@@ -263,9 +263,10 @@ export function createIdentityVerificationClient(
         sessionId,
         provider: 'NICE',
         status: VERIFIED_SESSION_STATUS,
-        name: '홍길동',
+        name: pending?.name?.trim() || '홍길동',
         phone: '010-1234-5678',
         birthDate: pending?.birthDate ? toApiBirthDate(pending.birthDate) : undefined,
+        gender: pending?.gender,
         verifiedAt: new Date().toISOString(),
       }
     }
@@ -301,6 +302,7 @@ export function createIdentityVerificationClient(
       verifiedName: pending?.name?.trim() || '홍길동',
       verifiedPhone: '010-1234-5678',
       verifiedBirthDate: input.birthDate ? toVerifiedBirthDate(input.birthDate) : undefined,
+      verifiedGender: input.gender,
       verifiedAt: new Date().toISOString(),
     }
   }

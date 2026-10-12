@@ -65,6 +65,7 @@ export interface IdentityChallengeCompleteResult {
   verifiedName?: string
   verifiedPhone?: string
   verifiedBirthDate?: string
+  verifiedGender?: string
   verifiedAt: string
 }
 
@@ -76,6 +77,7 @@ export interface IdentityVerifiedPayload {
   verifiedName?: string
   verifiedPhone?: string
   verifiedBirthDate?: string
+  verifiedGender?: string
   verifiedAt: string
 }
 

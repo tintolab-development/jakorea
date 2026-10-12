@@ -133,24 +133,27 @@ async function processRemoteCallback(
     let verifiedName = session.verifiedName ?? fromQuery.verifiedName
     let verifiedPhone = session.verifiedPhone ?? fromQuery.verifiedPhone
     let verifiedBirthDate = session.verifiedBirthDate ?? fromQuery.verifiedBirthDate
+    let verifiedGender: string | undefined
     let verifiedAt = session.verifiedAt
     let resolvedSessionId = session.sessionId ?? sessionId
 
-    if (!verifiedName || !verifiedPhone) {
-      if (!skipVerifiedProfileFetch) {
-        try {
-          const profile = await client.fetchVerifiedProfile(sessionId, profileToken)
-          verifiedName = profile.name ?? verifiedName
-          verifiedPhone = profile.phone ?? verifiedPhone
-          verifiedBirthDate =
-            (profile.birthDate ? toVerifiedBirthDate(profile.birthDate) : undefined) ??
-            (profile.birthDateRaw ? toVerifiedBirthDate(profile.birthDateRaw) : undefined) ??
-            verifiedBirthDate
-          verifiedAt = profile.verifiedAt ?? verifiedAt
-          resolvedSessionId = profile.sessionId ?? resolvedSessionId
-        } catch {
-          // confirm 등으로 토큰이 이미 소비된 경우 — 세션/쿼리 값만으로 진행
-        }
+    const needsVerifiedProfileFetch =
+      !skipVerifiedProfileFetch && (!verifiedName || !verifiedPhone || !verifiedGender)
+
+    if (needsVerifiedProfileFetch) {
+      try {
+        const profile = await client.fetchVerifiedProfile(sessionId, profileToken)
+        verifiedName = profile.name ?? verifiedName
+        verifiedPhone = profile.phone ?? verifiedPhone
+        verifiedBirthDate =
+          (profile.birthDate ? toVerifiedBirthDate(profile.birthDate) : undefined) ??
+          (profile.birthDateRaw ? toVerifiedBirthDate(profile.birthDateRaw) : undefined) ??
+          verifiedBirthDate
+        verifiedGender = profile.gender ?? profile.genderLabel ?? verifiedGender
+        verifiedAt = profile.verifiedAt ?? verifiedAt
+        resolvedSessionId = profile.sessionId ?? resolvedSessionId
+      } catch {
+        // confirm 등으로 토큰이 이미 소비된 경우 — 세션/쿼리 값만으로 진행
       }
     }
 
@@ -176,6 +179,7 @@ async function processRemoteCallback(
       verifiedName,
       verifiedPhone,
       verifiedBirthDate,
+      verifiedGender,
       verifiedAt: verifiedAt ?? new Date().toISOString(),
     }
 
@@ -248,6 +252,7 @@ async function processMockCallback(
       verifiedName: result.verifiedName,
       verifiedPhone: result.verifiedPhone,
       verifiedBirthDate: result.verifiedBirthDate,
+      verifiedGender: result.verifiedGender,
       verifiedAt: result.verifiedAt,
     }
 

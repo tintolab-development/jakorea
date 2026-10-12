@@ -159,6 +159,7 @@ export function useIdentityVerification({
           verifiedName: verified.verifiedName,
           verifiedPhone: verified.verifiedPhone,
           verifiedBirthDate: verified.verifiedBirthDate,
+          verifiedGender: verified.verifiedGender,
           verifiedAt: verified.verifiedAt,
         })
         setStatus('idle')
