@@ -17,6 +17,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
 
 import {
   readSurveySubmissionPeriodFromSchema,
+  readSurveyTitleFromSchema,
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
@@ -39,6 +40,22 @@ function titleSchema(title: Record<string, unknown>): string {
     ],
   })
 }
+
+describe('readSurveyTitleFromSchema', () => {
+  it('reads surveyTitle from the title period paragraph', () => {
+    expect(
+      readSurveyTitleFromSchema(
+        titleSchema({
+          surveyTitle: '2026 봄 만족도 조사',
+        })
+      )
+    ).toBe('2026 봄 만족도 조사')
+  })
+
+  it('returns undefined when surveyTitle is blank', () => {
+    expect(readSurveyTitleFromSchema(titleSchema({ surveyTitle: '   ' }))).toBeUndefined()
+  })
+})
 
 describe('readSurveySubmissionPeriodFromSchema', () => {
   it('reads custom start/end dates from the title period paragraph', () => {

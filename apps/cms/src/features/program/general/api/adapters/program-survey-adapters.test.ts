@@ -461,6 +461,36 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
     })
   })
 
+  it('keeps multiple SURVEY poll bindings (same schedule, different template versions)', () => {
+    const rows = mergeSurveysWithBindings(
+      [],
+      [
+        {
+          bindingId: 1,
+          templateId: 10,
+          templateVersionId: 100,
+          formType: 'SURVEY',
+          templateName: '설문 A',
+          targetScope: 'SCHEDULE',
+          targetScopeId: 186682,
+          active: true,
+        },
+        {
+          bindingId: 2,
+          templateId: 11,
+          templateVersionId: 101,
+          formType: 'SURVEY',
+          templateName: '설문 B',
+          targetScope: 'SCHEDULE',
+          targetScopeId: 186682,
+          active: true,
+        },
+      ]
+    )
+    expect(rows).toHaveLength(2)
+    expect(rows.map(r => r.id).sort()).toEqual(['100', '101'])
+  })
+
   it('lists a SURVEY binding on the poll tab when the template name looks like satisfaction', () => {
     const rows = mergeSurveysWithBindings(
       [],
