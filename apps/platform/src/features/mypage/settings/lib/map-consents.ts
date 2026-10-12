@@ -28,6 +28,13 @@ const CATALOG_BY_TYPE = new Map(
 )
 const DOCUMENT_SECTION_IDS = new Set(DOCUMENT_CONSENT_ITEMS.map(item => item.id))
 
+/** 회원 유형별 기본 동의 — `applicable: false`이면 미노출 (동의서·서약서는 유지) */
+const MEMBER_TYPE_BASIC_CONSENT_TYPES = new Set([
+  'TEACHER_INFO_COLLECTION',
+  'GUARDIAN_CONSENT',
+  'CHILD_PRIVACY_COLLECTION',
+])
+
 /** ISO `2026-07-03T09:23:00` → `2026.07.03 09:23` */
 export function formatConsentAgreedAt(value: string | null | undefined): string | undefined {
   const matched = value?.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/)
@@ -49,7 +56,8 @@ function normalizeConsentType(value: string | undefined): string {
 /**
  * `GET /api/portal/me/consents` 응답 행을 그대로 카드로 만든다.
  * 행 구성·순서·필수·철회 가능 여부는 서버 값, 제목·종류·약관 보기는 화면 카탈로그.
- * `applicable: false` 행도 숨기지 않는다(미동의 카드).
+ * 동의서·서약서는 `applicable: false`도 미동의 카드로 노출.
+ * 교사·미성년 전용 기본 동의는 `applicable: false`면 제외.
  */
 export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]): {
   basicItems: SettingsConsentItem[]
@@ -60,7 +68,14 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
   const seen = new Set<SettingsConsentItemId>()
 
   for (const summary of summaries) {
-    const meta = CATALOG_BY_TYPE.get(normalizeConsentType(summary.consentType))
+    const consentType = normalizeConsentType(summary.consentType)
+    if (
+      summary.applicable === false &&
+      MEMBER_TYPE_BASIC_CONSENT_TYPES.has(consentType)
+    ) {
+      continue
+    }
+    const meta = CATALOG_BY_TYPE.get(consentType)
     if (!meta || seen.has(meta.id)) continue
     seen.add(meta.id)
 

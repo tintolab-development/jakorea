@@ -99,3 +99,25 @@ export async function fetchPortalConsents(signal?: AbortSignal): Promise<PortalC
   const data = unwrapEnvelope<unknown>(res.data)
   return Array.isArray(data) ? (data as PortalConsentSummary[]) : []
 }
+
+/** GET /api/portal/me/consents/documents/{documentId} — 제출 동의서 조회 */
+export type PortalConsentDocumentDetail = {
+  documentId?: number
+  consentType?: string
+  title?: string
+  contentFormat?: string
+  content?: string
+  schemaJson?: unknown
+  renderStatus?: string
+}
+
+export async function fetchPortalConsentDocument(
+  documentId: number,
+  signal?: AbortSignal,
+): Promise<PortalConsentDocumentDetail> {
+  const res = await axiosClient.get(
+    `${PORTAL_CONSENTS_PATH}/documents/${encodeURIComponent(String(documentId))}`,
+    { signal },
+  )
+  return unwrapEnvelope<PortalConsentDocumentDetail>(res.data) ?? {}
+}

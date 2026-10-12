@@ -5,8 +5,10 @@ export const EMPTY_SETTINGS_VALUE = '-'
 export const SETTINGS_WITHDRAW_GUIDE = {
   title: '회원 탈퇴 안내',
   description:
-    '탈퇴하시면 서비스 이용이 중단되며, 개인정보는 관련 법령에 따라 보관 후 파기됩니다. 진행 중인 프로그램이 있는 경우 탈퇴가 제한될 수 있습니다.',
-  confirmLabel: '확인',
+    'JA KOREA 서비스를 탈퇴하시겠습니까?\n탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제·처리됩니다. 삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
+  passwordPlaceholder: '현재 사용 중인 비밀번호를 입력해 주세요',
+  cancelLabel: '취소',
+  confirmLabel: '탈퇴하기',
   /** OpenAPI `PortalWithdrawalRequest.reason` */
   reason: '회원 요청에 의한 탈퇴',
 } as const

@@ -15,6 +15,7 @@ import { useSettingsConsents } from '../hooks/use-settings-consents'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
 import { formatConsentDate, SETTINGS_CONSENT_TYPE_BY_ID } from '../lib/map-consents'
 import { ConsentWithdrawComplete, ConsentWithdrawConfirm } from './consent-withdraw-confirm'
+import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overlay'
 import styles from './consents-view.module.css'
 
 const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
@@ -118,12 +119,14 @@ function ConsentCard({
   marketingAgreed,
   onMarketingChange,
   onViewTerms,
+  onViewDocument,
   onWithdraw,
 }: {
   item: SettingsConsentItem
   marketingAgreed: boolean
   onMarketingChange: (next: boolean) => void
   onViewTerms: (item: SettingsConsentItem) => void
+  onViewDocument?: (item: SettingsConsentItem) => void
   onWithdraw?: (item: SettingsConsentItem) => void
 }) {
   const agreed = item.kind === 'toggle' ? marketingAgreed : item.agreed
@@ -211,7 +214,12 @@ function ConsentCard({
               동의 철회
             </PFButton>
           ) : null}
-          <PFButton size="medium" variant="tertiary" className={styles.actionButton}>
+          <PFButton
+            size="medium"
+            variant="tertiary"
+            className={styles.actionButton}
+            onClick={() => onViewDocument?.(item)}
+          >
             동의서 확인
           </PFButton>
           <PFButton size="medium" variant="primary" className={styles.actionButton}>
@@ -251,6 +259,7 @@ export function SettingsConsentsView() {
     id: SettingsConsentItemId
     withdrawnAt: string
   } | null>(null)
+  const [documentPreviewItem, setDocumentPreviewItem] = useState<SettingsConsentItem | null>(null)
   const withdrawCopy = withdrawTarget ? BASIC_WITHDRAW_COPY[withdrawTarget.id] : undefined
   const completeCopy = withdrawComplete ? BASIC_WITHDRAW_COPY[withdrawComplete.id] : undefined
 
@@ -380,6 +389,7 @@ export function SettingsConsentsView() {
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
             }}
+            onViewDocument={item.kind === 'document' ? setDocumentPreviewItem : undefined}
             onWithdraw={BASIC_WITHDRAW_COPY[item.id] ? setWithdrawTarget : undefined}
           />
         ))}
@@ -398,9 +408,17 @@ export function SettingsConsentsView() {
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
             }}
+            onViewDocument={setDocumentPreviewItem}
           />
         ))}
       </section>
+
+      <ConsentDocumentPreviewOverlay
+        open={documentPreviewItem != null}
+        item={documentPreviewItem}
+        isRemoteSession={consents.isRemoteSession}
+        onClose={() => setDocumentPreviewItem(null)}
+      />
 
       {terms.openType ? (
         <TermsViewModal open={terms.isOpen} type={terms.openType} onClose={terms.close} />

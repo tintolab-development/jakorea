@@ -1,0 +1,106 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-neutral-white, #fff);
+}
+
+.topBar {
+  box-sizing: border-box;
+  display: flex;
+  height: 92px;
+  padding: 28px;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+  color: var(--color-neutral-black, #3d3d3d);
+  border-bottom: 1px solid var(--color-neutral-cool-200, #e8ebed);
+}
+
+.topBarTitle {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  padding-right: 16px;
+}
+
+.closeButton {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.documentScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 120px 28px 180px;
+  background: var(--Color-netural-cool-50, #f5f7f7);
+}
+
+.previewForm {
+  pointer-events: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.crimeImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bottomChrome {
+  position: fixed;
+  left: 50%;
+  bottom: 36px;
+  transform: translateX(-50%);
+  z-index: 1201;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.previewBadge {
+  display: inline-flex;
+  padding: 10px var(--spacing-16, 16px);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  border-radius: 60px;
+  background: rgba(35, 35, 35, 0.75);
+  color: var(--color-neutral-white, #fff);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 150%;
+  pointer-events: auto;
+}
+
+.pagination {
+  pointer-events: auto;
+  margin-bottom: 0;
+}

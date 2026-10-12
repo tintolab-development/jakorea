@@ -149,13 +149,17 @@ export type PhoneIdentityChangeResponse = {
   changedAt?: string
 }
 
+/** POST /api/portal/me/withdrawals — `confirmationText` 고정 확인 문구 (OpenAPI example·enum) */
+export const PORTAL_WITHDRAWAL_CONFIRMATION_TEXT = '회원탈퇴'
+
 /**
  * POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalRequest`
- * 본인 확인 SoT는 `currentPassword`만. `confirmationText`는 optional·서버 무시(보내지 않음).
+ * 본인 확인 SoT는 `currentPassword`. `confirmationText`는 서버 `@NotBlank` 검증(고정 문구 `회원탈퇴`).
  */
 export type PortalWithdrawalRequest = {
   currentPassword: string
   reason: string
+  confirmationText?: string
 }
 
 /** POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalResponse` */

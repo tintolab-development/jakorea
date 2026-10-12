@@ -9,10 +9,11 @@ import {
   isRemoteApiConfigured,
   setDevAuthLoggedIn,
 } from '@/shared/lib'
-import { PFAlertModal, PFButton, PFInfoReview, PFText, PFTextInput } from '@/shared/ui'
+import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE, SETTINGS_WITHDRAW_GUIDE, VOLUNTEER_1365_URL } from '../lib/constants'
 import type { SettingsGuardianView, SettingsInfoRow } from '../lib/map-view'
 import { SettingsChangePasswordModal } from './change-password-modal'
+import { SettingsWithdrawGuideModal } from './withdraw-guide-modal'
 import styles from './view.module.css'
 
 export type SettingsViewProps = {
@@ -172,48 +173,22 @@ export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewP
         onClose={() => setIsChangePasswordOpen(false)}
       />
 
-      <PFAlertModal
+      <SettingsWithdrawGuideModal
         open={isWithdrawGuideOpen}
-        title={SETTINGS_WITHDRAW_GUIDE.title}
-        description={SETTINGS_WITHDRAW_GUIDE.description}
-        confirmLabel={SETTINGS_WITHDRAW_GUIDE.confirmLabel}
+        password={withdrawPassword}
+        passwordError={withdrawPasswordError}
+        formError={withdrawFormError}
         confirmLoading={withdrawMutation.isPending}
-        onDismiss={closeWithdrawGuide}
+        onClose={closeWithdrawGuide}
+        onPasswordChange={next => {
+          setWithdrawPassword(next)
+          if (withdrawPasswordError) setWithdrawPasswordError(null)
+          if (withdrawFormError) setWithdrawFormError(null)
+        }}
         onConfirm={() => {
           void handleWithdrawConfirm()
         }}
-      >
-        <PFTextInput
-          size="large"
-          label="비밀번호"
-          type="password"
-          name="withdraw-current-password"
-          placeholder="비밀번호를 입력해 주세요"
-          autoComplete="current-password"
-          autoFocus
-          value={withdrawPassword}
-          onValueChange={next => {
-            setWithdrawPassword(next)
-            if (withdrawPasswordError) setWithdrawPasswordError(null)
-            if (withdrawFormError) setWithdrawFormError(null)
-          }}
-          onKeyDown={event => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              void handleWithdrawConfirm()
-            }
-          }}
-          error={Boolean(withdrawPasswordError)}
-          message={withdrawPasswordError ?? undefined}
-          messageStatus="error"
-          disabled={withdrawMutation.isPending}
-        />
-        {withdrawFormError ? (
-          <PFText as="p" typo="bd-sm-md" color="error">
-            {withdrawFormError}
-          </PFText>
-        ) : null}
-      </PFAlertModal>
+      />
     </div>
   )
 }
