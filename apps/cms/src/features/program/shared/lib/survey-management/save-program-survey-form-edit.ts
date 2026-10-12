@@ -95,7 +95,7 @@ export function resolveProgramSurveyFormEditFailure(
 
 export type ProgramSurveyFormEditResult =
   | { ok: true; templateId: number; templateVersionId: number }
-  | { ok: false; message: string; refetchBindings?: boolean }
+  | { ok: false; message: string; refetchBindings?: boolean; incompleteKeys?: readonly string[] }
 
 /**
  * 프로그램 설문 양식 수정 — 바인딩된 PUBLISHED version은 수정 불가(409)이고,

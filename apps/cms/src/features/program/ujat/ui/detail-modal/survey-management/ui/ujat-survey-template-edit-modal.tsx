@@ -24,6 +24,10 @@ import {
   buildDefaultSurveyWritingDraft,
   saveSurveyWritingTemplate,
 } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import {
+  SurveyWritingValidationHighlightProvider,
+  useSurveyWritingSaveValidationFeedback,
+} from '@/features/program/shared/lib/survey-management/use-survey-writing-save-validation-feedback'
 
 export type UjatSurveyTemplateEditModalProps = {
   open: boolean
@@ -32,13 +36,22 @@ export type UjatSurveyTemplateEditModalProps = {
   onSaved?: (templateId: string) => void
 }
 
-export function UjatSurveyTemplateEditModal({
+export function UjatSurveyTemplateEditModal(props: UjatSurveyTemplateEditModalProps) {
+  return (
+    <SurveyWritingValidationHighlightProvider variant="survey">
+      <UjatSurveyTemplateEditModalInner {...props} />
+    </SurveyWritingValidationHighlightProvider>
+  )
+}
+
+function UjatSurveyTemplateEditModalInner({
   open,
   templateId,
   onClose,
   onSaved,
 }: UjatSurveyTemplateEditModalProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const { handleDraftValidationFailure } = useSurveyWritingSaveValidationFeedback()
   const templateRow = useMemo(
     () => (open ? findWritingTemplateRowByDefinitionId(templateId) : null),
     [open, templateId]
@@ -78,12 +91,16 @@ export function UjatSurveyTemplateEditModal({
     void (async () => {
       const result = await saveSurveyWritingTemplate(templateId, draftRef.current)
       if (!result.ok) {
+        if (result.incompleteKeys != null && result.incompleteKeys.length > 0) {
+          handleDraftValidationFailure(result)
+          return
+        }
         showSaveFailure(new Error(result.message))
         return
       }
       showSaveSuccess(() => onSaved?.(templateId))
     })()
-  }, [onSaved, showSaveFailure, showSaveSuccess, templateId])
+  }, [handleDraftValidationFailure, onSaved, showSaveFailure, showSaveSuccess, templateId])
 
   const tableRowSelection = useTableRowSelectionState({
     paragraphs: editor.draft.paragraphs,
