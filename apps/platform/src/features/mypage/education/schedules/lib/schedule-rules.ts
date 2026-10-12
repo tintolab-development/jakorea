@@ -42,8 +42,10 @@ export function shouldShowEducationAssignment(
 ): boolean {
   const assignment = item.assignment
   if (!assignment) return false
-  const start = new Date(assignment.submitStartAt)
-  if (Number.isNaN(start.getTime())) return false
+  const rawStart = assignment.submitStartAt?.trim()
+  if (!rawStart) return true
+  const start = new Date(rawStart)
+  if (Number.isNaN(start.getTime())) return true
   return now.getTime() >= start.getTime()
 }
 
