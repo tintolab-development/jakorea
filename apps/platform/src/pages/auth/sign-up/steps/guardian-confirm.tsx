@@ -15,7 +15,7 @@ export function GuardianConfirmStep({ signUp }: GuardianConfirmStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="보호자 동의에 필요한 정보만 확인해요"
+        title="보호자 동의에 필요한 정보만 확인해요."
         description="입력한 정보는 보호자 본인인증과 동의 확인에만 사용돼요."
         actionsVariant="terms"
         actions={
@@ -36,7 +36,6 @@ export function GuardianConfirmStep({ signUp }: GuardianConfirmStepProps) {
             value={profile.name}
             required
             disabled
-            message="보호자 이름을 입력해 주세요."
           />
           <PFTextInput
             size="xlarge"

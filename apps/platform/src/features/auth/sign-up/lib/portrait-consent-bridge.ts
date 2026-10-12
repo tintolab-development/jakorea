@@ -1,14 +1,53 @@
+import {
+  MEMBER_CONSENT_TEMPLATE_MAP,
+  normalizeMemberConsentWriteDraft,
+} from '@jakorea/form-schema/consent'
+import { createAgreementPortraitDraft, type WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import type {
   AgreementState,
   GuardianAgreementState,
 } from '../model/sign-up.types'
 import { SIGN_UP_PATH } from './wizard-location'
+import { clearSignupMemberVerifiedIdentity } from './signup-verified-identity-storage'
+import { clearSignupWizardFields } from './signup-wizard-field-storage'
 
 export const SIGN_UP_PORTRAIT_CONSENT_PATH = '/auth/sign-up/portrait-consent'
 
 const BRIDGE_STORAGE_KEY = 'platform:sign-up-portrait-consent-bridge'
 const DRAFT_STORAGE_KEY = 'platform:sign-up-portrait-consent-draft'
 const DRAFT_SCOPE_KEY = 'platform:sign-up-portrait-consent-draft-scope'
+const WIZARD_INSTANCE_KEY = 'platform:sign-up-wizard-instance'
+
+function createWizardInstanceId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `signup-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+/** 가입 시도마다 달라지는 ID — 초상권 draft scope 분리 */
+export function ensureSignupWizardInstanceId(): string {
+  if (!canUseSessionStorage()) return createWizardInstanceId()
+  try {
+    const existing = window.sessionStorage.getItem(WIZARD_INSTANCE_KEY)?.trim()
+    if (existing) return existing
+    const next = createWizardInstanceId()
+    window.sessionStorage.setItem(WIZARD_INSTANCE_KEY, next)
+    return next
+  } catch {
+    return createWizardInstanceId()
+  }
+}
+
+function clearPortraitConsentDraftStorage(): void {
+  if (!canUseSessionStorage()) return
+  try {
+    window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+    window.sessionStorage.removeItem(DRAFT_SCOPE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
 
 export type PortraitConsentBridgeSource = 'adult' | 'guardian'
 
@@ -131,11 +170,13 @@ export function dismissPortraitConsentRestore(): void {
 /** 초상권 bridge + 작성 draft + 메모리 핸드오프 전부 삭제 (가입 새로 시작·완료 시) */
 export function clearPortraitConsentSession(): void {
   pendingRestore = null
+  clearSignupMemberVerifiedIdentity()
+  clearSignupWizardFields()
   if (!canUseSessionStorage()) return
   try {
     window.sessionStorage.removeItem(BRIDGE_STORAGE_KEY)
-    window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)
-    window.sessionStorage.removeItem(DRAFT_SCOPE_KEY)
+    window.sessionStorage.removeItem(WIZARD_INSTANCE_KEY)
+    clearPortraitConsentDraftStorage()
   } catch {
     /* ignore */
   }
@@ -143,7 +184,7 @@ export function clearPortraitConsentSession(): void {
 
 export function portraitConsentDraftScope(bridge: PortraitConsentBridgeState | null): string {
   if (bridge == null) return ''
-  return `${bridge.source}:${bridge.returnSearch}`
+  return `${ensureSignupWizardInstanceId()}:${bridge.source}:${bridge.returnSearch}`
 }
 
 export function loadPortraitConsentDraftState<T extends PortraitConsentDraftState>(
@@ -151,7 +192,10 @@ export function loadPortraitConsentDraftState<T extends PortraitConsentDraftStat
   scope: string
 ): T {
   if (!canUseSessionStorage()) return fallback
-  if (scope === '') return fallback
+  if (scope === '') {
+    clearPortraitConsentDraftStorage()
+    return fallback
+  }
   try {
     const storedScope = window.sessionStorage.getItem(DRAFT_SCOPE_KEY)
     if (storedScope !== scope) {
@@ -202,4 +246,33 @@ export function buildPortraitConsentPath(returnSearch: string): string {
   const params = new URLSearchParams()
   params.set('returnTo', `${SIGN_UP_PATH}${returnSearch.startsWith('?') ? returnSearch : `?${returnSearch}`}`)
   return `${SIGN_UP_PORTRAIT_CONSENT_PATH}?${params.toString()}`
+}
+
+const PORTRAIT_CONSENT_TEMPLATE_ID = MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.templateId
+
+/** 가입 완료 시 sessionStorage에 남은 초상권 작성 draft (현재 wizard instance scope만) */
+export function readPortraitConsentDraftForSubmit(): WritingFormDraft | null {
+  if (!canUseSessionStorage()) return null
+
+  const scope = window.sessionStorage.getItem(DRAFT_SCOPE_KEY)?.trim()
+  if (!scope) return null
+
+  const wizardId = ensureSignupWizardInstanceId()
+  if (!scope.startsWith(`${wizardId}:`)) return null
+
+  const fallbackDraft = normalizeMemberConsentWriteDraft(
+    createAgreementPortraitDraft(),
+    PORTRAIT_CONSENT_TEMPLATE_ID
+  )
+  const loaded = loadPortraitConsentDraftState(
+    { draft: fallbackDraft, signatures: {} },
+    scope
+  )
+
+  const draft = loaded.draft
+  if (draft == null || typeof draft !== 'object') return null
+  const paragraphs = (draft as WritingFormDraft).paragraphs
+  if (!Array.isArray(paragraphs) || paragraphs.length === 0) return null
+
+  return draft as WritingFormDraft
 }

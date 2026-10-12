@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
   buildPortraitConsentReturnPath,
+  clearPortraitConsentSession,
   markPortraitConsentCompleted,
   peekPortraitConsentBridge,
 } from '@/features/auth/sign-up/lib/portrait-consent-bridge'
@@ -17,6 +19,13 @@ export function SignUpPortraitConsentPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const bridge = peekPortraitConsentBridge()
+
+  useEffect(() => {
+    if (bridge != null) return
+    clearPortraitConsentSession()
+    navigate(SIGN_UP_PATH, { replace: true })
+  }, [bridge, navigate])
+
   const returnTo =
     parseSafeInternalPath(searchParams.get('returnTo')) ??
     (bridge != null ? buildPortraitConsentReturnPath(bridge.returnSearch) : SIGN_UP_PATH)
@@ -28,6 +37,10 @@ export function SignUpPortraitConsentPage() {
   const handleComplete = () => {
     markPortraitConsentCompleted()
     navigate(returnTo)
+  }
+
+  if (bridge == null) {
+    return null
   }
 
   return (

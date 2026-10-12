@@ -1,13 +1,8 @@
-import { useCallback, useRef } from 'react'
 import {
   IDENTITY_MODULE_IDLE_DESCRIPTION,
   IDENTITY_MODULE_IDLE_TITLE,
 } from '@jakorea/domain/shared/identity-module-copy'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import {
-  useSignupIdentityVerification,
-  type IdentityChallengeCompleteResult,
-} from '@/features/auth/identity-verification'
 import { PFButton, PFText } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
@@ -18,29 +13,13 @@ type IdentityStepProps = {
 }
 
 export function IdentityStep({ signUp }: IdentityStepProps) {
-  const { step, birth, identity } = signUp
-  const completeRef = useRef(identity.complete)
-  completeRef.current = identity.complete
-
-  const handleSuccess = useCallback((result: IdentityChallengeCompleteResult) => {
-    completeRef.current({
-      sessionId: result.sessionId,
-      verifiedName: result.verifiedName,
-      verifiedPhone: result.verifiedPhone,
-    })
-  }, [])
-
-  const { verify, isVerifying, errorMessage } = useSignupIdentityVerification({
-    birthDate: birth.birthDate,
-    gender: birth.gender,
-    onSuccess: handleSuccess,
-  })
+  const { step, identity } = signUp
 
   const handleVerify = () => {
     if (identity.tryAdminRegisteredRedirect()) {
       return
     }
-    void verify()
+    void identity.verify()
   }
 
   return (
@@ -52,10 +31,10 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
           <PFButton
             size="xlarge"
             width="100%"
-            disabled={isVerifying}
+            disabled={identity.isVerifying}
             onClick={handleVerify}
           >
-            {isVerifying ? '본인인증 진행 중…' : '휴대폰 본인인증하기'}
+            {identity.isVerifying ? '본인인증 진행 중…' : '휴대폰 본인인증하기'}
           </PFButton>
         }
       >
@@ -66,9 +45,9 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
               <br />
               {IDENTITY_MODULE_IDLE_DESCRIPTION}
             </PFText>
-            {errorMessage ? (
+            {identity.errorMessage ? (
               <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
-                {errorMessage}
+                {identity.errorMessage}
               </PFText>
             ) : null}
           </div>

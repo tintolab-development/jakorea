@@ -15,7 +15,13 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
         title="입력한 정보를 확인해 주세요"
-        description="내용이 맞다면 가입을 완료할게요."
+        description={
+          <>
+            정보를 확인해 주세요.
+            <br />
+            내용이 맞다면 아래 버튼을 눌러 가입을 완료해 주세요.
+          </>
+        }
         actionsVariant="terms"
         actions={
           <>

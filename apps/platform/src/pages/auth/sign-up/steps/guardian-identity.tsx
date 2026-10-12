@@ -37,8 +37,14 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="보호자 본인인증을 진행해 주세요"
-        description="안전하게 가입하기 위해 휴대폰 본인인증이 필요해요. 동의 확인과 법정대리인 확인을 위해 사용돼요."
+        title="보호자 본인인증을 진행해 주세요."
+        description={
+          <>
+            안전하게 가입하기 위해 휴대폰 본인인증이 필요해요.
+            <br />
+            인증 결과는 동의 확인과 법정대리인 확인을 위해 사용돼요.
+          </>
+        }
         actions={
           <PFButton
             size="xlarge"

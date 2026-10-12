@@ -10,6 +10,7 @@ import { GuardianIdentityStep } from './steps/guardian-identity'
 import { IdentityStep } from './steps/identity'
 import { MemberTypeStep } from './steps/member-type'
 import { PasswordStep } from './steps/password'
+import { MinorProfileStep } from './steps/minor-profile-step'
 import { ProfileStep } from './steps/profile'
 import { TeacherProfileStep } from './steps/teacher-profile'
 
@@ -64,7 +65,7 @@ const Step6: SignUpStepComponent = ({ signUp }) => {
 
 const Step7: SignUpStepComponent = ({ signUp }) =>
   signUp.guardian.isUnderAgeSignup ? (
-    <ProfileStep signUp={signUp} />
+    <MinorProfileStep signUp={signUp} />
   ) : (
     <ConfirmationStep signUp={signUp} />
   )

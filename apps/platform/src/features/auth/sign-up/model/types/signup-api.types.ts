@@ -40,12 +40,19 @@ export type SignupTermsCatalogResponse = {
   terms?: SignupTermsDocument[]
 }
 
+export type SignupFilledDocumentRequest = {
+  templateCode?: string
+  /** WritingFormDraft — JSON object (이중 인코딩 없음) */
+  schemaJson?: Record<string, unknown>
+}
+
 export type TermsAgreementRequest = {
   termsType: string
   version: string
   required?: boolean
   agreed?: boolean
   termsSnapshotJson?: string
+  filledDocument?: SignupFilledDocumentRequest
 }
 
 /** CMS 미등록 학교(NEIS 등) 선택값 — OpenAPI PortalSchoolSelectionRequest */

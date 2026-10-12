@@ -10,6 +10,8 @@ import { toApiSignupPhone } from '../../lib/helpers/to-api-phone'
 import { parseBirthDate } from '../../lib/utils'
 import { buildTermsAgreementsFromCatalog } from './map-terms-agreements'
 import { buildSchoolSelection } from '../../lib/build-school-selection'
+import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { attachPortraitFilledDocumentToTermsAgreements } from '../../lib/map-portrait-consent-filled-document'
 import type {
   HomepageGeneralSignupRequest,
   HomepageTeacherSignupRequest,
@@ -78,25 +80,31 @@ export type SignUpMapInput = {
   agreements: AgreementState
   guardianAgreements?: GuardianAgreementState
   termsCatalog?: SignupTermsCatalogResponse | null
+  portraitConsentDraft?: WritingFormDraft | null
 }
 
 function buildMember(input: SignUpMapInput): MemberSignupRequest {
-  const termsAgreements = buildTermsAgreementsFromCatalog({
-    catalog: input.termsCatalog,
-    agreements: input.agreements,
-    guardianAgreements: input.guardianAgreements,
-    isUnderAge: input.isUnderAgeSignup,
-  })
+  const termsAgreements = attachPortraitFilledDocumentToTermsAgreements(
+    buildTermsAgreementsFromCatalog({
+      catalog: input.termsCatalog,
+      agreements: input.agreements,
+      guardianAgreements: input.guardianAgreements,
+      isUnderAge: input.isUnderAgeSignup,
+    }),
+    input.portraitConsentDraft
+  )
+
+  const memberPhone = input.isUnderAgeSignup ? undefined : toApiSignupPhone(input.phone)
 
   const member: MemberSignupRequest = {
     email: input.email.trim(),
     password: input.password,
     name: input.name?.trim() ?? '',
-    phone: toApiSignupPhone(input.phone) ?? '',
+    ...(memberPhone ? { phone: memberPhone } : {}),
     birthDate: toApiBirthDate(input.birthDate),
     gender: toApiGender(input.gender),
     under14: input.isUnderAgeSignup,
-    identityVerified: input.isIdentityVerified,
+    identityVerified: input.isUnderAgeSignup ? false : input.isIdentityVerified,
     schoolEnrollmentStatus:
       input.selectedType === 'teacher'
         ? undefined
@@ -112,7 +120,10 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
     termsAgreements: termsAgreements.length > 0 ? termsAgreements : undefined,
   }
 
-  if (input.identityVerificationSessionId != null) {
+  if (
+    !input.isUnderAgeSignup &&
+    input.identityVerificationSessionId != null
+  ) {
     member.identityVerificationSessionId = input.identityVerificationSessionId
   }
   if (input.guardianVerificationSessionId != null) {
