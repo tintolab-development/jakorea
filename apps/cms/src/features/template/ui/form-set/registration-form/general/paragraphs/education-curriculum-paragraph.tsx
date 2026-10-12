@@ -18,7 +18,6 @@ import { getProgramRegistrationEducationFormOptions } from './program-registrati
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   PRE_EDUCATION_SCHEDULE_LABEL,
-  shouldLockProgressSchedulePeriodToggle,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
@@ -27,7 +26,7 @@ import {
   ProgramRegistrationMultiRoundAssignmentFields,
   type ProgramRegistrationMultiRoundAssignmentValue,
 } from './program-registration-multi-round-assignment-fields'
-import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
@@ -309,12 +308,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   ipsScheduleDetail,
   scheduleCurriculumPreEducation = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
-  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
-    participantIndividual,
-    participantOrganization,
-    programType: 'curriculum',
-    sessionRound: sessionRoundType,
-  })
   const [ipsBySession] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationIpsTypeValue>
   >('generalRegistration.educationCurriculum.ipsBySession', {})
@@ -531,14 +524,11 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   validationKey="curriculum.preEducationScheduleLine"
                   edit={
                     <div className="detail-info-form-inputs-wrapper-no-gap">
-                      <ParagraphDatePicker
-                        mode="single"
-                        presetMode="schedule"
-                        customizable={false}
-                        lockTimeToggleOn
-                        showTimeToggle={false}
-                        lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
-                        suppressAutoTodayWhenEmpty
+                      <EducationProgressScheduleDatePicker
+                        participantIndividual={participantIndividual}
+                        participantOrganization={participantOrganization}
+                        programType="curriculum"
+                        sessionRound={sessionRoundType}
                         value={scheduleRange?.[0] ?? null}
                         appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
                         appliedSurfaceWithTime={scheduleHasClock}
@@ -549,8 +539,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                             () => formatEducationScheduleLineFromRange([start, end])
                           )
                         }
-                        width="100%"
-                        placeholder="일정을 선택하세요"
                       />
                     </div>
                   }

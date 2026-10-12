@@ -468,8 +468,8 @@ describe('shouldLockProgressSchedulePeriodToggle', () => {
     ).toBe(true)
     expect(
       shouldLockProgressSchedulePeriodToggle({
-        participantIndividual: false,
-        participantOrganization: true,
+        participantIndividual: true,
+        participantOrganization: false,
         programType: 'curriculum',
         sessionRound: 'multi',
       })

@@ -25,6 +25,7 @@ import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/for
 import {
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
+  shouldLockProgressSchedulePeriodToggle,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
@@ -393,6 +394,12 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
             participantOrganization: participant.organization,
             educationStructure: extras.programType,
+          })}
+          lockProgressSchedulePeriodToggle={shouldLockProgressSchedulePeriodToggle({
+            participantIndividual: participant.individual,
+            participantOrganization: participant.organization,
+            programType: extras.programType,
+            sessionRound: extras.sessionRoundType,
           })}
         />
         </ProgramCommonInfoEditSection>

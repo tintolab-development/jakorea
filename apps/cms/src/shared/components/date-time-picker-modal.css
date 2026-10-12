@@ -119,18 +119,8 @@
   width: 100%;
 }
 
-.date-time-picker-popover__input .cms-input__control {
-  border-color: var(--color-mint-01, #01a1af);
-  pointer-events: none;
-}
-
 .date-time-picker-popover__input .cms-input__inner .ant-input {
   cursor: default;
-}
-
-.date-time-picker-popover__input--active .cms-input__control {
-  border-color: var(--color-mint-01, #01a1af);
-  box-shadow: 0 0 0 2px rgba(1, 161, 175, 0.2);
 }
 
 .date-time-picker-popover__datetime-row {
@@ -225,11 +215,12 @@
   line-height: 150%;
 }
 
-.date-time-picker-popover__fields
-  .date-time-picker-popover__input:not(.date-time-picker-popover__input--active)
-  .cms-input__control {
-  border-color: var(--table-line, #e0e0e0);
-  box-shadow: none;
+.date-time-picker-popover__field--end-date-locked {
+  cursor: default;
+}
+
+.date-time-picker-popover__end-time-wrap {
+  width: 100%;
 }
 
 .date-time-picker-popover__time-error {
@@ -376,35 +367,6 @@
   > .date-time-picker-time-selects__wrap.cms-select
   .ant-select {
   width: 100%;
-}
-
-.date-time-picker-time-selects__colon {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--main-BK, #3d3d3d);
-  flex-shrink: 0;
-  line-height: 40px;
-}
-
-.date-time-picker-time-selects__wrap--hour-active.cms-select {
-  border-color: var(--color-mint-01, #01a1af);
-  box-shadow: 0 0 0 2px rgba(1, 161, 175, 0.2);
-}
-
-.date-time-picker-time-selects__wrap--hour-active.cms-select:hover:not(.cms-select--disabled) {
-  border-color: var(--color-mint-01, #01a1af);
-}
-
-.date-time-picker-time-selects__wrap--muted.cms-select {
-  border-color: var(--table-line, #e0e0e0);
-}
-
-.date-time-picker-time-selects__wrap--muted.cms-select:focus-within:not(.cms-select--disabled),
-.date-time-picker-time-selects__wrap--muted.cms-select:has(.ant-select-open):not(
-    .cms-select--disabled
-  ) {
-  border-color: var(--table-line, #e0e0e0);
-  box-shadow: none;
 }
 
 .date-time-picker-time-selects__wrap--invalid.cms-select {

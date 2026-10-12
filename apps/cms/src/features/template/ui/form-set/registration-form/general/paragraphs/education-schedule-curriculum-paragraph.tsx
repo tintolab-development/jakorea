@@ -12,6 +12,7 @@ import type {
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
@@ -19,7 +20,6 @@ import {
   getScheduleEventPerScheduleExtraPlan,
   isScheduleEducationAndIpsBothPerSchedule,
   PRE_EDUCATION_SCHEDULE_LABEL,
-  shouldLockProgressSchedulePeriodToggle,
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
@@ -294,12 +294,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   preEducationDisplayMode = 'prepend',
   hideAssignmentSettings = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
-  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
-    participantIndividual,
-    participantOrganization,
-    programType: 'schedule',
-    sessionRound: sessionRoundType,
-  })
   const replaceFirstTraining =
     scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
   const prependTraining =
@@ -932,14 +926,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     )
     return (
       <div className="detail-info-form-inputs-wrapper-no-gap">
-        <ParagraphDatePicker
-          mode="single"
-          presetMode="schedule"
-          customizable={false}
-          lockTimeToggleOn
-          showTimeToggle={false}
-          lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
-          suppressAutoTodayWhenEmpty
+        <EducationProgressScheduleDatePicker
+          participantIndividual={participantIndividual}
+          participantOrganization={participantOrganization}
+          programType="schedule"
+          sessionRound={sessionRoundType}
           value={scheduleRange?.[0] ?? null}
           appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
           appliedSurfaceWithTime={scheduleHasClock}
@@ -953,8 +944,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               })
             )
           }
-          width="100%"
-          placeholder="일정을 선택하세요"
         />
       </div>
     )
