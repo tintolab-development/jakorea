@@ -351,11 +351,8 @@ export async function putParticipantAssignedOrganizationsRemote(
   )
 }
 
-export type ProgramParticipantGiveUpRequest = {
-  reason: string
-  /** BE 보완 — §G-8 활동 포기 중단일 (resolvedScheduleId) */
-  stopScheduleId?: number
-}
+export type ProgramParticipantGiveUpRequest =
+  import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 
 /**
  * POST /api/admin/programs/{programId}/participants/{participantId}/give-up

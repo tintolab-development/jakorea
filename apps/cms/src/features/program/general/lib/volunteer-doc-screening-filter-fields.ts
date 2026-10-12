@@ -414,6 +414,13 @@ export function filterGeneralInterview2Applicants(
   })
 }
 
+/** remote 목록: 서버 query가 처리하므로 추가 클라이언트 필터 없음. */
+export function filterGeneralInterview2ApplicantsRemoteClientOnly(
+  rows: GeneralVolunteerApplicantRow[]
+): GeneralVolunteerApplicantRow[] {
+  return rows
+}
+
 export function filterGeneralInterview2CalendarApplicants(
   rows: GeneralVolunteerApplicantRow[],
   filters: GeneralVolunteerInterview2Filters

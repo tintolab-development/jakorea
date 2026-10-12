@@ -30,8 +30,9 @@ import {
   getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
-  hasGeneralVolunteerApplications,
   resolveGeneralProgramForDetail,
+  shouldShowGeneralVolunteerApplicationsLnb,
+  type GeneralVolunteerApplicationsLnbVisibility,
   type GeneralProgressMenuItem,
   type GeneralSurveyMenuItem,
 } from '@/features/program/general/lib/detail-meta'
@@ -275,7 +276,8 @@ function isVolunteerTabValid(tab: string, interview: boolean): boolean {
 function normalizeGeneralDetailParams(
   programId: string,
   searchParams: URLSearchParams,
-  program: Program
+  program: Program,
+  volunteerLnbVisibility?: GeneralVolunteerApplicationsLnbVisibility
 ): URLSearchParams | null {
   const volunteerInterview = getGeneralVolunteerInterviewEnabled(program)
   const participantInterview = getGeneralParticipantInterviewEnabled(program)
@@ -283,7 +285,7 @@ function normalizeGeneralDetailParams(
   const progressMenuItems = getGeneralProgressMenuItems(program)
   const progressTabKeys = progressMenuItems.map(item => item.tab)
   const showInstructor = hasGeneralInstructorApplications(program)
-  const showVolunteer = hasGeneralVolunteerApplications(program)
+  const showVolunteer = shouldShowGeneralVolunteerApplicationsLnb(program, volunteerLnbVisibility)
   const showParticipant = hasGeneralParticipantApplications(program)
 
   const next = new URLSearchParams(searchParams)
@@ -499,8 +501,12 @@ export function GeneralProgramDetailFullPageModal({
     initialProgram: program,
     enabled: open,
   })
-  const { disabledLnbKeys, capabilities: navigationCapabilities } =
-    useGeneralProgramNavigation(open ? programId : undefined, open)
+  const {
+    disabledLnbKeys,
+    capabilities: navigationCapabilities,
+    navigation,
+    isRemoteDataSource: isNavigationRemote,
+  } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
   const displayProgram = useMemo(() => {
@@ -589,9 +595,21 @@ export function GeneralProgramDetailFullPageModal({
     ? hasGeneralInstructorApplications(displayProgram) &&
       !disabledLnbKeys.has('instructor_applications')
     : false
+  const volunteerLnbVisibility = useMemo((): GeneralVolunteerApplicationsLnbVisibility | undefined => {
+    if (!isNavigationRemote) return undefined
+    return {
+      allowedApplicationTargets: navigation?.allowedApplicationTargets,
+      volunteerLnbDisabled: disabledLnbKeys.has('volunteer_applications'),
+      honorNavigationTargets: true,
+    }
+  }, [
+    disabledLnbKeys,
+    isNavigationRemote,
+    navigation?.allowedApplicationTargets,
+  ])
+
   const showVolunteerApplications = displayProgram
-    ? hasGeneralVolunteerApplications(displayProgram) &&
-      !disabledLnbKeys.has('volunteer_applications')
+    ? shouldShowGeneralVolunteerApplicationsLnb(displayProgram, volunteerLnbVisibility)
     : false
   const showParticipantApplications = displayProgram
     ? hasGeneralParticipantApplications(displayProgram) &&
@@ -622,8 +640,18 @@ export function GeneralProgramDetailFullPageModal({
       getGeneralVolunteerInterviewEnabled(displayProgram) ? '1' : '0',
       surveyKeys.join(','),
       progressMenuItems.map(item => item.tab).join(','),
+      (navigation?.allowedApplicationTargets ?? []).join(','),
+      disabledLnbKeys.has('volunteer_applications') ? 'vol-off' : 'vol-on',
+      isNavigationRemote ? 'nav-remote' : 'nav-local',
     ].join('|')
-  }, [displayProgram, surveyKeys, progressMenuItems])
+  }, [
+    displayProgram,
+    surveyKeys,
+    progressMenuItems,
+    navigation?.allowedApplicationTargets,
+    disabledLnbKeys,
+    isNavigationRemote,
+  ])
 
   const urlDetailRoute = useMemo(() => {
     if (!open) {
@@ -1191,7 +1219,8 @@ export function GeneralProgramDetailFullPageModal({
         const normalized = normalizeGeneralDetailParams(
           programId,
           prev,
-          displayProgramRef.current!
+          displayProgramRef.current!,
+          volunteerLnbVisibility
         )
         if (!normalized) return prev
         if (normalized.toString() === prev.toString()) return prev
@@ -1199,7 +1228,7 @@ export function GeneralProgramDetailFullPageModal({
       },
       { replace: true }
     )
-  }, [open, programId, programNavigationMetaKey, setSearchParams])
+  }, [open, programId, programNavigationMetaKey, setSearchParams, volunteerLnbVisibility])
 
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true

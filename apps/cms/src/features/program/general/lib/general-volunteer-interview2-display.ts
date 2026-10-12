@@ -55,19 +55,26 @@ export function formatGeneralAssignedInterviewScheduleDisplay(
   return `${y}년 ${m}월 ${d}일 (${weekday}) ${slot}`
 }
 
-/** 입력된 담당자 슬롯 점수의 합. 한 슬롯만 있으면 그 점수. */
+function hasValidInterviewEvaluatorScore(score: number | null | undefined): boolean {
+  return score != null && Number.isFinite(score)
+}
+
+/** BE `totalScoreUnevaluated`와 동일 — 유효 score 제출 평가자 수 < 2 */
+export function isGeneralInterviewTotalScoreUnevaluated(
+  row: Pick<GeneralVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
+): boolean {
+  let count = 0
+  if (hasValidInterviewEvaluatorScore(row.managerAScore)) count += 1
+  if (hasValidInterviewEvaluatorScore(row.managerBScore)) count += 1
+  return count < 2
+}
+
+/** 목록·필터 총점 — 미평가면 null(`-`), 양쪽 제출(0점 포함)이면 합산 */
 export function computeGeneralInterviewTotalScore(
   row: Pick<GeneralVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
 ): number | null {
-  const { managerAScore, managerBScore } = row
-  if (managerAScore == null && managerBScore == null) return null
-
-  const total = (managerAScore ?? 0) + (managerBScore ?? 0)
-  if (total < GENERAL_INTERVIEW_TOTAL_SCORE_MIN || total > GENERAL_INTERVIEW_TOTAL_SCORE_MAX) {
-    return null
-  }
-
-  return total
+  if (isGeneralInterviewTotalScoreUnevaluated(row)) return null
+  return (row.managerAScore ?? 0) + (row.managerBScore ?? 0)
 }
 
 export function parseGeneralInterviewSlotEnd(
@@ -88,6 +95,21 @@ export function parseGeneralInterviewSlotEnd(
     .minute(Number(match[4]))
     .second(0)
     .millisecond(0)
+}
+
+/** BE `assignedInterviewEndAt` 우선, 없으면 표시 문자열 파싱 */
+export function parseGeneralInterviewSlotEndFromRow(
+  row: Pick<
+    GeneralVolunteerApplicantRow,
+    'assignedInterviewEndAt' | 'assignedInterviewDateLabel' | 'assignedInterviewTime'
+  >
+): Dayjs | null {
+  const endAt = row.assignedInterviewEndAt?.trim()
+  if (endAt) {
+    const parsed = dayjs(endAt)
+    if (parsed.isValid()) return parsed
+  }
+  return parseGeneralInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
 }
 
 export function isGeneralAutoDerivedSecondInterviewStatus(
@@ -115,10 +137,7 @@ export function getGeneralInterview2NextStatusTransitionDelayMs(
   for (const row of rows) {
     if (!isGeneralAutoDerivedSecondInterviewStatus(row)) continue
 
-    const slotEnd = parseGeneralInterviewSlotEnd(
-      row.assignedInterviewDateLabel,
-      row.assignedInterviewTime
-    )
+    const slotEnd = parseGeneralInterviewSlotEndFromRow(row)
     if (!slotEnd) continue
 
     const delay = slotEnd.valueOf() - nowMs
@@ -149,6 +168,7 @@ export function resolveGeneralEffectiveSecondInterviewStatus(
     | 'secondInterviewScreeningStatus'
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
+    | 'assignedInterviewEndAt'
   >,
   now: Dayjs = dayjs()
 ): GeneralEffectiveSecondInterviewStatus {
@@ -157,10 +177,7 @@ export function resolveGeneralEffectiveSecondInterviewStatus(
   const stored = row.secondInterviewScreeningStatus
   if (stored && MANUAL_SECOND_INTERVIEW_STATUSES.has(stored)) return stored
 
-  const slotEnd = parseGeneralInterviewSlotEnd(
-    row.assignedInterviewDateLabel,
-    row.assignedInterviewTime
-  )
+  const slotEnd = parseGeneralInterviewSlotEndFromRow(row)
   if (!slotEnd) return 'waiting'
 
   return now.isBefore(slotEnd) ? 'waiting' : 'completed'

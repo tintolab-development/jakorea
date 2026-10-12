@@ -1,0 +1,11 @@
+.application-give-up-reason-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.application-give-up-reason-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

@@ -482,17 +482,17 @@ export async function saveGeneralVolunteerAssignedOrganizations(
 export async function giveUpGeneralParticipatingInstitution(
   programId: string,
   participantId: string,
-  reason: string,
-  options?: { stopScheduleId?: number }
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 ): Promise<void> {
   assertProgramProgressRemoteReady()
-  const trimmed = reason.trim()
+  const trimmed = payload.reason.trim()
   if (!trimmed) {
     throw new Error('활동 포기 사유가 필요합니다.')
   }
   await giveUpProgramParticipantRemote(programId, participantId, {
     reason: trimmed,
-    ...(options?.stopScheduleId != null ? { stopScheduleId: options.stopScheduleId } : {}),
+    ...(payload.stopScheduleId != null ? { stopScheduleId: payload.stopScheduleId } : {}),
+    ...(payload.faultParty ? { faultParty: payload.faultParty } : {}),
   })
 }
 

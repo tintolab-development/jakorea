@@ -61,6 +61,35 @@ export function hasGeneralVolunteerApplications(program: Program): boolean {
   return getGeneralParticipantTypes(program).includes('volunteer')
 }
 
+/** BE `GET …/programs/{id}/navigation` → `allowedApplicationTargets` */
+export function navigationAllowsVolunteerApplicationTarget(
+  allowedApplicationTargets?: readonly string[] | null
+): boolean {
+  return (allowedApplicationTargets ?? []).some(
+    target => String(target).trim().toUpperCase() === 'VOLUNTEER'
+  )
+}
+
+export type GeneralVolunteerApplicationsLnbVisibility = {
+  allowedApplicationTargets?: readonly string[] | null
+  volunteerLnbDisabled?: boolean
+  /** remote navigation 계약을 LNB 노출에 반영할 때만 true */
+  honorNavigationTargets?: boolean
+}
+
+/**
+ * 봉사자 신청 목록 LNB 노출 — 프로그램 모집 메타 + (remote 시) navigation `allowedApplicationTargets`.
+ */
+export function shouldShowGeneralVolunteerApplicationsLnb(
+  program: Program,
+  options?: GeneralVolunteerApplicationsLnbVisibility
+): boolean {
+  if (options?.volunteerLnbDisabled) return false
+  if (hasGeneralVolunteerApplications(program)) return true
+  if (options?.honorNavigationTargets !== true) return false
+  return navigationAllowsVolunteerApplicationTarget(options.allowedApplicationTargets)
+}
+
 /** 참여자(개인)·기관 신청 목록 LNB — school_institution 또는 individual 포함 시 */
 export function hasGeneralParticipantApplications(program: Program): boolean {
   const types = getGeneralParticipantTypes(program)

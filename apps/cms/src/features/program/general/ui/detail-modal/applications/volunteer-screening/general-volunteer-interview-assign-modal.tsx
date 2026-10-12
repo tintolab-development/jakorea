@@ -6,6 +6,7 @@ import type { GeneralVolunteerApplicantRow } from '@/features/program/general/mo
 import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
 import {
   mergeApplicantAvailabilityIntoSchedule,
+  mergeRemoteSlotsIntoProgramSchedule,
   parseGeneralInterviewScheduleFromProgram,
   parseGeneralInterviewScheduleFromRemoteSlots,
   shouldUseRemoteInterviewSchedule,
@@ -16,6 +17,7 @@ import {
   toInterviewAssignModalApplicant,
   toInterviewAssignModalApplicants,
 } from '@/features/program/general/lib/interview-assign-applicant-adapter'
+import { useKoreanPublicHolidayDateKeys } from '@/features/program/ujat/api/korean-public-holidays'
 import { UjatVolunteerInterviewAssignModal } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/modal'
 
 export type GeneralInterviewAssignNotifyTiming = 'immediate' | 'manual'
@@ -61,6 +63,18 @@ export function GeneralVolunteerInterviewAssignModal({
   const slotsQuery = useGeneralInterviewSlots(program.id, open && useRemoteSchedule, {
     applicationsUseRemote,
   })
+  const interviewRange = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const publicHolidayDateKeys = useKoreanPublicHolidayDateKeys({
+    from:
+      interviewRange?.periodStartDate ??
+      program.generalCommonInfo?.volunteerRecruitmentInfo?.interviewStartDate ??
+      program.interviewStartDate,
+    to:
+      interviewRange?.periodEndDate ??
+      program.generalCommonInfo?.volunteerRecruitmentInfo?.interviewEndDate ??
+      program.interviewEndDate,
+    enabled: open,
+  })
 
   useEffect(() => {
     if (!open || useRemoteSchedule || useLocalInterviewSchedule) return
@@ -69,19 +83,25 @@ export function GeneralVolunteerInterviewAssignModal({
   }, [open, onCancel, useLocalInterviewSchedule, useRemoteSchedule])
 
   const schedule = useMemo(() => {
+    /** 가능일·불가일 SSOT = 프로그램 면접 일정. remote slots / 신청일은 슬롯만 보강 */
+    const scheduleProgram = useLocalInterviewSchedule && localProgramDetail ? localProgramDetail : program
+    const fromProgram = parseGeneralInterviewScheduleFromProgram(
+      scheduleProgram,
+      publicHolidayDateKeys
+    )
     if (useRemoteSchedule) {
+      const fromRemote = parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? [])
       return mergeApplicantAvailabilityIntoSchedule(
-        parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? []),
+        mergeRemoteSlotsIntoProgramSchedule(fromProgram, fromRemote),
         applicant.interviewAvailability ?? []
       )
     }
-    if (useLocalInterviewSchedule && localProgramDetail) {
-      return parseGeneralInterviewScheduleFromProgram(localProgramDetail)
-    }
-    return parseGeneralInterviewScheduleFromRemoteSlots([])
+    return fromProgram
   }, [
     applicant.interviewAvailability,
     localProgramDetail,
+    program,
+    publicHolidayDateKeys,
     slotsQuery.data,
     useLocalInterviewSchedule,
     useRemoteSchedule,
