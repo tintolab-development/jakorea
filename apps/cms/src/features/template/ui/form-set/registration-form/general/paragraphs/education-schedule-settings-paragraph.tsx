@@ -218,7 +218,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
                 showPeriodToggle={false}
-                showTimeToggle={!autoFillDatePicker}
+                showTimeToggle={false}
                 lockTimeToggleOn={lockTimeOnDateMode && !autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}

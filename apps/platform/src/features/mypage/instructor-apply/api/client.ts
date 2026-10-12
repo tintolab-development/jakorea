@@ -2,11 +2,13 @@ import { isAxiosError } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { portalMePaths } from '@/features/auth/sign-in'
 import {
+  parseInstructorRoleRequestDetail,
   parseInstructorRoleRequestSummary,
   parseInstructorRoleWorkflowResponse,
 } from './parse'
 import type {
   InstructorRoleRequestCreateRequest,
+  InstructorRoleRequestDetail,
   InstructorRoleRequestSummary,
   InstructorRoleWorkflowResponse,
 } from './types'
@@ -31,6 +33,24 @@ export async function getCurrentInstructorRoleRequest(
   } catch (error) {
     if (isAxiosError(error) && error.response?.status === 404) {
       return { canRequest: true }
+    }
+    throw error
+  }
+}
+
+/** GET /api/portal/me/instructor-role-requests/current/detail */
+export async function getCurrentInstructorRoleRequestDetail(
+  signal?: AbortSignal,
+): Promise<InstructorRoleRequestDetail | null> {
+  try {
+    const { data } = await axiosClient.get<unknown>(
+      portalMePaths.instructorRoleRequestCurrentDetail(),
+      { signal },
+    )
+    return parseInstructorRoleRequestDetail(data)
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return null
     }
     throw error
   }

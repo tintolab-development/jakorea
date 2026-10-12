@@ -266,7 +266,7 @@ export function ProgramList({
             data: filteredRows,
           }}
         >
-          <div ref={tableWrapRef} className="program-list-table__scroll-measure">
+          <div ref={tableWrapRef}>
             <CmsDataTable
               className={tableClassName}
               rowSelection={

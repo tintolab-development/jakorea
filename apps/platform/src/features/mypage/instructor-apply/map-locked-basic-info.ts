@@ -1,6 +1,7 @@
 import type { SchoolTeacherEmploymentStatus } from '@jakorea/domain/instructor/employment-status'
 import type { Gender } from '@jakorea/domain/instructor/gender'
 import type { InstructorMemberType } from '@jakorea/domain/instructor/member-type'
+import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import type { PortalProfileResponse } from '@/features/auth/sign-in'
 import {
   formatBirthDateInput,
@@ -16,6 +17,36 @@ export function isInstructorApplyHomeAddressLocked(
   locked: Pick<InstructorApplyLockedBasicInfo, 'homeAddress' | 'homeAddressDetail'>,
 ): boolean {
   return Boolean(locked.homeAddress.trim())
+}
+
+/** 회원가입(프로필) 고정 필드를 draft·API 값 위에 병합 */
+export function applyLockedBasicToInstructorForm(
+  base: InstructorSharedProfileFormValues,
+  locked: InstructorApplyLockedBasicInfo,
+  preserveEmploymentStatus = false,
+): InstructorSharedProfileFormValues {
+  const homeAddressLocked = isInstructorApplyHomeAddressLocked(locked)
+  const employmentStatus =
+    locked.memberType === 'school_teacher'
+      ? preserveEmploymentStatus
+        ? base.employmentStatus
+        : locked.employmentStatus
+      : ''
+  return {
+    ...base,
+    name: locked.name,
+    gender: locked.gender || base.gender,
+    birthDate: locked.birthDate,
+    contact: locked.contact,
+    email: locked.email,
+    homeAddress: homeAddressLocked ? locked.homeAddress : base.homeAddress,
+    homeAddressDetail: homeAddressLocked ? locked.homeAddressDetail : base.homeAddressDetail,
+    memberType: locked.memberType,
+    schoolName: locked.memberType === 'school_teacher' ? locked.schoolName : '',
+    employmentStatus,
+    affiliationName: locked.memberType === 'general' ? locked.affiliationName : '',
+    affiliationNone: locked.memberType === 'general' ? locked.affiliationNone : false,
+  }
 }
 
 /** 강사 신청 — 회원가입 정보로 고정·비활성화하는 기본정보 */

@@ -37,6 +37,14 @@ describe('resolveUploadContentType', () => {
     )
   })
 
+  it('svg / ai / eps 확장자 MIME을 추정한다', () => {
+    expect(resolveUploadContentType(uploadFile('logo.svg', ''))).toBe('image/svg+xml')
+    expect(resolveUploadContentType(uploadFile('logo.ai', 'application/octet-stream'))).toBe(
+      'application/vnd.adobe.illustrator'
+    )
+    expect(resolveUploadContentType(uploadFile('logo.eps', ''))).toBe('application/postscript')
+  })
+
   it('pdf / docx / xls MIME은 바꾸지 않는다', () => {
     expect(resolveUploadContentType(uploadFile('a.pdf', 'application/pdf'))).toBe('application/pdf')
     expect(

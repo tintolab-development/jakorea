@@ -195,9 +195,12 @@ export {
   getInstructorRoleRequestStatusMessage,
   InstructorApplyConsentWriteForm,
   InstructorApplyForm,
+  InstructorApplyPendingReviewView,
   isInstructorApplyConsentKey,
+  isInstructorRoleRequestPendingReview,
   mapInstructorApplyFormToCreateRequest,
   useCreateInstructorRoleRequestMutation,
+  useCurrentInstructorRoleRequestDetailQuery,
   useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
 } from './instructor-apply'

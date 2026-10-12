@@ -266,6 +266,9 @@ export const platformQueryKeys = {
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */
     instructorRoleRequestCurrent: () =>
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
+    /** 내 강사 권한 신청 제출 스냅샷 — GET .../instructor-role-requests/current/detail */
+    instructorRoleRequestCurrentDetail: () =>
+      [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current', 'detail'] as const,
     /** 마이페이지 홈 요약 — GET /api/portal/me/dashboard (Class E, member scoped) */
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
     /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */

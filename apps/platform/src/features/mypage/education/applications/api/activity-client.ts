@@ -24,6 +24,9 @@ export type PortalNoticeListItem = {
   readCount?: number
   reactionCount?: number
   createdAt?: string
+  createdByActorType?: string
+  createdByActorId?: number
+  createdByDisplayName?: string | null
 }
 
 export type PortalNoticeListResponse = {
@@ -61,6 +64,9 @@ export type PortalNoticeDetail = {
   commentCount?: number
   readCount?: number
   reactionCount?: number
+  createdByActorType?: string
+  createdByActorId?: number
+  createdByDisplayName?: string | null
   attachments?: PortalNoticeAttachment[]
   comments?: PortalNoticeComment[]
 }

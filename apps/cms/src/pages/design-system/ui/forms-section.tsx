@@ -99,7 +99,7 @@ export function FormsSection() {
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
           XL 52 · L 44 · M 40 · S 36 / 기본 너비 240px / 라벨 – 6px – 박스 – 6px – 메세지(선택) ·
           라벨 #525252 500/140% · 필수 * #C32F4A 700 · 메세지 12px 500/150% #85969D(에러 시 #C32F4A)
-          · 테두리 기본 #E0E0E0 · hover/focus #00A0AF · 에러 #C32F4A · 값이 있으면 X
+          · 테두리 기본 #E0E0E0 · hover/focus #00A0AF · 에러 #C32F4A · 값 있을 때 X는 hover/focus만
         </p>
         {INPUT_FIELD_SIZES.map(({ size, label }) => (
           <div key={size} className="ds-demo__stack" style={{ maxWidth: 'none' }}>

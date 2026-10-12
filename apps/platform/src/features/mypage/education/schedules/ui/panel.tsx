@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import { PFText } from '@/shared/ui'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
@@ -19,6 +20,10 @@ type EducationSchedulePanelProps = {
   applicationId?: string | null
 }
 
+/**
+ * 교육일정 탭 — remote면 신청 GET .../schedules만 SSOT.
+ * mock 로그인 세션에서만 mock 시드. 프로그램 상세 일정은 사용하지 않는다.
+ */
 export function EducationSchedulePanel({
   programId,
   lastParticipatedSession,
@@ -30,7 +35,14 @@ export function EducationSchedulePanel({
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
 
   const allItems = useMemo(() => {
-    const items = remoteSchedules.enabled ? remoteSchedules.items : getMockEducationSchedules(programId)
+    let items: EducationScheduleItem[]
+    if (remoteSchedules.enabled) {
+      items = remoteSchedules.items
+    } else if (shouldUsePlatformMockData()) {
+      items = getMockEducationSchedules(programId)
+    } else {
+      items = []
+    }
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
   }, [lastParticipatedSession, programId, remoteSchedules.enabled, remoteSchedules.items])
 

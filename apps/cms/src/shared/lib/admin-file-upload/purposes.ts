@@ -102,6 +102,9 @@ export function resolveUploadContentType(file: File): string {
     gif: 'image/gif',
     heic: 'image/heic',
     bmp: 'image/bmp',
+    svg: 'image/svg+xml',
+    ai: 'application/vnd.adobe.illustrator',
+    eps: 'application/postscript',
     mp4: 'video/mp4',
     mov: 'video/quicktime',
   }

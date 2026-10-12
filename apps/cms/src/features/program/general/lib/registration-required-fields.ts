@@ -29,6 +29,7 @@ import {
   PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
+import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
 
 export type GeneralProgramRegistrationRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -369,8 +370,11 @@ function findIncompleteCurriculumReasons(
     )
     pushReason(
       reasons,
-      isEmptyText(
-        readOverlay(overlay, 'generalRegistration.educationCurriculum.preEducationScheduleLine')
+      isEducationScheduleProgressLineMissingOrWithoutClock(
+        readOverlay(overlay, 'generalRegistration.educationCurriculum.preEducationScheduleLine') as
+          | string
+          | null
+          | undefined
       ),
       'curriculum.preEducationScheduleLine'
     )
@@ -420,7 +424,7 @@ function findIncompleteScheduleCurriculumReasons(
     if (useEventScheduleDate) {
       pushReason(
         reasons,
-        isEmptyText(scheduleDates[index]),
+        isEducationScheduleProgressLineMissingOrWithoutClock(scheduleDates[index] as string),
         `scheduleCurriculum.scheduleDate[${index}]`
       )
     } else {
@@ -454,7 +458,11 @@ function findIncompleteScheduleCurriculumReasons(
       preEducationName !== undefined && isEmptyText(preEducationName),
       'scheduleCurriculum.preEducationName'
     )
-    pushReason(reasons, isEmptyText(scheduleDates[0]), 'scheduleCurriculum.preEducationScheduleDate')
+    pushReason(
+      reasons,
+      isEducationScheduleProgressLineMissingOrWithoutClock(scheduleDates[0] as string),
+      'scheduleCurriculum.preEducationScheduleDate'
+    )
   }
   return reasons
 }
@@ -509,14 +517,14 @@ const REQUIRED_FIELD_LABELS: Record<string, string> = {
   'curriculum.roundContent': '회차 교육 내용',
   'curriculum.assignment': '과제 설정',
   'curriculum.preEducationScheduleName': '교육 연수명',
-  'curriculum.preEducationScheduleLine': '교육 연수 진행 일정',
   'scheduleCurriculum.eventName': '일정명',
-  'scheduleCurriculum.scheduleDate': '진행 일정',
+  'scheduleCurriculum.scheduleDate': '진행 일정(시간 포함)',
   'scheduleCurriculum.groupTimes': '진행 일정',
   'scheduleCurriculum.ips': 'IPS 유형',
   'scheduleCurriculum.assignment': '과제 설정',
   'scheduleCurriculum.preEducationName': '교육 연수명',
-  'scheduleCurriculum.preEducationScheduleDate': '교육 연수 진행 일정',
+  'scheduleCurriculum.preEducationScheduleDate': '진행 일정(시간 포함)',
+  'curriculum.preEducationScheduleLine': '진행 일정(시간 포함)',
   'educationScheduleSettings.periodDateIso': '교육 진행 예정일',
   'educationScheduleSettings.singleDateIso': '교육 진행 예정일',
 }

@@ -15,6 +15,7 @@ import {
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
+  shouldLockProgressSchedulePeriodToggle,
   shouldUseScheduleEventBlockLayout,
   type ScheduleEventBlockLayoutInput,
 } from './schedule-detail-form'
@@ -419,6 +420,60 @@ describe('applyCurriculumPreEducationBlock', () => {
     const twice = applyCurriculumPreEducationBlock(once, true, 'single')
     expect(twice[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
     expect(twice[0]?.title).toBe('사전 워크숍')
+  })
+})
+
+describe('shouldLockProgressSchedulePeriodToggle', () => {
+  it('개인·일정형·복수 회차 — 기간 토글 조작 허용', () => {
+    expect(
+      shouldLockProgressSchedulePeriodToggle({
+        participantIndividual: true,
+        participantOrganization: false,
+        programType: 'schedule',
+        sessionRound: 'multi',
+      })
+    ).toBe(false)
+  })
+
+  it('기관·일정형·복수 회차 — 기간 토글 조작 허용', () => {
+    expect(
+      shouldLockProgressSchedulePeriodToggle({
+        participantIndividual: false,
+        participantOrganization: true,
+        programType: 'schedule',
+        sessionRound: 'multi',
+      })
+    ).toBe(false)
+  })
+
+  it('일정형·복수 회차이나 개인·기관 참여가 아니면 잠금', () => {
+    expect(
+      shouldLockProgressSchedulePeriodToggle({
+        participantIndividual: false,
+        participantOrganization: false,
+        programType: 'schedule',
+        sessionRound: 'multi',
+      })
+    ).toBe(true)
+  })
+
+  it('일정형·단일 회차·커리큘럼형은 잠금', () => {
+    expect(
+      shouldLockProgressSchedulePeriodToggle({
+        participantIndividual: true,
+        participantOrganization: false,
+        programType: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toBe(true)
+    expect(
+      shouldLockProgressSchedulePeriodToggle({
+        participantIndividual: false,
+        participantOrganization: true,
+        programType: 'curriculum',
+        sessionRound: 'multi',
+      })
+    ).toBe(true)
   })
 })
 

@@ -5,6 +5,10 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import {
+  mapPortalNoticePostAuthor,
+  portalEducationNoticeActorLabel,
+} from '../../notices/lib/author-label'
 import type {
   EducationInProgressFile,
   EducationInProgressNotice,
@@ -12,7 +16,7 @@ import type {
   EducationNoticeReactionSummary,
   EducationNoticeReactionUser,
 } from '../../notices/model/types'
-import type { EducationScheduleItem } from '../../schedules/model/types'
+import { mapPortalEducationSchedule } from '../../schedules/lib/map-from-portal'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
 import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
 import {
@@ -31,7 +35,6 @@ import {
   fetchPortalSurveyFormBinding,
   fetchSettlementApplications,
   submitPortalSurveyResponse,
-  type PortalEducationSchedule,
   type PortalExpenseReceipt,
   type PortalFormListItem,
   type PortalNoticeAttachmentListItem,
@@ -69,11 +72,13 @@ function queryOptions() {
 
 function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null {
   if (item.postId == null) return null
+  const author = mapPortalNoticePostAuthor(item.createdByDisplayName, item.createdByActorType)
   return {
     id: String(item.postId),
     title: item.title?.trim() || '안내',
     content: '',
-    authorName: '안내',
+    authorName: author.authorName,
+    authorIsStaff: author.authorIsStaff,
     publishedAt: item.createdAt ?? '',
     read: item.unread === false,
     viewCount: item.readCount ?? 0,
@@ -98,23 +103,12 @@ function mapNoticeAttachmentListItem(
   }
 }
 
-function portalActorLabel(
-  displayName: string | null | undefined,
-  actorType: string | undefined,
-  mine: boolean | undefined,
-): string {
-  const named = displayName?.trim()
-  if (named) return named
-  const normalized = (actorType ?? '').toUpperCase()
-  if (normalized === 'ADMIN' || normalized === 'CMS' || normalized === 'SYSTEM') {
-    return 'JA KOREA 알림'
-  }
-  if (mine) return '나'
-  return '회원'
-}
-
 function noticeCommentAuthorLabel(comment: PortalNoticeComment): string {
-  return portalActorLabel(comment.authorDisplayName, comment.authorType, comment.mine)
+  return portalEducationNoticeActorLabel(
+    comment.authorDisplayName,
+    comment.authorType,
+    comment.mine,
+  )
 }
 
 function mapNoticeDetail(detail: PortalNoticeDetail): {
@@ -123,10 +117,13 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
   comments: EducationNoticeComment[]
 } {
   const id = detail.postId == null ? '' : String(detail.postId)
+  const author = mapPortalNoticePostAuthor(detail.createdByDisplayName, detail.createdByActorType)
   return {
     notice: {
       title: detail.title,
       content: detail.content ?? '',
+      authorName: author.authorName,
+      authorIsStaff: author.authorIsStaff,
       publishedAt: detail.createdAt,
       read: detail.unread === false,
       viewCount: detail.readCount ?? 0,
@@ -185,7 +182,11 @@ function mapNoticeReactions(
           {
             id: `${postId}-${row.actorType ?? 'actor'}-${row.actorId ?? index}-${emojiType}`,
             noticeId: postId,
-            authorName: portalActorLabel(row.actorDisplayName, row.actorType, row.mine),
+            authorName: portalEducationNoticeActorLabel(
+              row.actorDisplayName,
+              row.actorType,
+              row.mine,
+            ),
             emojiType,
             reactedAt: row.reactedAt ?? '',
           },
@@ -197,35 +198,6 @@ function mapNoticeReactions(
     myReactionTypes: (state?.myReactions ?? []).filter(Boolean),
     total: summary.reduce((sum, row) => sum + row.count, 0),
     users,
-  }
-}
-
-function mapAttendance(
-  value: string | undefined,
-): EducationScheduleItem['attendanceStatus'] {
-  switch ((value ?? '').toUpperCase()) {
-    case 'PRESENT':
-    case 'ATTENDED':
-      return 'present'
-    case 'LATE':
-      return 'late'
-    case 'ABSENT':
-      return 'absent'
-    case 'EXCUSED':
-      return 'excused'
-    default:
-      return null
-  }
-}
-
-function mapSchedule(item: PortalEducationSchedule, index: number): EducationScheduleItem | null {
-  if (item.scheduleId == null || !item.startAt) return null
-  return {
-    id: String(item.scheduleId),
-    sessionNumber: item.sessionNo ?? index + 1,
-    heldAt: item.startAt,
-    title: item.title?.trim() || item.locationName?.trim() || `${index + 1}회차`,
-    attendanceStatus: mapAttendance(item.attendanceStatus),
   }
 }
 
@@ -603,7 +575,7 @@ export function useApplicationSchedulesQuery(
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
     items: (query.data ?? []).flatMap((item, index) => {
-      const mapped = mapSchedule(item, index)
+      const mapped = mapPortalEducationSchedule(item, index)
       return mapped ? [mapped] : []
     }),
   }

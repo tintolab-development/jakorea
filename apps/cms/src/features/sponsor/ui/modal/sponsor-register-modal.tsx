@@ -11,6 +11,12 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import {
+  mergeSponsorLogoFiles,
+  SPONSOR_LOGO_ACCEPT,
+  SPONSOR_LOGO_GUIDE_LINES,
+  validateSponsorLogoSelection,
+} from '@/features/sponsor/lib/sponsor-logo-file-policy'
+import {
   AddressSearch,
   CmsBusinessNumberInput,
   CmsButton,
@@ -19,6 +25,7 @@ import {
   CmsRadioGroup,
   ContentModal,
   FileSelectField,
+  useCmsAlert,
 } from '@/shared/ui'
 import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
 
@@ -41,13 +48,8 @@ type FormState = {
   detailAddress: string
   homepageUrl: string
   securityMemo: string
-  logoFile: File | null
+  logoFiles: File[]
 }
-
-const LOGO_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
 
 const emptyForm = (): FormState => ({
   nameDisplayKo: '',
@@ -61,7 +63,7 @@ const emptyForm = (): FormState => ({
   detailAddress: '',
   homepageUrl: '',
   securityMemo: '',
-  logoFile: null,
+  logoFiles: [],
 })
 
 export function SponsorRegisterModal({
@@ -72,6 +74,7 @@ export function SponsorRegisterModal({
 }: SponsorRegisterModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [isSponsorshipStatusOpen, setIsSponsorshipStatusOpen] = useState(false)
+  const { showAlert } = useCmsAlert()
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달이 열릴 때 등록 폼을 초기 상태로 리셋 */
   useEffect(() => {
@@ -103,7 +106,7 @@ export function SponsorRegisterModal({
       detailAddress: form.detailAddress,
       homepageUrl: form.homepageUrl,
       securityMemo: form.securityMemo,
-      logoFile: form.logoFile,
+      logoFiles: form.logoFiles,
     })
   }, [form, onSubmit])
 
@@ -310,14 +313,33 @@ export function SponsorRegisterModal({
             view={noopView}
             edit={
               <FileSelectField
-                multiple={false}
-                accept=".jpg,.jpeg,.png"
-                fileNames={form.logoFile ? [form.logoFile.name] : []}
-                currentTotalBytes={form.logoFile?.size ?? 0}
-                onFilesChange={files => setField('logoFile', files[0] ?? null)}
-                onRemoveFile={() => setField('logoFile', null)}
-                guideLines={LOGO_GUIDE_LINES}
-                uploading={submitting && form.logoFile != null}
+                multiple
+                accept={SPONSOR_LOGO_ACCEPT}
+                maxTotalBytes={0}
+                fileNames={form.logoFiles.map(file => file.name)}
+                currentTotalBytes={0}
+                onFilesChange={files => {
+                  const next = mergeSponsorLogoFiles(form.logoFiles, files)
+                  if (next.length === form.logoFiles.length && files.length > 0) {
+                    const message = validateSponsorLogoSelection([
+                      ...form.logoFiles,
+                      ...files,
+                    ])
+                    if (message) {
+                      showAlert({ title: '안내', content: message })
+                    }
+                    return
+                  }
+                  setField('logoFiles', next)
+                }}
+                onRemoveFile={index =>
+                  setField(
+                    'logoFiles',
+                    form.logoFiles.filter((_, fileIndex) => fileIndex !== index)
+                  )
+                }
+                guideLines={[...SPONSOR_LOGO_GUIDE_LINES]}
+                uploading={submitting && form.logoFiles.length > 0}
                 disabled={submitting}
               />
             }

@@ -1,11 +1,11 @@
 /*
- * 권한 승인 목록: Ant CSS-in-js·colgroup 차이 대비 — 체크박스 68px(좌 8px 패딩 포함), No. 80px
+ * 권한 승인 목록: Ant CSS-in-js·colgroup 차이 대비 — 체크박스·No. 80px
  */
 .members-permission-list__table.cms-data-table:has(.ant-table-selection-column)
   colgroup
   > col:nth-child(1) {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
 }
 .members-permission-list__table.cms-data-table:has(.ant-table-selection-column)
   colgroup
@@ -30,9 +30,9 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
+  max-width: var(--table-selection-column-width, 80px) !important;
   box-sizing: border-box !important;
   padding: 12px 4px 12px 8px !important;
   vertical-align: middle !important;

@@ -19,6 +19,7 @@ import {
   getScheduleEventPerScheduleExtraPlan,
   isScheduleEducationAndIpsBothPerSchedule,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  shouldLockProgressSchedulePeriodToggle,
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
@@ -258,6 +259,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   /** 프로그램 유형 설정에서 IPS 유형이「일정 별 상이」일 때만 (단일·일부 복수 조합) 세부 일정 하단에 IPS 행 */
   ipsPerSchedule?: boolean
   sessionRoundType: ProgramRegistrationSessionRoundType
+  participantIndividual: boolean
   participantOrganization: boolean
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind
   participationScheduleDetail: ProgramRegistrationScheduleDetailKind
@@ -282,6 +284,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   onDeleteScheduleCurriculumGroup,
   ipsPerSchedule = false,
   sessionRoundType,
+  participantIndividual,
   participantOrganization,
   educationFormScheduleDetail,
   participationScheduleDetail,
@@ -291,6 +294,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   preEducationDisplayMode = 'prepend',
   hideAssignmentSettings = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
+  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    participantIndividual,
+    participantOrganization,
+    programType: 'schedule',
+    sessionRound: sessionRoundType,
+  })
   const replaceFirstTraining =
     scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
   const prependTraining =
@@ -927,6 +936,9 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           mode="single"
           presetMode="schedule"
           customizable={false}
+          lockTimeToggleOn
+          showTimeToggle={false}
+          lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
           suppressAutoTodayWhenEmpty
           value={scheduleRange?.[0] ?? null}
           appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}

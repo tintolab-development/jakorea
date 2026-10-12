@@ -551,7 +551,7 @@ export function EducationInProgressNoticeDetailModal({
                   <PFText
                     as="p"
                     typo="bd-md-sb"
-                    color="black"
+                    color={notice.authorIsStaff ? 'primary-500' : 'black'}
                     id="education-notice-detail-author"
                     className={styles.author}
                   >

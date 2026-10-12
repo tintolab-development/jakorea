@@ -13,14 +13,22 @@ import {
 import {
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
-  getWritingFormHeadMiddlePinnedTail,
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  firstSurveyWritingIncompleteMessage,
+  listIncompleteSurveyWritingDraftKeys,
+  type SurveyWritingIncompleteDiagnosticKey,
+} from '@/features/program/shared/lib/survey-management/survey-writing-draft-validation'
 
 export type SurveyWritingDraftValidationResult =
   | { ok: true }
-  | { ok: false; message: string }
+  | {
+      ok: false
+      message: string
+      incompleteKeys?: readonly SurveyWritingIncompleteDiagnosticKey[]
+    }
 
 export type ResolveSurveyWritingDraftOptions = {
   templateName?: string
@@ -125,12 +133,12 @@ export function resolveSurveyWritingDraftSync(
 export function validateSurveyWritingDraft(
   draft: WritingFormDraft
 ): SurveyWritingDraftValidationResult {
-  const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
-  if (split == null || split.middle.length < 1) {
+  const incompleteKeys = listIncompleteSurveyWritingDraftKeys(draft)
+  if (incompleteKeys.length > 0) {
     return {
       ok: false,
-      message:
-        '제목과 마무리글, 설문자 정보를 제외하고 최소 1개 이상의 단락이 존재해야 합니다.',
+      message: firstSurveyWritingIncompleteMessage(incompleteKeys),
+      incompleteKeys,
     }
   }
   return { ok: true }

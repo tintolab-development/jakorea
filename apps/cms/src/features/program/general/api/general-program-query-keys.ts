@@ -30,6 +30,8 @@ export const generalProgramQueryKeys = {
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
   formBindings: (programId: string) =>
     [...generalProgramQueryKeys.all, 'form-bindings', programId] as const,
+  schedules: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'schedules', programId] as const,
   surveyResponses: (programId: string, templateVersionId: string) =>
     [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
   surveyResponseDetail: (

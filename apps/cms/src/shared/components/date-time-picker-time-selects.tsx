@@ -86,7 +86,7 @@ export function DateTimePickerTimeInlineSelects({
 }: DateTimePickerTimeInlineSelectsProps) {
   const minuteOptions = minuteOptionsForStep(minuteStep)
   const selectCommon = {
-    inputSize: 'large' as const,
+    inputSize: 'medium' as const,
     withAllOption: false,
     getPopupContainer,
     popupMatchSelectWidth: true,

@@ -24,8 +24,10 @@ type AdminRegisteredProfileUpdateInput = {
   schoolEducationOfficeCode?: string | null
   schoolSource?: 'neis' | 'careerNet'
   employmentStatus?: EmploymentStatus
-  /** GET /api/portal/me/profile 스냅샷 — teacherEmploymentStatus 등 */
-  portalProfile?: PortalProfileResponse
+  /** GET /api/portal/me/profile·설정 화면 스냅샷 — teacherEmploymentStatus 등 */
+  portalProfile?: Partial<Omit<PortalProfileResponse, 'schoolOrganizationId'>> & {
+    schoolOrganizationId?: number | null
+  }
 }
 
 function text(value: string | undefined): string {
@@ -59,24 +61,56 @@ export function mapAdminRegisteredEditToPortalProfileUpdate(
 ): UpdatePortalProfileRequest {
   const enrolled = input.schoolStatus === 'enrolled'
   const snapshot = input.portalProfile
-  const schoolName = enrolled ? text(input.schoolName) : ''
-  const grade = enrolled ? text(input.grade) : ''
+  const teacherEmploymentStatus =
+    snapshot?.teacherEmploymentStatus?.trim() ||
+    (input.employmentStatus === 'employed'
+      ? 'EMPLOYED'
+      : input.employmentStatus === 'on-leave'
+        ? 'ON_LEAVE'
+        : '')
+
+  const base = {
+    postalCode: text(input.postalCode) || text(snapshot?.postalCode),
+    address: text(input.address),
+    addressDetail: text(input.addressDetail),
+    regionSido: text(input.regionSido) || text(snapshot?.regionSido),
+    regionSigungu: text(input.regionSigungu) || text(snapshot?.regionSigungu),
+    teacherEmploymentStatus,
+    external1365Id: text(input.volunteerId),
+  }
+
+  /**
+   * 해당 없음: 잔여 학교/NEIS 메타가 있어도 schoolSelection·ENROLLED로 나가면 안 됨.
+   * schoolOrganizationId null 로 기존 FK 해제.
+   */
+  if (!enrolled) {
+    return {
+      ...base,
+      schoolOrganizationId: null,
+      schoolName: '',
+      grade: '',
+      affiliationName: text(input.affiliationName),
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+    }
+  }
+
+  const schoolName = text(input.schoolName)
+  const grade = text(input.grade)
+  /** `null`은 명시적 해제(NEIS-only). `undefined`(미전달)만 스냅샷 FK 유지. */
   const resolvedOrganizationId =
-    input.schoolOrganizationId ?? snapshot?.schoolOrganizationId ?? null
+    input.schoolOrganizationId !== undefined
+      ? input.schoolOrganizationId
+      : (snapshot?.schoolOrganizationId ?? null)
 
   /**
    * 재학 중 + CMS PK: schoolOrganizationId 전송.
    * 재학 중 + PK 없음: schoolSelection 전송 (NEIS resolve/create).
-   * 해당 없음: schoolOrganizationId null — omit 시 서버가 기존 FK 유지.
    */
-  const schoolOrganizationId: number | null | undefined = enrolled
-    ? resolvedOrganizationId != null
-      ? resolvedOrganizationId
-      : undefined
-    : null
+  const schoolOrganizationId: number | undefined =
+    resolvedOrganizationId != null ? resolvedOrganizationId : undefined
 
   const schoolSelection =
-    enrolled && resolvedOrganizationId == null
+    resolvedOrganizationId == null
       ? buildSchoolSelectionForProfile({
           schoolName: input.schoolName,
           schoolAddress: input.schoolAddress,
@@ -87,27 +121,13 @@ export function mapAdminRegisteredEditToPortalProfileUpdate(
         })
       : undefined
 
-  const teacherEmploymentStatus =
-    snapshot?.teacherEmploymentStatus?.trim() ||
-    (input.employmentStatus === 'employed'
-      ? 'EMPLOYED'
-      : input.employmentStatus === 'on-leave'
-        ? 'ON_LEAVE'
-        : '')
-
   return {
-    postalCode: text(input.postalCode) || text(snapshot?.postalCode),
-    address: text(input.address),
-    addressDetail: text(input.addressDetail),
-    regionSido: text(input.regionSido) || text(snapshot?.regionSido),
-    regionSigungu: text(input.regionSigungu) || text(snapshot?.regionSigungu),
+    ...base,
     ...(schoolOrganizationId === undefined ? {} : { schoolOrganizationId }),
     ...(schoolSelection ? { schoolSelection } : {}),
     schoolName,
     grade,
-    affiliationName: enrolled ? schoolName : text(input.affiliationName),
-    schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
-    teacherEmploymentStatus,
-    external1365Id: text(input.volunteerId),
+    affiliationName: schoolName,
+    schoolEnrollmentStatus: 'ENROLLED',
   }
 }

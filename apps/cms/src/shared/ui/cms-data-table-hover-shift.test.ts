@@ -46,8 +46,6 @@ const FORBIDDEN_TBODY_DIMENSION_HOVER =
 describe('cms-data-table hover shift (CSS contract)', () => {
   const cmsTableCss = readCss('apps/cms/src/shared/ui/cms-data-table.css')
   const adminTableCss = readCss('apps/admin/src/shared/ui/cms-data-table.css')
-  const programListCss = readCss('apps/cms/src/features/program/general/ui/program-list.css')
-
   it('CMS·Admin 공통 css: tbody 치수용 measure-row):hover 선택자 없음', () => {
     expect(cmsTableCss).not.toMatch(FORBIDDEN_TBODY_DIMENSION_HOVER)
     expect(adminTableCss).not.toMatch(FORBIDDEN_TBODY_DIMENSION_HOVER)
@@ -62,24 +60,14 @@ describe('cms-data-table hover shift (CSS contract)', () => {
     )
   })
 
-  it('program-list overview: base·hover 쌍에 동일 padding(12×16)', () => {
-    expect(programListCss).toMatch(
-      /\.program-list-card--program-list-overview[\s\S]*tr:hover[\s\S]*td\.ant-table-cell[\s\S]*padding: 12px 16px !important/
+  it('CMS 공통 css: 기본 tbody 셀 높이 52px 고정 (min-height + height)', () => {
+    const match = cmsTableCss.match(
+      /\.cms-data-table \.ant-table-tbody > tr:not\(\.ant-table-placeholder\):not\(\.ant-table-measure-row\) > td \{([^}]+)\}/
     )
-    expect(programListCss).toMatch(
-      /\.program-list-card--program-list-overview[\s\S]*tr:hover[\s\S]*td\.ant-table-selection-column[\s\S]*padding: 12px 4px 12px 8px !important/
-    )
-  })
-
-  it('호버 시 overview padding 규칙이 공통 tbody padding보다 특이도 높음', () => {
-    const sharedTbodyPadding =
-      '.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td'
-    const programOverviewHover =
-      '.program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table-tbody > tr:hover > td.ant-table-cell'
-
-    expect(compareSpec(specificity(programOverviewHover), specificity(sharedTbodyPadding))).toBeGreaterThan(
-      0
-    )
+    const block = match?.[1] ?? ''
+    expect(block).toContain('min-height: 52px !important')
+    expect(block).toContain('height: 52px !important')
+    expect(block).not.toContain('height: auto')
   })
 
   it('회귀: 공통 tbody :hover 치수 규칙이 있으면 overview(tr>td만)보다 호버 시 특이도가 높아짐', () => {

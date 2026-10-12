@@ -143,6 +143,18 @@ describe('hasIncompleteTrainedTeachersProgramRegistrationRequiredFields', () => 
     ).toBe(false)
   })
 
+  it('커리큘럼·교육 연수 ON — 날짜만 있으면 미완료이다', () => {
+    expect(
+      describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay({
+          'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
+            '26년 4월 20일(월)',
+        }),
+        ctx({ teacherTrainingEnabled: true })
+      )
+    ).toBe('curriculum.preEducationScheduleLine')
+  })
+
   it('일정형·복수회차·교육 연수 ON — 첫 세부 진행 일정이 없으면 미완료이다', () => {
     expect(
       describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
@@ -177,5 +189,23 @@ describe('hasIncompleteTrainedTeachersProgramRegistrationRequiredFields', () => 
         })
       )
     ).toBe(false)
+  })
+
+  it('일정형·복수회차·교육 연수 ON — 날짜만 있으면 미완료이다', () => {
+    expect(
+      describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay({
+          'trainedTeachersRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+            1: '2026-04-20',
+          },
+        }),
+        ctx({
+          programType: 'schedule',
+          sessionRoundType: 'multi',
+          teacherTrainingEnabled: true,
+          scheduleCurriculumDetailCount: 1,
+        })
+      )
+    ).toBe('scheduleCurriculum.scheduleDate[1]')
   })
 })

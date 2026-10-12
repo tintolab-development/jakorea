@@ -1228,6 +1228,7 @@ export * from './sponsorDeleteResponse';
 export * from './sponsorDetailResponse';
 export * from './sponsorDetailResponseSponsorshipStatus';
 export * from './sponsorLogoBulkDownloadRequest';
+export * from './sponsorLogoFileResponse';
 export * from './sponsorManager';
 export * from './sponsorProgramHistoryResponse';
 export * from './sponsorRequest';

@@ -1,0 +1,11 @@
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.titleDivider {
+  color: var(--color-neutral-cool-400);
+  font-size: inherit;
+  line-height: inherit;
+}

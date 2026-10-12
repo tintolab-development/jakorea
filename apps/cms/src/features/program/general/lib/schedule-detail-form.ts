@@ -46,6 +46,31 @@ export function shouldLockEducationScheduleCalendarToggles(input: {
   return input.educationStructure === 'curriculum'
 }
 
+/**
+ * 등록·공통정보 「진행 일정」(`presetMode: schedule`) 팝오버 — 기간 토글 ON·비활성 고정.
+ *
+ * 조작 허용(잠금 해제)은 아래만:
+ * - 개인 / 일정형 / 복수 회차
+ * - 기관 / 일정형 / 복수 회차
+ */
+export function shouldLockProgressSchedulePeriodToggle(input: {
+  participantIndividual: boolean
+  participantOrganization: boolean
+  programType: 'curriculum' | 'schedule'
+  sessionRound: 'single' | 'multi'
+}): boolean {
+  if (input.programType !== 'schedule' || input.sessionRound !== 'multi') {
+    return true
+  }
+  if (input.participantIndividual && !input.participantOrganization) {
+    return false
+  }
+  if (input.participantOrganization) {
+    return false
+  }
+  return true
+}
+
 export function padEventScheduleLabel(index: number): string {
   return `행사 일정 ${String(index + 1).padStart(2, '0')}`
 }

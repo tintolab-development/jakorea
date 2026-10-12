@@ -18,6 +18,7 @@ import { getProgramRegistrationEducationFormOptions } from './program-registrati
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   PRE_EDUCATION_SCHEDULE_LABEL,
+  shouldLockProgressSchedulePeriodToggle,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
@@ -101,6 +102,7 @@ const PRE_EDUCATION_SESSION_INDEX = 0
 
 type ProgramRegistrationEducationCurriculumParagraphProps = {
   sessionRoundType: ProgramRegistrationSessionRoundType
+  participantIndividual: boolean
   /** 참여자 유형 학교/기관 — 교육 형태에 「참여자 선택」 포함 */
   participantOrganization: boolean
   curriculumSessionCount: number
@@ -296,6 +298,7 @@ function ProgramRegistrationCurriculumChartSessionBlock({
 
 export function ProgramRegistrationEducationCurriculumParagraph({
   sessionRoundType,
+  participantIndividual,
   participantOrganization,
   curriculumSessionCount,
   onDeleteCurriculumSession,
@@ -306,6 +309,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   ipsScheduleDetail,
   scheduleCurriculumPreEducation = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
+  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    participantIndividual,
+    participantOrganization,
+    programType: 'curriculum',
+    sessionRound: sessionRoundType,
+  })
   const [ipsBySession] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationIpsTypeValue>
   >('generalRegistration.educationCurriculum.ipsBySession', {})
@@ -526,6 +535,9 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                         mode="single"
                         presetMode="schedule"
                         customizable={false}
+                        lockTimeToggleOn
+                        showTimeToggle={false}
+                        lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
                         suppressAutoTodayWhenEmpty
                         value={scheduleRange?.[0] ?? null}
                         appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}

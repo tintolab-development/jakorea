@@ -610,12 +610,7 @@ function ProgramListPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <FilterTableToolbarButton
-          variant="delete"
-          width={140}
-          onClick={handleBulkDeleteClick}
-          className="program-list-page__bulk-delete-button"
-        >
+        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
           선택 삭제
         </FilterTableToolbarButton>
       )}

@@ -2,7 +2,7 @@
  * CMS 전용 셀렉트
  * - 박스 상태·사이즈 변수·X·화살표 공통 스펙은 `cms-field.css`
  * - 박스 padding 은 0, 좌우 여백은 `.ant-select-selector` 에 둔다 (팝업 폭·좌측 정렬이 박스와 일치)
- * - 값이 있으면 X + 화살표를 함께 노출 (`suffixIcon` 커스텀)
+ * - 값이 있으면 X + 화살표 (`suffixIcon` 커스텀). X는 hover / focus·open 시에만 보임
  */
 
 .cms-select.cms-field__box {
@@ -92,7 +92,9 @@
   gap: var(--cms-control-gap, 8px);
 }
 
-.cms-select__suffix .cms-select__clear {
+/* 드롭다운 open = active — X 노출 */
+.cms-select.cms-field__box:has(.ant-select-open) .cms-field__clear {
+  opacity: 1;
   pointer-events: auto;
 }
 

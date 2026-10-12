@@ -83,12 +83,32 @@ export type InstructorRoleRequestSettlement = {
   }>
 }
 
-/** CMS `TermsAgreementRequest` 정렬 */
+/** CMS `TermsAgreement` / 요청 DTO 정렬 */
 export type InstructorRoleRequestTermsAgreement = {
   termsType: string
   version: string
   required: boolean
   agreed: boolean
+  agreedAt?: string
+}
+
+/** GET /api/portal/me/instructor-role-requests/current/detail — CMS `InstructorRoleRequestDetailResponse` 정렬 */
+export type InstructorRoleRequestDetail = {
+  requestId?: number
+  memberId?: number
+  status?: string
+  requestedActivityType?: string
+  requestedAt?: string
+  decidedAt?: string
+  rejectedReason?: string
+  name?: string
+  gender?: string
+  birthDate?: string
+  phone?: string
+  email?: string
+  profile?: InstructorRoleRequestProfile
+  settlement?: InstructorRoleRequestSettlement
+  termsAgreements?: InstructorRoleRequestTermsAgreement[]
 }
 
 /** POST /api/portal/me/instructor-role-requests — InstructorRoleRequestCreateRequest */

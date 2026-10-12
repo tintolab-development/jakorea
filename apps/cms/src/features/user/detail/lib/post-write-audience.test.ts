@@ -4,6 +4,8 @@ import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
   defaultPostWriteAudience,
+  postWriteAudienceFromStored,
+  reconcilePostWriteAudienceSelection,
   resolveParticipantAudienceApiKey,
 } from './post-write-audience'
 
@@ -45,6 +47,23 @@ describe('post-write-audience', () => {
     expect(buildPostWriteVisibilityType(['all', 'teacher', 'instructor'])).toBe('ALL')
     expect(buildPostWriteVisibilityType(['teacher'])).toBe('TEACHER')
     expect(buildPostWriteVisibilityType(['student', 'instructor'])).toBe('STUDENT,INSTRUCTOR')
+  })
+
+  it('저장값 ALL(all)이면 수정 폼에서 전체·참여자·강사·봉사자 모두 체크', () => {
+    const program = programStub({ generalProgramAudience: 'organization' })
+    expect(postWriteAudienceFromStored(['all'], program)).toEqual([
+      'all',
+      'teacher',
+      'instructor',
+      'volunteer',
+    ])
+  })
+
+  it('전체 체크 시 나머지 옵션도 함께 선택된다', () => {
+    const program = programStub({ generalProgramAudience: 'organization' })
+    expect(reconcilePostWriteAudienceSelection(['all'], program)).toEqual(
+      defaultPostWriteAudience(program)
+    )
   })
 
   it('기본 선택은 프로그램 유형에 맞는 참여자 API 키를 포함한다', () => {

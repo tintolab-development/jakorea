@@ -49,3 +49,55 @@ export function buildPostWriteVisibilityType(
   }
   return unique.map(key => key.toUpperCase()).join(',')
 }
+
+/** API·도메인 audience 배열 → 수정 폼 체크박스 값 (전체=ALL 이면 모든 항목 체크) */
+export function postWriteAudienceFromStored(
+  stored: string[] | undefined,
+  program?: Program
+): PostWriteAudienceApiKey[] {
+  const defaults = defaultPostWriteAudience(program)
+  if (!stored?.length) return defaults
+
+  const participantKey = resolveParticipantAudienceApiKey(program)
+  const mapped = stored
+    .map(key => {
+      const lower = key.trim().toLowerCase()
+      if (lower === 'all') return 'all' as const
+      if (lower === 'participant' || lower === 'teacher' || lower === 'student') {
+        return participantKey
+      }
+      if (lower === 'instructor') return 'instructor' as const
+      if (lower === 'volunteer') return 'volunteer' as const
+      return null
+    })
+    .filter((key): key is PostWriteAudienceApiKey => key != null)
+
+  const unique = [...new Set(mapped)]
+  if (unique.length === 0) return defaults
+
+  return reconcilePostWriteAudienceSelection(unique, program)
+}
+
+/** 체크박스 onChange — 「전체」 선택 시 나머지 항목도 함께 체크 */
+export function reconcilePostWriteAudienceSelection(
+  selected: PostWriteAudienceApiKey[],
+  program?: Program
+): PostWriteAudienceApiKey[] {
+  const allKeys = defaultPostWriteAudience(program)
+  const unique = [...new Set(selected)]
+
+  if (unique.includes('all')) {
+    const everyOptionChecked = allKeys.every(key => unique.includes(key))
+    if (everyOptionChecked || unique.length === 1) {
+      return allKeys
+    }
+    return unique.filter(key => key !== 'all')
+  }
+
+  const withoutAll = allKeys.filter(key => key !== 'all')
+  if (withoutAll.every(key => unique.includes(key))) {
+    return allKeys
+  }
+
+  return unique
+}
