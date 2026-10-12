@@ -259,6 +259,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   /** 프로그램 유형 설정에서 IPS 유형이「일정 별 상이」일 때만 (단일·일부 복수 조합) 세부 일정 하단에 IPS 행 */
   ipsPerSchedule?: boolean
   sessionRoundType: ProgramRegistrationSessionRoundType
+  participantIndividual: boolean
   participantOrganization: boolean
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind
   participationScheduleDetail: ProgramRegistrationScheduleDetailKind
@@ -283,6 +284,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   onDeleteScheduleCurriculumGroup,
   ipsPerSchedule = false,
   sessionRoundType,
+  participantIndividual,
   participantOrganization,
   educationFormScheduleDetail,
   participationScheduleDetail,
@@ -293,6 +295,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   hideAssignmentSettings = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
   const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    participantIndividual,
+    participantOrganization,
     programType: 'schedule',
     sessionRound: sessionRoundType,
   })
@@ -933,6 +937,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           presetMode="schedule"
           customizable={false}
           lockTimeToggleOn
+          showTimeToggle={false}
           lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
           suppressAutoTodayWhenEmpty
           value={scheduleRange?.[0] ?? null}

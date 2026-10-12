@@ -96,6 +96,8 @@ function TrainedTeachersTeacherTrainingBlock() {
                     mode="single"
                     presetMode="schedule"
                     customizable={false}
+                    lockTimeToggleOn
+                    showTimeToggle={false}
                     suppressAutoTodayWhenEmpty
                     value={scheduleRange?.[0] ?? null}
                     appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}

@@ -102,6 +102,7 @@ const PRE_EDUCATION_SESSION_INDEX = 0
 
 type ProgramRegistrationEducationCurriculumParagraphProps = {
   sessionRoundType: ProgramRegistrationSessionRoundType
+  participantIndividual: boolean
   /** 참여자 유형 학교/기관 — 교육 형태에 「참여자 선택」 포함 */
   participantOrganization: boolean
   curriculumSessionCount: number
@@ -297,6 +298,7 @@ function ProgramRegistrationCurriculumChartSessionBlock({
 
 export function ProgramRegistrationEducationCurriculumParagraph({
   sessionRoundType,
+  participantIndividual,
   participantOrganization,
   curriculumSessionCount,
   onDeleteCurriculumSession,
@@ -308,6 +310,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   scheduleCurriculumPreEducation = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
   const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    participantIndividual,
+    participantOrganization,
     programType: 'curriculum',
     sessionRound: sessionRoundType,
   })
@@ -532,6 +536,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                         presetMode="schedule"
                         customizable={false}
                         lockTimeToggleOn
+                        showTimeToggle={false}
                         lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
                         suppressAutoTodayWhenEmpty
                         value={scheduleRange?.[0] ?? null}

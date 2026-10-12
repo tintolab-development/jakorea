@@ -146,7 +146,7 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   /** 모달(포털) 열림·닫힘 — 테이블 행 포커스 등 상위 동기화용 */
   onOpenChange?: (open: boolean) => void
   /**
-   * false면 푸터 「시간」 토글 숨김 (`timeOn` 고정 false).
+   * false면 푸터 「시간」 토글 숨김 (`timeOn` 고정 false, `lockTimeToggleOn` 없을 때).
    * 기본 true — 다른 피커 동작 유지.
    */
   showTimeToggle?: boolean
@@ -159,7 +159,7 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    */
   showPeriodToggle?: boolean
   /**
-   * true면 「시간」을 ON으로 고정하고 조작 불가 토글은 숨김. `showTimeToggle`이 false면 무시.
+   * true면 시간 입력 항상 ON. 푸터 「시간」 토글은 숨김(`showTimeToggle`과 무관).
    * 기본 false — 다른 피커는 기존처럼 토글을 조작할 수 있음.
    */
   lockTimeToggleOn?: boolean
@@ -266,7 +266,7 @@ function ParagraphDatePickerSingleInner({
     findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate).startOf('month')
   )
   const [periodOn, setPeriodOn] = useState(
-    presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
+    presetMode === 'period' || lockPeriodToggleOn
   )
 
   useEffect(() => {
@@ -291,11 +291,11 @@ function ParagraphDatePickerSingleInner({
   const [surfaceRange, setSurfaceRange] = useState<[Dayjs, Dayjs] | null>(null)
   /** 마지막 [설정] 시 시간 토글이 켜져 있었는지 — 트리거에 날짜+시간 인풋 표시 */
   const [surfaceAppliedWithTime, setSurfaceAppliedWithTime] = useState(false)
-  const [timeOn, setTimeOn] = useState(lockTimeToggleOn && showTimeToggle)
-  const timeToggleLocked = lockTimeToggleOn && showTimeToggle
-  const periodToggleLocked =
-    presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
-  const effectiveTimeOn = showTimeToggle ? timeOn : false
+  const [timeOn, setTimeOn] = useState(() => lockTimeToggleOn)
+  const timeToggleLocked = lockTimeToggleOn
+  const periodToggleLocked = presetMode === 'period' || lockPeriodToggleOn
+  const effectiveTimeOn = lockTimeToggleOn || (showTimeToggle && timeOn)
+  const showTimeToggleInFooter = showTimeToggle && !lockTimeToggleOn
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('9')
   const [singleMinute, setSingleMinute] = useState('0')
@@ -305,13 +305,13 @@ function ParagraphDatePickerSingleInner({
   const [endMinute, setEndMinute] = useState('0')
 
   const showPeriodToggleInFooter =
-    (showPeriodToggle && (customizable || presetMode === 'schedule')) ||
-    (lockPeriodToggleOn && showPeriodToggle)
+    lockPeriodToggleOn ||
+    (showPeriodToggle && (customizable || presetMode === 'schedule'))
 
   useEffect(() => {
-    if (!timeToggleLocked) return
+    if (!lockTimeToggleOn) return
     setTimeOn(true)
-  }, [timeToggleLocked])
+  }, [lockTimeToggleOn])
 
   useEffect(() => {
     if (!periodToggleLocked) return
@@ -483,7 +483,7 @@ function ParagraphDatePickerSingleInner({
         /* period/time already false above */
       } else if (presetMode === 'period') {
         setPeriodOn(true)
-        setTimeOn(false)
+        if (!lockTimeToggleOn) setTimeOn(false)
       } else {
         setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
       }
@@ -503,10 +503,10 @@ function ParagraphDatePickerSingleInner({
         /* period/time already false above */
       } else if (presetMode === 'period') {
         setPeriodOn(true)
-        setTimeOn(false)
+        if (!lockTimeToggleOn) setTimeOn(false)
       } else {
         setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
-        setTimeOn(false)
+        if (!lockTimeToggleOn) setTimeOn(false)
       }
     }
 
@@ -526,7 +526,7 @@ function ParagraphDatePickerSingleInner({
     }
 
     setInvalidTimeRange(false)
-    if (timeToggleLocked) setTimeOn(true)
+    if (lockTimeToggleOn) setTimeOn(true)
     if (periodToggleLocked) setPeriodOn(true)
     setOpen(true)
   }
@@ -752,9 +752,9 @@ function ParagraphDatePickerSingleInner({
         }}
         invalidTimeRange={invalidTimeRange}
         showPeriodToggle={showPeriodToggleInFooter}
-        showTimeToggle={showTimeToggle}
+        showTimeToggle={showTimeToggleInFooter}
         periodToggleDisabled={periodToggleLocked}
-        timeToggleDisabled={timeToggleLocked}
+        timeToggleDisabled={timeToggleLocked && showTimeToggleInFooter}
         periodOn={periodOn}
         onPeriodOnChange={next => {
           if (periodToggleLocked) return
