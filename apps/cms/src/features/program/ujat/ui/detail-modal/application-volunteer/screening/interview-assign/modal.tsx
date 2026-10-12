@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { CloseOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { UjatVolunteerInterviewAssignCalendarMini } from './calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import '@/shared/components/calendar/styles/calendar.css'
+import '@/shared/components/permission-modal.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { alertUjatVolunteerInterviewAssignSlotRequired } from '../applicant/guard-actions'
@@ -16,11 +18,12 @@ import { useKoreanPublicHolidayDateKeys } from '@/features/program/ujat/api/kore
 import { resolveUjatVolunteerInterviewScheduleDisplay } from '@/features/program/ujat/lib/ujat-volunteer-interview-schedule-display'
 import {
   countSlotAssignments,
-  formatInterviewSummary,
+  formatInterviewAssignScheduledSummary,
   formatStoredInterviewDateLabel,
+  normalizeTimeRangeKey,
   getApplicantAssignedSlotKey,
-  getApplicantInterviewAvailabilityDateKeys,
   getAssignedInterviewDateKeys,
+  buildProgramInterviewUnavailableDateKeys,
   getSlotsForDate,
   parseInterviewScheduleFromDisplay,
   resolveInterviewAssignModalCalendarState,
@@ -66,7 +69,7 @@ export function UjatVolunteerInterviewAssignModal({
   allApplicants,
   mode,
   schedule: scheduleOverride,
-  subjectNoun = '봉사자',
+  subjectNoun: _subjectNoun = '봉사자',
   onCancel,
   onConfirm,
 }: UjatVolunteerInterviewAssignModalProps) {
@@ -111,22 +114,6 @@ export function UjatVolunteerInterviewAssignModal({
     [applicant]
   )
 
-  /** 봉사자 신청 시 선택한 면접 가능일 — 연한 민트 배경 */
-  const volunteerAvailabilityDateKeys = useMemo(
-    () => getApplicantInterviewAvailabilityDateKeys(applicant),
-    [applicant]
-  )
-
-  /** 프로그램 면접 가능 ∩ 봉사자 신청일 — 신청하지 않은 날은 클릭 불가 */
-  const clickableDateKeys = useMemo(() => {
-    if (volunteerAvailabilityDateKeys.size === 0) return schedule.clickableDateKeys
-    const keys = new Set<string>()
-    for (const key of schedule.clickableDateKeys) {
-      if (volunteerAvailabilityDateKeys.has(key)) keys.add(key)
-    }
-    return keys.size > 0 ? keys : schedule.clickableDateKeys
-  }, [schedule.clickableDateKeys, volunteerAvailabilityDateKeys])
-
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => schedule.scheduleMonth)
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => schedule.scheduleMonth)
   const [selectedSlotKey, setSelectedSlotKey] = useState<string | null>(null)
@@ -135,15 +122,21 @@ export function UjatVolunteerInterviewAssignModal({
   const [dateTimePickerOpen, setDateTimePickerOpen] = useState(false)
   const [notifyError, setNotifyError] = useState('')
 
+  const programUnavailableDateKeys = useMemo(
+    () => buildProgramInterviewUnavailableDateKeys(schedule),
+    [schedule]
+  )
+
+  /** 캘린더·시간대 SSOT = 프로그램 면접 일정 */
   const disabledDate = useMemo(
     () => (date: Dayjs) => {
       const key = date.format('YYYY-MM-DD')
-      if (!clickableDateKeys.has(key)) return true
+      if (!schedule.clickableDateKeys.has(key)) return true
       /** 시간대 선택 후 다른 날짜 비활성 — 선택 해제 시 다시 변경 가능 */
       if (selectedSlotKey != null && !date.isSame(selectedDate, 'day')) return true
       return false
     },
-    [clickableDateKeys, selectedDate, selectedSlotKey]
+    [schedule.clickableDateKeys, selectedDate, selectedSlotKey]
   )
 
   const scheduleTopRef = useRef<HTMLDivElement>(null)
@@ -194,6 +187,10 @@ export function UjatVolunteerInterviewAssignModal({
     setSelectedSlotKey(prev => (prev === slot.key ? null : slot.key))
   }
 
+  const handleClearSelectedSchedule = () => {
+    setSelectedSlotKey(null)
+  }
+
   const handleNotifyTimingChange = (next: UjatInterviewAssignNotifyTiming) => {
     setNotifyTiming(next)
     setNotifyError('')
@@ -224,8 +221,18 @@ export function UjatVolunteerInterviewAssignModal({
   }
 
   const summaryBlock = selectedSlot ? (
-    <span className="ujat-volunteer-interview-assign-modal__summary-value">
-      {formatInterviewSummary(selectedDate, selectedSlot.timeRange)}
+    <span className="ujat-volunteer-interview-assign-modal__summary-selected">
+      <span className="ujat-volunteer-interview-assign-modal__summary-value">
+        {formatInterviewAssignScheduledSummary(selectedDate, selectedSlot.timeRange)}
+      </span>
+      <button
+        type="button"
+        className="ujat-volunteer-interview-assign-modal__summary-clear"
+        aria-label="선택한 면접 일정 지우기"
+        onClick={handleClearSelectedSchedule}
+      >
+        <CloseOutlined aria-hidden />
+      </button>
     </span>
   ) : (
     <span className="ujat-volunteer-interview-assign-modal__summary-placeholder">
@@ -244,17 +251,7 @@ export function UjatVolunteerInterviewAssignModal({
         width={800}
         className="ujat-volunteer-interview-assign-modal"
         zIndex={MODAL_Z_INDEX}
-        modalStyles={{
-          content: {
-            height: 809,
-            maxHeight: 809,
-          },
-          body: {
-            maxHeight: 'calc(809px - 50px)',
-            overflowY: 'auto',
-          },
-        }}
-        description={`**[${applicant.name}]** ${subjectNoun}의 면접을 진행할 일정을 선택해 주세요.\n면접은 한 명 당 한 차례만 진행 가능합니다.`}
+        description={`**[${applicant.name}]** 님의 면접을 진행할 일정을 선택해 주세요.\n면접은 한 차례만 진행할 수 있습니다.`}
         footer={
           <div className="ujat-volunteer-interview-assign-modal__footer">
             <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
@@ -285,8 +282,8 @@ export function UjatVolunteerInterviewAssignModal({
                 selectedDate={selectedDate}
                 onMonthChange={setCurrentMonth}
                 onSelectDate={handleSelectDate}
-                programDates={volunteerAvailabilityDateKeys}
-                clickableDates={clickableDateKeys}
+                programDates={schedule.clickableDateKeys}
+                programUnavailableDateKeys={programUnavailableDateKeys}
                 holidayDateKeys={schedule.holidayDateKeys}
                 assignedDateKeys={assignedDateKeys}
                 disabledDate={disabledDate}
@@ -334,7 +331,7 @@ export function UjatVolunteerInterviewAssignModal({
                         onClick={() => handleSelectSlot(slot)}
                       >
                         <span className="ujat-volunteer-interview-assign-modal__slot-time">
-                          {slot.displayTimeRange}
+                          {normalizeTimeRangeKey(slot.timeRange)}
                         </span>
                         <span className="ujat-volunteer-interview-assign-modal__slot-count">
                           {assignedCount}명
@@ -350,24 +347,28 @@ export function UjatVolunteerInterviewAssignModal({
           <div className="ujat-volunteer-interview-assign-modal__summary-section">
             <DetailInfoForm title="" hideHeader mode="edit">
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="면접 진행일" edit={summaryBlock} view={summaryBlock} />
+                <DetailInfoForm.Field label="배정된 일정" edit={summaryBlock} view={summaryBlock} />
               </DetailInfoForm.Row>
             </DetailInfoForm>
           </div>
 
-          <div className="ujat-volunteer-interview-assign-modal__notify-field">
-            <span className="ujat-volunteer-interview-assign-modal__notify-label">알림 발송</span>
+          <div className="ujat-volunteer-interview-assign-modal__notify-field permission-modal__field">
             <CmsRadio.Group
-              size="large"
+              label="알림 발송"
+              required
+              size="medium"
               value={notifyTiming}
               onChange={e =>
                 handleNotifyTimingChange(e.target.value as UjatInterviewAssignNotifyTiming)
               }
             >
-              <CmsRadio value="immediate">즉시</CmsRadio>
+              <CmsRadio value="immediate" size="medium">
+                즉시
+              </CmsRadio>
               <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
                 <CmsRadio
                   value="manual"
+                  size="medium"
                   onClick={() => {
                     if (notifyTiming === 'manual') {
                       setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
@@ -377,7 +378,7 @@ export function UjatVolunteerInterviewAssignModal({
                 >
                   직접 설정
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
-                    <span className="ujat-volunteer-interview-assign-modal__manual-summary">
+                    <span className="permission-modal__manual-summary">
                       {' '}
                       ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
                     </span>
@@ -386,10 +387,7 @@ export function UjatVolunteerInterviewAssignModal({
               </span>
             </CmsRadio.Group>
             {notifyError ? (
-              <span
-                className="ujat-volunteer-interview-assign-modal__notify-error"
-                role="alert"
-              >
+              <span className="permission-modal__field-error" role="alert">
                 {notifyError}
               </span>
             ) : null}

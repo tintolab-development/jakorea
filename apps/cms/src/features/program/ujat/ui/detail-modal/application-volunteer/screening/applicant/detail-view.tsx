@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type {
+  UjatVolunteerApplicantRow,
+  UjatVolunteerInterviewEvaluationPayload,
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -14,7 +17,11 @@ import { ManagerEvaluationSection } from './manager-evaluation-section'
 import { InterviewAvailabilitySection } from './interview-availability'
 import { EssaySections } from './essay-sections'
 import { PreviousTermSection } from './previous-term-section'
-import { InterviewEvaluationSection } from './interview-evaluation-section'
+import {
+  InterviewEvaluationSection,
+  type InterviewEvaluationSectionHandle,
+} from './interview-evaluation-section'
+import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
 
@@ -44,7 +51,10 @@ type Interview2DetailProps = {
   onWithdrawActivity?: () => void
   onInterviewFail?: () => void
   onInterviewPass?: () => void
-  onOpenInterviewEvaluation?: () => void
+  /** 인라인 면접 평가 저장. 편집 중 「면접 평가」 재클릭 시 호출 */
+  onSaveInterviewEvaluation?: (
+    payload: UjatVolunteerInterviewEvaluationPayload
+  ) => Promise<boolean>
 }
 
 export type ApplicantDetailViewProps =
@@ -62,6 +72,122 @@ function isInterview2Props(
   props: ApplicantDetailViewProps
 ): props is Interview2DetailProps {
   return props.variant === 'interview2'
+}
+
+function Interview2ApplicantDetail({
+  applicant,
+  personalInfoRevealed,
+  openPersonalInfoRevealConfirm,
+  personalInfoRevealModal,
+  onWithdrawActivity,
+  onInterviewFail,
+  onInterviewPass,
+  onSaveInterviewEvaluation,
+}: {
+  applicant: UjatVolunteerApplicantRow
+  personalInfoRevealed: boolean
+  openPersonalInfoRevealConfirm: () => void
+  personalInfoRevealModal: ReactNode
+  onWithdrawActivity?: () => void
+  onInterviewFail?: () => void
+  onInterviewPass?: () => void
+  onSaveInterviewEvaluation?: (
+    payload: UjatVolunteerInterviewEvaluationPayload
+  ) => Promise<boolean>
+}) {
+  const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
+  const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+
+  useEffect(() => {
+    setIsEvaluationEditing(false)
+  }, [applicant.id])
+
+  const handleInterviewEvaluationClick = useCallback(async () => {
+    if (!isEvaluationEditing) {
+      if (!guardUjatVolunteerInterview2Evaluation(applicant)) return
+      setIsEvaluationEditing(true)
+      return
+    }
+    const saved = await evaluationSectionRef.current?.submit()
+    if (saved) setIsEvaluationEditing(false)
+  }, [applicant, isEvaluationEditing])
+
+  return (
+    <div className="applicant-detail">
+      <div className="applicant-detail__header">
+        <div className="program-detail-fullpage-modal__header-actions">
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={onWithdrawActivity}
+          >
+            활동 포기
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={onInterviewFail}
+          >
+            면접 불합격
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={onInterviewPass}
+          >
+            면접 합격
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="primary"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={() => {
+              void handleInterviewEvaluationClick()
+            }}
+          >
+            면접 평가
+          </CmsButton>
+          <PersonalInfoRevealButton
+            labelMode="stickyReveal"
+            revealed={personalInfoRevealed}
+            cmsVariant="primary"
+            cmsSize="large"
+            width={180}
+            onClick={openPersonalInfoRevealConfirm}
+          />
+        </div>
+      </div>
+
+      <div className="applicant-detail__body applicant-info-section">
+        <ApplicantBasicInfo
+          applicant={applicant}
+          maskSensitive={!personalInfoRevealed}
+          statusRow="second_interview"
+        />
+        <InterviewEvaluationSection
+          ref={evaluationSectionRef}
+          applicant={applicant}
+          isEditing={isEvaluationEditing}
+          onSave={async payload => (await onSaveInterviewEvaluation?.(payload)) ?? false}
+        />
+        <PreviousTermSection applicant={applicant} />
+        <EssaySections applicant={applicant} />
+      </div>
+
+      {personalInfoRevealModal}
+    </div>
+  )
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
@@ -112,77 +238,17 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
   }, [applicant.interviewAssignmentStatus])
 
   if (isInterview2Props(props)) {
-    const { onWithdrawActivity, onInterviewFail, onInterviewPass, onOpenInterviewEvaluation } =
-      props
-
     return (
-      <div className="applicant-detail">
-        <div className="applicant-detail__header">
-          <div className="program-detail-fullpage-modal__header-actions">
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onWithdrawActivity}
-            >
-              활동 포기
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onInterviewFail}
-            >
-              면접 불합격
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onInterviewPass}
-            >
-              면접 합격
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="primary"
-              size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onOpenInterviewEvaluation}
-            >
-              면접 평가
-            </CmsButton>
-            <PersonalInfoRevealButton
-              labelMode="stickyReveal"
-              revealed={personalInfoRevealed}
-              cmsVariant="primary"
-              cmsSize="large"
-              width={180}
-              onClick={openPersonalInfoRevealConfirm}
-            />
-          </div>
-        </div>
-
-        <div className="applicant-detail__body applicant-info-section">
-          <ApplicantBasicInfo
-            applicant={applicant}
-            maskSensitive={!personalInfoRevealed}
-            statusRow="second_interview"
-          />
-          <InterviewEvaluationSection applicant={applicant} />
-          <PreviousTermSection applicant={applicant} />
-          <EssaySections applicant={applicant} />
-        </div>
-
-        {personalInfoRevealModal}
-      </div>
+      <Interview2ApplicantDetail
+        applicant={applicant}
+        personalInfoRevealed={personalInfoRevealed}
+        openPersonalInfoRevealConfirm={openPersonalInfoRevealConfirm}
+        personalInfoRevealModal={personalInfoRevealModal}
+        onWithdrawActivity={props.onWithdrawActivity}
+        onInterviewFail={props.onInterviewFail}
+        onInterviewPass={props.onInterviewPass}
+        onSaveInterviewEvaluation={props.onSaveInterviewEvaluation}
+      />
     )
   }
 

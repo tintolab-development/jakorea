@@ -135,7 +135,6 @@ export function useUjatVolunteerInterview2({
     null
   )
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
-  const [evaluationTargetId, setEvaluationTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [now, setNow] = useState(() => dayjs())
 
@@ -166,7 +165,6 @@ export function useUjatVolunteerInterview2({
     setViewMode('list')
     setSelectedRowKeys([])
     setWithdrawTargetId(null)
-    setEvaluationTargetId(null)
     setBulkPassModalOpen(false)
     setNow(dayjs())
   }, [programId, half])
@@ -377,31 +375,20 @@ export function useUjatVolunteerInterview2({
     [list, withdrawTargetId]
   )
 
-  const openEvaluationModal = useCallback((row: UjatVolunteerApplicantRow) => {
-    if (!guardUjatVolunteerInterview2Evaluation(row)) return
-    setEvaluationTargetId(row.id)
-  }, [])
-
-  const closeEvaluationModal = useCallback(() => {
-    setEvaluationTargetId(null)
-  }, [])
-
-  const evaluationTarget = useMemo(
-    () => (evaluationTargetId ? list.find(row => row.id === evaluationTargetId) : undefined),
-    [evaluationTargetId, list]
-  )
-
   const saveInterviewEvaluation = useCallback(
-    (payload: UjatVolunteerInterviewEvaluationPayload) => {
-      if (!evaluationTargetId) return
-      setList(prev => patchUjatVolunteerInterviewEvaluation(prev, evaluationTargetId, payload))
+    async (
+      row: UjatVolunteerApplicantRow,
+      payload: UjatVolunteerInterviewEvaluationPayload
+    ): Promise<boolean> => {
+      if (!guardUjatVolunteerInterview2Evaluation(row)) return false
+      setList(prev => patchUjatVolunteerInterviewEvaluation(prev, row.id, payload))
       showAlert({
         title: '면접 평가',
         content: '면접 평가가 저장되었습니다.',
       })
-      setEvaluationTargetId(null)
+      return true
     },
-    [evaluationTargetId, showAlert]
+    [showAlert]
   )
 
   const columns = useUjatVolunteerInterview2Columns()
@@ -451,9 +438,6 @@ export function useUjatVolunteerInterview2({
     withdrawTarget,
     requestInterview2Pass,
     requestInterview2Fail,
-    openEvaluationModal,
-    closeEvaluationModal,
-    evaluationTarget,
     saveInterviewEvaluation,
     fetchNextPage: applicationsQuery.fetchNextPage,
     hasNextPage: applicationsQuery.hasNextPage,
