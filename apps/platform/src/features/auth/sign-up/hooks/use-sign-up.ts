@@ -16,9 +16,8 @@ import {
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
   SIGN_UP_UNDER_AGE_TOTAL_STEPS,
-  MOCK_VERIFIED_NAME,
-  MOCK_VERIFIED_PHONE,
 } from '../lib/constants'
+import { signupGenderFromVerifiedIdentity } from '../lib/helpers/verified-identity-gender'
 import { toApiSignupPhone } from '../lib/helpers/to-api-phone'
 import { buildConfirmationRows, formatBirthDateInput } from '../lib/utils'
 import {
@@ -80,6 +79,7 @@ import {
 } from '../lib/wizard-location'
 import {
   buildPortraitConsentPath,
+  clearPortraitConsentSession,
   consumePortraitConsentBridge,
   dismissPortraitConsentRestore,
   savePortraitConsentBridge,
@@ -125,8 +125,8 @@ export function useSignUp() {
   const [guardianVerificationSessionId, setGuardianVerificationSessionId] = useState<number | null>(
     null
   )
-  const [verifiedName, setVerifiedName] = useState(MOCK_VERIFIED_NAME)
-  const [verifiedPhone, setVerifiedPhone] = useState(MOCK_VERIFIED_PHONE)
+  const [verifiedName, setVerifiedName] = useState('')
+  const [verifiedPhone, setVerifiedPhone] = useState('')
   const [agreements, setAgreements] = useState<AgreementState>(createInitialAgreementState)
   const [email, setEmail] = useState('')
   const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'success' | 'error'>('idle')
@@ -215,6 +215,18 @@ export function useSignUp() {
       setSearchParams(buildSignUpSearch(1), { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    const step = parseSignUpStep(searchParams, SIGN_UP_UNDER_AGE_TOTAL_STEPS)
+    const phase = parseSignUpPhase(searchParams)
+    const isFreshSignupEntry =
+      step === 1 && phase == null && !isSignUpWizardLocationState(location.state)
+
+    if (isFreshSignupEntry) {
+      clearPortraitConsentSession()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 가입 1단계 최초 진입 시 1회
+  }, [])
 
   useEffect(() => {
     const bridge = consumePortraitConsentBridge()
@@ -483,16 +495,30 @@ export function useSignUp() {
     }
   }
 
-  const handleIdentitySuccess = (result: {
-    sessionId: number
+  const applyVerifiedIdentityFields = (result: {
     verifiedName?: string
     verifiedPhone?: string
+    verifiedGender?: string
+    syncGender?: boolean
   }) => {
-    setIdentityVerificationSessionId(result.sessionId)
     if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
     if (result.verifiedPhone?.trim()) {
       setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
     }
+    if (result.syncGender) {
+      const fromVerification = signupGenderFromVerifiedIdentity(result.verifiedGender)
+      if (fromVerification) setGender(fromVerification)
+    }
+  }
+
+  const handleIdentitySuccess = (result: {
+    sessionId: number
+    verifiedName?: string
+    verifiedPhone?: string
+    verifiedGender?: string
+  }) => {
+    setIdentityVerificationSessionId(result.sessionId)
+    applyVerifiedIdentityFields({ ...result, syncGender: true })
     setIsIdentityVerified(true)
     pushWizard(3, 'agreement')
   }
@@ -501,12 +527,10 @@ export function useSignUp() {
     sessionId: number
     verifiedName?: string
     verifiedPhone?: string
+    verifiedGender?: string
   }) => {
     setGuardianVerificationSessionId(result.sessionId)
-    if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
-    if (result.verifiedPhone?.trim()) {
-      setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
-    }
+    applyVerifiedIdentityFields({ ...result, syncGender: false })
     setIsGuardianIdentityVerified(true)
     pushWizard(4)
   }
@@ -651,8 +675,8 @@ export function useSignUp() {
     setIsIdentityVerified(false)
     setIdentityVerificationSessionId(null)
     setGuardianVerificationSessionId(null)
-    setVerifiedName(MOCK_VERIFIED_NAME)
-    setVerifiedPhone(MOCK_VERIFIED_PHONE)
+    setVerifiedName('')
+    setVerifiedPhone('')
     if (parseSignUpPhase(searchParams)) {
       replaceWizard(2)
     }
@@ -665,8 +689,8 @@ export function useSignUp() {
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
     setGuardianVerificationSessionId(null)
-    setVerifiedName(MOCK_VERIFIED_NAME)
-    setVerifiedPhone(MOCK_VERIFIED_PHONE)
+    setVerifiedName('')
+    setVerifiedPhone('')
     pushWizard(3, 'guardian-agreement')
   }
 
@@ -674,6 +698,7 @@ export function useSignUp() {
     setSubmitMessage('')
 
     if (!remoteApi) {
+      clearPortraitConsentSession()
       navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
       return
     }
@@ -746,6 +771,7 @@ export function useSignUp() {
         await postGeneralSignup(mapSignUpToGeneralRequest(mapInput))
       }
 
+      clearPortraitConsentSession()
       navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
     } catch (error) {
       setSubmitMessage(
@@ -850,8 +876,8 @@ export function useSignUp() {
       resetVerified: () => {
         setIsIdentityVerified(false)
         setIdentityVerificationSessionId(null)
-        setVerifiedName(MOCK_VERIFIED_NAME)
-        setVerifiedPhone(MOCK_VERIFIED_PHONE)
+        setVerifiedName('')
+        setVerifiedPhone('')
         replaceWizard(3, 'identity')
       },
     },

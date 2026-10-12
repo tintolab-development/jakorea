@@ -8,6 +8,7 @@ export const SIGN_UP_PORTRAIT_CONSENT_PATH = '/auth/sign-up/portrait-consent'
 
 const BRIDGE_STORAGE_KEY = 'platform:sign-up-portrait-consent-bridge'
 const DRAFT_STORAGE_KEY = 'platform:sign-up-portrait-consent-draft'
+const DRAFT_SCOPE_KEY = 'platform:sign-up-portrait-consent-draft-scope'
 
 export type PortraitConsentBridgeSource = 'adult' | 'guardian'
 
@@ -127,15 +128,46 @@ export function dismissPortraitConsentRestore(): void {
   pendingRestore = null
 }
 
+/** 초상권 bridge + 작성 draft + 메모리 핸드오프 전부 삭제 (가입 새로 시작·완료 시) */
+export function clearPortraitConsentSession(): void {
+  pendingRestore = null
+  if (!canUseSessionStorage()) return
+  try {
+    window.sessionStorage.removeItem(BRIDGE_STORAGE_KEY)
+    window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+    window.sessionStorage.removeItem(DRAFT_SCOPE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function portraitConsentDraftScope(bridge: PortraitConsentBridgeState | null): string {
+  if (bridge == null) return ''
+  return `${bridge.source}:${bridge.returnSearch}`
+}
+
 export function loadPortraitConsentDraftState<T extends PortraitConsentDraftState>(
-  fallback: T
+  fallback: T,
+  scope: string
 ): T {
   if (!canUseSessionStorage()) return fallback
+  if (scope === '') return fallback
   try {
+    const storedScope = window.sessionStorage.getItem(DRAFT_SCOPE_KEY)
+    if (storedScope !== scope) {
+      window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+      window.sessionStorage.removeItem(DRAFT_SCOPE_KEY)
+      return fallback
+    }
     const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY)
     if (!raw) return fallback
     const parsed = JSON.parse(raw) as T
     if (parsed?.draft == null || typeof parsed.draft !== 'object') return fallback
+    const paragraphs = (parsed.draft as { paragraphs?: unknown }).paragraphs
+    if (!Array.isArray(paragraphs) || paragraphs.length === 0) {
+      window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+      return fallback
+    }
     return {
       ...fallback,
       ...parsed,
@@ -147,9 +179,14 @@ export function loadPortraitConsentDraftState<T extends PortraitConsentDraftStat
   }
 }
 
-export function savePortraitConsentDraftState(state: PortraitConsentDraftState): void {
+export function savePortraitConsentDraftState(
+  state: PortraitConsentDraftState,
+  scope: string
+): void {
   if (!canUseSessionStorage()) return
+  if (scope === '') return
   try {
+    window.sessionStorage.setItem(DRAFT_SCOPE_KEY, scope)
     window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(state))
   } catch {
     /* quota / private mode */

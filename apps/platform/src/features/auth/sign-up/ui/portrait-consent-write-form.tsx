@@ -1,5 +1,4 @@
 import {
-  createConsentTemplateSeedDraft,
   hasMemberConsentIncompleteRequiredFields,
   MEMBER_CONSENT_TEMPLATE_MAP,
   normalizeMemberConsentWriteDraft,
@@ -8,6 +7,7 @@ import {
 } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
+  createAgreementPortraitDraft,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
@@ -20,6 +20,7 @@ import { PFAlertModal, PFButton, type FormSignatureValue } from '@/shared/ui'
 import {
   loadPortraitConsentDraftState,
   peekPortraitConsentBridge,
+  portraitConsentDraftScope,
   savePortraitConsentDraftState,
 } from '../lib/portrait-consent-bridge'
 
@@ -34,18 +35,12 @@ type PortraitConsentWriteState = {
   }
 }
 
-function createInitialPortraitConsentState(): PortraitConsentWriteState {
-  const seed = createConsentTemplateSeedDraft(TEMPLATE_ID)
-  const draft: WritingFormDraft =
-    seed != null
-      ? normalizeMemberConsentWriteDraft(seed, TEMPLATE_ID)
-      : {
-          schemaVersion: 1,
-          formSettings: { titleNumbering: 'numeric' },
-          paragraphs: [],
-        }
+function createPortraitConsentDraft(): WritingFormDraft {
+  return normalizeMemberConsentWriteDraft(createAgreementPortraitDraft(), TEMPLATE_ID)
+}
 
-  return { draft, signatures: {} }
+function createInitialPortraitConsentState(): PortraitConsentWriteState {
+  return { draft: createPortraitConsentDraft(), signatures: {} }
 }
 
 function prefillPortraitName(draft: WritingFormDraft, verifiedName: string): WritingFormDraft {
@@ -92,12 +87,13 @@ export function PortraitConsentWriteForm({
 }) {
   const bridge = peekPortraitConsentBridge()
   const verifiedName = bridge?.verifiedName?.trim() ?? ''
+  const draftScope = portraitConsentDraftScope(bridge)
 
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(INCOMPLETE_ALERT_MESSAGE)
   const [state, setState] = useState<PortraitConsentWriteState>(() => {
     const initial = createInitialPortraitConsentState()
-    const loaded = loadPortraitConsentDraftState(initial)
+    const loaded = loadPortraitConsentDraftState(initial, draftScope)
     const normalized = normalizeMemberConsentWriteDraft(loaded.draft as WritingFormDraft, TEMPLATE_ID)
     return {
       ...loaded,
@@ -107,8 +103,8 @@ export function PortraitConsentWriteForm({
   })
 
   useEffect(() => {
-    savePortraitConsentDraftState(state)
-  }, [state])
+    savePortraitConsentDraftState(state, draftScope)
+  }, [draftScope, state])
 
   const incomplete = hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId: TEMPLATE_ID,

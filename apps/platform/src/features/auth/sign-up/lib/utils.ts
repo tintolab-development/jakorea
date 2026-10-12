@@ -6,7 +6,7 @@ import type {
   SchoolStatus,
 } from '../model/sign-up.types'
 import { isDateWithinInputBounds } from '@/shared/ui/pf-date-input/date-utils'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from './constants'
+import { toApiSignupPhone } from './helpers/to-api-phone'
 
 /** 숫자만 입력해도 YYYY.MM.DD 형식으로 `.`을 자동 삽입한다. */
 export function formatBirthDateInput(value: string) {
@@ -79,7 +79,8 @@ export function getMemberTypeLabel(type: MemberType | null) {
 
 export function getGenderLabel(value: GenderType | null) {
   if (value === 'female') return '여성'
-  return '남성'
+  if (value === 'male') return '남성'
+  return '-'
 }
 
 export function getSchoolStatusLabel(value: SchoolStatus) {
@@ -131,8 +132,11 @@ export function buildConfirmationRows(input: {
 }): ConfirmationRow[] {
   const shared: ConfirmationRow[] = [
     { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
-    { label: '이름', value: input.name?.trim() || MOCK_VERIFIED_NAME },
-    { label: '휴대폰 번호', value: input.phone?.trim() || MOCK_VERIFIED_PHONE },
+    { label: '이름', value: input.name?.trim() || '-' },
+    {
+      label: '휴대폰 번호',
+      value: toApiSignupPhone(input.phone) || input.phone?.trim() || '-',
+    },
     { label: '생년월일', value: input.birthDate },
     { label: '성별', value: getGenderLabel(input.gender) },
   ]

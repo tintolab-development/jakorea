@@ -6,7 +6,6 @@ import type {
   MemberType,
   SchoolStatus,
 } from '../sign-up.types'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '../../lib/constants'
 import { toApiSignupPhone } from '../../lib/helpers/to-api-phone'
 import { parseBirthDate } from '../../lib/utils'
 import { buildTermsAgreementsFromCatalog } from './map-terms-agreements'
@@ -92,8 +91,8 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
   const member: MemberSignupRequest = {
     email: input.email.trim(),
     password: input.password,
-    name: (input.name ?? MOCK_VERIFIED_NAME).trim(),
-    phone: toApiSignupPhone(input.phone ?? MOCK_VERIFIED_PHONE),
+    name: input.name?.trim() ?? '',
+    phone: toApiSignupPhone(input.phone) ?? '',
     birthDate: toApiBirthDate(input.birthDate),
     gender: toApiGender(input.gender),
     under14: input.isUnderAgeSignup,
