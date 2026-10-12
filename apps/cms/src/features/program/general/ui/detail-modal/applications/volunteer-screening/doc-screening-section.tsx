@@ -18,6 +18,7 @@ import { useGeneralVolunteerDocScreening } from './use-doc-screening'
 import { isDocumentScreeningPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -257,7 +258,7 @@ export function GeneralVolunteerDocScreeningSection({
               scroll={{ x: GENERAL_DOC_SCREENING_TABLE_SCROLL_X }}
               rowSelection={{
                 fixed: true,
-                columnWidth: 68,
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
                 getCheckboxProps: record => ({

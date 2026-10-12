@@ -26,6 +26,7 @@ import {
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
+import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
 import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
@@ -118,6 +119,9 @@ function isIpsTypeIncomplete(category: string | undefined, detail: string | unde
 
 /** 공통 정보 저장 — 사전 교육 진행 일정 누락. 팝업은 공통 필수항목 미입력으로 노출 */
 export const PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE = '사전 교육 일정을 입력해주세요'
+
+/** ParagraphDatePicker schedule 모드 — 진행 일정에 시각(00:00만 아님) 필수 */
+export const EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE = '진행 일정에 시간을 설정해 주세요'
 
 /**
  * 일반 프로그램 공통 정보 — 등록(`registration-required-fields`)과 동일하게
@@ -338,6 +342,17 @@ export const generalProgramCommonInfoEditSchema = z
           })
         }
         if (
+          isPre &&
+          !isBlankText(session.scheduleDate) &&
+          isEducationScheduleProgressLineMissingOrWithoutClock(session.scheduleDate)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
+            path: ['curriculumSessions', index, 'scheduleDate'],
+          })
+        }
+        if (
           educationFormDetail === 'perSchedule' &&
           !isPre &&
           isBlankText(session.educationForm)
@@ -408,6 +423,12 @@ export const generalProgramCommonInfoEditSchema = z
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: isPre ? PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE : '일정을 선택해주세요',
+              path: ['scheduleDetails', index, 'scheduleDate'],
+            })
+          } else if (isEducationScheduleProgressLineMissingOrWithoutClock(detail.scheduleDate)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
               path: ['scheduleDetails', index, 'scheduleDate'],
             })
           }

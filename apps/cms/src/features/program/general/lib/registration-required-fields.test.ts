@@ -417,7 +417,8 @@ it('reproduce org multi curriculum volunteer preEdu', () => {
       1: { category: 'prepare', detail: 'none' },
       2: { category: 'inspire', detail: '' },
     },
-    'generalRegistration.educationCurriculum.preEducationScheduleLine': '26년 9월 18일(금)',
+    'generalRegistration.educationCurriculum.preEducationScheduleLine':
+      '26년 9월 18일(금) 10:40 ~ 11:40',
     'generalRegistration.educationScheduleSettings.scheduleLines': [
       '26년 9월 18일(금) 10:40 ~ 11:40',
       '26년 9월 28일(월) 10:40 ~ 11:40',
@@ -465,7 +466,8 @@ it('기관·복수회차 — 과제 overlay 잔존해도 완료이다', () => {
         'generalRegistration.educationCurriculum.assignmentByRound': {
           1: { enabled: true, period: '' },
         },
-        'generalRegistration.educationCurriculum.preEducationScheduleLine': '26년 9월 18일(금)',
+        'generalRegistration.educationCurriculum.preEducationScheduleLine':
+      '26년 9월 18일(금) 10:40 ~ 11:40',
         'generalRegistration.educationScheduleSettings.scheduleLines': [
           '26년 9월 18일(금) 10:40 ~ 11:40',
           '26년 9월 28일(월) 10:40 ~ 11:40',
@@ -651,7 +653,7 @@ it('일정형·IPS 일정별 — 행별 overlay 없어도 Prepare 기본값으�
         },
         'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
           1: '2026-10-16 10:00-12:00',
-          2: '2026-10-11 01:47-2026-10-22 02:47',
+          2: '2026-10-17 14:00-16:00',
         },
       }),
       ctx({
@@ -665,7 +667,7 @@ it('일정형·IPS 일정별 — 행별 overlay 없어도 Prepare 기본값으�
   ).toBe(false)
 })
 
-it('일정형·복수 회차·교육 형태 일정 공통 — 진행 일정(date)만 채우면 groupTimes 없이 완료이다', () => {
+it('일정형·복수 회차 — 진행 일정에 시각이 있으면 groupTimes 없이 완료이다', () => {
   expect(
     hasIncompleteGeneralProgramRegistrationRequiredFields(
       filledOverlay({
@@ -679,9 +681,9 @@ it('일정형·복수 회차·교육 형태 일정 공통 — 진행 일정(date
           3: '행사 3',
         },
         'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
-          1: '2026-10-16 10:00-12:00',
-          2: '2026-10-11 01:47-2026-10-22 02:47',
-          3: '2026-10-01 00:00-2026-10-21 01:00',
+          1: '26년 10월 16일(금) 10:00 ~ 12:00',
+          2: '26년 10월 11일(일) 9:30 ~ 12:00',
+          3: '26년 10월 1일(목) 14:00 ~ 16:00',
         },
       }),
       ctx({
@@ -701,6 +703,28 @@ it('일정형·복수 회차·교육 형태 일정 공통 — 진행 일정(date
       })
     )
   ).toBe(false)
+})
+
+it('일정형·복수 회차 — 진행 일정이 날짜만이면 미완료이다', () => {
+  expect(
+    describeIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': undefined,
+        'generalRegistration.kpi.dispatchedSchool': 10,
+        'generalRegistration.kpi.dispatchedClass': 5,
+        'generalRegistration.typeSettings.ipsType': { category: 'prepare', detail: 'none' },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': { 1: '행사 1' },
+        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+          1: '26년 10월 16일(금)',
+        },
+      }),
+      ctx({
+        programType: 'schedule',
+        sessionRoundType: 'multi',
+        scheduleCurriculumDetailCount: 1,
+      })
+    )
+  ).toBe('scheduleCurriculum.scheduleDate[1]')
 })
 
 it('일정형·교육형태 일정별 — overlay 미기록이면 UI 기본 온라인으로 완료이다', () => {

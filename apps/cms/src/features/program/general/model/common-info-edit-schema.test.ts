@@ -9,6 +9,7 @@ import {
   generalCommonInfoEditValuesToProgramPatch,
   overlayIpsIndexForScheduleDetail,
   persistScheduleEducationFormByDetailOverlay,
+  EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
   PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE,
   programToGeneralCommonInfoEditValues,
   resolveScheduleDetailEducationFormLabelForView,
@@ -249,7 +250,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
         blockKind: 'event',
         name: '오리엔테이션',
         groupTimes: [{ startTime: '', endTime: '' }],
-        scheduleDate: '26년 4월 20일(월)',
+        scheduleDate: '26년 4월 20일(월) 9:30 ~ 12:20',
         assignmentEnabled: false,
         assignmentPeriod: '',
         educationForm: 'offline',
@@ -405,7 +406,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
         blockKind: 'preEducation',
         name: '사전 워크숍',
         groupTimes: [{ startTime: '', endTime: '' }],
-        scheduleDate: '26년 4월 20일(월)',
+        scheduleDate: '26년 4월 20일(월) 9:30 ~ 12:20',
         assignmentEnabled: false,
         assignmentPeriod: '',
         educationForm: 'online',
@@ -448,7 +449,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
         blockKind: 'preEducation',
         name: '사전 교육',
         groupTimes: [{ startTime: '', endTime: '' }],
-        scheduleDate: '26년 4월 20일(월)',
+        scheduleDate: '26년 4월 20일(월) 9:30 ~ 12:20',
         assignmentEnabled: false,
         assignmentPeriod: '',
         educationForm: 'offline',
@@ -508,6 +509,84 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
         issue =>
           issue.path.includes('scheduleDate') &&
           issue.message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE
+      )
+    ).toBe(true)
+  })
+
+  it('일정형 사전 교육 — 진행 일정에 시각이 없으면 검증 실패한다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'multi'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.scheduleCurriculumPreEducation = true
+    values.scheduleDetails = [
+      {
+        scheduleLabel: '사전 교육',
+        blockKind: 'preEducation',
+        name: '사전 워크숍',
+        groupTimes: [{ startTime: '', endTime: '' }],
+        scheduleDate: '26년 4월 20일(월)',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'online',
+        participationMethod: 'individual',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const result = generalProgramCommonInfoEditSchema.safeParse(values)
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(
+      result.error.issues.some(
+        issue =>
+          issue.path.includes('scheduleDate') &&
+          issue.message === EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE
+      )
+    ).toBe(true)
+  })
+
+  it('커리큘럼형 사전 교육 — 진행 일정에 시각이 없으면 검증 실패한다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'curriculum'
+    values.sessionRound = 'single'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.scheduleCurriculumPreEducation = true
+    values.curriculumSessions = [
+      {
+        sessionLabel: '사전 교육',
+        title: '사전 워크숍',
+        description: '',
+        scheduleDate: '26년 4월 20일(월)',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'offline',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const result = generalProgramCommonInfoEditSchema.safeParse(values)
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(
+      result.error.issues.some(
+        issue =>
+          issue.path.join('.') === 'curriculumSessions.0.scheduleDate' &&
+          issue.message === EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE
       )
     ).toBe(true)
   })

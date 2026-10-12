@@ -312,6 +312,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
             }
             ipsPerSchedule={extras.ipsScheduleDetail === 'perSchedule'}
             sessionRoundType={extras.sessionRoundType}
+            participantIndividual={participant.individual}
             participantOrganization={participant.organization}
             educationFormScheduleDetail={extras.educationFormScheduleDetail ?? 'common'}
             participationScheduleDetail={extras.participationScheduleDetail ?? 'common'}
@@ -322,6 +323,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           <ProgramRegistrationEducationCurriculumParagraph
             key={`pr-curriculum-${extras.sessionRoundType}-${extras.educationFormScheduleDetail}-${extras.participationScheduleDetail}-${extras.ipsScheduleDetail}-${participant.organization ? 'org' : 'ind'}`}
             sessionRoundType={extras.sessionRoundType}
+            participantIndividual={participant.individual}
             participantOrganization={participant.organization}
             curriculumSessionCount={extras.curriculumSessionCount ?? 1}
             onDeleteCurriculumSession={() =>
@@ -372,27 +374,27 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               operationStart={program.startDate}
               operationEnd={program.endDate}
             />
+        }
+      >
+        <ProgramRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={extras.educationScheduleMode ?? 'date'}
+          onEducationScheduleModeChange={value =>
+            commitExtras({ ...extras, educationScheduleMode: value })
           }
-        >
-          <ProgramRegistrationEducationScheduleSettingsParagraph
-            educationScheduleMode={extras.educationScheduleMode ?? 'date'}
-            onEducationScheduleModeChange={value =>
-              commitExtras({ ...extras, educationScheduleMode: value })
-            }
-            autoFillFromScheduleGroupTimes={
-              extras.programType === 'schedule' &&
-              extras.sessionRoundType === 'single' &&
-              !participant.organization
-            }
-            disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
-              participantOrganization: participant.organization,
-              sessionRound: extras.sessionRoundType,
-            })}
-            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
-              participantOrganization: participant.organization,
-              educationStructure: extras.programType,
-            })}
-          />
+          autoFillFromScheduleGroupTimes={
+            extras.programType === 'schedule' &&
+            extras.sessionRoundType === 'single' &&
+            !participant.organization
+          }
+          disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
+            participantOrganization: participant.organization,
+            sessionRound: extras.sessionRoundType,
+          })}
+          lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+            participantOrganization: participant.organization,
+            educationStructure: extras.programType,
+          })}
+        />
         </ProgramCommonInfoEditSection>
       )}
     </ProgramCommonInfoEditSections>
