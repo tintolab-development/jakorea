@@ -74,6 +74,7 @@ import { EducationSchoolNameField } from './education-school-name-field'
 import { getInstructorApplyConsentPath } from './consent/catalog'
 import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
 import {
+  applyLockedBasicToInstructorForm,
   isInstructorApplyHomeAddressLocked,
   type InstructorApplyLockedBasicInfo,
 } from './map-locked-basic-info'
@@ -122,35 +123,6 @@ function shouldPreserveEmploymentStatus(
   draft: InstructorSharedProfileFormValues | null,
 ): boolean {
   return draft?.memberType === 'school_teacher' && Boolean(draft.employmentStatus)
-}
-
-function applyLockedBasic(
-  base: InstructorSharedProfileFormValues,
-  locked: InstructorApplyLockedBasicInfo,
-  preserveEmploymentStatus: boolean,
-): InstructorSharedProfileFormValues {
-  const homeAddressLocked = isInstructorApplyHomeAddressLocked(locked)
-  const employmentStatus =
-    locked.memberType === 'school_teacher'
-      ? preserveEmploymentStatus
-        ? base.employmentStatus
-        : locked.employmentStatus
-      : ''
-  return {
-    ...base,
-    name: locked.name,
-    gender: locked.gender || base.gender,
-    birthDate: locked.birthDate,
-    contact: locked.contact,
-    email: locked.email,
-    homeAddress: homeAddressLocked ? locked.homeAddress : base.homeAddress,
-    homeAddressDetail: homeAddressLocked ? locked.homeAddressDetail : base.homeAddressDetail,
-    memberType: locked.memberType,
-    schoolName: locked.memberType === 'school_teacher' ? locked.schoolName : '',
-    employmentStatus,
-    affiliationName: locked.memberType === 'general' ? locked.affiliationName : '',
-    affiliationNone: locked.memberType === 'general' ? locked.affiliationNone : false,
-  }
 }
 
 type AlertState = {
@@ -356,7 +328,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
     const draft = loadInstructorApplyFormDraft()
     const preserveEmploymentStatus = shouldPreserveEmploymentStatus(draft)
     employmentTouchedRef.current = preserveEmploymentStatus
-    return applyLockedBasic(
+    return applyLockedBasicToInstructorForm(
       draft ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
       lockedBasic,
       preserveEmploymentStatus,
@@ -370,7 +342,9 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const isHomeAddressLocked = isInstructorApplyHomeAddressLocked(lockedBasic)
 
   useEffect(() => {
-    setValues(prev => applyLockedBasic(prev, lockedBasic, employmentTouchedRef.current))
+    setValues(prev =>
+      applyLockedBasicToInstructorForm(prev, lockedBasic, employmentTouchedRef.current),
+    )
   }, [lockedBasic])
 
   useEffect(() => {

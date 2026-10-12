@@ -6,10 +6,13 @@ import {
   getInstructorRoleRequestStatusMessage,
   INSTRUCTOR_APPLY_PATH,
   InstructorApplyForm,
+  InstructorApplyPendingReviewView,
+  isInstructorRoleRequestPendingReview,
   MYPAGE_PATH,
   useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
 } from '@/features/mypage'
+import { InstructorApplyPendingTitle } from './instructor-apply-pending-title'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getAccessToken,
@@ -29,6 +32,8 @@ export function MypageInstructorApplyPage() {
   const currentRequestQuery = useCurrentInstructorRoleRequestQuery({ enabled: remoteSession })
   const canSubmit = canSubmitInstructorRoleRequest(currentRequestQuery.data)
   const statusMessage = getInstructorRoleRequestStatusMessage(currentRequestQuery.data)
+  const isPendingReview =
+    remoteSession && isInstructorRoleRequestPendingReview(currentRequestQuery.data)
 
   useEffect(() => {
     if (remoteSession) {
@@ -62,7 +67,7 @@ export function MypageInstructorApplyPage() {
             onClick={() => navigate(MYPAGE_PATH)}
           />
         }
-        title="강사 신청"
+        title={isPendingReview ? <InstructorApplyPendingTitle /> : '강사 신청'}
       >
         {isPageLoading ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -76,6 +81,11 @@ export function MypageInstructorApplyPage() {
           <PFText as="p" typo="bd-md-rg" color="error">
             강사 신청 상태를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
           </PFText>
+        ) : isPendingReview && currentRequestQuery.data ? (
+          <InstructorApplyPendingReviewView
+            summary={currentRequestQuery.data}
+            lockedBasic={lockedBasic}
+          />
         ) : remoteSession && !canSubmit ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             {statusMessage}
