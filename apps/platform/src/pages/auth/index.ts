@@ -23,6 +23,7 @@ export {
 } from './find-password'
 export {
   SignUpPage,
+  SignUpPortraitConsentPage,
   SignUpCompletePage,
   SignUpSocialConnectPage,
   SignUpSocialConnectCompletePage,

@@ -83,7 +83,13 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
                 <button
                   className={styles.termsViewButton}
                   type="button"
-                  onClick={() => terms.open(agreementKeyToTermsView(item.key))}
+                  onClick={() => {
+                    if (item.key === 'portrait') {
+                      agreement.openPortraitConsent()
+                      return
+                    }
+                    terms.open(agreementKeyToTermsView(item.key))
+                  }}
                 >
                   <PFText typo="bd-sm-md" color="inherit">
                     보기

@@ -78,6 +78,13 @@ import {
   parseSignUpStep,
   type SignUpWizardPhase,
 } from '../lib/wizard-location'
+import {
+  buildPortraitConsentPath,
+  consumePortraitConsentBridge,
+  dismissPortraitConsentRestore,
+  savePortraitConsentBridge,
+  type PortraitConsentBridgeSource,
+} from '../lib/portrait-consent-bridge'
 
 export type UseSignUpReturn = ReturnType<typeof useSignUp>
 
@@ -208,6 +215,24 @@ export function useSignUp() {
       setSearchParams(buildSignUpSearch(1), { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    const bridge = consumePortraitConsentBridge()
+    if (bridge == null) return
+
+    if (bridge.agreements != null) {
+      setAgreements({
+        ...bridge.agreements,
+        portrait: bridge.portraitCompleted === true ? true : bridge.agreements.portrait,
+      })
+    }
+    if (bridge.guardianAgreements != null) {
+      setGuardianAgreements({
+        ...bridge.guardianAgreements,
+        portrait: bridge.portraitCompleted === true ? true : bridge.guardianAgreements.portrait,
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (skipUrlSyncRef.current) {
@@ -355,7 +380,36 @@ export function useSignUp() {
     pushWizard(step)
   }
 
+  const openPortraitConsentForm = (
+    source: PortraitConsentBridgeSource,
+    nextAgreements: AgreementState,
+    nextGuardianAgreements: GuardianAgreementState
+  ) => {
+    const returnSearch =
+      source === 'guardian'
+        ? `?${buildSignUpSearch(3, 'guardian-agreement')}`
+        : `?${buildSignUpSearch(3, 'agreement')}`
+
+    savePortraitConsentBridge({
+      source,
+      returnSearch,
+      agreements: nextAgreements,
+      guardianAgreements: nextGuardianAgreements,
+      verifiedName,
+      portraitCompleted: false,
+    })
+    navigate(buildPortraitConsentPath(returnSearch))
+  }
+
   const toggleAgreement = (key: AgreementKey) => {
+    if (key === 'portrait') {
+      if (agreements.portrait) {
+        setAgreements(prev => setAgreementState(prev, 'portrait', false))
+        return
+      }
+      openPortraitConsentForm('adult', agreements, guardianAgreements)
+      return
+    }
     setAgreements(prev => toggleAgreementState(prev, key))
   }
 
@@ -363,11 +417,38 @@ export function useSignUp() {
     setAgreements(prev => setAgreementState(prev, key, agreed))
   }
 
+  const openPortraitConsentView = (source: PortraitConsentBridgeSource) => {
+    openPortraitConsentForm(source, agreements, guardianAgreements)
+  }
+
   const toggleAllAgreements = () => {
-    setAgreements(prev => toggleAllAgreementState(prev, visibleAgreementItems))
+    if (agreementDerived.isAllAgreed) {
+      setAgreements(prev => toggleAllAgreementState(prev, visibleAgreementItems))
+      return
+    }
+
+    const next: AgreementState = { ...agreements }
+    for (const item of visibleAgreementItems) {
+      if (item.key !== 'portrait') {
+        next[item.key] = true
+      }
+    }
+    setAgreements(next)
+
+    if (!next.portrait) {
+      openPortraitConsentForm('adult', next, guardianAgreements)
+    }
   }
 
   const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
+    if (key === 'portrait') {
+      if (guardianAgreements.portrait) {
+        setGuardianAgreements(prev => setGuardianAgreementState(prev, 'portrait', false))
+        return
+      }
+      openPortraitConsentForm('guardian', agreements, guardianAgreements)
+      return
+    }
     setGuardianAgreements(prev => toggleGuardianAgreementState(prev, key))
   }
 
@@ -376,11 +457,27 @@ export function useSignUp() {
   }
 
   const toggleAllGuardianAgreements = () => {
-    setGuardianAgreements(prev => toggleAllGuardianAgreementState(prev))
+    if (guardianAgreementDerived.isAllAgreed) {
+      setGuardianAgreements(prev => toggleAllGuardianAgreementState(prev))
+      return
+    }
+
+    const next: GuardianAgreementState = { ...guardianAgreements }
+    for (const item of guardianAgreementItems) {
+      if (item.key !== 'portrait') {
+        next[item.key] = true
+      }
+    }
+    setGuardianAgreements(next)
+
+    if (!next.portrait) {
+      openPortraitConsentForm('guardian', agreements, next)
+    }
   }
 
   const handleGuardianAgreementContinue = () => {
     if (guardianAgreementDerived.isRequiredAgreed) {
+      dismissPortraitConsentRestore()
       setIsGuardianAgreementCompleted(true)
       pushWizard(3, 'guardian-identity')
     }
@@ -484,6 +581,7 @@ export function useSignUp() {
 
   const handleAgreementContinue = () => {
     if (agreementDerived.isRequiredAgreed) {
+      dismissPortraitConsentRestore()
       pushWizard(4)
     }
   }
@@ -714,6 +812,7 @@ export function useSignUp() {
         toggle: toggleGuardianAgreement,
         set: setGuardianAgreement,
         toggleAll: toggleAllGuardianAgreements,
+        openPortraitConsent: () => openPortraitConsentView('guardian'),
         continue: handleGuardianAgreementContinue,
       },
       identity: {
@@ -764,6 +863,7 @@ export function useSignUp() {
       toggle: toggleAgreement,
       set: setAgreement,
       toggleAll: toggleAllAgreements,
+      openPortraitConsent: () => openPortraitConsentView('adult'),
       continue: handleAgreementContinue,
       termsLoading: termsQuery.isFetching,
       termsError: termsQuery.isError,
