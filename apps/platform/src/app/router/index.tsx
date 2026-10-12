@@ -20,6 +20,7 @@ import {
   SignInPage,
   SignUpCompletePage,
   SignUpPage,
+  SignUpPortraitConsentPage,
   SignUpIdentityCallbackPage,
   SignUpGuardianIdentityCallbackPage,
   SignUpIdentityMockNicePage,
@@ -246,6 +247,10 @@ export const router = createBrowserRouter([
       {
         path: '/mypage/instructor-apply/consent/:consentKey',
         element: <MypageInstructorApplyConsentPage />,
+      },
+      {
+        path: '/auth/sign-up/portrait-consent',
+        element: <SignUpPortraitConsentPage />,
       },
       {
         path: '/mypage/education/:applicationId/settlement/write',

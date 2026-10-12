@@ -98,6 +98,20 @@
   max-width: 360px;
 }
 
+.portraitAffiliationRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitAffiliationRow > :first-child {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
 .tableBlock {
   display: flex;
   width: 100%;

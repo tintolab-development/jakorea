@@ -55,6 +55,7 @@ import {
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
+  shouldLockProgressSchedulePeriodToggle,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -172,6 +173,7 @@ import {
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
@@ -2512,6 +2514,10 @@ function CurriculumPreEducationEventEditBlock({
   formMode: 'view' | 'edit'
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
+  const participantIndividual = Boolean(editForm.watch('participantIndividual'))
+  const participantOrganization = Boolean(editForm.watch('participantOrganization'))
+  const sessionRound =
+    editForm.watch('sessionRound') === 'multi' ? 'multi' : 'single'
   return (
     <div className="program-registration-schedule-curriculum__block">
       <div className="program-registration-schedule-curriculum__session-heading">
@@ -2559,11 +2565,11 @@ function CurriculumPreEducationEventEditBlock({
                           appliedRange && educationScheduleRangeHasClock(appliedRange)
                         )
                         return (
-                          <ParagraphDatePicker
-                            mode="single"
-                            presetMode="schedule"
-                            customizable={false}
-                            suppressAutoTodayWhenEmpty
+                          <EducationProgressScheduleDatePicker
+                            participantIndividual={participantIndividual}
+                            participantOrganization={participantOrganization}
+                            programType="curriculum"
+                            sessionRound={sessionRound}
                             value={appliedRange?.[0] ?? null}
                             onChange={() => {}}
                             onRangeChange={([start, end]) => {
@@ -2571,8 +2577,6 @@ function CurriculumPreEducationEventEditBlock({
                             }}
                             appliedSurfaceRange={educationScheduleAppliedSurfaceRange(appliedRange)}
                             appliedSurfaceWithTime={appliedWithTime}
-                            width="100%"
-                            placeholder="일정을 선택하세요"
                           />
                         )
                       }}
@@ -3427,6 +3431,10 @@ function ScheduleEventDetailEditBlock({
   canRemove?: boolean
 }) {
   const headingLabel = isPreEducationBlock ? '사전 교육' : scheduleLabel
+  const participantIndividual = Boolean(editForm.watch('participantIndividual'))
+  const participantOrganization = Boolean(editForm.watch('participantOrganization'))
+  const sessionRound =
+    editForm.watch('sessionRound') === 'multi' ? 'multi' : 'single'
 
   return (
     <div className="program-registration-schedule-curriculum__block">
@@ -3477,11 +3485,11 @@ function ScheduleEventDetailEditBlock({
                           appliedRange && educationScheduleRangeHasClock(appliedRange)
                         )
                         return (
-                          <ParagraphDatePicker
-                            mode="single"
-                            presetMode="schedule"
-                            customizable={false}
-                            suppressAutoTodayWhenEmpty
+                          <EducationProgressScheduleDatePicker
+                            participantIndividual={participantIndividual}
+                            participantOrganization={participantOrganization}
+                            programType="schedule"
+                            sessionRound={sessionRound}
                             value={appliedRange?.[0] ?? null}
                             onChange={() => {}}
                             onRangeChange={([start, end]) => {
@@ -3489,8 +3497,6 @@ function ScheduleEventDetailEditBlock({
                             }}
                             appliedSurfaceRange={educationScheduleAppliedSurfaceRange(appliedRange)}
                             appliedSurfaceWithTime={appliedWithTime}
-                            width="100%"
-                            placeholder="일정을 선택하세요"
                           />
                         )
                       }}
@@ -4456,7 +4462,14 @@ function ScheduleSettingsEditFields({
   const educationStructure = form.watch('educationStructure')
   const sessionRound = form.watch('sessionRound')
   const participantOrganization = form.watch('participantOrganization')
+  const participantIndividual = form.watch('participantIndividual')
   const scheduleDetails = form.watch('scheduleDetails') ?? []
+  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    participantIndividual: Boolean(participantIndividual),
+    participantOrganization: Boolean(participantOrganization),
+    programType: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+  })
   const autoFillFromScheduleGroupTimes =
     educationStructure === 'schedule' &&
     sessionRound === 'single' &&
@@ -4607,11 +4620,12 @@ function ScheduleSettingsEditFields({
             scheduleMode === 'date' ? (
               <ParagraphDatePicker
                 mode="single"
-                presetMode={autoFillDatePicker ? 'date' : 'schedule'}
+                presetMode="schedule"
                 customizable={false}
-                showPeriodToggle={false}
-                showTimeToggle={!autoFillDatePicker}
-                lockTimeToggleOn={!autoFillDatePicker}
+                showPeriodToggle={!lockProgressSchedulePeriodToggle}
+                showTimeToggle={false}
+                lockTimeToggleOn
+                lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
@@ -4625,6 +4639,10 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
+                lockTimeToggleOn={shouldLockEducationScheduleCalendarToggles({
+                  participantOrganization: Boolean(participantOrganization),
+                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
+                })}
                 lockPeriodToggleOn={shouldLockEducationScheduleCalendarToggles({
                   participantOrganization: Boolean(participantOrganization),
                   educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',

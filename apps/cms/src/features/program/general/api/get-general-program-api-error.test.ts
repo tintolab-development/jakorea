@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getGeneralProgramApiErrorMessage,
   getParticipationConsentRequiredMessage,
+  getProgramFormBindingErrorMessage,
 } from './get-general-program-api-error'
 
 describe('getGeneralProgramApiErrorMessage', () => {
@@ -183,6 +184,40 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
       '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.'
     )
+  })
+})
+
+describe('getProgramFormBindingErrorMessage', () => {
+  const slotConflictError = {
+    response: {
+      status: 409,
+      data: {
+        success: false,
+        message: '같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다.',
+        error: {
+          code: 'PROGRAM_FORM_BINDING_ACTIVE_SLOT_CONFLICT',
+          field: 'formBindings',
+        },
+      },
+    },
+  }
+
+  it('SURVEY+SCHEDULE 슬롯 충돌은 동일 templateVersion 재등록 안내로 매핑한다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(slotConflictError, 'fallback', {
+        formType: 'SURVEY',
+        targetScope: 'SCHEDULE',
+      })
+    ).toContain('동일한 설문 양식 버전')
+  })
+
+  it('만족도 등 다른 formType 슬롯 충돌은 기본 슬롯 안내를 쓴다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(slotConflictError, 'fallback', {
+        formType: 'SATISFACTION',
+        targetScope: 'PROGRAM',
+      })
+    ).toBe('같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다.')
   })
 })
 

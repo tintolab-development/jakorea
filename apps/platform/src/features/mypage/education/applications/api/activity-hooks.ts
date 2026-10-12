@@ -574,10 +574,7 @@ export function useApplicationSchedulesQuery(
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
-    items: (query.data ?? []).flatMap((item, index) => {
-      const mapped = mapPortalEducationSchedule(item, index)
-      return mapped ? [mapped] : []
-    }),
+    items: (query.data ?? []).map((item, index) => mapPortalEducationSchedule(item, index)),
   }
 }
 

@@ -97,20 +97,69 @@ type PortalFileDownloadResolve = {
   downloadUrl?: string
 }
 
+export type PortalEducationStructure = 'CURRICULUM' | 'SCHEDULE'
+export type PortalSessionRound = 'SINGLE' | 'MULTI'
+export type PortalScheduleBlockKind = 'PRE_EDUCATION' | 'SUB' | 'EVENT'
+export type PortalAssignmentStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'FEEDBACK'
+  | 'REVISION_SUBMITTED'
+export type PortalAssignmentSubmissionKind = 'FILE' | 'URL'
+
+export type PortalEducationScheduleAssignmentSubmission = {
+  id?: number | string
+  kind?: PortalAssignmentSubmissionKind | string
+  fileName?: string
+  url?: string
+}
+
+export type PortalEducationScheduleAssignment = {
+  enabled?: boolean
+  submitStartAt?: string | null
+  submitEndAt?: string | null
+  periodLabel?: string
+  status?: PortalAssignmentStatus | string
+  formResponseId?: number
+  submissions?: PortalEducationScheduleAssignmentSubmission[]
+}
+
+export type PortalEducationScheduleGroupTime = {
+  startTime?: string
+  endTime?: string
+}
+
 export type PortalEducationSchedule = {
-  scheduleId?: number
+  scheduleId?: number | null
   sessionNo?: number
   title?: string
-  startAt?: string
-  endAt?: string
+  startAt?: string | null
+  endAt?: string | null
   locationName?: string
+  attendanceStatus?: string | null
+  absenceReason?: string
+  sessionLabel?: string
+  unitName?: string
+  content?: string
+  scheduleLabel?: string
+  scheduleName?: string
+  blockKind?: PortalScheduleBlockKind | string
+  progressTimeLabel?: string
+  groupTimes?: PortalEducationScheduleGroupTime[]
+  assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
-  attendanceStatus?: string
   surveyCount?: number
+  absenceReasonStatus?: string
+  availableActions?: string[]
 }
 
 export type PortalEducationScheduleList = {
+  applicationId?: number
+  applicationType?: string
+  educationStructure?: PortalEducationStructure | string | null
+  sessionRound?: PortalSessionRound | string | null
   items?: PortalEducationSchedule[]
+  scopeStatus?: string | null
 }
 
 export type PortalFormListItem = {

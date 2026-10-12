@@ -48,7 +48,10 @@ import {
   mapProgramPostReadsToDomainRows,
   mapProgramPostResponseToDomain,
 } from '@/features/program/general/api/adapters/program-post-adapters'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  getProgramFormBindingErrorMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type {
@@ -60,6 +63,10 @@ import type {
   ProgramPostReadRow,
 } from '@/types/domain'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
+import {
+  applySurveyDisplayTitles,
+  fetchSurveyTitlesByTemplateVersionIds,
+} from '@/features/program/shared/lib/survey-management/survey-display-titles'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type {
   SurveyPollRawResponse,
@@ -472,7 +479,7 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
     retry: false,
   })
 
-  const registeredSurveys = useMemo((): RegisteredSurvey[] | null => {
+  const registeredSurveysBase = useMemo((): RegisteredSurvey[] | null => {
     if (!remoteEnabled) return null
     return mergeSurveysWithBindings(surveysQuery.data ?? [], bindingsQuery.data ?? []).filter(
       survey => {
@@ -489,6 +496,38 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
     )
   }, [bindingsQuery.data, remoteEnabled, surveysQuery.data])
 
+  const surveyTitleVersionIdsKey = useMemo(() => {
+    if (registeredSurveysBase == null) return ''
+    const ids = registeredSurveysBase.map(s => s.id).filter(id => /^\d+$/.test(id))
+    return [...new Set(ids)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(',')
+  }, [registeredSurveysBase])
+
+  const surveyDisplayTitlesQuery = useQuery({
+    queryKey: generalProgramQueryKeys.surveyDisplayTitles(
+      programId ?? '',
+      surveyTitleVersionIdsKey
+    ),
+    queryFn: () =>
+      fetchSurveyTitlesByTemplateVersionIds(
+        surveyTitleVersionIdsKey.split(',').filter(id => id !== '')
+      ),
+    enabled:
+      remoteEnabled &&
+      Boolean(programId) &&
+      surveyTitleVersionIdsKey !== '' &&
+      registeredSurveysBase != null &&
+      registeredSurveysBase.length > 0,
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+
+  const registeredSurveys = useMemo((): RegisteredSurvey[] | null => {
+    if (registeredSurveysBase == null) return null
+    const titles = surveyDisplayTitlesQuery.data
+    if (titles == null || titles.size === 0) return registeredSurveysBase
+    return applySurveyDisplayTitles(registeredSurveysBase, titles)
+  }, [registeredSurveysBase, surveyDisplayTitlesQuery.data])
+
   const classifiedBindings = useMemo((): ClassifiedFormBinding[] | null => {
     if (!remoteEnabled) return null
     return classifyProgramFormBindings(bindingsQuery.data ?? [])
@@ -502,7 +541,8 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
       ? surveysQuery.isFetching ||
         surveysQuery.isLoading ||
         bindingsQuery.isFetching ||
-        bindingsQuery.isLoading
+        bindingsQuery.isLoading ||
+        surveyDisplayTitlesQuery.isFetching
       : false,
     /** 최초 로드만 — 백그라운드 재조회 중에는 false (결과 뷰 언마운트 방지) */
     initialLoading: remoteEnabled
@@ -618,6 +658,9 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
       queryClient.invalidateQueries({
         queryKey: [...generalProgramQueryKeys.all, 'survey-summary', programId],
       }),
+      queryClient.invalidateQueries({
+        queryKey: [...generalProgramQueryKeys.all, 'survey-display-titles', programId],
+      }),
     ])
   }, [programId, queryClient])
 
@@ -656,9 +699,13 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
       } catch (error) {
         return {
           ok: false as const,
-          message: getGeneralProgramApiErrorMessage(
+          message: getProgramFormBindingErrorMessage(
             error,
-            '설문 등록에 실패했습니다. 다시 시도해 주세요.'
+            '설문 등록에 실패했습니다. 다시 시도해 주세요.',
+            {
+              formType: payload.formType,
+              targetScope: payload.targetScope,
+            }
           ),
         }
       }

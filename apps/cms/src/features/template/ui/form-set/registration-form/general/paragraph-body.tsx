@@ -28,6 +28,7 @@ import { resolveGeneralRegistrationKpiFieldAvailability } from '@/features/progr
 import {
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
+  shouldLockProgressSchedulePeriodToggle,
 } from '@/features/program/general/lib/schedule-detail-form'
 
 export type ProgramRegistrationType = 'curriculum' | 'schedule'
@@ -293,6 +294,12 @@ export function renderProgramRegistrationParagraphBody(
             lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
               participantOrganization: options.participant.organization,
               educationStructure: options.programType,
+            })}
+            lockProgressSchedulePeriodToggle={shouldLockProgressSchedulePeriodToggle({
+              participantIndividual: options.participant.individual,
+              participantOrganization: options.participant.organization,
+              programType: options.programType,
+              sessionRound: options.sessionRoundType,
             })}
           />
         )

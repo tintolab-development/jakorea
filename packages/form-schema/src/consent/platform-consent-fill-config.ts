@@ -1,5 +1,6 @@
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
 } from '../writing-form/draft-schema.js'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
@@ -18,6 +19,10 @@ export const NOTICE_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
 ])
 
+export const PORTRAIT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemDate,
+])
+
 export function resolvePlatformConsentHiddenParagraphIds(templateId: string): Set<string> {
   if (templateId === 'agreement-third-party') {
     return PAYMENT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS
@@ -27,6 +32,9 @@ export function resolvePlatformConsentHiddenParagraphIds(templateId: string): Se
   }
   if (templateId === 'agreement-notice') {
     return NOTICE_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS
+  }
+  if (templateId === 'agreement-portrait') {
+    return PORTRAIT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS
   }
   return new Set<string>()
 }
