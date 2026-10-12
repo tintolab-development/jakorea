@@ -115,3 +115,13 @@
   gap: var(--spacing-8);
   margin-top: var(--spacing-28);
 }
+
+@media (--bp-below-pc) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+}

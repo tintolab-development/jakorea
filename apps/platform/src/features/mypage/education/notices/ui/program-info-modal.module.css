@@ -13,7 +13,7 @@
   gap: var(--spacing-24);
   overflow-x: hidden;
   overflow-y: auto;
-  margin-top: var(--spacing-16);
+  margin-top: var(--spacing-28);
 }
 
 .detail {

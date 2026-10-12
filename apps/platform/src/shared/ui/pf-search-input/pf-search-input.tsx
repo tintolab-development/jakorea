@@ -50,12 +50,13 @@ export function PFSearchInput({
   }
 
   const icon = (
-    <img
-      className={styles.icon}
-      src={isOutlined ? searchWarm24IconUrl : searchMintIconUrl}
-      alt=""
-      aria-hidden="true"
-    />
+    <span className={styles.iconWrap} aria-hidden="true">
+      <img
+        className={styles.icon}
+        src={isOutlined ? searchWarm24IconUrl : searchMintIconUrl}
+        alt=""
+      />
+    </span>
   )
 
   return (

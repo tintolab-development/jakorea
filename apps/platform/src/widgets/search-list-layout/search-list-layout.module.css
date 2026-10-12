@@ -25,3 +25,21 @@
   justify-content: center;
   margin-top: var(--spacing-40);
 }
+
+@media (--bp-below-pc) {
+  .search {
+    margin-bottom: var(--spacing-16);
+  }
+
+  .filters {
+    margin-bottom: 0;
+  }
+
+  .toolbar {
+    margin-bottom: var(--spacing-20);
+  }
+
+  .pagination {
+    margin-top: var(--spacing-32);
+  }
+}

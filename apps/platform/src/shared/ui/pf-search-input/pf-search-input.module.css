@@ -64,12 +64,23 @@
   opacity: 0.5;
 }
 
+.iconWrap {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
 .icon {
   display: block;
-  flex: 0 0 auto;
   width: 24px;
   height: 24px;
   aspect-ratio: 1 / 1;
+}
+
+.underline .iconWrap {
+  width: 32px;
+  height: 32px;
 }
 
 .underline .icon {
@@ -137,4 +148,30 @@
 
 .input::-webkit-search-cancel-button {
   display: none;
+}
+
+@media (--bp-below-pc) {
+  .underline {
+    gap: 0;
+  }
+
+  .underline .iconWrap {
+    width: 26px;
+    height: 26px;
+    flex-direction: column;
+    margin-right: 4px;
+  }
+
+  .underline .icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .underline .input,
+  .underline .input::placeholder {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
 }
