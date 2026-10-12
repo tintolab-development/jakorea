@@ -24,7 +24,11 @@ function shouldHideParagraph(
   hiddenParagraphIds: ReadonlySet<string>
 ): boolean {
   if (hiddenParagraphIds.has(paragraph.id)) return true
-  if (paragraph.kind === 'description' && paragraph.variant === 'system') return true
+  if (paragraph.kind === 'description' && paragraph.variant === 'system') {
+    /* 전자서명 sidecar — renderParagraphSlot에서 처리 */
+    if (paragraph.systemPreset === 'agreement_signature') return false
+    return true
+  }
   if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
     return true
   }

@@ -7,6 +7,7 @@ import {
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   type HorizontalTableParagraph,
   type MultipleChoiceParagraph,
   type TableBottomConsent,
@@ -33,6 +34,7 @@ import {
 import { ConsentWriteRadioGroup } from './consent-radio'
 import { ConsentInfoTable } from './info-table'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
+import { PlatformPortraitPersonalConsentTable } from './portrait-personal-consent-table'
 import { resolveHorizontalTablePlatformView } from './horizontal-table-from-schema'
 import styles from './consent-form.module.css'
 
@@ -132,6 +134,19 @@ export function PlatformConsentParagraphBody({
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    if (paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable) {
+      return (
+        <PlatformPortraitPersonalConsentTable
+          paragraph={paragraph}
+          onUpdateParagraph={onUpdateParagraph}
+        />
+      )
+    }
+
+    const isPortraitLockedBodyTable =
+      paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable ||
+      paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
+
     return (
       <FormTemplateHost surface="platformUser">
         <VerticalTablePreviewBody
@@ -144,33 +159,45 @@ export function PlatformConsentParagraphBody({
                 : current
             )
           }
-          onCellChange={(rowIndex, stageIndex, value) =>
-            onUpdateParagraph(paragraph.id, current =>
-              current.kind === 'single_item' && current.variant === 'vertical_table'
-                ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
-                : current
-            )
+          onCellChange={
+            isPortraitLockedBodyTable
+              ? undefined
+              : (rowIndex, stageIndex, value) =>
+                  onUpdateParagraph(paragraph.id, current =>
+                    current.kind === 'single_item' && current.variant === 'vertical_table'
+                      ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
+                      : current
+                  )
           }
-          onCompositeTimeChange={(rowIndex, stageIndex, value) =>
-            onUpdateParagraph(paragraph.id, current =>
-              current.kind === 'single_item' && current.variant === 'vertical_table'
-                ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
-                : current
-            )
+          onCompositeTimeChange={
+            isPortraitLockedBodyTable
+              ? undefined
+              : (rowIndex, stageIndex, value) =>
+                  onUpdateParagraph(paragraph.id, current =>
+                    current.kind === 'single_item' && current.variant === 'vertical_table'
+                      ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
+                      : current
+                  )
           }
-          onMultipleChoiceChange={(rowIndex, stageIndex, values) =>
-            onUpdateParagraph(paragraph.id, current =>
-              current.kind === 'single_item' && current.variant === 'vertical_table'
-                ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
-                : current
-            )
+          onMultipleChoiceChange={
+            isPortraitLockedBodyTable
+              ? undefined
+              : (rowIndex, stageIndex, values) =>
+                  onUpdateParagraph(paragraph.id, current =>
+                    current.kind === 'single_item' && current.variant === 'vertical_table'
+                      ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
+                      : current
+                  )
           }
-          onFileNamesChange={(rowIndex, stageIndex, fileNames) =>
-            onUpdateParagraph(paragraph.id, current =>
-              current.kind === 'single_item' && current.variant === 'vertical_table'
-                ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
-                : current
-            )
+          onFileNamesChange={
+            isPortraitLockedBodyTable
+              ? undefined
+              : (rowIndex, stageIndex, fileNames) =>
+                  onUpdateParagraph(paragraph.id, current =>
+                    current.kind === 'single_item' && current.variant === 'vertical_table'
+                      ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
+                      : current
+                  )
           }
         />
       </FormTemplateHost>

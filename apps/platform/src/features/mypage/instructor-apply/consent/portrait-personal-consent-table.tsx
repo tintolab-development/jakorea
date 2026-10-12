@@ -1,0 +1,151 @@
+import type { ConsentValue } from '@jakorea/domain/instructor/consent'
+import {
+  portraitPersonalConsentAffiliationState,
+  portraitPersonalConsentNameValue,
+  PORTRAIT_NO_AFFILIATION,
+} from '@jakorea/form-schema/consent'
+import type { TableBottomConsent, VerticalTableParagraph } from '@jakorea/form-schema/writing-form'
+import {
+  type FormUpdateParagraph,
+  patchVerticalTableBottomConsent,
+  patchVerticalTableCell,
+} from '@jakorea/form-template-runtime'
+import { PFCheckbox, PFTextInput } from '@/shared/ui'
+import { ConsentWriteRadioGroup } from './consent-radio'
+import styles from './consent-form.module.css'
+
+function tableBottomConsentToChoice(value?: TableBottomConsent): ConsentValue | '' {
+  if (value === 'agree') return 'agree'
+  if (value === 'disagree') return 'disagree'
+  return ''
+}
+
+/** 초상권 1번 표 — 성명·소속(+소속 없음) 입력 + 나머지 행(읽기 전용)·하단 동의 */
+export function PlatformPortraitPersonalConsentTable({
+  paragraph,
+  onUpdateParagraph,
+}: {
+  paragraph: VerticalTableParagraph
+  onUpdateParagraph: FormUpdateParagraph
+}) {
+  const nameRaw = paragraph.rows[0]?.cells[0] ?? ''
+  const affiliationRaw = paragraph.rows[0]?.cells[1] ?? ''
+  const name = portraitPersonalConsentNameValue(nameRaw)
+  const { noAffiliation, affiliation } = portraitPersonalConsentAffiliationState(affiliationRaw)
+  const restRows = paragraph.rows.slice(1)
+
+  const patchName = (value: string) => {
+    onUpdateParagraph(paragraph.id, current =>
+      current.kind === 'single_item' && current.variant === 'vertical_table'
+        ? patchVerticalTableCell(current, 0, 0, value)
+        : current
+    )
+  }
+
+  const patchAffiliation = (value: string) => {
+    onUpdateParagraph(paragraph.id, current =>
+      current.kind === 'single_item' && current.variant === 'vertical_table'
+        ? patchVerticalTableCell(current, 0, 1, value)
+        : current
+    )
+  }
+
+  return (
+    <div className={styles.tableBlock}>
+      <div className="form-template-vertical-table-wrap">
+        <div className="form-template-vertical-table" role="grid">
+          <div className="form-template-vertical-table__row" role="row">
+            <div className="form-template-vertical-table__stage">
+              <div className="form-template-vertical-table__th" role="columnheader">
+                성명
+              </div>
+              <div className="form-template-vertical-table__td" role="gridcell">
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  value={name}
+                  placeholder="한글 성명"
+                  aria-label="성명"
+                  onValueChange={patchName}
+                />
+              </div>
+            </div>
+            <div className="form-template-vertical-table__stage">
+              <div className="form-template-vertical-table__th" role="columnheader">
+                소속
+              </div>
+              <div className="form-template-vertical-table__td" role="gridcell">
+                <div className={styles.portraitAffiliationRow}>
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    value={noAffiliation ? '' : affiliation}
+                    placeholder="소속"
+                    disabled={noAffiliation}
+                    aria-label="소속"
+                    onValueChange={value => {
+                      if (noAffiliation) return
+                      patchAffiliation(value)
+                    }}
+                  />
+                  <PFCheckbox
+                    size="large"
+                    checked={noAffiliation}
+                    onCheckedChange={checked => {
+                      patchAffiliation(checked ? PORTRAIT_NO_AFFILIATION : '')
+                    }}
+                  >
+                    {PORTRAIT_NO_AFFILIATION}
+                  </PFCheckbox>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {restRows.map((row, rowIndex) => (
+            <div
+              key={`portrait-rest-${rowIndex}-sc${row.stageCount}`}
+              className="form-template-vertical-table__row"
+              role="row"
+            >
+              {Array.from({ length: row.stageCount }, (_, stageIndex) => (
+                <div
+                  key={`portrait-rest-${rowIndex}-s-${stageIndex}`}
+                  className="form-template-vertical-table__stage"
+                >
+                  <div className="form-template-vertical-table__th" role="columnheader">
+                    {row.headers[stageIndex] ?? ''}
+                  </div>
+                  <div className="form-template-vertical-table__td" role="gridcell">
+                    <span className={styles.cellText}>{row.cells[stageIndex] ?? ''}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {paragraph.showBottomText || paragraph.showBottomConsent ? (
+        <div className={styles.tableAfter}>
+          {paragraph.showBottomText && paragraph.bottomText ? (
+            <p className={styles.tableDescription}>{paragraph.bottomText}</p>
+          ) : null}
+          {paragraph.showBottomConsent ? (
+            <ConsentWriteRadioGroup
+              name={`consent-table-${paragraph.id}`}
+              value={tableBottomConsentToChoice(paragraph.bottomConsent)}
+              onChange={next =>
+                onUpdateParagraph(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'vertical_table'
+                    ? patchVerticalTableBottomConsent(current, next as TableBottomConsent)
+                    : current
+                )
+              }
+            />
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
