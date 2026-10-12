@@ -190,3 +190,39 @@ export function nullifyEmptyProfileUpdateFields<T extends Record<string, unknown
 
   return next
 }
+
+/**
+ * 해당 없음 전환 시 남아 있을 수 있는 학교 검색 메타를 제출 직전에 제거한다.
+ * (재학 중 → 해당 없음 후 소속 기관명 미입력 포함)
+ */
+export function sanitizeSettingsEditSchoolFields<
+  T extends {
+    schoolStatus: SettingsEditSchoolStatus
+    schoolName: string
+    affiliationName: string
+    grade: string
+    schoolOrganizationId: number | null
+    schoolAddress?: string
+    schoolNeisCode?: string | null
+    schoolEducationOfficeCode?: string | null
+    schoolSource?: 'neis' | 'careerNet'
+  },
+>(input: T): T {
+  if (input.schoolStatus === 'enrolled') {
+    return {
+      ...input,
+      affiliationName: '',
+    }
+  }
+
+  return {
+    ...input,
+    schoolName: '',
+    grade: '',
+    schoolOrganizationId: null,
+    schoolAddress: '',
+    schoolNeisCode: '',
+    schoolEducationOfficeCode: '',
+    schoolSource: undefined,
+  }
+}
