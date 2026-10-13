@@ -250,3 +250,12 @@
     line-height: 160%;
   }
 }
+
+/* 행정정보 공동이용 — 연번 열 100×54 (CMS `agreement-notice-table` 동일) */
+[data-paragraph-id='agreement-notice-table']
+  .form-template-horizontal-table__row
+  > :is(:nth-child(1), :nth-child(3)) {
+  flex: 0 0 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
