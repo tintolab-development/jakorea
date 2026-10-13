@@ -67,6 +67,7 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   APPLICATION_FORM_NOT_CONFIGURED:
     '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
   PROGRAM_NOT_APPLICABLE: '현재 신청할 수 없는 프로그램입니다.',
+  /** POST 403 — options ORGANIZATION_MEMBERSHIP_REQUIRED 와 쌍 */
   ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED: '활성 학교·기관 소속이 필요합니다.',
   APPLICATION_TYPE_NOT_ALLOWED: '해당 모집에 허용되지 않은 지원 유형입니다.',
   RECRUITMENT_NOT_OPEN: '현재 신청할 수 없는 모집입니다.',
@@ -99,7 +100,17 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
    */
   VOLUNTEER_RECRUITMENT_TARGET_MISMATCH:
     '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.',
-  /** 개인 프로그램 — 재학(ENROLLED)인데 회원 프로필 학년 없음 */
+  COLLEGE_STUDENT_REQUIRED:
+    '대학생 모집 프로그램은 재학 중인 대학생 회원만 신청할 수 있습니다.',
+  CAPACITY_FULL: '모집 정원이 마감되었습니다.',
+  /** POST 409 — options PROGRAM_NOT_APPLICABLE */
+  PROGRAM_NOT_ACCEPTING_APPLICATIONS: '현재 신청할 수 없는 프로그램입니다.',
+  /** POST 409 — options CAPACITY_FULL */
+  RECRUITMENT_CAPACITY_FULL: '모집 정원이 마감되었습니다.',
+  /** POST 409 — options APPLICATION_FORM_NOT_CONFIGURED */
+  APPLICATION_FORM_NOT_AVAILABLE:
+    '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
+  /** 개인 프로그램 — 재학(ENROLLED)인데 회원 프로필 학년 없음 (POST; options SSOT 아님) */
   INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED:
     '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
 }

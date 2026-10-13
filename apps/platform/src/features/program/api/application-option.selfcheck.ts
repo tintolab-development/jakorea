@@ -74,7 +74,7 @@ const instructorWithoutBinding = [
     applicationType: 'INSTRUCTOR',
     formBindingId: null,
     canApply: false,
-    blockedReason: 'APPLICATION_FORM_NOT_CONFIGURED',
+    blockedReason: 'APPLICATION_FORM_NOT_CONFIGURED' as const,
   },
 ]
 const instructorPick = pickApplicationOption(instructorWithoutBinding, {
