@@ -112,7 +112,18 @@ export {
   formatFormSignatureDate,
   normalizeFormSignatureValue,
 } from './pf-form-signature-block'
-export type { FormSignatureValue, PFFormSignatureBlockProps } from './pf-form-signature-block'
+export {
+  PFFormDraftSignatureProvider,
+  PFFormDraftSignatureTitleAsideBridge,
+  usePFFormDraftSignature,
+  usePFFormDraftSignatureOptional,
+} from './pf-form-draft-signature'
+export type { PFFormDraftSignatureProviderProps } from './pf-form-draft-signature'
+export type {
+  FormSignatureValue,
+  PFFormSignatureBlockHandle,
+  PFFormSignatureBlockProps,
+} from './pf-form-signature-block'
 export type {
   ElectronicSignatureMode,
   ElectronicSignatureResult,
@@ -146,6 +157,7 @@ export { PFText } from './pf-text'
 export type { PFTextColor, PFTypography } from './pf-text'
 export { remoteCopyClassName } from './remote-copy/remote-copy-class-name'
 export { PFTextInput } from './pf-text-input'
+export type { PFControlFieldSize } from './pf-control-field-size'
 export { PFTextarea } from './pf-textarea'
 export type {
   PFTextareaMessageStatus,

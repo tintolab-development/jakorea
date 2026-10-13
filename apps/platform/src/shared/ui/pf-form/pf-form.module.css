@@ -50,6 +50,24 @@
   gap: var(--spacing-8);
 }
 
+.titleRow {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+}
+
+.titleRow .pageTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.titleAside {
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
 .pageTitle {
   margin: 0;
 }
@@ -283,6 +301,28 @@
   font-weight: 700;
   line-height: 140%;
   text-align: left;
+}
+
+.fieldLabelRowVertical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em;
+  width: 100%;
+  min-width: 0;
+}
+
+.fieldLabelDescriptionVertical {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  opacity: 0.6;
 }
 
 .fieldContentVertical {

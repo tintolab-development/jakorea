@@ -28,7 +28,7 @@ import { PFDatePickerMonthPanel } from './pf-date-picker-month-panel'
 import { PFDatePickerYearPanel } from './pf-date-picker-year-panel'
 import styles from './pf-date-input.module.css'
 
-export type PFDateInputSize = 'medium' | 'large' | 'xlarge'
+export type PFDateInputSize = 'medium' | 'large' | 'xlarge' | 'mobile'
 export type PFDateInputVariant = 'default' | 'formPage'
 export type PFDateInputMessageStatus = 'neutral' | 'success' | 'error'
 /** date=`YYYY-MM-DD` · month=`YYYY-MM` · year=`YYYY` */
@@ -91,6 +91,7 @@ const sizeTypographyClassMap: Record<PFDateInputSize, string> = {
   medium: 'typo-bd-sm-md',
   large: 'typo-bd-md-md',
   xlarge: 'typo-bd-md-md',
+  mobile: 'typo-bd-md-md',
 }
 
 const DEFAULT_PLACEHOLDER: Record<PFDateInputPicker, string> = {

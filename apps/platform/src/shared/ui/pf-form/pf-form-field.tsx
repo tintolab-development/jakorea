@@ -59,6 +59,8 @@ export type PFFormFieldLayout = 'horizontal' | 'vertical'
 
 export type PFFormFieldProps = {
   label: string
+  /** `layout="vertical"` — fieldLabel 우측 안내 문구 (기관 신청 안내 사항 등) */
+  labelDescription?: ReactNode
   required?: boolean
   children: ReactNode
   /** double 행에서 전체 폭 */
@@ -76,6 +78,7 @@ export type PFFormFieldProps = {
 
 export function PFFormField({
   label,
+  labelDescription,
   required = false,
   children,
   fullWidth = false,
@@ -106,26 +109,54 @@ export function PFFormField({
           .filter(Boolean)
           .join(' ')}
       >
-        <PFText
-          as="span"
-          typo="form-field-label"
-          className={[styles.fieldLabelText, isVertical ? styles.fieldLabelTextVertical : undefined]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {label}
-        </PFText>
-        {required ? (
-          <PFText
-            as="span"
-            typo="bd-lg-sb"
-            color="error"
-            className={styles.fieldLabelRequired}
-            aria-hidden
-          >
-            *
-          </PFText>
-        ) : null}
+        {isVertical && labelDescription != null && labelDescription !== '' ? (
+          <div className={styles.fieldLabelRowVertical}>
+            <PFText
+              as="span"
+              typo="form-field-label"
+              className={[styles.fieldLabelText, styles.fieldLabelTextVertical]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {label}
+            </PFText>
+            <span className={styles.fieldLabelDescriptionVertical}>{labelDescription}</span>
+            {required ? (
+              <PFText
+                as="span"
+                typo="bd-lg-sb"
+                color="error"
+                className={styles.fieldLabelRequired}
+                aria-hidden
+              >
+                *
+              </PFText>
+            ) : null}
+          </div>
+        ) : (
+          <>
+            <PFText
+              as="span"
+              typo="form-field-label"
+              className={[styles.fieldLabelText, isVertical ? styles.fieldLabelTextVertical : undefined]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {label}
+            </PFText>
+            {required ? (
+              <PFText
+                as="span"
+                typo="bd-lg-sb"
+                color="error"
+                className={styles.fieldLabelRequired}
+                aria-hidden
+              >
+                *
+              </PFText>
+            ) : null}
+          </>
+        )}
       </div>
       <div
         className={[styles.fieldContent, isVertical ? styles.fieldContentVertical : undefined]
@@ -145,7 +176,7 @@ export function PFFormField({
 export type PFFormFieldValueTextProps = {
   children: ReactNode
   className?: string
-  as?: 'span' | 'p'
+  as?: 'span' | 'p' | 'li'
 }
 
 /** PFFormField value 영역 — 일반 텍스트용 */

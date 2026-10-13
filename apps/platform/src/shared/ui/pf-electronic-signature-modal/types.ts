@@ -13,6 +13,8 @@ export type PFElectronicSignatureModalProps = {
   onSign: (result: ElectronicSignatureResult) => void
   /** 초기 탭. 기본 draw */
   initialMode?: ElectronicSignatureMode
+  /** 모달 헤더. 기본 `전자서명하기` (DS) */
+  title?: string
 }
 
 export type PFElectronicSignatureEditConfirmProps = {

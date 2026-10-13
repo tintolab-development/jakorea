@@ -6,6 +6,8 @@ export type PFFormPageProps = {
   /** 상단 이전/목록 버튼 영역 */
   back?: ReactNode
   title: ReactNode
+  /** 제목 행 우측 (예: 전자서명 수정하기) */
+  titleAside?: ReactNode
   description?: ReactNode
   children: ReactNode
   className?: string
@@ -16,6 +18,7 @@ export type PFFormPageProps = {
 export function PFFormPage({
   back,
   title,
+  titleAside,
   description,
   children,
   className,
@@ -31,13 +34,16 @@ export function PFFormPage({
         {back ? <div className={styles.back}>{back}</div> : null}
 
         <header className={styles.titleBlock}>
-          {typeof title === 'string' ? (
-            <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-              {title}
-            </PFText>
-          ) : (
-            title
-          )}
+          <div className={titleAside != null ? styles.titleRow : undefined}>
+            {typeof title === 'string' ? (
+              <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+                {title}
+              </PFText>
+            ) : (
+              title
+            )}
+            {titleAside != null ? <div className={styles.titleAside}>{titleAside}</div> : null}
+          </div>
           {description ? (
             typeof description === 'string' ? (
               <PFText

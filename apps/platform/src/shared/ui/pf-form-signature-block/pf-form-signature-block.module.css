@@ -11,10 +11,18 @@
   box-shadow: var(--shadow-card-lg);
 }
 
+.cardContentEnd {
+  justify-content: flex-end;
+}
+
 .signBlock {
   display: flex;
   flex-shrink: 0;
   align-items: center;
+}
+
+.signerAlignEnd {
+  align-items: flex-end;
 }
 
 .signer {

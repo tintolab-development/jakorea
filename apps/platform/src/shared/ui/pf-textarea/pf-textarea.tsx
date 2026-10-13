@@ -12,7 +12,7 @@ import { PFText } from '../pf-text'
 import resizeIconUrl from './icons/resize.svg'
 import styles from './pf-textarea.module.css'
 
-export type PFTextareaSize = 'medium' | 'large' | 'xlarge'
+export type PFTextareaSize = 'medium' | 'large' | 'xlarge' | 'mobile'
 export type PFTextareaVariant = 'default' | 'formPage'
 export type PFTextareaMessageStatus = 'neutral' | 'success' | 'error'
 
@@ -29,6 +29,8 @@ export type PFTextareaProps = Omit<
   error?: boolean
   message?: string
   messageStatus?: PFTextareaMessageStatus
+  /** 하단 안내·글자 수 정렬 */
+  messageAlign?: 'start' | 'end'
   onValueChange?: (value: string) => void
 }
 
@@ -43,6 +45,7 @@ const sizeTypographyClassMap: Record<PFTextareaSize, string> = {
   medium: 'typo-bd-sm-md',
   large: 'typo-bd-md-md',
   xlarge: 'typo-bd-md-md',
+  mobile: 'typo-bd-md-md',
 }
 
 function readMinHeightPx(element: HTMLTextAreaElement): number {
@@ -58,6 +61,7 @@ export function PFTextarea({
   error = false,
   message,
   messageStatus = 'neutral',
+  messageAlign = 'start',
   disabled = false,
   required = false,
   rows = DEFAULT_ROWS,
@@ -83,6 +87,7 @@ export function PFTextarea({
 
   const fieldClassName = [
     styles.field,
+    isFormPage ? undefined : styles[size],
     isRows1 ? styles.fieldRows1 : undefined,
     error ? styles.error : undefined,
     disabled ? styles.disabled : undefined,
@@ -104,7 +109,13 @@ export function PFTextarea({
     success: styles.messageSuccess,
     error: styles.messageError,
   } as const
-  const messageClassName = [styles.message, messageStatusClassMap[messageStatus]].join(' ')
+  const messageClassName = [
+    styles.message,
+    messageStatusClassMap[messageStatus],
+    messageAlign === 'end' ? styles.messageEnd : undefined,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     if (!isControlled) {

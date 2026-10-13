@@ -1,0 +1,21 @@
+/* Boxed control shell — height + radius only (padding on each component .field) */
+
+.medium {
+  height: 40px;
+  border-radius: var(--radius-12);
+}
+
+.large {
+  height: 44px;
+  border-radius: var(--radius-12);
+}
+
+.xlarge {
+  height: 54px;
+  border-radius: var(--radius-16);
+}
+
+.mobile {
+  height: 52px;
+  border-radius: var(--radius-16);
+}

@@ -1,6 +1,6 @@
 .button {
   display: inline-flex;
-  min-width: 89px;
+  min-width: 50px;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-4);
@@ -28,6 +28,7 @@
 
 .small {
   height: 30px;
+  padding: 6px 20px;
   border-radius: var(--radius-8);
 }
 

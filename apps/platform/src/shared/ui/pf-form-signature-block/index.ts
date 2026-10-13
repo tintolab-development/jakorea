@@ -1,4 +1,5 @@
 export { PFFormSignatureBlock } from './pf-form-signature-block'
+export type { PFFormSignatureBlockHandle } from './types'
 export {
   createFormSignatureValue,
   formatFormSignatureDate,

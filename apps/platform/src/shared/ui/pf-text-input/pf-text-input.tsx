@@ -10,7 +10,7 @@ import cancelIconUrl from './icons/cancel.svg'
 import searchIconUrl from './icons/search.svg'
 import styles from './pf-text-input.module.css'
 
-type PFTextInputSize = 'medium' | 'large' | 'xlarge'
+type PFTextInputSize = 'medium' | 'large' | 'xlarge' | 'mobile'
 type PFTextInputVariant = 'default' | 'formPage'
 type PFTextInputMessageStatus = 'neutral' | 'success' | 'error'
 
@@ -18,6 +18,8 @@ type PFTextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'wi
   size?: PFTextInputSize
   /** Platform 양식 페이지(PFFormPage) 내부 전용 스타일 */
   variant?: PFTextInputVariant
+  /** 제목 아래 한 줄 텍스트형(행정정보 1·2번 단락 시안) — field 테두리 없음 */
+  appearance?: 'boxed' | 'plain'
   /** 지정 시 루트 width (숫자는 px) */
   width?: number | string
   label?: string
@@ -26,6 +28,8 @@ type PFTextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'wi
   message?: string
   messageStatus?: PFTextInputMessageStatus
   onValueChange?: (value: string) => void
+  /** `<input>`에 추가 클래스 (plain·boxed 공통) */
+  inputClassName?: string
 }
 
 function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
@@ -37,11 +41,13 @@ const sizeTypographyClassMap: Record<PFTextInputSize, string> = {
   medium: 'typo-bd-sm-md',
   large: 'typo-bd-md-md',
   xlarge: 'typo-bd-md-md',
+  mobile: 'typo-bd-md-md',
 }
 
 export function PFTextInput({
   size = 'medium',
   variant = 'default',
+  appearance = 'boxed',
   width,
   label,
   hasIcon = false,
@@ -56,6 +62,7 @@ export function PFTextInput({
   onChange,
   onValueChange,
   className,
+  inputClassName,
   style,
   type,
   ...props
@@ -80,10 +87,13 @@ export function PFTextInput({
     .filter(Boolean)
     .join(' ')
 
-  const inputClassName = [
+  const resolvedInputClassName = [
     styles.input,
     isFormPage ? styles.formPageInput : sizeTypographyClassMap[size],
-  ].join(' ')
+    inputClassName,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const messageStatusClassMap = {
     neutral: styles.messageNeutral,
     success: styles.messageSuccess,
@@ -126,11 +136,10 @@ export function PFTextInput({
         </label>
       ) : null}
 
-      <div className={fieldClassName}>
-        {hasIcon ? <img className={styles.icon} src={searchIconUrl} alt="" aria-hidden="true" /> : null}
+      {appearance === 'plain' ? (
         <input
           id={inputId}
-          className={inputClassName}
+          className={[resolvedInputClassName, styles.plainInput].filter(Boolean).join(' ')}
           disabled={disabled}
           required={required}
           type={type}
@@ -138,17 +147,31 @@ export function PFTextInput({
           value={currentValue}
           onChange={handleChange}
         />
-        {shouldShowClearButton ? (
-          <button
-            className={styles.clearButton}
-            type="button"
-            aria-label="입력 내용 지우기"
-            onClick={handleClear}
-          >
-            <img className={styles.clearIcon} src={cancelIconUrl} alt="" aria-hidden="true" />
-          </button>
-        ) : null}
-      </div>
+      ) : (
+        <div className={fieldClassName}>
+          {hasIcon ? <img className={styles.icon} src={searchIconUrl} alt="" aria-hidden="true" /> : null}
+          <input
+            id={inputId}
+            className={resolvedInputClassName}
+            disabled={disabled}
+            required={required}
+            type={type}
+            {...props}
+            value={currentValue}
+            onChange={handleChange}
+          />
+          {shouldShowClearButton ? (
+            <button
+              className={styles.clearButton}
+              type="button"
+              aria-label="입력 내용 지우기"
+              onClick={handleClear}
+            >
+              <img className={styles.clearIcon} src={cancelIconUrl} alt="" aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+      )}
       {message ? <p className={messageClassName}>{message}</p> : null}
     </div>
   )
