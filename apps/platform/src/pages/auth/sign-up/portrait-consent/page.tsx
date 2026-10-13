@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
@@ -39,6 +39,8 @@ export function SignUpPortraitConsentPage() {
     navigate(returnTo)
   }
 
+  const [titleAside, setTitleAside] = useState<ReactNode>(null)
+
   if (bridge == null) {
     return null
   }
@@ -48,8 +50,9 @@ export function SignUpPortraitConsentPage() {
       aria-label={PAGE_TITLE}
       back={<ProgramBackButton size="small" label="이전으로" onClick={handleBack} />}
       title={PAGE_TITLE}
+      titleAside={titleAside}
     >
-      <PortraitConsentWriteForm onComplete={handleComplete} />
+      <PortraitConsentWriteForm onComplete={handleComplete} onTitleAside={setTitleAside} />
     </PFFormPage>
   )
 }

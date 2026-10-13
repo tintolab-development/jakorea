@@ -14,6 +14,10 @@ export const SIGN_UP_UNDER_AGE_TOTAL_STEPS = 8
 export const SIGN_IN_PATH = '/auth/sign-in'
 export const SIGN_UP_COMPLETE_PATH = '/auth/sign-up/complete'
 
+export type SignUpCompleteLocationState = {
+  memberType?: MemberType
+}
+
 export const MOCK_VERIFIED_NAME = '홍길동'
 export const MOCK_VERIFIED_PHONE = '010-1234-5678'
 export const MOCK_DUPLICATE_EMAIL = 'ja@gmail.com'

@@ -158,17 +158,24 @@ export function SignUpSocialConnectPage() {
 
   return (
     <section>
-      <PFText as="div" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
-        소셜 계정을 연결하면
-        <br />
-        더 쉽게 로그인 할 수 있어요
-      </PFText>
+      <div className={styles.intro}>
+        <PFText as="div" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
+          소셜 계정을 연결하면
+          <br />
+          더 쉽게 로그인 할 수 있어요
+        </PFText>
 
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={authPageCopyClass('description')}>
-        다음부터 이메일과 비밀번호 없이 로그인할 수 있어요.
-        <br />
-        연결은 선택 사항이며, 나중에 마이페이지에서도 할 수 있어요.
-      </PFText>
+        <PFText
+          as="p"
+          typo="bd-md-rg"
+          color="neutral-cool-500"
+          className={authPageCopyClass('description')}
+        >
+          다음부터 이메일과 비밀번호 없이 로그인할 수 있어요.
+          <br />
+          연결은 선택 사항이며, 나중에 마이페이지에서도 할 수 있어요.
+        </PFText>
+      </div>
 
       {listError ? (
         <PFText as="p" typo="bd-sm-md" color="error">

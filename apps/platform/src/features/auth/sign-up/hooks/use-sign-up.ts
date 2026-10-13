@@ -75,6 +75,7 @@ import {
   validateBirthStep,
 } from '../lib/identity/identity.logic'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { resolvePortalSchoolOrganizationId } from '../lib/resolve-portal-school-organization-id'
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import type { SelectedAddress } from '../ui/address-search-modal'
 import type { SelectedSchool } from '../ui/school-search-modal'
@@ -917,6 +918,17 @@ export function useSignUp() {
     setSchoolEducationOfficeCode(school.educationOfficeCode?.trim() || null)
     setSchoolSource(school.source ?? (school.neisCode ? 'neis' : null))
     setSchoolOrganizationId(school.organizationId ?? null)
+
+    if (remoteApi && school.organizationId == null && school.name.trim()) {
+      void resolvePortalSchoolOrganizationId({
+        schoolName: school.name,
+        address: school.address,
+      }).then(organizationId => {
+        if (organizationId != null) {
+          setSchoolOrganizationId(organizationId)
+        }
+      })
+    }
   }
 
   const handleAddressSelect = (selection: SelectedAddress) => {
@@ -978,7 +990,10 @@ export function useSignUp() {
 
     if (!remoteApi) {
       clearPortraitConsentSession()
-      navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
+      navigate(SIGN_UP_COMPLETE_PATH, {
+        replace: true,
+        state: selectedType ? { memberType: selectedType } : undefined,
+      })
       return
     }
 
@@ -1027,6 +1042,22 @@ export function useSignUp() {
       }
     }
 
+    let teacherSchoolOrganizationId = schoolOrganizationId
+    if (
+      selectedType === 'teacher' &&
+      remoteApi &&
+      teacherSchoolOrganizationId == null &&
+      schoolName.trim()
+    ) {
+      teacherSchoolOrganizationId = await resolvePortalSchoolOrganizationId({
+        schoolName,
+        address: schoolAddress,
+      })
+      if (teacherSchoolOrganizationId != null) {
+        setSchoolOrganizationId(teacherSchoolOrganizationId)
+      }
+    }
+
     const mapInput = {
       selectedType,
       email,
@@ -1039,7 +1070,7 @@ export function useSignUp() {
       guardianVerificationSessionId,
       schoolStatus,
       schoolName,
-      schoolOrganizationId,
+      schoolOrganizationId: teacherSchoolOrganizationId,
       schoolNeisCode,
       schoolEducationOfficeCode,
       schoolAddress,
@@ -1076,7 +1107,10 @@ export function useSignUp() {
       }
 
       clearPortraitConsentSession()
-      navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
+      navigate(SIGN_UP_COMPLETE_PATH, {
+        replace: true,
+        state: { memberType: selectedType },
+      })
     } catch (error) {
       setSubmitMessage(
         getSignupApiErrorMessage(

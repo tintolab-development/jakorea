@@ -40,7 +40,8 @@ export function ensureSignupWizardInstanceId(): string {
   }
 }
 
-function clearPortraitConsentDraftStorage(): void {
+/** 가입 초상권 작성 session draft 제거 */
+export function clearPortraitConsentDraftStorage(): void {
   if (!canUseSessionStorage()) return
   try {
     window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)

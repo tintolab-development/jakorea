@@ -387,6 +387,7 @@ export function SchoolSearchModal({
           />
           <PFButton
             size="xlarge"
+            width="100%"
             className={styles.schoolModalSearchButton}
             disabled={loading}
             onClick={handleSearch}
