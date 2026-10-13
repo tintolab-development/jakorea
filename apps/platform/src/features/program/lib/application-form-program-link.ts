@@ -53,6 +53,7 @@ export function applyProgramLinkedApplicationDraftPatches(
         runtimeContext,
         program.educationScheduleLines,
       ) ?? [],
+    maxScheduleCount: program.maxPreferredScheduleCount,
     runtimeContext,
     scheduleParagraphRaw,
   })

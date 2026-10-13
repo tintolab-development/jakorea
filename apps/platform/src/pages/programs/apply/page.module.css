@@ -117,6 +117,25 @@
   text-overflow: unset;
 }
 
+/* FormTemplateHost가 typo-* 를 unset — 신청 슬롯 본문은 16px 고정 */
+.form :global(.form-template-host) :global(.typo-bd-md-md) {
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.form :global(.form-template-host) :global(.typo-bd-md-rg) {
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
 .actions {
   display: flex;
   justify-content: center;
@@ -132,6 +151,12 @@
   display: flex;
   justify-content: center;
   margin-top: var(--spacing-12);
+}
+
+.submitAlertFollowUp {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-16);
 }
 
 .blockedNotice {

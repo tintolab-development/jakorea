@@ -118,7 +118,7 @@ export function ApplyPreferredSchedule({
                 ■ {index + 1}지망
               </PFText>
               <div className={styles.field}>
-                <PFText as="p" typo="bd-sm-md" color="neutral-cool-700" className={styles.fieldLabel}>
+                <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.fieldLabel}>
                   희망 교육일
                 </PFText>
                 <PFDateInput
@@ -134,7 +134,7 @@ export function ApplyPreferredSchedule({
                 />
               </div>
               <div className={styles.field}>
-                <PFText as="p" typo="bd-sm-md" color="neutral-cool-700" className={styles.fieldLabel}>
+                <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.fieldLabel}>
                   1차시 희망 교육 시간
                 </PFText>
                 <div className={styles.timeRow}>

@@ -21,9 +21,11 @@ import {
 import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
 import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
 import {
+  getApplicationApiErrorCode,
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
 } from '@/features/program/lib/application-api-error'
+import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
@@ -189,7 +191,7 @@ import {
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
-import { PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -295,8 +297,10 @@ export function ProgramApplyPage() {
     useState<ApplyUjatVolunteerBasicInfoValues>(emptyUjatVolunteerBasicInfo)
   const [ujatVolunteerPreviousTerm, setUjatVolunteerPreviousTerm] =
     useState<ApplyUjatVolunteerPreviousTermValues>(emptyUjatVolunteerPreviousTerm)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [submitErrorPromptSettingsGrade, setSubmitErrorPromptSettingsGrade] = useState(false)
+  const [submitAlert, setSubmitAlert] = useState<{
+    description: string
+    promptSettingsGrade?: boolean
+  } | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
 
@@ -1200,16 +1204,16 @@ export function ProgramApplyPage() {
   }
 
   const handleSubmit = async () => {
-    setSubmitError(null)
-    setSubmitErrorPromptSettingsGrade(false)
+    setSubmitAlert(null)
     if (displayDraft == null) {
-      setSubmitError(
-        blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
-      )
+      setSubmitAlert({
+        description:
+          blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      })
       return
     }
     if (blockedMessage && !canSubmitRemote) {
-      setSubmitError(blockedMessage)
+      setSubmitAlert({ description: blockedMessage })
       return
     }
     const bundle = applicationFormQuery.bundle
@@ -1225,7 +1229,7 @@ export function ProgramApplyPage() {
       if (showPreferredScheduleInput) {
         const preferredError = findIncompletePreferredScheduleMessage(preferredBlocks)
         if (preferredError) {
-          setSubmitError(preferredError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1233,7 +1237,7 @@ export function ProgramApplyPage() {
         ? toPreferredScheduleAnswerValue(preferredBlocks)
         : null
       if (showPreferredScheduleInput && !preferredAnswer) {
-        setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
+        setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
         return
       }
       if (
@@ -1260,7 +1264,7 @@ export function ProgramApplyPage() {
             institutionScheduleParagraph,
           )
           if (selected.length === 0) {
-            setSubmitError('진행 희망 교육 일정을 한 개 이상 선택해 주세요.')
+            setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
             return
           }
         }
@@ -1270,11 +1274,11 @@ export function ProgramApplyPage() {
       if (basicParagraph) {
         const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
         if (basicError) {
-          setSubmitError(basicError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
         if (!basicAnswer) {
-          setSubmitError('기본 정보(신청 기관명)를 입력해 주세요.')
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1288,7 +1292,7 @@ export function ProgramApplyPage() {
       if (teamInfoVisible) {
         const teamError = findIncompleteIndividualTeamInfoMessage(teamInfo)
         if (teamError) {
-          setSubmitError(teamError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1299,7 +1303,7 @@ export function ProgramApplyPage() {
       if (sexOffenseParagraph) {
         const sexOffenseError = findIncompleteSexOffenseMessage(sexOffense)
         if (sexOffenseError) {
-          setSubmitError(sexOffenseError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1314,7 +1318,7 @@ export function ProgramApplyPage() {
       if (instructorCrimeParagraph && isRequiredParagraph(instructorCrimeParagraph)) {
         const crimeError = findIncompleteInstructorCrimeRecordMessage(instructorCrimeRecord)
         if (crimeError) {
-          setSubmitError(crimeError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1332,7 +1336,7 @@ export function ProgramApplyPage() {
           instructorScheduleSlots,
         )
         if (scheduleError) {
-          setSubmitError(scheduleError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1352,7 +1356,7 @@ export function ProgramApplyPage() {
           interviewSlots,
         )
         if (interviewError) {
-          setSubmitError(interviewError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1364,13 +1368,13 @@ export function ProgramApplyPage() {
         isVolunteerPreviousJaProgramParagraphId,
       )
       if (volunteerEvidenceUploading) {
-        setSubmitError('증빙서류 업로드가 끝난 뒤 신청해 주세요.')
+        setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
         return
       }
       if (volunteerPreviousJaParagraph && isRequiredParagraph(volunteerPreviousJaParagraph)) {
         const previousJaError = findIncompleteVolunteerPreviousJaProgramMessage(volunteerPreviousJa)
         if (previousJaError) {
-          setSubmitError(previousJaError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1378,7 +1382,7 @@ export function ProgramApplyPage() {
       if (volunteerFreeTextParagraph && isRequiredParagraph(volunteerFreeTextParagraph)) {
         const freeTextError = findIncompleteVolunteerFreeTextItemsMessage(volunteerFreeText)
         if (freeTextError) {
-          setSubmitError(freeTextError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1393,7 +1397,7 @@ export function ProgramApplyPage() {
           volunteerActivitySlots,
         )
         if (activityError) {
-          setSubmitError(activityError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1401,7 +1405,7 @@ export function ProgramApplyPage() {
       if (ujatBasicInfoParagraph && isRequiredParagraph(ujatBasicInfoParagraph)) {
         const ujatBasicError = findIncompleteUjatVolunteerBasicInfoMessage(ujatVolunteerBasicInfo)
         if (ujatBasicError) {
-          setSubmitError(ujatBasicError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1412,7 +1416,7 @@ export function ProgramApplyPage() {
         const previousTermError =
           findIncompleteUjatVolunteerPreviousTermMessage(ujatVolunteerPreviousTerm)
         if (previousTermError) {
-          setSubmitError(previousTermError)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
@@ -1600,32 +1604,42 @@ export function ProgramApplyPage() {
       } catch (error) {
         const message = getProgramApplicationApiErrorMessage(error)
         const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
+        const errorCode = getApplicationApiErrorCode(error)
+        const validationFailed = errorCode === 'VALIDATION_FAILED'
+        const resolveDescription = (interviewVisible: boolean) => {
+          if (validationFailed) return PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE
+          if (interviewVisible) {
+            return `${message} 면접 진행 가능 일정이 바뀌었을 수 있어 신청서를 새로 불러왔습니다. 일정을 다시 확인한 뒤 신청해 주세요.`
+          }
+          return message
+        }
         if (getQueryRetryHttpStatus(error) !== 400) {
-          setSubmitError(message)
-          setSubmitErrorPromptSettingsGrade(promptSettingsGrade)
+          setSubmitAlert({
+            description: resolveDescription(false),
+            promptSettingsGrade,
+          })
           return
         }
         // 런타임 선택지(면접 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
-        if (!promptSettingsGrade) {
+        if (!promptSettingsGrade && !validationFailed) {
           applicationFormQuery.refetch()
         }
         const interviewVisible =
           applyCase === 'individual-volunteer' &&
           interviewBindingParagraph != null &&
           !hiddenParagraphIds.has(interviewBindingParagraph.id)
-        setSubmitError(
-          interviewVisible
-            ? `${message} 면접 진행 가능 일정이 바뀌었을 수 있어 신청서를 새로 불러왔습니다. 일정을 다시 확인한 뒤 신청해 주세요.`
-            : message,
-        )
-        setSubmitErrorPromptSettingsGrade(promptSettingsGrade)
+        setSubmitAlert({
+          description: resolveDescription(interviewVisible),
+          promptSettingsGrade,
+        })
       }
       return
     }
     if (remoteApplyEnabled) {
-      setSubmitError(
-        blockedMessage ?? '신청을 제출할 수 없습니다. 모집 기간과 회원 자격을 확인해 주세요.',
-      )
+      setSubmitAlert({
+        description:
+          blockedMessage ?? '신청을 제출할 수 없습니다. 모집 기간과 회원 자격을 확인해 주세요.',
+      })
       return
     }
     navigate(programApplyCompletePath(program.id, focus, fromPath))
@@ -1699,26 +1713,7 @@ export function ProgramApplyPage() {
             </FormTemplateHost>
           ) : null}
 
-          {submitError ? (
-            <>
-              <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
-                {submitError}
-              </PFText>
-              {submitErrorPromptSettingsGrade ? (
-                <div className={styles.submitErrorFollowUp}>
-                  <PFButton
-                    type="button"
-                    size="large"
-                    variant="secondary"
-                    width={280}
-                    onClick={() => navigate('/mypage/settings')}
-                  >
-                    회원 정보에서 학년 등록
-                  </PFButton>
-                </div>
-              ) : null}
-            </>
-          ) : instructorScheduleUnavailable ? (
+          {instructorScheduleUnavailable ? (
             <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
               선택 가능한 강의 일정이 없어 신청할 수 없습니다. 관리자에게 문의해 주세요.
             </PFText>
@@ -1745,6 +1740,30 @@ export function ProgramApplyPage() {
           </div>
         </div>
       </div>
+
+      <PFAlertModal
+        open={submitAlert != null}
+        title="안내"
+        description={submitAlert?.description}
+        onConfirm={() => setSubmitAlert(null)}
+      >
+        {submitAlert?.promptSettingsGrade ? (
+          <div className={styles.submitAlertFollowUp}>
+            <PFButton
+              type="button"
+              size="large"
+              variant="secondary"
+              width="100%"
+              onClick={() => {
+                setSubmitAlert(null)
+                navigate('/mypage/settings')
+              }}
+            >
+              회원 정보에서 학년 등록
+            </PFButton>
+          </div>
+        ) : null}
+      </PFAlertModal>
     </section>
   )
 }

@@ -122,5 +122,6 @@ export function getMockApplyFormDraft(
     educationScheduleMode: program.educationScheduleMode ?? 'date',
     educationScheduleLines: program.educationScheduleLines ?? [],
     maxPreferredScheduleCount: program.maxPreferredScheduleCount ?? 1,
+    maxScheduleCount: program.maxPreferredScheduleCount ?? 1,
   })
 }

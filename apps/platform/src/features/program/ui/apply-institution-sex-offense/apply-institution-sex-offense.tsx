@@ -3,6 +3,7 @@ import {
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
+  PFFormFieldValueText,
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
@@ -16,6 +17,7 @@ import {
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS,
 } from '@jakorea/form-schema/program-application'
 import { ApplyFormRadioGroup } from '../apply-form-radio'
+import hostStyles from '../apply-form-field-host.module.css'
 import styles from './apply-institution-sex-offense.module.css'
 
 /** CMS `application.institution.sexOffense.*` 와 동일 */
@@ -108,7 +110,7 @@ type SubmissionProps = {
 
 export function ApplyInstitutionSexOffenseSubmission({ value, onChange }: SubmissionProps) {
   return (
-    <div className={styles.root}>
+    <div className={[styles.root, hostStyles.root].join(' ')}>
       <ApplyFormRadioGroup
         name="apply-sex-offense-submission"
         value={value.submissionRequest}
@@ -128,8 +130,8 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
   const showOnlineCredentials = value.siteSubmission === 'online'
 
   return (
-    <div className={styles.root}>
-      <PFFormFieldTable>
+    <div className={[styles.root, hostStyles.root].join(' ')}>
+      <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
         <PFFormFieldRow type={showOnlineCredentials ? 'double' : 'single'}>
           <PFFormField label="사이트 제출 방식" fullWidth={!showOnlineCredentials}>
             <ApplyFormRadioGroup
@@ -149,7 +151,7 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
               <PFFormInlineRow>
                 <PFFormInlineSegment>
                   <PFFormControlCluster>
-                    <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                    <PFText as="span" typo="bd-md-md" color="neutral-cool-700">
                       ID
                     </PFText>
                     <PFTextInput
@@ -165,7 +167,7 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
                 <PFFormInlineSeparator />
                 <PFFormInlineSegment>
                   <PFFormControlCluster>
-                    <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                    <PFText as="span" typo="bd-md-md" color="neutral-cool-700">
                       검증번호
                     </PFText>
                     <PFTextInput
@@ -186,14 +188,14 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
       <div className={styles.notes}>
         <ul className={styles.noteList}>
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES.map(note => (
-            <PFText key={note} as="li" typo="bd-sm-rg" color="neutral-cool-700">
+            <PFFormFieldValueText key={note} as="li" className={styles.noteItem}>
               {note}
-            </PFText>
+            </PFFormFieldValueText>
           ))}
         </ul>
-        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-700">
+        <PFFormFieldValueText as="p" className={styles.caution}>
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION}
-        </PFText>
+        </PFFormFieldValueText>
       </div>
     </div>
   )

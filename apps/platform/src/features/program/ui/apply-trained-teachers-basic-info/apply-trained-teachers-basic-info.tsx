@@ -149,7 +149,7 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFTextInput
             variant="formPage"
             size="large"
-            width="200px"
+            width="100%"
             placeholder={
               answerKeyPlaceholders && schoolNameLocked ? 'schoolName' : '로그인 교사의 소속 학교'
             }
@@ -176,7 +176,7 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFTextInput
             variant="formPage"
             size="large"
-            width="200px"
+            width="100%"
             placeholder={answerKeyPlaceholders ? 'regionLabel' : '기관 등록 주소'}
             value={regionDisplay}
             disabled
@@ -278,6 +278,9 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFFormInlineRow>
             <PFFormInlineSegment>
               <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  담당 교사
+                </PFText>
                 <PFTextInput
                   variant="formPage"
                   size="large"
@@ -287,6 +290,14 @@ export function ApplyTrainedTeachersBasicInfo({
                   disabled
                   onValueChange={() => {}}
                 />
+              </PFFormControlCluster>
+            </PFFormInlineSegment>
+            <PFFormInlineSeparator />
+            <PFFormInlineSegment>
+              <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  Tel
+                </PFText>
                 <PFTextInput
                   variant="formPage"
                   size="large"
@@ -301,29 +312,39 @@ export function ApplyTrainedTeachersBasicInfo({
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="담당 교사의 휴대폰 번호"
-                value={formatKoreanPhoneNumber(value.teacherMobile)}
-                onValueChange={next =>
-                  patch({ teacherMobile: formatKoreanPhoneNumber(next) })
-                }
-              />
+              <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  M
+                </PFText>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="담당 교사의 휴대폰 번호"
+                  value={formatKoreanPhoneNumber(value.teacherMobile)}
+                  onValueChange={next =>
+                    patch({ teacherMobile: formatKoreanPhoneNumber(next) })
+                  }
+                />
+              </PFFormControlCluster>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                placeholder="담당 교사의 이메일"
-                value={value.teacherEmail}
-                onValueChange={next => patch({ teacherEmail: next })}
-              />
+              <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  E-mail
+                </PFText>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  placeholder="담당 교사의 이메일"
+                  value={value.teacherEmail}
+                  onValueChange={next => patch({ teacherEmail: next })}
+                />
+              </PFFormControlCluster>
             </PFFormInlineSegment>
           </PFFormInlineRow>
         </PFFormField>

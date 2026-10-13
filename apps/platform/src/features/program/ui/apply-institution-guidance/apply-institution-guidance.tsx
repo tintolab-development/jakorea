@@ -4,13 +4,7 @@ import {
   INSTITUTION_GUIDANCE_FIELDS,
   type InstitutionGuidanceFieldId,
 } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
-import {
-  PFFormField,
-  PFFormFieldHintText,
-  PFFormFieldRow,
-  PFFormFieldTable,
-  PFTextarea,
-} from '@/shared/ui'
+import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFTextarea } from '@/shared/ui'
 import hostStyles from '../apply-form-field-host.module.css'
 import styles from './apply-institution-guidance.module.css'
 
@@ -57,20 +51,22 @@ export function ApplyInstitutionGuidance({ value, onChange }: ApplyInstitutionGu
       {INSTITUTION_GUIDANCE_FIELDS.map(field => (
         <PFFormFieldTable key={field.id}>
           <PFFormFieldRow type="single">
-            <PFFormField label={field.title} layout="vertical">
-              <div className={styles.answer}>
-                <PFFormFieldHintText as="p">{field.description}</PFFormFieldHintText>
-                <PFTextarea
-                  variant="formPage"
-                  width="100%"
-                  aria-label={field.title}
-                  maxLength={INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}
-                  placeholder={INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER}
-                  value={value[field.id] ?? ''}
-                  message={`${(value[field.id] ?? '').length}/${INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}`}
-                  onValueChange={next => onChange({ ...value, [field.id]: next })}
-                />
-              </div>
+            <PFFormField
+              label={field.title}
+              labelDescription={field.description}
+              layout="vertical"
+            >
+              <PFTextarea
+                variant="formPage"
+                width="100%"
+                aria-label={field.title}
+                maxLength={INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}
+                placeholder={INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER}
+                value={value[field.id] ?? ''}
+                message={`${(value[field.id] ?? '').length}/${INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}`}
+                messageAlign="end"
+                onValueChange={next => onChange({ ...value, [field.id]: next })}
+              />
             </PFFormField>
           </PFFormFieldRow>
         </PFFormFieldTable>

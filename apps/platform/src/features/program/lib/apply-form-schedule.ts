@@ -197,14 +197,23 @@ export function shouldShowApplyPreferredSchedule(program: ApplyScheduleVisibilit
   return shouldShowApplicationPreferredScheduleParagraph(program)
 }
 
+export type ApplyScheduleParagraphsForProgramInput = ApplyScheduleProgramFields & {
+  maxScheduleCount?: number
+  maxSessionsPerDay?: number
+  runtimeContext?: unknown
+}
+
 export function applyScheduleParagraphsForProgram(
   draft: WritingFormDraft,
-  program: ApplyScheduleProgramFields
+  program: ApplyScheduleParagraphsForProgramInput
 ): WritingFormDraft {
   return syncApplicationScheduleChoiceParagraphsInDraft(draft, {
     educationStructure: program.educationStructure ?? 'curriculum',
     sessionRound: program.sessionRound ?? 'single',
     educationScheduleMode: program.educationScheduleMode ?? 'date',
     educationScheduleLines: program.educationScheduleLines ?? [],
+    maxScheduleCount: program.maxScheduleCount ?? program.maxPreferredScheduleCount,
+    maxSessionsPerDay: program.maxSessionsPerDay,
+    runtimeContext: program.runtimeContext,
   })
 }
