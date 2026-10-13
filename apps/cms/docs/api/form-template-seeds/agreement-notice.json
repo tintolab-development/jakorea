@@ -36,7 +36,7 @@
         "paragraphTitle": "이용기관 명칭",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
-        "bodyPlaceholder": "텍스트를 작성해 주세요",
+        "bodyPlaceholder": "예시 이용기관명",
         "bodyText": "",
         "answerRequired": false
       },
@@ -61,43 +61,13 @@
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": [
-          "연번",
-          "행정정보명",
-          "연번",
-          "행정정보명"
-        ],
+        "columnHeaders": ["연번", "행정정보명", "연번", "행정정보명"],
         "dataRows": [
-          [
-            "1",
-            "성범죄경력 및 아동학대 관련 범죄전력 조회",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            ""
-          ]
+          ["1", "성범죄경력 및 아동학대 관련 범죄전력 조회", "", ""],
+          ["", "", "", ""],
+          ["", "", "", ""],
+          ["", "", "", ""],
+          ["", "", "", ""]
         ],
         "columnFields": [],
         "fieldDataRows": [],
