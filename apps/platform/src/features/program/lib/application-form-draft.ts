@@ -693,6 +693,14 @@ export function writingFormDraftFromApplicationForm(
 
 function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
   if ('showBottomConsent' in paragraph && paragraph.showBottomConsent) {
+    /** BE는 제3자 동의 등 표 본문(`fieldDataRows`)과 하단 동의를 함께 검증한다. */
+    if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
+      return {
+        fieldDataRows: 'fieldDataRows' in paragraph ? paragraph.fieldDataRows : [],
+        dataRows: 'dataRows' in paragraph ? paragraph.dataRows : [],
+        bottomConsent: paragraph.bottomConsent ?? null,
+      }
+    }
     return { bottomConsent: paragraph.bottomConsent ?? null }
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'short_essay') {

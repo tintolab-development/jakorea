@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
@@ -1216,6 +1217,10 @@ export function ProgramApplyPage() {
       setSubmitAlert({ description: blockedMessage })
       return
     }
+    if (hasIncompleteApplicationFormThirdPartyRecipient(displayDraft)) {
+      setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+      return
+    }
     const bundle = applicationFormQuery.bundle
     if (
       canSubmitRemote &&
@@ -1270,7 +1275,11 @@ export function ProgramApplyPage() {
         }
       }
       const basicParagraph = findDraftParagraph(displayDraft, isApplicationBasicInfoParagraphId)
-      const basicAnswer = basicParagraph ? basicInfoAnswerFromValues(basicInfo) : null
+      const basicAnswer = basicParagraph
+        ? basicInfoAnswerFromValues(basicInfo, {
+            includePreferredEducationFields: showPreferredEducationForm,
+          })
+        : null
       if (basicParagraph) {
         const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
         if (basicError) {

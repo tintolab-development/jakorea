@@ -187,9 +187,12 @@ assert.ok(personal && 'bottomConsent' in personal)
 assert.equal(personal.bottomConsent, 'agree')
 
 const answers = buildApplicationAnswersFromDraft(draft!)
-assert.deepEqual(answers['program-application-trained-teachers-seed-personal-info'], {
-  bottomConsent: 'agree',
-})
+const personalAnswer = answers['program-application-trained-teachers-seed-personal-info'] as {
+  bottomConsent?: string
+  fieldDataRows?: unknown
+}
+assert.equal(personalAnswer.bottomConsent, 'agree')
+assert.ok(Array.isArray(personalAnswer.fieldDataRows))
 
 const withOverride = buildApplicationAnswersFromDraft(draft!, {
   overrides: {
