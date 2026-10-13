@@ -73,6 +73,10 @@ const patchedSchedule = patched.paragraphs.find(
 assert.ok(patchedSchedule && patchedSchedule.variant === 'multiple_choice')
 const patchedItems = (patchedSchedule as MultipleChoiceParagraph).items
 assert.equal(patchedItems.length, 3)
+assert.equal(
+  patchedSchedule.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+)
 
 assert.equal(
   shouldShowApplicationScheduleParagraphResolved({

@@ -5,6 +5,10 @@ import { readInstitutionFixedScheduleChoiceItems } from './fixed-schedule-choice
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
 import { shouldShowApplicationScheduleParagraphResolved } from './application-schedule-visibility-input.js'
 import {
+  readApplicationScheduleRecruitmentLimitsFromRuntime,
+  resolveApplicationScheduleParagraphDescription,
+} from './application-schedule-paragraph-copy.js'
+import {
   shouldShowApplicationPreferredScheduleParagraph,
   type ApplicationScheduleVisibilityInput,
 } from './schedule-paragraph-visibility.js'
@@ -37,15 +41,33 @@ function applyDateScheduleItems(
 export type ApplyScheduleDraftSyncInput = ApplicationScheduleVisibilityInput & {
   runtimeContext?: unknown
   scheduleParagraphRaw?: unknown
+  /** Platform `maxPreferredScheduleCount` · CMS `maxScheduleCount` */
+  maxScheduleCount?: number
+  maxSessionsPerDay?: number
 }
 
 /**
  * 시드·remote draft의 schedule choice 단락 items를 프로그램·binding SSOT에 맞춘다.
  */
+function scheduleCopyInputFromSync(
+  input: ApplyScheduleDraftSyncInput
+): ApplyScheduleDraftSyncInput {
+  const fromRuntime = readApplicationScheduleRecruitmentLimitsFromRuntime(input.runtimeContext)
+  return {
+    ...input,
+    maxScheduleCount: input.maxScheduleCount ?? fromRuntime.maxScheduleCount,
+    maxSessionsPerDay: input.maxSessionsPerDay ?? fromRuntime.maxSessionsPerDay,
+  }
+}
+
 export function syncApplicationScheduleChoiceParagraphsInDraft(
   draft: WritingFormDraft,
   input: ApplyScheduleDraftSyncInput
 ): WritingFormDraft {
+  const copyInput = scheduleCopyInputFromSync(input)
+  const scheduleParagraphDescription =
+    resolveApplicationScheduleParagraphDescription(copyInput)
+
   const scheduleParagraphRaw =
     input.scheduleParagraphRaw ??
     draft.paragraphs.find(
@@ -80,7 +102,7 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
         }
         return {
           ...paragraph,
-          paragraphDescription: '',
+          paragraphDescription: scheduleParagraphDescription,
           items: [],
           selectedPreviewMultipleIds: [],
         }
@@ -112,13 +134,20 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
         if (choiceItems.length === 0) return paragraph
         return {
           ...paragraph,
+          paragraphDescription: scheduleParagraphDescription,
           items: choiceItems.map(item => ({ id: item.id, label: item.label })),
           selectedPreviewSingleId: null,
         }
       }
 
-      if (lines.length === 0) return paragraph
-      return applyDateScheduleItems(paragraph as MultipleChoiceParagraph, lines)
+      if (lines.length === 0) {
+        if (!scheduleParagraphDescription) return paragraph
+        return { ...paragraph, paragraphDescription: scheduleParagraphDescription }
+      }
+      return {
+        ...applyDateScheduleItems(paragraph as MultipleChoiceParagraph, lines),
+        paragraphDescription: scheduleParagraphDescription,
+      }
     }),
   }
 }
