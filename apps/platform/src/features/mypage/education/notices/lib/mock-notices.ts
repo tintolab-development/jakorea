@@ -71,10 +71,41 @@ const MOCK_FILES: EducationInProgressFile[] = [
   },
 ]
 
+const appendedNoticesByProgramId = new Map<string, EducationInProgressNotice[]>()
+
+export type AppendMockEducationNoticeInput = {
+  programId: string
+  title: string
+  content: string
+  authorName: string
+}
+
+/** mock — 교사·강사가 작성한 프로그램 안내사항 게시글 */
+export function appendMockEducationInProgressNotice(
+  input: AppendMockEducationNoticeInput,
+): EducationInProgressNotice {
+  const notice: EducationInProgressNotice = {
+    id: `edu-notice-mock-${Date.now()}`,
+    title: input.title.trim(),
+    content: input.content.trim(),
+    authorName: input.authorName,
+    publishedAt: new Date().toISOString(),
+    read: true,
+    viewCount: 0,
+    commentCount: 0,
+    reactionCount: 0,
+    isAuthor: true,
+  }
+  const prev = appendedNoticesByProgramId.get(input.programId) ?? []
+  appendedNoticesByProgramId.set(input.programId, [notice, ...prev])
+  return notice
+}
+
 /** 진행중 상세에서 목록이 보이도록 동일 시드 반환. API 연동 시 programId로 교체. */
-export function getMockEducationInProgressNotices(_programId: string): EducationInProgressNotice[] {
+export function getMockEducationInProgressNotices(programId: string): EducationInProgressNotice[] {
   if (!shouldUsePlatformMockData()) return []
-  return MOCK_NOTICES.map(notice => ({ ...notice }))
+  const appended = appendedNoticesByProgramId.get(programId) ?? []
+  return [...appended, ...MOCK_NOTICES.map(notice => ({ ...notice }))]
 }
 
 export function getMockEducationInProgressFiles(_programId: string): EducationInProgressFile[] {

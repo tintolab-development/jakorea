@@ -1,0 +1,26 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.field {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.editorWrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-8);
+}

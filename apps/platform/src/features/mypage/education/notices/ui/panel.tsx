@@ -38,6 +38,8 @@ type EducationInProgressNoticePanelProps = {
   leading?: ReactNode
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  /** CMS 프로그램 게시글(안내사항) 작성 — 교사·기관 프로그램 등 */
+  onNoticeWriteClick?: () => void
 }
 
 export function EducationInProgressNoticePanel({
@@ -47,6 +49,7 @@ export function EducationInProgressNoticePanel({
   leading,
   applicationType,
   applicationId,
+  onNoticeWriteClick,
 }: EducationInProgressNoticePanelProps) {
   const programId = program.id
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
@@ -267,6 +270,19 @@ export function EducationInProgressNoticePanel({
             신청 정보
           </PFButton>
         </div>
+
+        {onNoticeWriteClick ? (
+          <PFButton
+            type="button"
+            className={styles.noticeWriteCta}
+            variant="secondary"
+            size="xlarge"
+            width="100%"
+            onClick={onNoticeWriteClick}
+          >
+            안내사항 작성하기
+          </PFButton>
+        ) : null}
       </div>
 
       <EducationInProgressNoticeDetailModal

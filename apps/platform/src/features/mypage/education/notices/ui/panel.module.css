@@ -118,6 +118,11 @@
   margin-top: var(--spacing-16);
 }
 
+.noticeWriteCta {
+  flex-shrink: 0;
+  margin-top: var(--spacing-40);
+}
+
 .actionDivider {
   width: 1px;
   height: 16px;
