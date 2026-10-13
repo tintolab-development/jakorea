@@ -29,7 +29,26 @@ export {
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
   updateMockTeacherApplicationGuidance,
+  updateMockTeacherInstitutionGuidanceFormState,
+  getMockTeacherInstitutionGuidanceFormState,
 } from './lib/mock-applications'
+export {
+  educationInstitutionGuidanceWritePath,
+  educationInstitutionGuidanceApplicationTabPath,
+} from './lib/guidance-path'
+export {
+  shouldShowTeacherInstitutionGuidanceWrite,
+  shouldShowTeacherInstitutionGuidanceWriteForProfile,
+  hasInstitutionGuidanceDraftContent,
+  resolveTeacherInstitutionGuidanceCtaLabel,
+} from './lib/teacher-institution-guidance'
+export {
+  mapInstitutionGuidanceFromApplicationAnswers,
+  buildInstitutionGuidanceAnswerPatch,
+  teacherGuidanceContentFromFormState,
+  teacherInstitutionGuidanceFormStateFromTeacherContent,
+  type TeacherInstitutionGuidanceFormState,
+} from './lib/institution-guidance-from-answers'
 export {
   filterEducationStatusApplications,
   filterLectureStatusApplications,

@@ -153,13 +153,59 @@ export type PortalEducationSchedule = {
   availableActions?: string[]
 }
 
+export type PortalEducationScheduleScopeStatus =
+  | 'ASSIGNMENT_SCOPED'
+  | 'RECORDED_ONLY'
+  | 'NO_SCOPE_EVIDENCE'
+  | 'PROGRAM_SCHEDULE'
+
+export type PortalEducationSchedulesResult = {
+  items: PortalEducationSchedule[]
+  scopeStatus?: PortalEducationScheduleScopeStatus | null
+  educationStructure?: PortalEducationStructure | null
+  sessionRound?: PortalSessionRound | null
+  applicationId?: number
+  applicationType?: string
+}
+
 export type PortalEducationScheduleList = {
   applicationId?: number
   applicationType?: string
   educationStructure?: PortalEducationStructure | string | null
   sessionRound?: PortalSessionRound | string | null
   items?: PortalEducationSchedule[]
-  scopeStatus?: string | null
+  scopeStatus?: PortalEducationScheduleScopeStatus | string | null
+}
+
+function normalizePortalEducationScheduleScopeStatus(
+  value: string | null | undefined,
+): PortalEducationScheduleScopeStatus | null {
+  const normalized = value?.trim().toUpperCase()
+  switch (normalized) {
+    case 'ASSIGNMENT_SCOPED':
+    case 'RECORDED_ONLY':
+    case 'NO_SCOPE_EVIDENCE':
+    case 'PROGRAM_SCHEDULE':
+      return normalized
+    default:
+      return null
+  }
+}
+
+function normalizePortalEducationStructure(
+  value: string | null | undefined,
+): PortalEducationStructure | null {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'CURRICULUM' || normalized === 'SCHEDULE') return normalized
+  return null
+}
+
+function normalizePortalSessionRound(
+  value: string | null | undefined,
+): PortalSessionRound | null {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'SINGLE' || normalized === 'MULTI') return normalized
+  return null
 }
 
 export type PortalFormListItem = {
@@ -382,14 +428,23 @@ export async function fetchApplicationSchedules(
   applicationType: ProgramApplicationType,
   applicationId: string,
   signal?: AbortSignal,
-): Promise<PortalEducationSchedule[]> {
+): Promise<PortalEducationSchedulesResult> {
   const { data } = await axiosClient.get<unknown>(
     `${applicationPath(applicationType, applicationId)}/schedules`,
     { signal },
   )
   const unwrapped = unwrapEnvelope<PortalEducationScheduleList | PortalEducationSchedule[]>(data)
-  if (Array.isArray(unwrapped)) return unwrapped
-  return unwrapped.items ?? []
+  if (Array.isArray(unwrapped)) {
+    return { items: unwrapped }
+  }
+  return {
+    items: unwrapped.items ?? [],
+    scopeStatus: normalizePortalEducationScheduleScopeStatus(unwrapped.scopeStatus),
+    educationStructure: normalizePortalEducationStructure(unwrapped.educationStructure),
+    sessionRound: normalizePortalSessionRound(unwrapped.sessionRound),
+    applicationId: unwrapped.applicationId,
+    applicationType: unwrapped.applicationType,
+  }
 }
 
 export async function fetchApplicationForms(

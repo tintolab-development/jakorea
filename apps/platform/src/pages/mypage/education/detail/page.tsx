@@ -56,6 +56,8 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
+import { shouldShowTeacherInstitutionGuidanceWrite } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
+import { educationProgramNoticeWritePath } from '@/features/mypage/education/notices/lib/notice-path'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -389,12 +391,19 @@ export function MypageEducationDetailPage() {
     schedules: program.eventSchedules,
   })
 
+  const showTeacherGuidanceWrite = shouldShowTeacherInstitutionGuidanceWrite({
+    isTeacher,
+    programAudience: program.programAudience,
+    displayStatus: application.displayStatus,
+  })
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
       isTeacher && application.teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
           content={application.teacherApplicationContent}
+          showGuidanceWriteLink={showTeacherGuidanceWrite}
         />
       ) : (
         <EducationApplicationContent
@@ -417,6 +426,11 @@ export function MypageEducationDetailPage() {
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          onNoticeWriteClick={
+            showTeacherGuidanceWrite
+              ? () => navigate(educationProgramNoticeWritePath(application.id))
+              : undefined
+          }
         />
       )
     }
@@ -436,6 +450,9 @@ export function MypageEducationDetailPage() {
     if (active === 'students') {
       return (
         <EducationStudentsPanel
+          applicationId={application.id}
+          applicationType={routeApplicationType}
+          certificateAvailable={application.certificateAvailable}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

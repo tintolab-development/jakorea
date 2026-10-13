@@ -1,11 +1,179 @@
-.panel {
+.shell {
   display: flex;
+  align-items: stretch;
+  gap: var(--spacing-80);
   width: 100%;
   min-width: 0;
+  min-height: 560px;
+}
+
+.stepMain {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.stepSide {
+  display: flex;
+  flex-shrink: 0;
+  width: 360px;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.stepHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.stepTitle {
+  margin: 0;
+}
+
+.stepDescription {
+  margin: 0;
+}
+
+.rosterActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-16);
 }
 
-.title {
+.rosterActionGroup,
+.portraitActionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.buttonInner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.hiddenFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.contentBox,
+.contentBoxEmpty {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 280px;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+}
+
+.contentBox {
+  padding: var(--spacing-24) var(--spacing-32);
+  gap: var(--spacing-16);
+  overflow-y: auto;
+}
+
+.contentBoxEmpty,
+.portraitBoxEmpty {
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-48);
+}
+
+.portraitBox,
+.portraitBoxEmpty {
+  display: flex;
+  min-height: 200px;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+}
+
+.portraitBox {
+  padding: var(--spacing-24);
+  justify-content: center;
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.illustration {
+  display: block;
+  width: 100px;
+  height: 100px;
+  margin-bottom: var(--spacing-16);
+}
+
+.emptyTitle {
   margin: 0;
+}
+
+.rosterSummary {
+  margin: 0;
+}
+
+.rosterList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rosterListItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-8) var(--spacing-16);
+}
+
+@media (--bp-below-pc) {
+  .shell {
+    flex-direction: column;
+    gap: var(--spacing-48);
+    min-height: 0;
+  }
+
+  .stepSide {
+    width: 100%;
+  }
+
+  .rosterActionRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rosterActionGroup,
+  .portraitActionGroup {
+    width: 100%;
+  }
+
+  .rosterActionGroup :global(button),
+  .portraitActionGroup :global(button) {
+    flex: 1;
+    min-width: 0;
+  }
 }

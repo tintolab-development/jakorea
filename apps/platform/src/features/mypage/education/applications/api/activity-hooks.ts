@@ -17,6 +17,10 @@ import type {
   EducationNoticeReactionUser,
 } from '../../notices/model/types'
 import { mapPortalEducationSchedule } from '../../schedules/lib/map-from-portal'
+import {
+  getEducationSchedulesQueryErrorCode,
+  getEducationSchedulesQueryTraceId,
+} from '../../schedules/lib/schedules-query-error'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
 import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
 import {
@@ -570,11 +574,20 @@ export function useApplicationSchedulesQuery(
     enabled,
     ...queryOptions(),
   })
+  const items = useMemo(
+    () => (query.data?.items ?? []).map((item, index) => mapPortalEducationSchedule(item, index)),
+    [query.data?.items],
+  )
   return {
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
-    items: (query.data ?? []).map((item, index) => mapPortalEducationSchedule(item, index)),
+    isRefetching: enabled && query.isFetching && !query.isPending,
+    items,
+    scopeStatus: query.data?.scopeStatus ?? null,
+    refetch: query.refetch,
+    errorCode: query.isError ? getEducationSchedulesQueryErrorCode(query.error) : null,
+    traceId: query.isError ? getEducationSchedulesQueryTraceId(query.error) : null,
   }
 }
 

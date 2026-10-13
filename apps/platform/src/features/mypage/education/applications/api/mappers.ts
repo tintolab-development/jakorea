@@ -4,8 +4,18 @@ import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
   resolvePreferredEducationScheduleLabelFromAnswers,
+  resolvePreferredScheduleLabelsFromAnswers,
 } from '../lib/application-content-from-answers'
-import type { EducationApplicationListItem, EducationDisplayStatus } from '../model/types'
+import { mapTeacherInstitutionFromApplicationAnswers } from '../lib/institution-basic-info-from-answers'
+import {
+  mapInstitutionGuidanceFromApplicationAnswers,
+  teacherGuidanceContentFromFormState,
+} from '../lib/institution-guidance-from-answers'
+import type {
+  EducationApplicationListItem,
+  EducationDisplayStatus,
+  EducationTeacherPreferredSchedule,
+} from '../model/types'
 import type {
   PortalProgramApplicationDetail,
   PortalProgramApplicationListItem,
@@ -286,6 +296,9 @@ export function mapPortalProgramApplicationDetail(
   mapped.displayStatus = displayStatus
   mapped.recruitmentStatus = mapRecruitmentStatus(displayStatus)
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
+  if (detail.certificateAvailable != null) {
+    mapped.certificateAvailable = detail.certificateAvailable
+  }
   const recruitmentLabel = formatDateRange(
     detail.program?.recruitmentStartAt,
     detail.program?.recruitmentEndAt,
@@ -312,6 +325,43 @@ export function mapPortalProgramApplicationDetail(
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
+
+  if (detail.applicationType === 'ORGANIZATION' && Object.keys(answers).length > 0) {
+    const guidanceForm = mapInstitutionGuidanceFromApplicationAnswers(answers, mapped.detailCase)
+    const institutionFromAnswers = mapTeacherInstitutionFromApplicationAnswers(
+      answers,
+      mapped.detailCase,
+      detail.programGroup ?? detail.program?.programGroup,
+    )
+    const scheduleLabels = resolvePreferredScheduleLabelsFromAnswers({
+      answers,
+      preferredScheduleOptionValues: mapped.preferredScheduleOptionValues,
+    })
+    const preferredSchedules: EducationTeacherPreferredSchedule[] = scheduleLabels.map(
+      (value, index) => ({
+        id: `preferred-schedule-${index + 1}`,
+        label: `진행 희망 교육 일정 ${index + 1}`,
+        value,
+      }),
+    )
+    mapped.teacherApplicationContent = {
+      institution: institutionFromAnswers ?? {
+        name: '',
+        grade: '',
+        address: '',
+        addressDetail: '',
+        classAndHeadcount: '',
+        teacherContact: '',
+        reason: '',
+        otherRequests: '',
+      },
+      guidance: teacherGuidanceContentFromFormState(guidanceForm),
+      preferredSchedules:
+        preferredSchedules.length > 0
+          ? preferredSchedules
+          : (mapped.teacherApplicationContent?.preferredSchedules ?? []),
+    }
+  }
 
   return mapped
 }

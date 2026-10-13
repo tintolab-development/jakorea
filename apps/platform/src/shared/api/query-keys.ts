@@ -303,6 +303,30 @@ export const platformQueryKeys = {
         'ORGANIZATION',
         applicationId,
       ] as const,
+    /** 기관 신청 — 학생 명단·초상권 (Class D) */
+    organizationApplications: {
+      studentRoster: (applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.all(),
+          'organization-applications',
+          applicationId,
+          'student-roster',
+        ] as const,
+      studentDocumentsPolicy: (applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.all(),
+          'organization-applications',
+          applicationId,
+          'student-documents-policy',
+        ] as const,
+      portraitConsent: (applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.all(),
+          'organization-applications',
+          applicationId,
+          'portrait-consent',
+        ] as const,
+    },
     programApplications: {
       all: () => [...platformQueryKeys.mypage.all(), 'program-applications'] as const,
       /**

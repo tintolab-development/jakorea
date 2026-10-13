@@ -3,8 +3,11 @@ import type {
   EducationApplicationTab,
   EducationDisplayStatus,
   EducationTeacherApplicationContent,
-  EducationTeacherApplicationGuidance,
 } from '../model/types'
+import {
+  teacherGuidanceContentFromFormState,
+  type TeacherInstitutionGuidanceFormState,
+} from './institution-guidance-from-answers'
 import {
   ECONOMY_INSTRUCTOR_STATUS_IDS,
   GENERAL_INSTRUCTOR_STATUS_IDS,
@@ -91,16 +94,52 @@ function createMockTeacherApplicationContent(): EducationTeacherApplicationConte
   }
 }
 
-/** 안내사항 수정 — mock 로컬 스냅샷 */
-const teacherGuidanceOverrides = new Map<string, EducationTeacherApplicationGuidance>()
+/** 안내사항 작성·수정 — mock 로컬 스냅샷 */
+const teacherGuidanceFormOverrides = new Map<string, TeacherInstitutionGuidanceFormState>()
 
-export function updateMockTeacherApplicationGuidance(
+export function getMockTeacherInstitutionGuidanceFormState(
   applicationId: string,
-  guidance: EducationTeacherApplicationGuidance
+): TeacherInstitutionGuidanceFormState | undefined {
+  const stored = teacherGuidanceFormOverrides.get(applicationId)
+  if (!stored) return undefined
+  return {
+    guidance: { ...stored.guidance },
+    sexOffense: { ...stored.sexOffense },
+  }
+}
+
+export function updateMockTeacherInstitutionGuidanceFormState(
+  applicationId: string,
+  state: TeacherInstitutionGuidanceFormState,
 ): void {
   if (!shouldUsePlatformMockData()) return
-  teacherGuidanceOverrides.set(applicationId, { ...guidance })
+  teacherGuidanceFormOverrides.set(applicationId, {
+    guidance: { ...state.guidance },
+    sexOffense: { ...state.sexOffense },
+  })
   emitMockEducationApplicationsChange()
+}
+
+/** @deprecated `updateMockTeacherInstitutionGuidanceFormState` 사용 */
+export function updateMockTeacherApplicationGuidance(
+  applicationId: string,
+  guidance: EducationTeacherApplicationContent['guidance'],
+): void {
+  updateMockTeacherInstitutionGuidanceFormState(applicationId, {
+    guidance: {
+      'computer-in-room': guidance.computerInRoom,
+      'waiting-place': guidance.waitingPlace,
+      meal: guidance.meal,
+      'other-notes': guidance.otherNotes,
+    },
+    sexOffense: {
+      submissionRequest: 'request',
+      inquiryMethod: 'criminal_record_site',
+      siteSubmission: 'online',
+      institutionId: '',
+      verificationNumber: '',
+    },
+  })
 }
 
 const MOCK_TEACHER_ASSIGNMENT: NonNullable<EducationApplicationListItem['teacherAssignment']> = {
@@ -252,6 +291,8 @@ const TEACHER_APPLICATION_CONTENT_STATUSES: ReadonlySet<EducationDisplayStatus> 
   'document_passed',
   'rejected',
   'withdrawn',
+  'in_progress',
+  'completed',
 ])
 
 function buildEducationApplications(): EducationApplicationListItem[] {
@@ -287,9 +328,9 @@ function buildEducationApplications(): EducationApplicationListItem[] {
 
       if (isGeneralNonVolunteer && TEACHER_APPLICATION_CONTENT_STATUSES.has(item.displayStatus)) {
         const content = createMockTeacherApplicationContent()
-        const guidanceOverride = teacherGuidanceOverrides.get(item.id)
+        const guidanceOverride = teacherGuidanceFormOverrides.get(item.id)
         if (guidanceOverride) {
-          content.guidance = { ...guidanceOverride }
+          content.guidance = teacherGuidanceContentFromFormState(guidanceOverride)
         }
         item.teacherApplicationContent = content
       }

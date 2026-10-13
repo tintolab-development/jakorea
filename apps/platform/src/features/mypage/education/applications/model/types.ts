@@ -122,6 +122,8 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
+  /** 수료증 발급 가능 — 포털 신청 상세 `certificateAvailable` */
+  certificateAvailable?: boolean
 }
 
 /** 교사 회원 신청 내용 — 신청 기관 정보 */
