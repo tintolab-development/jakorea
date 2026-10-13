@@ -48,6 +48,8 @@ export type EducationScheduleAssignment = {
 
 export type EducationScheduleItem = {
   id: string
+  /** 운영 일정 행 id. API가 `null`이면 일정 미등록(출석·결석 UI 비활성) */
+  scheduleId?: number | null
   /** 회차 번호(1-based) — 활동 포기 시 `lastParticipatedSession` 필터 */
   sessionNumber: number
   /** 교육 진행일 (ISO date or datetime). 없으면 빈 문자열 — 날짜 폴백은 Row */

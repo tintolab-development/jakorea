@@ -152,6 +152,11 @@ export function mapPortalEducationSchedule(
 
   return {
     id,
+    ...(item.scheduleId === null
+      ? { scheduleId: null }
+      : item.scheduleId != null
+        ? { scheduleId: item.scheduleId }
+        : {}),
     sessionNumber,
     heldAt,
     title,

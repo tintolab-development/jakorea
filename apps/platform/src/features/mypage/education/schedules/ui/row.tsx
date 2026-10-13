@@ -26,12 +26,14 @@ export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
   const heldLabel = resolveEducationScheduleDateLabel(item)
   const showAssignment = shouldShowEducationAssignment(item)
-  const showAbsenceSubmit = canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
-  const attendance = item.attendanceStatus
+  const hasOperationalSchedule = item.scheduleId !== null
+  const showAbsenceSubmit =
+    hasOperationalSchedule && canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
+  const attendance = hasOperationalSchedule ? item.attendanceStatus : null
   const rowLabel = item.sessionLabel?.trim() || item.scheduleLabel?.trim()
   const subtitle =
     rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title
-  const absenceReason = item.absenceReason?.trim()
+  const absenceReason = hasOperationalSchedule ? item.absenceReason?.trim() : undefined
 
   return (
     <>

@@ -107,4 +107,16 @@ const titleFallback = mapPortalEducationSchedule({ startAt: '2026-01-01T00:00:00
 assert.equal(titleFallback.sessionNumber, 5)
 assert.equal(titleFallback.title, '5회차')
 
+const unregisteredSchedule = mapPortalEducationSchedule(
+  {
+    scheduleId: null,
+    sessionNo: 1,
+    sessionLabel: '1차시',
+    title: '도입',
+  },
+  0,
+)
+assert.equal(unregisteredSchedule.scheduleId, null)
+assert.equal('scheduleId' in unregisteredSchedule, true)
+
 console.log('map-from-portal.selfcheck: ok')
