@@ -40,7 +40,7 @@ function readSettingsTab(params: URLSearchParams): SettingsTab {
 
 function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
   if (mode === 'edit-basic') return '회원정보 수정'
-  if (tab === 'social') return '소셜 계정 연동'
+  if (tab === 'social') return '소셜 계정 연동 관리'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
   return '회원정보 설정'
 }
@@ -115,11 +115,7 @@ export function MypageSettingsPage() {
   }
 
   const backButton = (
-    <ProgramBackButton
-      size="small"
-      label="마이페이지로"
-      onClick={() => navigate(MYPAGE_PATH)}
-    />
+    <ProgramBackButton size="small" label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
   )
 
   const pageTitleNode = (

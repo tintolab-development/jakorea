@@ -3,6 +3,19 @@ export const MYPAGE_PATH = '/mypage'
 /** 마이페이지 — 회원정보 설정 */
 export const MYPAGE_SETTINGS_PATH = '/mypage/settings'
 
+export const MYPAGE_SETTINGS_CONSENTS_TAB = `${MYPAGE_SETTINGS_PATH}?tab=consents`
+
+export function settingsConsentWritePath(
+  consentKey: string,
+  options?: { mode?: 'view' },
+): string {
+  const base = `${MYPAGE_SETTINGS_PATH}/consents/${encodeURIComponent(consentKey)}`
+  if (options?.mode === 'view') {
+    return `${base}?mode=view`
+  }
+  return base
+}
+
 /** 마이페이지 — 문의내역 */
 export const MYPAGE_INQUIRIES_PATH = '/mypage/inquiries'
 

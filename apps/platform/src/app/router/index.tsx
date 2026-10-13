@@ -45,6 +45,7 @@ import {
   MypageLecturePage,
   MypageLectureDetailPage,
   MypageSettingsPage,
+  MypageSettingsConsentPage,
 } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
@@ -230,6 +231,10 @@ export const router = createBrowserRouter([
       {
         path: '/mypage/instructor-apply/consent/:consentKey',
         element: <MypageInstructorApplyConsentPage />,
+      },
+      {
+        path: '/mypage/settings/consents/:consentKey',
+        element: <MypageSettingsConsentPage />,
       },
       {
         path: '/auth/sign-up/portrait-consent',
