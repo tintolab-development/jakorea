@@ -63,6 +63,15 @@ assert.equal(
 )
 
 assert.equal(messageForApplicationBlockedReason('VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'), MISMATCH)
+assert.equal(
+  messageForApplicationBlockedReason('ORGANIZATION_MEMBERSHIP_REQUIRED'),
+  '학교·기관 회원만 신청할 수 있습니다.',
+)
+assert.equal(
+  messageForApplicationBlockedReason('COLLEGE_STUDENT_REQUIRED'),
+  '대학생 모집 프로그램은 재학 중인 대학생 회원만 신청할 수 있습니다.',
+)
+assert.equal(messageForApplicationBlockedReason('CAPACITY_FULL'), '모집 정원이 마감되었습니다.')
 assert.equal(getProgramApplicationApiErrorMessage(axiosErr(mismatchBody)), MISMATCH)
 assert.equal(getApplicationApiErrorCode(axiosErr(mismatchBody)), 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH')
 

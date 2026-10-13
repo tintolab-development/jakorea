@@ -15,6 +15,8 @@ type ProgramInfoAsideProps = {
   showApplyCta?: boolean
   showCancelCta?: boolean
   onApply?: () => void
+  /** application-options 조회 중 — 중복 클릭 방지 */
+  applyChecking?: boolean
   onCancel?: () => void
   showTopFab?: boolean
 }
@@ -29,6 +31,7 @@ export function ProgramInfoAside({
   showApplyCta = false,
   showCancelCta = false,
   onApply,
+  applyChecking = false,
   onCancel,
   showTopFab = true,
 }: ProgramInfoAsideProps) {
@@ -54,7 +57,8 @@ export function ProgramInfoAside({
         <button
           type="button"
           className={styles.applyButton}
-          disabled={!canApply}
+          disabled={!canApply || applyChecking}
+          aria-busy={applyChecking}
           onClick={onApply}
         >
           <span className={styles.applyCopy}>
