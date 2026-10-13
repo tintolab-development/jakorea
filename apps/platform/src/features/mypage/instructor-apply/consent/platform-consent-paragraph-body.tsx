@@ -12,6 +12,7 @@ import {
   type MultipleChoiceParagraph,
   type TableBottomConsent,
   type WritingFormParagraph,
+  isEducatorFacilitatorPledgeClauseParagraphId,
   resolveMultipleChoiceBodyDescriptionText,
 } from '@jakorea/form-schema/writing-form'
 import {
@@ -23,6 +24,7 @@ import {
 } from '@/shared/ui'
 import {
   FormTemplateHost,
+  HorizontalTablePreviewBody,
   type FormUpdateParagraph,
   VerticalTablePreviewBody,
   patchVerticalTableBottomConsent,
@@ -33,10 +35,13 @@ import {
 } from '@jakorea/form-template-runtime'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import { ConsentInfoTable } from './info-table'
+import { AgreementNoticeSubjectFillFields } from './agreement-notice-subject-fill-fields'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
+import { PlatformPortraitLockedVerticalTable } from './platform-portrait-locked-vertical-table'
 import { PlatformPortraitPersonalConsentTable } from './portrait-personal-consent-table'
 import { resolveHorizontalTablePlatformView } from './horizontal-table-from-schema'
 import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
+import { NOTICE_CONFIRMATION } from './copy'
 import styles from './consent-form.module.css'
 
 function tableBottomConsentToChoice(value?: TableBottomConsent): ConsentValue | '' {
@@ -56,6 +61,75 @@ function resolveMultipleChoiceConsent(paragraph: MultipleChoiceParagraph): Conse
   return 'agree'
 }
 
+function applyMultipleChoiceConsent(
+  paragraph: MultipleChoiceParagraph,
+  next: ConsentValue,
+  onUpdateParagraph: FormUpdateParagraph,
+): void {
+  onUpdateParagraph(paragraph.id, current => {
+    if (current.kind !== 'single_item' || current.variant !== 'multiple_choice') {
+      return current
+    }
+    const suffix = next === 'agree' ? '-agree' : '-disagree'
+    const item =
+      current.items.find(entry => entry.id.endsWith(suffix)) ??
+      current.items.find(entry =>
+        next === 'agree' ? entry.label === '동의' : entry.label.includes('동의하지 않'),
+      )
+    return { ...current, selectedPreviewSingleId: item?.id ?? null }
+  })
+}
+
+function noticeTablePreviewParagraph(paragraph: HorizontalTableParagraph): HorizontalTableParagraph {
+  return {
+    ...paragraph,
+    idTypeWithInput: undefined,
+    showBottomText: false,
+    showBottomConsent: false,
+  }
+}
+
+function PlatformAgreementNoticeTableBody({
+  paragraph,
+  onUpdateParagraph,
+}: {
+  paragraph: HorizontalTableParagraph
+  onUpdateParagraph: FormUpdateParagraph
+}) {
+  const idType = paragraph.idTypeWithInput
+
+  return (
+    <div className={styles.tableBlock} data-paragraph-id={paragraph.id}>
+      <FormTemplateHost surface="platformUser">
+        <HorizontalTablePreviewBody
+          paragraph={noticeTablePreviewParagraph(paragraph)}
+          interactionMode="user"
+        />
+      </FormTemplateHost>
+      {paragraph.showBottomText || idType != null ? (
+        <div className={styles.tableAfter}>
+          {paragraph.showBottomText && paragraph.bottomText ? (
+            <p className={styles.tableDescription}>{paragraph.bottomText}</p>
+          ) : null}
+          {idType != null ? (
+            <PlatformIdTypeWithInputFields
+              paragraph={idType}
+              lockResidentIdType
+              onChange={next =>
+                onUpdateParagraph(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'horizontal_table'
+                    ? { ...current, idTypeWithInput: next }
+                    : current
+                )
+              }
+            />
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function PlatformHorizontalTableBody({
   paragraph,
   onUpdateParagraph,
@@ -63,6 +137,12 @@ function PlatformHorizontalTableBody({
   paragraph: HorizontalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
 }) {
+  if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table) {
+    return (
+      <PlatformAgreementNoticeTableBody paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
+    )
+  }
+
   const { headers, rows, emphasizedColumns } = resolveHorizontalTablePlatformView(paragraph)
   const idType = paragraph.idTypeWithInput
 
@@ -72,7 +152,7 @@ function PlatformHorizontalTableBody({
         headers={headers}
         rows={rows}
         emphasizedColumns={emphasizedColumns}
-        hideEmptyPairs={paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table}
+        hideEmptyPairs={false}
       />
       {paragraph.showBottomText || paragraph.showBottomConsent || idType != null ? (
         <div className={styles.tableAfter}>
@@ -146,9 +226,17 @@ export function PlatformConsentParagraphBody({
       )
     }
 
-    const isPortraitLockedBodyTable =
+    if (
       paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable ||
       paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
+    ) {
+      return (
+        <PlatformPortraitLockedVerticalTable
+          paragraph={paragraph}
+          onUpdateParagraph={onUpdateParagraph}
+        />
+      )
+    }
 
     return (
       <div className={styles.tableBlock}>
@@ -163,45 +251,33 @@ export function PlatformConsentParagraphBody({
                   : current
               )
             }
-            onCellChange={
-              isPortraitLockedBodyTable
-                ? undefined
-                : (rowIndex, stageIndex, value) =>
-                    onUpdateParagraph(paragraph.id, current =>
-                      current.kind === 'single_item' && current.variant === 'vertical_table'
-                        ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
-                        : current
-                    )
+            onCellChange={(rowIndex, stageIndex, value) =>
+              onUpdateParagraph(paragraph.id, current =>
+                current.kind === 'single_item' && current.variant === 'vertical_table'
+                  ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
+                  : current
+              )
             }
-            onCompositeTimeChange={
-              isPortraitLockedBodyTable
-                ? undefined
-                : (rowIndex, stageIndex, value) =>
-                    onUpdateParagraph(paragraph.id, current =>
-                      current.kind === 'single_item' && current.variant === 'vertical_table'
-                        ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
-                        : current
-                    )
+            onCompositeTimeChange={(rowIndex, stageIndex, value) =>
+              onUpdateParagraph(paragraph.id, current =>
+                current.kind === 'single_item' && current.variant === 'vertical_table'
+                  ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
+                  : current
+              )
             }
-            onMultipleChoiceChange={
-              isPortraitLockedBodyTable
-                ? undefined
-                : (rowIndex, stageIndex, values) =>
-                    onUpdateParagraph(paragraph.id, current =>
-                      current.kind === 'single_item' && current.variant === 'vertical_table'
-                        ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
-                        : current
-                    )
+            onMultipleChoiceChange={(rowIndex, stageIndex, values) =>
+              onUpdateParagraph(paragraph.id, current =>
+                current.kind === 'single_item' && current.variant === 'vertical_table'
+                  ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
+                  : current
+              )
             }
-            onFileNamesChange={
-              isPortraitLockedBodyTable
-                ? undefined
-                : (rowIndex, stageIndex, fileNames) =>
-                    onUpdateParagraph(paragraph.id, current =>
-                      current.kind === 'single_item' && current.variant === 'vertical_table'
-                        ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
-                        : current
-                    )
+            onFileNamesChange={(rowIndex, stageIndex, fileNames) =>
+              onUpdateParagraph(paragraph.id, current =>
+                current.kind === 'single_item' && current.variant === 'vertical_table'
+                  ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
+                  : current
+              )
             }
           />
         </FormTemplateHost>
@@ -214,6 +290,26 @@ export function PlatformConsentParagraphBody({
       resolveMultipleChoiceBodyDescriptionText(paragraph) ||
       paragraph.paragraphDescription?.trim() ||
       ''
+    const consentValue = resolveMultipleChoiceConsent(paragraph)
+    const radioGroup = (
+      <ConsentWriteRadioGroup
+        name={`consent-mc-${paragraph.id}`}
+        value={consentValue}
+        onChange={(next: ConsentValue) =>
+          applyMultipleChoiceConsent(paragraph, next, onUpdateParagraph)
+        }
+      />
+    )
+
+    if (isEducatorFacilitatorPledgeClauseParagraphId(paragraph.id)) {
+      return (
+        <div className={styles.tableAfter}>
+          {bodyDescription ? <p className={styles.tableDescription}>{bodyDescription}</p> : null}
+          {radioGroup}
+        </div>
+      )
+    }
+
     return (
       <>
         {bodyDescription ? (
@@ -224,26 +320,7 @@ export function PlatformConsentParagraphBody({
         <PFFormFieldTable>
           <PFFormFieldRow type="single">
             <PFFormField label="동의 여부" required>
-              <ConsentWriteRadioGroup
-                name={`consent-mc-${paragraph.id}`}
-                value={resolveMultipleChoiceConsent(paragraph)}
-                onChange={(next: ConsentValue) => {
-                  onUpdateParagraph(paragraph.id, current => {
-                    if (current.kind !== 'single_item' || current.variant !== 'multiple_choice') {
-                      return current
-                    }
-                    const suffix = next === 'agree' ? '-agree' : '-disagree'
-                    const item =
-                      current.items.find(entry => entry.id.endsWith(suffix)) ??
-                      current.items.find(entry =>
-                        next === 'agree'
-                          ? entry.label === '동의'
-                          : entry.label.includes('동의하지 않')
-                      )
-                    return { ...current, selectedPreviewSingleId: item?.id ?? null }
-                  })
-                }}
-              />
+              {radioGroup}
             </PFFormField>
           </PFFormFieldRow>
         </PFFormFieldTable>
@@ -254,10 +331,17 @@ export function PlatformConsentParagraphBody({
   if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
     const interactive = isExplanationInteractive(paragraph.id, fillOptions)
     if (interactive) {
+      const isNoticeExplanationPlain =
+        paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution ||
+        paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose
       return (
         <PFTextInput
           variant="formPage"
+          appearance={isNoticeExplanationPlain ? 'plain' : 'boxed'}
           size="large"
+          inputClassName={
+            isNoticeExplanationPlain ? styles.noticeExplanationParagraphBody : undefined
+          }
           value={paragraph.bodyText}
           placeholder={paragraph.bodyPlaceholder || '내용을 입력해 주세요'}
           onValueChange={value =>
@@ -284,6 +368,18 @@ export function PlatformConsentParagraphBody({
     paragraph.kind === 'single_item' &&
     (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay')
   ) {
+    if (
+      paragraph.variant === 'short_essay' &&
+      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
+    ) {
+      return (
+        <AgreementNoticeSubjectFillFields
+          paragraph={paragraph}
+          onUpdateParagraph={onUpdateParagraph}
+        />
+      )
+    }
+
     const items = paragraph.items ?? []
     if (items.length === 0) {
       return (
@@ -380,6 +476,13 @@ export function PlatformConsentParagraphBody({
   }
 
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+    if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing) {
+      const text = paragraph.body.trim() || NOTICE_CONFIRMATION
+      if (documentPreview) {
+        return <p className={previewTypography.closingText}>{text}</p>
+      }
+      return <p className={styles.noticeClosingStatement}>{text}</p>
+    }
     if (documentPreview) {
       return <p className={previewTypography.closingText}>{paragraph.body}</p>
     }

@@ -189,6 +189,28 @@
   gap: 16px;
 }
 
+.portraitTableDesktop {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitTableMobile {
+  display: none;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (--bp-below-pc) {
+  .portraitTableDesktop {
+    display: none;
+  }
+
+  .portraitTableMobile {
+    display: block;
+  }
+}
+
 .tableAfter {
   display: flex;
   width: 100%;
@@ -284,44 +306,8 @@
   font-weight: 700;
 }
 
-/* 모바일 — 초상권 1번 세로표: 성명·소속 필드 스택 (pf-form fieldTable 리듬) */
+/* 모바일 — PFFormFieldTable 내 소속 입력 + 소속 없음 체크 */
 @media (--bp-below-pc) {
-  .portraitPersonalVerticalTable
-    :global(> .form-template-vertical-table__row--portrait-name-affiliation) {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .portraitPersonalVerticalTable
-    :global(> .form-template-vertical-table__row--portrait-name-affiliation)
-    :global(> .form-template-vertical-table__stage) {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .portraitPersonalVerticalTable
-    :global(> .form-template-vertical-table__row--portrait-name-affiliation)
-    :global(.form-template-vertical-table__th) {
-    justify-content: flex-start;
-    color: var(--color-neutral-cool-600, #667278);
-    font-family: Pretendard, sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 140%;
-    text-align: left;
-  }
-
-  .portraitPersonalVerticalTable
-    :global(> .form-template-vertical-table__row--portrait-name-affiliation)
-    :global(.form-template-vertical-table__td) {
-    align-items: stretch;
-    gap: var(--spacing-8);
-  }
-
   .portraitAffiliationRow {
     flex-direction: row;
     flex-wrap: nowrap;
@@ -498,6 +484,67 @@
   width: 100%;
   justify-content: center;
   padding-top: 0;
+}
+
+/* 행정정보 — 대상자 본인 섹션 + 전자서명 카드(별도 셸) */
+.paragraphWithCompanion {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-24);
+}
+
+@media (--bp-below-pc) {
+  .paragraphWithCompanion {
+    gap: var(--spacing-16);
+  }
+}
+
+.noticeSubjectSignatureCard {
+  width: 100%;
+}
+
+/* 행정정보 1·2번 — 설명글 본문 입력값 Body/Medium/medium (`typo-bd-md-md`) */
+.noticeExplanationParagraphBody {
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d) !important;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px !important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  letter-spacing: -0.16px !important;
+}
+
+/* placeholder — Body/Medium/regular + 회색 (`#85969d`) */
+.noticeExplanationParagraphBody::placeholder {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d) !important;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px !important;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 150% !important;
+  letter-spacing: -0.16px !important;
+  opacity: 1 !important;
+}
+
+/* 행정정보 — 마무리 확인 문구 (서명은 5. 대상자 본인 섹션) */
+.noticeClosingStatement {
+  margin: 0;
+  width: 100%;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
 }
 
 .inlineFields {

@@ -18,6 +18,8 @@ export type PlatformConsentFormBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   fillOptions?: PlatformConsentFillOptions
   renderParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
+  /** 단락 섹션 카드 바로 다음(별도 카드 등) — 행정정보 대상자 본인 전자서명 */
+  renderAfterParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
   /** A4 동의서 미리보기 — CMS `form-document-preview-body` 타이포 */
   documentPreview?: boolean
   documentPreviewTemplateId?: string
@@ -101,6 +103,7 @@ export function PlatformConsentFormBody({
   onUpdateParagraph,
   fillOptions,
   renderParagraphSlot,
+  renderAfterParagraphSlot,
   documentPreview = false,
   documentPreviewTemplateId,
 }: PlatformConsentFormBodyProps) {
@@ -127,20 +130,32 @@ export function PlatformConsentFormBody({
         const title = resolvePlatformConsentSectionTitle(paragraph, titleIndex)
 
         const slot = renderParagraphSlot?.(paragraph)
-        if (slot != null) {
-          return wrapConsentParagraph(paragraph, title, slot, documentPreview)
+        const afterSlot = renderAfterParagraphSlot?.(paragraph)
+
+        const content =
+          slot != null
+            ? slot
+            : (
+                <PlatformConsentParagraphBody
+                  paragraph={paragraph}
+                  onUpdateParagraph={onUpdateParagraph}
+                  fillOptions={fillOptions}
+                  documentPreview={documentPreview}
+                />
+              )
+
+        const wrapped = wrapConsentParagraph(paragraph, title, content, documentPreview)
+
+        if (afterSlot != null && !documentPreview) {
+          return (
+            <div key={paragraph.id} className={styles.paragraphWithCompanion}>
+              {wrapped}
+              <div className={styles.bodyOnlyWrap}>{afterSlot}</div>
+            </div>
+          )
         }
 
-        const body = (
-          <PlatformConsentParagraphBody
-            paragraph={paragraph}
-            onUpdateParagraph={onUpdateParagraph}
-            fillOptions={fillOptions}
-            documentPreview={documentPreview}
-          />
-        )
-
-        return wrapConsentParagraph(paragraph, title, body, documentPreview)
+        return wrapped
       })}
     </div>
   )

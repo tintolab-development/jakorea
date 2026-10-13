@@ -1,8 +1,11 @@
 import { type ChangeEvent, useCallback, useRef, useState } from 'react'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { submitPortalCrimeConsentComplete } from '../../settings/lib/submit-portal-consent-document'
+import type { InstructorApplyConsentKey } from './catalog'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
 import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
 import { markInstructorApplyConsentAgreed } from './form-persist'
+import type { ConsentWriteSubmitContext } from './write-form'
 import { uploadMemberPortalFile } from '../api/member-file-upload'
 import styles from './consent-form.module.css'
 
@@ -40,22 +43,32 @@ function isPdfPreviewSrc(src: string, fileName: string | null): boolean {
 }
 
 /** CMS `MemberConsentCrimeModal`과 동일 — A4 문서 업로드 후 제출 */
+const PORTAL_SUBMIT_FAILED_MESSAGE =
+  '동의서를 제출하지 못했어요. 잠시 후 다시 시도해 주세요.'
+
 export function CrimeConsentDocumentForm({
+  consentKey,
   uploaded,
   onUploadedChange,
   onComplete,
   incomplete,
+  submitContext = 'instructorApply',
+  portalSubmitEnabled = false,
 }: {
+  consentKey: InstructorApplyConsentKey
   uploaded: boolean
   onUploadedChange: (uploaded: boolean) => void
   onComplete: () => void
   incomplete: boolean
+  submitContext?: ConsentWriteSubmitContext
+  portalSubmitEnabled?: boolean
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [previewSrc, setPreviewSrc] = useState<string | null>(null)
   const [previewFileName, setPreviewFileName] = useState<string | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handlePickDocument = () => {
     fileInputRef.current?.click()
@@ -97,11 +110,20 @@ export function CrimeConsentDocumentForm({
   }
 
   const handleSubmit = () => {
+    if (isSubmitting) return
     if (incomplete) {
       setAlertMessage(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
       return
     }
-    markInstructorApplyConsentAgreed('consentSexOffenseCheck')
+    if (portalSubmitEnabled && submitContext === 'mypageSettings') {
+      setIsSubmitting(true)
+      void submitPortalCrimeConsentComplete(consentKey)
+        .then(() => onComplete())
+        .catch(() => setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE))
+        .finally(() => setIsSubmitting(false))
+      return
+    }
+    markInstructorApplyConsentAgreed(consentKey)
     onComplete()
   }
 
@@ -154,8 +176,14 @@ export function CrimeConsentDocumentForm({
         ) : null}
       </div>
       <div className={styles.actions}>
-        <PFButton size="xlarge" width={240} type="button" onClick={handleSubmit}>
-          작성 완료
+        <PFButton
+          size="xlarge"
+          width={240}
+          type="button"
+          disabled={isSubmitting}
+          onClick={handleSubmit}
+        >
+          {isSubmitting ? '제출 중…' : '작성 완료'}
         </PFButton>
       </div>
       <PFAlertModal

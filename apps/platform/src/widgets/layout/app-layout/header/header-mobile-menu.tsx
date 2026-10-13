@@ -98,7 +98,9 @@ export function HeaderMobileMenu({
   useEffect(() => {
     if (!open) return
 
-    setExpandedGroup(null)
+    const resetExpandedFrame = requestAnimationFrame(() => {
+      setExpandedGroup(null)
+    })
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -112,6 +114,7 @@ export function HeaderMobileMenu({
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
+      cancelAnimationFrame(resetExpandedFrame)
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
