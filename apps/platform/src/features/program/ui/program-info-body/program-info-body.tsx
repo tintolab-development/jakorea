@@ -14,6 +14,7 @@ type ProgramInfoBodyProps = {
   showApplyCta?: boolean
   showCancelCta?: boolean
   onApply?: () => void
+  applyChecking?: boolean
   onCancel?: () => void
   showTopFab?: boolean
   className?: string
@@ -26,6 +27,7 @@ export function ProgramInfoBody({
   showApplyCta = false,
   showCancelCta = false,
   onApply,
+  applyChecking,
   onCancel,
   showTopFab = true,
   className,
@@ -51,6 +53,7 @@ export function ProgramInfoBody({
         showApplyCta={showApplyCta}
         showCancelCta={showCancelCta}
         onApply={onApply}
+        applyChecking={applyChecking}
         onCancel={onCancel}
         showTopFab={showTopFab}
       />

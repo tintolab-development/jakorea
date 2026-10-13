@@ -3,7 +3,11 @@ import {
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
+  ProgramApplyGateModals,
+  programApplyGateApplicationsPath,
+  programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
+  useProgramApplyGate,
   useProgramDetail,
 } from '@/features/program'
 import { getDevAuthLoggedIn } from '@/shared/lib'
@@ -49,6 +53,18 @@ export function ProgramDetailPage() {
   const focus = readPortalRecruitmentFocus(search)
   const { program, isLoading } = useProgramDetail(programId, { focus })
   const fromPath = new URLSearchParams(search).get('from')
+  const applySelection =
+    program?.focusedRecruitmentIds?.length === 1
+      ? {
+          portalTab: focus?.portalTab,
+          applicationTypes: program.focusedApplicationTypes,
+          recruitmentIds: program.focusedRecruitmentIds,
+        }
+      : focus
+  const { gateModal, closeGateModal, isChecking, runApplyGate } = useProgramApplyGate(
+    programId,
+    applySelection,
+  )
 
   if (isLoading && !program) {
     return <ProgramDetailLoading />
@@ -77,24 +93,38 @@ export function ProgramDetailPage() {
     if (program.recruitmentSelectionAmbiguous) {
       return
     }
-    const nextFocus =
-      program.focusedRecruitmentIds?.length === 1
-        ? {
-            portalTab: focus?.portalTab,
-            applicationTypes: program.focusedApplicationTypes,
-            recruitmentIds: program.focusedRecruitmentIds,
-          }
-        : focus
+    const nextFocus = applySelection
     const applyPath = programApplyPath(program.id, nextFocus, fromPath ?? undefined)
     if (!getDevAuthLoggedIn()) {
       navigate(programApplyRequiredPath(program.id, nextFocus, fromPath ?? undefined))
       return
     }
 
-    navigate(applyPath)
+    void runApplyGate(() => {
+      navigate(applyPath)
+    })
   }
 
   return (
-    <ProgramDetailView program={program} onBackToList={handleBackToList} onApply={handleApply} />
+    <>
+      <ProgramDetailView
+        program={program}
+        onBackToList={handleBackToList}
+        onApply={handleApply}
+        applyChecking={isChecking}
+      />
+      <ProgramApplyGateModals
+        kind={gateModal}
+        onClose={closeGateModal}
+        onEditMemberInfo={() => {
+          closeGateModal()
+          navigate(programApplyGateMemberSettingsPath)
+        }}
+        onViewApplications={() => {
+          closeGateModal()
+          navigate(programApplyGateApplicationsPath)
+        }}
+      />
+    </>
   )
 }

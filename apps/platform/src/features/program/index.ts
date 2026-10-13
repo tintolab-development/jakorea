@@ -68,6 +68,26 @@ export {
   useProgramApplicationForm,
   useSubmitProgramApplication,
 } from './api/application-hooks'
+export { useProgramApplyGate } from './hooks/use-program-apply-gate'
+export {
+  normalizePortalApplicationBlockedReason,
+  resolveProgramApplyGateModal,
+  shouldHideApplyPageBlockedBanner,
+  type ProgramApplyGateModalKind,
+} from './lib/application-apply-gate'
+export type {
+  PortalApplicationBlockedReason,
+  PortalApplicationType,
+  PortalExistingApplication,
+} from './api/application-types'
+export {
+  ProgramApplyCompleteModal,
+  ProgramApplyGateModals,
+  ProgramApplyRequiredConsentModal,
+  programApplyGateApplicationsPath,
+  programApplyGateConsentsPath,
+  programApplyGateMemberSettingsPath,
+} from './ui/program-apply-gate-modals'
 export type {
   ProgramApplicationFormQuery,
   ProgramApplicationFormStatus,

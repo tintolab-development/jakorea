@@ -8,7 +8,6 @@ import {
   getProgramIdFromPath,
   parsePortalProgramId,
   ProgramBackButton,
-  programApplyCompletePath,
   programDetailPath,
   readPortalRecruitmentFocus,
   resolveProgramApplyFormCase,
@@ -17,6 +16,12 @@ import {
   useProgramDetail,
   useSubmitProgramApplication,
   ProgramApplyLoading,
+  ProgramApplyCompleteModal,
+  ProgramApplyGateModals,
+  programApplyGateApplicationsPath,
+  programApplyGateMemberSettingsPath,
+  shouldHideApplyPageBlockedBanner,
+  useProgramApplyGate,
 } from '@/features/program'
 import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
 import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
@@ -247,6 +252,19 @@ export function ProgramApplyPage() {
   )
   const submitMutation = useSubmitProgramApplication(numericProgramId)
   const profileQuery = usePortalProfileQuery({ enabled: remoteApplyEnabled })
+  const applicationSelection = focus
+    ? {
+        recruitmentId: focus.recruitmentIds?.[0],
+        recruitmentIds: focus.recruitmentIds,
+        applicationTypes: focus.applicationTypes,
+      }
+    : null
+  const { gateModal, setGateModal, closeGateModal, readGateModalForOptions } = useProgramApplyGate(
+    programId,
+    applicationSelection,
+  )
+  const [completeModalOpen, setCompleteModalOpen] = useState(false)
+  const applyGatePromptedRef = useRef(false)
 
   useEffect(() => {
     if (!programId) {
@@ -260,6 +278,31 @@ export function ProgramApplyPage() {
 
     setIsReady(true)
   }, [navigate, programId, search])
+
+  useEffect(() => {
+    if (applyGatePromptedRef.current || !remoteApplyEnabled) return
+    if (
+      applicationFormQuery.status !== 'ready' &&
+      applicationFormQuery.status !== 'unavailable' &&
+      applicationFormQuery.status !== 'error'
+    ) {
+      return
+    }
+    const modal = readGateModalForOptions(
+      applicationFormQuery.bundle?.option.canApply,
+      applicationFormQuery.blockedReason,
+    )
+    if (!modal) return
+    applyGatePromptedRef.current = true
+    setGateModal(modal)
+  }, [
+    applicationFormQuery.blockedReason,
+    applicationFormQuery.bundle?.option.canApply,
+    applicationFormQuery.status,
+    readGateModalForOptions,
+    remoteApplyEnabled,
+    setGateModal,
+  ])
 
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
@@ -728,6 +771,13 @@ export function ProgramApplyPage() {
   }, [])
 
   const blockedMessage = applicationFormQuery.blockedMessage
+  const showBlockedBanner = Boolean(
+    blockedMessage &&
+      !shouldHideApplyPageBlockedBanner(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      ),
+  )
   const canSubmitRemote =
     remoteApplyEnabled &&
     applicationFormQuery.status === 'ready' &&
@@ -1596,7 +1646,7 @@ export function ProgramApplyPage() {
             return fileObjectIdsByQuestion ? { fileObjectIdsByQuestion } : {}
           })(),
         })
-        navigate(programApplyCompletePath(program.id, focus, fromPath))
+        setCompleteModalOpen(true)
       } catch (error) {
         const message = getProgramApplicationApiErrorMessage(error)
         const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
@@ -1628,7 +1678,7 @@ export function ProgramApplyPage() {
       )
       return
     }
-    navigate(programApplyCompletePath(program.id, focus, fromPath))
+    setCompleteModalOpen(true)
   }
 
   const visibleInstructorScheduleParagraph = displayDraft
@@ -1672,7 +1722,7 @@ export function ProgramApplyPage() {
           </PFText>
         </div>
 
-        {blockedMessage ? (
+        {showBlockedBanner ? (
           <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
             {blockedMessage}
           </PFText>
@@ -1745,6 +1795,32 @@ export function ProgramApplyPage() {
           </div>
         </div>
       </div>
+
+      <ProgramApplyGateModals
+        kind={gateModal}
+        onClose={closeGateModal}
+        onEditMemberInfo={() => {
+          closeGateModal()
+          navigate(programApplyGateMemberSettingsPath)
+        }}
+        onViewApplications={() => {
+          closeGateModal()
+          navigate(programApplyGateApplicationsPath)
+        }}
+      />
+      <ProgramApplyCompleteModal
+        open={completeModalOpen}
+        onClose={() => {
+          setCompleteModalOpen(false)
+          if (program) {
+            navigate(programDetailPath(program.id, fromPath, focus))
+          }
+        }}
+        onViewApplications={() => {
+          setCompleteModalOpen(false)
+          navigate(programApplyGateApplicationsPath)
+        }}
+      />
     </section>
   )
 }
