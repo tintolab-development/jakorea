@@ -1,12 +1,7 @@
 import type { ReactNode } from 'react'
 import { RichTextViewer } from '@/shared/rich-text'
 import { PFText } from '@/shared/ui'
-import type {
-  ProgramDetail,
-  ProgramEventSchedule,
-  ProgramSession,
-  ProgramVolunteerInterviewSchedule,
-} from '../../model/types'
+import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
 import { isHtmlContent } from '../../lib/html-body'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
@@ -79,61 +74,6 @@ function curriculumSessionTitle(program: ProgramDetail, title: string): string {
   return sessionNumber ? `${sessionNumber}차시` : ''
 }
 
-function interviewScheduleSummaryLines(schedule: ProgramVolunteerInterviewSchedule) {
-  return [
-    schedule.periodLabel?.trim()
-      ? { label: '기간', value: schedule.periodLabel.trim() }
-      : null,
-    schedule.availableTimeSlots?.trim()
-      ? { label: '가능 시간대', value: schedule.availableTimeSlots.trim() }
-      : null,
-    schedule.recurringUnavailable?.trim()
-      ? { label: '진행 불가일', value: schedule.recurringUnavailable.trim() }
-      : null,
-  ].filter((line): line is { label: string; value: string } => line != null)
-}
-
-function VolunteerInterviewScheduleCard({
-  schedule,
-}: {
-  schedule: ProgramVolunteerInterviewSchedule
-}) {
-  const summaryLines = interviewScheduleSummaryLines(schedule)
-  const hasOptions = schedule.options.length > 0
-
-  return (
-    <div className={styles.scheduleCard}>
-      <PFText as="span" typo="bd-md-sb" color="black">
-        면접 진행 가능 일정
-      </PFText>
-      {summaryLines.length > 0 ? (
-        <div className={styles.interviewScheduleSummary}>
-          {summaryLines.map(line => (
-            <PFText key={line.label} as="p" typo="bd-sm-rg" color="neutral-cool-600">
-              {line.label} {line.value}
-            </PFText>
-          ))}
-        </div>
-      ) : null}
-      {hasOptions ? (
-        <ul className={styles.interviewScheduleOptions}>
-          {schedule.options.map(option => (
-            <li key={option.id}>
-              <PFText as="span" typo="bd-md-md" color="black">
-                {option.label}
-              </PFText>
-            </li>
-          ))}
-        </ul>
-      ) : summaryLines.length === 0 ? (
-        <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
-          선택 가능한 일정이 없습니다
-        </PFText>
-      ) : null}
-    </div>
-  )
-}
-
 export function ProgramInfoDetail({
   program,
   header,
@@ -144,11 +84,9 @@ export function ProgramInfoDetail({
   const hasCurriculumBlock = program.sessions.length > 0 || program.eventSchedules.length > 0
   const hasBasicInfoSection = basicInfoFields.length > 0 || hasCurriculumBlock
   const applicationMethodValue = program.applicationMethodValue.trim()
-  const volunteerInterviewSchedule = program.volunteerInterviewSchedule
   const hasDetailContent =
     program.recruitmentPhases.length > 0 ||
     program.educationSchedules.length > 0 ||
-    volunteerInterviewSchedule != null ||
     program.extraSections.length > 0 ||
     Boolean(program.contactValue.trim())
 
@@ -281,12 +219,6 @@ export function ProgramInfoDetail({
                     </PFText>
                   </div>
                 ))}
-              </div>
-            ) : null}
-
-            {volunteerInterviewSchedule ? (
-              <div className={styles.schedules}>
-                <VolunteerInterviewScheduleCard schedule={volunteerInterviewSchedule} />
               </div>
             ) : null}
 

@@ -209,31 +209,6 @@
   background: var(--color-neutral-cool-50);
 }
 
-.interviewScheduleSummary {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-4);
-  min-width: 0;
-}
-
-.interviewScheduleOptions {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-8);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  min-width: 0;
-}
-
-.interviewScheduleOptions li {
-  min-width: 0;
-}
-
 .extraSections {
   display: flex;
   width: 100%;

@@ -742,8 +742,8 @@ function toDateOnly(value: string | null | undefined): Date | null {
 }
 
 /**
- * 봉사자 모집 행 `volunteerInterviewSchedule` → 상세 표시 모델.
- * VOLUNTEER 면접 운영 행에만 온다. 없으면 undefined(섹션 숨김).
+ * 봉사자 모집 행 `volunteerInterviewSchedule` → `ProgramDetail` 필드.
+ * 프로그램 상세 세부내용에는 비노출(신청 폼·후속 연동용).
  */
 function mapVolunteerInterviewSchedule(
   recruitments: PortalRecruitment[] | undefined

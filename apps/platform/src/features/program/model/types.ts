@@ -102,7 +102,7 @@ export type ProgramLabeledValue = {
   value: string
 }
 
-/** 프로그램 상세 「면접 진행 가능 일정」 — Portal `volunteerInterviewSchedule` */
+/** Portal `volunteerInterviewSchedule` (신청 폼 등 — 프로그램 상세 세부내용에는 비노출) */
 export type ProgramVolunteerInterviewScheduleOption = {
   id: string
   label: string
@@ -224,8 +224,8 @@ export type ProgramDetail = ProgramListItem & {
   /** 세부내용 「교육 일정 N」 카드 — 보통 educationScheduleLines */
   educationSchedules: ProgramLabeledValue[]
   /**
-   * 봉사자 모집 상세 「면접 진행 가능 일정」.
    * VOLUNTEER 면접 운영 행의 `volunteerInterviewSchedule`이 있을 때만.
+   * 프로그램 상세 UI에는 노출하지 않음(신청서 면접 일정 단락과 분리).
    * `schedules[]`·`educationScheduleLines`·면접 기간만으로 만들지 않는다.
    */
   volunteerInterviewSchedule?: ProgramVolunteerInterviewSchedule
