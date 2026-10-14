@@ -216,24 +216,6 @@
   transition: background-color 0s !important;
 }
 
-/* 다줄·콘텐츠 높이 가변 행 (참여 기관 일정 열 등) — 최소 52px, 내용 많으면 늘어남 */
-.cms-data-table.cms-data-table--variable-row-height
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td {
-  vertical-align: top;
-  min-height: 52px !important;
-  height: auto !important;
-  max-height: none !important;
-}
-
-.cms-data-table.cms-data-table--variable-row-height
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.status-dropdown-cell__cell-status {
-  vertical-align: middle !important;
-}
-
 /* 단줄 고정·말줄임 클립 (기본도 52px — max-height로 초과 콘텐츠 잘림) */
 .cms-data-table.cms-data-table--fixed-row-height
   .ant-table-tbody
@@ -325,14 +307,25 @@
   min-width: var(--table-selection-column-width, 80px) !important;
 }
 
-.detail-fullpage-modal .cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col {
+.detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  col.ant-table-selection-col
+  + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
 }
 
-.detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
-.detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
+.detail-fullpage-modal
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.ant-table-selection-column,
+.detail-fullpage-modal
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.ant-table-selection-column {
   width: var(--table-selection-column-width, 80px) !important;
   min-width: var(--table-selection-column-width, 80px) !important;
   max-width: var(--table-selection-column-width, 80px) !important;
@@ -390,7 +383,10 @@
   min-width: var(--table-selection-column-width, 80px) !important;
 }
 
-.detail-fullpage-modal .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col {
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  col.ant-table-selection-col
+  + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
@@ -437,12 +433,16 @@
   > td.ant-table-selection-column
   + td,
 .detail-fullpage-modal
-  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(
+    :has(col.ant-table-selection-col)
+  )
   .ant-table-thead
   > tr
   > th:first-child:not(.ant-table-cell-scrollbar),
 .detail-fullpage-modal
-  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(
+    :has(col.ant-table-selection-col)
+  )
   .ant-table-tbody
   > tr:not(.ant-table-measure-row)
   > td:first-child {
@@ -458,7 +458,9 @@
 }
 
 .detail-fullpage-modal
-  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(
+    :has(col.ant-table-selection-col)
+  )
   colgroup
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
@@ -490,12 +492,19 @@
  * FilterTableLayout 목록 카드: `__table` → `ant-table-wrapper.cms-data-table` 체인으로
  * antd Table CSS-in-js(hash 클래스)보다 구체성을 높여 선택·No. 열·행 높이 52px 확정
  */
-.filter-table-layout .filter-table-layout__table .ant-table-wrapper.cms-data-table col.ant-table-selection-col {
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col {
   width: var(--table-selection-column-width, 80px) !important;
   min-width: var(--table-selection-column-width, 80px) !important;
 }
 
-.filter-table-layout .filter-table-layout__table .ant-table-wrapper.cms-data-table col.ant-table-selection-col + col {
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
@@ -559,13 +568,17 @@
   + td,
 .filter-table-layout
   .filter-table-layout__table
-  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(
+    :has(col.ant-table-selection-col)
+  )
   .ant-table-thead
   > tr
   > th:first-child:not(.ant-table-cell-scrollbar),
 .filter-table-layout
   .filter-table-layout__table
-  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(
+    :has(col.ant-table-selection-col)
+  )
   .ant-table-tbody
   > tr:not(.ant-table-measure-row)
   > td:first-child {
@@ -582,7 +595,9 @@
 
 .filter-table-layout
   .filter-table-layout__table
-  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(
+    :has(col.ant-table-selection-col)
+  )
   colgroup
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;

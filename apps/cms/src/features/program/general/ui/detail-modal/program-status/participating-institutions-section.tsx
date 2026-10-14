@@ -6,9 +6,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Spin } from 'antd'
-import { FilterTableLayout,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableLayout, FilterTableToolbarButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -629,7 +627,7 @@ export function ParticipatingInstitutionsSection({
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <CmsDataTable<ParticipatingSchoolRow>
-              className="cms-data-table cms-data-table--variable-row-height participating-institutions-section__table participating-institutions-section__table--textbook-dropdown participating-institutions-section__table--clickable"
+              className="cms-data-table participating-institutions-section__table participating-institutions-section__table--textbook-dropdown participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}
