@@ -18,6 +18,7 @@ import type { ProgramPostReactionSummaryResponse } from '@/shared/api/generated/
 import type { ProgramPostReactionResponse } from '@/shared/api/generated/dashboard/schemas/programPostReactionResponse'
 import type { ProgramPostReadsResponse } from '@/shared/api/generated/dashboard/schemas/programPostReadsResponse'
 import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
+import { nullToUndefined } from '@/shared/lib/openapi-null'
 
 /** BE 표시명 필드(2026-10-06 추가) — orval 재생성 전까지 로컬 확장 */
 type WithCreatedByDisplayName = { createdByDisplayName?: string | null }
@@ -101,12 +102,12 @@ export function mapProgramPostListItemToDomain(
     id: String(dto.postId ?? ''),
     programId,
     authorName: resolvePostAuthorName(
-      dto.createdByActorType,
-      dto.createdByActorId,
-      dto.createdByDisplayName
+      nullToUndefined(dto.createdByActorType),
+      nullToUndefined(dto.createdByActorId),
+      nullToUndefined(dto.createdByDisplayName)
     ),
-    createdByActorType: dto.createdByActorType,
-    createdByActorId: dto.createdByActorId,
+    createdByActorType: nullToUndefined(dto.createdByActorType),
+    createdByActorId: nullToUndefined(dto.createdByActorId),
     title: dto.title?.trim() || undefined,
     content: content || (dto.title?.trim() ?? ''),
     read: (dto.unreadCount ?? 0) === 0,
@@ -132,12 +133,12 @@ export function mapProgramPostResponseToDomain(
     id: String(dto.postId ?? dto.id ?? ''),
     programId: dto.programId != null ? String(dto.programId) : programId,
     authorName: resolvePostAuthorName(
-      dto.createdByActorType,
-      dto.createdByActorId,
-      dto.createdByDisplayName
+      nullToUndefined(dto.createdByActorType),
+      nullToUndefined(dto.createdByActorId),
+      nullToUndefined(dto.createdByDisplayName)
     ),
-    createdByActorType: dto.createdByActorType,
-    createdByActorId: dto.createdByActorId,
+    createdByActorType: nullToUndefined(dto.createdByActorType),
+    createdByActorId: nullToUndefined(dto.createdByActorId),
     title: dto.title?.trim() || undefined,
     content: content || (dto.title?.trim() ?? ''),
     read: (dto.unreadCount ?? 0) === 0,
@@ -209,10 +210,14 @@ export function mapProgramPostReadsToDomainRows(
     return {
       id: String(actorId ?? row.readId ?? `read-${index}`),
       postId,
-      displayName: resolveActorDisplayName(row.readerActorType, actorId, row.readerDisplayName),
+      displayName: resolveActorDisplayName(
+        row.readerActorType,
+        nullToUndefined(actorId),
+        row.readerDisplayName
+      ),
       roleLabel: mapActorRoleLabel(row.readerActorType),
       hasRead: true,
-      readAt: row.lastReadAt ?? row.firstReadAt ?? row.readAt,
+      readAt: nullToUndefined(row.lastReadAt ?? row.firstReadAt ?? row.readAt),
     }
   })
 

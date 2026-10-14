@@ -24,7 +24,7 @@ const detailWithResume = {
     },
     essays: { freeWrite1: '이력서 자기소개 1', freeWrite2: '이력서 자기소개 2' },
   },
-} as InstructorApplicationDetailResponse
+} as unknown as InstructorApplicationDetailResponse
 
 const base = {
   id: 'p-1',

@@ -74,7 +74,10 @@ export function mapLectureReportDtoToInstructorRow(
   const due = row.submitDueAt ? dayjs(row.submitDueAt) : null
   const submissionPeriodLabel =
     due?.isValid() === true ? `${due.format('YYYY. MM. DD')}까지` : '-'
-  const submissionStatusLabel = mapSubmissionLabel(row.reportStatus, row.submittedAt)
+  const submissionStatusLabel = mapSubmissionLabel(
+    row.reportStatus,
+    row.submittedAt ?? undefined
+  )
   const lectureProgressLabel = mapProgressLabel(row.lectureProgressStatus, submissionStatusLabel)
   const fileObjectIds = (row.fileObjectIds ?? []).filter(
     (id): id is number => typeof id === 'number' && Number.isFinite(id)

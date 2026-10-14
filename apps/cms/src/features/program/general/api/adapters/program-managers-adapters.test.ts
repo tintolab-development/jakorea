@@ -41,7 +41,7 @@ describe('mapProgramManagerResponsesToRows', () => {
         id: 1,
         adminName: '선배',
         adminEmail: 'a@test.com',
-        role: 'OWNER',
+        role: 'PM',
         assignedAt: '2026-01-01T10:00:00Z',
         adminId: 11,
       },

@@ -9,6 +9,11 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  readRuntimeBoolean,
+  readRuntimeNumber,
+  readRuntimeString,
+} from '@/shared/lib/openapi-runtime-field'
 import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
@@ -257,6 +262,9 @@ export function applyRequestedSchedulesToApplicantSchoolRow(
   const preferred = row.preferredEducationSchedules ?? []
   const dto: OrganizationApplicationListItemResponse = {
     programType: options?.companySchool ? 'ONE_COMPANY_ONE_SCHOOL' : 'GENERAL_ORGANIZATION',
+    availableActions: [],
+    sessions: [],
+    preferredEducationSchedules: [],
   }
   const sessions = resolveOrganizationApplicationAssignmentSessions(
     dto,
@@ -564,16 +572,17 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     contact: dto.contact?.trim() || '',
     email: dto.email?.trim() || '',
     address: dto.homeAddress?.trim() || '',
-    appliedAt: dto.submittedAt,
+    appliedAt: readRuntimeString(dto, 'submittedAt'),
     schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
     preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
-      formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) || undefined,
-    rejectionReason: dto.rejectReason?.trim() || undefined,
-    distanceKm: dto.distanceKm,
-    longDistanceYn: dto.longDistance,
+      formatInstructorFeeGradeLabel(readRuntimeString(dto, 'instructorFeeGradeSnapshot')) ||
+      undefined,
+    rejectionReason: readRuntimeString(dto, 'rejectReason'),
+    distanceKm: readRuntimeNumber(dto, 'distanceKm'),
+    longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
     availableActions: dto.availableActions,
   }
 }
@@ -708,8 +717,12 @@ export function mapInstructorApplicationDetailToApplicantRow(
     birthDate: dto.birthDate?.trim() || base.birthDate,
     gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
-    distanceKm: dto.distanceKm !== undefined ? dto.distanceKm : base.distanceKm,
-    longDistanceYn: dto.longDistance !== undefined ? dto.longDistance : base.longDistanceYn,
+    distanceKm:
+      dto.distanceKm !== undefined && dto.distanceKm !== null ? dto.distanceKm : base.distanceKm,
+    longDistanceYn:
+      dto.longDistance !== undefined && dto.longDistance !== null
+        ? dto.longDistance
+        : base.longDistanceYn,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
@@ -722,7 +735,9 @@ function mapInstructorResumeFromDetail(
   dto: InstructorApplicationDetailResponse,
   base: ApplicantInstructorRow
 ): Partial<ApplicantInstructorRow> {
-  const profile = normalizeInstructorCmsProfileFromApi(dto.instructorCmsProfile ?? undefined)
+  const profile = normalizeInstructorCmsProfileFromApi(
+    (dto.instructorCmsProfile ?? undefined) as Parameters<typeof normalizeInstructorCmsProfileFromApi>[0]
+  )
   if (!profile) return {}
   const resume = instructorCmsProfileToApplicantInstructorRowPartial(profile)
   const pickList = <T>(next: T[] | undefined, prev: T[] | undefined) =>
@@ -1023,7 +1038,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
   const teamDetail = resolveIndividualApplicationTeamDetail({
     team: dto.team,
-    formAnswers: dto.application?.formAnswers,
+    formAnswers: (dto.application as { formAnswers?: Record<string, unknown> | null } | undefined)
+      ?.formAnswers,
   })
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
@@ -1051,7 +1067,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
     detail: {
       gender: toGenderLabelOrRaw(profile?.gender),
       birthDate: profile?.birthDate ?? undefined,
-      age: profile?.age,
+      age: profile?.age ?? undefined,
       schoolEnrollmentStatus: toSchoolEnrollmentStatusLabelOrRaw(profile?.schoolEnrollmentStatus),
       affiliationSchool: profile?.affiliationSchool ?? undefined,
       affiliationGrade: profile?.affiliationGrade ?? undefined,
@@ -1070,8 +1086,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
     },
     textbookId: toId(dto.textbook?.id) || undefined,
     textbookName: dto.textbook?.name ?? undefined,
-    textbookKits: dto.textbook?.kits,
-    textbookQuantity: dto.textbook?.quantity,
+    textbookKits: dto.textbook?.kits ?? undefined,
+    textbookQuantity: dto.textbook?.quantity ?? undefined,
     textbookStatus: dto.textbook?.status as GeneralIndividualApplicantRow['textbookStatus'],
     managerAEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerA),
     managerBEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerB),
@@ -1209,7 +1225,7 @@ export function mapApiVolunteerInterviewStatusToAssignmentStatus(
 
 export function mapApiFinalResultToSecondInterviewStatus(
   status?: string | null,
-  reserveRank?: number
+  reserveRank?: number | null
 ): GeneralSecondInterviewScreeningStatus | undefined {
   const normalized = status?.trim().toUpperCase() ?? ''
   if (!normalized) return undefined
@@ -1275,7 +1291,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
   })
   return {
     id: toId(dto.id),
-    memberId: dto.memberId,
+    memberId: dto.memberId ?? undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     no: index + 1,
     name: dto.memberName?.trim() || '이름 없음',
@@ -1445,7 +1461,7 @@ function readOrganizationTextbookStatus(
   const extra = dto as ParticipantListItemResponse & { textbookDeliveryStatus?: string | null }
   const delivery = extra.textbookDeliveryStatus?.trim()
   if (delivery) return mapTextbookDeliveryStatusToBadge(delivery)
-  return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus)
+  return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus ?? undefined)
 }
 
 export function mapParticipantToParticipatingSchoolRow(
@@ -1467,7 +1483,7 @@ export function mapParticipantToParticipatingSchoolRow(
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
-    teacherMemberId: dto.teacherMemberId,
+    teacherMemberId: dto.teacherMemberId ?? undefined,
     no: index + 1,
     schoolName: dto.organizationName?.trim() || dto.memberName?.trim() || '기관명 없음',
     region,
@@ -1653,7 +1669,7 @@ export function mapParticipantToParticipatingVolunteerRow(
       enriched.volunteerKind === 'GENERAL' || enriched.volunteerKind === 'EMPLOYEE'
         ? enriched.volunteerKind
         : undefined,
-    memberId: dto.memberId,
+    memberId: dto.memberId ?? undefined,
     programId,
     no: index + 1,
     volunteerName: dto.memberName?.trim() || '이름 없음',

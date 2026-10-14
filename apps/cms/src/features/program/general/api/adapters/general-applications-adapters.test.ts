@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  instructorApplicationListItemFixture,
+  organizationApplicationListItemFixture,
+  participantListItemFixture,
+} from '@/shared/test/openapi-dashboard-fixtures'
+import { asOpenApiFixture } from '@/shared/test/openapi-fixture-cast'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
+import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
+import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
+import {
   filterIndividualDoc1Rows,
   mapApiApplicationStatusToApprovalStatus,
   mapApiInterviewStatusToAssignmentStatus,
@@ -162,7 +172,7 @@ describe('general-applications-adapters', () => {
 
   it('maps organization application list item to applicant row', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
-      {
+      organizationApplicationListItemFixture({
         id: 101,
         organizationId: 8801,
         teacherMemberId: 9901,
@@ -174,7 +184,7 @@ describe('general-applications-adapters', () => {
         submittedAt: '2026-04-01T00:00:00Z',
         availableActions: ['VIEW'],
         sessions: [],
-      },
+      }),
       0,
       '5001'
     )
@@ -190,14 +200,14 @@ describe('general-applications-adapters', () => {
 
   it('maps organization resultNotificationSentAt and RESEND_NOTIFICATION', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
-      {
+      organizationApplicationListItemFixture({
         id: 1691123,
         organizationName: '승인학교',
         applicationStatus: 'APPROVED',
         resultNotificationSentAt: '2026-09-27T05:00:00Z',
         availableActions: ['VIEW', 'RESEND_NOTIFICATION', 'CANCEL_APPROVAL'],
         sessions: [],
-      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      }),
       0,
       '168001'
     )
@@ -425,12 +435,12 @@ describe('general-applications-adapters', () => {
   })
 
   it('maps saved affiliation fallback for individual, instructor, and volunteer participants', () => {
-    const dto = {
+    const dto = participantListItemFixture({
       participantId: 1691500,
       memberName: '기존 회원',
       organizationId: 8801,
       organizationName: '기존 소속 기관',
-    }
+    })
 
     const individual = mapParticipantToParticipatingIndividualRow(dto, 0, '168001')
     const instructor = mapParticipantToParticipatingInstructorRow(dto, 0, '168001')
@@ -466,7 +476,7 @@ describe('general-applications-adapters', () => {
             attendanceStatus: 'COMPLETED',
           },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168001'
     )
@@ -499,7 +509,7 @@ describe('general-applications-adapters', () => {
             endAt: '2026-10-15T23:59:00+09:00',
           },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '186089'
     )
@@ -518,7 +528,7 @@ describe('general-applications-adapters', () => {
           { scheduleId: 702, sessionNo: 2, attendanceStatus: 'LATE' },
           { scheduleId: 703, sessionNo: 3, attendanceStatus: 'EXCUSED' },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168001'
     )
@@ -556,12 +566,22 @@ describe('general-applications-adapters', () => {
 
   it('maps list birthDate and gender into detail for certificate issuance', () => {
     const withProfile = mapParticipantToParticipatingIndividualRow(
-      { participantId: 1694731, memberName: '이건희일반', birthDate: '1994-07-29', gender: 'MALE' },
+      participantListItemFixture({
+        participantId: 1694731,
+        memberName: '이건희일반',
+        birthDate: '1994-07-29',
+        gender: 'MALE',
+      }),
       0,
       '186046'
     )
     const legacyGender = mapParticipantToParticipatingIndividualRow(
-      { participantId: 1694732, memberName: '레거시', birthDate: null, gender: 'X' },
+      participantListItemFixture({
+        participantId: 1694732,
+        memberName: '레거시',
+        birthDate: null,
+        gender: 'X',
+      }),
       1,
       '186046'
     )
@@ -619,7 +639,7 @@ describe('general-applications-adapters', () => {
             attendanceStatus: 'COMPLETED',
           },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168001'
     )
@@ -654,7 +674,7 @@ describe('general-applications-adapters', () => {
         settlementStatus: 'awaiting_confirmation',
         assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
         lectureReportSubmitted: true,
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168006'
     )
@@ -697,7 +717,7 @@ describe('general-applications-adapters', () => {
         participantId: 1691502,
         memberName: '박강사',
         sourceApplicationId: 77001,
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168006'
     )
@@ -714,7 +734,7 @@ describe('general-applications-adapters', () => {
           { scheduleId: 501, sessionNo: 1, scheduleName: '1차 교육', startAt: '2026-05-01T09:00:00' },
           { scheduleId: 502, sessionNo: 2, scheduleName: '2차 교육', startAt: '2026-05-08T09:00:00' },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168006'
     )
@@ -743,7 +763,7 @@ describe('general-applications-adapters', () => {
 
   it('maps instructor application list item to applicant row', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 77,
         instructorMemberId: 9001,
         affiliationOrganizationId: 8801,
@@ -754,7 +774,9 @@ describe('general-applications-adapters', () => {
         submittedAt: '2026-04-02T00:00:00Z',
         rejectReason: '서류 미비',
         preferredOrganizations: [],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '5001'
     )
@@ -771,7 +793,7 @@ describe('general-applications-adapters', () => {
 
   it('maps instructor preferredOrganizations to preferredSchools for calendar', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 88,
         programId: 5001,
         instructorName: '김강사',
@@ -784,7 +806,9 @@ describe('general-applications-adapters', () => {
             dateRangeLabel: '2026.06.01(월) ~ 2026.06.02(화)',
           },
         ],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '5001'
     )
@@ -796,14 +820,16 @@ describe('general-applications-adapters', () => {
 
   it('fills affiliation and settlement from instructorCmsProfile and settlement on detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 1,
         instructorMemberId: 9001,
         programId: 186081,
         instructorName: '이강사',
         applicationStatus: 'SUBMITTED',
         preferredOrganizations: [],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '186081'
     )
@@ -832,14 +858,16 @@ describe('general-applications-adapters', () => {
 
   it('merges instructorCmsProfile resume onto instructor application detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 1694639,
         instructorMemberId: 190001,
         programId: 186048,
         instructorName: '이건희',
         applicationStatus: 'SUBMITTED',
         preferredOrganizations: [],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '186048'
     )
@@ -861,7 +889,10 @@ describe('general-applications-adapters', () => {
     }
 
     const row = mapInstructorApplicationDetailToApplicantRow(
-      { id: 1694639, instructorCmsProfile },
+      asOpenApiFixture<InstructorApplicationDetailResponse>({
+        id: 1694639,
+        instructorCmsProfile,
+      }),
       { ...base, freeWriting2: '기존 작성' }
     )
 
@@ -875,18 +906,20 @@ describe('general-applications-adapters', () => {
 
   it('keeps base resume when instructorCmsProfile is absent', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      asOpenApiFixture<InstructorApplicationListItemResponse>({
         id: 1,
         programId: 1,
         instructorName: '강사',
         applicationStatus: 'SUBMITTED',
         preferredOrganizations: [],
-      },
+        availableScheduleIds: [],
+        availableActions: [],
+      }),
       0,
       '1'
     )
     const row = mapInstructorApplicationDetailToApplicantRow(
-      { id: 1 },
+      asOpenApiFixture<InstructorApplicationDetailResponse>({ id: 1 }),
       { ...base, freeWriting1: '기존' }
     )
     expect(row.freeWriting1).toBe('기존')
@@ -894,7 +927,7 @@ describe('general-applications-adapters', () => {
 
   it('maps volunteer application list item to screening row', () => {
     const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
-      {
+      asOpenApiFixture<VolunteerApplicationListItemResponse>({
         id: 55,
         programId: 5001,
         affiliationOrganizationId: undefined,
@@ -910,7 +943,7 @@ describe('general-applications-adapters', () => {
         canEditManagerAEvaluation: true,
         canEditManagerBEvaluation: false,
         availableActions: ['VIEW', 'UPDATE_DOCUMENT_EVALUATION'],
-      },
+      }),
       0,
       '5001'
     )
@@ -992,7 +1025,7 @@ describe('general-applications-adapters', () => {
 
   it('maps individual application list item with screening fields', () => {
     const row = mapIndividualApplicationToApplicantRow(
-      {
+      asOpenApiFixture<IndividualApplicationListItemEnriched>({
         id: 55,
         programId: 5001,
         affiliationOrganizationId: 8802,
@@ -1037,7 +1070,7 @@ describe('general-applications-adapters', () => {
             endAt: '2026-09-20T02:00:00Z',
           },
         ],
-      },
+      }),
       0,
       '5001'
     )
@@ -1081,7 +1114,7 @@ describe('general-applications-adapters', () => {
 
   it('shows line schedule labels and keeps them after operational schedules', () => {
     const row = mapIndividualApplicationToApplicantRow(
-      {
+      asOpenApiFixture<IndividualApplicationListItemEnriched>({
         id: 56,
         programId: 186021,
         memberName: '이참여자',
@@ -1096,7 +1129,7 @@ describe('general-applications-adapters', () => {
           { label: '26년 10월 13일(화) 10:00 ~ 12:00' },
         ],
         applicationStatus: 'WAITING_REVIEW',
-      },
+      }),
       0,
       '186021'
     )

@@ -25,6 +25,7 @@ import {
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   institutionFilterFields,
@@ -457,14 +458,12 @@ export function useApplicantsDetail({
       try {
         // 면접 ON 1차 서류 탭: document-result (PASS_DOCUMENT / FAIL)
         if (individualScreeningStage === 'doc1') {
+          const notifyFields = toScreeningResultNotifyFields(screeningNotify)
           const payload = {
-            result: decision === 'approve' ? 'PASS' : 'FAIL',
+            result: (decision === 'approve' ? 'PASS' : 'FAIL') as 'PASS' | 'FAIL',
             reason: decision === 'reject' ? reason?.trim() || '반려' : reason,
-            ...(screeningNotify?.notifyTiming
-              ? { notifyTiming: screeningNotify.notifyTiming }
-              : {}),
-            ...(screeningNotify?.scheduledAt ? { scheduledAt: screeningNotify.scheduledAt } : {}),
-          } as const
+            ...notifyFields,
+          }
           if (ids.length > 1) {
             const result = await applicationsRemote.submitIndividualDocumentResultBulk(ids, payload)
             if ((result.failureCount ?? 0) > 0) {
