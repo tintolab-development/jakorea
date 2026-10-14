@@ -37539,9 +37539,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "studentDocumentsSupported": {
+            "type": "boolean"
+          },
           "programStartDate": {
             "type": "string",
             "format": "date"
+          },
+          "firstEducationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "해당 기관 신청에 배정된 활성 교육 일정의 첫 교육일. 아직 배정되지 않았으면 null"
           },
           "studentRosterUploadDeadline": {
             "type": "string",
@@ -47144,15 +47152,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
