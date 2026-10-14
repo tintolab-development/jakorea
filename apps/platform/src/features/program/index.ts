@@ -86,6 +86,7 @@ export {
   ProgramApplyGateModals,
   ProgramApplyRequiredConsentModal,
   programApplyGateApplicationsPath,
+  programApplyGateApplicationsPathForType,
   programApplyGateConsentsPath,
   programApplyGateMemberSettingsPath,
 } from './ui/program-apply-gate-modals'

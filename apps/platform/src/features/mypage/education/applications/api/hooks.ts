@@ -138,6 +138,8 @@ export function useMyProgramApplications(
     staleTime: APPLICATIONS_STALE_MS,
     gcTime: APPLICATIONS_GC_MS,
     placeholderData: serverPaged ? keepPreviousData : undefined,
+    // 신청 완료·취소 후 목록 화면으로 돌아오면 서버 원본을 즉시 다시 확인한다.
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: shouldRetryQuery,

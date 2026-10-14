@@ -3,6 +3,7 @@ export {
   ProgramApplyGateModals,
   ProgramApplyRequiredConsentModal,
   programApplyGateApplicationsPath,
+  programApplyGateApplicationsPathForType,
   programApplyGateConsentsPath,
   programApplyGateMemberSettingsPath,
 } from './program-apply-gate-modals'

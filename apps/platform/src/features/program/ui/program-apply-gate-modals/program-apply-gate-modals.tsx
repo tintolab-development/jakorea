@@ -1,4 +1,9 @@
-import { MYPAGE_EDUCATION_PATH, MYPAGE_SETTINGS_PATH } from '@/features/mypage/lib/constants'
+import {
+  MYPAGE_EDUCATION_PATH,
+  MYPAGE_LECTURE_PATH,
+  MYPAGE_SETTINGS_PATH,
+  MYPAGE_VOLUNTEER_PATH,
+} from '@/features/mypage/lib/constants'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
 import type { ProgramApplyGateModalKind } from '../../lib/application-apply-gate'
 import styles from './program-apply-gate-modals.module.css'
@@ -162,3 +167,15 @@ export function ProgramApplyCompleteModal({
 export const programApplyGateMemberSettingsPath = MYPAGE_SETTINGS_PATH
 export const programApplyGateConsentsPath = `${MYPAGE_SETTINGS_PATH}?tab=consents`
 export const programApplyGateApplicationsPath = MYPAGE_EDUCATION_PATH
+
+/** 신청 유형에 맞는 마이페이지 신청 목록으로 이동한다. */
+export function programApplyGateApplicationsPathForType(applicationType?: string): string {
+  switch (applicationType?.trim().toUpperCase()) {
+    case 'INSTRUCTOR':
+      return MYPAGE_LECTURE_PATH
+    case 'VOLUNTEER':
+      return MYPAGE_VOLUNTEER_PATH
+    default:
+      return MYPAGE_EDUCATION_PATH
+  }
+}

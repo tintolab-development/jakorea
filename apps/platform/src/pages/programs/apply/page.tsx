@@ -20,7 +20,7 @@ import {
   ProgramApplyLoading,
   ProgramApplyCompleteModal,
   ProgramApplyGateModals,
-  programApplyGateApplicationsPath,
+  programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
@@ -272,8 +272,12 @@ export function ProgramApplyPage() {
   const [completeModalOpen, setCompleteModalOpen] = useState(false)
   const applyGatePromptedRef = useRef(false)
   const submittedSuccessfullyProgramIdRef = useRef<string | null>(null)
+  const applicationTypeForMyPage =
+    applicationFormQuery.bundle?.option.applicationType ??
+    (focus?.applicationTypes?.length === 1 ? focus.applicationTypes[0] : undefined) ??
+    program?.applicationType
 
-  const handleViewApplications = useCallback(() => {
+  const handleViewApplications = () => {
     closeGateModal()
     setCompleteModalOpen(false)
     void queryClient
@@ -281,9 +285,9 @@ export function ProgramApplyPage() {
         queryKey: platformQueryKeys.mypage.programApplications.all(),
       })
       .finally(() => {
-        navigate(programApplyGateApplicationsPath)
+        navigate(programApplyGateApplicationsPathForType(applicationTypeForMyPage))
       })
-  }, [closeGateModal, navigate, queryClient, setCompleteModalOpen])
+  }
 
   useEffect(() => {
     if (!programId) {
