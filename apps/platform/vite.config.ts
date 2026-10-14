@@ -83,6 +83,8 @@ export default defineConfig(({ mode }) => {
       }
       // CMS shared auth (NICE start is public). Must beat the catch-all `/api` → 8081.
       entries['/api/auth'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      // 약관 원장 current — JABACK. `/api/public/*` 기본은 Homepage이므로 더 긴 prefix로 분리.
+      entries['/api/public/terms-documents'] = withNgrokSkip(cmsTarget, ngrokSkip)
     }
     if (homepageTarget) {
       entries['/api'] = withNgrokSkip(homepageTarget, ngrokSkip)

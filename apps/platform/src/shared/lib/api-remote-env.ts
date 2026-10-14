@@ -60,7 +60,7 @@ export function getHomepageApiBaseUrl(): string {
 
 /**
  * 정적 배포에서는 Vite proxy가 없으므로 로컬 proxy 계약을 브라우저 요청에도 동일하게 적용한다.
- * - /api/portal, /api/auth → JABACK
+ * - /api/portal, /api/auth, /api/public/terms-documents → JABACK
  * - 그 외 /api → JAHOME
  */
 export function getApiBaseUrlForPath(requestUrl: string): string {
@@ -72,7 +72,9 @@ export function getApiBaseUrlForPath(requestUrl: string): string {
     path === '/api/portal' ||
     path.startsWith('/api/portal/') ||
     path === '/api/auth' ||
-    path.startsWith('/api/auth/')
+    path.startsWith('/api/auth/') ||
+    path === '/api/public/terms-documents' ||
+    path.startsWith('/api/public/terms-documents/')
 
   if (usesJaback) return jabackOrigin
 
