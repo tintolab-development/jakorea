@@ -228,6 +228,9 @@ export function mapPortalProgramApplicationListItem(
     thumbnailUrl,
     displayStatus,
     detailCase,
+    ...(row.pendingSurveyCount != null && row.pendingSurveyCount > 0
+      ? { pendingSurveyCount: row.pendingSurveyCount }
+      : {}),
   }
 }
 

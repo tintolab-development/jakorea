@@ -1,5 +1,13 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce, readDownloadUrlFromJsonBlob } from '@/shared/lib/download-attachment'
+import {
+  dedupePortalFormListItems,
+  isPortalSatisfactionFormType,
+  isPortalSurveyFormType,
+  PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
+  PORTAL_SURVEY_FORM_TYPE_QUERIES,
+} from '../lib/portal-form-list'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type { ProgramApplicationType } from './types'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
@@ -210,6 +218,7 @@ function normalizePortalSessionRound(
 
 export type PortalFormListItem = {
   bindingId?: number
+  programFormBindingId?: number
   id?: number
   formBindingId?: number
   title?: string
@@ -221,6 +230,7 @@ export type PortalFormListItem = {
   templateVersionId?: number
   form?: Record<string, unknown> | null
   formResponseId?: number
+  latestFormResponseId?: number | null
   answers?: Record<string, unknown> | null
   draftAnswers?: Record<string, unknown> | null
 }
@@ -263,13 +273,24 @@ export async function fetchApplicationNotices(
   applicationId: string,
   signal?: AbortSignal,
 ): Promise<PortalNoticeListResponse> {
-  const { data } = await axiosClient.get<unknown>(`${applicationPath(applicationType, applicationId)}/notices`, {
-    signal,
-    params: { page: 0, size: 100 },
+  const items = await fetchAllApiPages(async (page, size) => {
+    const { data } = await axiosClient.get<unknown>(
+      `${applicationPath(applicationType, applicationId)}/notices`,
+      {
+        signal,
+        params: { page, size },
+      }
+    )
+    const unwrapped = unwrapEnvelope<PortalNoticeListResponse | PortalNoticeListItem[]>(data)
+    if (Array.isArray(unwrapped)) {
+      return { items: unwrapped, totalPages: 1 }
+    }
+    return {
+      items: unwrapped.items ?? [],
+      totalPages: (unwrapped as { totalPages?: number }).totalPages,
+    }
   })
-  const unwrapped = unwrapEnvelope<PortalNoticeListResponse | PortalNoticeListItem[]>(data)
-  if (Array.isArray(unwrapped)) return { items: unwrapped }
-  return { items: unwrapped.items ?? [] }
+  return { items }
 }
 
 export async function fetchApplicationNoticeDetail(
@@ -429,22 +450,26 @@ export async function fetchApplicationNoticeAttachments(
   signal?: AbortSignal,
 ): Promise<PortalNoticeAttachmentListItem[]> {
   const trimmedKeyword = keyword?.trim()
-  const { data } = await axiosClient.get<unknown>(
-    `${applicationPath(applicationType, applicationId)}/notices/attachments`,
-    {
-      signal,
-      params: {
-        page: 0,
-        size: 100,
-        ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
-      },
-    },
-  )
-  const unwrapped = unwrapEnvelope<
-    { items?: PortalNoticeAttachmentListItem[] } | PortalNoticeAttachmentListItem[]
-  >(data)
-  if (Array.isArray(unwrapped)) return unwrapped
-  return unwrapped?.items ?? []
+  return fetchAllApiPages(async (page, size) => {
+    const { data } = await axiosClient.get<unknown>(
+      `${applicationPath(applicationType, applicationId)}/notices/attachments`,
+      {
+        signal,
+        params: {
+          page,
+          size,
+          ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
+        },
+      }
+    )
+    const unwrapped = unwrapEnvelope<
+      { items?: PortalNoticeAttachmentListItem[]; totalPages?: number } | PortalNoticeAttachmentListItem[]
+    >(data)
+    if (Array.isArray(unwrapped)) {
+      return { items: unwrapped, totalPages: 1 }
+    }
+    return { items: unwrapped?.items ?? [], totalPages: unwrapped?.totalPages }
+  })
 }
 
 /**
@@ -501,19 +526,49 @@ export async function fetchApplicationSchedules(
   }
 }
 
-export async function fetchApplicationForms(
+async function fetchApplicationFormsOnce(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  formType: string,
+  formType?: string,
   signal?: AbortSignal,
 ): Promise<PortalFormListItem[]> {
   const { data } = await axiosClient.get<unknown>(`${applicationPath(applicationType, applicationId)}/forms`, {
     signal,
-    params: { formType },
+    params: formType ? { formType } : undefined,
   })
   const unwrapped = unwrapEnvelope<PortalFormListResponse | PortalFormListItem[]>(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
+}
+
+export async function fetchApplicationForms(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  formType: 'SURVEY' | 'SATISFACTION',
+  signal?: AbortSignal,
+): Promise<PortalFormListItem[]> {
+  const queries =
+    formType === 'SURVEY' ? PORTAL_SURVEY_FORM_TYPE_QUERIES : PORTAL_SATISFACTION_FORM_TYPE_QUERIES
+
+  let merged: PortalFormListItem[] = []
+  for (const queryFormType of queries) {
+    const batch = await fetchApplicationFormsOnce(
+      applicationType,
+      applicationId,
+      queryFormType,
+      signal,
+    )
+    merged = dedupePortalFormListItems([...merged, ...batch])
+    if (merged.length > 0) return merged
+  }
+
+  const all = await fetchApplicationFormsOnce(applicationType, applicationId, undefined, signal)
+  const filtered = all.filter(item =>
+    formType === 'SURVEY'
+      ? isPortalSurveyFormType(item.formType)
+      : isPortalSatisfactionFormType(item.formType),
+  )
+  return dedupePortalFormListItems(filtered)
 }
 
 export type PortalSurveyFormDocument = {

@@ -19,7 +19,7 @@ import type { ProgramApplicationType } from './types'
 const APPLICATIONS_STALE_MS = 30_000
 const APPLICATIONS_GC_MS = 10 * 60_000
 /** statusGroup 없이 전체 조회할 때(레거시·탭 미전달) 상한 */
-const APPLICATIONS_FETCH_SIZE = 100
+const APPLICATIONS_FETCH_SIZE = 20
 
 export type MypageApplicationScope = 'education' | 'lecture' | 'volunteer'
 

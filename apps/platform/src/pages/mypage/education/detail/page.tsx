@@ -549,6 +549,7 @@ export function MypageEducationDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
+            pendingSurveyCount={application.pendingSurveyCount}
           />
         )
       }

@@ -22,6 +22,7 @@ import {
   getEducationSchedulesQueryTraceId,
 } from '../../schedules/lib/schedules-query-error'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
+import { mapPortalFormListItemToSurveyEntry } from '../lib/portal-form-list'
 import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
 import {
   createApplicationNotice,
@@ -210,23 +211,7 @@ function mapNoticeReactions(
 }
 
 function mapForm(item: PortalFormListItem): EducationSurveyListEntry | null {
-  const bindingId = item.bindingId ?? item.formBindingId ?? item.id
-  if (bindingId == null) return null
-  const status = (item.status ?? '').toUpperCase()
-  const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
-  return {
-    id: String(bindingId),
-    title: item.title?.trim() || '설문',
-    status: submitted ? 'submitted' : 'in_progress',
-    startAt: item.submissionStartAt?.slice(0, 10),
-    endAt: item.submissionEndAt?.slice(0, 10),
-    createdAt: item.submissionStartAt,
-    templateVersionId: item.templateVersionId,
-    form: item.form,
-    formResponseId: item.formResponseId,
-    answers: item.answers,
-    draftAnswers: item.draftAnswers,
-  }
+  return mapPortalFormListItemToSurveyEntry(item)
 }
 
 function mapReceiptStatus(value: string | undefined): EducationSettlementStatus {

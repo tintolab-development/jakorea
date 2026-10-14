@@ -20,10 +20,19 @@ const COPY: Record<
 
 type EducationSurveyEmptyPanelProps = {
   kind: EducationSurveyEmptyKind
+  /** API 목록이 비었지만 신청 건에 미응답 설문이 있다고 표시될 때 */
+  pendingMismatchHint?: boolean
 }
 
-export function EducationSurveyEmptyPanel({ kind }: EducationSurveyEmptyPanelProps) {
+export function EducationSurveyEmptyPanel({
+  kind,
+  pendingMismatchHint = false,
+}: EducationSurveyEmptyPanelProps) {
   const copy = COPY[kind]
+  const description =
+    pendingMismatchHint
+      ? '설문이 등록되어 있으나 이 신청 건과 연결되지 않았을 수 있습니다. CMS에서 설문 대상을 「전체」로 등록했는지 확인하거나, 잠시 후 다시 시도해 주세요.'
+      : copy.description
 
   return (
     <div className={styles.shell}>
@@ -41,7 +50,7 @@ export function EducationSurveyEmptyPanel({ kind }: EducationSurveyEmptyPanelPro
             {copy.title}
           </PFText>
           <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.description}>
-            {copy.description}
+            {description}
           </PFText>
         </div>
       </div>

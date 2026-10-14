@@ -218,7 +218,7 @@ export const platformQueryKeys = {
           params.page,
           params.size,
         ] as const,
-      /** 인접글용 preview (`size=100`, page 0, q 없음) */
+      /** 인접글용 preview (`size=20`, page 0, q 없음) */
       preview: () => [...platformQueryKeys.jaKorea.notices.all(), 'preview'] as const,
       /** 공개 상세 — GET /api/public/ja-korea/notices/{id} (Class D) */
       detail: (id: string) => [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,
