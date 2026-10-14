@@ -59,6 +59,7 @@ import {
 import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
 import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
@@ -256,6 +257,13 @@ const programDetailEditSchemaBase = z.object({
   title: z.string().min(1, '프로그램명을 입력해주세요'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  /** 참여자 모집 — 프로그램 운영 기간 (사업 startDate/endDate 와 분리) */
+  participantProgramOperationStartDate: z.string().optional(),
+  participantProgramOperationEndDate: z.string().optional(),
+  instructorProgramOperationStartDate: z.string().optional(),
+  instructorProgramOperationEndDate: z.string().optional(),
+  volunteerProgramOperationStartDate: z.string().optional(),
+  volunteerProgramOperationEndDate: z.string().optional(),
   category: z.enum(['school', 'individual']),
   targetLevels: targetLevelsFormSchema,
   district: z.string().optional(),
@@ -1072,6 +1080,70 @@ export function programToDetailEditValues(
   }
 }
 
+export type ProgramDetailEditPatchOptions = {
+  /** 모집 탭 저장 — 해당 audience 프로그램 운영 기간만 갱신, 루트 사업 날짜는 유지 */
+  recruitmentAudience?: ProgramDetailRecruitmentAudience
+}
+
+function resolveRecruitmentOperationPeriodLabels(
+  values: ProgramDetailEditFormValues,
+  existing: import('@/types/domain').Program,
+  recruitmentAudience?: ProgramDetailRecruitmentAudience
+): {
+  participant: string | undefined
+  instructor: string | undefined
+  volunteer: string | undefined
+} {
+  const keepParticipant =
+    existing.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel
+  const keepInstructor =
+    existing.generalCommonInfo?.instructorRecruitmentInfo?.operationPeriodLabel
+  const keepVolunteer =
+    existing.generalCommonInfo?.volunteerRecruitmentInfo?.operationPeriodLabel
+
+  const labelFromForm = (start?: string, end?: string, fallback?: string) =>
+    periodLabelFromRange(start, end) ?? fallback
+
+  if (recruitmentAudience === 'participant') {
+    return {
+      participant: labelFromForm(
+        values.participantProgramOperationStartDate,
+        values.participantProgramOperationEndDate,
+        keepParticipant
+      ),
+      instructor: keepInstructor,
+      volunteer: keepVolunteer,
+    }
+  }
+  if (recruitmentAudience === 'instructor') {
+    return {
+      participant: keepParticipant,
+      instructor: labelFromForm(
+        values.instructorProgramOperationStartDate,
+        values.instructorProgramOperationEndDate,
+        keepInstructor
+      ),
+      volunteer: keepVolunteer,
+    }
+  }
+  if (recruitmentAudience === 'volunteer') {
+    return {
+      participant: keepParticipant,
+      instructor: keepInstructor,
+      volunteer: labelFromForm(
+        values.volunteerProgramOperationStartDate,
+        values.volunteerProgramOperationEndDate,
+        keepVolunteer
+      ),
+    }
+  }
+  return {
+    participant: keepParticipant,
+    instructor: keepInstructor,
+    volunteer: keepVolunteer,
+  }
+}
+
 /**
  * 폼 값 → Program 패치 (저장 시 병합용)
  * `useProgramDetailInfoSave` 의 `triggerSave` 에서만 호출 — RHF `getValues()` 결과를 받음.
@@ -1079,7 +1151,8 @@ export function programToDetailEditValues(
  */
 export function detailEditValuesToProgramPatch(
   values: ProgramDetailEditFormValues,
-  existing: import('@/types/domain').Program
+  existing: import('@/types/domain').Program,
+  options?: ProgramDetailEditPatchOptions
 ): Partial<import('@/types/domain').Program> {
   type ProgramRound = import('@/types/domain').ProgramRound
   const announcementPublished =
@@ -1087,8 +1160,18 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished
   const studentListRequired =
     values.studentListRequired ?? existing.studentListRequired
-  const startDate = values.startDate ?? existing.startDate
-  const endDate = values.endDate ?? existing.endDate
+  const recruitmentAudience = options?.recruitmentAudience
+  const startDate = recruitmentAudience
+    ? existing.startDate
+    : values.startDate ?? existing.startDate
+  const endDate = recruitmentAudience
+    ? existing.endDate
+    : values.endDate ?? existing.endDate
+  const operationPeriodLabels = resolveRecruitmentOperationPeriodLabels(
+    values,
+    existing,
+    recruitmentAudience
+  )
   const applicationStartDate = values.applicationStartDate
   const applicationEndDate = values.applicationEndDate
   const resultAnnouncementDate =
@@ -1102,9 +1185,7 @@ export function detailEditValuesToProgramPatch(
   const recruitmentPeriodLabel =
     periodLabelFromRange(applicationStartDate, applicationEndDate) ??
     existing.generalCommonInfo?.participantRecruitmentInfo?.recruitmentPeriodLabel
-  const operationPeriodLabel =
-    periodLabelFromRange(startDate, endDate) ??
-    existing.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel
+  const operationPeriodLabel = operationPeriodLabels.participant
   const contactPhone = values.contactPhone ?? existing.contactPhone
   const contactEmail = values.contactEmail ?? existing.contactEmail
   const isTrainedTeacherProgram =
@@ -1488,9 +1569,7 @@ export function detailEditValuesToProgramPatch(
             values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
             values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate
           ) ?? existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentPeriodLabel,
-        operationPeriodLabel:
-          periodLabelFromRange(startDate, endDate) ??
-          existing.generalCommonInfo?.instructorRecruitmentInfo?.operationPeriodLabel,
+        operationPeriodLabel: operationPeriodLabels.instructor,
         ...finalPassAnnouncementPatch(values, existing, undefined, { nestedFields: false }),
       },
       volunteerRecruitmentInfo: {
@@ -1524,9 +1603,7 @@ export function detailEditValuesToProgramPatch(
             values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
             values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate
           ) ?? existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentPeriodLabel,
-        operationPeriodLabel:
-          periodLabelFromRange(startDate, endDate) ??
-          existing.generalCommonInfo?.volunteerRecruitmentInfo?.operationPeriodLabel,
+        operationPeriodLabel: operationPeriodLabels.volunteer,
         volunteerInterviewEnabled:
           values.volunteerRecruitmentInterviewEnabled === 'yes'
             ? true

@@ -105,18 +105,26 @@ export function GeneralProgramInstructorRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="startDate"
+                    name="instructorProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
                       <ParagraphDatePicker
                         mode="range"
                         value={[
                           toDayjs(field.value as string | Date | undefined),
-                          toDayjs(form.watch('endDate') as string | Date | undefined),
+                          toDayjs(
+                            form.watch('instructorProgramOperationEndDate') as
+                              | string
+                              | Date
+                              | undefined
+                          ),
                         ]}
                         onChange={([start, end]) => {
                           field.onChange(start ? start.toISOString() : '')
-                          form.setValue('endDate', end ? end.toISOString() : '')
+                          form.setValue(
+                            'instructorProgramOperationEndDate',
+                            end ? end.toISOString() : ''
+                          )
                         }}
                         placeholder={['운영 시작일', '운영 종료일']}
                         width="100%"

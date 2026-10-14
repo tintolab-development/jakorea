@@ -25,12 +25,14 @@ export function SchoolDetailAttendanceSessionPanel({
   getSessionStudents,
   onSave,
   saving = false,
+  scopeBlocked = false,
 }: {
   session: SchoolDetailAttendanceSessionGroup
   appliedFilters: SchoolDetailAttendanceFilters
   getSessionStudents: (sessionId: string) => SchoolDetailAttendanceStudentRow[]
   onSave: (sessionId: string, students: SchoolDetailAttendanceStudentRow[]) => Promise<void>
   saving?: boolean
+  scopeBlocked?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [savedRows, setSavedRows] = useState<SchoolDetailAttendanceStudentRow[]>(() =>
@@ -72,6 +74,7 @@ export function SchoolDetailAttendanceSessionPanel({
     hasChanges &&
     !saving &&
     !isSavingLocal &&
+    !scopeBlocked &&
     typeof session.scheduleId === 'number' &&
     session.scheduleId > 0
 

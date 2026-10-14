@@ -10,7 +10,10 @@ import type {
   DashboardProgramScheduleListResponse,
   DashboardRecruitmentListResponse,
   DashboardProgramScheduleResponse,
-} from '@/shared/api/generated/dashboard/schemas'
+} from '@/features/dashboard/api/dashboard-generated-types'
+import type { DashboardRecruitmentResponse } from '@/shared/api/generated/dashboard/schemas/dashboardRecruitmentResponse'
+import type { DashboardProgramInquirySummaryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquirySummaryResponse'
+import type { DashboardProgramInquiryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquiryResponse'
 import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
 import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard-service'
 
@@ -325,7 +328,7 @@ export function filterRecruitmentListForWidget(
 ): DashboardRecruitmentListResponse {
   const programType = getDashboardProgramTypeParamForWidget(widgetKey)
   if (!programType) return dto
-  const items = (dto.items ?? []).filter(item =>
+  const items = (dto.items ?? []).filter((item: DashboardRecruitmentResponse) =>
     recruitmentItemMatchesWidgetProgramType(item.programType, programType)
   )
   return { ...dto, items }
@@ -372,7 +375,7 @@ export function mapProgramInquiryListResponse(
 ): ProgramInquiryRow[] {
   const summaries = dto.summaries
   if (summaries && summaries.length > 0) {
-    return summaries.map((row, index) => {
+    return summaries.map((row: DashboardProgramInquirySummaryResponse, index: number) => {
       const programId = row.programId != null ? String(row.programId) : undefined
       const programName = row.programName?.trim() || '프로그램'
       return {
@@ -400,7 +403,7 @@ export function mapProgramInquiryListResponse(
     }
   >()
 
-  for (const item of items) {
+  for (const item of items as DashboardProgramInquiryResponse[]) {
     const programId = item.programId != null ? String(item.programId) : undefined
     const programName = item.programNameSnapshot ?? item.title ?? '프로그램'
     const groupKey = programId ?? programName
@@ -482,5 +485,5 @@ export function mapProgramScheduleListResponse(
 ): DashboardScheduleEventDto[] {
   return (dto.items ?? [])
     .map(mapScheduleItem)
-    .filter((row): row is DashboardScheduleEventDto => row != null)
+    .filter((row: DashboardScheduleEventDto | null): row is DashboardScheduleEventDto => row != null)
 }

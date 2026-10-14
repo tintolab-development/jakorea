@@ -7,6 +7,7 @@
  */
 
 export interface MemberPortalNoticeReactionSummary {
+  /** 정규화된 반응 유형. SMILE, LAUGH, LOVEFACE, SURPRISED, CRY, ANGRY, SCREAM, HEART, CLAP, THUMBSUP, CHECK 중 하나입니다. */
   reactionType?: string;
   /** @minimum 0 */
   count?: number;

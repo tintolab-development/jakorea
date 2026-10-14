@@ -31,6 +31,10 @@ export function SchoolDetailAttendanceSection({
     refetchAttendance,
     isRefetching,
     isSaving,
+    requiresAssignmentScopeForAttendance,
+    assignmentScopeLoading,
+    assignmentScopeLoadError,
+    getSessionScopeReadiness,
   } = useSchoolDetailAttendance(row, program)
 
   if (loadError) {
@@ -75,6 +79,24 @@ export function SchoolDetailAttendanceSection({
           }
         />
       ) : null}
+      {requiresAssignmentScopeForAttendance && assignmentScopeLoadError ? (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="학급 일정 배정 정보를 불러오지 못했습니다."
+          description="출석 저장이 제한됩니다. 잠시 후 다시 시도해 주세요."
+          action={
+            <CmsButton
+              variant="secondary"
+              loading={isRefetching}
+              onClick={() => refetchAttendance()}
+            >
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
       <FilterTableLayout
         className="school-detail-attendance-section__filter-layout"
         bordered={false}
@@ -93,16 +115,25 @@ export function SchoolDetailAttendanceSection({
           <div className="school-detail-attendance-section__empty">조회 결과가 없습니다.</div>
         ) : (
           <div className="school-detail-attendance-section__groups">
-            {sessionGroups.map(session => (
-              <SchoolDetailAttendanceSessionPanel
-                key={session.id}
-                session={session}
-                appliedFilters={appliedFilters}
-                getSessionStudents={getSessionStudents}
-                onSave={saveSessionStudents}
-                saving={isSaving}
-              />
-            ))}
+            {sessionGroups.map(session => {
+              const scopeReadiness = getSessionScopeReadiness(session.id)
+              const scopeBlocked =
+                requiresAssignmentScopeForAttendance &&
+                (assignmentScopeLoading ||
+                  assignmentScopeLoadError ||
+                  scopeReadiness?.ready === false)
+              return (
+                <SchoolDetailAttendanceSessionPanel
+                  key={session.id}
+                  session={session}
+                  appliedFilters={appliedFilters}
+                  getSessionStudents={getSessionStudents}
+                  onSave={saveSessionStudents}
+                  saving={isSaving}
+                  scopeBlocked={scopeBlocked}
+                />
+              )
+            })}
           </div>
         )}
       </FilterTableLayout>

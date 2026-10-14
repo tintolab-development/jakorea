@@ -74,6 +74,10 @@ describe('resolveProgramAdminDetailInfoTabUrl', () => {
       programId: 167001,
       canonicalProgramType: 'COMPANY_SCHOOL',
       rawProgramType: 'COMPANY_SCHOOL',
+      allowedApplicationTargets: [],
+      disabledApplicationTargets: [],
+      lnb: [],
+      availableActions: [],
     })
 
     const { resolveProgramAdminDetailInfoTabUrl } = await import('./resolve-program-admin-detail-url')

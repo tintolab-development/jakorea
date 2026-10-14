@@ -31,29 +31,14 @@ import {
   resolveRecruitmentOtherMatters,
   resolveRecruitmentRemarks,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  parseDisplayPeriodLabelToIsoRange,
+  seedAudienceProgramOperationFormFields,
+} from '@/features/program/general/lib/general-program-recruitment-operation-period'
 
 function hasIsoDate(value: string | Date | undefined): boolean {
   if (value == null || value === '') return false
   return dayjs(value).isValid()
-}
-
-/** 조회용 기간 라벨 → ISO (YYYY.MM.DD · YYYY-MM-DD 등) */
-export function parseDisplayPeriodLabelToIsoRange(
-  label: string | undefined
-): { start?: string; end?: string } {
-  if (!label?.trim() || label.trim() === '-') return {}
-  const parts = label
-    .split(/\s*[~\-–—]\s*/)
-    .map(part => part.replace(/\([^)]*\)/g, '').trim())
-    .filter(Boolean)
-  if (parts.length < 2) return {}
-  const start = dayjs(parts[0])
-  const end = dayjs(parts[1])
-  if (!start.isValid() || !end.isValid()) return {}
-  return {
-    start: start.startOf('day').toISOString(),
-    end: end.startOf('day').toISOString(),
-  }
 }
 
 function instructorTargetsFromRecruitmentTargetLabel(label: string | undefined): string[] {
@@ -109,8 +94,6 @@ function enrichParticipantRecruitmentScalars(program: Program): Program {
     ...next,
     applicationStartDate: coalesceIso(next.applicationStartDate, info.recruitmentPeriodLabel),
     applicationEndDate: coalesceIsoEnd(next.applicationEndDate, info.recruitmentPeriodLabel),
-    startDate: coalesceIso(next.startDate, info.operationPeriodLabel) ?? next.startDate,
-    endDate: coalesceIsoEnd(next.endDate, info.operationPeriodLabel) ?? next.endDate,
   }
 
   const finalParts = parseAnnouncementLabel(
@@ -152,8 +135,6 @@ function enrichInstructorRecruitmentScalars(program: Program): Program {
       next.instructorApplicationEndDate,
       info.recruitmentPeriodLabel
     ),
-    startDate: coalesceIso(next.startDate, info.operationPeriodLabel) ?? next.startDate,
-    endDate: coalesceIsoEnd(next.endDate, info.operationPeriodLabel) ?? next.endDate,
   }
 
   const finalParts = parseAnnouncementLabel(
@@ -197,8 +178,6 @@ function enrichVolunteerRecruitmentScalars(program: Program): Program {
       next.volunteerApplicationEndDate,
       info.recruitmentPeriodLabel
     ),
-    startDate: coalesceIso(next.startDate, info.operationPeriodLabel) ?? next.startDate,
-    endDate: coalesceIsoEnd(next.endDate, info.operationPeriodLabel) ?? next.endDate,
   }
 
   return next
@@ -245,6 +224,7 @@ export function programToRecruitmentTabEditValues(
     | undefined
   return {
     ...base,
+    ...seedAudienceProgramOperationFormFields(merged, audience),
     description: recruitmentCopy ? (detail.description ?? '') : (detail.description ?? base.description),
     recruitmentGuide: recruitmentCopy
       ? (detail.recruitmentGuide ?? '')

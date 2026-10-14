@@ -29,7 +29,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       teacherPhone: '010-1234-5678',
       teacherEmail: 'kim@example.com',
       teacherEmploymentStatus: null,
-      teacherScheduleChangeCount: null,
+      teacherScheduleChangeCount: undefined,
       assignedInstructor: undefined,
       officialDocumentRequired: false,
     })

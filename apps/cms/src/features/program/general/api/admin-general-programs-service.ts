@@ -187,12 +187,13 @@ export async function createGeneralProgram(
 export async function updateGeneralProgram(
   programId: string,
   program: Program,
-  patch?: Partial<Program>
+  patch?: Partial<Program>,
+  baseline?: Program
 ): Promise<Program> {
   assertGeneralProgramsRemoteReady()
   const dto = await updateAdminProgramRemote(
     programId,
-    mapGeneralProgramToUpdateRequest(program, patch)
+    mapGeneralProgramToUpdateRequest(program, patch, baseline)
   )
   const mapped = mapAdminProgramDetailToProgram(dto)
   const { withFetchedProgramSponsorAssignments } = await import(

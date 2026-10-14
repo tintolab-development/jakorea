@@ -1,4 +1,5 @@
 import type { ColumnsType } from 'antd/es/table'
+import { formatSchoolDetailAttendanceClassLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS,
@@ -52,7 +53,7 @@ export function buildSchoolDetailAttendanceSessionExcelRows(
     name: student.name,
     genderLabel: student.gender ? (STUDENT_GENDER_LABELS[student.gender] ?? '') : '',
     birthDate: student.birthDate ?? '',
-    gradeClass: student.gradeClass,
+    gradeClass: formatSchoolDetailAttendanceClassLabel(student.gradeClass),
     contact: maskContact(student.contact),
     email: maskEmail(student.email),
     statusLabel:

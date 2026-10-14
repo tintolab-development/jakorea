@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 import type { DocumentManagerEvaluation } from './documentManagerEvaluation';
+import type { ListVolunteerApplicationsEffectiveSecondInterviewStatus } from './listVolunteerApplicationsEffectiveSecondInterviewStatus';
+import type { ListVolunteerApplicationsGrade } from './listVolunteerApplicationsGrade';
+import type { ListVolunteerApplicationsInterviewStage } from './listVolunteerApplicationsInterviewStage';
 import type { ListVolunteerApplicationsRecruitHalf } from './listVolunteerApplicationsRecruitHalf';
 
 export type ListVolunteerApplicationsParams = {
@@ -18,9 +21,13 @@ status?: string;
  */
 documentStatus?: string;
 /**
- * 면접 상태
+ * 면접 상태. 단일 값은 interview_status 컬럼 동일 비교(하위 호환). 쉼표 구분 다중 값은 OR. 다중 ASSIGNED/EVALUATED/PARTIALLY_EVALUATED는 give_up_yn=false. WITHDRAWN은 give_up_yn=true·서류합격 alias. interviewStage와 동시 사용 불가.
  */
 interviewStatus?: string;
+/**
+ * 2차 면접 목록 preset. SECOND_ROUND는 interviewStatus=ASSIGNED,WITHDRAWN,EVALUATED,PARTIALLY_EVALUATED 와 동일 OR. documentStatus=PASS 와 AND 권장.
+ */
+interviewStage?: ListVolunteerApplicationsInterviewStage;
 /**
  * 최종 결과 상태. APPROVED/REJECTED 별칭도 허용
  */
@@ -58,4 +65,36 @@ recruitHalf?: ListVolunteerApplicationsRecruitHalf;
  * 모집 ID 정확 필터
  */
 recruitmentId?: number;
+/**
+ * UJAT 학년 라벨 정확 일치. 미응답 행은 제외
+ */
+grade?: ListVolunteerApplicationsGrade;
+/**
+ * UJAT 희망 교육 지역 라벨 또는 코드
+ */
+preferredRegion?: string;
+/**
+ * UJAT 교육 진행 경험. 미응답은 매칭되지 않음
+ */
+hasEducationExperience?: boolean;
+/**
+ * 활성 면접 배정 슬롯 시작일(Asia/Seoul). 일반·UJAT 공통.
+ */
+assignedInterviewDate?: string;
+/**
+ * 활성 면접 배정 슬롯 시작 시각(Asia/Seoul) 정확 일치(HH:mm:ss). 범위 검색 아님. assignedInterviewDate와 AND.
+ */
+assignedInterviewTime?: string;
+/**
+ * 최신 활성 면접 배정의 evaluator 1·2 score_total 합(0~10) 정확 일치. 미평가면 null로 매칭되지 않음. totalScoreUnevaluated와 동시 사용 불가(400 VOLUNTEER_APPLICATION_TOTAL_SCORE_FILTER_CONFLICT).
+ */
+totalScore?: number;
+/**
+ * true면 최신 활성 배정에서 score_total이 채워진 평가자가 2명 미만(목록 총점 '-'에 해당). 0+0 합산 완료 행은 제외. totalScore와 동시 불가.
+ */
+totalScoreUnevaluated?: boolean;
+/**
+ * 일반 2차 면접 파생 상태( interview_status 아님). 서버는 요청 처리 시점의 UTC 기준 시각을 한 번 고정해 list/count에 동일 적용. 우선순위: (1) 서류합격 후 활동포기 give_up_yn → 제외 (2) final_result_status PASS/FAIL 또는 RESERVE+reserve_rank 1~4 → 제외 (3) 최신 활성 배정 슬롯 end_at 없음·start≥end → WAITING (4) 기준시각 < end_at → WAITING, 기준시각 ≥ end_at → COMPLETED. 평가 점수·interview_status는 waiting/completed 판정에 사용하지 않음. assignedInterviewEndAt과 동일한 DB end_at. 다른 필터와 AND. finalResultStatus=PASS 등과 AND 시 빈 결과 가능. 잘못된 값은 400 VOLUNTEER_APPLICATION_EFFECTIVE_SECOND_INTERVIEW_STATUS_INVALID.
+ */
+effectiveSecondInterviewStatus?: ListVolunteerApplicationsEffectiveSecondInterviewStatus;
 };

@@ -3,8 +3,8 @@ import type { Program } from '@/types/domain'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { GENERAL_RECRUIT_OVERLAY_KEYS } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { parseDisplayPeriodLabelToIsoRange } from './general-program-recruitment-operation-period'
 import {
-  parseDisplayPeriodLabelToIsoRange,
   parseTargetLevelsFromDisplayLabel,
   programToRecruitmentTabEditValues,
   resolveGeneralProgramForRecruitmentEdit,
@@ -73,10 +73,10 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     expect(merged.educationTargetDetail).toBe('모집 상세')
     expect(merged.applicationStartDate).toBeTruthy()
     expect(merged.applicationEndDate).toBeTruthy()
-    expect(merged.startDate).toBeTruthy()
-    expect(merged.endDate).toBeTruthy()
 
     const values = programToRecruitmentTabEditValues(program, 'participant')
+    expect(values.participantProgramOperationStartDate).toBeTruthy()
+    expect(values.participantProgramOperationEndDate).toBeTruthy()
     expect(values.targetLevels).toEqual(['high'])
     expect(values.educationTargetDetail).toBe('모집 상세')
     expect(values.description).toBe('모집 전용 설명')

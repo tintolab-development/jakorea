@@ -4,7 +4,9 @@
 
 import type { StudentRosterItemResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterItemResponse'
 import type { StudentRosterRowRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterRowRequest'
+import type { StudentRosterCommitRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterCommitRequest'
 import type { StudentRosterResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterResponse'
+import { buildStudentRosterCommitRequestBody } from '@/features/program/general/lib/student-roster-commit-safety'
 import type {
   SchoolDetailStudentRow,
   StudentGenderKey,
@@ -118,7 +120,7 @@ export function mapStudentRosterItemToRow(
     '-'
   return {
     id: rosterId != null ? String(rosterId) : `roster-row-${index + 1}`,
-    memberId: item.memberId,
+    memberId: item.memberId ?? undefined,
     no: item.studentNo ?? index + 1,
     name: item.studentName?.trim() || '-',
     gender: mapApiGenderToStudentGenderKey(item.gender),
@@ -133,6 +135,7 @@ export function mapStudentRosterItemToRow(
         ? fileObjectId
         : undefined,
     satisfactionSurveyCompleted: extra.satisfactionSurveyCompleted === true,
+    notes: item.notes?.trim() || undefined,
   }
 }
 
@@ -176,6 +179,13 @@ export function mapStudentRowToRosterRequest(
   if (Number.isFinite(rosterId) && rosterId > 0) {
     payload.rosterId = rosterId
   }
+  if (
+    row.memberId != null &&
+    Number.isFinite(row.memberId) &&
+    row.memberId > 0
+  ) {
+    payload.memberId = row.memberId
+  }
   const gender = mapStudentGenderKeyToApi(row.gender)
   if (gender) payload.gender = gender
 
@@ -185,25 +195,22 @@ export function mapStudentRowToRosterRequest(
   const email = row.email?.trim()
   if (email && !isLikelyMaskedPii(email)) payload.email = email
 
+  const notes = row.notes?.trim()
+  if (notes) payload.notes = notes
+
   return payload
 }
 
 export function mapStudentRowsToRosterCommitRequest(input: {
   rows: SchoolDetailStudentRow[]
   educationGrade?: string | null
-  /**
-   * OpenAPI 필수. 수동 편집 시 직전 GET의 sourceFileObjectId를 재사용하고,
-   * 없으면 0 — 서버 optional 허용 전까지 임시.
-   */
-  sourceFileObjectId?: number | null
-}): {
-  sourceFileObjectId: number
-  rows: StudentRosterRowRequest[]
-} {
-  return {
-    sourceFileObjectId: input.sourceFileObjectId ?? 0,
-    rows: input.rows.map(row =>
-      mapStudentRowToRosterRequest(row, { educationGrade: input.educationGrade })
-    ),
-  }
+  expectedRevisionNo: number
+}): StudentRosterCommitRequest {
+  const rows = input.rows.map(row =>
+    mapStudentRowToRosterRequest(row, { educationGrade: input.educationGrade })
+  )
+  return buildStudentRosterCommitRequestBody({
+    rows,
+    expectedRevisionNo: input.expectedRevisionNo,
+  })
 }

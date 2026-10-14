@@ -8,12 +8,16 @@
 
 export interface VolunteerInterviewEvaluationSummary {
   evaluationId?: number;
+  /** 1=담당자 A, 2=담당자 B. evaluator_order가 있으면 그 값, 없으면 조회 순 1, 2 */
   evaluatorOrder?: number;
   /** @nullable */
   evaluatorAdminId?: number | null;
   /** @nullable */
   evaluatorName?: string | null;
-  /** @nullable */
+  /**
+     * 그 슬롯의 score_total. 0~5. 두 담당자 합이 아니다.
+     * @nullable
+     */
   score?: number | null;
   /** @nullable */
   evaluationStatus?: string | null;

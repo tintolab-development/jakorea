@@ -16,7 +16,12 @@ import {
   mapStudentRosterResponseToRows,
   mapStudentRowsToRosterCommitRequest,
 } from '@/features/program/general/api/adapters/student-roster-adapters'
-import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
+import type { OrganizationStudentRosterCommitInput } from '@/features/program/general/api/student-roster-commit-types'
+import {
+  isStudentRosterMemberIdConflictError,
+  isStudentRosterRevisionConflictError,
+  parseStudentRosterRevisionNo,
+} from '@/features/program/general/lib/student-roster-revision'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
   notifyProgramApiUnavailable,
@@ -54,18 +59,21 @@ export function useOrganizationStudentRosterRemote(input: {
     [enabled, query.data]
   )
 
-  const sourceFileObjectId = query.data?.sourceFileObjectId ?? null
+  const revisionNo = useMemo(
+    () => (enabled ? parseStudentRosterRevisionNo(query.data?.revisionNo) : null),
+    [enabled, query.data?.revisionNo]
+  )
 
   const commitMutation = useMutation({
-    mutationFn: async (rows: SchoolDetailStudentRow[]) => {
+    mutationFn: async (commitInput: OrganizationStudentRosterCommitInput) => {
       if (!enabled) {
         notifyProgramApiUnavailable('general-student-roster-commit', '참여 기관 · 학생 명단 저장')
         throw new Error('student roster remote unavailable')
       }
       const body = mapStudentRowsToRosterCommitRequest({
-        rows,
+        rows: commitInput.rows,
         educationGrade: input.educationGrade,
-        sourceFileObjectId,
+        expectedRevisionNo: commitInput.expectedRevisionNo,
       })
       return commitOrganizationStudentRosterRemote(applicationId, body)
     },
@@ -81,13 +89,16 @@ export function useOrganizationStudentRosterRemote(input: {
       ])
     },
     onError: error => {
+      if (isStudentRosterRevisionConflictError(error) || isStudentRosterMemberIdConflictError(error)) {
+        return
+      }
       handleError(error, { context: 'useOrganizationStudentRosterRemote.commit' })
     },
   })
 
   const commitRows = useCallback(
-    async (rows: SchoolDetailStudentRow[]) => {
-      await commitMutation.mutateAsync(rows)
+    async (commitInput: OrganizationStudentRosterCommitInput) => {
+      await commitMutation.mutateAsync(commitInput)
     },
     [commitMutation]
   )
@@ -95,8 +106,8 @@ export function useOrganizationStudentRosterRemote(input: {
   return {
     remoteEnabled: enabled,
     students,
+    revisionNo,
     totalCount: query.data?.totalCount ?? students.length,
-    sourceFileObjectId,
     isLoading: enabled && query.isLoading,
     isFetching: enabled && query.isFetching,
     isError: enabled && query.isError,

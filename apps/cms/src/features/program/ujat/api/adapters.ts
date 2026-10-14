@@ -1,6 +1,7 @@
 import type {
   AdminProgramListItemDto,
 } from '@/features/program/general/api/programs-api-client'
+import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
@@ -962,15 +963,15 @@ export function toCreateRequest(
       }
     : program
   // programType·serviceDetailJson을 앞에 — DevTools/문서 복사 시 detail 잘림·BE INVALID_VALUE 방지
-  return {
+  return omitNullRecordValues({
     programType: 'UJAT',
-    serviceDetailJson,
+    serviceDetailJson: serviceDetailJson ?? undefined,
     ...coreWithoutDetail,
-    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments, copySource),
+    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments ?? undefined, copySource),
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     autoApplyDefaultFormBindings: true,
-  }
+  }) as ProgramCreateRequest
 }
 
 export function toUpdateRequest(

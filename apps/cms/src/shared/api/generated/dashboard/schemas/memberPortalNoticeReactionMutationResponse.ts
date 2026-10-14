@@ -10,6 +10,7 @@ import type { MemberPortalNoticeReactionSummary } from './memberPortalNoticeReac
 export interface MemberPortalNoticeReactionMutationResponse {
   programId?: number;
   postId?: number;
+  /** 이번 요청에서 처리된 정규화 반응 유형. SMILE, LAUGH, LOVEFACE, SURPRISED, CRY, ANGRY, SCREAM, HEART, CLAP, THUMBSUP, CHECK 중 하나입니다. */
   reactionType?: string;
   active?: boolean;
   deleted?: boolean;

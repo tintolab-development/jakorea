@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { formatSchoolDetailAttendanceClassLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import {
   STUDENT_GENDER_LABELS,
   type SchoolDetailAttendanceStudentRow,
@@ -102,6 +103,7 @@ export function SchoolDetailAttendanceTable({
         key: 'gradeClass',
         width: 100,
         align: 'center',
+        render: (value: string | undefined) => formatSchoolDetailAttendanceClassLabel(value),
       },
       {
         title: '연락처',

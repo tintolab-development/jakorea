@@ -106,7 +106,10 @@ export function participantRecruitOverlayPatchFromDetailEditValues(
     patch[inst.recruitRangeSeal] = recruitRange
     patch[keys.individual.recruitRangeSeal] = recruitRange
   }
-  const programRange = rangeSealFromDates(values.startDate, values.endDate)
+  const programRange = rangeSealFromDates(
+    values.participantProgramOperationStartDate,
+    values.participantProgramOperationEndDate
+  )
   if (programRange) {
     patch[inst.programRangeSeal] = programRange
     patch[keys.individual.programRangeSeal] = programRange
@@ -126,8 +129,8 @@ export function instructorRecruitOverlayPatchFromDetailEditValues(
         | 'instructorRecruitmentAnnouncementPublished'
         | 'instructorApplicationStartDate'
         | 'instructorApplicationEndDate'
-        | 'startDate'
-        | 'endDate'
+        | 'instructorProgramOperationStartDate'
+        | 'instructorProgramOperationEndDate'
       >
     >
 ): Record<string, unknown> {
@@ -155,7 +158,10 @@ export function instructorRecruitOverlayPatchFromDetailEditValues(
     values.instructorApplicationEndDate
   )
   if (recruitRange) patch[keys.instructor.recruitRangeSeal] = recruitRange
-  const programRange = rangeSealFromDates(values.startDate, values.endDate)
+  const programRange = rangeSealFromDates(
+    values.instructorProgramOperationStartDate,
+    values.instructorProgramOperationEndDate
+  )
   if (programRange) patch[keys.instructor.programRangeSeal] = programRange
   return patch
 }
@@ -164,7 +170,16 @@ export function recruitOverlayPatchFromDetailEditValues(
   values: ProgramDetailEditFormValues,
   audience: ProgramDetailRecruitmentAudience
 ): Record<string, unknown> {
-  if (audience === 'volunteer') return volunteerRecruitOverlayPatchFromDetailEditValues(values)
+  if (audience === 'volunteer') {
+    const programRange = rangeSealFromDates(
+      values.volunteerProgramOperationStartDate,
+      values.volunteerProgramOperationEndDate
+    )
+    return {
+      ...volunteerRecruitOverlayPatchFromDetailEditValues(values),
+      ...(programRange ? { [keys.volunteer.programRangeSeal]: programRange } : {}),
+    }
+  }
   if (audience === 'instructor') return instructorRecruitOverlayPatchFromDetailEditValues(values)
   return participantRecruitOverlayPatchFromDetailEditValues(values)
 }

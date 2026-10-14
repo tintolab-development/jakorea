@@ -19,6 +19,7 @@ import {
   submitGeneralIndividualFinalResult,
 } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import type { DocumentManagerEvaluation } from '@/shared/api/generated/dashboard/schemas/documentManagerEvaluation'
 import type { ParticipantCancelRejectionConfirmPayload } from '@/features/program/general/lib/participant-cancel-rejection'
 import {
   resolveApplicantNotificationResendSentAt,
@@ -487,7 +488,7 @@ export function GeneralParticipantApplicantDetailView({
       if (!applicant) return
       try {
         const response = await updateIndividualDocumentEvaluationRemote(applicant.id, managerSlot, {
-          evaluation: evaluation.toUpperCase(),
+          evaluation: evaluation.toUpperCase() as DocumentManagerEvaluation,
         })
         syncRemoteApplicant(mergeDocumentEvaluationResponse(applicant, response))
         await queryClient.invalidateQueries({

@@ -5,26 +5,26 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
-import type { HomepageSignupTermsOption } from './homepageSignupTermsOption'
+import type { HomepageSignupTermsOption } from './homepageSignupTermsOption';
 
 /**
  * 회원 포탈 회원가입 플로우 옵션 응답입니다.
  */
 export interface HomepageSignupFlowOptionsResponse {
   /** 회원 유형 */
-  memberType?: string
+  memberType?: string;
   /** 연령 그룹 */
-  ageGroup?: string
+  ageGroup?: string;
   /** 본인인증 필요 여부 */
-  identityVerificationRequired?: boolean
+  identityVerificationRequired?: boolean;
   /** 보호자 인증 필요 여부 */
-  guardianVerificationRequired?: boolean
-  /** 교사 회원 가입 가능 여부 */
-  teacherSignupAllowed?: boolean
+  guardianVerificationRequired?: boolean;
+  /** 교사회원 가입 가능 여부 */
+  teacherSignupAllowed?: boolean;
   /** 다음 화면 단계 */
-  nextStep?: string
+  nextStep?: string;
   /** 필요 약관 항목 */
-  terms?: HomepageSignupTermsOption[]
+  terms?: HomepageSignupTermsOption[];
   /** 화면 안내 메시지 */
-  message?: string
+  message?: string;
 }

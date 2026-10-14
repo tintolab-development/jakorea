@@ -19,6 +19,7 @@ import {
   cancelGeneralIndividualApplicationRejection,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
@@ -194,9 +195,11 @@ export function useGeneralVolunteerApplicationsRemote({
         const payload = {
           result,
           reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
-          notifyTiming: notifyTiming?.trim().toUpperCase() || undefined,
-          ...(scheduledAt ? { scheduledAt } : {}),
-        } as const
+          ...toScreeningResultNotifyFields({
+            notifyTiming: notifyTiming?.trim().toUpperCase(),
+            scheduledAt,
+          }),
+        }
         if (subjectKind === 'participant') {
           if (ids.length > 1) {
             const bulk = await submitGeneralIndividualDocumentResultBulk(ids, payload)
@@ -264,7 +267,11 @@ export function useGeneralVolunteerApplicationsRemote({
     ) => {
       if (!remoteEnabled) return false
       try {
-        const payload = mapSecondInterviewStatusToFinalResultPayload(status, reason, notify)
+        const payload = mapSecondInterviewStatusToFinalResultPayload(
+          status,
+          reason,
+          toScreeningResultNotifyFields(notify)
+        )
         if (subjectKind === 'participant') {
           for (const id of ids) {
             await submitGeneralIndividualFinalResult(id, payload)

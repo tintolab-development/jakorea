@@ -119,7 +119,9 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         scheduleKey,
         no: 0,
         instructorName: app.instructorName?.trim() || '이름 없음',
-        distanceToSchool: formatDistanceKm(app.distanceKm),
+        distanceToSchool: formatDistanceKm(
+          (app as { distanceKm?: number | null }).distanceKm ?? undefined
+        ),
         assignmentStatus,
         hopeDate: hope.hopeDate,
         hopeTime: hope.hopeTime,

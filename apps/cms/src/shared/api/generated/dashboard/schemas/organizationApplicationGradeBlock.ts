@@ -12,6 +12,6 @@ export interface OrganizationApplicationGradeBlock {
   gradeLabel?: string | null;
   /** @nullable */
   classCount?: number | null;
-  /** 학급별 인원이 없으면 [] */
+  /** 실제 등록 반 목록. classes[].classNo만 학생 명단 Select 옵션으로 사용합니다. []이면 classCount는 신청 메타일 뿐 반 번호 목록이 아닙니다. */
   classes?: OrganizationApplicationClassRoom[];
 }
