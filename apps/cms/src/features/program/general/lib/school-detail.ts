@@ -306,6 +306,7 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     textbookQuantity: dto.textbookQuantity ?? detail.textbookQuantity,
     waitingRoomAvailable: dto.waitingRoomAvailable ?? detail.waitingRoomAvailable,
     participationAppliedAt: dto.submittedAt ?? detail.participationAppliedAt,
+    gradeBlocks: dto.gradeBlocks ?? detail.gradeBlocks,
   }
 }
 

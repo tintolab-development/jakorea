@@ -9,6 +9,11 @@ import type {
   SchoolDetailStudentRow,
   StudentGenderKey,
 } from '@/features/program/general/model/school-detail-types'
+import {
+  formatGradeClassSelectDisplay,
+  parseStudentGradeClassForRosterApi,
+  shouldUseShortGradeClassLabelForGrades,
+} from '@/features/program/general/lib/student-registered-grade-class-options'
 import { formatStudentBirthDateFromDigits } from '@/features/program/general/model/school-detail-add-student-schema'
 import {
   PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID,
@@ -100,11 +105,17 @@ export function mapRosterPortraitConsentSubmission(
 
 export function mapStudentRosterItemToRow(
   item: StudentRosterItemResponse,
-  index: number
+  index: number,
+  options?: { useShortClassLabel?: boolean }
 ): SchoolDetailStudentRow {
   const rosterId = item.rosterId
   const extra = item as StudentRosterItemEnriched
   const fileObjectId = extra.portraitConsentFileObjectId
+  const useShort = options?.useShortClassLabel === true
+  const gradeClass =
+    formatGradeClassSelectDisplay(item.grade ?? '', item.className ?? '', useShort) ||
+    formatStudentGradeClass(item.grade, item.className) ||
+    '-'
   return {
     id: rosterId != null ? String(rosterId) : `roster-row-${index + 1}`,
     memberId: item.memberId,
@@ -112,7 +123,7 @@ export function mapStudentRosterItemToRow(
     name: item.studentName?.trim() || '-',
     gender: mapApiGenderToStudentGenderKey(item.gender),
     birthDate: mapApiBirthDateToDisplay(item.birthDate),
-    gradeClass: formatStudentGradeClass(item.grade, item.className) || '-',
+    gradeClass,
     contact: item.maskedPhone?.trim() || undefined,
     email: item.maskedEmail?.trim() || undefined,
     participantId: item.participantId,
@@ -129,7 +140,12 @@ export function mapStudentRosterResponseToRows(
   response: StudentRosterResponse | null | undefined
 ): SchoolDetailStudentRow[] {
   const rows = response?.rows ?? []
-  return rows.map((item, index) => mapStudentRosterItemToRow(item, index))
+  const useShortClassLabel = shouldUseShortGradeClassLabelForGrades(
+    rows.map(item => item.grade ?? '')
+  )
+  return rows.map((item, index) =>
+    mapStudentRosterItemToRow(item, index, { useShortClassLabel })
+  )
 }
 
 export type MapStudentRowToRosterRequestOptions = {
@@ -145,14 +161,20 @@ export function mapStudentRowToRosterRequest(
   row: SchoolDetailStudentRow,
   options: MapStudentRowToRosterRequestOptions = {}
 ): StudentRosterRowRequest {
-  const educationGrade = options.educationGrade?.trim() || ''
-  const className = row.gradeClass?.trim() || ''
+  const { grade, className } = parseStudentGradeClassForRosterApi(
+    row.gradeClass ?? '',
+    options.educationGrade
+  )
   const payload: StudentRosterRowRequest = {
     studentName: row.name.trim(),
     birthDate: mapDisplayBirthDateToApi(row.birthDate),
-    grade: educationGrade,
-    className: className || '-',
+    grade,
+    className,
     studentNo: Math.min(999, Math.max(1, row.no || 1)),
+  }
+  const rosterId = Number.parseInt(row.id, 10)
+  if (Number.isFinite(rosterId) && rosterId > 0) {
+    payload.rosterId = rosterId
   }
   const gender = mapStudentGenderKeyToApi(row.gender)
   if (gender) payload.gender = gender

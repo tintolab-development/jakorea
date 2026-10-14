@@ -2128,6 +2128,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               schoolId={detail.id}
               studentCount={detail.studentCount}
               classCount={mergedDetail.classCount}
+              registeredGradeBlocks={mergedDetail.gradeBlocks}
               schoolName={mergedDetail.schoolName ?? row.schoolName ?? ''}
               educationGrade={mergedDetail.educationGrade ?? ''}
               organizationApplicationId={row.organizationApplicationId}

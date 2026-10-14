@@ -41,7 +41,8 @@ describe('student-roster-adapters', () => {
         portraitConsentStatus: 'CONSENTED',
         portraitConsentUpdatedAt: '2026-09-01T00:00:00Z',
       },
-      0
+      0,
+      { useShortClassLabel: true }
     )
     expect(row).toMatchObject({
       id: '12',
@@ -50,7 +51,7 @@ describe('student-roster-adapters', () => {
       name: '김학생',
       gender: 'male',
       birthDate: '2010. 07. 15.',
-      gradeClass: '초5 1반',
+      gradeClass: '1반',
       contact: '010-****-1234',
       email: 'k***@example.com',
       participantId: 99,
@@ -106,6 +107,7 @@ describe('student-roster-adapters', () => {
       { educationGrade: '초5' }
     )
     expect(payload).toEqual({
+      rosterId: 1,
       studentName: '김학생',
       gender: 'male',
       birthDate: '2010-07-15',
@@ -113,6 +115,21 @@ describe('student-roster-adapters', () => {
       className: '1반',
       studentNo: 1,
     })
+  })
+
+  it('splits combined gradeClass display into grade and className', () => {
+    const payload = mapStudentRowToRosterRequest(
+      {
+        id: '2',
+        no: 2,
+        name: '이학생',
+        gradeClass: '4학년 2반',
+        birthDate: '2010. 01. 01.',
+      },
+      { educationGrade: '3학년' }
+    )
+    expect(payload.grade).toBe('4학년')
+    expect(payload.className).toBe('2반')
   })
 
   it('builds commit body with fallback sourceFileObjectId 0', () => {
