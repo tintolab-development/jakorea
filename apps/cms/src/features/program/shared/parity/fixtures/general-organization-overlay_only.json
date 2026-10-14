@@ -1,0 +1,24 @@
+{
+  "fixtureId": "general-organization-overlay_only",
+  "variant": "general",
+  "label": "overlay_only",
+  "program": {
+    "id": "parity-general-org-003",
+    "title": "Parity overlay only",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "generalParticipantTypes": ["school_institution"],
+    "generalProgramAudience": "organization",
+    "registrationOverlay": {
+      "recruit.detailInfo.programDescription": "overlay-only-desc",
+      "recruit.detailInfo.recruitmentGuide": "overlay-only-guide"
+    },
+    "generalCommonInfo": {
+      "participantRecruitmentInfo": {}
+    }
+  }
+}

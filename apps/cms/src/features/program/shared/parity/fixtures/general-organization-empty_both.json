@@ -1,0 +1,19 @@
+{
+  "fixtureId": "general-organization-empty_both",
+  "variant": "general",
+  "label": "empty_both",
+  "program": {
+    "id": "parity-general-org-empty",
+    "title": "Parity empty",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "generalParticipantTypes": ["school_institution"],
+    "generalProgramAudience": "organization",
+    "registrationOverlay": {},
+    "generalCommonInfo": {}
+  }
+}

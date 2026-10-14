@@ -1,0 +1,30 @@
+{
+  "fixtureId": "general-organization-nested_only",
+  "variant": "general",
+  "label": "nested_only",
+  "program": {
+    "id": "parity-general-org-001",
+    "title": "Parity 일반 기관",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "generalParticipantTypes": ["school_institution", "teacher_instructor"],
+    "generalProgramAudience": "organization",
+    "description": "nested-description",
+    "registrationOverlay": {},
+    "generalCommonInfo": {
+      "announcementTitle": "nested-announcement",
+      "participantRecruitmentInfo": {
+        "programDescription": "nested-participant-desc",
+        "recruitmentGuide": "nested-participant-guide",
+        "applicationMethod": "nested-participant-method"
+      },
+      "instructorRecruitmentInfo": {
+        "programDescription": "nested-instructor-desc"
+      }
+    }
+  }
+}

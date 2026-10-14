@@ -1,0 +1,23 @@
+{
+  "fixtureId": "company-school-economy-overlay_only",
+  "variant": "company_school",
+  "label": "overlay_only",
+  "program": {
+    "id": "parity-cs-001",
+    "title": "Parity 1사1교",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "generalCommonInfo": {
+      "curriculumSessions": [
+        { "sessionLabel": "1차시", "title": "default-title", "description": "default-desc" }
+      ]
+    },
+    "registrationOverlay": {
+      "economyRegistration.educationCurriculum.session1.title": "overlay-session-title"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "fixtureId": "ujat-institution-nested_only",
+  "variant": "ujat",
+  "label": "nested_only",
+  "program": {
+    "id": "parity-ujat-001",
+    "title": "Parity UJAT",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "registrationOverlay": {},
+    "generalCommonInfo": {
+      "announcementTitle": "ujat-announcement"
+    }
+  }
+}
