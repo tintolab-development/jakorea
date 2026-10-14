@@ -201,6 +201,10 @@ function toWidthStyle(width: number | string | undefined): CSSProperties | undef
   return { width: typeof width === 'number' ? `${width}px` : width }
 }
 
+function isFullWidthPicker(width: number | string | undefined): boolean {
+  return width === '100%' || width === '100vw'
+}
+
 function formatDualPeriodCellText(d: Dayjs, withTime: boolean): string {
   const date = formatAppDatepickerDisplay(d)
   if (withTime) return `${date} (${formatTriggerClock(d)})`
@@ -613,15 +617,16 @@ function ParagraphDatePickerSingleInner({
         }
         setInvalidTimeRange(false)
         onRangeChange?.([start, end])
-        onChange(start)
+        // 기간 확정 시 onChange(시작일)까지 호출하면 onRangeChange 직후 부모가 [d,d]로 덮어쓰는 패턴이 깨진다.
+        if (onRangeChange == null) onChange(start)
         setSurfaceRange([start, end])
         setSurfaceAppliedWithTime(true)
         setSurfacePeriodOn(true)
       } else {
         const s = sDay.startOf('day')
-        const e = eDay.startOf('day')
+        const e = eDay.endOf('day')
         onRangeChange?.([s, e])
-        onChange(s)
+        if (onRangeChange == null) onChange(s)
         setSurfaceRange([s, e])
         setSurfaceAppliedWithTime(false)
         setSurfacePeriodOn(true)
@@ -698,6 +703,8 @@ function ParagraphDatePickerSingleInner({
   const triggerWidthStyle = customizable && surfaceRange != null ? { width: '500px' } : widthStyle
 
   const useDualPeriodTrigger = dualPeriodTrigger && presetMode === 'period'
+  const useDualFluidLayout = useDualPeriodTrigger && isFullWidthPicker(width)
+  const dualShellWidthStyle = useDualFluidLayout ? toWidthStyle('100%') : undefined
   const dualStartText =
     surfaceRange != null
       ? formatDualPeriodCellText(surfaceRange[0], surfaceAppliedWithTime)
@@ -738,9 +745,11 @@ function ParagraphDatePickerSingleInner({
           className={cn(
             'paragraph-date-picker__trigger',
             'paragraph-date-picker__trigger--dual-shell',
+            useDualFluidLayout && 'paragraph-date-picker__trigger--dual-fluid',
             disabled && 'paragraph-date-picker__trigger--disabled',
             readOnly && !disabled && 'paragraph-date-picker__trigger--readonly'
           )}
+          style={dualShellWidthStyle}
           aria-label={dualTriggerAriaLabel}
         >
           <div className="paragraph-date-picker__trigger-dual-row">
@@ -1013,11 +1022,21 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
       : 'date'
   const singleCustomizable = props.mode === 'single' ? Boolean(props.customizable) : false
   const resolvedWidth = props.width ?? '500px'
+  const dualFluidRoot =
+    props.mode !== 'range' &&
+    Boolean(props.dualPeriodTrigger) &&
+    isFullWidthPicker(props.width)
 
   return (
     <div
       ref={rootRef}
-      className={['paragraph-date-picker', className].filter(Boolean).join(' ')}
+      className={[
+        'paragraph-date-picker',
+        dualFluidRoot && 'paragraph-date-picker--dual-fluid',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, ...style }}
     >
       {label != null ? <span className="fs-16 nowrap">{label}</span> : null}

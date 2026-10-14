@@ -14,7 +14,14 @@ export function ParagraphSettingsSection({
   return (
     <>
       {isTitleWithPeriodParagraph(active) ? (
-        <TitleWithPeriodSettingsSection active={active} updateParagraph={updateParagraph} />
+        <>
+          {!(active.showWritingPeriodOnForm ?? false) ? (
+            <span className="form-editor-right-panel__system-hint">
+              단락 카드 하단 「작성 기간」을 켜면 시작일·마감일을 설정할 수 있습니다.
+            </span>
+          ) : null}
+          <TitleWithPeriodSettingsSection active={active} updateParagraph={updateParagraph} />
+        </>
       ) : null}
 
       {active.kind === 'description' &&

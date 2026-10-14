@@ -625,3 +625,31 @@
   line-height: 1;
   color: rgba(61, 61, 61, 0.45);
 }
+
+/* 우측 패널 등 좁은 영역 — 240×2 고정 너비로 패널 밖으로 밀려나지 않게 */
+.paragraph-date-picker--dual-fluid {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.paragraph-date-picker__trigger--dual-fluid {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.paragraph-date-picker__trigger--dual-fluid .paragraph-date-picker__trigger-dual-row {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.paragraph-date-picker__trigger--dual-fluid .paragraph-date-picker__trigger-dual-cell {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}

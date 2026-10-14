@@ -1,16 +1,17 @@
 import { useMemo } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import type { TitleWithPeriodParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
-  resolveTitleEndPeriodMode,
-  resolveTitleStartPeriodMode,
   titlePeriodEndDisplayText,
   titlePeriodStartDisplayText,
 } from '@/features/template/lib/title-with-period-settings'
 import {
-  WritingFormPeriodDatePickerField,
-  dateRangeUsesClockTime,
-} from '@/features/template/ui/shared/writing-form-period-date-picker-field'
+  patchSurveyTitleWritingPeriodCustomRange,
+  resolveSurveyTitleWritingPeriodAppliedSurfaceRange,
+  resolveSurveyTitleWritingPeriodAppliedWithTime,
+  resolveSurveyTitleWritingPeriodPickerValue,
+} from '@/features/template/lib/survey-title-writing-period'
+import { WritingFormPeriodDatePickerField } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 
 import './explanation-title-period.css'
 
@@ -32,42 +33,25 @@ export function ExplanationTitle({
   /** 기간 입력란 위 라벨 (미지정 시 `작성 기간`) */
   periodLabel?: string
 }) {
-  const startMode = resolveTitleStartPeriodMode(paragraph)
-  const endMode = resolveTitleEndPeriodMode(paragraph)
+  const pickerValue = useMemo(
+    () => resolveSurveyTitleWritingPeriodPickerValue(paragraph),
+    [paragraph]
+  )
 
-  const anchorDate = useMemo((): Dayjs => {
-    if (paragraph.startAt) {
-      const d = dayjs(paragraph.startAt)
-      if (d.isValid()) return d
-    }
-    if (paragraph.endAt) {
-      const d = dayjs(paragraph.endAt)
-      if (d.isValid()) return d
-    }
-    return dayjs()
-  }, [paragraph.startAt, paragraph.endAt])
-
-  const appliedSurfaceRange = useMemo((): [Dayjs, Dayjs] | null => {
-    if (startMode === 'custom' && paragraph.startAt) {
-      const start = dayjs(paragraph.startAt)
-      if (!start.isValid()) return null
-      if (endMode === 'custom' && paragraph.endAt) {
-        const end = dayjs(paragraph.endAt)
-        if (end.isValid()) return [start, end]
-      }
-      return [start, start]
-    }
-    if (endMode === 'custom' && paragraph.endAt) {
-      const end = dayjs(paragraph.endAt)
-      if (end.isValid()) return [end, end]
-    }
-    return null
-  }, [endMode, paragraph.endAt, paragraph.startAt, startMode])
+  const appliedSurfaceRange = useMemo(
+    () => resolveSurveyTitleWritingPeriodAppliedSurfaceRange(paragraph),
+    [paragraph]
+  )
 
   const appliedSurfaceWithTime = useMemo(() => {
     if (appliedSurfaceRange == null) return false
-    return dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1])
+    return resolveSurveyTitleWritingPeriodAppliedWithTime(appliedSurfaceRange)
   }, [appliedSurfaceRange])
+
+  const anchorDate = useMemo(
+    () => pickerValue ?? dayjs(),
+    [pickerValue]
+  )
 
   const dualStartPlaceholder = titlePeriodStartDisplayText(paragraph)
   const dualEndPlaceholder = titlePeriodEndDisplayText(paragraph)
@@ -88,32 +72,25 @@ export function ExplanationTitle({
           <WritingFormPeriodDatePickerField
             style={{ marginTop: 0 }}
             anchorDate={anchorDate}
+            value={pickerValue}
             appliedSurfaceRange={appliedSurfaceRange}
             appliedSurfaceWithTime={appliedSurfaceWithTime}
             dualPeriodTrigger
             dualStartPlaceholder={dualStartPlaceholder}
             dualEndPlaceholder={dualEndPlaceholder}
-            onCommitRange={([a, b]) => {
-              onChange({
-                ...paragraph,
-                startPeriodMode: 'custom',
-                endPeriodMode: 'custom',
-                startAt: a.toISOString(),
-                endAt: b.toISOString(),
-                endPeriodPresetLabel: null,
-                periodMode: 'custom',
-              })
+            onCommitRange={range => {
+              onChange(
+                patchSurveyTitleWritingPeriodCustomRange(
+                  paragraph,
+                  range,
+                  resolveSurveyTitleWritingPeriodAppliedWithTime(range)
+                )
+              )
             }}
             onCommitSingleDay={d => {
-              onChange({
-                ...paragraph,
-                startPeriodMode: 'custom',
-                endPeriodMode: 'custom',
-                startAt: d.startOf('day').toISOString(),
-                endAt: d.endOf('day').toISOString(),
-                endPeriodPresetLabel: null,
-                periodMode: 'custom',
-              })
+              onChange(
+                patchSurveyTitleWritingPeriodCustomRange(paragraph, [d, d], false)
+              )
             }}
           />
         </div>
