@@ -132,8 +132,14 @@ function formatScheduleHeader(schedule: DashboardProgramScheduleResponse, index:
   }
 }
 
+type ProgressAttendanceParticipantInput = Pick<
+  ParticipantListItemResponse,
+  'participantId' | 'memberName' | 'participantType'
+> &
+  Partial<ParticipantListItemResponse>
+
 function mapParticipantRow(
-  participant: ParticipantListItemResponse,
+  participant: ProgressAttendanceParticipantInput,
   attendance: AttendanceItemResponse | undefined,
   schedule: Pick<DashboardProgramScheduleResponse, 'scheduleStatus' | 'startAt'>
 ): ParticipatingIndividualProgressAttendanceParticipantRow {
@@ -170,13 +176,13 @@ function mapParticipantRow(
     attendanceRecorded,
     ...(attendanceRecorded ? { attendanceStatus: status } : {}),
     lateTime,
-    remark: attendance?.absenceReason,
+    remark: attendance?.absenceReason ?? undefined,
   }
 }
 
 export function buildProgressAttendanceSessionsFromRemote(params: {
   schedules: DashboardProgramScheduleResponse[]
-  participants: ParticipantListItemResponse[]
+  participants: ProgressAttendanceParticipantInput[]
   attendancesByScheduleId: Record<string, AttendanceItemResponse[]>
 }): ParticipatingIndividualProgressAttendanceSessionGroup[] {
   const individuals = params.participants.filter(p => {
