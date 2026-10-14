@@ -1,8 +1,9 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH,
-  FilterTableToolbarButton
+import {
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -244,8 +245,8 @@ export function Interview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              className="cms-button--application-list-bulk"
+              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
               onClick={handleBulkFail}
             >
               선택 불합격
@@ -253,8 +254,8 @@ export function Interview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              className="cms-button--application-list-bulk"
+              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
               onClick={handleBulkPass}
             >
               선택 합격

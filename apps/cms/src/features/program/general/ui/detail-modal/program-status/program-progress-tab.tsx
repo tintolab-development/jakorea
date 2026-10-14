@@ -5,7 +5,11 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Row, Col, Select } from 'antd'
-import { CmsButton } from '@/shared/ui'
+import {
+  CmsButton,
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -592,14 +596,17 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     총 {filteredSchools.length}건
                   </span>
                 </div>
-                <CmsButton
-                  variant="delete"
-                  size="large"
-                  disabled={selectedSchoolRowKeys.length === 0}
-                  onClick={handleSchoolDeleteClick}
-                >
-                  학교 삭제
-                </CmsButton>
+                <div className="program-progress-tab__table-actions program-application-list-toolbar">
+                  <FilterTableToolbarButton
+                    variant="delete"
+                    className="cms-button--application-list-bulk"
+                    width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
+                    disabled={selectedSchoolRowKeys.length === 0}
+                    onClick={handleSchoolDeleteClick}
+                  >
+                    학교 삭제
+                  </FilterTableToolbarButton>
+                </div>
               </div>
               <CmsDataTable<ParticipatingSchoolRow>
                 className="program-progress-tab__table cms-data-table"
@@ -642,32 +649,31 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     총 {filteredInstructors.length}건
                   </span>
                 </div>
-                <div className="program-progress-tab__table-actions">
-                  <CmsButton
+                <div className="program-progress-tab__table-actions program-application-list-toolbar">
+                  <FilterTableToolbarButton
                     variant="secondary"
-                    size="large"
                     icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
                     }
                   >
                     활동확인서 발급
-                  </CmsButton>
-                  <CmsButton
+                  </FilterTableToolbarButton>
+                  <FilterTableToolbarButton
                     variant="delete"
-                    size="large"
+                    className="cms-button--application-list-bulk"
+                    width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                     disabled={selectedInstructorRowKeys.length === 0}
                     onClick={handleInstructorDeleteClick}
                   >
                     강사 삭제
-                  </CmsButton>
-                  <CmsButton
+                  </FilterTableToolbarButton>
+                  <FilterTableToolbarButton
                     variant="primary"
-                    size="large"
                     onClick={() => setAddInstructorModalOpen(true)}
                   >
                     강사 등록
-                  </CmsButton>
+                  </FilterTableToolbarButton>
                 </div>
               </div>
               <CmsDataTable<ParticipatingInstructorRow>

@@ -1,3 +1,5 @@
+@import '../../../../../shared/ui/program-application-list-toolbar.css';
+
 .filter-table-layout.general-volunteer-interview2__filter-layout .filter-table-layout__divider {
   padding: 32px 0;
 }

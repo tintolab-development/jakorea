@@ -922,7 +922,7 @@ export function SchoolDetailStudentListSection({
     : filteredStudentList.length
 
   const studentListToolbarActions = (
-    <div className="school-detail-student-list-section__toolbar-actions">
+    <div className="school-detail-student-list-section__toolbar-actions program-application-list-toolbar">
       <FilterTableToolbarButton
         variant="secondary"
         width={180}

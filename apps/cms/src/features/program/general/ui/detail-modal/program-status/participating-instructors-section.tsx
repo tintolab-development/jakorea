@@ -690,7 +690,7 @@ export function ParticipatingInstructorsSection({
         title="교육 참여 강사 목록"
         description={`${filteredInstructors.length}건`}
         actions={
-          <>
+          <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
               variant="secondary"
               style={{ minWidth: 180 }}
@@ -735,7 +735,7 @@ export function ParticipatingInstructorsSection({
             >
               강사 등록
             </FilterTableToolbarButton>
-          </>
+          </div>
         }
         excelExport={{
           columns: instructorListExportColumns,

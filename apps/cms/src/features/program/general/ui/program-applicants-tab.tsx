@@ -680,16 +680,16 @@ export function ProgramApplicantsTab({
                 <div className="program-applicants-tab__table-actions">
                   <CmsButton
                     variant="delete"
-                    size="large"
-                    className="cms-button--action"
+                    size="h40"
+                    className="cms-button--application-list-bulk"
                     onClick={handleSchoolBulkRejectClick}
                   >
                     선택 반려
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="large"
-                    className="cms-button--action"
+                    size="h40"
+                    className="cms-button--application-list-bulk"
                     onClick={handleSchoolBulkApproveClick}
                   >
                     선택 승인
@@ -740,16 +740,16 @@ export function ProgramApplicantsTab({
                 <div className="program-applicants-tab__table-actions">
                   <CmsButton
                     variant="delete"
-                    size="large"
-                    className="cms-button--action"
+                    size="h40"
+                    className="cms-button--application-list-bulk"
                     onClick={handleInstructorBulkRejectClick}
                   >
                     선택 반려
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="large"
-                    className="cms-button--action"
+                    size="h40"
+                    className="cms-button--application-list-bulk"
                     onClick={handleInstructorBulkApproveClick}
                   >
                     선택 승인

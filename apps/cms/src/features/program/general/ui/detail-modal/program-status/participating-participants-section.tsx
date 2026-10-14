@@ -338,7 +338,7 @@ export function ParticipatingParticipantsSection({
         title="교육 참여자 목록"
         description={`${filteredParticipants.length}건`}
         actions={
-          <>
+          <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
               variant="secondary"
               icon={<ButtonDownloadIcon />}
@@ -366,7 +366,7 @@ export function ParticipatingParticipantsSection({
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}
-          </>
+          </div>
         }
         excelExport={{
           columns: excelColumns,

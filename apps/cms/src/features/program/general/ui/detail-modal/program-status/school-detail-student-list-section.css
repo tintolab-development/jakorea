@@ -44,6 +44,8 @@
   }
 }
 
+@import '../../../../shared/ui/program-application-list-toolbar.css';
+
 .school-detail-student-list-section__toolbar-actions {
   display: flex;
   flex-wrap: wrap;
@@ -140,8 +142,8 @@
 .school-detail-student-list-section__btn-outline.cms-button.cms-button--secondary.ant-btn {
   display: inline-flex !important;
   flex-direction: row !important;
-  height: 44px !important;
-  min-height: 44px !important;
+  height: 40px !important;
+  min-height: 40px !important;
   padding: 0 20px !important;
   justify-content: center;
   align-items: center;

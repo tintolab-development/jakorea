@@ -537,6 +537,8 @@
   vertical-align: middle;
 }
 
+@import '../../../../../../shared/ui/program-application-list-toolbar.css';
+
 .ujat-volunteer-doc-screening__actions {
   display: flex;
   flex-wrap: wrap;

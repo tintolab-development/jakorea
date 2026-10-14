@@ -69,7 +69,7 @@ export function UjatEducationProgressInstitutionsSection({
         title="기관 신청 목록"
         description={`${tableData.length}건`}
         actions={
-          <div className="ujat-education-progress-institutions__actions">
+          <div className="ujat-education-progress-institutions__actions program-application-list-toolbar">
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
                 type="button"

@@ -1,3 +1,5 @@
+@import '../../../../../shared/ui/program-application-list-toolbar.css';
+
 .ujat-education-progress-attendance__groups {
   display: flex;
   flex-direction: column;

@@ -1,3 +1,4 @@
+import './institution-application-tab.css'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -12,8 +13,10 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
-import { CMS_ACTION_BUTTON_WIDTH, useCmsAlert,
-  FilterTableToolbarButton
+import {
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
+  useCmsAlert,
 } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
@@ -445,11 +448,11 @@ export function GeminiInstitutionApplicationTab({
         description={`총 ${(remoteQuery.data?.pages[0]?.totalElements ?? filteredRows.length).toLocaleString()}건`}
         actions={
           canWrite ? (
-            <>
+            <div className="program-application-list-toolbar">
               <FilterTableToolbarButton
                 variant="delete"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                className="cms-button--application-list-bulk"
+                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                 disabled={rejectDisabled}
                 onClick={handleBulkReject}
               >
@@ -457,14 +460,14 @@ export function GeminiInstitutionApplicationTab({
               </FilterTableToolbarButton>
               <FilterTableToolbarButton
                 variant="secondary"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                className="cms-button--application-list-bulk"
+                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                 disabled={approveDisabled}
                 onClick={handleBulkApprove}
               >
                 선택 승인
               </FilterTableToolbarButton>
-            </>
+            </div>
           ) : null
         }
         excelExport={{

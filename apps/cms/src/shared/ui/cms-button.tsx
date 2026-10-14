@@ -51,8 +51,11 @@ const ANTD_SIZE: Record<CmsButtonResolvedSize, ButtonProps['size']> = {
   h32: 'small',
 }
 
-/** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) */
+/** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) — 모달·상세 등 */
 export const CMS_ACTION_BUTTON_WIDTH = 140
+
+/** 신청 목록 툴바 일괄 액션 — 선택 승인·반려·합격·불합격 (h40은 FilterTableToolbarButton·공통 CSS) */
+export const CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH = 120
 
 /** 「수료증/참여인증서 발급」 버튼 공통 폭(px) */
 export const CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH = 210
