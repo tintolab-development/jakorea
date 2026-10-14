@@ -43,6 +43,9 @@ export type CmsSelectMultipleProps = {
   /** 에러 테두리 (disabled 이면 무시) */
   error?: boolean
   allowClear?: boolean
+  /** 옵션 목록 API 로딩 중 — 빈 목록일 때 검색 없음 문구 대신 표시 */
+  optionsLoading?: boolean
+  onOpenChange?: (open: boolean) => void
   className?: string
   id?: string
   style?: CSSProperties
@@ -57,6 +60,8 @@ export function CmsSelectMultiple({
   disabled = false,
   error = false,
   allowClear = true,
+  optionsLoading = false,
+  onOpenChange,
   className,
   id: idProp,
   style,
@@ -121,7 +126,9 @@ export function CmsSelectMultiple({
       />
       <ul className="cms-select-multi__list" role="listbox" aria-multiselectable>
         {filteredOptions.length === 0 ? (
-          <li className="cms-select-multi__empty">검색 결과가 없습니다.</li>
+          <li className="cms-select-multi__empty">
+            {optionsLoading ? '목록을 불러오는 중입니다.' : '검색 결과가 없습니다.'}
+          </li>
         ) : (
           filteredOptions.map((opt, index) => {
             const originalIndex = options.indexOf(opt)
@@ -161,6 +168,7 @@ export function CmsSelectMultiple({
         open={disabled ? false : open}
         onOpenChange={next => {
           if (!disabled) {
+            onOpenChange?.(next)
             setOpen(next)
             if (!next) setSearch('')
           }
@@ -172,6 +180,7 @@ export function CmsSelectMultiple({
       >
         <button
           type="button"
+          onMouseDown={() => onOpenChange?.(true)}
           className={joinCmsClassNames(
             'cms-select-multi__trigger',
             'cms-field__box',

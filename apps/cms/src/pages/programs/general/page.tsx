@@ -11,6 +11,7 @@ import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widg
 import {
   LazyGeneralProgramDetailFullPageModal,
   LazyGeneralProgramRegistrationFullpageModal,
+  preloadGeneralProgramRegistrationModal,
   ProgramModalWhenOpen,
 } from '@/pages/programs/lazy-program-modals'
 import { useDeleteGeneralPrograms } from '@/features/program/general/hooks/use-delete-general-program'
@@ -113,6 +114,7 @@ export function GeneralProgramListPageContent() {
 
   const openNewRegistration = useCallback(
     (mode?: 'continue' | 'fresh') => {
+      preloadGeneralProgramRegistrationModal()
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -308,6 +310,7 @@ export function GeneralProgramListPageContent() {
   }
 
   const handleProgramCreateClick = useCallback(() => {
+    preloadGeneralProgramRegistrationModal()
     void (async () => {
       try {
         assertRegistrationWizardRemoteReady()
@@ -452,7 +455,7 @@ export function GeneralProgramListPageContent() {
         />
       </ProgramModalWhenOpen>
 
-      <ProgramModalWhenOpen open={isGeneralProgramNewRegistrationQuery}>
+      <ProgramModalWhenOpen open={isGeneralProgramNewRegistrationQuery} registrationEntry>
         <LazyGeneralProgramRegistrationFullpageModal
           open={isGeneralProgramNewRegistrationQuery}
           onClose={handleCloseGeneralProgramRegistrationFullpage}

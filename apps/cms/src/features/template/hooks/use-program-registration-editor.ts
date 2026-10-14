@@ -35,7 +35,6 @@ import type {
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { syncInstitutionApplicationPreferredEducationFormFromOverlay } from '@/features/program/general/lib/institution-application-program-bridge'
-import { syncInstitutionApplicationBridgeForRegistrationWizard } from '@/features/program/general/lib/registration-institution-bridge-sync'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import {
   resolveProgramRegistrationCurriculumEditDescription,
@@ -85,7 +84,6 @@ import {
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
   setProgramRegistrationOverlayScope,
-  subscribeProgramRegistrationOverlay,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
@@ -329,38 +327,6 @@ export function useProgramRegistrationEditor(
     closeWritingUserPreview,
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
-
-  const recruitTemplateCodeForBridge =
-    programRegistrationFormVariant === 'economy'
-      ? 'recruitment-economy'
-      : programRegistrationFormVariant === 'trainedTeachers'
-        ? 'recruitment-trained-teachers'
-        : 'recruitment-participant-school'
-
-  useEffect(() => {
-    if (!active) return
-
-    const syncInstitutionApplicationBridge = () => {
-      syncInstitutionApplicationBridgeForRegistrationWizard({
-        registrationFormVariant: programRegistrationFormVariant,
-        programType,
-        sessionRound: sessionRoundType,
-        educationScheduleMode,
-        recruitTemplateCode: recruitTemplateCodeForBridge,
-      })
-    }
-
-    syncInstitutionApplicationBridge()
-
-    return subscribeProgramRegistrationOverlay(syncInstitutionApplicationBridge)
-  }, [
-    active,
-    programRegistrationFormVariant,
-    programType,
-    sessionRoundType,
-    educationScheduleMode,
-    recruitTemplateCodeForBridge,
-  ])
 
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
     setParticipant(

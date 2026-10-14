@@ -265,6 +265,18 @@ export function subscribeProgramRegistrationOverlayKey(
   return store.subscribeKey(key, listener)
 }
 
+/** 브리지·participant 스냅샷 등 — listed keys만 구독 (basicInfo 타이핑은 제외) */
+export function subscribeProgramRegistrationOverlayKeys(
+  keys: readonly string[],
+  listener: () => void
+): () => void {
+  if (keys.length === 0) return () => {}
+  const unsubs = keys.map(key => store.subscribeKey(key, listener))
+  return () => {
+    unsubs.forEach(unsub => unsub())
+  }
+}
+
 export function getProgramRegistrationOverlayVersion(): number {
   return store.getVersion()
 }

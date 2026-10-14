@@ -45,7 +45,6 @@ import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/
 import { invalidateProgramListCachesAfterRegistration } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
-import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
@@ -369,6 +368,7 @@ function GeneralProgramRegistrationFullpageModalInner({
     <>
       <TemplateFullpageModal
         open={open}
+        bodyLoading={flow.isDraftLoading}
         onClose={handleClose}
         title={
           registrationFormVariant === 'economy'
@@ -417,20 +417,14 @@ function GeneralProgramRegistrationFullpageModalInner({
         }
         footerActions={footerActions}
         leftContent={
-          flow.isDraftLoading ? (
-            <FormDraftLoading />
-          ) : (
-            <HideParagraphSelectionChromeContext.Provider
-              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
-              value={flow.phase !== 'application'}
-            >
-              {flow.panels.leftContent}
-            </HideParagraphSelectionChromeContext.Provider>
-          )
+          <HideParagraphSelectionChromeContext.Provider
+            key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+            value={flow.phase !== 'application'}
+          >
+            {flow.panels.leftContent}
+          </HideParagraphSelectionChromeContext.Provider>
         }
-        rightNavigation={
-          flow.isDraftLoading || hideCustomFieldNav ? null : flow.panels.rightNavigation
-        }
+        rightNavigation={hideCustomFieldNav ? null : flow.panels.rightNavigation}
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}

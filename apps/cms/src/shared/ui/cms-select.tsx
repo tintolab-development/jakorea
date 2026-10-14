@@ -160,6 +160,8 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
     defaultValue,
     onChange,
     onClear,
+    onOpenChange,
+    loading,
     options,
     mode,
     withAllOption = true,
@@ -301,6 +303,8 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
         options={multipleOptions}
         value={resolvedValue as string[]}
         allowClear={allowClear}
+        optionsLoading={Boolean(loading)}
+        onOpenChange={onOpenChange}
         onChange={next => {
           if (!isControlled) setUncontrolledValue(next)
           onChange?.(next as never, [] as never)
@@ -335,6 +339,8 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
         className={selectClassName}
         disabled={disabled}
         placeholder={placeholder}
+        loading={loading}
+        onOpenChange={onOpenChange}
         {...rest}
         classNames={{ ...classNames, popup: { ...classNames?.popup, root: popupRootCn } }}
         mode={mode}

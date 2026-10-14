@@ -90,9 +90,9 @@ export type PaymentItemCatalogState = {
  * 정산 항목 설정과 동일 소스의 지급 항목 옵션.
  * 실 API 환경: 응답 전·실패 시 빈 목록(mock 대체 없음). 백엔드 미설정 로컬 환경: mock.
  */
-export function usePaymentItemCatalogState(): PaymentItemCatalogState {
+export function usePaymentItemCatalogState(enabled = true): PaymentItemCatalogState {
   const remote = isPaymentItemCatalogRemote()
-  const sectionsQuery = useSettlementConfigSectionsQuery(remote)
+  const sectionsQuery = useSettlementConfigSectionsQuery(remote && enabled)
 
   return useMemo(() => {
     if (!remote) {

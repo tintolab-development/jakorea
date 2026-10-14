@@ -11,6 +11,7 @@ import {
   resetProgramRegistrationOverlayStoreForTests,
   setProgramRegistrationOverlayScope,
   subscribeProgramRegistrationOverlayKey,
+  subscribeProgramRegistrationOverlayKeys,
   updateProgramRegistrationOverlayKey,
 } from './program-registration-overlay-sync'
 
@@ -51,6 +52,22 @@ describe('program-registration-overlay-sync', () => {
 
     unsubTitle()
     unsubOther()
+  })
+
+  it('다중 키 구독은 listed 키 변경 시만 listener를 호출한다', () => {
+    const listener = vi.fn()
+    const unsub = subscribeProgramRegistrationOverlayKeys(['a', 'b'], listener)
+
+    patchProgramRegistrationOverlay({ title: 'ignored' })
+    expect(listener).not.toHaveBeenCalled()
+
+    patchProgramRegistrationOverlay({ a: 1 })
+    expect(listener).toHaveBeenCalledTimes(1)
+
+    patchProgramRegistrationOverlay({ b: 2 })
+    expect(listener).toHaveBeenCalledTimes(2)
+
+    unsub()
   })
 
   it('isolates values by templateCode and keeps persist keys unprefixed', () => {

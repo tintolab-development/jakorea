@@ -561,7 +561,10 @@ function ParagraphDatePickerSingleInner({
       }
     } else {
       setRangeStart(d)
-      const nextEnd = findNextEnabledDate(d.add(1, 'day'), disabledDate)
+      const nextEnd =
+        presetMode === 'period' && !customizable
+          ? d
+          : findNextEnabledDate(d.add(1, 'day'), disabledDate)
       setRangeEnd(nextEnd)
       setRangeFocus('start')
       const ta = dayjsTimeParts(d)
@@ -675,14 +678,33 @@ function ParagraphDatePickerSingleInner({
 
     setInvalidTimeRange(false)
     if (isRangeCalendarMode) {
-      if (lockEndDateToStartDay || rangeFocus === 'start') {
+      if (lockEndDateToStartDay) {
         setRangeStart(next)
         setRangeEnd(
           buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
         )
+      } else if (rangeFocus === 'start') {
+        const pendingEndSelection = rangeStart.isSame(rangeEnd, 'day')
+        setRangeStart(next)
+        if (pendingEndSelection) {
+          setRangeEnd(
+            buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+          )
+          setRangeFocus('end')
+        }
       } else {
-        setRangeEnd(next)
-        if (rangeStart.isAfter(next, 'day')) setRangeStart(next)
+        const pendingEndSelection = rangeStart.isSame(rangeEnd, 'day')
+        setRangeEnd(
+          buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+        )
+        if (rangeStart.isAfter(next, 'day')) {
+          setRangeStart(
+            buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))
+          )
+        }
+        if (pendingEndSelection) {
+          setRangeFocus('start')
+        }
       }
       setDraft(next)
       setCalendarMonth(next.startOf('month'))

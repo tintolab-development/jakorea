@@ -6,6 +6,7 @@ import {
   resetInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  subscribeInstitutionApplicationBridgeForRegistrationWizard,
   syncInstitutionApplicationBridgeForRegistrationWizard,
 } from '@/features/program/general/lib/registration-institution-bridge-sync'
 import {
@@ -26,6 +27,25 @@ afterEach(() => {
 })
 
 describe('syncInstitutionApplicationBridgeForRegistrationWizard', () => {
+  it('subscribe 진입 시 기존 schedule lines를 즉시 브리지에 반영한다', () => {
+    replaceProgramRegistrationOverlay({
+      [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: ['26년 4월 20일(월) 9:30 ~ 12:20'],
+    })
+
+    const unsub = subscribeInstitutionApplicationBridgeForRegistrationWizard({
+      registrationFormVariant: 'general',
+      programType: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      recruitTemplateCode: 'recruitment-participant-school',
+    })
+
+    expect(getInstitutionApplicationProgramBridge().educationScheduleLines).toEqual([
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+    ])
+    unsub()
+  })
+
   it('일반 — registration overlay schedule lines를 브리지에 반영한다', () => {
     replaceProgramRegistrationOverlay({
       [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: [

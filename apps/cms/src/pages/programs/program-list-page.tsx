@@ -33,6 +33,7 @@ import { ProgramListModals } from './program-list-modals'
 import {
   LazyGeneralProgramRegistrationFullpageModal,
   LazyProgramDetailFullPageModal,
+  preloadGeneralProgramRegistrationModal,
   ProgramModalWhenOpen,
 } from '@/pages/programs/lazy-program-modals'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
@@ -471,6 +472,7 @@ function ProgramListPageContent() {
 
   const openCompanySchoolRegistration = useCallback(
     (mode?: 'continue' | 'fresh') => {
+      preloadGeneralProgramRegistrationModal()
       const next = new URLSearchParams(searchParams)
       next.set(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY, '1')
       next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
@@ -500,6 +502,7 @@ function ProgramListPageContent() {
 
   const handleProgramCreateClick = () => {
     if (programType === 'company_school') {
+      preloadGeneralProgramRegistrationModal()
       void (async () => {
         try {
           assertRegistrationWizardRemoteReady()
@@ -723,7 +726,7 @@ function ProgramListPageContent() {
         />
       </ProgramModalWhenOpen>
 
-      <ProgramModalWhenOpen open={isCompanySchoolRegistrationOpen}>
+      <ProgramModalWhenOpen open={isCompanySchoolRegistrationOpen} registrationEntry>
         <LazyGeneralProgramRegistrationFullpageModal
           open={isCompanySchoolRegistrationOpen}
           onClose={handleCloseCompanySchoolRegistrationFullpage}

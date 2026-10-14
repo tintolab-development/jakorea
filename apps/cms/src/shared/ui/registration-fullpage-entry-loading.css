@@ -1,0 +1,18 @@
+.registration-fullpage-entry-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: min(560px, calc(100dvh - 220px));
+  box-sizing: border-box;
+  background: var(--full-page-modal-body-bg, #f4f6f6);
+}
+
+.registration-fullpage-entry-loading--viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  min-height: 100dvh;
+  background: var(--color-overlay-light-80, rgba(255, 255, 255, 0.85));
+}

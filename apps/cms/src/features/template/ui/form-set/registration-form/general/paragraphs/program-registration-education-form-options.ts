@@ -107,6 +107,14 @@ const PER_SCHEDULE_EDUCATION_FORM_OVERLAY_KEYS = [
   'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
 ] as const
 
+/** institution bridge `showPreferredEducationForm` · schedule sync — basicInfo 제외 */
+export const PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS: readonly string[] = [
+  MULTI_COMMON_EDUCATION_FORM_KEY,
+  SINGLE_EDUCATION_FORM_KEY,
+  LEGACY_EDUCATION_FORM_KEY,
+  ...PER_SCHEDULE_EDUCATION_FORM_OVERLAY_KEYS,
+]
+
 function overlayNonEmptyText(overlay: Record<string, unknown>, key: string): string {
   const raw = overlay[key]
   if (typeof raw === 'string' && raw.trim()) return raw.trim()

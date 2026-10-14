@@ -84,6 +84,7 @@ import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/uja
 import {
   LazyUjatProgramDetailFullPageModal,
   LazyUjatProgramRegistrationFullpageModal,
+  preloadUjatProgramRegistrationModal,
   ProgramModalWhenOpen,
 } from '@/pages/programs/lazy-program-modals'
 
@@ -449,6 +450,7 @@ function UjatProgramListPageContent() {
 
   const openNewRegistration = useCallback(
     (mode?: 'continue' | 'fresh') => {
+      preloadUjatProgramRegistrationModal()
       const draftMode =
         mode === 'continue'
           ? REGISTRATION_DRAFT_MODE_CONTINUE
@@ -464,6 +466,7 @@ function UjatProgramListPageContent() {
   )
 
   const handleProgramCreateClick = useCallback(() => {
+    preloadUjatProgramRegistrationModal()
     void (async () => {
       try {
         assertRegistrationWizardRemoteReady()
@@ -575,7 +578,7 @@ function UjatProgramListPageContent() {
       />
       </ProgramModalWhenOpen>
 
-      <ProgramModalWhenOpen open={isUjatProgramNewRegistrationQuery}>
+      <ProgramModalWhenOpen open={isUjatProgramNewRegistrationQuery} registrationEntry>
       <LazyUjatProgramRegistrationFullpageModal
         open={isUjatProgramNewRegistrationQuery}
         onClose={handleCloseUjatProgramRegistrationFullpage}

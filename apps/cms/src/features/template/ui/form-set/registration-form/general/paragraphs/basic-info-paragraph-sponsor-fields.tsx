@@ -3,6 +3,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   encodeSponsorManagerContactRef,
@@ -189,7 +190,15 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     trainedTeachersDefaults,
   ])
 
-  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
+    overlayBasicInfoPrefix: trainedTeachersDefaults
+      ? 'trainedTeachersRegistration.basicInfo'
+      : 'generalRegistration.basicInfo',
+  })
+  const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
+  const sponsorApiOptions = sponsorCatalogQuery.options
+  const sponsorOptionsLoading =
+    catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const isAllSponsor = trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
 
   // 후원사는 있는데 담당자가 비면 수정 진입·후원사 변경 모두 미선택을 고른다.
@@ -201,7 +210,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   }, [isAllSponsor, managerContactIds.length, setManagerContactIds, sponsorIds.length])
 
   const multiSponsorContext = useGeneralProgramSponsorEditContext(
-    allowMultipleSponsors ? sponsorIds : []
+    allowMultipleSponsors ? sponsorIds : [],
+    catalogReady
   )
   const singleContactsQuery = useSponsorContactsQuery(
     !allowMultipleSponsors && !isAllSponsor ? sponsorId || null : null,
@@ -375,10 +385,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 optionFilterProp="label"
                 options={sponsorOptions}
                 value={sponsorIds}
+                loading={sponsorOptionsLoading}
                 onChange={v => {
                   const next = Array.isArray(v) ? v.map(String) : []
                   setSponsorIds(next)
                 }}
+                onOpenChange={onSelectOpenChange}
               />
             ) : (
               <CmsSelect
@@ -388,6 +400,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 width={240}
                 options={sponsorOptions}
                 value={sponsorId}
+                onOpenChange={onSelectOpenChange}
                 onChange={v => {
                   const next = String(v ?? '')
                   setSponsorId(next)
@@ -418,6 +431,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               optionFilterProp="label"
               options={managerSelectOptions}
               value={managerContactIds}
+              loading={
+                catalogReady &&
+                allowMultipleSponsors &&
+                sponsorIds.length > 0 &&
+                !managerContactsReady
+              }
               disabled={
                 allowMultipleSponsors
                   ? sponsorIds.length === 0
@@ -427,6 +446,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 const next = Array.isArray(v) ? v.map(String) : []
                 setManagerContactIds(next)
               }}
+              onOpenChange={onSelectOpenChange}
             />
           </div>
         }
