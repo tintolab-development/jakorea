@@ -130,6 +130,34 @@
   color: var(--color-neutral-warm-400);
 }
 
+.certificate {
+  display: flex;
+  box-sizing: border-box;
+  width: 240px;
+  min-width: 240px;
+  height: 64px;
+  padding: var(--spacing-16) var(--spacing-20);
+  justify-content: space-between;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--radius-12);
+  border: 1px solid rgb(61 61 61 / 10%);
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.certificate:hover:not(:disabled) {
+  background: var(--color-primary-400);
+}
+
+.certificate:disabled {
+  border: 1px solid rgb(61 61 61 / 10%);
+  background:
+    linear-gradient(0deg, var(--color-neutral-warm-200) 0%, var(--color-neutral-warm-200) 100%),
+    var(--color-neutral-white);
+  color: var(--color-neutral-warm-400);
+}
+
 @media (--bp-below-pc) {
   .button.small {
     font-size: 11px;

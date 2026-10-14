@@ -87,7 +87,7 @@ export function PFTextarea({
 
   const fieldClassName = [
     styles.field,
-    isFormPage ? undefined : styles[size],
+    styles[size],
     isRows1 ? styles.fieldRows1 : undefined,
     error ? styles.error : undefined,
     disabled ? styles.disabled : undefined,
