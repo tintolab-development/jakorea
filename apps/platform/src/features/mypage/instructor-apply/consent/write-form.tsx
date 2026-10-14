@@ -50,8 +50,6 @@ import {
   PaymentBasicInfoFields,
   resolvePaymentConsentSignerName,
 } from './payment-basic-info-fields'
-import { AgreementNoticeSubjectFillFields } from './agreement-notice-subject-fill-fields'
-import { NOTICE_CONFIRMATION } from './copy'
 import { ConsentSignatureStatement } from './signature-statement'
 import { PlatformConsentFormBody } from './platform-consent-form-body'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
@@ -103,18 +101,36 @@ export type ConsentWriteSubmitContext = 'instructorApply' | 'mypageSettings'
 const PORTAL_SUBMIT_FAILED_MESSAGE =
   '동의서를 제출하지 못했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
 
-function resolveNoticeConsentSignerName(draft: WritingFormDraft, fallbackName: string): string {
-  const subject = draft.paragraphs.find(
-    paragraph => paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
-  )
-  if (subject?.kind === 'single_item' && subject.variant === 'short_essay') {
-    const name =
-      subject.items
-        ?.find(item => item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name)
-        ?.bodyText?.trim() ?? ''
-    if (name) return name
-  }
-  return fallbackName.trim() || '회원'
+function patchAgreementNoticeSubjectMemberName(
+  draft: WritingFormDraft,
+  memberName: string,
+): WritingFormDraft {
+  const name = memberName.trim()
+  if (!name) return draft
+
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ||
+      paragraph.kind !== 'single_item' ||
+      paragraph.variant !== 'short_essay'
+    ) {
+      return paragraph
+    }
+    let paragraphChanged = false
+    const items = (paragraph.items ?? []).map(item => {
+      if (item.id !== AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name || item.bodyText === name) {
+        return item
+      }
+      paragraphChanged = true
+      return { ...item, bodyText: name }
+    })
+    if (!paragraphChanged) return paragraph
+    changed = true
+    return { ...paragraph, items }
+  })
+
+  return changed ? { ...draft, paragraphs } : draft
 }
 
 export function SchemaConsentWriteForm({
@@ -154,6 +170,17 @@ export function SchemaConsentWriteForm({
     if (readOnly) return
     saveSchemaConsentWriteState(consentKey, state)
   }, [consentKey, readOnly, state])
+
+  useEffect(() => {
+    if (readOnly || templateId !== 'agreement-notice') return
+    const memberName = lockedBasic.name.trim()
+    if (!memberName) return
+    setState(prev => {
+      const nextDraft = patchAgreementNoticeSubjectMemberName(prev.draft, memberName)
+      if (nextDraft === prev.draft) return prev
+      return { ...prev, draft: nextDraft }
+    })
+  }, [lockedBasic.name, readOnly, templateId])
 
   const incomplete = isSchemaConsentWriteIncomplete(consentKey, state)
 
@@ -218,10 +245,13 @@ export function SchemaConsentWriteForm({
 
   const signerName = useMemo(() => {
     if (templateId === 'agreement-notice') {
-      return resolveNoticeConsentSignerName(state.draft, lockedBasic.name)
+      return lockedBasic.name.trim() || '회원'
     }
     return resolvePaymentConsentSignerName(state.paymentBasicInfo, lockedBasic.name)
-  }, [lockedBasic.name, state.draft, state.paymentBasicInfo, templateId])
+  }, [lockedBasic.name, state.paymentBasicInfo, templateId])
+
+  const lockedNoticeSubjectMemberName =
+    templateId === 'agreement-notice' ? lockedBasic.name.trim() : undefined
 
   const signatureSlots = useMemo(() => resolveConsentSignatureSlots(templateId), [templateId])
   const showDraftSignature = signatureSlots.length > 0 && !readOnly
@@ -288,23 +318,6 @@ export function SchemaConsentWriteForm({
                 signatures: { ...prev.signatures, final: finalSig },
               }))
             }
-          />
-        )
-      }
-
-      if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing) {
-        return <p className={styles.noticeClosingStatement}>{NOTICE_CONFIRMATION}</p>
-      }
-
-      if (
-        paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject &&
-        paragraph.kind === 'single_item' &&
-        paragraph.variant === 'short_essay'
-      ) {
-        return (
-          <AgreementNoticeSubjectFillFields
-            paragraph={paragraph}
-            onUpdateParagraph={updateParagraph}
           />
         )
       }
@@ -409,6 +422,7 @@ export function SchemaConsentWriteForm({
             hiddenParagraphIds={hiddenParagraphIds}
             onUpdateParagraph={readOnly ? () => undefined : updateParagraph}
             fillOptions={fillOptions}
+            lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
             renderParagraphSlot={renderParagraphSlot}
             renderAfterParagraphSlot={renderAfterParagraphSlot}
           />

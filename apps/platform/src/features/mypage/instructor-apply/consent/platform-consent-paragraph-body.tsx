@@ -1,12 +1,9 @@
 import type { ConsentValue } from '@jakorea/domain/instructor/consent'
-import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
 import {
-  applyConsentShortEssayItemInput,
   type PlatformConsentFillOptions,
 } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
-  AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   type HorizontalTableParagraph,
   type MultipleChoiceParagraph,
@@ -24,7 +21,6 @@ import {
 } from '@/shared/ui'
 import {
   FormTemplateHost,
-  HorizontalTablePreviewBody,
   type FormUpdateParagraph,
   VerticalTablePreviewBody,
   patchVerticalTableBottomConsent,
@@ -35,13 +31,12 @@ import {
 } from '@jakorea/form-template-runtime'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import { ConsentInfoTable } from './info-table'
-import { AgreementNoticeSubjectFillFields } from './agreement-notice-subject-fill-fields'
+import { ConsentShortEssayFillFields } from './consent-short-essay-fill-fields'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
 import { PlatformPortraitLockedVerticalTable } from './platform-portrait-locked-vertical-table'
 import { PlatformPortraitPersonalConsentTable } from './portrait-personal-consent-table'
 import { resolveHorizontalTablePlatformView } from './horizontal-table-from-schema'
 import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
-import { NOTICE_CONFIRMATION } from './copy'
 import styles from './consent-form.module.css'
 
 function tableBottomConsentToChoice(value?: TableBottomConsent): ConsentValue | '' {
@@ -80,15 +75,6 @@ function applyMultipleChoiceConsent(
   })
 }
 
-function noticeTablePreviewParagraph(paragraph: HorizontalTableParagraph): HorizontalTableParagraph {
-  return {
-    ...paragraph,
-    idTypeWithInput: undefined,
-    showBottomText: false,
-    showBottomConsent: false,
-  }
-}
-
 function PlatformAgreementNoticeTableBody({
   paragraph,
   onUpdateParagraph,
@@ -96,16 +82,17 @@ function PlatformAgreementNoticeTableBody({
   paragraph: HorizontalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
 }) {
+  const { headers, rows, emphasizedColumns } = resolveHorizontalTablePlatformView(paragraph)
   const idType = paragraph.idTypeWithInput
 
   return (
     <div className={styles.tableBlock} data-paragraph-id={paragraph.id}>
-      <FormTemplateHost surface="platformUser">
-        <HorizontalTablePreviewBody
-          paragraph={noticeTablePreviewParagraph(paragraph)}
-          interactionMode="user"
-        />
-      </FormTemplateHost>
+      <ConsentInfoTable
+        headers={headers}
+        rows={rows}
+        emphasizedColumns={emphasizedColumns}
+        hideEmptyPairs
+      />
       {paragraph.showBottomText || idType != null ? (
         <div className={styles.tableAfter}>
           {paragraph.showBottomText && paragraph.bottomText ? (
@@ -203,11 +190,13 @@ export function PlatformConsentParagraphBody({
   paragraph,
   onUpdateParagraph,
   fillOptions,
+  lockedNoticeSubjectMemberName,
   documentPreview = false,
 }: {
   paragraph: WritingFormParagraph
   onUpdateParagraph: FormUpdateParagraph
   fillOptions?: PlatformConsentFillOptions
+  lockedNoticeSubjectMemberName?: string
   documentPreview?: boolean
 }) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
@@ -368,96 +357,12 @@ export function PlatformConsentParagraphBody({
     paragraph.kind === 'single_item' &&
     (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay')
   ) {
-    if (
-      paragraph.variant === 'short_essay' &&
-      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
-    ) {
-      return (
-        <AgreementNoticeSubjectFillFields
-          paragraph={paragraph}
-          onUpdateParagraph={onUpdateParagraph}
-        />
-      )
-    }
-
-    const items = paragraph.items ?? []
-    if (items.length === 0) {
-      return (
-        <PFTextInput
-          variant="formPage"
-          size="large"
-          value={paragraph.bodyText}
-          placeholder={paragraph.bodyPlaceholder || '답변을 입력해 주세요'}
-          onValueChange={value =>
-            onUpdateParagraph(paragraph.id, current =>
-              current.kind === 'single_item' &&
-              (current.variant === 'short_essay' || current.variant === 'session_plan_short_essay')
-                ? { ...current, bodyText: value }
-                : current
-            )
-          }
-        />
-      )
-    }
-
     return (
-      <PFFormFieldTable>
-        {items.map(item => (
-          <PFFormFieldRow key={item.id} type="single">
-            <PFFormField label={item.label || '입력'} required={paragraph.answerRequired}>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                value={item.bodyText}
-                placeholder={item.placeholder || paragraph.bodyPlaceholder || '답변을 입력해 주세요'}
-                inputMode={
-                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth ||
-                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
-                    ? 'numeric'
-                    : undefined
-                }
-                maxLength={
-                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
-                    ? 10
-                    : item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
-                      ? 13
-                      : undefined
-                }
-                type={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone ? 'tel' : undefined}
-                autoComplete={
-                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone ? 'tel' : undefined
-                }
-                onChange={event => {
-                  const nextValue =
-                    item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
-                      ? applyKoreanPhoneInputChange(
-                          item.bodyText,
-                          event.target.value,
-                          event.target.selectionStart
-                        ).formatted
-                      : applyConsentShortEssayItemInput(item.id, event.target.value)
-                  event.target.value = nextValue
-                  onUpdateParagraph(paragraph.id, current => {
-                    if (
-                      current.kind !== 'single_item' ||
-                      (current.variant !== 'short_essay' &&
-                        current.variant !== 'session_plan_short_essay')
-                    ) {
-                      return current
-                    }
-                    return {
-                      ...current,
-                      items: (current.items ?? []).map(entry =>
-                        entry.id === item.id ? { ...entry, bodyText: nextValue } : entry
-                      ),
-                    }
-                  })
-                }}
-              />
-            </PFFormField>
-          </PFFormFieldRow>
-        ))}
-      </PFFormFieldTable>
+      <ConsentShortEssayFillFields
+        paragraph={paragraph}
+        onUpdateParagraph={onUpdateParagraph}
+        lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
+      />
     )
   }
 
@@ -477,7 +382,8 @@ export function PlatformConsentParagraphBody({
 
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing) {
-      const text = paragraph.body.trim() || NOTICE_CONFIRMATION
+      const text = paragraph.body.trim()
+      if (!text) return null
       if (documentPreview) {
         return <p className={previewTypography.closingText}>{text}</p>
       }

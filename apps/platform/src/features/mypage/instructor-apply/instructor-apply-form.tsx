@@ -65,13 +65,14 @@ import {
 } from '@/shared/ui'
 import { getInstructorApplyApiErrorMessage } from './api/get-instructor-apply-api-error-message'
 import { mapInstructorApplyFormToCreateRequest } from './api/map-create-request'
+import { resolveInstructorApplyTermsAgreementVersions } from './api/resolve-terms-agreement-versions'
 import { useCreateInstructorRoleRequestMutation } from './api/use-create-instructor-role-request-mutation'
 import { EducationSchoolNameField } from './education-school-name-field'
 import { getInstructorApplyConsentPath } from './consent/catalog'
 import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
 import {
   applyLockedBasicToInstructorForm,
-  isInstructorApplyHomeAddressLocked,
+  resolveInstructorApplyHomeAddressLock,
   type InstructorApplyLockedBasicInfo,
 } from './map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -174,13 +175,15 @@ function RadioGroup<T extends string>({
 function HomeAddressFieldRow({
   roadValue,
   detailValue,
-  disabled,
+  roadDisabled,
+  detailDisabled,
   onRoadChange,
   onDetailChange,
 }: {
   roadValue: string
   detailValue: string
-  disabled: boolean
+  roadDisabled: boolean
+  detailDisabled: boolean
   onRoadChange: (value: string) => void
   onDetailChange: (value: string) => void
 }) {
@@ -194,7 +197,8 @@ function HomeAddressFieldRow({
           onDetailChange={onDetailChange}
           roadPlaceholder={PH.homeAddress}
           detailPlaceholder={PH.homeAddressDetail}
-          disabled={disabled}
+          roadDisabled={roadDisabled}
+          detailDisabled={detailDisabled}
         />
       </PFFormField>
     </PFFormFieldRow>
@@ -243,7 +247,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const createMutation = useCreateInstructorRoleRequestMutation()
   const useRemoteSubmit = isRemoteApiConfigured() && Boolean(getAccessToken())
   const isSubmitting = submitting || createMutation.isPending
-  const isHomeAddressLocked = isInstructorApplyHomeAddressLocked(lockedBasic)
+  const homeAddressLock = resolveInstructorApplyHomeAddressLock(lockedBasic)
 
   useEffect(() => {
     setValues(prev =>
@@ -269,12 +273,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
     next: InstructorSharedProfileFormValues[K]
   ) => {
     if ((LOCKED_BASIC_KEYS as readonly string[]).includes(key)) return
-    if (
-      isHomeAddressLocked &&
-      (key === 'homeAddress' || key === 'homeAddressDetail')
-    ) {
-      return
-    }
+    if (key === 'homeAddress' && homeAddressLock.roadLocked) return
+    if (key === 'homeAddressDetail' && homeAddressLock.detailLocked) return
     setValues(prev => ({ ...prev, [key]: next }))
   }
 
@@ -356,13 +356,32 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
       return
     }
 
-    const body = mapInstructorApplyFormToCreateRequest(values)
-    createMutation.mutate(body, {
-      onSuccess: () => {
-        setSubmitting(false)
-        onSubmitSuccess()
-      },
-      onError: error => {
+    void (async () => {
+      try {
+        const mapped = mapInstructorApplyFormToCreateRequest(values)
+        const termsAgreements = await resolveInstructorApplyTermsAgreementVersions(
+          mapped.termsAgreements,
+        )
+        createMutation.mutate(
+          { ...mapped, termsAgreements },
+          {
+            onSuccess: () => {
+              setSubmitting(false)
+              onSubmitSuccess()
+            },
+            onError: error => {
+              setSubmitting(false)
+              setAlert({
+                title: '안내',
+                description: getInstructorApplyApiErrorMessage(
+                  error,
+                  '강사 신청을 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                ),
+              })
+            },
+          },
+        )
+      } catch (error) {
         setSubmitting(false)
         setAlert({
           title: '안내',
@@ -371,8 +390,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
             '강사 신청을 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
           ),
         })
-      },
-    })
+      }
+    })()
   }
 
   return (
@@ -495,7 +514,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
               <HomeAddressFieldRow
                 roadValue={values.homeAddress}
                 detailValue={values.homeAddressDetail}
-                disabled={isHomeAddressLocked}
+                roadDisabled={homeAddressLock.roadLocked}
+                detailDisabled={homeAddressLock.detailLocked}
                 onRoadChange={value => patch('homeAddress', value)}
                 onDetailChange={value => patch('homeAddressDetail', value)}
               />
@@ -546,7 +566,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
               <HomeAddressFieldRow
                 roadValue={values.homeAddress}
                 detailValue={values.homeAddressDetail}
-                disabled={isHomeAddressLocked}
+                roadDisabled={homeAddressLock.roadLocked}
+                detailDisabled={homeAddressLock.detailLocked}
                 onRoadChange={value => patch('homeAddress', value)}
                 onDetailChange={value => patch('homeAddressDetail', value)}
               />

@@ -11,7 +11,12 @@ export type PFFormHomeAddressFieldsProps = {
   onDetailChange: (value: string) => void
   roadPlaceholder?: string
   detailPlaceholder?: string
+  /** 도로명·상세 모두 비활성. `roadDisabled` / `detailDisabled`보다 우선하지 않음 — 둘 다 true와 동일 */
   disabled?: boolean
+  /** 도로명(검색)만 비활성. 미지정 시 `disabled` */
+  roadDisabled?: boolean
+  /** 상세 주소만 비활성. 미지정 시 `disabled` */
+  detailDisabled?: boolean
   /** true면 도로명·상세 인풋이 한 행을 50%씩 채움 */
   fillRow?: boolean
 }
@@ -25,12 +30,16 @@ export function PFFormHomeAddressFields({
   roadPlaceholder = '건물명, 도로명 또는 지번',
   detailPlaceholder = '상세 주소',
   disabled = false,
+  roadDisabled,
+  detailDisabled,
   fillRow = false,
 }: PFFormHomeAddressFieldsProps) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const isRoadDisabled = roadDisabled ?? disabled
+  const isDetailDisabled = detailDisabled ?? disabled
 
   const openAddressModal = () => {
-    if (disabled) return
+    if (isRoadDisabled) return
     setIsAddressModalOpen(true)
   }
 
@@ -44,7 +53,7 @@ export function PFFormHomeAddressFields({
             hasIcon
             readOnly
             placeholder={roadPlaceholder}
-            disabled={disabled}
+            disabled={isRoadDisabled}
             value={roadValue}
             onClick={openAddressModal}
           />
@@ -55,7 +64,7 @@ export function PFFormHomeAddressFields({
             variant="formPage"
             size="large"
             placeholder={detailPlaceholder}
-            disabled={disabled}
+            disabled={isDetailDisabled}
             value={detailValue}
             onValueChange={onDetailChange}
           />

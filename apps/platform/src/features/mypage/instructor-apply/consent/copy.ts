@@ -104,8 +104,6 @@ export const NOTICE_CONSENT_LINES = [
   '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
 ] as const
 
-export const NOTICE_CONFIRMATION = '위와 같은 행정정보 공동이용에 대한 내용을 모두 확인했습니다.'
-
 export const NOTICE_ID_TYPE_OPTIONS = [
   { value: 'resident', label: '주민등록번호' },
   { value: 'passport', label: '여권번호' },

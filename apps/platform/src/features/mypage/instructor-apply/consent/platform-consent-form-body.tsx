@@ -17,6 +17,8 @@ export type PlatformConsentFormBodyProps = {
   hiddenParagraphIds: ReadonlySet<string>
   onUpdateParagraph: FormUpdateParagraph
   fillOptions?: PlatformConsentFillOptions
+  /** 행정정보 공동이용 — 대상자 본인 성명(포털 로그인 회원명) */
+  lockedNoticeSubjectMemberName?: string
   renderParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
   /** 단락 섹션 카드 바로 다음(별도 카드 등) — 행정정보 대상자 본인 전자서명 */
   renderAfterParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
@@ -102,6 +104,7 @@ export function PlatformConsentFormBody({
   hiddenParagraphIds,
   onUpdateParagraph,
   fillOptions,
+  lockedNoticeSubjectMemberName,
   renderParagraphSlot,
   renderAfterParagraphSlot,
   documentPreview = false,
@@ -140,6 +143,7 @@ export function PlatformConsentFormBody({
                   paragraph={paragraph}
                   onUpdateParagraph={onUpdateParagraph}
                   fillOptions={fillOptions}
+                  lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
                   documentPreview={documentPreview}
                 />
               )
