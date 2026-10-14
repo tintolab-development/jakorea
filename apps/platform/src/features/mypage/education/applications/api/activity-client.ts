@@ -14,6 +14,10 @@ function unwrapEnvelope<T>(payload: unknown): T {
   return payload as T
 }
 
+/**
+ * Portal `GET …/notices` item — BE `MemberPortalNoticeListItem` (+ 작성자 필드).
+ * Platform은 CMS Orval 미사용 · OpenAPI 갱신 시 필드 동기화.
+ */
 export type PortalNoticeListItem = {
   postId?: number
   title?: string
@@ -24,9 +28,11 @@ export type PortalNoticeListItem = {
   readCount?: number
   reactionCount?: number
   createdAt?: string
+  updatedAt?: string
   createdByActorType?: string
   createdByActorId?: number
   createdByDisplayName?: string | null
+  mine?: boolean
 }
 
 export type PortalNoticeListResponse = {
@@ -61,12 +67,14 @@ export type PortalNoticeDetail = {
   content?: string
   unread?: boolean
   createdAt?: string
+  updatedAt?: string
   commentCount?: number
   readCount?: number
   reactionCount?: number
   createdByActorType?: string
   createdByActorId?: number
   createdByDisplayName?: string | null
+  mine?: boolean
   attachments?: PortalNoticeAttachment[]
   comments?: PortalNoticeComment[]
 }
