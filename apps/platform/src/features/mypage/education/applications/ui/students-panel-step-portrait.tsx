@@ -1,8 +1,8 @@
 import { type ChangeEvent, useRef, useState } from 'react'
 import type { PortalOrganizationPortraitConsent } from '../api/student-documents-types'
-import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
-import fileDownloadBlackUrl from '@/shared/assets/icons/file-download-black.svg'
-import filePreviewUrl from '@/shared/assets/icons/file-preview.svg'
+import illustHackerUrl from '@/shared/assets/illustration/illust-hacker.svg'
+import fileDownloadMintUrl from '@/shared/assets/icons/file-download-mint.svg'
+import fileUploadBlackUrl from '@/shared/assets/icons/file-upload-black.svg'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import styles from './students-panel.module.css'
 
@@ -57,10 +57,16 @@ export function StudentsPanelStepPortrait({
   return (
     <section className={styles.stepSide} aria-labelledby="students-step-portrait-title">
       <div className={styles.stepHeader}>
-        <PFText id="students-step-portrait-title" as="h2" typo="hl-sm" color="black" className={styles.stepTitle}>
-          Step 2 학생 초상권 동의서를 업로드 해주세요
+        <PFText
+          id="students-step-portrait-title"
+          as="h2"
+          typo="hl-sm"
+          color="black"
+          className={styles.stepTitle}
+        >
+          <span className={styles.stepLabel}>Step 2</span> 학생 초상권 동의서를 업로드 해주세요
         </PFText>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.stepDescription}>
+        <PFText as="p" typo="bd-md-md" color="black" className={styles.stepDescription}>
           제공된 양식에 초상권 동의를 받은 후 업로드 해주세요.
         </PFText>
       </div>
@@ -74,19 +80,19 @@ export function StudentsPanelStepPortrait({
           onClick={onDownloadTemplate}
         >
           <span className={styles.buttonInner}>
-            <img src={fileDownloadBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
+            <img src={fileDownloadMintUrl} alt="" width={20} height={20} aria-hidden="true" />
             양식 다운로드
           </span>
         </PFButton>
         <PFButton
           type="button"
           size="large"
-          variant="secondary"
-          disabled={!remoteEnabled || isUploading || !portraitUploadAllowed}
+          variant="tertiary"
+          disabled={isUploading}
           onClick={handlePickFile}
         >
           <span className={styles.buttonInner}>
-            <img src={filePreviewUrl} alt="" width={20} height={20} aria-hidden="true" />
+            <img src={fileUploadBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
             {isUploading ? '업로드 중' : '파일 업로드'}
           </span>
         </PFButton>
@@ -127,15 +133,17 @@ export function StudentsPanelStepPortrait({
         <div className={styles.portraitBoxEmpty}>
           <div className={styles.emptyContent}>
             <img
-              className={styles.illustration}
-              src={illustExclamationUrl}
+              className={styles.portraitEmptyIllustration}
+              src={illustHackerUrl}
               alt=""
-              width={100}
-              height={100}
+              width={120}
+              height={120}
               aria-hidden="true"
             />
-            <PFText as="p" typo="hl-lg" color="black" className={styles.emptyTitle}>
-              아직 초상권 동의서가 등록되지 않았어요
+            <PFText as="p" typo="hl-lg" color="black">
+              아직 초상권 동의서가
+              <br />
+              등록되지 않았어요
             </PFText>
           </div>
         </div>

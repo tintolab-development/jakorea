@@ -74,13 +74,53 @@ function formatVenue(values: ApplyTrainedTeachersBasicInfoValues): string | unde
   return base
 }
 
+function readAnswerStringField(row: Record<string, unknown>, ...keys: string[]): string {
+  for (const key of keys) {
+    const raw = row[key]
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  }
+  return ''
+}
+
+function readPreferredFieldsFromAnswerRow(
+  row: Record<string, unknown>,
+  values: ApplyTrainedTeachersBasicInfoValues,
+): Pick<EducationTeacherApplicationInstitution, 'preferredEducationForm' | 'venue'> {
+  const preferred: Pick<EducationTeacherApplicationInstitution, 'preferredEducationForm' | 'venue'> =
+    {}
+
+  if (Object.prototype.hasOwnProperty.call(row, 'educationFormat')) {
+    const formatRaw = readAnswerStringField(row, 'educationFormat')
+    if (formatRaw) {
+      preferred.preferredEducationForm =
+        EDUCATION_FORMAT_LABELS[formatRaw] ?? formatRaw
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(row, 'educationPlace')) {
+    const venue = formatVenue({
+      ...values,
+      educationPlace: readAnswerStringField(row, 'educationPlace'),
+      educationPlaceDetail: Object.prototype.hasOwnProperty.call(row, 'educationPlaceDetail')
+        ? readAnswerStringField(row, 'educationPlaceDetail')
+        : values.educationPlaceDetail,
+    })
+    if (venue) preferred.venue = venue
+  }
+
+  return preferred
+}
+
 function institutionFromBasicInfoValues(
   values: ApplyTrainedTeachersBasicInfoValues,
+  preferredFromAnswers?: Pick<
+    EducationTeacherApplicationInstitution,
+    'preferredEducationForm' | 'venue'
+  >,
 ): EducationTeacherApplicationInstitution {
-  const preferredEducationForm = values.educationFormat.trim()
-    ? EDUCATION_FORMAT_LABELS[values.educationFormat.trim()] ?? values.educationFormat.trim()
-    : undefined
-  const venue = formatVenue(values)
+  const preferredEducationForm = preferredFromAnswers?.preferredEducationForm
+  const venue = preferredFromAnswers?.venue
 
   return {
     name: values.schoolName.trim(),
@@ -106,5 +146,10 @@ export function mapTeacherInstitutionFromApplicationAnswers(
   const raw = answers[key]
   const values = basicInfoValuesFromDraftAnswer(raw)
   if (!values) return null
-  return institutionFromBasicInfoValues(values)
+  const row =
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {}
+  const preferredFromAnswers = readPreferredFieldsFromAnswerRow(row, values)
+  return institutionFromBasicInfoValues(values, preferredFromAnswers)
 }

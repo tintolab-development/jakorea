@@ -289,6 +289,51 @@ function noticePath(applicationType: ProgramApplicationType, applicationId: stri
   return `${applicationPath(applicationType, applicationId)}/notices/${postId}`
 }
 
+export type PortalCreateApplicationNoticeRequest = {
+  title?: string
+  content: string
+  visibilityType: string
+  organizationApplicationId?: number
+}
+
+export type PortalCreateApplicationNoticeResponse = {
+  postId?: number
+}
+
+export async function createApplicationNotice(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  body: PortalCreateApplicationNoticeRequest,
+): Promise<PortalCreateApplicationNoticeResponse> {
+  const { data } = await axiosClient.post<unknown>(
+    `${applicationPath(applicationType, applicationId)}/notices`,
+    body,
+  )
+  return unwrapEnvelope<PortalCreateApplicationNoticeResponse>(data)
+}
+
+export async function putApplicationNoticeAttachments(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  fileObjectIds: number[],
+): Promise<void> {
+  await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/attachments`, {
+    fileObjectIds,
+  })
+}
+
+export async function putApplicationNoticeInlineImages(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  fileObjectIds: number[],
+): Promise<void> {
+  await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/inline-images`, {
+    fileObjectIds,
+  })
+}
+
 export async function createApplicationNoticeComment(
   applicationType: ProgramApplicationType,
   applicationId: string,

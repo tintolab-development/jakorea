@@ -56,8 +56,12 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
-import { shouldShowTeacherInstitutionGuidanceWrite } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
-import { educationProgramNoticeWritePath } from '@/features/mypage/education/notices/lib/notice-path'
+import {
+  hasTeacherApplicationGuidanceContent,
+  shouldShowTeacherInstitutionGuidanceEditOnApplicationTab,
+  shouldShowTeacherInstitutionGuidanceWrite,
+} from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
+import { resolveTeacherPreferredSchedules } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -216,6 +220,46 @@ export function MypageEducationDetailPage() {
     () => withdrawnDuringTabItems.map(item => item.key),
     [withdrawnDuringTabItems],
   )
+
+  const teacherApplicationContent = useMemo(() => {
+    const base = application?.teacherApplicationContent
+    if (!base || !program) return base
+    const preferredSchedules = resolveTeacherPreferredSchedules({
+      preferredSchedules: base.preferredSchedules,
+      preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+      preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
+      preferredScheduleBlocks: application.preferredScheduleBlocks,
+      program,
+    })
+    return { ...base, preferredSchedules }
+  }, [
+    application?.teacherApplicationContent,
+    application?.preferredEducationScheduleLabel,
+    application?.preferredScheduleBlocks,
+    application?.preferredScheduleOptionValues,
+    program,
+  ])
+
+  const applicationInfoBody = useMemo(() => {
+    if (!application || !program || !isTeacher || !teacherApplicationContent) return undefined
+    return (
+      <TeacherApplicationContent
+        applicationId={application.id}
+        applicationType={application.applicationType}
+        content={teacherApplicationContent}
+        showGuidanceWriteLink={false}
+        showPreferredEducationForm={program.educationForm === 'participant_choice'}
+      />
+    )
+  }, [
+    application,
+    application?.applicationType,
+    application?.id,
+    isTeacher,
+    program,
+    program?.educationForm,
+    teacherApplicationContent,
+  ])
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -391,19 +435,34 @@ export function MypageEducationDetailPage() {
     schedules: program.eventSchedules,
   })
 
-  const showTeacherGuidanceWrite = shouldShowTeacherInstitutionGuidanceWrite({
+  const showTeacherGuidanceEditOnApplicationTab =
+    shouldShowTeacherInstitutionGuidanceEditOnApplicationTab({
+      isTeacher,
+      programAudience: program.programAudience,
+      displayStatus: application.displayStatus,
+    }) &&
+    Boolean(application.teacherApplicationContent) &&
+    hasTeacherApplicationGuidanceContent(application.teacherApplicationContent!.guidance)
+
+  const showTeacherNoticeWrite = shouldShowTeacherInstitutionGuidanceWrite({
     isTeacher,
     programAudience: program.programAudience,
     displayStatus: application.displayStatus,
   })
 
+  const noticeWriteAuthorDisplayName = member.displayName
+    ? `${member.displayName} 담당교사님`
+    : '담당교사님'
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      isTeacher && application.teacherApplicationContent ? (
+      isTeacher && teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
-          content={application.teacherApplicationContent}
-          showGuidanceWriteLink={showTeacherGuidanceWrite}
+          applicationType={application.applicationType}
+          content={teacherApplicationContent}
+          showGuidanceWriteLink={showTeacherGuidanceEditOnApplicationTab}
+          showPreferredEducationForm={program.educationForm === 'participant_choice'}
         />
       ) : (
         <EducationApplicationContent
@@ -424,13 +483,11 @@ export function MypageEducationDetailPage() {
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+          applicationInfoBody={applicationInfoBody}
           applicationType={routeApplicationType}
           applicationId={application.id}
-          onNoticeWriteClick={
-            showTeacherGuidanceWrite
-              ? () => navigate(educationProgramNoticeWritePath(application.id))
-              : undefined
-          }
+          noticeWriteEnabled={showTeacherNoticeWrite}
+          noticeWriteAuthorDisplayName={noticeWriteAuthorDisplayName}
         />
       )
     }
@@ -452,7 +509,6 @@ export function MypageEducationDetailPage() {
         <EducationStudentsPanel
           applicationId={application.id}
           applicationType={routeApplicationType}
-          certificateAvailable={application.certificateAvailable}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

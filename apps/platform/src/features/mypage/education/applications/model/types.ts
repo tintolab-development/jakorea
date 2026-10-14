@@ -111,6 +111,8 @@ export type EducationApplicationListItem = {
    * 표시 시 프로그램 일정·교육 진행 예정일로 해석한다.
    */
   preferredScheduleOptionValues?: string[]
+  /** Portal 신청 상세 `preferredScheduleBlocks` — answers 일정 키 없을 때 fallback */
+  preferredScheduleBlocks?: readonly unknown[]
   /** `displayStatus === 'withdrawn'` 일 때 포기 시점 */
   withdrawalPhase?: EducationWithdrawalPhase
   /**

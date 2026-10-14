@@ -28,7 +28,9 @@ import {
 } from '../lib/mock-applications'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
+import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
+import { PFAlertModal, PFButton } from '@/shared/ui'
 import styles from './institution-guidance-write-form.module.css'
 
 type EducationInstitutionGuidanceWriteFormProps = {
@@ -77,7 +79,10 @@ export function EducationInstitutionGuidanceWriteForm({
           state,
         })
       }
-      navigate(educationInstitutionGuidanceApplicationTabPath(applicationId), { replace: true })
+      navigate(
+        educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
+        { replace: true },
+      )
     } catch {
       setAlertMessage('안내사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
@@ -87,50 +92,43 @@ export function EducationInstitutionGuidanceWriteForm({
 
   return (
     <>
-      <div className={styles.root}>
-        <ApplyInstitutionGuidance value={guidance} onChange={setGuidance} />
+      <FormTemplateHost surface="platformUser">
+        <div className={styles.paragraphStack}>
+          <ApplyInstitutionGuidance
+            layout="paragraphCards"
+            value={guidance}
+            onChange={setGuidance}
+          />
 
-        <section className={styles.section} aria-labelledby="guidance-sex-offense-submission">
-          <PFText
-            as="h2"
-            typo="hl-sm"
-            color="black"
-            id="guidance-sex-offense-submission"
-            className={styles.sectionTitle}
+          <ParagraphCard
+            dataParagraphId="institution-sex-offense-submission"
+            editableHeading={institutionGuidanceParagraphHeading(
+              INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.title,
+              INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.description,
+            )}
           >
-            {INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.title}
-          </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.sectionDescription}>
-            {INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.description}
-          </PFText>
-          <ApplyInstitutionSexOffenseSubmission value={sexOffense} onChange={setSexOffense} />
-        </section>
+            <ApplyInstitutionSexOffenseSubmission value={sexOffense} onChange={setSexOffense} />
+          </ParagraphCard>
 
-        {shouldShowSexOffenseInquiry(sexOffense) ? (
-          <section className={styles.section} aria-labelledby="guidance-sex-offense-inquiry">
-            <PFText
-              as="h2"
-              typo="hl-sm"
-              color="black"
-              id="guidance-sex-offense-inquiry"
-              className={styles.sectionTitle}
+          {shouldShowSexOffenseInquiry(sexOffense) ? (
+            <ParagraphCard
+              dataParagraphId="institution-sex-offense-inquiry"
+              editableHeading={institutionGuidanceParagraphHeading(
+                INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
+                INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
+              )}
             >
-              {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title}
-            </PFText>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.sectionDescription}>
-              {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description}
-            </PFText>
-            <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
-          </section>
-        ) : null}
+              <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
+            </ParagraphCard>
+          ) : null}
 
-        <div className={styles.closingCard}>
-          <PFText as="p" typo="bd-md-md" color="neutral-cool-700">
-            작성해 주셔서 감사합니다.
-          </PFText>
+          <div className={styles.closingCard}>
+            <p className={styles.closingText}>작성해주셔서 감사합니다</p>
+          </div>
         </div>
+      </FormTemplateHost>
 
-        <div className={styles.actions}>
+      <div className={styles.actions}>
           <PFButton
             type="button"
             size="xlarge"
@@ -143,7 +141,6 @@ export function EducationInstitutionGuidanceWriteForm({
             {submitting ? '저장 중…' : submitLabel}
           </PFButton>
         </div>
-      </div>
 
       <PFAlertModal
         open={alertMessage != null}

@@ -24,7 +24,9 @@ import {
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
 import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
 import {
+  createApplicationNotice,
   createApplicationNoticeComment,
+  putApplicationNoticeAttachments,
   deleteApplicationNoticeComment,
   deleteApplicationNoticeReaction,
   fetchApplicationForms,
@@ -50,6 +52,8 @@ import {
   type PortalSurveySubmitBody,
 } from './activity-client'
 import type { ProgramApplicationType } from './types'
+import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
+import { PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE } from '../../notices/lib/notice-attach-policy'
 
 const STALE_MS = 30_000
 const GC_MS = 10 * 60_000
@@ -434,6 +438,74 @@ export function useApplicationNoticeReactionsQuery(
     [postId, query.data],
   )
   return { enabled, ...reactions }
+}
+
+export type CreateApplicationNoticeInput = {
+  title: string
+  content: string
+  visibilityType: string
+  organizationApplicationId?: number
+  attachmentFiles?: File[]
+}
+
+export function useCreateApplicationNoticeMutation(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: CreateApplicationNoticeInput) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('application scope is required')
+      }
+      const created = await createApplicationNotice(applicationType, applicationId, {
+        title: input.title,
+        content: input.content,
+        visibilityType: input.visibilityType,
+        organizationApplicationId: input.organizationApplicationId,
+      })
+      const postId = created.postId
+      if (postId == null) {
+        throw new Error('PORTAL_NOTICE_CREATE_MISSING_POST_ID')
+      }
+      const files = input.attachmentFiles ?? []
+      if (files.length > 0) {
+        const fileObjectIds = await Promise.all(
+          files.map(file =>
+            uploadMemberPortalFile({
+              file,
+              filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
+            }),
+          ),
+        )
+        await putApplicationNoticeAttachments(
+          applicationType,
+          applicationId,
+          String(postId),
+          fileObjectIds,
+        )
+      }
+      return String(postId)
+    },
+    onSuccess: () => {
+      if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType,
+          applicationId,
+        ),
+        exact: true,
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+        ],
+      })
+    },
+  })
 }
 
 /** 댓글 등록·수정·삭제 후 상세(댓글)와 목록(댓글 수)을 다시 받는다. */

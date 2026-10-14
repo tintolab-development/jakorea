@@ -22,7 +22,6 @@ import styles from './students-panel.module.css'
 export type EducationStudentsPanelProps = {
   applicationId: string
   applicationType: ProgramApplicationType | null
-  certificateAvailable?: boolean
   /** 포기 이후 회차 비노출용 — 학생 명단 API는 신청 단위 */
   lastParticipatedSession?: number
 }
@@ -30,7 +29,6 @@ export type EducationStudentsPanelProps = {
 export function EducationStudentsPanel({
   applicationId,
   applicationType,
-  certificateAvailable = false,
 }: EducationStudentsPanelProps) {
   const remoteEnabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -56,8 +54,7 @@ export function EducationStudentsPanel({
     [portraitQuery.data],
   )
 
-  const certificateIssueEnabled =
-    remoteEnabled && rosterCount > 0 && Boolean(certificateAvailable)
+  const certificateButtonEnabled = rosterCount > 0
 
   const isLoading =
     remoteEnabled &&
@@ -76,7 +73,7 @@ export function EducationStudentsPanel({
         rosterCount={rosterCount}
         rows={rows}
         rosterUploadAllowed={rosterUploadAllowed}
-        certificateIssueEnabled={certificateIssueEnabled}
+        certificateButtonEnabled={certificateButtonEnabled}
         isDownloadingTemplate={downloadRosterTemplate.isPending}
         isImporting={importRoster.isPending}
         onDownloadTemplate={() => {

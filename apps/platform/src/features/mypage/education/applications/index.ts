@@ -39,9 +39,12 @@ export {
 export {
   shouldShowTeacherInstitutionGuidanceWrite,
   shouldShowTeacherInstitutionGuidanceWriteForProfile,
+  shouldShowTeacherInstitutionGuidanceEditOnApplicationTab,
+  hasTeacherApplicationGuidanceContent,
   hasInstitutionGuidanceDraftContent,
   resolveTeacherInstitutionGuidanceCtaLabel,
 } from './lib/teacher-institution-guidance'
+export { resolveTeacherPreferredSchedules } from './lib/teacher-preferred-schedules'
 export {
   mapInstitutionGuidanceFromApplicationAnswers,
   buildInstitutionGuidanceAnswerPatch,

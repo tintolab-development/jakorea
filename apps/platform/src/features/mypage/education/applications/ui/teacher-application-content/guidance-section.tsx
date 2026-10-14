@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import type { ProgramApplicationType } from '../../api/types'
 import type { EducationTeacherApplicationGuidance } from '../../model/types'
 import { educationInstitutionGuidanceWritePath } from '../../lib/guidance-path'
 import {
@@ -17,12 +18,14 @@ import styles from './teacher-application-content.module.css'
 
 type GuidanceSectionProps = {
   applicationId: string
+  applicationType?: ProgramApplicationType
   guidance: EducationTeacherApplicationGuidance
   showWriteLink?: boolean
 }
 
 export function GuidanceSection({
   applicationId,
+  applicationType,
   guidance,
   showWriteLink = false,
 }: GuidanceSectionProps) {
@@ -40,7 +43,9 @@ export function GuidanceSection({
             type="button"
             size="medium"
             variant="secondary"
-            onClick={() => navigate(educationInstitutionGuidanceWritePath(applicationId))}
+            onClick={() =>
+              navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType))
+            }
           >
             안내사항 수정하기
           </PFButton>

@@ -27,5 +27,18 @@ assert.equal(institution!.grade, '2학년')
 assert.equal(institution!.address, '서울특별시 강서구 마곡중앙8로 71')
 assert.equal(institution!.classAndHeadcount, '1개 학급 | 총 2명')
 assert.ok(institution!.teacherContact.includes('이가원'))
+assert.equal(institution!.preferredEducationForm, undefined)
+assert.equal(institution!.venue, undefined)
+
+const answersWithPreferred = {
+  [basicKey]: {
+    ...answers[basicKey],
+    educationFormat: 'online',
+    educationPlace: 'inside',
+  },
+}
+const withPreferred = mapTeacherInstitutionFromApplicationAnswers(answersWithPreferred, 'general')
+assert.equal(withPreferred!.preferredEducationForm, '온라인')
+assert.equal(withPreferred!.venue, '기관 안')
 
 console.log('institution-basic-info-from-answers.selfcheck: ok')

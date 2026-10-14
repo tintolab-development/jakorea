@@ -1,9 +1,12 @@
 import { type ChangeEvent, useRef, useState } from 'react'
 import type { PortalStudentRosterItem } from '../api/student-documents-types'
+import illustDiplomaGrayUrl from '@/shared/assets/illustration/illust-diploma-gray.svg'
+import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
-import fileDownloadBlackUrl from '@/shared/assets/icons/file-download-black.svg'
-import filePreviewUrl from '@/shared/assets/icons/file-preview.svg'
+import fileDownloadMintUrl from '@/shared/assets/icons/file-download-mint.svg'
+import fileUploadBlackUrl from '@/shared/assets/icons/file-upload-black.svg'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { StudentsPanelRosterTable } from './students-panel-roster-table'
 import styles from './students-panel.module.css'
 
 const EXCEL_ACCEPT =
@@ -15,7 +18,7 @@ type StudentsPanelStepRosterProps = {
   rosterCount: number
   rows: PortalStudentRosterItem[]
   rosterUploadAllowed: boolean
-  certificateIssueEnabled: boolean
+  certificateButtonEnabled: boolean
   isDownloadingTemplate: boolean
   isImporting: boolean
   onDownloadTemplate: () => void
@@ -29,7 +32,7 @@ export function StudentsPanelStepRoster({
   rosterCount,
   rows,
   rosterUploadAllowed,
-  certificateIssueEnabled,
+  certificateButtonEnabled,
   isDownloadingTemplate,
   isImporting,
   onDownloadTemplate,
@@ -39,6 +42,7 @@ export function StudentsPanelStepRoster({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const hasStudents = rosterCount > 0
+  const isCertificateDisabled = !certificateButtonEnabled
 
   const handlePickExcel = () => {
     if (!remoteEnabled) {
@@ -62,11 +66,18 @@ export function StudentsPanelStepRoster({
   return (
     <section className={styles.stepMain} aria-labelledby="students-step-roster-title">
       <div className={styles.stepHeader}>
-        <PFText id="students-step-roster-title" as="h2" typo="hl-sm" color="black" className={styles.stepTitle}>
-          Step 1 학생 명단을 등록해 주세요
+        <PFText
+          id="students-step-roster-title"
+          as="h2"
+          typo="hl-sm"
+          color="black"
+          className={styles.stepTitle}
+        >
+          <span className={styles.stepLabel}>Step 1</span> 학생 명단을 등록해 주세요
         </PFText>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.stepDescription}>
-          프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 엑셀 양식을 작성해 업로드 해주세요.
+        <PFText as="p" typo="bd-md-md" color="black" className={styles.stepDescription}>
+          프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 엑셀 양식을 작성해 업로드
+          해주세요.
         </PFText>
       </div>
 
@@ -80,31 +91,38 @@ export function StudentsPanelStepRoster({
             onClick={onDownloadTemplate}
           >
             <span className={styles.buttonInner}>
-              <img src={fileDownloadBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
+              <img src={fileDownloadMintUrl} alt="" width={20} height={20} aria-hidden="true" />
               양식 다운로드
             </span>
           </PFButton>
           <PFButton
             type="button"
             size="large"
-            variant="secondary"
-            disabled={!remoteEnabled || isImporting || !rosterUploadAllowed}
+            variant="tertiary"
+            disabled={isImporting}
             onClick={handlePickExcel}
           >
             <span className={styles.buttonInner}>
-              <img src={filePreviewUrl} alt="" width={20} height={20} aria-hidden="true" />
+              <img src={fileUploadBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
               {isImporting ? '업로드 중' : '엑셀 업로드'}
             </span>
           </PFButton>
         </div>
         <PFButton
           type="button"
-          size="large"
-          variant="tertiary"
-          disabled={!certificateIssueEnabled}
+          variant="certificate"
+          disabled={isCertificateDisabled}
           onClick={onCertificateIssue}
         >
           수료증 발급하기
+          <img
+            className={styles.certificateIllustration}
+            src={isCertificateDisabled ? illustDiplomaGrayUrl : illustDiplomaUrl}
+            alt=""
+            width={48}
+            height={48}
+            aria-hidden="true"
+          />
         </PFButton>
       </div>
 
@@ -124,24 +142,8 @@ export function StudentsPanelStepRoster({
           </PFText>
         </div>
       ) : hasStudents ? (
-        <div className={styles.contentBox}>
-          <PFText as="p" typo="bd-md-sb" color="black" className={styles.rosterSummary}>
-            참여 학생 {rosterCount}명
-          </PFText>
-          <ul className={styles.rosterList}>
-            {rows.map(row => (
-              <li key={row.rosterId ?? `${row.studentName}-${row.studentNo}`} className={styles.rosterListItem}>
-                <PFText as="span" typo="bd-md-md" color="black">
-                  {row.studentName?.trim() || '-'}
-                </PFText>
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
-                  {[row.grade, row.className, row.studentNo != null ? `${row.studentNo}번` : '']
-                    .filter(part => part != null && String(part).trim() !== '')
-                    .join(' · ')}
-                </PFText>
-              </li>
-            ))}
-          </ul>
+        <div className={styles.rosterTableBox}>
+          <StudentsPanelRosterTable rows={rows} />
         </div>
       ) : (
         <div className={styles.contentBoxEmpty}>

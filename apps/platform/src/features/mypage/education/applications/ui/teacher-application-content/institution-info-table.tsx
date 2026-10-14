@@ -4,11 +4,18 @@ import styles from './teacher-application-content.module.css'
 
 type InstitutionInfoTableProps = {
   institution: EducationTeacherApplicationInstitution
+  /** 프로그램 `educationForm === 'participant_choice'`일 때만 희망 교육 형태·교육 장소 노출 */
+  showPreferredEducationForm?: boolean
 }
 
-export function InstitutionInfoTable({ institution }: InstitutionInfoTableProps) {
-  const showPreferredForm = Boolean(institution.preferredEducationForm?.trim())
-  const venue = institution.venue?.trim() ?? ''
+export function InstitutionInfoTable({
+  institution,
+  showPreferredEducationForm = false,
+}: InstitutionInfoTableProps) {
+  const showPreferredForm =
+    showPreferredEducationForm && Boolean(institution.preferredEducationForm?.trim())
+  const venue =
+    showPreferredEducationForm && institution.venue?.trim() ? institution.venue.trim() : ''
 
   return (
     <PFFormFieldTable>

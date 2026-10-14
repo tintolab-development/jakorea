@@ -4,9 +4,9 @@ import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
   resolvePreferredEducationScheduleLabelFromAnswers,
-  resolvePreferredScheduleLabelsFromAnswers,
 } from '../lib/application-content-from-answers'
 import { mapTeacherInstitutionFromApplicationAnswers } from '../lib/institution-basic-info-from-answers'
+import { resolveTeacherPreferredSchedules } from '../lib/teacher-preferred-schedules'
 import {
   mapInstitutionGuidanceFromApplicationAnswers,
   teacherGuidanceContentFromFormState,
@@ -14,7 +14,6 @@ import {
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
-  EducationTeacherPreferredSchedule,
 } from '../model/types'
 import type {
   PortalProgramApplicationDetail,
@@ -321,6 +320,9 @@ export function mapPortalProgramApplicationDetail(
   if (fromAnswers.preferredScheduleOptionValues?.length) {
     mapped.preferredScheduleOptionValues = fromAnswers.preferredScheduleOptionValues
   }
+  if (detail.preferredScheduleBlocks?.length) {
+    mapped.preferredScheduleBlocks = detail.preferredScheduleBlocks
+  }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
@@ -333,17 +335,12 @@ export function mapPortalProgramApplicationDetail(
       mapped.detailCase,
       detail.programGroup ?? detail.program?.programGroup,
     )
-    const scheduleLabels = resolvePreferredScheduleLabelsFromAnswers({
+    const preferredSchedules = resolveTeacherPreferredSchedules({
       answers,
       preferredScheduleOptionValues: mapped.preferredScheduleOptionValues,
+      preferredEducationScheduleLabel: mapped.preferredEducationScheduleLabel,
+      preferredScheduleBlocks: detail.preferredScheduleBlocks,
     })
-    const preferredSchedules: EducationTeacherPreferredSchedule[] = scheduleLabels.map(
-      (value, index) => ({
-        id: `preferred-schedule-${index + 1}`,
-        label: `진행 희망 교육 일정 ${index + 1}`,
-        value,
-      }),
-    )
     mapped.teacherApplicationContent = {
       institution: institutionFromAnswers ?? {
         name: '',
@@ -356,10 +353,7 @@ export function mapPortalProgramApplicationDetail(
         otherRequests: '',
       },
       guidance: teacherGuidanceContentFromFormState(guidanceForm),
-      preferredSchedules:
-        preferredSchedules.length > 0
-          ? preferredSchedules
-          : (mapped.teacherApplicationContent?.preferredSchedules ?? []),
+      preferredSchedules,
     }
   }
 
