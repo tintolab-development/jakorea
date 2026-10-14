@@ -7,7 +7,7 @@
  */
 
 /**
- * 계좌 지급 상세 팝업 전용 원문 계좌정보. 목록에는 포함하지 않으며 권한/감사로그가 적용된 상세 조회에서만 반환합니다.
+ * 계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.
  */
 export interface AccountPaymentSensitiveDetailResponse {
   bankName?: string;

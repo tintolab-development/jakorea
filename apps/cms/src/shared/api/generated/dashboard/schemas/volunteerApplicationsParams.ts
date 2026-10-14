@@ -20,6 +20,10 @@ documentStatus?: string;
  */
 interviewStatus?: string;
 /**
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ */
+interviewStage?: string;
+/**
  * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
 finalResultStatus?: string;
@@ -66,7 +70,19 @@ assignedInterviewDate?: string;
 /**
  * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */
+assignedInterviewTime?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ */
 totalScore?: number;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ */
+totalScoreUnevaluated?: boolean;
+/**
+ * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ */
+effectiveSecondInterviewStatus?: string;
 /**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
