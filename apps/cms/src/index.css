@@ -6,6 +6,7 @@
 @import './features/program/shared/ui/program-attendance-detail.css';
 @import './shared/ui/button-loading-only.css';
 @import './shared/ui/page-content-loading.css';
+@import './shared/ui/hide-input-character-count.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {

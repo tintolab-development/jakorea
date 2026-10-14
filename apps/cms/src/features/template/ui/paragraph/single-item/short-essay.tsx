@@ -134,7 +134,6 @@ function ShortEssayItemBody({
               rows={itemInputRows}
               expandableFromSingleRow={singleLineExpandable}
               maxLength={maxLength}
-              showCount={maxLength != null}
               readOnly={!isBodyInteractive}
               onChange={
                 isBodyInteractive ? e => setEditValue(e.target.value) : undefined
@@ -164,7 +163,6 @@ function ShortEssayItemBody({
       rows={itemInputRows}
       expandableFromSingleRow={singleLineExpandable}
       maxLength={maxLength}
-      showCount={maxLength != null}
       readOnly={!isBodyInteractive}
       tabIndex={isBodyInteractive ? undefined : -1}
       onClick={event => {
