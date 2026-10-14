@@ -1,17 +1,16 @@
 import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
-import { MAIL_SEND_HISTORY_MOCK } from '@/features/notifications/model/mail-send-history/mock'
 import type { MailSendHistoryRow } from '@/features/notifications/model/mail-send-history/types'
 import type { MailSendDraft } from '@/features/notifications/model/mail-send/types'
 
 /** 세션 내 mock 발송 이력 (실 API 없을 때 발송→조회 연결) */
-let sessionMailSendHistory: MailSendHistoryRow[] = [...MAIL_SEND_HISTORY_MOCK]
+let sessionMailSendHistory: MailSendHistoryRow[] = []
 
 export function getMailSendHistoryMockRows(): MailSendHistoryRow[] {
   return sessionMailSendHistory
 }
 
 export function resetMailSendHistoryMockRows(): void {
-  sessionMailSendHistory = [...MAIL_SEND_HISTORY_MOCK]
+  sessionMailSendHistory = []
 }
 
 export function prependMailSendHistoryMockRows(rows: MailSendHistoryRow[]): void {

@@ -1,11 +1,25 @@
 import { useState } from 'react'
-import { MAIL_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/mail-template/mock'
+import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import { FormModal } from '@/features/notifications/ui/mail-template/form-modal'
 import { PreviewModal } from '@/features/notifications/ui/mail-template/preview-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { DsDemo, DsSection } from './section'
 
-const SAMPLE = MAIL_TEMPLATE_ITEM_MOCK[1] ?? MAIL_TEMPLATE_ITEM_MOCK[0] ?? null
+const SAMPLE: MailTemplateItem = {
+  id: 'mail-template-sample',
+  name: '샘플 템플릿',
+  templateName: '샘플 템플릿',
+  categoryId: 'sample',
+  categoryName: '샘플',
+  registeredAt: '',
+  updatedAt: '',
+  senderName: 'JA Korea',
+  senderEmail: 'sample@jakorea.org',
+  senderDisplay: 'JA Korea <sample@jakorea.org>',
+  subject: '메일 샘플 제목',
+  bodyHtml: '<p>메일 샘플 본문</p>',
+  attachmentFileNames: [],
+}
 
 export function MailTemplateSection() {
   const [formOpen, setFormOpen] = useState(false)

@@ -10,7 +10,6 @@
 
 import { useEffect, useMemo } from 'react'
 import { CmsRadio } from '@/shared/ui/cms-radio'
-import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -1248,18 +1247,39 @@ export function BasicInfoSection({
             <Controller
               name="startDate"
               control={commonInfoForm.control}
-              render={({ field }) => (
-                <CmsDateRangePicker
-                  value={[toDayjs(field.value), toDayjs(commonInfoForm.watch('endDate'))]}
-                  onChange={dates => {
-                    const [start, end] = dates ?? [null, null]
-                    field.onChange(toIso(start))
-                    commonInfoForm.setValue('endDate', toIso(end))
-                  }}
-                  format="YYYY. MM. DD"
-                  width={'100%'}
-                />
-              )}
+              render={({ field }) => {
+                const start = toDayjs(field.value)
+                const end = toDayjs(commonInfoForm.watch('endDate'))
+                const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
+                const operationRangeWithTime =
+                  operationRange != null ? dateRangeUsesClockTime(operationRange) : false
+
+                return (
+                  <div className="detail-info-form-inputs-wrapper-no-gap">
+                    <ParagraphDatePicker
+                      mode="single"
+                      presetMode="period"
+                      value={start ?? null}
+                      width="100%"
+                      placeholder="사업 운영 기간을 선택하세요"
+                      preferPeriodModeInPopover
+                      appliedSurfaceRange={operationRange}
+                      appliedSurfaceWithTime={operationRangeWithTime}
+                      onRangeChange={range => {
+                        field.onChange(toIso(range[0]))
+                        commonInfoForm.setValue('endDate', toIso(range[1]), {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        })
+                      }}
+                      onChange={next => {
+                        if (next == null) return
+                        field.onChange(toIso(next))
+                      }}
+                    />
+                  </div>
+                )
+              }}
             />
           }
         />

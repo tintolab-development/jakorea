@@ -110,8 +110,3 @@ export interface AccountPaymentStatusDetail {
   plainAccountForPaymentConfirm: AccountPaymentPlainAccountForConfirm
 }
 
-/** @deprecated FE mock removed — remote account payment detail only */
-export function getMockAccountPaymentStatusDetail(_row: AccountPaymentRow): AccountPaymentStatusDetail {
-  void _row
-  throw new Error('계좌 지급 상세는 remote API를 사용하세요.')
-}

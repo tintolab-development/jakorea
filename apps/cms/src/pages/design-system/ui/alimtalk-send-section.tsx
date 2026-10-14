@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ALIMTALK_SEND_TEMPLATE_PICKER_MOCK } from '@/features/notifications/model/alimtalk-template/mock'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 import { PreviewModal } from '@/features/notifications/ui/alimtalk-template/preview-modal'
 import { SendFullpageModal } from '@/features/notifications/ui/alimtalk-send/fullpage-modal'
@@ -14,8 +13,9 @@ import { DsDemo, DsSection } from './section'
 
 const TEMPLATE_PICKER_Z_INDEX = 1100
 const TEMPLATE_PREVIEW_Z_INDEX = 1200
+const TEMPLATE_PICKER_ITEMS: AlimtalkTemplateItem[] = []
 const templatePickerTotalPages = Math.ceil(
-  ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.length / TEMPLATE_SELECT_MODAL_PAGE_SIZE
+  TEMPLATE_PICKER_ITEMS.length / TEMPLATE_SELECT_MODAL_PAGE_SIZE
 )
 
 export function AlimtalkSendSection() {
@@ -65,11 +65,11 @@ export function AlimtalkSendSection() {
         800px · padding 26/30/34 · 타이틀↔본문 gap 16 (<code>titleBodyGap=&quot;always&quot;</code>
         ). 본문 블록 gap 16 — 검색 ↔ (총 건수+테이블) ↔ 페이지네이션.{' '}
         <strong>총 N건 ↔ 테이블 gap 8</strong>. 총 건수 16/500/150% main-BK opacity 0.6 (
-        <code>총 {ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.length}건</code> 형식). 검색은 CmsInput large + 검색 버튼(Enter·클릭 적용). 테이블{' '}
+        <code>총 {TEMPLATE_PICKER_ITEMS.length}건</code> 형식). 검색은 CmsInput large + 검색 버튼(Enter·클릭 적용). 테이블{' '}
         <code>cms-data-table</code> · 행 52px · 셀 padding 8×12 · 템플릿명·관리 열{' '}
         <strong>가운데 정렬</strong>. 템플릿명 16/500 <code>#3D3D3D</code>. 관리 열 220px · 행
         버튼 80×32 gap 8(미리보기 default / 사용하기 mint). mock은 템플릿 목록(
-        {ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.length}건)과 동일 · 페이지당 {TEMPLATE_SELECT_MODAL_PAGE_SIZE}건.
+        {TEMPLATE_PICKER_ITEMS.length}건)과 동일 · 페이지당 {TEMPLATE_SELECT_MODAL_PAGE_SIZE}건.
         <br />
         페이지네이션 SSOT: <code>CmsCompactPagination variant=&quot;modal&quot;</code> — prev/next
         26×26 radius 6 · disabled opacity 0.6 · 버튼↔숫자 gap 16. 전체 페이지 수는{' '}
@@ -95,12 +95,12 @@ export function AlimtalkSendSection() {
         <div style={{ maxWidth: 480, width: '100%' }}>
           <TemplateSelectField
             value={selectedTemplateId}
-            templates={ALIMTALK_SEND_TEMPLATE_PICKER_MOCK}
+            templates={TEMPLATE_PICKER_ITEMS}
             onSelect={template => setSelectedTemplateId(template.id)}
           />
         </div>
       </DsDemo>
-      <DsDemo label={`TemplateSelectModal (단독 — 총 ${ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.length}건 · 테이블 · 페이지네이션)`}>
+      <DsDemo label={`TemplateSelectModal (단독 — 총 ${TEMPLATE_PICKER_ITEMS.length}건 · 테이블 · 페이지네이션)`}>
         <CmsButton
           variant="primary"
           size="large"
@@ -127,7 +127,7 @@ export function AlimtalkSendSection() {
       {templateModalOpen ? (
         <TemplateSelectModal
           open
-          templates={ALIMTALK_SEND_TEMPLATE_PICKER_MOCK}
+          templates={TEMPLATE_PICKER_ITEMS}
           onClose={handleTemplateModalClose}
           onPreview={setPreviewTemplate}
           onUse={handleTemplateUse}

@@ -176,6 +176,6 @@ export function mapProgramsToEducationRecordRows(
   return programs.map(program => mapProgramToEducationRecordRow(program, regionMap, sponsorLookup))
 }
 
-export function getMockEducationRecordRows(): EducationRecordRow[] {
+export function getEmptyEducationRecordRows(): EducationRecordRow[] {
   return []
 }

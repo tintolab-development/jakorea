@@ -27,7 +27,7 @@ export function generalProgramDetailQueryOptions(programId: string) {
 /**
  * 일반 프로그램 상세.
  * - remote ON + 숫자 API id: GET /programs/{id}
- * - FE 시드(`general-prog-*`) 또는 remote OFF: resolveGeneralProgramForDetail mock
+ * - remote OFF: 등록 임시저장(`general-local-*`)만 resolveGeneralProgramForDetail
  */
 export function useGeneralProgramDetail(
   programId: string | undefined,

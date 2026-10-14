@@ -49,7 +49,7 @@ export default function TemplateFormTab() {
   const {
     sections: writingSections,
     isLoading: isWritingSectionsLoading,
-    isMockCatalog,
+    isFormsApiUnavailable,
     isError: isWritingSectionsError,
   } = useWritingFormSections()
   const isPreviewOpen = params.mode === 'edit'
@@ -326,9 +326,10 @@ export default function TemplateFormTab() {
     <>
       {deleteConfirmModal}
       <div className="template-form-tab__content">
-        {isMockCatalog ? (
+        {isFormsApiUnavailable ? (
           <p className="template-form-tab__catalog-notice" role="status">
-            mock 카탈로그 — 백엔드 API가 연결되지 않아 FE 시드 목록을 표시합니다.
+            양식·설문 API가 연결되지 않았습니다. 로그인·환경 설정(VITE_REAL_API_MODULES)을 확인한 뒤
+            다시 시도해 주세요.
           </p>
         ) : null}
         {isWritingSectionsError ? (

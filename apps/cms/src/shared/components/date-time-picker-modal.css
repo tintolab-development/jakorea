@@ -119,7 +119,23 @@
   width: 100%;
 }
 
-.date-time-picker-popover__input .cms-input__inner .ant-input {
+.date-time-picker-popover__field:not(.date-time-picker-popover__field--end-date-locked)
+  .date-time-picker-popover__input {
+  cursor: pointer;
+}
+
+.date-time-picker-popover__field:not(.date-time-picker-popover__field--end-date-locked)
+  .date-time-picker-popover__input
+  .cms-input__inner
+  .ant-input {
+  cursor: pointer;
+}
+
+.date-time-picker-popover__field--end-date-locked
+  .date-time-picker-popover__input
+  .cms-input__inner
+  .ant-input,
+.date-time-picker-popover__input .cms-input__control--disabled.ant-input {
   cursor: default;
 }
 

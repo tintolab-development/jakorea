@@ -8,11 +8,6 @@ export function shouldUseGeneralProgramsRemoteApi(): boolean {
   return isRealApiModuleEnabled('programs') && hasRemoteAdminJwt()
 }
 
-/** 로그인 우회·mock JWT 등 — CMS mock 프로그램 데이터 사용 */
-export function shouldUseGeneralProgramsMockData(): boolean {
-  return !shouldUseGeneralProgramsRemoteApi()
-}
-
 /**
  * posts/surveys/navigation 등 programs HTTP.
  * 일반 · 1사1교 opt-in · 교육받은 교사 opt-in.

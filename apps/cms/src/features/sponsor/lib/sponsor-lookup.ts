@@ -31,6 +31,14 @@ export function getSponsorNameFromCache(queryClient: QueryClient, sponsorId: str
   const fromOptions = readSponsorRowsFromQueryCache(options).find(row => row.id === sponsorId)
   if (fromOptions?.name?.trim()) return fromOptions.name.trim()
 
+  const infiniteOptionsQueries = queryClient.getQueriesData<unknown>({
+    queryKey: dataManagementQueryKeys.sponsors.optionsInfiniteAll(),
+  })
+  for (const [, data] of infiniteOptionsQueries) {
+    const hit = readSponsorRowsFromQueryCache(data).find(row => row.id === sponsorId)
+    if (hit?.name?.trim()) return hit.name.trim()
+  }
+
   const listQueries = queryClient.getQueriesData<unknown>({
     queryKey: dataManagementQueryKeys.sponsors.all(),
   })
@@ -81,6 +89,14 @@ export function findSponsorInListCache(
   )
   const fromOptions = readSponsorRowsFromQueryCache(options).find(row => row.id === sponsorId)
   if (fromOptions) return fromOptions
+
+  const infiniteOptionsQueries = queryClient.getQueriesData<unknown>({
+    queryKey: dataManagementQueryKeys.sponsors.optionsInfiniteAll(),
+  })
+  for (const [, data] of infiniteOptionsQueries) {
+    const hit = readSponsorRowsFromQueryCache(data).find(row => row.id === sponsorId)
+    if (hit) return hit
+  }
 
   const listQueries = queryClient.getQueriesData<unknown>({
     queryKey: dataManagementQueryKeys.sponsors.all(),

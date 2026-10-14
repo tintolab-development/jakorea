@@ -2,7 +2,10 @@ import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
-import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import {
+  SPONSOR_SELECT_SEARCH_DEBOUNCE_MS,
+  useSponsorSelectOptionsInfinite,
+} from '@/features/sponsor/hooks/use-sponsor-select-options-infinite'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
@@ -195,7 +198,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       ? 'trainedTeachersRegistration.basicInfo'
       : 'generalRegistration.basicInfo',
   })
-  const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
+  const sponsorCatalogQuery = useSponsorSelectOptionsInfinite(catalogReady)
   const sponsorApiOptions = sponsorCatalogQuery.options
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
@@ -218,7 +221,15 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     !allowMultipleSponsors && !isAllSponsor && Boolean(sponsorId)
   )
 
-  const sponsorOptions = sponsorApiOptions
+  const sponsorOptions = useMemo(() => {
+    const byId = new Map(sponsorApiOptions.map(option => [option.value, option]))
+    for (const id of sponsorIds) {
+      if (byId.has(id)) continue
+      const row = multiSponsorContext.sponsors.find(sponsor => sponsor.id === id)
+      byId.set(id, { value: id, label: row?.name?.trim() || id })
+    }
+    return [...byId.values()]
+  }, [multiSponsorContext.sponsors, sponsorApiOptions, sponsorIds])
 
   const managerContactsReady = allowMultipleSponsors
     ? sponsorIds.length === 0 ||
@@ -381,16 +392,25 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 inputSize="medium"
                 placeholder="후원사를 선택하세요"
                 width={240}
-                showSearch
-                optionFilterProp="label"
                 options={sponsorOptions}
                 value={sponsorIds}
                 loading={sponsorOptionsLoading}
+                filterLocally={false}
+                searchDebounceMs={SPONSOR_SELECT_SEARCH_DEBOUNCE_MS}
+                onSearchChange={sponsorCatalogQuery.setSearchDraft}
+                hasMore={catalogReady ? (sponsorCatalogQuery.hasNextPage ?? false) : false}
+                loadingMore={sponsorCatalogQuery.isFetchingNextPage}
+                onLoadMore={() => {
+                  void sponsorCatalogQuery.fetchNextPage()
+                }}
                 onChange={v => {
                   const next = Array.isArray(v) ? v.map(String) : []
                   setSponsorIds(next)
                 }}
-                onOpenChange={onSelectOpenChange}
+                onOpenChange={open => {
+                  onSelectOpenChange(open)
+                  if (!open) sponsorCatalogQuery.setSearchDraft('')
+                }}
               />
             ) : (
               <CmsSelect

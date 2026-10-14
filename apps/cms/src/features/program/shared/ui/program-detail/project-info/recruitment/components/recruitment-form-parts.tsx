@@ -7,7 +7,8 @@ import {
 } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatDateOnly,
@@ -40,26 +41,41 @@ export function DateRangeEdit({
       <Controller
         name={startName}
         control={form.control}
-        render={({ field }) => (
-          <CmsDateRangePicker
-            value={[
-              toDayjs(field.value as string | Date | undefined),
-              toDayjs(form.watch(endName) as string | Date | undefined),
-            ]}
-            onChange={dates => {
-              const start = dates?.[0] ?? null
-              const end = dates?.[1] ?? null
-              field.onChange(emit(start))
-              form.setValue(
-                endName,
-                emit(end) as PathValue<ProgramDetailEditFormValues, typeof endName>
-              )
-            }}
-            format="YYYY. MM. DD"
-            width="100%"
-            className="program-detail-info-tab__date-picker"
-          />
-        )}
+        render={({ field }) => {
+          const start = toDayjs(field.value as string | Date | undefined)
+          const end = toDayjs(form.watch(endName) as string | Date | undefined)
+          const appliedRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
+          const appliedWithTime =
+            appliedRange != null
+              ? dateRangeUsesClockTime(appliedRange[0], appliedRange[1])
+              : false
+
+          return (
+            <ParagraphDatePicker
+              mode="single"
+              presetMode="period"
+              value={start ?? null}
+              width="100%"
+              className="program-detail-info-tab__date-picker"
+              placeholder="기간을 선택하세요"
+              preferPeriodModeInPopover
+              appliedSurfaceRange={appliedRange}
+              appliedSurfaceWithTime={appliedWithTime}
+              onRangeChange={range => {
+                field.onChange(emit(range[0]))
+                form.setValue(
+                  endName,
+                  emit(range[1]) as PathValue<ProgramDetailEditFormValues, typeof endName>,
+                  { shouldValidate: true, shouldDirty: true }
+                )
+              }}
+              onChange={next => {
+                if (next == null) return
+                field.onChange(emit(next))
+              }}
+            />
+          )
+        }}
       />
     </div>
   )

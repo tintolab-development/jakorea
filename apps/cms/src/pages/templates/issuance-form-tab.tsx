@@ -154,7 +154,7 @@ export function IssuanceFormTab() {
   const {
     sections: issuanceSections,
     isLoading: isIssuanceSectionsLoading,
-    isMockCatalog,
+    isFormsApiUnavailable,
     isError: isIssuanceSectionsError,
   } = useIssuanceFormSections()
   const reportSection = issuanceSections.find(section => section.key === 'issuance-report')
@@ -721,9 +721,10 @@ export function IssuanceFormTab() {
       {isPreviewOpen && isLectureReportIssuance ? lectureReportPdfMeasureLayer : null}
       {isPreviewOpen && isUjatStructuredIssuance ? ujatStructuredPdfMeasureLayer : null}
       <div className="template-form-tab__content">
-        {isMockCatalog ? (
+        {isFormsApiUnavailable ? (
           <p className="template-form-tab__catalog-notice" role="status">
-            mock 카탈로그 — 백엔드 API가 연결되지 않아 FE 시드 목록을 표시합니다.
+            양식·설문 API가 연결되지 않았습니다. 로그인·환경 설정(VITE_REAL_API_MODULES)을 확인한 뒤
+            다시 시도해 주세요.
           </p>
         ) : null}
         {isIssuanceSectionsError ? (

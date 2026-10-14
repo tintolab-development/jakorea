@@ -1,5 +1,5 @@
 import type { CSSProperties, KeyboardEvent, ReactNode, RefObject } from 'react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
@@ -23,6 +23,25 @@ import './paragraph-date-picker.css'
 
 function formatTriggerClock(d: Dayjs): string {
   return d.format('HH:mm')
+}
+
+/** 캘린더 1·2번 클릭(필드 포커스 없음) — 날짜 순으로 시작·종료 시각 부여 */
+function chronologicalRangeFromTwoPicks(
+  firstPick: Dayjs,
+  secondPick: Dayjs,
+  startHour: string,
+  startMinute: string,
+  endHour: string,
+  endMinute: string
+): [Dayjs, Dayjs] {
+  const a = firstPick.startOf('day')
+  const b = secondPick.startOf('day')
+  const earlier = a.isAfter(b, 'day') ? secondPick : firstPick
+  const later = a.isAfter(b, 'day') ? firstPick : secondPick
+  return [
+    buildTimeFrom24Hour(earlier, parseNum(startHour, 0), parseNum(startMinute, 0)),
+    buildTimeFrom24Hour(later, parseNum(endHour, 0), parseNum(endMinute, 0)),
+  ]
 }
 
 /** 트리거 한 줄 표시 (이미지 시안: 동일일 일정은 날짜 한 번 + `시작 ~ 종료시`) */
@@ -313,6 +332,12 @@ function ParagraphDatePickerSingleInner({
     )
   )
   const [rangeFocus, setRangeFocus] = useState<'start' | 'end'>('start')
+  /** 시작일/종료일 필드를 직접 눌렀을 때만 — 캘린더는 해당 필드만 수정 */
+  const [explicitRangeFieldFocus, setExplicitRangeFieldFocus] = useState<'start' | 'end' | null>(
+    null
+  )
+  /** 필드 포커스 없이 캘린더 2번 클릭으로 기간 잡는 중 */
+  const [awaitingSecondRangePick, setAwaitingSecondRangePick] = useState(false)
   /** [설정]으로 확정된 기간 — 트리거에 시작/종료 UI 표시 */
   const [surfaceRange, setSurfaceRange] = useState<[Dayjs, Dayjs] | null>(null)
   /** 마지막 [설정] 시 시간 토글이 켜져 있었는지 — 트리거에 날짜+시간 인풋 표시 */
@@ -603,8 +628,16 @@ function ParagraphDatePickerSingleInner({
     setInvalidTimeRange(false)
     if (lockTimeToggleOn) setTimeOn(true)
     if (periodToggleLocked || lockPeriodToggleOn) setPeriodOn(true)
+    setExplicitRangeFieldFocus(null)
+    setAwaitingSecondRangePick(false)
     setOpen(true)
   }
+
+  const handleRangeFocusChange = useCallback((focus: 'start' | 'end') => {
+    setRangeFocus(focus)
+    setExplicitRangeFieldFocus(focus)
+    setAwaitingSecondRangePick(false)
+  }, [])
 
   const handleApply = () => {
     if (isRangeCalendarMode) {
@@ -683,28 +716,48 @@ function ParagraphDatePickerSingleInner({
         setRangeEnd(
           buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
         )
-      } else if (rangeFocus === 'start') {
-        const pendingEndSelection = rangeStart.isSame(rangeEnd, 'day')
-        setRangeStart(next)
-        if (pendingEndSelection) {
+      } else if (explicitRangeFieldFocus === 'start') {
+        const newStart = buildTimeFrom24Hour(
+          next,
+          parseNum(startHour, 0),
+          parseNum(startMinute, 0)
+        )
+        setRangeStart(newStart)
+        if (newStart.isAfter(rangeEnd, 'day')) {
           setRangeEnd(
             buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
           )
-          setRangeFocus('end')
         }
-      } else {
-        const pendingEndSelection = rangeStart.isSame(rangeEnd, 'day')
-        setRangeEnd(
-          buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
-        )
+      } else if (explicitRangeFieldFocus === 'end') {
+        const newEnd = buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+        setRangeEnd(newEnd)
         if (rangeStart.isAfter(next, 'day')) {
           setRangeStart(
             buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))
           )
         }
-        if (pendingEndSelection) {
-          setRangeFocus('start')
-        }
+      } else if (!awaitingSecondRangePick) {
+        setRangeStart(
+          buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))
+        )
+        setRangeEnd(
+          buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+        )
+        setAwaitingSecondRangePick(true)
+        setRangeFocus('end')
+      } else {
+        const [sortedStart, sortedEnd] = chronologicalRangeFromTwoPicks(
+          rangeStart,
+          next,
+          startHour,
+          startMinute,
+          endHour,
+          endMinute
+        )
+        setRangeStart(sortedStart)
+        setRangeEnd(sortedEnd)
+        setAwaitingSecondRangePick(false)
+        setRangeFocus('end')
       }
       setDraft(next)
       setCalendarMonth(next.startOf('month'))
@@ -832,7 +885,7 @@ function ParagraphDatePickerSingleInner({
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
         rangeFocus={rangeFocus}
-        onRangeFocusChange={setRangeFocus}
+        onRangeFocusChange={handleRangeFocusChange}
         onCalendarSelect={handleCalendarSelect}
         singleHour={singleHour}
         singleMinute={singleMinute}

@@ -62,7 +62,7 @@ import {
   type UjatHalfSemesterKey,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
-import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import { getPublicHolidayDateKeysForSchedule } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
@@ -1302,7 +1302,7 @@ function buildUnavailableSelection(
     excludeHoliday: Math.random() < 0.5,
   }
   const blocked = new Set<string>(
-    exclusion.excludeHoliday ? [...getMockHolidayDateKeys()] : []
+    exclusion.excludeHoliday ? [...getPublicHolidayDateKeysForSchedule()] : []
   )
   const candidates = picker(start, end, blocked).filter(key => {
     const day = dayjs(key).day()

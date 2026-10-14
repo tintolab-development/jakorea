@@ -213,7 +213,7 @@ export async function persistWritingFormTemplateDraft(args: {
  * `localOnly: true` — 프로그램 localStorage만.
  * `preferLocal: true` — local 초안이 있으면 사용, 없으면 remote.
  * `templateVersionId` — 프로그램 binding version payload.
- * 그 외 — remote draft GET (dev fallback: `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1`).
+ * 그 외 — remote draft GET (실패 시 null → seed hydrate).
  */
 export async function loadWritingFormTemplateDraft(
   templateId: string,

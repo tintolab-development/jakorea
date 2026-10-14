@@ -4,7 +4,7 @@ import {
   buildVolunteerInterviewScheduleEditSeed,
   type VolunteerInterviewScheduleEditSeed,
 } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
-import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import { getPublicHolidayDateKeysForSchedule } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 
 export type VolunteerInterviewTimeSlotOption = {
   key: string
@@ -89,7 +89,7 @@ export function parseVolunteerInterviewApplicantScheduleFromSeed(
   const blockSaturday = seed.excludeSaturday
   const blockSunday = seed.excludeSunday
   const blockHoliday = seed.excludeHoliday
-  const holidayDateKeys = blockHoliday ? getMockHolidayDateKeys() : new Set<string>()
+  const holidayDateKeys = blockHoliday ? getPublicHolidayDateKeysForSchedule() : new Set<string>()
   const enabledSlotLabels = new Set(seed.selectedTimeSlotLabels)
 
   const timeRange = buildDayjsTimeRange(seed.interviewTimeRange)

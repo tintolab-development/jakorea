@@ -68,7 +68,6 @@ export function logOAuthBackendOriginDebug(context: string): void {
     VITE_DEV_PROXY_TARGET: import.meta.env.VITE_DEV_PROXY_TARGET ?? '',
     VITE_NGROK_SERVER: import.meta.env.VITE_NGROK_SERVER ?? '',
     VITE_OAUTH_REDIRECT_ORIGIN: import.meta.env.VITE_OAUTH_REDIRECT_ORIGIN ?? '',
-    VITE_OAUTH_EXCHANGE_MODE: import.meta.env.VITE_OAUTH_EXCHANGE_MODE ?? '',
     resolvedBackendOrigin: resolvedBackendOrigin ?? '(not configured)',
   })
 }
