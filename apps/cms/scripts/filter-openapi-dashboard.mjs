@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeOpenApiSchemaNode } from './lib/normalize-openapi-schema-for-orval.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -79,29 +80,7 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
   subset.components.securitySchemes.bearerAuth = rest
 }
 
-/** Springdoc 3.1 → Orval(OpenAPI 3.0 validator) 호환: type 배열·null+$ref 정규화 */
-function normalizeSchemaNode(node) {
-  if (node == null || typeof node !== 'object') return
-  if (Array.isArray(node)) {
-    for (const item of node) normalizeSchemaNode(item)
-    return
-  }
-  if (node.$ref && node.type === 'null') {
-    delete node.type
-    node.nullable = true
-  }
-  if (Array.isArray(node.type)) {
-    const hasNull = node.type.includes('null')
-    const types = node.type.filter(t => t !== 'null')
-    node.type = types[0] ?? 'string'
-    if (hasNull) node.nullable = true
-  }
-  for (const value of Object.values(node)) {
-    normalizeSchemaNode(value)
-  }
-}
-
-normalizeSchemaNode(subset)
+normalizeOpenApiSchemaNode(subset)
 
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
 console.log(`Wrote ${Object.keys(filteredPaths).length} paths → ${outputPath}`)
