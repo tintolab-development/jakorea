@@ -47,10 +47,7 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import {
-  fetchGeneralInstructorAssignmentBoard,
-  findScheduleIdForLectureDate,
-} from '@/features/program/general/api/instructor-assignment-board-service'
+import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
@@ -361,9 +358,15 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         return false
       }
       try {
-        const board = await fetchGeneralInstructorAssignmentBoard(program.id)
         let leadAssigned = assignedSchedules.some(row => row.role === 'lead')
         for (const waitingRow of selectedRows) {
+          if (waitingRow.assignmentStatus !== 'waiting') {
+            showAlert({
+              title: '안내',
+              content: `${waitingRow.lectureLocation} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
+            })
+            return false
+          }
           const orgAppId = Number(waitingRow.organizationApplicationId)
           if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
             showAlert({
@@ -372,36 +375,27 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             })
             return false
           }
-          if (waitingRow.scheduleUnresolved) {
+          const session =
+            waitingRow.sessions?.find(
+              item => resolveAssignableSchedulePayloadFromSession(item) != null
+            ) ?? null
+          const schedulePayload =
+            resolveAssignableSchedulePayloadFromSession(session) ??
+            (typeof waitingRow.resolvedScheduleId === 'number' && waitingRow.resolvedScheduleId > 0
+              ? { scheduleId: waitingRow.resolvedScheduleId }
+              : waitingRow.requestedScheduleId != null && waitingRow.requestedScheduleId > 0
+                ? { requestedScheduleId: waitingRow.requestedScheduleId }
+                : null)
+          if (!schedulePayload) {
             showAlert({
               title: '안내',
-              content: `${waitingRow.lectureLocation} — 희망일에 대응하는 program schedule이 없습니다.`,
-            })
-            return false
-          }
-          let scheduleId: number | undefined =
-            typeof waitingRow.resolvedScheduleId === 'number' &&
-            waitingRow.resolvedScheduleId > 0
-              ? waitingRow.resolvedScheduleId
-              : undefined
-          const requestedScheduleId = waitingRow.requestedScheduleId
-          if (scheduleId == null && requestedScheduleId == null) {
-            scheduleId =
-              findScheduleIdForLectureDate(board.schedules, waitingRow.scheduleLabel) ??
-              undefined
-          }
-          if (scheduleId == null && requestedScheduleId == null) {
-            showAlert({
-              title: '안내',
-              content:
-                '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+              content: `${waitingRow.lectureLocation} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
             })
             return false
           }
           await createInstructorAssignmentRemote(program.id, {
             instructorMemberId: memberId,
-            ...(scheduleId != null ? { scheduleId } : {}),
-            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            ...schedulePayload,
             organizationApplicationId: orgAppId,
             instructorApplicationId: waitingRow.instructorApplicationId
               ? Number(waitingRow.instructorApplicationId)
@@ -415,8 +409,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         await assignment.invalidate()
         return true
       } catch (error) {
+        const scopeMessage = formatInstructorOrganizationScheduleScopeMessage(error)
+        if (scopeMessage) {
+          await assignment.invalidate()
+          showAlert({ title: '배정 실패', content: scopeMessage })
+          return false
+        }
         const message =
-          formatInstructorOrganizationScheduleScopeMessage(error) ??
           getParticipationConsentRequiredMessage(error) ??
           (error instanceof Error && error.message.trim()
             ? error.message

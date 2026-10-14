@@ -1,7 +1,10 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
-export type WaitingInstructorAssignmentStatus = 'waiting' | 'unavailable'
+export type WaitingInstructorAssignmentStatus =
+  | 'waiting'
+  | 'unavailable'
+  | 'no_assignable_schedule'
 
 export const WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS: Record<
   WaitingInstructorAssignmentStatus,
@@ -9,6 +12,7 @@ export const WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS: Record<
 > = {
   waiting: '배정 대기',
   unavailable: '배정 불가',
+  no_assignable_schedule: '배정 가능 일정 없음',
 }
 
 export interface WaitingInstructorHopeSchedule {
@@ -98,8 +102,14 @@ export function sortWaitingInstructorRowsUnavailableToBottom<
   T extends { no: number; assignmentStatus: WaitingInstructorAssignmentStatus },
 >(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
-    const aUnavailable = a.assignmentStatus === 'unavailable' ? 1 : 0
-    const bUnavailable = b.assignmentStatus === 'unavailable' ? 1 : 0
+    const aUnavailable =
+      a.assignmentStatus === 'unavailable' || a.assignmentStatus === 'no_assignable_schedule'
+        ? 1
+        : 0
+    const bUnavailable =
+      b.assignmentStatus === 'unavailable' || b.assignmentStatus === 'no_assignable_schedule'
+        ? 1
+        : 0
     if (aUnavailable !== bUnavailable) return aUnavailable - bUnavailable
     return b.no - a.no
   })

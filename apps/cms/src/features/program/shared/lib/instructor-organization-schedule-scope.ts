@@ -27,7 +27,7 @@ export const ORGANIZATION_CONTEXT_GUIDE =
  * @see general-instructor-approve-preferred-schedule-scope-frontend-handoff-2026-10-09.md
  */
 export const ORGANIZATION_SCHEDULE_SCOPE_GUIDE =
-  '선택한 기관의 승인된 희망 교육 일정과 일치하는지 확인해 주세요.'
+  '선택한 기관의 승인된 희망 교육 일정과 일치하지 않습니다. 기관의 교육 일정 확정 후 다시 배정해 주세요.'
 
 /**
  * 409 `INSTRUCTOR_ORGANIZATION_SCHEDULE_SCOPE_INVALID` 이면 서버 message 우선, 아니면 null.
