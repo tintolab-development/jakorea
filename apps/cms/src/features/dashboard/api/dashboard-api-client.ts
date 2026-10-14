@@ -2,7 +2,14 @@
  * Orval 생성 함수 래퍼 — axios 응답 body 추출
  * UI·페이지에서 직접 import하지 말고 admin-dashboard-service / dashboard-api-client만 사용.
  */
-import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
+import { getJABackendAdminAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
+import type {
+  GetApiAdminDashboardKpiProgressParams,
+  GetApiAdminDashboardProgramInquiriesParams,
+  GetApiAdminDashboardProgramSchedulesParams,
+  GetApiAdminDashboardRecruitmentsParams,
+  GetApiAdminNotificationsParams,
+} from '@/shared/api/generated/dashboard/schemas'
 import type {
   DashboardHomeResponse,
   DashboardKpiProgressListResponse,
@@ -24,10 +31,10 @@ import type {
   NotificationReadAllResponse,
   NotificationUnreadCountResponse,
   Notifications1Params,
-  PageResponse,
-} from '@/shared/api/generated/dashboard/schemas'
+  NotificationPageResponse,
+} from '@/features/dashboard/api/dashboard-generated-types'
 
-const dashboardRemoteApi = getJAKoreaCMSBackendAPIDashboardSubset()
+const dashboardRemoteApi = getJABackendAdminAPIDashboardSubset()
 
 function unwrapBody<T>(payload: unknown): T {
   if (
@@ -43,70 +50,88 @@ function unwrapBody<T>(payload: unknown): T {
 }
 
 export async function fetchDashboardHomeRemote(): Promise<DashboardHomeResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardHome())
+  return unwrapBody(await dashboardRemoteApi.getApiAdminDashboardHome())
 }
 
 export async function fetchDashboardNotificationCountRemote(): Promise<NotificationUnreadCountResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardNotificationCount())
+  return unwrapBody(await dashboardRemoteApi.getApiAdminDashboardNotificationsCount())
 }
 
 export async function fetchDashboardRecruitmentsRemote(
-  params: DashboardRecruitmentsParams | Record<string, string>
+  params: DashboardRecruitmentsParams | GetApiAdminDashboardRecruitmentsParams | Record<string, string>
 ): Promise<DashboardRecruitmentListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardRecruitments(params as DashboardRecruitmentsParams))
+  return unwrapBody(
+    await dashboardRemoteApi.getApiAdminDashboardRecruitments(
+      params as GetApiAdminDashboardRecruitmentsParams
+    )
+  )
 }
 
 export async function fetchDashboardKpiProgressRemote(
-  params: DashboardKpiProgressParams | Record<string, string>
+  params: DashboardKpiProgressParams | GetApiAdminDashboardKpiProgressParams | Record<string, string>
 ): Promise<DashboardKpiProgressListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardKpiProgress(params as DashboardKpiProgressParams))
+  return unwrapBody(
+    await dashboardRemoteApi.getApiAdminDashboardKpiProgress(
+      params as GetApiAdminDashboardKpiProgressParams
+    )
+  )
 }
 
 export async function fetchDashboardProgramInquiriesRemote(
-  params: DashboardProgramInquiriesParams | Record<string, string>
+  params:
+    | DashboardProgramInquiriesParams
+    | GetApiAdminDashboardProgramInquiriesParams
+    | Record<string, string>
 ): Promise<DashboardProgramInquiryListResponse> {
   return unwrapBody(
-    await dashboardRemoteApi.dashboardProgramInquiries(params as DashboardProgramInquiriesParams)
+    await dashboardRemoteApi.getApiAdminDashboardProgramInquiries(
+      params as GetApiAdminDashboardProgramInquiriesParams
+    )
   )
 }
 
 export async function fetchDashboardProgramSchedulesRemote(
-  params: DashboardProgramSchedulesParams | Record<string, string>
+  params:
+    | DashboardProgramSchedulesParams
+    | GetApiAdminDashboardProgramSchedulesParams
+    | Record<string, string>
 ): Promise<DashboardProgramScheduleListResponse> {
   return unwrapBody(
-    await dashboardRemoteApi.dashboardProgramSchedules(params as DashboardProgramSchedulesParams)
+    await dashboardRemoteApi.getApiAdminDashboardProgramSchedules(
+      params as GetApiAdminDashboardProgramSchedulesParams
+    )
   )
 }
 
 export async function fetchDashboardPreferencesRemote(): Promise<DashboardPreferencesResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardPreferences())
+  return unwrapBody(await dashboardRemoteApi.getApiAdminDashboardPreferences())
 }
 
 export async function saveDashboardPreferencesRemote(
   body: DashboardPreferencesSaveRequest
 ): Promise<DashboardPreferencesResponse> {
-  return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences1(body))
+  return unwrapBody(await dashboardRemoteApi.putApiAdminDashboardPreferences(body))
 }
 
 export async function fetchDashboardShortcutsRemote(): Promise<DashboardShortcutListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardShortcuts())
+  return unwrapBody(await dashboardRemoteApi.getApiAdminDashboardShortcuts())
 }
 
 /** Swagger: GET /api/admin/me/dashboard-preferences */
 export async function fetchMeDashboardPreferencesRemote(): Promise<DashboardMePreferencesResponse> {
-  return unwrapBody(await dashboardRemoteApi.getDashboardPreferences())
+  return unwrapBody(await dashboardRemoteApi.getApiAdminMeDashboardPreferences())
 }
 
 /** Swagger: PUT /api/admin/me/dashboard-preferences */
 export async function saveMeDashboardPreferencesRemote(
   body: DashboardMePreferencesRequest
 ): Promise<DashboardMePreferencesResponse> {
-  return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences(body))
+  return unwrapBody(await dashboardRemoteApi.putApiAdminMeDashboardPreferences(body))
 }
 
 /** Swagger: GET /api/admin/me/dashboard-shortcut-badges */
 export async function fetchDashboardShortcutBadgesRemote(): Promise<DashboardShortcutBadgesResponse> {
-  return unwrapBody(await dashboardRemoteApi.getDashboardShortcutBadges())
+  return unwrapBody(await dashboardRemoteApi.getApiAdminMeDashboardShortcutBadges())
 }
 
 /** Swagger: POST /api/admin/me/dashboard-shortcut-badges/{shortcutId}/read */
@@ -114,29 +139,48 @@ export async function readDashboardShortcutBadgeRemote(
   shortcutId: string,
   body?: DashboardShortcutBadgeReadRequest
 ): Promise<DashboardShortcutBadgeReadResponse> {
-  return unwrapBody(await dashboardRemoteApi.readDashboardShortcutBadge(shortcutId, body ?? {}))
+  return unwrapBody(
+    await dashboardRemoteApi.postApiAdminMeDashboardShortcutBadgesShortcutIdRead(
+      shortcutId,
+      body ?? {}
+    )
+  )
 }
 
 /** Swagger: GET /api/admin/notifications */
 export async function fetchAdminNotificationsRemote(
-  params?: Notifications1Params
-): Promise<PageResponse> {
-  return unwrapBody(await dashboardRemoteApi.notifications1(params))
+  params?: Notifications1Params | GetApiAdminNotificationsParams
+): Promise<NotificationPageResponse> {
+  return unwrapBody(
+    await dashboardRemoteApi.getApiAdminNotifications(params as GetApiAdminNotificationsParams)
+  )
+}
+
+function parseNotificationRecipientId(recipientId: string | number): number {
+  const id = typeof recipientId === 'number' ? recipientId : Number(recipientId)
+  if (!Number.isFinite(id)) {
+    throw new Error('알림 recipientId가 올바르지 않습니다.')
+  }
+  return id
 }
 
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/read */
-export async function markAdminNotificationReadRemote(recipientId: string): Promise<void> {
-  await dashboardRemoteApi.markRead2(Number(recipientId))
+export async function markAdminNotificationReadRemote(recipientId: string | number): Promise<void> {
+  await dashboardRemoteApi.patchApiAdminNotificationsRecipientIdRead(
+    parseNotificationRecipientId(recipientId)
+  )
 }
 
 /** Swagger: PATCH /api/admin/notifications/read-all */
 export async function markAllAdminNotificationsReadRemote(): Promise<NotificationReadAllResponse> {
-  return unwrapBody(await dashboardRemoteApi.readAllNotifications())
+  return unwrapBody(await dashboardRemoteApi.patchApiAdminNotificationsReadAll())
 }
 
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/hidden */
-export async function hideAdminNotificationRemote(recipientId: string): Promise<void> {
-  await dashboardRemoteApi.hide1(Number(recipientId))
+export async function hideAdminNotificationRemote(recipientId: string | number): Promise<void> {
+  await dashboardRemoteApi.patchApiAdminNotificationsRecipientIdHidden(
+    parseNotificationRecipientId(recipientId)
+  )
 }
 
 /** 위젯 programIds 필터 → 대시보드 목록 query (flat). OpenAPI `params` 맵 래핑은 제거됨. */
