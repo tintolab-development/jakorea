@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-10-14T10:04:10.724Z",
+  "screenCount": 13,
+  "screens": [
+    {
+      "screenId": "general.info.common",
+      "variant": "general",
+      "routeHint": "/programs/general?lnb=info&tab=info",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "general.info.recruitment.participant",
+      "variant": "general",
+      "routeHint": "/programs/general?lnb=info&tab=recruitment (participant)",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "general.info.recruitment.instructor",
+      "variant": "general",
+      "routeHint": "/programs/general?lnb=info&tab=recruitment (instructor)",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "general.info.recruitment.volunteer",
+      "variant": "general",
+      "routeHint": "/programs/general?lnb=info&tab=recruitment (volunteer)",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "general.info.application",
+      "variant": "general",
+      "routeHint": "/programs/general?lnb=info&tab=application",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "general.progress.school",
+      "variant": "general",
+      "routeHint": "lnb=progress&tab=progress_participants&schoolId&schoolTab",
+      "remotePolicy": "remote",
+      "priority": "P1"
+    },
+    {
+      "screenId": "general.progress.instructor",
+      "variant": "general",
+      "routeHint": "progress_instructors&instructorId&instructorTab",
+      "remotePolicy": "remote",
+      "priority": "P1"
+    },
+    {
+      "screenId": "general.progress.volunteer",
+      "variant": "general",
+      "routeHint": "progress_volunteers&volunteerId&volunteerTab",
+      "remotePolicy": "remote",
+      "priority": "P1"
+    },
+    {
+      "screenId": "general.progress.participant",
+      "variant": "general",
+      "routeHint": "progress_participants&participantId",
+      "remotePolicy": "remote",
+      "priority": "P1"
+    },
+    {
+      "screenId": "company_school.info.common",
+      "variant": "company_school",
+      "routeHint": "/programs/company_school?programId (program-detail-fullpage-modal)",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "trained_teachers.info.common",
+      "variant": "trained_teachers",
+      "routeHint": "/programs/trained-teachers?programId",
+      "remotePolicy": "remote",
+      "priority": "P2"
+    },
+    {
+      "screenId": "ujat.info.common",
+      "variant": "ujat",
+      "routeHint": "/programs/ujat?lnb=info",
+      "remotePolicy": "remote",
+      "priority": "P0"
+    },
+    {
+      "screenId": "registration.general.seed_to_detail",
+      "variant": "registration_general",
+      "routeHint": "registration-fullpage-modal → detail-fullpage-modal",
+      "remotePolicy": "mixed",
+      "priority": "P0"
+    }
+  ],
+  "bypassScan": [
+    {
+      "patternId": "getGeneralRecruitOverlayRecord",
+      "files": []
+    },
+    {
+      "patternId": "preferOverlay_true",
+      "files": []
+    },
+    {
+      "patternId": "registrationOverlay_bracket",
+      "files": []
+    },
+    {
+      "patternId": "readOverlayForSave",
+      "files": []
+    }
+  ]
+}
