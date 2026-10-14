@@ -17,8 +17,13 @@ import {
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
 import type { ProgramApplicationType } from '../api/types'
-import { savePortalTeacherInstitutionGuidance } from '../api/institution-guidance-client'
+import { usePatchOrganizationGuidanceAnswersMutation } from '../api/institution-guidance-hooks'
 import type { TeacherInstitutionGuidanceFormState } from '../lib/institution-guidance-from-answers'
+import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
+import {
+  resolveOrganizationGuidancePatchBlockedMessage,
+  type OrganizationGuidancePatchPortalContext,
+} from '../lib/institution-guidance-patch-readiness'
 import { educationInstitutionGuidanceApplicationTabPath } from '../lib/guidance-path'
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
 import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
@@ -38,6 +43,8 @@ type EducationInstitutionGuidanceWriteFormProps = {
   applicationType: ProgramApplicationType
   detailCase: ProgramDetailCase | undefined
   initialState: TeacherInstitutionGuidanceFormState
+  /** remote PATCH 전 Portal 신청 상세 기준 사전 검사 */
+  portalPatchContext?: OrganizationGuidancePatchPortalContext
 }
 
 export function EducationInstitutionGuidanceWriteForm({
@@ -45,6 +52,7 @@ export function EducationInstitutionGuidanceWriteForm({
   applicationType,
   detailCase,
   initialState,
+  portalPatchContext,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
   const [guidance, setGuidance] = useState<ApplyInstitutionGuidanceAnswers>(initialState.guidance)
@@ -52,7 +60,10 @@ export function EducationInstitutionGuidanceWriteForm({
     initialState.sexOffense,
   )
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const patchGuidanceMutation = usePatchOrganizationGuidanceAnswersMutation(
+    applicationType,
+    applicationId,
+  )
 
   const submitLabel = hasInstitutionGuidanceDraftContent(initialState.guidance)
     ? '수정하기'
@@ -65,28 +76,27 @@ export function EducationInstitutionGuidanceWriteForm({
       return
     }
 
-    setSubmitting(true)
+    const useMockPersist =
+      !isRemoteApiConfigured() || shouldUsePlatformMockData()
     try {
-      const useMockPersist =
-        !isRemoteApiConfigured() || shouldUsePlatformMockData()
       if (useMockPersist) {
         updateMockTeacherInstitutionGuidanceFormState(applicationId, state)
       } else {
-        await savePortalTeacherInstitutionGuidance({
-          applicationType,
-          applicationId,
-          detailCase,
-          state,
-        })
+        const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(
+          portalPatchContext ?? {},
+        )
+        if (blockedMessage) {
+          setAlertMessage(blockedMessage)
+          return
+        }
+        await patchGuidanceMutation.mutateAsync({ detailCase, state })
       }
       navigate(
         educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
         { replace: true },
       )
-    } catch {
-      setAlertMessage('안내사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
-    } finally {
-      setSubmitting(false)
+    } catch (error) {
+      setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
     }
   }
 
@@ -133,12 +143,12 @@ export function EducationInstitutionGuidanceWriteForm({
             type="button"
             size="xlarge"
             width={240}
-            disabled={submitting}
+            disabled={patchGuidanceMutation.isPending}
             onClick={() => {
               void handleSubmit()
             }}
           >
-            {submitting ? '저장 중…' : submitLabel}
+            {patchGuidanceMutation.isPending ? '저장 중…' : submitLabel}
           </PFButton>
         </div>
 

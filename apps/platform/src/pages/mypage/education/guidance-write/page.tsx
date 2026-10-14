@@ -105,6 +105,11 @@ export function MypageEducationInstitutionGuidanceWritePage() {
         applicationType={applicationType}
         detailCase={application.detailCase}
         initialState={resolvedInitial}
+        portalPatchContext={{
+          formResponseId: application.formResponseId,
+          formResponseStatus: application.formResponseStatus,
+          applicationAnswers: application.applicationAnswers,
+        }}
       />
     </PFFormPage>
   )
