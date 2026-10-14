@@ -187,6 +187,13 @@ alwaysApply: false
 컴포넌트: [`EducationSchedulePanel`](apps/platform/src/features/mypage/education/schedules/ui/panel.tsx)  
 규칙·문구: [`schedule-rules.ts`](apps/platform/src/features/mypage/education/schedules/lib/schedule-rules.ts)
 
+### API · BE (GENERAL_INDIVIDUAL `INDIVIDUAL`)
+
+- 목록 SSOT: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules` only. 신청 `line:N` / `preferredEducationSchedules` 와 **FE에서 merge·필터하지 않음**.
+- 기대(제품): **사전교육 + 해당 신청자 선택 일정**이 BE `items[]`·participant education-scope에 반영. `scopeStatus=ASSIGNMENT_SCOPED`·`scheduleId` join 후 출석 UI.
+- **Admin `education-scope`**: 개인 **참여자**용 CMS 화면 **없음** (API만 존재). 봉사자 「봉사 배정 현황」만 호출. 검증·핸드오프는 JABACK API 직접 — FE/QA에 CMS에서 스코프 JSON 보라고 요청하지 않음.
+- 계약·이슈: [`education-schedules-api-integration.md`](apps/platform/docs/api/education-schedules-api-integration.md) §GENERAL_INDIVIDUAL · BE handoff [`portal-individual-education-schedules-scope-backend-request-2026-10-14.md`](apps/platform/docs/api/portal-individual-education-schedules-scope-backend-request-2026-10-14.md) (예: application `1694669`, participant `1694770`, program `186099`).
+
 ### 목록
 
 - 헤더: `{탭라벨} N건` (교육일정 / 배정현황 / 배정 및 출결 현황)
@@ -330,13 +337,15 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 
 - **안내사항 탭** [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 하단 — 전폭 **`안내사항 작성하기`** → [`EducationProgramNoticeWriteModal`](apps/platform/src/features/mypage/education/notices/ui/notice-write-modal.tsx) (`PFModal` lg · mobile full)
 - **저장:** mock `appendMockEducationInProgressNotice` · remote `useCreateApplicationNoticeMutation` — 첨부 `PROGRAM_POST_ATTACHMENT` upload → `POST .../notices` → `PUT .../notices/{postId}/attachments` ([`activity-client.ts`](apps/platform/src/features/mypage/education/applications/api/activity-client.ts)). 본문 인라인 `<img>` 금지(CMS 동일). 403 `NOTICE_WRITE_NOT_ALLOWED` / `PARTICIPATION_REQUIRED` 등 → [`notice-write-errors.ts`](apps/platform/src/features/mypage/education/notices/lib/notice-write-errors.ts)
+- **작성자 표시:** 목록·상세 `createdByDisplayName` / `createdByActorType` / `mine` — [`mapPortalNoticeAuthorFields`](apps/platform/src/features/mypage/education/notices/lib/author-label.ts) · ADMIN·CMS·SYSTEM(+표시명 없으면 JA Korea 담당자) · null 표시명 → `작성자 정보 없음` · `mine===true`만 상세 수정·삭제 더보기
 
 ### 기관 신청 안내 양식 (4항목·성범죄 — 신청 폼 SSOT)
 
 - **진입:** **신청 내용 탭** [`GuidanceSection`](apps/platform/src/features/mypage/education/applications/ui/teacher-application-content/guidance-section.tsx) **`안내사항 수정하기`** 만 → `/mypage/education/:applicationId/guidance/write`
 - **화면:** [`MypageEducationInstitutionGuidanceWritePage`](apps/platform/src/pages/mypage/education/guidance-write/page.tsx) · [`INSTITUTION_GUIDANCE_FIELDS`](packages/form-schema/src/lib/institution-guidance-field-definitions.ts) + 성범죄 단락 ([`ApplyInstitutionGuidance`](apps/platform/src/features/program/ui/apply-institution-guidance/apply-institution-guidance) / [`ApplyInstitutionSexOffense*`](apps/platform/src/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense.tsx) 재사용)
 - **신청 내용 탭** 안내 블록은 **읽기 전용** (인라인 편집 없음)
-- **저장:** mock `updateMockTeacherInstitutionGuidanceFormState` · remote `PATCH /api/portal/me/organization-applications/{applicationId}/application-answers` — [`savePortalTeacherInstitutionGuidance`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-client.ts) · 성공·409 시 신청 상세 query invalidate ([`institution-guidance-hooks.ts`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-hooks.ts))
+- **저장:** mock `updateMockTeacherInstitutionGuidanceFormState` · remote `PATCH /api/portal/me/organization-applications/{applicationId}/application-answers` — [`savePortalTeacherInstitutionGuidance`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-client.ts) · body는 [`buildInstitutionGuidanceAnswerPatch`](apps/platform/src/features/mypage/education/applications/lib/institution-guidance-from-answers.ts)만 사용(URL·path id 변경 없음) · 성공·409 시 신청 상세 query invalidate ([`institution-guidance-hooks.ts`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-hooks.ts))
+- **BE(2026-10-14):** 과거 409 「최신 제출본 없음」은 PATCH `context_type` 불일치(`ORGANIZATION` vs GET `ORGANIZATION_APPLICATION`) — BE 정렬 후 FE 계약 동일 · 스모크 `1691243` — [`portal-organization-guidance-patch-409-backend-request-2026-10-14.md`](apps/platform/docs/api/portal-organization-guidance-patch-409-backend-request-2026-10-14.md) §0
 - **remote 사전 검사:** 상세 `formResponseId`·`formResponseStatus`(SUBMITTED/APPROVED/COMPLETED)·`answers` 비어 있으면 PATCH 전 안내 — [`institution-guidance-patch-readiness.ts`](apps/platform/src/features/mypage/education/applications/lib/institution-guidance-patch-readiness.ts)
 
 ## 안내사항 상세 모달 (진행중)
