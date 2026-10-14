@@ -4,7 +4,7 @@ import {
   programIncludesOperatingDate,
   programOverlapsOperatingDateRange,
   programOverlapsOperatingYear,
-} from './mock-programs'
+} from './program-operating-period'
 
 /** Platform: 모집 예정 우선, 모집 중, 모집 완료 후순위 */
 const STATUS_RANK: Record<string, number> = {

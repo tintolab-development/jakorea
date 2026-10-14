@@ -20,19 +20,8 @@ import type {
 } from '../model/types'
 import { getNoticeAttachments } from '../model/types'
 import { formatEducationNoticePublishedAt } from '../lib/format'
-import {
-  addNoticeComment,
-  deleteNoticeComment,
-  getNoticeComments,
-  updateNoticeComment,
-} from '../lib/mock-comments'
-import {
-  getNoticeReactions,
-  getNoticeReactionUsers,
-  toggleNoticeReaction,
-} from '../lib/mock-reactions'
-import { MOCK_MYPAGE_USER_NAME } from '../../../lib/constants'
 import { useMypageMember } from '../../../hooks/use-mypage-member'
+import { MOCK_MYPAGE_USER_NAME } from '../../../lib/constants'
 import {
   useApplicationNoticeCommentMutations,
   useApplicationNoticeDetailQuery,
@@ -123,8 +112,8 @@ export function EducationInProgressNoticeDetailModal({
   onClose,
   onNoticeChange,
   onDelete,
-  onReactionCountChange,
-  onCommentCountChange,
+  onReactionCountChange: _onReactionCountChange,
+  onCommentCountChange: _onCommentCountChange,
   applicationType,
   applicationId,
 }: EducationInProgressNoticeDetailModalProps) {
@@ -136,8 +125,6 @@ export function EducationInProgressNoticeDetailModal({
   const [isAttachmentListOpen, setIsAttachmentListOpen] = useState(false)
   const [isCommentListOpen, setIsCommentListOpen] = useState(false)
   const [reactionPanel, setReactionPanel] = useState<'list' | 'picker' | null>(null)
-  const [reactionTick, setReactionTick] = useState(0)
-  const [commentTick, setCommentTick] = useState(0)
   const [listPopoverStyle, setListPopoverStyle] = useState<CSSProperties | null>(null)
   const [pickerPopoverStyle, setPickerPopoverStyle] = useState<CSSProperties | null>(null)
   const reactionListRef = useRef<HTMLDivElement>(null)
@@ -190,18 +177,6 @@ export function EducationInProgressNoticeDetailModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isContentImagesLoading, setIsContentImagesLoading] = useState(false)
 
-  const mockReactions = useMemo(
-    () => (notice && !isRemote ? getNoticeReactions(notice.id) : []),
-    [isRemote, notice, reactionTick]
-  )
-  const mockReactionUsers = useMemo(
-    () => (notice && !isRemote ? getNoticeReactionUsers(notice.id) : []),
-    [isRemote, notice, reactionTick]
-  )
-  const mockComments = useMemo(
-    () => (notice && !isRemote ? getNoticeComments(notice.id) : []),
-    [isRemote, notice, commentTick]
-  )
   const remoteComments = useMemo(
     () =>
       (remoteDetail.detail?.comments ?? []).map(row =>
@@ -222,15 +197,15 @@ export function EducationInProgressNoticeDetailModal({
     }))
   }, [memberDisplayName, noticeId, remoteReactions.myReactionTypes, remoteReactions.users])
 
-  const reactions = isRemote ? remoteReactions.summary : mockReactions
-  const reactionUsers = isRemote ? remoteReactionUsers : mockReactionUsers
-  const comments = isRemote ? remoteComments : mockComments
+  const reactions = isRemote ? remoteReactions.summary : []
+  const reactionUsers = isRemote ? remoteReactionUsers : []
+  const comments = isRemote ? remoteComments : []
   const reactionCount = isRemote ? remoteReactions.total : (notice?.reactionCount ?? 0)
   const commentCount =
     isRemote && remoteDetail.detail ? remoteComments.length : (notice?.commentCount ?? 0)
   const myReactionType = isRemote
     ? remoteReactions.myReactionTypes[0]
-    : mockReactionUsers.find(row => row.authorName === MOCK_MYPAGE_USER_NAME)?.emojiType
+    : undefined
   const selectedEmojiIndex =
     myReactionType != null ? getPlatformReactionEmojiIndex(myReactionType) : null
 
@@ -461,24 +436,6 @@ export function EducationInProgressNoticeDetailModal({
       return
     }
 
-    if (emojiType) {
-      const { reactionCount: nextReactionCount } = toggleNoticeReaction(
-        notice.id,
-        emojiType,
-        MOCK_MYPAGE_USER_NAME
-      )
-      setReactionTick(tick => tick + 1)
-      onReactionCountChange?.(notice.id, nextReactionCount)
-    }
-    if (content) {
-      const { commentCount: nextCommentCount } = addNoticeComment(
-        notice.id,
-        MOCK_MYPAGE_USER_NAME,
-        content
-      )
-      setCommentTick(tick => tick + 1)
-      onCommentCountChange?.(notice.id, nextCommentCount)
-    }
     finish()
   }
 
@@ -490,8 +447,6 @@ export function EducationInProgressNoticeDetailModal({
       )
       return
     }
-    updateNoticeComment(commentId, content)
-    setCommentTick(tick => tick + 1)
   }
 
   const handleCommentDeleteConfirm = () => {
@@ -504,11 +459,7 @@ export function EducationInProgressNoticeDetailModal({
       setCommentToDeleteId(null)
       return
     }
-    const result = deleteNoticeComment(commentToDeleteId)
     setCommentToDeleteId(null)
-    if (!result) return
-    setCommentTick(tick => tick + 1)
-    onCommentCountChange?.(result.noticeId, result.commentCount)
   }
 
   const canSubmitComment =

@@ -12,12 +12,11 @@ export {
   type EducationSurveySeedKind,
 } from './lib/seed-survey-draft'
 export {
-  getMockEducationSurveyList,
   educationSurveyListStatusLabel,
   type EducationSurveyListEntry,
   type EducationSurveyListStatus,
-} from './lib/mock-survey-list'
+} from './lib/survey-list-types'
 export {
-  getEducationSurveyMockAvailability,
-  type EducationSurveyMockAvailability,
-} from './lib/mock-survey-availability'
+  getEducationSurveyTabAvailability,
+  type EducationSurveyTabAvailability,
+} from './lib/survey-tab-availability'

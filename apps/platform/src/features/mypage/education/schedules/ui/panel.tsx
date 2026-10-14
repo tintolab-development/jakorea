@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
 import { PFButton, PFText } from '@/shared/ui'
 import { resolveEducationScheduleEmptyMessage } from '../lib/scope-status'
@@ -9,7 +8,6 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SCHEDULE_PAGE_SIZE, type EducationScheduleItem } from '../model/types'
-import { getMockEducationSchedules } from '../lib/mock-schedules'
 import { EducationScheduleRow } from './row'
 import styles from './panel.module.css'
 
@@ -38,14 +36,9 @@ export function EducationSchedulePanel({
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
 
   const allItems = useMemo(() => {
-    let items: EducationScheduleItem[]
-    if (remoteSchedules.enabled) {
-      items = remoteSchedules.items
-    } else if (shouldUsePlatformMockData()) {
-      items = getMockEducationSchedules(programId)
-    } else {
-      items = []
-    }
+    const items: EducationScheduleItem[] = remoteSchedules.enabled
+      ? remoteSchedules.items
+      : []
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
   }, [lastParticipatedSession, programId, remoteSchedules.enabled, remoteSchedules.items])
 

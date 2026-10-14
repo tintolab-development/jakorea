@@ -1,76 +1,44 @@
 import { isAdminOnboardingRequired } from './admin-onboarding-session'
-import { getAccessToken, PLATFORM_AUTH_TOKEN_KEY } from './auth-token'
+import { PLATFORM_AUTH_TOKEN_KEY } from './auth-token'
 import { DEV_AUTH_CHANGE_EVENT, emitDevAuthChange } from './auth-session-event'
 
-/** DEV mock 로그인 세션 — `sign-in` Mock 버튼 전용 */
+/** @deprecated mock 로그인 제거 — 로그아웃 시 레거시 키만 정리 */
 const DEV_AUTH_STORAGE_KEY = 'platform:dev:is-logged-in'
 export { DEV_AUTH_CHANGE_EVENT }
 
 export function getDevAuthLoggedIn() {
   if (typeof window === 'undefined') return false
-  // 관리자 등록 온보딩 미완료: 토큰이 있어도 정상 로그인 UI로 취급하지 않음
   if (isAdminOnboardingRequired()) return false
-  // 실로그인 토큰이 있으면 로그인으로 간주 (헤더·마이페이지 가드 호환)
-  if (window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY)) return true
-  // DEV mock 로그인 — access token 없이 마이페이지 mock 진입
-  if (import.meta.env.DEV) {
-    return window.localStorage.getItem(DEV_AUTH_STORAGE_KEY) === 'true'
-  }
+  return Boolean(window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY))
+}
+
+/** 항상 false — mock 데이터 경로 제거 */
+export function isPlatformMockLoginSession(): boolean {
   return false
 }
 
-/** DEV mock 버튼으로 만든 세션만 true. 실세션 token이 있으면 mock 데이터는 절대 쓰지 않는다. */
-export function isPlatformMockLoginSession(): boolean {
-  if (typeof window === 'undefined') return false
-  if (!import.meta.env.DEV) return false
-  if (isAdminOnboardingRequired()) return false
-  if (window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY) || getAccessToken()) return false
-  return window.localStorage.getItem(DEV_AUTH_STORAGE_KEY) === 'true'
-}
-
-/**
- * Platform mock 카탈로그를 쓸지.
- * Mock 로그인 세션에서만 true.
- * `getDevAuthLoggedIn()`은 토큰이 있어도 true라서 데이터 소스 가드로 쓰지 않는다.
- *
- * **마이페이지 개인 데이터**(신청·일정·정산·문의 등)에만 사용한다.
- * 공개 콘텐츠 시드는 `shouldUsePlatformContentSeed` 를 본다.
- */
+/** 항상 false — 마이페이지 mock 카탈로그 미사용 */
 export function shouldUsePlatformMockData(): boolean {
-  return isPlatformMockLoginSession()
+  return false
 }
 
-/**
- * 공개 콘텐츠(프로그램·공지·실적·스토리·교재·기관소개 등) 시드 노출 여부.
- * Portal 목록/상세 API 연동 전까지는 remote 세션에서도 시드를 유지해 **시안 규격 레이아웃**이
- * 빈 목록으로 붕괴되지 않게 한다. API 연동 후 화면별로 false/실데이터로 전환한다.
- */
+/** 항상 false — 공개 콘텐츠 FE 시드 미사용 (remote API만) */
 export function shouldUsePlatformContentSeed(): boolean {
-  return true
+  return false
 }
 
-export function withPlatformMockData<T>(value: T, empty: T): T {
-  return shouldUsePlatformMockData() ? value : empty
+export function withPlatformMockData<T>(_value: T, empty: T): T {
+  return empty
 }
 
-export function withPlatformContentSeed<T>(value: T, empty: T): T {
-  return shouldUsePlatformContentSeed() ? value : empty
+export function withPlatformContentSeed<T>(_value: T, empty: T): T {
+  return empty
 }
 
-/**
- * 로그인 상태 변경 알림.
- * - 실세션: access token이 SSOT
- * - DEV mock: `platform:dev:is-logged-in` (sign-in Mock 버튼)
- */
+/** 로그아웃 등 — 레거시 mock 세션 키 제거 */
 export function setDevAuthLoggedIn(isLoggedIn: boolean) {
   if (typeof window === 'undefined') return
-  if (import.meta.env.DEV) {
-    if (isLoggedIn) {
-      window.localStorage.setItem(DEV_AUTH_STORAGE_KEY, 'true')
-    } else {
-      window.localStorage.removeItem(DEV_AUTH_STORAGE_KEY)
-    }
-  } else if (!isLoggedIn) {
+  if (!isLoggedIn) {
     window.localStorage.removeItem(DEV_AUTH_STORAGE_KEY)
   }
   emitDevAuthChange(getDevAuthLoggedIn())

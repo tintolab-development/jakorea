@@ -21,8 +21,8 @@ import {
 import { mapCmsProgramToPlatformDetail } from './map-from-cms.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
 import {
+  buildApplyFormSeedDraft,
   getApplicationTemplateCodeForApplyCase,
-  getMockApplyFormDraft,
   PROGRAM_APPLY_FORM_CASE_SSOT_IDS,
   resolveProgramApplyFormCase,
 } from './apply-form-drafts.ts'
@@ -40,7 +40,7 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
     detail.participationMethod = extra.participationMethod
   }
   const applyCase = resolveProgramApplyFormCase(detail)
-  const draft = getMockApplyFormDraft(detail)
+  const draft = buildApplyFormSeedDraft(detail)
   assert.ok(draft, `apply draft missing: ${programId}`)
   return {
     applyCase,
@@ -164,7 +164,7 @@ function testScheduleSingleDateUsesRegisteredLines() {
   assert.equal(detail.educationScheduleMode, 'date')
   assert.ok(detail.educationScheduleLines.length > 0)
 
-  const draft = getMockApplyFormDraft(detail)
+  const draft = buildApplyFormSeedDraft(detail)
   const schedule = draft.paragraphs.find(
     p => p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
   )

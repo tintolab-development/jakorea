@@ -4,7 +4,6 @@ export type {
   EducationSettlementStatus,
 } from './model/types'
 export { EDUCATION_SETTLEMENT_PAGE_SIZE } from './model/types'
-export { getMockEducationSettlements } from './lib/mock-settlements'
 export { buildSettlementWritePath, buildSettlementConfirmPath, buildSettlementTabPath } from './lib/write-path'
 export { buildSettlementWriteDraft, hydrateSettlementWriteFormState } from './lib/build-write-draft'
 export {

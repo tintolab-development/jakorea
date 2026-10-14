@@ -9,7 +9,11 @@ import type {
   HomeSocialLink,
   HomeStripBanner,
 } from './view.ts'
-import type { HomeAchievementStat, HomeHeroSlide, HomePartnerLogo } from './mock.ts'
+import type {
+  HomeAchievementStat,
+  HomeHeroSlide,
+  HomePartnerLogo,
+} from './home-fallback-content.ts'
 
 /**
  * Fallback 규율

@@ -6,7 +6,6 @@ import {
   readResultsListParams,
   resultDetailPath,
   ResultListItemRow,
-  useMockResultsCatalog,
   useProgramResultsList,
   type ResultsListParams,
 } from '@/features/result'
@@ -25,7 +24,6 @@ export function ResultsPage() {
   const [params, setParams] = useState(readResultsListParams)
   const [draftQ, setDraftQ] = useState(() => readResultsListParams().q)
   const debouncedQ = useDebouncedValue(draftQ, SEARCH_DEBOUNCE_MS)
-  const results = useMockResultsCatalog()
   const remoteList = useProgramResultsList(params)
 
   useEffect(() => {
@@ -65,8 +63,9 @@ export function ResultsPage() {
   }
 
   const filteredResults = useMemo(
-    () => (remoteList.isRemoteEnabled ? remoteList.items : filterAndSortResults(results, params)),
-    [remoteList.isRemoteEnabled, remoteList.items, results, params]
+    () =>
+      remoteList.isRemoteEnabled ? remoteList.items : filterAndSortResults([], params),
+    [remoteList.isRemoteEnabled, remoteList.items, params]
   )
 
   const totalPages = remoteList.isRemoteEnabled

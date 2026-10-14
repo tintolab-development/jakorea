@@ -19,7 +19,7 @@ export {
 } from './lib/constants'
 export { buildTextbooksListPath, readTextbooksListParams } from './lib/list-params'
 export { isTextbooksPath } from './lib/routes'
-export { filterAndSortTextbooks, filterTextbooksByCategory } from './lib/mock-data'
+export { filterAndSortTextbooks, filterTextbooksByCategory } from './lib/filter-textbooks'
 export { usePublicTextbookCatalog, usePublicTextbookDetail } from './api/hooks'
 export { buildThemeSections } from './api/mappers'
 export { DirectoryListItem } from './ui/directory-list-item'

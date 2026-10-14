@@ -4,7 +4,6 @@ import path from 'path'
 import type { Plugin, ProxyOptions } from 'vite'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
-import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
 
 function withNgrokSkip(
   target: string,
@@ -117,7 +116,6 @@ export default defineConfig(({ mode }) => {
       : {}),
     plugins: [
       react(),
-      mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
       ...(isProgramPreviewBuild ? [dropUnreferencedAssetsPlugin()] : []),
     ],
     css: {

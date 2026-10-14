@@ -1,6 +1,6 @@
 import { mapPortalFormListItemToSurveyEntry } from '../../applications/lib/portal-form-list'
 import type { PortalFormListItem } from '../../applications/api/activity-client'
-import type { EducationSurveyListEntry } from './mock-survey-list'
+import type { EducationSurveyListEntry } from './survey-list-types'
 
 /** Portal program-applications `forms` item.status (BE SSOT) */
 export type PortalFormResponseStatus =

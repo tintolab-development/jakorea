@@ -13,5 +13,5 @@ function subscribe(onStoreChange: () => void) {
 
 /** mock 카탈로그 on/off. 로그인 전환 시 getter를 다시 읽게 한다. */
 export function useShouldUsePlatformMockData(): boolean {
-  return useSyncExternalStore(subscribe, shouldUsePlatformMockData, () => true)
+  return useSyncExternalStore(subscribe, shouldUsePlatformMockData, () => false)
 }

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
-import type { DonationImpactItem } from '../lib/impact-mock'
+import type { DonationImpactItem } from '../lib/donation-impact-types'
 import styles from './donation-impact-card.module.css'
 
 export type DonationImpactCardProps = {

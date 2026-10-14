@@ -30,14 +30,12 @@ export { filterCareerJobs } from './lib/filter-jobs'
 export {
   CAREERS_HERO,
   FEATURED_STORIES,
-  MOCK_CAREER_JOBS,
   THRIVE_DECORATION_URL,
   THRIVE_TITLE,
   THRIVE_VALUES,
   getFeaturedStories,
-  getMockCareerJobs,
   getThriveValues,
-} from './lib/mock-data'
+} from './lib/careers-fallback-content'
 export {
   useCareerPostingDetail,
   useCreatePublicCareerTalentApplication,

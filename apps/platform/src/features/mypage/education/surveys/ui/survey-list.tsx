@@ -2,7 +2,7 @@ import { PFText } from '@/shared/ui'
 import {
   educationSurveyListStatusLabel,
   type EducationSurveyListEntry,
-} from '../lib/mock-survey-list'
+} from '../lib/survey-list-types'
 import styles from './survey-list.module.css'
 
 export type EducationSurveyListProps = {

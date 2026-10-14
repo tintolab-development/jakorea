@@ -3,15 +3,11 @@ import type {
   EducationWithdrawalPhase,
 } from '@/features/mypage/education/applications/model/types'
 
-export type EducationSurveyMockAvailability = 'active' | 'empty'
+export type EducationSurveyTabAvailability = 'active' | 'empty'
 
 type SurveyAvailabilityOptions = {
   displayStatus: EducationDisplayStatus
   withdrawalPhase?: EducationWithdrawalPhase
-  /**
-   * 프로그램에 설문/만족도 미설정 시 false.
-   * `surveyConfigured` / `satisfactionConfigured` 어느 쪽이든 이 키로 전달.
-   */
   configured?: boolean
   /** @deprecated `configured` 사용 — survey 탭 호환 */
   surveyConfigured?: boolean
@@ -19,9 +15,9 @@ type SurveyAvailabilityOptions = {
 
 const ACTIVE_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'completed'])
 
-export function getEducationSurveyMockAvailability(
-  options: SurveyAvailabilityOptions,
-): EducationSurveyMockAvailability {
+export function getEducationSurveyTabAvailability(
+  options: SurveyAvailabilityOptions
+): EducationSurveyTabAvailability {
   const configured = options.configured ?? options.surveyConfigured
   if (configured === false) {
     return 'empty'
@@ -40,3 +36,7 @@ export function getEducationSurveyMockAvailability(
 
   return 'empty'
 }
+
+/** @deprecated `getEducationSurveyTabAvailability` */
+export const getEducationSurveyMockAvailability = getEducationSurveyTabAvailability
+export type EducationSurveyMockAvailability = EducationSurveyTabAvailability

@@ -2,10 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { useCreateApplicationNoticeMutation } from '../../applications/api/activity-hooks'
-import {
-  appendMockEducationInProgressFiles,
-  appendMockEducationInProgressNotice,
-} from '../lib/mock-notices'
 import { deriveNoticeTitleFromHtml, isNoticeHtmlContentEmpty } from '../lib/derive-notice-title'
 import {
   NOTICE_ATTACH_ACCEPT,
@@ -22,7 +18,6 @@ import {
   type PostWriteAudienceApiKey,
 } from '../lib/post-write-audience'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import { PfRichTextEditor, useRichTextEditor } from '@/shared/rich-text'
 import {
   PFAlertModal,
@@ -47,7 +42,7 @@ type EducationProgramNoticeWriteModalProps = {
   applicationId: string
   program: ProgramDetail
   authorDisplayName: string
-  onMockSuccess?: () => void
+  onCreated?: () => void
 }
 
 export function EducationProgramNoticeWriteModal({
@@ -56,8 +51,8 @@ export function EducationProgramNoticeWriteModal({
   applicationType,
   applicationId,
   program,
-  authorDisplayName,
-  onMockSuccess,
+  authorDisplayName: _authorDisplayName,
+  onCreated,
 }: EducationProgramNoticeWriteModalProps) {
   const [audience, setAudience] = useState<PostWriteAudienceApiKey[]>(() =>
     defaultPostWriteAudience(program)
@@ -147,32 +142,12 @@ export function EducationProgramNoticeWriteModal({
         ? organizationApplicationId
         : undefined
 
-    const useMockPersist = !isRemoteApiConfigured() || shouldUsePlatformMockData()
+    if (!isRemoteApiConfigured()) {
+      setAlertMessage('API가 설정되지 않아 등록할 수 없습니다.')
+      return
+    }
 
     try {
-      if (useMockPersist) {
-        const notice = appendMockEducationInProgressNotice({
-          programId: program.id,
-          title,
-          content,
-          authorName: authorDisplayName,
-          attachmentCount: attachments.length,
-        })
-        if (attachments.length > 0) {
-          appendMockEducationInProgressFiles(
-            program.id,
-            notice.id,
-            attachments.map(item => ({
-              fileName: item.file.name,
-              fileSizeBytes: item.file.size,
-            }))
-          )
-        }
-        onMockSuccess?.()
-        onClose()
-        return
-      }
-
       await createMutation.mutateAsync({
         title,
         content,
@@ -180,6 +155,7 @@ export function EducationProgramNoticeWriteModal({
         organizationApplicationId: orgId,
         attachmentFiles: attachments.map(item => item.file),
       })
+      onCreated?.()
       onClose()
     } catch (error) {
       setAlertMessage(resolvePortalNoticeWriteErrorMessage(error))

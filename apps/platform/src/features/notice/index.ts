@@ -12,15 +12,6 @@ export {
   NOTICES_PATH,
   noticeDetailPath,
 } from './lib/constants'
-export {
-  getAdjacentNotices,
-  getMockNoticeById,
-  getMockNoticeDetailById,
-  getMockNotices,
-  useMockNoticeDetail,
-  useMockNoticesCatalog,
-  type NoticeCatalogItem,
-} from './lib/mock-notices'
 export type { AdjacentNotices } from './lib/adjacent'
 export { getAdjacentFromNotices } from './lib/adjacent'
 export {

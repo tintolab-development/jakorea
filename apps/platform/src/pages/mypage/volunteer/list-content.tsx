@@ -1,19 +1,15 @@
-import { useMemo, useSyncExternalStore } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   EDUCATION_APPLICATION_PAGE_SIZE,
   EducationApplicationListItemRow,
   filterVolunteerStatusApplications,
-  getMockEducationApplications,
-  getMockEducationApplicationsVersion,
   listEducationApplications,
-  subscribeMockEducationApplications,
   useMyProgramApplications,
   volunteerApplicationDetailPath,
   type EducationApplicationListParams,
   EducationApplicationListSkeleton,
 } from '@/features/mypage'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFText } from '@/shared/ui'
 import styles from '../education/page.module.css'
 
@@ -25,30 +21,17 @@ type VolunteerListContentProps = {
 export function VolunteerListContent({ params, onParamsChange }: VolunteerListContentProps) {
   const navigate = useNavigate()
   const remoteApplications = useMyProgramApplications('volunteer')
-  const applicationsVersion = useSyncExternalStore(
-    subscribeMockEducationApplications,
-    getMockEducationApplicationsVersion,
-    getMockEducationApplicationsVersion,
-  )
-  const mockEnabled = useShouldUsePlatformMockData()
 
   const { items, totalPages, currentPage, totalElements } = useMemo(() => {
     const sourceItems = remoteApplications.isRemoteEnabled
       ? remoteApplications.items
-      : filterVolunteerStatusApplications(getMockEducationApplications())
+      : filterVolunteerStatusApplications([])
     return listEducationApplications(sourceItems, {
       tab: params.tab,
       page: params.page,
       pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
     })
-  }, [
-    applicationsVersion,
-    mockEnabled,
-    params.page,
-    params.tab,
-    remoteApplications.isRemoteEnabled,
-    remoteApplications.items,
-  ])
+  }, [params.page, params.tab, remoteApplications.isRemoteEnabled, remoteApplications.items])
 
   if (remoteApplications.isRemoteEnabled && remoteApplications.isLoading) {
     return <EducationApplicationListSkeleton rowCount={3} />
@@ -60,7 +43,7 @@ export function VolunteerListContent({ params, onParamsChange }: VolunteerListCo
         <div className={styles.list}>
           {items.map(item => (
             <EducationApplicationListItemRow
-              key={`${item.applicationType ?? 'mock'}:${item.id}`}
+              key={`${item.applicationType ?? 'application'}:${item.id}`}
               item={item}
               onClick={() =>
                 navigate(volunteerApplicationDetailPath(item.id, item.applicationType), {

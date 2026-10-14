@@ -1,10 +1,9 @@
 import { ProgramBackButton } from '@/features/program'
 import {
-  getAdjacentResults,
+  getEmptyAdjacentResults,
   getResultIdFromPath,
   ResultAdjacentNav,
   RESULTS_PATH,
-  useMockResultDetail,
   useProgramResultDetail,
 } from '@/features/result'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -25,14 +24,11 @@ function formatViewCount(count: number) {
 export function ResultDetailPage() {
   const navigate = useNavigate()
   const resultId = getResultIdFromPath()
-  const mockDetail = useMockResultDetail(resultId)
   const remoteDetail = useProgramResultDetail(resultId)
-  const detail = remoteDetail.isRemoteEnabled ? remoteDetail.data : mockDetail
+  const detail = remoteDetail.isRemoteEnabled ? remoteDetail.data : null
   const adjacent = remoteDetail.isRemoteEnabled
     ? { previous: remoteDetail.previous, next: remoteDetail.next }
-    : detail
-      ? getAdjacentResults(detail.id)
-      : { previous: null, next: null }
+    : getEmptyAdjacentResults()
 
   const handleBackToList = () => {
     if (window.history.length > 1) {

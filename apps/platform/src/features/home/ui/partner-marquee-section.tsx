@@ -5,7 +5,7 @@ import jaArrowCtaMintUrl from '../image/icon/ja-arrow-cta-mint.svg'
 import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
 import { useHomeMain } from '../api/use-home-main'
 import type { HomeDonationCta } from '../lib/view'
-import type { HomePartnerLogo } from '../lib/mock'
+import type { HomePartnerLogo } from '../lib/home-fallback-content'
 import { SkeletonBlock } from './skeleton-block'
 import styles from './partner-marquee-section.module.css'
 

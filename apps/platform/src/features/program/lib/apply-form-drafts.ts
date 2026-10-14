@@ -89,7 +89,7 @@ export function getMockApplyFormCase(
  * 케이스 해석 후 CMS templateCode와 동일한 시드 draft를 반환한다.
  * 일반 개인·기관은 등록된 교육 진행 일정 유형에 따라 scheduleChoice를 숨기거나 선택지를 맞춘다.
  */
-export function getMockApplyFormDraft(
+export function buildApplyFormSeedDraft(
   program: Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
     Partial<
       Pick<

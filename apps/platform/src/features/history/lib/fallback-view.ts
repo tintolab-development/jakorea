@@ -16,7 +16,7 @@ import {
   KOREA_TIMELINE_PERIODS,
   LEARNING_PHOTO_URL,
   WORLD_TIMELINE_PERIODS,
-} from './mock-data'
+} from './page-content'
 import type { HistoryPageView, HistoryTimelinePeriodView } from '../model/view'
 
 function media(fileName: string, url: string, alt: string) {

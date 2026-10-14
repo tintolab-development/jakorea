@@ -5,7 +5,7 @@ import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schem
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import {
-  getMockApplyFormDraft,
+  buildApplyFormSeedDraft,
   getProgramIdFromPath,
   parsePortalProgramId,
   ProgramBackButton,
@@ -727,7 +727,7 @@ export function ProgramApplyPage() {
     if (hydratedFormKeyRef.current === mockKey) return
     hydratedFormKeyRef.current = mockKey
     setDraft(
-      getMockApplyFormDraft({
+      buildApplyFormSeedDraft({
         ...program,
         applicationType: focusedApplicationType,
       }),

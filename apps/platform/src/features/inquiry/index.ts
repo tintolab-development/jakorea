@@ -19,11 +19,6 @@ export {
 } from './lib/constants'
 export { filterFaqs } from './lib/filter-faqs'
 export { buildInquiryListPath, readInquiryListParams } from './lib/list-params'
-export { MOCK_FAQS, useMockFaqsCatalog } from './lib/mock-faqs'
-export {
-  MOCK_ONE_TO_ONE_INQUIRIES,
-  useMockOneToOneInquiriesCatalog,
-} from './lib/mock-one-to-one-inquiries'
 export {
   useCreateMyInquiryMutation,
   useDeleteMyInquiryMutation,
@@ -35,4 +30,3 @@ export {
 export { FaqTabContent } from './ui/faq-tab-content'
 export { InquiryTabContent } from './ui/inquiry-tab-content'
 export { OneToOneInquiryWriteModal } from './ui/one-to-one-inquiry-write-modal'
-export type { OneToOneInquiryWriteModalProps } from './ui/one-to-one-inquiry-write-modal'

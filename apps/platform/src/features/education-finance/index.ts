@@ -14,7 +14,7 @@ export { isEducationFinancePath } from './lib/routes'
 export {
   EDUCATION_FINANCE_PROGRAMS,
   getEducationFinancePrograms,
-} from './lib/mock-data'
+} from './lib/page-content'
 export { ProgramSection } from './ui/program-section'
 export { ProgramGallery } from './ui/program-gallery'
 export { PartnerBadge } from './ui/partner-badge'

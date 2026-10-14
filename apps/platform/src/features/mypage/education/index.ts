@@ -22,12 +22,6 @@ export {
   EDUCATION_APPLICATION_PAGE_SIZE,
   EDUCATION_APPLICATION_TAB_ITEMS,
   EDUCATION_TEACHER_DELIVERY_STATUS_LABEL,
-  MOCK_EDUCATION_APPLICATIONS,
-  cancelMockEducationApplication,
-  getMockEducationApplicationById,
-  getMockEducationApplications,
-  getMockEducationApplicationsVersion,
-  subscribeMockEducationApplications,
   filterEducationStatusApplications,
   filterLectureStatusApplications,
   filterVolunteerStatusApplications,
@@ -93,8 +87,6 @@ export type {
 export {
   getFirstNoticeAttachment,
   getNoticeAttachments,
-  getMockEducationInProgressFiles,
-  getMockEducationInProgressNotices,
   EducationInProgressNoticePanel,
   EducationProgramInfoModal,
   EducationInProgressNoticeDetailModal,
@@ -118,7 +110,6 @@ export {
   resolveEducationScheduleProgressStatus,
   shouldShowEducationAssignment,
   formatEducationScheduleHeldAt,
-  getMockEducationSchedules,
   EducationSchedulePanel,
   EducationScheduleRow,
 } from './schedules'
@@ -127,7 +118,7 @@ export type {
   EducationSatisfactionAudience,
   EducationSurveyEmptyKind,
   EducationSurveyFillPanelProps,
-  EducationSurveyMockAvailability,
+  EducationSurveyTabAvailability,
   EducationSurveySeedKind,
 } from './surveys'
 export {
@@ -135,7 +126,7 @@ export {
   EducationSurveyFillPanel,
   createEducationSurveySeedDraft,
   EDUCATION_SURVEY_SEED_CREATED_AT,
-  getEducationSurveyMockAvailability,
+  getEducationSurveyTabAvailability,
 } from './surveys'
 export type {
   EducationSettlementItem,
@@ -148,5 +139,4 @@ export {
   EducationSettlementWriteForm,
   buildSettlementWritePath,
   buildSettlementTabPath,
-  getMockEducationSettlements,
 } from './settlements'

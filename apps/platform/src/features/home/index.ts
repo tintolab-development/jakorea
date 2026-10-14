@@ -7,8 +7,12 @@ export {
   HOME_YOUTUBE_URL,
   getHomeAchievementHighlight,
   getHomeAchievementStats,
-} from './lib/mock'
-export type { HomeAchievementStat, HomeHeroSlide, HomePartnerLogo } from './lib/mock'
+} from './lib/home-fallback-content'
+export type {
+  HomeAchievementStat,
+  HomeHeroSlide,
+  HomePartnerLogo,
+} from './lib/home-fallback-content'
 
 export { HOME_MAIN_FALLBACK, getHomeMainFallback } from './lib/fallback'
 export { FALLBACK_IMPACT_TITLE } from './lib/view'

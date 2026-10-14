@@ -15,7 +15,6 @@ import {
   getLoginApiErrorMessage,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
-import type { PlatformMemberProfile } from '@/features/mypage'
 import {
   isPortalSocialAuthLoginRemoteEnabled,
   platformSocialAuthClient,
@@ -26,7 +25,6 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useMediaQuery } from '@/shared/hooks'
 import {
   clearAuthTokens,
-  DEV_MEMBER_PROFILE_OPTIONS,
   isRemoteApiConfigured,
   platformMediaQueries,
   queryClient,
@@ -83,18 +81,6 @@ export function SignInPage() {
   const loginMutation = usePortalLoginMutation()
 
   const resolveRedirectPath = () => searchParams.get('redirect') ?? '/'
-
-  const completeDevSignIn = (profile?: PlatformMemberProfile) => {
-    // mock 로그인: 실 API 토큰이 남아 있으면 remote 세션으로 오인 → mock 데이터가 안 나옴
-    clearAuthTokens()
-    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
-    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
-    if (profile) {
-      setDevMemberProfile(profile)
-    }
-    setDevAuthLoggedIn(true)
-    navigate(resolveRedirectPath())
-  }
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
@@ -214,10 +200,6 @@ export function SignInPage() {
       })
   }
 
-  const handleMockProfileSignIn = (profile: PlatformMemberProfile) => {
-    completeDevSignIn(profile)
-  }
-
   const isSubmitting = loginMutation.isPending || loadingProvider !== null
 
   return (
@@ -335,32 +317,6 @@ export function SignInPage() {
           ))}
         </div>
       </div>
-
-      {import.meta.env.DEV ? (
-        <div className={styles.mockSection}>
-          <div className={styles.socialDivider}>
-            <span className={styles.socialDividerLine} />
-            <PFText typo="caption-rg" color="neutral-cool-500">
-              Mock 로그인 (개발용)
-            </PFText>
-            <span className={styles.socialDividerLine} />
-          </div>
-          <div className={styles.mockLoginColumn}>
-            {DEV_MEMBER_PROFILE_OPTIONS.map(option => (
-              <PFButton
-                key={option.value}
-                type="button"
-                size="xlarge"
-                className={styles.submitButton}
-                disabled={isSubmitting}
-                onClick={() => handleMockProfileSignIn(option.value)}
-              >
-                {option.label} 로그인
-              </PFButton>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </section>
   )
 }

@@ -6,7 +6,6 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
-import { getMockEducationSettlements } from '../lib/mock-settlements'
 import {
   countCompletedSettlementSessions,
   resolvePaymentStatementProcessLabel,
@@ -32,9 +31,7 @@ export function EducationSettlementPanel({
   const remoteSettlements = useApplicationSettlementsQuery(applicationType, applicationId, programId)
 
   const allItems = useMemo(() => {
-    const items = remoteSettlements.enabled
-      ? remoteSettlements.items
-      : getMockEducationSettlements(programId)
+    const items = remoteSettlements.enabled ? remoteSettlements.items : []
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
   }, [lastParticipatedSession, programId, remoteSettlements.enabled, remoteSettlements.items])
 

@@ -1,16 +1,11 @@
 /**
- * CMS 공지사항 카테고리 mock 시드 미러.
+ * CMS 공지사항 카테고리 — portal 결과 필터용 상수.
  * SSOT: apps/cms/src/features/posts/model/admin-notice-management-filter-fields.ts
- * (`createInitialNoticeCategoryRows`)
- * 실 API 연동 시 portal notice-categories로 교체.
  */
 
-import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { NoticeCategory } from '../model/types'
 import type { PFTabItem } from '@/shared/ui'
 
-/** CMS `PROGRAM_RESULT_NOTICE_CATEGORIES`와 동일 */
 export const RESULT_ANNOUNCEMENT_CATEGORY_NAMES = [
   '최종 합격 발표',
   '서류 심사 결과',
@@ -30,7 +25,6 @@ const CMS_NOTICE_CATEGORY_SEED: readonly NoticeCategory[] = [
   { id: RESULT_DOCS_CATEGORY_ID, name: '서류 심사 결과' },
 ]
 
-/** 시안 pill 탭 — 라벨은 스크린샷, 필터는 CMS 카테고리 id로 resolve */
 export const RESULT_CATEGORY_TAB_ITEMS: readonly PFTabItem[] = [
   { key: 'all', label: '전체' },
   { key: 'result', label: '결과발표' },
@@ -38,10 +32,6 @@ export const RESULT_CATEGORY_TAB_ITEMS: readonly PFTabItem[] = [
   { key: 'screening', label: '심사결과' },
 ]
 
-/**
- * 탭 key → 필터용 categoryId.
- * `docs`·`screening`은 CMS에 카테고리가 1개뿐이므로 둘 다 `notice-cat-7`.
- */
 export function resolveResultCategoryFilterId(tabKey: string): string {
   switch (tabKey) {
     case 'all':
@@ -58,15 +48,9 @@ export function resolveResultCategoryFilterId(tabKey: string): string {
   }
 }
 
-export function getMockNoticeCategories(): NoticeCategory[] {
-  if (!shouldUsePlatformContentSeed()) return []
-  return CMS_NOTICE_CATEGORY_SEED.map(row => ({ ...row }))
-}
-
-/** 결과 확인 필터 — 전체 + 결과 발표 카테고리만 (드롭다운 레거시) */
 export function getNoticeCategoryFilterOptions(): { value: string; label: string }[] {
   const resultCategories = CMS_NOTICE_CATEGORY_SEED.filter(row =>
-    (RESULT_ANNOUNCEMENT_CATEGORY_NAMES as readonly string[]).includes(row.name)
+    (RESULT_ANNOUNCEMENT_CATEGORY_NAMES as readonly string[]).includes(row.name),
   )
 
   return [
@@ -77,11 +61,6 @@ export function getNoticeCategoryFilterOptions(): { value: string; label: string
 
 export function getResultCategoryTabItems(): PFTabItem[] {
   return RESULT_CATEGORY_TAB_ITEMS.map(item => ({ ...item }))
-}
-
-export function useMockNoticeCategories(): NoticeCategory[] {
-  useShouldUsePlatformMockData()
-  return getMockNoticeCategories()
 }
 
 export function findNoticeCategoryByName(name: string): NoticeCategory | undefined {

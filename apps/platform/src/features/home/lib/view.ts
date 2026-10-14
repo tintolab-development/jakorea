@@ -1,6 +1,10 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import type { ImpactStoryListItem } from '@/features/impact-story'
-import type { HomeAchievementStat, HomeHeroSlide, HomePartnerLogo } from './mock'
+import type {
+  HomeAchievementStat,
+  HomeHeroSlide,
+  HomePartnerLogo,
+} from './home-fallback-content'
 
 export type HomeStripBanner = {
   id: string

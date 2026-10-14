@@ -14,7 +14,7 @@ export { isEducationDigitalLiteracyPath } from './lib/routes'
 export {
   EDUCATION_DIGITAL_LITERACY_PROGRAMS,
   getEducationDigitalLiteracyPrograms,
-} from './lib/mock-data'
+} from './lib/page-content'
 export { ProgramSection } from './ui/program-section'
 export { ProgramGallery } from './ui/program-gallery'
 export { PartnerBadge } from './ui/partner-badge'

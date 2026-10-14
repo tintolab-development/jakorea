@@ -17,7 +17,6 @@ export {
   shouldShowEducationAssignment,
 } from './lib/schedule-rules'
 export { formatEducationScheduleHeldAt } from './lib/format'
-export { getMockEducationSchedules } from './lib/mock-schedules'
 export { mapPortalEducationSchedule } from './lib/map-from-portal'
 export { EducationSchedulePanel } from './ui/panel'
 export { EducationScheduleRow } from './ui/row'

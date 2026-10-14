@@ -5,23 +5,12 @@ import thriveImpactDecoUrl from '../image/illustration/thrive-impact-deco.svg'
 import thriveLearnDecoUrl from '../image/illustration/thrive-learn-deco.svg'
 import thriveSpeakDecoUrl from '../image/illustration/thrive-speak-deco.svg'
 import thriveTitleDecoUrl from '../image/illustration/thrive-title-deco.svg'
-import type {
-  CareerJobListItem,
-  CareersFeaturedStory,
-  ThriveValue,
-} from '../model/types'
+import type { CareersFeaturedStory, ThriveValue } from '../model/types'
 
 export const CAREERS_HERO = {
   label: '인재채용',
-  titleLines: [
-    '가능성을 믿는 사람들이',
-    '만드는 변화, 우리는 청소년의',
-    '가능성을 믿습니다',
-  ],
-  descriptionKo: [
-    '신뢰와 존중을 바탕으로 함께 배우고 성장하며,',
-    '그 가능성을 현실로 만들어갑니다.',
-  ],
+  titleLines: ['가능성을 믿는 사람들이', '만드는 변화, 우리는 청소년의', '가능성을 믿습니다'],
+  descriptionKo: ['신뢰와 존중을 바탕으로 함께 배우고 성장하며,', '그 가능성을 현실로 만들어갑니다.'],
   descriptionEn:
     'People who believe in young people, creating impact together through trust, partnership, and continuous learning.',
   imageUrl: heroImageUrl,
@@ -54,12 +43,8 @@ export const THRIVE_VALUES: readonly ThriveValue[] = [
     title: 'Keep Learning',
     summary: '배움은 성장의 시작입니다',
     summaryLines: ['배움은 성장의 시작입니다'],
-    detail:
-      '호기심을 가지고 새로운 것에 도전하며 끊임없이 배우고 더 나은 방법을 함께 찾아갑니다.',
-    detailLines: [
-      '호기심을 가지고 새로운 것에 도전하며 끊임없이',
-      '배우고 더 나은 방법을 함께 찾아갑니다.',
-    ],
+    detail: '호기심을 가지고 새로운 것에 도전하며 끊임없이 배우고 더 나은 방법을 함께 찾아갑니다.',
+    detailLines: ['호기심을 가지고 새로운 것에 도전하며 끊임없이', '배우고 더 나은 방법을 함께 찾아갑니다.'],
     tone: 'sky',
     column: 'left',
     order: 1,
@@ -87,10 +72,7 @@ export const THRIVE_VALUES: readonly ThriveValue[] = [
     summaryLines: ['협력은 서로를 존중하는', '마음에서 시작됩니다'],
     detail:
       '다양한 의견에 귀 기울이고, 도움이 필요한 순간에는 기꺼이 손을 내밀며 함께 해결책을 찾아갑니다.',
-    detailLines: [
-      '다양한 의견에 귀 기울이고, 도움이 필요한 순간에는',
-      '기꺼이 손을 내밀며 함께 해결책을 찾아갑니다.',
-    ],
+    detailLines: ['다양한 의견에 귀 기울이고, 도움이 필요한 순간에는', '기꺼이 손을 내밀며 함께 해결책을 찾아갑니다.'],
     tone: 'lime',
     column: 'right',
     order: 1,
@@ -128,84 +110,6 @@ export const FEATURED_STORIES: readonly CareersFeaturedStory[] = [
     imageUrl: storyMetlifeUrl,
   },
 ]
-
-/** 채용성 mock — 시안 공지 제목은 사용하지 않음 */
-export const MOCK_CAREER_JOBS: readonly CareerJobListItem[] = [
-  {
-    id: 'job-1',
-    title: '교육사업팀 프로그램 매니저 채용',
-    status: 'recruiting',
-    statusLabel: '모집중',
-    publishedAtLabel: '2026년 05월 08일',
-  },
-  {
-    id: 'job-2',
-    title: '마케팅·커뮤니케이션 담당자 채용',
-    status: 'recruiting',
-    statusLabel: '모집중',
-    publishedAtLabel: '2026년 04월 22일',
-  },
-  {
-    id: 'job-3',
-    title: '디지털 콘텐츠 기획자 채용 — 서류 합격자 안내',
-    status: 'result',
-    statusLabel: '결과발표',
-    publishedAtLabel: '2026년 03월 15일',
-  },
-  {
-    id: 'job-4',
-    title: '지역 파트너십 코디네이터 채용 — 최종 합격자 발표',
-    status: 'result',
-    statusLabel: '결과발표',
-    publishedAtLabel: '2026년 02월 28일',
-  },
-  {
-    id: 'job-5',
-    title: '경영지원팀 회계·총무 담당자 채용',
-    status: 'closed',
-    statusLabel: '모집완료',
-    publishedAtLabel: '2025년 12월 10일',
-  },
-  {
-    id: 'job-6',
-    title: '자원봉사 운영 매니저 채용',
-    status: 'closed',
-    statusLabel: '모집완료',
-    publishedAtLabel: '2025년 11월 05일',
-  },
-  {
-    id: 'job-7',
-    title: '2025 하반기 신입·경력 공개채용',
-    status: 'closed',
-    statusLabel: '모집완료',
-    publishedAtLabel: '2025년 09월 18일',
-  },
-  {
-    id: 'job-8',
-    title: '교육 콘텐츠 에디터 채용',
-    status: 'closed',
-    statusLabel: '모집완료',
-    publishedAtLabel: '2025년 08월 01일',
-  },
-  {
-    id: 'job-9',
-    title: 'IT·데이터 분석 담당자 채용',
-    status: 'closed',
-    statusLabel: '모집완료',
-    publishedAtLabel: '2025년 06월 20일',
-  },
-  {
-    id: 'job-10',
-    title: '대외협력팀 어시스턴트 채용',
-    status: 'closed',
-    statusLabel: '모집완료',
-    publishedAtLabel: '2025년 05월 08일',
-  },
-]
-
-export function getMockCareerJobs() {
-  return MOCK_CAREER_JOBS
-}
 
 export function getThriveValues() {
   return THRIVE_VALUES

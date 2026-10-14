@@ -1,5 +1,5 @@
 import type { PortalFormListItem } from '../api/activity-client'
-import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
+import type { EducationSurveyListEntry } from '../../surveys/lib/survey-list-types'
 
 export const PORTAL_SURVEY_FORM_TYPE_QUERIES = ['SURVEY', 'QUESTIONNAIRE'] as const
 

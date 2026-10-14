@@ -27,7 +27,7 @@ import {
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
-import { getMockEducationSurveyList, type EducationSurveyListEntry } from '../lib/mock-survey-list'
+import type { EducationSurveyListEntry } from '../lib/survey-list-types'
 import { isPortalFormSubmissionPeriodOpen } from '../lib/portal-form-submission-period'
 import { EducationSurveyEmptyPanel } from './empty-panel'
 import {
@@ -105,7 +105,7 @@ export function EducationSurveyFillPanel({
     kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
   )
   const surveyList = useMemo(
-    () => (remoteForms.enabled ? remoteForms.items : getMockEducationSurveyList(kind)),
+    () => (remoteForms.enabled ? remoteForms.items : []),
     [kind, remoteForms.enabled, remoteForms.items],
   )
   const showList = surveyList.length >= 2

@@ -1,5 +1,5 @@
 /**
- * 홈 섹션 mock 데이터 — 공개 API(`GET /api/public/main`) 실패·빈 필드의 fallback SSOT.
+ * 홈 섹션 fallback 데이터 — 공개 API(`GET /api/public/main`) 실패·빈 필드의 fallback SSOT.
  * 연동 시 `lib/map-public-main.ts`가 이 값을 기본으로 쓰고, 원격 값만 덮어쓴다.
  */
 

@@ -4,7 +4,6 @@ import {
   useCreateMyInquiryMutation,
   useDeleteMyInquiryMutation,
   useInquiryWriteOptionsQuery,
-  useMockOneToOneInquiriesCatalog,
   useMyInquiriesQuery,
   useMyInquiryDetailQuery,
   type InquiryListParams,
@@ -46,8 +45,7 @@ function createInquiryItem(
 
 export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentProps) {
   const remoteInquiries = useMyInquiriesQuery()
-  const catalog = useMockOneToOneInquiriesCatalog()
-  const [localItems, setLocalItems] = useState<OneToOneInquiryItem[]>(() => [...catalog])
+  const [localItems, setLocalItems] = useState<OneToOneInquiryItem[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
   const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)

@@ -3,7 +3,6 @@ import {
   FAQ_CATEGORY_OPTIONS,
   FAQ_PAGE_SIZE,
   filterFaqs,
-  useMockFaqsCatalog,
   usePublicFaqsQuery,
   type InquiryListParams,
 } from '@/features/inquiry'
@@ -23,8 +22,7 @@ type FaqTabContentProps = {
 
 export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
   const remoteFaqs = usePublicFaqsQuery()
-  const mockFaqs = useMockFaqsCatalog()
-  const faqs = remoteFaqs.enabled ? remoteFaqs.items : mockFaqs
+  const faqs = remoteFaqs.enabled ? remoteFaqs.items : []
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const filteredFaqs = useMemo(() => filterFaqs(faqs, params), [faqs, params])
