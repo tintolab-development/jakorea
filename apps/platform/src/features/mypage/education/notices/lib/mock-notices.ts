@@ -72,12 +72,30 @@ const MOCK_FILES: EducationInProgressFile[] = [
 ]
 
 const appendedNoticesByProgramId = new Map<string, EducationInProgressNotice[]>()
+const appendedFilesByProgramId = new Map<string, EducationInProgressFile[]>()
+
+export function appendMockEducationInProgressFiles(
+  programId: string,
+  postId: string,
+  files: Array<{ fileName: string; fileSizeBytes: number }>,
+): void {
+  const rows = files.map((file, index) => ({
+    id: `edu-file-mock-${postId}-${index}`,
+    fileName: file.fileName,
+    uploadedAt: new Date().toISOString(),
+    fileSizeBytes: file.fileSizeBytes,
+    postId,
+  }))
+  const prev = appendedFilesByProgramId.get(programId) ?? []
+  appendedFilesByProgramId.set(programId, [...rows, ...prev])
+}
 
 export type AppendMockEducationNoticeInput = {
   programId: string
   title: string
   content: string
   authorName: string
+  attachmentCount?: number
 }
 
 /** mock — 교사·강사가 작성한 프로그램 안내사항 게시글 */
@@ -95,6 +113,7 @@ export function appendMockEducationInProgressNotice(
     commentCount: 0,
     reactionCount: 0,
     isAuthor: true,
+    attachmentCount: input.attachmentCount ?? 0,
   }
   const prev = appendedNoticesByProgramId.get(input.programId) ?? []
   appendedNoticesByProgramId.set(input.programId, [notice, ...prev])
@@ -108,7 +127,8 @@ export function getMockEducationInProgressNotices(programId: string): EducationI
   return [...appended, ...MOCK_NOTICES.map(notice => ({ ...notice }))]
 }
 
-export function getMockEducationInProgressFiles(_programId: string): EducationInProgressFile[] {
+export function getMockEducationInProgressFiles(programId: string): EducationInProgressFile[] {
   if (!shouldUsePlatformMockData()) return []
-  return MOCK_FILES.map(file => ({ ...file }))
+  const appended = appendedFilesByProgramId.get(programId) ?? []
+  return [...appended, ...MOCK_FILES.map(file => ({ ...file }))]
 }

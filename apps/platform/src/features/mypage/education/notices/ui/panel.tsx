@@ -25,6 +25,7 @@ import { EducationInProgressFileRow } from './file-row'
 import { EducationInProgressNoticeCard } from './card'
 import { EducationInProgressNoticeDetailModal } from './detail-modal'
 import { EducationProgramInfoModal } from './program-info-modal'
+import { EducationProgramNoticeWriteModal } from './notice-write-modal'
 import { PFAlertModal, PFButton, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './panel.module.css'
 
@@ -34,24 +35,31 @@ type EducationInProgressNoticePanelProps = {
   program: ProgramDetail
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 진행중 「신청 정보」 팝업 — 교사·기관 신청 내용 탭과 동일 */
+  applicationInfoBody?: ReactNode
   /** 봉사현황 기관 안내사항 등 — 안내 목록 위 슬롯 */
   leading?: ReactNode
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
-  /** CMS 프로그램 게시글(안내사항) 작성 — 교사·기관 프로그램 등 */
-  onNoticeWriteClick?: () => void
+  /** 교사·기관 프로그램 — 안내사항 작성 모달 */
+  noticeWriteEnabled?: boolean
+  noticeWriteAuthorDisplayName?: string
 }
 
 export function EducationInProgressNoticePanel({
   program,
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  applicationInfoBody,
   leading,
   applicationType,
   applicationId,
-  onNoticeWriteClick,
+  noticeWriteEnabled = false,
+  noticeWriteAuthorDisplayName = '담당교사님',
 }: EducationInProgressNoticePanelProps) {
   const programId = program.id
+  const [isNoticeWriteOpen, setIsNoticeWriteOpen] = useState(false)
+  const [mockFilesVersion, setMockFilesVersion] = useState(0)
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
@@ -91,8 +99,9 @@ export function EducationInProgressNoticePanel({
   )
   const files = useMemo(() => {
     if (remoteNotices.enabled) return remoteFiles.files
+    void mockFilesVersion
     return getMockEducationInProgressFiles(programId)
-  }, [programId, remoteFiles.files, remoteNotices.enabled])
+  }, [programId, remoteFiles.files, remoteNotices.enabled, mockFilesVersion])
 
   const filteredFiles = useMemo(() => {
     if (remoteNotices.enabled && remoteFiles.isFullList) return files
@@ -271,14 +280,14 @@ export function EducationInProgressNoticePanel({
           </PFButton>
         </div>
 
-        {onNoticeWriteClick ? (
+        {noticeWriteEnabled && applicationType && applicationId ? (
           <PFButton
             type="button"
             className={styles.noticeWriteCta}
             variant="secondary"
             size="xlarge"
             width="100%"
-            onClick={onNoticeWriteClick}
+            onClick={() => setIsNoticeWriteOpen(true)}
           >
             안내사항 작성하기
           </PFButton>
@@ -325,8 +334,26 @@ export function EducationInProgressNoticePanel({
         open={isApplicationInfoOpen}
         selfIntroMotivation={selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        applicationBody={applicationInfoBody}
         onClose={() => setIsApplicationInfoOpen(false)}
       />
+
+      {noticeWriteEnabled && applicationType && applicationId ? (
+        <EducationProgramNoticeWriteModal
+          open={isNoticeWriteOpen}
+          onClose={() => setIsNoticeWriteOpen(false)}
+          applicationType={applicationType}
+          applicationId={applicationId}
+          program={program}
+          authorDisplayName={noticeWriteAuthorDisplayName}
+          onMockSuccess={() => {
+            if (!remoteNotices.enabled) {
+              setLocalNotices(getMockEducationInProgressNotices(programId))
+              setMockFilesVersion(version => version + 1)
+            }
+          }}
+        />
+      ) : null}
 
       <PFAlertModal
         open={isComingSoonOpen}

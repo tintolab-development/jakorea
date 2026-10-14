@@ -279,7 +279,7 @@ alwaysApply: false
 | 설명 | `프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 엑셀 양식을 작성해 업로드 해주세요.` (`bd-md-rg` cool-500) |
 | 양식 다운로드 | `POST .../organization-applications/{id}/student-roster/template` |
 | 엑셀 업로드 | 파일 업로드(`filePurpose=STUDENT_ROSTER`) → `POST .../student-roster/import` |
-| 수료증 발급하기 | `certificateAvailable` + 명단 1명 이상일 때만 활성. 발급 플로우는 후속(준비 중 안내) |
+| 수료증 발급하기 | 명단 1명 이상일 때 활성(비활성은 명단 없음만). 클릭 시 발급 API 미연동이면 준비 중 안내. 상세 `certificateAvailable`은 BE 발급 가능 여부 플래그(버튼 disabled와 무관·후속 연동) |
 | 빈 상태 | `illust-quotation-no-bg` + `아직 등록된 학생이 없어요` (`hl-lg`) |
 | 등록 후 | `참여 학생 N명` + 이름·학년·반·번호 요약 목록(CMS급 테이블·필터 후속) |
 
@@ -328,8 +328,8 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 
 ### CMS 게시글형 안내사항 (목록·상세 모달과 동일 도메인)
 
-- **안내사항 탭** [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 하단 — 전폭 **`안내사항 작성하기`** → `/mypage/education/:applicationId/notices/write` ([`MypageEducationProgramNoticeWritePage`](apps/platform/src/pages/mypage/education/notice-write/page.tsx) · [`EducationProgramNoticeWriteForm`](apps/platform/src/features/mypage/education/notices/ui/notice-write-form.tsx))
-- **저장:** mock `appendMockEducationInProgressNotice` · remote `POST .../notices` OpenAPI 미정 → [`createPortalProgramNotice`](apps/platform/src/features/mypage/education/notices/api/notice-compose-client.ts) 후속
+- **안내사항 탭** [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 하단 — 전폭 **`안내사항 작성하기`** → [`EducationProgramNoticeWriteModal`](apps/platform/src/features/mypage/education/notices/ui/notice-write-modal.tsx) (`PFModal` lg · mobile full)
+- **저장:** mock `appendMockEducationInProgressNotice` · remote `useCreateApplicationNoticeMutation` → [`activity-client.ts`](apps/platform/src/features/mypage/education/applications/api/activity-client.ts) `POST .../notices` + `PUT .../attachments` (OpenAPI·BE 배포 후)
 
 ### 기관 신청 안내 양식 (4항목·성범죄 — 신청 폼 SSOT)
 
