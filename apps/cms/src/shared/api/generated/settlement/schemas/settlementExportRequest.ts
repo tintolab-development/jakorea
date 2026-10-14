@@ -63,6 +63,6 @@ export interface SettlementExportRequest {
      * @items.minimum 1
      */
   settlementIds?: number[];
-  dateRangeValid?: boolean;
   rawPrivacyApprovalValid?: boolean;
+  dateRangeValid?: boolean;
 }

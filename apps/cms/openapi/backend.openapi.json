@@ -32894,6 +32894,89 @@
         }
       }
     },
+    "/api/portal/me/organization-applications/{applicationId}/application-answers": {
+      "patch": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "회원 포탈 기관 신청 안내사항 답변 부분 수정",
+        "description": "### 이 API가 하는 일\n- 회원 포탈 기관 신청 안내사항 답변 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/portal/me/organization-applications/{applicationId}/application-answers`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기관 신청의 guidance 및 성범죄 조회 문단만 부분 병합하고 기존 답변은 유지",
+        "operationId": "patchOrganizationGuidanceAnswers",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationGuidanceAnswersPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
+          },
+          "400": {
+            "description": "GUIDANCE_ANSWERS_VALIDATION_FAILED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationGuidanceAnswersPatchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "ORGANIZATION_APPLICATION_NOT_OWNED 또는 GUIDANCE_EDIT_NOT_ALLOWED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationGuidanceAnswersPatchResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ORGANIZATION_APPLICATION_NOT_FOUND",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationGuidanceAnswersPatchResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "APPLICATION_ANSWERS_CONFLICT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationGuidanceAnswersPatchResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/me/notifications/{recipientId}/read": {
       "patch": {
         "tags": [
@@ -74172,10 +74255,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -78752,7 +78835,7 @@
               "string",
               "null"
             ],
-            "description": "학급 번호 또는 반 이름"
+            "description": "실제 등록 학급 번호 또는 반 이름. 학생 명단 StudentRosterRowRequest.className과 분리된 반 값(보통 N반)."
           },
           "studentCount": {
             "type": [
@@ -78784,7 +78867,7 @@
       },
       "GradeBlock": {
         "type": "object",
-        "description": "학년 한 묶음. classes가 비어 있으면 학급별 인원은 없고 classCount와 신청 총원만 있다.",
+        "description": "학년 한 묶음. classes[].classNo가 실제 등록 반의 SSOT입니다. classes가 비어 있으면 classCount는 신청 메타일 뿐 반 번호 목록이 아닙니다.",
         "properties": {
           "gradeLabel": {
             "type": [
@@ -79067,7 +79150,7 @@
               "array",
               "null"
             ],
-            "description": "학년별 학급. 저장된 학급 구성이 없으면 null. 학급별 인원이 없으면 classes는 []",
+            "description": "CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 활성 기관별 일정 배정의 gradeLabel/classes.classNo, UJAT은 교육 학급 카탈로그를 사용합니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.",
             "items": {
               "$ref": "#/components/schemas/GradeBlock"
             }
@@ -86407,6 +86490,37 @@
           "affiliationStartedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "OrganizationGuidanceAnswersPatchRequest": {
+        "type": "object",
+        "description": "기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다.",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "answers"
+        ]
+      },
+      "OrganizationGuidanceAnswersPatchResponse": {
+        "type": "object",
+        "description": "기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. answers는 갱신 후 최신 제출 응답 전체이며 빈 객체가 아닙니다.",
+        "properties": {
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
@@ -102623,15 +102737,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },

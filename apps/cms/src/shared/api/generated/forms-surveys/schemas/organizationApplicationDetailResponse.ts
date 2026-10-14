@@ -115,7 +115,7 @@ export interface OrganizationApplicationDetailResponse {
      */
   preferredEducationDates?: string[] | null;
   /**
-     * 학년별 학급. 저장된 학급 구성이 없으면 null. 학급별 인원이 없으면 classes는 []
+     * CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 활성 기관별 일정 배정의 gradeLabel/classes.classNo, UJAT은 교육 학급 카탈로그를 사용합니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.
      * @nullable
      */
   gradeBlocks?: GradeBlock[] | null;

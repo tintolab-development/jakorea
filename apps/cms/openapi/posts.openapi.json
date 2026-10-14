@@ -14265,10 +14265,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -18845,7 +18845,7 @@
               "string",
               "null"
             ],
-            "description": "학급 번호 또는 반 이름"
+            "description": "실제 등록 학급 번호 또는 반 이름. 학생 명단 StudentRosterRowRequest.className과 분리된 반 값(보통 N반)."
           },
           "studentCount": {
             "type": [
@@ -18877,7 +18877,7 @@
       },
       "GradeBlock": {
         "type": "object",
-        "description": "학년 한 묶음. classes가 비어 있으면 학급별 인원은 없고 classCount와 신청 총원만 있다.",
+        "description": "학년 한 묶음. classes[].classNo가 실제 등록 반의 SSOT입니다. classes가 비어 있으면 classCount는 신청 메타일 뿐 반 번호 목록이 아닙니다.",
         "properties": {
           "gradeLabel": {
             "type": [
@@ -19160,7 +19160,7 @@
               "array",
               "null"
             ],
-            "description": "학년별 학급. 저장된 학급 구성이 없으면 null. 학급별 인원이 없으면 classes는 []",
+            "description": "CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 활성 기관별 일정 배정의 gradeLabel/classes.classNo, UJAT은 교육 학급 카탈로그를 사용합니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.",
             "items": {
               "$ref": "#/components/schemas/GradeBlock"
             }
@@ -26500,6 +26500,37 @@
           "affiliationStartedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "OrganizationGuidanceAnswersPatchRequest": {
+        "type": "object",
+        "description": "기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다.",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "answers"
+        ]
+      },
+      "OrganizationGuidanceAnswersPatchResponse": {
+        "type": "object",
+        "description": "기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. answers는 갱신 후 최신 제출 응답 전체이며 빈 객체가 아닙니다.",
+        "properties": {
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
@@ -42716,15 +42747,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
