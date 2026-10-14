@@ -64,14 +64,9 @@ export function formatInstructorApplyHomeAddressDisplay(
 export function formatInstructorApplyAffiliationDisplay(
   values: Pick<
     InstructorSharedProfileFormValues,
-    'memberType' | 'schoolName' | 'employmentStatus' | 'affiliationName' | 'affiliationNone'
+    'memberType' | 'affiliationName' | 'affiliationNone'
   >,
 ): string {
-  if (values.memberType === 'school_teacher') {
-    const school = values.schoolName.trim()
-    const employment = formatInstructorApplyEmploymentDisplay(values.employmentStatus)
-    return [school, employment].filter(Boolean).join(' | ')
-  }
   if (values.affiliationNone) return '소속 없음'
   return values.affiliationName.trim()
 }

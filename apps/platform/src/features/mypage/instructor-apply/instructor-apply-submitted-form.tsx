@@ -27,6 +27,7 @@ import {
   formatInstructorApplyPeriodDisplay,
 } from './lib/format-instructor-apply-display'
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
+import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 import {
   PFButton,
@@ -175,9 +176,16 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
             <PFFormField label="소속">
-              <PFFormFieldValueText>
-                {displayOrDash(formatInstructorApplyAffiliationDisplay(values))}
-              </PFFormFieldValueText>
+              {values.memberType === 'school_teacher' ? (
+                <TeacherAffiliationDisplay
+                  schoolName={values.schoolName}
+                  employmentStatus={values.employmentStatus}
+                />
+              ) : (
+                <PFFormFieldValueText>
+                  {displayOrDash(formatInstructorApplyAffiliationDisplay(values))}
+                </PFFormFieldValueText>
+              )}
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="single">

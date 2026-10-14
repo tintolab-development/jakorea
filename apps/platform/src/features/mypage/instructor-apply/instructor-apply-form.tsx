@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
 import { CAREER_LEVEL_OPTIONS } from '@jakorea/domain/instructor/career-level'
@@ -41,7 +40,6 @@ import {
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
-import { SETTINGS_TEACHER_EMPLOYMENT_OPTIONS } from '@/features/mypage/settings/lib/map-edit'
 import {
   PFAlertModal,
   PFButton,
@@ -61,9 +59,7 @@ import {
   PFFormPeriodTilde,
   PFFormSection,
   PFItemDeleteButton,
-  PFOptionList,
   PFSelect,
-  PFStateBadge,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
@@ -80,6 +76,7 @@ import {
 } from './map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
+import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
 const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
@@ -204,101 +201,6 @@ function HomeAddressFieldRow({
   )
 }
 
-function TeacherEmploymentStatusMenu({
-  value,
-  onChange,
-}: {
-  value: InstructorSharedProfileFormValues['employmentStatus']
-  onChange: (next: InstructorSharedProfileFormValues['employmentStatus']) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [listStyle, setListStyle] = useState<CSSProperties | null>(null)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
-  const matched = SETTINGS_TEACHER_EMPLOYMENT_OPTIONS.find(option => option.value === value)
-  const tone = value === 'ON_LEAVE' ? 'success' : 'progress'
-
-  useLayoutEffect(() => {
-    if (!open) return
-
-    const updatePosition = () => {
-      const trigger = rootRef.current
-      if (!trigger) return
-      const rect = trigger.getBoundingClientRect()
-      setListStyle({
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
-        minWidth: Math.max(120, rect.width),
-        zIndex: 20,
-      })
-    }
-
-    updatePosition()
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, true)
-    return () => {
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null
-      if (!target) return
-      if (rootRef.current?.contains(target) || listRef.current?.contains(target)) return
-      setOpen(false)
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown, true)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [open])
-
-  return (
-    <div className={styles.employmentMenu} ref={rootRef}>
-      <button
-        type="button"
-        className={styles.employmentTrigger}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label="재직 현황"
-        onClick={() => setOpen(current => !current)}
-      >
-        <PFStateBadge size="small" tone={matched ? tone : 'disabled'}>
-          {matched?.label ?? '재직 현황'}
-        </PFStateBadge>
-      </button>
-      {open
-        ? createPortal(
-            <PFOptionList
-              ref={listRef}
-              className={styles.employmentList}
-              style={listStyle ?? undefined}
-              aria-label="재직 현황"
-              options={SETTINGS_TEACHER_EMPLOYMENT_OPTIONS}
-              selectedValue={value}
-              onSelect={next => {
-                onChange(next as InstructorSharedProfileFormValues['employmentStatus'])
-                setOpen(false)
-              }}
-            />,
-            document.body,
-          )
-        : null}
-    </div>
-  )
-}
-
 function ListRowActions({
   isFirst,
   onAdd,
@@ -327,7 +229,9 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const [values, setValues] = useState<InstructorSharedProfileFormValues>(() => {
     const draft = loadInstructorApplyFormDraft()
     const preserveEmploymentStatus = shouldPreserveEmploymentStatus(draft)
-    employmentTouchedRef.current = preserveEmploymentStatus
+    if (preserveEmploymentStatus) {
+      employmentTouchedRef.current = true
+    }
     return applyLockedBasicToInstructorForm(
       draft ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
       lockedBasic,
@@ -599,25 +503,11 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
             <PFFormFieldRow type="single">
               <PFFormField label="소속">
                 {values.memberType === 'school_teacher' ? (
-                  <PFFormInlineRow>
-                    <PFFormInlineSegment>
-                      <PFTextInput
-                        variant="formPage"
-                        size="large"
-                        width={200}
-                        placeholder={PH.schoolName}
-                        disabled
-                        value={values.schoolName}
-                        onValueChange={value => patch('schoolName', value)}
-                      />
-                    </PFFormInlineSegment>
-                    <PFFormInlineSegment>
-                      <TeacherEmploymentStatusMenu
-                        value={values.employmentStatus}
-                        onChange={handleEmploymentStatusChange}
-                      />
-                    </PFFormInlineSegment>
-                  </PFFormInlineRow>
+                  <TeacherAffiliationDisplay
+                    schoolName={values.schoolName}
+                    employmentStatus={values.employmentStatus}
+                    onEmploymentStatusChange={handleEmploymentStatusChange}
+                  />
                 ) : (
                   <PFFormInlineRow>
                     <PFFormInlineSegment>

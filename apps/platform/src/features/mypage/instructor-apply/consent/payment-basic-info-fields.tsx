@@ -50,7 +50,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
   return (
     <PFFormFieldTable>
       <PFFormFieldRow type="double">
-        <PFFormField label="성명" required>
+        <PFFormField label="성명">
           <PFTextInput
             variant="formPage"
             size="large"
@@ -70,7 +70,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="double">
-        <PFFormField label="주민등록번호" required>
+        <PFFormField label="주민등록번호">
           <PFFormResidentNumberInput
             fillRow
             frontValue={merged.residentFront}
@@ -110,7 +110,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="자택 주소" required>
+        <PFFormField label="자택 주소">
           <PFFormHomeAddressFields
             fillRow
             roadValue={merged.addressRoad}
@@ -121,7 +121,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="정산 계좌 정보" required>
+        <PFFormField label="정산 계좌 정보">
           <PFFormInlineRow className={formStyles.inlineRowFill}>
             <PFFormInlineSegment>
               <PFFormControlCluster>
