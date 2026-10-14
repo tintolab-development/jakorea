@@ -64,6 +64,47 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
     expect(rows[0]?.requestedScheduleId).toBe(12345)
   })
 
+  it('승인 강사 목록의 homeAddress·distanceKm를 배정 대기 행에 매핑한다', () => {
+    const rows = buildCompanySchoolWaitingInstructorRows({
+      schoolName: '부명초등학교',
+      sessions: [
+        {
+          round: 1,
+          date: '2024. 10. 01',
+          dayOfWeek: '화',
+          duration: '1차시',
+          format: '단독',
+          classNum: '1교시',
+          timeRange: '15:00 ~ 17:00',
+          status: 'pending',
+          requestedScheduleId: 1,
+          resolvedScheduleId: 2,
+        },
+      ],
+      approvedInstructors: [
+        asOpenApiFixture<InstructorApplicationListItemResponse>({
+          id: 1694662,
+          instructorMemberId: 190001,
+          instructorName: '이현아',
+          applicationStatus: 'APPROVED',
+          homeAddress: '서울특별시 강남구 테헤란로 1',
+          preferredOrganizations: [],
+          availableScheduleIds: [],
+          availableActions: [],
+          distanceKm: 42.3,
+          longDistance: false,
+        } as InstructorApplicationListItemResponse & {
+          distanceKm?: number
+          longDistance?: boolean
+        }),
+      ],
+      assignedInstructorMemberIds: new Set(),
+    })
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.homeAddress).toBe('서울특별시 강남구 테헤란로 1')
+    expect(rows[0]?.distanceToSchool).toBe('42.3km')
+  })
+
   it('resolvedScheduleId null이면 일정 미생성으로 unavailable', () => {
     const rows = buildCompanySchoolWaitingInstructorRows({
       schoolName: '인천가온고등학교',
