@@ -129,6 +129,17 @@ export {
   useMyProgramApplicationDetail,
   useMyProgramApplications,
 } from './api/hooks'
+export {
+  isOrganizationStudentDocumentsQueryEnabled,
+  useDownloadPortraitConsentTemplateMutation,
+  useDownloadStudentRosterTemplateMutation,
+  useImportOrganizationStudentRosterMutation,
+  useOrganizationPortraitConsentQuery,
+  useOrganizationStudentDocumentPolicyQuery,
+  useOrganizationStudentRosterQuery,
+  useSubmitOrganizationPortraitConsentMutation,
+} from './api/student-documents-hooks'
+export type { OrganizationStudentDocumentsScope } from './api/student-documents-hooks'
 export type { MypageApplicationScope, MyProgramApplicationsListOptions } from './api/hooks'
 export type { ProgramApplicationType, ProgramApplicationStatusGroup } from './api/types'
 export { resolveStatusGroupForTab, resolveStatusGroupsForTab } from './api/status-group'

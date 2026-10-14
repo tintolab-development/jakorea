@@ -8,7 +8,7 @@
 
 export interface ClassRoom {
   /**
-     * 학급 번호 또는 반 이름
+     * 실제 등록 학급 번호 또는 반 이름. 학생 명단 StudentRosterRowRequest.className과 분리된 반 값(보통 N반).
      * @nullable
      */
   classNo?: string | null;

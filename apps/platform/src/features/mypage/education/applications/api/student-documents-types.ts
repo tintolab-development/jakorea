@@ -37,10 +37,14 @@ export type PortalStudentRosterResponse = {
 export type PortalStudentDocumentPolicy = {
   organizationApplicationId?: number
   programId?: number
+  /** false — 명단·초상권 Portal 기능 미지원 프로그램 */
+  studentDocumentsSupported?: boolean
   programStartDate?: string
-  studentRosterUploadDeadline?: string
+  /** 기관 신청에 배정된 첫 교육일. 미배정 시 null */
+  firstEducationDate?: string | null
+  studentRosterUploadDeadline?: string | null
   studentRosterUploadAllowed?: boolean
-  portraitConsentUploadDeadline?: string
+  portraitConsentUploadDeadline?: string | null
   portraitConsentUploadAllowed?: boolean
 }
 

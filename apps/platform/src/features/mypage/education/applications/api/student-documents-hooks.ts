@@ -18,21 +18,55 @@ import {
   PORTAL_FILE_PURPOSE_PORTRAIT_CONSENT,
   PORTAL_FILE_PURPOSE_STUDENT_ROSTER,
 } from './student-documents-types'
+import { resolveOrganizationApplicationId } from '../lib/resolve-organization-application-id'
 
 const STALE_MS = 30_000
 const GC_MS = 10 * 60_000
 
+export type OrganizationStudentDocumentsScope = {
+  /** `program.programAudience === 'organization'` — applicationType 누락 시 보조 */
+  organizationProgram?: boolean
+}
+
+export type OrganizationStudentDocumentsQueryOptions = {
+  /** policy `studentDocumentsSupported === true`일 때만 roster/portrait 조회 */
+  studentDocumentsSupported?: boolean
+}
+
+function isOrganizationApplicationScope(
+  applicationType: ProgramApplicationType | null | undefined,
+  scope?: OrganizationStudentDocumentsScope,
+): boolean {
+  return applicationType === 'ORGANIZATION' || scope?.organizationProgram === true
+}
+
+export function isOrganizationStudentDocumentsUiScope(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+  scope?: OrganizationStudentDocumentsScope,
+): boolean {
+  return Boolean(
+    resolveOrganizationApplicationId(applicationId) &&
+      isOrganizationApplicationScope(applicationType, scope),
+  )
+}
+
 export function isOrganizationStudentDocumentsQueryEnabled(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
+  scope?: OrganizationStudentDocumentsScope,
 ): boolean {
   return Boolean(
     isRemoteApiConfigured() &&
       getAccessToken() &&
-      applicationType === 'ORGANIZATION' &&
-      applicationId &&
-      /^\d+$/.test(applicationId),
+      isOrganizationStudentDocumentsUiScope(applicationType, applicationId, scope),
   )
+}
+
+function requireOrganizationApplicationId(applicationId: string): string {
+  const id = resolveOrganizationApplicationId(applicationId)
+  if (!id) throw new Error('신청 정보가 올바르지 않습니다.')
+  return id
 }
 
 function queryOptions() {
@@ -49,9 +83,12 @@ function queryOptions() {
 export function useOrganizationStudentRosterQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
+  scope?: OrganizationStudentDocumentsScope,
+  options?: OrganizationStudentDocumentsQueryOptions,
 ) {
-  const enabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId)
-  const id = applicationId ?? ''
+  const baseEnabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId, scope)
+  const enabled = baseEnabled && options?.studentDocumentsSupported === true
+  const id = resolveOrganizationApplicationId(applicationId) ?? ''
 
   return useQuery({
     queryKey: platformQueryKeys.mypage.organizationApplications.studentRoster(id),
@@ -64,9 +101,10 @@ export function useOrganizationStudentRosterQuery(
 export function useOrganizationStudentDocumentPolicyQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
+  scope?: OrganizationStudentDocumentsScope,
 ) {
-  const enabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId)
-  const id = applicationId ?? ''
+  const enabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId, scope)
+  const id = resolveOrganizationApplicationId(applicationId) ?? ''
 
   return useQuery({
     queryKey: platformQueryKeys.mypage.organizationApplications.studentDocumentsPolicy(id),
@@ -79,9 +117,12 @@ export function useOrganizationStudentDocumentPolicyQuery(
 export function useOrganizationPortraitConsentQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
+  scope?: OrganizationStudentDocumentsScope,
+  options?: OrganizationStudentDocumentsQueryOptions,
 ) {
-  const enabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId)
-  const id = applicationId ?? ''
+  const baseEnabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId, scope)
+  const enabled = baseEnabled && options?.studentDocumentsSupported === true
+  const id = resolveOrganizationApplicationId(applicationId) ?? ''
 
   return useQuery({
     queryKey: platformQueryKeys.mypage.organizationApplications.portraitConsent(id),
@@ -96,15 +137,18 @@ export function useImportOrganizationStudentRosterMutation(applicationId: string
 
   return useMutation({
     mutationFn: async (file: File) => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
       const fileObjectId = await uploadMemberPortalFile({
         file,
         filePurpose: PORTAL_FILE_PURPOSE_STUDENT_ROSTER,
       })
-      return importOrganizationStudentRoster(applicationId, fileObjectId)
+      return importOrganizationStudentRoster(orgApplicationId, fileObjectId)
     },
-    onSuccess: data => {
+    onSuccess: (data, _file, _ctx) => {
+      const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+      if (!orgApplicationId) return
       queryClient.setQueryData(
-        platformQueryKeys.mypage.organizationApplications.studentRoster(applicationId),
+        platformQueryKeys.mypage.organizationApplications.studentRoster(orgApplicationId),
         data,
       )
     },
@@ -116,15 +160,18 @@ export function useSubmitOrganizationPortraitConsentMutation(applicationId: stri
 
   return useMutation({
     mutationFn: async (file: File) => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
       const fileObjectId = await uploadMemberPortalFile({
         file,
         filePurpose: PORTAL_FILE_PURPOSE_PORTRAIT_CONSENT,
       })
-      return submitOrganizationPortraitConsent(applicationId, fileObjectId)
+      return submitOrganizationPortraitConsent(orgApplicationId, fileObjectId)
     },
     onSuccess: data => {
+      const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+      if (!orgApplicationId) return
       queryClient.setQueryData(
-        platformQueryKeys.mypage.organizationApplications.portraitConsent(applicationId),
+        platformQueryKeys.mypage.organizationApplications.portraitConsent(orgApplicationId),
         data,
       )
     },
@@ -133,12 +180,18 @@ export function useSubmitOrganizationPortraitConsentMutation(applicationId: stri
 
 export function useDownloadStudentRosterTemplateMutation(applicationId: string) {
   return useMutation({
-    mutationFn: () => downloadOrganizationStudentRosterTemplate(applicationId),
+    mutationFn: () => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
+      return downloadOrganizationStudentRosterTemplate(orgApplicationId)
+    },
   })
 }
 
 export function useDownloadPortraitConsentTemplateMutation(applicationId: string) {
   return useMutation({
-    mutationFn: () => downloadOrganizationPortraitConsentTemplate(applicationId),
+    mutationFn: () => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
+      return downloadOrganizationPortraitConsentTemplate(orgApplicationId)
+    },
   })
 }

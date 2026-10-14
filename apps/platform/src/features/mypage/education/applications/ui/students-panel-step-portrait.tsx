@@ -10,11 +10,10 @@ const PORTRAIT_UPLOAD_ACCEPT =
   'application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp'
 
 type StudentsPanelStepPortraitProps = {
-  remoteEnabled: boolean
   isLoading: boolean
   consent: PortalOrganizationPortraitConsent | null | undefined
   hasSubmission: boolean
-  portraitUploadAllowed: boolean
+  uploadBlockedMessage?: string | null
   isDownloadingTemplate: boolean
   isUploading: boolean
   onDownloadTemplate: () => void
@@ -22,11 +21,10 @@ type StudentsPanelStepPortraitProps = {
 }
 
 export function StudentsPanelStepPortrait({
-  remoteEnabled,
   isLoading,
   consent,
   hasSubmission,
-  portraitUploadAllowed,
+  uploadBlockedMessage,
   isDownloadingTemplate,
   isUploading,
   onDownloadTemplate,
@@ -36,12 +34,8 @@ export function StudentsPanelStepPortrait({
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
   const handlePickFile = () => {
-    if (!remoteEnabled) {
-      setAlertMessage('초상권 동의서 업로드는 로그인 후 이용할 수 있습니다.')
-      return
-    }
-    if (!portraitUploadAllowed) {
-      setAlertMessage('초상권 동의서 제출 기한이 지났거나 제출할 수 없습니다.')
+    if (uploadBlockedMessage) {
+      setAlertMessage(uploadBlockedMessage)
       return
     }
     fileInputRef.current?.click()
@@ -76,7 +70,7 @@ export function StudentsPanelStepPortrait({
           type="button"
           size="large"
           variant="secondary"
-          disabled={!remoteEnabled || isDownloadingTemplate}
+          disabled={isDownloadingTemplate}
           onClick={onDownloadTemplate}
         >
           <span className={styles.buttonInner}>
