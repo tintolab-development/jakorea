@@ -32,9 +32,7 @@ export async function listFormResponsesRemote(
 }
 
 /** GET /api/admin/form-responses/{responseId} */
-export async function getFormResponseRemote(
-  responseId: number
-): Promise<FormResponseResponse> {
+export async function getFormResponseRemote(responseId: number): Promise<FormResponseResponse> {
   return unwrapApiBody<FormResponseResponse>(
     await customInstance({
       url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}`,
@@ -74,7 +72,11 @@ export async function fetchLatestFormResponseByContextRemote(input: {
     page: 0,
     size: 5,
   })
-  const first = page.items?.[0]
+  const first = [...(page.items ?? [])].sort((a, b) => {
+    const aTime = Date.parse(a.updatedAt ?? a.submittedAt ?? a.createdAt ?? '') || 0
+    const bTime = Date.parse(b.updatedAt ?? b.submittedAt ?? b.createdAt ?? '') || 0
+    return bTime - aTime
+  })[0]
   const responseId = first?.formResponseId
   if (responseId == null) return first ?? null
   try {

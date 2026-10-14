@@ -5,8 +5,11 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.lists(), statusFilter ?? 'all', tableFiltersKey] as const,
   /** 상단 4카드 위젯 건수 — list 무효화와 함께 갱신 */
   overviewStages: () => [...generalProgramQueryKeys.all, 'overview-stages'] as const,
-  detail: (programId: string) =>
-    [...generalProgramQueryKeys.all, 'detail', programId] as const,
+  detail: (programId: string) => [...generalProgramQueryKeys.all, 'detail', programId] as const,
+  materials: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'materials', programId] as const,
+  materialCandidates: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'material-candidates', programId] as const,
   sponsorAssignments: (programId: string) =>
     [...generalProgramQueryKeys.all, 'sponsor-assignments', programId] as const,
   navigation: (programId: string) =>
@@ -38,11 +41,7 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'schedules', programId] as const,
   surveyResponses: (programId: string, templateVersionId: string) =>
     [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
-  surveyResponseDetail: (
-    programId: string,
-    templateVersionId: string,
-    formResponseId: string
-  ) =>
+  surveyResponseDetail: (programId: string, templateVersionId: string, formResponseId: string) =>
     [
       ...generalProgramQueryKeys.all,
       'survey-response-detail',

@@ -2185,13 +2185,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrainedTeacherOrganizationApplicationResponse"
+                  "$ref": "#/components/schemas/TrainedTeacherOrganizationApplicationDetailResponse"
                 }
               }
             }
           }
         },
-        "description": "목록과 동일 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT.",
+        "description": "목록 DTO와 분리된 flat 상세 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT이며 상세 수정 필드를 포함한다.",
         "parameters": [
           {
             "name": "programId",
@@ -20688,6 +20688,50 @@
           }
         }
       },
+      "TrainedTeacherOrganizationApplicationDetailResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TrainedTeacherOrganizationApplicationResponse"
+          },
+          {
+            "type": "object",
+            "description": "교육받은 교사 기관 신청 상세 전용 필드. 목록 DTO와 동일한 최상위(flat) 응답으로 반환한다.",
+            "properties": {
+              "addressDetail": {
+                "type": "string",
+                "nullable": true
+              },
+              "requestedEducationFormat": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "ONLINE",
+                  "OFFLINE",
+                  "HYBRID"
+                ]
+              },
+              "applicationReason": {
+                "type": "string",
+                "nullable": true
+              },
+              "otherRequests": {
+                "type": "string",
+                "nullable": true
+              },
+              "teacherEmail": {
+                "type": "string",
+                "nullable": true,
+                "description": "개인정보 정책에 따라 마스킹될 수 있다."
+              },
+              "textbookId": {
+                "type": "integer",
+                "format": "int64",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
       "GeminiOrganizationApplicationItem": {
         "type": "object",
         "description": "Gemini 찾아가는 연수 기관 신청 목록 행. CMS 「기관 신청 목록」 컬럼 투영.",
@@ -22816,6 +22860,40 @@
           "regionSigungu": {
             "type": "string",
             "nullable": true
+          },
+          "temporaryAssignmentStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등. 비-UJAT이면 null."
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "UJAT 교육 지역 코드. 없거나 비-UJAT이면 null."
+          },
+          "scheduleConfirmStatus": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "institution_checking",
+              "institution_confirmed",
+              "approval_completed",
+              "revision_requested",
+              "application_rejected"
+            ],
+            "description": "UJAT 일정 확인 상태. 비-UJAT이면 null."
+          },
+          "assignedInstructorCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "UJAT 배정 강사 수. 미집계 또는 비-UJAT이면 null."
+          },
+          "operatingStudentCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "UJAT 운영 학생 명단 수. 미집계 또는 비-UJAT이면 null."
           },
           "applicationReason": {
             "type": "string",

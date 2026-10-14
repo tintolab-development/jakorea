@@ -8,6 +8,7 @@
 import type { OrganizationApplicationClassTimeRow } from './organizationApplicationClassTimeRow';
 import type { OrganizationApplicationDetailResponsePreviousYearParticipation } from './organizationApplicationDetailResponsePreviousYearParticipation';
 import type { OrganizationApplicationDetailResponsePrivacyMaskingLevel } from './organizationApplicationDetailResponsePrivacyMaskingLevel';
+import type { OrganizationApplicationDetailResponseScheduleConfirmStatus } from './organizationApplicationDetailResponseScheduleConfirmStatus';
 import type { OrganizationApplicationGradeBlock } from './organizationApplicationGradeBlock';
 import type { OrganizationApplicationSessionResponse } from './organizationApplicationSessionResponse';
 import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
@@ -100,6 +101,31 @@ export interface OrganizationApplicationDetailResponse {
   regionSido?: string | null;
   /** @nullable */
   regionSigungu?: string | null;
+  /**
+     * UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등. 비-UJAT이면 null.
+     * @nullable
+     */
+  temporaryAssignmentStatus?: string | null;
+  /**
+     * UJAT 교육 지역 코드. 없거나 비-UJAT이면 null.
+     * @nullable
+     */
+  educationRegionCode?: string | null;
+  /**
+     * UJAT 일정 확인 상태. 비-UJAT이면 null.
+     * @nullable
+     */
+  scheduleConfirmStatus?: OrganizationApplicationDetailResponseScheduleConfirmStatus;
+  /**
+     * UJAT 배정 강사 수. 미집계 또는 비-UJAT이면 null.
+     * @nullable
+     */
+  assignedInstructorCount?: number | null;
+  /**
+     * UJAT 운영 학생 명단 수. 미집계 또는 비-UJAT이면 null.
+     * @nullable
+     */
+  operatingStudentCount?: number | null;
   /**
      * 신청 사유 스냅샷. 없으면 null. 빈 문자열을 반환하지 않는다.
      * @nullable

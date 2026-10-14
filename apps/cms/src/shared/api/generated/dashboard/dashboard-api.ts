@@ -63,6 +63,7 @@ import type {
   PageResponseVolunteerApplicationListItemResponse,
   PreferenceResponse,
   PreferenceUpdateRequest,
+  TrainedTeacherOrganizationApplicationDetailResponse,
   TrainedTeacherOrganizationApplicationResponse,
   UjatOrganizationScheduleListResponse,
   UjatOrganizationScheduleResponse,
@@ -680,14 +681,14 @@ const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications = (
     }
 
 /**
- * 목록과 동일 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT.
+ * 목록 DTO와 분리된 flat 상세 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT이며 상세 수정 필드를 포함한다.
  * @summary 교육받은 교사 참여 기관 신청 상세 조회
  */
 const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId = (
     programId: string,
     applicationId: string,
- options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
-      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationDetailResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationDetailResponse>(
       {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}`, method: 'GET'
     },
       options);

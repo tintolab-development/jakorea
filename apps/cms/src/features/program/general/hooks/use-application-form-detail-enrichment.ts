@@ -24,6 +24,7 @@ import {
   type AdminCommentTargetType,
 } from '@/features/program/general/api/admin-comments-api-client'
 import {
+  getFormResponseRemote,
   fetchLatestFormResponseByContextRemote,
   type FormResponseContextType,
 } from '@/features/program/general/api/form-responses-api-client'
@@ -79,32 +80,39 @@ function useApplicationFormAndComments(input: {
   contextType: FormResponseContextType
   contextId: number | null
   targetType: AdminCommentTargetType
+  formResponseId?: number | null
+  allowContextFormResponseLookup?: boolean
 }) {
   const remote =
     input.contextType === 'ORGANIZATION_APPLICATION' ||
     input.contextType === 'INSTRUCTOR_APPLICATION'
       ? shouldUseOrganizationApplicationRemoteApi()
       : shouldUseGeneralApplicationsRemoteApi()
-  const enabled =
-    input.enabled &&
-    remote &&
-    input.programId != null &&
-    input.contextId != null
+  const queryEnabled = input.enabled && remote && input.programId != null && input.contextId != null
+
+  const hasDirectFormResponse = input.formResponseId != null && input.formResponseId > 0
+  const formEnabled =
+    queryEnabled && (hasDirectFormResponse || input.allowContextFormResponseLookup !== false)
 
   const formQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.formByContext(
-      String(input.programId ?? ''),
-      input.contextType,
-      String(input.contextId ?? '')
-    ),
+    queryKey: hasDirectFormResponse
+      ? generalApplicationsQueryKeys.formDetail(String(input.formResponseId))
+      : generalApplicationsQueryKeys.formByContext(
+          String(input.programId ?? ''),
+          input.contextType,
+          String(input.contextId ?? '')
+        ),
     queryFn: () =>
-      fetchLatestFormResponseByContextRemote({
-        programId: input.programId!,
-        contextType: input.contextType,
-        contextId: input.contextId!,
-      }),
-    enabled,
+      hasDirectFormResponse
+        ? getFormResponseRemote(input.formResponseId!)
+        : fetchLatestFormResponseByContextRemote({
+            programId: input.programId!,
+            contextType: input.contextType,
+            contextId: input.contextId!,
+          }),
+    enabled: formEnabled,
     staleTime: 30_000,
+    retry: false,
   })
 
   const commentsQuery = useQuery({
@@ -117,7 +125,7 @@ function useApplicationFormAndComments(input: {
         targetType: input.targetType,
         targetId: input.contextId!,
       }),
-    enabled,
+    enabled: queryEnabled,
     staleTime: 30_000,
   })
 
@@ -129,7 +137,7 @@ function useApplicationFormAndComments(input: {
   return {
     formResponse: formQuery.data ?? null,
     adminComment,
-    isLoading: enabled && (formQuery.isLoading || commentsQuery.isLoading),
+    isLoading: queryEnabled && (formQuery.isLoading || commentsQuery.isLoading),
     isFetching: formQuery.isFetching || commentsQuery.isFetching,
   }
 }
@@ -153,20 +161,25 @@ export function useOrganizationApplicationDetailEnrichment(
     queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        !skipDetail &&
-        row &&
-        shouldUseOrganizationApplicationRemoteApi() &&
-        contextId != null
+      !skipDetail &&
+      row &&
+      shouldUseOrganizationApplicationRemoteApi() &&
+      contextId != null
     ),
     staleTime: 30_000,
     retry: false,
   })
+  const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
   const { formResponse, adminComment } = useApplicationFormAndComments({
-    enabled: Boolean(options?.enabled !== false && row),
+    // 기관 상세 응답의 latestFormResponseId가 확정된 뒤에만 form response를 조회한다.
+    // context 목록의 첫 항목을 임의로 선택하면 이전 응답이 화면에 섞일 수 있다.
+    enabled: Boolean(options?.enabled !== false && row && detailQuery.isFetched),
     programId,
     contextType: 'ORGANIZATION_APPLICATION',
     contextId,
     targetType: 'ORGANIZATION_APPLICATION',
+    formResponseId: detailQuery.data?.latestFormResponseId,
+    allowContextFormResponseLookup: !organizationRemoteEnabled,
   })
 
   const hydrated = useMemo(() => {
@@ -183,16 +196,13 @@ export function useOrganizationApplicationDetailEnrichment(
       row: canonical,
       formResponse,
       adminComment,
+      canonicalDetail: detailQuery.data,
     })
   }, [row, detailQuery.data, formResponse, adminComment, softMerge, skipDetail])
 
-  const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
-
   const requestedSchedulesQuery = useQuery({
     ...organizationRequestedSchedulesQueryOptions(String(contextId ?? '')),
-    enabled: Boolean(
-      options?.enabled !== false && organizationRemoteEnabled && contextId != null
-    ),
+    enabled: Boolean(options?.enabled !== false && organizationRemoteEnabled && contextId != null),
   })
 
   const hydratedWithSchedules = useMemo(() => {
@@ -210,8 +220,7 @@ export function useOrganizationApplicationDetailEnrichment(
       }
     }
 
-    const fromRequested =
-      mapRequestedSchedulesToSessions(requestedSchedulesQuery.data ?? []) ?? []
+    const fromRequested = mapRequestedSchedulesToSessions(requestedSchedulesQuery.data ?? []) ?? []
     if (fromRequested.length > 0) {
       return {
         ...hydrated,
@@ -239,9 +248,7 @@ export function useOrganizationApplicationDetailEnrichment(
 
   const teacherMemberId = hydratedWithSchedules?.teacherMemberId
   const needsMemberEmail =
-    softMerge &&
-    teacherMemberId != null &&
-    !(hydratedWithSchedules?.detail?.teacherEmail?.trim())
+    softMerge && teacherMemberId != null && !hydratedWithSchedules?.detail?.teacherEmail?.trim()
 
   const memberEmailQuery = useQuery({
     queryKey: ['organization-application-teacher-member-email', teacherMemberId],
@@ -251,9 +258,9 @@ export function useOrganizationApplicationDetailEnrichment(
     },
     enabled: Boolean(
       options?.enabled !== false &&
-        needsMemberEmail &&
-        isMembersRemoteEnabled() &&
-        teacherMemberId != null
+      needsMemberEmail &&
+      isMembersRemoteEnabled() &&
+      teacherMemberId != null
     ),
     staleTime: 60_000,
     retry: false,
@@ -288,9 +295,9 @@ export function useInstructorApplicationDetailEnrichment(
     queryFn: () => fetchInstructorApplicationDetailRemote(String(contextId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        row &&
-        shouldUseOrganizationApplicationRemoteApi() &&
-        contextId != null
+      row &&
+      shouldUseOrganizationApplicationRemoteApi() &&
+      contextId != null
     ),
     staleTime: 30_000,
     retry: false,
@@ -327,7 +334,9 @@ export function useInstructorApplicationDetailEnrichment(
       const detail = await fetchInstructorMemberDetailRemote(instructorMemberId!)
       return mapInstructorMemberDetailToUser(detail)
     },
-    enabled: Boolean(options?.enabled !== false && needsMemberBasicInfo && instructorMemberId != null),
+    enabled: Boolean(
+      options?.enabled !== false && needsMemberBasicInfo && instructorMemberId != null
+    ),
     staleTime: 60_000,
     retry: false,
   })
@@ -362,9 +371,9 @@ export function useParticipatingInstructorApplicationDetailEnrichment(
     queryFn: () => fetchInstructorApplicationDetailRemote(String(applicationId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        row &&
-        shouldUseOrganizationApplicationRemoteApi() &&
-        applicationId != null
+      row &&
+      shouldUseOrganizationApplicationRemoteApi() &&
+      applicationId != null
     ),
     staleTime: 30_000,
     retry: false,
@@ -417,9 +426,9 @@ export function useParticipatingIndividualApplicationDetailEnrichment(
     queryFn: () => fetchIndividualApplicationDetailRemote(String(applicationId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        row &&
-        shouldUseGeneralApplicationsRemoteApi() &&
-        applicationId != null
+      row &&
+      shouldUseGeneralApplicationsRemoteApi() &&
+      applicationId != null
     ),
     staleTime: 30_000,
     retry: false,
@@ -444,9 +453,9 @@ export function useParticipatingVolunteerApplicationDetailEnrichment(
     queryFn: () => fetchVolunteerApplicationDetailRemote(String(applicationId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        row &&
-        shouldUseGeneralApplicationsRemoteApi() &&
-        applicationId != null
+      row &&
+      shouldUseGeneralApplicationsRemoteApi() &&
+      applicationId != null
     ),
     staleTime: 30_000,
     retry: false,
@@ -498,9 +507,9 @@ export function useVolunteerApplicationDetailEnrichment(
     queryFn: () => fetchVolunteerApplicationDetailRemote(String(contextId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        row &&
-        shouldUseGeneralApplicationsRemoteApi() &&
-        contextId != null
+      row &&
+      shouldUseGeneralApplicationsRemoteApi() &&
+      contextId != null
     ),
     staleTime: 30_000,
     retry: false,

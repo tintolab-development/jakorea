@@ -19,7 +19,7 @@ export function useUjatProgramScheduleDates(programId?: string | null): {
 } {
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const schedulesQuery = useQuery({
-    queryKey: [...ujatQueryKeys.all, 'program-schedules', programId ?? ''] as const,
+    queryKey: ujatQueryKeys.programSchedules(programId ?? ''),
     queryFn: () => fetchProgramSchedulesLoose(String(programId)),
     enabled: remoteEnabled,
     staleTime: 60_000,
