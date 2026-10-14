@@ -51,6 +51,10 @@
   margin: 0;
 }
 
+.uploadHint {
+  margin: 0;
+}
+
 .rosterActionRow {
   display: flex;
   flex-wrap: wrap;

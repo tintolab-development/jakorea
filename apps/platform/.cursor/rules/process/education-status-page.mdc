@@ -276,9 +276,9 @@ alwaysApply: false
 | 요소 | 규칙 |
 | --- | --- |
 | 제목 | `Step 1 학생 명단을 등록해 주세요` (`hl-sm`) |
-| 설명 | `프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 엑셀 양식을 작성해 업로드 해주세요.` (`bd-md-rg` cool-500) |
+| 설명 | `프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 양셀 양식을 작성해 업로드 해주세요.` + 보조 안내: XLSX·CSV, 20MB, 500명, 첫 시트, `.xls` 미지원 (`bd-md-rg` cool-500) |
 | 양식 다운로드 | `POST .../organization-applications/{id}/student-roster/template` |
-| 엑셀 업로드 | 파일 업로드(`filePurpose=STUDENT_ROSTER`) → `POST .../student-roster/import` |
+| 파일 업로드 | XLSX·CSV만 ([`student-roster-upload-policy.ts`](apps/platform/src/features/mypage/education/applications/lib/student-roster-upload-policy.ts)). `filePurpose=STUDENT_ROSTER` → `POST .../student-roster/import` |
 | 수료증 발급하기 | 명단 1명 이상일 때 활성(비활성은 명단 없음만). 클릭 → [`StudentsPanelCertificateModal`](apps/platform/src/features/mypage/education/applications/ui/students-panel-certificate-modal.tsx) (학생 선택·수료증 다운받기). 다운로드 API 미연동 시 준비 중 안내. 상세 `certificateAvailable`은 BE 발급 가능 여부 플래그(버튼 disabled와 무관·후속 연동) |
 | 빈 상태 | `illust-quotation-no-bg` + `아직 등록된 학생이 없어요` (`hl-lg`) |
 | 등록 후 | `참여 학생 N명` + 이름·학년·반·번호 요약 목록(CMS급 테이블·필터 후속) |
@@ -388,4 +388,4 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 - 설문·만족도: `EducationSurveyFillPanel` (active, CMS `createDefaultSurveyDraft` 시드) · `EducationSurveyEmptyPanel` (empty)
 - 역할 판정: remote API는 신청 건 `applicationType`이 SoT. [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts)는 `applicationType` 우선, mock/레거시 항목만 `detailCase` fallback.
 
-**Last updated:** 2026-10-13 (교사 교육현황 학생 명단 탭 Step1/2 + Portal organization-applications API)
+**Last updated:** 2026-10-14 (학생 명단 import BE 계약: XLSX·CSV, 20MB, 500행, 첫 시트)

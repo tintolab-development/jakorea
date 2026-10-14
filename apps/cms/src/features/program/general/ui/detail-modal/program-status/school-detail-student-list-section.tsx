@@ -12,6 +12,7 @@ import { Spin } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import {
   CmsInput,
+  CmsPhoneInput,
   CmsRadio,
   CmsSelect,
   FilterTableLayout,
@@ -54,12 +55,16 @@ import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { LectureAttendanceDetail } from '../../../model/school-detail-types'
 import {
+  buildStudentAddGradeClassOptions,
+  buildRegisteredGradeClassSelectOptions,
+  buildStudentEditGradeClassOptions,
+} from '../../../lib/student-registered-grade-class-options'
+import {
   buildStudentClassFilterOptionsFromRows,
-  buildStudentGradeClassOptions,
   buildStudentListFilterFields,
   matchesStudentListFilters,
-  mergeStudentClassSelectOptions,
 } from '../../../lib/student-list-filter-fields'
+import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
 import {
   formatStudentBirthDateFromDigits,
@@ -141,8 +146,10 @@ function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStude
 export interface SchoolDetailStudentListSectionProps {
   schoolId: string
   studentCount: number
-  /** 신청 학급 수 — 학급 Select·필터 옵션 상한 (1반 … N반) */
+  /** @deprecated 학급 Select는 `registeredGradeBlocks` 기준. 목록 상단 요약용으로만 유지 */
   classCount?: number
+  /** 기관 신청 상세 `gradeBlocks` — 등록 학급 SSOT */
+  registeredGradeBlocks?: GradeBlock[] | null
   schoolName?: string
   educationGrade?: string
   /**
@@ -177,7 +184,8 @@ export interface SchoolDetailStudentListSectionProps {
 export function SchoolDetailStudentListSection({
   schoolId,
   studentCount,
-  classCount,
+  classCount: _classCount,
+  registeredGradeBlocks = null,
   schoolName = '',
   educationGrade = '',
   organizationApplicationId = null,
@@ -509,19 +517,31 @@ export function SchoolDetailStudentListSection({
     [pendingFilters]
   )
 
-  /** 필터·학생 추가·명단 수정 Select 공통 학급 옵션 */
-  const gradeClassOptions = useMemo(
+  const rosterGradeClassFallbackOptions = useMemo(
+    () => buildStudentClassFilterOptionsFromRows(mergedStudentList),
+    [mergedStudentList]
+  )
+
+  const registeredGradeClassOptions = useMemo(
+    () => buildRegisteredGradeClassSelectOptions(registeredGradeBlocks, educationGrade),
+    [registeredGradeBlocks, educationGrade]
+  )
+
+  /** 상단 검색 필터 — 명단에 실제 존재하는 학급만 */
+  const studentListFilterGradeClassOptions = rosterGradeClassFallbackOptions
+
+  const addStudentGradeClassOptions = useMemo(
     () =>
-      mergeStudentClassSelectOptions(
-        buildStudentGradeClassOptions(classCount, educationGrade),
-        buildStudentClassFilterOptionsFromRows(mergedStudentList)
-      ),
-    [classCount, educationGrade, mergedStudentList]
+      buildStudentAddGradeClassOptions({
+        registeredOptions: registeredGradeClassOptions,
+        rosterFallbackOptions: rosterGradeClassFallbackOptions,
+      }),
+    [registeredGradeClassOptions, rosterGradeClassFallbackOptions]
   )
 
   const studentListFilterFields = useMemo(
-    () => buildStudentListFilterFields(gradeClassOptions),
-    [gradeClassOptions]
+    () => buildStudentListFilterFields(studentListFilterGradeClassOptions),
+    [studentListFilterGradeClassOptions]
   )
 
   const studentListForm = useForm<StudentListFormValues>({
@@ -997,7 +1017,12 @@ export function SchoolDetailStudentListSection({
                   inputSize="medium"
                   width="100%"
                   withAllOption={false}
-                  options={gradeClassOptions}
+                  options={buildStudentEditGradeClassOptions({
+                    registeredOptions: registeredGradeClassOptions,
+                    studentGradeClass: field.value ?? '',
+                    educationGrade,
+                    rosterFallbackOptions: rosterGradeClassFallbackOptions,
+                  })}
                   getPopupContainer={() => document.body}
                 />
               </StudentListEditCell>
@@ -1016,7 +1041,13 @@ export function SchoolDetailStudentListSection({
             name={`students.${index}.contact`}
             render={({ field }) => (
               <StudentListEditCell>
-                <CmsInput {...field} inputSize="medium" width="100%" />
+                <CmsPhoneInput
+                  {...field}
+                  value={field.value ?? ''}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="010-1234-5678"
+                />
               </StudentListEditCell>
             )}
           />
@@ -1074,7 +1105,13 @@ export function SchoolDetailStudentListSection({
         ),
       },
     ],
-    [control, gradeClassOptions, showStudentListEditModeBlockedAlert]
+    [
+      control,
+      educationGrade,
+      registeredGradeClassOptions,
+      rosterGradeClassFallbackOptions,
+      showStudentListEditModeBlockedAlert,
+    ]
   )
 
   return (
@@ -1161,7 +1198,7 @@ export function SchoolDetailStudentListSection({
         open={addStudentModalOpen}
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
-        gradeClassOptions={gradeClassOptions}
+        gradeClassOptions={addStudentGradeClassOptions}
       />
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}

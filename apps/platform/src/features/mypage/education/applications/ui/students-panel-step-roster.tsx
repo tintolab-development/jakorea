@@ -6,11 +6,13 @@ import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no
 import fileDownloadMintUrl from '@/shared/assets/icons/file-download-mint.svg'
 import fileUploadBlackUrl from '@/shared/assets/icons/file-upload-black.svg'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import {
+  STUDENT_ROSTER_FILE_ACCEPT,
+  STUDENT_ROSTER_UPLOAD_HINT,
+  validateStudentRosterUploadFile,
+} from '../lib/student-roster-upload-policy'
 import { StudentsPanelRosterTable } from './students-panel-roster-table'
 import styles from './students-panel.module.css'
-
-const EXCEL_ACCEPT =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.xlsx,.xls'
 
 type StudentsPanelStepRosterProps = {
   isLoading: boolean
@@ -54,6 +56,11 @@ export function StudentsPanelStepRoster({
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
+    const validationError = validateStudentRosterUploadFile(file)
+    if (validationError) {
+      setAlertMessage(validationError)
+      return
+    }
     onImportFile(file)
   }
 
@@ -70,8 +77,10 @@ export function StudentsPanelStepRoster({
           <span className={styles.stepLabel}>Step 1</span> 학생 명단을 등록해 주세요
         </PFText>
         <PFText as="p" typo="bd-md-md" color="black" className={styles.stepDescription}>
-          프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 엑셀 양식을 작성해 업로드
-          해주세요.
+          프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 양식을 작성해 업로드해 주세요.
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.uploadHint}>
+          {STUDENT_ROSTER_UPLOAD_HINT}
         </PFText>
       </div>
 
@@ -98,7 +107,7 @@ export function StudentsPanelStepRoster({
           >
             <span className={styles.buttonInner}>
               <img src={fileUploadBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
-              {isImporting ? '업로드 중' : '엑셀 업로드'}
+              {isImporting ? '업로드 중' : '파일 업로드'}
             </span>
           </PFButton>
         </div>
@@ -123,10 +132,10 @@ export function StudentsPanelStepRoster({
       <input
         ref={fileInputRef}
         type="file"
-        accept={EXCEL_ACCEPT}
+        accept={STUDENT_ROSTER_FILE_ACCEPT}
         className={styles.hiddenFile}
         onChange={handleFileChange}
-        aria-label="학생 명단 엑셀 파일 선택"
+        aria-label="학생 명단 파일 선택 (XLSX, CSV)"
       />
 
       {isLoading ? (

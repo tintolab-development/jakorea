@@ -4,7 +4,10 @@
 
 import { useCallback, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
 import {
   commitOrganizationStudentRosterRemote,
   fetchOrganizationStudentRosterRemote,
@@ -66,8 +69,16 @@ export function useOrganizationStudentRosterRemote(input: {
       })
       return commitOrganizationStudentRosterRemote(applicationId, body)
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       queryClient.setQueryData(generalProgramProgressQueryKeys.studentRoster(applicationId), data)
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.organizationDetail(applicationId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.studentRoster(applicationId),
+        }),
+      ])
     },
     onError: error => {
       handleError(error, { context: 'useOrganizationStudentRosterRemote.commit' })
