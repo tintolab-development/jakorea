@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
   canSubmitInstructorRoleRequest,
   getInstructorRoleRequestStatusMessage,
   INSTRUCTOR_APPLY_PATH,
+  INSTRUCTOR_APPLY_REAPPLY_QUERY,
   InstructorApplyForm,
   InstructorApplyPendingReviewView,
   InstructorApplyRejectedReviewView,
@@ -27,9 +28,11 @@ import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
 
 export function MypageInstructorApplyPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const reapplyFromQuery = searchParams.get(INSTRUCTOR_APPLY_REAPPLY_QUERY) === '1'
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [successOpen, setSuccessOpen] = useState(false)
-  const [reapplyAfterReject, setReapplyAfterReject] = useState(false)
+  const [reapplyAfterReject, setReapplyAfterReject] = useState(reapplyFromQuery)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const { isLoading, isError, lockedBasic } = useInstructorApplyLockedBasic()
   const remoteSession = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -40,6 +43,12 @@ export function MypageInstructorApplyPage() {
     remoteSession && isInstructorRoleRequestPendingReview(currentRequestQuery.data)
   const isRejected =
     remoteSession && isInstructorRoleRequestRejected(currentRequestQuery.data)
+
+  useEffect(() => {
+    if (reapplyFromQuery) {
+      setReapplyAfterReject(true)
+    }
+  }, [reapplyFromQuery])
 
   useEffect(() => {
     if (remoteSession) {
@@ -104,7 +113,13 @@ export function MypageInstructorApplyPage() {
           <InstructorApplyRejectedReviewView
             summary={currentRequestQuery.data}
             lockedBasic={lockedBasic}
-            onReapply={() => setReapplyAfterReject(true)}
+            onReapply={() => {
+              setReapplyAfterReject(true)
+              navigate(
+                `${INSTRUCTOR_APPLY_PATH}?${INSTRUCTOR_APPLY_REAPPLY_QUERY}=1`,
+                { replace: true },
+              )
+            }}
           />
         ) : remoteSession && !canSubmit ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

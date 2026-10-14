@@ -38,6 +38,8 @@ export {
 } from './education'
 export {
   INSTRUCTOR_APPLY_PATH,
+  INSTRUCTOR_APPLY_REAPPLY_QUERY,
+  instructorApplyPath,
   instructorApplyConsentPath,
   MOCK_MYPAGE_USER_NAME,
   MYPAGE_PATH,
