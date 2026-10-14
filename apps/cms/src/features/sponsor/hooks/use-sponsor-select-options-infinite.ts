@@ -29,7 +29,7 @@ export function useSponsorSelectOptionsInfinite(enabled = true) {
   const options = useMemo(
     () =>
       (query.data?.pages.flatMap(page => page.items) ?? []).map(row => ({
-        value: row.id,
+        value: String(row.id),
         label: row.name,
       })),
     [query.data]

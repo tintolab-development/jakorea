@@ -30,6 +30,7 @@ import {
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
   normalizeTrainedTeachersAllSelectValue,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import { mergeSponsorRegistrationSelectOptions } from '@/features/program/general/lib/registration-sponsor-select-option-merge'
 import {
   isSponsorContactUnselected,
   normalizeSponsorContactUnselectedSelection,
@@ -221,26 +222,30 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     !allowMultipleSponsors && !isAllSponsor && Boolean(sponsorId)
   )
 
-  const sponsorOptions = useMemo(() => {
-    const byId = new Map(sponsorApiOptions.map(option => [option.value, option]))
-    for (const id of sponsorIds) {
-      if (byId.has(id)) continue
-      const row = multiSponsorContext.sponsors.find(sponsor => sponsor.id === id)
-      byId.set(id, { value: id, label: row?.name?.trim() || id })
-    }
-    return [...byId.values()]
-  }, [multiSponsorContext.sponsors, sponsorApiOptions, sponsorIds])
+  const sponsorOptions = useMemo(
+    () =>
+      mergeSponsorRegistrationSelectOptions({
+        sponsorIds,
+        apiOptions: sponsorApiOptions,
+        sponsors: multiSponsorContext.sponsors,
+      }),
+    [multiSponsorContext.sponsors, sponsorApiOptions, sponsorIds]
+  )
 
   const managerContactsReady = allowMultipleSponsors
     ? sponsorIds.length === 0 ||
-      (sponsorIds.every(id => multiSponsorContext.sponsors.some(row => row.id === id)) &&
-        sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[id] != null))
+      (sponsorIds.every(id =>
+        multiSponsorContext.sponsors.some(row => String(row.id) === String(id))
+      ) &&
+        sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[String(id)] != null))
     : isAllSponsor || singleContactsQuery.isSuccess || singleContactsQuery.isError
 
   const selectedSponsors = useMemo(() => {
     if (!allowMultipleSponsors) return [] as SponsorManagementRow[]
     return sponsorIds
-      .map(id => multiSponsorContext.sponsors.find(row => row.id === id))
+      .map(id =>
+        multiSponsorContext.sponsors.find(row => String(row.id) === String(id))
+      )
       .filter((row): row is SponsorManagementRow => row != null)
   }, [allowMultipleSponsors, multiSponsorContext.sponsors, sponsorIds])
 
@@ -251,10 +256,10 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     if (allowMultipleSponsors) {
       const options: Array<{ value: string; label: string }> = []
       for (const sponsor of selectedSponsors) {
-        const contacts = multiSponsorContext.contactsBySponsorId[sponsor.id] ?? []
+        const contacts = multiSponsorContext.contactsBySponsorId[String(sponsor.id)] ?? []
         for (const contact of contacts) {
           options.push({
-            value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
+            value: encodeSponsorManagerContactRef(String(sponsor.id), String(contact.id)),
             label: formatSponsorManagerSelectLabel({
               sponsorName: sponsor.name,
               contactName: contact.name,
@@ -268,7 +273,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     }
     if (!sponsorId) return []
     return (singleContactsQuery.data ?? []).map(c => ({
-      value: c.id,
+      value: String(c.id),
       label: c.name,
     }))
   }, [
@@ -283,12 +288,16 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const managerSelectOptions = useMemo(() => {
     const sponsorChosen =
       isAllSponsor || (allowMultipleSponsors ? sponsorIds.length > 0 : Boolean(sponsorId))
-    // 후원사만 고르면 미선택 노출. contacts 전부 로드될 때까지 기다리면 옵션이 빠져 보인다.
-    if (!sponsorChosen) return managerOptions
+    const needsUnselectedOption =
+      sponsorChosen ||
+      managerContactIds.some(id => isSponsorContactUnselected(id))
+    // 후원사만 고르면 미선택 노출. autofill sentinel은 후원사 로드 전에도 라벨 매칭.
+    if (!needsUnselectedOption) return managerOptions
     return withSponsorContactUnselectedOption(managerOptions)
   }, [
     allowMultipleSponsors,
     isAllSponsor,
+    managerContactIds,
     managerOptions,
     sponsorId,
     sponsorIds.length,

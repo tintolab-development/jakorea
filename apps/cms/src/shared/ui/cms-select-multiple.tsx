@@ -9,6 +9,10 @@ import { Input, Popover } from 'antd'
 import { CmsCheckbox } from './cms-checkbox'
 import { CmsClearIconSvg, joinCmsClassNames } from './cms-field'
 import { FieldChevronDownIcon } from './icons/FieldIcons'
+import {
+  isSponsorContactUnselected,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 export type CmsSelectMultipleOption = {
   value: string
@@ -107,7 +111,12 @@ export function CmsSelectMultiple({
 
   const displayText = useMemo(() => {
     if (value.length === 0) return ''
-    return value.map(v => optionByValue.get(v)?.label ?? v).join(', ')
+    return value
+      .map(v => {
+        if (isSponsorContactUnselected(v)) return SPONSOR_CONTACT_UNSELECTED_LABEL
+        return optionByValue.get(v)?.label ?? v
+      })
+      .join(', ')
   }, [value, optionByValue])
 
   const filteredOptions = useMemo(() => {
