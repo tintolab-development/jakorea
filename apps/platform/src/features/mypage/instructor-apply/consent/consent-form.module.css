@@ -486,6 +486,15 @@
   padding-top: 0;
 }
 
+.consentShortEssayStack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-16);
+}
+
 /* 행정정보 — 대상자 본인 섹션 + 전자서명 카드(별도 셸) */
 .paragraphWithCompanion {
   display: flex;

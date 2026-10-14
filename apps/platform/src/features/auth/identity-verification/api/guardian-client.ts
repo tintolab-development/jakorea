@@ -4,8 +4,8 @@ import { isIdentityVerificationRemoteEnabled } from '@/shared/config/identity-ve
 import { identityVerificationPaths } from '@/shared/config/identity-verification-paths'
 
 /**
- * 만 14세 미만 보호자 본인인증.
- * NICE identity 세션을 사용하고, 가입 요청의 `guardianVerificationSessionId`로 전달한다.
+ * @deprecated 만 14세 미만은 Guardian Bridge(`useGuardianBridgeVerification`)만 사용한다.
+ * `guardianVerificationSessionId`는 Challenge sessionId이며 NICE Identity sessionId와 다르다.
  */
 export const guardianIdentityVerificationClient = createIdentityVerificationClient({
   http: {

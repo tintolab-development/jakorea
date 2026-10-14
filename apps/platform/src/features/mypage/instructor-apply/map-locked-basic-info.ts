@@ -12,11 +12,26 @@ import { getDevMemberProfile } from '@/shared/lib/dev-member-profile'
 import { MOCK_MYPAGE_USER_NAME } from '../lib/constants'
 import type { PlatformMemberProfile } from '../model/types'
 
-/** 프로필에 자택 주소(도로명)가 있을 때만 강사 신청 폼에서 고정·비활성화 */
+/**
+ * 자택 주소 잠금
+ * - 교사: 회원정보에 자택 주소 없음 → 도로명·상세 모두 편집
+ * - 개인(general): 회원정보 주소 고정 → 도로명·상세 모두 비활성
+ */
+export function resolveInstructorApplyHomeAddressLock(
+  locked: Pick<InstructorApplyLockedBasicInfo, 'memberType'>,
+): { roadLocked: boolean; detailLocked: boolean } {
+  if (locked.memberType !== 'general') {
+    return { roadLocked: false, detailLocked: false }
+  }
+  return { roadLocked: true, detailLocked: true }
+}
+
+/** 개인 회원만 자택 주소 전체 고정 */
 export function isInstructorApplyHomeAddressLocked(
-  locked: Pick<InstructorApplyLockedBasicInfo, 'homeAddress' | 'homeAddressDetail'>,
+  locked: Pick<InstructorApplyLockedBasicInfo, 'memberType'>,
 ): boolean {
-  return Boolean(locked.homeAddress.trim())
+  const { roadLocked, detailLocked } = resolveInstructorApplyHomeAddressLock(locked)
+  return roadLocked && detailLocked
 }
 
 /** 회원가입(프로필) 고정 필드를 draft·API 값 위에 병합 */
@@ -25,7 +40,7 @@ export function applyLockedBasicToInstructorForm(
   locked: InstructorApplyLockedBasicInfo,
   preserveEmploymentStatus = false,
 ): InstructorSharedProfileFormValues {
-  const homeAddressLocked = isInstructorApplyHomeAddressLocked(locked)
+  const { roadLocked, detailLocked } = resolveInstructorApplyHomeAddressLock(locked)
   const employmentStatus =
     locked.memberType === 'school_teacher'
       ? preserveEmploymentStatus
@@ -39,8 +54,8 @@ export function applyLockedBasicToInstructorForm(
     birthDate: locked.birthDate,
     contact: locked.contact,
     email: locked.email,
-    homeAddress: homeAddressLocked ? locked.homeAddress : base.homeAddress,
-    homeAddressDetail: homeAddressLocked ? locked.homeAddressDetail : base.homeAddressDetail,
+    homeAddress: roadLocked ? locked.homeAddress : base.homeAddress,
+    homeAddressDetail: detailLocked ? locked.homeAddressDetail : base.homeAddressDetail,
     memberType: locked.memberType,
     schoolName: locked.memberType === 'school_teacher' ? locked.schoolName : '',
     employmentStatus,
@@ -113,8 +128,9 @@ export function mapPortalProfileToLockedBasicInfo(
       birthDate: toInstructorFormBirthDate(profile?.birthDate),
       contact: profile?.phone?.trim() ?? '',
       email: profile?.email?.trim() ?? '',
-      homeAddress: profile?.address?.trim() ?? '',
-      homeAddressDetail: profile?.addressDetail?.trim() ?? '',
+      /** 교사 회원정보에 자택 주소 없음 — 강사 신청에서 직접 입력 */
+      homeAddress: '',
+      homeAddressDetail: '',
       memberType,
       schoolName: profile?.schoolName?.trim() ?? '',
       employmentStatus: toInstructorFormEmploymentStatus(profile?.teacherEmploymentStatus),
@@ -154,8 +170,8 @@ export function getMockInstructorApplyLockedBasic(
     birthDate: '1990.01.01',
     contact: MOCK_VERIFIED_PHONE,
     email: 'hong@example.com',
-    homeAddress: '서울특별시 중구 세종대로 110',
-    homeAddressDetail: 'JA Korea',
+    homeAddress: teacher ? '' : '서울특별시 중구 세종대로 110',
+    homeAddressDetail: teacher ? '' : 'JA Korea',
     memberType: teacher ? 'school_teacher' : 'general',
     schoolName: teacher ? '서울초등학교' : '',
     employmentStatus: teacher ? 'ACTIVE' : '',

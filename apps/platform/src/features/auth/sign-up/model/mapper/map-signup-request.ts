@@ -56,6 +56,7 @@ export type SignUpMapInput = {
   isIdentityVerified: boolean
   identityVerificationSessionId?: number | null
   guardianVerificationSessionId?: number | null
+  signupIntentId?: string | null
   schoolStatus: SchoolStatus
   schoolName: string
   schoolOrganizationId?: number | null
@@ -128,6 +129,9 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
   }
   if (input.guardianVerificationSessionId != null) {
     member.guardianVerificationSessionId = input.guardianVerificationSessionId
+  }
+  if (input.isUnderAgeSignup && input.signupIntentId?.trim()) {
+    member.signupIntentId = input.signupIntentId.trim()
   }
 
   if (input.selectedType === 'general' && input.schoolStatus === 'enrolled') {

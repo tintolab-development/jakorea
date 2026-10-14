@@ -218,7 +218,7 @@ export function UjatEducationProgressVolunteersSection({
         title="참여 봉사자 목록"
         description={`${tableData.length}건`}
         actions={
-          <div className="ujat-education-progress-volunteers__actions">
+          <div className="ujat-education-progress-volunteers__actions program-application-list-toolbar">
             <FilterTableToolbarButton
               type="button"
               variant="secondary"

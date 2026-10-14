@@ -1,0 +1,7 @@
+.reapplyStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  width: 100%;
+  min-width: 0;
+}

@@ -603,7 +603,7 @@ export function ParticipatingVolunteersSection({
         title="참여 봉사자 목록"
         description={`${filteredVolunteers.length}건`}
         actions={
-          <>
+          <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
               variant="secondary"
               style={{ minWidth: 180 }}
@@ -645,7 +645,7 @@ export function ParticipatingVolunteersSection({
             >
               봉사자 등록
             </FilterTableToolbarButton>
-          </>
+          </div>
         }
         excelExport={{
           columns,

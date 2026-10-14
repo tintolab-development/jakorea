@@ -10,6 +10,12 @@ export function isInstructorRoleRequestPendingReview(
   return PENDING_REVIEW_STATUSES.has(status)
 }
 
+export function isInstructorRoleRequestRejected(
+  summary?: InstructorRoleRequestSummary | null,
+): boolean {
+  return summary?.status?.trim().toUpperCase() === 'REJECTED'
+}
+
 /** current 신청 상태 기준으로 신규/재신청 가능 여부 */
 export function canSubmitInstructorRoleRequest(
   summary?: InstructorRoleRequestSummary | null,

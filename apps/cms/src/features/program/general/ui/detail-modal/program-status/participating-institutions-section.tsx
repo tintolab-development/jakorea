@@ -599,25 +599,27 @@ export function ParticipatingInstitutionsSection({
         title="교육 참여 기관 목록"
         description={`${filteredSchools.length}건`}
         actions={
-          viewMode === 'list' ? (
-            <FilterTableToolbarButton
-              variant="secondary"
-              style={{ minWidth: 180 }}
-              icon={<ButtonCalendarIcon />}
-              onClick={handleCalendarView}
-            >
-              캘린더 뷰로 보기
-            </FilterTableToolbarButton>
-          ) : (
-            <FilterTableToolbarButton
-              variant="secondary"
-              style={{ minWidth: 180 }}
-              icon={<ButtonListIcon />}
-              onClick={handleListView}
-            >
-              리스트 뷰로 보기
-            </FilterTableToolbarButton>
-          )
+          <div className="program-application-list-toolbar">
+            {viewMode === 'list' ? (
+              <FilterTableToolbarButton
+                variant="secondary"
+                style={{ minWidth: 180 }}
+                icon={<ButtonCalendarIcon />}
+                onClick={handleCalendarView}
+              >
+                캘린더 뷰로 보기
+              </FilterTableToolbarButton>
+            ) : (
+              <FilterTableToolbarButton
+                variant="secondary"
+                style={{ minWidth: 180 }}
+                icon={<ButtonListIcon />}
+                onClick={handleListView}
+              >
+                리스트 뷰로 보기
+              </FilterTableToolbarButton>
+            )}
+          </div>
         }
         excelExport={{
           columns,

@@ -52,3 +52,5 @@ CMS Orval 타입과 동일한 계약을 Platform `settings/api`에서 hand-writt
 
 - HTTP: [`portal-consent-documents.ts`](../../src/features/mypage/settings/api/portal-consent-documents.ts)
 - 제출 오케스트레이션: [`submit-portal-consent-document.ts`](../../src/features/mypage/settings/lib/submit-portal-consent-document.ts)
+- 작성 UI: [`write-form.tsx`](../../src/features/mypage/instructor-apply/consent/write-form.tsx) — `isRemoteApiConfigured()` + 액세스 토큰 있으면 Portal 제출(마이페이지 설정·강사 신청 동의서 공통). 없으면 강사 신청은 sessionStorage `markInstructorApplyConsentAgreed`만.
+- 초상권(마이페이지): [`mypage-portrait-consent-write-form.tsx`](../../src/features/mypage/settings/ui/mypage-portrait-consent-write-form.tsx) → `submitPortalPortraitConsentFromWriteState`

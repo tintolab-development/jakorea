@@ -1,0 +1,5 @@
+/* Ant Design Input / TextArea showCount — CMS 앱 전역 미표시 */
+.ant-input-show-count-suffix,
+.ant-input-data-count {
+  display: none !important;
+}

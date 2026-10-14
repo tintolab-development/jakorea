@@ -1,13 +1,10 @@
 import {
   PFCheckbox,
-  PFFormControlCluster,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormHomeAddressFields,
-  PFFormInlineRow,
-  PFFormInlineSegment,
-  PFFormInlineSeparator,
+  PFFormInlineSeparatedFields,
   PFFormResidentNumberInput,
   PFSelect,
   PFTextInput,
@@ -50,7 +47,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
   return (
     <PFFormFieldTable>
       <PFFormFieldRow type="double">
-        <PFFormField label="성명" required>
+        <PFFormField label="성명">
           <PFTextInput
             variant="formPage"
             size="large"
@@ -70,7 +67,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="double">
-        <PFFormField label="주민등록번호" required>
+        <PFFormField label="주민등록번호">
           <PFFormResidentNumberInput
             fillRow
             frontValue={merged.residentFront}
@@ -80,37 +77,32 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
           />
         </PFFormField>
         <PFFormField label="소속">
-          <PFFormInlineRow className={formStyles.inlineRowFill}>
-            <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                placeholder="소속 기관명"
-                disabled={merged.noAffiliation}
-                value={merged.noAffiliation ? '' : merged.affiliation}
-                onValueChange={value => patch('affiliation', value)}
-              />
-            </PFFormInlineSegment>
-            <PFFormInlineSeparator />
-            <PFFormInlineSegment>
-              <PFCheckbox
-                checked={merged.noAffiliation}
-                onCheckedChange={checked =>
-                  onChange({
-                    ...merged,
-                    noAffiliation: checked,
-                    affiliation: checked ? '' : merged.affiliation,
-                  })
-                }
-              >
-                소속 없음
-              </PFCheckbox>
-            </PFFormInlineSegment>
-          </PFFormInlineRow>
+          <PFFormInlineSeparatedFields className={formStyles.inlineRowFill}>
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              placeholder="소속 기관명"
+              disabled={merged.noAffiliation}
+              value={merged.noAffiliation ? '' : merged.affiliation}
+              onValueChange={value => patch('affiliation', value)}
+            />
+            <PFCheckbox
+              checked={merged.noAffiliation}
+              onCheckedChange={checked =>
+                onChange({
+                  ...merged,
+                  noAffiliation: checked,
+                  affiliation: checked ? '' : merged.affiliation,
+                })
+              }
+            >
+              소속 없음
+            </PFCheckbox>
+          </PFFormInlineSeparatedFields>
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="자택 주소" required>
+        <PFFormField label="자택 주소">
           <PFFormHomeAddressFields
             fillRow
             roadValue={merged.addressRoad}
@@ -121,40 +113,33 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="정산 계좌 정보" required>
-          <PFFormInlineRow className={formStyles.inlineRowFill}>
-            <PFFormInlineSegment>
-              <PFFormControlCluster>
-                <PFSelect
-                  variant="formPage"
-                  size="large"
-                  width={200}
-                  placeholder="은행명"
-                  options={SETTLEMENT_BANK_OPTIONS}
-                  value={resolveBankSelectValue(merged.bankName)}
-                  onValueChange={value => patch('bankName', value)}
-                />
-                <PFTextInput
-                  variant="formPage"
-                  size="large"
-                  inputMode="numeric"
-                  placeholder="계좌번호(숫자만)"
-                  value={merged.accountNumber}
-                  onValueChange={value => patch('accountNumber', value.replace(/\D/g, ''))}
-                />
-              </PFFormControlCluster>
-            </PFFormInlineSegment>
-            <PFFormInlineSeparator />
-            <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                placeholder="예금주명"
-                value={merged.accountHolder}
-                onValueChange={value => patch('accountHolder', value)}
-              />
-            </PFFormInlineSegment>
-          </PFFormInlineRow>
+        <PFFormField label="정산 계좌 정보">
+          <PFFormInlineSeparatedFields className={formStyles.inlineRowFill}>
+            <PFSelect
+              variant="formPage"
+              size="large"
+              width={200}
+              placeholder="은행명"
+              options={SETTLEMENT_BANK_OPTIONS}
+              value={resolveBankSelectValue(merged.bankName)}
+              onValueChange={value => patch('bankName', value)}
+            />
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              inputMode="numeric"
+              placeholder="계좌번호(숫자만)"
+              value={merged.accountNumber}
+              onValueChange={value => patch('accountNumber', value.replace(/\D/g, ''))}
+            />
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              placeholder="예금주명"
+              value={merged.accountHolder}
+              onValueChange={value => patch('accountHolder', value)}
+            />
+          </PFFormInlineSeparatedFields>
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">

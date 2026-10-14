@@ -107,7 +107,7 @@ export function UjatEducationProgressAttendanceSection({
         hideExcelDownload
         actions={
           firstSessionTitle != null ? (
-            <>
+            <div className="program-application-list-toolbar">
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
@@ -120,7 +120,7 @@ export function UjatEducationProgressAttendanceSection({
                 loading={isFirstSessionExporting}
                 onClick={exportFirstSessionExcel}
               />
-            </>
+            </div>
           ) : null
         }
       >

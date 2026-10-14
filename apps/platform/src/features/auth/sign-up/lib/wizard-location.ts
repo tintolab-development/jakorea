@@ -5,7 +5,9 @@ export const SIGN_UP_PATH = '/auth/sign-up'
 export type SignUpWizardPhase =
   | 'guardian-consent'
   | 'guardian-agreement'
+  | 'guardian-profile'
   | 'guardian-identity'
+  | 'guardian-final-consent'
   | 'identity'
   | 'agreement'
 
@@ -23,7 +25,9 @@ export function isUnderAgeSignUpWizardPhase(phase: SignUpWizardPhase | null): bo
   return (
     phase === 'guardian-consent' ||
     phase === 'guardian-agreement' ||
-    phase === 'guardian-identity'
+    phase === 'guardian-profile' ||
+    phase === 'guardian-identity' ||
+    phase === 'guardian-final-consent'
   )
 }
 
@@ -32,7 +36,9 @@ export function parseSignUpPhase(searchParams: URLSearchParams): SignUpWizardPha
   switch (phase) {
     case 'guardian-consent':
     case 'guardian-agreement':
+    case 'guardian-profile':
     case 'guardian-identity':
+    case 'guardian-final-consent':
     case 'identity':
     case 'agreement':
       return phase

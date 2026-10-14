@@ -1,3 +1,5 @@
+@import '../../program-application-list-toolbar.css';
+
 /* 리스트 뷰만 가로 클립 — 캘린더(split-card)는 grid min-width로 가로 overflow 가능 */
 .applicant-details {
   width: 100%;

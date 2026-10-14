@@ -81,6 +81,8 @@ export type MemberSignupRequest = {
   identityVerified?: boolean
   identityVerificationSessionId?: number
   guardianVerificationSessionId?: number
+  /** 만 14세 미만 Guardian Bridge — Intent UUID */
+  signupIntentId?: string
   schoolEnrollmentStatus?: string
   schoolOrganizationId?: number
   schoolName?: string

@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
 import { CAREER_LEVEL_OPTIONS } from '@jakorea/domain/instructor/career-level'
@@ -41,45 +40,41 @@ import {
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
-import { SETTINGS_TEACHER_EMPLOYMENT_OPTIONS } from '@/features/mypage/settings/lib/map-edit'
 import {
   PFAlertModal,
   PFButton,
   PFCheckbox,
   PFCircleAddButton,
   PFDateInput,
-  PFFormControlCluster,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
   PFFormHomeAddressFields,
-  PFFormInlineRow,
-  PFFormInlineSegment,
-  PFFormInlineSeparator,
+  PFFormInlineSeparatedFields,
   PFFormPeriodPair,
   PFFormPeriodTilde,
   PFFormSection,
   PFItemDeleteButton,
-  PFOptionList,
   PFSelect,
-  PFStateBadge,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
 import { getInstructorApplyApiErrorMessage } from './api/get-instructor-apply-api-error-message'
 import { mapInstructorApplyFormToCreateRequest } from './api/map-create-request'
+import { resolveInstructorApplyTermsAgreementVersions } from './api/resolve-terms-agreement-versions'
 import { useCreateInstructorRoleRequestMutation } from './api/use-create-instructor-role-request-mutation'
 import { EducationSchoolNameField } from './education-school-name-field'
 import { getInstructorApplyConsentPath } from './consent/catalog'
 import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
 import {
   applyLockedBasicToInstructorForm,
-  isInstructorApplyHomeAddressLocked,
+  resolveInstructorApplyHomeAddressLock,
   type InstructorApplyLockedBasicInfo,
 } from './map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
+import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
 const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
@@ -177,13 +172,15 @@ function RadioGroup<T extends string>({
 function HomeAddressFieldRow({
   roadValue,
   detailValue,
-  disabled,
+  roadDisabled,
+  detailDisabled,
   onRoadChange,
   onDetailChange,
 }: {
   roadValue: string
   detailValue: string
-  disabled: boolean
+  roadDisabled: boolean
+  detailDisabled: boolean
   onRoadChange: (value: string) => void
   onDetailChange: (value: string) => void
 }) {
@@ -197,105 +194,11 @@ function HomeAddressFieldRow({
           onDetailChange={onDetailChange}
           roadPlaceholder={PH.homeAddress}
           detailPlaceholder={PH.homeAddressDetail}
-          disabled={disabled}
+          roadDisabled={roadDisabled}
+          detailDisabled={detailDisabled}
         />
       </PFFormField>
     </PFFormFieldRow>
-  )
-}
-
-function TeacherEmploymentStatusMenu({
-  value,
-  onChange,
-}: {
-  value: InstructorSharedProfileFormValues['employmentStatus']
-  onChange: (next: InstructorSharedProfileFormValues['employmentStatus']) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [listStyle, setListStyle] = useState<CSSProperties | null>(null)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
-  const matched = SETTINGS_TEACHER_EMPLOYMENT_OPTIONS.find(option => option.value === value)
-  const tone = value === 'ON_LEAVE' ? 'success' : 'progress'
-
-  useLayoutEffect(() => {
-    if (!open) return
-
-    const updatePosition = () => {
-      const trigger = rootRef.current
-      if (!trigger) return
-      const rect = trigger.getBoundingClientRect()
-      setListStyle({
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
-        minWidth: Math.max(120, rect.width),
-        zIndex: 20,
-      })
-    }
-
-    updatePosition()
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, true)
-    return () => {
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null
-      if (!target) return
-      if (rootRef.current?.contains(target) || listRef.current?.contains(target)) return
-      setOpen(false)
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown, true)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [open])
-
-  return (
-    <div className={styles.employmentMenu} ref={rootRef}>
-      <button
-        type="button"
-        className={styles.employmentTrigger}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label="재직 현황"
-        onClick={() => setOpen(current => !current)}
-      >
-        <PFStateBadge size="small" tone={matched ? tone : 'disabled'}>
-          {matched?.label ?? '재직 현황'}
-        </PFStateBadge>
-      </button>
-      {open
-        ? createPortal(
-            <PFOptionList
-              ref={listRef}
-              className={styles.employmentList}
-              style={listStyle ?? undefined}
-              aria-label="재직 현황"
-              options={SETTINGS_TEACHER_EMPLOYMENT_OPTIONS}
-              selectedValue={value}
-              onSelect={next => {
-                onChange(next as InstructorSharedProfileFormValues['employmentStatus'])
-                setOpen(false)
-              }}
-            />,
-            document.body,
-          )
-        : null}
-    </div>
   )
 }
 
@@ -327,7 +230,9 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const [values, setValues] = useState<InstructorSharedProfileFormValues>(() => {
     const draft = loadInstructorApplyFormDraft()
     const preserveEmploymentStatus = shouldPreserveEmploymentStatus(draft)
-    employmentTouchedRef.current = preserveEmploymentStatus
+    if (preserveEmploymentStatus) {
+      employmentTouchedRef.current = true
+    }
     return applyLockedBasicToInstructorForm(
       draft ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
       lockedBasic,
@@ -339,7 +244,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const createMutation = useCreateInstructorRoleRequestMutation()
   const useRemoteSubmit = isRemoteApiConfigured() && Boolean(getAccessToken())
   const isSubmitting = submitting || createMutation.isPending
-  const isHomeAddressLocked = isInstructorApplyHomeAddressLocked(lockedBasic)
+  const homeAddressLock = resolveInstructorApplyHomeAddressLock(lockedBasic)
 
   useEffect(() => {
     setValues(prev =>
@@ -365,12 +270,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
     next: InstructorSharedProfileFormValues[K]
   ) => {
     if ((LOCKED_BASIC_KEYS as readonly string[]).includes(key)) return
-    if (
-      isHomeAddressLocked &&
-      (key === 'homeAddress' || key === 'homeAddressDetail')
-    ) {
-      return
-    }
+    if (key === 'homeAddress' && homeAddressLock.roadLocked) return
+    if (key === 'homeAddressDetail' && homeAddressLock.detailLocked) return
     setValues(prev => ({ ...prev, [key]: next }))
   }
 
@@ -452,13 +353,32 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
       return
     }
 
-    const body = mapInstructorApplyFormToCreateRequest(values)
-    createMutation.mutate(body, {
-      onSuccess: () => {
-        setSubmitting(false)
-        onSubmitSuccess()
-      },
-      onError: error => {
+    void (async () => {
+      try {
+        const mapped = mapInstructorApplyFormToCreateRequest(values)
+        const termsAgreements = await resolveInstructorApplyTermsAgreementVersions(
+          mapped.termsAgreements,
+        )
+        createMutation.mutate(
+          { ...mapped, termsAgreements },
+          {
+            onSuccess: () => {
+              setSubmitting(false)
+              onSubmitSuccess()
+            },
+            onError: error => {
+              setSubmitting(false)
+              setAlert({
+                title: '안내',
+                description: getInstructorApplyApiErrorMessage(
+                  error,
+                  '강사 신청을 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                ),
+              })
+            },
+          },
+        )
+      } catch (error) {
         setSubmitting(false)
         setAlert({
           title: '안내',
@@ -467,8 +387,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
             '강사 신청을 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
           ),
         })
-      },
-    })
+      }
+    })()
   }
 
   return (
@@ -499,22 +419,17 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                       labelWidth="wide"
                       required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
                     >
-                      <PFFormInlineRow>
-                        <PFFormInlineSegment>
-                          <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
-                        </PFFormInlineSegment>
-                        <PFFormInlineSeparator />
-                        <PFFormInlineSegment>
-                          <PFButton
-                            type="button"
-                            variant="secondary"
-                            size="formPage"
-                            onClick={() => handleConsentDocumentWrite(item.key)}
-                          >
-                            동의서 작성
-                          </PFButton>
-                        </PFFormInlineSegment>
-                      </PFFormInlineRow>
+                      <PFFormInlineSeparatedFields>
+                        <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
+                        <PFButton
+                          type="button"
+                          variant="secondary"
+                          size="formPage"
+                          onClick={() => handleConsentDocumentWrite(item.key)}
+                        >
+                          동의서 작성
+                        </PFButton>
+                      </PFFormInlineSeparatedFields>
                     </PFFormField>
                   )
                 })}
@@ -538,29 +453,24 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 />
               </PFFormField>
               <PFFormField label="성별 및 생년월일">
-                <PFFormInlineRow>
-                  <PFFormInlineSegment>
-                    <RadioGroup
-                      name="gender"
-                      value={values.gender}
-                      options={GENDER_OPTIONS}
-                      disabled
-                      onChange={value => patch('gender', value)}
-                    />
-                  </PFFormInlineSegment>
-                  <PFFormInlineSeparator />
-                  <PFFormInlineSegment>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      width="180px"
-                      placeholder={PH.birthDate}
-                      disabled
-                      value={values.birthDate}
-                      onValueChange={value => patch('birthDate', value)}
-                    />
-                  </PFFormInlineSegment>
-                </PFFormInlineRow>
+                <PFFormInlineSeparatedFields>
+                  <RadioGroup
+                    name="gender"
+                    value={values.gender}
+                    options={GENDER_OPTIONS}
+                    disabled
+                    onChange={value => patch('gender', value)}
+                  />
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    width="180px"
+                    placeholder={PH.birthDate}
+                    disabled
+                    value={values.birthDate}
+                    onValueChange={value => patch('birthDate', value)}
+                  />
+                </PFFormInlineSeparatedFields>
               </PFFormField>
             </PFFormFieldRow>
             <PFFormFieldRow type="double">
@@ -591,7 +501,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
               <HomeAddressFieldRow
                 roadValue={values.homeAddress}
                 detailValue={values.homeAddressDetail}
-                disabled={isHomeAddressLocked}
+                roadDisabled={homeAddressLock.roadLocked}
+                detailDisabled={homeAddressLock.detailLocked}
                 onRoadChange={value => patch('homeAddress', value)}
                 onDetailChange={value => patch('homeAddressDetail', value)}
               />
@@ -599,56 +510,37 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
             <PFFormFieldRow type="single">
               <PFFormField label="소속">
                 {values.memberType === 'school_teacher' ? (
-                  <PFFormInlineRow>
-                    <PFFormInlineSegment>
-                      <PFTextInput
-                        variant="formPage"
-                        size="large"
-                        width={200}
-                        placeholder={PH.schoolName}
-                        disabled
-                        value={values.schoolName}
-                        onValueChange={value => patch('schoolName', value)}
-                      />
-                    </PFFormInlineSegment>
-                    <PFFormInlineSegment>
-                      <TeacherEmploymentStatusMenu
-                        value={values.employmentStatus}
-                        onChange={handleEmploymentStatusChange}
-                      />
-                    </PFFormInlineSegment>
-                  </PFFormInlineRow>
+                  <TeacherAffiliationDisplay
+                    schoolName={values.schoolName}
+                    employmentStatus={values.employmentStatus}
+                    onEmploymentStatusChange={handleEmploymentStatusChange}
+                  />
                 ) : (
-                  <PFFormInlineRow>
-                    <PFFormInlineSegment>
-                      <PFTextInput
-                        variant="formPage"
-                        size="large"
-                        width={200}
-                        placeholder={PH.affiliationName}
-                        disabled
-                        value={values.affiliationName}
-                        onValueChange={value => patch('affiliationName', value)}
-                      />
-                    </PFFormInlineSegment>
-                    <PFFormInlineSeparator />
-                    <PFFormInlineSegment>
-                      <PFCheckbox
-                        size="large"
-                        checked={values.affiliationNone}
-                        disabled
-                        onCheckedChange={checked => {
-                          setValues(prev => ({
-                            ...prev,
-                            affiliationNone: checked,
-                            affiliationName: checked ? '' : prev.affiliationName,
-                          }))
-                        }}
-                      >
-                        소속 없음
-                      </PFCheckbox>
-                    </PFFormInlineSegment>
-                  </PFFormInlineRow>
+                  <PFFormInlineSeparatedFields>
+                    <PFTextInput
+                      variant="formPage"
+                      size="large"
+                      width={200}
+                      placeholder={PH.affiliationName}
+                      disabled
+                      value={values.affiliationName}
+                      onValueChange={value => patch('affiliationName', value)}
+                    />
+                    <PFCheckbox
+                      size="large"
+                      checked={values.affiliationNone}
+                      disabled
+                      onCheckedChange={checked => {
+                        setValues(prev => ({
+                          ...prev,
+                          affiliationNone: checked,
+                          affiliationName: checked ? '' : prev.affiliationName,
+                        }))
+                      }}
+                    >
+                      소속 없음
+                    </PFCheckbox>
+                  </PFFormInlineSeparatedFields>
                 )}
               </PFFormField>
             </PFFormFieldRow>
@@ -656,7 +548,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
               <HomeAddressFieldRow
                 roadValue={values.homeAddress}
                 detailValue={values.homeAddressDetail}
-                disabled={isHomeAddressLocked}
+                roadDisabled={homeAddressLock.roadLocked}
+                detailDisabled={homeAddressLock.detailLocked}
                 onRoadChange={value => patch('homeAddress', value)}
                 onDetailChange={value => patch('homeAddressDetail', value)}
               />
@@ -675,39 +568,32 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
             </PFFormFieldRow>
             <PFFormFieldRow type="single">
               <PFFormField label="정산 계좌 정보">
-                <PFFormInlineRow>
-                  <PFFormInlineSegment>
-                    <PFFormControlCluster>
-                      <PFTextInput
-                        variant="formPage"
-                        size="large"
-                        width={120}
-                        placeholder={PH.bankName}
-                        value={values.bankName}
-                        onValueChange={value => patch('bankName', value)}
-                      />
-                      <PFTextInput
-                        variant="formPage"
-                        size="large"
-                        width={240}
-                        placeholder={PH.accountNumber}
-                        value={values.accountNumber}
-                        onValueChange={value => patch('accountNumber', value)}
-                      />
-                    </PFFormControlCluster>
-                  </PFFormInlineSegment>
-                  <PFFormInlineSeparator />
-                  <PFFormInlineSegment>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      width={240}
-                      placeholder={PH.accountHolder}
-                      value={values.accountHolder}
-                      onValueChange={value => patch('accountHolder', value)}
-                    />
-                  </PFFormInlineSegment>
-                </PFFormInlineRow>
+                <PFFormInlineSeparatedFields>
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    width={120}
+                    placeholder={PH.bankName}
+                    value={values.bankName}
+                    onValueChange={value => patch('bankName', value)}
+                  />
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    width={240}
+                    placeholder={PH.accountNumber}
+                    value={values.accountNumber}
+                    onValueChange={value => patch('accountNumber', value)}
+                  />
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    width={240}
+                    placeholder={PH.accountHolder}
+                    value={values.accountHolder}
+                    onValueChange={value => patch('accountHolder', value)}
+                  />
+                </PFFormInlineSeparatedFields>
               </PFFormField>
             </PFFormFieldRow>
             <PFFormFieldRow type="single">
@@ -744,8 +630,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
               <PFFormField label="최종 학력">
-                <PFFormInlineRow>
-                  <PFFormInlineSegment>
+                <PFFormInlineSeparatedFields>
                   <PFSelect
                     variant="formPage"
                     size="large"
@@ -755,9 +640,6 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                     value={values.eduSchoolType}
                     onValueChange={handleEduSchoolTypeChange}
                   />
-                  </PFFormInlineSegment>
-                  <PFFormInlineSeparator />
-                  <PFFormInlineSegment>
                   <PFSelect
                     variant="formPage"
                     size="large"
@@ -767,8 +649,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                     value={values.eduStatus}
                     onValueChange={value => patch('eduStatus', value)}
                   />
-                </PFFormInlineSegment>
-                </PFFormInlineRow>
+                </PFFormInlineSeparatedFields>
               </PFFormField>
             </PFFormFieldRow>
             {availableEducationKeys.length > 0 ? (
@@ -800,52 +681,47 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
             {values.educationDetailKeys.includes('high') ? (
               <PFFormFieldRow type="single">
                 <PFFormField label="고등학교">
-                  <PFFormInlineRow>
-                    <PFFormInlineSegment>
-                      <PFFormPeriodPair>
-                        <PFDateInput
-                          variant="formPage"
-                          size="large"
-                          width={200}
-                          picker="year"
-                          placeholder={PH.admitYear}
-                          value={values.highSchool.admitYear ?? ''}
-                          onValueChange={value =>
-                            patch('highSchool', {
-                              ...values.highSchool,
-                              admitYear: value || null,
-                            })
-                          }
-                        />
-                        <PFFormPeriodTilde />
-                        <PFDateInput
-                          variant="formPage"
-                          size="large"
-                          width={200}
-                          picker="year"
-                          placeholder={PH.gradYear}
-                          disabled={finalEducationEnrolled && lockedEducationKey === 'high'}
-                          value={values.highSchool.gradYear ?? ''}
-                          onValueChange={value =>
-                            patch('highSchool', {
-                              ...values.highSchool,
-                              gradYear: value || null,
-                            })
-                          }
-                        />
-                      </PFFormPeriodPair>
-                    </PFFormInlineSegment>
-                    <PFFormInlineSeparator />
-                    <PFFormInlineSegment>
-                      <EducationSchoolNameField
-                        detailKey="high"
-                        value={values.highSchool.schoolName}
-                        onChange={schoolName =>
-                          patch('highSchool', { ...values.highSchool, schoolName })
+                  <PFFormInlineSeparatedFields>
+                    <PFFormPeriodPair>
+                      <PFDateInput
+                        variant="formPage"
+                        size="large"
+                        width={200}
+                        picker="year"
+                        placeholder={PH.admitYear}
+                        value={values.highSchool.admitYear ?? ''}
+                        onValueChange={value =>
+                          patch('highSchool', {
+                            ...values.highSchool,
+                            admitYear: value || null,
+                          })
                         }
                       />
-                    </PFFormInlineSegment>
-                  </PFFormInlineRow>
+                      <PFFormPeriodTilde />
+                      <PFDateInput
+                        variant="formPage"
+                        size="large"
+                        width={200}
+                        picker="year"
+                        placeholder={PH.gradYear}
+                        disabled={finalEducationEnrolled && lockedEducationKey === 'high'}
+                        value={values.highSchool.gradYear ?? ''}
+                        onValueChange={value =>
+                          patch('highSchool', {
+                            ...values.highSchool,
+                            gradYear: value || null,
+                          })
+                        }
+                      />
+                    </PFFormPeriodPair>
+                    <EducationSchoolNameField
+                      detailKey="high"
+                      value={values.highSchool.schoolName}
+                      onChange={schoolName =>
+                        patch('highSchool', { ...values.highSchool, schoolName })
+                      }
+                    />
+                  </PFFormInlineSeparatedFields>
                 </PFFormField>
               </PFFormFieldRow>
             ) : null}
@@ -856,81 +732,74 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   <div className={styles.fieldStack}>
                     {values.college23Rows.map((row, index) => (
                       <div key={`college23-${index}`} className={styles.fieldStackRow}>
-                        <PFFormInlineRow>
-                          <PFFormInlineSegment>
-                        <PFFormPeriodPair>
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="year"
-                                placeholder={PH.admitYear}
-                                value={row.admitYear ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.college23Rows]
-                                  next[index] = { ...row, admitYear: value || null }
-                                  patch('college23Rows', next)
-                                }}
-                              />
-                              <PFFormPeriodTilde />
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="year"
-                                placeholder={PH.gradYear}
-                                disabled={finalEducationEnrolled && lockedEducationKey === 'college23'}
-                                value={row.gradYear ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.college23Rows]
-                                  next[index] = { ...row, gradYear: value || null }
-                                  patch('college23Rows', next)
-                                }}
-                              />
-                            </PFFormPeriodPair>
-                          </PFFormInlineSegment>
-                          <PFFormInlineSeparator />
-                          <PFFormInlineSegment>
-                        <PFFormControlCluster>
-                              <EducationSchoolNameField
-                                detailKey="college23"
-                                value={row.schoolName}
-                                onChange={schoolName => {
-                                  const next = [...values.college23Rows]
-                                  next[index] = { ...row, schoolName }
-                                  patch('college23Rows', next)
-                                }}
-                              />
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={160}
-                                placeholder={PH.major}
-                                value={row.major}
-                                onValueChange={value => {
-                                  const next = [...values.college23Rows]
-                                  next[index] = { ...row, major: value }
-                                  patch('college23Rows', next)
-                                }}
-                              />
-                              <ListRowActions
-                                isFirst={index === 0}
-                                onAdd={() =>
-                                  patch('college23Rows', [
-                                    ...values.college23Rows,
-                                    { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW },
-                                  ])
-                                }
-                                onRemove={() =>
-                                  patch(
-                                    'college23Rows',
-                                    values.college23Rows.filter((_, i) => i !== index)
-                                  )
-                                }
-                              />
-                            </PFFormControlCluster>
-                          </PFFormInlineSegment>
-                        </PFFormInlineRow>
+                        <PFFormInlineSeparatedFields>
+                          <PFFormPeriodPair>
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="year"
+                              placeholder={PH.admitYear}
+                              value={row.admitYear ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.college23Rows]
+                                next[index] = { ...row, admitYear: value || null }
+                                patch('college23Rows', next)
+                              }}
+                            />
+                            <PFFormPeriodTilde />
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="year"
+                              placeholder={PH.gradYear}
+                              disabled={finalEducationEnrolled && lockedEducationKey === 'college23'}
+                              value={row.gradYear ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.college23Rows]
+                                next[index] = { ...row, gradYear: value || null }
+                                patch('college23Rows', next)
+                              }}
+                            />
+                          </PFFormPeriodPair>
+                          <EducationSchoolNameField
+                            detailKey="college23"
+                            value={row.schoolName}
+                            onChange={schoolName => {
+                              const next = [...values.college23Rows]
+                              next[index] = { ...row, schoolName }
+                              patch('college23Rows', next)
+                            }}
+                          />
+                          <PFTextInput
+                            variant="formPage"
+                            size="large"
+                            width={160}
+                            placeholder={PH.major}
+                            value={row.major}
+                            onValueChange={value => {
+                              const next = [...values.college23Rows]
+                              next[index] = { ...row, major: value }
+                              patch('college23Rows', next)
+                            }}
+                          />
+                          <ListRowActions
+                            isFirst={index === 0}
+                            onAdd={() =>
+                              patch('college23Rows', [
+                                ...values.college23Rows,
+                                { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW },
+                              ])
+                            }
+                            onRemove={() =>
+                              patch(
+                                'college23Rows',
+                                values.college23Rows.filter((_, i) => i !== index)
+                              )
+                            }
+                          />
+                        </PFFormInlineSeparatedFields>
                       </div>
                     ))}
                   </div>
@@ -944,81 +813,74 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   <div className={styles.fieldStack}>
                     {values.college4Rows.map((row, index) => (
                       <div key={`college4-${index}`} className={styles.fieldStackRow}>
-                        <PFFormInlineRow>
-                          <PFFormInlineSegment>
-                        <PFFormPeriodPair>
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="year"
-                                placeholder={PH.admitYear}
-                                value={row.admitYear ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.college4Rows]
-                                  next[index] = { ...row, admitYear: value || null }
-                                  patch('college4Rows', next)
-                                }}
-                              />
-                              <PFFormPeriodTilde />
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="year"
-                                placeholder={PH.gradYear}
-                                disabled={finalEducationEnrolled && lockedEducationKey === 'college4'}
-                                value={row.gradYear ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.college4Rows]
-                                  next[index] = { ...row, gradYear: value || null }
-                                  patch('college4Rows', next)
-                                }}
-                              />
-                            </PFFormPeriodPair>
-                          </PFFormInlineSegment>
-                          <PFFormInlineSeparator />
-                          <PFFormInlineSegment>
-                        <PFFormControlCluster>
-                              <EducationSchoolNameField
-                                detailKey="college4"
-                                value={row.schoolName}
-                                onChange={schoolName => {
-                                  const next = [...values.college4Rows]
-                                  next[index] = { ...row, schoolName }
-                                  patch('college4Rows', next)
-                                }}
-                              />
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={160}
-                                placeholder={PH.major}
-                                value={row.major}
-                                onValueChange={value => {
-                                  const next = [...values.college4Rows]
-                                  next[index] = { ...row, major: value }
-                                  patch('college4Rows', next)
-                                }}
-                              />
-                              <ListRowActions
-                                isFirst={index === 0}
-                                onAdd={() =>
-                                  patch('college4Rows', [
-                                    ...values.college4Rows,
-                                    { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW },
-                                  ])
-                                }
-                                onRemove={() =>
-                                  patch(
-                                    'college4Rows',
-                                    values.college4Rows.filter((_, i) => i !== index)
-                                  )
-                                }
-                              />
-                            </PFFormControlCluster>
-                          </PFFormInlineSegment>
-                        </PFFormInlineRow>
+                        <PFFormInlineSeparatedFields>
+                          <PFFormPeriodPair>
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="year"
+                              placeholder={PH.admitYear}
+                              value={row.admitYear ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.college4Rows]
+                                next[index] = { ...row, admitYear: value || null }
+                                patch('college4Rows', next)
+                              }}
+                            />
+                            <PFFormPeriodTilde />
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="year"
+                              placeholder={PH.gradYear}
+                              disabled={finalEducationEnrolled && lockedEducationKey === 'college4'}
+                              value={row.gradYear ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.college4Rows]
+                                next[index] = { ...row, gradYear: value || null }
+                                patch('college4Rows', next)
+                              }}
+                            />
+                          </PFFormPeriodPair>
+                          <EducationSchoolNameField
+                            detailKey="college4"
+                            value={row.schoolName}
+                            onChange={schoolName => {
+                              const next = [...values.college4Rows]
+                              next[index] = { ...row, schoolName }
+                              patch('college4Rows', next)
+                            }}
+                          />
+                          <PFTextInput
+                            variant="formPage"
+                            size="large"
+                            width={160}
+                            placeholder={PH.major}
+                            value={row.major}
+                            onValueChange={value => {
+                              const next = [...values.college4Rows]
+                              next[index] = { ...row, major: value }
+                              patch('college4Rows', next)
+                            }}
+                          />
+                          <ListRowActions
+                            isFirst={index === 0}
+                            onAdd={() =>
+                              patch('college4Rows', [
+                                ...values.college4Rows,
+                                { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW },
+                              ])
+                            }
+                            onRemove={() =>
+                              patch(
+                                'college4Rows',
+                                values.college4Rows.filter((_, i) => i !== index)
+                              )
+                            }
+                          />
+                        </PFFormInlineSeparatedFields>
                       </div>
                     ))}
                   </div>
@@ -1032,95 +894,88 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   <div className={styles.fieldStack}>
                     {values.graduateRows.map((row, index) => (
                       <div key={`graduate-${index}`} className={styles.fieldStackRow}>
-                        <PFFormInlineRow>
-                          <PFFormInlineSegment>
-                        <PFFormPeriodPair>
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="year"
-                                placeholder={PH.admitYear}
-                                value={row.admitYear ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.graduateRows]
-                                  next[index] = { ...row, admitYear: value || null }
-                                  patch('graduateRows', next)
-                                }}
-                              />
-                              <PFFormPeriodTilde />
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="year"
-                                placeholder={PH.gradYear}
-                                disabled={finalEducationEnrolled && lockedEducationKey === 'graduate'}
-                                value={row.gradYear ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.graduateRows]
-                                  next[index] = { ...row, gradYear: value || null }
-                                  patch('graduateRows', next)
-                                }}
-                              />
-                              <PFSelect
-                                variant="formPage"
-                                size="large"
-                                width={120}
-                                className={styles.degreeSelectMargin}
-                                placeholder={PH.degree}
-                                options={toSelectOptions(EDUCATION_DEGREE_OPTIONS)}
-                                value={row.degree}
-                                onValueChange={value => {
-                                  const next = [...values.graduateRows]
-                                  next[index] = { ...row, degree: value }
-                                  patch('graduateRows', next)
-                                }}
-                              />
-                            </PFFormPeriodPair>
-                          </PFFormInlineSegment>
-                          <PFFormInlineSeparator />
-                          <PFFormInlineSegment>
-                        <PFFormControlCluster>
-                              <EducationSchoolNameField
-                                detailKey="graduate"
-                                value={row.schoolName}
-                                onChange={schoolName => {
-                                  const next = [...values.graduateRows]
-                                  next[index] = { ...row, schoolName }
-                                  patch('graduateRows', next)
-                                }}
-                              />
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={160}
-                                placeholder={PH.major}
-                                value={row.major}
-                                onValueChange={value => {
-                                  const next = [...values.graduateRows]
-                                  next[index] = { ...row, major: value }
-                                  patch('graduateRows', next)
-                                }}
-                              />
-                              <ListRowActions
-                                isFirst={index === 0}
-                                onAdd={() =>
-                                  patch('graduateRows', [
-                                    ...values.graduateRows,
-                                    { ...EMPTY_INSTRUCTOR_EDUCATION_GRADUATE_ROW },
-                                  ])
-                                }
-                                onRemove={() =>
-                                  patch(
-                                    'graduateRows',
-                                    values.graduateRows.filter((_, i) => i !== index)
-                                  )
-                                }
-                              />
-                            </PFFormControlCluster>
-                          </PFFormInlineSegment>
-                        </PFFormInlineRow>
+                        <PFFormInlineSeparatedFields>
+                          <PFFormPeriodPair>
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="year"
+                              placeholder={PH.admitYear}
+                              value={row.admitYear ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.graduateRows]
+                                next[index] = { ...row, admitYear: value || null }
+                                patch('graduateRows', next)
+                              }}
+                            />
+                            <PFFormPeriodTilde />
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="year"
+                              placeholder={PH.gradYear}
+                              disabled={finalEducationEnrolled && lockedEducationKey === 'graduate'}
+                              value={row.gradYear ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.graduateRows]
+                                next[index] = { ...row, gradYear: value || null }
+                                patch('graduateRows', next)
+                              }}
+                            />
+                            <PFSelect
+                              variant="formPage"
+                              size="large"
+                              width={120}
+                              className={styles.degreeSelectMargin}
+                              placeholder={PH.degree}
+                              options={toSelectOptions(EDUCATION_DEGREE_OPTIONS)}
+                              value={row.degree}
+                              onValueChange={value => {
+                                const next = [...values.graduateRows]
+                                next[index] = { ...row, degree: value }
+                                patch('graduateRows', next)
+                              }}
+                            />
+                          </PFFormPeriodPair>
+                          <EducationSchoolNameField
+                            detailKey="graduate"
+                            value={row.schoolName}
+                            onChange={schoolName => {
+                              const next = [...values.graduateRows]
+                              next[index] = { ...row, schoolName }
+                              patch('graduateRows', next)
+                            }}
+                          />
+                          <PFTextInput
+                            variant="formPage"
+                            size="large"
+                            width={160}
+                            placeholder={PH.major}
+                            value={row.major}
+                            onValueChange={value => {
+                              const next = [...values.graduateRows]
+                              next[index] = { ...row, major: value }
+                              patch('graduateRows', next)
+                            }}
+                          />
+                          <ListRowActions
+                            isFirst={index === 0}
+                            onAdd={() =>
+                              patch('graduateRows', [
+                                ...values.graduateRows,
+                                { ...EMPTY_INSTRUCTOR_EDUCATION_GRADUATE_ROW },
+                              ])
+                            }
+                            onRemove={() =>
+                              patch(
+                                'graduateRows',
+                                values.graduateRows.filter((_, i) => i !== index)
+                              )
+                            }
+                          />
+                        </PFFormInlineSeparatedFields>
                       </div>
                     ))}
                   </div>
@@ -1148,96 +1003,89 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   <div className={styles.fieldStack}>
                     {values.careers.map((row, index) => (
                       <div key={`career-${index}`} className={styles.fieldStackRow}>
-                        <PFFormInlineRow>
-                          <PFFormInlineSegment>
-                        <PFFormPeriodPair>
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="month"
-                                placeholder={PH.careerPeriodStart}
-                                value={row.periodStart ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.careers]
-                                  next[index] = { ...row, periodStart: value || null }
-                                  patch('careers', next)
-                                }}
-                              />
-                              <PFFormPeriodTilde />
-                              <PFDateInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                picker="month"
-                                placeholder={PH.careerPeriodEnd}
-                                disabled={row.currentlyEmployed}
-                                value={row.periodEnd ?? ''}
-                                onValueChange={value => {
-                                  const next = [...values.careers]
-                                  next[index] = { ...row, periodEnd: value || null }
-                                  patch('careers', next)
-                                }}
-                              />
-                            </PFFormPeriodPair>
-                          </PFFormInlineSegment>
-                          <PFFormInlineSeparator />
-                          <PFFormInlineSegment>
-                        <PFFormControlCluster>
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={200}
-                                placeholder={PH.companyName}
-                                value={row.companyName}
-                                onValueChange={value => {
-                                  const next = [...values.careers]
-                                  next[index] = { ...row, companyName: value }
-                                  patch('careers', next)
-                                }}
-                              />
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={160}
-                                placeholder={PH.roleName}
-                                value={row.roleName}
-                                onValueChange={value => {
-                                  const next = [...values.careers]
-                                  next[index] = { ...row, roleName: value }
-                                  patch('careers', next)
-                                }}
-                              />
-                              <PFCheckbox
-                                size="large"
-                                checked={row.currentlyEmployed}
-                                onCheckedChange={checked => {
-                                  const next = [...values.careers]
-                                  next[index] = {
-                                    ...row,
-                                    currentlyEmployed: checked,
-                                    periodEnd: checked ? null : row.periodEnd,
-                                  }
-                                  patch('careers', next)
-                                }}
-                              >
-                                재직중
-                              </PFCheckbox>
-                              <ListRowActions
-                                isFirst={index === 0}
-                                onAdd={() =>
-                                  patch('careers', [...values.careers, { ...EMPTY_INSTRUCTOR_CAREER }])
-                                }
-                                onRemove={() =>
-                                  patch(
-                                    'careers',
-                                    values.careers.filter((_, i) => i !== index)
-                                  )
-                                }
-                              />
-                            </PFFormControlCluster>
-                          </PFFormInlineSegment>
-                        </PFFormInlineRow>
+                        <PFFormInlineSeparatedFields>
+                          <PFFormPeriodPair>
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="month"
+                              placeholder={PH.careerPeriodStart}
+                              value={row.periodStart ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.careers]
+                                next[index] = { ...row, periodStart: value || null }
+                                patch('careers', next)
+                              }}
+                            />
+                            <PFFormPeriodTilde />
+                            <PFDateInput
+                              variant="formPage"
+                              size="large"
+                              width={200}
+                              picker="month"
+                              placeholder={PH.careerPeriodEnd}
+                              disabled={row.currentlyEmployed}
+                              value={row.periodEnd ?? ''}
+                              onValueChange={value => {
+                                const next = [...values.careers]
+                                next[index] = { ...row, periodEnd: value || null }
+                                patch('careers', next)
+                              }}
+                            />
+                          </PFFormPeriodPair>
+                          <PFTextInput
+                            variant="formPage"
+                            size="large"
+                            width={200}
+                            placeholder={PH.companyName}
+                            value={row.companyName}
+                            onValueChange={value => {
+                              const next = [...values.careers]
+                              next[index] = { ...row, companyName: value }
+                              patch('careers', next)
+                            }}
+                          />
+                          <PFTextInput
+                            variant="formPage"
+                            size="large"
+                            width={160}
+                            placeholder={PH.roleName}
+                            value={row.roleName}
+                            onValueChange={value => {
+                              const next = [...values.careers]
+                              next[index] = { ...row, roleName: value }
+                              patch('careers', next)
+                            }}
+                          />
+                          <PFCheckbox
+                            size="large"
+                            checked={row.currentlyEmployed}
+                            onCheckedChange={checked => {
+                              const next = [...values.careers]
+                              next[index] = {
+                                ...row,
+                                currentlyEmployed: checked,
+                                periodEnd: checked ? null : row.periodEnd,
+                              }
+                              patch('careers', next)
+                            }}
+                          >
+                            재직중
+                          </PFCheckbox>
+                          <ListRowActions
+                            isFirst={index === 0}
+                            onAdd={() =>
+                              patch('careers', [...values.careers, { ...EMPTY_INSTRUCTOR_CAREER }])
+                            }
+                            onRemove={() =>
+                              patch(
+                                'careers',
+                                values.careers.filter((_, i) => i !== index)
+                              )
+                            }
+                          />
+                        </PFFormInlineSeparatedFields>
                       </div>
                     ))}
                   </div>
@@ -1254,81 +1102,74 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 <div className={styles.fieldStack}>
                   {values.jaKoreaRows.map((row, index) => (
                     <div key={`ja-${index}`} className={styles.fieldStackRow}>
-                      <PFFormInlineRow>
-                        <PFFormInlineSegment>
-                      <PFFormPeriodPair>
-                            <PFDateInput
-                              variant="formPage"
-                              size="large"
-                              width={200}
-                              placeholder={PH.jaPeriodStart}
-                              value={row.periodStart ?? ''}
-                              onValueChange={value => {
-                                const next = [...values.jaKoreaRows]
-                                next[index] = { ...row, periodStart: value || null }
-                                patch('jaKoreaRows', next)
-                              }}
-                            />
-                            <PFFormPeriodTilde />
-                            <PFDateInput
-                              variant="formPage"
-                              size="large"
-                              width={200}
-                              placeholder={PH.jaPeriodEnd}
-                              value={row.periodEnd ?? ''}
-                              onValueChange={value => {
-                                const next = [...values.jaKoreaRows]
-                                next[index] = { ...row, periodEnd: value || null }
-                                patch('jaKoreaRows', next)
-                              }}
-                            />
-                          </PFFormPeriodPair>
-                        </PFFormInlineSegment>
-                        <PFFormInlineSeparator />
-                        <PFFormInlineSegment>
-                      <PFFormControlCluster>
-                            <PFTextInput
-                              variant="formPage"
-                              size="large"
-                              width={200}
-                              placeholder={PH.jaProgramName}
-                              value={row.title}
-                              onValueChange={value => {
-                                const next = [...values.jaKoreaRows]
-                                next[index] = { ...row, title: value }
-                                patch('jaKoreaRows', next)
-                              }}
-                            />
-                            <PFTextInput
-                              variant="formPage"
-                              size="large"
-                              width={160}
-                              placeholder={PH.jaNote}
-                              value={row.note}
-                              onValueChange={value => {
-                                const next = [...values.jaKoreaRows]
-                                next[index] = { ...row, note: value }
-                                patch('jaKoreaRows', next)
-                              }}
-                            />
-                            <ListRowActions
-                              isFirst={index === 0}
-                              onAdd={() =>
-                                patch('jaKoreaRows', [
-                                  ...values.jaKoreaRows,
-                                  { ...EMPTY_INSTRUCTOR_JA_KOREA_ROW },
-                                ])
-                              }
-                              onRemove={() =>
-                                patch(
-                                  'jaKoreaRows',
-                                  values.jaKoreaRows.filter((_, i) => i !== index)
-                                )
-                              }
-                            />
-                          </PFFormControlCluster>
-                        </PFFormInlineSegment>
-                      </PFFormInlineRow>
+                      <PFFormInlineSeparatedFields>
+                        <PFFormPeriodPair>
+                          <PFDateInput
+                            variant="formPage"
+                            size="large"
+                            width={200}
+                            placeholder={PH.jaPeriodStart}
+                            value={row.periodStart ?? ''}
+                            onValueChange={value => {
+                              const next = [...values.jaKoreaRows]
+                              next[index] = { ...row, periodStart: value || null }
+                              patch('jaKoreaRows', next)
+                            }}
+                          />
+                          <PFFormPeriodTilde />
+                          <PFDateInput
+                            variant="formPage"
+                            size="large"
+                            width={200}
+                            placeholder={PH.jaPeriodEnd}
+                            value={row.periodEnd ?? ''}
+                            onValueChange={value => {
+                              const next = [...values.jaKoreaRows]
+                              next[index] = { ...row, periodEnd: value || null }
+                              patch('jaKoreaRows', next)
+                            }}
+                          />
+                        </PFFormPeriodPair>
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={200}
+                          placeholder={PH.jaProgramName}
+                          value={row.title}
+                          onValueChange={value => {
+                            const next = [...values.jaKoreaRows]
+                            next[index] = { ...row, title: value }
+                            patch('jaKoreaRows', next)
+                          }}
+                        />
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={160}
+                          placeholder={PH.jaNote}
+                          value={row.note}
+                          onValueChange={value => {
+                            const next = [...values.jaKoreaRows]
+                            next[index] = { ...row, note: value }
+                            patch('jaKoreaRows', next)
+                          }}
+                        />
+                        <ListRowActions
+                          isFirst={index === 0}
+                          onAdd={() =>
+                            patch('jaKoreaRows', [
+                              ...values.jaKoreaRows,
+                              { ...EMPTY_INSTRUCTOR_JA_KOREA_ROW },
+                            ])
+                          }
+                          onRemove={() =>
+                            patch(
+                              'jaKoreaRows',
+                              values.jaKoreaRows.filter((_, i) => i !== index)
+                            )
+                          }
+                        />
+                      </PFFormInlineSeparatedFields>
                     </div>
                   ))}
                 </div>
@@ -1344,67 +1185,60 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 <div className={styles.fieldStack}>
                   {values.licenseRows.map((row, index) => (
                     <div key={`license-${index}`} className={styles.fieldStackRow}>
-                      <PFFormInlineRow>
-                        <PFFormInlineSegment>
-                      <PFDateInput
-                            variant="formPage"
-                            size="large"
-                            width={200}
-                            picker="year"
-                            placeholder={PH.licenseYear}
-                            value={row.acquiredYear ?? ''}
-                            onValueChange={value => {
-                              const next = [...values.licenseRows]
-                              next[index] = { ...row, acquiredYear: value || null }
-                              patch('licenseRows', next)
-                            }}
-                          />
-                        </PFFormInlineSegment>
-                        <PFFormInlineSeparator />
-                        <PFFormInlineSegment>
-                      <PFFormControlCluster>
-                            <PFTextInput
-                              variant="formPage"
-                              size="large"
-                              width={200}
-                              placeholder={PH.licenseTitle}
-                              value={row.title}
-                              onValueChange={value => {
-                                const next = [...values.licenseRows]
-                                next[index] = { ...row, title: value }
-                                patch('licenseRows', next)
-                              }}
-                            />
-                            <PFTextInput
-                              variant="formPage"
-                              size="large"
-                              width={160}
-                              placeholder={PH.licenseIssuer}
-                              value={row.issuer}
-                              onValueChange={value => {
-                                const next = [...values.licenseRows]
-                                next[index] = { ...row, issuer: value }
-                                patch('licenseRows', next)
-                              }}
-                            />
-                            <ListRowActions
-                              isFirst={index === 0}
-                              onAdd={() =>
-                                patch('licenseRows', [
-                                  ...values.licenseRows,
-                                  { ...EMPTY_INSTRUCTOR_LICENSE_OR_AWARD_ROW },
-                                ])
-                              }
-                              onRemove={() =>
-                                patch(
-                                  'licenseRows',
-                                  values.licenseRows.filter((_, i) => i !== index)
-                                )
-                              }
-                            />
-                          </PFFormControlCluster>
-                        </PFFormInlineSegment>
-                      </PFFormInlineRow>
+                      <PFFormInlineSeparatedFields>
+                        <PFDateInput
+                          variant="formPage"
+                          size="large"
+                          width={200}
+                          picker="year"
+                          placeholder={PH.licenseYear}
+                          value={row.acquiredYear ?? ''}
+                          onValueChange={value => {
+                            const next = [...values.licenseRows]
+                            next[index] = { ...row, acquiredYear: value || null }
+                            patch('licenseRows', next)
+                          }}
+                        />
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={200}
+                          placeholder={PH.licenseTitle}
+                          value={row.title}
+                          onValueChange={value => {
+                            const next = [...values.licenseRows]
+                            next[index] = { ...row, title: value }
+                            patch('licenseRows', next)
+                          }}
+                        />
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={160}
+                          placeholder={PH.licenseIssuer}
+                          value={row.issuer}
+                          onValueChange={value => {
+                            const next = [...values.licenseRows]
+                            next[index] = { ...row, issuer: value }
+                            patch('licenseRows', next)
+                          }}
+                        />
+                        <ListRowActions
+                          isFirst={index === 0}
+                          onAdd={() =>
+                            patch('licenseRows', [
+                              ...values.licenseRows,
+                              { ...EMPTY_INSTRUCTOR_LICENSE_OR_AWARD_ROW },
+                            ])
+                          }
+                          onRemove={() =>
+                            patch(
+                              'licenseRows',
+                              values.licenseRows.filter((_, i) => i !== index)
+                            )
+                          }
+                        />
+                      </PFFormInlineSeparatedFields>
                     </div>
                   ))}
                 </div>
@@ -1420,67 +1254,60 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 <div className={styles.fieldStack}>
                   {values.awardRows.map((row, index) => (
                     <div key={`award-${index}`} className={styles.fieldStackRow}>
-                      <PFFormInlineRow>
-                        <PFFormInlineSegment>
-                      <PFDateInput
-                            variant="formPage"
-                            size="large"
-                            width={200}
-                            picker="year"
-                            placeholder={PH.awardYear}
-                            value={row.acquiredYear ?? ''}
-                            onValueChange={value => {
-                              const next = [...values.awardRows]
-                              next[index] = { ...row, acquiredYear: value || null }
-                              patch('awardRows', next)
-                            }}
-                          />
-                        </PFFormInlineSegment>
-                        <PFFormInlineSeparator />
-                        <PFFormInlineSegment>
-                      <PFFormControlCluster>
-                            <PFTextInput
-                              variant="formPage"
-                              size="large"
-                              width={200}
-                              placeholder={PH.awardTitle}
-                              value={row.title}
-                              onValueChange={value => {
-                                const next = [...values.awardRows]
-                                next[index] = { ...row, title: value }
-                                patch('awardRows', next)
-                              }}
-                            />
-                            <PFTextInput
-                              variant="formPage"
-                              size="large"
-                              width={160}
-                              placeholder={PH.awardIssuer}
-                              value={row.issuer}
-                              onValueChange={value => {
-                                const next = [...values.awardRows]
-                                next[index] = { ...row, issuer: value }
-                                patch('awardRows', next)
-                              }}
-                            />
-                            <ListRowActions
-                              isFirst={index === 0}
-                              onAdd={() =>
-                                patch('awardRows', [
-                                  ...values.awardRows,
-                                  { ...EMPTY_INSTRUCTOR_LICENSE_OR_AWARD_ROW },
-                                ])
-                              }
-                              onRemove={() =>
-                                patch(
-                                  'awardRows',
-                                  values.awardRows.filter((_, i) => i !== index)
-                                )
-                              }
-                            />
-                          </PFFormControlCluster>
-                        </PFFormInlineSegment>
-                      </PFFormInlineRow>
+                      <PFFormInlineSeparatedFields>
+                        <PFDateInput
+                          variant="formPage"
+                          size="large"
+                          width={200}
+                          picker="year"
+                          placeholder={PH.awardYear}
+                          value={row.acquiredYear ?? ''}
+                          onValueChange={value => {
+                            const next = [...values.awardRows]
+                            next[index] = { ...row, acquiredYear: value || null }
+                            patch('awardRows', next)
+                          }}
+                        />
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={200}
+                          placeholder={PH.awardTitle}
+                          value={row.title}
+                          onValueChange={value => {
+                            const next = [...values.awardRows]
+                            next[index] = { ...row, title: value }
+                            patch('awardRows', next)
+                          }}
+                        />
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={160}
+                          placeholder={PH.awardIssuer}
+                          value={row.issuer}
+                          onValueChange={value => {
+                            const next = [...values.awardRows]
+                            next[index] = { ...row, issuer: value }
+                            patch('awardRows', next)
+                          }}
+                        />
+                        <ListRowActions
+                          isFirst={index === 0}
+                          onAdd={() =>
+                            patch('awardRows', [
+                              ...values.awardRows,
+                              { ...EMPTY_INSTRUCTOR_LICENSE_OR_AWARD_ROW },
+                            ])
+                          }
+                          onRemove={() =>
+                            patch(
+                              'awardRows',
+                              values.awardRows.filter((_, i) => i !== index)
+                            )
+                          }
+                        />
+                      </PFFormInlineSeparatedFields>
                     </div>
                   ))}
                 </div>

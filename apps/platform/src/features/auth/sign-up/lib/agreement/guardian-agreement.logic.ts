@@ -46,6 +46,20 @@ export function toggleAllGuardianAgreementState(
   }
 }
 
+/** 필수 약관만 일괄 동의/해제 (선택 항목은 유지) */
+export function toggleAllRequiredGuardianAgreementState(
+  agreements: GuardianAgreementState,
+): GuardianAgreementState {
+  const nextRequired = !isRequiredAgreed(agreements, guardianAgreementItems)
+  const next = { ...agreements }
+  for (const item of guardianAgreementItems) {
+    if (item.required) {
+      next[item.key] = nextRequired
+    }
+  }
+  return next
+}
+
 export function getGuardianAgreementDerived(agreements: GuardianAgreementState) {
   return {
     isAllAgreed: isAllAgreed(agreements, guardianAgreementItems),

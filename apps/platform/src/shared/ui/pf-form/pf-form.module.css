@@ -433,7 +433,7 @@
   align-self: center;
   width: 1px;
   height: 13px;
-  margin-inline: var(--spacing-12);
+  margin-inline: var(--spacing-16);
   opacity: 0.5;
   background: var(--default-BK, #3d3d3d);
 }
@@ -529,6 +529,23 @@
 
   .titleBlock {
     margin-bottom: var(--spacing-20);
+  }
+
+  .titleRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-16);
+  }
+
+  .titleAside {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .titleAside > * {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
   }
 
   /* hd-lg 대체 — 24/700/normal/-0.48 (완전 일치 토큰 없음) */

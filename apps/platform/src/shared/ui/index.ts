@@ -34,6 +34,8 @@ export { PFMetaBadge } from './pf-meta-badge'
 export type { PFMetaBadgeProps } from './pf-meta-badge'
 export { PFStateBadge } from './pf-state-badge'
 export type { PFStateBadgeProps, PFStateBadgeSize, PFStateBadgeTone } from './pf-state-badge'
+export { SchoolTeacherEmploymentStatusBadge } from './school-teacher-employment-status-badge'
+export type { SchoolTeacherEmploymentStatusBadgeProps } from './school-teacher-employment-status-badge'
 export { PFButton } from './pf-button'
 export { PFCheckbox } from './pf-checkbox'
 export type { PFCheckboxProps, PFCheckboxSize } from './pf-checkbox'
@@ -59,7 +61,9 @@ export {
   PFFormFieldValueText,
   PFFormFileAttach,
   PFFormControlCluster,
+  PFFormInlineJoinedValues,
   PFFormInlineRow,
+  PFFormInlineSeparatedFields,
   PFFormInlineSegment,
   PFFormInlineSeparator,
   PFFormPage,
@@ -82,7 +86,9 @@ export type {
   PFFormFieldValueTextProps,
   PFFormFileAttachProps,
   PFFormHomeAddressFieldsProps,
+  PFFormInlineJoinedValuesProps,
   PFFormInlineRowProps,
+  PFFormInlineSeparatedFieldsProps,
   PFFormInlineSegmentProps,
   PFFormInlineSeparatorProps,
   PFFormPageProps,

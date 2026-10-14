@@ -4,7 +4,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  CMS_ACTION_BUTTON_WIDTH,
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
   useCmsAlert,
@@ -1918,19 +1918,19 @@ export function ApplicantList({
             title={title}
             description={`${tableData.length}건`}
             actions={
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="program-application-list-toolbar">
                 <FilterTableToolbarButton
                   variant="delete"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
+                  className="cms-button--application-list-bulk"
+                  width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                   onClick={handleBulkRejectClick}
                 >
                   선택 반려
                 </FilterTableToolbarButton>
                 <FilterTableToolbarButton
                   variant="secondary"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
+                  className="cms-button--application-list-bulk"
+                  width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                   onClick={handleBulkApproveClick}
                 >
                   선택 승인
