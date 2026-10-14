@@ -4219,6 +4219,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "expectedRevisionNo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "조회한 최신 학생명단 revisionNo. 값이 있으면 불일치 시 409 STUDENT_ROSTER_REVISION_CONFLICT를 반환합니다. 최초 저장은 0입니다. 구형 클라이언트의 생략은 하위 호환을 위해 허용되지만 충돌 보호를 적용하지 않습니다.",
+            "minimum": 0
+          },
           "rows": {
             "type": "array",
             "items": {
@@ -15505,10 +15514,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -27758,7 +27767,7 @@
       },
       "OrganizationGuidanceAnswersPatchResponse": {
         "type": "object",
-        "description": "기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. answers는 갱신 후 최신 제출 응답 전체이며 빈 객체가 아닙니다.",
+        "description": "기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. formResponseId·answers·formResponseStatus는 같은 최신 제출본 기준이며 answers는 갱신 후 전체 응답입니다.",
         "properties": {
           "organizationApplicationId": {
             "type": "integer",
@@ -27771,6 +27780,9 @@
           "answers": {
             "type": "object",
             "additionalProperties": {}
+          },
+          "formResponseStatus": {
+            "type": "string"
           }
         }
       },

@@ -8,10 +8,11 @@
 import type { OrganizationGuidanceAnswersPatchResponseAnswers } from './organizationGuidanceAnswersPatchResponseAnswers';
 
 /**
- * 기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. answers는 갱신 후 최신 제출 응답 전체이며 빈 객체가 아닙니다.
+ * 기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. formResponseId·answers·formResponseStatus는 같은 최신 제출본 기준이며 answers는 갱신 후 전체 응답입니다.
  */
 export interface OrganizationGuidanceAnswersPatchResponse {
   organizationApplicationId?: number;
   formResponseId?: number;
   answers?: OrganizationGuidanceAnswersPatchResponseAnswers;
+  formResponseStatus?: string;
 }
