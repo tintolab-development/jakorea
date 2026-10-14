@@ -414,7 +414,11 @@ export function ParticipatingInstitutionsSection({
                       className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
                     },
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
-                if (status === 'not_applicable') return '-'
+                const hasTextbook = Boolean(
+                  record.textbookId?.trim() || record.textbookName?.trim()
+                )
+                if (!hasTextbook)
+                  return <ParticipatingInstitutionTextbookStatusBadge status="not_applicable" />
                 return (
                   <StatusDropdownCell<TextbookStatusKey>
                     status={status ?? null}

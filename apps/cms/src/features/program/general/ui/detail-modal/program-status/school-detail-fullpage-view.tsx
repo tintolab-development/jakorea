@@ -489,10 +489,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     invalidatePosts,
     removeDeletedPost,
   } = useGeneralProgramPosts(program.id)
-  const postsForTab = useMemo(
-    () => (postsRemote ? remotePosts : null),
-    [postsRemote, remotePosts]
-  )
+  const postsForTab = useMemo(() => (postsRemote ? remotePosts : null), [postsRemote, remotePosts])
   const filesForTab = useMemo(
     () => (postsRemote ? remotePostFiles : null),
     [postsRemote, remotePostFiles]
@@ -548,7 +545,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     queryKey: generalApplicationsQueryKeys.organizationDetail(organizationApplicationIdForDetail),
     queryFn: () => fetchOrganizationApplicationDetailRemote(organizationApplicationIdForDetail),
     enabled:
-      shouldUseOrganizationApplicationRemoteApi() && organizationApplicationIdForDetail.length > 0,
+      activeTab === 'application' &&
+      shouldUseOrganizationApplicationRemoteApi() &&
+      organizationApplicationIdForDetail.length > 0,
     staleTime: 30_000,
   })
   const mergedDetail = {
@@ -573,7 +572,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
   /** 1사1교 conflicts ON 또는 일반 progress remote ON */
   const assignmentBoardRemoteEnabled =
-    companySchoolAssignmentConflictsEnabled || (!isCompanySchool && progressRemoteEnabled)
+    activeTab === 'instructors' &&
+    (companySchoolAssignmentConflictsEnabled || (!isCompanySchool && progressRemoteEnabled))
 
   const occupiedLectureDatesQuery = useQuery({
     queryKey: isCompanySchool
@@ -625,11 +625,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         label: app.instructorName?.trim() || '이름 없음',
         initialApproval: true,
       }))
-  }, [
-    assignmentBoard,
-    assignmentBoardRemoteEnabled,
-    row.organizationApplicationId,
-  ])
+  }, [assignmentBoard, assignmentBoardRemoteEnabled, row.organizationApplicationId])
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
@@ -708,13 +704,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       return
     }
     enterApplicationInfoEdit()
-  }, [
-    canEditApplicationInfo,
-    enterApplicationInfoEdit,
-    program,
-    programProgressStatus,
-    showAlert,
-  ])
+  }, [canEditApplicationInfo, enterApplicationInfoEdit, program, programProgressStatus, showAlert])
 
   const resolvePersonalInfoAccessItem = useCallback(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
@@ -1790,12 +1780,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   })
 
   /** 기본 정보 — 상단(진행·교재) / 하단(기관·신청) 테이블 분리 (시안) */
+  const hasSelectedTextbook =
+    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
+      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
+      mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookStatusCell =
-    onTextbookStatusChange != null ? (
+    onTextbookStatusChange != null && hasSelectedTextbook ? (
       <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
         <StatusDropdownCell<TextbookStatusKey>
           status={mergedDetail.textbookStatus}
-          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
+          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
           renderBadge={s => <TextbookStatusBadge status={s} />}
           isItemDisabled={(cur, opt) => cur === opt}
           onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
@@ -1808,14 +1803,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       <TextbookStatusBadge status={mergedDetail.textbookStatus} />
     )
 
-  const hasSelectedTextbook =
-    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
-      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
-    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
-      mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
   const kitsAndQty =
-    hasSelectedTextbook && textbookDisplay.textbookKits > 0
+    hasSelectedTextbook && textbookDisplay.textbookKits != null && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
       : '-'
 
@@ -2310,9 +2300,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
                     const sessionIds = _meta?.sessionIds ?? []
                     const selectedSessions = (row.sessions ?? []).filter(session =>
-                      sessionIds.includes(
-                        buildSchoolAddInstructorSessionSlotKey(row.id, session)
-                      )
+                      sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
                     )
                     if (selectedSessions.length === 0) {
                       showAlert({
@@ -2348,10 +2336,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                         const requestedScheduleId = session.requestedScheduleId
                         if (scheduleId == null && requestedScheduleId == null) {
                           scheduleId =
-                            findScheduleIdForLectureDate(
-                              assignmentBoard.schedules,
-                              session.date
-                            ) ?? undefined
+                            findScheduleIdForLectureDate(assignmentBoard.schedules, session.date) ??
+                            undefined
                         }
                         if (scheduleId == null && requestedScheduleId == null) {
                           showAlert({

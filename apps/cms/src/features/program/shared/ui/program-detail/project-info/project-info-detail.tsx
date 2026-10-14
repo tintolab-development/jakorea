@@ -42,6 +42,7 @@ import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edi
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { CompanySchoolCommonInfoRegistrationEdit } from '@/features/program/1c-1s/ui/common-info-registration-edit'
+import { ProgramMaterialsSection } from './program-materials-section'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
@@ -343,42 +344,48 @@ export function ProjectInfoDetailPanels({
                 <CompanySchoolCommonInfoRegistrationEdit program={program} />
               ) : (
                 <>
-              <BasicInfoSection // 기본 정보
-                program={program}
-                sponsorName={sponsorName}
-                createdByName={program.createdByName}
-                updatedByName={program.updatedByName}
-                lifecycleStatus={program.lifecycleStatus ?? undefined}
-                isEditMode={isEditModeInfo}
-                form={isEditModeInfo ? infoForm : undefined}
-                forceCompanySchoolLayout={companySchoolSections}
-              />
-              <ProgramKpiTargetSection // 사업 KPI 목표
-                programId={program.id}
-                program={program}
-                showVolunteerKpi={!companySchoolSections}
-                isEditMode={isEditModeInfo}
-                form={isEditModeInfo ? infoForm : undefined}
-              />
-              <ProgramWageInfoSection // 임금 정보
-                programId={program.id}
-                program={program}
-                isEditMode={isEditModeInfo}
-                form={isEditModeInfo ? infoForm : undefined}
-                forceCompanySchoolLayout={companySchoolSections}
-              />
-              <CurriculumSection // 교육 커리큘럼
-                program={program}
-                isEditMode={isEditModeInfo}
-                form={isEditModeInfo ? infoForm : undefined}
-                forceCompanySchoolLayout={companySchoolSections}
-              />
-              <EducationScheduleSettingsSection
-                program={program}
-                isEditMode={isEditModeInfo}
-                form={isEditModeInfo ? infoForm : undefined}
-                forceCompanySchoolLayout={companySchoolSections}
-              />
+                  <BasicInfoSection // 기본 정보
+                    program={program}
+                    sponsorName={sponsorName}
+                    createdByName={program.createdByName}
+                    updatedByName={program.updatedByName}
+                    lifecycleStatus={program.lifecycleStatus ?? undefined}
+                    isEditMode={isEditModeInfo}
+                    form={isEditModeInfo ? infoForm : undefined}
+                    forceCompanySchoolLayout={companySchoolSections}
+                  />
+                  <ProgramKpiTargetSection // 사업 KPI 목표
+                    programId={program.id}
+                    program={program}
+                    showVolunteerKpi={!companySchoolSections}
+                    isEditMode={isEditModeInfo}
+                    form={isEditModeInfo ? infoForm : undefined}
+                  />
+                  <ProgramWageInfoSection // 임금 정보
+                    programId={program.id}
+                    program={program}
+                    isEditMode={isEditModeInfo}
+                    form={isEditModeInfo ? infoForm : undefined}
+                    forceCompanySchoolLayout={companySchoolSections}
+                  />
+                  <CurriculumSection // 교육 커리큘럼
+                    program={program}
+                    isEditMode={isEditModeInfo}
+                    form={isEditModeInfo ? infoForm : undefined}
+                    forceCompanySchoolLayout={companySchoolSections}
+                  />
+                  <EducationScheduleSettingsSection
+                    program={program}
+                    isEditMode={isEditModeInfo}
+                    form={isEditModeInfo ? infoForm : undefined}
+                    forceCompanySchoolLayout={companySchoolSections}
+                  />
+                  {!companySchoolSections && (
+                    <ProgramMaterialsSection
+                      programId={String(program.id)}
+                      isEditMode={isEditModeInfo}
+                    />
+                  )}
                 </>
               )}
             </div>

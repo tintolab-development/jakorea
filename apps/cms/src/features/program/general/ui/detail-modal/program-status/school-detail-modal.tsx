@@ -46,9 +46,7 @@ import {
   TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
 } from '@/features/program/general/model/participating-schools'
-import {
-  SchoolDetailAddInstructorAssignModal,
-} from './school-detail-add-instructor-assign-modal'
+import { SchoolDetailAddInstructorAssignModal } from './school-detail-add-instructor-assign-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
 import { buildProgramApprovedInstructorAssignOptions } from '../../../lib/school-add-instructor-assign'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
@@ -449,7 +447,10 @@ export function SchoolDetailModal({
 
   const basicInfoFormMode = isBasicEditMode ? 'edit' : 'view'
   const { control: basicControl } = basicInfoForm
-  const textbookStatusOptions = TEXTBOOK_STATUS_OPTION_KEYS.map(value => ({
+  const hasTextbook = Boolean(detail.textbookId?.trim() || detail.textbookName?.trim())
+  const textbookStatusOptions = TEXTBOOK_STATUS_OPTION_KEYS.filter(value =>
+    hasTextbook ? value !== 'not_applicable' : value === 'not_applicable'
+  ).map(value => ({
     label: TEXTBOOK_STATUS_LABELS[value],
     value,
   }))
@@ -716,9 +717,7 @@ export function SchoolDetailModal({
                   />
                   <DetailInfoForm.Field
                     label="교재 준비 수량"
-                    view={
-                      detail.textbookQuantity != null ? `${detail.textbookQuantity}권` : '-'
-                    }
+                    view={detail.textbookQuantity != null ? `${detail.textbookQuantity}권` : '-'}
                     readOnlyDisplay
                   />
                 </DetailInfoForm.Row>
@@ -759,7 +758,11 @@ export function SchoolDetailModal({
                     </>
                   ) : (
                     <>
-                      <CmsButton variant="secondary" size="medium" onClick={handleInstructorEditStart}>
+                      <CmsButton
+                        variant="secondary"
+                        size="medium"
+                        onClick={handleInstructorEditStart}
+                      >
                         수정
                       </CmsButton>
                       <CmsButton

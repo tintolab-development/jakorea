@@ -32,6 +32,7 @@ import {
   buildApplicantInstitutionTextbookOptions,
   resolveApplicantInstitutionTextbookDisplayLabel,
 } from '@/features/program/general/lib/applicant-institution-textbook'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { getSameSchoolApplicantGrades } from '@/features/program/general/lib/get-same-school-applicant-grades'
 import {
   buildInstitutionClassCountOptions,
@@ -39,9 +40,18 @@ import {
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import { updateOrganizationApplicationRemote } from '@/features/program/general/api/applications-api-client'
-import { mapOrganizationApplicationDetailToApplicantSchoolRow, toRequestedEducationFormatApiValue } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  fetchOrganizationApplicationDetailRemote,
+  updateOrganizationApplicationRemote,
+} from '@/features/program/general/api/applications-api-client'
+import {
+  mapOrganizationApplicationDetailToApplicantSchoolRow,
+  toRequestedEducationFormatApiValue,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
 
 /**
  * 기관 신청자 상세 편집 — 합반은 organization-merge-groups, 그 외는 PATCH organization-applications.
@@ -100,11 +110,8 @@ export function useApplicantInstitutionDetailEdit({
       : undefined
   }, [draft?.educationGrade, institution?.educationGrade, isEditing])
 
-  const {
-    catalog: textbookCatalog,
-    isLoading: isTextbookCatalogLoading,
-    materialIds: programMaterialTextbookIds,
-  } = useIndividualApplicantTextbookOptions(program, applicantEducationGrade)
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useIndividualApplicantTextbookOptions(program, applicantEducationGrade)
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -220,10 +227,9 @@ export function useApplicantInstitutionDetailEdit({
     return buildApplicantInstitutionTextbookOptions(
       program,
       applicantEducationGrade,
-      textbookCatalog,
-      programMaterialTextbookIds
+      textbookCatalog
     )
-  }, [applicantEducationGrade, program, programMaterialTextbookIds, textbookCatalog])
+  }, [applicantEducationGrade, program, textbookCatalog])
 
   const textbookDisplayLabel = useMemo(() => {
     if (!institution) return undefined
@@ -299,14 +305,31 @@ export function useApplicantInstitutionDetailEdit({
           option => option.label === normalizedDraft.teacherName
         )
         const teacherMemberId = selectedTeacher ? Number(selectedTeacher.value) : undefined
-        const textbookId = Number(normalizedDraft.textbookId)
+        const textbookIdRaw = normalizedDraft.textbookId.trim()
+        const textbookIdNumber = Number(textbookIdRaw)
+        const textbookIsNotUsed =
+          textbookIdRaw === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+          normalizedDraft.textbookName.trim() === '해당 없음' ||
+          textbookIdRaw === ''
+        const textbookChanged =
+          normalizedDraft.textbookId !== baselineDraft.textbookId ||
+          normalizedDraft.textbookName !== baselineDraft.textbookName
+        const textbookPatch = textbookChanged
+          ? {
+              textbookId: textbookIsNotUsed
+                ? null
+                : Number.isFinite(textbookIdNumber)
+                  ? textbookIdNumber
+                  : undefined,
+            }
+          : {}
         const nextEducationFormat = showEducationFormatField
           ? toRequestedEducationFormatApiValue(normalizedDraft.educationFormat)
           : undefined
         const baselineEducationFormat = toRequestedEducationFormatApiValue(
           baselineDraft.educationFormat
         )
-        const response = await updateOrganizationApplicationRemote(institution.id, {
+        await updateOrganizationApplicationRemote(institution.id, {
           requestedGrade: normalizedDraft.educationGrade,
           organizationAddressDetail: normalizedDraft.addressDetail.trim() || undefined,
           requestedClassCount: savePayload.classCount,
@@ -324,7 +347,7 @@ export function useApplicantInstitutionDetailEdit({
             normalizedDraft.teacherPhone.trim() ||
             undefined,
           teacherEmail: normalizedDraft.teacherEmail.trim() || undefined,
-          textbookId: Number.isFinite(textbookId) ? textbookId : undefined,
+          ...textbookPatch,
           applicationReason: normalizedDraft.applicationReason.trim() || undefined,
           otherRequests: normalizedDraft.otherRequests.trim() || undefined,
           computerInRoom: normalizedDraft.computerInRoom.trim() || undefined,
@@ -338,6 +361,8 @@ export function useApplicantInstitutionDetailEdit({
             : undefined,
           parkingInfo: normalizedDraft.parkingInfo.trim() || undefined,
         })
+        // PATCH 응답/목록 캐시가 아니라 상세 GET을 저장 후 canonical source로 사용한다.
+        const response = await fetchOrganizationApplicationDetailRemote(institution.id)
         remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
           response,
           institution
@@ -349,6 +374,11 @@ export function useApplicantInstitutionDetailEdit({
         void queryClient.invalidateQueries({
           queryKey: generalApplicationsQueryKeys.organizationList(String(program?.id ?? '')),
         })
+        if (program?.id != null) {
+          void queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.institutions(String(program.id)),
+          })
+        }
       }
 
       if (!savedCombinedClass && !nonMergeChanged) {
