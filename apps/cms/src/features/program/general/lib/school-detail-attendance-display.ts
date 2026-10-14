@@ -1,6 +1,7 @@
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { formatStudentGradeClassColumnLabel } from '@/features/program/general/lib/student-registered-grade-class-options'
 import type { Program } from '@/types/domain'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
@@ -102,6 +103,11 @@ export function buildAttendanceSessionFilterLabel(
   sessionLeadLabel: string
 ): string {
   return `${sessionLeadLabel} · ${formatSessionDate(session.date, session.dayOfWeek)}`
+}
+
+/** @deprecated {@link formatStudentGradeClassColumnLabel} — 출석 관리 호환 alias */
+export function formatSchoolDetailAttendanceClassLabel(gradeClass?: string | null): string {
+  return formatStudentGradeClassColumnLabel(gradeClass)
 }
 
 export function studentMatchesAttendanceFilters(

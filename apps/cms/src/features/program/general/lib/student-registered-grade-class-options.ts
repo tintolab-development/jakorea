@@ -66,6 +66,23 @@ export function parseStudentGradeClassDisplay(
   return { gradeLabel: fallbackEducationGrade?.trim() ?? '', classPart: trimmed }
 }
 
+/** 학생 명단·출석 테이블·엑셀 학급 컬럼 — 학년 없이 반(예: 1반)만 표시 */
+export function formatStudentGradeClassColumnLabel(gradeClass?: string | null): string {
+  const trimmed = (gradeClass ?? '').trim()
+  if (!trimmed) return '-'
+
+  const { classPart } = parseStudentGradeClassDisplay(trimmed)
+  const normalizedClassPart = classPart.trim()
+  if (/^\d+반$/.test(normalizedClassPart)) return normalizedClassPart
+
+  const fromFull = trimmed.match(/(\d+반)$/)
+  if (fromFull) return fromFull[1]
+
+  if (/^\d+반$/.test(trimmed)) return trimmed
+
+  return normalizedClassPart || trimmed || '-'
+}
+
 /** PUT roster API용 grade / className */
 export function parseStudentGradeClassForRosterApi(
   gradeClass: string,

@@ -62,7 +62,7 @@ describe('mergeStudentClassSelectOptions', () => {
     ).toEqual([
       { label: '4학년 1반', value: '4학년 1반' },
       { label: '4학년 2반', value: '4학년 2반' },
-      { label: '5학년 1반', value: '5학년 1반' },
+      { label: '1반', value: '5학년 1반' },
     ])
   })
 })

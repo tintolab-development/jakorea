@@ -132,9 +132,10 @@ describe('student-roster-adapters', () => {
     expect(payload.className).toBe('2반')
   })
 
-  it('builds commit body with fallback sourceFileObjectId 0', () => {
+  it('builds commit body without forcing sourceFileObjectId 0', () => {
     const body = mapStudentRowsToRosterCommitRequest({
       educationGrade: '초5',
+      expectedRevisionNo: 0,
       rows: [
         {
           id: '1',
@@ -146,7 +147,48 @@ describe('student-roster-adapters', () => {
         },
       ],
     })
-    expect(body.sourceFileObjectId).toBe(0)
+    expect(body.expectedRevisionNo).toBe(0)
+    expect(body.sourceFileObjectId).toBeUndefined()
     expect(body.rows[0]?.phone).toBe('010-1234-5678')
+  })
+
+  it('includes notes on GET mapping and PUT payload', () => {
+    const row = mapStudentRosterItemToRow(
+      {
+        rosterId: 1,
+        studentName: '김학생',
+        birthDate: '2010-01-01',
+        grade: '초5',
+        className: '1반',
+        notes: '특이사항',
+      },
+      0
+    )
+    expect(row.notes).toBe('특이사항')
+    const payload = mapStudentRowToRosterRequest(
+      { ...row, birthDate: '2010. 01. 01.' },
+      { educationGrade: '초5' }
+    )
+    expect(payload.notes).toBe('특이사항')
+  })
+
+  it('does not include sourceFileObjectId on manual commit even when GET had file id', () => {
+    const body = mapStudentRowsToRosterCommitRequest({
+      expectedRevisionNo: 5,
+      educationGrade: '초5',
+      rows: [
+        {
+          id: '1',
+          no: 1,
+          name: '김학생',
+          birthDate: '2010. 01. 01.',
+          gradeClass: '1반',
+          memberId: 4401,
+        },
+      ],
+    })
+    expect(body.sourceFileObjectId).toBeUndefined()
+    expect(body.rows[0]?.memberId).toBe(4401)
+    expect(body.rows[0]?.rosterId).toBe(1)
   })
 })
