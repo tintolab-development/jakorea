@@ -312,13 +312,28 @@ export function useMyProgramApplicationDetail(
 export function useCancelMyProgramApplicationMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (args: { applicationType: ProgramApplicationType; applicationId: string }) =>
+    mutationFn: (args: {
+      applicationType: ProgramApplicationType
+      applicationId: string
+      /** 신청 취소 후 재신청 가능 여부 캐시를 갱신하기 위한 프로그램 ID */
+      programId?: string | number | null
+    }) =>
       cancelMyProgramApplication(args.applicationType, args.applicationId),
-    onSuccess: (_data, args) => {
-      void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.all(),
-      })
-      void queryClient.removeQueries({
+    onSuccess: async (_data, args) => {
+      const invalidationTasks = [
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.all(),
+        }),
+      ]
+      if (args.programId != null && String(args.programId).trim()) {
+        invalidationTasks.push(
+          queryClient.invalidateQueries({
+            queryKey: platformQueryKeys.program.applicationOptions(String(args.programId)),
+          }),
+        )
+      }
+      await Promise.all(invalidationTasks)
+      queryClient.removeQueries({
         queryKey: platformQueryKeys.mypage.programApplications.detail(
           args.applicationType,
           args.applicationId,

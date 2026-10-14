@@ -279,7 +279,11 @@ export function MypageVolunteerDetailPage() {
     if (remoteDetailEnabled && application?.applicationType) {
       if (cancelMutation.isPending) return
       cancelMutation.mutate(
-        { applicationType: application.applicationType, applicationId: application.id },
+        {
+          applicationType: application.applicationType,
+          applicationId: application.id,
+          programId: application.programId,
+        },
         {
           onSuccess: () => {
             setIsCancelConfirmOpen(false)
