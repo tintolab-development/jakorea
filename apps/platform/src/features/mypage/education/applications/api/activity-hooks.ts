@@ -441,7 +441,8 @@ export function useApplicationNoticeReactionsQuery(
 }
 
 export type CreateApplicationNoticeInput = {
-  title: string
+  /** 생략·공백 시 BE는 "" 처리 */
+  title?: string
   content: string
   visibilityType: string
   organizationApplicationId?: number
@@ -458,8 +459,21 @@ export function useCreateApplicationNoticeMutation(
       if (!applicationType || !applicationId) {
         throw new Error('application scope is required')
       }
+      const files = input.attachmentFiles ?? []
+      const fileObjectIds =
+        files.length > 0
+          ? await Promise.all(
+              files.map(file =>
+                uploadMemberPortalFile({
+                  file,
+                  filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
+                }),
+              ),
+            )
+          : []
+
       const created = await createApplicationNotice(applicationType, applicationId, {
-        title: input.title,
+        title: input.title?.trim() ?? '',
         content: input.content,
         visibilityType: input.visibilityType,
         organizationApplicationId: input.organizationApplicationId,
@@ -468,16 +482,7 @@ export function useCreateApplicationNoticeMutation(
       if (postId == null) {
         throw new Error('PORTAL_NOTICE_CREATE_MISSING_POST_ID')
       }
-      const files = input.attachmentFiles ?? []
-      if (files.length > 0) {
-        const fileObjectIds = await Promise.all(
-          files.map(file =>
-            uploadMemberPortalFile({
-              file,
-              filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
-            }),
-          ),
-        )
+      if (fileObjectIds.length > 0) {
         await putApplicationNoticeAttachments(
           applicationType,
           applicationId,

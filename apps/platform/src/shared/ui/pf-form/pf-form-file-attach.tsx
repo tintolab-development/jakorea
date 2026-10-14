@@ -4,10 +4,17 @@ import { PFItemDeleteButton } from '../pf-item-delete-button'
 import { PFText } from '../pf-text'
 import styles from './pf-form.module.css'
 
+type PFFormFileAttachButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'text' | 'certificate'
+type PFFormFileAttachButtonSize = 'small' | 'medium' | 'large' | 'xlarge' | 'formPage'
+
 export type PFFormFileAttachProps = {
   /** input accept. 기본 PDF */
   accept?: string
   buttonLabel?: string
+  buttonVariant?: PFFormFileAttachButtonVariant
+  buttonSize?: PFFormFileAttachButtonSize
+  /** 트리거 버튼을 컨테이너 너비에 맞춘다 */
+  buttonFullWidth?: boolean
   uploadingLabel?: string
   uploading?: boolean
   disabled?: boolean
@@ -50,6 +57,9 @@ function PdfFileIcon() {
 export function PFFormFileAttach({
   accept = 'application/pdf,.pdf',
   buttonLabel = '파일 추가',
+  buttonVariant = 'secondary',
+  buttonSize = 'medium',
+  buttonFullWidth = false,
   uploadingLabel = '업로드 중…',
   uploading = false,
   disabled = false,
@@ -89,8 +99,9 @@ export function PFFormFileAttach({
       {hideTrigger ? null : (
         <PFButton
           type="button"
-          variant="secondary"
-          size="medium"
+          variant={buttonVariant}
+          size={buttonSize}
+          width={buttonFullWidth ? '100%' : undefined}
           className={styles.fileAttachTrigger}
           disabled={busy}
           onClick={() => inputRef.current?.click()}

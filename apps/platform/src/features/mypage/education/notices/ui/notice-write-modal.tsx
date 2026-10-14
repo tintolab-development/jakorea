@@ -6,14 +6,14 @@ import {
   appendMockEducationInProgressFiles,
   appendMockEducationInProgressNotice,
 } from '../lib/mock-notices'
-import {
-  deriveNoticeTitleFromHtml,
-  isNoticeHtmlContentEmpty,
-} from '../lib/derive-notice-title'
+import { deriveNoticeTitleFromHtml, isNoticeHtmlContentEmpty } from '../lib/derive-notice-title'
 import {
   NOTICE_ATTACH_ACCEPT,
   validateNoticeAttachmentFile,
+  validateNoticeAttachmentsTotalSize,
 } from '../lib/notice-attach-policy'
+import { resolvePortalNoticeWriteErrorMessage } from '../lib/notice-write-errors'
+import { noticeContentHasInlineImage } from '../lib/validate-notice-content'
 import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
@@ -28,8 +28,8 @@ import {
   PFAlertModal,
   PFButton,
   PFCheckbox,
-  PFFormField,
   PFFormFileAttach,
+  PFItemDeleteButton,
   PFModal,
   PFText,
 } from '@/shared/ui'
@@ -60,7 +60,7 @@ export function EducationProgramNoticeWriteModal({
   onMockSuccess,
 }: EducationProgramNoticeWriteModalProps) {
   const [audience, setAudience] = useState<PostWriteAudienceApiKey[]>(() =>
-    defaultPostWriteAudience(program),
+    defaultPostWriteAudience(program)
   )
   const [attachments, setAttachments] = useState<PendingAttachment[]>([])
   const [attachError, setAttachError] = useState<string | null>(null)
@@ -74,7 +74,7 @@ export function EducationProgramNoticeWriteModal({
 
   const editorResetKey = useMemo(
     () => (open ? `education-notice-write-${applicationId}-${editorEpoch}` : 'closed'),
-    [open, applicationId, editorEpoch],
+    [open, applicationId, editorEpoch]
   )
 
   const { editor, api } = useRichTextEditor({
@@ -108,6 +108,12 @@ export function EducationProgramNoticeWriteModal({
       setAttachError(validationError)
       return
     }
+    const nextFiles = [...attachments.map(item => item.file), file]
+    const totalError = validateNoticeAttachmentsTotalSize(nextFiles)
+    if (totalError) {
+      setAttachError(totalError)
+      return
+    }
     setAttachError(null)
     setAttachments(prev => [...prev, { id: `${Date.now()}-${file.name}`, file }])
   }
@@ -125,6 +131,10 @@ export function EducationProgramNoticeWriteModal({
     const content = (api?.getHTML() ?? '').trim()
     if (isNoticeHtmlContentEmpty(content)) {
       setAlertMessage('안내사항 내용을 입력해 주세요.')
+      return
+    }
+    if (noticeContentHasInlineImage(content)) {
+      setAlertMessage('본문에 이미지를 넣을 수 없습니다. 파일 첨부를 이용해 주세요.')
       return
     }
 
@@ -155,7 +165,7 @@ export function EducationProgramNoticeWriteModal({
             attachments.map(item => ({
               fileName: item.file.name,
               fileSizeBytes: item.file.size,
-            })),
+            }))
           )
         }
         onMockSuccess?.()
@@ -171,8 +181,8 @@ export function EducationProgramNoticeWriteModal({
         attachmentFiles: attachments.map(item => item.file),
       })
       onClose()
-    } catch {
-      setAlertMessage('안내사항을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.')
+    } catch (error) {
+      setAlertMessage(resolvePortalNoticeWriteErrorMessage(error))
     }
   }
 
@@ -191,20 +201,38 @@ export function EducationProgramNoticeWriteModal({
       >
         <div className={styles.body}>
           <div className={styles.audienceField}>
-            <PFFormField label="게시글 공개 범위" required>
-              <div className={styles.audienceChecks}>
-                {audienceOptions.map(option => (
-                  <PFCheckbox
-                    key={option.value}
-                    size="large"
-                    checked={audience.includes(option.value)}
-                    onChange={event => toggleAudience(option.value, event.target.checked)}
-                  >
-                    {option.label}
-                  </PFCheckbox>
-                ))}
-              </div>
-            </PFFormField>
+            <div className={styles.audienceLabel}>
+              <PFText
+                as="span"
+                typo="label-md"
+                color="neutral-warm-600"
+                className={styles.audienceLabelText}
+              >
+                게시글 공개 범위
+              </PFText>
+              <PFText
+                as="span"
+                typo="bd-lg-sb"
+                color="error"
+                className={styles.audienceLabelRequired}
+                aria-hidden
+              >
+                *
+              </PFText>
+            </div>
+            <div className={styles.audienceChecks}>
+              {audienceOptions.map(option => (
+                <PFCheckbox
+                  className={styles.audienceCheck}
+                  key={option.value}
+                  size="large"
+                  checked={audience.includes(option.value)}
+                  onChange={event => toggleAudience(option.value, event.target.checked)}
+                >
+                  {option.label}
+                </PFCheckbox>
+              ))}
+            </div>
           </div>
 
           <div className={styles.editorWrap}>
@@ -212,41 +240,54 @@ export function EducationProgramNoticeWriteModal({
           </div>
 
           <section className={styles.attachSection} aria-label="파일 첨부">
-            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            <PFText as="p" typo="label-md" color="neutral-warm-600" className={styles.attachLabel}>
               파일 첨부
             </PFText>
-            <div className={styles.attachList}>
-              {attachments.map(item => (
-                <PFFormFileAttach
-                  key={item.id}
-                  hideTrigger
-                  fileName={item.file.name}
-                  onFileSelect={() => {}}
-                  onRemove={() => handleRemoveFile(item.id)}
-                />
-              ))}
-            </div>
             <PFFormFileAttach
               className={styles.addFileButton}
               accept={NOTICE_ATTACH_ACCEPT}
               buttonLabel="파일 추가하기"
+              buttonVariant="tertiary"
+              buttonSize="xlarge"
+              buttonFullWidth
               disabled={submitting}
               onFileSelect={handleAddFile}
               error={attachError}
             />
             <ul className={styles.attachHints}>
               <li>
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                  JPG, PNG 형식의 파일만 등록할 수 있으며, 파일 용량은 15MB 이하만 등록할 수
-                  있습니다.
+                <PFText as="span" typo="label-md" className={styles.attachHintText}>
+                  파일은 최대 15mb까지 JPG, PNG 형식만 등록 가능합니다.
                 </PFText>
               </li>
               <li>
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                  파일명에 특수문자가 포함된 경우 등록이 되지 않을 수 있습니다.
+                <PFText as="span" typo="label-md" className={styles.attachHintText}>
+                  첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.
                 </PFText>
               </li>
             </ul>
+            {attachments.length > 0 ? (
+              <ul className={styles.attachList} aria-label="첨부된 파일">
+                {attachments.map(item => (
+                  <li key={item.id} className={styles.attachListRow}>
+                    <PFText
+                      as="span"
+                      typo="bd-md-md"
+                      color="black"
+                      className={styles.attachFileName}
+                      title={item.file.name}
+                    >
+                      {item.file.name}
+                    </PFText>
+                    <PFItemDeleteButton
+                      aria-label={`${item.file.name} 삭제`}
+                      disabled={submitting}
+                      onClick={() => handleRemoveFile(item.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </section>
 
           <div className={styles.footer}>

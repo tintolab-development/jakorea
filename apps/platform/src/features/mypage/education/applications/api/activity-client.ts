@@ -305,10 +305,19 @@ export async function createApplicationNotice(
   applicationId: string,
   body: PortalCreateApplicationNoticeRequest,
 ): Promise<PortalCreateApplicationNoticeResponse> {
+  const payload: PortalCreateApplicationNoticeRequest = {
+    content: body.content,
+    visibilityType: body.visibilityType,
+    title: body.title?.trim() ?? '',
+  }
+  if (body.organizationApplicationId != null) {
+    payload.organizationApplicationId = body.organizationApplicationId
+  }
   const { data } = await axiosClient.post<unknown>(
     `${applicationPath(applicationType, applicationId)}/notices`,
-    body,
+    payload,
   )
+  // 성공 시 래퍼 없이 { postId } — envelope 있으면 unwrap만 적용
   return unwrapEnvelope<PortalCreateApplicationNoticeResponse>(data)
 }
 

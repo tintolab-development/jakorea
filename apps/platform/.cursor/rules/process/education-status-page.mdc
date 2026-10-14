@@ -329,7 +329,7 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 ### CMS 게시글형 안내사항 (목록·상세 모달과 동일 도메인)
 
 - **안내사항 탭** [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 하단 — 전폭 **`안내사항 작성하기`** → [`EducationProgramNoticeWriteModal`](apps/platform/src/features/mypage/education/notices/ui/notice-write-modal.tsx) (`PFModal` lg · mobile full)
-- **저장:** mock `appendMockEducationInProgressNotice` · remote `useCreateApplicationNoticeMutation` → [`activity-client.ts`](apps/platform/src/features/mypage/education/applications/api/activity-client.ts) `POST .../notices` + `PUT .../attachments` (OpenAPI·BE 배포 후)
+- **저장:** mock `appendMockEducationInProgressNotice` · remote `useCreateApplicationNoticeMutation` — 첨부 `PROGRAM_POST_ATTACHMENT` upload → `POST .../notices` → `PUT .../notices/{postId}/attachments` ([`activity-client.ts`](apps/platform/src/features/mypage/education/applications/api/activity-client.ts)). 본문 인라인 `<img>` 금지(CMS 동일). 403 `NOTICE_WRITE_NOT_ALLOWED` / `PARTICIPATION_REQUIRED` 등 → [`notice-write-errors.ts`](apps/platform/src/features/mypage/education/notices/lib/notice-write-errors.ts)
 
 ### 기관 신청 안내 양식 (4항목·성범죄 — 신청 폼 SSOT)
 
