@@ -1,0 +1,98 @@
+.body {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-top: var(--spacing-12);
+}
+
+.description {
+  margin: 0;
+}
+
+.tableFrame {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-height: min(420px, 50vh);
+  overflow: auto;
+  border: 1px solid var(--Color-border-light, rgba(61, 61, 61, 0.1));
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  padding: 14px 12px;
+  border-right: 1px solid var(--Color-border-light, rgba(61, 61, 61, 0.1));
+  border-bottom: 1px solid var(--Color-border-light, rgba(61, 61, 61, 0.1));
+  vertical-align: middle;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--Color-netural-cool-80, #eef3f4);
+}
+
+.table th:last-child,
+.table td:last-child {
+  border-right: none;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.left {
+  text-align: left;
+}
+
+.checkboxCell {
+  width: 52px;
+}
+
+.checkboxCell :global(label) {
+  padding: 0;
+  margin: 0 auto;
+}
+
+.footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-4);
+}
+
+.footerButton {
+  min-width: 120px;
+}
+
+/* PFButton xlarge: 아이콘 24×24 — PFFileDownload·첨부 다운로드와 동일 */
+.downloadInner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.downloadIcon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  filter: brightness(0) invert(1);
+}

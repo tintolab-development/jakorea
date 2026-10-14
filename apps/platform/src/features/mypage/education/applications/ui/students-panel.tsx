@@ -28,6 +28,7 @@ import {
   validateStudentRosterImportFile,
 } from '../lib/validate-student-document-file'
 import { PFAlertModal, PFText } from '@/shared/ui'
+import { StudentsPanelCertificateModal } from './students-panel-certificate-modal'
 import { StudentsPanelStepPortrait } from './students-panel-step-portrait'
 import { StudentsPanelStepRoster } from './students-panel-step-roster'
 import { StudentsPanelUnsupported } from './students-panel-unsupported'
@@ -59,7 +60,7 @@ export function EducationStudentsPanel({
     documentsScope,
   )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [certificateNoticeOpen, setCertificateNoticeOpen] = useState(false)
+  const [certificateModalOpen, setCertificateModalOpen] = useState(false)
 
   const policyQuery = useOrganizationStudentDocumentPolicyQuery(
     applicationType,
@@ -205,7 +206,7 @@ export function EducationStudentsPanel({
             .mutateAsync(file)
             .catch(error => handleAsyncError(error, '학생 명단을 업로드하지 못했습니다.'))
         }}
-        onCertificateIssue={() => setCertificateNoticeOpen(true)}
+        onCertificateIssue={() => setCertificateModalOpen(true)}
       />
 
       <StudentsPanelStepPortrait
@@ -250,12 +251,10 @@ export function EducationStudentsPanel({
         onConfirm={() => setErrorMessage(null)}
       />
 
-      <PFAlertModal
-        open={certificateNoticeOpen}
-        title="안내"
-        description="수료증 발급 기능을 준비 중입니다."
-        confirmLabel="확인"
-        onConfirm={() => setCertificateNoticeOpen(false)}
+      <StudentsPanelCertificateModal
+        open={certificateModalOpen}
+        rows={rows}
+        onClose={() => setCertificateModalOpen(false)}
       />
     </div>
   )
