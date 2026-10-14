@@ -328,9 +328,16 @@ export function useCancelMyProgramApplicationMutation() {
         }),
       ]
       if (args.programId != null && String(args.programId).trim()) {
+        const programId = String(args.programId)
         invalidationTasks.push(
           queryClient.invalidateQueries({
-            queryKey: platformQueryKeys.program.applicationOptions(String(args.programId)),
+            queryKey: platformQueryKeys.program.applicationOptions(programId),
+          }),
+          // 프로그램 상세는 모집 상태·신청 가능 상태를 함께 보여줄 수 있으므로
+          // 취소 직후 오래된 상세 캐시를 남기지 않는다. scope가 다른 상세도 같은
+          // programId prefix 아래에서 함께 재검증한다.
+          queryClient.invalidateQueries({
+            queryKey: platformQueryKeys.program.detailPrefix(programId),
           }),
         )
       }

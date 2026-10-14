@@ -38,6 +38,28 @@ assert.equal(pickApplicationOption(options, { recruitmentId: 9999 }), null)
 assert.equal(pickApplicationOption(options, { applicationTypes: ['INSTRUCTOR'] })?.recruitmentId, 1002)
 assert.equal(pickApplicationOption(options, { applicationTypes: ['VOLUNTEER'] }), null)
 
+/** 취소 이력이 있어도 서버가 canApply=true를 반환하면 재신청 가능한 모집으로 유지한다. */
+const cancelledApplication = [
+  {
+    recruitmentId: 1005,
+    applicationType: 'INSTRUCTOR',
+    formBindingId: 15,
+    canApply: true,
+    blockedReason: undefined,
+    existingApplication: {
+      applicationId: 7005,
+      applicationType: 'INSTRUCTOR',
+      status: 'CANCELLED',
+    },
+  },
+]
+const cancelledPick = pickApplicationOption(cancelledApplication, {
+  recruitmentId: 1005,
+  applicationTypes: ['INSTRUCTOR'],
+})
+assert.equal(cancelledPick?.canApply, true)
+assert.equal(cancelledPick?.blockedReason, undefined)
+
 const sharedRecruitment = [
   {
     recruitmentId: 186050,

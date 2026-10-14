@@ -127,6 +127,8 @@ export const platformQueryKeys = {
         scope?.recruitmentId ?? '',
         scope?.applicationType ?? '',
       ] as const,
+    /** 프로그램 상세 전체 scope — 모집별 상세 캐시까지 함께 무효화할 때 사용 */
+    detailPrefix: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
     /** 신청 옵션 — GET /api/portal/programs/{programId}/application-options (Class D, 회원) */
     applicationOptions: (programId: string) =>
       [...platformQueryKeys.program.all(), 'application-options', programId] as const,
