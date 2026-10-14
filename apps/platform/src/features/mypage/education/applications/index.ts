@@ -40,6 +40,7 @@ export {
   shouldShowTeacherInstitutionGuidanceWrite,
   shouldShowTeacherInstitutionGuidanceWriteForProfile,
   shouldShowTeacherInstitutionGuidanceEditOnApplicationTab,
+  shouldShowTeacherInstitutionGuidanceEditLink,
   hasTeacherApplicationGuidanceContent,
   hasInstitutionGuidanceDraftContent,
   resolveTeacherInstitutionGuidanceCtaLabel,

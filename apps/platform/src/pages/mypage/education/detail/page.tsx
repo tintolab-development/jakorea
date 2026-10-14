@@ -58,10 +58,10 @@ import {
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import {
   hasTeacherApplicationGuidanceContent,
-  shouldShowTeacherInstitutionGuidanceEditOnApplicationTab,
+  shouldShowTeacherInstitutionGuidanceEditLink,
   shouldShowTeacherInstitutionGuidanceWrite,
 } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
-import { resolveTeacherPreferredSchedules } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
+import { buildTeacherApplicationContentFromPortal } from '@/features/mypage/education/applications/lib/teacher-application-content-from-portal'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -222,32 +222,55 @@ export function MypageEducationDetailPage() {
   )
 
   const teacherApplicationContent = useMemo(() => {
-    const base = application?.teacherApplicationContent
-    if (!base || !program) return base
-    const preferredSchedules = resolveTeacherPreferredSchedules({
-      preferredSchedules: base.preferredSchedules,
-      preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+    if (!application || !program) return undefined
+    const isOrganizationApplication =
+      application.applicationType === 'ORGANIZATION' || program.programAudience === 'organization'
+    if (!isOrganizationApplication) return application.teacherApplicationContent
+
+    const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
       preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
-      preferredScheduleBlocks: application.preferredScheduleBlocks,
-      program,
+      preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+      educationScheduleLines: program.educationScheduleLines,
+      schedules: program.eventSchedules,
     })
-    return { ...base, preferredSchedules }
-  }, [
-    application?.teacherApplicationContent,
-    application?.preferredEducationScheduleLabel,
-    application?.preferredScheduleBlocks,
-    application?.preferredScheduleOptionValues,
-    program,
-  ])
+
+    return buildTeacherApplicationContentFromPortal(
+      {
+        applicationType: application.applicationType ?? 'ORGANIZATION',
+        detailCase: application.detailCase,
+        answers: application.applicationAnswers,
+        preferredScheduleBlocks: application.preferredScheduleBlocks,
+        preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+        preferredEducationScheduleLabel,
+        existing: application.teacherApplicationContent,
+      },
+      program,
+    )
+  }, [application, program])
+
+  const showTeacherGuidanceEditLink = useMemo(() => {
+    if (!application || !program || !teacherApplicationContent) return false
+    return (
+      shouldShowTeacherInstitutionGuidanceEditLink({
+        isTeacher,
+        programAudience: program.programAudience,
+        displayStatus: application.displayStatus,
+      }) && hasTeacherApplicationGuidanceContent(teacherApplicationContent.guidance)
+    )
+  }, [application, isTeacher, program, teacherApplicationContent])
 
   const applicationInfoBody = useMemo(() => {
-    if (!application || !program || !isTeacher || !teacherApplicationContent) return undefined
+    const isOrganizationApplication =
+      application?.applicationType === 'ORGANIZATION' || program?.programAudience === 'organization'
+    if (!application || !program || !isTeacher || !isOrganizationApplication || !teacherApplicationContent) {
+      return undefined
+    }
     return (
       <TeacherApplicationContent
         applicationId={application.id}
         applicationType={application.applicationType}
         content={teacherApplicationContent}
-        showGuidanceWriteLink={false}
+        showGuidanceWriteLink={showTeacherGuidanceEditLink}
         showPreferredEducationForm={program.educationForm === 'participant_choice'}
       />
     )
@@ -258,6 +281,7 @@ export function MypageEducationDetailPage() {
     isTeacher,
     program,
     program?.educationForm,
+    showTeacherGuidanceEditLink,
     teacherApplicationContent,
   ])
 
@@ -435,15 +459,6 @@ export function MypageEducationDetailPage() {
     schedules: program.eventSchedules,
   })
 
-  const showTeacherGuidanceEditOnApplicationTab =
-    shouldShowTeacherInstitutionGuidanceEditOnApplicationTab({
-      isTeacher,
-      programAudience: program.programAudience,
-      displayStatus: application.displayStatus,
-    }) &&
-    Boolean(application.teacherApplicationContent) &&
-    hasTeacherApplicationGuidanceContent(application.teacherApplicationContent!.guidance)
-
   const showTeacherNoticeWrite = shouldShowTeacherInstitutionGuidanceWrite({
     isTeacher,
     programAudience: program.programAudience,
@@ -461,7 +476,7 @@ export function MypageEducationDetailPage() {
           applicationId={application.id}
           applicationType={application.applicationType}
           content={teacherApplicationContent}
-          showGuidanceWriteLink={showTeacherGuidanceEditOnApplicationTab}
+          showGuidanceWriteLink={showTeacherGuidanceEditLink}
           showPreferredEducationForm={program.educationForm === 'participant_choice'}
         />
       ) : (

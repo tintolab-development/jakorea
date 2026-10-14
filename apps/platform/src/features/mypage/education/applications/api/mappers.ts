@@ -5,12 +5,7 @@ import {
   resolveApplicationContentFromAnswers,
   resolvePreferredEducationScheduleLabelFromAnswers,
 } from '../lib/application-content-from-answers'
-import { mapTeacherInstitutionFromApplicationAnswers } from '../lib/institution-basic-info-from-answers'
-import { resolveTeacherPreferredSchedules } from '../lib/teacher-preferred-schedules'
-import {
-  mapInstitutionGuidanceFromApplicationAnswers,
-  teacherGuidanceContentFromFormState,
-} from '../lib/institution-guidance-from-answers'
+import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
@@ -323,38 +318,28 @@ export function mapPortalProgramApplicationDetail(
   if (detail.preferredScheduleBlocks?.length) {
     mapped.preferredScheduleBlocks = detail.preferredScheduleBlocks
   }
+  if (Object.keys(answers).length > 0) {
+    mapped.applicationAnswers = answers
+  }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
 
-  if (detail.applicationType === 'ORGANIZATION' && Object.keys(answers).length > 0) {
-    const guidanceForm = mapInstitutionGuidanceFromApplicationAnswers(answers, mapped.detailCase)
-    const institutionFromAnswers = mapTeacherInstitutionFromApplicationAnswers(
-      answers,
-      mapped.detailCase,
-      detail.programGroup ?? detail.program?.programGroup,
-    )
-    const preferredSchedules = resolveTeacherPreferredSchedules({
-      answers,
-      preferredScheduleOptionValues: mapped.preferredScheduleOptionValues,
-      preferredEducationScheduleLabel: mapped.preferredEducationScheduleLabel,
-      preferredScheduleBlocks: detail.preferredScheduleBlocks,
-    })
-    mapped.teacherApplicationContent = {
-      institution: institutionFromAnswers ?? {
-        name: '',
-        grade: '',
-        address: '',
-        addressDetail: '',
-        classAndHeadcount: '',
-        teacherContact: '',
-        reason: '',
-        otherRequests: '',
+  const applicationType = readApplicationType(detail.applicationType)
+  if (applicationType === 'ORGANIZATION') {
+    mapped.teacherApplicationContent = buildTeacherApplicationContentFromPortal(
+      {
+        applicationType,
+        detailCase: mapped.detailCase,
+        programGroup: detail.programGroup ?? detail.program?.programGroup,
+        answers,
+        preferredScheduleBlocks: detail.preferredScheduleBlocks,
+        preferredScheduleOptionValues: mapped.preferredScheduleOptionValues,
+        preferredEducationScheduleLabel: mapped.preferredEducationScheduleLabel,
       },
-      guidance: teacherGuidanceContentFromFormState(guidanceForm),
-      preferredSchedules,
-    }
+      undefined,
+    )
   }
 
   return mapped

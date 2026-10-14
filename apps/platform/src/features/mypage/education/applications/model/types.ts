@@ -113,6 +113,8 @@ export type EducationApplicationListItem = {
   preferredScheduleOptionValues?: string[]
   /** Portal 신청 상세 `preferredScheduleBlocks` — answers 일정 키 없을 때 fallback */
   preferredScheduleBlocks?: readonly unknown[]
+  /** Portal 신청 상세 `answers` — 상세 재조회·신청 정보 팝업용 */
+  applicationAnswers?: Record<string, unknown>
   /** `displayStatus === 'withdrawn'` 일 때 포기 시점 */
   withdrawalPhase?: EducationWithdrawalPhase
   /**

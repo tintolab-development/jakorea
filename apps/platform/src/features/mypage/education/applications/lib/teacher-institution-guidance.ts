@@ -35,6 +35,20 @@ export function shouldShowTeacherInstitutionGuidanceEditOnApplicationTab(options
   return canShowEducationApplicationContent(options.displayStatus)
 }
 
+/** 신청 내용 탭·진행중 신청 정보 팝업 — 「안내사항 수정하기」 */
+export function shouldShowTeacherInstitutionGuidanceEditLink(options: {
+  isTeacher: boolean
+  programAudience: ProgramDetail['programAudience'] | undefined
+  displayStatus: EducationDisplayStatus
+}): boolean {
+  if (!options.isTeacher) return false
+  if (options.programAudience !== 'organization') return false
+  return (
+    canShowEducationApplicationContent(options.displayStatus) ||
+    GUIDANCE_WRITE_DISPLAY_STATUSES.has(options.displayStatus)
+  )
+}
+
 export function hasTeacherApplicationGuidanceContent(
   guidance: EducationTeacherApplicationGuidance,
 ): boolean {

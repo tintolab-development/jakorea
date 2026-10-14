@@ -1,6 +1,7 @@
 import type { ProgramDetail } from '@/features/program'
 import type { EducationTeacherPreferredSchedule } from '../model/types'
 import {
+  isOpaqueScheduleOptionToken,
   resolvePreferredEducationScheduleDisplayLabel,
   resolvePreferredEducationScheduleLabelFromAnswers,
   resolvePreferredScheduleLabelsFromAnswers,
@@ -50,7 +51,10 @@ export function resolveTeacherPreferredSchedules(input: {
   preferredScheduleBlocks?: readonly unknown[] | null
   program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'>
 }): EducationTeacherPreferredSchedule[] {
-  const existing = input.preferredSchedules?.filter(row => row.value?.trim()) ?? []
+  const existing =
+    input.preferredSchedules?.filter(
+      row => row.value?.trim() && !isOpaqueScheduleOptionToken(row.value.trim()),
+    ) ?? []
   if (existing.length > 0) return existing
 
   const lookup = programDetailToPreferredScheduleLookup(input.program)
