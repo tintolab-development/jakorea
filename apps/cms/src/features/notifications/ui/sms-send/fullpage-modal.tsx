@@ -14,7 +14,7 @@ import {
   getNotificationsApiErrorMessage,
 } from '@/features/notifications/api/get-notifications-api-error'
 import {
-  getSmsRecipientCandidates,
+  fetchAllSmsRecipientCandidates,
   resolveSmsSenderProfileId,
   shouldUseSmsSendRemoteApi,
   submitSmsSend,
@@ -31,7 +31,6 @@ import {
   canSelectNotificationSendTemplate,
   isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
-  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
 } from '@/features/notifications/model/send-program-id'
 import {
   canUseNotificationSendTemplateForProgram,
@@ -75,7 +74,7 @@ function createIdempotencyKey(): string {
 
 function recipientTotalPages(total: number, size: number, totalPages?: number): number {
   if (totalPages != null && totalPages > 0) return totalPages
-  return Math.max(Math.ceil((total || 0) / (size || 50)), 1)
+  return Math.max(Math.ceil((total || 0) / (size || 20)), 1)
 }
 
 type SendFullpageModalProps = {
@@ -187,7 +186,7 @@ export function SendFullpageModal({
       memberType:
         recipientTypeMode === 'member' ? toSmsSendMemberTypeApi(recipientSearch.typeValue) : undefined,
       page: recipientSearch.page,
-      size: 50,
+      size: 20,
     },
     open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
@@ -611,13 +610,12 @@ export function SendFullpageModal({
         fetchAllCandidates={
           remote && (programNumericId != null || isWithoutProgram)
             ? async () => {
-                const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await candidatesQuery.refetch({
                   throwOnError: true,
                 })
                 if (!result.data) return []
                 if (result.data.total <= result.data.items.length) return result.data.items
-                const all = await getSmsRecipientCandidates({
+                return fetchAllSmsRecipientCandidates({
                   programId: programNumericId,
                   keyword: recipientSearch.keyword || undefined,
                   participantType:
@@ -628,10 +626,7 @@ export function SendFullpageModal({
                     recipientTypeMode === 'member'
                       ? toSmsSendMemberTypeApi(recipientSearch.typeValue)
                       : undefined,
-                  page: 0,
-                  size: Math.min(Math.max(total, 50), NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT),
                 })
-                return all.items
               }
             : undefined
         }

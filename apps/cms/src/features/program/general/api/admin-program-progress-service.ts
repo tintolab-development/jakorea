@@ -110,7 +110,7 @@ export async function fetchGeneralParticipatingInstitutions(
   return (await fetchGeneralParticipatingInstitutionsPage(programId)).rows
 }
 
-const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 100
+const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 20
 const ORG_APPLICATIONS_ENRICH_PAGE_LIMIT = 40
 
 async function fetchOrganizationPreferredEducationSchedulesByApplicationId(

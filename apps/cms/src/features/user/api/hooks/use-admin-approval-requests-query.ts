@@ -9,7 +9,7 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import { isAdminApprovalRequestsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import type { ListAdminApprovalRequestsParams } from '@/features/user/api/admin-approval-requests.types'
 
-const DEFAULT_PAGE_SIZE = 50
+const DEFAULT_PAGE_SIZE = 20
 
 export function useAdminApprovalRequestsQuery(
   params: ListAdminApprovalRequestsParams = {},

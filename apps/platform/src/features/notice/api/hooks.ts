@@ -32,7 +32,7 @@ const DETAIL_STALE_MS = 2 * 60_000
 const DETAIL_GC_MS = 15 * 60_000
 
 /** 인접글용 preview (검색은 서버 `q` 사용). */
-export const NOTICES_PREVIEW_SIZE = 100
+export const NOTICES_PREVIEW_SIZE = 20
 
 function shouldRetryDetail(failureCount: number, error: unknown): boolean {
   if (getQueryRetryHttpStatus(error) === 404) return false

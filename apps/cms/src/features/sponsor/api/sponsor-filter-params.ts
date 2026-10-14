@@ -20,7 +20,7 @@ export type SponsorsListQueryParams = SponsorsParams & {
 export const SPONSOR_LIST_PAGE_SIZE = DATA_MANAGEMENT_LIST_PAGE_SIZE
 
 /** 후원사 셀렉트·드롭다운 전량 로드 (BE max 100) */
-export const SPONSOR_OPTIONS_LIST_SIZE = 100
+export const SPONSOR_OPTIONS_LIST_SIZE = 20
 
 function parseKind(raw: string | null): SponsorOrganizationKind {
   if (raw === 'foundation') return 'foundation'

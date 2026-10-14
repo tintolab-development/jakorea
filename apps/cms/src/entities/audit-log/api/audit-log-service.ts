@@ -151,8 +151,17 @@ export async function getAuditLogStats(filters: AuditLogFilters = {}): Promise<{
 }> {
   await new Promise(resolve => setTimeout(resolve, 200))
 
-  const queryResult = await getAuditLogs({ ...filters, page: 1, pageSize: 10000 })
-  const allLogs = queryResult.logs
+  const pageSize = 20
+  const allLogs: AuditLog[] = []
+  let page = 1
+  let total = 0
+  for (;;) {
+    const queryResult = await getAuditLogs({ ...filters, page, pageSize })
+    allLogs.push(...queryResult.logs)
+    total = queryResult.total
+    if (allLogs.length >= total || queryResult.logs.length === 0) break
+    page += 1
+  }
 
   const byEventType: Record<string, number> = {}
   const byUser: Record<string, number> = {}

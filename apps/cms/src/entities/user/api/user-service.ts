@@ -100,6 +100,7 @@ import {
   upsertMemberAdminCommentRemote,
 } from '@/features/user/api/members-api-client'
 import { fetchAllAccountsDirectoryPage } from '@/features/user/api/fetch-all-accounts-directory-page'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import {
   applyAdminPermissionVariantToUser,
   resolveAdminAccountIdForPermissionPatch,
@@ -742,7 +743,7 @@ async function resolveAdminAccountIdForMemberUser(
   const page = await fetchAdminsPageRemote({
     ...(email ? { keyword: email } : {}),
     page: 0,
-    size: 50,
+    size: PAGE_SIZE,
   })
   const items = page.items ?? []
   const idToken = user.id.replace(/^(admin-|member-)/, '')
@@ -798,8 +799,10 @@ async function patchAdminPermissionVariantRemote(
         } else if (Number.isFinite(numeric) && numeric > 0) {
           adminId = Math.trunc(numeric)
         } else {
-          const page = await fetchAdminsPageRemote({ page: 0, size: 100 })
-          const match = (page.items ?? []).find(item => {
+          const adminItems = await fetchAllApiPages((page, size) =>
+            fetchAdminsPageRemote({ page, size })
+          )
+          const match = adminItems.find(item => {
             const uuid = item.uuid?.trim()
             if (!uuid) return false
             return uuid === userId || uuid === raw || `admin-${uuid}` === userId

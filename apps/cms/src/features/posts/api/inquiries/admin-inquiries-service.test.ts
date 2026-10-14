@@ -44,7 +44,7 @@ describe('getInquiryCategories', () => {
       { id: '1', name: '계정' },
       { id: '2', name: '프로그램' },
     ])
-    expect(fetchInquiryCategoriesRemoteMock).toHaveBeenCalledWith({ page: 0, size: 100 })
+    expect(fetchInquiryCategoriesRemoteMock).toHaveBeenCalledWith({ page: 0, size: 20 })
   })
 })
 

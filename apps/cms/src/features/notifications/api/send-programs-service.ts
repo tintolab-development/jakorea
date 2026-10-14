@@ -10,9 +10,9 @@ import { mapAdminProgramListItemsToSendPrograms } from './adapters/send-program-
 /**
  * 발송 대상 프로그램 피커용 목록 size.
  * UI는 클라이언트에서 5건 슬라이스하고, API는 유형별로 페이지네이션한다.
- * (수신자 후보 size=50 / 전체선택 max 1000 과 분리)
+ * (수신자 후보 size=20 / 전체선택 max 1000 과 분리)
  */
-const SEND_PROGRAM_LIST_PAGE_SIZE = 50
+const SEND_PROGRAM_LIST_PAGE_SIZE = 20
 const MAX_PAGES = 40
 const SEND_PROGRAM_API_TYPES = [
   'GENERAL',

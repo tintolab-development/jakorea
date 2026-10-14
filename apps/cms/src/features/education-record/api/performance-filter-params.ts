@@ -8,7 +8,7 @@ import type {
 } from '@/features/education-record/model/education-record-types'
 
 export const PERFORMANCE_LIST_PAGE = 0
-export const PERFORMANCE_LIST_SIZE = 50
+export const PERFORMANCE_LIST_SIZE = 20
 
 export const EDUCATION_RECORD_PARAM_KEYS = {
   year: 'er_year',

@@ -24,6 +24,7 @@ import {
 } from '@/features/notifications/model/sms-send/payload'
 import type { SmsSendDraft, SmsSendRecipient } from '@/features/notifications/model/sms-send/types'
 import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
+import { NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT } from '@/features/notifications/model/send-program-id'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -79,7 +80,7 @@ export async function getSmsRecipientCandidates(input: {
   size: number
   totalPages: number
 }> {
-  const size = input.size ?? 50
+  const size = input.size ?? 20
   const page = input.page ?? 0
 
   if (!shouldUseSmsSendRemoteApi()) {
@@ -110,8 +111,27 @@ export async function getSmsRecipientCandidates(input: {
     total,
     page: dto.page ?? page,
     size: resolvedSize,
-    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 50)), 1),
+    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 20)), 1),
   }
+}
+
+export async function fetchAllSmsRecipientCandidates(input: {
+  programId?: number
+  keyword?: string
+  participantType?: string
+  memberType?: string
+}): Promise<SmsSendRecipient[]> {
+  const collected: SmsSendRecipient[] = []
+  let page = 0
+  let totalPages = 1
+  while (page < totalPages && collected.length < NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT) {
+    const result = await getSmsRecipientCandidates({ ...input, page, size: 20 })
+    collected.push(...result.items)
+    totalPages = result.totalPages
+    if (result.items.length === 0) break
+    page += 1
+  }
+  return collected.slice(0, NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT)
 }
 
 export async function getSmsTemplateVariables(

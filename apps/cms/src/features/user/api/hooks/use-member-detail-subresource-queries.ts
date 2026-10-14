@@ -35,9 +35,9 @@ import type { UserHistory } from '@/types/domain'
 import type { Program } from '@/types/domain'
 import type { SchoolAffiliatedTeacherRow } from '@/types/user'
 
-const MEMBER_DETAIL_LIST_SIZE = 50
-/** program-history size max clamp 100 (BE 2026-09-11). default 20과 동일 계열 */
-const MEMBER_PROGRAM_HISTORY_LIST_SIZE = 50
+const MEMBER_DETAIL_LIST_SIZE = 20
+/** program-history — BE page size 상한 20 */
+const MEMBER_PROGRAM_HISTORY_LIST_SIZE = 20
 /** history LNB 탭 전환 시 동일 memberId 재GET 방지 (전역 30s와 동일) */
 const MEMBER_DETAIL_SUBRESOURCE_STALE_MS = 30_000
 

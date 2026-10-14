@@ -5,13 +5,13 @@ function parseUsage(raw: string | null): 'active' | 'inactive' {
 }
 
 /** 세부 프로그램 목록·셀렉트 API 페이지 크기 (한 요청 payload 상한) */
-export const DETAILED_PROGRAM_API_PAGE_SIZE = 100
+export const DETAILED_PROGRAM_API_PAGE_SIZE = 20
 
 /** @deprecated `DETAILED_PROGRAM_API_PAGE_SIZE` 사용 */
 export const DETAILED_PROGRAM_LIST_PAGE_SIZE = DETAILED_PROGRAM_API_PAGE_SIZE
 
-/** 필터만 유지한 전수 조회 시 페이지 순회 상한 (100 × N건) */
-export const DETAILED_PROGRAM_LIST_MAX_PAGES = 10
+/** 필터만 유지한 전수 조회 시 페이지 순회 상한 (20 × N건) */
+export const DETAILED_PROGRAM_LIST_MAX_PAGES = 50
 
 export function detailedProgramsParamsFromSearchParams(
   searchParams: URLSearchParams,

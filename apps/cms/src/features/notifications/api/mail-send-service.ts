@@ -27,6 +27,7 @@ import {
 import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
 import {
   isNotificationSendWithoutProgram,
+  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
@@ -120,7 +121,7 @@ export async function getMailRecipientCandidates(input: {
   size: number
   totalPages: number
 }> {
-  const size = input.size ?? 50
+  const size = input.size ?? 20
   const page = input.page ?? 0
   if (!shouldUseMailSendRemoteApi()) {
     return {
@@ -149,8 +150,27 @@ export async function getMailRecipientCandidates(input: {
     total,
     page: dto.page ?? page,
     size: resolvedSize,
-    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 50)), 1),
+    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 20)), 1),
   }
+}
+
+export async function fetchAllMailRecipientCandidates(input: {
+  programId?: number
+  keyword?: string
+  participantType?: string
+  memberType?: string
+}): Promise<MailSendRecipient[]> {
+  const collected: MailSendRecipient[] = []
+  let page = 0
+  let totalPages = 1
+  while (page < totalPages && collected.length < NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT) {
+    const result = await getMailRecipientCandidates({ ...input, page, size: 20 })
+    collected.push(...result.items)
+    totalPages = result.totalPages
+    if (result.items.length === 0) break
+    page += 1
+  }
+  return collected.slice(0, NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT)
 }
 
 export async function getMailTemplateVariables(

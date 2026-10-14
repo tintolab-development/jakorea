@@ -17,7 +17,7 @@ import {
   fetchCategoryTreeRemote,
   fetchNotificationTemplatePreviewRemote,
   fetchNotificationTemplateRemote,
-  fetchNotificationTemplatesRemote,
+  fetchAllNotificationTemplatesRemote,
   moveCategoryRemote,
   moveTemplateRemote,
   syncNotificationTemplatesRemote,
@@ -120,12 +120,10 @@ export async function getMailTemplatePreview(
 export async function getMailSendTemplatePicker(): Promise<MailTemplateItem[]> {
   if (!shouldUseMailTemplatesRemoteApi()) return []
 
-  const dto = await fetchNotificationTemplatesRemote({
+  const templateItems = await fetchAllNotificationTemplatesRemote({
     channelType: MAIL_API_CHANNEL_TYPE,
-    page: '0',
-    size: '100',
   })
-  const fromList = (dto.items ?? [])
+  const fromList = templateItems
     .filter(item => (item.channelType ?? MAIL_API_CHANNEL_TYPE).toUpperCase() === MAIL_API_CHANNEL_TYPE)
     .map(item => mapMailNotificationTemplateToItem(item))
     .filter((item): item is MailTemplateItem => item != null)

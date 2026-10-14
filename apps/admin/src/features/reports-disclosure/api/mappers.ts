@@ -41,14 +41,18 @@ export function mapReportResponseToDomain(row: ReportResponse): TransparencyRepo
   }
 }
 
-export function toReportsListParams(filter: ReportListFilter): ReportsParams {
+export function toReportsListParams(
+  filter: ReportListFilter,
+  page = 0,
+  size = 20
+): ReportsParams {
   return {
     title: filter.title?.trim() || undefined,
     attachmentFileName: filter.attachmentName?.trim() || undefined,
     createdFrom: filter.createdFrom || undefined,
     createdTo: filter.createdTo || undefined,
-    page: 0,
-    size: 100,
+    page,
+    size,
   }
 }
 

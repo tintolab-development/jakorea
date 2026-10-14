@@ -13,7 +13,7 @@ import {
   deleteCategoryRemote,
   deleteNotificationTemplateRemote,
   fetchCategoryTreeRemote,
-  fetchNotificationTemplatesRemote,
+  fetchAllNotificationTemplatesRemote,
   fetchNotificationTemplatePreviewRemote,
   fetchNotificationTemplateRemote,
   moveCategoryRemote,
@@ -117,12 +117,10 @@ export async function getSmsTemplatePreview(
 export async function getSmsSendTemplatePicker(): Promise<SmsTemplateItem[]> {
   if (!shouldUseSmsTemplatesRemoteApi()) return []
 
-  const dto = await fetchNotificationTemplatesRemote({
+  const templateItems = await fetchAllNotificationTemplatesRemote({
     channelType: SMS_API_CHANNEL_TYPE,
-    page: '0',
-    size: '100',
   })
-  const fromList = (dto.items ?? [])
+  const fromList = templateItems
     .filter(item => (item.channelType ?? SMS_API_CHANNEL_TYPE).toUpperCase() === SMS_API_CHANNEL_TYPE)
     .map(item => mapSmsNotificationTemplateToItem(item))
     .filter((item): item is SmsTemplateItem => item != null)

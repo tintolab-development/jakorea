@@ -101,6 +101,6 @@ describe('logs-filter-params', () => {
       page: '1',
       size: '20',
     })
-    expect(toLogsListQueryParams({}, 0, 200).size).toBe('100')
+    expect(toLogsListQueryParams({}, 0, 200).size).toBe('20')
   })
 })

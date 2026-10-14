@@ -7,11 +7,11 @@ import {
 } from './log-list-page'
 
 describe('log-list-page', () => {
-  it('clamps size to 1..100 with default 20', () => {
+  it('clamps size to 1..20 with default 20', () => {
     expect(clampLogListPageSize()).toBe(LOG_LIST_PAGE_SIZE)
     expect(clampLogListPageSize(0)).toBe(1)
     expect(clampLogListPageSize(101)).toBe(LOG_LIST_MAX_PAGE_SIZE)
-    expect(clampLogListPageSize(50)).toBe(50)
+    expect(clampLogListPageSize(50)).toBe(20)
   })
 
   it('paginates a local list with totalElements and hasNext', () => {

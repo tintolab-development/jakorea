@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import { getJAKoreaCMSBackendAPINotificationsSubset } from '@/shared/api/generated/notifications/notifications-api'
 import customInstance from '@/shared/api/orval-mutator'
 import type {
@@ -53,6 +54,20 @@ export async function fetchNotificationTemplatesRemote(
       params,
     })
   )
+}
+
+export async function fetchAllNotificationTemplatesRemote(
+  baseParams: Record<string, string>
+): Promise<NonNullable<NotificationTemplateListResponse['items']>> {
+  return fetchAllApiPages(async (page, size) => {
+    const dto = await fetchNotificationTemplatesRemote({
+      ...baseParams,
+      page: String(page),
+      size: String(size),
+    })
+    const totalPages = (dto as { totalPages?: number }).totalPages
+    return { items: dto.items ?? [], totalPages }
+  })
 }
 
 export async function fetchNotificationTemplateRemote(

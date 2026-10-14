@@ -91,8 +91,8 @@ export function shouldUseFormsSurveysRemoteApi(): boolean {
   return isRealApiModuleEnabled('formsSurveys') && hasRemoteAdminJwt()
 }
 
-const FORM_TEMPLATE_LIST_PAGE_SIZE = 100
-const FORM_TEMPLATE_LIST_MAX_PAGES = 20
+const FORM_TEMPLATE_LIST_PAGE_SIZE = 20
+const FORM_TEMPLATE_LIST_MAX_PAGES = 100
 
 async function fetchAllFormTemplateListItems(
   params: Omit<ListTemplatesParams, 'page' | 'size'>

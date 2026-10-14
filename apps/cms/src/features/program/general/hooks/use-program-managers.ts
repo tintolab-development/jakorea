@@ -21,6 +21,7 @@ import {
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import { fetchAdminsPageRemote } from '@/features/user/api/members-api-client'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   canAssignProgramRoleToCmsAdmin,
@@ -73,8 +74,10 @@ export function useProgramManagers(
   const candidatesQuery = useQuery({
     queryKey: generalProgramQueryKeys.managerCandidates(),
     queryFn: async (): Promise<AssignableManagerCandidate[]> => {
-      const page = await fetchAdminsPageRemote({ page: 0, size: 100, status: 'ACTIVE' })
-      return (page.items ?? [])
+      const adminItems = await fetchAllApiPages((page, size) =>
+        fetchAdminsPageRemote({ page, size, status: 'ACTIVE' })
+      )
+      return adminItems
         .filter(item => item.adminAccountId != null && item.name?.trim())
         .map(item => ({
           id: String(item.adminAccountId),

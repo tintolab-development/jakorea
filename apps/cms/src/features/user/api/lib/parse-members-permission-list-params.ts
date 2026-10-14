@@ -3,7 +3,7 @@ import { mapUiApprovalFilterToApiStatus } from '@/features/user/api/lib/map-perm
 import type { ListInstructorRoleRequestsParams } from '@/shared/api/generated/members/schemas'
 import type { MemberPermissionApplicationStatus } from '@/types/member-permission-application'
 
-const DEFAULT_PAGE_SIZE = 50
+const DEFAULT_PAGE_SIZE = 20
 
 function parseApproval(raw: string | null): MemberPermissionApplicationStatus | 'ALL' {
   if (!raw || raw === 'ALL') return 'ALL'

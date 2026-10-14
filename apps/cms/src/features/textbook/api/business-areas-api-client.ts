@@ -6,7 +6,7 @@ import type {
   TextbookBusinessAreaResponse,
 } from '@/shared/api/generated/data-management/schemas'
 
-const LIST_PAGE_SIZE = 100
+const LIST_PAGE_SIZE = 20
 
 export async function fetchTextbookBusinessAreasRemote(): Promise<TextbookBusinessAreaResponse[]> {
   const page = unwrapApiBody<PageResponseTextbookBusinessAreaResponse>(

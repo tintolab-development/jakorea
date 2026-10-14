@@ -23,6 +23,7 @@ import {
   updateNoticeCategoryRemote,
   updateNoticeRemote,
 } from '@/features/posts/api/notices/notices-api-client'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type { Notice } from '@/features/posts/model/notice'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -181,8 +182,10 @@ export async function deleteNotices(ids: string[]): Promise<void> {
 
 export async function getNoticeCategories(): Promise<CategoryRow[]> {
   assertNoticesRemoteReady()
-  const dto = await fetchNoticeCategoriesRemote({ page: 0, size: 100 })
-  return mapCategoryItems(dto.items)
+  const items = await fetchAllApiPages((page, size) =>
+    fetchNoticeCategoriesRemote({ page, size })
+  )
+  return mapCategoryItems(items)
 }
 
 export async function createNoticeCategory(name: string): Promise<CategoryRow | null> {

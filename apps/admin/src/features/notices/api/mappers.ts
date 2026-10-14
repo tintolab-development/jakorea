@@ -64,11 +64,14 @@ export function mapNoticeResponseToDomain(row: NoticeResponse): Notice {
   }
 }
 
-export function toNoticeListParams(filter?: NoticeListFilter): List5Params {
+export function toNoticeListParams(
+  filter?: NoticeListFilter,
+  page = 0,
+  size = 20
+): List5Params {
   const params: List5Params = {
-    page: 0,
-    // BE: size must be between 1 and 100
-    size: 100,
+    page,
+    size,
   }
   if (!filter) return params
 

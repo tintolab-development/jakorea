@@ -1,5 +1,6 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import { API_LIST_PAGE_SIZE, fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type { PublicTextbookDetail, PublicTextbookListPage } from './types'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
@@ -24,25 +25,31 @@ const SKIP_AUTH: SkipAuthConfig = {
 } as SkipAuthConfig
 
 const TEXTBOOKS_PATH = '/api/public/education/textbooks'
-const TEXTBOOKS_PAGE_SIZE = 50
+const TEXTBOOKS_PAGE_SIZE = API_LIST_PAGE_SIZE
 
 /** GET /api/public/education/textbooks — 인증 불필요. 페이지 키는 `items`. */
 export async function fetchPublicTextbooks(signal?: AbortSignal): Promise<PublicTextbookListPage> {
-  const { data } = await axiosClient.get<unknown>(TEXTBOOKS_PATH, {
-    ...SKIP_AUTH,
-    signal,
-    params: { page: 0, size: TEXTBOOKS_PAGE_SIZE },
+  const items = await fetchAllApiPages(async (page, size) => {
+    const { data } = await axiosClient.get<unknown>(TEXTBOOKS_PATH, {
+      ...SKIP_AUTH,
+      signal,
+      params: { page, size },
+    })
+    const unwrapped = unwrapEnvelope<PublicTextbookListPage>(data)
+    if (!unwrapped || typeof unwrapped !== 'object') {
+      return { items: [], totalPages: 0 }
+    }
+    return {
+      items: Array.isArray(unwrapped.items) ? unwrapped.items : [],
+      totalPages: unwrapped.totalPages,
+    }
   })
-  const unwrapped = unwrapEnvelope<PublicTextbookListPage>(data)
-  if (!unwrapped || typeof unwrapped !== 'object') {
-    return { items: [], totalCount: 0, page: 0, size: TEXTBOOKS_PAGE_SIZE, totalPages: 0 }
-  }
   return {
-    items: Array.isArray(unwrapped.items) ? unwrapped.items : [],
-    totalCount: unwrapped.totalCount,
-    page: unwrapped.page,
-    size: unwrapped.size,
-    totalPages: unwrapped.totalPages,
+    items,
+    totalCount: items.length,
+    page: 0,
+    size: TEXTBOOKS_PAGE_SIZE,
+    totalPages: items.length > 0 ? 1 : 0,
   }
 }
 

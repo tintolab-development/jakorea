@@ -21,7 +21,7 @@ describe('parseInstructorRoleRequestListParams', () => {
       requestedAtFrom: undefined,
       requestedAtTo: undefined,
       page: 0,
-      size: 50,
+      size: 20,
     })
   })
 
@@ -44,7 +44,7 @@ describe('parseInstructorRoleRequestListParams', () => {
       requestedAtFrom: undefined,
       requestedAtTo: undefined,
       page: 0,
-      size: 50,
+      size: 20,
     })
   })
 })
@@ -64,7 +64,7 @@ describe('parseAdminApprovalRequestListParams', () => {
       requestedAtFrom: undefined,
       requestedAtTo: undefined,
       page: 0,
-      size: 50,
+      size: 20,
     })
   })
 })
