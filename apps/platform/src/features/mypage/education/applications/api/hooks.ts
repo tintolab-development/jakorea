@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -188,6 +189,52 @@ export function useMyProgramApplications(
     isRemoteEnabled: true,
     isServerPaged: data?.serverPaged ?? serverPaged,
     refetch,
+  }
+}
+
+const PROBE_EDUCATION_APPLICATION_TYPES: ProgramApplicationType[] = ['ORGANIZATION', 'INDIVIDUAL']
+
+function isNotFoundApplicationDetailError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 404
+}
+
+/**
+ * `/mypage/education/:applicationId` 레거시 URL — ORGANIZATION·INDIVIDUAL 상세 probe.
+ */
+export function useProbeEducationApplicationType(
+  applicationId: string,
+  routeApplicationType: ProgramApplicationType | null,
+) {
+  const remote = isRemoteApiConfigured()
+  const enabled = remote && Boolean(applicationId) && routeApplicationType == null
+  const query = useQuery({
+    queryKey: [
+      ...platformQueryKeys.mypage.programApplications.all(),
+      'education-type-probe',
+      applicationId,
+    ],
+    queryFn: async ({ signal }) => {
+      for (const applicationType of PROBE_EDUCATION_APPLICATION_TYPES) {
+        try {
+          await fetchMyProgramApplicationDetail(applicationType, applicationId, signal)
+          return applicationType
+        } catch (error) {
+          if (isNotFoundApplicationDetailError(error)) continue
+          throw error
+        }
+      }
+      return null
+    },
+    enabled,
+    staleTime: 5 * 60_000,
+    gcTime: APPLICATIONS_GC_MS,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+
+  return {
+    applicationType: query.data ?? null,
+    isProbing: enabled && query.isPending,
   }
 }
 

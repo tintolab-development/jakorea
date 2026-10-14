@@ -6,7 +6,7 @@ import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
-  mapPortalNoticePostAuthor,
+  mapPortalNoticeAuthorFields,
   portalEducationNoticeActorLabel,
 } from '../../notices/lib/author-label'
 import type {
@@ -22,8 +22,7 @@ import {
   getEducationSchedulesQueryTraceId,
 } from '../../schedules/lib/schedules-query-error'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
-import { mapPortalFormListItemToSurveyEntry } from '../lib/portal-form-list'
-import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
+import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import {
   createApplicationNotice,
   createApplicationNoticeComment,
@@ -43,7 +42,6 @@ import {
   fetchSettlementApplications,
   submitPortalSurveyResponse,
   type PortalExpenseReceipt,
-  type PortalFormListItem,
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
   type PortalNoticeDetail,
@@ -81,10 +79,10 @@ function queryOptions() {
 
 function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null {
   if (item.postId == null) return null
-  const author = mapPortalNoticePostAuthor(item.createdByDisplayName, item.createdByActorType)
+  const author = mapPortalNoticeAuthorFields(item)
   return {
     id: String(item.postId),
-    title: item.title?.trim() || '안내',
+    title: item.title?.trim() || '안내사항',
     content: '',
     authorName: author.authorName,
     authorIsStaff: author.authorIsStaff,
@@ -93,7 +91,7 @@ function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null
     viewCount: item.readCount ?? 0,
     commentCount: item.commentCount ?? 0,
     reactionCount: item.reactionCount ?? 0,
-    isAuthor: false,
+    isAuthor: author.isAuthor,
     attachmentCount: item.attachmentCount ?? 0,
   }
 }
@@ -126,13 +124,14 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
   comments: EducationNoticeComment[]
 } {
   const id = detail.postId == null ? '' : String(detail.postId)
-  const author = mapPortalNoticePostAuthor(detail.createdByDisplayName, detail.createdByActorType)
+  const author = mapPortalNoticeAuthorFields(detail)
   return {
     notice: {
       title: detail.title,
       content: detail.content ?? '',
       authorName: author.authorName,
       authorIsStaff: author.authorIsStaff,
+      isAuthor: author.isAuthor,
       publishedAt: detail.createdAt,
       read: detail.unread === false,
       viewCount: detail.readCount ?? 0,
@@ -208,10 +207,6 @@ function mapNoticeReactions(
     total: summary.reduce((sum, row) => sum + row.count, 0),
     users,
   }
-}
-
-function mapForm(item: PortalFormListItem): EducationSurveyListEntry | null {
-  return mapPortalFormListItemToSurveyEntry(item)
 }
 
 function mapReceiptStatus(value: string | undefined): EducationSettlementStatus {
@@ -672,7 +667,7 @@ export function useApplicationFormsQuery(
   const items = useMemo(
     () =>
       (query.data ?? []).flatMap(item => {
-        const mapped = mapForm(item)
+        const mapped = mapPortalFormListItem(item)
         return mapped ? [mapped] : []
       }),
     [query.data],

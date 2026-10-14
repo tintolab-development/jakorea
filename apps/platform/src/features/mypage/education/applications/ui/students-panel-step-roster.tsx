@@ -146,9 +146,6 @@ export function StudentsPanelStepRoster({
         </div>
       ) : hasStudents ? (
         <div className={styles.rosterTableBox}>
-          <PFText as="p" typo="bd-md-sb" color="black" className={styles.rosterTableTitle}>
-            참여 학생 {rosterCount}명
-          </PFText>
           <StudentsPanelRosterTable rows={rows} />
         </div>
       ) : (

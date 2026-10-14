@@ -4,6 +4,7 @@ import {
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
+  EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   resolveVolunteerActivityDetailCase,
 } from './detail-tabs.ts'
 import { hasTeacherAssignmentAsideContent } from '../model/types.ts'
@@ -82,6 +83,17 @@ const teacherNoSurvey = buildTeacherInProgressDetailTabItems({
 assert.deepEqual(
   teacherNoSurvey.map(item => item.key),
   ['notice', 'schedule', 'students'],
+)
+
+const teacherInstructorProgramCase = buildTeacherInProgressDetailTabItems({
+  detailCase: 'instructor',
+  scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  surveyConfigured: true,
+  satisfactionConfigured: true,
+})
+assert.equal(
+  teacherInstructorProgramCase.find(item => item.key === 'schedule')?.label,
+  '교육일정',
 )
 
 console.log('detail-tabs.teacher.selfcheck: ok')

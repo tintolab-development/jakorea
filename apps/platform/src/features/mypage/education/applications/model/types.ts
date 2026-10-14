@@ -115,6 +115,10 @@ export type EducationApplicationListItem = {
   preferredScheduleBlocks?: readonly unknown[]
   /** Portal 신청 상세 `answers` — 상세 재조회·신청 정보 팝업용 */
   applicationAnswers?: Record<string, unknown>
+  /** Portal 신청 상세 `formResponseId` — 안내사항 PATCH 전제 */
+  formResponseId?: number
+  /** Portal 신청 상세 `formResponseStatus` — SUBMITTED/APPROVED/COMPLETED 등 */
+  formResponseStatus?: string
   /** `displayStatus === 'withdrawn'` 일 때 포기 시점 */
   withdrawalPhase?: EducationWithdrawalPhase
   /**

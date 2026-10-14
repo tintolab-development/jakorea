@@ -22,6 +22,10 @@ function unwrapEnvelope<T>(payload: unknown): T {
   return payload as T
 }
 
+/**
+ * Portal `GET …/notices` item — BE `MemberPortalNoticeListItem` (+ 작성자 필드).
+ * Platform은 CMS Orval 미사용 · OpenAPI 갱신 시 필드 동기화.
+ */
 export type PortalNoticeListItem = {
   postId?: number
   title?: string
@@ -32,9 +36,11 @@ export type PortalNoticeListItem = {
   readCount?: number
   reactionCount?: number
   createdAt?: string
+  updatedAt?: string
   createdByActorType?: string
   createdByActorId?: number
   createdByDisplayName?: string | null
+  mine?: boolean
 }
 
 export type PortalNoticeListResponse = {
@@ -69,12 +75,14 @@ export type PortalNoticeDetail = {
   content?: string
   unread?: boolean
   createdAt?: string
+  updatedAt?: string
   commentCount?: number
   readCount?: number
   reactionCount?: number
   createdByActorType?: string
   createdByActorId?: number
   createdByDisplayName?: string | null
+  mine?: boolean
   attachments?: PortalNoticeAttachment[]
   comments?: PortalNoticeComment[]
 }
@@ -216,6 +224,13 @@ function normalizePortalSessionRound(
   return null
 }
 
+/** Portal `.../forms` item.status */
+export type PortalFormResponseStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'COMPLETED'
+  | 'DONE'
+
 export type PortalFormListItem = {
   bindingId?: number
   programFormBindingId?: number
@@ -223,7 +238,7 @@ export type PortalFormListItem = {
   formBindingId?: number
   title?: string
   formType?: string
-  status?: string
+  status?: PortalFormResponseStatus | string
   submissionStartAt?: string
   submissionEndAt?: string
   required?: boolean
@@ -541,6 +556,10 @@ async function fetchApplicationFormsOnce(
   return unwrapped.items ?? []
 }
 
+/**
+ * 교육현황 설문·만족도 목록 SSOT (`formType=SURVEY` | `SATISFACTION`).
+ * Admin `/programs/{id}/surveys` 는 사용하지 않는다. `items: []` 는 정상 empty(오류 아님).
+ */
 export async function fetchApplicationForms(
   applicationType: ProgramApplicationType,
   applicationId: string,

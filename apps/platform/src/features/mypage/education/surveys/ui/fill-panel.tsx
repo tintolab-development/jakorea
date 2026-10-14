@@ -28,6 +28,7 @@ import {
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { getMockEducationSurveyList, type EducationSurveyListEntry } from '../lib/mock-survey-list'
+import { isPortalFormSubmissionPeriodOpen } from '../lib/portal-form-submission-period'
 import { EducationSurveyEmptyPanel } from './empty-panel'
 import {
   formatEducationPeriodLabel,
@@ -122,13 +123,21 @@ export function EducationSurveyFillPanel({
   )
   const selectedEntryId = selectedEntry?.id ?? ''
   const listHasForm = selectedEntry?.form != null
+  const canFetchRemoteForm =
+    remoteForms.enabled &&
+    surveyList.length > 0 &&
+    !listHasForm &&
+    Boolean(programId) &&
+    Boolean(selectedEntryId)
 
   const remoteFormQuery = useApplicationSurveyFormQuery(
-    listHasForm ? null : programId,
-    listHasForm ? null : selectedEntryId,
+    canFetchRemoteForm ? programId : null,
+    canFetchRemoteForm ? selectedEntryId : null,
   )
   const submitMutation = useSubmitEducationSurveyMutation(programId, applicationType, applicationId)
-  const readOnly = selectedEntry?.status === 'submitted'
+  const readOnly =
+    selectedEntry?.status === 'submitted' ||
+    (selectedEntry != null && !isPortalFormSubmissionPeriodOpen(selectedEntry))
 
   const remoteFormDocument = listHasForm
     ? {

@@ -1,5 +1,5 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import type { ProgramDetailCase } from '@/features/program'
+import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
@@ -324,16 +324,29 @@ export function mapPortalProgramApplicationDetail(
   if (Object.keys(answers).length > 0) {
     mapped.applicationAnswers = answers
   }
+  if (detail.formResponseId != null && Number.isFinite(detail.formResponseId)) {
+    mapped.formResponseId = detail.formResponseId
+  }
+  const formResponseStatus = detail.formResponseStatus?.trim()
+  if (formResponseStatus) {
+    mapped.formResponseStatus = formResponseStatus
+  }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
 
   const applicationType = readApplicationType(detail.applicationType)
-  if (applicationType === 'ORGANIZATION') {
+  const nestedProgramAudience = (
+    detail.program as { programAudience?: ProgramDetail['programAudience'] } | undefined
+  )?.programAudience
+  const isOrganizationApplication =
+    applicationType === 'ORGANIZATION' || nestedProgramAudience === 'organization'
+  if (isOrganizationApplication) {
     mapped.teacherApplicationContent = buildTeacherApplicationContentFromPortal(
       {
-        applicationType,
+        applicationType: 'ORGANIZATION',
+        programAudience: nestedProgramAudience,
         detailCase: mapped.detailCase,
         programGroup: detail.programGroup ?? detail.program?.programGroup,
         answers,

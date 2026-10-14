@@ -28,7 +28,8 @@ export function TeacherApplicationContent({
     setGuidance(content.guidance)
   }, [applicationId, content.guidance])
 
-  const showGuidanceSection = hasTeacherApplicationGuidanceContent(guidance)
+  const showGuidanceSection =
+    showGuidanceWriteLink || hasTeacherApplicationGuidanceContent(guidance)
 
   return (
     <div className={styles.root}>
