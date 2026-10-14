@@ -2,6 +2,7 @@
  * 일반 프로그램(기관·개인) — 강사 승인 2단계: 강사비 책정 및 승인 안내 (600×474)
  */
 
+import { useEffect } from 'react'
 import dayjs from 'dayjs'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import {
@@ -13,6 +14,7 @@ import {
   type InstructorFeeApprovalConfirmDetail,
 } from '@/features/program/general/lib/use-instructor-fee-approval-modal'
 import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
+import type { InstructorApplicationFeePolicyContext } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -37,6 +39,8 @@ export type InstructorFeeApprovalModalProps = {
   instructorName: string
   /** 프로그램 기준 적용 시 자동 선택 */
   instructorFeeGradeLabel?: string
+  feePolicyContext?: InstructorApplicationFeePolicyContext
+  feePolicyError?: string | null
   onConfirm: (detail: InstructorFeeApprovalConfirmDetail) => void
 }
 
@@ -49,6 +53,8 @@ export function InstructorFeeApprovalModal({
   onCancel,
   instructorName,
   instructorFeeGradeLabel,
+  feePolicyContext,
+  feePolicyError,
   onConfirm,
 }: InstructorFeeApprovalModalProps) {
   const {
@@ -72,7 +78,14 @@ export function InstructorFeeApprovalModal({
     handleLectureFeeBasisTypeChange,
     handleNotifyTimingChange,
     buildConfirmDetail,
-  } = useInstructorFeeApprovalModal({ open, instructorFeeGradeLabel })
+  } = useInstructorFeeApprovalModal({ open, instructorFeeGradeLabel, feePolicyContext })
+
+  useEffect(() => {
+    if (!open || !feePolicyError) return
+    document
+      .getElementById('instructor-fee-approval-fee-policy')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [open, feePolicyError])
 
   const handleConfirm = () => {
     const detail = buildConfirmDetail()
@@ -110,7 +123,7 @@ export function InstructorFeeApprovalModal({
         }
       >
         <div ref={modalContentRef} className="instructor-fee-approval-modal__content">
-          <div className="instructor-fee-approval-modal__field">
+          <div className="instructor-fee-approval-modal__field" id="instructor-fee-approval-fee-policy">
             <span className="instructor-fee-approval-modal__label">강사비 책정 방식</span>
             <CmsRadio.Group
               className="instructor-fee-approval-modal__radio-group"
@@ -167,6 +180,11 @@ export function InstructorFeeApprovalModal({
                   <span className="instructor-fee-approval-modal__amount-unit">원</span>
                 </div>
               </div>
+            ) : null}
+            {feePolicyError ? (
+              <span className="instructor-fee-approval-modal__field-error" role="alert">
+                {feePolicyError}
+              </span>
             ) : null}
           </div>
 

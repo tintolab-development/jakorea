@@ -20,6 +20,7 @@ import {
 } from '@/shared/ui'
 import {
   extractApiErrorMessage,
+  getApiErrorCode,
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
@@ -390,7 +391,7 @@ export function useApplicantsDetail({
       approvalPayload?: import('@/features/program/general/api/applications-api-client').InstructorApplicationApprovalRequest,
       notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest,
       bulkNotify?: OrganizationDecisionNotifyRequest
-    ): Promise<'ok' | 'error' | 'skipped'> => {
+    ): Promise<'ok' | 'error' | 'skipped' | 'invalid_fee_policy'> => {
       if (!applicationsRemote.instructorRemoteEnabled) return 'skipped'
       try {
         const numericIds = ids.map(id => Number(id))
@@ -440,6 +441,9 @@ export function useApplicantsDetail({
         await applicationsRemote.invalidateApplications()
         return 'ok'
       } catch (error) {
+        if (getApiErrorCode(error) === 'INVALID_FEE_POLICY') {
+          return 'invalid_fee_policy'
+        }
         notifyRemoteInstructorDecisionFailure(error)
         return 'error'
       }
@@ -1066,6 +1070,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'invalid_fee_policy') return 'error'
         return remote
       }
       const notifyOptions = toInstructorNotifyOptions(payload, payload.reason)
@@ -1098,6 +1103,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'invalid_fee_policy') return 'error'
         return remote
       }
       const notifyOptions = toInstructorNotifyOptions(payload)

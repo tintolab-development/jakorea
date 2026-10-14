@@ -3,7 +3,13 @@ import type {
   ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorApplicationFeePolicyRequest } from '@/features/program/general/api/applications-api-client'
+import {
+  INSTRUCTOR_FEE_GRADE_LABELS,
+  toInstructorFeeGradeCode,
+  type InstructorFeeGradeCode,
+} from '@/shared/constants/instructor-fee-grade'
 import { formatCurrencyInput, sanitizeNumericInput } from '@/shared/lib/numeric-input'
+import { parseWageGradeAmount, pricingByWageGrade } from '@/features/program/general/lib/wage-display'
 
 export type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
 
@@ -116,19 +122,114 @@ export function normalizeLectureFeeMeasure(
 }
 
 /** 승인 POST·상세 PATCH 공통 `feePolicy` — `measure`에 정산 계산 단위(`SESSION`)를 보내면 422 */
-export function toInstructorApplicationFeePolicy(input: {
-  basisType: ApplicantInstructorLectureFeeBasisType | undefined
-  measure: string | null | undefined
-  amount: string | null | undefined
-  instructorFeeGrade: string | null | undefined
-}): InstructorApplicationFeePolicyRequest {
-  const basisType = input.basisType ?? 'special_lecture'
-  const amount = Number(parseLectureFeeAmountDigits(input.amount ?? undefined) || 0)
+export const INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE = '강사비 기준을 확인해 주세요.'
+
+export type InstructorApplicationFeePolicyContext = {
+  programWageGradeRows?: Array<{ grade: string; pricing: string }>
+}
+
+export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'RECRUITMENT'
+export type ApiInstructorFeePolicyMeasure = 'PER_SESSION' | 'PER_HOUR' | 'FIXED'
+
+export function toApiInstructorFeePolicyBasisType(
+  basisType: ApplicantInstructorLectureFeeBasisType
+): ApiInstructorFeePolicyBasisType {
+  return basisType === 'program' ? 'PROGRAM' : 'RECRUITMENT'
+}
+
+export function toApiInstructorFeePolicyMeasure(
+  uiMeasure: string | null | undefined,
+  basisType: ApplicantInstructorLectureFeeBasisType,
+  programCalculationUnit?: string | null
+): ApiInstructorFeePolicyMeasure {
+  if (basisType === 'program') {
+    const unit = (programCalculationUnit ?? 'PER_HOUR').trim().toUpperCase()
+    if (unit === 'PER_SESSION' || unit === 'SESSION') return 'PER_SESSION'
+    if (unit === 'FIXED') return 'FIXED'
+    return 'PER_HOUR'
+  }
+
+  const normalized = normalizeLectureFeeMeasure(uiMeasure ?? undefined, basisType)
+  const upper = normalized.trim().toUpperCase()
+  if (upper === 'PER_SESSION' || upper === 'SESSION') return 'PER_SESSION'
+  if (upper === 'PER_HOUR' || upper === 'HOUR') return 'PER_HOUR'
+  if (upper === 'FIXED') return 'FIXED'
+  if (normalized === '출강 1회당' || normalized === '1회 기준') return 'PER_SESSION'
+  if (normalized === '1시간 당') return 'PER_HOUR'
+  return 'PER_SESSION'
+}
+
+export function resolveInstructorFeeGradeCode(
+  raw: string | null | undefined
+): InstructorFeeGradeCode | undefined {
+  return toInstructorFeeGradeCode(raw)
+}
+
+export function resolveProgramBasisFeePolicyFromWageRows(
+  instructorFeeGradeRaw: string,
+  programWageGradeRows?: Array<{ grade: string; pricing: string }>
+): { amount: number; measure: ApiInstructorFeePolicyMeasure } | null {
+  const code = resolveInstructorFeeGradeCode(instructorFeeGradeRaw)
+  if (!code || !programWageGradeRows?.length) return null
+
+  const label = INSTRUCTOR_FEE_GRADE_LABELS[code]
+  const pricing = pricingByWageGrade(programWageGradeRows)[label]
+  const amount = parseWageGradeAmount(pricing)
+  if (amount == null || amount < 0) return null
+
+  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_SESSION'
+  return { amount, measure }
+}
+
+export function isInstructorApplicationFeePolicyRequestValid(
+  policy: InstructorApplicationFeePolicyRequest | null | undefined,
+  assignmentCount = 1
+): boolean {
+  if (!policy || assignmentCount < 1) return false
+  const basisType = policy.basisType.trim()
+  const measure = policy.measure.trim()
+  const grade = policy.instructorFeeGrade.trim()
+  if (!basisType || !measure || !grade) return false
+  if (!resolveInstructorFeeGradeCode(grade)) return false
+  if (!Number.isFinite(policy.amount) || policy.amount < 0) return false
+  return true
+}
+
+export function toInstructorApplicationFeePolicy(
+  input: {
+    basisType: ApplicantInstructorLectureFeeBasisType | undefined
+    measure: string | null | undefined
+    amount: string | null | undefined
+    instructorFeeGrade: string | null | undefined
+  },
+  context?: InstructorApplicationFeePolicyContext
+): InstructorApplicationFeePolicyRequest | null {
+  const basisTypeUi = input.basisType ?? 'special_lecture'
+  const gradeCode = resolveInstructorFeeGradeCode(input.instructorFeeGrade)
+  if (!gradeCode) return null
+
+  let amount: number
+  let measure: ApiInstructorFeePolicyMeasure
+
+  if (basisTypeUi === 'program') {
+    const fromProgram = resolveProgramBasisFeePolicyFromWageRows(
+      input.instructorFeeGrade ?? '',
+      context?.programWageGradeRows
+    )
+    if (!fromProgram) return null
+    amount = fromProgram.amount
+    measure = fromProgram.measure
+  } else {
+    amount = Number(parseLectureFeeAmountDigits(input.amount ?? undefined) || 0)
+    if (!Number.isFinite(amount) || amount < 0) return null
+    measure = toApiInstructorFeePolicyMeasure(input.measure, basisTypeUi)
+  }
+
   return {
-    basisType,
-    measure: normalizeLectureFeeMeasure(input.measure ?? undefined, basisType),
-    amount: Number.isFinite(amount) ? amount : 0,
-    instructorFeeGrade: input.instructorFeeGrade?.trim() ?? '',
+    basisType: toApiInstructorFeePolicyBasisType(basisTypeUi),
+    measure,
+    amount,
+    instructorFeeGrade: gradeCode,
   }
 }
 

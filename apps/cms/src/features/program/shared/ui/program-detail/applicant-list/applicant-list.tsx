@@ -70,7 +70,11 @@ import {
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
-import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  isInstructorApplicationFeePolicyRequestValid,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import { mapLectureAssignItemsToApprovalAssignments } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import {
   toFlatDecisionNotifyTiming,
@@ -373,6 +377,15 @@ export function ApplicantList({
         : null)
     )
   }, [instructorApprovalTarget, instructorList, selectedItem])
+
+  const instructorFeePolicyContext = useMemo(
+    () => ({
+      programWageGradeRows: program?.generalCommonInfo?.wageGradeRows,
+    }),
+    [program?.generalCommonInfo?.wageGradeRows]
+  )
+
+  const [instructorFeePolicyError, setInstructorFeePolicyError] = useState<string | null>(null)
 
   const instructorCancelApprovalInstructor = useMemo(() => {
     if (!instructorCancelApprovalTarget) return null
@@ -1759,7 +1772,12 @@ export function ApplicantList({
         open={instructorApprovalTarget?.step === 'fee' && menu === 'instructors'}
         instructorName={instructorApprovalTarget?.name ?? ''}
         instructorFeeGradeLabel={instructorApprovalInstructor?.instructorFeeGradeLabel}
-        onCancel={() => setInstructorApprovalTarget(null)}
+        feePolicyContext={instructorFeePolicyContext}
+        feePolicyError={instructorFeePolicyError}
+        onCancel={() => {
+          setInstructorFeePolicyError(null)
+          setInstructorApprovalTarget(null)
+        }}
         onConfirm={detail => {
           if (!instructorApprovalTarget || instructorApprovalTarget.step !== 'fee') return
           const { id, assignments } = instructorApprovalTarget
@@ -1821,21 +1839,32 @@ export function ApplicantList({
                 })
                 return
               }
+              const feePolicy = toInstructorApplicationFeePolicy(
+                {
+                  basisType: detail.lectureFeeBasisType,
+                  measure: detail.lectureFeeMeasure,
+                  amount: detail.lectureFeeAmount,
+                  instructorFeeGrade:
+                    detail.instructorFeeGrade?.trim() ||
+                    detail.instructorFeeGradeLabel?.trim() ||
+                    instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
+                    '',
+                },
+                instructorFeePolicyContext
+              )
+              const assignmentCount = useInstructorAssignFlow ? remoteAssignments.length : 1
+              if (!isInstructorApplicationFeePolicyRequestValid(feePolicy, assignmentCount)) {
+                setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+                return
+              }
+              setInstructorFeePolicyError(null)
               const remote = await applyRemoteInstructorDecision(
                 [id],
                 'approve',
                 undefined,
                 {
                   assignments: remoteAssignments,
-                  feePolicy: toInstructorApplicationFeePolicy({
-                    basisType: detail.lectureFeeBasisType,
-                    measure: detail.lectureFeeMeasure,
-                    amount: detail.lectureFeeAmount,
-                    instructorFeeGrade:
-                      detail.instructorFeeGradeLabel?.trim() ||
-                      instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
-                      '미지정',
-                  }),
+                  feePolicy: feePolicy!,
                   notification: {
                     timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                     scheduledAt:
@@ -1845,6 +1874,10 @@ export function ApplicantList({
                   },
                 }
               )
+              if (remote === 'invalid_fee_policy') {
+                setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+                return
+              }
               if (remote === 'error') return
               if (remote === 'ok') {
                 setInstructorApprovalTarget(null)

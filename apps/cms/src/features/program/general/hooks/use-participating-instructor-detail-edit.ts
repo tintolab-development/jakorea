@@ -6,7 +6,10 @@ import {
   type ParticipatingInstructorEditDraft,
 } from '@/features/program/general/lib/participating-instructor-detail-edit'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
-import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   fetchInstructorApplicationDetailRemote,
   updateInstructorApplication,
@@ -85,14 +88,20 @@ export function useParticipatingInstructorDetailEdit({
     }
 
     const payload = draftToParticipatingInstructorSavePayload(draft)
+    const feePolicy = toInstructorApplicationFeePolicy({
+      basisType: payload.lectureFeeBasisType,
+      measure: payload.lectureFeeMeasure,
+      amount: payload.lectureFeeAmount,
+      instructorFeeGrade: payload.instructorFeeGradeLabel,
+    })
+    if (!feePolicy) {
+      setValidationErrors({ form: INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE })
+      return false
+    }
+
     try {
       await updateInstructorApplication(applicationId, {
-        feePolicy: toInstructorApplicationFeePolicy({
-          basisType: payload.lectureFeeBasisType,
-          measure: payload.lectureFeeMeasure,
-          amount: payload.lectureFeeAmount,
-          instructorFeeGrade: payload.instructorFeeGradeLabel,
-        }),
+        feePolicy,
         businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
       })
       const refreshed = await fetchInstructorApplicationDetailRemote(applicationId)

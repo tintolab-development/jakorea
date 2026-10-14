@@ -11,7 +11,10 @@ import {
   rowToInstructorEditDraft,
   type ApplicantInstructorEditDraft,
 } from '@/features/program/general/lib/applicant-instructor-detail-edit'
-import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   fetchInstructorApplicationDetailRemote,
   updateInstructorApplication,
@@ -70,15 +73,21 @@ export function useApplicantInstructorDetailEdit({
     }
 
     const payload = draftToInstructorSavePayload(draft)
+    const feePolicy = toInstructorApplicationFeePolicy({
+      basisType: payload.lectureFeeBasisType,
+      measure: payload.lectureFeeMeasure,
+      amount: payload.lectureFeeAmount,
+      instructorFeeGrade: payload.instructorFeeGradeLabel,
+    })
+    if (!feePolicy) {
+      setValidationErrors({ form: INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE })
+      return false
+    }
+
     try {
       await updateInstructorApplication(instructor.id, {
         managerComment: payload.managerComment ?? null,
-        feePolicy: toInstructorApplicationFeePolicy({
-          basisType: payload.lectureFeeBasisType,
-          measure: payload.lectureFeeMeasure,
-          amount: payload.lectureFeeAmount,
-          instructorFeeGrade: payload.instructorFeeGradeLabel,
-        }),
+        feePolicy,
         businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
       })
       const refreshed = await fetchInstructorApplicationDetailRemote(instructor.id)

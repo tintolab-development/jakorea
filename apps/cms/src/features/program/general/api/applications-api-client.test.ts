@@ -483,10 +483,10 @@ describe('updateInstructorApplication', () => {
     await updateInstructorApplication('201', {
       managerComment: '배정 후 강사비 재확인',
       feePolicy: {
-        basisType: 'special_lecture',
-        measure: '출강 1회당',
+        basisType: 'RECRUITMENT',
+        measure: 'PER_SESSION',
         amount: 150000,
-        instructorFeeGrade: '3급 강사비',
+        instructorFeeGrade: 'GRADE_3',
       },
       businessIncomeEarnerStatus: '해당 없음',
     })
@@ -497,10 +497,10 @@ describe('updateInstructorApplication', () => {
       data: {
         managerComment: '배정 후 강사비 재확인',
         feePolicy: {
-          basisType: 'special_lecture',
-          measure: '출강 1회당',
+          basisType: 'RECRUITMENT',
+          measure: 'PER_SESSION',
           amount: 150000,
-          instructorFeeGrade: '3급 강사비',
+          instructorFeeGrade: 'GRADE_3',
         },
         businessIncomeEarnerStatus: '해당 없음',
       },
