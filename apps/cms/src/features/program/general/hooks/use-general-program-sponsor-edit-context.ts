@@ -65,7 +65,7 @@ export function useGeneralProgramSponsorEditContext(
     sponsorIds.forEach((id, index) => {
       const contacts = contactQueries[index]?.data
       if (!contacts) return
-      contactsBySponsorId[id] = normalizeSponsorContactsSingleLead(
+      contactsBySponsorId[String(id)] = normalizeSponsorContactsSingleLead(
         contacts.map(contact => ({ ...contact }))
       )
     })

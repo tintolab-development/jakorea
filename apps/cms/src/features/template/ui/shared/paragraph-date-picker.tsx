@@ -716,6 +716,9 @@ function ParagraphDatePickerSingleInner({
         setRangeEnd(
           buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
         )
+        setExplicitRangeFieldFocus(null)
+        setAwaitingSecondRangePick(false)
+        setRangeFocus('start')
       } else if (explicitRangeFieldFocus === 'start') {
         const newStart = buildTimeFrom24Hour(
           next,
@@ -728,6 +731,10 @@ function ParagraphDatePickerSingleInner({
             buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
           )
         }
+        // 시작일을 직접 지정한 뒤에는 다음 캘린더 선택을 종료일로 처리한다.
+        setExplicitRangeFieldFocus(null)
+        setAwaitingSecondRangePick(true)
+        setRangeFocus('end')
       } else if (explicitRangeFieldFocus === 'end') {
         const newEnd = buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
         setRangeEnd(newEnd)
@@ -736,6 +743,10 @@ function ParagraphDatePickerSingleInner({
             buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))
           )
         }
+        // 종료일을 직접 지정한 뒤에는 기간 선택을 완료하고 다음 선택을 새 시작일로 연다.
+        setExplicitRangeFieldFocus(null)
+        setAwaitingSecondRangePick(false)
+        setRangeFocus('end')
       } else if (!awaitingSecondRangePick) {
         setRangeStart(
           buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))

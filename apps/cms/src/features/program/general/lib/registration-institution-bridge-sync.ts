@@ -141,14 +141,15 @@ export function syncInstitutionApplicationBridgeForRegistrationWizard(
   if (args.registrationFormVariant === 'general') {
     const hideScheduleSettings =
       args.programType === 'schedule' && args.sessionRound === 'multi'
+    const lines = hideScheduleSettings ? [] : readGeneralRegistrationOverlayScheduleLines()
+    const mode = args.educationScheduleMode as InstitutionApplicationEducationScheduleMode
     patchInstitutionApplicationProgramBridge({
       ...recruitLimits,
       educationStructure: args.programType,
       sessionRound: args.sessionRound,
-      educationScheduleMode: args.educationScheduleMode as InstitutionApplicationEducationScheduleMode,
-      educationScheduleLines: hideScheduleSettings
-        ? []
-        : readGeneralRegistrationOverlayScheduleLines(),
+      educationScheduleMode: mode,
+      educationScheduleLines: lines,
+      educationScheduleRange: mode === 'period' ? resolvePeriodRangeFromLines(lines) : undefined,
       ...(preEducationFromRecruit !== undefined
         ? { preEducationNoticeRequired: preEducationFromRecruit }
         : {}),

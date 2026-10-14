@@ -10,6 +10,7 @@ import { patchProgramSchedulesSameDate } from '@/features/program/shared/api/pro
 import {
   buildSameDateScheduleChangePairs,
   educationOperationRangeSealKeyFromSchedulePrefix,
+  findEducationScheduleChangePeriodIssues,
   type EducationOperationRangeSeal,
 } from '@/features/program/shared/lib/education-schedule-change'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
@@ -27,6 +28,9 @@ type EducationScheduleChangeTitleActionProps = {
   lockCalendarTogglesToScheduleMode?: boolean
   operationStart?: DateValue | null
   operationEnd?: DateValue | null
+  /** 수정 폼의 기간과 별개로, API가 현재 저장된 기간을 검증할 때 사용할 기간 */
+  persistedOperationStart?: DateValue | null
+  persistedOperationEnd?: DateValue | null
 }
 
 function EducationScheduleChangeOverlayTitleAction({
@@ -37,6 +41,8 @@ function EducationScheduleChangeOverlayTitleAction({
   lockCalendarTogglesToScheduleMode,
   operationStart,
   operationEnd,
+  persistedOperationStart,
+  persistedOperationEnd,
 }: {
   programId?: string | null
   overlayKeyPrefix: string
@@ -45,6 +51,8 @@ function EducationScheduleChangeOverlayTitleAction({
   lockCalendarTogglesToScheduleMode?: boolean
   operationStart?: DateValue | null
   operationEnd?: DateValue | null
+  persistedOperationStart?: DateValue | null
+  persistedOperationEnd?: DateValue | null
 }) {
   const [lines, setLines] = useProgramRegistrationOverlayKv<string[]>(
     `${overlayKeyPrefix}.scheduleLines`,
@@ -64,6 +72,8 @@ function EducationScheduleChangeOverlayTitleAction({
       lockCalendarTogglesToScheduleMode={lockCalendarTogglesToScheduleMode}
       operationStart={operationRangeSeal?.start ?? operationStart}
       operationEnd={operationRangeSeal?.end ?? operationEnd}
+      persistedOperationStart={persistedOperationStart}
+      persistedOperationEnd={persistedOperationEnd}
     />
   )
 }
@@ -87,6 +97,8 @@ function EducationScheduleChangeTitleActionView({
   educationScheduleMode,
   operationStart,
   operationEnd,
+  persistedOperationStart,
+  persistedOperationEnd,
 }: Omit<EducationScheduleChangeTitleActionProps, 'overlayKeyPrefix'>) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -115,6 +127,22 @@ function EducationScheduleChangeTitleActionView({
         }}
         onConfirm={async nextLines => {
           const id = programId?.trim()
+          const periodIssues = findEducationScheduleChangePeriodIssues(
+            scheduleLines,
+            nextLines,
+            persistedOperationStart ?? operationStart,
+            persistedOperationEnd ?? operationEnd
+          ).filter(issue => issue.targetOutsideOperationRange)
+          if (periodIssues.length > 0) {
+            const dates = periodIssues
+              .map(issue => `${issue.fromDate} → ${issue.toDate}`)
+              .join(', ')
+            cmsAlertModal.show({
+              title: '교육 일정 변경 안내',
+              content: `변경 대상 일정(${dates})이 현재 저장된 사업 운영기간 밖입니다.\n사업 운영기간을 먼저 저장한 후 교육 일정 변경을 다시 시도해 주세요.`,
+            })
+            return
+          }
           if (id) {
             setSubmitting(true)
             try {
@@ -154,6 +182,8 @@ export function EducationScheduleChangeTitleAction({
   lockCalendarTogglesToScheduleMode,
   operationStart,
   operationEnd,
+  persistedOperationStart,
+  persistedOperationEnd,
 }: EducationScheduleChangeTitleActionProps) {
   if (overlayKeyPrefix) {
     return (
@@ -165,6 +195,8 @@ export function EducationScheduleChangeTitleAction({
         lockCalendarTogglesToScheduleMode={lockCalendarTogglesToScheduleMode}
         operationStart={operationStart}
         operationEnd={operationEnd}
+        persistedOperationStart={persistedOperationStart}
+        persistedOperationEnd={persistedOperationEnd}
       />
     )
   }
@@ -179,6 +211,8 @@ export function EducationScheduleChangeTitleAction({
       lockCalendarTogglesToScheduleMode={lockCalendarTogglesToScheduleMode}
       operationStart={operationStart}
       operationEnd={operationEnd}
+      persistedOperationStart={persistedOperationStart}
+      persistedOperationEnd={persistedOperationEnd}
     />
   )
 }

@@ -96,6 +96,23 @@ export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
   return primary ? [primary] : []
 }
 
+/** 후원사·담당자 id/ref를 단일·다중 overlay 키에 함께 반영 (자동입력·에디터 동기화) */
+export function patchGeneralRegistrationSponsorSelectionOverlay(args: {
+  sponsorId: string
+  contactSelectValue: string
+}): void {
+  const sponsorId = args.sponsorId.trim()
+  const contactSelectValue = args.contactSelectValue.trim()
+  patchProgramRegistrationOverlay({
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: sponsorId,
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]: sponsorId ? [sponsorId] : [],
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: contactSelectValue,
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]: contactSelectValue
+      ? [contactSelectValue]
+      : [],
+  })
+}
+
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }

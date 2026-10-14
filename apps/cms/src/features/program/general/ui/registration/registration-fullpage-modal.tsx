@@ -44,7 +44,9 @@ import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/share
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { invalidateProgramListCachesAfterRegistration } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
+import { RegistrationGeneralDevAutofillToolbar } from '@/features/program/general/ui/registration/registration-general-dev-autofill-toolbar'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
+import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/general/lib/registration-dev-autofill-cases'
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
@@ -120,6 +122,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
+  const [devAutofillCaseId, setDevAutofillCaseId] = useState<GeneralRegistrationDevAutofillCaseId>(1)
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
@@ -411,9 +414,17 @@ function GeneralProgramRegistrationFullpageModalInner({
           )
         }
         headerActionsLeading={
-          <RegistrationDevAutofillButton
-            onClick={() => void flow.registrationVm.applyDevAutofill()}
-          />
+          registrationFormVariant === 'general' ? (
+            <RegistrationGeneralDevAutofillToolbar
+              caseId={devAutofillCaseId}
+              onCaseIdChange={setDevAutofillCaseId}
+              onAutofill={caseId => flow.registrationVm.applyDevAutofill(caseId)}
+            />
+          ) : (
+            <RegistrationDevAutofillButton
+              onClick={() => void flow.registrationVm.applyDevAutofill()}
+            />
+          )
         }
         footerActions={footerActions}
         leftContent={

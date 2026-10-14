@@ -330,7 +330,8 @@ function BasicInfoSection({
   const lockDetailedProgramToNone =
     watchedEducationStructure === 'schedule' ||
     (watchedEducationStructure == null && isGeneralProgramScheduleType(program))
-  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  // 세부 프로그램 옵션은 조회 화면이 아니라 수정 컨트롤에서만 필요하다.
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(isFormEdit)
   const detailedProgramOptions = useMemo(
     () =>
       getGeneralDetailedProgramSelectOptions(
@@ -408,7 +409,11 @@ function BasicInfoSection({
   const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
-  const sponsorEditContext = useGeneralProgramSponsorEditContext(sponsorIdsForContacts)
+  // 후원사 상세·담당자 연락처는 수정 시 담당자 선택지를 만들 때만 필요하다.
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(
+    sponsorIdsForContacts,
+    isFormEdit
+  )
   const selectedSponsors = useMemo(
     () =>
       sponsorIdsForContacts
@@ -4742,8 +4747,10 @@ function ScheduleSettingsSection({
               ),
               educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
             })}
-            operationStart={program.startDate}
-            operationEnd={program.endDate}
+            operationStart={isFormEdit ? editForm.watch('startDate') : program.startDate}
+            operationEnd={isFormEdit ? editForm.watch('endDate') : program.endDate}
+            persistedOperationStart={program.startDate}
+            persistedOperationEnd={program.endDate}
             onApply={nextLines => {
               editForm.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
             }}

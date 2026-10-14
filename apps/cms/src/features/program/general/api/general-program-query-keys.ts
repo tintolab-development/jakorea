@@ -7,6 +7,8 @@ export const generalProgramQueryKeys = {
   overviewStages: () => [...generalProgramQueryKeys.all, 'overview-stages'] as const,
   detail: (programId: string) =>
     [...generalProgramQueryKeys.all, 'detail', programId] as const,
+  sponsorAssignments: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'sponsor-assignments', programId] as const,
   navigation: (programId: string) =>
     [...generalProgramQueryKeys.all, 'navigation', programId] as const,
   posts: (programId: string) => [...generalProgramQueryKeys.all, 'posts', programId] as const,

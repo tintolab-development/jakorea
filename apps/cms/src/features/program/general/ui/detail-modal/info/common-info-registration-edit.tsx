@@ -6,6 +6,7 @@ import type { Program } from '@/types/domain'
 import {
   extrasFromGeneralProgram,
   setGeneralRegistrationDetailEditExtras,
+  seedGeneralRegistrationOverlayFromProgram,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
@@ -84,7 +85,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     const nextParticipant = participantFlagsFromGeneralProgram(program)
     setExtras(nextExtras)
     setParticipant(nextParticipant)
-    setGeneralRegistrationDetailEditExtras(extrasWithParticipant(nextExtras, nextParticipant))
+    seedGeneralRegistrationOverlayFromProgram(program)
     // program 객체 참조가 바뀌어도 참여자 유형이 같으면 수정 중 체크를 덮지 않는다.
   }, [
     program.id,
