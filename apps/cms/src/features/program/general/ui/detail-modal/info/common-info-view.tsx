@@ -55,7 +55,6 @@ import {
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
-  shouldLockProgressSchedulePeriodToggle,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -4467,14 +4466,7 @@ function ScheduleSettingsEditFields({
   const educationStructure = form.watch('educationStructure')
   const sessionRound = form.watch('sessionRound')
   const participantOrganization = form.watch('participantOrganization')
-  const participantIndividual = form.watch('participantIndividual')
   const scheduleDetails = form.watch('scheduleDetails') ?? []
-  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
-    participantIndividual: Boolean(participantIndividual),
-    participantOrganization: Boolean(participantOrganization),
-    programType: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
-    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
-  })
   const autoFillFromScheduleGroupTimes =
     educationStructure === 'schedule' &&
     sessionRound === 'single' &&
@@ -4569,9 +4561,10 @@ function ScheduleSettingsEditFields({
         setSingleDate(null)
         return
       }
-      setSingleDate(next)
+      const day = next.startOf('day')
+      handleScheduleRangeApply([day, day])
     },
-    [appendLineIfNew, autoFillFromScheduleGroupTimes, scheduleDetails]
+    [appendLineIfNew, autoFillFromScheduleGroupTimes, handleScheduleRangeApply, scheduleDetails]
   )
 
   return (
@@ -4625,16 +4618,13 @@ function ScheduleSettingsEditFields({
             scheduleMode === 'date' ? (
               <ParagraphDatePicker
                 mode="single"
-                presetMode="schedule"
+                presetMode="date"
                 customizable={false}
-                showPeriodToggle={!lockProgressSchedulePeriodToggle}
+                showPeriodToggle={false}
                 showTimeToggle={false}
-                lockTimeToggleOn
-                lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
-                onRangeChange={autoFillDatePicker ? undefined : handleScheduleRangeApply}
                 width={240}
               />
             ) : (
@@ -4644,14 +4634,6 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
-                lockTimeToggleOn={shouldLockEducationScheduleCalendarToggles({
-                  participantOrganization: Boolean(participantOrganization),
-                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
-                })}
-                lockPeriodToggleOn={shouldLockEducationScheduleCalendarToggles({
-                  participantOrganization: Boolean(participantOrganization),
-                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
-                })}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}

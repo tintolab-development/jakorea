@@ -32,6 +32,7 @@ export const PROGRAM_REGISTRATION_GENERAL_SECTION_META = {
   },
   educationScheduleSettings: {
     title: '교육 진행 일정 설정',
-    editDescription: '교육이 실행되는 일정을 설정해 주세요.',
+    editDescription:
+      '사업 운영 기간과 교육 일정 기간은 동시에 수정할 수 없습니다. 운영 기간을 먼저 수정하고 저장한 다음, 교육 일정 기간을 수정해 주세요.',
   },
 } as const
