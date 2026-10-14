@@ -7,7 +7,10 @@
  */
 
 export interface OrganizationApplicationClassRoom {
-  /** @nullable */
+  /**
+     * 실제 등록 학급 번호 또는 반 이름. 학생 명단 row의 grade와 분리되는 className 값(보통 N반).
+     * @nullable
+     */
   classNo?: string | null;
   /** @nullable */
   studentCount?: number | null;

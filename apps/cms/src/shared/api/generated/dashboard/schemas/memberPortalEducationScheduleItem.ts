@@ -5,22 +5,60 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { MemberPortalEducationScheduleAssignment } from './memberPortalEducationScheduleAssignment';
+import type { MemberPortalEducationScheduleGroupTime } from './memberPortalEducationScheduleGroupTime';
+import type { MemberPortalEducationScheduleItemBlockKind } from './memberPortalEducationScheduleItemBlockKind';
 
 export interface MemberPortalEducationScheduleItem {
-  scheduleId?: number;
+  /**
+     * 운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null.
+     * @nullable
+     */
+  scheduleId?: number | null;
   sessionNo?: number;
   title?: string;
-  startAt?: string;
-  endAt?: string;
+  /** @nullable */
+  startAt?: string | null;
+  /** @nullable */
+  endAt?: string | null;
   allDay?: boolean;
   locationName?: string;
   address?: string;
   addressDetail?: string;
   scheduleStatus?: string;
-  attendanceStatus?: string;
+  /**
+     * PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이면 null.
+     * @nullable
+     */
+  attendanceStatus?: string | null;
   absenceReasonStatus?: string;
+  /**
+     * 저장된 결석 사유 본문
+     * @nullable
+     */
+  absenceReason?: string | null;
   assignmentCount?: number;
   surveyCount?: number;
   satisfactionCount?: number;
   availableActions?: string[];
+  /**
+     * 커리큘럼 행 라벨. 예: 1차시 / 1회차
+     * @nullable
+     */
+  sessionLabel?: string | null;
+  /** @nullable */
+  unitName?: string | null;
+  /** @nullable */
+  content?: string | null;
+  /** @nullable */
+  scheduleLabel?: string | null;
+  /** @nullable */
+  scheduleName?: string | null;
+  /** @nullable */
+  blockKind?: MemberPortalEducationScheduleItemBlockKind;
+  /** @nullable */
+  progressTimeLabel?: string | null;
+  /** @nullable */
+  groupTimes?: MemberPortalEducationScheduleGroupTime[] | null;
+  assignment?: MemberPortalEducationScheduleAssignment | null;
 }

@@ -8,6 +8,7 @@
 
 export interface MemberPortalNoticeReactionRequest {
   /**
+     * 반응 유형. 허용값: SMILE, LAUGH, LOVEFACE, SURPRISED, CRY, ANGRY, SCREAM, HEART, CLAP, THUMBSUP, CHECK. 대소문자와 '_', '-', 공백은 무시하고 정규화합니다(loveFace, LOVE_FACE → LOVEFACE). 그 외 값은 400입니다.
      * @minLength 1
      * @maxLength 40
      * @pattern ^[A-Za-z0-9 _-]+$

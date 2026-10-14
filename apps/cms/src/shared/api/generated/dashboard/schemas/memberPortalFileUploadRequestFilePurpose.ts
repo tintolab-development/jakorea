@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * VOLUNTEER_APPLICATION_EVIDENCE: 봉사자 신청서 증빙(일반 '이전 참여 JA 프로그램', UJAT '이전 활동 수료증'). JPG/JPEG/PNG/PDF, 파일당 15MB, PRIVATE_SENSITIVE. PROGRAM_POST_ATTACHMENT·PROGRAM_POST_INLINE_IMAGE: 안내사항 첨부·본문 이미지(JPG/PNG, 15MB).
+ */
 export type MemberPortalFileUploadRequestFilePurpose = typeof MemberPortalFileUploadRequestFilePurpose[keyof typeof MemberPortalFileUploadRequestFilePurpose];
 
 
@@ -15,4 +18,7 @@ export const MemberPortalFileUploadRequestFilePurpose = {
   ABSENCE_EVIDENCE: 'ABSENCE_EVIDENCE',
   EXPENSE_RECEIPT: 'EXPENSE_RECEIPT',
   INSTRUCTOR_APPLICATION: 'INSTRUCTOR_APPLICATION',
+  VOLUNTEER_APPLICATION_EVIDENCE: 'VOLUNTEER_APPLICATION_EVIDENCE',
+  PROGRAM_POST_ATTACHMENT: 'PROGRAM_POST_ATTACHMENT',
+  PROGRAM_POST_INLINE_IMAGE: 'PROGRAM_POST_INLINE_IMAGE',
 } as const;
