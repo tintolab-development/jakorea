@@ -75,7 +75,8 @@ assert.equal(body.settlement.bankName, '국민')
 assert.equal(body.settlement.businessIncome, false)
 
 assert.equal(body.termsAgreements[0]?.termsType, 'PAYMENT_STATEMENT_PRE_CONSENT')
-assert.equal(body.termsAgreements[0]?.version, '1.0')
+/** 동기 매핑 fallback — 원격 제출 시 resolveInstructorApplyTermsAgreementVersions로 교체 */
+assert.equal(body.termsAgreements[0]?.version, '2026-01')
 assert.equal(body.termsAgreements.length, 4)
 
 const serialized = JSON.stringify(body)

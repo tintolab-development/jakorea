@@ -2,8 +2,11 @@ import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-inc
 import { CAREER_LEVEL_OPTIONS } from '@jakorea/domain/instructor/career-level'
 import {
   EDUCATION_DEGREE_OPTIONS,
+  EDUCATION_DETAIL_OPTIONS,
   EDUCATION_SCHOOL_TYPE_OPTIONS,
   EDUCATION_STATUS_OPTIONS,
+  orderEducationDetailKeys,
+  type EducationDetailKey,
 } from '@jakorea/domain/instructor/education-options'
 import { GENDER_OPTIONS } from '@jakorea/domain/instructor/gender'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
@@ -51,6 +54,52 @@ export function formatInstructorApplyEducationStatusDisplay(value: string): stri
 export function formatInstructorApplyDegreeDisplay(value: string): string {
   if (!value) return ''
   return labelFromOptions(value, EDUCATION_DEGREE_OPTIONS)
+}
+
+function normalizeEducationYear(value: string | null | undefined): string {
+  if (!value?.trim()) return ''
+  const digits = value.replace(/\D/g, '')
+  if (digits.length >= 4) return digits.slice(0, 4)
+  return value.trim()
+}
+
+/** 입학·졸업 연도 — `2013 ~ 2016` */
+export function formatInstructorApplyEducationYearRange(
+  admitYear: string | null | undefined,
+  gradYear: string | null | undefined,
+): string {
+  const from = normalizeEducationYear(admitYear)
+  const to = normalizeEducationYear(gradYear)
+  if (!from && !to) return ''
+  if (!to) return from
+  if (!from) return to
+  return `${from} ~ ${to}`
+}
+
+export function formatInstructorApplyEducationDetailSummary(keys: EducationDetailKey[]): string {
+  return orderEducationDetailKeys(keys)
+    .map(key => labelFromOptions(key, EDUCATION_DETAIL_OPTIONS))
+    .filter(Boolean)
+    .join(', ')
+}
+
+export function formatInstructorApplyEducationDetailFieldLabel(key: EducationDetailKey): string {
+  return labelFromOptions(key, EDUCATION_DETAIL_OPTIONS)
+}
+
+export function formatInstructorApplySchoolMajorLine(school: string, major: string): string {
+  return [school.trim(), major.trim()].filter(Boolean).join(' ')
+}
+
+/** 대학원 행 앞부분 — `2022 ~ 2024 석사` */
+export function formatInstructorApplyGraduateLeadingDisplay(
+  admitYear: string | null | undefined,
+  gradYear: string | null | undefined,
+  degree: string,
+): string {
+  const period = formatInstructorApplyEducationYearRange(admitYear, gradYear)
+  const degreeLabel = formatInstructorApplyDegreeDisplay(degree)
+  return [period, degreeLabel].filter(Boolean).join(' ')
 }
 
 export function formatInstructorApplyHomeAddressDisplay(

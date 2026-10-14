@@ -16,15 +16,17 @@ import type { InstructorApplyConsentKey } from './consent/catalog'
 import {
   displayOrDash,
   formatInstructorApplyAffiliationDisplay,
-  formatInstructorApplyBankDisplay,
   formatInstructorApplyBusinessIncomeDisplay,
   formatInstructorApplyCareerLevelDisplay,
-  formatInstructorApplyDegreeDisplay,
+  formatInstructorApplyEducationDetailFieldLabel,
+  formatInstructorApplyEducationDetailSummary,
   formatInstructorApplyEducationSchoolTypeDisplay,
   formatInstructorApplyEducationStatusDisplay,
+  formatInstructorApplyEducationYearRange,
   formatInstructorApplyGenderDisplay,
-  formatInstructorApplyHomeAddressDisplay,
+  formatInstructorApplyGraduateLeadingDisplay,
   formatInstructorApplyPeriodDisplay,
+  formatInstructorApplySchoolMajorLine,
 } from './lib/format-instructor-apply-display'
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
 import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
@@ -35,9 +37,8 @@ import {
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
-  PFFormInlineRow,
-  PFFormInlineSegment,
-  PFFormInlineSeparator,
+  PFFormInlineJoinedValues,
+  PFFormInlineSeparatedFields,
   PFFormSection,
   PFText,
 } from '@/shared/ui'
@@ -79,13 +80,6 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
     navigate(`${getInstructorApplyConsentPath(key)}?mode=view&returnTo=${returnTo}`)
   }
 
-  const genderBirth = [
-    formatInstructorApplyGenderDisplay(values.gender),
-    values.birthDate.trim(),
-  ]
-    .filter(Boolean)
-    .join(' | ')
-
   return (
     <div className={styles.form}>
       <PFFormSection
@@ -108,32 +102,22 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
                     labelWidth="wide"
                     required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
                   >
-                    <PFFormInlineRow>
-                      <PFFormInlineSegment>
-                        <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
-                      </PFFormInlineSegment>
-                      <PFFormInlineSeparator />
-                      <PFFormInlineSegment>
-                        <PFButton
-                          type="button"
-                          variant="secondary"
-                          size="formPage"
-                          onClick={() => handleConsentView(item.key)}
-                        >
-                          동의서 보기
-                        </PFButton>
-                      </PFFormInlineSegment>
+                    <PFFormInlineSeparatedFields>
+                      <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
+                      <PFButton
+                        type="button"
+                        variant="secondary"
+                        size="formPage"
+                        onClick={() => handleConsentView(item.key)}
+                      >
+                        동의서 보기
+                      </PFButton>
                       {agreedAt ? (
-                        <>
-                          <PFFormInlineSeparator />
-                          <PFFormInlineSegment>
-                            <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
-                              {formatInstructorConsentAgreedAtLabel(agreedAt)}
-                            </PFText>
-                          </PFFormInlineSegment>
-                        </>
+                        <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                          {formatInstructorConsentAgreedAtLabel(agreedAt)}
+                        </PFText>
                       ) : null}
-                    </PFFormInlineRow>
+                    </PFFormInlineSeparatedFields>
                   </PFFormField>
                 )
               })}
@@ -149,7 +133,12 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
               <PFFormFieldValueText>{displayOrDash(values.name)}</PFFormFieldValueText>
             </PFFormField>
             <PFFormField label="성별 및 생년월일">
-              <PFFormFieldValueText>{displayOrDash(genderBirth)}</PFFormFieldValueText>
+              <PFFormInlineJoinedValues
+                parts={[
+                  formatInstructorApplyGenderDisplay(values.gender),
+                  values.birthDate,
+                ]}
+              />
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="double">
@@ -164,14 +153,9 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
             <PFFormField label="자택 주소지">
-              <PFFormFieldValueText>
-                {displayOrDash(
-                  formatInstructorApplyHomeAddressDisplay(
-                    values.homeAddress,
-                    values.homeAddressDetail,
-                  ),
-                )}
-              </PFFormFieldValueText>
+              <PFFormInlineJoinedValues
+                parts={[values.homeAddress, values.homeAddressDetail]}
+              />
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
@@ -195,15 +179,9 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
             <PFFormField label="정산 계좌 정보">
-              <PFFormFieldValueText>
-                {displayOrDash(
-                  formatInstructorApplyBankDisplay(
-                    values.bankName,
-                    values.accountNumber,
-                    values.accountHolder,
-                  ),
-                )}
-              </PFFormFieldValueText>
+              <PFFormInlineJoinedValues
+                parts={[values.bankName, values.accountNumber, values.accountHolder]}
+              />
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
@@ -230,71 +208,114 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
         <PFFormFieldTable>
           <PFFormFieldRow type="single">
             <PFFormField label="최종 학력">
-              <PFFormFieldValueText>
-                {[
+              <PFFormInlineJoinedValues
+                parts={[
                   formatInstructorApplyEducationSchoolTypeDisplay(values.eduSchoolType),
                   formatInstructorApplyEducationStatusDisplay(values.eduStatus),
-                ]
-                  .filter(Boolean)
-                  .join(' | ') || '–'}
-              </PFFormFieldValueText>
+                ]}
+              />
             </PFFormField>
           </PFFormFieldRow>
-          {values.educationDetailKeys.map(key => {
-            if (key === 'high' && values.highSchool.schoolName.trim()) {
-              return (
-                <PFFormFieldRow key={key} type="single">
-                  <PFFormField label="고등학교">
-                    <PFFormFieldValueText>
-                      {[values.highSchool.schoolName, values.highSchool.major]
-                        .filter(part => part.trim())
-                        .join(' | ')}
-                    </PFFormFieldValueText>
-                  </PFFormField>
-                </PFFormFieldRow>
-              )
-            }
-            return null
-          })}
-          {values.college23Rows
-            .filter(row => row.schoolName.trim())
-            .map((row, index) => (
-              <PFFormFieldRow key={`c23-${index}`} type="single">
-                <PFFormField label="대학교(2·3년)">
-                  <PFFormFieldValueText>
-                    {[row.schoolName, row.major].filter(part => part.trim()).join(' | ')}
-                  </PFFormFieldValueText>
-                </PFFormField>
-              </PFFormFieldRow>
-            ))}
-          {values.college4Rows
-            .filter(row => row.schoolName.trim())
-            .map((row, index) => (
-              <PFFormFieldRow key={`c4-${index}`} type="single">
-                <PFFormField label="대학교(4년)">
-                  <PFFormFieldValueText>
-                    {[row.schoolName, row.major].filter(part => part.trim()).join(' | ')}
-                  </PFFormFieldValueText>
-                </PFFormField>
-              </PFFormFieldRow>
-            ))}
-          {values.graduateRows
-            .filter(row => row.schoolName.trim())
-            .map((row, index) => (
-              <PFFormFieldRow key={`grad-${index}`} type="single">
-                <PFFormField label="대학원">
-                  <PFFormFieldValueText>
-                    {[
-                      formatInstructorApplyDegreeDisplay(row.degree),
-                      row.schoolName,
-                      row.major,
-                    ]
-                      .filter(part => part.trim())
-                      .join(' | ')}
-                  </PFFormFieldValueText>
-                </PFFormField>
-              </PFFormFieldRow>
-            ))}
+          {values.educationDetailKeys.length > 0 ? (
+            <PFFormFieldRow type="single">
+              <PFFormField label="학력 상세">
+                <PFFormFieldValueText>
+                  {displayOrDash(
+                    formatInstructorApplyEducationDetailSummary(values.educationDetailKeys),
+                  )}
+                </PFFormFieldValueText>
+              </PFFormField>
+            </PFFormFieldRow>
+          ) : null}
+          {values.educationDetailKeys.includes('high') ? (
+            <PFFormFieldRow type="single">
+              <PFFormField label={formatInstructorApplyEducationDetailFieldLabel('high')}>
+                <PFFormInlineJoinedValues
+                  parts={[
+                    formatInstructorApplyEducationYearRange(
+                      values.highSchool.admitYear,
+                      values.highSchool.gradYear,
+                    ),
+                    formatInstructorApplySchoolMajorLine(
+                      values.highSchool.schoolName,
+                      values.highSchool.major,
+                    ),
+                  ]}
+                />
+              </PFFormField>
+            </PFFormFieldRow>
+          ) : null}
+          {values.educationDetailKeys.includes('college23')
+            ? values.college23Rows
+                .filter(
+                  row =>
+                    row.schoolName.trim() ||
+                    formatInstructorApplyEducationYearRange(row.admitYear, row.gradYear),
+                )
+                .map((row, index) => (
+                  <PFFormFieldRow key={`c23-${index}`} type="single">
+                    <PFFormField
+                      label={formatInstructorApplyEducationDetailFieldLabel('college23')}
+                    >
+                      <PFFormInlineJoinedValues
+                        parts={[
+                          formatInstructorApplyEducationYearRange(row.admitYear, row.gradYear),
+                          formatInstructorApplySchoolMajorLine(row.schoolName, row.major),
+                        ]}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                ))
+            : null}
+          {values.educationDetailKeys.includes('college4')
+            ? values.college4Rows
+                .filter(
+                  row =>
+                    row.schoolName.trim() ||
+                    formatInstructorApplyEducationYearRange(row.admitYear, row.gradYear),
+                )
+                .map((row, index) => (
+                  <PFFormFieldRow key={`c4-${index}`} type="single">
+                    <PFFormField
+                      label={formatInstructorApplyEducationDetailFieldLabel('college4')}
+                    >
+                      <PFFormInlineJoinedValues
+                        parts={[
+                          formatInstructorApplyEducationYearRange(row.admitYear, row.gradYear),
+                          formatInstructorApplySchoolMajorLine(row.schoolName, row.major),
+                        ]}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                ))
+            : null}
+          {values.educationDetailKeys.includes('graduate')
+            ? values.graduateRows
+                .filter(
+                  row =>
+                    row.schoolName.trim() ||
+                    formatInstructorApplyEducationYearRange(row.admitYear, row.gradYear) ||
+                    row.degree,
+                )
+                .map((row, index) => (
+                  <PFFormFieldRow key={`grad-${index}`} type="single">
+                    <PFFormField
+                      label={formatInstructorApplyEducationDetailFieldLabel('graduate')}
+                    >
+                      <PFFormInlineJoinedValues
+                        parts={[
+                          formatInstructorApplyGraduateLeadingDisplay(
+                            row.admitYear,
+                            row.gradYear,
+                            row.degree,
+                          ),
+                          formatInstructorApplySchoolMajorLine(row.schoolName, row.major),
+                        ]}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                ))
+            : null}
         </PFFormFieldTable>
       </PFFormSection>
 
@@ -312,8 +333,8 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
             .map((row, index) => (
               <PFFormFieldRow key={`career-${index}`} type="single">
                 <PFFormField label="경력">
-                  <PFFormFieldValueText>
-                    {[
+                  <PFFormInlineJoinedValues
+                    parts={[
                       row.companyName,
                       row.roleName,
                       formatInstructorApplyPeriodDisplay(
@@ -321,10 +342,8 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
                         row.periodEnd,
                         row.currentlyEmployed,
                       ),
-                    ]
-                      .filter(part => part.trim())
-                      .join(' | ')}
-                  </PFFormFieldValueText>
+                    ]}
+                  />
                 </PFFormField>
               </PFFormFieldRow>
             ))}
@@ -338,15 +357,13 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
             .map((row, index) => (
               <PFFormFieldRow key={`ja-${index}`} type="single">
                 <PFFormField label="JA Korea 활동">
-                  <PFFormFieldValueText>
-                    {[
+                  <PFFormInlineJoinedValues
+                    parts={[
                       row.title,
                       row.note,
                       formatInstructorApplyPeriodDisplay(row.periodStart, row.periodEnd),
-                    ]
-                      .filter(part => part.trim())
-                      .join(' | ')}
-                  </PFFormFieldValueText>
+                    ]}
+                  />
                 </PFFormField>
               </PFFormFieldRow>
             ))}
@@ -360,11 +377,9 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
             .map((row, index) => (
               <PFFormFieldRow key={`license-${index}`} type="single">
                 <PFFormField label="자격증">
-                  <PFFormFieldValueText>
-                    {[row.title, row.issuer, row.acquiredYear]
-                      .filter(part => part != null && String(part).trim())
-                      .join(' | ')}
-                  </PFFormFieldValueText>
+                  <PFFormInlineJoinedValues
+                    parts={[row.title, row.issuer, row.acquiredYear]}
+                  />
                 </PFFormField>
               </PFFormFieldRow>
             ))}
@@ -378,11 +393,9 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
             .map((row, index) => (
               <PFFormFieldRow key={`award-${index}`} type="single">
                 <PFFormField label="수상">
-                  <PFFormFieldValueText>
-                    {[row.title, row.issuer, row.acquiredYear]
-                      .filter(part => part != null && String(part).trim())
-                      .join(' | ')}
-                  </PFFormFieldValueText>
+                  <PFFormInlineJoinedValues
+                    parts={[row.title, row.issuer, row.acquiredYear]}
+                  />
                 </PFFormField>
               </PFFormFieldRow>
             ))}

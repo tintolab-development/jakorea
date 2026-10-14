@@ -2,8 +2,7 @@ import type { SchoolTeacherEmploymentStatus } from '@jakorea/domain/instructor/e
 import type { SettingsTeacherEmploymentStatus } from '@/features/mypage/settings/lib/map-edit'
 import {
   PFFormFieldValueText,
-  PFFormInlineRow,
-  PFFormInlineSeparator,
+  PFFormInlineSeparatedFields,
   SchoolTeacherEmploymentStatusBadge,
 } from '@/shared/ui'
 import { displayOrDash } from '../lib/format-instructor-apply-display'
@@ -48,16 +47,17 @@ export function TeacherAffiliationDisplay({
     return <PFFormFieldValueText>{displayOrDash('')}</PFFormFieldValueText>
   }
 
+  if (!hasEmploymentSlot) {
+    return <PFFormFieldValueText>{displayOrDash(school)}</PFFormFieldValueText>
+  }
+
   return (
-    <PFFormInlineRow>
-      <PFFormFieldValueText>{displayOrDash(school)}</PFFormFieldValueText>
-      {school && hasEmploymentSlot ? <PFFormInlineSeparator /> : null}
-      {hasEmploymentSlot ? (
-        <EmploymentStatusSlot
-          employmentStatus={employmentStatus}
-          onEmploymentStatusChange={onEmploymentStatusChange}
-        />
-      ) : null}
-    </PFFormInlineRow>
+    <PFFormInlineSeparatedFields>
+      {school ? <PFFormFieldValueText>{school}</PFFormFieldValueText> : null}
+      <EmploymentStatusSlot
+        employmentStatus={employmentStatus}
+        onEmploymentStatusChange={onEmploymentStatusChange}
+      />
+    </PFFormInlineSeparatedFields>
   )
 }

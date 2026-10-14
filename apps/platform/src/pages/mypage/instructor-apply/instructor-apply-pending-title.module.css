@@ -5,7 +5,8 @@
 }
 
 .titleDivider {
-  color: var(--color-neutral-cool-400);
-  font-size: inherit;
-  line-height: inherit;
+  flex-shrink: 0;
+  width: 2px;
+  height: 30px;
+  background: var(--color-neutral-cool-400);
 }

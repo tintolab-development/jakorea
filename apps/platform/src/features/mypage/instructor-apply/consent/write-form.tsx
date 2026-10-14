@@ -34,6 +34,7 @@ import {
 } from '@/shared/ui'
 import {
   clearConsentSignatureSlotKeys,
+  isConsentSignaturesComplete,
   resolveConsentSignatureSlots,
 } from './resolve-consent-signature-slots'
 import { submitPortalConsentDocumentFromWriteState } from '../../settings/lib/submit-portal-consent-document'
@@ -43,6 +44,7 @@ import { CrimeConsentDocumentForm } from './crime-document-form'
 import { markInstructorApplyConsentAgreed } from './form-persist'
 import {
   clearSchemaConsentWriteState,
+  loadSchemaConsentWriteState,
   saveSchemaConsentWriteState,
   type SchemaConsentWriteState,
 } from './schema-draft-persist'
@@ -100,6 +102,7 @@ export type ConsentWriteSubmitContext = 'instructorApply' | 'mypageSettings'
 
 const PORTAL_SUBMIT_FAILED_MESSAGE =
   '동의서를 제출하지 못했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
+const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
 
 function patchAgreementNoticeSubjectMemberName(
   draft: WritingFormDraft,
@@ -152,18 +155,21 @@ export function SchemaConsentWriteForm({
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const portalSubmitEnabled =
-    submitContext === 'mypageSettings' && isRemoteApiConfigured() && Boolean(getAccessToken())
+  const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
 
   const [state, setState] = useState<SchemaConsentWriteState>(() => {
-    clearSchemaConsentWriteState(consentKey)
     const initial = createInitialSchemaConsentState(consentKey)
-    return {
+    const normalized: SchemaConsentWriteState = {
       ...initial,
       draft: normalizeMemberConsentWriteDraft(initial.draft, templateId),
       signatures: {},
       crimeDocumentUploaded: initial.crimeDocumentUploaded,
     }
+    if (readOnly) {
+      return loadSchemaConsentWriteState(consentKey, normalized)
+    }
+    clearSchemaConsentWriteState(consentKey)
+    return normalized
   })
 
   useEffect(() => {
@@ -182,6 +188,7 @@ export function SchemaConsentWriteForm({
     })
   }, [lockedBasic.name, readOnly, templateId])
 
+  const signatureSlots = useMemo(() => resolveConsentSignatureSlots(templateId), [templateId])
   const incomplete = isSchemaConsentWriteIncomplete(consentKey, state)
 
   const handleSubmit = () => {
@@ -208,10 +215,24 @@ export function SchemaConsentWriteForm({
       return
     }
 
+    if (
+      signatureSlots.length > 0 &&
+      !isConsentSignaturesComplete(state.signatures, signatureSlots)
+    ) {
+      setAlertMessage(SIGNATURE_REQUIRED_ALERT_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
+
     if (portalSubmitEnabled) {
       setIsSubmitting(true)
       void submitPortalConsentDocumentFromWriteState(consentKey, state)
-        .then(() => onComplete())
+        .then(() => {
+          if (submitContext === 'instructorApply') {
+            markInstructorApplyConsentAgreed(consentKey)
+          }
+          onComplete()
+        })
         .catch(() => {
           setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
           setAlertOpen(true)
@@ -253,7 +274,6 @@ export function SchemaConsentWriteForm({
   const lockedNoticeSubjectMemberName =
     templateId === 'agreement-notice' ? lockedBasic.name.trim() : undefined
 
-  const signatureSlots = useMemo(() => resolveConsentSignatureSlots(templateId), [templateId])
   const showDraftSignature = signatureSlots.length > 0 && !readOnly
 
   const handleClearAllSignatureSlots = useCallback(() => {

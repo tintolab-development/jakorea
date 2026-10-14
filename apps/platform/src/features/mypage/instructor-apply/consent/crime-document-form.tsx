@@ -115,10 +115,15 @@ export function CrimeConsentDocumentForm({
       setAlertMessage(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
       return
     }
-    if (portalSubmitEnabled && submitContext === 'mypageSettings') {
+    if (portalSubmitEnabled) {
       setIsSubmitting(true)
       void submitPortalCrimeConsentComplete(consentKey)
-        .then(() => onComplete())
+        .then(() => {
+          if (submitContext === 'instructorApply') {
+            markInstructorApplyConsentAgreed(consentKey)
+          }
+          onComplete()
+        })
         .catch(() => setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE))
         .finally(() => setIsSubmitting(false))
       return

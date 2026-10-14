@@ -18,9 +18,7 @@ export function InstructorApplyStatusTitle({
       <PFText as="span" typo="hd-lg" color="black">
         강사 신청
       </PFText>
-      <span className={styles.titleDivider} aria-hidden="true">
-        |
-      </span>
+      <span className={styles.titleDivider} aria-hidden />
       <PFText as="span" typo="hd-lg" color={statusColor}>
         {statusLabel}
       </PFText>

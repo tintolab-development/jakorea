@@ -7,9 +7,7 @@ export function InstructorApplyPendingTitle() {
       <PFText as="span" typo="hd-lg" color="black">
         강사 신청
       </PFText>
-      <span className={styles.titleDivider} aria-hidden="true">
-        |
-      </span>
+      <span className={styles.titleDivider} aria-hidden />
       <PFText as="span" typo="hd-lg" color="primary-500">
         승인 대기 중
       </PFText>

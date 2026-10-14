@@ -12,7 +12,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  gap: var(--spacing-24);
+  gap: var(--spacing-6);
   align-self: stretch;
   border-radius: var(--radius-16);
   background: var(--color-element-hover);
@@ -24,5 +24,5 @@
 
 .requestedAt {
   margin: 0;
-  color: #6c7684;
+  color: var(--color-neutral-cool-550);
 }

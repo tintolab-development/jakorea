@@ -1,13 +1,10 @@
 import {
   PFCheckbox,
-  PFFormControlCluster,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormHomeAddressFields,
-  PFFormInlineRow,
-  PFFormInlineSegment,
-  PFFormInlineSeparator,
+  PFFormInlineSeparatedFields,
   PFFormResidentNumberInput,
   PFFormSection,
   PFText,
@@ -116,33 +113,28 @@ export function PaymentConsentForm({
               />
             </PFFormField>
             <PFFormField label="소속">
-              <PFFormInlineRow>
-                <PFFormInlineSegment>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    placeholder="소속 기관명"
-                    disabled={draft.noAffiliation}
-                    value={draft.noAffiliation ? '' : draft.affiliation}
-                    onValueChange={value => patch('affiliation', value)}
-                  />
-                </PFFormInlineSegment>
-                <PFFormInlineSeparator />
-                <PFFormInlineSegment>
-                  <PFCheckbox
-                    checked={draft.noAffiliation}
-                    onCheckedChange={checked =>
-                      onChange({
-                        ...draft,
-                        noAffiliation: checked,
-                        affiliation: checked ? '' : draft.affiliation,
-                      })
-                    }
-                  >
-                    소속 없음
-                  </PFCheckbox>
-                </PFFormInlineSegment>
-              </PFFormInlineRow>
+              <PFFormInlineSeparatedFields>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  placeholder="소속 기관명"
+                  disabled={draft.noAffiliation}
+                  value={draft.noAffiliation ? '' : draft.affiliation}
+                  onValueChange={value => patch('affiliation', value)}
+                />
+                <PFCheckbox
+                  checked={draft.noAffiliation}
+                  onCheckedChange={checked =>
+                    onChange({
+                      ...draft,
+                      noAffiliation: checked,
+                      affiliation: checked ? '' : draft.affiliation,
+                    })
+                  }
+                >
+                  소속 없음
+                </PFCheckbox>
+              </PFFormInlineSeparatedFields>
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
@@ -157,37 +149,30 @@ export function PaymentConsentForm({
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
             <PFFormField label="정산 계좌 정보" required>
-              <PFFormInlineRow>
-                <PFFormInlineSegment>
-                  <PFFormControlCluster>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      placeholder="은행명"
-                      value={draft.bankName}
-                      onValueChange={value => patch('bankName', value)}
-                    />
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      inputMode="numeric"
-                      placeholder="계좌번호(숫자만)"
-                      value={draft.accountNumber}
-                      onValueChange={value => patch('accountNumber', value.replace(/\D/g, ''))}
-                    />
-                  </PFFormControlCluster>
-                </PFFormInlineSegment>
-                <PFFormInlineSeparator />
-                <PFFormInlineSegment>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    placeholder="예금주명"
-                    value={draft.accountHolder}
-                    onValueChange={value => patch('accountHolder', value)}
-                  />
-                </PFFormInlineSegment>
-              </PFFormInlineRow>
+              <PFFormInlineSeparatedFields>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  placeholder="은행명"
+                  value={draft.bankName}
+                  onValueChange={value => patch('bankName', value)}
+                />
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  inputMode="numeric"
+                  placeholder="계좌번호(숫자만)"
+                  value={draft.accountNumber}
+                  onValueChange={value => patch('accountNumber', value.replace(/\D/g, ''))}
+                />
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  placeholder="예금주명"
+                  value={draft.accountHolder}
+                  onValueChange={value => patch('accountHolder', value)}
+                />
+              </PFFormInlineSeparatedFields>
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="single">

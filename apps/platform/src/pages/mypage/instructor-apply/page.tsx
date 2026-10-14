@@ -7,12 +7,15 @@ import {
   INSTRUCTOR_APPLY_PATH,
   InstructorApplyForm,
   InstructorApplyPendingReviewView,
+  InstructorApplyRejectedReviewView,
   isInstructorRoleRequestPendingReview,
+  isInstructorRoleRequestRejected,
   MYPAGE_PATH,
   useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
 } from '@/features/mypage'
 import { InstructorApplyPendingTitle } from './instructor-apply-pending-title'
+import { InstructorApplyRejectedTitle } from './instructor-apply-status-title'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getAccessToken,
@@ -26,6 +29,7 @@ export function MypageInstructorApplyPage() {
   const navigate = useNavigate()
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [successOpen, setSuccessOpen] = useState(false)
+  const [reapplyAfterReject, setReapplyAfterReject] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const { isLoading, isError, lockedBasic } = useInstructorApplyLockedBasic()
   const remoteSession = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -34,6 +38,8 @@ export function MypageInstructorApplyPage() {
   const statusMessage = getInstructorRoleRequestStatusMessage(currentRequestQuery.data)
   const isPendingReview =
     remoteSession && isInstructorRoleRequestPendingReview(currentRequestQuery.data)
+  const isRejected =
+    remoteSession && isInstructorRoleRequestRejected(currentRequestQuery.data)
 
   useEffect(() => {
     if (remoteSession) {
@@ -67,7 +73,15 @@ export function MypageInstructorApplyPage() {
             onClick={() => navigate(MYPAGE_PATH)}
           />
         }
-        title={isPendingReview ? <InstructorApplyPendingTitle /> : '강사 신청'}
+        title={
+          isPendingReview ? (
+            <InstructorApplyPendingTitle />
+          ) : isRejected && !reapplyAfterReject ? (
+            <InstructorApplyRejectedTitle />
+          ) : (
+            '강사 신청'
+          )
+        }
       >
         {isPageLoading ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -85,6 +99,12 @@ export function MypageInstructorApplyPage() {
           <InstructorApplyPendingReviewView
             summary={currentRequestQuery.data}
             lockedBasic={lockedBasic}
+          />
+        ) : isRejected && currentRequestQuery.data && !reapplyAfterReject ? (
+          <InstructorApplyRejectedReviewView
+            summary={currentRequestQuery.data}
+            lockedBasic={lockedBasic}
+            onReapply={() => setReapplyAfterReject(true)}
           />
         ) : remoteSession && !canSubmit ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

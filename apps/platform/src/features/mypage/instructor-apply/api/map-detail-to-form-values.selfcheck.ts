@@ -18,7 +18,33 @@ const detail: InstructorRoleRequestDetail = {
     affiliation: { organizationNames: ['한국대학교'] },
     homeAddress: { line: '서울특별시 강서구 마곡중앙로 171', detail: '101동 1001호' },
     instructorCareerSummary: '5년',
-    education: { detailKeys: [] },
+    education: {
+      highestSchoolType: 'graduate',
+      highestStatus: 'graduated',
+      detailKeys: ['high', 'college23', 'college4', 'graduate'],
+      highSchool: {
+        schoolName: '서울고등학교',
+        admitYear: '2013-01',
+        gradYear: '2016-01',
+      },
+      college23: [
+        {
+          schoolName: '한국전문대학교',
+          major: '경영학과',
+          admitYear: '2016',
+          gradYear: '2018',
+        },
+      ],
+      graduate: [
+        {
+          schoolName: '한국대학교 대학원',
+          major: '경제교육학과',
+          degree: 'master',
+          admitYear: '2022',
+          gradYear: '2024',
+        },
+      ],
+    },
     career: { level: 'experienced', rows: [] },
     jaKoreaActivities: [],
     licenses: [],
@@ -49,6 +75,16 @@ assert.equal(snapshot.values.birthDate, '2000.09.15')
 assert.equal(snapshot.values.contact, '010-1234-5678')
 assert.equal(snapshot.values.affiliationName, '한국대학교')
 assert.equal(snapshot.values.instructorCareer, '5년')
+assert.deepEqual(snapshot.values.educationDetailKeys, [
+  'high',
+  'college23',
+  'college4',
+  'graduate',
+])
+assert.equal(snapshot.values.highSchool.admitYear, '2013')
+assert.equal(snapshot.values.highSchool.gradYear, '2016')
+assert.equal(snapshot.values.college23Rows[0]?.admitYear, '2016')
+assert.equal(snapshot.values.college23Rows[0]?.gradYear, '2018')
 assert.equal(snapshot.values.consentPaymentStatement, CONSENT_VALUE.agree)
 assert.equal(
   snapshot.consentAgreedAt.consentPaymentStatement,
