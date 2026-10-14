@@ -208,13 +208,20 @@ function normalizePortalSessionRound(
   return null
 }
 
+/** Portal `.../forms` item.status */
+export type PortalFormResponseStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'COMPLETED'
+  | 'DONE'
+
 export type PortalFormListItem = {
   bindingId?: number
   id?: number
   formBindingId?: number
   title?: string
   formType?: string
-  status?: string
+  status?: PortalFormResponseStatus | string
   submissionStartAt?: string
   submissionEndAt?: string
   required?: boolean
@@ -501,6 +508,10 @@ export async function fetchApplicationSchedules(
   }
 }
 
+/**
+ * 교육현황 설문·만족도 목록 SSOT (`formType=SURVEY` | `SATISFACTION`).
+ * Admin `/programs/{id}/surveys` 는 사용하지 않는다. `items: []` 는 정상 empty(오류 아님).
+ */
 export async function fetchApplicationForms(
   applicationType: ProgramApplicationType,
   applicationId: string,

@@ -22,7 +22,7 @@ import {
   getEducationSchedulesQueryTraceId,
 } from '../../schedules/lib/schedules-query-error'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
-import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
+import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import {
   createApplicationNotice,
   createApplicationNoticeComment,
@@ -42,7 +42,6 @@ import {
   fetchSettlementApplications,
   submitPortalSurveyResponse,
   type PortalExpenseReceipt,
-  type PortalFormListItem,
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
   type PortalNoticeDetail,
@@ -206,26 +205,6 @@ function mapNoticeReactions(
     myReactionTypes: (state?.myReactions ?? []).filter(Boolean),
     total: summary.reduce((sum, row) => sum + row.count, 0),
     users,
-  }
-}
-
-function mapForm(item: PortalFormListItem): EducationSurveyListEntry | null {
-  const bindingId = item.bindingId ?? item.formBindingId ?? item.id
-  if (bindingId == null) return null
-  const status = (item.status ?? '').toUpperCase()
-  const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
-  return {
-    id: String(bindingId),
-    title: item.title?.trim() || '설문',
-    status: submitted ? 'submitted' : 'in_progress',
-    startAt: item.submissionStartAt?.slice(0, 10),
-    endAt: item.submissionEndAt?.slice(0, 10),
-    createdAt: item.submissionStartAt,
-    templateVersionId: item.templateVersionId,
-    form: item.form,
-    formResponseId: item.formResponseId,
-    answers: item.answers,
-    draftAnswers: item.draftAnswers,
   }
 }
 
@@ -687,7 +666,7 @@ export function useApplicationFormsQuery(
   const items = useMemo(
     () =>
       (query.data ?? []).flatMap(item => {
-        const mapped = mapForm(item)
+        const mapped = mapPortalFormListItem(item)
         return mapped ? [mapped] : []
       }),
     [query.data],
