@@ -16,12 +16,16 @@ import {
 } from '@/features/mypage/education/applications'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { isSchoolTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
+import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFFormPage, PFText } from '@/shared/ui'
 
 export function MypageEducationInstitutionGuidanceWritePage() {
   const navigate = useNavigate()
-  const { applicationId = '' } = useParams<{ applicationId: string }>()
+  const { applicationId = '', applicationType: applicationTypeParam } = useParams<{
+    applicationId: string
+    applicationType?: string
+  }>()
   const member = useMypageMember()
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
 
@@ -30,7 +34,9 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     [applicationId],
   )
   const remoteEnabled = isRemoteApiConfigured()
-  const applicationType = mockApplication?.applicationType ?? 'ORGANIZATION'
+  const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)
+  const applicationType =
+    routeApplicationType ?? mockApplication?.applicationType ?? 'ORGANIZATION'
   const remoteQuery = useMyProgramApplicationDetail(
     remoteEnabled ? applicationType : null,
     remoteEnabled ? applicationId : null,
@@ -52,7 +58,10 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     return mapInstitutionGuidanceFromApplicationAnswers(undefined, application.detailCase)
   }, [application, program?.detailCase])
 
-  const backPath = educationInstitutionGuidanceApplicationTabPath(applicationId)
+  const backPath = educationInstitutionGuidanceApplicationTabPath(
+    applicationId,
+    application?.applicationType ?? applicationType,
+  )
   const pageTitle = '안내사항 수정하기'
 
   if (!isTeacher) {
