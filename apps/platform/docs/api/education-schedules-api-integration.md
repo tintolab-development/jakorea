@@ -210,3 +210,34 @@ FE는 「준비 중」. 기존 form submit과 맞출지, `POST .../schedules/{sc
 - `apps/platform/src/features/mypage/education/schedules/lib/map-from-portal.ts`에 assignment / absence / 상세 문구 매핑
 - Row / AssignmentBlock UI는 mock 구조 유지
 - 제출·결석 버튼의 「준비 중」은 쓰기 API 연결 후 교체
+
+---
+
+## GENERAL_INDIVIDUAL · `INDIVIDUAL` 신청 (2026-10-14)
+
+### 제품·BE 기대
+
+- 교육일정 탭은 **신청 건(applicationId) 단위** 목록이다.
+- 노출 행: **사전 교육 등 필수** (`scheduleCurriculumPreEducation` / `PRE_EDUCATION`) **+** 해당 신청의 희망 일정 (`preferredEducationSchedules`, form `line:N` / `schedule:id`).
+- OpenAPI: participant/volunteer는 **CMS 확정 education-scope**와 Portal 목록이 같아야 하고, `scopeStatus=ASSIGNMENT_SCOPED`가 확정 스코프의 정상 모드다.
+
+### Platform FE (현재)
+
+- **합성·필터 없음** — `GET .../schedules` 응답만 렌더.
+- 신청 탭 「진행 희망 교육 일정」은 신청 상세·answers lookup — **교육일정 탭과 API 분리**.
+- `scheduleId === null` → 출석·결석 블록 숨김 ([`EducationScheduleRow`](../../src/features/mypage/education/schedules/ui/row.tsx)).
+
+### CMS · Admin
+
+- 개인 **참여자** participant에 대한 `GET/PUT .../education-scope` **화면 없음** (API는 존재).
+- `education-scope` API를 쓰는 CMS UI: 일반 개인 프로그램 **참여 봉사자 → 봉사 배정 현황**만.
+- 개인 신청 승인: `POST .../approve` (CMS). `approve-with-education-scope` **미연동**.
+
+### BE 이슈 재현 (handoff)
+
+- applicationId `1694669`, participantId `1694770`, programId `186099` — 신청 `line:0`/`line:1` 저장됐으나 schedules **정의 4행 전체**, `RECORDED_ONLY`, `scheduleId` 없음, `summary.scheduleCount: 0`.
+- JABACK 요청서: [`portal-individual-education-schedules-scope-backend-request-2026-10-14.md`](./portal-individual-education-schedules-scope-backend-request-2026-10-14.md)
+
+### OpenAPI 문서 tension (BE 정리 요청)
+
+- `items` description(정의 SSOT) vs operation description(확정 스코프) — **INDIVIDUAL Portal 목록**은 **participant eligible scope**로 문서·구현 일치 필요.
