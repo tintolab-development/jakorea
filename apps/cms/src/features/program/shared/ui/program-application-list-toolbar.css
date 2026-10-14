@@ -4,6 +4,15 @@
  * - 그 외 툴바 버튼: h40 (FilterTableToolbarButton 기본)
  */
 
+/* 액션 그룹 — FilterTableLayout의 우측 툴바 슬롯 안에서도 버튼을 한 그룹으로 정렬 */
+.program-application-list-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--filter-table-toolbar-actions-gap, 8px);
+  min-width: 0;
+}
+
 /* h40 — 툴바 내 모든 CmsButton */
 .program-application-list-toolbar .cms-button.ant-btn,
 .applicant-details .filter-table-layout__toolbar-actions .cms-button.ant-btn,
