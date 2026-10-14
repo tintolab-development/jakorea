@@ -46,17 +46,23 @@ export function MypageEducationInstitutionGuidanceWritePage() {
   const programQuery = useProgramDetail(programId)
   const program = programQuery.program
 
+  const guidanceDetailCase = program?.detailCase ?? application?.detailCase
+
   const initialState = useMemo(() => {
     if (!application) {
-      return mapInstitutionGuidanceFromApplicationAnswers(undefined, program?.detailCase)
+      return mapInstitutionGuidanceFromApplicationAnswers(undefined, guidanceDetailCase)
+    }
+    const answers = application.applicationAnswers
+    if (answers && Object.keys(answers).length > 0) {
+      return mapInstitutionGuidanceFromApplicationAnswers(answers, guidanceDetailCase)
     }
     if (application.teacherApplicationContent) {
       return teacherInstitutionGuidanceFormStateFromTeacherContent(
         application.teacherApplicationContent.guidance,
       )
     }
-    return mapInstitutionGuidanceFromApplicationAnswers(undefined, application.detailCase)
-  }, [application, program?.detailCase])
+    return mapInstitutionGuidanceFromApplicationAnswers(undefined, guidanceDetailCase)
+  }, [application, guidanceDetailCase])
 
   const backPath = educationInstitutionGuidanceApplicationTabPath(
     applicationId,
@@ -103,7 +109,7 @@ export function MypageEducationInstitutionGuidanceWritePage() {
       <EducationInstitutionGuidanceWriteForm
         applicationId={applicationId}
         applicationType={applicationType}
-        detailCase={application.detailCase}
+        detailCase={guidanceDetailCase}
         initialState={resolvedInitial}
         portalPatchContext={{
           formResponseId: application.formResponseId,

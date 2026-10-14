@@ -27,6 +27,18 @@ function readPortalErrorMessage(data: unknown): string | undefined {
   return typeof top === 'string' && top.trim() ? top.trim() : undefined
 }
 
+function readPortalErrorTraceId(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const record = data as { error?: { traceId?: string } }
+  const traceId = record.error?.traceId
+  return typeof traceId === 'string' && traceId.trim() ? traceId.trim() : undefined
+}
+
+function appendTraceId(message: string, traceId: string | undefined): string {
+  if (!traceId) return message
+  return `${message}\n\n(문의 시 traceId: ${traceId})`
+}
+
 export function resolveInstitutionGuidanceErrorMessage(
   error: unknown,
   fallback = '안내사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -35,8 +47,13 @@ export function resolveInstitutionGuidanceErrorMessage(
   const data = axiosError?.response?.data
   const code = readPortalErrorCode(data)
   const serverMessage = readPortalErrorMessage(data)
-  if (code === 'APPLICATION_ANSWERS_CONFLICT' && serverMessage) {
-    return serverMessage
+  if (code === 'APPLICATION_ANSWERS_CONFLICT') {
+    const base =
+      serverMessage ?? INSTITUTION_GUIDANCE_ERROR_MESSAGES.APPLICATION_ANSWERS_CONFLICT
+    return appendTraceId(
+      `${base}\n\n잠시 후 다시 시도하거나 화면을 새로고침해 주세요.`,
+      readPortalErrorTraceId(data),
+    )
   }
   if (code && INSTITUTION_GUIDANCE_ERROR_MESSAGES[code]) {
     return INSTITUTION_GUIDANCE_ERROR_MESSAGES[code]
