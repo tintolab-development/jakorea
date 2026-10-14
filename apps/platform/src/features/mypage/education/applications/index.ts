@@ -91,6 +91,7 @@ export {
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
+  EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
 } from './lib/detail-tabs'
@@ -127,6 +128,7 @@ export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  useProbeEducationApplicationType,
   useMyProgramApplications,
 } from './api/hooks'
 export {
@@ -139,6 +141,11 @@ export {
   useOrganizationStudentRosterQuery,
   useSubmitOrganizationPortraitConsentMutation,
 } from './api/student-documents-hooks'
+export { usePatchOrganizationGuidanceAnswersMutation } from './api/institution-guidance-hooks'
+export {
+  patchOrganizationGuidanceAnswers,
+  savePortalTeacherInstitutionGuidance,
+} from './api/institution-guidance-client'
 export type { OrganizationStudentDocumentsScope } from './api/student-documents-hooks'
 export type { MypageApplicationScope, MyProgramApplicationsListOptions } from './api/hooks'
 export type { ProgramApplicationType, ProgramApplicationStatusGroup } from './api/types'

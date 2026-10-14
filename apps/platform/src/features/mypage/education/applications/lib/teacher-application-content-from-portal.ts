@@ -1,5 +1,6 @@
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import type { ProgramApplicationType } from '../api/types'
+import { isOrganizationEducationApplication } from './organization-education-application'
 import type { EducationTeacherApplicationContent } from '../model/types'
 import { mapTeacherInstitutionFromApplicationAnswers } from './institution-basic-info-from-answers'
 import {
@@ -28,6 +29,7 @@ const EMPTY_GUIDANCE: EducationTeacherApplicationContent['guidance'] = {
 
 export type BuildTeacherApplicationContentInput = {
   applicationType?: ProgramApplicationType
+  programAudience?: ProgramDetail['programAudience']
   detailCase: ProgramDetailCase
   programGroup?: string
   answers?: Record<string, unknown> | null
@@ -39,18 +41,16 @@ export type BuildTeacherApplicationContentInput = {
 
 export function buildTeacherApplicationContentFromPortal(
   input: BuildTeacherApplicationContentInput,
-  program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'>,
+  program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules' | 'programAudience'>,
 ): EducationTeacherApplicationContent | undefined {
-  if (input.applicationType !== 'ORGANIZATION') return input.existing
+  const isOrganization = isOrganizationEducationApplication(
+    { applicationType: input.applicationType },
+    program ?? (input.programAudience ? { programAudience: input.programAudience } : undefined),
+  )
+  if (!isOrganization) return input.existing
 
   const answers = input.answers ?? {}
   const hasAnswers = Object.keys(answers).length > 0
-  const hasScheduleMeta =
-    Boolean(input.preferredScheduleOptionValues?.length) ||
-    Boolean(input.preferredScheduleBlocks?.length) ||
-    Boolean(input.preferredEducationScheduleLabel?.trim())
-
-  if (!hasAnswers && !hasScheduleMeta && !input.existing) return undefined
 
   const institutionFromAnswers = hasAnswers
     ? mapTeacherInstitutionFromApplicationAnswers(answers, input.detailCase, input.programGroup)

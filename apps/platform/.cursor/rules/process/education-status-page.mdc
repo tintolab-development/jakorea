@@ -117,11 +117,7 @@ alwaysApply: false
 #### 진행·완료 탭 세부
 
 - **설문조사·만족도조사**: 진행 중 내용이 없어도 **탭 유지**. 단 프로그램 등록 시 해당 항목을 **설정하지 않은** 경우(`surveyConfigured` / `satisfactionConfigured === false`) 탭 **비노출**
-- **교육 일정** 라벨 (`resolveEducationScheduleTabLabel`):
-  - 봉사(`volunteer`) → **배정현황**
-  - UJAT(`ujat-volunteer` / `ujat-participant`) → **배정 및 출결 현황**
-  - 강사(`instructor`) → **강의 일정**
-  - 그 외 → **교육일정**
+- **교육 일정** 탭·패널 제목: 교육현황 상세는 **`교육일정` 고정** (`EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL` · `program.detailCase` 무관). 봉사·강의현황은 `resolveEducationScheduleTabLabel(detailCase)` 유지.
 - 구현: [`detail-tabs.ts`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts)
 
 탭 여백: top 48 / bottom 56. section query: `?section=program|application|notice|schedule|survey|satisfaction|settlement`
@@ -340,7 +336,8 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 - **진입:** **신청 내용 탭** [`GuidanceSection`](apps/platform/src/features/mypage/education/applications/ui/teacher-application-content/guidance-section.tsx) **`안내사항 수정하기`** 만 → `/mypage/education/:applicationId/guidance/write`
 - **화면:** [`MypageEducationInstitutionGuidanceWritePage`](apps/platform/src/pages/mypage/education/guidance-write/page.tsx) · [`INSTITUTION_GUIDANCE_FIELDS`](packages/form-schema/src/lib/institution-guidance-field-definitions.ts) + 성범죄 단락 ([`ApplyInstitutionGuidance`](apps/platform/src/features/program/ui/apply-institution-guidance/apply-institution-guidance) / [`ApplyInstitutionSexOffense*`](apps/platform/src/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense.tsx) 재사용)
 - **신청 내용 탭** 안내 블록은 **읽기 전용** (인라인 편집 없음)
-- **저장:** mock `updateMockTeacherInstitutionGuidanceFormState` · remote PATCH OpenAPI 미정 → [`savePortalTeacherInstitutionGuidance`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-client.ts) 후속
+- **저장:** mock `updateMockTeacherInstitutionGuidanceFormState` · remote `PATCH /api/portal/me/organization-applications/{applicationId}/application-answers` — [`savePortalTeacherInstitutionGuidance`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-client.ts) · 성공·409 시 신청 상세 query invalidate ([`institution-guidance-hooks.ts`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-hooks.ts))
+- **remote 사전 검사:** 상세 `formResponseId`·`formResponseStatus`(SUBMITTED/APPROVED/COMPLETED)·`answers` 비어 있으면 PATCH 전 안내 — [`institution-guidance-patch-readiness.ts`](apps/platform/src/features/mypage/education/applications/lib/institution-guidance-patch-readiness.ts)
 
 ## 안내사항 상세 모달 (진행중)
 

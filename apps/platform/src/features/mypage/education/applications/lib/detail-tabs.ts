@@ -14,6 +14,9 @@ export type EducationDetailTabItem = {
   label: string
 }
 
+/** 교육현황 상세 — 일정 탭·패널 제목 SSOT (`detailCase`와 무관) */
+export const EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL = '교육일정'
+
 /**
  * 교육 일정 탭 라벨.
  * - 봉사: 배정현황
@@ -47,10 +50,22 @@ export function resolveVolunteerActivityDetailCase(
 
 type ActivityTabOptions = {
   detailCase: ProgramDetailCase
+  /**
+   * 일정 탭 라벨 override.
+   * 교육현황은 `EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL`. 봉사·강의현황은 미설정 → `detailCase` 분기.
+   */
+  scheduleTabLabel?: string
   /** 프로그램에 설문조사 항목이 설정된 경우. false면 탭 비노출. 기본 true */
   surveyConfigured?: boolean
   /** 프로그램에 만족도조사 항목이 설정된 경우. false면 탭 비노출. 기본 true */
   satisfactionConfigured?: boolean
+}
+
+function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
+  if (options.scheduleTabLabel != null && options.scheduleTabLabel !== '') {
+    return options.scheduleTabLabel
+  }
+  return resolveEducationScheduleTabLabel(options.detailCase)
 }
 
 function isConfigured(flag: boolean | undefined): boolean {
@@ -78,7 +93,7 @@ export function buildInProgressDetailTabItems(
 ): EducationDetailTabItem[] {
   const items: EducationDetailTabItem[] = [
     { key: 'notice', label: '안내사항' },
-    { key: 'schedule', label: resolveEducationScheduleTabLabel(options.detailCase) },
+    { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
   ]
   appendSurveySatisfactionTabs(items, options)
   items.push({ key: 'settlement', label: '정산현황' })
@@ -94,7 +109,7 @@ export function buildTeacherInProgressDetailTabItems(
 ): EducationDetailTabItem[] {
   const items: EducationDetailTabItem[] = [
     { key: 'notice', label: '안내사항' },
-    { key: 'schedule', label: resolveEducationScheduleTabLabel(options.detailCase) },
+    { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
     { key: 'students', label: '학생 명단' },
   ]
   appendSurveySatisfactionTabs(items, options)
