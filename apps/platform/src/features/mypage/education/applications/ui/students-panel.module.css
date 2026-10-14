@@ -7,6 +7,14 @@
   min-height: 560px;
 }
 
+.unsupportedShell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 560px;
+  align-items: flex-start;
+}
+
 .stepMain {
   display: flex;
   flex: 1;
@@ -159,6 +167,11 @@
   overflow: hidden;
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-24);
+}
+
+.rosterTableTitle {
+  margin: 0;
+  padding: var(--spacing-20) var(--spacing-20) var(--spacing-12);
 }
 
 .rosterDataTable {

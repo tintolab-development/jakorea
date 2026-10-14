@@ -297,7 +297,11 @@ alwaysApply: false
 ### API · remote
 
 - Base: `/api/portal/me/organization-applications/{applicationId}` — 신청 id는 교육현황 상세 `:applicationId`와 동일
-- 제출 기한: `GET .../student-documents/policy` — `studentRosterUploadAllowed` / `portraitConsentUploadAllowed`가 `false`면 해당 업로드 비활성
+- **policy SSOT:** `GET .../student-documents/policy` — 탭 진입 시 최우선 조회 ([`student-documents-policy.ts`](apps/platform/src/features/mypage/education/applications/lib/student-documents-policy.ts))
+  - `studentDocumentsSupported === false` → Step UI 비노출, 안내: `이 프로그램은 학생 명단 및 초상권 동의서 제출 대상이 아닙니다.` · import/template/초상권 API 호출 금지
+  - `studentDocumentsSupported === true` → 명단·초상권 각각 `studentRosterUploadAllowed` / `portraitConsentUploadAllowed`로 독립 판단 (기한 종료 ≠ 기능 미지원)
+  - `firstEducationDate` null — 일정 미배정; `*UploadAllowed`가 최종 기준
+- import 오류: `PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED` · `STUDENT_ROSTER_DEADLINE_PASSED` · `PORTRAIT_CONSENT_DEADLINE_PASSED` · `BAD_REQUEST` → [`student-documents-errors.ts`](apps/platform/src/features/mypage/education/applications/lib/student-documents-errors.ts)
 - 클라이언트: [`student-documents-client.ts`](apps/platform/src/features/mypage/education/applications/api/student-documents-client.ts) · 훅 [`student-documents-hooks.ts`](apps/platform/src/features/mypage/education/applications/api/student-documents-hooks.ts)
 - remote off(mock): 빈 명단·빈 초상권 UI만 노출(업로드 시 로그인 안내)
 

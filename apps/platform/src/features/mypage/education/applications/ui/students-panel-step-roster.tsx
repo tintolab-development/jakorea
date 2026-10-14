@@ -13,11 +13,10 @@ const EXCEL_ACCEPT =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.xlsx,.xls'
 
 type StudentsPanelStepRosterProps = {
-  remoteEnabled: boolean
   isLoading: boolean
   rosterCount: number
   rows: PortalStudentRosterItem[]
-  rosterUploadAllowed: boolean
+  uploadBlockedMessage?: string | null
   certificateButtonEnabled: boolean
   isDownloadingTemplate: boolean
   isImporting: boolean
@@ -27,11 +26,10 @@ type StudentsPanelStepRosterProps = {
 }
 
 export function StudentsPanelStepRoster({
-  remoteEnabled,
   isLoading,
   rosterCount,
   rows,
-  rosterUploadAllowed,
+  uploadBlockedMessage,
   certificateButtonEnabled,
   isDownloadingTemplate,
   isImporting,
@@ -45,12 +43,8 @@ export function StudentsPanelStepRoster({
   const isCertificateDisabled = !certificateButtonEnabled
 
   const handlePickExcel = () => {
-    if (!remoteEnabled) {
-      setAlertMessage('학생 명단 업로드는 로그인 후 이용할 수 있습니다.')
-      return
-    }
-    if (!rosterUploadAllowed) {
-      setAlertMessage('학생 명단 제출 기한이 지났거나 제출할 수 없습니다.')
+    if (uploadBlockedMessage) {
+      setAlertMessage(uploadBlockedMessage)
       return
     }
     fileInputRef.current?.click()
@@ -87,7 +81,7 @@ export function StudentsPanelStepRoster({
             type="button"
             size="large"
             variant="secondary"
-            disabled={!remoteEnabled || isDownloadingTemplate}
+            disabled={isDownloadingTemplate}
             onClick={onDownloadTemplate}
           >
             <span className={styles.buttonInner}>
@@ -143,6 +137,9 @@ export function StudentsPanelStepRoster({
         </div>
       ) : hasStudents ? (
         <div className={styles.rosterTableBox}>
+          <PFText as="p" typo="bd-md-sb" color="black" className={styles.rosterTableTitle}>
+            참여 학생 {rosterCount}명
+          </PFText>
           <StudentsPanelRosterTable rows={rows} />
         </div>
       ) : (

@@ -523,7 +523,10 @@ export function MypageEducationDetailPage() {
       return (
         <EducationStudentsPanel
           applicationId={application.id}
-          applicationType={routeApplicationType}
+          applicationType={routeApplicationType ?? application.applicationType ?? null}
+          organizationProgram={
+            routeApplicationType === 'ORGANIZATION' || program.programAudience === 'organization'
+          }
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
