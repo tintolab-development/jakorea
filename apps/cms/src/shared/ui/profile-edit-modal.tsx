@@ -30,10 +30,7 @@ import {
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { withdrawAdminSelfRemote } from '@/features/user/api/members-api-client'
-import {
-  fetchAdminMe,
-  updateAdminMarketingConsent,
-} from '@/features/auth/api/fetch-admin-me'
+import { fetchAdminMe, updateAdminMarketingConsent } from '@/features/auth/api/fetch-admin-me'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
 import { fetchCurrentTermsDocumentMeta } from '@/features/user/api/fetch-current-terms-document'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
@@ -206,7 +203,7 @@ function ProfileFieldWithAction({
       <span className="profile-edit-modal__value-with-action-text">{value}</span>
       <CmsButton
         variant="secondary"
-        size="small"
+        size="h32"
         width={100}
         className="profile-edit-modal__field-action-btn"
         type="button"
@@ -606,65 +603,56 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
           </div>
         </DetailInfoForm>
 
-        <DetailInfoForm
-          title="약관 및 동의"
-          mode="view"
-          className="profile-edit-modal__section profile-edit-modal__section--terms"
-        >
-          <div className="profile-edit-modal__terms-table">
-            <DetailInfoForm.Row
-              type="double"
-              className="profile-edit-modal__terms-row profile-edit-modal__terms-row--standard"
-            >
-              <DetailInfoForm.Field
-                label="서비스 이용약관"
-                readOnlyDisplay
-                view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
-              />
-              <DetailInfoForm.Field
-                label="개인정보 수집·이용 동의"
-                readOnlyDisplay
-                view={consentReadonlyContent(
-                  personalInfoTerms.agreed,
-                  personalInfoTerms.agreedAtDisplay
-                )}
-              />
-            </DetailInfoForm.Row>
+        <DetailInfoForm title="약관 및 동의" mode="view">
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              labelWidth={220}
+              label="서비스 이용약관"
+              readOnlyDisplay
+              view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
+            />
+            <DetailInfoForm.Field
+              label="개인정보 수집·이용 동의"
+              readOnlyDisplay
+              labelWidth={220}
+              view={consentReadonlyContent(
+                personalInfoTerms.agreed,
+                personalInfoTerms.agreedAtDisplay
+              )}
+            />
+          </DetailInfoForm.Row>
 
-            <DetailInfoForm.Row
-              type="double"
-              className="profile-edit-modal__terms-row profile-edit-modal__terms-row--bottom"
-            >
-              <DetailInfoForm.Field
-                label="마케팅 제공 동의"
-                labelWidth={220}
-                mode="edit"
-                view={consentReadonlyContent(marketingConsent === 'agree', marketingAgreedAt)}
-                edit={
-                  <span className="profile-edit-modal__marketing-consent">
-                    <CmsRadioGroup
-                      size="large"
-                      options={MARKETING_RADIO_OPTIONS}
-                      value={marketingConsent}
-                      disabled={marketingConsentUpdating}
-                      onChange={event =>
-                        void handleMarketingChange(event.target.value as MarketingConsentValue)
-                      }
-                    />
-                    <DetailInfoForm.TdDivider />
-                    <span className="user-consent-agreement-section__value-datetime">
-                      {marketingAgreedAt}
-                    </span>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="마케팅 제공 동의"
+              labelWidth={220}
+              mode="edit"
+              view={consentReadonlyContent(marketingConsent === 'agree', marketingAgreedAt)}
+              edit={
+                <span className="profile-edit-modal__marketing-consent">
+                  <CmsRadioGroup
+                    size="medium"
+                    options={MARKETING_RADIO_OPTIONS}
+                    value={marketingConsent}
+                    disabled={marketingConsentUpdating}
+                    onChange={event =>
+                      void handleMarketingChange(event.target.value as MarketingConsentValue)
+                    }
+                  />
+                  <DetailInfoForm.TdDivider />
+                  <span className="user-consent-agreement-section__value-datetime">
+                    {marketingAgreedAt}
                   </span>
-                }
-              />
-              <DetailInfoForm.Field
-                label="2단계 인증(MFA) 설정 동의"
-                readOnlyDisplay
-                view={consentReadonlyContent(mfaSetupTerms.agreed, mfaSetupTerms.agreedAtDisplay)}
-              />
-            </DetailInfoForm.Row>
-          </div>
+                </span>
+              }
+            />
+            <DetailInfoForm.Field
+              label="2단계 인증(MFA) 설정 동의"
+              labelWidth={220}
+              readOnlyDisplay
+              view={consentReadonlyContent(mfaSetupTerms.agreed, mfaSetupTerms.agreedAtDisplay)}
+            />
+          </DetailInfoForm.Row>
         </DetailInfoForm>
       </div>
 
