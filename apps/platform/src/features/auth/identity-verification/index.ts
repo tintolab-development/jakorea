@@ -17,6 +17,7 @@ export {
 export {
   useSignupIdentityVerification,
   useGuardianIdentityVerification,
+  useGuardianBridgeVerification,
   useFindPasswordIdentityVerification,
   useFindEmailIdentityVerification,
   useAdminProvisionedIdentityVerification,

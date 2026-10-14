@@ -86,6 +86,19 @@ import {
   useSignupTermsQuery,
 } from '../api'
 import {
+  pollGuardianSignupStatus,
+  postGuardianChallenge,
+  postGuardianConsent,
+  postSignupIntent,
+} from '../api/guardian-signup-bridge/client'
+import { resolveGuardianConsentVersion } from '../lib/guardian/resolve-guardian-consent-version'
+import { toSignupIntentGender } from '../lib/guardian/to-signup-intent-gender'
+import {
+  clearGuardianSignupBridgeState,
+  readGuardianSignupBridgeState,
+  writeGuardianSignupBridgeState,
+} from '../lib/guardian-signup-bridge-storage'
+import {
   mapSignUpToGeneralRequest,
   mapSignUpToTeacherRequest,
   toApiBirthDate,
@@ -172,10 +185,27 @@ export function useSignUp() {
   const [requiresGuardianConsent, setRequiresGuardianConsent] = useState(
     () => parseSignUpPhase(searchParams) === 'guardian-consent'
   )
-  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(
-    () => parseSignUpPhase(searchParams) === 'guardian-identity'
+  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(() => {
+    const phase = parseSignUpPhase(searchParams)
+    return (
+      phase === 'guardian-profile' ||
+      phase === 'guardian-identity' ||
+      phase === 'guardian-final-consent'
+    )
+  })
+  const [isGuardianProfileCompleted, setIsGuardianProfileCompleted] = useState(
+    () => parseSignUpPhase(searchParams) === 'guardian-identity',
   )
   const [isGuardianIdentityVerified, setIsGuardianIdentityVerified] = useState(false)
+  const [isGuardianFinalConsentCompleted, setIsGuardianFinalConsentCompleted] = useState(false)
+  const [signupIntentId, setSignupIntentId] = useState<string | null>(
+    () => readGuardianSignupBridgeState()?.signupIntentId ?? null,
+  )
+  const [guardianProfileSubmitting, setGuardianProfileSubmitting] = useState(false)
+  const [guardianProfileSubmitError, setGuardianProfileSubmitError] = useState('')
+  const [guardianFinalConsentSubmitting, setGuardianFinalConsentSubmitting] = useState(false)
+  const [guardianFinalConsentSubmitError, setGuardianFinalConsentSubmitError] = useState('')
+  const [guardianIdentityErrorMessage, setGuardianIdentityErrorMessage] = useState('')
   const [guardianVerifiedName, setGuardianVerifiedName] = useState('')
   const [guardianVerifiedPhone, setGuardianVerifiedPhone] = useState('')
   const [guardianAgreements, setGuardianAgreements] = useState<GuardianAgreementState>(
@@ -195,7 +225,7 @@ export function useSignUp() {
     () => initialMemberVerifiedIdentity?.sessionId ?? null
   )
   const [guardianVerificationSessionId, setGuardianVerificationSessionId] = useState<number | null>(
-    null
+    () => readGuardianSignupBridgeState()?.guardianSessionId ?? null,
   )
   const [verifiedName, setVerifiedName] = useState(
     () => initialMemberVerifiedIdentity?.verifiedName ?? ''
@@ -276,9 +306,15 @@ export function useSignUp() {
       if (isUnderAgeSignupRef.current) {
         if (phase === 'guardian-identity') {
           setIsGuardianAgreementCompleted(true)
+          setIsGuardianProfileCompleted(true)
+          setIsGuardianIdentityVerified(false)
+        } else if (phase === 'guardian-profile') {
+          setIsGuardianAgreementCompleted(true)
+          setIsGuardianProfileCompleted(false)
           setIsGuardianIdentityVerified(false)
         } else {
           setIsGuardianAgreementCompleted(false)
+          setIsGuardianProfileCompleted(false)
           setIsGuardianIdentityVerified(false)
         }
       } else if (phase === 'agreement') {
@@ -291,7 +327,11 @@ export function useSignUp() {
     if (step >= 4) {
       if (isUnderAgeSignupRef.current) {
         setIsGuardianAgreementCompleted(true)
+        setIsGuardianProfileCompleted(true)
         setIsGuardianIdentityVerified(true)
+        if (phase === 'guardian-final-consent') {
+          setIsGuardianFinalConsentCompleted(false)
+        }
       } else {
         setIsIdentityVerified(true)
       }
@@ -316,7 +356,14 @@ export function useSignUp() {
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
     setIsGuardianAgreementCompleted(false)
+    setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
+    setIsGuardianFinalConsentCompleted(false)
+    setSignupIntentId(null)
+    setGuardianProfileSubmitError('')
+    setGuardianFinalConsentSubmitError('')
+    setGuardianIdentityErrorMessage('')
+    clearGuardianSignupBridgeState()
     setGuardianVerifiedName('')
     setGuardianVerifiedPhone('')
     setMemberProfileName('')
@@ -494,7 +541,11 @@ export function useSignUp() {
       ? isTeacherProfileValid(schoolName, employmentStatus)
       : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade) &&
         (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
-  const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
+  const isGuardianProfileValidState = isGuardianProfileValid({
+    name: guardianVerifiedName,
+    phone: guardianVerifiedPhone,
+    relationship: guardianRelationship,
+  })
 
   const handleSignIn = () => {
     navigate(SIGN_IN_PATH)
@@ -559,6 +610,15 @@ export function useSignUp() {
       if (isGuardianIdentityVerified) {
         setIsGuardianIdentityVerified(false)
         replaceWizard(3, 'guardian-identity')
+        return
+      }
+
+      if (isGuardianProfileCompleted) {
+        setIsGuardianProfileCompleted(false)
+        setGuardianVerificationSessionId(null)
+        setSignupIntentId(null)
+        clearGuardianSignupBridgeState()
+        replaceWizard(3, 'guardian-profile')
         return
       }
 
@@ -684,7 +744,7 @@ export function useSignUp() {
     if (guardianAgreementDerived.isRequiredAgreed) {
       dismissPortraitConsentRestore()
       setIsGuardianAgreementCompleted(true)
-      pushWizard(3, 'guardian-identity')
+      pushWizard(3, 'guardian-profile')
     }
   }
 
@@ -755,31 +815,191 @@ export function useSignUp() {
     onSuccess: handleIdentitySuccess,
   })
 
-  const handleGuardianIdentitySuccess = (result: {
-    sessionId: number
-    verifiedName?: string
-    verifiedPhone?: string
-  }) => {
-    setGuardianVerificationSessionId(result.sessionId)
-    if (result.verifiedName?.trim()) {
-      setGuardianVerifiedName(result.verifiedName.trim())
+  const handleGuardianIdentitySuccess = async (_result: { identitySessionId: number }) => {
+    setGuardianIdentityErrorMessage('')
+    const bridge = readGuardianSignupBridgeState()
+    if (!bridge) {
+      setGuardianIdentityErrorMessage('보호자 인증 정보가 없습니다. 이전 단계부터 다시 진행해 주세요.')
+      return
     }
-    if (result.verifiedPhone?.trim()) {
-      setGuardianVerifiedPhone(
-        toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim(),
+
+    try {
+      const status = await pollGuardianSignupStatus({
+        guardianSessionId: bridge.guardianSessionId,
+        statusToken: bridge.guardianStatusToken,
+      })
+
+      if (status?.identityVerified !== true) {
+        setGuardianIdentityErrorMessage('본인인증이 완료되지 않았습니다. 다시 시도해 주세요.')
+        return
+      }
+
+      setIsGuardianIdentityVerified(true)
+      const minorBirth = readMinorMemberBirthDate()
+      if (minorBirth) {
+        setBirthDate(minorBirth)
+      }
+
+      const normalizedStatus = status.status?.trim().toUpperCase()
+      if (normalizedStatus === 'CONSENTED') {
+        setIsGuardianFinalConsentCompleted(true)
+        pushWizard(5)
+        return
+      }
+
+      pushWizard(4, 'guardian-final-consent')
+    } catch (error) {
+      setGuardianIdentityErrorMessage(
+        getSignupApiErrorMessage(error, '보호자 인증 상태를 확인하지 못했습니다. 다시 시도해 주세요.'),
       )
     }
-    setIsGuardianIdentityVerified(true)
-    const minorBirth = readMinorMemberBirthDate()
-    if (minorBirth) {
-      setBirthDate(minorBirth)
-    }
-    pushWizard(4)
   }
 
-  const handleGuardianProfileContinue = () => {
-    if (isGuardianProfileValidState) {
+  const handleGuardianProfileSubmit = async () => {
+    if (!isGuardianProfileValidState || guardianProfileSubmitting) return
+
+    if (!remoteApi) {
+      setGuardianProfileSubmitError('보호자 인증 API 연동 후 진행할 수 있습니다.')
+      return
+    }
+
+    setGuardianProfileSubmitError('')
+    setGuardianProfileSubmitting(true)
+
+    try {
+      const apiBirth = toApiBirthDate(signupMemberBirthDate)
+      const intentGender = toSignupIntentGender(gender)
+      if (!apiBirth || !intentGender) {
+        setGuardianProfileSubmitError('가입자 생년월일과 성별을 step 2에서 다시 확인해 주세요.')
+        return
+      }
+
+      const termsVersion = resolveGuardianConsentVersion(termsQuery.data ?? null)
+      if (!termsVersion) {
+        setGuardianProfileSubmitError('약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+
+      const guardianName = guardianVerifiedName.trim()
+      const guardianPhone =
+        toApiSignupPhone(guardianVerifiedPhone) ??
+        guardianVerifiedPhone.replace(/\D/g, '')
+      const guardianRelation = guardianRelationship.trim()
+
+      const intent = await postSignupIntent({
+        memberType: 'GENERAL',
+        birthDate: apiBirth,
+        gender: intentGender,
+      })
+      const intentId = intent.intentId?.trim()
+      if (!intentId) {
+        setGuardianProfileSubmitError('가입 준비 정보를 발급하지 못했습니다.')
+        return
+      }
+
+      const challenge = await postGuardianChallenge({
+        provider: 'NICE',
+        guardianName,
+        guardianPhone,
+        guardianRelation,
+        signupIntentId: intentId,
+      })
+
+      const guardianSessionId = challenge.sessionId
+      const statusToken = challenge.statusToken?.trim()
+      if (guardianSessionId == null || !statusToken) {
+        setGuardianProfileSubmitError('보호자 인증 세션을 생성하지 못했습니다.')
+        return
+      }
+
+      writeGuardianSignupBridgeState({
+        signupIntentId: intentId,
+        intentExpiresAt: intent.expiresAt,
+        guardianSessionId,
+        guardianStatusToken: statusToken,
+        guardianExpiresAt: challenge.expiresAt,
+        guardianConsentVersion: termsVersion,
+        guardianRelation,
+      })
+
+      setSignupIntentId(intentId)
+      setGuardianVerificationSessionId(guardianSessionId)
+
+      await postGuardianConsent({
+        guardianSessionId,
+        statusToken,
+        body: {
+          agreed: true,
+          termsVersion,
+          guardianRelation,
+        },
+        idempotencyKey: `guardian-first-${intentId}`,
+      })
+
+      setIsGuardianProfileCompleted(true)
+      pushWizard(3, 'guardian-identity')
+    } catch (error) {
+      setGuardianProfileSubmitError(
+        getSignupApiErrorMessage(error, '보호자 정보 확인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+      )
+    } finally {
+      setGuardianProfileSubmitting(false)
+    }
+  }
+
+  const handleGuardianFinalConsentSubmit = async () => {
+    if (guardianFinalConsentSubmitting) return
+    if (!isGuardianIdentityVerified) {
+      setGuardianFinalConsentSubmitError('보호자 본인인증을 먼저 완료해 주세요.')
+      replaceWizard(3, 'guardian-identity')
+      return
+    }
+
+    const bridge = readGuardianSignupBridgeState()
+    if (!bridge) {
+      setGuardianFinalConsentSubmitError('보호자 인증 정보가 없습니다. 처음부터 다시 진행해 주세요.')
+      return
+    }
+
+    const termsVersion =
+      bridge.guardianConsentVersion ??
+      resolveGuardianConsentVersion(termsQuery.data ?? null)
+    const guardianRelation =
+      bridge.guardianRelation?.trim() || guardianRelationship.trim()
+
+    if (!termsVersion || !guardianRelation) {
+      setGuardianFinalConsentSubmitError('동의 약관 정보를 확인할 수 없습니다.')
+      return
+    }
+
+    setGuardianFinalConsentSubmitError('')
+    setGuardianFinalConsentSubmitting(true)
+
+    try {
+      const response = await postGuardianConsent({
+        guardianSessionId: bridge.guardianSessionId,
+        statusToken: bridge.guardianStatusToken,
+        body: {
+          agreed: true,
+          termsVersion,
+          guardianRelation,
+        },
+        idempotencyKey: `guardian-final-${bridge.signupIntentId}`,
+      })
+
+      if (response.status?.trim().toUpperCase() !== 'CONSENTED') {
+        setGuardianFinalConsentSubmitError('보호자 동의가 완료되지 않았습니다. 다시 시도해 주세요.')
+        return
+      }
+
+      setIsGuardianFinalConsentCompleted(true)
       pushWizard(5)
+    } catch (error) {
+      setGuardianFinalConsentSubmitError(
+        getSignupApiErrorMessage(error, '보호자 동의 확인에 실패했습니다. 다시 시도해 주세요.'),
+      )
+    } finally {
+      setGuardianFinalConsentSubmitting(false)
     }
   }
 
@@ -923,7 +1143,11 @@ export function useSignUp() {
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
     setIsGuardianAgreementCompleted(false)
+    setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
+    setIsGuardianFinalConsentCompleted(false)
+    setSignupIntentId(null)
+    clearGuardianSignupBridgeState()
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
     setGuardianVerifiedName('')
@@ -943,7 +1167,11 @@ export function useSignUp() {
   const handleStartGuardianConsent = () => {
     setRequiresGuardianConsent(false)
     setIsGuardianAgreementCompleted(false)
+    setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
+    setIsGuardianFinalConsentCompleted(false)
+    setSignupIntentId(null)
+    clearGuardianSignupBridgeState()
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
     setGuardianVerificationSessionId(null)
@@ -977,6 +1205,8 @@ export function useSignUp() {
         isUnderAgeSignup,
         identityVerificationSessionId,
         guardianVerificationSessionId,
+        signupIntentId,
+        guardianBridgeFinalConsentCompleted: isGuardianFinalConsentCompleted,
       })
     ) {
       setSubmitMessage(SIGNUP_IDENTITY_REQUIRED_MESSAGE)
@@ -1038,6 +1268,7 @@ export function useSignUp() {
       isIdentityVerified,
       identityVerificationSessionId,
       guardianVerificationSessionId,
+      signupIntentId,
       schoolStatus,
       schoolName,
       schoolOrganizationId: teacherSchoolOrganizationId,
@@ -1155,6 +1386,8 @@ export function useSignUp() {
     guardian: {
       isUnderAgeSignup,
       isAgreementCompleted: isGuardianAgreementCompleted,
+      isProfileCompleted: isGuardianProfileCompleted,
+      isFinalConsentCompleted: isGuardianFinalConsentCompleted,
       agreement: {
         items: guardianAgreementItems,
         state: guardianAgreements,
@@ -1170,14 +1403,24 @@ export function useSignUp() {
         isVerified: isGuardianIdentityVerified,
         sessionId: guardianVerificationSessionId,
         complete: handleGuardianIdentitySuccess,
+        errorMessage: guardianIdentityErrorMessage,
       },
       profile: {
         name: guardianVerifiedName,
+        setName: setGuardianVerifiedName,
         phone: guardianVerifiedPhone,
+        setPhone: setGuardianVerifiedPhone,
         relationship: guardianRelationship,
         setRelationship: setGuardianRelationship,
         isValid: isGuardianProfileValidState,
-        continue: handleGuardianProfileContinue,
+        isSubmitting: guardianProfileSubmitting,
+        submitError: guardianProfileSubmitError,
+        submit: handleGuardianProfileSubmit,
+      },
+      finalConsent: {
+        isSubmitting: guardianFinalConsentSubmitting,
+        submitError: guardianFinalConsentSubmitError,
+        submit: handleGuardianFinalConsentSubmit,
       },
     },
     identity: {

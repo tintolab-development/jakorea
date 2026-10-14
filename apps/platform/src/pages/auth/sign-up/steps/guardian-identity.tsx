@@ -4,10 +4,7 @@ import {
   IDENTITY_MODULE_IDLE_TITLE,
 } from '@jakorea/domain/shared/identity-module-copy'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import {
-  useGuardianIdentityVerification,
-  type IdentityChallengeCompleteResult,
-} from '@/features/auth/identity-verification'
+import { useGuardianBridgeVerification } from '@/features/auth/identity-verification'
 import { PFButton, PFText } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
@@ -22,15 +19,11 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
   const completeRef = useRef(guardian.identity.complete)
   completeRef.current = guardian.identity.complete
 
-  const handleSuccess = useCallback((result: IdentityChallengeCompleteResult) => {
-    completeRef.current({
-      sessionId: result.sessionId,
-      verifiedName: result.verifiedName,
-      verifiedPhone: result.verifiedPhone,
-    })
+  const handleSuccess = useCallback((result: { identitySessionId: number }) => {
+    void completeRef.current(result)
   }, [])
 
-  const { verify, isVerifying, errorMessage } = useGuardianIdentityVerification({
+  const { verify, isVerifying, errorMessage } = useGuardianBridgeVerification({
     onSuccess: handleSuccess,
   })
 
@@ -65,9 +58,9 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
               <br />
               {IDENTITY_MODULE_IDLE_DESCRIPTION}
             </PFText>
-            {errorMessage ? (
+            {(errorMessage || guardian.identity.errorMessage) ? (
               <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
-                {errorMessage}
+                {errorMessage ?? guardian.identity.errorMessage}
               </PFText>
             ) : null}
           </div>
