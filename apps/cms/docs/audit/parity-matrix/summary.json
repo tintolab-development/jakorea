@@ -1,0 +1,1238 @@
+{
+  "generatedAt": "2026-10-14T10:04:19.594Z",
+  "totalRows": 65,
+  "strictFailures": 5,
+  "liveWarnings": 5,
+  "rows": [
+    {
+      "screenId": "general.info.common",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.common",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.common",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.common",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.common",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.participant",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.participant",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.participant",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.participant",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.participant",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.instructor",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.instructor",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.instructor",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.instructor",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.instructor",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.volunteer",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.volunteer",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.volunteer",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.volunteer",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.recruitment.volunteer",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "general.info.application",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.info.application",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.info.application",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.info.application",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.info.application",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.school",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.school",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.school",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.school",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.school",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.instructor",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.instructor",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.instructor",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.instructor",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.instructor",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.volunteer",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.volunteer",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.volunteer",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.volunteer",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.volunteer",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.participant",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.participant",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.participant",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.participant",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "general.progress.participant",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "company_school.info.common",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "company_school.info.common",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "company_school.info.common",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "company_school.info.common",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "company_school.info.common",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": []
+    },
+    {
+      "screenId": "trained_teachers.info.common",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "trained_teachers.info.common",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "trained_teachers.info.common",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "trained_teachers.info.common",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "trained_teachers.info.common",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "ujat.info.common",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "ujat.info.common",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "ujat.info.common",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "ujat.info.common",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "ujat.info.common",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 0,
+      "liveDiffCount": 0,
+      "strictDiffs": [],
+      "skipped": "no_strict_builder"
+    },
+    {
+      "screenId": "registration.general.seed_to_detail",
+      "fixtureId": "general-organization-nested_only",
+      "strictDiffCount": 27,
+      "liveDiffCount": 27,
+      "strictDiffs": [
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.businessField",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.courseDeliveredBy",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramId",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramName",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationCourse",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueDetail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueKind",
+          "apiTruth": null,
+          "uiExposed": "inside"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.ipOwned",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactId",
+          "apiTruth": null,
+          "uiExposed": "__sponsor_contact_unselected__"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactIds",
+          "apiTruth": null,
+          "uiExposed": "[\"__sponsor_contact_unselected__\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localProgramTitleKo",
+          "apiTruth": null,
+          "uiExposed": "Parity 일반 기관"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorId",
+          "apiTruth": null,
+          "uiExposed": "1"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorIds",
+          "apiTruth": null,
+          "uiExposed": "[\"1\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.partnerInvolvement",
+          "apiTruth": null,
+          "uiExposed": "yes"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.programTitleEn",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.publicProgramTitle",
+          "apiTruth": null,
+          "uiExposed": "nested-announcement"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.sponsorManagerLine",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.lecture_evaluation",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.satisfaction",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.survey",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationScheduleSettings.scheduleLines",
+          "apiTruth": null,
+          "uiExposed": "[]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.category",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.detail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        }
+      ]
+    },
+    {
+      "screenId": "registration.general.seed_to_detail",
+      "fixtureId": "general-organization-nested_overlay_conflict",
+      "strictDiffCount": 29,
+      "liveDiffCount": 27,
+      "strictDiffs": [
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.businessField",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.courseDeliveredBy",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramId",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramName",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationCourse",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueDetail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueKind",
+          "apiTruth": null,
+          "uiExposed": "inside"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.ipOwned",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactId",
+          "apiTruth": null,
+          "uiExposed": "__sponsor_contact_unselected__"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactIds",
+          "apiTruth": null,
+          "uiExposed": "[\"__sponsor_contact_unselected__\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localProgramTitleKo",
+          "apiTruth": null,
+          "uiExposed": "Parity conflict"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorId",
+          "apiTruth": null,
+          "uiExposed": "1"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorIds",
+          "apiTruth": null,
+          "uiExposed": "[\"1\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.partnerInvolvement",
+          "apiTruth": null,
+          "uiExposed": "yes"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.programTitleEn",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.publicProgramTitle",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.sponsorManagerLine",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.lecture_evaluation",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.satisfaction",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.survey",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationScheduleSettings.scheduleLines",
+          "apiTruth": null,
+          "uiExposed": "[]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.category",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.detail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.recruit.individual.notes",
+          "apiTruth": "overlay-leftover",
+          "uiExposed": null
+        },
+        {
+          "path": "registrationOverlay.recruitParticipant.detailInfo.programDescription",
+          "apiTruth": "overlay-participant-desc",
+          "uiExposed": null
+        }
+      ]
+    },
+    {
+      "screenId": "registration.general.seed_to_detail",
+      "fixtureId": "general-organization-overlay_only",
+      "strictDiffCount": 29,
+      "liveDiffCount": 27,
+      "strictDiffs": [
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.businessField",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.courseDeliveredBy",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramId",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramName",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationCourse",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueDetail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueKind",
+          "apiTruth": null,
+          "uiExposed": "inside"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.ipOwned",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactId",
+          "apiTruth": null,
+          "uiExposed": "__sponsor_contact_unselected__"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactIds",
+          "apiTruth": null,
+          "uiExposed": "[\"__sponsor_contact_unselected__\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localProgramTitleKo",
+          "apiTruth": null,
+          "uiExposed": "Parity overlay only"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorId",
+          "apiTruth": null,
+          "uiExposed": "1"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorIds",
+          "apiTruth": null,
+          "uiExposed": "[\"1\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.partnerInvolvement",
+          "apiTruth": null,
+          "uiExposed": "yes"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.programTitleEn",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.publicProgramTitle",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.sponsorManagerLine",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.lecture_evaluation",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.satisfaction",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.survey",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationScheduleSettings.scheduleLines",
+          "apiTruth": null,
+          "uiExposed": "[]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.category",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.detail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.recruitParticipant.detailInfo.programDescription",
+          "apiTruth": "overlay-only-desc",
+          "uiExposed": null
+        },
+        {
+          "path": "registrationOverlay.recruitParticipant.detailInfo.recruitmentGuide",
+          "apiTruth": "overlay-only-guide",
+          "uiExposed": null
+        }
+      ]
+    },
+    {
+      "screenId": "registration.general.seed_to_detail",
+      "fixtureId": "general-organization-empty_both",
+      "strictDiffCount": 27,
+      "liveDiffCount": 27,
+      "strictDiffs": [
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.businessField",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.courseDeliveredBy",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramId",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramName",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationCourse",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueDetail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueKind",
+          "apiTruth": null,
+          "uiExposed": "inside"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.ipOwned",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactId",
+          "apiTruth": null,
+          "uiExposed": "__sponsor_contact_unselected__"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactIds",
+          "apiTruth": null,
+          "uiExposed": "[\"__sponsor_contact_unselected__\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localProgramTitleKo",
+          "apiTruth": null,
+          "uiExposed": "Parity empty"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorId",
+          "apiTruth": null,
+          "uiExposed": "1"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorIds",
+          "apiTruth": null,
+          "uiExposed": "[\"1\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.partnerInvolvement",
+          "apiTruth": null,
+          "uiExposed": "yes"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.programTitleEn",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.publicProgramTitle",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.sponsorManagerLine",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.lecture_evaluation",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.satisfaction",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.survey",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationScheduleSettings.scheduleLines",
+          "apiTruth": null,
+          "uiExposed": "[]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.category",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.detail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        }
+      ]
+    },
+    {
+      "screenId": "registration.general.seed_to_detail",
+      "fixtureId": "company-school-economy-overlay_only",
+      "strictDiffCount": 35,
+      "liveDiffCount": 34,
+      "strictDiffs": [
+        {
+          "path": "registrationOverlay.economyRegistration.educationCurriculum.session1.title",
+          "apiTruth": "overlay-session-title",
+          "uiExposed": null
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.businessField",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.courseDeliveredBy",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramId",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.detailedProgramName",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationCourse",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueDetail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.educationVenueKind",
+          "apiTruth": null,
+          "uiExposed": "inside"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.ipOwned",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactId",
+          "apiTruth": null,
+          "uiExposed": "__sponsor_contact_unselected__"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localManagerContactIds",
+          "apiTruth": null,
+          "uiExposed": "[\"__sponsor_contact_unselected__\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localProgramTitleKo",
+          "apiTruth": null,
+          "uiExposed": "Parity 1사1교"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorId",
+          "apiTruth": null,
+          "uiExposed": "1"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.localSponsorIds",
+          "apiTruth": null,
+          "uiExposed": "[\"1\"]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.partnerInvolvement",
+          "apiTruth": null,
+          "uiExposed": "yes"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.programTitleEn",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.publicProgramTitle",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.sponsorManagerLine",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.lecture_evaluation",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.satisfaction",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.basicInfo.surveyItems.survey",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.assignmentByRound.1.enabled",
+          "apiTruth": null,
+          "uiExposed": false
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.assignmentByRound.1.period",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.preEducationScheduleName",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.progressSessionByRound.1",
+          "apiTruth": null,
+          "uiExposed": "default-title"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.roundContentByRound.1",
+          "apiTruth": null,
+          "uiExposed": "default-desc"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.unitContentBySession.1",
+          "apiTruth": null,
+          "uiExposed": "default-desc"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationCurriculum.unitNameBySession.1",
+          "apiTruth": null,
+          "uiExposed": "default-title"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.educationScheduleSettings.scheduleLines",
+          "apiTruth": null,
+          "uiExposed": "[]"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.category",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.ipsType.detail",
+          "apiTruth": null,
+          "uiExposed": ""
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.multiCommonParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleEducationForm",
+          "apiTruth": null,
+          "uiExposed": "online"
+        },
+        {
+          "path": "registrationOverlay.generalRegistration.typeSettings.singleParticipation",
+          "apiTruth": null,
+          "uiExposed": "individual"
+        }
+      ]
+    }
+  ]
+}

@@ -200,8 +200,8 @@ VITE_REAL_API_MODULES=...,formsSurveys
 ```
 template-form-tab.tsx
   → useWritingFormSections()
-    → remoteEnabled ? getWritingFormSectionsRemote() : getMockWritingFormSections()
-    → API 실패/미활성 → writingSections (template.schema.ts)
+    → remoteEnabled ? getWritingFormSectionsRemote() : emptyWritingSections() (rows: [])
+    → API 실패 → emptyWritingSections() (rows: [])
 ```
 
 ### 백엔드 작업
@@ -266,7 +266,7 @@ VITE_REAL_API_MODULES=...,notices,faqs  # formsSurveys 없음
 
 로드: loadWritingFormTemplateDraft
   → GET version (schemaJson)                            // SSOT
-  → 실패/없음 → FE seed (local fallback는 VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1 만)
+  → 실패/없음 → 에디터 seed hydrate (localStorage fallback 없음)
 ```
 
 ### 백엔드 작업

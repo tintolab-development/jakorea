@@ -147,7 +147,7 @@ CMS 등록: `resolve-survey-poll-binding-target.ts` · 에러 문구: `getProgra
 | 단계 | 동작 |
 |------|------|
 | **양식 관리 (현재)** | remote GET/PUT SSOT. localStorage **미사용**. load 실패 → seed. save 실패 → UI 실패 |
-| Dev fallback | `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1` 때만 load 시 local 허용 |
+| Dev fallback | 없음 — remote 실패 시 seed hydrate |
 | 프로그램 등록 | `localOnly: true` → `cms.jakorea.writingFormTemplateSaves.v1` ([program-draft-local-storage-follow-up.md](./program-draft-local-storage-follow-up.md)) |
 
 상세: [form-template-remote-ssot.md](./form-template-remote-ssot.md)

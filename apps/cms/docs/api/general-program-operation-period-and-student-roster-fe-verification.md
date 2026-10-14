@@ -216,6 +216,11 @@ Excel 업로드는 다음 API 흐름만 사용한다.
 cd apps/cms
 
 pnpm exec vitest run \
+  src/shared/ui/cms-select.test.ts \
+  src/features/program/general/lib/registration-payload-smoke.test.ts \
+  src/features/program/general/lib/registration-institution-bridge-sync.test.ts \
+  src/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready.test.ts \
+  src/features/template/ui/form-set/registration-form/shared/registration-catalog-prefetch.test.ts \
   src/features/program/general/lib/general-program-recruitment-operation-period.test.ts \
   src/features/program/general/lib/general-program-recruitment-edit-seed.test.ts \
   src/features/program/shared/model/program-detail-edit-schema.test.ts \
@@ -251,6 +256,24 @@ pnpm exec vitest run \
 - [ ] C-1 출석·Excel 반 표시 확인
 - [ ] C-2 학생명단·필터 반 표시 확인
 - [ ] 전체 Vitest PASS
+- [ ] 등록 위저드 카탈로그·셀렉트 (후원사/세부프로그램/담당자 `onOpenChange`, overlay prefetch) — 아래 inventory 매트릭스
+
+---
+
+## 등록 위저드 (릴리스 수동 QA)
+
+**인벤토리·필드 키:** [`docs/audit/registration-wizard-input-performance-inventory.md`](../audit/registration-wizard-input-performance-inventory.md)
+
+| Variant | program | recruit 기관 | application 기관 |
+|---------|---------|--------------|------------------|
+| general | 제목, 후원사 multi, 담당자 multi, 세부프로그램, 사업·모집 운영기간(A-5), 임금 지급항목 | 모집 기간·교육대상·한도 | 희망교육형태·학급수(bridge) |
+| economy | 1c-1s basic + wage | economy layout | 1c-1s application |
+| trainedTeachers | TT basic + 일정 | TT recruit | TT application |
+| UJAT | ujat basic + sponsor | UJAT recruit | UJAT institution application |
+
+각 셀: 입력 지연 없음 · 셀렉트 첫 오픈 시 목록 로드 · 임시저장 후 재개 · 다음 단계 미리보기.
+
+Optional audit: `pnpm --filter cms audit:registration-wizard-fields` → `docs/audit/registration-wizard-field-audit.json`
 
 ---
 
