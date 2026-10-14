@@ -433,7 +433,7 @@
   align-self: center;
   width: 1px;
   height: 13px;
-  margin-inline: var(--spacing-12);
+  margin-inline: var(--spacing-16);
   opacity: 0.5;
   background: var(--default-BK, #3d3d3d);
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AddressSearchModal } from '@/features/auth'
 import { PFTextInput } from '../pf-text-input'
-import { PFFormInlineRow, PFFormInlineSegment, PFFormInlineSeparator } from './pf-form-inline'
+import { PFFormInlineSeparatedFields } from './pf-form-inline'
 import styles from './pf-form.module.css'
 
 export type PFFormHomeAddressFieldsProps = {
@@ -45,31 +45,26 @@ export function PFFormHomeAddressFields({
 
   return (
     <>
-      <PFFormInlineRow className={fillRow ? styles.inlineRowFill : undefined}>
-        <PFFormInlineSegment>
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            hasIcon
-            readOnly
-            placeholder={roadPlaceholder}
-            disabled={isRoadDisabled}
-            value={roadValue}
-            onClick={openAddressModal}
-          />
-        </PFFormInlineSegment>
-        <PFFormInlineSeparator />
-        <PFFormInlineSegment>
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            placeholder={detailPlaceholder}
-            disabled={isDetailDisabled}
-            value={detailValue}
-            onValueChange={onDetailChange}
-          />
-        </PFFormInlineSegment>
-      </PFFormInlineRow>
+      <PFFormInlineSeparatedFields className={fillRow ? styles.inlineRowFill : undefined}>
+        <PFTextInput
+          variant="formPage"
+          size="large"
+          hasIcon
+          readOnly
+          placeholder={roadPlaceholder}
+          disabled={isRoadDisabled}
+          value={roadValue}
+          onClick={openAddressModal}
+        />
+        <PFTextInput
+          variant="formPage"
+          size="large"
+          placeholder={detailPlaceholder}
+          disabled={isDetailDisabled}
+          value={detailValue}
+          onValueChange={onDetailChange}
+        />
+      </PFFormInlineSeparatedFields>
 
       <AddressSearchModal
         open={isAddressModalOpen}

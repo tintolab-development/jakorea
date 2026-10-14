@@ -1,4 +1,5 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import { Children, Fragment, type HTMLAttributes, type ReactNode } from 'react'
+import { PFFormFieldValueText } from './pf-form-field'
 import styles from './pf-form.module.css'
 
 export type PFFormInlineRowProps = {
@@ -37,6 +38,58 @@ export function PFFormInlineSeparator({ className, ...rest }: PFFormInlineSepara
       aria-hidden
       {...rest}
     />
+  )
+}
+
+export type PFFormInlineSeparatedFieldsProps = {
+  children: ReactNode
+  className?: string
+}
+
+/** 인라인 필드·텍스트 사이 `PFFormInlineSeparator` (16px 간격) 자동 삽입 */
+export function PFFormInlineSeparatedFields({
+  children,
+  className,
+}: PFFormInlineSeparatedFieldsProps) {
+  const items = Children.toArray(children)
+  if (items.length === 0) return null
+
+  return (
+    <PFFormInlineRow className={className}>
+      {items.map((child, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <PFFormInlineSeparator /> : null}
+          <PFFormInlineSegment>{child}</PFFormInlineSegment>
+        </Fragment>
+      ))}
+    </PFFormInlineRow>
+  )
+}
+
+export type PFFormInlineJoinedValuesProps = {
+  parts: Array<string | null | undefined>
+  emptyFallback?: string
+}
+
+/** 읽기 전용 값 목록 — 문자 `|` 대신 세로 구분선 */
+export function PFFormInlineJoinedValues({
+  parts,
+  emptyFallback = '–',
+}: PFFormInlineJoinedValuesProps) {
+  const items = parts
+    .map(part => (part == null ? '' : String(part).trim()))
+    .filter(Boolean)
+
+  if (items.length === 0) {
+    return <PFFormFieldValueText>{emptyFallback}</PFFormFieldValueText>
+  }
+
+  return (
+    <PFFormInlineSeparatedFields>
+      {items.map((item, index) => (
+        <PFFormFieldValueText key={index}>{item}</PFFormFieldValueText>
+      ))}
+    </PFFormInlineSeparatedFields>
   )
 }
 
