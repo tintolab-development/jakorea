@@ -25,8 +25,32 @@ function unwrap<T>(payload: unknown): T {
   return payload as T
 }
 
-const REJECTED_UPLOAD_STATUSES = new Set(['QUARANTINED', 'DELETED', 'DESTROYED', 'EXPIRED'])
-const REJECTED_SCAN_STATUSES = new Set(['INFECTED', 'FAILED', 'DESTROYED'])
+/** CMS `admin-file-upload`와 동일 — 스캔 대기(`PENDING_SCAN` 등)는 계속 폴링 */
+const FAILED_UPLOAD_STATUSES = new Set(['QUARANTINED'])
+const FAILED_SCAN_STATUSES = new Set(['INFECTED', 'FAILED'])
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+const XLSX_MIME_ALIASES = new Set(['application/haansoftxlsx'])
+
+function fileExtension(fileName: string): string {
+  const name = fileName.trim().toLowerCase()
+  return name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : ''
+}
+
+function resolveMemberPortalUploadContentType(file: File): string {
+  const typed = file.type.trim()
+  const ext = fileExtension(file.name)
+  if (ext === 'xlsx') {
+    if (!typed || XLSX_MIME_ALIASES.has(typed.toLowerCase())) return XLSX_MIME
+  }
+  if (ext === 'xls') return typed || 'application/vnd.ms-excel'
+  if (ext === 'csv') return typed || 'text/csv'
+  if (ext === 'pdf') return typed || 'application/pdf'
+  if (ext === 'png') return typed || 'image/png'
+  if (ext === 'jpg' || ext === 'jpeg') return typed || 'image/jpeg'
+  if (ext === 'webp') return typed || 'image/webp'
+  return typed || 'application/octet-stream'
+}
 
 /** 보안 검사·내용 정책에서 최종 거부된 파일. 다시 기다려도 사용할 수 없다. */
 export class MemberFileRejectedError extends Error {
@@ -55,7 +79,7 @@ export async function uploadMemberPortalFile(input: {
   file: File
   filePurpose: string
 }): Promise<number> {
-  const contentType = input.file.type.trim() || 'application/octet-stream'
+  const contentType = resolveMemberPortalUploadContentType(input.file)
   const prepared = unwrap<MemberFileUploadResponse>(
     (
       await axiosClient.post(
@@ -70,14 +94,23 @@ export async function uploadMemberPortalFile(input: {
       )
     ).data
   )
-  const headers = prepared.requiredHeaders ?? {}
+  const headers: Record<string, string> = { ...(prepared.requiredHeaders ?? {}) }
+  if (!headers['Content-Type'] && !headers['content-type']) {
+    headers['Content-Type'] = contentType
+  }
   const uploadResponse = await fetch(prepared.uploadUrl, {
     method: prepared.method?.trim() || 'PUT',
     headers,
     body: input.file,
   })
   if (!uploadResponse.ok) {
-    throw new Error('파일 업로드에 실패했습니다.')
+    const detail = await uploadResponse.text().catch(() => '')
+    const snippet = detail.trim().slice(0, 200)
+    throw new Error(
+      snippet
+        ? `파일 저장소 업로드에 실패했습니다. (${uploadResponse.status}) ${snippet}`
+        : `파일 저장소 업로드에 실패했습니다. (${uploadResponse.status})`,
+    )
   }
   const confirmPath =
     prepared.confirmPath?.trim() || `/api/portal/me/files/${prepared.fileObjectId}/confirm`
@@ -96,7 +129,7 @@ export async function uploadMemberPortalFile(input: {
     if (isAvailable(status)) return prepared.fileObjectId
     const scan = status.scanStatus?.trim().toUpperCase() ?? ''
     const upload = status.uploadStatus?.trim().toUpperCase() ?? ''
-    if (REJECTED_SCAN_STATUSES.has(scan) || REJECTED_UPLOAD_STATUSES.has(upload)) {
+    if (FAILED_SCAN_STATUSES.has(scan) || FAILED_UPLOAD_STATUSES.has(upload)) {
       throw new MemberFileRejectedError()
     }
     await sleep(POLL_INTERVAL_MS)
