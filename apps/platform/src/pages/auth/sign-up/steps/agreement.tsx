@@ -49,17 +49,17 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
         <div className={styles.termsContent}>
           <PFToggle
             variant="check-large"
-            checked={agreement.isAllAgreed}
+            checked={agreement.isRequiredAgreed}
             onChange={() => agreement.toggleAll()}
             className={[
               styles.allAgreementButton,
-              agreement.isAllAgreed ? styles.allAgreementButtonChecked : undefined,
+              agreement.isRequiredAgreed ? styles.allAgreementButtonChecked : undefined,
             ]
               .filter(Boolean)
               .join(' ')}
           >
             <PFText typo="bd-lg-sb" color="inherit">
-              전체 동의하기
+              필수 항목 전체 동의하기
             </PFText>
           </PFToggle>
 

@@ -46,14 +46,14 @@ import {
   getAgreementItems,
   setAgreementState,
   toggleAgreementState,
-  toggleAllAgreementState,
+  toggleAllRequiredAgreementState,
 } from '../lib/agreement/agreement.logic'
 import {
   createInitialGuardianAgreementState,
   getGuardianAgreementDerived,
   guardianAgreementItems,
   setGuardianAgreementState,
-  toggleAllGuardianAgreementState,
+  toggleAllRequiredGuardianAgreementState,
   toggleGuardianAgreementState,
 } from '../lib/agreement/guardian-agreement.logic'
 import { validateEmailDuplicateCheck } from '../lib/email/email.logic'
@@ -657,22 +657,7 @@ export function useSignUp() {
   }
 
   const toggleAllAgreements = () => {
-    if (agreementDerived.isAllAgreed) {
-      setAgreements(prev => toggleAllAgreementState(prev, visibleAgreementItems))
-      return
-    }
-
-    const next: AgreementState = { ...agreements }
-    for (const item of visibleAgreementItems) {
-      if (item.key !== 'portrait') {
-        next[item.key] = true
-      }
-    }
-    setAgreements(next)
-
-    if (!next.portrait) {
-      openPortraitConsentForm('adult', next, guardianAgreements)
-    }
+    setAgreements(prev => toggleAllRequiredAgreementState(prev, visibleAgreementItems))
   }
 
   const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
@@ -692,22 +677,7 @@ export function useSignUp() {
   }
 
   const toggleAllGuardianAgreements = () => {
-    if (guardianAgreementDerived.isAllAgreed) {
-      setGuardianAgreements(prev => toggleAllGuardianAgreementState(prev))
-      return
-    }
-
-    const next: GuardianAgreementState = { ...guardianAgreements }
-    for (const item of guardianAgreementItems) {
-      if (item.key !== 'portrait') {
-        next[item.key] = true
-      }
-    }
-    setGuardianAgreements(next)
-
-    if (!next.portrait) {
-      openPortraitConsentForm('guardian', agreements, next)
-    }
+    setGuardianAgreements(prev => toggleAllRequiredGuardianAgreementState(prev))
   }
 
   const handleGuardianAgreementContinue = () => {
