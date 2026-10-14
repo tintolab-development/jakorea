@@ -172,7 +172,7 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
           dto.teacherTrainingScheduleName ?? baseCommon.teacherTrainingScheduleName,
       }
     ),
-    updatedAt: dto.updatedAt,
+    updatedAt: dto.updatedAt ?? undefined,
   }
 }
 

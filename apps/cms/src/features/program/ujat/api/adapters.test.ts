@@ -209,7 +209,7 @@ describe('UJAT program adapters', () => {
       id: program.id,
       title: '수정된 UJAT',
       educationStructure: 'CURRICULUM',
-      serviceDetailJson: updated.serviceDetailJson,
+      serviceDetailJson: updated.serviceDetailJson ?? undefined,
     })
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
     expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual(capacity)
@@ -237,7 +237,7 @@ describe('UJAT program adapters', () => {
       title: program.title,
       sponsorId: '163388',
       ips: 'Inspire',
-      serviceDetailJson: updated.serviceDetailJson,
+      serviceDetailJson: updated.serviceDetailJson ?? undefined,
     })
     expect(mapped.ips).toBe('Inspire')
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.ipsCategory']).toBe('inspire')

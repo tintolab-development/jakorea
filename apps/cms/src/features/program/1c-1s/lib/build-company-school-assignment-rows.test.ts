@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { asOpenApiFixture } from '@/shared/test/openapi-fixture-cast'
+import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import {
   buildCompanySchoolAssignedInstructorRows,
   buildCompanySchoolWaitingInstructorRows,
@@ -10,14 +12,15 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
       schoolName: '인천가온고등학교',
       sessions: [],
       approvedInstructors: [
-        {
+        asOpenApiFixture<InstructorApplicationListItemResponse>({
           id: 1,
           instructorMemberId: 170024,
           instructorName: '한서연',
           applicationStatus: 'APPROVED',
-          distanceKm: 45,
           preferredOrganizations: [],
-        },
+          availableScheduleIds: [],
+          availableActions: [],
+        }),
       ],
       assignedInstructorMemberIds: new Set(),
     })
@@ -43,13 +46,15 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
         },
       ],
       approvedInstructors: [
-        {
+        asOpenApiFixture<InstructorApplicationListItemResponse>({
           id: 1,
           instructorMemberId: 170024,
           instructorName: '한서연',
           applicationStatus: 'APPROVED',
           preferredOrganizations: [],
-        },
+          availableScheduleIds: [],
+          availableActions: [],
+        }),
       ],
       assignedInstructorMemberIds: new Set(),
       occupiedLectureDatesByInstructorId: occupied,
@@ -78,13 +83,15 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
         },
       ],
       approvedInstructors: [
-        {
+        asOpenApiFixture<InstructorApplicationListItemResponse>({
           id: 1,
           instructorMemberId: 170024,
           instructorName: '한서연',
           applicationStatus: 'APPROVED',
           preferredOrganizations: [],
-        },
+          availableScheduleIds: [],
+          availableActions: [],
+        }),
       ],
       assignedInstructorMemberIds: new Set(),
     })

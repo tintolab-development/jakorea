@@ -13,12 +13,16 @@ import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import type { ProgramUpdateRequestRoundsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestRoundsItem'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
+import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
 import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
+  omitUnchangedWageFieldsFromProgramForServiceDetail,
   parseGeneralProgramServiceDetailJson,
   serializeGeneralProgramServiceDetailJson,
+  wageCommonInfoFieldsUnchanged,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
@@ -56,6 +60,7 @@ import {
   hydrateGeneralRecruitmentInfoFromRows,
   type RecruitmentCopyAudience,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
@@ -517,6 +522,13 @@ export function filterGeneralProgramsByOverviewStatus(
   return programs.filter(program => programMatchesProgressPhase(program, statusFilter))
 }
 
+function mapProgramRoundsToUpdateRequest(
+  program: Program
+): ProgramUpdateRequestRoundsItem[] | undefined {
+  const rounds = mapProgramRoundsToRequest(program)
+  return rounds as ProgramUpdateRequestRoundsItem[] | undefined
+}
+
 function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['rounds'] {
   return program.rounds?.map(round => ({
     roundNumber: round.roundNumber,
@@ -535,6 +547,23 @@ function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['roun
  * `generalParticipantTypes`에 volunteer가 있으면 VOLUNTEER ACTIVE 필수
  * (`GENERAL_PROGRAM_ACTIVE_VOLUNTEER_RECRUITMENT_REQUIRED`).
  */
+function recruitmentOperationRequestDates(
+  program: Program,
+  recruitmentType: 'PARTICIPANT' | 'INSTRUCTOR' | 'VOLUNTEER'
+): Pick<ProgramRecruitmentRequest, 'operationStartDate' | 'operationEndDate'> {
+  const audience =
+    recruitmentType === 'INSTRUCTOR'
+      ? 'instructor'
+      : recruitmentType === 'VOLUNTEER'
+        ? 'volunteer'
+        : 'participant'
+  const iso = resolveAudienceProgramOperationIsoRange(program, audience)
+  return {
+    operationStartDate: toRequestDate(iso.start),
+    operationEndDate: toRequestDate(iso.end),
+  }
+}
+
 export function mapGeneralProgramRecruitmentsToRequest(
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
@@ -559,6 +588,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       status: ProgramRecruitmentRequestStatus.ACTIVE,
       startAt: toRequestDate(program.applicationStartDate),
       endAt: toRequestDate(program.applicationEndDate),
+      ...recruitmentOperationRequestDates(program, 'PARTICIPANT'),
       maxCount: program.totalParticipants ?? program.approvedStudentCount ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
     })
@@ -571,6 +601,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       status: ProgramRecruitmentRequestStatus.ACTIVE,
       startAt: toRequestDate(program.applicationStartDate),
       endAt: toRequestDate(program.applicationEndDate),
+      ...recruitmentOperationRequestDates(program, 'PARTICIPANT'),
       maxCount: program.totalParticipants ?? program.approvedStudentCount ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
     })
@@ -587,6 +618,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       endAt: toRequestDate(
         program.instructorApplicationEndDate ?? program.applicationEndDate
       ),
+      ...recruitmentOperationRequestDates(program, 'INSTRUCTOR'),
       maxCount: program.instructors ?? program.instructorCapacity ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
     })
@@ -603,6 +635,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       endAt: toRequestDate(
         program.volunteerApplicationEndDate ?? program.applicationEndDate
       ),
+      ...recruitmentOperationRequestDates(program, 'VOLUNTEER'),
       maxCount: program.generalVolunteers ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
     })
@@ -805,7 +838,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     attachmentFileNames: program.attachmentFileNames,
     // BE 필수 — serviceDetailJson 앞쪽에 둬 로깅·디버깅 시 잘리지 않게
     applicationTargetMode,
-    rounds: mapProgramRoundsToRequest(program),
+    rounds: mapProgramRoundsToUpdateRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
@@ -818,9 +851,9 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
 
 export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequestBody {
   const core = mapProgramCoreFieldsToRequest(program)
-  return {
+  return omitNullRecordValues({
     ...core,
-    recruitments: withGeneralCreateRowCopy(core.recruitments, program),
+    recruitments: withGeneralCreateRowCopy(core.recruitments ?? undefined, program),
     // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
     sponsorId: core.sponsorId != null ? String(core.sponsorId) : undefined,
     programType: resolveGeneralProgramCreateProgramType(
@@ -830,7 +863,7 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
     businessStartDate: toRequestDate(program.startDate),
     businessEndDate: toRequestDate(program.endDate),
     autoApplyDefaultFormBindings: true,
-  }
+  }) as ProgramCreateRequestBody
 }
 
 const SERVICE_DETAIL_PROGRAM_KEYS = [
@@ -890,7 +923,7 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
  * rounds·curriculum·담당자(미변경/마스킹) 등 화면 밖 필드는 보내지 않음.
  */
 function recruitmentTypeOf(
-  recruitmentType: string | undefined
+  recruitmentType: string | null | undefined
 ): ProgramRecruitmentEditType | null {
   if (recruitmentType === 'PARTICIPANT' || recruitmentType === 'INSTRUCTOR' || recruitmentType === 'VOLUNTEER') {
     return recruitmentType
@@ -1052,7 +1085,7 @@ function mapProgramPatchFieldsToRequest(
     body.learningSupportContent = merged.learningSupportContent
   }
   if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
-  if (has('rounds')) body.rounds = mapProgramRoundsToRequest(merged)
+  if (has('rounds')) body.rounds = mapProgramRoundsToUpdateRequest(merged)
 
   const detailSource =
     has('generalProgramAudience') || has('generalParticipantTypes')
@@ -1080,8 +1113,17 @@ function mapProgramPatchFieldsToRequest(
       persistedTargetLevels != null
         ? { ...detailSource, targetLevels: persistedTargetLevels }
         : detailSource
-    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeSource, {
+    const omitUnchangedWageOverlay = wageCommonInfoFieldsUnchanged(
+      serializeSource.generalCommonInfo,
+      existing.generalCommonInfo
+    )
+    const serializeProgram = omitUnchangedWageFieldsFromProgramForServiceDetail(
+      serializeSource,
+      existing
+    )
+    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeProgram, {
       omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
+      omitUnchangedWageOverlay,
     })
     if (touchesTargetLevels && persistedTargetLevels != null) {
       body.targetLevels = persistedTargetLevels
@@ -1113,10 +1155,13 @@ function mapProgramPatchFieldsToRequest(
  */
 export function mapGeneralProgramToUpdateRequest(
   program: Program,
-  patch?: Partial<Program>
+  patch?: Partial<Program>,
+  /** 저장 전 로드된 프로그램 — 임금·모집 잠금 비교 SSOT */
+  baseline?: Program
 ): ProgramUpdateRequestBody {
+  const baselineProgram = baseline ?? program
   if (patch && Object.keys(patch).length > 0) {
-    return mapProgramPatchFieldsToRequest({ ...program, ...patch }, patch, program)
+    return mapProgramPatchFieldsToRequest({ ...program, ...patch }, patch, baselineProgram)
   }
   return mapProgramCoreFieldsToRequest(program)
 }

@@ -671,8 +671,8 @@ describe('trained teachers recruitment edit round-trip', () => {
       participantRecruitmentMaxSessionsPerDay: 4,
       applicationStartDate: '2026-10-01T00:00:00.000Z',
       applicationEndDate: '2026-10-31T00:00:00.000Z',
-      startDate: '2026-11-01T00:00:00.000Z',
-      endDate: '2026-12-15T00:00:00.000Z',
+      participantProgramOperationStartDate: '2026-11-01T00:00:00.000Z',
+      participantProgramOperationEndDate: '2026-12-15T00:00:00.000Z',
       targetLevels: ['middle' as const],
       educationTargetDetail: '중학교 2학년',
       resultAnnouncementDate: '2026-11-02T00:00:00.000Z',
@@ -683,7 +683,9 @@ describe('trained teachers recruitment edit round-trip', () => {
       remarks: '수정된 비고',
     }
 
-    const patch = detailEditValuesToProgramPatch(values, ttProgram)
+    const patch = detailEditValuesToProgramPatch(values, ttProgram, {
+      recruitmentAudience: 'participant',
+    })
     const draft = {
       ...ttProgram,
       ...patch,

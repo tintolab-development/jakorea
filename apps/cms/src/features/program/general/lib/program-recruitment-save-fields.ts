@@ -65,8 +65,8 @@ export const programParticipantRecruitmentSaveSchema = z.object({
   participantRecruitmentMaxClassCount: optionalNonNegNumber,
   participantRecruitmentMaxScheduleCount: optionalNonNegNumber,
   participantRecruitmentMaxSessionsPerDay: optionalNonNegNumber,
-  startDate: optionalString,
-  endDate: optionalString,
+  participantProgramOperationStartDate: optionalString,
+  participantProgramOperationEndDate: optionalString,
   targetLevels: targetLevelsSaveSchema,
   district: optionalString,
   contactPhone: z.preprocess(
@@ -119,8 +119,10 @@ export const programTrainedTeachersRecruitmentSaveSchema =
     participantRecruitmentMaxSessionsPerDay: requiredNonNeg(
       '신청 가능 1일 최대 차시를 입력해주세요'
     ),
-    startDate: requiredText('프로그램 운영 시작일을 선택해주세요'),
-    endDate: requiredText('프로그램 운영 종료일을 선택해주세요'),
+    participantProgramOperationStartDate: requiredText(
+      '프로그램 운영 시작일을 선택해주세요'
+    ),
+    participantProgramOperationEndDate: requiredText('프로그램 운영 종료일을 선택해주세요'),
     applicationStartDate: requiredText('참여자 모집 시작일을 선택해주세요'),
     applicationEndDate: requiredText('참여자 모집 종료일을 선택해주세요'),
     targetLevels: z.preprocess(
@@ -147,8 +149,8 @@ export const programTrainedTeachersRecruitmentSaveSchema =
 
 export const programInstructorRecruitmentSaveSchema = z.object({
   instructorRecruitmentAnnouncementPublished: publishedEnum,
-  startDate: optionalString,
-  endDate: optionalString,
+  instructorProgramOperationStartDate: optionalString,
+  instructorProgramOperationEndDate: optionalString,
   instructorTargets: z.array(z.string()).nullish(),
   instructorTargetDetail: optionalString,
   instructorApplicationStartDate: optionalString,
@@ -191,8 +193,8 @@ export const programVolunteerRecruitmentSaveSchema = z.object({
   interviewMethod: optionalString,
   finalPassAnnouncementDate: optionalString,
   finalPassAnnouncementMethod: optionalString,
-  startDate: optionalString,
-  endDate: optionalString,
+  volunteerProgramOperationStartDate: optionalString,
+  volunteerProgramOperationEndDate: optionalString,
   volunteerTargets: z.array(z.string()).nullish(),
   volunteerTargetDetail: optionalString,
   volunteerRecruitmentContactOrganizationName: optionalString,

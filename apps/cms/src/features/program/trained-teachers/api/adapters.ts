@@ -1,4 +1,5 @@
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
+import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
@@ -605,12 +606,12 @@ export function mapTrainedTeacherToUpdateRequest(
 }
 
 export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreateRequest {
-  return {
+  return omitNullRecordValues({
     ...mapTrainedTeacherToUpdateRequest(program),
     programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
     applicationTargetMode: 'ORGANIZATION',
     businessStartDate: toDate(program.startDate),
     businessEndDate: toDate(program.endDate),
     autoApplyDefaultFormBindings: true,
-  }
+  }) as ProgramCreateRequest
 }

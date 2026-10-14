@@ -301,7 +301,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     documentStatus: dto.documentStatus,
     interviewStatus: dto.interviewStatus,
     finalResultStatus: dto.finalResultStatus,
-    reserveRank: dto.reserveRank,
+    reserveRank: dto.reserveRank ?? undefined,
     giveUpYn: dto.giveUpYn,
   })
 
@@ -344,8 +344,8 @@ export function mapVolunteerApplicationToUjatApplicantRow(
       | undefined
   )
   const interviewEvals = dto.interviewEvaluations ?? []
-  const scoreA = interviewEvals.find(item => item.evaluatorOrder === 1)?.score
-  const scoreB = interviewEvals.find(item => item.evaluatorOrder === 2)?.score
+  const scoreA = interviewEvals.find(item => item.evaluatorOrder === 1)?.scoreTotal
+  const scoreB = interviewEvals.find(item => item.evaluatorOrder === 2)?.scoreTotal
 
   return {
     id: toId(dto.id),

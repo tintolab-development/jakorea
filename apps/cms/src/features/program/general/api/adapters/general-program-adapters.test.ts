@@ -908,6 +908,99 @@ describe('general-program-adapters', () => {
     )
   })
 
+  it('학생 명단 제출 여부만 패치할 때 legacy paymentItems를 serviceDetailJson에 넣지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      id: '186090',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      studentListRequired: 'not_required',
+      generalCommonInfo: {
+        paymentItems: '숙박비',
+        participantRecruitmentInfo: {
+          studentListRequired: 'not_required',
+          studentListRequiredLabel: '제출 불필요',
+        },
+      },
+    }
+    const patch = {
+      studentListRequired: 'required' as const,
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        participantRecruitmentInfo: {
+          ...existing.generalCommonInfo?.participantRecruitmentInfo,
+          studentListRequired: 'required' as const,
+          studentListRequiredLabel: '제출 필요',
+        },
+      },
+    }
+    const draft: Program = { ...existing, ...patch }
+    const request = mapGeneralProgramToUpdateRequest(draft, patch, existing)
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      studentListRequired?: string
+      registration?: { overlay?: Record<string, unknown> }
+      generalCommonInfo?: { paymentItems?: string; participantRecruitmentInfo?: { studentListRequired?: string } }
+    }
+    expect(detail.studentListRequired).toBe('required')
+    expect(detail.generalCommonInfo?.participantRecruitmentInfo?.studentListRequired).toBe(
+      'required'
+    )
+    expect(detail.generalCommonInfo?.paymentItems).toBeUndefined()
+    expect(detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemValues']).toBeUndefined()
+    expect(detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemLabels']).toBeUndefined()
+    expect(request.serviceDetailJson).not.toContain('숙박비')
+  })
+
+  it('학생 명단 패치 시 registrationOverlay의 wageInfo도 serviceDetailJson에 재전송하지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalCommonInfo: {
+        paymentItems: '숙박비',
+        participantRecruitmentInfo: { studentListRequired: 'not_required' },
+      },
+      registrationOverlay: {
+        'generalRegistration.wageInfo.paymentItemValues': ['p-3'],
+        'generalRegistration.wageInfo.paymentItemLabels': '숙박비',
+      },
+    }
+    const patch = {
+      studentListRequired: 'required' as const,
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        participantRecruitmentInfo: {
+          studentListRequired: 'required' as const,
+        },
+      },
+    }
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing)
+    expect(request.serviceDetailJson).not.toContain('paymentItemValues')
+    expect(request.serviceDetailJson).not.toContain('숙박비')
+  })
+
+  it('지급 항목을 실제로 바꾼 패치는 paymentItems를 serviceDetailJson에 남긴다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalCommonInfo: {
+        paymentItems: '강사 교통비',
+      },
+    }
+    const patch = {
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        paymentItems: '강사 교통비, 숙박비',
+      },
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      { ...existing, ...patch },
+      patch,
+      existing
+    )
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: { paymentItems?: string }
+    }
+    expect(detail.generalCommonInfo?.paymentItems).toBe('강사 교통비, 숙박비')
+  })
+
   it('공통 정보 패치는 같은 참여자 유형이면 applicationTargetMode를 모집 시작 후에 빼다', () => {
     const request = mapGeneralProgramToUpdateRequest(
       {

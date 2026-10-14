@@ -24,6 +24,7 @@ export function toProgramRecruitmentWindows(
         startAt?: string | null
         endAt?: string | null
         operationStartDate?: string | null
+        operationEndDate?: string | null
         programDescription?: string | null
         recruitmentGuide?: string | null
         applicationMethod?: string | null
@@ -60,6 +61,7 @@ export function toProgramRecruitmentWindows(
     startAt: row.startAt ?? null,
     endAt: row.endAt ?? null,
     operationStartDate: row.operationStartDate ?? null,
+    operationEndDate: row.operationEndDate ?? null,
     announcementTitle: row.announcementTitle ?? null,
     summary: row.summary ?? null,
     contactName: row.contactName ?? null,
