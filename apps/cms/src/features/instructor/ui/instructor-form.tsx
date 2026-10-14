@@ -67,29 +67,6 @@ const specialties = [
   '기업가정신',
 ]
 
-const banks = [
-  '국민은행',
-  '신한은행',
-  '우리은행',
-  '하나은행',
-  'SC제일은행',
-  '기업은행',
-  '농협은행',
-  '카카오뱅크',
-  '토스뱅크',
-  '케이뱅크',
-  '새마을금고',
-  '신협',
-  '우체국',
-  '수협은행',
-  '대구은행',
-  '부산은행',
-  '경남은행',
-  '광주은행',
-  '전북은행',
-  '제주은행',
-]
-
 export function InstructorForm({ instructor, onSubmit, onCancel, loading }: InstructorFormProps) {
   // defaultValues를 useMemo로 계산하여 항상 최신 값 사용
   const defaultValues = useMemo<InstructorFormData | undefined>(() => {
@@ -278,13 +255,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           name="bankName"
           control={control}
           render={({ field }) => (
-            <Select {...field} placeholder="은행 선택" allowClear>
-              {banks.map(bank => (
-                <Option key={bank} value={bank}>
-                  {bank}
-                </Option>
-              ))}
-            </Select>
+            <Input {...field} placeholder="은행명을 입력하세요" />
           )}
         />
       </Form.Item>
