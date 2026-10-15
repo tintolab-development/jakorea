@@ -1507,6 +1507,19 @@ export function ProgramApplyPage() {
         }
       }
 
+      // 고정 교육 일정이 서버 응답상 1개뿐이면 선택 UI를 숨기는 정책을
+      // 유지하되, 서버가 필수로 검증하는 일정 답변은 실제 runtime option을
+      // 자동 제출한다. 화면에서 선택할 수 없다는 이유로 canonical API 값이
+      // payload에서 빠지면 단일 회차 기관 신청이 400으로 거절된다.
+      const singleFixedInstitutionSchedule =
+        applyCase === 'institution-general' &&
+        institutionScheduleInputMode === 'fixed_schedule_options'
+          ? readInstitutionFixedScheduleChoiceItems(
+              applicationFormDocument?.runtimeContext,
+              institutionScheduleParagraph,
+              { educationScheduleLines: educationScheduleLinesForApply },
+            )?.[0]
+          : undefined
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
         const scheduleParagraph = displayDraft.paragraphs.find(
@@ -1548,6 +1561,11 @@ export function ProgramApplyPage() {
       }
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
+      }
+      if (singleFixedInstitutionSchedule && institutionScheduleParagraph) {
+        overrides[resolveApplicationAnswerKey(institutionScheduleParagraph)] = [
+          singleFixedInstitutionSchedule.id,
+        ]
       }
       if (teamInfoVisible) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
@@ -1633,7 +1651,11 @@ export function ProgramApplyPage() {
         }
       }
       for (const paragraph of displayDraft.paragraphs) {
-        if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
+        if (
+          isApplyScheduleChoiceParagraphId(paragraph.id) &&
+          hiddenParagraphIds.has(paragraph.id) &&
+          singleFixedInstitutionSchedule == null
+        ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
         }
