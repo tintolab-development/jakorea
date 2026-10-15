@@ -1,10 +1,18 @@
 /** 안내사항 상세 팝업 — `?noticeId=` 로 열린 게시글을 공유·새로고침·뒤로가기와 맞춘다. */
 export const NOTICE_ID_QUERY_KEY = 'noticeId'
+export const COMMENT_ID_QUERY_KEY = 'commentId'
 
 /** 브라우저 URL 이 SSOT — router params 는 한 커밋 늦을 수 있다. */
 export function readNoticeIdFromLocation(): string | null {
   if (typeof window === 'undefined') return null
   const value = new URLSearchParams(window.location.search).get(NOTICE_ID_QUERY_KEY)?.trim()
+  return value || null
+}
+
+/** 댓글 알림에서 특정 댓글을 강조할 때 사용하는 식별자. */
+export function readCommentIdFromLocation(): string | null {
+  if (typeof window === 'undefined') return null
+  const value = new URLSearchParams(window.location.search).get(COMMENT_ID_QUERY_KEY)?.trim()
   return value || null
 }
 
