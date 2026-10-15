@@ -640,7 +640,7 @@ export class GeneralProgramRegistrationPage {
     // 풀페이지 모달 footer 「프로그램 등록 완료」 버튼과 구분
     const successDialog = this.page
       .getByRole('dialog')
-      .filter({ hasText: '신규 프로그램 등록이 완료되었습니다.' })
+      .filter({ hasText: '등록되었습니다.' })
 
     // POST가 안 나가고 실패 모달만 뜨는 경우(템플릿 draft 500 등)도 잡기 위해 race
     const outcomePromise = Promise.race([

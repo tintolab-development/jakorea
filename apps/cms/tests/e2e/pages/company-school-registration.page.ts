@@ -324,7 +324,7 @@ export class CompanySchoolRegistrationPage {
     const failDialog = this.page.getByRole('dialog').filter({ hasText: /등록 실패/ })
     const successDialog = this.page
       .getByRole('dialog')
-      .filter({ hasText: '신규 프로그램 등록이 완료되었습니다.' })
+      .filter({ hasText: '등록되었습니다.' })
 
     const outcomePromise = Promise.race([
       this.page
