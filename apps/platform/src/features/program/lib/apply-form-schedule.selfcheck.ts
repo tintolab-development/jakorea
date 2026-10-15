@@ -15,6 +15,7 @@ import {
   readInstitutionFixedScheduleChoiceItems,
   normalizeInstitutionFixedScheduleAnswerTokens,
   shouldUseInstitutionAllowedSchedulePeriodDates,
+  resolveApplyPreferredScheduleMaxBlocks,
   shouldShowApplyPreferredSchedule,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldShowApplyScheduleParagraph,
@@ -102,6 +103,30 @@ function testScheduleParagraphVisibility() {
       educationScheduleLines: ['26년 4월 20일(월) ~ 26년 4월 27일(월)'],
     }),
     true
+  )
+
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocks({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+      educationScheduleLines: [],
+      maxPreferredScheduleCount: 1,
+    }),
+    10
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocks(
+      {
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+        educationScheduleLines: [],
+        maxPreferredScheduleCount: 4,
+      },
+      { maxScheduleCount: 4 }
+    ),
+    4
   )
 
   assert.equal(

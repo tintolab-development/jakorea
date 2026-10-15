@@ -288,6 +288,28 @@ assert.deepEqual(
   generalCurriculum.educationSchedules.map(item => item.value),
   generalCurriculum.educationScheduleLines
 )
+assert.deepEqual(
+  generalCurriculum.educationSchedules.map(item => item.label),
+  ['교육 일정 1', '교육 일정 2']
+)
+
+const periodEducationSchedule = mapPortalProgramDetail({
+  programId: 186099,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '기간 일정',
+  educationStructure: 'curriculum',
+  educationScheduleMode: 'period',
+  educationScheduleLines: ['26년 11월 19일(목) 0:00 ~ 26년 11월 30일(월) 23:59'],
+  curriculumSessions: [],
+  scheduleDetails: [],
+})
+assert.ok(periodEducationSchedule)
+assert.equal(periodEducationSchedule.educationSchedules.length, 1)
+assert.equal(periodEducationSchedule.educationSchedules[0]?.label, '교육 일정')
+assert.equal(
+  periodEducationSchedule.educationSchedules[0]?.value,
+  '26년 11월 19일(목) ~ 26년 11월 30일(월)'
+)
 assert.equal(generalCurriculum.educationForm, 'online')
 assert.equal(generalCurriculum.educationFormLabel, '온라인')
 assert.equal(generalCurriculum.participationMethod, 'individual')

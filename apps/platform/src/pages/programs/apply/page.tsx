@@ -88,6 +88,7 @@ import {
   createEmptyApplyPreferredScheduleBlocks,
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
+  resolveApplyPreferredScheduleMaxBlocks,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyPreferredScheduleSessionSelect,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
@@ -101,6 +102,7 @@ import {
 } from '@/features/program/lib/preferred-schedule-blocks'
 import {
   ApplyPreferredSchedule,
+  ApplyPreferredScheduleAddButton,
   type ApplyPreferredScheduleBlock,
 } from '@/features/program/ui/apply-preferred-schedule/apply-preferred-schedule'
 import {
@@ -497,6 +499,10 @@ export function ProgramApplyPage() {
     if (!program || !showGeneralPreferredSchedule) return false
     return shouldShowApplySchedulePeriodDateOnlyPreferred(program)
   }, [program, showGeneralPreferredSchedule])
+  const preferredScheduleMaxBlocks = useMemo(() => {
+    if (!program) return 1
+    return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
+  }, [program, applicationFormRuntimeContext])
   const preferredScheduleMapOptions = useMemo(
     () => (institutionDateOnlyPreferred ? { dateOnly: true } : undefined),
     [institutionDateOnlyPreferred],
@@ -1014,7 +1020,7 @@ export function ProgramApplyPage() {
           isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
         return (
           <ApplyPreferredSchedule
-            maxBlocks={program.maxPreferredScheduleCount}
+            maxBlocks={preferredScheduleMaxBlocks}
             value={preferredBlocks}
             onChange={setPreferredBlocks}
             minDate={
@@ -1057,13 +1063,18 @@ export function ProgramApplyPage() {
       ) {
         const selectedIds = paragraph.selectedPreviewMultipleIds ?? []
         const choiceItems =
-          isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
+          isApplyScheduleChoiceParagraphId(paragraph.id)
             ? paragraph.items.length > 0
               ? paragraph.items
               : (readInstitutionFixedScheduleChoiceItems(
                   applicationFormDocument?.runtimeContext,
                   institutionScheduleParagraph ?? paragraph,
-                  { educationScheduleLines: educationScheduleLinesForApply },
+                  {
+                    educationScheduleLines: educationScheduleLinesForApply,
+                    educationStructure: program.educationStructure,
+                    sessionRound: program.sessionRound,
+                    educationScheduleMode: program.educationScheduleMode,
+                  },
                 ) ?? paragraph.items)
             : paragraph.items
         if (choiceItems.length === 0) {
@@ -1220,7 +1231,39 @@ export function ProgramApplyPage() {
       profileTeacherMobile,
       profileTeacherEmail,
       updateParagraph,
+      preferredScheduleMaxBlocks,
     ]
+  )
+
+  const renderParagraphTitleTrailing = useCallback(
+    (paragraph: WritingFormParagraph) => {
+      const isPreferredScheduleSlot =
+        isApplicationPreferredScheduleParagraphId(paragraph.id) ||
+        (showGeneralPreferredSchedule && isApplyScheduleChoiceParagraphId(paragraph.id)) ||
+        (showTrainedTeachersApply &&
+          paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+
+      if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
+      if (preferredBlocks.length >= preferredScheduleMaxBlocks) return null
+
+      return (
+        <ApplyPreferredScheduleAddButton
+          onClick={() => {
+            setPreferredBlocks(prev => {
+              if (prev.length >= preferredScheduleMaxBlocks) return prev
+              return [...prev, createEmptyPreferredBlock()]
+            })
+          }}
+        />
+      )
+    },
+    [
+      showGeneralPreferredSchedule,
+      showTrainedTeachersApply,
+      showPreferredScheduleInput,
+      preferredBlocks.length,
+      preferredScheduleMaxBlocks,
+    ],
   )
 
   const formLoading =
@@ -1846,6 +1889,7 @@ export function ProgramApplyPage() {
                 onUpdateParagraph={updateParagraph}
                 fillOptions={{ consentFillReadOnlyBody: true }}
                 renderParagraphSlot={renderParagraphSlot}
+                renderParagraphTitleTrailing={renderParagraphTitleTrailing}
               />
             </FormTemplateHost>
           ) : null}

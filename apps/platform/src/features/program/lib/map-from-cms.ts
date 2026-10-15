@@ -37,6 +37,10 @@ import {
 } from './detail-case.ts'
 import { PROGRAM_TAB_LABEL } from './constants.ts'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from './html-body.ts'
+import {
+  educationScheduleDetailCardLabel,
+  formatEducationScheduleLineForDetailCard,
+} from './education-schedule-detail-display.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -574,6 +578,7 @@ function mapEducationSchedules(
     .filter(line => line && !isUnavailableScheduleLine(line))
 
   if (lines.length) {
+    const scheduleMode = mapEducationScheduleMode(program)
     return lines.map((line, index) => {
       // UJAT 기관: "상반기: …" 형태면 label 분리
       if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
@@ -585,8 +590,8 @@ function mapEducationSchedules(
         }
       }
       return {
-        label: `교육 일정 ${index + 1}`,
-        value: line,
+        label: educationScheduleDetailCardLabel(index, lines.length),
+        value: formatEducationScheduleLineForDetailCard(line, scheduleMode),
       }
     })
   }
@@ -600,7 +605,7 @@ function mapEducationSchedules(
   if (start || end) {
     return [
       {
-        label: '교육 일정 1',
+        label: educationScheduleDetailCardLabel(0, 1),
         value: formatOperatingPeriodLabel(start, end),
       },
     ]

@@ -218,6 +218,28 @@ export function shouldShowApplySchedulePeriodDateOnlyPreferred(
 
 const DEFAULT_MAX_SESSIONS_PER_DAY = 16
 
+function clampPreferredScheduleBlockCount(maxScheduleCount?: number | null): number {
+  if (maxScheduleCount == null || maxScheduleCount < 1) return 1
+  return Math.min(maxScheduleCount, 10)
+}
+
+/** CMS `resolveInstitutionPreferredScheduleMaxBlocks`와 동일 — runtime·program·기간 지망 fallback */
+export function resolveApplyPreferredScheduleMaxBlocks(
+  program: ApplyScheduleVisibilityFields & { maxPreferredScheduleCount?: number },
+  runtimeContext?: unknown
+): number {
+  const fromRuntime = readApplicationScheduleRecruitmentLimitsFromRuntime(runtimeContext)
+  const preferredUi = shouldShowApplicationPreferredScheduleParagraph(program)
+  const recruitmentFallback = preferredUi ? 10 : undefined
+  const fromProgramLimit =
+    program.maxPreferredScheduleCount != null && program.maxPreferredScheduleCount > 1
+      ? program.maxPreferredScheduleCount
+      : undefined
+  return clampPreferredScheduleBlockCount(
+    fromRuntime.maxScheduleCount ?? fromProgramLimit ?? recruitmentFallback
+  )
+}
+
 /** 모집 1일 최대 차시 — CMS `buildInstitutionSessionCountOptions`와 동일 상한 */
 
 /** 기관 복수+기간(모집 1일 최대 차시)만 기본 2지망 — CMS와 동일 */
@@ -270,11 +292,21 @@ export function applyScheduleParagraphsForProgram(
   program: ApplyScheduleParagraphsForProgramInput
 ): WritingFormDraft {
   const scheduleMeta = readApplyScheduleMetaFromProgram(program)
+  const visibility = mergeApplicationScheduleVisibilityInput({
+    runtime: program.runtimeContext,
+    program: {
+      educationStructure: program.educationStructure,
+      sessionRound: program.sessionRound,
+      educationScheduleMode: program.educationScheduleMode,
+      educationScheduleLines: program.educationScheduleLines,
+    },
+    educationScheduleLines: program.educationScheduleLines,
+  })
   return syncApplicationScheduleChoiceParagraphsInDraft(draft, {
-    educationStructure: program.educationStructure ?? 'curriculum',
-    sessionRound: program.sessionRound ?? 'single',
-    educationScheduleMode: program.educationScheduleMode ?? 'date',
-    educationScheduleLines: program.educationScheduleLines ?? [],
+    educationStructure: visibility.educationStructure ?? 'curriculum',
+    sessionRound: visibility.sessionRound ?? 'single',
+    educationScheduleMode: visibility.educationScheduleMode ?? 'date',
+    educationScheduleLines: visibility.educationScheduleLines ?? program.educationScheduleLines ?? [],
     maxScheduleCount: program.maxScheduleCount ?? program.maxPreferredScheduleCount,
     maxSessionsPerDay: program.maxSessionsPerDay,
     educationRoundCount: scheduleMeta.educationRoundCount,

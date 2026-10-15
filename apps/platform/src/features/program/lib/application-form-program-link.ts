@@ -3,13 +3,14 @@
  */
 
 import {
+  isApplicationScheduleChoiceParagraphId,
+  mergeApplicationScheduleVisibilityInput,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   readEducationScheduleLinesForApplicationForm,
   syncApplicationScheduleChoiceParagraphsInDraft,
 } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
-import { isInstitutionApplyScheduleChoiceParagraphId } from './apply-form-schedule.ts'
 import type { ProgramApplyFormCase } from './apply-form-case.ts'
 import type { ProgramDetail } from '../model/types.ts'
 
@@ -19,9 +20,9 @@ export type ApplyProgramLinkedDraftPatchInput = {
   runtimeContext?: unknown
 }
 
-function findInstitutionScheduleParagraphRaw(draft: WritingFormDraft): unknown {
+function findApplicationScheduleParagraphRaw(draft: WritingFormDraft): unknown {
   const found = draft.paragraphs.find(paragraph =>
-    isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
+    isApplicationScheduleChoiceParagraphId(paragraph.id)
   )
   return found ?? null
 }
@@ -43,21 +44,31 @@ export function applyProgramLinkedApplicationDraftPatches(
     return draft
   }
 
-  const scheduleParagraphRaw =
-    applyCase === 'institution-general' ? findInstitutionScheduleParagraphRaw(draft) : null
+  const scheduleParagraphRaw = findApplicationScheduleParagraphRaw(draft)
 
   const scheduleMeta = readApplyScheduleMetaFromProgram(program)
   const recruitLimits = readApplicationScheduleRecruitmentLimitsFromRuntime(runtimeContext)
+  const scheduleLines =
+    readEducationScheduleLinesForApplicationForm(
+      runtimeContext,
+      program.educationScheduleLines,
+    ) ?? []
+  const visibility = mergeApplicationScheduleVisibilityInput({
+    runtime: runtimeContext,
+    program: {
+      educationStructure: program.educationStructure,
+      sessionRound: program.sessionRound,
+      educationScheduleMode: program.educationScheduleMode,
+      educationScheduleLines: program.educationScheduleLines,
+    },
+    educationScheduleLines: scheduleLines,
+  })
 
   return syncApplicationScheduleChoiceParagraphsInDraft(draft, {
-    educationStructure: program.educationStructure ?? 'curriculum',
-    sessionRound: program.sessionRound ?? 'single',
-    educationScheduleMode: program.educationScheduleMode ?? 'date',
-    educationScheduleLines:
-      readEducationScheduleLinesForApplicationForm(
-        runtimeContext,
-        program.educationScheduleLines,
-      ) ?? [],
+    educationStructure: visibility.educationStructure ?? 'curriculum',
+    sessionRound: visibility.sessionRound ?? 'single',
+    educationScheduleMode: visibility.educationScheduleMode ?? 'date',
+    educationScheduleLines: visibility.educationScheduleLines ?? scheduleLines,
     maxScheduleCount: recruitLimits.maxScheduleCount ?? program.maxPreferredScheduleCount,
     maxSessionsPerDay: recruitLimits.maxSessionsPerDay ?? program.maxSessionsPerDay,
     educationRoundCount: scheduleMeta.educationRoundCount,
