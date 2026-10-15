@@ -441,6 +441,7 @@ export function HorizontalTableParagraphBody({
   showInstitutionApplicationLimits,
   applicantRecruitInstitutionLayoutVariant,
   applicantRecruitInstitutionDefaults,
+  applicantRecruitInstitutionRecruitLimitVisibility,
   applicantRecruitInstitutionTemplateAuthoringMode,
   economyRecruitFormInstitution,
   trainedTeachersRecruitFormInstitution,
@@ -506,6 +507,7 @@ export function HorizontalTableParagraphBody({
   showInstitutionApplicationLimits?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  applicantRecruitInstitutionRecruitLimitVisibility?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['recruitLimitVisibility']
   applicantRecruitInstitutionTemplateAuthoringMode?: boolean
   /** 1사1교_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   economyRecruitFormInstitution?: boolean
@@ -619,6 +621,7 @@ export function HorizontalTableParagraphBody({
     {
       showInstitutionApplicationLimits,
       isTemplateAuthoringMode: applicantRecruitInstitutionTemplateAuthoringMode === true,
+      recruitLimitVisibility: applicantRecruitInstitutionRecruitLimitVisibility,
       layoutVariant: applicantRecruitInstitutionLayoutVariant,
       defaults: applicantRecruitInstitutionDefaults,
     }

@@ -79,6 +79,37 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     expect(options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(
       false
     )
+    expect(
+      resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+        program,
+        paragraphs: [],
+        institutionBridge,
+      })?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+    ).toBe(false)
+  })
+
+  it('개인 · 일정형 · 단일 · 날짜(2일) — scheduleChoice 노출', () => {
+    const program = {
+      id: 'individual-schedule-single',
+      generalProgramAudience: 'individual',
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        educationScheduleMode: 'date',
+        educationScheduleLines: [
+          '26년 4월 20일(월) 09:30 ~ 12:20',
+          '26년 4월 27일(월) 13:00 ~ 15:50',
+        ],
+      },
+    } as Program
+    const bridge = resolveInstitutionApplicationProgramBridge(program)
+    expect(bridge.educationStructure).toBe('schedule')
+    const hidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program,
+      paragraphs: [],
+      institutionBridge: bridge,
+    })
+    expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(false)
   })
 
   it('등록 위저드 sync 후 개인 신청 — 고유 일자 1일이면 scheduleChoice를 숨긴다', () => {

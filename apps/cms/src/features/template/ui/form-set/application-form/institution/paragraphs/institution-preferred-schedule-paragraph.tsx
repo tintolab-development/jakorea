@@ -12,6 +12,7 @@ import {
   resolveInstitutionPreferredScheduleInitialBlockCount,
   resolveInstitutionPreferredScheduleMaxBlocks,
 } from '@/features/template/lib/institution-application-schedule-copy'
+import { resolvePreferredScheduleBlockTitle } from '@jakorea/form-schema/program-application'
 import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
@@ -89,13 +90,7 @@ function PreferenceScheduleFields({
     />
   )
 
-  if (dateOnlyPreferred) {
-    return (
-      <DetailInfoForm.Row type="single">
-        {dateField}
-      </DetailInfoForm.Row>
-    )
-  }
+  const timeInputsDisabled = dateOnlyPreferred
 
   return (
     <>
@@ -105,7 +100,7 @@ function PreferenceScheduleFields({
           label="희망 교육 시간"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap institution-preferred-schedule-paragraph__time-inputs">
-              {showSessionSelect ? (
+              {showSessionSelect && !dateOnlyPreferred ? (
                 <>
                   <CmsSelect
                     inputSize="medium"
@@ -117,6 +112,7 @@ function PreferenceScheduleFields({
                       onPatch({ session: value == null ? undefined : String(value) })
                     }
                     options={sessionOptions}
+                    disabled={timeInputsDisabled}
                   />
                   <DetailInfoForm.InputsSeparator />
                 </>
@@ -127,6 +123,7 @@ function PreferenceScheduleFields({
                 placeholder="수업 시작"
                 width={140}
                 showEndTimeToggle={false}
+                disabled={timeInputsDisabled}
               />
               <span className="institution-preferred-schedule-paragraph__tilde">~</span>
               <ParagraphTimePicker
@@ -135,7 +132,7 @@ function PreferenceScheduleFields({
                 placeholder="수업 종료"
                 width={140}
                 showEndTimeToggle={false}
-                disabled={block.start == null}
+                disabled={timeInputsDisabled || block.start == null}
               />
             </div>
           }
@@ -168,10 +165,12 @@ function ScheduleBlock({
   return (
     <div className="institution-preferred-schedule-paragraph__block-row">
       <div className="institution-preferred-schedule-paragraph__block-body">
-        <div className="detail-info-form--text-bold institution-preferred-schedule-paragraph__block-title">
-          {title}
-        </div>
-        <DetailInfoForm title={title} hideHeader mode="edit">
+        {title ? (
+          <div className="detail-info-form--text-bold institution-preferred-schedule-paragraph__block-title">
+            {title}
+          </div>
+        ) : null}
+        <DetailInfoForm title={title || '희망 교육 일정'} hideHeader mode="edit">
           <PreferenceScheduleFields
             block={block}
             onPatch={onPatch}
@@ -331,12 +330,15 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     )
   }
 
+  const blockTitle = (index: number) =>
+    resolvePreferredScheduleBlockTitle(index, displayBlocks.length, maxBlocks)
+
   return (
     <div className="program-registration-paragraph institution-preferred-schedule-paragraph">
       {displayBlocks.map((block, index) => (
         <ScheduleBlock
           key={index}
-          title={`■ ${index + 1}지망`}
+          title={blockTitle(index)}
           block={block}
           onPatch={patch => patchBlock(index, patch)}
           sessionOptions={sessionOptions}
@@ -357,6 +359,18 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
           }
         />
       ))}
+      {displayBlocks.length < maxBlocks ? (
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          className="cms-button--no-label-ellipsis institution-preferred-schedule-paragraph__add"
+          icon={<ButtonAddIcon />}
+          onClick={() => addInstitutionPreferredScheduleBlock()}
+        >
+          희망 교육 일정 추가
+        </CmsButton>
+      ) : null}
     </div>
   )
 }

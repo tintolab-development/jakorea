@@ -46,20 +46,21 @@
   opacity: 0.35;
 }
 
-/* 다줄 목록 — 값 셀·라벨 상단 정렬 */
-.detail-info-form__field:has(.education-schedule-preview-lines) {
+/* 다줄 목록(2건 이상) — 값 셀·라벨 상단 정렬. 1건은 DetailInfoForm 기본 세로 중앙 */
+.detail-info-form__field:has(.education-schedule-preview-lines--multiline) {
   align-items: stretch;
 }
 
-.detail-info-form__field:has(.education-schedule-preview-lines) .detail-info-form__field-label {
+.detail-info-form__field:has(.education-schedule-preview-lines--multiline)
+  .detail-info-form__field-label {
   align-items: flex-start;
 }
 
-.detail-info-form__field-content:has(.education-schedule-preview-lines) {
+.detail-info-form__field-content:has(.education-schedule-preview-lines--multiline) {
   align-items: flex-start;
 }
 
-.detail-info-form__field-content > .education-schedule-preview-lines {
+.detail-info-form__field-content > .education-schedule-preview-lines--multiline {
   flex: 0 1 auto;
   align-self: flex-start;
   min-width: 0;

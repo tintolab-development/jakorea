@@ -136,6 +136,23 @@ export function parseEducationScheduleLineToRange(line: string | undefined): [Da
   return [start, applyScheduleClock(endDate, endToken)]
 }
 
+/** 기관 일정형 단일 기간 — 저장·조회 시 시각 제거 */
+export function normalizeEducationSchedulePeriodRangeDateOnly(
+  range: [Dayjs, Dayjs]
+): [Dayjs, Dayjs] {
+  const sDay = range[0].isBefore(range[1], 'day') ? range[0] : range[1]
+  const eDay = range[0].isBefore(range[1], 'day') ? range[1] : range[0]
+  return [sDay.startOf('day'), eDay.startOf('day')]
+}
+
+export function normalizeEducationSchedulePeriodLineDateOnly(line: string): string {
+  const trimmed = line.trim()
+  if (!trimmed) return ''
+  const range = parseEducationScheduleLineToRange(trimmed)
+  if (!range) return trimmed
+  return formatEducationScheduleLineFromRange(normalizeEducationSchedulePeriodRangeDateOnly(range))
+}
+
 export function educationScheduleRangeHasClock(range: [Dayjs, Dayjs]): boolean {
   const [start, end] = range
   return start.hour() !== 0 || start.minute() !== 0 || end.hour() !== 0 || end.minute() !== 0

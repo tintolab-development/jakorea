@@ -186,6 +186,7 @@ export type RenderFormParagraphBodyOptions = {
   showInstitutionApplicationLimits?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  applicantRecruitInstitutionRecruitLimitVisibility?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['recruitLimitVisibility']
   applicantRecruitInstitutionTemplateAuthoringMode?: boolean
   /** 1사1교_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   economyRecruitFormInstitution?: boolean
@@ -530,6 +531,9 @@ export function renderFormParagraphBody(
             options?.applicantRecruitInstitutionLayoutVariant
           }
           applicantRecruitInstitutionDefaults={options?.applicantRecruitInstitutionDefaults}
+          applicantRecruitInstitutionRecruitLimitVisibility={
+            options?.applicantRecruitInstitutionRecruitLimitVisibility
+          }
           applicantRecruitInstitutionTemplateAuthoringMode={
             options?.applicantRecruitInstitutionTemplateAuthoringMode
           }

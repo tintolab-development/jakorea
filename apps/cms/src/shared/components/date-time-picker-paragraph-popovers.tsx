@@ -62,6 +62,8 @@ export type ParagraphDatePickerPopoverProps = {
   periodToggleDisabled?: boolean
   /** 시간 토글 ON 고정. 조작 불가하므로 팝오버에서는 숨김. 기본 false. */
   timeToggleDisabled?: boolean
+  /** 시간 선택 UI 노출 + 비활성 (기관 일정형 단일 기간) */
+  timeInputsDisabled?: boolean
   periodOn: boolean
   onPeriodOnChange: (next: boolean) => void
   onTimeOnChange: (next: boolean) => void
@@ -108,6 +110,7 @@ export function ParagraphDatePickerPopover({
   showTimeToggle = true,
   periodToggleDisabled = false,
   timeToggleDisabled = false,
+  timeInputsDisabled = false,
   periodOn,
   onPeriodOnChange,
   onTimeOnChange,
@@ -207,7 +210,7 @@ export function ParagraphDatePickerPopover({
                         onHourChange={onStartHourChange}
                         onMinuteChange={onStartMinuteChange}
                         getPopupContainer={() => popoverRef.current ?? document.body}
-                        disabled={disabled}
+                        disabled={disabled || timeInputsDisabled}
                         hourActive={rangeFocus === 'start'}
                         rowPhase="start"
                       />
@@ -273,7 +276,7 @@ export function ParagraphDatePickerPopover({
                           onHourChange={onEndHourChange}
                           onMinuteChange={onEndMinuteChange}
                           getPopupContainer={() => popoverRef.current ?? document.body}
-                          disabled={disabled}
+                          disabled={disabled || timeInputsDisabled}
                           hourActive={rangeFocus === 'end'}
                           invalid={invalidTimeRange}
                           rowPhase="end"

@@ -379,6 +379,7 @@ export type UseProgramParticipantApplicationEditorOptions = {
   programLinkedApplicationFormPreview?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  applicantRecruitInstitutionRecruitLimitVisibility?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['recruitLimitVisibility']
   /**
    * true면 시드 단락 타이틀에 필수(*)를 강제 (`answerRequired`·`requiredMark`).
    * 1사1교 등록 위저드에서 공유 강사 모집 폼 등 상세 단락이 선택인 시드를 쓸 때.
@@ -1828,8 +1829,13 @@ export function useProgramParticipantApplicationEditor(
             ? 'trainedTeachers'
             : editorOptions?.applicantRecruitInstitutionLayoutVariant,
       applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
+      applicantRecruitInstitutionRecruitLimitVisibility:
+        editorOptions?.applicantRecruitInstitutionRecruitLimitVisibility,
+      /** 양식 관리(미연동)만 상시 노출 — 등록 위저드 모집은 recruitLimitVisibility·브리지로 판단 */
       applicantRecruitInstitutionTemplateAuthoringMode:
-        isRecruitmentEditorVariant(variant) && !programLinkedPreview,
+        isRecruitmentEditorVariant(variant) &&
+        !programLinkedPreview &&
+        !usesRegistrationWizardDraft,
       applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
       recruitFormInstructor: variant === 'recruit-instructor',
       recruitFormVolunteer: variant === 'recruit-volunteer',
@@ -1858,6 +1864,7 @@ export function useProgramParticipantApplicationEditor(
       active,
       draft.paragraphs,
       editorOptions?.applicantRecruitInstitutionDefaults,
+      editorOptions?.applicantRecruitInstitutionRecruitLimitVisibility,
       editorOptions?.applicantRecruitInstitutionLayoutVariant,
       editorOptions?.participantOrganization,
       editorOptions?.ujatRecruitParagraphProps,

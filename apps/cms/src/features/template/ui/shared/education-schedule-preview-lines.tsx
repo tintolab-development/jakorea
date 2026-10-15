@@ -38,8 +38,16 @@ export function EducationSchedulePreviewLines({
 
   const editable = onRemove != null
 
+  const multiline = lines.length > 1
+
   return (
-    <div className="education-schedule-preview-lines">
+    <div
+      className={
+        multiline
+          ? 'education-schedule-preview-lines education-schedule-preview-lines--multiline'
+          : 'education-schedule-preview-lines'
+      }
+    >
       {lines.map((line, index) => {
         return (
           <Fragment key={`${line}-${index}`}>

@@ -288,6 +288,7 @@ export function renderProgramRegistrationParagraphBody(
               sessionRound: options.sessionRoundType,
             })}
             programType={options.programType}
+            sessionRound={options.sessionRoundType}
           />
         )
       }
