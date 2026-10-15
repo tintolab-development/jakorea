@@ -1322,6 +1322,7 @@ export function UjatProgramDetailFullPageModal({
     isEditMode: isEditModeRecruitParticipant,
     schema: programDetailInstitutionsEditSchema,
     mapToValues: mapInstitutionRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -1385,11 +1386,13 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH1,
     mapToValues: mapVolunteerH1RecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const volunteersH2Form = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH2,
     mapToValues: mapVolunteerH2RecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const volunteersForm =
     activeRecruitTab === 'recruit_volunteer_h2' ? volunteersH2Form : volunteersH1Form

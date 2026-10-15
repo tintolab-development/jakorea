@@ -977,6 +977,7 @@ export function GeneralProgramDetailFullPageModal({
     isEditMode: isEditModeInstitutions,
     schema: programDetailInstitutionsEditSchema,
     mapToValues: mapParticipantRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -1005,6 +1006,7 @@ export function GeneralProgramDetailFullPageModal({
     program: recruitmentEditProgram,
     isEditMode: isEditModeInstructors,
     mapToValues: mapInstructorRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: instructorsTriggerSave,
@@ -1034,6 +1036,7 @@ export function GeneralProgramDetailFullPageModal({
     program: recruitmentEditProgram,
     isEditMode: isEditModeVolunteers,
     mapToValues: mapVolunteerRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: volunteersTriggerSave,
