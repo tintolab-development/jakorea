@@ -10,7 +10,6 @@ import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import type { TemplateFullpageModalFooterAction } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import {
   UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeUjatProgramRegistrationStepKey,
@@ -298,6 +297,7 @@ function UjatProgramRegistrationFullpageModalInner({
     <>
       <TemplateFullpageModal
         open={open}
+        bodyLoading={flow.isDraftLoading}
         onClose={handleClose}
         title={UJAT_REGISTRATION_MODAL_TITLE}
         titleReadOnly
@@ -338,18 +338,14 @@ function UjatProgramRegistrationFullpageModalInner({
             }}
           />
         }
-        footerActions={flow.isDraftLoading ? undefined : footerActions}
+        footerActions={footerActions}
         leftContent={
-          flow.isDraftLoading ? (
-            <FormDraftLoading />
-          ) : (
-            <HideParagraphSelectionChromeContext.Provider
-              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
-              value
-            >
-              {flow.panels.leftContent}
-            </HideParagraphSelectionChromeContext.Provider>
-          )
+          <HideParagraphSelectionChromeContext.Provider
+            key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+            value
+          >
+            {flow.panels.leftContent}
+          </HideParagraphSelectionChromeContext.Provider>
         }
         rightNavigation={null} // 공통·모집만 있어 커스텀 필드 우측 패널 미노출
       />

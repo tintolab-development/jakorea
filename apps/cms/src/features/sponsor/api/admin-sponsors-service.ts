@@ -16,10 +16,12 @@ import {
   SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
 } from '@/features/sponsor/api/program-histories-filter-params'
 import { mapSponsorListPage } from '@/features/sponsor/api/map-sponsor-list-page'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import {
   SPONSOR_OPTIONS_LIST_SIZE,
   sponsorsParamsFromSearchParams,
 } from '@/features/sponsor/api/sponsor-filter-params'
+import type { SponsorResponse } from '@/shared/api/generated/data-management/schemas'
 import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import {
   addSponsorContactRemote,
@@ -285,12 +287,31 @@ export async function getSponsorProgramHistories(
   }
 }
 
-/** 후원사 셀렉트·이름 조회용 목록 (구분 필터 없음, size=100) */
+/** 후원사 셀렉트 드롭다운 — 페이지 단위 (기본 size 20) */
+export async function getSponsorSelectOptionsPage(
+  keyword = '',
+  page = 0,
+  size = SPONSOR_OPTIONS_LIST_SIZE
+): Promise<DataManagementListPage<SponsorManagementRow>> {
+  assertSponsorsRemoteReady()
+  const params = new URLSearchParams()
+  const trimmed = keyword.trim()
+  if (trimmed) params.set('sp_name', trimmed)
+  const payload = await fetchSponsorsRemote(
+    sponsorsParamsFromSearchParams(params, page, size)
+  )
+  return mapSponsorListPage(payload)
+}
+
+/** 후원사 셀렉트·이름 조회용 목록 (구분 필터 없음, size=20 페이지 순회) */
 export async function getSponsorOptionsList(): Promise<SponsorManagementRow[]> {
   assertSponsorsRemoteReady()
-  const payload = await fetchSponsorsRemote({
-    page: 0,
-    size: SPONSOR_OPTIONS_LIST_SIZE,
+  const items = await fetchAllApiPages<SponsorResponse>(async (page, size) => {
+    const payload = (await fetchSponsorsRemote({ page, size })) as {
+      items?: SponsorResponse[]
+      totalPages?: number
+    }
+    return { items: payload.items ?? [], totalPages: payload.totalPages }
   })
-  return mapSponsorListPage(payload).items
+  return items.map(item => mapSponsorResponse(item))
 }

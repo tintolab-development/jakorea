@@ -5,12 +5,6 @@ import { isHomepageApiConfigured } from '@/shared/lib/api-remote-env'
 import { getQueryRetryHttpStatus, queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { getAdjacentFromNotices, type AdjacentNotices } from '../lib/adjacent'
 import { NOTICES_PAGE_SIZE } from '../lib/constants'
-import { filterAndSortNotices } from '../lib/filter-notices'
-import {
-  getMockNoticeDetailById,
-  getMockNotices,
-} from '../lib/mock-notices'
-import { toNoticeDetailView } from '../lib/map-detail'
 import type {
   NoticeDetail,
   NoticeDetailStatus,
@@ -32,7 +26,7 @@ const DETAIL_STALE_MS = 2 * 60_000
 const DETAIL_GC_MS = 15 * 60_000
 
 /** 인접글용 preview (검색은 서버 `q` 사용). */
-export const NOTICES_PREVIEW_SIZE = 100
+export const NOTICES_PREVIEW_SIZE = 20
 
 function shouldRetryDetail(failureCount: number, error: unknown): boolean {
   if (getQueryRetryHttpStatus(error) === 404) return false
@@ -57,26 +51,14 @@ export type NoticeDetailQuery = {
   refetch: () => void
 }
 
-function paginateLocal(
-  notices: readonly (NoticeListItem & { content?: string })[],
-  params: NoticesListParams,
-): Pick<NoticesListQuery, 'items' | 'totalPages' | 'totalCount' | 'currentPage'> {
-  const filtered = filterAndSortNotices(notices, params)
-  const totalCount = filtered.length
-  const totalPages = Math.max(1, Math.ceil(totalCount / NOTICES_PAGE_SIZE) || 1)
-  const currentPage = Math.min(Math.max(params.page, 1), totalPages)
-  const start = (currentPage - 1) * NOTICES_PAGE_SIZE
-  const pageItems = filtered.slice(start, start + NOTICES_PAGE_SIZE)
-  const withNos = pageItems.map((item, index) => ({
-    ...item,
-    no: Math.max(1, totalCount - (start + index)),
-  }))
-  return {
-    items: withNos,
-    totalPages: totalCount === 0 ? 1 : totalPages,
-    totalCount,
-    currentPage,
-  }
+const EMPTY_NOTICES_LIST: NoticesListQuery = {
+  items: [],
+  totalPages: 1,
+  totalCount: 0,
+  currentPage: 1,
+  isRemoteEnabled: false,
+  isPending: false,
+  isError: false,
 }
 
 export const noticesPreviewQueryOptions = queryOptions({
@@ -152,7 +134,8 @@ export function useNoticesList(params: NoticesListParams): NoticesListQuery {
   return useMemo(() => {
     if (!remote) {
       return {
-        ...paginateLocal(getMockNotices(), params),
+        ...EMPTY_NOTICES_LIST,
+        currentPage: params.page,
         isRemoteEnabled: false,
         isPending: false,
         isError: false,
@@ -161,7 +144,8 @@ export function useNoticesList(params: NoticesListParams): NoticesListQuery {
 
     if (query.isError) {
       return {
-        ...paginateLocal(getMockNotices(), params),
+        ...EMPTY_NOTICES_LIST,
+        currentPage: params.page,
         isRemoteEnabled: remote,
         isPending: false,
         isError: true,
@@ -250,27 +234,20 @@ export function useNoticeDetail(id: string | null): NoticeDetailQuery {
     }
 
     if (!remote) {
-      const found = getMockNoticeDetailById(id)
-      const data = found ? toNoticeDetailView(found) : null
-      const mockList = filterAndSortNotices(getMockNotices(), { q: '' })
       return {
-        data,
-        status: data ? ('ready' as const) : ('not-found' as const),
-        adjacent: getAdjacentFromNotices(mockList, id),
+        data: null,
+        status: 'not-found' as const,
+        adjacent: { previous: null, next: null },
         isRemoteEnabled: remote,
         refetch,
       }
     }
 
     if (!enabled) {
-      const found = getMockNoticeDetailById(id)
-      const data = found ? toNoticeDetailView(found) : null
       return {
-        data,
-        status: data ? ('ready' as const) : ('not-found' as const),
-        adjacent: data
-          ? getAdjacentFromNotices(filterAndSortNotices(getMockNotices(), { q: '' }), id)
-          : { previous: null, next: null },
+        data: null,
+        status: 'not-found' as const,
+        adjacent: { previous: null, next: null },
         isRemoteEnabled: remote,
         refetch,
       }
@@ -297,19 +274,6 @@ export function useNoticeDetail(id: string | null): NoticeDetailQuery {
           refetch,
         }
       }
-      const found = getMockNoticeDetailById(id)
-      if (found) {
-        return {
-          data: toNoticeDetailView(found),
-          status: 'ready' as const,
-          adjacent: getAdjacentFromNotices(
-            filterAndSortNotices(getMockNotices(), { q: '' }),
-            id,
-          ),
-          isRemoteEnabled: remote,
-          refetch,
-        }
-      }
       return {
         data: null,
         status: 'error' as const,
@@ -330,10 +294,7 @@ export function useNoticeDetail(id: string | null): NoticeDetailQuery {
       }
     }
 
-    const adjacentSource =
-      preview.items.length > 0
-        ? preview.items
-        : filterAndSortNotices(getMockNotices(), { q: '' })
+    const adjacentSource = preview.items.length > 0 ? preview.items : []
 
     return {
       data,

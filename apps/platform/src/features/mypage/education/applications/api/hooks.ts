@@ -20,7 +20,7 @@ import type { ProgramApplicationType } from './types'
 const APPLICATIONS_STALE_MS = 30_000
 const APPLICATIONS_GC_MS = 10 * 60_000
 /** statusGroup 없이 전체 조회할 때(레거시·탭 미전달) 상한 */
-const APPLICATIONS_FETCH_SIZE = 100
+const APPLICATIONS_FETCH_SIZE = 20
 
 export type MypageApplicationScope = 'education' | 'lecture' | 'volunteer'
 
@@ -138,6 +138,8 @@ export function useMyProgramApplications(
     staleTime: APPLICATIONS_STALE_MS,
     gcTime: APPLICATIONS_GC_MS,
     placeholderData: serverPaged ? keepPreviousData : undefined,
+    // 신청 완료·취소 후 목록 화면으로 돌아오면 서버 원본을 즉시 다시 확인한다.
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: shouldRetryQuery,
@@ -312,13 +314,35 @@ export function useMyProgramApplicationDetail(
 export function useCancelMyProgramApplicationMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (args: { applicationType: ProgramApplicationType; applicationId: string }) =>
+    mutationFn: (args: {
+      applicationType: ProgramApplicationType
+      applicationId: string
+      /** 신청 취소 후 재신청 가능 여부 캐시를 갱신하기 위한 프로그램 ID */
+      programId?: string | number | null
+    }) =>
       cancelMyProgramApplication(args.applicationType, args.applicationId),
-    onSuccess: (_data, args) => {
-      void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.all(),
-      })
-      void queryClient.removeQueries({
+    onSuccess: async (_data, args) => {
+      const invalidationTasks = [
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.all(),
+        }),
+      ]
+      if (args.programId != null && String(args.programId).trim()) {
+        const programId = String(args.programId)
+        invalidationTasks.push(
+          queryClient.invalidateQueries({
+            queryKey: platformQueryKeys.program.applicationOptions(programId),
+          }),
+          // 프로그램 상세는 모집 상태·신청 가능 상태를 함께 보여줄 수 있으므로
+          // 취소 직후 오래된 상세 캐시를 남기지 않는다. scope가 다른 상세도 같은
+          // programId prefix 아래에서 함께 재검증한다.
+          queryClient.invalidateQueries({
+            queryKey: platformQueryKeys.program.detailPrefix(programId),
+          }),
+        )
+      }
+      await Promise.all(invalidationTasks)
+      queryClient.removeQueries({
         queryKey: platformQueryKeys.mypage.programApplications.detail(
           args.applicationType,
           args.applicationId,

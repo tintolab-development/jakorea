@@ -11,7 +11,7 @@ import {
   IMPACT_SECTION_TITLE,
   IMPACT_SLIDER_VISIBLE_COUNT,
 } from '../lib/constants'
-import type { DonationImpactCategory, DonationImpactItem } from '../lib/impact-mock'
+import type { DonationImpactCategory, DonationImpactItem } from '../lib/donation-impact-types'
 import { DonationImpactCard } from './donation-impact-card'
 import styles from './impact-section.module.css'
 

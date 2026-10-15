@@ -7,8 +7,8 @@ const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 import { getKoreanPublicHolidayDateKeysSync } from '@/features/program/ujat/api/korean-public-holidays'
 
-/** @deprecated `getKoreanPublicHolidayDateKeysSync` / `useKoreanPublicHolidayDateKeys` — mock 상수 제거 */
-export function getMockHolidayDateKeys(): Set<string> {
+/** 면접·일정 UI — 동기 공휴일 집합(API prefetch 후 채움, 미로드 시 빈 Set) */
+export function getPublicHolidayDateKeysForSchedule(): Set<string> {
   return getKoreanPublicHolidayDateKeysSync()
 }
 

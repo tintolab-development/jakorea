@@ -11,8 +11,8 @@ import {
   teacherInstitutionGuidanceFormStateFromTeacherContent,
 } from '@/features/mypage/education/applications/lib/institution-guidance-from-answers'
 import {
-  getMockEducationApplicationById,
   useMyProgramApplicationDetail,
+  useProbeEducationApplicationType,
 } from '@/features/mypage/education/applications'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { isSchoolTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
@@ -29,19 +29,16 @@ export function MypageEducationInstitutionGuidanceWritePage() {
   const member = useMypageMember()
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
 
-  const mockApplication = useMemo(
-    () => (applicationId ? getMockEducationApplicationById(applicationId) : undefined),
-    [applicationId],
-  )
   const remoteEnabled = isRemoteApiConfigured()
   const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)
+  const typeProbe = useProbeEducationApplicationType(applicationId, routeApplicationType)
   const applicationType =
-    routeApplicationType ?? mockApplication?.applicationType ?? 'ORGANIZATION'
+    routeApplicationType ?? typeProbe.applicationType ?? 'ORGANIZATION'
   const remoteQuery = useMyProgramApplicationDetail(
     remoteEnabled ? applicationType : null,
     remoteEnabled ? applicationId : null,
   )
-  const application = remoteEnabled ? remoteQuery.application ?? mockApplication : mockApplication
+  const application = remoteEnabled ? remoteQuery.application : undefined
   const programId = application?.programId ?? ''
   const programQuery = useProgramDetail(programId)
   const program = programQuery.program

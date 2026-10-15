@@ -5,7 +5,6 @@ import path from 'path'
 import { e2eErrorLogMockApiPlugin } from './vite-plugins/e2e-error-log-mock-api'
 import { e2eTestLogMockApiPlugin } from './vite-plugins/e2e-test-log-mock-api'
 import { platformPreviewBundlePlugin } from './vite-plugins/platform-preview-bundle'
-import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -21,7 +20,6 @@ export default defineConfig(({ mode }) => {
       react(),
       e2eErrorLogMockApiPlugin(),
       e2eTestLogMockApiPlugin(),
-      mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
       platformPreviewBundlePlugin({
         bundleDir: path.resolve(__dirname, '../platform/dist-preview'),
       }),
@@ -133,7 +131,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
-      include: ['src/**/*.test.ts'],
+      include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
       passWithNoTests: true,
       setupFiles: ['src/test/vitest-setup.ts'],
     },

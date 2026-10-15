@@ -132,6 +132,8 @@ export type EducationApplicationListItem = {
   teacherApplicationContent?: EducationTeacherApplicationContent
   /** 수료증 발급 가능 — 포털 신청 상세 `certificateAvailable` */
   certificateAvailable?: boolean
+  /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
+  pendingSurveyCount?: number
 }
 
 /** 교사 회원 신청 내용 — 신청 기관 정보 */

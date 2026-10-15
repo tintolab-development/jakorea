@@ -14,8 +14,14 @@ export const queryKeys = {
   detail: (scope: 'remote' | 'local', programId: string) =>
     [...queryKeys.details(), scope, programId] as const,
   applications: () => [...queryKeys.all, 'applications'] as const,
+  organizationApplicationsRoot: (programId: string) =>
+    [...queryKeys.applications(), 'organizations', programId] as const,
   organizationApplications: (programId: string, query: ApplicationsListQuery = {}) =>
-    [...queryKeys.applications(), 'organizations', programId, query] as const,
+    [...queryKeys.organizationApplicationsRoot(programId), query] as const,
+  organizationDetail: (programId: string, institutionId: string) =>
+    [...queryKeys.organizationApplicationsRoot(programId), 'detail', institutionId] as const,
+  programSchedules: (programId: string) =>
+    [...queryKeys.all, 'program-schedules', programId] as const,
   volunteerApplications: (
     programId: string,
     half: UjatVolunteerRecruitHalf,

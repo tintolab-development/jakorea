@@ -16,19 +16,10 @@ export {
 export {
   getNoticeCategoryFilterOptions,
   getResultCategoryTabItems,
-  getMockNoticeCategories,
   resolveResultCategoryFilterId,
-  useMockNoticeCategories,
-} from './lib/mock-notice-categories'
-export {
-  getAdjacentResults,
-  getMockResultById,
-  getMockResultDetailById,
-  getMockResults,
-  useMockResultDetail,
-  useMockResultsCatalog,
-} from './lib/mock-results'
-export type { AdjacentResults } from './lib/mock-results'
+} from './lib/result-notice-categories'
+export type { AdjacentResults } from './lib/result-adjacent'
+export { getEmptyAdjacentResults } from './lib/result-adjacent'
 export { useProgramResultDetail, useProgramResultsList } from './api/hooks'
 export type {
   ProgramResultDetailQuery,

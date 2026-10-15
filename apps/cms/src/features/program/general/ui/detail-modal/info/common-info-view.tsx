@@ -55,7 +55,6 @@ import {
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
-  shouldLockProgressSchedulePeriodToggle,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -330,7 +329,8 @@ function BasicInfoSection({
   const lockDetailedProgramToNone =
     watchedEducationStructure === 'schedule' ||
     (watchedEducationStructure == null && isGeneralProgramScheduleType(program))
-  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  // 세부 프로그램 옵션은 조회 화면이 아니라 수정 컨트롤에서만 필요하다.
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(isFormEdit)
   const detailedProgramOptions = useMemo(
     () =>
       getGeneralDetailedProgramSelectOptions(
@@ -408,7 +408,11 @@ function BasicInfoSection({
   const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
-  const sponsorEditContext = useGeneralProgramSponsorEditContext(sponsorIdsForContacts)
+  // 후원사 상세·담당자 연락처는 수정 시 담당자 선택지를 만들 때만 필요하다.
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(
+    sponsorIdsForContacts,
+    isFormEdit
+  )
   const selectedSponsors = useMemo(
     () =>
       sponsorIdsForContacts
@@ -4462,14 +4466,7 @@ function ScheduleSettingsEditFields({
   const educationStructure = form.watch('educationStructure')
   const sessionRound = form.watch('sessionRound')
   const participantOrganization = form.watch('participantOrganization')
-  const participantIndividual = form.watch('participantIndividual')
   const scheduleDetails = form.watch('scheduleDetails') ?? []
-  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
-    participantIndividual: Boolean(participantIndividual),
-    participantOrganization: Boolean(participantOrganization),
-    programType: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
-    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
-  })
   const autoFillFromScheduleGroupTimes =
     educationStructure === 'schedule' &&
     sessionRound === 'single' &&
@@ -4564,9 +4561,10 @@ function ScheduleSettingsEditFields({
         setSingleDate(null)
         return
       }
-      setSingleDate(next)
+      const day = next.startOf('day')
+      handleScheduleRangeApply([day, day])
     },
-    [appendLineIfNew, autoFillFromScheduleGroupTimes, scheduleDetails]
+    [appendLineIfNew, autoFillFromScheduleGroupTimes, handleScheduleRangeApply, scheduleDetails]
   )
 
   return (
@@ -4620,16 +4618,13 @@ function ScheduleSettingsEditFields({
             scheduleMode === 'date' ? (
               <ParagraphDatePicker
                 mode="single"
-                presetMode="schedule"
+                presetMode="date"
                 customizable={false}
-                showPeriodToggle={!lockProgressSchedulePeriodToggle}
+                showPeriodToggle={false}
                 showTimeToggle={false}
-                lockTimeToggleOn
-                lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
-                onRangeChange={autoFillDatePicker ? undefined : handleScheduleRangeApply}
                 width={240}
               />
             ) : (
@@ -4639,14 +4634,6 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
-                lockTimeToggleOn={shouldLockEducationScheduleCalendarToggles({
-                  participantOrganization: Boolean(participantOrganization),
-                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
-                })}
-                lockPeriodToggleOn={shouldLockEducationScheduleCalendarToggles({
-                  participantOrganization: Boolean(participantOrganization),
-                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
-                })}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}
@@ -4742,8 +4729,10 @@ function ScheduleSettingsSection({
               ),
               educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
             })}
-            operationStart={program.startDate}
-            operationEnd={program.endDate}
+            operationStart={isFormEdit ? editForm.watch('startDate') : program.startDate}
+            operationEnd={isFormEdit ? editForm.watch('endDate') : program.endDate}
+            persistedOperationStart={program.startDate}
+            persistedOperationEnd={program.endDate}
             onApply={nextLines => {
               editForm.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
             }}

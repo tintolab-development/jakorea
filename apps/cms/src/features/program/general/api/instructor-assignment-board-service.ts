@@ -23,6 +23,7 @@ import {
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
 export type InstructorAssignmentBoardData = {
   assignments: InstructorAssignmentListItemEnriched[]
@@ -85,6 +86,22 @@ function enrichScheduleLabelFromAssignments(
   return map
 }
 
+async function fetchAllInstructorAssignments(
+  programId: string
+): Promise<InstructorAssignmentListItemEnriched[]> {
+  return fetchAllApiPages((page, size) =>
+    fetchInstructorAssignmentsRemote({ programId, page, size })
+  )
+}
+
+async function fetchAllInstructorApplications(
+  programId: string
+): Promise<InstructorApplicationListItemResponse[]> {
+  return fetchAllApiPages((page, size) =>
+    fetchInstructorApplicationsRemote(programId, { page, size })
+  )
+}
+
 async function fetchCalendarSafe(
   programId: string
 ): Promise<ReturnType<typeof buildOccupiedLectureDatesFromCalendar>> {
@@ -103,15 +120,14 @@ async function fetchCalendarSafe(
 export async function fetchInstructorAssignmentBoardData(
   programId: string
 ): Promise<InstructorAssignmentBoardData> {
-  const [assignmentsPage, instructorAppsPage, schedules, calendarOccupied] = await Promise.all([
-    fetchInstructorAssignmentsRemote({ programId, page: 0, size: 200 }),
-    fetchInstructorApplicationsRemote(programId, { page: 0, size: 100 }),
+  const [assignments, instructorApplications, schedules, calendarOccupied] = await Promise.all([
+    fetchAllInstructorAssignments(programId),
+    fetchAllInstructorApplications(programId),
     fetchAdminProgramSchedulesRemote(programId),
     fetchCalendarSafe(programId),
   ])
 
-  const assignments = (assignmentsPage.items ?? []) as InstructorAssignmentListItemEnriched[]
-  const approvedInstructorApplications = (instructorAppsPage.items ?? []).filter(app => {
+  const approvedInstructorApplications = instructorApplications.filter(app => {
     const status = (app.applicationStatus ?? '').toUpperCase()
     return ['APPROVED', 'WAITING_ASSIGNMENT', 'ASSIGNED'].includes(status)
   })

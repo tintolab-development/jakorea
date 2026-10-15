@@ -462,25 +462,28 @@ export function useGeneralProgramFormBindings(programId: string | undefined) {
   }
 }
 
-export function useGeneralProgramSurveys(programId: string | undefined) {
+export function useGeneralProgramSurveys(
+  programId: string | undefined,
+  enabled = true
+) {
   const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
   const surveysQuery = useQuery({
     queryKey: generalProgramQueryKeys.surveys(programId ?? ''),
     queryFn: () => fetchGeneralProgramSurveys(programId!),
-    enabled: remoteEnabled && Boolean(programId),
+    enabled: enabled && remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
   })
   const bindingsQuery = useQuery({
     queryKey: generalProgramQueryKeys.formBindings(programId ?? ''),
     queryFn: () => fetchGeneralProgramFormBindings(programId!),
-    enabled: remoteEnabled && Boolean(programId),
+    enabled: enabled && remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
   })
 
   const registeredSurveysBase = useMemo((): RegisteredSurvey[] | null => {
-    if (!remoteEnabled) return null
+    if (!enabled || !remoteEnabled) return null
     return mergeSurveysWithBindings(surveysQuery.data ?? [], bindingsQuery.data ?? []).filter(
       survey => {
         // 만족도·강의평가 템플릿은 전용 탭에서 처리 — poll 목록에서 제외
@@ -494,7 +497,7 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
         return hit.kind === 'poll'
       }
     )
-  }, [bindingsQuery.data, remoteEnabled, surveysQuery.data])
+  }, [bindingsQuery.data, enabled, remoteEnabled, surveysQuery.data])
 
   const surveyTitleVersionIdsKey = useMemo(() => {
     if (registeredSurveysBase == null) return ''
@@ -512,6 +515,7 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
         surveyTitleVersionIdsKey.split(',').filter(id => id !== '')
       ),
     enabled:
+      enabled &&
       remoteEnabled &&
       Boolean(programId) &&
       surveyTitleVersionIdsKey !== '' &&
@@ -529,15 +533,15 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
   }, [registeredSurveysBase, surveyDisplayTitlesQuery.data])
 
   const classifiedBindings = useMemo((): ClassifiedFormBinding[] | null => {
-    if (!remoteEnabled) return null
+    if (!enabled || !remoteEnabled) return null
     return classifyProgramFormBindings(bindingsQuery.data ?? [])
-  }, [bindingsQuery.data, remoteEnabled])
+  }, [bindingsQuery.data, enabled, remoteEnabled])
 
   return {
     registeredSurveys,
     classifiedBindings,
     rawSurveys: surveysQuery.data ?? null,
-    loading: remoteEnabled
+    loading: enabled && remoteEnabled
       ? surveysQuery.isFetching ||
         surveysQuery.isLoading ||
         bindingsQuery.isFetching ||
@@ -545,11 +549,11 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
         surveyDisplayTitlesQuery.isFetching
       : false,
     /** 최초 로드만 — 백그라운드 재조회 중에는 false (결과 뷰 언마운트 방지) */
-    initialLoading: remoteEnabled
+    initialLoading: enabled && remoteEnabled
       ? (surveysQuery.isFetching && surveysQuery.data === undefined) ||
         (bindingsQuery.isFetching && bindingsQuery.data === undefined)
       : false,
-    isRemoteDataSource: remoteEnabled && !surveysQuery.isError,
+    isRemoteDataSource: enabled && remoteEnabled && !surveysQuery.isError,
   }
 }
 

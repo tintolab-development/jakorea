@@ -10,17 +10,13 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { useDebouncedValue } from '@/shared/hooks'
-import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
+import type { EducationInProgressFile } from '../model/types'
 import {
   downloadEducationNoticeFile,
   downloadRemoteEducationNoticeFile,
   hasRemoteDownloadPath,
 } from '../lib/download-file'
 import { readNoticeIdFromLocation, writeNoticeIdToLocation } from '../lib/notice-url'
-import {
-  getMockEducationInProgressFiles,
-  getMockEducationInProgressNotices,
-} from '../lib/mock-notices'
 import { EducationInProgressFileRow } from './file-row'
 import { EducationInProgressNoticeCard } from './card'
 import { EducationInProgressNoticeDetailModal } from './detail-modal'
@@ -57,18 +53,13 @@ export function EducationInProgressNoticePanel({
   noticeWriteEnabled = false,
   noticeWriteAuthorDisplayName = '담당교사님',
 }: EducationInProgressNoticePanelProps) {
-  const programId = program.id
   const [isNoticeWriteOpen, setIsNoticeWriteOpen] = useState(false)
-  const [mockFilesVersion, setMockFilesVersion] = useState(0)
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const [draftFileQuery, setDraftFileQuery] = useState('')
   const debouncedFileQuery = useDebouncedValue(draftFileQuery, SEARCH_DEBOUNCE_MS)
   const remoteNotices = useApplicationNoticesQuery(applicationType, applicationId)
-  const [localNotices, setLocalNotices] = useState<EducationInProgressNotice[]>(() =>
-    getMockEducationInProgressNotices(programId),
-  )
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(readNoticeIdFromLocation)
   const [downloadErrorOpen, setDownloadErrorOpen] = useState(false)
   /** 이 패널이 push 한 history 엔트리 위에 있으면 닫을 때 back 으로 되돌린다. */
@@ -79,7 +70,7 @@ export function EducationInProgressNoticePanel({
     remoteNotices.enabled ? selectedNoticeId : null,
   )
 
-  const notices = remoteNotices.enabled ? remoteNotices.items : localNotices
+  const notices = remoteNotices.enabled ? remoteNotices.items : []
   /** 상세 본문은 팝업에만 합친다 — 목록 카드에 넣으면 열린 카드만 높이가 바뀌어 순서가 바뀐 듯 보인다 */
   const modalNotices = useMemo(() => {
     const detailNotice = remoteDetail.detail?.notice
@@ -99,9 +90,8 @@ export function EducationInProgressNoticePanel({
   )
   const files = useMemo(() => {
     if (remoteNotices.enabled) return remoteFiles.files
-    void mockFilesVersion
-    return getMockEducationInProgressFiles(programId)
-  }, [programId, remoteFiles.files, remoteNotices.enabled, mockFilesVersion])
+    return []
+  }, [remoteFiles.files, remoteNotices.enabled])
 
   const filteredFiles = useMemo(() => {
     if (remoteNotices.enabled && remoteFiles.isFullList) return files
@@ -148,11 +138,6 @@ export function EducationInProgressNoticePanel({
   }
 
   const openNoticeDetail = (noticeId: string) => {
-    if (!remoteNotices.enabled) {
-      setLocalNotices(prev =>
-        prev.map(notice => (notice.id === noticeId ? { ...notice, read: true } : notice)),
-      )
-    }
     if (selectedNoticeId === null) {
       writeNoticeIdToLocation(noticeId, 'push')
       pushedNoticeEntryRef.current = true
@@ -178,10 +163,7 @@ export function EducationInProgressNoticePanel({
     openComingSoon()
   }
 
-  const deleteNotice = (noticeId: string) => {
-    if (!remoteNotices.enabled) {
-      setLocalNotices(prev => prev.filter(notice => notice.id !== noticeId))
-    }
+  const deleteNotice = (_noticeId: string) => {
     closeNoticeDetail()
   }
 
@@ -304,24 +286,8 @@ export function EducationInProgressNoticePanel({
         onDelete={deleteNotice}
         applicationType={applicationType}
         applicationId={applicationId}
-        onReactionCountChange={(noticeId, reactionCount) => {
-          if (!remoteNotices.enabled) {
-            setLocalNotices(prev =>
-              prev.map(notice =>
-                notice.id === noticeId ? { ...notice, reactionCount } : notice,
-              ),
-            )
-          }
-        }}
-        onCommentCountChange={(noticeId, commentCount) => {
-          if (!remoteNotices.enabled) {
-            setLocalNotices(prev =>
-              prev.map(notice =>
-                notice.id === noticeId ? { ...notice, commentCount } : notice,
-              ),
-            )
-          }
-        }}
+        onReactionCountChange={undefined}
+        onCommentCountChange={undefined}
       />
 
       <EducationProgramInfoModal
@@ -346,12 +312,6 @@ export function EducationInProgressNoticePanel({
           applicationId={applicationId}
           program={program}
           authorDisplayName={noticeWriteAuthorDisplayName}
-          onMockSuccess={() => {
-            if (!remoteNotices.enabled) {
-              setLocalNotices(getMockEducationInProgressNotices(programId))
-              setMockFilesVersion(version => version + 1)
-            }
-          }}
         />
       ) : null}
 

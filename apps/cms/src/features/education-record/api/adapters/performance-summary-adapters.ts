@@ -6,7 +6,7 @@ import {
   SUMMARY_CATEGORIES,
   type SummaryCategoryMeta,
 } from '@/features/education-record/model/education-record-summary-config'
-import { SUMMARY_EMPTY_ROW } from '@/features/education-record/model/education-record-summary-mock'
+import { SUMMARY_EMPTY_ROW } from '@/features/education-record/model/education-record-summary-empty'
 import type {
   EducationRecordRow,
   SummaryCategoryKey,

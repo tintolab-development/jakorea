@@ -127,6 +127,8 @@ export const platformQueryKeys = {
         scope?.recruitmentId ?? '',
         scope?.applicationType ?? '',
       ] as const,
+    /** 프로그램 상세 전체 scope — 모집별 상세 캐시까지 함께 무효화할 때 사용 */
+    detailPrefix: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
     /** 신청 옵션 — GET /api/portal/programs/{programId}/application-options (Class D, 회원) */
     applicationOptions: (programId: string) =>
       [...platformQueryKeys.program.all(), 'application-options', programId] as const,
@@ -218,7 +220,7 @@ export const platformQueryKeys = {
           params.page,
           params.size,
         ] as const,
-      /** 인접글용 preview (`size=100`, page 0, q 없음) */
+      /** 인접글용 preview (`size=20`, page 0, q 없음) */
       preview: () => [...platformQueryKeys.jaKorea.notices.all(), 'preview'] as const,
       /** 공개 상세 — GET /api/public/ja-korea/notices/{id} (Class D) */
       detail: (id: string) => [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,

@@ -1,9 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  getMockWritingFormSections,
-  getWritingFormSectionsRemote,
-} from '@/features/template/api/admin-form-templates-service'
+import { getWritingFormSectionsRemote } from '@/features/template/api/admin-form-templates-service'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useFormsSurveysRemoteEnabled } from '@/features/template/hooks/use-forms-surveys-remote-enabled'
 import { WRITING_FORM_SECTION_CATALOG } from '@/features/template/api/form-template-catalog'
@@ -30,7 +27,7 @@ export function useWritingFormSections() {
   })
 
   const sections = useMemo<TemplateSection[]>(() => {
-    if (!remoteEnabled) return getMockWritingFormSections()
+    if (!remoteEnabled) return emptyWritingSections()
     if (query.isError || query.data == null) return emptyWritingSections()
     return query.data
   }, [remoteEnabled, query.isError, query.data])
@@ -40,7 +37,7 @@ export function useWritingFormSections() {
     isLoading: remoteEnabled && query.isLoading,
     isFetching: remoteEnabled && query.isFetching,
     isRemote: remoteEnabled && !query.isError && query.data != null,
-    isMockCatalog: !remoteEnabled,
+    isFormsApiUnavailable: !remoteEnabled,
     isError: remoteEnabled && query.isError,
     error: remoteEnabled ? query.error : null,
   }

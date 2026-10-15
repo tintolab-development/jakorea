@@ -19,6 +19,7 @@ import {
   fetchCategoryTreeRemote,
   fetchNotificationTemplatePreviewRemote,
   fetchNotificationTemplateRemote,
+  fetchAllNotificationTemplatesRemote,
   fetchNotificationTemplatesRemote,
   moveCategoryRemote,
   moveTemplateRemote,
@@ -192,13 +193,11 @@ export async function deleteAlimtalkTemplate(
 export async function getAlimtalkSendTemplatePicker(): Promise<AlimtalkTemplateItem[]> {
   if (!shouldUseAlimtalkTemplatesRemoteApi()) return []
 
-  const dto = await fetchNotificationTemplatesRemote({
+  const templateItems = await fetchAllNotificationTemplatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     approvalStatus: 'APPROVED',
-    page: '0',
-    size: '100',
   })
-  const fromList = (dto.items ?? [])
+  const fromList = templateItems
     .filter(
       item => (item.channelType ?? ALIMTALK_API_CHANNEL_TYPE).toUpperCase() === ALIMTALK_API_CHANNEL_TYPE
     )

@@ -380,10 +380,26 @@ export function useGeneralProgramRegistrationFlow(
   const isProgramStep = coercedActiveStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(coercedActiveStep)
   const { buildCurrentProgramSnapshot } = registrationVm
+  const registrationOverlayVersionFrozenRef = useRef(getProgramRegistrationOverlayVersion())
+  const subscribeRegistrationOverlayForLinkedProgram = useCallback(
+    (onStoreChange: () => void) => {
+      if (!open || !isParticipantStep) return () => {}
+      return subscribeProgramRegistrationOverlay(onStoreChange)
+    },
+    [open, isParticipantStep]
+  )
+  const getRegistrationOverlayVersionForLinkedProgram = useCallback(() => {
+    if (!open || !isParticipantStep) {
+      return registrationOverlayVersionFrozenRef.current
+    }
+    const next = getProgramRegistrationOverlayVersion()
+    registrationOverlayVersionFrozenRef.current = next
+    return next
+  }, [open, isParticipantStep])
   const registrationOverlayVersion = useSyncExternalStore(
-    subscribeProgramRegistrationOverlay,
-    getProgramRegistrationOverlayVersion,
-    getProgramRegistrationOverlayVersion
+    subscribeRegistrationOverlayForLinkedProgram,
+    getRegistrationOverlayVersionForLinkedProgram,
+    getRegistrationOverlayVersionForLinkedProgram
   )
   const registrationWizardLinkedProgram = useMemo(() => {
     if (!open || !isParticipantStep) return null
@@ -493,6 +509,7 @@ export function useGeneralProgramRegistrationFlow(
 
   useEffect(() => {
     if (!open || !isParticipantStep) return
+    syncInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
     return subscribeInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
   }, [open, isParticipantStep, institutionBridgeSyncArgs])
 

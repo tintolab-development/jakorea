@@ -1,6 +1,6 @@
 import type { ResultListItem, ResultsListParams } from '../model/types'
 import { DEFAULT_RESULTS_LIST_PARAMS } from './constants'
-import { resolveResultCategoryFilterId } from './mock-notice-categories'
+import { resolveResultCategoryFilterId } from './result-notice-categories'
 
 /**
  * 검색·카테고리·정렬 pure 함수.

@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -226,7 +227,13 @@ export function UjatBasicInfoParagraph({
     'no'
   )
 
-  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
+    overlayBasicInfoPrefix: 'ujat.basicInfo',
+  })
+  const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
+  const sponsorApiOptions = sponsorCatalogQuery.options
+  const sponsorOptionsLoading =
+    catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const contactsQuery = useSponsorContactsQuery(
     sponsorId === UJAT_SPONSOR_ALL_VALUE ? null : sponsorId,
     sponsorId !== UJAT_SPONSOR_ALL_VALUE && Boolean(sponsorId)
@@ -310,7 +317,7 @@ export function UjatBasicInfoParagraph({
     }
   }, [selectedSponsorContactIds, sponsorContactId, sponsorContactIds, sponsorManagerName])
 
-  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(catalogReady)
 
   // 일반 일정형과 동일 — 잠금 시 「해당없음」만 유효. 잠금 해제(커리큘럼형)에서는 UJAT 고정 옵션+카탈로그.
   const detailedProgramOptions = useMemo(
@@ -405,6 +412,7 @@ export function UjatBasicInfoParagraph({
                   options={detailedProgramOptions}
                   value={detailedProgramSelectValue}
                   onChange={v => setDetailedProgramSelection(String(v ?? ''))}
+                  onOpenChange={onSelectOpenChange}
                   disabled={lockDetailedProgramToNone}
                 />
               </div>
@@ -527,6 +535,8 @@ export function UjatBasicInfoParagraph({
                   width={240}
                   options={sponsorOptions}
                   value={sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
                   onChange={v => {
                     const next = String(v ?? '')
                     setSponsorId(next)
@@ -555,6 +565,8 @@ export function UjatBasicInfoParagraph({
                   options={managerOptions}
                   value={selectedSponsorContactIds}
                   disabled={!sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)

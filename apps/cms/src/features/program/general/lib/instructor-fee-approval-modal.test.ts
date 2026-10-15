@@ -16,6 +16,7 @@ describe('instructor-fee-approval-modal', () => {
     expect(
       canConfirmInstructorFeeApproval({
         lectureFeeBasisType: 'special_lecture',
+        instructorFeeGrade: '1급 강사비',
         lectureFeeMeasure: '출강 1회당',
         lectureFeeAmount: '',
         notifyTiming: 'immediate',
@@ -26,6 +27,7 @@ describe('instructor-fee-approval-modal', () => {
     expect(
       canConfirmInstructorFeeApproval({
         lectureFeeBasisType: 'other_labor',
+        instructorFeeGrade: '2급 강사비',
         lectureFeeMeasure: '1시간 당',
         lectureFeeAmount: '250000',
         notifyTiming: 'immediate',
@@ -38,20 +40,28 @@ describe('instructor-fee-approval-modal', () => {
     expect(
       canConfirmInstructorFeeApproval({
         lectureFeeBasisType: 'program',
+        instructorFeeGrade: '1급 강사비',
         lectureFeeMeasure: '',
         lectureFeeAmount: '',
         notifyTiming: 'manual',
         manualNotifyAt: null,
+        feePolicyContext: {
+          programWageGradeRows: [{ grade: '1급 강사비', pricing: '1시간 당 | 기본 : 1원' }],
+        },
       })
     ).toBe(false)
 
     expect(
       canConfirmInstructorFeeApproval({
         lectureFeeBasisType: 'program',
+        instructorFeeGrade: '1급 강사비',
         lectureFeeMeasure: '',
         lectureFeeAmount: '',
         notifyTiming: 'manual',
         manualNotifyAt: dayjs('2026-03-23 10:00'),
+        feePolicyContext: {
+          programWageGradeRows: [{ grade: '1급 강사비', pricing: '1시간 당 | 기본 : 1원' }],
+        },
       })
     ).toBe(true)
   })

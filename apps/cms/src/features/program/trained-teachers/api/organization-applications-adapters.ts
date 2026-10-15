@@ -11,7 +11,7 @@ import {
 } from '@/features/program/shared/model/applicant-institution'
 import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
-import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
+import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 
 /** YYYY-MM-DD → YYYY.MM.DD (목록 세션 표시용). 이미 점 구분 문자열이면 공백만 정리. */
 function formatPreferredScheduleDateForSession(raw: string): string {
@@ -63,7 +63,7 @@ export function mapPreferredScheduleBlocksToSessions(
 }
 
 /** BE DTO는 OpenAPI 축소본보다 runtime 필드가 더 있을 수 있음 — 기존 투영 유지 */
-type TrainedTeacherOrganizationApplicationDto = TrainedTeacherOrganizationApplicationResponse & {
+type TrainedTeacherOrganizationApplicationDto = TrainedTeacherOrganizationApplicationDetailResponse & {
   schoolName?: string | null
   organizationName?: string | null
   schoolId?: number
@@ -87,6 +87,7 @@ type TrainedTeacherOrganizationApplicationDto = TrainedTeacherOrganizationApplic
   applicationReason?: string | null
   otherRequests?: string | null
   requestedEducationFormat?: string | null
+  textbookId?: number | string | null
 }
 
 function formatResultNotificationSentAt(iso?: string | null): string | undefined {
@@ -203,12 +204,14 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
         : undefined
   const teacherEmailMasked =
     dto.teacherEmailMasked?.trim() || dto.teacherEmail?.trim() || undefined
+  const textbookId = dto.textbookId == null ? undefined : String(dto.textbookId)
   const detailFields = {
     ...(addressDetail ? { addressDetail } : {}),
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(educationType ? { educationType } : {}),
     ...(teacherEmailMasked ? { teacherEmail: teacherEmailMasked } : {}),
+    ...(textbookId ? { textbookId } : {}),
   }
   return {
     id: toId(dto.applicationId),

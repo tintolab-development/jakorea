@@ -8,10 +8,9 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import {
-  getMockAccountPaymentStatusDetail,
-  type AccountPaymentRow,
-  type AccountPaymentStatusDetail,
+import type {
+  AccountPaymentRow,
+  AccountPaymentStatusDetail,
 } from '@/features/settlement-management/model/account-payments-list'
 import './account-payment-confirmation-modal.css'
 
@@ -117,13 +116,36 @@ function AccountPaymentConfirmationSummary({
   )
 }
 
-/** 테이블에서 체크한 행만 묶어 요약 표시 — 1건이면 상세와 동일한 단건(입금 안내) 모달 */
+function resolveListRowDepositAccountDisplay(row: AccountPaymentRow): string {
+  const deposit = row.depositAccountNumber?.trim()
+  if (deposit) return deposit
+  const bank = row.bankName?.trim()
+  const account = row.maskedAccountNo?.trim()
+  if (bank && account) return `${bank} ${account}`
+  return bank || account || '-'
+}
+
+/** 목록 행만 있을 때 단건 지급 확인 모달(상세 API 없이 목록 필드 사용) */
+export function buildAccountPaymentSingleConfirmationPayloadFromListRow(
+  row: AccountPaymentRow
+): AccountPaymentConfirmationModalPayloadSingle {
+  return {
+    kind: 'single',
+    programDisplay: row.programName,
+    settlementAmount: row.amount,
+    accountBankAndNumber: resolveListRowDepositAccountDisplay(row),
+    accountHolder: row.accountHolder?.trim() || '-',
+    recipientName: row.instructorName?.trim() || '신청자',
+  }
+}
+
+/** 테이블에서 체크한 행만 묶어 요약 표시 — 1건이면 단건(입금 안내) 모달 */
 export function buildAccountPaymentConfirmationPayloadForSelection(
   rows: AccountPaymentRow[]
 ): AccountPaymentConfirmationModalPayload | null {
   if (rows.length === 0) return null
   if (rows.length === 1) {
-    return buildAccountPaymentSingleConfirmationPayload(getMockAccountPaymentStatusDetail(rows[0]))
+    return buildAccountPaymentSingleConfirmationPayloadFromListRow(rows[0])
   }
   const uniquePrograms = [...new Set(rows.map(r => r.programName))]
   const programDisplay =

@@ -55,21 +55,10 @@ export {
   lectureApplicationDetailPath,
 } from './lib/constants'
 export { navigateMypageLnb } from './lib/navigate-lnb'
-export {
-  MOCK_MYPAGE_AFFILIATION,
-  MOCK_MYPAGE_EMPLOYMENT_LABEL,
-  MOCK_MYPAGE_PROGRAM_STATS,
-  getMockMypageProgramStats,
-} from './home'
+export { DEV_MYPAGE_AFFILIATION, DEV_MYPAGE_EMPLOYMENT_LABEL } from './home'
 export {
   APPLICATION_TYPES_BY_SCOPE,
   EDUCATION_APPLICATION_TAB_ITEMS,
-  MOCK_EDUCATION_APPLICATIONS,
-  cancelMockEducationApplication,
-  getMockEducationApplicationById,
-  getMockEducationApplications,
-  getMockEducationApplicationsVersion,
-  subscribeMockEducationApplications,
   filterEducationStatusApplications,
   filterLectureStatusApplications,
   filterVolunteerStatusApplications,
@@ -77,8 +66,6 @@ export {
   isParticipantRoleApplication,
   isVolunteerRoleApplication,
   resolveApplicationRole,
-  getMockEducationInProgressFiles,
-  getMockEducationInProgressNotices,
   compareEducationApplicationItems,
   listEducationApplications,
   matchesEducationApplicationTab,
@@ -129,17 +116,14 @@ export {
   EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSettlementWriteForm,
-  getMockEducationSettlements,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
-  getEducationSurveyMockAvailability,
+  getEducationSurveyTabAvailability,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
 } from './education'
 export {
-  MOCK_MYPAGE_SCHEDULE_EVENTS,
   formatMypageScheduleBarLabel,
-  getMockMypageScheduleEvents,
   getMypageScheduleDatesInMonth,
   getMypageScheduleEventsOnDate,
   syncSelectedDateToMonth,

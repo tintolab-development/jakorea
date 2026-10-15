@@ -20,18 +20,7 @@ export {
   EDUCATION_TEACHER_DELIVERY_STATUS_LABEL,
   hasTeacherAssignmentAsideContent,
 } from './model/types'
-export {
-  EDUCATION_APPLICATION_TAB_ITEMS,
-  MOCK_EDUCATION_APPLICATIONS,
-  cancelMockEducationApplication,
-  getMockEducationApplicationById,
-  getMockEducationApplications,
-  getMockEducationApplicationsVersion,
-  subscribeMockEducationApplications,
-  updateMockTeacherApplicationGuidance,
-  updateMockTeacherInstitutionGuidanceFormState,
-  getMockTeacherInstitutionGuidanceFormState,
-} from './lib/mock-applications'
+export { EDUCATION_APPLICATION_TAB_ITEMS } from './lib/application-tab-items'
 export {
   educationInstitutionGuidanceWritePath,
   educationInstitutionGuidanceApplicationTabPath,

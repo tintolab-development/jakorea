@@ -7,7 +7,7 @@ import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/featur
 import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
 import {
   formatDisplayTimeRange,
-  getMockHolidayDateKeys,
+  getPublicHolidayDateKeysForSchedule,
   normalizeTimeRangeKey,
   parseInterviewDisplayDateLabel,
   type InterviewAssignSlot,
@@ -105,7 +105,7 @@ function buildParsedInterviewSchedule(
   const includeHolidays = source.recurringUnavailable.includes('공휴일')
   /** 호출부에서 조회한 공휴일 우선 — sync 캐시는 React 조회 전엔 비어 있을 수 있음 */
   const holidayDateKeys = includeHolidays
-    ? new Set<string>(publicHolidayDateKeys ?? getMockHolidayDateKeys())
+    ? new Set<string>(publicHolidayDateKeys ?? getPublicHolidayDateKeysForSchedule())
     : new Set<string>()
 
   const slotsByDateKey = new Map<string, InterviewAssignSlot[]>()

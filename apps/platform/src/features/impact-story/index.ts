@@ -27,15 +27,6 @@ export {
   readImpactStoriesListParams,
 } from './lib/list-params'
 export { filterImpactStories } from './lib/filter-stories'
-export {
-  getAdjacentImpactStories,
-  getFeaturedImpactStories,
-  getMockImpactStories,
-  getMockImpactStoryById,
-  getMockImpactStoryDetailById,
-  useMockImpactStories,
-  useMockImpactStoryDetail,
-} from './lib/mock-stories'
 export type { AdjacentImpactStories } from './lib/adjacent'
 export {
   getImpactStoryIdFromPath,

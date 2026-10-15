@@ -4,7 +4,7 @@ import {
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@jakorea/form-schema/writing-form'
-import type { EducationSurveyListEntry } from './mock-survey-list'
+import type { EducationSurveyListEntry } from './survey-list-types'
 
 /** immediate 기간일 때 헤더 시작일(설문 생성일) mock */
 export const EDUCATION_SURVEY_SEED_CREATED_AT = '2024-09-23'

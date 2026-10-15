@@ -63,6 +63,7 @@ import {
 import { getInstructorApplyApiErrorMessage } from './api/get-instructor-apply-api-error-message'
 import { mapInstructorApplyFormToCreateRequest } from './api/map-create-request'
 import { resolveInstructorApplyTermsAgreementVersions } from './api/resolve-terms-agreement-versions'
+import { resolveInstructorEmploymentStatusToSync } from './api/resolve-employment-status-sync'
 import { useCreateInstructorRoleRequestMutation } from './api/use-create-instructor-role-request-mutation'
 import { EducationSchoolNameField } from './education-school-name-field'
 import { getInstructorApplyConsentPath } from './consent/catalog'
@@ -359,8 +360,16 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
         const termsAgreements = await resolveInstructorApplyTermsAgreementVersions(
           mapped.termsAgreements,
         )
+        const employmentStatusToSync = resolveInstructorEmploymentStatusToSync(
+          values.memberType,
+          values.employmentStatus,
+          lockedBasic.employmentStatus,
+        )
         createMutation.mutate(
-          { ...mapped, termsAgreements },
+          {
+            body: { ...mapped, termsAgreements },
+            employmentStatusToSync,
+          },
           {
             onSuccess: () => {
               setSubmitting(false)

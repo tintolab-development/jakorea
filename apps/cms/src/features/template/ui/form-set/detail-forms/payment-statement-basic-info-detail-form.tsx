@@ -10,7 +10,6 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
 import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
@@ -308,15 +307,13 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(accountText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__account">
-              <CmsSelect
+              <CmsInput
                 disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="은행명"
                 width={200}
-                withAllOption={false}
-                options={[...PAYMENT_STATEMENT_BANK_OPTIONS]}
-                value={resolveBankSelectValue(v.bankName)}
-                onChange={next => patch({ bankName: String(next ?? '') })}
+                value={v.bankName}
+                onChange={e => patch({ bankName: e.target.value })}
                 aria-label="은행명 (발급 시 자동 입력)"
               />
               <CmsNumericInput

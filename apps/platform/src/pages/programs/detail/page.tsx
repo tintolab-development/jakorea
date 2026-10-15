@@ -4,7 +4,7 @@ import {
   programApplyRequiredPath,
   PROGRAMS_PATH,
   ProgramApplyGateModals,
-  programApplyGateApplicationsPath,
+  programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
   useProgramApplyGate,
@@ -122,7 +122,11 @@ export function ProgramDetailPage() {
         }}
         onViewApplications={() => {
           closeGateModal()
-          navigate(programApplyGateApplicationsPath)
+          const applicationType =
+            applySelection?.applicationTypes?.length === 1
+              ? applySelection.applicationTypes[0]
+              : program.applicationType
+          navigate(programApplyGateApplicationsPathForType(applicationType))
         }}
       />
     </>

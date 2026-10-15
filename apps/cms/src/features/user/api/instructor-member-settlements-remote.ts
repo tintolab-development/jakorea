@@ -7,7 +7,7 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { isMemberInstructorSettlementsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 
-const PAGE_SIZE = 100
+const PAGE_SIZE = 20
 
 export async function fetchAllInstructorSettlementsRemote(
   instructorMemberId: number

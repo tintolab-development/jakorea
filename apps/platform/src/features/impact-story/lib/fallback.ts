@@ -1,23 +1,18 @@
-/**
- * 공개 임팩트 스토리 API 실패·미호출 시 Platform mock 18건.
- */
-
-import { getAdjacentImpactStories, getFeaturedImpactStories, getMockImpactStories, getMockImpactStoryDetailById } from './mock-stories'
 import type { AdjacentImpactStories } from './adjacent'
+import type { ImpactStoryDetail, ImpactStoryListItem } from '../model/types'
 
-export function getImpactStoryListFallback() {
-  return getMockImpactStories()
+export function getImpactStoryListFallback(): ImpactStoryListItem[] {
+  return []
 }
 
-export function getImpactStoryFeaturedFallback() {
-  return getFeaturedImpactStories()
+export function getImpactStoryFeaturedFallback(): ImpactStoryListItem[] {
+  return []
 }
 
-export function getImpactStoryDetailFallback(id: string | null) {
-  if (!id) return null
-  return getMockImpactStoryDetailById(id)
+export function getImpactStoryDetailFallback(_id: string | null): ImpactStoryDetail | null {
+  return null
 }
 
-export function getImpactStoryAdjacentFallback(id: string): AdjacentImpactStories {
-  return getAdjacentImpactStories(id)
+export function getImpactStoryAdjacentFallback(_id: string): AdjacentImpactStories {
+  return { previous: null, next: null }
 }

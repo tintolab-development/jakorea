@@ -27,12 +27,7 @@ import {
 import { educationInstitutionGuidanceApplicationTabPath } from '../lib/guidance-path'
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
 import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
-import {
-  getMockTeacherInstitutionGuidanceFormState,
-  updateMockTeacherInstitutionGuidanceFormState,
-} from '../lib/mock-applications'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
 import { PFAlertModal, PFButton } from '@/shared/ui'
@@ -76,21 +71,17 @@ export function EducationInstitutionGuidanceWriteForm({
       return
     }
 
-    const useMockPersist =
-      !isRemoteApiConfigured() || shouldUsePlatformMockData()
+    if (!isRemoteApiConfigured()) {
+      setAlertMessage('API가 설정되지 않아 저장할 수 없습니다.')
+      return
+    }
     try {
-      if (useMockPersist) {
-        updateMockTeacherInstitutionGuidanceFormState(applicationId, state)
-      } else {
-        const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(
-          portalPatchContext ?? {},
-        )
-        if (blockedMessage) {
-          setAlertMessage(blockedMessage)
-          return
-        }
-        await patchGuidanceMutation.mutateAsync({ detailCase, state })
+      const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(portalPatchContext ?? {})
+      if (blockedMessage) {
+        setAlertMessage(blockedMessage)
+        return
       }
+      await patchGuidanceMutation.mutateAsync({ detailCase, state })
       navigate(
         educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
         { replace: true },
@@ -162,12 +153,9 @@ export function EducationInstitutionGuidanceWriteForm({
   )
 }
 
-/** write 페이지 초기값 — mock override 우선 */
 export function resolveTeacherInstitutionGuidanceInitialState(
-  applicationId: string,
+  _applicationId: string,
   fallback: TeacherInstitutionGuidanceFormState,
 ): TeacherInstitutionGuidanceFormState {
-  const override = getMockTeacherInstitutionGuidanceFormState(applicationId)
-  if (override) return override
   return fallback
 }

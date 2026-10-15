@@ -6,6 +6,7 @@ import type { Program } from '@/types/domain'
 import {
   extrasFromGeneralProgram,
   setGeneralRegistrationDetailEditExtras,
+  seedGeneralRegistrationOverlayFromProgram,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
@@ -25,7 +26,6 @@ import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/for
 import {
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
-  shouldLockProgressSchedulePeriodToggle,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
@@ -84,7 +84,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     const nextParticipant = participantFlagsFromGeneralProgram(program)
     setExtras(nextExtras)
     setParticipant(nextParticipant)
-    setGeneralRegistrationDetailEditExtras(extrasWithParticipant(nextExtras, nextParticipant))
+    seedGeneralRegistrationOverlayFromProgram(program)
     // program 객체 참조가 바뀌어도 참여자 유형이 같으면 수정 중 체크를 덮지 않는다.
   }, [
     program.id,
@@ -389,16 +389,6 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           }
           disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
             participantOrganization: participant.organization,
-            sessionRound: extras.sessionRoundType,
-          })}
-          lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
-            participantOrganization: participant.organization,
-            educationStructure: extras.programType,
-          })}
-          lockProgressSchedulePeriodToggle={shouldLockProgressSchedulePeriodToggle({
-            participantIndividual: participant.individual,
-            participantOrganization: participant.organization,
-            programType: extras.programType,
             sessionRound: extras.sessionRoundType,
           })}
         />

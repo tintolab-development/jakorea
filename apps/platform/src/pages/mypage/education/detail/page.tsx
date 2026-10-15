@@ -10,7 +10,6 @@ import {
   buildWithdrawnDuringDetailTabItems,
   canCancelEducationApplication,
   canShowEducationApplicationContent,
-  cancelMockEducationApplication,
   educationApplicationDetailPath,
   EducationApplicationContent,
   resolvePreferredEducationScheduleDisplayLabel,
@@ -25,8 +24,7 @@ import {
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
   DocumentPassBanner,
-  getEducationSurveyMockAvailability,
-  getMockEducationApplicationById,
+  getEducationSurveyTabAvailability,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
   isParticipantRoleApplication,
@@ -51,14 +49,13 @@ import {
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
-import { ProgramInfoBody, useMockProgramById, useProgramDetail } from '@/features/program'
+import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
   isRemoteApiConfigured,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import {
   shouldShowTeacherInstitutionGuidanceEditLink,
   shouldShowTeacherInstitutionGuidanceWrite,
@@ -165,32 +162,22 @@ export function MypageEducationDetailPage() {
   const member = useMypageMember()
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
 
-  const mockEnabled = useShouldUsePlatformMockData()
-  const mockApplication = useMemo(
-    () => getMockEducationApplicationById(applicationId),
-    [applicationId, mockEnabled],
-  )
   const remoteApplicationQuery = useMyProgramApplicationDetail(
     resolvedApplicationType,
     applicationId,
   )
-  const application = remoteDetailEnabled
-    ? remoteApplicationQuery.application
-    : isRemoteApiConfigured() && isProbingApplicationType
-      ? undefined
-      : mockApplication
-  const mockProgramQuery = useMockProgramById(remoteDetailEnabled ? '' : (application?.programId ?? ''))
+  const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
   const remoteProgramQuery = useProgramDetail(
-    remoteDetailEnabled ? application?.programId : null,
+    application?.programId ?? null,
     { fresh: true },
   )
-  const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const program = remoteProgramQuery.program
   const isApplicationLoading =
     (isRemoteApiConfigured() && isProbingApplicationType) ||
     (remoteDetailEnabled && remoteApplicationQuery.isLoading)
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
-    : mockProgramQuery.isLoading
+    : false
   const isDetailLoading =
     !isAuthReady ||
     isChecking ||
@@ -462,7 +449,11 @@ export function MypageEducationDetailPage() {
     if (remoteDetailEnabled && application?.applicationType) {
       if (cancelMutation.isPending) return
       cancelMutation.mutate(
-        { applicationType: application.applicationType, applicationId: application.id },
+        {
+          applicationType: application.applicationType,
+          applicationId: application.id,
+          programId: application.programId,
+        },
         {
           onSuccess: () => {
             setIsCancelConfirmOpen(false)
@@ -472,7 +463,6 @@ export function MypageEducationDetailPage() {
       )
       return
     }
-    cancelMockEducationApplication(applicationId)
     setIsCancelConfirmOpen(false)
     navigate(MYPAGE_EDUCATION_PATH, { replace: true })
   }
@@ -603,7 +593,7 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'survey') {
-      const surveyAvailability = getEducationSurveyMockAvailability({
+      const surveyAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
         configured: program.surveyConfigured,
@@ -618,13 +608,14 @@ export function MypageEducationDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
+            pendingSurveyCount={application.pendingSurveyCount}
           />
         )
       }
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
-      const satisfactionAvailability = getEducationSurveyMockAvailability({
+      const satisfactionAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
         configured: program.satisfactionConfigured,

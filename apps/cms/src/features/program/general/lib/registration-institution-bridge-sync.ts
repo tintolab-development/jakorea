@@ -18,11 +18,12 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   getProgramRegistrationOverlayRecord,
   readGeneralRegistrationOverlayScheduleLines,
-  subscribeProgramRegistrationOverlay,
+  subscribeProgramRegistrationOverlayKeys,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { subscribeApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
@@ -140,14 +141,15 @@ export function syncInstitutionApplicationBridgeForRegistrationWizard(
   if (args.registrationFormVariant === 'general') {
     const hideScheduleSettings =
       args.programType === 'schedule' && args.sessionRound === 'multi'
+    const lines = hideScheduleSettings ? [] : readGeneralRegistrationOverlayScheduleLines()
+    const mode = args.educationScheduleMode as InstitutionApplicationEducationScheduleMode
     patchInstitutionApplicationProgramBridge({
       ...recruitLimits,
       educationStructure: args.programType,
       sessionRound: args.sessionRound,
-      educationScheduleMode: args.educationScheduleMode as InstitutionApplicationEducationScheduleMode,
-      educationScheduleLines: hideScheduleSettings
-        ? []
-        : readGeneralRegistrationOverlayScheduleLines(),
+      educationScheduleMode: mode,
+      educationScheduleLines: lines,
+      educationScheduleRange: mode === 'period' ? resolvePeriodRangeFromLines(lines) : undefined,
       ...(preEducationFromRecruit !== undefined
         ? { preEducationNoticeRequired: preEducationFromRecruit }
         : {}),
@@ -191,7 +193,11 @@ export function subscribeInstitutionApplicationBridgeForRegistrationWizard(
   const run = () => {
     syncInstitutionApplicationBridgeForRegistrationWizard(args)
   }
-  const unsubReg = subscribeProgramRegistrationOverlay(run)
+  run()
+  const unsubReg = subscribeProgramRegistrationOverlayKeys(
+    registrationWizardBridgeOverlayKeys(args.registrationFormVariant),
+    run
+  )
   const unsubRecruit = subscribeApplicantRecruitInstitutionOverlay(run)
   return () => {
     unsubReg()
@@ -205,4 +211,22 @@ export function registrationWizardScheduleLinesOverlayKey(
   if (variant === 'general') return GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY
   if (variant === 'trainedTeachers') return TRAINED_TEACHERS_SCHEDULE_LINES_KEY
   return null
+}
+
+export function registrationWizardBridgeOverlayKeys(
+  variant: ProgramRegistrationFormVariant
+): readonly string[] {
+  if (variant === 'general') {
+    return [
+      GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+      ...PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS,
+    ]
+  }
+  if (variant === 'trainedTeachers') {
+    return [TRAINED_TEACHERS_SCHEDULE_LINES_KEY]
+  }
+  if (variant === 'economy') {
+    return [ECONOMY_DATE_RANGE_SEAL_KEY]
+  }
+  return []
 }

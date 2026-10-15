@@ -7,10 +7,15 @@ import {
   buildLectureFeeBasisDisplay,
   DEFAULT_LECTURE_FEE_PAYMENT_CRITERIA,
   parseLectureFeeAmountDigits,
+  resolveInstructorFeeGradeCode,
+  resolveProgramBasisFeePolicyFromWageRows,
 } from './applicant-instructor-lecture-fee-basis'
+import type { InstructorApplicationFeePolicyContext } from './applicant-instructor-lecture-fee-basis'
 
 export type InstructorFeeApprovalConfirmDetail = {
   lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType
+  /** API 전송용 — 라벨 또는 GRADE_* 코드 */
+  instructorFeeGrade: string
   instructorFeeGradeLabel: string | null
   lectureFeeMeasure: string | null
   lectureFeeAmount: string | null
@@ -32,17 +37,28 @@ export function resolveDefaultInstructorFeeGrade(
 
 export function canConfirmInstructorFeeApproval(params: {
   lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType
+  instructorFeeGrade: string
   lectureFeeMeasure: string
   lectureFeeAmount: string
   notifyTiming: PermissionModalNotifyTiming
   manualNotifyAt: Dayjs | null
+  feePolicyContext?: InstructorApplicationFeePolicyContext
 }): boolean {
   if (params.notifyTiming === 'manual' && !params.manualNotifyAt) {
     return false
   }
 
+  if (!resolveInstructorFeeGradeCode(params.instructorFeeGrade)) {
+    return false
+  }
+
   if (params.lectureFeeBasisType === 'program') {
-    return true
+    return (
+      resolveProgramBasisFeePolicyFromWageRows(
+        params.instructorFeeGrade,
+        params.feePolicyContext?.programWageGradeRows
+      ) != null
+    )
   }
 
   const measure = params.lectureFeeMeasure.trim()
@@ -67,6 +83,7 @@ export function buildInstructorFeeApprovalConfirmDetail(params: {
 
   return {
     lectureFeeBasisType: params.lectureFeeBasisType,
+    instructorFeeGrade: params.instructorFeeGrade,
     instructorFeeGradeLabel:
       params.lectureFeeBasisType === 'program' ? params.instructorFeeGrade : null,
     lectureFeeMeasure: params.lectureFeeBasisType === 'program' ? null : measure || null,
@@ -88,8 +105,9 @@ function nowManualNotifyAt(): Dayjs {
 export function useInstructorFeeApprovalModal(params: {
   open: boolean
   instructorFeeGradeLabel?: string
+  feePolicyContext?: InstructorApplicationFeePolicyContext
 }) {
-  const { open, instructorFeeGradeLabel } = params
+  const { open, instructorFeeGradeLabel, feePolicyContext } = params
 
   const [lectureFeeBasisType, setLectureFeeBasisType] =
     useState<ApplicantInstructorLectureFeeBasisType>('program')
@@ -125,12 +143,22 @@ export function useInstructorFeeApprovalModal(params: {
     () =>
       canConfirmInstructorFeeApproval({
         lectureFeeBasisType,
+        instructorFeeGrade,
         lectureFeeMeasure,
         lectureFeeAmount,
         notifyTiming,
         manualNotifyAt,
+        feePolicyContext,
       }),
-    [lectureFeeBasisType, lectureFeeMeasure, lectureFeeAmount, notifyTiming, manualNotifyAt]
+    [
+      lectureFeeBasisType,
+      instructorFeeGrade,
+      lectureFeeMeasure,
+      lectureFeeAmount,
+      notifyTiming,
+      manualNotifyAt,
+      feePolicyContext,
+    ]
   )
 
   const handleLectureFeeBasisTypeChange = useCallback(
@@ -160,10 +188,12 @@ export function useInstructorFeeApprovalModal(params: {
     if (
       !canConfirmInstructorFeeApproval({
         lectureFeeBasisType,
+        instructorFeeGrade,
         lectureFeeMeasure,
         lectureFeeAmount,
         notifyTiming,
         manualNotifyAt,
+        feePolicyContext,
       })
     ) {
       if (notifyTiming === 'manual' && !manualNotifyAt) {

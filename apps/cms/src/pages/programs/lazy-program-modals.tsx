@@ -3,36 +3,48 @@
  * 목록 전환은 모달 모듈 평가를 기다리지 않고, 모달이 열릴 때만 해당 청크를 로드한다.
  */
 import { lazy, Suspense, type ReactNode } from 'react'
-import { Spin } from 'antd'
+import { RegistrationFullpageEntryLoading } from '@/shared/ui/registration-fullpage-entry-loading'
 
 function ProgramModalChunkFallback() {
-  return (
-    <div
-      className="router-loading-fallback"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 2000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(255, 255, 255, 0.65)',
-      }}
-    >
-      <Spin size="large" />
-    </div>
-  )
+  return <RegistrationFullpageEntryLoading variant="viewport" />
+}
+
+function ProgramRegistrationModalChunkFallback() {
+  return <RegistrationFullpageEntryLoading variant="viewport" />
 }
 
 export function ProgramModalWhenOpen({
   open,
   children,
+  registrationEntry = false,
 }: {
   open: boolean
   children: ReactNode
+  /** 신규 등록 풀페이지 — 청크 로드 UI를 등록 모달과 동일하게 */
+  registrationEntry?: boolean
 }) {
   if (!open) return null
-  return <Suspense fallback={<ProgramModalChunkFallback />}>{children}</Suspense>
+  const fallback = registrationEntry ? (
+    <ProgramRegistrationModalChunkFallback />
+  ) : (
+    <ProgramModalChunkFallback />
+  )
+  return <Suspense fallback={fallback}>{children}</Suspense>
+}
+
+const generalRegistrationModalImport = () =>
+  import('@/features/program/general/ui/registration/registration-fullpage-modal')
+
+const ujatRegistrationModalImport = () =>
+  import('@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal')
+
+/** 신규 등록 클릭 직전·직후 청크 선로드 — URL 반영과 병렬 */
+export function preloadGeneralProgramRegistrationModal(): void {
+  void generalRegistrationModalImport()
+}
+
+export function preloadUjatProgramRegistrationModal(): void {
+  void ujatRegistrationModalImport()
 }
 
 export const LazyGeneralProgramDetailFullPageModal = lazy(() =>
@@ -48,7 +60,7 @@ export const LazyProgramDetailFullPageModal = lazy(() =>
 )
 
 export const LazyGeneralProgramRegistrationFullpageModal = lazy(() =>
-  import('@/features/program/general/ui/registration/registration-fullpage-modal').then(module => ({
+  generalRegistrationModalImport().then(module => ({
     default: module.GeneralProgramRegistrationFullpageModal,
   }))
 )
@@ -62,9 +74,7 @@ export const LazyUjatProgramDetailFullPageModal = lazy(() =>
 )
 
 export const LazyUjatProgramRegistrationFullpageModal = lazy(() =>
-  import('@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal').then(
-    module => ({
-      default: module.UjatProgramRegistrationFullpageModal,
-    })
-  )
+  ujatRegistrationModalImport().then(module => ({
+    default: module.UjatProgramRegistrationFullpageModal,
+  }))
 )

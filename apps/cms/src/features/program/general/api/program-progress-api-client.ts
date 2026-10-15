@@ -567,7 +567,7 @@ export type GeneralAssignmentSubmissionListResponse = {
   totalPages?: number
 }
 
-const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 200
+const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 20
 
 /** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
 export async function fetchProgramAssignmentSubmissionsRemote(

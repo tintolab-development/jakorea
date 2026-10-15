@@ -5,6 +5,13 @@ import {
   type EconomyAutofillPhraseSelection,
 } from '@/features/program/1c-1s/lib/dev-autofill-phrases'
 import { seedDevAutofillApplicationThirdPartyRecipients } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
+import {
+  mergeGeneralDevAutofillParticipant,
+  resolveGeneralRegistrationDevAutofillPreset,
+  type GeneralRegistrationDevAutofillCaseId,
+  type GeneralRegistrationDevAutofillOverlayBehavior,
+} from '@/features/program/general/lib/registration-dev-autofill-cases'
+import type { GeneralProgramRegistrationParticipantFlags } from '@/features/program/general/model/registration-flow'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
 import { completeTrainedTeachersDevAutofillOverlay } from '@/features/program/trained-teachers/lib/dev-autofill-required'
@@ -42,6 +49,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  patchGeneralRegistrationSponsorSelectionOverlay,
   patchProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
@@ -62,7 +70,7 @@ import {
   type UjatHalfSemesterKey,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
-import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import { getPublicHolidayDateKeysForSchedule } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
@@ -797,11 +805,24 @@ async function resolveSponsorAndContact(allowAllSentinel: boolean): Promise<{
   if (!shouldUseSponsorsRemoteApi()) return empty
   try {
     const sponsors = await getSponsorOptionsList()
-    const sponsor = sponsors.length > 0 ? pick(sponsors) : undefined
-    if (!sponsor?.id) return empty
-    const contacts = await getSponsorContacts(sponsor.id)
-    const contact = contacts.length > 0 ? pick(contacts) : undefined
-    return { sponsorId: sponsor.id, contactId: contact?.id ?? '' }
+    if (sponsors.length === 0) return empty
+    const ordered = [...sponsors]
+    for (let i = ordered.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[ordered[i], ordered[j]] = [ordered[j], ordered[i]]
+    }
+    for (const sponsor of ordered) {
+      if (!sponsor?.id) continue
+      const sponsorId = String(sponsor.id).trim()
+      const contacts = await getSponsorContacts(sponsorId)
+      if (contacts.length === 0) continue
+      const contact = pick(contacts)
+      if (!contact?.id) continue
+      return { sponsorId, contactId: String(contact.id).trim() }
+    }
+    const fallback = pick(sponsors)
+    if (!fallback?.id) return empty
+    return { sponsorId: String(fallback.id).trim(), contactId: '' }
   } catch {
     return empty
   }
@@ -846,7 +867,7 @@ async function resolveDetailedProgram(
   // 커리큘럼형인데 카탈로그가 비어 있으면 채울 수 있는 값이 없다 — 미선택으로 두고 필수 검증에 맡긴다.
   if (pool.length === 0) return { id: '', name: '' }
   const picked = pick(pool)
-  return { id: picked.value, name: picked.label }
+  return { id: String(picked.value).trim(), name: picked.label.trim() }
 }
 
 /**
@@ -977,11 +998,25 @@ function periodScheduleLine(index: number): string {
   return formatEducationScheduleLineFromRange([start.startOf('day'), end.startOf('day')])
 }
 
-function buildEducationSchedulePreviewLines(mode: 'date' | 'period'): string[] {
-  const count = pickInt(1, 5)
+function buildEducationSchedulePreviewLines(mode: 'date' | 'period', lineCount?: number): string[] {
+  const count = lineCount ?? pickInt(1, 5)
   return Array.from({ length: count }, (_, index) =>
     mode === 'period' ? periodScheduleLine(index + 1) : scheduleLineAt(index + 1)
   )
+}
+
+const DEV_AUTOFILL_FIXED_IPS = { category: 'prepare' as const, detail: 'none' }
+
+function assignmentEntryForPolicy(
+  policy: GeneralRegistrationDevAutofillOverlayBehavior['assignmentPolicy'] | undefined,
+  index: number,
+  legacyDefault?: boolean
+): { enabled: boolean; period: string } {
+  if (policy === 'disabled') return { enabled: false, period: '' }
+  if (policy === 'enabledWithPeriod') return { enabled: true, period: scheduleLineAt(index) }
+  if (policy === 'none') return { enabled: false, period: '' }
+  if (legacyDefault) return { enabled: true, period: scheduleLineAt(index) }
+  return { enabled: false, period: '' }
 }
 
 function canVaryEducationSchedulePeriod(input: {
@@ -1058,17 +1093,24 @@ function buildGeneralLikeOverlay(
     detailedProgramName: string
     paymentItemValues: string[]
     paymentItemLabels: string
-  }
+  },
+  overlayBehavior?: GeneralRegistrationDevAutofillOverlayBehavior
 ): Record<string, unknown> {
   const detailCount = rowCount(layout.scheduleCurriculumDetailCount)
   const groupCount = rowCount(layout.scheduleCurriculumGroupCount)
   const chartCount = rowCount(layout.curriculumChartSessionCount)
   const roundCount = rowCount(layout.curriculumSessionCount)
   const sessionSpan = Math.max(chartCount, roundCount)
+  const deterministic = overlayBehavior != null
   const educationFormByIndex = (count: number) =>
-    indexRecord(count, () => pick(EDUCATION_FORM_VALUES))
+    indexRecord(count, () =>
+      deterministic ? typeSettings.educationForm : pick(EDUCATION_FORM_VALUES)
+    )
   const participationByIndex = (count: number) =>
-    indexRecord(count, () => pick(PARTICIPATION_VALUES))
+    indexRecord(count, () =>
+      deterministic ? typeSettings.participation : pick(PARTICIPATION_VALUES)
+    )
+  const ipsAt = () => (deterministic ? DEV_AUTOFILL_FIXED_IPS : randomIps())
   return {
     [`${basicPrefix}.programTitleEn`]: sample.titleEn,
     [`${basicPrefix}.publicProgramTitle`]: sample.publicTitle,
@@ -1096,10 +1138,12 @@ function buildGeneralLikeOverlay(
     'generalRegistration.wageInfo.paymentItemValues': resolved.paymentItemValues,
     'generalRegistration.wageInfo.paymentItemLabels':
       resolved.paymentItemLabels || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
-    [`${typeSettingsPrefix}.ipsType`]: {
-      category: sample.ipsCategory,
-      detail: sample.ipsDetail,
-    },
+    [`${typeSettingsPrefix}.ipsType`]: deterministic
+      ? DEV_AUTOFILL_FIXED_IPS
+      : {
+          category: sample.ipsCategory,
+          detail: sample.ipsDetail,
+        },
     [`${typeSettingsPrefix}.singleEducationForm`]: typeSettings.educationForm,
     [`${typeSettingsPrefix}.multiCommonEducationForm`]: typeSettings.educationForm,
     [`${typeSettingsPrefix}.educationForm`]: typeSettings.educationForm,
@@ -1115,17 +1159,26 @@ function buildGeneralLikeOverlay(
       educationFormByIndex(sessionSpan),
     'generalRegistration.educationCurriculum.participationBySession':
       participationByIndex(sessionSpan),
-    'generalRegistration.educationCurriculum.ipsBySession': indexRecord(sessionSpan, () => randomIps()),
+    'generalRegistration.educationCurriculum.ipsBySession': indexRecord(sessionSpan, () => ipsAt()),
     'generalRegistration.educationCurriculum.progressSessionByRound': indexRecord(roundCount, index =>
       String(((index - 1) % 16) + 1)
     ),
     'generalRegistration.educationCurriculum.roundContentByRound': indexRecord(roundCount, index =>
       unitText(sample, index, 'content')
     ),
-    'generalRegistration.educationCurriculum.assignmentByRound': indexRecord(roundCount, index => ({
-      enabled: true,
-      period: scheduleLineAt(index),
-    })),
+    ...(typeSettings.sessionRoundType === 'multi'
+      ? {
+          'generalRegistration.educationCurriculum.assignmentByRound': indexRecord(
+            roundCount,
+            index =>
+              assignmentEntryForPolicy(
+                overlayBehavior?.assignmentPolicy,
+                index,
+                overlayBehavior == null
+              )
+          ),
+        }
+      : {}),
     [`${schedulePrefix}.scheduleLines`]: [...educationScheduleLines],
     'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': indexRecord(
       detailCount,
@@ -1141,22 +1194,34 @@ function buildGeneralLikeOverlay(
       participationByIndex(detailCount),
     'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex': indexRecord(
       detailCount,
-      () => randomIps()
+      () => ipsAt()
     ),
-    'generalRegistration.educationScheduleCurriculum.assignmentByDetail': indexRecord(
-      detailCount,
-      index => ({
-        enabled: true,
-        period: scheduleLineAt(index),
-      })
-    ),
-    'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': indexRecord(
-      detailCount,
-      index =>
-        Array.from({ length: groupCount }, (_, groupIndex) => ({
-          ...GROUP_TIME_SLOTS[(index + groupIndex) % GROUP_TIME_SLOTS.length],
-        }))
-    ),
+    ...(overlayBehavior?.assignmentPolicy !== 'none' || overlayBehavior == null
+      ? {
+          'generalRegistration.educationScheduleCurriculum.assignmentByDetail': indexRecord(
+            detailCount,
+            index =>
+              assignmentEntryForPolicy(
+                overlayBehavior?.assignmentPolicy,
+                index,
+                overlayBehavior == null
+              )
+          ),
+        }
+      : {}),
+    ...(typeSettings.programType === 'schedule' &&
+    (overlayBehavior == null ||
+      (typeSettings.sessionRoundType === 'single' && overlayBehavior.scheduleSingleUsesGroupTimes))
+      ? {
+          'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': indexRecord(
+            detailCount,
+            index =>
+              Array.from({ length: groupCount }, (_, groupIndex) => ({
+                ...GROUP_TIME_SLOTS[(index + groupIndex) % GROUP_TIME_SLOTS.length],
+              }))
+          ),
+        }
+      : {}),
     [titleKoKey]: sample.titleKo,
     [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: resolved.sponsorId,
     [GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]: resolved.sponsorId ? [resolved.sponsorId] : [],
@@ -1302,7 +1367,7 @@ function buildUnavailableSelection(
     excludeHoliday: Math.random() < 0.5,
   }
   const blocked = new Set<string>(
-    exclusion.excludeHoliday ? [...getMockHolidayDateKeys()] : []
+    exclusion.excludeHoliday ? [...getPublicHolidayDateKeysForSchedule()] : []
   )
   const candidates = picker(start, end, blocked).filter(key => {
     const day = dayjs(key).day()
@@ -1541,6 +1606,12 @@ export type ProgramRegistrationDevAutofillEditorPatch = {
   sponsorId: string
   sponsorContactId: string
   typeSettings?: ProgramRegistrationDevAutofillTypeSettings
+  layout?: ProgramRegistrationDevAutofillLayout
+  participantFlags?: GeneralProgramRegistrationParticipantFlags
+}
+
+export type ApplyDevProgramRegistrationAutofillOptions = {
+  caseId?: GeneralRegistrationDevAutofillCaseId
 }
 
 /**
@@ -1551,9 +1622,32 @@ export type ProgramRegistrationDevAutofillEditorPatch = {
  */
 export async function applyDevProgramRegistrationAutofill(
   variant: ProgramRegistrationFormVariant | 'ujat',
-  layout: ProgramRegistrationDevAutofillLayout = DEFAULT_AUTOFILL_LAYOUT
+  layout: ProgramRegistrationDevAutofillLayout = DEFAULT_AUTOFILL_LAYOUT,
+  options?: ApplyDevProgramRegistrationAutofillOptions
 ): Promise<ProgramRegistrationDevAutofillEditorPatch> {
+  const generalCasePreset =
+    variant === 'general' && options?.caseId != null
+      ? resolveGeneralRegistrationDevAutofillPreset(options.caseId)
+      : null
+  const effectiveLayout =
+    generalCasePreset != null
+      ? {
+          ...generalCasePreset.layout,
+          participant: mergeGeneralDevAutofillParticipant(
+            generalCasePreset.participantFlags,
+            layout.participant
+          ),
+        }
+      : layout
+  const overlayBehavior = generalCasePreset?.overlayBehavior
+
   const sample = buildDevAutofillSample()
+  if (generalCasePreset != null) {
+    sample.titleKo = generalCasePreset.programTitleKo
+    sample.publicTitle = generalCasePreset.publicProgramTitle
+    sample.ipsCategory = DEV_AUTOFILL_FIXED_IPS.category
+    sample.ipsDetail = DEV_AUTOFILL_FIXED_IPS.detail
+  }
   const economyPhrases = variant === 'economy' ? selectEconomyRegistrationAutofillPhrases() : undefined
   if (economyPhrases) {
     const dates = buildEconomyAutofillDatePlan()
@@ -1573,12 +1667,20 @@ export async function applyDevProgramRegistrationAutofill(
   }
   patchRecruitDatePlan(sample.recruitDates, sample.titleKo, {
     variant,
-    participant: layout.participant,
+    participant: effectiveLayout.participant,
     economy: economyPhrases,
   })
-  const typeSettings = finalizeTypeSettings(variant, layout)
+  const typeSettings =
+    generalCasePreset?.typeSettings ?? finalizeTypeSettings(variant, effectiveLayout)
+  const scheduleLineCount =
+    generalCasePreset != null
+      ? typeSettings.sessionRoundType === 'multi'
+        ? 2
+        : 1
+      : undefined
   const educationScheduleLines = buildEducationSchedulePreviewLines(
-    typeSettings.educationScheduleMode
+    typeSettings.educationScheduleMode,
+    scheduleLineCount
   )
 
   if (variant === 'ujat') {
@@ -1635,7 +1737,7 @@ export async function applyDevProgramRegistrationAutofill(
     }
   }
 
-  seedDevAutofillApplicationThirdPartyRecipients(variant, layout)
+  seedDevAutofillApplicationThirdPartyRecipients(variant, effectiveLayout)
 
   if (variant === 'economy') {
     const [sponsorContact, detailedProgram, paymentItems] = await Promise.all([
@@ -1684,9 +1786,10 @@ export async function applyDevProgramRegistrationAutofill(
     ),
     pickPaymentItemSelection(),
   ])
+  const sponsorId = String(sponsorContact.sponsorId || '').trim()
   const resolved = {
-    ...sponsorContact,
-    contactId: toSponsorContactSelectValue(sponsorContact.sponsorId, sponsorContact.contactId, true),
+    sponsorId,
+    contactId: toSponsorContactSelectValue(sponsorId, sponsorContact.contactId, true),
     detailedProgramId: detailedProgram.id,
     detailedProgramName: detailedProgram.name,
     paymentItemValues: paymentItems.ids,
@@ -1720,16 +1823,91 @@ export async function applyDevProgramRegistrationAutofill(
       'generalRegistration.educationScheduleSettings',
       GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
       'generalRegistration.typeSettings',
-      layout,
+      effectiveLayout,
       typeSettings,
       educationScheduleLines,
-      resolved
+      resolved,
+      overlayBehavior
     )
   )
+  patchGeneralRegistrationSponsorSelectionOverlay({
+    sponsorId: resolved.sponsorId,
+    contactSelectValue: resolved.contactId,
+  })
+  if (resolved.detailedProgramId) {
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.detailedProgramId': resolved.detailedProgramId,
+      'generalRegistration.basicInfo.detailedProgramName': resolved.detailedProgramName,
+    })
+  }
   return {
     programTitleKo: sample.titleKo,
     sponsorId: resolved.sponsorId,
     sponsorContactId: resolved.contactId,
     typeSettings,
+    layout: effectiveLayout,
+    participantFlags: effectiveLayout.participant ?? generalCasePreset?.participantFlags,
+  }
+}
+
+export type PreviewGeneralRegistrationDevAutofillForCaseResult = {
+  typeSettings: ProgramRegistrationDevAutofillTypeSettings
+  layout: ProgramRegistrationDevAutofillLayout
+  participantFlags: GeneralProgramRegistrationParticipantFlags
+  programTitleKo: string
+}
+
+/** 테스트·검증용 — API 없이 overlay·모집·신청 시드를 케이스 프리셋으로 채운다. */
+export function previewGeneralRegistrationDevAutofillForCase(
+  caseId: GeneralRegistrationDevAutofillCaseId,
+  resolved: {
+    sponsorId: string
+    contactId: string
+    detailedProgramId: string
+    detailedProgramName: string
+    paymentItemValues: string[]
+    paymentItemLabels: string
+  }
+): PreviewGeneralRegistrationDevAutofillForCaseResult {
+  const preset = resolveGeneralRegistrationDevAutofillPreset(caseId)
+  const sample = buildDevAutofillSample()
+  sample.titleKo = preset.programTitleKo
+  sample.publicTitle = preset.publicProgramTitle
+  sample.ipsCategory = DEV_AUTOFILL_FIXED_IPS.category
+  sample.ipsDetail = DEV_AUTOFILL_FIXED_IPS.detail
+  patchRecruitDatePlan(sample.recruitDates, sample.titleKo, {
+    variant: 'general',
+    participant: preset.participantFlags,
+  })
+  const typeSettings = preset.typeSettings
+  const educationScheduleLines = buildEducationSchedulePreviewLines(
+    typeSettings.educationScheduleMode,
+    typeSettings.sessionRoundType === 'multi' ? 2 : 1
+  )
+  seedDevAutofillApplicationThirdPartyRecipients('general', preset.layout)
+  patchProgramRegistrationOverlay(
+    buildGeneralLikeOverlay(
+      sample,
+      'generalRegistration.basicInfo',
+      'generalRegistration.kpi',
+      'generalRegistration.educationCurriculum',
+      'generalRegistration.educationScheduleSettings',
+      GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+      'generalRegistration.typeSettings',
+      preset.layout,
+      typeSettings,
+      educationScheduleLines,
+      {
+        ...resolved,
+        contactId: resolved.contactId,
+      },
+      preset.overlayBehavior
+    )
+  )
+  return {
+    typeSettings,
+    layout: preset.layout,
+    participantFlags: preset.participantFlags,
+    programTitleKo: sample.titleKo,
   }
 }

@@ -42,8 +42,19 @@ import {
   type UjatEduPlanEndPeriodChoice,
   type UjatEduPlanStartPeriodChoice,
 } from '@/features/template/lib/title-with-period-settings'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
+import {
+  WritingFormPeriodDatePickerField,
+  dateRangeUsesClockTime,
+} from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import {
+  patchSurveyTitleWritingPeriodCustomEndDate,
+  patchSurveyTitleWritingPeriodCustomRange,
+  patchSurveyTitleWritingPeriodCustomStartDate,
+  resolveSurveyTitleWritingPeriodAppliedSurfaceRange,
+  resolveSurveyTitleWritingPeriodAppliedWithTime,
+  resolveSurveyTitleWritingPeriodPickerValue,
+} from '@/features/template/lib/survey-title-writing-period'
 import type { FormEditorRightPanelUpdateParagraph } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel.types'
 
 function patchTitlePeriod(
@@ -809,21 +820,24 @@ function DefaultTitleWithPeriodSettings({
     return dayjs()
   }, [active.endAt])
 
-  const endAppliedSurfaceRange = useMemo((): [Dayjs, Dayjs] | null => {
-    if (endMode !== 'custom' || !active.endAt) return null
-    const end = dayjs(active.endAt)
-    if (!end.isValid()) return null
-    const start = active.startAt ? dayjs(active.startAt) : end
-    if (!start.isValid()) return [end, end]
-    return start.isBefore(end, 'day') ? [start, end] : [end, end]
-  }, [active.endAt, active.startAt, endMode])
+  const combinedAppliedSurfaceRange = useMemo(
+    () => resolveSurveyTitleWritingPeriodAppliedSurfaceRange(active),
+    [active]
+  )
 
-  const endAppliedSurfaceWithTime = useMemo(() => {
-    if (endAppliedSurfaceRange == null) return false
-    return dateRangeUsesClockTime(endAppliedSurfaceRange[0], endAppliedSurfaceRange[1])
-  }, [endAppliedSurfaceRange])
+  const combinedAppliedWithTime = useMemo(() => {
+    if (combinedAppliedSurfaceRange == null) return false
+    return resolveSurveyTitleWritingPeriodAppliedWithTime(combinedAppliedSurfaceRange)
+  }, [combinedAppliedSurfaceRange])
 
-  const endPickerPlaceholder = active.endPeriodPresetLabel?.trim() || '종료일을 선택하세요'
+  const combinedPickerValue = useMemo(
+    () => resolveSurveyTitleWritingPeriodPickerValue(active),
+    [active]
+  )
+
+  const combinedAnchorDate = useMemo(() => combinedPickerValue ?? dayjs(), [combinedPickerValue])
+
+  const endPickerPlaceholder = active.endPeriodPresetLabel?.trim() || '마감일을 선택하세요'
 
   return (
     <>
@@ -862,8 +876,8 @@ function DefaultTitleWithPeriodSettings({
           />
         </Form.Item>
       ) : null}
-      {startMode === 'custom' ? (
-        <Form.Item>
+      {startMode === 'custom' && endMode !== 'custom' ? (
+        <Form.Item label="시작일">
           <ParagraphDatePicker
             mode="single"
             presetMode="date"
@@ -878,11 +892,51 @@ function DefaultTitleWithPeriodSettings({
               if (next == null) return
               updateParagraph(active.id, cur => {
                 if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
-                return patchTitlePeriod(cur, {
-                  startPeriodMode: 'custom',
-                  startAt: next.startOf('day').toISOString(),
-                  startPeriodPresetLabel: null,
-                })
+                return patchTitlePeriod(
+                  patchSurveyTitleWritingPeriodCustomStartDate(cur, next),
+                  {}
+                )
+              })
+            }}
+          />
+        </Form.Item>
+      ) : null}
+
+      {startMode === 'custom' && endMode === 'custom' ? (
+        <Form.Item label="작성 기간">
+          <WritingFormPeriodDatePickerField
+            width="100%"
+            anchorDate={combinedAnchorDate}
+            value={combinedPickerValue}
+            appliedSurfaceRange={combinedAppliedSurfaceRange}
+            appliedSurfaceWithTime={combinedAppliedWithTime}
+            dualPeriodTrigger
+            dualStartPlaceholder="시작일"
+            dualEndPlaceholder="마감일"
+            onCommitRange={range => {
+              updateParagraph(active.id, cur => {
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') {
+                  return cur
+                }
+                return patchTitlePeriod(
+                  patchSurveyTitleWritingPeriodCustomRange(
+                    cur,
+                    range,
+                    resolveSurveyTitleWritingPeriodAppliedWithTime(range)
+                  ),
+                  {}
+                )
+              })
+            }}
+            onCommitSingleDay={d => {
+              updateParagraph(active.id, cur => {
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') {
+                  return cur
+                }
+                return patchTitlePeriod(
+                  patchSurveyTitleWritingPeriodCustomRange(cur, [d, d], false),
+                  {}
+                )
               })
             }}
           />
@@ -924,38 +978,20 @@ function DefaultTitleWithPeriodSettings({
           />
         </Form.Item>
       ) : null}
-      {endMode === 'custom' ? (
-        <Form.Item>
+      {endMode === 'custom' && startMode !== 'custom' ? (
+        <Form.Item label="마감일">
           <ParagraphDatePicker
             mode="single"
-            presetMode="period"
+            presetMode="date"
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.endAt ? endAnchorDate : null}
             placeholder={endPickerPlaceholder}
-            presetDisplayText={!active.endAt ? active.endPeriodPresetLabel ?? undefined : undefined}
-            preferPeriodModeInPopover
-            appliedSurfaceRange={endAppliedSurfaceRange}
-            appliedSurfaceWithTime={endAppliedSurfaceWithTime}
-            onRangeChange={([, end]) => {
-              updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
-                return patchTitlePeriod(cur, {
-                  endPeriodMode: 'custom',
-                  endAt: end.toISOString(),
-                  endPeriodPresetLabel: null,
-                })
-              })
-            }}
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
                 if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
-                return patchTitlePeriod(cur, {
-                  endPeriodMode: 'custom',
-                  endAt: next.endOf('day').toISOString(),
-                  endPeriodPresetLabel: null,
-                })
+                return patchTitlePeriod(patchSurveyTitleWritingPeriodCustomEndDate(cur, next), {})
               })
             }}
           />
@@ -972,6 +1008,10 @@ export function TitleWithPeriodSettingsSection({
   active: TitleWithPeriodParagraph
   updateParagraph: FormEditorRightPanelUpdateParagraph
 }) {
+  if (!(active.showWritingPeriodOnForm ?? false)) {
+    return null
+  }
+
   if (active.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.title) {
     return <LectureReportTitlePeriodSettings active={active} updateParagraph={updateParagraph} />
   }

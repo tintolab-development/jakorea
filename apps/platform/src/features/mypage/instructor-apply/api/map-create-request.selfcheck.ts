@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import { INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES } from '@jakorea/domain/instructor/profile-form-values'
 import { mapInstructorApplyFormToCreateRequest } from './map-create-request.ts'
+import { resolveInstructorEmploymentStatusToSync } from './resolve-employment-status-sync.ts'
 
 const values = {
   ...INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
@@ -78,6 +79,16 @@ assert.equal(body.termsAgreements[0]?.termsType, 'PAYMENT_STATEMENT_PRE_CONSENT'
 /** 동기 매핑 fallback — 원격 제출 시 resolveInstructorApplyTermsAgreementVersions로 교체 */
 assert.equal(body.termsAgreements[0]?.version, '2026-01')
 assert.equal(body.termsAgreements.length, 4)
+
+assert.equal(
+  resolveInstructorEmploymentStatusToSync('school_teacher', 'ON_LEAVE', 'ACTIVE'),
+  'ON_LEAVE'
+)
+assert.equal(
+  resolveInstructorEmploymentStatusToSync('school_teacher', 'ACTIVE', 'ACTIVE'),
+  undefined
+)
+assert.equal(resolveInstructorEmploymentStatusToSync('general', 'ON_LEAVE', 'ACTIVE'), undefined)
 
 const serialized = JSON.stringify(body)
 assert.equal(serialized.includes('SnapshotJson'), false)

@@ -65,7 +65,7 @@ export function useUjatInstitutionScheduleAssign(
   })
 
   const schedulesQuery = useQuery({
-    queryKey: [...ujatQueryKeys.all, 'program-schedules', programId ?? ''] as const,
+    queryKey: ujatQueryKeys.programSchedules(programId ?? ''),
     queryFn: () => fetchProgramSchedulesLoose(String(programId)),
     enabled: remoteEnabled,
     staleTime: 60_000,

@@ -1,5 +1,6 @@
+import { mapPortalFormListItemToSurveyEntry } from '../../applications/lib/portal-form-list'
 import type { PortalFormListItem } from '../../applications/api/activity-client'
-import type { EducationSurveyListEntry } from './mock-survey-list'
+import type { EducationSurveyListEntry } from './survey-list-types'
 
 /** Portal program-applications `forms` item.status (BE SSOT) */
 export type PortalFormResponseStatus =
@@ -7,8 +8,6 @@ export type PortalFormResponseStatus =
   | 'SUBMITTED'
   | 'COMPLETED'
   | 'DONE'
-
-const SUBMITTED_STATUSES: ReadonlySet<string> = new Set(['SUBMITTED', 'COMPLETED', 'DONE'])
 
 /** ISO 또는 YYYY-MM-DD — 목록 표시용 날짜 부분만 (null-safe) */
 export function slicePortalFormDate(iso: string | null | undefined): string | undefined {
@@ -22,23 +21,13 @@ export function slicePortalFormDate(iso: string | null | undefined): string | un
  * bindingId 없으면 null (render/submit 호출 금지).
  */
 export function mapPortalFormListItem(item: PortalFormListItem): EducationSurveyListEntry | null {
-  const bindingId = item.bindingId ?? item.formBindingId ?? item.id
-  if (bindingId == null) return null
-
-  const status = (item.status ?? 'NOT_SUBMITTED').trim().toUpperCase()
-  const submitted = SUBMITTED_STATUSES.has(status)
+  const entry = mapPortalFormListItemToSurveyEntry(item)
+  if (!entry) return null
 
   return {
-    id: String(bindingId),
-    title: item.title?.trim() || '설문',
-    status: submitted ? 'submitted' : 'in_progress',
-    startAt: slicePortalFormDate(item.submissionStartAt),
-    endAt: slicePortalFormDate(item.submissionEndAt),
-    createdAt: item.submissionStartAt?.trim() ? item.submissionStartAt : undefined,
-    templateVersionId: item.templateVersionId,
-    form: item.form,
-    formResponseId: item.formResponseId,
-    answers: item.answers,
-    draftAnswers: item.draftAnswers,
+    ...entry,
+    startAt: slicePortalFormDate(item.submissionStartAt) ?? entry.startAt,
+    endAt: slicePortalFormDate(item.submissionEndAt) ?? entry.endAt,
+    createdAt: item.submissionStartAt?.trim() ? item.submissionStartAt : entry.createdAt,
   }
 }

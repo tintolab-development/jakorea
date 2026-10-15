@@ -249,11 +249,16 @@ export function useSubmitProgramApplication(programId: number | null) {
       }
       return submitPortalApplication(programId, body)
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       if (programId == null) return
-      void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.all(),
+        }),
+      ])
     },
     onError: error => {
       if (programId == null) return

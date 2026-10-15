@@ -1638,8 +1638,10 @@ function TrainedTeachersScheduleSettingsSection({
             programId={programId}
             scheduleLines={lines}
             educationScheduleMode={scheduleMode}
-            operationStart={operationStart}
-            operationEnd={operationEnd}
+            operationStart={isFormEdit ? form.watch('startDate') : operationStart}
+            operationEnd={isFormEdit ? form.watch('endDate') : operationEnd}
+            persistedOperationStart={operationStart}
+            persistedOperationEnd={operationEnd}
             onApply={nextLines => {
               form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
             }}

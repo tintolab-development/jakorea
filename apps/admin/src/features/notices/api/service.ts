@@ -17,6 +17,7 @@ import {
   toNoticeUpdateRequest,
   toPublishedToggleRequest,
 } from './mappers'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import {
   createNotice as createLocal,
   getNoticeById,
@@ -32,8 +33,11 @@ function jaKoreaApi() {
 }
 
 async function listRemoteNotices(filter?: NoticeListFilter): Promise<Notice[]> {
-  const response = await jaKoreaApi().list5(toNoticeListParams(filter))
-  return (response.items ?? []).map(mapNoticeResponseToDomain)
+  const items = await fetchAllApiPages(async (page, size) => {
+    const response = await jaKoreaApi().list5(toNoticeListParams(filter, page, size))
+    return { items: response.items ?? [], totalPages: response.totalPages }
+  })
+  return items.map(mapNoticeResponseToDomain)
 }
 
 async function resolveAttachmentAssetId(

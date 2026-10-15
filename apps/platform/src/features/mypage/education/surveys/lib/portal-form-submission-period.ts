@@ -1,4 +1,4 @@
-import type { EducationSurveyListEntry } from './mock-survey-list'
+import type { EducationSurveyListEntry } from './survey-list-types'
 
 function startOfLocalDay(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(part => Number(part))

@@ -96,6 +96,23 @@ export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
   return primary ? [primary] : []
 }
 
+/** 후원사·담당자 id/ref를 단일·다중 overlay 키에 함께 반영 (자동입력·에디터 동기화) */
+export function patchGeneralRegistrationSponsorSelectionOverlay(args: {
+  sponsorId: string
+  contactSelectValue: string
+}): void {
+  const sponsorId = args.sponsorId.trim()
+  const contactSelectValue = args.contactSelectValue.trim()
+  patchProgramRegistrationOverlay({
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: sponsorId,
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]: sponsorId ? [sponsorId] : [],
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: contactSelectValue,
+    [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]: contactSelectValue
+      ? [contactSelectValue]
+      : [],
+  })
+}
+
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
@@ -263,6 +280,18 @@ export function subscribeProgramRegistrationOverlayKey(
   listener: () => void
 ): () => void {
   return store.subscribeKey(key, listener)
+}
+
+/** 브리지·participant 스냅샷 등 — listed keys만 구독 (basicInfo 타이핑은 제외) */
+export function subscribeProgramRegistrationOverlayKeys(
+  keys: readonly string[],
+  listener: () => void
+): () => void {
+  if (keys.length === 0) return () => {}
+  const unsubs = keys.map(key => store.subscribeKey(key, listener))
+  return () => {
+    unsubs.forEach(unsub => unsub())
+  }
 }
 
 export function getProgramRegistrationOverlayVersion(): number {

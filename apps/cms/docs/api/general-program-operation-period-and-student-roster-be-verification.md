@@ -359,4 +359,9 @@ FE가 출석·학생명단 UI에서 **반만** 표시하므로, BE는 다음만 
 2. GENERAL·UJAT·타 프로그램 유형 간 regression — `ProgramRecruitmentRequest` 행 단위 저장이 타 유형에 영향 없는지 확인.
 3. 수정 후 위 체크리스트 + FE vitest 묶음(연계 문서) 재실행 요청.
 
-**Document version:** 2026-10-14
+**FE 릴리스 묶음 (등록 위저드·운영기간·명단):**
+
+- 수동 QA 매트릭스: [`general-program-operation-period-and-student-roster-fe-verification.md`](./general-program-operation-period-and-student-roster-fe-verification.md) § 등록 위저드
+- 자동: FE 문서 § 자동 테스트 + `registration-payload-smoke.test.ts`, `cms-select.test.ts`, catalog-ready/bridge 테스트
+
+**Document version:** 2026-10-14 (FE 릴리스 cross-link)

@@ -5,6 +5,7 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { RegistrationFullpageEntryLoading } from '@/shared/ui/registration-fullpage-entry-loading'
 import './template-fullpage-modal.css'
 import '../paragraph/shared/paragraph-card.css'
 
@@ -59,6 +60,11 @@ interface TemplateFullpageModalProps {
   headerActionsLeading?: ReactNode
   /** 프로그램 상세 등 다른 풀페이지 모달 위에 겹칠 때 스택 순서 */
   zIndex?: number
+  /**
+   * 등록 위자드 draft·템플릿 fetch 중 — 본문 전체에 공통 로딩(헤더·단계 탭은 유지).
+   * true이면 footer CTA도 숨긴다.
+   */
+  bodyLoading?: boolean
 }
 
 export type TemplateFullpageModalFooterAction = {
@@ -113,13 +119,16 @@ export function TemplateFullpageModal({
   bodyHeaderBelow,
   headerActionsLeading,
   zIndex,
+  bodyLoading = false,
 }: TemplateFullpageModalProps) {
-  const resolvedFooterActions =
-    footerActions ?? (footerAction != null ? [footerAction] : undefined)
+  const resolvedFooterActions = bodyLoading
+    ? undefined
+    : footerActions ?? (footerAction != null ? [footerAction] : undefined)
   const rootClassName = [
     'full-page-modal',
     registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
     rightNavigation == null ? 'full-page-modal--no-right-nav' : '',
+    bodyLoading ? 'full-page-modal--body-loading' : '',
     className,
   ]
     .filter(Boolean)
@@ -279,12 +288,18 @@ export function TemplateFullpageModal({
           ) : null}
 
           <div className="full-page-modal__contents">
-            <div className="full-page-modal__left">{leftContent}</div>
-            {rightNavigation != null ? (
-              <aside className="full-page-modal__right-wrap">
-                <div className="full-page-modal__right">{rightNavigation}</div>
-              </aside>
-            ) : null}
+            {bodyLoading ? (
+              <RegistrationFullpageEntryLoading variant="modal-body" />
+            ) : (
+              <>
+                <div className="full-page-modal__left">{leftContent}</div>
+                {rightNavigation != null ? (
+                  <aside className="full-page-modal__right-wrap">
+                    <div className="full-page-modal__right">{rightNavigation}</div>
+                  </aside>
+                ) : null}
+              </>
+            )}
           </div>
           {resolvedFooterActions != null && resolvedFooterActions.length > 0 ? (
             <div

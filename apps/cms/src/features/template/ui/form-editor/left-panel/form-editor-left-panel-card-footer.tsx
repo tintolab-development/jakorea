@@ -19,6 +19,7 @@ import { getLastMiddleParagraphId } from '@/features/template/lib/writing-form-m
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 import { isSurveyEditorParagraphDupDeleteLocked } from '@/features/template/lib/survey-paragraph-editor-locks'
+import { normalizeTitleWithPeriodParagraph } from '@/features/template/lib/title-with-period-settings'
 import { isTitleWithPeriodParagraph } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 
@@ -162,11 +163,11 @@ export function modalCardFooterToggles(
           label="작성 기간"
           checked={titleParagraph.showWritingPeriodOnForm ?? false}
           onChange={checked =>
-            updateParagraph(titleParagraph.id, p =>
-              p.kind === 'description' && p.variant === 'survey_title_with_period'
-                ? { ...p, showWritingPeriodOnForm: checked }
-                : p
-            )
+            updateParagraph(titleParagraph.id, p => {
+              if (p.kind !== 'description' || p.variant !== 'survey_title_with_period') return p
+              const next = { ...p, showWritingPeriodOnForm: checked }
+              return checked ? normalizeTitleWithPeriodParagraph(next) : next
+            })
           }
         />
       </div>

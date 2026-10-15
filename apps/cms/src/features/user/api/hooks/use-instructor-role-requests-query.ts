@@ -9,7 +9,7 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import { isInstructorRoleRequestsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import type { ListInstructorRoleRequestsParams } from '@/shared/api/generated/members/schemas'
 
-const DEFAULT_PAGE_SIZE = 50
+const DEFAULT_PAGE_SIZE = 20
 
 export function useInstructorRoleRequestsQuery(
   params: ListInstructorRoleRequestsParams = {},

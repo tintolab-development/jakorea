@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import {
-  getMockApplyFormDraft,
+  buildApplyFormSeedDraft,
   getProgramIdFromPath,
   parsePortalProgramId,
   ProgramBackButton,
@@ -19,7 +20,7 @@ import {
   ProgramApplyLoading,
   ProgramApplyCompleteModal,
   ProgramApplyGateModals,
-  programApplyGateApplicationsPath,
+  programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
@@ -32,6 +33,7 @@ import {
   isIndividualApplicationEnrolledGradeRequiredError,
 } from '@/features/program/lib/application-api-error'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
@@ -230,6 +232,7 @@ function isAnyVolunteerFreeTextItemsParagraphId(id: string): boolean {
 }
 
 export function ProgramApplyPage() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { search } = useLocation()
   const focus = readPortalRecruitmentFocus(search)
@@ -268,6 +271,23 @@ export function ProgramApplyPage() {
   )
   const [completeModalOpen, setCompleteModalOpen] = useState(false)
   const applyGatePromptedRef = useRef(false)
+  const submittedSuccessfullyProgramIdRef = useRef<string | null>(null)
+  const applicationTypeForMyPage =
+    applicationFormQuery.bundle?.option.applicationType ??
+    (focus?.applicationTypes?.length === 1 ? focus.applicationTypes[0] : undefined) ??
+    program?.applicationType
+
+  const handleViewApplications = () => {
+    closeGateModal()
+    setCompleteModalOpen(false)
+    void queryClient
+      .invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.all(),
+      })
+      .finally(() => {
+        navigate(programApplyGateApplicationsPathForType(applicationTypeForMyPage))
+      })
+  }
 
   useEffect(() => {
     if (!programId) {
@@ -283,7 +303,13 @@ export function ProgramApplyPage() {
   }, [navigate, programId, search])
 
   useEffect(() => {
-    if (applyGatePromptedRef.current || !remoteApplyEnabled) return
+    if (
+      applyGatePromptedRef.current ||
+      submittedSuccessfullyProgramIdRef.current === programId ||
+      !remoteApplyEnabled
+    ) {
+      return
+    }
     if (
       applicationFormQuery.status !== 'ready' &&
       applicationFormQuery.status !== 'unavailable' &&
@@ -305,6 +331,7 @@ export function ProgramApplyPage() {
     readGateModalForOptions,
     remoteApplyEnabled,
     setGateModal,
+    programId,
   ])
 
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
@@ -727,7 +754,7 @@ export function ProgramApplyPage() {
     if (hydratedFormKeyRef.current === mockKey) return
     hydratedFormKeyRef.current = mockKey
     setDraft(
-      getMockApplyFormDraft({
+      buildApplyFormSeedDraft({
         ...program,
         applicationType: focusedApplicationType,
       }),
@@ -1659,6 +1686,8 @@ export function ProgramApplyPage() {
             return fileObjectIdsByQuestion ? { fileObjectIdsByQuestion } : {}
           })(),
         })
+        submittedSuccessfullyProgramIdRef.current = programId
+        setGateModal(null)
         setCompleteModalOpen(true)
       } catch (error) {
         const message = getProgramApplicationApiErrorMessage(error)
@@ -1807,10 +1836,7 @@ export function ProgramApplyPage() {
           closeGateModal()
           navigate(programApplyGateMemberSettingsPath)
         }}
-        onViewApplications={() => {
-          closeGateModal()
-          navigate(programApplyGateApplicationsPath)
-        }}
+        onViewApplications={handleViewApplications}
       />
       <ProgramApplyCompleteModal
         open={completeModalOpen}
@@ -1820,10 +1846,7 @@ export function ProgramApplyPage() {
             navigate(programDetailPath(program.id, fromPath, focus))
           }
         }}
-        onViewApplications={() => {
-          setCompleteModalOpen(false)
-          navigate(programApplyGateApplicationsPath)
-        }}
+        onViewApplications={handleViewApplications}
       />
       <PFAlertModal
         open={submitAlert != null}

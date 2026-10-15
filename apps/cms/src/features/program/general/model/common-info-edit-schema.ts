@@ -67,6 +67,7 @@ import {
   type ProgramRegistrationIpsCategory,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import { findEducationScheduleLinesOutsideOperationRange } from '@/features/program/shared/lib/education-schedule-change'
 
 const curriculumSessionSchema = z.object({
   sessionLabel: z.string(),
@@ -505,6 +506,19 @@ export const generalProgramCommonInfoEditSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: '교육 진행 일정을 입력해주세요',
+          path: ['educationScheduleLines'],
+        })
+      }
+
+      const outOfRangeLineIndices = findEducationScheduleLinesOutsideOperationRange(
+        data.educationScheduleLines,
+        data.startDate,
+        data.endDate
+      )
+      if (outOfRangeLineIndices.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
           path: ['educationScheduleLines'],
         })
       }

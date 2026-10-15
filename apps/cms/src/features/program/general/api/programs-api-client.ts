@@ -511,7 +511,7 @@ type SurveyResponseListItem =
   import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse
 
 /** 서버 `size` 최대값 */
-const SURVEY_RESPONSES_PAGE_SIZE = 100
+const SURVEY_RESPONSES_PAGE_SIZE = 20
 /** 비정상 헤더·무한 페이지 방지 */
 const SURVEY_RESPONSES_MAX_PAGES = 50
 

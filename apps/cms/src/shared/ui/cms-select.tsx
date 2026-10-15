@@ -146,6 +146,13 @@ export interface CmsSelectProps
   withAllOption?: boolean
   /** 값이 있을 때 선택 초기화(×) 표시 (기본 true) */
   allowClear?: boolean
+  /** mode="multiple" — 서버 검색·무한 스크롤 */
+  filterLocally?: boolean
+  searchDebounceMs?: number
+  onSearchChange?: (query: string) => void
+  hasMore?: boolean
+  loadingMore?: boolean
+  onLoadMore?: () => void
 }
 
 export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref) => {
@@ -160,10 +167,18 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
     defaultValue,
     onChange,
     onClear,
+    onOpenChange,
+    loading,
     options,
     mode,
     withAllOption = true,
     allowClear = true,
+    filterLocally,
+    searchDebounceMs,
+    onSearchChange,
+    hasMore,
+    loadingMore,
+    onLoadMore,
     placeholder,
     classNames,
     popupClassName,
@@ -301,6 +316,14 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
         options={multipleOptions}
         value={resolvedValue as string[]}
         allowClear={allowClear}
+        optionsLoading={Boolean(loading)}
+        filterLocally={filterLocally}
+        searchDebounceMs={searchDebounceMs}
+        onSearchChange={onSearchChange}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={onLoadMore}
+        onOpenChange={onOpenChange}
         onChange={next => {
           if (!isControlled) setUncontrolledValue(next)
           onChange?.(next as never, [] as never)
@@ -335,6 +358,8 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
         className={selectClassName}
         disabled={disabled}
         placeholder={placeholder}
+        loading={loading}
+        onOpenChange={onOpenChange}
         {...rest}
         classNames={{ ...classNames, popup: { ...classNames?.popup, root: popupRootCn } }}
         mode={mode}

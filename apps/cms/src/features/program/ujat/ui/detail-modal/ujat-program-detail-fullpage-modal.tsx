@@ -604,11 +604,13 @@ export function UjatProgramDetailFullPageModal({
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? undefined
+  const surveysTabActive =
+    open && (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info') === 'survey'
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
     isRemoteDataSource: surveysRemote,
-  } = useGeneralProgramSurveys(programId)
+  } = useGeneralProgramSurveys(programId, surveysTabActive)
   const { createBinding, deleteBinding, invalidateSurveyCaches } =
     useGeneralProgramSurveyFormBindingMutations(programId)
 

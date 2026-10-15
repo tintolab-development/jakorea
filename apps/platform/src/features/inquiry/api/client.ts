@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
 const PUBLIC_FAQS_PATH = '/api/portal/public/faqs'
 const INQUIRIES_PATH = '/api/portal/me/inquiries'
@@ -81,13 +82,20 @@ export async function fetchPublicFaqs(signal?: AbortSignal): Promise<PublicFaqIt
 }
 
 export async function fetchMyInquiries(signal?: AbortSignal): Promise<PortalInquiryListItem[]> {
-  const { data } = await axiosClient.get<unknown>(INQUIRIES_PATH, {
-    signal,
-    params: { page: 0, size: 100 },
+  return fetchAllApiPages(async (page, size) => {
+    const { data } = await axiosClient.get<unknown>(INQUIRIES_PATH, {
+      signal,
+      params: { page, size },
+    })
+    const unwrapped = unwrapEnvelope<PortalInquiryPage | PortalInquiryListItem[]>(data)
+    if (Array.isArray(unwrapped)) {
+      return { items: unwrapped, totalPages: 1 }
+    }
+    return {
+      items: unwrapped.items ?? [],
+      totalPages: (unwrapped as { totalPages?: number }).totalPages,
+    }
   })
-  const unwrapped = unwrapEnvelope<PortalInquiryPage | PortalInquiryListItem[]>(data)
-  if (Array.isArray(unwrapped)) return unwrapped
-  return unwrapped.items ?? []
 }
 
 export async function fetchMyInquiryDetail(

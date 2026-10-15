@@ -33,7 +33,7 @@ export type { PortalRecruitmentFocus, PortalTabCode } from './lib/portal-recruit
 export {
   getApplicationTemplateCodeForApplyCase,
   getMockApplyFormCase,
-  getMockApplyFormDraft,
+  buildApplyFormSeedDraft,
   PROGRAM_APPLY_FORM_CASE_SSOT_IDS,
   resolveProgramApplyFormCase,
   shouldShowIndividualTeamInfoParagraph,
@@ -53,12 +53,13 @@ export {
   getMockPrograms,
   loadMockProgramById,
   loadMockPrograms,
+} from './lib/program-catalog-fallback'
+export {
   programIncludesOperatingDate,
   programOverlapsOperatingDateRange,
   programOverlapsOperatingYear,
-} from './lib/mock-programs'
+} from './lib/program-operating-period'
 export { mergeSeedAndCatalogPrograms } from './lib/merge-seed-catalog'
-export { useMockProgramById, useMockProgramsCatalog } from './lib/use-mock-programs-catalog'
 export {
   useHomePortalPrograms,
   usePortalProgramsList,
@@ -85,6 +86,7 @@ export {
   ProgramApplyGateModals,
   ProgramApplyRequiredConsentModal,
   programApplyGateApplicationsPath,
+  programApplyGateApplicationsPathForType,
   programApplyGateConsentsPath,
   programApplyGateMemberSettingsPath,
 } from './ui/program-apply-gate-modals'

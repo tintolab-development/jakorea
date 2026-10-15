@@ -59,19 +59,16 @@
 .actions {
   display: flex;
   width: 100%;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: stretch;
   justify-content: center;
   gap: var(--spacing-8);
 }
 
 .actions > * {
-  flex: 1 1 140px;
-  min-width: 0;
-}
-
-@media (--bp-pc-up) {
-  .actions > * {
-    flex: 1 1 0;
-  }
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: max-content;
+  padding-inline: var(--spacing-8);
+  white-space: nowrap;
 }

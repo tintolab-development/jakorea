@@ -587,10 +587,25 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   }
 }
 
+function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  if (trimmed === 'PER_HOUR') return '1시간 당'
+  if (trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
+  if (trimmed === 'FIXED') return '해당 없음'
+  return trimmed
+}
+
 function mapInstructorFeeBasisType(
   raw?: string | null
 ): ApplicantInstructorLectureFeeBasisType | undefined {
-  if (raw === 'program' || raw === 'special_lecture' || raw === 'other_labor') return raw
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const lower = trimmed.toLowerCase()
+  if (lower === 'program' || trimmed === 'PROGRAM') return 'program'
+  if (lower === 'special_lecture') return 'special_lecture'
+  if (lower === 'other_labor') return 'other_labor'
+  if (trimmed === 'RECRUITMENT') return 'special_lecture'
   return undefined
 }
 
@@ -683,7 +698,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
       base.instructorFeeGradeLabel,
     lectureFeeBasisType:
       mapInstructorFeeBasisType(dto.feePolicy?.basisType) ?? base.lectureFeeBasisType,
-    lectureFeeMeasure: dto.feePolicy?.measure?.trim() || base.lectureFeeMeasure,
+    lectureFeeMeasure:
+      mapInstructorFeeMeasureFromApi(dto.feePolicy?.measure) ?? base.lectureFeeMeasure,
     lectureFeeAmount:
       dto.feePolicy?.amount != null ? String(dto.feePolicy.amount) : base.lectureFeeAmount,
     lectureFeeBasisDisplay:
@@ -692,7 +708,9 @@ export function mapInstructorApplicationDetailToApplicantRow(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
               'special_lecture',
-            dto.feePolicy.measure ?? base.lectureFeeMeasure ?? '',
+            mapInstructorFeeMeasureFromApi(dto.feePolicy.measure) ??
+              base.lectureFeeMeasure ??
+              '',
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
               : (base.lectureFeeAmount ?? '')

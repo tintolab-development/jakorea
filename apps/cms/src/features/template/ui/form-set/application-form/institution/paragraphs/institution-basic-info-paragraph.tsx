@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { memo, useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
   shouldShowInstitutionApplicationPreferredEducationForm,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import { isParticipantSelectionEducationFormInOverlay } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import {
+  isParticipantSelectionEducationFormInOverlay,
+  PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   getProgramRegistrationOverlayRecord,
-  getProgramRegistrationOverlayVersion,
-  subscribeProgramRegistrationOverlay,
+  subscribeProgramRegistrationOverlayKeys,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   DEFAULT_INSTITUTION_APPLICATION_MAX_CLASS_COUNT,
@@ -46,6 +48,113 @@ const PREVIEW_AUTO_USER_INFO_SAMPLE = {
 
 const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 }
 
+const InstitutionApplicationTeacherContactFields = memo(
+  function InstitutionApplicationTeacherContactFields() {
+    const [teacherTel, setTeacherTel] = useGeneralApplicationOverlayKv<string>(
+      'application.institution.teacherTel',
+      PREVIEW_AUTO_USER_INFO_SAMPLE.tel
+    )
+    const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
+      'application.institution.teacherMobile',
+      PREVIEW_AUTO_USER_INFO_SAMPLE.mobile
+    )
+    const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
+      'application.institution.teacherEmail',
+      PREVIEW_AUTO_USER_INFO_SAMPLE.email
+    )
+    return (
+      <div className="detail-info-form-inputs-wrapper-no-gap">
+        <span className="mr-6">담당 교사</span>
+        <CmsInput
+          inputSize="medium"
+          width={120}
+          value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
+          disabled
+          readOnly
+        />
+        <DetailInfoForm.InputsSeparator />
+        <span className="mr-6">Tel</span>
+        <CmsInput
+          inputSize="medium"
+          width={240}
+          placeholder="담당 교사의 내선 번호(직통 번호)"
+          value={teacherTel}
+          onChange={e => setTeacherTel(e.target.value)}
+        />
+        <DetailInfoForm.InputsSeparator />
+        <span className="mr-6">M</span>
+        <CmsInput
+          inputSize="medium"
+          width={240}
+          placeholder="담당 교사의 휴대폰 번호"
+          value={teacherMobile}
+          onChange={e => setTeacherMobile(e.target.value)}
+        />
+        <DetailInfoForm.InputsSeparator />
+        <span className="mr-6">E-mail</span>
+        <CmsInput
+          inputSize="medium"
+          width={240}
+          placeholder="담당 교사의 이메일"
+          value={teacherEmail}
+          onChange={e => setTeacherEmail(e.target.value)}
+        />
+      </div>
+    )
+  }
+)
+
+const InstitutionApplicationGradeField = memo(function InstitutionApplicationGradeField() {
+  const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.applicationGrade',
+    ''
+  )
+  return (
+    <DetailInfoForm.Field
+      label="신청 학년"
+      edit={
+        <CmsSelect
+          inputSize="medium"
+          width="100%"
+          withAllOption={false}
+          placeholder="학년 선택"
+          value={applicationGrade === '' ? undefined : applicationGrade}
+          onChange={v => setApplicationGrade(String(v ?? ''))}
+          options={APPLICATION_GRADE_OPTIONS}
+        />
+      }
+      view="-"
+    />
+  )
+})
+
+const InstitutionApplicationEducationFormField = memo(function InstitutionApplicationEducationFormField() {
+  const [educationForm, setEducationForm] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.educationForm',
+    EDUCATION_FORM_OPTIONS[0]?.value ?? 'online'
+  )
+  return (
+    <DetailInfoForm.Field
+      label="희망 교육 형태"
+      edit={
+        <CmsRadioGroup
+          size="large"
+          value={educationForm}
+          onChange={e => setEducationForm(e.target.value)}
+          style={inlineChoiceStyle}
+        >
+          {EDUCATION_FORM_OPTIONS.map(o => (
+            <CmsRadio key={o.value} value={o.value}>
+              {o.label}
+            </CmsRadio>
+          ))}
+        </CmsRadioGroup>
+      }
+      view="-"
+    />
+  )
+})
+
 /** 프로그램 참여자 신청 폼 (학교) — 기본 정보 단락 (`DetailInfoForm` 격자) */
 export function ProgramApplicationFormInstitutionBasicInfoParagraph({
   isTemplateAuthoringMode: _isTemplateAuthoringMode = false,
@@ -60,39 +169,22 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
       ),
     [bridge.maxClassCount]
   )
-  const overlayVersion = useSyncExternalStore(
-    subscribeProgramRegistrationOverlay,
-    getProgramRegistrationOverlayVersion,
-    getProgramRegistrationOverlayVersion
+  const participantSelectionInRegistrationOverlay = useSyncExternalStore(
+    listener =>
+      subscribeProgramRegistrationOverlayKeys(
+        PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS,
+        listener
+      ),
+    () => isParticipantSelectionEducationFormInOverlay(getProgramRegistrationOverlayRecord()),
+    () => isParticipantSelectionEducationFormInOverlay(getProgramRegistrationOverlayRecord())
   )
-  void overlayVersion
   const showPreferredEducationForm =
     shouldShowInstitutionApplicationPreferredEducationForm(bridge) ||
-    isParticipantSelectionEducationFormInOverlay(getProgramRegistrationOverlayRecord())
+    participantSelectionInRegistrationOverlay
 
-  const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
-    'application.institution.applicationGrade',
-    ''
-  )
   const [classCount, setClassCount] = useGeneralApplicationOverlayKv<string>(
     'application.institution.classCount',
     ''
-  )
-  const [educationForm, setEducationForm] = useGeneralApplicationOverlayKv<string>(
-    'application.institution.educationForm',
-    EDUCATION_FORM_OPTIONS[0]?.value ?? 'online'
-  )
-  const [teacherTel, setTeacherTel] = useGeneralApplicationOverlayKv<string>(
-    'application.institution.teacherTel',
-    PREVIEW_AUTO_USER_INFO_SAMPLE.tel
-  )
-  const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
-    'application.institution.teacherMobile',
-    PREVIEW_AUTO_USER_INFO_SAMPLE.mobile
-  )
-  const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
-    'application.institution.teacherEmail',
-    PREVIEW_AUTO_USER_INFO_SAMPLE.email
   )
 
   useEffect(() => {
@@ -123,46 +215,6 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
       disabled
       readOnly
     />
-  )
-
-  const teacherInfoInputs = (
-    <div className="detail-info-form-inputs-wrapper-no-gap">
-      <span className="mr-6">담당 교사</span>
-      <CmsInput
-        inputSize="medium"
-        width={120}
-        value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
-        disabled
-        readOnly
-      />
-      <DetailInfoForm.InputsSeparator />
-      <span className="mr-6">Tel</span>
-      <CmsInput
-        inputSize="medium"
-        width={240}
-        placeholder="담당 교사의 내선 번호(직통 번호)"
-        value={teacherTel}
-        onChange={e => setTeacherTel(e.target.value)}
-      />
-      <DetailInfoForm.InputsSeparator />
-      <span className="mr-6">M</span>
-      <CmsInput
-        inputSize="medium"
-        width={240}
-        placeholder="담당 교사의 휴대폰 번호"
-        value={teacherMobile}
-        onChange={e => setTeacherMobile(e.target.value)}
-      />
-      <DetailInfoForm.InputsSeparator />
-      <span className="mr-6">E-mail</span>
-      <CmsInput
-        inputSize="medium"
-        width={240}
-        placeholder="담당 교사의 이메일"
-        value={teacherEmail}
-        onChange={e => setTeacherEmail(e.target.value)}
-      />
-    </div>
   )
 
   const classCountAndTotalField = (
@@ -198,21 +250,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           readOnlyDisplay
           view={autoFilledInstitutionName}
         />
-        <DetailInfoForm.Field
-          label="신청 학년"
-          edit={
-            <CmsSelect
-              inputSize="medium"
-              width="100%"
-              withAllOption={false}
-              placeholder="학년 선택"
-              value={applicationGrade === '' ? undefined : applicationGrade}
-              onChange={v => setApplicationGrade(String(v ?? ''))}
-              options={APPLICATION_GRADE_OPTIONS}
-            />
-          }
-          view="-"
-        />
+        <InstitutionApplicationGradeField />
       </DetailInfoForm.Row>
 
       <DetailInfoForm.Row type="double">
@@ -233,31 +271,19 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
       {showPreferredEducationForm ? (
         <DetailInfoForm.Row type="double">
           {classCountAndTotalField}
-          <DetailInfoForm.Field
-            label="희망 교육 형태"
-            edit={
-              <CmsRadioGroup
-                size="large"
-                value={educationForm}
-                onChange={e => setEducationForm(e.target.value)}
-                style={inlineChoiceStyle}
-              >
-                {EDUCATION_FORM_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value}>
-                    {o.label}
-                  </CmsRadio>
-                ))}
-              </CmsRadioGroup>
-            }
-            view="-"
-          />
+          <InstitutionApplicationEducationFormField />
         </DetailInfoForm.Row>
       ) : (
         <DetailInfoForm.Row type="single">{classCountAndTotalField}</DetailInfoForm.Row>
       )}
 
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="담당 교사 정보" fullRow edit={teacherInfoInputs} view="-" />
+        <DetailInfoForm.Field
+          label="담당 교사 정보"
+          fullRow
+          edit={<InstitutionApplicationTeacherContactFields />}
+          view="-"
+        />
       </DetailInfoForm.Row>
 
       <DetailInfoForm.Row type="single">

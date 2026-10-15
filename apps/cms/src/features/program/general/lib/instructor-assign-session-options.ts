@@ -3,6 +3,7 @@
  */
 
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 
 export interface InstructorAssignSessionOption {
   id: string
@@ -61,7 +62,9 @@ export function mapParticipatingSessionsToInstructorAssignOptions(
       scheduleLabel: `${dateLabel} ${timeRange}`,
       sessionRoundLabel: `${s.round}차시`,
       capacityLabel: '0명',
-      disabled: s.status === 'completed',
+      disabled:
+        s.status === 'completed' ||
+        resolveAssignableSchedulePayloadFromSession(s) == null,
     }
   })
 }
