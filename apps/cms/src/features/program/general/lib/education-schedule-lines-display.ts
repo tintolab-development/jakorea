@@ -117,6 +117,7 @@ export function resolveEducationScheduleLinesForView(input: {
   let normalized = normalizeEducationScheduleLinesForView(picked)
   if (input.dateOnlyPeriodLines) {
     normalized = normalized.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+    return normalized
   }
 
   if (!input.autoFillFromScheduleGroupTimes || normalized.length === 0) {

@@ -118,6 +118,36 @@ export function shouldDisableEducationSchedulePeriodMode(input: {
   return true
 }
 
+/**
+ * 「교육 진행 일정 유형」을 날짜 지정으로 고정(기간 라디오 비활성·period→date 강제).
+ * 진행 시간 자동 반영(`shouldAutoFillEducationScheduleFromGroupTimes`)과 분리 —
+ * 기관·일정·단일은 자동 반영은 켜도 기간 지정은 허용.
+ */
+export function shouldLockEducationScheduleDateMode(input: {
+  participantOrganization: boolean
+  educationStructure: 'curriculum' | 'schedule'
+  sessionRound?: 'single' | 'multi'
+}): boolean {
+  if (
+    shouldDisableEducationSchedulePeriodMode({
+      participantOrganization: input.participantOrganization,
+      sessionRound: input.sessionRound,
+    })
+  ) {
+    return true
+  }
+  if (
+    input.participantOrganization ||
+    !shouldAutoFillEducationScheduleFromGroupTimes({
+      educationStructure: input.educationStructure,
+      sessionRound: input.sessionRound,
+    })
+  ) {
+    return false
+  }
+  return true
+}
+
 /** 일정형 — 진행 그룹 구분 추가는 단일 회차 + 날짜 지정만 */
 export function shouldAllowScheduleProgressGroupAdd(input: {
   sessionRound: 'single' | 'multi'

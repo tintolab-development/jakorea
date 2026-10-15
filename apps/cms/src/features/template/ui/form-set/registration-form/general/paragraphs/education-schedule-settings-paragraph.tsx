@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -6,6 +6,7 @@ import {
   educationScheduleLinesEqual,
   flattenGroupTimeSlotsByDetail,
   educationScheduleLinesFromSelectionRangeApply,
+  normalizeEducationSchedulePeriodLineDateOnly,
   rebuildEducationScheduleLinesFromGroupTimes,
   type EducationScheduleGroupTimeSlot,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -30,6 +31,7 @@ import {
 import {
   getEducationScheduleSelectionDatePickerProps,
   shouldDisableEducationSchedulePeriodTimeInput,
+  shouldLockEducationScheduleDateMode,
 } from '@/features/program/general/lib/schedule-detail-form'
 import './program-registration-paragraph.css'
 
@@ -41,9 +43,9 @@ type EducationScheduleSettingsProps = {
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
   /** Overlay key prefix (e.g., 'generalRegistration.educationScheduleSettings') */
   overlayKeyPrefix?: string
-  /** 일반 개인·일정형·단일 회차 — 날짜 선택 시 진행 시간 자동 반영, 기간/시간 토글 숨김 */
+  /** 일반 일정형·단일 — 날짜 선택 시 진행 시간 자동 반영(기관·개인). 기간 라디오 잠금은 SSOT `shouldLockEducationScheduleDateMode` */
   autoFillFromScheduleGroupTimes?: boolean
-  /** 일반 개인·단일 회차 — 기간 지정 라디오·캘린더 기간 토글 비활성 */
+  /** @deprecated 잠금은 `shouldLockEducationScheduleDateMode` — 호환용으로만 전달 */
   disablePeriodMode?: boolean
   programType?: 'curriculum' | 'schedule'
   sessionRound?: 'single' | 'multi'
@@ -61,7 +63,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   participantOrganization = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
-  const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
+  const lockDateMode = shouldLockEducationScheduleDateMode({
+    participantOrganization,
+    educationStructure: programType,
+    sessionRound,
+  })
   const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
     educationScheduleMode: scheduleMode,
   })
@@ -177,6 +183,22 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
 
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const groupTimeSlotsKey = JSON.stringify(flattenGroupTimeSlotsByDetail(groupTimesByDetail))
+  const previewScheduleLines = useMemo(
+    () =>
+      scheduleMode === 'period'
+        ? scheduleLines.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+        : scheduleLines,
+    [scheduleLines, scheduleMode]
+  )
+
+  useEffect(() => {
+    if (scheduleMode !== 'period') return
+    const next = scheduleLines.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+    if (educationScheduleLinesEqual(scheduleLines, next)) return
+    updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
+      educationScheduleLinesEqual(prev ?? [], next) ? prev ?? [] : next
+    )
+  }, [scheduleLines, scheduleLinesKey, scheduleMode])
 
   useEffect(() => {
     if (!autoFillDatePicker) return
@@ -206,7 +228,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 value={lockDateMode ? 'date' : scheduleMode}
                 onChange={e => {
                   const next = e.target.value as ProgramRegistrationEducationScheduleMode
-                  if (lockDateMode && next === 'period') return
+                  if ((lockDateMode || disablePeriodMode) && next === 'period') return
                   applyEducationScheduleModeLineSwap({
                     overlayKeyPrefix,
                     currentMode: scheduleMode,
@@ -216,7 +238,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 }}
               >
                 <CmsRadio value="date">날짜 지정</CmsRadio>
-                <CmsRadio value="period" disabled={lockDateMode}>
+                <CmsRadio value="period" disabled={lockDateMode || disablePeriodMode}>
                   기간 지정
                 </CmsRadio>
               </CmsRadioGroup>
@@ -255,7 +277,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
           readOnlyDisplay
           view={
             <div className="program-registration-paragraph__schedule-lines">
-              <EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />
+              <EducationSchedulePreviewLines lines={previewScheduleLines} onRemove={removeLine} />
             </div>
           }
         />

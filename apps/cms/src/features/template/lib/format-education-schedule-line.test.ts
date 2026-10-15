@@ -49,6 +49,20 @@ describe('buildEducationScheduleLinesFromDateAndGroupTimes', () => {
 })
 
 describe('educationScheduleLinesFromSelectionRangeApply', () => {
+  it('기간 지정 — 그룹 시간·range 시각과 무관하게 예정일은 날짜만', () => {
+    const start = dayjs('2026-11-01T09:00:00')
+    const end = dayjs('2026-11-05T18:00:00')
+    expect(
+      educationScheduleLinesFromSelectionRangeApply({
+        range: [start, end],
+        autoFillFromScheduleGroupTimes: true,
+        educationScheduleMode: 'period',
+        groupTimeSlots: [{ startTime: '09:00', endTime: '12:00' }],
+        dateOnlyPeriodRange: false,
+      })
+    ).toEqual(['26년 11월 1일(일) ~ 26년 11월 5일(목)'])
+  })
+
   it('개인 일정형 단일·날짜 지정 — range apply도 그룹 시간으로 예정일을 만든다', () => {
     const day = dayjs('2026-11-10')
     expect(

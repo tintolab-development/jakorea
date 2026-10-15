@@ -16,6 +16,7 @@ import {
   getEducationScheduleSelectionDatePickerProps,
   shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleDateMode,
   shouldDisableEducationSchedulePeriodTimeInput,
   shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
@@ -652,6 +653,38 @@ describe('getEducationScheduleSelectionDatePickerProps', () => {
       lockTimeToggleOn: false,
       disableTimeInputs: true,
     })
+  })
+})
+
+describe('shouldLockEducationScheduleDateMode', () => {
+  it('기관·일정·단일 — 진행 시간 자동 반영과 별도로 기간 지정 잠금하지 않음', () => {
+    expect(
+      shouldLockEducationScheduleDateMode({
+        participantOrganization: true,
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toBe(false)
+  })
+
+  it('개인·일정·단일 — 날짜 지정 고정(기간 라디오 잠금)', () => {
+    expect(
+      shouldLockEducationScheduleDateMode({
+        participantOrganization: false,
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toBe(true)
+  })
+
+  it('개인·커리큘럼 — 기간 지정 정책으로 날짜 고정', () => {
+    expect(
+      shouldLockEducationScheduleDateMode({
+        participantOrganization: false,
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+      })
+    ).toBe(true)
   })
 })
 

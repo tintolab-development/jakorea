@@ -82,7 +82,11 @@ export function educationScheduleLinesFromSelectionRangeApply(input: {
   groupTimeSlots: Array<EducationScheduleGroupTimeSlot | null | undefined>
   dateOnlyPeriodRange: boolean
 }): string[] {
-  if (input.autoFillFromScheduleGroupTimes && input.educationScheduleMode === 'date') {
+  if (input.educationScheduleMode === 'period') {
+    const normalized = normalizeEducationSchedulePeriodRangeDateOnly(input.range)
+    return [formatEducationScheduleLineFromRange(normalized)]
+  }
+  if (input.autoFillFromScheduleGroupTimes) {
     const day = input.range[0].startOf('day')
     return buildEducationScheduleLinesFromDateAndGroupTimes(day, input.groupTimeSlots)
   }

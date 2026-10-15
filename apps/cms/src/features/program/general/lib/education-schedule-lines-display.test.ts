@@ -65,6 +65,19 @@ describe('resolveEducationScheduleLinesForView', () => {
     ).toEqual(['26년 11월 1일(일) ~ 26년 11월 5일(목)'])
   })
 
+  it('기간 지정 모드 — 진행 시간 자동 반영으로 예정일에 시각을 넣지 않는다', () => {
+    expect(
+      resolveEducationScheduleLinesForView({
+        educationScheduleLines: ['26년 9월 16일(수)'],
+        autoFillFromScheduleGroupTimes: true,
+        dateOnlyPeriodLines: true,
+        scheduleDetails: [
+          { progressTimeSummary: '그룹 A : 9:00 ~ 12:00 | 그룹 B : 13:00 ~ 15:00' },
+        ],
+      })
+    ).toEqual(['26년 9월 16일(수)'])
+  })
+
   it('개인 일정형 단일은 진행 시간으로 예정일 시각을 다시 입힌다', () => {
     expect(
       resolveEducationScheduleLinesForView({

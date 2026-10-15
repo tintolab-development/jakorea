@@ -25,6 +25,16 @@ export function getInstructorApplyConsentPageTitle(key: InstructorApplyConsentKe
   return PAGE_TITLES[key]
 }
 
+const PAGE_DESCRIPTIONS: Partial<Record<InstructorApplyConsentKey, string>> = {
+  consentSexOffenseCheck: '동의서 양식을 다운로드하여 작성 후 업로드해 주세요.',
+}
+
+export function getInstructorApplyConsentPageDescription(
+  key: InstructorApplyConsentKey,
+): string | undefined {
+  return PAGE_DESCRIPTIONS[key]
+}
+
 export function getInstructorApplyConsentPath(key: InstructorConsentDocumentKey): string {
   return instructorApplyConsentPath(key)
 }

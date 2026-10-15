@@ -53,10 +53,10 @@ import {
   padEventScheduleLabel,
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
-  shouldDisableEducationSchedulePeriodMode,
   getEducationScheduleSelectionDatePickerProps,
   shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodTimeInput,
+  shouldLockEducationScheduleDateMode,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
@@ -4475,13 +4475,13 @@ function ScheduleSettingsEditFields({
     educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
   })
-  const disablePeriodMode = shouldDisableEducationSchedulePeriodMode({
-    participantOrganization: Boolean(participantOrganization),
-    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
-  })
-  const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
   const educationStructureKind =
     educationStructure === 'schedule' ? 'schedule' : 'curriculum'
+  const lockDateMode = shouldLockEducationScheduleDateMode({
+    participantOrganization: Boolean(participantOrganization),
+    educationStructure: educationStructureKind,
+    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+  })
   const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
     educationScheduleMode: scheduleMode,
   })
@@ -4513,6 +4513,14 @@ function ScheduleSettingsEditFields({
     if (educationScheduleLinesEqual(current, next)) return
     form.setValue('educationScheduleLines', next, { shouldDirty: true })
   }, [autoFillDatePicker, form, groupTimeSlotsKey])
+
+  useEffect(() => {
+    if (scheduleMode !== 'period') return
+    const current = form.getValues('educationScheduleLines') ?? []
+    const next = current.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+    if (educationScheduleLinesEqual(current, next)) return
+    form.setValue('educationScheduleLines', next, { shouldDirty: true })
+  }, [form, lines, scheduleMode])
 
   useEffect(() => {
     if (!lockDateMode) return
