@@ -10,6 +10,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import { isFutureNotificationTime } from '@/shared/lib/notification-schedule'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   PaymentOrderRejectNotificationType,
@@ -44,7 +45,9 @@ export function PaymentOrderPaymentRejectionModal({
   const [reason, setReason] = useState('')
   const [notificationType, setNotificationType] =
     useState<PaymentOrderRejectNotificationType>('IMMEDIATE')
-  const [scheduledAt, setScheduledAt] = useState<Dayjs>(() => dayjs().add(1, 'day').hour(9).minute(15).second(0))
+  const [scheduledAt, setScheduledAt] = useState<Dayjs>(() =>
+    dayjs().add(1, 'day').hour(9).minute(15).second(0)
+  )
 
   useEffect(() => {
     if (open) {
@@ -59,7 +62,7 @@ export function PaymentOrderPaymentRejectionModal({
   const canReject =
     trimmed.length > 0 &&
     !confirmLoading &&
-    (notificationType !== 'MANUAL' || scheduledAt?.isValid())
+    (notificationType !== 'MANUAL' || isFutureNotificationTime(scheduledAt))
 
   return (
     <ContentModal
@@ -84,7 +87,9 @@ export function PaymentOrderPaymentRejectionModal({
                 reason: trimmed,
                 notificationType,
                 scheduledNotificationAt:
-                  notificationType === 'MANUAL' ? scheduledAt.format('YYYY-MM-DDTHH:mm:ss') : undefined,
+                  notificationType === 'MANUAL'
+                    ? scheduledAt.format('YYYY-MM-DDTHH:mm:ss')
+                    : undefined,
               })
             }}
           >

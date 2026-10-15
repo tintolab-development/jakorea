@@ -35,6 +35,7 @@ import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s
 import type { Application } from '@/types/domain'
 import {
   formatApplicantGradeLabel,
+  formatPreviousYearParticipationLabel,
   formatRequestedEducationFormat,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
@@ -275,47 +276,47 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
   detail: SchoolDetailForModal,
   dto: OrganizationApplicationDetailResponse
 ): SchoolDetailForModal {
-  const hasField = (key: keyof OrganizationApplicationDetailResponse): boolean =>
-    Object.prototype.hasOwnProperty.call(dto, key)
-  const stringField = (key: keyof OrganizationApplicationDetailResponse, fallback?: string) => {
-    if (!hasField(key)) return fallback
+  const stringField = (key: keyof OrganizationApplicationDetailResponse) => {
     const value = dto[key]
-    return typeof value === 'string' ? value.trim() : undefined
+    if (typeof value !== 'string') return undefined
+    const trimmed = value.trim()
+    return trimmed || undefined
   }
-  const numberField = (key: keyof OrganizationApplicationDetailResponse, fallback?: number) => {
-    if (!hasField(key)) return fallback
+  const numberField = (key: keyof OrganizationApplicationDetailResponse) => {
     const value = dto[key]
     return typeof value === 'number' && Number.isFinite(value) ? value : undefined
   }
-  const teacherPhone = stringField('teacherPhone', detail.teacherPhone)
-  const teacherEmail = stringField('teacherEmail', detail.teacherEmail)
-  const addressDetail = stringField('organizationAddressDetail', detail.addressDetail)
-  const educationFormat = hasField('requestedEducationFormat')
-    ? formatRequestedEducationFormat(dto.requestedEducationFormat)
-    : detail.educationFormat
-  const requestedGrade = stringField('requestedGrade', detail.educationGrade)
-  const organizationName = stringField('organizationName', detail.schoolName)
-  const organizationAddress = stringField('organizationAddress', detail.region)
-  const teacherName = stringField('teacherName', detail.teacherName)
-  const applicationReason = stringField('applicationReason', detail.applicationReason)
-  const otherRequests = stringField('otherRequests', detail.otherRequests)
-  const computerInRoom = stringField('computerInRoom', detail.computerInRoom)
-  const waitingRoomLocation = stringField('waitingRoomLocation', detail.waitingRoomLocation)
-  const mealNotice = stringField('mealNotice', detail.mealNotice)
-  const parkingInfo = stringField('parkingInfo', detail.parkingInfo)
-  const textbookName = stringField('textbookName', detail.textbookName)
-  const textbookGrade = stringField('textbookGrade', detail.textbookGrade)
+  const teacherPhone = stringField('teacherPhone')
+  const teacherEmail = stringField('teacherEmail')
+  const addressDetail = stringField('organizationAddressDetail')
+  const educationFormat = formatRequestedEducationFormat(dto.requestedEducationFormat)
+  const requestedGrade = stringField('requestedGrade')
+  const organizationName = stringField('organizationName')
+  const organizationAddress = stringField('organizationAddress')
+  const teacherName = stringField('teacherName')
+  const applicationReason = stringField('applicationReason')
+  const otherRequests = stringField('otherRequests')
+  const computerInRoom = stringField('computerInRoom')
+  const waitingRoomLocation = stringField('waitingRoomLocation')
+  const mealNotice = stringField('mealNotice')
+  const parkingInfo = stringField('parkingInfo')
+  const textbookName = stringField('textbookName')
+  const textbookGrade = stringField('textbookGrade')
+  const economyFields = {
+    previousYearParticipation: formatPreviousYearParticipationLabel(
+      dto.previousYearParticipation
+    ),
+    affiliatedFinancialCompany: stringField('affiliatedFinancialCompany'),
+  }
   return {
     ...detail,
-    schoolName: organizationName ?? (hasField('organizationName') ? '' : detail.schoolName),
-    region: organizationAddress ?? (hasField('organizationAddress') ? '' : detail.region),
+    schoolName: organizationName ?? '-',
+    region: organizationAddress ?? '-',
     addressDetail,
-    educationGrade:
-      formatApplicantGradeLabel(requestedGrade) ||
-      (hasField('requestedGrade') ? '' : detail.educationGrade),
-    educationFormat,
-    classCount: numberField('requestedClassCount', detail.classCount) ?? 0,
-    studentCount: numberField('requestedStudentCount', detail.studentCount) ?? 0,
+    educationGrade: formatApplicantGradeLabel(requestedGrade) || '-',
+    educationFormat: educationFormat || undefined,
+    classCount: numberField('requestedClassCount') ?? 0,
+    studentCount: numberField('requestedStudentCount') ?? 0,
     teacherName,
     teacherPhone,
     teacherMobile: teacherPhone,
@@ -324,27 +325,18 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     otherRequests,
     computerInRoom,
     waitingRoomLocation,
-    mealProvided: hasField('mealProvided') ? dto.mealProvided ?? undefined : detail.mealProvided,
+    mealProvided: dto.mealProvided ?? undefined,
     mealNotice,
     parkingInfo,
-    textbookId: hasField('textbookId')
-      ? dto.textbookId != null
-        ? String(dto.textbookId)
-        : undefined
-      : detail.textbookId,
+    textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
     textbookName,
     textbookGrade,
-    textbookKits: hasField('textbookKits') ? dto.textbookKits ?? undefined : detail.textbookKits,
-    textbookQuantity: hasField('textbookQuantity')
-      ? dto.textbookQuantity ?? undefined
-      : detail.textbookQuantity,
-    waitingRoomAvailable: hasField('waitingRoomAvailable')
-      ? dto.waitingRoomAvailable ?? undefined
-      : detail.waitingRoomAvailable,
-    participationAppliedAt: hasField('submittedAt')
-      ? dto.submittedAt ?? undefined
-      : detail.participationAppliedAt,
-    gradeBlocks: hasField('gradeBlocks') ? dto.gradeBlocks ?? undefined : detail.gradeBlocks,
+    textbookKits: dto.textbookKits ?? undefined,
+    textbookQuantity: dto.textbookQuantity ?? undefined,
+    waitingRoomAvailable: dto.waitingRoomAvailable ?? undefined,
+    participationAppliedAt: dto.submittedAt ?? undefined,
+    gradeBlocks: dto.gradeBlocks ?? undefined,
+    ...economyFields,
   }
 }
 

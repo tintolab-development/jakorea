@@ -1,6 +1,7 @@
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES,
+  isGeneralInterviewTotalScoreUnevaluated,
   resolveGeneralEffectiveSecondInterviewStatus,
   type GeneralEffectiveSecondInterviewStatus,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
@@ -8,13 +9,19 @@ import { buildInterview2ProcessedSelectionAlert } from '@/features/program/gener
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
-/** 선택 합격/불합격 가능 — 면접 대기만 (진행 완료·결과 확정·활동 포기 제외) */
+/**
+ * 선택 합격/불합격 가능 — 면접 종료·평가 완료·최종 결과 미입력 상태.
+ *
+ * `completed`는 배정된 면접 시간이 종료되어 평가/결과 처리가 가능한 상태이며,
+ * 최종 합격·불합격·예비 결과가 확정되었다는 의미가 아니다. 최종 결과가 저장된
+ * 상태는 manual screening status로 별도 제외한다.
+ */
 export function isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(
   status: GeneralEffectiveSecondInterviewStatus
 ): boolean {
   if (status === 'withdrawn') return false
   if (GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES.has(status)) return false
-  return status === 'waiting'
+  return status === 'completed'
 }
 
 export function isGeneralVolunteerInterview2SelectableForResult(
@@ -24,11 +31,19 @@ export function isGeneralVolunteerInterview2SelectableForResult(
     | 'secondInterviewScreeningStatus'
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
+    | 'availableActions'
+    | 'managerAScore'
+    | 'managerBScore'
   >
 ): boolean {
-  return isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(
-    resolveGeneralEffectiveSecondInterviewStatus(row)
-  )
+  const status = resolveGeneralEffectiveSecondInterviewStatus(row)
+  const hasResultAction = row.availableActions.some(action => {
+    const normalized = action.trim().toUpperCase()
+    return normalized === 'APPROVE' || normalized === 'REJECT'
+  })
+  if (!hasResultAction) return false
+  if (isGeneralInterviewTotalScoreUnevaluated(row)) return false
+  return isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(status)
 }
 
 function hasProcessedInterview2Selection(
@@ -38,6 +53,9 @@ function hasProcessedInterview2Selection(
     | 'secondInterviewScreeningStatus'
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
+    | 'availableActions'
+    | 'managerAScore'
+    | 'managerBScore'
   >[]
 ): boolean {
   return rows.some(row => !isGeneralVolunteerInterview2SelectableForResult(row))
@@ -57,6 +75,9 @@ export function requestGeneralVolunteerInterview2BulkPass({
     | 'secondInterviewScreeningStatus'
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
+    | 'availableActions'
+    | 'managerAScore'
+    | 'managerBScore'
   >[]
   subjectKind?: ScreeningSubjectKind
   onOpenSinglePass: () => void
@@ -94,6 +115,9 @@ export function requestGeneralVolunteerInterview2BulkFail({
     | 'secondInterviewScreeningStatus'
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
+    | 'availableActions'
+    | 'managerAScore'
+    | 'managerBScore'
   >[]
   subjectKind?: ScreeningSubjectKind
   onOpenSingleFail: () => void

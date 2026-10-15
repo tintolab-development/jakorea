@@ -1,6 +1,5 @@
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { GeneralVolunteerInterview2CalendarListRow } from '@/features/program/general/lib/general-volunteer-interview2-calendar-list-rows'
-import { isGeneralVolunteerInterview2EffectiveStatusSelectableForResult } from './general-volunteer-interview2-actions'
 import {
   formatSecondInterviewListScoreLabel,
   resolveSecondInterviewScreeningListBadgeLabel,
@@ -19,9 +18,7 @@ export function GeneralVolunteerInterview2CalendarListItem({
   onToggle: (key: string, checked: boolean) => void
 }) {
   const tone = resolveSecondInterviewScreeningTone(row.effectiveStatus)
-  const checkboxDisabled = !isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(
-    row.effectiveStatus
-  )
+  const checkboxDisabled = !row.selectableForResult
 
   return (
     <div className="general-volunteer-interview2-calendar-list-item">

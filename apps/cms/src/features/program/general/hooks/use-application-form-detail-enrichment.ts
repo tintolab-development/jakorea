@@ -7,7 +7,6 @@ import {
 import {
   mapInstructorApplicationDetailToApplicantRow,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
-  softMergeOrganizationApplicationDetailOntoRow,
   mapVolunteerApplicationDetailToApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
@@ -16,8 +15,6 @@ import {
   fetchOrganizationApplicationDetailRemote,
   fetchVolunteerApplicationDetailRemote,
 } from '@/features/program/general/api/applications-api-client'
-import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
-import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import {
   listAdminCommentsByTargetRemote,
   resolveLatestAdminCommentText,
@@ -34,10 +31,7 @@ import {
   hydrateInstructorApplicationRowFromForm,
   hydrateVolunteerApplicationRowFromForm,
 } from '@/features/program/general/api/adapters/application-form-detail-adapters'
-import {
-  fetchInstructorMemberDetailRemote,
-  fetchTeacherMemberDetailRemote,
-} from '@/features/user/api/members-api-client'
+import { fetchInstructorMemberDetailRemote } from '@/features/user/api/members-api-client'
 import { mapInstructorMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
@@ -61,6 +55,9 @@ import {
   participatingRowToVolunteerApplicationSeed,
 } from '@/features/program/general/lib/participating-volunteer-application-detail'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
+import { getTrainedTeacherOrganizationApplication } from '@/features/program/trained-teachers/api/organization-applications-service'
 
 function parseNumericId(id: string | undefined): number | null {
   if (!id?.trim()) return null
@@ -148,139 +145,117 @@ export function useOrganizationApplicationDetailEnrichment(
   options?: {
     enabled?: boolean
     skipCanonicalDetail?: boolean
-    /** TT — 상세 GET 하되 목록 SoT는 유지하고 PII·부가 필드만 soft-merge */
-    softMergeDetail?: boolean
+    /** 상세 API 종류. TT는 전용 기관 신청 상세 API를 사용한다. */
+    detailSource?: 'general' | 'trained-teacher'
   }
-): ApplicantSchoolRow | null {
-  const softMerge = options?.softMergeDetail === true
-  const skipDetail = options?.skipCanonicalDetail === true && !softMerge
+): {
+  row: ApplicantSchoolRow | null
+  isLoading: boolean
+  isError: boolean
+} {
+  const isTrainedTeacherDetail = options?.detailSource === 'trained-teacher'
+  const skipDetail = options?.skipCanonicalDetail === true
   const programId = parseProgramId(row?.programId)
   const contextId = parseNumericId(row?.id)
-  const detailQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.organizationDetail(String(contextId ?? '')),
-    queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
-    enabled: Boolean(
-      options?.enabled !== false &&
+  const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+  const trainedTeacherRemoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
+  const detailEnabled = Boolean(
+    options?.enabled !== false &&
       !skipDetail &&
       row &&
-      shouldUseOrganizationApplicationRemoteApi() &&
-      contextId != null
-    ),
+      contextId != null &&
+      (!isTrainedTeacherDetail || programId != null) &&
+      (isTrainedTeacherDetail ? trainedTeacherRemoteEnabled : organizationRemoteEnabled)
+  )
+  const generalDetailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationDetail(String(contextId ?? '')),
+    queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
+    enabled: detailEnabled && !isTrainedTeacherDetail,
     staleTime: 30_000,
     retry: false,
   })
-  const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+  const trainedTeacherDetailQuery = useQuery({
+    queryKey: trainedTeacherQueryKeys.organizationApplication(
+      String(programId ?? ''),
+      String(contextId ?? '')
+    ),
+    queryFn: () =>
+      getTrainedTeacherOrganizationApplication(String(programId), String(contextId)),
+    enabled: detailEnabled && isTrainedTeacherDetail,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const detailError = isTrainedTeacherDetail
+    ? trainedTeacherDetailQuery.isError
+    : generalDetailQuery.isError
+  const detailLoading = isTrainedTeacherDetail
+    ? trainedTeacherDetailQuery.isLoading
+    : generalDetailQuery.isLoading
+  const detailSnapshot = isTrainedTeacherDetail
+    ? trainedTeacherDetailQuery.data
+    : generalDetailQuery.data
   const { formResponse, adminComment } = useApplicationFormAndComments({
     // 기관 상세 응답의 latestFormResponseId가 확정된 뒤에만 form response를 조회한다.
     // context 목록의 첫 항목을 임의로 선택하면 이전 응답이 화면에 섞일 수 있다.
-    enabled: Boolean(options?.enabled !== false && row && detailQuery.isFetched),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        !isTrainedTeacherDetail &&
+        row &&
+        generalDetailQuery.isSuccess
+    ),
     programId,
     contextType: 'ORGANIZATION_APPLICATION',
     contextId,
     targetType: 'ORGANIZATION_APPLICATION',
-    formResponseId: detailQuery.data?.latestFormResponseId,
+    formResponseId: generalDetailQuery.data?.latestFormResponseId,
     allowContextFormResponseLookup: !organizationRemoteEnabled,
   })
 
   const hydrated = useMemo(() => {
     if (!row) return null
-    const canonical = detailQuery.data
-      ? softMerge
-        ? softMergeOrganizationApplicationDetailOntoRow(detailQuery.data, row)
-        : skipDetail
+    const canonical: ApplicantSchoolRow = isTrainedTeacherDetail
+      ? ((detailSnapshot as ApplicantSchoolRow | undefined) ?? row)
+      : generalDetailQuery.data
+        ? skipDetail
           ? row
-          : mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
-      : row
+          : mapOrganizationApplicationDetailToApplicantSchoolRow(generalDetailQuery.data, row)
+        : row
+    if (detailEnabled && detailError) return null
     if (!formResponse && !adminComment) return canonical
     return hydrateOrganizationApplicationRowFromForm({
       row: canonical,
       formResponse,
       adminComment,
-      canonicalDetail: detailQuery.data,
+      canonicalDetail: generalDetailQuery.data,
     })
-  }, [row, detailQuery.data, formResponse, adminComment, softMerge, skipDetail])
-
-  const requestedSchedulesQuery = useQuery({
-    ...organizationRequestedSchedulesQueryOptions(String(contextId ?? '')),
-    enabled: Boolean(options?.enabled !== false && organizationRemoteEnabled && contextId != null),
-  })
-
-  const hydratedWithSchedules = useMemo(() => {
-    if (!hydrated) return null
-    if (!organizationRemoteEnabled) return hydrated
-
-    if (requestedSchedulesQuery.isPending) {
-      if (softMerge) {
-        return { ...hydrated, requestedSchedulesSyncState: 'loading' as const }
-      }
-      return {
-        ...hydrated,
-        sessions: undefined,
-        requestedSchedulesSyncState: 'loading' as const,
-      }
-    }
-
-    const fromRequested = mapRequestedSchedulesToSessions(requestedSchedulesQuery.data ?? []) ?? []
-    if (fromRequested.length > 0) {
-      return {
-        ...hydrated,
-        sessions: fromRequested,
-        requestedSchedulesSyncState: 'ready' as const,
-      }
-    }
-
-    if (softMerge) {
-      return { ...hydrated, requestedSchedulesSyncState: 'ready' as const }
-    }
-
-    return {
-      ...hydrated,
-      sessions: undefined,
-      requestedSchedulesSyncState: 'ready' as const,
-    }
   }, [
-    hydrated,
-    organizationRemoteEnabled,
-    requestedSchedulesQuery.data,
-    requestedSchedulesQuery.isPending,
-    softMerge,
+    row,
+    isTrainedTeacherDetail,
+    detailSnapshot,
+    generalDetailQuery.data,
+    detailEnabled,
+    detailError,
+    formResponse,
+    adminComment,
+    skipDetail,
   ])
 
-  const teacherMemberId = hydratedWithSchedules?.teacherMemberId
-  const needsMemberEmail =
-    softMerge && teacherMemberId != null && !hydratedWithSchedules?.detail?.teacherEmail?.trim()
-
-  const memberEmailQuery = useQuery({
-    queryKey: ['organization-application-teacher-member-email', teacherMemberId],
-    queryFn: async () => {
-      const detail = await fetchTeacherMemberDetailRemote(teacherMemberId!)
-      return detail.member?.email?.trim() || null
-    },
-    enabled: Boolean(
-      options?.enabled !== false &&
-      needsMemberEmail &&
-      isMembersRemoteEnabled() &&
-      teacherMemberId != null
-    ),
-    staleTime: 60_000,
-    retry: false,
-  })
+  const hydratedWithSchedules = hydrated
 
   return useMemo(() => {
-    if (!hydratedWithSchedules) return null
-    const memberEmail = memberEmailQuery.data?.trim()
-    if (!memberEmail || hydratedWithSchedules.detail?.teacherEmail?.trim()) {
-      return hydratedWithSchedules
+    if (!hydratedWithSchedules) {
+      return {
+        row: null,
+        isLoading: detailEnabled && detailLoading,
+        isError: detailEnabled && detailError,
+      }
     }
     return {
-      ...hydratedWithSchedules,
-      detail: {
-        ...hydratedWithSchedules.detail,
-        teacherEmail: memberEmail,
-        teacherInfo: undefined,
-      },
+      row: hydratedWithSchedules,
+      isLoading: detailEnabled && detailLoading,
+      isError: detailEnabled && detailError,
     }
-  }, [hydratedWithSchedules, memberEmailQuery.data])
+  }, [hydratedWithSchedules, detailEnabled, detailLoading, detailError])
 }
 
 /** 일반 강사 신청 상세 — form_response + admin_comment hydrate */

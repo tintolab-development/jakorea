@@ -152,6 +152,24 @@ export type ScreeningResultNotifyFields = {
   scheduledAt?: string
 }
 
+function sanitizeScreeningResultPayload<T extends ScreeningResultNotifyFields>(payload: T): T {
+  const { scheduledAt, ...rest } = payload
+  return {
+    ...rest,
+    ...(payload.notifyTiming === 'MANUAL' && scheduledAt ? { scheduledAt } : {}),
+  } as T
+}
+
+function sanitizeInterviewAssignmentPayload<
+  T extends { notifyTiming?: string | null; scheduledAt?: string | null },
+>(payload: T): T {
+  const { scheduledAt, ...rest } = payload
+  return {
+    ...rest,
+    ...(payload.notifyTiming === 'MANUAL' && scheduledAt ? { scheduledAt } : {}),
+  } as T
+}
+
 export type IndividualApplicationUpdatePayload = Omit<
   IndividualApplicationUpdateRequest,
   'textbookId' | 'teamName' | 'teamRole' | 'managerComment'
@@ -814,7 +832,7 @@ export async function submitIndividualDocumentResultRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -827,7 +845,7 @@ export async function submitIndividualFinalResultRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -840,7 +858,7 @@ export async function submitVolunteerDocumentResultRemote(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/document-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -853,7 +871,7 @@ export async function bulkVolunteerDocumentResultsRemote(
     await customInstance({
       url: '/api/admin/volunteer-applications/document-results/bulk',
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -865,7 +883,7 @@ export async function bulkIndividualDocumentResultsRemote(
     await customInstance({
       url: '/api/admin/individual-applications/document-results/bulk',
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -878,7 +896,7 @@ export async function submitVolunteerFinalResultRemote(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -891,7 +909,7 @@ export async function bulkVolunteerFinalResultsRemote(
     await customInstance({
       url: '/api/admin/volunteer-applications/final-results/bulk',
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -968,7 +986,7 @@ export async function createInterviewAssignmentRemote(
     await customInstance({
       url: '/api/admin/interview-assignments',
       method: 'POST',
-      data: payload,
+      data: sanitizeInterviewAssignmentPayload(payload),
     })
   )
 }

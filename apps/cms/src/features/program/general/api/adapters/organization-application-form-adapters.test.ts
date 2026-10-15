@@ -248,4 +248,33 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     // canonical DTO에 없는 동적 답변은 계속 표시할 수 있다.
     expect(hydrated.detail?.sexOffenseCheckRequest).toBe('성범죄 조회 요청 완료')
   })
+
+  it('does not use form answers when the detail snapshot omits optional fields', () => {
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: {
+        ...baseRow,
+        detail: { educationType: '온라인', applicationReason: '목록 값' },
+      },
+      formResponse: formWithAnswers([
+        { questionKeySnapshot: 'applicationReason', answerDisplayText: '이전 사유' },
+        { questionKeySnapshot: 'teacherTel', answerDisplayText: '02-1234-5678' },
+        { questionKeySnapshot: 'teacherMobile', answerDisplayText: '010-1111-2222' },
+        { questionKeySnapshot: 'computerAvailability', answerDisplayText: 'PC 있음' },
+      ]),
+      canonicalDetail: {
+        // 선택 필드는 JSON에서 생략될 수 있으며, 생략도 상세 정본의 값 없음이다.
+        requestedEducationFormat: undefined,
+        applicationReason: undefined,
+        teacherTel: undefined,
+        teacherPhone: undefined,
+        computerInRoom: undefined,
+      },
+    })
+
+    expect(hydrated.detail?.educationType).toBeUndefined()
+    expect(hydrated.detail?.applicationReason).toBeUndefined()
+    expect(hydrated.detail?.teacherTel).toBeUndefined()
+    expect(hydrated.detail?.teacherMobile).toBeUndefined()
+    expect(hydrated.detail?.computerInSpace).toBeUndefined()
+  })
 })

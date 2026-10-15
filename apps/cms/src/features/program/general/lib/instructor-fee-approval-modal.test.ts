@@ -58,7 +58,7 @@ describe('instructor-fee-approval-modal', () => {
         lectureFeeMeasure: '',
         lectureFeeAmount: '',
         notifyTiming: 'manual',
-        manualNotifyAt: dayjs('2026-03-23 10:00'),
+        manualNotifyAt: dayjs().add(5, 'minute'),
         feePolicyContext: {
           programWageGradeRows: [{ grade: '1급 강사비', pricing: '1시간 당 | 기본 : 1원' }],
         },

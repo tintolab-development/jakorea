@@ -27,7 +27,7 @@ import {
   validatePortraitConsentUploadFile,
   validateStudentRosterImportFile,
 } from '../lib/validate-student-document-file'
-import { PFAlertModal, PFText } from '@/shared/ui'
+import { PFAlertModal, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { StudentsPanelCertificateModal } from './students-panel-certificate-modal'
 import { StudentsPanelStepPortrait } from './students-panel-step-portrait'
 import { StudentsPanelStepRoster } from './students-panel-step-roster'
@@ -163,10 +163,8 @@ export function EducationStudentsPanel({
 
   if (isPolicyLoading) {
     return (
-      <div className={styles.unsupportedShell}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
-          제출 안내를 불러오는 중입니다.
-        </PFText>
+      <div className={styles.unsupportedShell} role="status" aria-busy="true">
+        <PFLoadingSpinner label="제출 안내를 불러오는 중" />
       </div>
     )
   }

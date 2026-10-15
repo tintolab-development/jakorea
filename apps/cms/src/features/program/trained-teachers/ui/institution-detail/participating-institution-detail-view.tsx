@@ -174,6 +174,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       textbookName: remote.textbookName,
       applicationReason: remote.detail?.applicationReason,
       otherRequests: remote.detail?.otherRequests,
+      preferredScheduleBlocks: remote.preferredScheduleBlocks ?? [],
     }
   }, [applicationDetailQuery.data])
 
@@ -568,6 +569,38 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     )
   )
 
+  if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTab === 'application') {
+    return (
+      <div className="school-detail-fullpage-view">
+        <CmsTextTabs
+          className="school-detail-fullpage-view__tabs-row"
+          activeKey={activeTab}
+          onChange={key => setActiveTab(key as TrainedTeachersInstitutionDetailTabKey)}
+          items={visibleDetailTabs.map(key => ({
+            key,
+            label: TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS[key],
+          }))}
+        />
+        <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
+            <div className="school-detail-fullpage-view__detail-error">
+              교육받은 교사 기관 신청 상세 정보를 불러오지 못했습니다.
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                onClick={() => {
+                  void applicationDetailQuery.refetch()
+                }}
+              >
+                다시 시도
+              </CmsButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="school-detail-fullpage-view">
       <CmsTextTabs
@@ -641,7 +674,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
-              preferredScheduleBlocks={row.preferredScheduleBlocks}
+              preferredScheduleBlocks={mergedDetail.preferredScheduleBlocks}
               schoolName={mergedDetail.schoolName}
               educationGrade={
                 isApplicationDetailEditing ? (

@@ -21,7 +21,10 @@ import {
   type GeneralVolunteerDocPassedFilters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
-import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import {
+  assignGeneralIndividualInterview,
+  assignGeneralVolunteerInterview,
+} from '@/features/program/general/api/admin-applications-service'
 import { toInterviewAssignNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -41,6 +44,7 @@ import {
   mergeAssignedInterviewIntoAvailability,
 } from '@/features/program/general/lib/interview-availability-utils'
 import { mapGeneralVolunteerInterviewAvailabilityToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
+import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
 
 export type GeneralVolunteerDocPassedViewMode = 'list' | 'calendar'
 
@@ -231,9 +235,11 @@ export function useGeneralVolunteerDocPassed({
         await volunteerRemote.invalidateVolunteerApplications?.()
       } catch (error) {
         console.debug('interview assign remote failed', error)
+        const scheduleError = getNotificationScheduleError(error)
         showAlert({
           title: '면접 배정 실패',
-          content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          content:
+            scheduleError?.message ?? '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
         })
         return
       }

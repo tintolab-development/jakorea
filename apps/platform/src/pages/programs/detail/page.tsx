@@ -11,7 +11,7 @@ import {
   useProgramDetail,
 } from '@/features/program'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -21,9 +21,7 @@ function ProgramDetailLoading() {
   return (
     <section className={[shell.page, styles.page].join(' ')} aria-busy="true">
       <div className={shell.inner}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.loadingStatus}>
-          프로그램을 불러오는 중입니다.
-        </PFText>
+        <PFLoadingSpinner className={styles.loadingStatus} label="프로그램을 불러오는 중" />
         <div className={styles.back}>
           <span className={[styles.skeleton, styles.skeletonBack].join(' ')} />
         </div>

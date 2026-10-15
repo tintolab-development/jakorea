@@ -675,13 +675,12 @@ export function ApplicantsDetailContents({
   const institutionRow = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorRow = isInstructor ? (data as ApplicantInstructorRow) : null
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program ?? null)
-  const institutionData = useOrganizationApplicationDetailEnrichment(institutionRow, {
+  const {
+    row: institutionData,
+    isError: institutionDetailError,
+  } = useOrganizationApplicationDetailEnrichment(institutionRow, {
     enabled: isGeneralDetail,
-    /**
-     * TT: 목록 SoT(preferredScheduleBlocks·학급/인원)는 유지하고
-     * 마스킹 이메일 등 PII만 상세·회원 GET에서 soft-merge.
-     */
-    softMergeDetail: isTrainedTeachers,
+    detailSource: isTrainedTeachers ? 'trained-teacher' : 'general',
   })
   const instructorData = useInstructorApplicationDetailEnrichment(instructorRow, {
     enabled: isGeneralDetail,
@@ -1640,6 +1639,23 @@ export function ApplicantsDetailContents({
       />
     </>
   )
+
+  if (
+    isInstitution &&
+    isGeneralDetail &&
+    institutionDetailError
+  ) {
+    return (
+      <div className="applicant-contents">
+        <div className="applicant-contents__panel">
+          <Empty description="기관 신청 상세 정보를 불러오지 못했습니다." />
+        </div>
+        {personalInfoRevealModal}
+        {adminCommentModals}
+        {combinedClassModals}
+      </div>
+    )
+  }
 
   if (
     isInstitution &&

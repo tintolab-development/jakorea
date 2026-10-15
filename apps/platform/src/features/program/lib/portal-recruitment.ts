@@ -73,6 +73,8 @@ export function applicationTypesForPortalTab(
 export function rowApplicationTypes(row: PortalRecruitment): string[] {
   const listed = upperList(row.applicationTypes)
   if (listed.length > 0) return listed
+  const explicit = upperList(row.applicationType ? [row.applicationType] : undefined)
+  if (explicit.length > 0) return explicit
   const recruitmentType = (row.recruitmentType ?? '').trim().toUpperCase()
   const targetType = (row.targetType ?? '').trim().toUpperCase()
   if (recruitmentType === 'VOLUNTEER') return ['VOLUNTEER']

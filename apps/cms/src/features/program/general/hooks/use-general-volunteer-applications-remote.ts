@@ -43,6 +43,7 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { validateApplicationGiveUpReason } from '@/features/program/shared/lib/application-give-up'
 import { mergeGeneralVolunteerApplicantListRows } from '@/features/program/general/lib/general-volunteer-applications-list-merge'
+import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
 
 export type GeneralVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -93,21 +94,19 @@ export function useGeneralVolunteerApplicationsRemote({
     [enabled, programId]
   )
 
-  const queryFn = useCallback(({ pageParam }: { pageParam: number }) => {
-    if (subjectKind === 'participant') {
-      return fetchGeneralIndividualScreeningApplicationsPage(
-        programId,
-        stage === 'interview2' ? 'interview2' : 'docPassed',
-        pageParam
-      )
-    }
-    return fetchGeneralVolunteerScreeningApplicationsPage(
-      programId,
-      stage,
-      pageParam,
-      listQuery
-    )
-  }, [listQuery, programId, stage, subjectKind])
+  const queryFn = useCallback(
+    ({ pageParam }: { pageParam: number }) => {
+      if (subjectKind === 'participant') {
+        return fetchGeneralIndividualScreeningApplicationsPage(
+          programId,
+          stage === 'interview2' ? 'interview2' : 'docPassed',
+          pageParam
+        )
+      }
+      return fetchGeneralVolunteerScreeningApplicationsPage(programId, stage, pageParam, listQuery)
+    },
+    [listQuery, programId, stage, subjectKind]
+  )
 
   const listQueryKey =
     subjectKind === 'participant'
@@ -164,9 +163,11 @@ export function useGeneralVolunteerApplicationsRemote({
     (error: unknown) => {
       console.debug('applications remote decision failed', error)
       const data = (error as { response?: { data?: unknown } } | null)?.response?.data
+      const scheduleError = getNotificationScheduleError(error)
       showAlert({
         title: '처리 실패',
         content:
+          scheduleError?.message ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatApplicationDecisionCancelConflictMessage(error) ??
           formatApplicationStatusConflictMessage(error) ??

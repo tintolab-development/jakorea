@@ -6,6 +6,13 @@
   min-width: 0;
 }
 
+.loadingState {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+}
+
 .rejectedBanner {
   display: flex;
   padding: var(--spacing-24);

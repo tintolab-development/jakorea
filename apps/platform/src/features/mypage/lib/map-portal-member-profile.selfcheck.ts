@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mapPortalMemberToPlatformProfile } from './map-portal-member-profile'
+import { mapPortalMemberToPlatformProfile } from './map-portal-member-profile.ts'
 
 assert.equal(
   mapPortalMemberToPlatformProfile({

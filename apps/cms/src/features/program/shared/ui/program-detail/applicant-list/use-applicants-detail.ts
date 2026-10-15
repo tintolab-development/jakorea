@@ -26,6 +26,7 @@ import {
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
@@ -245,9 +246,7 @@ export function useApplicantsDetail({
   const trainedTeacherApplicationsRemote = useTrainedTeacherOrganizationApplicationsRemoteSync({
     programId,
     enabled:
-      isTrainedTeachersSurface &&
-      menu === 'institutions' &&
-      usesProgramInstitutionApplications,
+      isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications,
     listFilters: appliedFilters,
     setInstitutionList,
   })
@@ -286,6 +285,9 @@ export function useApplicantsDetail({
       showAlert({
         title: '처리 실패',
         content:
+          (getApiErrorCode(error) === 'INSTRUCTOR_ASSIGNMENT_CONFLICT'
+            ? '해당 일정에 이미 같은 강사가 배정되어 있거나, 일정 배정 상태가 변경되었습니다. 최신 배정 정보를 다시 조회한 후 시도해 주세요.'
+            : null) ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatInstructorOrganizationApprovalErrorMessage(error) ??
           extractApiErrorMessage(responseData, {
@@ -439,16 +441,27 @@ export function useApplicantsDetail({
           }
         }
         await applicationsRemote.invalidateApplications()
+        if (programId) {
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
+          })
+        }
         return 'ok'
       } catch (error) {
         if (getApiErrorCode(error) === 'INVALID_FEE_POLICY') {
           return 'invalid_fee_policy'
         }
+        if (programId && getApiErrorCode(error) === 'INSTRUCTOR_ASSIGNMENT_CONFLICT') {
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
+          })
+          await applicationsRemote.invalidateApplications()
+        }
         notifyRemoteInstructorDecisionFailure(error)
         return 'error'
       }
     },
-    [applicationsRemote, notifyRemoteInstructorDecisionFailure, showAlert]
+    [applicationsRemote, notifyRemoteInstructorDecisionFailure, programId, queryClient, showAlert]
   )
 
   const applyRemoteIndividualDecision = useCallback(
@@ -1563,8 +1576,7 @@ export function useApplicantsDetail({
     }
     if (
       menu === 'institutions' &&
-      (institutionColumnPreset === 'general-detail' ||
-        institutionColumnPreset === 'company-school')
+      (institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school')
     ) {
       // 1사1교·교육받은 교사 overview도 일반 기관 신청과 동일 필터 키(organizationName·소재지·학년…)
       return filterGeneralOrganizationApplications(institutionList, appliedFilters)

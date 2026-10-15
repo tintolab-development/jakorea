@@ -344,63 +344,54 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
 }): ApplicantSchoolRow {
   const { row, formResponse, adminComment, canonicalDetail } = input
   const map = buildFormAnswerMap(formResponse?.answers)
+  const hasCanonicalDetailSnapshot = canonicalDetail != null
   /**
-   * 학년·주소·교사 연락처는 목록/상세 컬럼이 우선.
-   * 신청사유·기타요청·안내는 DTO가 비어 있으면 nested 모집양식 답을 fallback으로 쓴다.
+   * 상세 DTO가 있으면 선택 필드의 생략/null도 정본의 값 없음으로 취급한다.
+   * form_response는 상세 DTO가 없는 레거시 경로에서만 화면 보조값으로 사용한다.
    */
   const nestedBasic = parseNestedBasicInfo(map)
   const guidance = parseGuidanceRows(map)
-  const computerFromForm = hasCanonicalField(canonicalDetail, 'computerInRoom')
-    ? undefined
-    : guidance.computer
-  const waitingFromForm = hasCanonicalField(canonicalDetail, 'waitingRoomLocation')
-    ? undefined
-    : guidance.waiting
-  const mealFromForm =
-    hasCanonicalField(canonicalDetail, 'mealNotice') ||
-    hasCanonicalField(canonicalDetail, 'mealProvided')
-      ? undefined
-      : guidance.meal
-  const notesFromForm = hasCanonicalField(canonicalDetail, 'parkingInfo')
-    ? undefined
-    : guidance.notes
+  const computerFromForm = hasCanonicalDetailSnapshot ? undefined : guidance.computer
+  const waitingFromForm = hasCanonicalDetailSnapshot ? undefined : guidance.waiting
+  const mealFromForm = hasCanonicalDetailSnapshot ? undefined : guidance.meal
+  const notesFromForm = hasCanonicalDetailSnapshot ? undefined : guidance.notes
 
-  const textbookName = hasCanonicalField(canonicalDetail, 'textbookName')
+  const textbookName = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswerWithNested(map, nestedBasic, 'textbookName')
-  const educationGradeFromForm = hasCanonicalField(canonicalDetail, 'requestedGrade')
+  const educationGradeFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : formatApplicantGradeLabel(
         pickAnswerWithNested(map, nestedBasic, 'applicationGrade', 'educationGrade', 'grade')
       )
-  const regionFromForm = canonicalDetail
+  const regionFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'organizationRegion', 'regionLabel')
-  const addressDetailFromForm = hasCanonicalField(canonicalDetail, 'organizationAddressDetail')
+  const addressDetailFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'addressDetail', 'detailAddress', 'address', 'organizationAddress')
   const applicationReason =
     row.detail?.applicationReason?.trim() ||
-    (hasCanonicalField(canonicalDetail, 'applicationReason')
+    (hasCanonicalDetailSnapshot
       ? undefined
       : pickAnswer(map, 'applicationReason') || nestedBasic.applicationReason)
   const otherRequests =
     row.detail?.otherRequests?.trim() ||
-    (hasCanonicalField(canonicalDetail, 'otherRequests')
+    (hasCanonicalDetailSnapshot
       ? undefined
       : pickAnswer(map, 'otherRequests') || nestedBasic.otherRequests)
   // 교육 형태는 canonical 상세 응답만 사용한다. 상세 응답이 없으면 UI에서 '-'로 표시한다.
   const educationType = row.detail?.educationType?.trim()
-  const teacherNameFromForm = hasCanonicalField(canonicalDetail, 'teacherName')
+  const teacherNameFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'teacherName')
-  const teacherMobileFromForm = hasCanonicalField(canonicalDetail, 'teacherPhone')
+  const teacherMobileFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'teacherMobile', 'teacherPhone')
-  const teacherTelFromForm = hasCanonicalField(canonicalDetail, 'teacherTel')
+  const teacherTelFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'teacherTel')
-  const teacherEmailFromForm = hasCanonicalField(canonicalDetail, 'teacherEmail')
+  const teacherEmailFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'teacherEmail')
   const sexOffenseCheckRequest =
@@ -419,8 +410,8 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(educationType ? { educationType } : {}),
-    ...(teacherTelFromForm && !row.detail?.teacherPhone
-      ? { teacherPhone: teacherTelFromForm }
+    ...(teacherTelFromForm && !row.detail?.teacherTel
+      ? { teacherTel: teacherTelFromForm }
       : {}),
     ...(teacherMobileFromForm && !row.detail?.teacherMobile
       ? { teacherMobile: teacherMobileFromForm }
@@ -441,12 +432,12 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       : {}),
     ...(sexOffenseCheckRequest ? { sexOffenseCheckRequest } : {}),
     ...(!row.detail?.previousYearParticipation &&
-    !hasCanonicalField(canonicalDetail, 'previousYearParticipation') &&
+    !hasCanonicalDetailSnapshot &&
     economyFromForm.previousYearParticipation
       ? { previousYearParticipation: economyFromForm.previousYearParticipation }
       : {}),
     ...(!row.detail?.affiliatedFinancialCompany &&
-    !hasCanonicalField(canonicalDetail, 'affiliatedFinancialCompany') &&
+    !hasCanonicalDetailSnapshot &&
     economyFromForm.affiliatedFinancialCompany
       ? { affiliatedFinancialCompany: economyFromForm.affiliatedFinancialCompany }
       : {}),
@@ -471,8 +462,7 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     'waitingRoom',
   ])
   if (
-    !hasCanonicalField(canonicalDetail, 'mealProvided') ||
-    canonicalDetail?.mealProvided == null
+    !hasCanonicalDetailSnapshot
   ) {
     clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'mealNotice', ['mealInfo'])
   }
@@ -485,6 +475,9 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
   ])
   clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'teacherPhone', [
     'teacherPhone',
+  ])
+  clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'teacherTel', [
+    'teacherTel',
   ])
   clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'teacherEmail', [
     'teacherEmail',
@@ -515,13 +508,13 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     educationGrade: row.educationGrade?.trim() || educationGradeFromForm || row.educationGrade,
     region: row.region?.trim() || regionFromForm || row.region,
     classCount:
-      !hasCanonicalField(canonicalDetail, 'requestedClassCount') &&
+      !hasCanonicalDetailSnapshot &&
       Number.isFinite(classCountParsed) &&
       classCountParsed > 0
         ? classCountParsed
         : row.classCount,
     studentCount:
-      !hasCanonicalField(canonicalDetail, 'requestedStudentCount') &&
+      !hasCanonicalDetailSnapshot &&
       Number.isFinite(studentCountParsed) &&
       studentCountParsed > 0
         ? studentCountParsed

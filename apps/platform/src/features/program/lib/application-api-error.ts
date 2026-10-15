@@ -3,7 +3,7 @@
  */
 
 import { isAxiosError } from 'axios'
-import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from './program-apply-messages'
+import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from './program-apply-messages.ts'
 
 function extractErrorCode(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined

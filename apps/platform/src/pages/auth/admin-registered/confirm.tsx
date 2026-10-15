@@ -9,7 +9,7 @@ import {
 } from '@/features/auth/admin-registered'
 import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
+import { PFButton, PFInfoReview, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import sharedStyles from './shared.module.css'
 
@@ -35,9 +35,7 @@ export function AdminRegisteredConfirmPage() {
   if (isHydrating) {
     return (
       <section>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
-          가입 정보를 불러오는 중…
-        </PFText>
+        <PFLoadingSpinner centered label="가입 정보를 불러오는 중" />
       </section>
     )
   }
@@ -81,9 +79,7 @@ export function AdminRegisteredConfirmPage() {
       </div>
 
       {isHydrating ? (
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
-          가입 정보를 불러오는 중…
-        </PFText>
+        <PFLoadingSpinner centered label="가입 정보를 불러오는 중" />
       ) : null}
 
       {isError ? (

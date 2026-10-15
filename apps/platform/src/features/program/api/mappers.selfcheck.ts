@@ -5,6 +5,7 @@
  * 홈 카드 클릭은 CMS 숫자 id → GET /api/portal/programs/{id}.
  */
 import assert from 'node:assert/strict'
+import type { PortalProgramDetail } from './types.ts'
 import {
   mapPortalProgramDetail,
   mapPortalProgramListItem,
@@ -399,6 +400,25 @@ assert.equal(
   false
 )
 assert.equal(organization.sessions[0]?.sessionLabel, '사전 교육')
+
+const uppercaseMultiRound = mapPortalProgramDetail({
+  programId: 186012,
+  programType: 'GENERAL_ORGANIZATION',
+  title: '대문자 복수 회차',
+  educationStructure: 'schedule',
+  sessionRound: 'MULTI',
+  scheduleDetails: [
+    {
+      scheduleLabel: '세부 일정 01',
+      scheduleDateLabel: '2026.10.01',
+      progressTimeSummary: '10:00 ~ 12:00',
+    },
+  ],
+  educationScheduleLines: ['노출되면 안 되는 일정'],
+} as unknown as PortalProgramDetail)
+assert.ok(uppercaseMultiRound)
+assert.equal(uppercaseMultiRound.sessionRound, 'multi')
+assert.equal(uppercaseMultiRound.educationSchedules.length, 0)
 
 const trainedTeacherProgress = mapPortalProgramDetail({
   programId: 186018,

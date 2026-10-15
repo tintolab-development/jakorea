@@ -24,7 +24,7 @@ import {
   isRemoteApiConfigured,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
-import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
+import { PFAlertModal, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 
 export function MypageInstructorApplyPage() {
   const navigate = useNavigate()
@@ -93,9 +93,7 @@ export function MypageInstructorApplyPage() {
         }
       >
         {isPageLoading ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            회원 정보를 불러오는 중…
-          </PFText>
+          <PFLoadingSpinner centered label="회원 정보를 불러오는 중" />
         ) : isError ? (
           <PFText as="p" typo="bd-md-rg" color="error">
             회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.

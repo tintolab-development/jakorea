@@ -83,9 +83,8 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
         items={accordionItems}
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
-        emptyMessage={
-          remoteFaqs.isLoading ? 'FAQ를 불러오는 중입니다.' : '선택한 카테고리에 등록된 FAQ가 없습니다.'
-        }
+        loading={remoteFaqs.isLoading}
+        emptyMessage="선택한 카테고리에 등록된 FAQ가 없습니다."
       />
 
       {filteredFaqs.length > 0 ? (
