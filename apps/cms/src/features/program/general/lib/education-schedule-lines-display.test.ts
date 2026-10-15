@@ -47,6 +47,15 @@ describe('resolveEducationScheduleLinesForView', () => {
     ).toEqual(['26년 9월 16일(수)'])
   })
 
+  it('기관 일정형 단일 기간 — 예정일 표시는 날짜만', () => {
+    expect(
+      resolveEducationScheduleLinesForView({
+        educationScheduleLines: ['26년 11월 1일(목) 9:00 ~ 26년 11월 2일(금) 13:00'],
+        dateOnlyPeriodLines: true,
+      })
+    ).toEqual(['26년 11월 1일(일) ~ 26년 11월 2일(월)'])
+  })
+
   it('개인 일정형 단일은 진행 시간으로 예정일 시각을 다시 입힌다', () => {
     expect(
       resolveEducationScheduleLinesForView({

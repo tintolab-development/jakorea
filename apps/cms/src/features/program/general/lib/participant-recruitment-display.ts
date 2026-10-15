@@ -23,6 +23,7 @@ import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   getInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
+  resolveInstitutionApplicationRecruitLimitsVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   type InstitutionApplicationProgramBridge,
@@ -169,9 +170,19 @@ function resolveRecruitmentInstitutionLimitsBridge(
   const fromProgram = resolveInstitutionApplicationProgramBridge(program)
   const live = getInstitutionApplicationProgramBridge()
   if (live.educationStructure == null || live.sessionRound == null) {
-    return fromProgram
+    return resolveInstitutionApplicationRecruitLimitsVisibilityBridge(fromProgram)
   }
-  return { ...fromProgram, ...live }
+  const merged: InstitutionApplicationProgramBridge = { ...fromProgram, ...live }
+  const programMode = fromProgram.educationScheduleMode
+  const liveMode = live.educationScheduleMode ?? 'date'
+  if (merged.educationScheduleRange != null) {
+    merged.educationScheduleMode = 'period'
+  } else if (liveMode === 'period') {
+    merged.educationScheduleMode = 'period'
+  } else if (programMode === 'period' && liveMode === 'date') {
+    merged.educationScheduleMode = 'period'
+  }
+  return resolveInstitutionApplicationRecruitLimitsVisibilityBridge(merged)
 }
 
 export function resolveGeneralProgramParticipantRecruitmentDisplay(

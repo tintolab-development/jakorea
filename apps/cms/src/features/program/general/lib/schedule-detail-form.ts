@@ -28,6 +28,19 @@ export function shouldDisableEducationScheduleSelectionTimeInput(input: {
   return input.educationStructure === 'schedule'
 }
 
+/** 기관 · 일정형 · 단일 · 기간 — 팝오버 시간은 비활성 노출, 예정일·지망은 날짜만 */
+export function shouldDisableEducationSchedulePeriodTimeInput(input: {
+  educationStructure: 'curriculum' | 'schedule'
+  sessionRound?: 'single' | 'multi'
+  educationScheduleMode?: 'date' | 'period'
+}): boolean {
+  return (
+    input.educationStructure === 'schedule' &&
+    (input.sessionRound ?? 'single') === 'single' &&
+    input.educationScheduleMode === 'period'
+  )
+}
+
 /** 일반 — 기관은 기간 지정 항상 허용, 개인은 단일·복수 회차 모두 기간 지정 불가 */
 export function shouldDisableEducationSchedulePeriodMode(input: {
   participantOrganization: boolean

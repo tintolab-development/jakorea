@@ -1,6 +1,23 @@
+import type { Program } from '@/types/domain'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 
 /** overlay/도메인에 남는 세부 프로그램 마스터 id → create/update `detailedProgramId` */
+/**
+ * BE `serviceDetailJson.generalCommonInfo`에 미러되는 `detailedProgramId`.
+ * 일반 일정형은 마스터 id를 남기면 저장이 거부된다 — 커리큘럼→일정 전환 시 제거.
+ */
+export function omitMirroredDetailedProgramMasterIdFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  if (!Object.prototype.hasOwnProperty.call(common, 'detailedProgramId')) return common
+  const { detailedProgramId: _removed, ...rest } = common as Program['generalCommonInfo'] & {
+    detailedProgramId?: unknown
+  }
+  void _removed
+  return rest
+}
+
 export function parseDetailedProgramMasterId(
   value: string | number | null | undefined
 ): number | undefined {

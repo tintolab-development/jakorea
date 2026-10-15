@@ -16,6 +16,7 @@ import {
   patchInstitutionApplicationProgramBridge,
   resetInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
+  resolveInstitutionApplicationRecruitLimitsVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   shouldShowInstitutionApplicationPreferredScheduleParagraph,
@@ -106,6 +107,22 @@ describe('resolveInstitutionApplicationProgramBridge', () => {
     // +09:00 자정 → UTC 전날 15:00 — 로컬 달력일 기준으로 3월/9월
     expect(start.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })).toBe('2026-03-01')
     expect(end.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })).toBe('2026-09-30')
+  })
+})
+
+describe('resolveInstitutionApplicationRecruitLimitsVisibilityBridge', () => {
+  it('educationScheduleRange가 있으면 기간 지정으로 간주한다', () => {
+    const bridge = resolveInstitutionApplicationRecruitLimitsVisibilityBridge({
+      preEducationNoticeRequired: true,
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleRange: {
+        start: '2026-04-01T00:00:00.000Z',
+        end: '2026-06-30T00:00:00.000Z',
+      },
+    })
+    expect(shouldShowInstitutionApplicationMaxScheduleFields(bridge)).toBe(true)
   })
 })
 

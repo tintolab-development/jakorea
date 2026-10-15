@@ -468,6 +468,14 @@ export function useGeneralProgramRegistrationFlow(
               maxSessionsPerDay: 8,
             }
           : undefined,
+      applicantRecruitInstitutionRecruitLimitVisibility:
+        registrationFormVariant === 'general' && !isCompanySchoolRegistration
+          ? {
+              educationStructure: registrationVm.programType,
+              sessionRound: registrationVm.sessionRoundType,
+              educationScheduleMode: registrationVm.educationScheduleMode,
+            }
+          : undefined,
       /** 1사1교 — 단락 타이틀 옆 필수(*) (공유 강사 모집 상세 등 선택 시드 포함) */
       forceSeedParagraphsRequired: isCompanySchoolRegistration,
     }

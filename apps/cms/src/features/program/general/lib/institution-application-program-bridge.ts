@@ -287,6 +287,35 @@ export function isInstitutionApplicationBridgeTemplateAuthoring(
   return bridge.educationStructure == null && bridge.sessionRound == null
 }
 
+/** 모집 양식 — SSOT 일정 유형만으로 최대 일정·1일 차시 필드 노출 판단 */
+export type InstitutionApplicationRecruitLimitVisibilityInput = Pick<
+  InstitutionApplicationProgramBridge,
+  'educationStructure' | 'sessionRound' | 'educationScheduleMode'
+>
+
+export function buildInstitutionApplicationRecruitLimitVisibilityBridge(
+  input: InstitutionApplicationRecruitLimitVisibilityInput
+): InstitutionApplicationProgramBridge {
+  return {
+    preEducationNoticeRequired: true,
+    educationStructure: input.educationStructure,
+    sessionRound: input.sessionRound,
+    educationScheduleMode: input.educationScheduleMode,
+  }
+}
+
+/**
+ * live 브리지 기본값(`educationScheduleMode: date`)이 기간 지정·range와 어긋날 때 모집 필드 노출을 맞춘다.
+ */
+export function resolveInstitutionApplicationRecruitLimitsVisibilityBridge(
+  bridge: InstitutionApplicationProgramBridge
+): InstitutionApplicationProgramBridge {
+  if (bridge.educationScheduleRange != null && bridge.educationScheduleMode !== 'period') {
+    return { ...bridge, educationScheduleMode: 'period' }
+  }
+  return bridge
+}
+
 /** 희망 일정 신청 — 최대 일정 수 필드(및 일정 UI) 노출 */
 export function shouldShowInstitutionApplicationMaxScheduleFields(
   bridge: InstitutionApplicationProgramBridge
