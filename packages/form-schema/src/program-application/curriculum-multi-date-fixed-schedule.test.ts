@@ -67,6 +67,19 @@ describe('curriculum multi date fixed schedule matrix', () => {
     expect(meta.sessionsPerRound).toBe(2)
   })
 
+  it('회차별 차시 수가 다르면 설명 N차시는 1회차 기준', () => {
+    const text = resolveApplicationFixedScheduleParagraphDescription({
+      ...MATRIX_VISIBILITY,
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: '2' },
+        { sessionLabel: '2회차', title: '4' },
+      ],
+    })
+    expect(text).toBe(
+      '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+    )
+  })
+
   it('설명글 N 치환', () => {
     const text = resolveApplicationFixedScheduleParagraphDescription({
       ...MATRIX_VISIBILITY,
