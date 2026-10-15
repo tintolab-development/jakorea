@@ -63,6 +63,7 @@ type EducationInProgressNoticeDetailModalProps = {
   notices: EducationInProgressNotice[]
   files: EducationInProgressFile[]
   noticeId: string | null
+  commentId?: string | null
   onClose: () => void
   onNoticeChange: (noticeId: string) => void
   onDelete: (noticeId: string) => void
@@ -116,6 +117,7 @@ export function EducationInProgressNoticeDetailModal({
   notices,
   files,
   noticeId,
+  commentId,
   onClose,
   onNoticeChange,
   onDelete,
@@ -206,7 +208,7 @@ export function EducationInProgressNoticeDetailModal({
 
   const reactions = isRemote ? remoteReactions.summary : []
   const reactionUsers = isRemote ? remoteReactionUsers : []
-  const comments = isRemote ? remoteComments : []
+  const comments = useMemo(() => (isRemote ? remoteComments : []), [isRemote, remoteComments])
   const reactionCount = isRemote ? remoteReactions.total : (notice?.reactionCount ?? 0)
   const commentCount =
     isRemote && remoteDetail.detail ? remoteComments.length : (notice?.commentCount ?? 0)
@@ -228,6 +230,20 @@ export function EducationInProgressNoticeDetailModal({
       setIsDeleteConfirmOpen(false)
     }
   }, [open, noticeId])
+
+  useEffect(() => {
+    if (!open || !commentId || comments.length === 0) return
+    if (!comments.some(item => item.id === commentId)) return
+    setIsCommentListOpen(true)
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`notice-comment-${commentId}`)?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      })
+      document.getElementById(`notice-comment-${commentId}`)?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [commentId, comments, open])
 
   useEffect(() => {
     if (!reactionPanel) return

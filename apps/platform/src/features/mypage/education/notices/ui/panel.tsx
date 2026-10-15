@@ -16,7 +16,11 @@ import {
   downloadRemoteEducationNoticeFile,
   hasRemoteDownloadPath,
 } from '../lib/download-file'
-import { readNoticeIdFromLocation, writeNoticeIdToLocation } from '../lib/notice-url'
+import {
+  readCommentIdFromLocation,
+  readNoticeIdFromLocation,
+  writeNoticeIdToLocation,
+} from '../lib/notice-url'
 import { EducationInProgressFileRow } from './file-row'
 import { EducationInProgressNoticeCard } from './card'
 import { EducationInProgressNoticeDetailModal } from './detail-modal'
@@ -61,6 +65,7 @@ export function EducationInProgressNoticePanel({
   const debouncedFileQuery = useDebouncedValue(draftFileQuery, SEARCH_DEBOUNCE_MS)
   const remoteNotices = useApplicationNoticesQuery(applicationType, applicationId)
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(readNoticeIdFromLocation)
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(readCommentIdFromLocation)
   const [downloadErrorOpen, setDownloadErrorOpen] = useState(false)
   /** 이 패널이 push 한 history 엔트리 위에 있으면 닫을 때 back 으로 되돌린다. */
   const pushedNoticeEntryRef = useRef(false)
@@ -104,6 +109,7 @@ export function EducationInProgressNoticePanel({
     const handlePopState = () => {
       pushedNoticeEntryRef.current = false
       setSelectedNoticeId(readNoticeIdFromLocation())
+      setSelectedCommentId(readCommentIdFromLocation())
     }
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
@@ -281,6 +287,7 @@ export function EducationInProgressNoticePanel({
         notices={modalNotices}
         files={files}
         noticeId={selectedNoticeId}
+        commentId={selectedCommentId}
         onClose={closeNoticeDetail}
         onNoticeChange={openNoticeDetail}
         onDelete={deleteNotice}
