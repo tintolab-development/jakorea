@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import {
   UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
   type UjatInterview2BulkPassType,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import {
+  getDefaultManualNotifyAt,
+  isFutureNotificationTime,
+} from '@/shared/lib/notification-schedule'
 import { alertUjatVolunteerInterview2BulkPassTypeRequired } from '../applicant/guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -28,10 +32,6 @@ export type UjatVolunteerInterview2BulkPassModalProps = {
   count: number
   onCancel: () => void
   onConfirm: (payload: UjatInterview2BulkPassConfirmPayload) => void
-}
-
-function nowManualNotifyAt(): Dayjs {
-  return dayjs().second(0).millisecond(0)
 }
 
 export function UjatVolunteerInterview2BulkPassModal({
@@ -64,7 +64,7 @@ export function UjatVolunteerInterview2BulkPassModal({
     setNotifyTiming(next)
     setNotifyError('')
     if (next === 'manual') {
-      setManualNotifyAt(nowManualNotifyAt())
+      setManualNotifyAt(getDefaultManualNotifyAt())
       setDateTimePickerOpen(true)
     } else {
       setDateTimePickerOpen(false)
@@ -80,12 +80,16 @@ export function UjatVolunteerInterview2BulkPassModal({
       setNotifyError('알림 발송 일시를 설정해 주세요.')
       return
     }
+    if (notifyTiming === 'manual' && !isFutureNotificationTime(manualNotifyAt)) {
+      setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+      return
+    }
     setPassTypeError('')
     setNotifyError('')
     onConfirm({
       passType,
       notifyTiming,
-      manualNotifyAt: notifyTiming === 'manual' ? manualNotifyAt ?? undefined : undefined,
+      manualNotifyAt: notifyTiming === 'manual' ? (manualNotifyAt ?? undefined) : undefined,
     })
   }
 
@@ -104,12 +108,7 @@ export function UjatVolunteerInterview2BulkPassModal({
             <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
               취소
             </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="medium"
-              type="button"
-              onClick={handleConfirm}
-            >
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleConfirm}>
               합격
             </CmsButton>
           </div>
@@ -153,7 +152,7 @@ export function UjatVolunteerInterview2BulkPassModal({
                   value="manual"
                   onClick={() => {
                     if (notifyTiming === 'manual') {
-                      setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                      setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                       setDateTimePickerOpen(true)
                     }
                   }}
@@ -182,7 +181,7 @@ export function UjatVolunteerInterview2BulkPassModal({
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={modalContentRef}
-        value={manualNotifyAt ?? nowManualNotifyAt()}
+        value={manualNotifyAt ?? getDefaultManualNotifyAt()}
         onChange={setManualNotifyAt}
         onApply={value => {
           setManualNotifyAt(value)

@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import {
   GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
   type GeneralInterview2BulkPassType,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import {
+  getDefaultManualNotifyAt,
+  isFutureNotificationTime,
+} from '@/shared/lib/notification-schedule'
 import { alertGeneralVolunteerInterview2BulkPassTypeRequired } from './general-volunteer-applicant-guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -30,10 +34,6 @@ export type GeneralVolunteerInterview2BulkPassModalProps = {
   onConfirm: (payload: GeneralInterview2BulkPassConfirmPayload) => void
 }
 
-function nowManualNotifyAt(): Dayjs {
-  return dayjs().second(0).millisecond(0)
-}
-
 export function GeneralVolunteerInterview2BulkPassModal({
   open,
   count,
@@ -42,7 +42,8 @@ export function GeneralVolunteerInterview2BulkPassModal({
 }: GeneralVolunteerInterview2BulkPassModalProps) {
   const [passType, setPassType] = useState<GeneralInterview2BulkPassType | null>(null)
   const [passTypeError, setPassTypeError] = useState('')
-  const [notifyTiming, setNotifyTiming] = useState<GeneralInterview2BulkPassNotifyTiming>('immediate')
+  const [notifyTiming, setNotifyTiming] =
+    useState<GeneralInterview2BulkPassNotifyTiming>('immediate')
   const [manualNotifyAt, setManualNotifyAt] = useState<Dayjs | null>(null)
   const [dateTimePickerOpen, setDateTimePickerOpen] = useState(false)
   const [notifyError, setNotifyError] = useState('')
@@ -64,7 +65,7 @@ export function GeneralVolunteerInterview2BulkPassModal({
     setNotifyTiming(next)
     setNotifyError('')
     if (next === 'manual') {
-      setManualNotifyAt(nowManualNotifyAt())
+      setManualNotifyAt(getDefaultManualNotifyAt())
       setDateTimePickerOpen(true)
     } else {
       setDateTimePickerOpen(false)
@@ -80,12 +81,16 @@ export function GeneralVolunteerInterview2BulkPassModal({
       setNotifyError('알림 발송 일시를 설정해 주세요.')
       return
     }
+    if (notifyTiming === 'manual' && !isFutureNotificationTime(manualNotifyAt)) {
+      setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+      return
+    }
     setPassTypeError('')
     setNotifyError('')
     onConfirm({
       passType,
       notifyTiming,
-      manualNotifyAt: notifyTiming === 'manual' ? manualNotifyAt ?? undefined : undefined,
+      manualNotifyAt: notifyTiming === 'manual' ? (manualNotifyAt ?? undefined) : undefined,
     })
   }
 
@@ -110,7 +115,10 @@ export function GeneralVolunteerInterview2BulkPassModal({
           </div>
         }
       >
-        <div ref={modalContentRef} className="general-volunteer-interview2-bulk-pass-modal__content">
+        <div
+          ref={modalContentRef}
+          className="general-volunteer-interview2-bulk-pass-modal__content"
+        >
           <div className="general-volunteer-interview2-bulk-pass-modal__field">
             <span className="general-volunteer-interview2-bulk-pass-modal__label">합격 유형</span>
             <CmsSelect
@@ -151,7 +159,7 @@ export function GeneralVolunteerInterview2BulkPassModal({
                   value="manual"
                   onClick={() => {
                     if (notifyTiming === 'manual') {
-                      setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                      setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                       setDateTimePickerOpen(true)
                     }
                   }}
@@ -183,7 +191,7 @@ export function GeneralVolunteerInterview2BulkPassModal({
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={modalContentRef}
-        value={manualNotifyAt ?? nowManualNotifyAt()}
+        value={manualNotifyAt ?? getDefaultManualNotifyAt()}
         onChange={setManualNotifyAt}
         onApply={value => {
           setManualNotifyAt(value)

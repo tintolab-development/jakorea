@@ -5,16 +5,12 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { CmsRadio } from '@/shared/ui'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import { getDefaultManualNotifyAt } from '@/shared/lib/notification-schedule'
 import '@/shared/components/permission-modal.css'
 import './approval-alarm-send-section.css'
-
-/** 직접 설정 최초값 — 호출 시점의 현재 날짜·시간(초 이하 절삭) */
-function nowManualNotifyAt(): Dayjs {
-  return dayjs().second(0).millisecond(0)
-}
 
 export type ApprovalAlarmSendValue = 'immediate' | 'on_announcement' | 'manual'
 
@@ -60,7 +56,7 @@ export function ApprovalAlarmSendSection({
       setInternalValue(next)
     }
     if (next === 'manual') {
-      const resolved = currentManual ?? nowManualNotifyAt()
+      const resolved = currentManual ?? getDefaultManualNotifyAt()
       if (!isControlled) setInternalManual(resolved)
       setDateTimePickerOpen(true)
       onChange?.(next, resolved)
@@ -102,7 +98,7 @@ export function ApprovalAlarmSendSection({
               size="large"
               onClick={() => {
                 if (currentValue === 'manual') {
-                  const resolved = currentManual ?? nowManualNotifyAt()
+                  const resolved = currentManual ?? getDefaultManualNotifyAt()
                   if (!isControlled) setInternalManual(resolved)
                   setDateTimePickerOpen(true)
                 }
@@ -125,7 +121,7 @@ export function ApprovalAlarmSendSection({
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={sectionRef}
-        value={currentManual ?? nowManualNotifyAt()}
+        value={currentManual ?? getDefaultManualNotifyAt()}
         onChange={handleManualDateChange}
         onApply={date => {
           handleManualDateChange(date)

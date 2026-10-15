@@ -3,7 +3,6 @@
  */
 
 import { useEffect } from 'react'
-import dayjs from 'dayjs'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import {
   INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS,
@@ -21,15 +20,12 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { getDefaultManualNotifyAt } from '@/shared/lib/notification-schedule'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
 const MODAL_Z_INDEX = 2500
 const DATE_TIME_PICKER_Z_OFFSET = 100
-
-function nowManualNotifyAt() {
-  return dayjs().second(0).millisecond(0)
-}
 
 export type { InstructorFeeApprovalConfirmDetail }
 
@@ -123,7 +119,10 @@ export function InstructorFeeApprovalModal({
         }
       >
         <div ref={modalContentRef} className="instructor-fee-approval-modal__content">
-          <div className="instructor-fee-approval-modal__field" id="instructor-fee-approval-fee-policy">
+          <div
+            className="instructor-fee-approval-modal__field"
+            id="instructor-fee-approval-fee-policy"
+          >
             <span className="instructor-fee-approval-modal__label">강사비 책정 방식</span>
             <CmsRadio.Group
               className="instructor-fee-approval-modal__radio-group"
@@ -198,12 +197,15 @@ export function InstructorFeeApprovalModal({
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
               <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
-              <span ref={manualRadioAnchorRef} className="instructor-fee-approval-modal__manual-anchor">
+              <span
+                ref={manualRadioAnchorRef}
+                className="instructor-fee-approval-modal__manual-anchor"
+              >
                 <CmsRadio
                   value="manual"
                   onClick={() => {
                     if (notifyTiming === 'manual') {
-                      setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                      setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                       setDateTimePickerOpen(true)
                     }
                   }}
@@ -232,7 +234,7 @@ export function InstructorFeeApprovalModal({
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={modalContentRef}
-        value={manualNotifyAt ?? nowManualNotifyAt()}
+        value={manualNotifyAt ?? getDefaultManualNotifyAt()}
         onChange={setManualNotifyAt}
         onApply={value => {
           setManualNotifyAt(value)

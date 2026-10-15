@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
 import type { PermissionModalNotifyTiming } from '@/shared/components/permission-modal'
@@ -11,6 +11,10 @@ import {
   resolveProgramBasisFeePolicyFromWageRows,
 } from './applicant-instructor-lecture-fee-basis'
 import type { InstructorApplicationFeePolicyContext } from './applicant-instructor-lecture-fee-basis'
+import {
+  getDefaultManualNotifyAt,
+  isFutureNotificationTime,
+} from '@/shared/lib/notification-schedule'
 
 export type InstructorFeeApprovalConfirmDetail = {
   lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType
@@ -44,7 +48,7 @@ export function canConfirmInstructorFeeApproval(params: {
   manualNotifyAt: Dayjs | null
   feePolicyContext?: InstructorApplicationFeePolicyContext
 }): boolean {
-  if (params.notifyTiming === 'manual' && !params.manualNotifyAt) {
+  if (params.notifyTiming === 'manual' && !isFutureNotificationTime(params.manualNotifyAt)) {
     return false
   }
 
@@ -78,8 +82,7 @@ export function buildInstructorFeeApprovalConfirmDetail(params: {
     params.lectureFeeBasisType === 'program'
       ? ''
       : parseLectureFeeAmountDigits(params.lectureFeeAmount)
-  const measure =
-    params.lectureFeeBasisType === 'program' ? '' : params.lectureFeeMeasure.trim()
+  const measure = params.lectureFeeBasisType === 'program' ? '' : params.lectureFeeMeasure.trim()
 
   return {
     lectureFeeBasisType: params.lectureFeeBasisType,
@@ -96,10 +99,6 @@ export function buildInstructorFeeApprovalConfirmDetail(params: {
     notifyTiming: params.notifyTiming,
     manualNotifyAt: params.notifyTiming === 'manual' ? params.manualNotifyAt : null,
   }
-}
-
-function nowManualNotifyAt(): Dayjs {
-  return dayjs().second(0).millisecond(0)
 }
 
 export function useInstructorFeeApprovalModal(params: {
@@ -177,7 +176,7 @@ export function useInstructorFeeApprovalModal(params: {
     setNotifyTiming(next)
     setNotifyError('')
     if (next === 'manual') {
-      setManualNotifyAt(nowManualNotifyAt())
+      setManualNotifyAt(getDefaultManualNotifyAt())
       setDateTimePickerOpen(true)
     } else {
       setDateTimePickerOpen(false)
@@ -196,8 +195,12 @@ export function useInstructorFeeApprovalModal(params: {
         feePolicyContext,
       })
     ) {
-      if (notifyTiming === 'manual' && !manualNotifyAt) {
-        setNotifyError('알림 발송 일시를 설정해 주세요.')
+      if (notifyTiming === 'manual') {
+        if (!manualNotifyAt) {
+          setNotifyError('알림 발송 일시를 설정해 주세요.')
+        } else if (!isFutureNotificationTime(manualNotifyAt)) {
+          setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+        }
       }
       return null
     }

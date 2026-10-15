@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { UjatVolunteerInterviewAssignCalendarMini } from './calendar-mini'
@@ -9,6 +9,10 @@ import '@/shared/components/calendar/styles/calendar.css'
 import '@/shared/components/permission-modal.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import {
+  getDefaultManualNotifyAt,
+  isFutureNotificationTime,
+} from '@/shared/lib/notification-schedule'
 import { alertUjatVolunteerInterviewAssignSlotRequired } from '../applicant/guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -56,10 +60,6 @@ export type UjatVolunteerInterviewAssignModalProps = {
   subjectNoun?: string
   onCancel: () => void
   onConfirm: (payload: UjatInterviewAssignConfirmPayload) => void
-}
-
-function nowManualNotifyAt(): Dayjs {
-  return dayjs().second(0).millisecond(0)
 }
 
 export function UjatVolunteerInterviewAssignModal({
@@ -149,8 +149,11 @@ export function UjatVolunteerInterviewAssignModal({
   useEffect(() => {
     if (!open) return
 
-    const { scheduleMonth, selectedDate: initialSelectedDate, selectedSlotKey: initialSlotKey } =
-      resolveInterviewAssignModalCalendarState(schedule, applicant)
+    const {
+      scheduleMonth,
+      selectedDate: initialSelectedDate,
+      selectedSlotKey: initialSlotKey,
+    } = resolveInterviewAssignModalCalendarState(schedule, applicant)
 
     setCurrentMonth(scheduleMonth)
     setSelectedDate(initialSelectedDate)
@@ -195,7 +198,7 @@ export function UjatVolunteerInterviewAssignModal({
     setNotifyTiming(next)
     setNotifyError('')
     if (next === 'manual') {
-      setManualNotifyAt(nowManualNotifyAt())
+      setManualNotifyAt(getDefaultManualNotifyAt())
       setDateTimePickerOpen(true)
     } else {
       setDateTimePickerOpen(false)
@@ -211,12 +214,16 @@ export function UjatVolunteerInterviewAssignModal({
       setNotifyError('알림 발송 일시를 설정해 주세요.')
       return
     }
+    if (notifyTiming === 'manual' && !isFutureNotificationTime(manualNotifyAt)) {
+      setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+      return
+    }
     setNotifyError('')
     onConfirm({
       dateLabel: storedDateLabel,
       timeRange: selectedSlot.timeRange,
       notifyTiming,
-      manualNotifyAt: notifyTiming === 'manual' ? manualNotifyAt ?? undefined : undefined,
+      manualNotifyAt: notifyTiming === 'manual' ? (manualNotifyAt ?? undefined) : undefined,
     })
   }
 
@@ -257,22 +264,14 @@ export function UjatVolunteerInterviewAssignModal({
             <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
               취소
             </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="medium"
-              type="button"
-              onClick={handleConfirm}
-            >
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleConfirm}>
               {confirmLabel}
             </CmsButton>
           </div>
         }
       >
         <div ref={modalContentRef}>
-          <div
-            ref={scheduleTopRef}
-            className="ujat-volunteer-interview-assign-modal__schedule-top"
-          >
+          <div ref={scheduleTopRef} className="ujat-volunteer-interview-assign-modal__schedule-top">
             <div
               ref={calendarWrapRef}
               className="ujat-volunteer-interview-assign-modal__calendar-panel"
@@ -292,10 +291,7 @@ export function UjatVolunteerInterviewAssignModal({
             <div className="ujat-volunteer-interview-assign-modal__slots-panel">
               <div className="ujat-volunteer-interview-assign-modal__slots-list">
                 {slotsForDay.length === 0 ? (
-                  <div
-                    className="ujat-volunteer-interview-assign-modal__slots-empty"
-                    role="status"
-                  >
+                  <div className="ujat-volunteer-interview-assign-modal__slots-empty" role="status">
                     이 날짜에 배정 가능한 시간대가 없습니다.
                   </div>
                 ) : (
@@ -308,8 +304,7 @@ export function UjatVolunteerInterviewAssignModal({
                     )
                     const isSelected = selectedSlotKey === slot.key
                     /** 시간대 선택 시 나머지 항목 비활성화(재클릭으로 선택 해제) */
-                    const isDisabledBySiblingSelection =
-                      selectedSlotKey != null && !isSelected
+                    const isDisabledBySiblingSelection = selectedSlotKey != null && !isSelected
                     const isApplicantAssignedSlot = applicantAssignedSlotKey === slot.key
                     return (
                       <ParagraphChip
@@ -371,7 +366,7 @@ export function UjatVolunteerInterviewAssignModal({
                   size="medium"
                   onClick={() => {
                     if (notifyTiming === 'manual') {
-                      setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                      setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                       setDateTimePickerOpen(true)
                     }
                   }}
@@ -400,7 +395,7 @@ export function UjatVolunteerInterviewAssignModal({
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={modalContentRef}
-        value={manualNotifyAt ?? nowManualNotifyAt()}
+        value={manualNotifyAt ?? getDefaultManualNotifyAt()}
         onChange={setManualNotifyAt}
         onApply={value => {
           setManualNotifyAt(value)
