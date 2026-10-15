@@ -54,6 +54,7 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  shouldDisableEducationSchedulePeriodTimeInput,
   shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
@@ -167,6 +168,8 @@ import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
   formatEducationScheduleLineFromRange,
+  normalizeEducationSchedulePeriodLineDateOnly,
+  normalizeEducationSchedulePeriodRangeDateOnly,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -4480,7 +4483,19 @@ function ScheduleSettingsEditFields({
   const disableScheduleSelectionTime = shouldDisableEducationScheduleSelectionTimeInput({
     educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
   })
+  const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
+    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+    educationScheduleMode: scheduleMode,
+  })
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
+  const previewScheduleLines = useMemo(
+    () =>
+      disableSchedulePeriodTime
+        ? lines.map(line => normalizeEducationSchedulePeriodLineDateOnly(line)).filter(Boolean)
+        : lines,
+    [disableSchedulePeriodTime, lines]
+  )
   const groupTimeSlotsKey = JSON.stringify(
     scheduleDetails.flatMap(detail => detail.groupTimes ?? [])
   )
@@ -4544,11 +4559,14 @@ function ScheduleSettingsEditFields({
 
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      appendLineIfNew(formatEducationScheduleLineFromRange(range))
+      const normalized = disableSchedulePeriodTime
+        ? normalizeEducationSchedulePeriodRangeDateOnly(range)
+        : range
+      appendLineIfNew(formatEducationScheduleLineFromRange(normalized))
       setSingleDate(null)
       setPeriodDate(null)
     },
-    [appendLineIfNew]
+    [appendLineIfNew, disableSchedulePeriodTime]
   )
 
   const handleDateApply = useCallback(
@@ -4655,6 +4673,8 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
+                lockTimeToggleOn={disableSchedulePeriodTime}
+                disableTimeInputs={disableSchedulePeriodTime}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}
@@ -4671,7 +4691,7 @@ function ScheduleSettingsEditFields({
           label="교육 진행 예정일"
           fullRow
           readOnlyDisplay
-          view={<EducationSchedulePreviewLines lines={lines} onRemove={removeLine} />}
+          view={<EducationSchedulePreviewLines lines={previewScheduleLines} onRemove={removeLine} />}
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

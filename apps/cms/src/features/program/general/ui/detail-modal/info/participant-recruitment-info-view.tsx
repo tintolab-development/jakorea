@@ -63,6 +63,16 @@ const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 const FORM_CLASS = 'program-registration-paragraph'
 
+/** 수정 중 빈 칸(undefined)은 기존 program 값으로 덮지 않는다 */
+function recruitmentLimitForBridge(
+  fieldValue: number | undefined,
+  baseline: number | undefined,
+  editing: boolean
+): number | undefined {
+  if (editing) return fieldValue
+  return fieldValue ?? baseline
+}
+
 function NumberWithSuffixEdit({
   form,
   name,
@@ -137,13 +147,26 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           : preEducationField === 'not_required'
             ? false
             : base.preEducationNoticeRequired,
-      maxAssignableInstructors: maxInstructorsField ?? base.maxAssignableInstructors,
-      maxClassCount: maxClassField ?? base.maxClassCount,
-      maxScheduleCount: maxScheduleField ?? base.maxScheduleCount,
-      maxSessionsPerDay: maxSessionsField ?? base.maxSessionsPerDay,
+      maxAssignableInstructors: recruitmentLimitForBridge(
+        maxInstructorsField,
+        base.maxAssignableInstructors,
+        isEdit
+      ),
+      maxClassCount: recruitmentLimitForBridge(maxClassField, base.maxClassCount, isEdit),
+      maxScheduleCount: recruitmentLimitForBridge(
+        maxScheduleField,
+        base.maxScheduleCount,
+        isEdit
+      ),
+      maxSessionsPerDay: recruitmentLimitForBridge(
+        maxSessionsField,
+        base.maxSessionsPerDay,
+        isEdit
+      ),
     })
   }, [
     program,
+    isEdit,
     preEducationField,
     maxInstructorsField,
     maxClassField,

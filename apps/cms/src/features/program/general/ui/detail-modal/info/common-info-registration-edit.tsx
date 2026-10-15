@@ -433,6 +433,8 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
             participantOrganization: participant.organization,
             sessionRound: extras.sessionRoundType,
           })}
+          programType={extras.programType}
+          sessionRound={extras.sessionRoundType}
         />
         </ProgramCommonInfoEditSection>
       )}
