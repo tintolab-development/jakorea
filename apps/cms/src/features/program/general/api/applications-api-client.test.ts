@@ -128,6 +128,31 @@ describe('bulkIndividualDocumentResultsRemote', () => {
       },
     })
   })
+
+  it('즉시 발송이면 scheduledAt을 제거한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      requestedCount: 1,
+      successCount: 1,
+      failureCount: 0,
+    })
+
+    await bulkIndividualDocumentResultsRemote({
+      ids: [1690625],
+      result: 'PASS',
+      notifyTiming: 'IMMEDIATE',
+      scheduledAt: '2026-10-20T00:00:00.000Z',
+    })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/document-results/bulk',
+      method: 'POST',
+      data: {
+        ids: [1690625],
+        result: 'PASS',
+        notifyTiming: 'IMMEDIATE',
+      },
+    })
+  })
 })
 
 describe('updateIndividualDocumentEvaluationRemote', () => {
@@ -385,7 +410,10 @@ describe('approveOrganizationApplicationRemote', () => {
   })
 
   it('시점 없으면 body 없이 즉시 발송한다', async () => {
-    vi.mocked(customInstance).mockResolvedValue({ applicationId: 101, applicationStatus: 'APPROVED' })
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
 
     await approveOrganizationApplicationRemote('101')
 
@@ -396,7 +424,10 @@ describe('approveOrganizationApplicationRemote', () => {
   })
 
   it('직접설정은 SCHEDULED + scheduledAt만 보낸다', async () => {
-    vi.mocked(customInstance).mockResolvedValue({ applicationId: 101, applicationStatus: 'APPROVED' })
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
 
     await approveOrganizationApplicationRemote('101', {
       timing: 'SCHEDULED',

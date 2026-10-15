@@ -199,7 +199,7 @@ export function useInstructorFeeApprovalModal(params: {
         if (!manualNotifyAt) {
           setNotifyError('알림 발송 일시를 설정해 주세요.')
         } else if (!isFutureNotificationTime(manualNotifyAt)) {
-          setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+          setNotifyError('현재 시각보다 최소 1분 이후의 시간을 선택해 주세요.')
         }
       }
       return null

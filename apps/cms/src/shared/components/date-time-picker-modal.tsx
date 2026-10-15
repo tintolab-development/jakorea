@@ -66,6 +66,8 @@ export type DateTimePickerPopoverProps = {
   zIndex?: number
   /** 분 선택 스텝(예: 30 → 00/30만). 기본 1분 */
   minuteStep?: number
+  /** 예약 가능한 최소 일시. 지정 시 날짜·시간 선택과 저장 시점에 함께 적용 */
+  minDateTime?: Dayjs
 }
 
 function snapDayjsMinute(value: Dayjs, minuteStep?: number): Dayjs {
@@ -95,10 +97,33 @@ export function DateTimePickerPopover({
   applyLabel = '설정',
   zIndex = CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX,
   minuteStep,
+  minDateTime,
 }: DateTimePickerPopoverProps) {
   const panelId = useId()
 
-  const initialDate = snapDayjsMinute(findNextEnabledDate(value, disabledDate), minuteStep)
+  const pickerMinimum =
+    minDateTime?.isValid() && minDateTime.second() !== 0
+      ? minDateTime.second(0).millisecond(0).add(1, 'minute')
+      : minDateTime?.isValid()
+        ? minDateTime.second(0).millisecond(0)
+        : undefined
+  const isDateDisabled = useCallback(
+    (date: Dayjs) =>
+      disabledDate?.(date) === true ||
+      (pickerMinimum != null && date.isBefore(pickerMinimum, 'day')),
+    [disabledDate, pickerMinimum]
+  )
+  const normalizeDateTime = useCallback(
+    (next: Dayjs) => {
+      const enabledDate = findNextEnabledDate(next, isDateDisabled)
+      const minimumApplied =
+        pickerMinimum != null && enabledDate.isBefore(pickerMinimum) ? pickerMinimum : enabledDate
+      return snapDayjsMinute(minimumApplied, minuteStep)
+    },
+    [isDateDisabled, minuteStep, pickerMinimum]
+  )
+
+  const initialDate = normalizeDateTime(value)
   const initialTimeParts = dayjsTimeParts(initialDate)
 
   const [draft, setDraft] = useState(initialDate)
@@ -124,13 +149,13 @@ export function DateTimePickerPopover({
     if (wasOpenRef.current) return
     wasOpenRef.current = true
 
-    const next = snapDayjsMinute(findNextEnabledDate(value, disabledDate), minuteStep)
+    const next = normalizeDateTime(value)
     const timeParts = dayjsTimeParts(next)
     setDraft(next)
     setCalendarMonth(next.startOf('month'))
     setSingleHour(timeParts.h)
     setSingleMinute(timeParts.m)
-  }, [open, value, disabledDate, minuteStep])
+  }, [open, value, normalizeDateTime])
 
   const buildDraftDateTime = useCallback(
     (date: Dayjs, hour = singleHour, minute = singleMinute) =>
@@ -154,13 +179,15 @@ export function DateTimePickerPopover({
   }, [open, onChange, draft, singleHour, singleMinute, buildDraftDateTime, minuteStep])
 
   const handleCalendarSelect = (next: Dayjs) => {
-    if (disabledDate?.(next)) return
+    if (isDateDisabled(next)) return
     setDraft(next)
     setCalendarMonth(next.startOf('month'))
   }
 
   const handleApply = () => {
-    onApply(snapDayjsMinute(buildDraftDateTime(draft), minuteStep))
+    const next = snapDayjsMinute(buildDraftDateTime(draft), minuteStep)
+    if (pickerMinimum != null && next.isBefore(pickerMinimum)) return
+    onApply(next)
     onClose()
   }
 
@@ -191,7 +218,7 @@ export function DateTimePickerPopover({
                 onMonthChange={setCalendarMonth}
                 onSelectDate={handleCalendarSelect}
                 programDates={EMPTY_SCHEDULES}
-                disabledDate={disabledDate}
+                disabledDate={isDateDisabled}
               />
             </div>
           </div>
@@ -217,6 +244,8 @@ export function DateTimePickerPopover({
                 hourActive
                 rowPhase="single"
                 minuteStep={minuteStep}
+                date={draft}
+                minDateTime={pickerMinimum}
               />
             </div>
             <div className="date-time-picker-popover__footer">

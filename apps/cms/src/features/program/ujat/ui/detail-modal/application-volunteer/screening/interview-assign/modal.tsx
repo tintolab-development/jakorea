@@ -11,6 +11,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import {
   getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
 import { alertUjatVolunteerInterviewAssignSlotRequired } from '../applicant/guard-actions'
@@ -215,7 +216,7 @@ export function UjatVolunteerInterviewAssignModal({
       return
     }
     if (notifyTiming === 'manual' && !isFutureNotificationTime(manualNotifyAt)) {
-      setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+      setNotifyError('현재 시각보다 최소 1분 이후의 시간을 선택해 주세요.')
       return
     }
     setNotifyError('')
@@ -402,6 +403,7 @@ export function UjatVolunteerInterviewAssignModal({
           setDateTimePickerOpen(false)
           setNotifyError('')
         }}
+        minDateTime={getMinimumManualNotifyAt()}
         zIndex={MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
       />
     </>

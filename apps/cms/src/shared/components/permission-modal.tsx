@@ -8,6 +8,7 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import {
   getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
 import {
@@ -216,7 +217,7 @@ export function PermissionModal({
     ) {
       showAlert({
         title: '알림 발송 일시 확인',
-        content: '알림 발송 일시는 현재 시각 이후로 설정해 주세요.',
+        content: '현재 시각보다 최소 1분 이후의 시간을 선택해 주세요.',
       })
       return
     }
@@ -384,6 +385,7 @@ export function PermissionModal({
             setManualNotifyAt(value)
             setDateTimePickerOpen(false)
           }}
+          minDateTime={getMinimumManualNotifyAt()}
           zIndex={dateTimePickerZ}
         />
       ) : null}

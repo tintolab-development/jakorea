@@ -8,7 +8,10 @@ import { useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { CmsRadio } from '@/shared/ui'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
-import { getDefaultManualNotifyAt } from '@/shared/lib/notification-schedule'
+import {
+  getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
+} from '@/shared/lib/notification-schedule'
 import '@/shared/components/permission-modal.css'
 import './approval-alarm-send-section.css'
 
@@ -127,6 +130,7 @@ export function ApprovalAlarmSendSection({
           handleManualDateChange(date)
           setDateTimePickerOpen(false)
         }}
+        minDateTime={getMinimumManualNotifyAt()}
         zIndex={dateTimePickerZIndex}
       />
     </>

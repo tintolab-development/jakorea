@@ -7,6 +7,7 @@ import {
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import {
   getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
 import { alertUjatVolunteerInterview2BulkPassTypeRequired } from '../applicant/guard-actions'
@@ -81,7 +82,7 @@ export function UjatVolunteerInterview2BulkPassModal({
       return
     }
     if (notifyTiming === 'manual' && !isFutureNotificationTime(manualNotifyAt)) {
-      setNotifyError('알림 발송 일시는 현재 시각 이후로 설정해 주세요.')
+      setNotifyError('현재 시각보다 최소 1분 이후의 시간을 선택해 주세요.')
       return
     }
     setPassTypeError('')
@@ -188,6 +189,7 @@ export function UjatVolunteerInterview2BulkPassModal({
           setDateTimePickerOpen(false)
           setNotifyError('')
         }}
+        minDateTime={getMinimumManualNotifyAt()}
         zIndex={MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
       />
     </>
