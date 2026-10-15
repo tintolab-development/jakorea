@@ -146,4 +146,85 @@ assert.equal(
   false
 )
 
+const individualMultiProgram = {
+  detailCase: 'general' as const,
+  educationStructure: 'curriculum' as const,
+  sessionRound: 'multi' as const,
+  educationScheduleMode: 'date' as const,
+  educationScheduleLines: [
+    '26년 4월 20일(월) 9:30 ~ 12:20',
+    '26년 4월 27일(월) 13:00 ~ 15:50',
+  ],
+  sessions: [
+    { sessionLabel: '1회차', title: '2' },
+    { sessionLabel: '2회차', title: '2' },
+  ],
+  maxPreferredScheduleCount: 1,
+  id: 'individual-curriculum-multi',
+  category: 'program' as const,
+  title: 'test',
+  educationForm: 'online' as const,
+}
+const individualMultiPatched = applyProgramLinkedApplicationDraftPatches(
+  createProgramParticipantApplicationDraft(),
+  {
+    applyCase: 'individual-general',
+    program: individualMultiProgram as unknown as import('../model/types.ts').ProgramDetail,
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualMultiSchedule = individualMultiPatched.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.ok(individualMultiSchedule && individualMultiSchedule.variant === 'multiple_choice')
+assert.equal(individualMultiSchedule.items.length, 4)
+assert.equal(
+  individualMultiSchedule.paragraphDescription,
+  '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+)
+assert.equal(individualMultiSchedule.items[0]?.label, '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차')
+
+const individualScheduleSingle = applyProgramLinkedApplicationDraftPatches(
+  createProgramParticipantApplicationDraft(),
+  {
+    applyCase: 'individual-general',
+    program: {
+      detailCase: 'general',
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+        '26년 4월 27일(월) 09:30 ~ 12:20',
+        '26년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+      maxPreferredScheduleCount: 1,
+      id: 'individual-schedule-single',
+      category: 'program',
+      title: 'test',
+      educationForm: 'online',
+    } as unknown as import('../model/types.ts').ProgramDetail,
+    runtimeContext: {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+        '26년 4월 27일(월) 09:30 ~ 12:20',
+        '26년 4월 27일(월) 13:00 ~ 15:50',
+      ].map((label, index) => ({ id: `line:${index}`, label })),
+    },
+  }
+)
+const individualScheduleTypeParagraph = individualScheduleSingle.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.ok(individualScheduleTypeParagraph?.variant === 'multiple_choice')
+assert.equal(individualScheduleTypeParagraph.items.length, 4)
+assert.ok(!individualScheduleTypeParagraph.items.some(item => item.label.includes('|')))
+assert.equal(
+  individualScheduleTypeParagraph.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+)
+
 console.log('application-form-program-link.selfcheck: ok')
