@@ -52,6 +52,137 @@ function uniqueIntegrationTitle(session: 'SINGLE' | 'MULTI') {
   return `E2E-기관강사봉사자-신청검증-${session}-${timestamp}-${random}`
 }
 
+type ProgramSchedule = {
+  allDay?: boolean
+  startAt?: string
+}
+
+function unwrap(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+  const row = value as Record<string, unknown>
+  if (row.success === true && 'data' in row) return unwrap(row.data)
+  return value
+}
+
+async function adminSchedules(page: Page, programId: number): Promise<ProgramSchedule[]> {
+  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
+  if (!token) throw new Error('CMS 일정 조회에 필요한 auth_token이 없습니다.')
+  const response = await page.request.get(`/api/admin/programs/${programId}/schedules`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const payload = JSON.parse(await response.text()) as unknown
+  if (!response.ok()) throw new Error(`프로그램 일정 조회 실패: HTTP ${response.status()}`)
+  const body = unwrap(payload)
+  if (!Array.isArray(body)) throw new Error(`프로그램 일정 응답이 배열이 아닙니다: ${programId}`)
+  return body as ProgramSchedule[]
+}
+
+function educationScheduleDateKeys(program: CmsProgramSnapshot): string[] {
+  let detail: unknown
+  try {
+    detail = JSON.parse(program.serviceDetailJson)
+  } catch {
+    throw new Error(`프로그램 교육 일정 원본 JSON을 해석할 수 없습니다: ${program.programId}`)
+  }
+
+  const root = detail && typeof detail === 'object' ? (detail as Record<string, unknown>) : {}
+  const common =
+    root.generalCommonInfo && typeof root.generalCommonInfo === 'object'
+      ? (root.generalCommonInfo as Record<string, unknown>)
+      : root
+  const lines = Array.isArray(common.educationScheduleLines)
+    ? common.educationScheduleLines.filter((line): line is string => typeof line === 'string')
+    : []
+  const dateKeys = lines.flatMap(line => {
+    const match = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(line)
+    if (!match) return []
+    const year = Number(match[1]) < 100 ? 2000 + Number(match[1]) : Number(match[1])
+    return [`${year}-${String(Number(match[2])).padStart(2, '0')}-${String(Number(match[3])).padStart(2, '0')}`]
+  })
+  const unique = [...new Set(dateKeys)]
+  if (unique.length === 0) {
+    throw new Error(`프로그램 교육 일정 날짜가 없습니다: ${program.programId}`)
+  }
+  return unique
+}
+
+function isoAtSeoulDate(dateKey: string, hour: number) {
+  return new Date(`${dateKey}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString()
+}
+
+function seoulDateKey(value: string | undefined): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .formatToParts(date)
+      .map(part => [part.type, part.value])
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+async function ensureMultiProgramSchedules(page: Page, program: CmsProgramSnapshot) {
+  const current = await adminSchedules(page, program.programId)
+  const dateKeys = educationScheduleDateKeys(program)
+  // Dynamic instructor/volunteer options are built from the canonical education
+  // schedule lines and live program_schedule rows. Keep both test rows on the
+  // last canonical line so the backend can expose two distinct schedule IDs.
+  // Previously these rows were created on unrelated arbitrary dates (45+ days
+  // ahead), which correctly produced an empty form-binding option list.
+  const runtimeDateKey = dateKeys.at(-1)!
+  const alignedScheduleCount = current.filter(
+    schedule => schedule.allDay === false && seoulDateKey(schedule.startAt) === runtimeDateKey
+  ).length
+  if (alignedScheduleCount >= 2) return
+
+  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
+  if (!token) throw new Error('CMS 일정 보정에 필요한 auth_token이 없습니다.')
+  const response = await page.request.patch(`/api/admin/programs/${program.programId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      schedules: [
+        {
+          sessionNo: 1,
+          scheduleName: `${program.title} 교육 1회차`,
+          startAt: isoAtSeoulDate(runtimeDateKey, 10),
+          endAt: isoAtSeoulDate(runtimeDateKey, 12),
+          allDay: false,
+          locationName: null,
+          address: null,
+          addressDetail: null,
+          maxParticipantCount: 30,
+          completionRequired: true,
+        },
+        {
+          sessionNo: 2,
+          scheduleName: `${program.title} 교육 2회차`,
+          startAt: isoAtSeoulDate(runtimeDateKey, 13),
+          endAt: isoAtSeoulDate(runtimeDateKey, 15),
+          allDay: false,
+          locationName: null,
+          address: null,
+          addressDetail: null,
+          maxParticipantCount: 30,
+          completionRequired: true,
+        },
+      ],
+    },
+  })
+  if (!response.ok()) throw new Error(`복수 회차 일정 보정 실패: HTTP ${response.status()}`)
+
+  const refreshed = await adminSchedules(page, program.programId)
+  expect(
+    refreshed.filter(schedule => schedule.allDay === false).length,
+    `복수 회차 프로그램의 실제 교육 일정이 2건 미만입니다: ${program.programId}`
+  ).toBeGreaterThanOrEqual(2)
+}
+
 async function createProgram(
   page: Page,
   regCase: RegistrationCase,
@@ -203,6 +334,7 @@ test('CMS 생성 프로그램을 Platform 역할별로 신청하고 모집 매�
     },
     'MULTI'
   )
+  await ensureMultiProgramSchedules(page, multi)
 
   // 복수 회차: 기관 신청(일정 배정 없음) → 강사·봉사자 신청.
   const multiOrganization = await submitAsRole(

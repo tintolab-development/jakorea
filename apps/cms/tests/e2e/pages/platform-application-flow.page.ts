@@ -227,13 +227,37 @@ export class PlatformApplicationFlowPage {
   ) {}
 
   async signIn(email: string) {
-    await this.page.goto(`${this.baseUrl}/auth/sign-in`)
-    await this.page.getByPlaceholder('이메일 주소를 입력해 주세요').fill(email)
-    await this.page.getByPlaceholder('비밀번호를 입력해 주세요').fill(this.password)
-    await this.page.getByRole('button', { name: '로그인하기' }).click()
-    await expect(this.page).not.toHaveURL(/\/auth\/sign-in/, { timeout: 30_000 })
-    this.accessToken = await this.page.evaluate(() => localStorage.getItem('platform_auth_token'))
-    if (!this.accessToken) throw new Error('Platform 로그인 후 access token을 찾지 못했습니다.')
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await this.page.goto(`${this.baseUrl}/auth/sign-in`)
+      await this.page.getByPlaceholder('이메일 주소를 입력해 주세요').fill(email)
+      await this.page.getByPlaceholder('비밀번호를 입력해 주세요').fill(this.password)
+
+      const loginResponse = this.page
+        .waitForResponse(
+          response =>
+            response.request().method() === 'POST' &&
+            response.url().replace(/\/$/, '').endsWith('/api/portal/auth/login'),
+          { timeout: 15_000 }
+        )
+        .catch(() => null)
+
+      await this.page.getByRole('button', { name: '로그인하기' }).click()
+      const response = await loginResponse
+      const status = response?.status()
+      const transientFailure = status != null && [500, 502, 503, 504].includes(status)
+
+      if (transientFailure && attempt === 0) {
+        await this.page.waitForTimeout(1_000)
+        continue
+      }
+
+      await expect(this.page).not.toHaveURL(/\/auth\/sign-in/, { timeout: 30_000 })
+      this.accessToken = await this.page.evaluate(() => localStorage.getItem('platform_auth_token'))
+      if (!this.accessToken) throw new Error('Platform 로그인 후 access token을 찾지 못했습니다.')
+      return
+    }
+
+    throw new Error('Platform 로그인에 실패했습니다.')
   }
 
   private async authenticatedHeaders() {
@@ -676,8 +700,40 @@ export class PlatformApplicationFlowPage {
     expect(Number(detail.applicationId ?? detail.id)).toBe(applicationId)
     expect(Number(detail.programId)).toBe(program.programId)
 
-    await this.page.reload()
-    await this.page.goto(`${this.baseUrl}${account.mypagePath}`)
+    // The shared my-page list is paginated independently from the API assertion above.
+    // The read model can become visible slightly after the submit response, so retry the
+    // full list query before treating an empty page as a failure.
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      await this.page.goto(`${this.baseUrl}${account.mypagePath}`)
+      await this.page.waitForLoadState('networkidle').catch(() => undefined)
+      await this.page.waitForTimeout(500)
+
+      const maxPages = 20
+      for (let pageIndex = 0; pageIndex < maxPages; pageIndex += 1) {
+        const title = this.page.getByText(portalProgramTitle, { exact: true }).first()
+        if (await title.isVisible().catch(() => false)) {
+          return
+        }
+
+        const nextPage = this.page.getByRole('button', { name: '다음 페이지' })
+        if ((await nextPage.count()) === 0 || !(await nextPage.isEnabled().catch(() => false))) {
+          break
+        }
+
+        const currentPage = this.page.locator('button[aria-current="page"]').first()
+        const currentPageLabel = await currentPage.getAttribute('aria-label').catch(() => null)
+        await nextPage.click()
+        if (currentPageLabel) {
+          await expect(currentPage).not.toHaveAttribute('aria-label', currentPageLabel, {
+            timeout: 5_000,
+          })
+        }
+        await this.page.waitForTimeout(500)
+      }
+
+      if (attempt < 3) await this.page.waitForTimeout(1_000)
+    }
+
     await expect(this.page.getByText(portalProgramTitle, { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     })

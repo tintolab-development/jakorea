@@ -208,16 +208,25 @@ test('기존 E2E 프로그램에서 역할별 신청 가능한 계정을 최대�
     `복수 회차 일정 응답이 2건 미만입니다. summary=${JSON.stringify(executionSummary)}`
   ).toBeGreaterThanOrEqual(2)
 
-  const submittedCount = Object.values(executionSummary).reduce((total, summary) => {
+  for (const [programId, summary] of Object.entries(executionSummary)) {
     const record = summary as Record<string, unknown>
-    return (
-      total +
-      (['organization', 'instructor', 'volunteer'] as const).reduce((roleTotal, role) => {
-        const rows = record[role]
-        return roleTotal + (Array.isArray(rows) ? rows.length : 0)
-      }, 0)
-    )
-  }, 0)
-  expect(submittedCount, `신규로 제출된 신청이 없습니다. summary=${JSON.stringify(executionSummary)}`).toBeGreaterThan(0)
+    const blockedByRole = record.blocked as Record<string, unknown>
+
+    for (const role of ['organization', 'instructor', 'volunteer'] as const) {
+      const submittedRows = record[role]
+      const blockedRows = blockedByRole[role]
+      const hasSubmittedApplication = Array.isArray(submittedRows) && submittedRows.length > 0
+      const hasVerifiedExistingApplication =
+        Array.isArray(blockedRows) &&
+        blockedRows.some((row: BlockedApplication) =>
+          row.blockedReason === 'ALREADY_APPLIED' && row.existingApplication != null
+        )
+
+      expect(
+        hasSubmittedApplication || hasVerifiedExistingApplication,
+        `${programId} ${role} 신청이 신규 제출 또는 서버 기존 신청 확인으로 검증되지 않았습니다. summary=${JSON.stringify(summary)}`
+      ).toBe(true)
+    }
+  }
   console.log(`[e2e-application-expansion] ${JSON.stringify(executionSummary)}`)
 })
