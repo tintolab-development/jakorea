@@ -19,6 +19,7 @@ const NOT_ELIGIBLE_BLOCKED_REASONS = new Set<PortalApplicationBlockedReason>([
   'ORGANIZATION_MEMBERSHIP_REQUIRED',
   'APPROVED_INSTRUCTOR_REQUIRED',
   'MEMBER_NOT_ACTIVE',
+  'APPLICATION_TYPE_NOT_ALLOWED',
 ])
 
 /** canApply=false 이어도 신청서 화면 진입(양식·배너) 허용 */

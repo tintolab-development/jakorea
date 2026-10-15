@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
-import { pickApplicationOption } from './pick-application-option.ts'
+import { applicationOptionKey, pickApplicationOption } from './pick-application-option.ts'
 import {
   focusFromListItem,
   programListEntryKey,
+  rowApplicationTypes,
 } from '../lib/portal-recruitment.ts'
 
 const options = [
@@ -37,6 +38,17 @@ assert.equal(pickApplicationOption(options, { recruitmentId: 1001 })?.canApply, 
 assert.equal(pickApplicationOption(options, { recruitmentId: 9999 }), null)
 assert.equal(pickApplicationOption(options, { applicationTypes: ['INSTRUCTOR'] })?.recruitmentId, 1002)
 assert.equal(pickApplicationOption(options, { applicationTypes: ['VOLUNTEER'] }), null)
+assert.equal(applicationOptionKey(options[1]!), '1002:INSTRUCTOR')
+assert.equal(applicationOptionKey({ recruitmentId: 1002 }), null)
+
+assert.deepEqual(
+  rowApplicationTypes({
+    recruitmentId: 1006,
+    recruitmentType: 'PARTICIPANT',
+    applicationType: 'INSTRUCTOR',
+  }),
+  ['INSTRUCTOR'],
+)
 
 /** 취소 이력이 있어도 서버가 canApply=true를 반환하면 재신청 가능한 모집으로 유지한다. */
 const cancelledApplication = [
