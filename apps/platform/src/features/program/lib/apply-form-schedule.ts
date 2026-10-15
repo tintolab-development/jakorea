@@ -13,13 +13,19 @@ import {
   mergeApplicationScheduleVisibilityInput,
   normalizeInstitutionFixedScheduleAnswerTokens,
   readApplicationScheduleInputMode,
+  readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
+  shouldShowApplicationMaxSessionsPerDayField,
+  shouldShowApplicationPreferredScheduleSessionSelect,
   shouldShowApplicationPreferredScheduleParagraph,
   shouldShowApplicationScheduleParagraph,
+  shouldShowApplicationSchedulePeriodDateOnlyPreferred,
   syncApplicationScheduleChoiceParagraphsInDraft,
   type ReadInstitutionFixedScheduleChoiceOptions,
 } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
+import type { ApplyPreferredScheduleBlock } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
 import type {
   ProgramDetail,
   ProgramEducationScheduleMode,
@@ -40,6 +46,7 @@ export type ApplyScheduleProgramFields = Pick<
   | 'educationScheduleMode'
   | 'educationScheduleLines'
   | 'maxPreferredScheduleCount'
+  | 'maxSessionsPerDay'
 >
 
 export { countUniqueEducationScheduleCalendarDays }
@@ -197,16 +204,72 @@ export function shouldShowApplyPreferredSchedule(program: ApplyScheduleVisibilit
   return shouldShowApplicationPreferredScheduleParagraph(program)
 }
 
+export function shouldShowApplyPreferredScheduleSessionSelect(
+  program: ApplyScheduleVisibilityFields
+): boolean {
+  return shouldShowApplicationPreferredScheduleSessionSelect(program)
+}
+
+export function shouldShowApplySchedulePeriodDateOnlyPreferred(
+  program: ApplyScheduleVisibilityFields
+): boolean {
+  return shouldShowApplicationSchedulePeriodDateOnlyPreferred(program)
+}
+
+const DEFAULT_MAX_SESSIONS_PER_DAY = 16
+
+/** 모집 1일 최대 차시 — CMS `buildInstitutionSessionCountOptions`와 동일 상한 */
+
+/** 기관 복수+기간(모집 1일 최대 차시)만 기본 2지망 — CMS와 동일 */
+export function resolveApplyPreferredScheduleInitialBlockCount(
+  program: ApplyScheduleVisibilityFields & { maxPreferredScheduleCount?: number },
+): number {
+  if (!shouldShowApplicationMaxSessionsPerDayField(program)) return 1
+  const maxBlocks = Math.max(1, Math.min(program.maxPreferredScheduleCount ?? 3, 10))
+  return Math.min(2, maxBlocks)
+}
+
+export function createEmptyApplyPreferredScheduleBlocks(count: number): ApplyPreferredScheduleBlock[] {
+  const n = Math.max(1, Math.min(count, 10))
+  return Array.from({ length: n }, () => ({
+    date: '',
+    classPeriod: '',
+    startTime: '',
+    endTime: '',
+  }))
+}
+
+export function resolveApplyPreferredMaxSessionsPerDay(
+  program: Pick<ProgramDetail, 'maxSessionsPerDay'>,
+  runtimeContext?: unknown,
+): number | undefined {
+  const fromRuntime = readApplicationScheduleRecruitmentLimitsFromRuntime(runtimeContext)
+  return fromRuntime.maxSessionsPerDay ?? program.maxSessionsPerDay
+}
+
+export function buildApplyPreferredSessionSelectOptions(maxSessionsPerDay?: number | null) {
+  const cap =
+    maxSessionsPerDay != null && maxSessionsPerDay > 0
+      ? Math.min(maxSessionsPerDay, DEFAULT_MAX_SESSIONS_PER_DAY)
+      : DEFAULT_MAX_SESSIONS_PER_DAY
+  return Array.from({ length: cap }, (_, index) => ({
+    value: String(index + 1),
+    label: `${index + 1}차시`,
+  }))
+}
+
 export type ApplyScheduleParagraphsForProgramInput = ApplyScheduleProgramFields & {
   maxScheduleCount?: number
   maxSessionsPerDay?: number
   runtimeContext?: unknown
+  sessions?: ProgramDetail['sessions']
 }
 
 export function applyScheduleParagraphsForProgram(
   draft: WritingFormDraft,
   program: ApplyScheduleParagraphsForProgramInput
 ): WritingFormDraft {
+  const scheduleMeta = readApplyScheduleMetaFromProgram(program)
   return syncApplicationScheduleChoiceParagraphsInDraft(draft, {
     educationStructure: program.educationStructure ?? 'curriculum',
     sessionRound: program.sessionRound ?? 'single',
@@ -214,6 +277,10 @@ export function applyScheduleParagraphsForProgram(
     educationScheduleLines: program.educationScheduleLines ?? [],
     maxScheduleCount: program.maxScheduleCount ?? program.maxPreferredScheduleCount,
     maxSessionsPerDay: program.maxSessionsPerDay,
+    educationRoundCount: scheduleMeta.educationRoundCount,
+    sessionsPerRound: scheduleMeta.sessionsPerRound,
+    curriculumChartSessionCount: scheduleMeta.curriculumChartSessionCount,
+    curriculumSessions: scheduleMeta.curriculumSessions,
     runtimeContext: program.runtimeContext,
   })
 }

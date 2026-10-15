@@ -84,7 +84,13 @@ import {
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
   normalizeInstitutionFixedScheduleAnswerTokens,
+  buildApplyPreferredSessionSelectOptions,
+  createEmptyApplyPreferredScheduleBlocks,
+  resolveApplyPreferredMaxSessionsPerDay,
+  resolveApplyPreferredScheduleInitialBlockCount,
   shouldShowApplyPreferredSchedule,
+  shouldShowApplyPreferredScheduleSessionSelect,
+  shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldUseInstitutionAllowedSchedulePeriodDates,
 } from '@/features/program/lib/apply-form-schedule'
 import {
@@ -469,6 +475,32 @@ export function ProgramApplyPage() {
   const showEconomyPreferredSchedule = applyCase === 'institution-economy'
   const showPreferredScheduleInput =
     showTrainedTeachersApply || showGeneralPreferredSchedule || showEconomyPreferredSchedule
+  const applicationFormRuntimeContext = useMemo(
+    () => coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+    [remoteForm],
+  )
+  const institutionPreferredSessionSelect = useMemo(() => {
+    if (!program || !showGeneralPreferredSchedule) {
+      return { show: false, options: [] as { value: string; label: string }[] }
+    }
+    const show = shouldShowApplyPreferredScheduleSessionSelect(program)
+    const maxSessionsPerDay = resolveApplyPreferredMaxSessionsPerDay(
+      program,
+      applicationFormRuntimeContext,
+    )
+    return {
+      show,
+      options: show ? buildApplyPreferredSessionSelectOptions(maxSessionsPerDay) : [],
+    }
+  }, [program, showGeneralPreferredSchedule, applicationFormRuntimeContext])
+  const institutionDateOnlyPreferred = useMemo(() => {
+    if (!program || !showGeneralPreferredSchedule) return false
+    return shouldShowApplySchedulePeriodDateOnlyPreferred(program)
+  }, [program, showGeneralPreferredSchedule])
+  const preferredScheduleMapOptions = useMemo(
+    () => (institutionDateOnlyPreferred ? { dateOnly: true } : undefined),
+    [institutionDateOnlyPreferred],
+  )
   const runtimeInstructorScheduleSlots = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -601,7 +633,14 @@ export function ProgramApplyPage() {
             preferredParagraph?.id ??
               PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
           )
-          setPreferredBlocks(fromPreferred ?? [createEmptyPreferredBlock()])
+          setPreferredBlocks(
+            fromPreferred ??
+              (applyCaseForDraft === 'institution-general'
+                ? createEmptyApplyPreferredScheduleBlocks(
+                    resolveApplyPreferredScheduleInitialBlockCount(program),
+                  )
+                : [createEmptyPreferredBlock()]),
+          )
           const basicParagraph = findDraftParagraph(programLinkedDraft, isApplicationBasicInfoParagraphId)
           const fromBasic = basicInfoValuesFromDraftAnswer(
             draftAnswerForParagraph(draftAnswers, basicParagraph),
@@ -991,6 +1030,13 @@ export function ProgramApplyPage() {
             enabledDates={
               useInstitutionScheduleBounds ? institutionScheduleEnabledDates : null
             }
+            showSessionSelect={
+              showGeneralPreferredSchedule && institutionPreferredSessionSelect.show
+            }
+            sessionOptions={
+              showGeneralPreferredSchedule ? institutionPreferredSessionSelect.options : []
+            }
+            dateOnlyPreferred={institutionDateOnlyPreferred}
           />
         )
       }
@@ -1306,17 +1352,20 @@ export function ProgramApplyPage() {
       bundle.option.applicationType
     ) {
       const preferredScheduleBlocks = showPreferredScheduleInput
-        ? toPortalPreferredScheduleBlocks(preferredBlocks)
+        ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
         : undefined
       if (showPreferredScheduleInput) {
-        const preferredError = findIncompletePreferredScheduleMessage(preferredBlocks)
+        const preferredError = findIncompletePreferredScheduleMessage(
+          preferredBlocks,
+          preferredScheduleMapOptions,
+        )
         if (preferredError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
       }
       const preferredAnswer = showPreferredScheduleInput
-        ? toPreferredScheduleAnswerValue(preferredBlocks)
+        ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
         : null
       if (showPreferredScheduleInput && !preferredAnswer) {
         setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })

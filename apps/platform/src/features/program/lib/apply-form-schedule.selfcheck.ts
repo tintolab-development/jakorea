@@ -16,6 +16,7 @@ import {
   normalizeInstitutionFixedScheduleAnswerTokens,
   shouldUseInstitutionAllowedSchedulePeriodDates,
   shouldShowApplyPreferredSchedule,
+  shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldShowApplyScheduleParagraph,
 } from './apply-form-schedule.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
@@ -111,6 +112,45 @@ function testScheduleParagraphVisibility() {
       educationScheduleLines: [
         '26년 4월 20일(월) 9:30 ~ 12:20',
         '26년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+    }),
+    false
+  )
+
+  assert.equal(
+    shouldShowApplySchedulePeriodDateOnlyPreferred({
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+    }),
+    true
+  )
+  assert.equal(
+    shouldShowApplySchedulePeriodDateOnlyPreferred({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+    }),
+    false
+  )
+
+  const scheduleSingleDateTwoDays = {
+    educationStructure: 'schedule' as const,
+    sessionRound: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+  }
+  assert.equal(shouldShowApplyScheduleParagraph(scheduleSingleDateTwoDays), true)
+  assert.equal(shouldShowApplyPreferredSchedule(scheduleSingleDateTwoDays), false)
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      ...scheduleSingleDateTwoDays,
+      educationScheduleLines: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
       ],
     }),
     false

@@ -3,10 +3,12 @@
  */
 
 import {
+  readApplicationScheduleRecruitmentLimitsFromRuntime,
   readEducationScheduleLinesForApplicationForm,
   syncApplicationScheduleChoiceParagraphsInDraft,
 } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { isInstitutionApplyScheduleChoiceParagraphId } from './apply-form-schedule.ts'
 import type { ProgramApplyFormCase } from './apply-form-case.ts'
 import type { ProgramDetail } from '../model/types.ts'
@@ -44,6 +46,9 @@ export function applyProgramLinkedApplicationDraftPatches(
   const scheduleParagraphRaw =
     applyCase === 'institution-general' ? findInstitutionScheduleParagraphRaw(draft) : null
 
+  const scheduleMeta = readApplyScheduleMetaFromProgram(program)
+  const recruitLimits = readApplicationScheduleRecruitmentLimitsFromRuntime(runtimeContext)
+
   return syncApplicationScheduleChoiceParagraphsInDraft(draft, {
     educationStructure: program.educationStructure ?? 'curriculum',
     sessionRound: program.sessionRound ?? 'single',
@@ -53,7 +58,12 @@ export function applyProgramLinkedApplicationDraftPatches(
         runtimeContext,
         program.educationScheduleLines,
       ) ?? [],
-    maxScheduleCount: program.maxPreferredScheduleCount,
+    maxScheduleCount: recruitLimits.maxScheduleCount ?? program.maxPreferredScheduleCount,
+    maxSessionsPerDay: recruitLimits.maxSessionsPerDay ?? program.maxSessionsPerDay,
+    educationRoundCount: scheduleMeta.educationRoundCount,
+    sessionsPerRound: scheduleMeta.sessionsPerRound,
+    curriculumChartSessionCount: scheduleMeta.curriculumChartSessionCount,
+    curriculumSessions: scheduleMeta.curriculumSessions,
     runtimeContext,
     scheduleParagraphRaw,
   })

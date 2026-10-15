@@ -215,6 +215,8 @@ export type ProgramDetail = ProgramListItem & {
   educationScheduleLines: string[]
   /** 기간 지정 지망 상한. 없으면 1 */
   maxPreferredScheduleCount: number
+  /** 기간 지정 — 희망 차시 셀렉 상한 (모집 1일 최대 차시). */
+  maxSessionsPerDay?: number
   /** 커리큘럼형 차시/회차 (일정형이면 빈 배열) */
   sessions: ProgramSession[]
   /** 일정형 세부·행사 일정 (커리큘럼형이면 빈 배열) */

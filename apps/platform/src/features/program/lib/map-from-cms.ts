@@ -521,6 +521,12 @@ function mapEducationScheduleLines(program: CmsProgramLike): string[] {
     .filter(line => line && !isUnavailableScheduleLine(line))
 }
 
+function mapMaxSessionsPerDay(program: CmsProgramLike): number | undefined {
+  const raw = program.generalCommonInfo?.maxSessionsPerDay
+  if (raw == null || raw < 1) return undefined
+  return Math.min(Math.floor(raw), 16)
+}
+
 function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
   if (program.registrationKind === 'trainedTeachers') {
     const raw = program.generalCommonInfo?.maxScheduleCount
@@ -821,6 +827,7 @@ export function mapCmsProgramToPlatformDetail(
     educationScheduleMode: mapEducationScheduleMode(program),
     educationScheduleLines: mapEducationScheduleLines(program),
     maxPreferredScheduleCount: mapMaxPreferredScheduleCount(program),
+    maxSessionsPerDay: mapMaxSessionsPerDay(program),
     sessions: mapSessions(program),
     eventSchedules: mapEventSchedules(program),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),

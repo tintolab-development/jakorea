@@ -67,6 +67,11 @@ type ApplyPreferredScheduleProps = {
   maxDate?: string | null
   /** 지정 시 이 날짜만 선택 가능 (교육 예정일 구간 합집합) */
   enabledDates?: ReadonlySet<string> | null
+  /** 기관 복수+기간 — 모집 1일 최대 차시 희망 차시 셀렉 (CMS institution preferred) */
+  showSessionSelect?: boolean
+  sessionOptions?: PFSelectOption[]
+  /** 일정형 단일 기간 — 희망 교육일만 */
+  dateOnlyPreferred?: boolean
 }
 
 export function ApplyPreferredSchedule({
@@ -76,6 +81,9 @@ export function ApplyPreferredSchedule({
   minDate = null,
   maxDate = null,
   enabledDates = null,
+  showSessionSelect = false,
+  sessionOptions = [],
+  dateOnlyPreferred = false,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
   const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
@@ -133,50 +141,67 @@ export function ApplyPreferredSchedule({
                   onValueChange={next => patchBlock(index, { date: next })}
                 />
               </div>
-              <div className={styles.field}>
-                <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.fieldLabel}>
-                  1차시 희망 교육 시간
-                </PFText>
-                <div className={styles.timeRow}>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    width={120}
-                    inputMode="numeric"
-                    placeholder="수업 진행 교시"
-                    value={block.classPeriod}
-                    onValueChange={next =>
-                      patchBlock(index, { classPeriod: next.replace(/[^\d]/g, '') })
-                    }
-                  />
-                  <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
-                    교시
+              {dateOnlyPreferred ? null : (
+                <div className={styles.field}>
+                  <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.fieldLabel}>
+                    {showSessionSelect ? '희망 교육 시간' : '1차시 희망 교육 시간'}
                   </PFText>
-                  <PFSelect
-                    variant="formPage"
-                    size="large"
-                    width={140}
-                    placeholder="시작 시간"
-                    options={timeSelectOptionsFor(startTime)}
-                    value={startTime}
-                    onValueChange={next => patchBlock(index, { startTime: next })}
-                    aria-label="시작 시간"
-                  />
-                  <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.timeUnit}>
-                    ~
-                  </PFText>
-                  <PFSelect
-                    variant="formPage"
-                    size="large"
-                    width={140}
-                    placeholder="종료 시간"
-                    options={timeSelectOptionsFor(endTime)}
-                    value={endTime}
-                    onValueChange={next => patchBlock(index, { endTime: next })}
-                    aria-label="종료 시간"
-                  />
+                  <div className={styles.timeRow}>
+                    {showSessionSelect ? (
+                      <PFSelect
+                        variant="formPage"
+                        size="large"
+                        width={120}
+                        placeholder="희망 차시"
+                        options={sessionOptions}
+                        value={block.classPeriod || undefined}
+                        onValueChange={next => patchBlock(index, { classPeriod: next ?? '' })}
+                        aria-label="희망 차시"
+                      />
+                    ) : (
+                      <>
+                        <PFTextInput
+                          variant="formPage"
+                          size="large"
+                          width={120}
+                          inputMode="numeric"
+                          placeholder="수업 진행 교시"
+                          value={block.classPeriod}
+                          onValueChange={next =>
+                            patchBlock(index, { classPeriod: next.replace(/[^\d]/g, '') })
+                          }
+                        />
+                        <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                          교시
+                        </PFText>
+                      </>
+                    )}
+                    <PFSelect
+                      variant="formPage"
+                      size="large"
+                      width={140}
+                      placeholder={showSessionSelect ? '수업 시작' : '시작 시간'}
+                      options={timeSelectOptionsFor(startTime)}
+                      value={startTime}
+                      onValueChange={next => patchBlock(index, { startTime: next })}
+                      aria-label="시작 시간"
+                    />
+                    <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.timeUnit}>
+                      ~
+                    </PFText>
+                    <PFSelect
+                      variant="formPage"
+                      size="large"
+                      width={140}
+                      placeholder={showSessionSelect ? '수업 종료' : '종료 시간'}
+                      options={timeSelectOptionsFor(endTime)}
+                      value={endTime}
+                      onValueChange={next => patchBlock(index, { endTime: next })}
+                      aria-label="종료 시간"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             {index > 0 ? (
               <div className={styles.delete}>
