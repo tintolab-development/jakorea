@@ -28,9 +28,9 @@ export interface ProgramFormBindingResponse {
   settlementRequired?: boolean;
   performanceRequired?: boolean;
   reviewRequired?: boolean;
-  /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. 서버가 종료 시각을 만들어 finished로 두지 않는다. */
+  /** SURVEY는 항상 값이 있다. SATISFACTION·LECTURE_EVALUATION은 기간 미설정 시 null이며 화면 상태는 진행 중(in_progress)이다. */
   submissionStartAt?: string;
-  /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 progressStatus는 IN_PROGRESS다. */
+  /** SURVEY는 항상 값이 있다. SATISFACTION·LECTURE_EVALUATION은 기간 미설정 시 null이며 progressStatus는 IN_PROGRESS다. */
   submissionEndAt?: string;
   /**
      * 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. BEFORE_START | IN_PROGRESS | FINISHED. 그 외 formType은 null. now < submissionStartAt 이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt 이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.

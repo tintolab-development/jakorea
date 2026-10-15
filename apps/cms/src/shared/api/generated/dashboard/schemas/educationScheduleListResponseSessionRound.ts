@@ -8,7 +8,6 @@
 
 /**
  * 회차 유형. SINGLE | MULTI. 이 API는 UPPERCASE입니다.
- * @nullable
  */
 export type EducationScheduleListResponseSessionRound = typeof EducationScheduleListResponseSessionRound[keyof typeof EducationScheduleListResponseSessionRound] | null;
 

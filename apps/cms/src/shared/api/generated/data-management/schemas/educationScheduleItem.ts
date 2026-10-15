@@ -11,7 +11,7 @@ import type { ScheduleGroupTime } from './scheduleGroupTime';
 
 export interface EducationScheduleItem {
   /**
-     * 운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null.
+     * 운영 program_schedule.id. GENERAL_INDIVIDUAL 승인 참여자는 확정된 교육범위의 각 카드에 채워지며, 미확정 신청/정의 전용 카드만 null일 수 있습니다.
      * @nullable
      */
   scheduleId?: number | null;

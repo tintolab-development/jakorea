@@ -3005,8 +3005,12 @@
         "type": "object",
         "properties": {
           "rosterId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "기존 활성 roster row를 지정하면 전체 교체 후에도 동일 rosterId를 유지합니다. 신규 행은 생략합니다."
           },
           "memberId": {
             "type": "integer",
@@ -14274,10 +14278,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -16757,12 +16761,12 @@
           "submissionStartAt": {
             "type": "string",
             "format": "date-time",
-            "description": "없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. 서버가 종료 시각을 만들어 finished로 두지 않는다."
+            "description": "SURVEY는 항상 값이 있다. SATISFACTION·LECTURE_EVALUATION은 기간 미설정 시 null이며 화면 상태는 진행 중(in_progress)이다."
           },
           "submissionEndAt": {
             "type": "string",
             "format": "date-time",
-            "description": "없으면 null. 시작·종료가 모두 null이면 기간 없음이며 progressStatus는 IN_PROGRESS다."
+            "description": "SURVEY는 항상 값이 있다. SATISFACTION·LECTURE_EVALUATION은 기간 미설정 시 null이며 progressStatus는 IN_PROGRESS다."
           },
           "progressStatus": {
             "type": [
@@ -19183,6 +19187,50 @@
             "items": {
               "$ref": "#/components/schemas/ClassTimeRow"
             }
+          },
+          "temporaryAssignmentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 임시배정 워크플로 상태. 비대상 프로그램이면 null."
+          },
+          "educationRegionCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 비대상 프로그램이면 null."
+          },
+          "scheduleConfirmStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 일정 확인 상태. 정의된 wire enum 또는 null.",
+            "enum": [
+              "institution_checking",
+              "institution_confirmed",
+              "approval_completed",
+              "revision_requested",
+              "application_rejected"
+            ]
+          },
+          "assignedInstructorCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "UJAT 신청에 배정된 강사 수. 0명은 null."
+          },
+          "operatingStudentCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null."
           }
         }
       },
@@ -32082,7 +32130,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null."
+            "description": "운영 program_schedule.id. GENERAL_INDIVIDUAL 승인 참여자는 확정된 교육범위의 각 카드에 채워지며, 미확정 신청/정의 전용 카드만 null일 수 있습니다."
           },
           "sessionNo": {
             "type": "integer",
@@ -32527,6 +32575,35 @@
             "format": "int32",
             "description": "반응 총합(모든 reactionType 합계). 반응이 없으면 0입니다.",
             "example": 3
+          },
+          "createdByActorType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "게시글 작성 actor 유형. MEMBER 또는 ADMIN 등입니다.",
+            "example": "MEMBER"
+          },
+          "createdByActorId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "게시글 작성 actor ID. 탈퇴·삭제·미존재 actor면 null일 수 있습니다.",
+            "example": 190081
+          },
+          "createdByDisplayName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "게시글 작성자 표시명. 탈퇴·삭제·미존재 actor면 null이며 FE가 안내로 대체할 수 있습니다.",
+            "example": "최지원"
+          },
+          "mine": {
+            "type": "boolean",
+            "description": "현재 로그인 회원이 작성한 게시글이면 true입니다."
           }
         }
       },
@@ -32700,6 +32777,35 @@
             "format": "int32",
             "description": "반응 총합(모든 reactionType 합계). 반응이 없으면 0입니다.",
             "example": 3
+          },
+          "createdByActorType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "게시글 작성 actor 유형. MEMBER 또는 ADMIN 등입니다.",
+            "example": "MEMBER"
+          },
+          "createdByActorId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "게시글 작성 actor ID. 탈퇴·삭제·미존재 actor면 null일 수 있습니다.",
+            "example": 190081
+          },
+          "createdByDisplayName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "게시글 작성자 표시명. 탈퇴·삭제·미존재 actor면 null이며 FE가 안내로 대체할 수 있습니다.",
+            "example": "최지원"
+          },
+          "mine": {
+            "type": "boolean",
+            "description": "현재 로그인 회원이 작성한 게시글이면 true입니다."
           }
         }
       },
@@ -37178,6 +37284,213 @@
           }
         }
       },
+      "TrainedTeacherOrganizationApplicationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schoolId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "teacherMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "teacherPhoneMasked": {
+            "type": "string"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "desiredEducationScheduleMemo": {
+            "type": "string"
+          },
+          "preferredScheduleBlocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleBlock"
+            }
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "educationJournalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resultNotificationSentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "schoolSido": {
+            "type": "string"
+          },
+          "schoolSigungu": {
+            "type": "string"
+          },
+          "organizationSido": {
+            "type": "string"
+          },
+          "organizationSigungu": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "regionName": {
+            "type": "string"
+          },
+          "requestedStudentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requestedClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "journalSubmitted": {
+            "type": "boolean"
+          },
+          "educationTarget": {
+            "type": "string"
+          },
+          "educationGrade": {
+            "type": "string"
+          },
+          "lectureRound": {
+            "type": "string"
+          },
+          "totalEducationRoundCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedEducationRoundCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "progressLabel": {
+            "type": "string"
+          },
+          "textbookName": {
+            "type": "string"
+          },
+          "educationCompletionCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activityWithdrawn": {
+            "type": "boolean"
+          },
+          "giveUpAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "giveUpStopScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "addressDetail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 당시 저장된 기관 상세주소. 없으면 null."
+          },
+          "requestedEducationFormat": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 당시 저장된 교육 형태. 없으면 null."
+          },
+          "applicationReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 당시 저장된 신청 사유. 없으면 null."
+          },
+          "otherRequests": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 당시 저장된 기타 요청사항. 없으면 null."
+          },
+          "teacherEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당 교사 이메일. 일반 상세 조회에서는 개인정보 정책에 따라 마스킹될 수 있음."
+          },
+          "textbookId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "신청 당시 지정된 교재 id. 없으면 null."
+          }
+        }
+      },
       "EducationJournalDownloadResponse": {
         "type": "object",
         "properties": {
@@ -38258,7 +38571,7 @@
       },
       "SessionProgress": {
         "type": "object",
-        "description": "참여 일정. 기관 참여자는 배정·출석이 붙은 프로그램 일정과 신청 희망 일정(GET .../requested-schedules 와 같은 program_application_requested_schedule)을 함께 반환한다. 희망 시각이 있으면 startAt/endAt은 Asia/Seoul 기준 ISO-8601이고 scheduleName은 신청 표기(dateText)다. 프로그램 일정과 시각이 맞지 않으면 scheduleId·resolvedScheduleId는 null, scheduleUnresolved는 true. 신청 답이 없는 고정 1일 프로그램은 일정을 만들지 않고 빈 배열이다. null은 반환하지 않는다.",
+        "description": "참여 일정. 기관 참여자는 해당 기관에 실제 배정된 프로그램 일정만 반환한다. 신청 희망 일정은 실제 배정 일정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 기관에 배정되지 않은 프로그램 일정과 미확정 희망 일정은 출석 상세·회차 집계에서 제외한다. null은 반환하지 않는다.",
         "properties": {
           "scheduleId": {
             "type": [
@@ -38266,7 +38579,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "시각이 일치하는 program_schedule id. 희망 일정만 있으면 null"
+            "description": "실제 반환 대상 program_schedule id. 값이 없으면 null"
           },
           "requestedScheduleId": {
             "type": [
@@ -38282,14 +38595,14 @@
               "null"
             ],
             "format": "int64",
-            "description": "출석/배정 mutation에 쓰는 program_schedule id. 미해결이면 null"
+            "description": "출석/배정 mutation에 쓰는 실제 program_schedule id. 값이 없으면 null"
           },
           "scheduleUnresolved": {
             "type": [
               "boolean",
               "null"
             ],
-            "description": "희망 일정은 있으나 같은 시각의 프로그램 일정이 없으면 true"
+            "description": "미확정 희망 일정이면 true. 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다"
           },
           "sessionNo": {
             "type": [
@@ -38297,14 +38610,14 @@
               "null"
             ],
             "format": "int32",
-            "description": "프로그램 일정 회차. 희망 일정은 preference_order"
+            "description": "프로그램 일정 회차. 확정된 희망 일정은 preference_order"
           },
           "scheduleName": {
             "type": [
               "string",
               "null"
             ],
-            "description": "일정명. 희망 일정은 dateText, 없으면 YYYY-MM-DD"
+            "description": "일정명. 실제 배정 일정 기준으로 반환한다"
           },
           "startAt": {
             "type": [
@@ -38312,7 +38625,7 @@
               "null"
             ],
             "format": "date-time",
-            "description": "시작 시각. 희망 일정은 신청일+시작시각(Asia/Seoul). 시각이 없으면 null"
+            "description": "실제 배정된 프로그램 일정의 시작 시각. 시각이 없으면 null"
           },
           "endAt": {
             "type": [
@@ -38320,7 +38633,7 @@
               "null"
             ],
             "format": "date-time",
-            "description": "종료 시각. 희망 일정은 신청일+종료시각(Asia/Seoul). 시각이 없으면 null"
+            "description": "실제 배정된 프로그램 일정의 종료 시각. 시각이 없으면 null"
           },
           "scheduleStatus": {
             "type": [
@@ -41711,6 +42024,124 @@
           "submittedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "NotificationPageResponse": {
+        "type": "object",
+        "description": "페이지 단위 관리자 알림 수신 목록",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "NotificationResponse": {
+        "type": "object",
+        "description": "관리자 알림 수신 응답",
+        "properties": {
+          "recipientId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "알림 수신자 row ID",
+            "example": 81001
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "알림 이벤트 ID",
+            "example": 80001
+          },
+          "eventType": {
+            "type": "string",
+            "description": "알림 이벤트 유형",
+            "example": "APPLICATION_APPROVED"
+          },
+          "notificationCategory": {
+            "type": "string",
+            "description": "알림 카테고리",
+            "example": "승인·반려"
+          },
+          "title": {
+            "type": "string",
+            "description": "알림 제목",
+            "example": "신청이 승인되었습니다"
+          },
+          "message": {
+            "type": "string",
+            "description": "알림 메시지",
+            "example": "경제교육 기본 과정 신청이 승인되었습니다."
+          },
+          "sourceDomain": {
+            "type": "string",
+            "description": "연결 도메인",
+            "example": "APPLICATION"
+          },
+          "sourceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "연결 도메인 ID",
+            "example": 7001
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "연결 프로그램 ID",
+            "example": 120
+          },
+          "linkType": {
+            "type": "string",
+            "description": "링크 유형",
+            "example": "INTERNAL_ROUTE"
+          },
+          "linkId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "링크 대상 ID",
+            "example": 7001
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "읽음 처리 시각",
+            "example": "2026-06-02T09:10:00Z"
+          },
+          "clickedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "클릭 처리 시각",
+            "example": "2026-06-02T09:11:00Z"
+          },
+          "hiddenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "숨김 처리 시각",
+            "example": "2026-06-02T09:12:00Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "알림 생성 시각",
+            "example": "2026-06-02T09:00:00Z"
           }
         }
       },

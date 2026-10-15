@@ -237,7 +237,7 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
         requestedGrade: null,
         requestedClassCount: null,
         requestedStudentCount: null,
-      },
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse,
     })
 
     expect(hydrated.detail?.applicationReason).toBeUndefined()
