@@ -153,6 +153,15 @@ function mapEducationForm(value: string | undefined): EducationForm {
   }
 }
 
+/** API 계약의 canonical 값은 lower-case지만 구 응답/직접 연동 값도 동일 의미로 정규화한다. */
+function isMultiSessionRound(value: string | null | undefined): boolean {
+  const normalized = (value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+  return ['multi', 'multiple', 'multi_round', 'multiple_round', '복수회차'].includes(normalized)
+}
+
 function mapEducationTarget(value: string | undefined): {
   key: EducationTargetKey | null
   educationTargetLabel: string
@@ -685,14 +694,14 @@ function mapPortalScheduleDetails(
   return (details ?? []).map(detail => {
     const rawScheduleLabel = detail.scheduleLabel?.trim() ?? ''
     const scheduleLabel =
-      sessionRound === 'multi'
+      isMultiSessionRound(sessionRound)
         ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
         : rawScheduleLabel
     const timeSummary =
       optionalText(detail.progressTimeSummary) ?? formatGroupTimes(detail.groupTimes)
     const scheduleDateLabel = optionalText(detail.scheduleDateLabel)
     const dateLabel =
-      sessionRound === 'multi'
+      isMultiSessionRound(sessionRound)
         ? [scheduleDateLabel, timeSummary].filter((part): part is string => Boolean(part)).join(' ')
         : (timeSummary ?? scheduleDateLabel ?? '')
     return {
@@ -722,7 +731,7 @@ function mapEducationTargetDetailLabel(remote: PortalProgramDetail, fallbackLabe
 
 /** 세부내용 「교육 일정 N」. 일정형 복수 회차는 배열이 있어도 카드를 숨긴다. */
 function mapPortalEducationScheduleCards(remote: PortalProgramDetail): ProgramLabeledValue[] {
-  if (remote.educationStructure === 'schedule' && remote.sessionRound === 'multi') return []
+  if (remote.educationStructure === 'schedule' && isMultiSessionRound(remote.sessionRound)) return []
   return (remote.educationScheduleLines ?? []).map((line, index) => ({
     label: `교육 일정 ${index + 1}`,
     value: line,
@@ -1030,7 +1039,7 @@ export function mapPortalProgramDetail(
         ? 'curriculum'
         : 'schedule',
     sessionRound: usesEducationProgressFields
-      ? remote.sessionRound === 'multi'
+      ? isMultiSessionRound(remote.sessionRound)
         ? 'multi'
         : 'single'
       : sessions.length > 1 || eventSchedules.length > 1
