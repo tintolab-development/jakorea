@@ -6,6 +6,7 @@
  * - 날짜 지정 + 고유 달력일 ≤ 1: 단락 숨김 (같은 날 AM/PM은 하루)
  * - 기간 지정 + (커리큘럼형 또는 일정형 단일): 1지망·2지망 희망 일정 UI
  * - 그 외(날짜 지정, 고유 일자 2일 이상): 등록된 교육 진행 예정일 선택지
+ * - 일정형·단일·날짜 지정: 커리큘럼·단일·날짜와 동일(고정 체크박스·1타임 설명·고유 일 1일 숨김)
  */
 
 export type ApplicationScheduleVisibilityInput = {
@@ -76,6 +77,29 @@ export function shouldShowApplicationMaxSessionsPerDayField(
     input.educationStructure === 'curriculum' &&
     input.sessionRound === 'multi' &&
     input.educationScheduleMode === 'period'
+  )
+}
+
+/** 일정형 + 단일 + 기간 지정 지망 — 희망 교육일만 (차시·시간 없음) */
+export function shouldShowApplicationSchedulePeriodDateOnlyPreferred(
+  input: ApplicationScheduleVisibilityInput
+): boolean {
+  return (
+    input.educationStructure === 'schedule' &&
+    input.sessionRound === 'single' &&
+    input.educationScheduleMode === 'period' &&
+    shouldShowApplicationPreferredScheduleParagraph(input)
+  )
+}
+
+/** 커리큘럼 + 기간 지정 지망 — 희망 차시 셀렉 (모집 1일 최대 차시 필드와 별개) */
+export function shouldShowApplicationPreferredScheduleSessionSelect(
+  input: ApplicationScheduleVisibilityInput
+): boolean {
+  return (
+    input.educationStructure === 'curriculum' &&
+    input.educationScheduleMode === 'period' &&
+    shouldShowApplicationPreferredScheduleParagraph(input)
   )
 }
 
