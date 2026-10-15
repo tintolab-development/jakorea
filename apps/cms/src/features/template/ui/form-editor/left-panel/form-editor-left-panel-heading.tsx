@@ -34,6 +34,7 @@ import {
   PROGRAM_REGISTRATION_IDS,
   PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-registration-draft'
+import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import {
   PROGRAM_PARTICIPANT_APPLICATION_IDS,
@@ -262,6 +263,27 @@ export function withProgramRegistrationCurriculumTitleTrailing(
         }
       />
     ),
+  }
+}
+
+/** 일반 프로그램 등록 — 교육 진행 일정 설정: 등록 위저드 카드 설명(상세 수정 안내 문구와 분리) */
+export function withProgramRegistrationEducationScheduleSettingsRegistrationDescription(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const pr = paragraphBodyOptions?.programRegistration
+  if (
+    paragraph.id !== PROGRAM_REGISTRATION_IDS.educationScheduleSettings ||
+    pr == null ||
+    pr.programRegistrationFormVariant !== 'general'
+  ) {
+    return heading
+  }
+  return {
+    ...heading,
+    descriptionValue:
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.registrationDescription,
   }
 }
 

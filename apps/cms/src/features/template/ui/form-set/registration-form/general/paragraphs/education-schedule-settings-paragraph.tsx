@@ -3,11 +3,9 @@ import type { ProgramRegistrationEducationScheduleMode } from '@/features/templa
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
-  buildEducationScheduleLinesFromDateAndGroupTimes,
   educationScheduleLinesEqual,
   flattenGroupTimeSlotsByDetail,
-  formatEducationScheduleLineFromRange,
-  normalizeEducationSchedulePeriodRangeDateOnly,
+  educationScheduleLinesFromSelectionRangeApply,
   rebuildEducationScheduleLinesFromGroupTimes,
   type EducationScheduleGroupTimeSlot,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -30,8 +28,8 @@ import {
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
+  getEducationScheduleSelectionDatePickerProps,
   shouldDisableEducationSchedulePeriodTimeInput,
-  shouldDisableEducationScheduleSelectionTimeInput,
 } from '@/features/program/general/lib/schedule-detail-form'
 import './program-registration-paragraph.css'
 
@@ -49,6 +47,7 @@ type EducationScheduleSettingsProps = {
   disablePeriodMode?: boolean
   programType?: 'curriculum' | 'schedule'
   sessionRound?: 'single' | 'multi'
+  participantOrganization?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
@@ -59,16 +58,18 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   disablePeriodMode = false,
   programType = 'curriculum',
   sessionRound = 'single',
+  participantOrganization = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
-  const disableScheduleSelectionTime = shouldDisableEducationScheduleSelectionTimeInput({
-    educationStructure: programType,
-  })
   const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
-    educationStructure: programType,
-    sessionRound,
     educationScheduleMode: scheduleMode,
+  })
+  const scheduleSelectionPickerProps = getEducationScheduleSelectionDatePickerProps({
+    educationStructure: programType,
+    participantOrganization,
+    sessionRound,
+    scheduleMode,
   })
   const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
     `${overlayKeyPrefix}.singleDateIso`,
@@ -116,14 +117,25 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
 
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      const normalized = disableSchedulePeriodTime
-        ? normalizeEducationSchedulePeriodRangeDateOnly(range)
-        : range
-      appendLineIfNew(formatEducationScheduleLineFromRange(normalized))
+      const slots = flattenGroupTimeSlotsByDetail(groupTimesByDetail)
+      const lines = educationScheduleLinesFromSelectionRangeApply({
+        range,
+        autoFillFromScheduleGroupTimes,
+        educationScheduleMode: scheduleMode,
+        groupTimeSlots: slots,
+        dateOnlyPeriodRange: disableSchedulePeriodTime,
+      })
+      for (const line of lines) appendLineIfNew(line)
       setSingleDate(null)
       setPeriodDate(null)
     },
-    [appendLineIfNew, disableSchedulePeriodTime]
+    [
+      appendLineIfNew,
+      autoFillFromScheduleGroupTimes,
+      disableSchedulePeriodTime,
+      groupTimesByDetail,
+      scheduleMode,
+    ]
   )
 
   const handleDateApply = useCallback(
@@ -132,18 +144,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
         setSingleDate(null)
         return
       }
-      if (autoFillFromScheduleGroupTimes) {
-        const slots = flattenGroupTimeSlotsByDetail(groupTimesByDetail)
-        for (const line of buildEducationScheduleLinesFromDateAndGroupTimes(next, slots)) {
-          appendLineIfNew(line)
-        }
-        setSingleDate(null)
-        return
-      }
-      const day = next.startOf('day')
-      handleScheduleRangeApply([day, day])
+      handleScheduleRangeApply([next.startOf('day'), next.startOf('day')])
     },
-    [appendLineIfNew, autoFillFromScheduleGroupTimes, groupTimesByDetail, handleScheduleRangeApply]
+    [handleScheduleRangeApply]
   )
 
   const removeLine = useCallback(
@@ -228,54 +231,19 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
             'educationScheduleSettings.periodDateIso',
           ]}
           edit={
-            scheduleMode === 'date' ? (
-              disableScheduleSelectionTime ? (
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="date"
-                  customizable={false}
-                  showPeriodToggle={false}
-                  showTimeToggle={false}
-                  suppressAutoTodayWhenEmpty
-                  value={singleDate}
-                  onChange={handleDateApply}
-                  width={240}
-                  disabledDate={disableOutsideOperation}
-                />
-              ) : (
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="schedule"
-                  customizable={false}
-                  showPeriodToggle={false}
-                  showTimeToggle={false}
-                  lockTimeToggleOn
-                  lockPeriodToggleOn
-                  suppressAutoTodayWhenEmpty
-                  value={singleDate}
-                  onChange={handleDateApply}
-                  onRangeChange={handleScheduleRangeApply}
-                  width={240}
-                  disabledDate={disableOutsideOperation}
-                />
-              )
-            ) : (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode="period"
-                customizable={false}
-                showTimeToggle={false}
-                showPeriodToggle={false}
-                lockTimeToggleOn={disableSchedulePeriodTime}
-                disableTimeInputs={disableSchedulePeriodTime}
-                suppressAutoTodayWhenEmpty
-                value={periodDate}
-                onChange={setPeriodDate}
-                onRangeChange={handleScheduleRangeApply}
-                width={360}
-                disabledDate={disableOutsideOperation}
-              />
-            )
+            <ParagraphDatePicker
+              mode="single"
+              customizable={false}
+              showPeriodToggle={false}
+              showTimeToggle={false}
+              {...scheduleSelectionPickerProps}
+              suppressAutoTodayWhenEmpty
+              value={scheduleMode === 'date' ? singleDate : periodDate}
+              onChange={scheduleMode === 'date' ? handleDateApply : setPeriodDate}
+              onRangeChange={handleScheduleRangeApply}
+              width={scheduleMode === 'date' ? 240 : 360}
+              disabledDate={disableOutsideOperation}
+            />
           }
           view="-"
         />

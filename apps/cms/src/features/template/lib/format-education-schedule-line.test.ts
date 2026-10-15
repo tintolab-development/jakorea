@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   buildEducationScheduleLinesFromDateAndGroupTimes,
+  educationScheduleLinesFromSelectionRangeApply,
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
   flattenGroupTimeSlotsByDetail,
@@ -44,6 +45,27 @@ describe('buildEducationScheduleLinesFromDateAndGroupTimes', () => {
     expect(
       buildEducationScheduleLinesFromDateAndGroupTimes(april20, [{ startTime: '', endTime: '' }])
     ).toEqual(['26년 4월 20일(월)'])
+  })
+})
+
+describe('educationScheduleLinesFromSelectionRangeApply', () => {
+  it('개인 일정형 단일·날짜 지정 — range apply도 그룹 시간으로 예정일을 만든다', () => {
+    const day = dayjs('2026-11-10')
+    expect(
+      educationScheduleLinesFromSelectionRangeApply({
+        range: [day, day],
+        autoFillFromScheduleGroupTimes: true,
+        educationScheduleMode: 'date',
+        groupTimeSlots: [
+          { startTime: '13:30', endTime: '15:30' },
+          { startTime: '09:30', endTime: '11:30' },
+        ],
+        dateOnlyPeriodRange: false,
+      })
+    ).toEqual([
+      '26년 11월 10일(화) 13:30 ~ 15:30',
+      '26년 11월 10일(화) 9:30 ~ 11:30',
+    ])
   })
 })
 

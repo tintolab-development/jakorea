@@ -124,6 +124,25 @@ describe('institution preferred schedule card copy', () => {
     expect(resolveInstitutionPreferredScheduleInitialBlockCount(bridge)).toBe(1)
   })
 
+  it('커리큘럼 + 복수 + 날짜 지정 — N차시*N회 설명(1회차 차시 기준)', () => {
+    const bridge: InstitutionApplicationProgramBridge = {
+      preEducationNoticeRequired: true,
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 4월 20일(월) 9:30 ~ 12:20',
+        '26년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+      educationRoundCount: 2,
+      sessionsPerRound: 2,
+    }
+    expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
+    expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
+      '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+    )
+  })
+
   it('일정형 + 단일 + 날짜 지정 — 고정 일정 1타임 설명·희망 카드 아님', () => {
     expect(shouldUseInstitutionPreferredScheduleCardCopy(SCHEDULE_SINGLE_DATE)).toBe(false)
     expect(shouldUseInstitutionFixedScheduleCardCopy(SCHEDULE_SINGLE_DATE)).toBe(true)

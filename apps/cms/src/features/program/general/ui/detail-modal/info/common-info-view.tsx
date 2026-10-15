@@ -54,8 +54,9 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  getEducationScheduleSelectionDatePickerProps,
+  shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodTimeInput,
-  shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
@@ -163,13 +164,12 @@ import {
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import {
-  buildEducationScheduleLinesFromDateAndGroupTimes,
+  educationScheduleLinesFromSelectionRangeApply,
   educationScheduleLinesEqual,
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
   formatEducationScheduleLineFromRange,
   normalizeEducationSchedulePeriodLineDateOnly,
-  normalizeEducationSchedulePeriodRangeDateOnly,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -4471,22 +4471,25 @@ function ScheduleSettingsEditFields({
   const sessionRound = form.watch('sessionRound')
   const participantOrganization = form.watch('participantOrganization')
   const scheduleDetails = form.watch('scheduleDetails') ?? []
-  const autoFillFromScheduleGroupTimes =
-    educationStructure === 'schedule' &&
-    sessionRound === 'single' &&
-    !participantOrganization
+  const autoFillFromScheduleGroupTimes = shouldAutoFillEducationScheduleFromGroupTimes({
+    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+  })
   const disablePeriodMode = shouldDisableEducationSchedulePeriodMode({
     participantOrganization: Boolean(participantOrganization),
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
   })
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
-  const disableScheduleSelectionTime = shouldDisableEducationScheduleSelectionTimeInput({
-    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
-  })
+  const educationStructureKind =
+    educationStructure === 'schedule' ? 'schedule' : 'curriculum'
   const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
-    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
-    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
     educationScheduleMode: scheduleMode,
+  })
+  const scheduleSelectionPickerProps = getEducationScheduleSelectionDatePickerProps({
+    educationStructure: educationStructureKind,
+    participantOrganization: Boolean(participantOrganization),
+    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+    scheduleMode,
   })
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const previewScheduleLines = useMemo(
@@ -4559,14 +4562,20 @@ function ScheduleSettingsEditFields({
 
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      const normalized = disableSchedulePeriodTime
-        ? normalizeEducationSchedulePeriodRangeDateOnly(range)
-        : range
-      appendLineIfNew(formatEducationScheduleLineFromRange(normalized))
+      const details = form.getValues('scheduleDetails') ?? []
+      const slots = details.flatMap(detail => detail.groupTimes ?? [])
+      const lines = educationScheduleLinesFromSelectionRangeApply({
+        range,
+        autoFillFromScheduleGroupTimes,
+        educationScheduleMode: scheduleMode,
+        groupTimeSlots: slots,
+        dateOnlyPeriodRange: disableSchedulePeriodTime,
+      })
+      for (const line of lines) appendLineIfNew(line)
       setSingleDate(null)
       setPeriodDate(null)
     },
-    [appendLineIfNew, disableSchedulePeriodTime]
+    [appendLineIfNew, autoFillFromScheduleGroupTimes, disableSchedulePeriodTime, form, scheduleMode]
   )
 
   const handleDateApply = useCallback(
@@ -4575,18 +4584,9 @@ function ScheduleSettingsEditFields({
         setSingleDate(null)
         return
       }
-      if (autoFillFromScheduleGroupTimes) {
-        const slots = scheduleDetails.flatMap(detail => detail.groupTimes ?? [])
-        for (const line of buildEducationScheduleLinesFromDateAndGroupTimes(next, slots)) {
-          appendLineIfNew(line)
-        }
-        setSingleDate(null)
-        return
-      }
-      const day = next.startOf('day')
-      handleScheduleRangeApply([day, day])
+      handleScheduleRangeApply([next.startOf('day'), next.startOf('day')])
     },
-    [appendLineIfNew, autoFillFromScheduleGroupTimes, handleScheduleRangeApply, scheduleDetails]
+    [handleScheduleRangeApply]
   )
 
   return (
@@ -4637,51 +4637,18 @@ function ScheduleSettingsEditFields({
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
           edit={
-            scheduleMode === 'date' ? (
-              disableScheduleSelectionTime ? (
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="date"
-                  customizable={false}
-                  showPeriodToggle={false}
-                  showTimeToggle={false}
-                  suppressAutoTodayWhenEmpty
-                  value={singleDate}
-                  onChange={handleDateApply}
-                  width={240}
-                />
-              ) : (
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="schedule"
-                  customizable={false}
-                  showPeriodToggle={false}
-                  showTimeToggle={false}
-                  lockTimeToggleOn
-                  lockPeriodToggleOn
-                  suppressAutoTodayWhenEmpty
-                  value={singleDate}
-                  onChange={handleDateApply}
-                  onRangeChange={handleScheduleRangeApply}
-                  width={240}
-                />
-              )
-            ) : (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode="period"
-                customizable={false}
-                showTimeToggle={false}
-                showPeriodToggle={false}
-                lockTimeToggleOn={disableSchedulePeriodTime}
-                disableTimeInputs={disableSchedulePeriodTime}
-                suppressAutoTodayWhenEmpty
-                value={periodDate}
-                onChange={setPeriodDate}
-                onRangeChange={handleScheduleRangeApply}
-                width={360}
-              />
-            )
+            <ParagraphDatePicker
+              mode="single"
+              customizable={false}
+              showPeriodToggle={false}
+              showTimeToggle={false}
+              {...scheduleSelectionPickerProps}
+              suppressAutoTodayWhenEmpty
+              value={scheduleMode === 'date' ? singleDate : periodDate}
+              onChange={scheduleMode === 'date' ? handleDateApply : setPeriodDate}
+              onRangeChange={handleScheduleRangeApply}
+              width={scheduleMode === 'date' ? 240 : 360}
+            />
           }
           view="-"
         />
@@ -4759,11 +4726,10 @@ function ScheduleSettingsSection({
                 ? (editForm.watch('educationScheduleMode') ?? 'date')
                 : 'date'
             }
-            autoFillFromScheduleGroupTimes={
-              educationStructure === 'schedule' &&
-              sessionRound === 'single' &&
-              !(isFormEdit && editForm.watch('participantOrganization'))
-            }
+            autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+              educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+              sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+            })}
             lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
               participantOrganization: Boolean(
                 isFormEdit && editForm.watch('participantOrganization')

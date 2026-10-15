@@ -44,6 +44,38 @@ function chronologicalRangeFromTwoPicks(
   ]
 }
 
+/**
+ * 종료일 날짜가 시작일에 고정된 같은 날 일정 — 종료 시각이 시작 이전이면 종료를 뒤로 맞춘다.
+ */
+function alignLockedSameDayEndTime(
+  day: Dayjs,
+  startHour: string,
+  startMinute: string,
+  endHour: string,
+  endMinute: string
+): { endHour: string; endMinute: string; rangeEnd: Dayjs } {
+  const start = buildTimeFrom24Hour(day, parseNum(startHour, 0), parseNum(startMinute, 0))
+  let end = buildTimeFrom24Hour(day, parseNum(endHour, 0), parseNum(endMinute, 0))
+  if (end.isAfter(start)) {
+    const tb = dayjsTimeParts(end)
+    return { endHour: tb.h, endMinute: tb.m, rangeEnd: end }
+  }
+
+  const byHour = start.add(1, 'hour')
+  if (byHour.isSame(start, 'day') && byHour.isAfter(start)) {
+    end = byHour
+  } else {
+    const byMinute = start.add(1, 'minute')
+    end =
+      byMinute.isSame(start, 'day') && byMinute.isAfter(start)
+        ? byMinute
+        : start.endOf('day').set('second', 0).set('millisecond', 0)
+  }
+
+  const tb = dayjsTimeParts(end)
+  return { endHour: tb.h, endMinute: tb.m, rangeEnd: end }
+}
+
 /** 트리거 한 줄 표시 (이미지 시안: 동일일 일정은 날짜 한 번 + `시작 ~ 종료시`) */
 function formatParagraphDatePickerTriggerDisplay(
   value: Dayjs | null,
@@ -667,7 +699,20 @@ function ParagraphDatePickerSingleInner({
         setSurfacePeriodOn(true)
       } else if (effectiveTimeOn) {
         const start = buildTimeFrom24Hour(sDay, parseNum(startHour, 0), parseNum(startMinute, 0))
-        const end = buildTimeFrom24Hour(eDay, parseNum(endHour, 0), parseNum(endMinute, 0))
+        let end = buildTimeFrom24Hour(eDay, parseNum(endHour, 0), parseNum(endMinute, 0))
+        if (lockEndDateToStartDay && sDay.isSame(eDay, 'day') && !end.isAfter(start)) {
+          const aligned = alignLockedSameDayEndTime(
+            sDay,
+            startHour,
+            startMinute,
+            endHour,
+            endMinute
+          )
+          end = aligned.rangeEnd
+          setEndHour(aligned.endHour)
+          setEndMinute(aligned.endMinute)
+          setRangeEnd(aligned.rangeEnd)
+        }
         if (!end.isAfter(start)) {
           setInvalidTimeRange(true)
           return
@@ -936,18 +981,36 @@ function ParagraphDatePickerSingleInner({
           setStartHour(v)
           setInvalidTimeRange(false)
           if (lockEndDateToStartDay) {
-            setRangeStart(
-              buildTimeFrom24Hour(rangeStart, parseNum(v, 0), parseNum(startMinute, 0))
+            const newStart = buildTimeFrom24Hour(rangeStart, parseNum(v, 0), parseNum(startMinute, 0))
+            setRangeStart(newStart)
+            const aligned = alignLockedSameDayEndTime(
+              newStart,
+              v,
+              startMinute,
+              endHour,
+              endMinute
             )
+            if (aligned.endHour !== endHour) setEndHour(aligned.endHour)
+            if (aligned.endMinute !== endMinute) setEndMinute(aligned.endMinute)
+            setRangeEnd(aligned.rangeEnd)
           }
         }}
         onStartMinuteChange={v => {
           setStartMinute(v)
           setInvalidTimeRange(false)
           if (lockEndDateToStartDay) {
-            setRangeStart(
-              buildTimeFrom24Hour(rangeStart, parseNum(startHour, 0), parseNum(v, 0))
+            const newStart = buildTimeFrom24Hour(rangeStart, parseNum(startHour, 0), parseNum(v, 0))
+            setRangeStart(newStart)
+            const aligned = alignLockedSameDayEndTime(
+              newStart,
+              startHour,
+              v,
+              endHour,
+              endMinute
             )
+            if (aligned.endHour !== endHour) setEndHour(aligned.endHour)
+            if (aligned.endMinute !== endMinute) setEndMinute(aligned.endMinute)
+            setRangeEnd(aligned.rangeEnd)
           }
         }}
         endHour={endHour}
