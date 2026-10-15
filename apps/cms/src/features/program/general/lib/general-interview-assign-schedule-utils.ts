@@ -234,46 +234,47 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
 }
 
 /**
- * 봉사자가 신청한 면접 시간대를 프로그램 가능일 슬롯에 합친다.
- * 프로그램 불가일·기간 밖 신청일은 clickable에 넣지 않는다(가능/불가 SSOT = 프로그램).
- * `program_interview_slot`이 비어도 가능일 위 신청 시간대로 배정할 수 있다.
+ * 봉사자가 신청한 면접 가능 일정과 실제 배정 가능한 프로그램 슬롯의 교집합만 남긴다.
+ *
+ * 면접 배정은 프로그램 슬롯에 존재하면서 봉사자가 선택한 시간대에서만 가능해야 한다.
+ * 따라서 신청자의 가능 일정을 프로그램 일정에 단순히 추가하거나, 프로그램 전체 슬롯을
+ * 그대로 노출하면 안 된다.
  */
 export function mergeApplicantAvailabilityIntoSchedule(
   schedule: ParsedInterviewSchedule,
   interviewAvailability: { dateLabel: string; slots: string[] }[]
 ): ParsedInterviewSchedule {
-  if (interviewAvailability.length === 0) return schedule
-
-  const today = dayjs().startOf('day')
-  const slotsByDateKey = new Map(schedule.slotsByDateKey)
-  let touched = false
-  let firstAvailabilityKey: string | null = null
-
+  const availabilityByDate = new Map<string, Set<string>>()
   for (const day of interviewAvailability) {
     const date = parseInterviewDisplayDateLabel(day.dateLabel)
-    if (!date || date.isBefore(today, 'day')) continue
-    const dateKey = date.format('YYYY-MM-DD')
-    if (!schedule.clickableDateKeys.has(dateKey)) continue
-
-    const daySlots = [...(slotsByDateKey.get(dateKey) ?? [])]
-    for (const raw of day.slots) {
-      if (!/\d{2}:\d{2}/.test(raw)) continue
-      const timeRange = normalizeTimeRangeKey(raw)
-      const key = `${dateKey}|${timeRange}`
-      if (daySlots.some(slot => slot.key === key)) continue
-      daySlots.push({ key, timeRange, displayTimeRange: formatDisplayTimeRange(timeRange) })
-      touched = true
-    }
-    if (daySlots.length === 0) continue
-    slotsByDateKey.set(dateKey, daySlots)
-    if (!firstAvailabilityKey || dateKey < firstAvailabilityKey) firstAvailabilityKey = dateKey
+    if (!date) continue
+    const slots = new Set(
+      day.slots
+        .filter(raw => /\d{2}:\d{2}/.test(raw))
+        .map(normalizeTimeRangeKey)
+    )
+    if (slots.size > 0) availabilityByDate.set(date.format('YYYY-MM-DD'), slots)
   }
 
-  if (!touched) return schedule
+  const slotsByDateKey = new Map<string, InterviewAssignSlot[]>()
+  const clickableDateKeys = new Set<string>()
+  let firstAvailabilityKey: string | null = null
+
+  for (const [dateKey, programSlots] of schedule.slotsByDateKey) {
+    const availableSlots = availabilityByDate.get(dateKey)
+    if (!availableSlots) continue
+    const slots = programSlots.filter(slot => availableSlots.has(slot.timeRange))
+    if (slots.length === 0) continue
+    slotsByDateKey.set(dateKey, slots)
+    clickableDateKeys.add(dateKey)
+    if (!firstAvailabilityKey || dateKey < firstAvailabilityKey) firstAvailabilityKey = dateKey
+  }
 
   return {
     ...schedule,
     slotsByDateKey,
+    clickableDateKeys,
+    disabledDate: (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD')),
     scheduleMonth: dayjs(firstAvailabilityKey ?? schedule.scheduleMonth).startOf('month'),
   }
 }

@@ -81,7 +81,7 @@ describe('186090 interview assign schedule SSOT', () => {
     expect(schedule.slotsByDateKey.get('2026-10-12')?.length).toBe(10)
   })
 
-  it('keeps program clickable days when remote slots are empty and applicant only has 10/12', () => {
+  it('limits available dates to the applicant availability', () => {
     const fromProgram = parseGeneralInterviewScheduleFromProgram(program186090)
     const fromRemote = parseGeneralInterviewScheduleFromRemoteSlots([])
     const merged = mergeApplicantAvailabilityIntoSchedule(
@@ -90,21 +90,23 @@ describe('186090 interview assign schedule SSOT', () => {
     )
 
     expect(merged.clickableDateKeys.has('2026-10-12')).toBe(true)
-    expect(merged.clickableDateKeys.has('2026-10-09')).toBe(true)
+    expect(merged.clickableDateKeys.has('2026-10-09')).toBe(false)
     expect(merged.clickableDateKeys.has('2026-10-13')).toBe(false)
-    expect(merged.clickableDateKeys.size).toBe(fromProgram.clickableDateKeys.size)
+    expect(merged.clickableDateKeys.size).toBe(1)
+    expect(merged.slotsByDateKey.get('2026-10-12')?.map(slot => slot.timeRange)).toEqual([
+      '10:00 ~ 10:30',
+    ])
   })
 
-  it('exposes all program time slots on any program-available day (not applicant availability only)', () => {
+  it('limits time slots to the applicant availability on each date', () => {
     const schedule = parseGeneralInterviewScheduleFromProgram(program186090)
-    const oct12 = getSlotsForDate(schedule, '2026-10-12', {
-      interviewAvailability: [{ dateLabel: '2026. 10. 12 (월)', slots: ['10:00 ~ 10:30'] }],
-    } as never)
-    const oct21 = getSlotsForDate(schedule, '2026-10-21', {
-      interviewAvailability: [{ dateLabel: '2026. 10. 12 (월)', slots: ['10:00 ~ 10:30'] }],
-    } as never)
-    expect(oct12.length).toBe(10)
-    expect(oct21.length).toBe(10)
-    expect(oct21[0]?.timeRange).toBe('10:00 ~ 10:30')
+    const restricted = mergeApplicantAvailabilityIntoSchedule(schedule, [
+      { dateLabel: '2026. 10. 12 (월)', slots: ['10:00 ~ 10:30'] },
+      { dateLabel: '2026. 10. 21 (수)', slots: ['13:00 ~ 13:30'] },
+    ])
+    const oct12 = getSlotsForDate(restricted, '2026-10-12')
+    const oct21 = getSlotsForDate(restricted, '2026-10-21')
+    expect(oct12.map(slot => slot.timeRange)).toEqual(['10:00 ~ 10:30'])
+    expect(oct21.map(slot => slot.timeRange)).toEqual(['13:00 ~ 13:30'])
   })
 })
