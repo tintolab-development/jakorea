@@ -237,6 +237,7 @@ import {
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
+import { shouldShowSurveyPollScheduleSelectField } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -876,6 +877,10 @@ export function UjatProgramDetailFullPageModal({
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     displayProgram,
     surveyCreateModalOpen
+  )
+  const showSurveyPollScheduleSelectField = useMemo(
+    () => shouldShowSurveyPollScheduleSelectField(displayProgram),
+    [displayProgram]
   )
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
@@ -1670,12 +1675,14 @@ export function UjatProgramDetailFullPageModal({
 
   const handleSubmitSurveyTemplate = useCallback(async () => {
     if (selectedSurveyTemplateId == null || selectedSurveyTemplateId === '') return
-    if (
-      selectedSurveyScheduleValue == null ||
-      selectedSurveyScheduleValue === '' ||
-      !surveyScheduleOptionsQuery.hasSessionSchedules
-    ) {
-      return
+    if (showSurveyPollScheduleSelectField) {
+      if (
+        selectedSurveyScheduleValue == null ||
+        selectedSurveyScheduleValue === '' ||
+        !surveyScheduleOptionsQuery.hasSessionSchedules
+      ) {
+        return
+      }
     }
     setSubmittingSurveyTemplate(true)
     try {
@@ -1691,14 +1698,30 @@ export function UjatProgramDetailFullPageModal({
           return
         }
         let targetScopePayload: Pick<ProgramFormBindingRequest, 'targetScope' | 'targetScopeId'>
-        try {
-          targetScopePayload = resolveSurveyPollBindingTarget(selectedSurveyScheduleValue)
-        } catch {
-          void showAlert({
-            title: '등록 실패',
-            content: '설문 대상 일정을 다시 선택해 주세요.',
-          })
-          return
+        if (showSurveyPollScheduleSelectField) {
+          try {
+            targetScopePayload = resolveSurveyPollBindingTarget(selectedSurveyScheduleValue!)
+          } catch {
+            void showAlert({
+              title: '등록 실패',
+              content: '설문 대상 일정을 다시 선택해 주세요.',
+            })
+            return
+          }
+        } else {
+          const surveyTarget =
+            displayProgram == null
+              ? null
+              : await resolveLectureEvalBindingTarget(String(displayProgram.id))
+          if (surveyTarget == null) {
+            void showAlert({
+              title: '등록 실패',
+              content:
+                '설문조사는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
+            })
+            return
+          }
+          targetScopePayload = surveyTarget
         }
         const payload: ProgramFormBindingRequest = {
           formType: 'SURVEY',
@@ -1761,6 +1784,7 @@ export function UjatProgramDetailFullPageModal({
     selectedSurveyScheduleValue,
     selectedSurveyTemplateId,
     showAlert,
+    showSurveyPollScheduleSelectField,
     surveyScheduleOptionsQuery.hasSessionSchedules,
     surveysRemote,
   ])
@@ -2950,6 +2974,7 @@ export function UjatProgramDetailFullPageModal({
         onScheduleChange={setSelectedSurveyScheduleValue}
         schedulesLoading={surveyScheduleOptionsQuery.isLoading}
         hasSessionSchedules={surveyScheduleOptionsQuery.hasSessionSchedules}
+        showScheduleField={showSurveyPollScheduleSelectField}
         onCancel={handleCloseSurveyCreateModal}
         onSubmit={() => {
           void handleSubmitSurveyTemplate()
