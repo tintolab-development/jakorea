@@ -28,6 +28,7 @@ import type {
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import type { OrganizationApplicationSessionResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationSessionResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type {
   IndividualApplicationListItemEnriched,
@@ -254,6 +255,44 @@ function resolveOrganizationApplicationAssignmentSessions(
   return fromPreferred
 }
 
+/** 기관 상세 DTO의 `sessions`를 상세 화면 표시 세션으로 변환한다. */
+function mapOrganizationApplicationDetailSessions(
+  sessions: OrganizationApplicationSessionResponse[] | undefined
+): ParticipatingSchoolSession[] {
+  return (sessions ?? []).map((session, index) => {
+    const start = session.startAt ? new Date(session.startAt) : null
+    const end = session.endAt ? new Date(session.endAt) : null
+    const validStart = start != null && !Number.isNaN(start.getTime())
+    const validEnd = end != null && !Number.isNaN(end.getTime())
+    const dateParts = validStart
+      ? formatPreferredScheduleDate(start)
+      : { date: '-', dayOfWeek: '-' }
+    const timeRange =
+      validStart && validEnd
+        ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+        : '-'
+    const duration =
+      validStart && validEnd && end.getTime() > start.getTime()
+        ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
+        : '-'
+    const round = session.sessionNo ?? index + 1
+    const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
+    return {
+      round,
+      ...dateParts,
+      duration,
+      format: session.scheduleName?.trim() || '-',
+      classNum: `${round}교시`,
+      timeRange,
+      deliveryScheduleStatus: session.assignmentStatus?.trim() || undefined,
+      resolvedScheduleId,
+      scheduleUnresolved:
+        session.scheduleUnresolved ??
+        (resolvedScheduleId == null && session.requestedScheduleId != null),
+    }
+  })
+}
+
 export function applyRequestedSchedulesToApplicantSchoolRow(
   row: ApplicantSchoolRow,
   requestedSchedules: RequestedScheduleResponse[] | undefined,
@@ -321,7 +360,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 }
 
-/** 상세 DTO → 신청 기관 detail(사유·안내). 빈 값은 기존 row를 지우지 않는다. */
+/** 상세 DTO → 신청 기관 detail(사유·안내). 생략/null/빈 값은 값 없음으로 유지한다. */
 export function readOrganizationApplicationDetailExtendFields(
   dto: Pick<
     OrganizationApplicationDetailResponse,
@@ -336,6 +375,7 @@ export function readOrganizationApplicationDetailExtendFields(
     | 'parkingInfo'
     | 'textbookId'
     | 'textbookName'
+    | 'teacherTel'
     | 'teacherPhone'
     | 'teacherEmail'
   >
@@ -353,6 +393,9 @@ export function readOrganizationApplicationDetailExtendFields(
   const parkingInfo = dto.parkingInfo?.trim() || undefined
   const textbookId = toId(dto.textbookId) || undefined
   const textbookName = dto.textbookName?.trim() || undefined
+  const teacherTel = Object.prototype.hasOwnProperty.call(dto, 'teacherTel')
+    ? dto.teacherTel?.trim() ?? ''
+    : undefined
   const teacherPhone = dto.teacherPhone?.trim() || undefined
   const teacherEmail = dto.teacherEmail?.trim() || undefined
 
@@ -367,6 +410,9 @@ export function readOrganizationApplicationDetailExtendFields(
     ...(parkingInfo ? { parkingInfo, otherSpecialNotes: parkingInfo } : {}),
     ...(textbookId ? { textbookId } : {}),
     ...(textbookName ? { textbookName } : {}),
+    // 상세 DTO가 teacherTel을 생략해도 상세 응답이 정본임을 표시한다.
+    // 그래야 teacherPhone(휴대폰)을 Tel로 잘못 재사용하지 않는다.
+    teacherTel,
     ...(teacherPhone ? { teacherPhone } : {}),
     ...(teacherEmail ? { teacherEmail } : {}),
   }
@@ -381,47 +427,42 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
-  const assignmentSessions = resolveOrganizationApplicationAssignmentSessions(
-    dto as OrganizationApplicationListItemResponse,
-    preferred.length > 0 ? preferred : (base.preferredEducationSchedules ?? []),
-    undefined
-  )
+  const detailSessions = mapOrganizationApplicationDetailSessions(dto.sessions)
   const sessions =
-    assignmentSessions.length > 0
-      ? assignmentSessions
-      : base.sessions
+    detailSessions.length > 0
+      ? detailSessions
+      : resolveOrganizationApplicationAssignmentSessions(
+          dto as OrganizationApplicationListItemResponse,
+          preferred,
+          undefined
+        )
   return {
     ...base,
-    id: toId(dto.id) || base.id,
-    organizationId: dto.organizationId ?? base.organizationId,
-    teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
-    schoolName: dto.organizationName?.trim() || base.schoolName,
-    region: dto.organizationAddress?.trim() || base.region,
-    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || base.educationGrade,
-    classCount: dto.requestedClassCount ?? base.classCount,
-    studentCount: dto.requestedStudentCount ?? base.studentCount,
-    teacherName: dto.teacherName?.trim() || base.teacherName,
-    contact: teacherPhone || base.contact,
-    appliedAt: dto.submittedAt ?? base.appliedAt,
+    id: toId(dto.id) || '',
+    organizationId: dto.organizationId ?? undefined,
+    teacherMemberId: dto.teacherMemberId ?? undefined,
+    schoolName: dto.organizationName?.trim() || '-',
+    region: dto.organizationAddress?.trim() || '-',
+    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || '-',
+    classCount: dto.requestedClassCount ?? 0,
+    studentCount: dto.requestedStudentCount ?? 0,
+    teacherName: dto.teacherName?.trim() || '-',
+    contact: teacherPhone,
+    appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
-    participationRejectionReason: dto.rejectReason?.trim() || base.participationRejectionReason,
-    approvalNotificationSentAt:
-      formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
-      base.approvalNotificationSentAt,
-    availableActions: dto.availableActions ?? base.availableActions,
+    participationRejectionReason: dto.rejectReason?.trim() || undefined,
+    approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
+      readResultNotificationSentAt(dto)
+    ),
+    availableActions: dto.availableActions ?? [],
     sessions,
-    ...(preferred.length > 0 ? { preferredEducationSchedules: preferred } : {}),
-    ...(requestedScheduleMemo
-      ? { desiredEducationPeriod: requestedScheduleMemo }
-      : base.desiredEducationPeriod
-        ? { desiredEducationPeriod: base.desiredEducationPeriod }
-        : {}),
+    preferredEducationSchedules: preferred,
+    desiredEducationPeriod: requestedScheduleMemo,
     detail: {
-      ...base.detail,
       ...detailFields,
       ...readOrganizationApplicationEconomyDisplayFields(dto),
-      ...(teacherPhone ? { teacherPhone } : {}),
-      ...(teacherEmail ? { teacherEmail } : {}),
+      teacherPhone,
+      teacherEmail,
       teacherInfo: undefined,
     },
   }
@@ -490,48 +531,6 @@ export function readOrganizationApplicationBasicInfoFields(
   const applicationReason = dto.applicationReason?.trim() || undefined
   const otherRequests = dto.otherRequests?.trim() || undefined
   return { addressDetail, educationFormat, applicationReason, otherRequests }
-}
-
-/**
- * TT 등 — 목록 SoT(학급·일정 블록)는 유지하고, 상세에만 있는 PII·부가 필드만 채운다.
- * 빈 문자열로 목록 값을 덮지 않는다.
- */
-export function softMergeOrganizationApplicationDetailOntoRow(
-  dto: OrganizationApplicationDetailResponse,
-  base: ApplicantSchoolRow
-): ApplicantSchoolRow {
-  const teacherPhone = dto.teacherPhone?.trim()
-  const teacherEmail = dto.teacherEmail?.trim()
-  const teacherName = dto.teacherName?.trim()
-  /** 상세 학년은 requestedGrade만. 목록 educationGrade(프로그램 대상 학년)를 다시 넣지 않는다. */
-  const requestedGrade = formatApplicantGradeLabel(dto.requestedGrade)
-  const rejectReason = dto.rejectReason?.trim()
-  const detailFields = readOrganizationApplicationDetailExtendFields(dto)
-  const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
-
-  return {
-    ...base,
-    educationGrade: requestedGrade,
-    teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
-    teacherName: teacherName || base.teacherName,
-    contact: teacherPhone || base.contact,
-    participationRejectionReason: rejectReason || base.participationRejectionReason,
-    approvalNotificationSentAt:
-      formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
-      base.approvalNotificationSentAt,
-    availableActions: dto.availableActions ?? base.availableActions,
-    ...(requestedScheduleMemo && !base.desiredEducationPeriod?.trim()
-      ? { desiredEducationPeriod: requestedScheduleMemo }
-      : {}),
-    detail: {
-      ...base.detail,
-      ...detailFields,
-      ...readOrganizationApplicationEconomyDisplayFields(dto),
-      ...(teacherPhone ? { teacherPhone } : {}),
-      ...(teacherEmail ? { teacherEmail } : {}),
-      teacherInfo: undefined,
-    },
-  }
 }
 
 function formatJaEvaluationGradeLabel(raw?: string | null): string | undefined {

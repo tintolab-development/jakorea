@@ -149,13 +149,14 @@ function buildTeacherInfoCell(
   detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const name = institution.teacherName?.trim()
-  const phone =
-    detail?.teacherPhone?.trim() ||
-    detail?.teacherMobile?.trim() ||
-    institution.contact?.trim()
-  const mobile =
-    detail?.teacherMobile?.trim() &&
-    detail.teacherMobile.trim() !== phone
+  const hasCanonicalTeacherTel =
+    detail != null && Object.prototype.hasOwnProperty.call(detail, 'teacherTel')
+  const phone = hasCanonicalTeacherTel
+    ? detail?.teacherTel?.trim()
+    : detail?.teacherPhone?.trim() || detail?.teacherMobile?.trim() || institution.contact?.trim()
+  const mobile = hasCanonicalTeacherTel
+    ? detail?.teacherPhone?.trim() || detail?.teacherMobile?.trim()
+    : detail?.teacherMobile?.trim() && detail.teacherMobile.trim() !== phone
       ? detail.teacherMobile.trim()
       : undefined
   const email = detail?.teacherEmail?.trim()

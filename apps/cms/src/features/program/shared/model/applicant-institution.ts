@@ -46,6 +46,8 @@ export interface ApplicantInstitutionDetailExtend {
   /** 담당 교사 정보 (교사명 | Tel | M | E-mail) — 레거시 조합 문자열 */
   teacherInfo?: string
   /** 담당 교사 Tel (구조화 — teacherInfo보다 우선) */
+  teacherTel?: string
+  /** 담당 교사 휴대폰 (상세 API teacherPhone) */
   teacherPhone?: string
   /** 담당 교사 휴대폰 */
   teacherMobile?: string

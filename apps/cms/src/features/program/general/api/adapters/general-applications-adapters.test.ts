@@ -26,7 +26,6 @@ import {
   mapTextbookStatusKeyToDeliveryStatus,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationToApplicantSchoolRow,
-  softMergeOrganizationApplicationDetailOntoRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
@@ -41,8 +40,9 @@ import type { Program } from '@/types/domain'
 
 describe('general-applications-adapters', () => {
   it('maps requested grade onto the applicant grade cell', () => {
-    const row = softMergeOrganizationApplicationDetailOntoRow(
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
       {
+        id: 1691187,
         requestedGrade: '2',
         organizationAddressDetail: '3층 교무실',
         applicationReason: '금융 교육',
@@ -104,6 +104,115 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.educationType).toBe('오프라인')
   })
 
+  it('keeps detail teacherTel and teacherPhone in their separate canonical fields', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 103,
+        teacherTel: '02-1234-5678',
+        teacherPhone: '010-1111-2222',
+      },
+      {
+        id: '103',
+        no: 1,
+        schoolName: '학교',
+        region: '서울',
+        educationGrade: '1학년',
+        classCount: 1,
+        studentCount: 10,
+        teacherName: '교사',
+        approvalStatus: 'approved',
+        programId: '186101',
+      }
+    )
+
+    expect(row.detail?.teacherTel).toBe('02-1234-5678')
+    expect(row.detail?.teacherPhone).toBe('010-1111-2222')
+  })
+
+  it('uses detail sessions before preferred schedule projections', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 104,
+        sessions: [
+          {
+            scheduleId: 180001,
+            sessionNo: 2,
+            scheduleName: '확정 일정',
+            startAt: '2026-10-15T01:00:00Z',
+            endAt: '2026-10-15T03:00:00Z',
+          },
+        ],
+        preferredEducationSchedules: [
+          { scheduleId: 180002, round: 1 } as never,
+        ],
+      },
+      {
+        id: '104',
+        no: 1,
+        schoolName: '학교',
+        region: '서울',
+        educationGrade: '1학년',
+        classCount: 1,
+        studentCount: 10,
+        teacherName: '교사',
+        approvalStatus: 'approved',
+        programId: '186101',
+      }
+    )
+
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(180001)
+    expect(row.sessions?.[0]?.format).toBe('확정 일정')
+  })
+
+  it('does not restore omitted detail fields from the list row', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 102,
+        applicationStatus: 'APPROVED',
+      },
+      {
+        id: '102',
+        no: 1,
+        schoolName: '목록 기관명',
+        region: '목록 지역',
+        educationGrade: '3학년',
+        classCount: 2,
+        studentCount: 30,
+        teacherName: '목록 담당자',
+        contact: '목록 전화번호',
+        approvalStatus: 'approved',
+        programId: '186101',
+        sessions: [{ date: '2026-10-15', dayOfWeek: '목' } as never],
+        preferredEducationSchedules: [
+          {
+            preferenceRank: 1,
+            date: '2026-10-15',
+            dayOfWeek: '목',
+            sessionCount: 1,
+            sessionTimes: [],
+          } as never,
+        ],
+        detail: {
+          educationType: '온라인',
+          applicationReason: '기존 사유',
+          teacherPhone: '기존 전화번호',
+        },
+      }
+    )
+
+    expect(row.schoolName).toBe('-')
+    expect(row.region).toBe('-')
+    expect(row.educationGrade).toBe('-')
+    expect(row.teacherName).toBe('-')
+    expect(row.contact).toBeUndefined()
+    expect(row.sessions).toEqual([])
+    expect(row.preferredEducationSchedules).toEqual([])
+    expect(row.detail?.educationType).toBeUndefined()
+    expect(row.detail?.applicationReason).toBeUndefined()
+    expect(row.detail?.teacherPhone).toBeUndefined()
+  })
+
   it('maps company-school economy fields from organization list and detail GET', () => {
     const listRow = mapOrganizationApplicationToApplicantSchoolRow(
       {
@@ -143,7 +252,7 @@ describe('general-applications-adapters', () => {
   })
 
   it('does not show the program grade range when the application has no requested grade', () => {
-    const row = softMergeOrganizationApplicationDetailOntoRow(
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
       { requestedEducationFormat: 'HYBRID' },
       {
         id: '1',
@@ -158,7 +267,7 @@ describe('general-applications-adapters', () => {
         programId: '186010',
       }
     )
-    expect(row.educationGrade).toBe('')
+    expect(row.educationGrade).toBe('-')
     expect(row.detail?.educationType).toBe('온/오프라인')
   })
 

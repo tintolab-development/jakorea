@@ -32,27 +32,27 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
       otherRequests: '',
     })
 
-    expect(merged.schoolName).toBe('')
-    expect(merged.region).toBe('')
+    expect(merged.schoolName).toBe('-')
+    expect(merged.region).toBe('-')
     expect(merged.addressDetail).toBeUndefined()
-    expect(merged.educationGrade).toBe('')
+    expect(merged.educationGrade).toBe('-')
     expect(merged.classCount).toBe(0)
     expect(merged.studentCount).toBe(0)
     expect(merged.teacherName).toBeUndefined()
     expect(merged.teacherPhone).toBeUndefined()
     expect(merged.teacherEmail).toBeUndefined()
     expect(merged.applicationReason).toBeUndefined()
-    expect(merged.otherRequests).toBe('')
+    expect(merged.otherRequests).toBeUndefined()
   })
 
-  it('상세 응답에 필드가 없으면 기존 목록 값을 보존한다', () => {
+  it('상세 응답에서 생략된 선택 필드는 기존 목록 값을 되살리지 않는다', () => {
     const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {})
 
-    expect(merged.schoolName).toBe('목록 기관명')
-    expect(merged.region).toBe('목록 지역')
-    expect(merged.classCount).toBe(4)
-    expect(merged.studentCount).toBe(80)
-    expect(merged.teacherName).toBe('목록 담당자')
-    expect(merged.teacherPhone).toBe('목록 전화번호')
+    expect(merged.schoolName).toBe('-')
+    expect(merged.region).toBe('-')
+    expect(merged.classCount).toBe(0)
+    expect(merged.studentCount).toBe(0)
+    expect(merged.teacherName).toBeUndefined()
+    expect(merged.teacherPhone).toBeUndefined()
   })
 })

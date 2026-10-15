@@ -52,6 +52,8 @@ import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 
 /**
  * 기관 신청자 상세 편집 — 합반은 organization-merge-groups, 그 외는 PATCH organization-applications.
@@ -378,6 +380,17 @@ export function useApplicantInstitutionDetailEdit({
           void queryClient.invalidateQueries({
             queryKey: generalProgramProgressQueryKeys.institutions(String(program.id)),
           })
+          if (isTrainedTeachersDetailProgram(program)) {
+            void queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+            })
+            void queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplication(
+                String(program.id),
+                institution.id
+              ),
+            })
+          }
         }
       }
 
