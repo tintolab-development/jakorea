@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { ConsentWriteFormPage } from '@/features/mypage/consent/ui/consent-write-form-page'
 import {
+  getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
   isInstructorApplyConsentKey,
@@ -43,6 +44,10 @@ export function MypageSettingsConsentPage() {
     : isInstructorApplyConsentKey(consentKey)
       ? getInstructorApplyConsentPageTitle(consentKey)
       : ''
+  const description =
+    isInstructorApplyConsentKey(consentKey)
+      ? getInstructorApplyConsentPageDescription(consentKey)
+      : undefined
 
   const handleComplete = () => {
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
@@ -54,6 +59,7 @@ export function MypageSettingsConsentPage() {
     <ConsentWriteFormPage
       ariaLabel={title}
       title={title}
+      description={description}
       titleAside={titleAside}
       onBack={() => navigate(returnTo)}
     >

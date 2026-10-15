@@ -4,6 +4,7 @@ import { PFFormPage } from '@/shared/ui'
 
 type ConsentWriteFormPageProps = {
   title: string
+  description?: ReactNode
   ariaLabel: string
   onBack: () => void
   titleAside?: ReactNode
@@ -13,6 +14,7 @@ type ConsentWriteFormPageProps = {
 /** 강사 신청·설정 동의서 작성 — 공통 PFFormPage shell */
 export function ConsentWriteFormPage({
   title,
+  description,
   ariaLabel,
   onBack,
   titleAside,
@@ -25,6 +27,7 @@ export function ConsentWriteFormPage({
         <ProgramBackButton size="small" label="이전으로" onClick={onBack} />
       }
       title={title}
+      description={description}
       titleAside={titleAside}
     >
       {children}
