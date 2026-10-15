@@ -5,7 +5,7 @@ import type { InstructorRoleRequestSummary } from './api/types'
 import { formatInstructorApplyRequestedAtLabel } from './lib/format-instructor-apply-datetime'
 import { resolveInstructorApplySubmittedSnapshot } from './lib/resolve-submitted-snapshot'
 import styles from './instructor-apply-rejected-review-view.module.css'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 
 const REJECTED_MESSAGE =
   '강사 신청이 반려되었어요. 반려 사유를 확인하고 내용을 보완해 다시 신청해 주세요.'
@@ -27,9 +27,9 @@ export function InstructorApplyRejectedReviewView({
 
   if (isDetailLoading) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        신청 내용을 불러오는 중…
-      </PFText>
+      <div className={styles.loadingState} role="status" aria-busy="true">
+        <PFLoadingSpinner centered label="신청 내용을 불러오는 중" />
+      </div>
     )
   }
 

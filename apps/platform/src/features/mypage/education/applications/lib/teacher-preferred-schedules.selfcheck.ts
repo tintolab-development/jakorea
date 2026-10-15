@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { resolveTeacherPreferredSchedules } from './teacher-preferred-schedules'
+import { resolveTeacherPreferredSchedules } from './teacher-preferred-schedules.ts'
 
 const fromBlocks = resolveTeacherPreferredSchedules({
   preferredScheduleBlocks: [

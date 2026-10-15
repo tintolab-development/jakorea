@@ -10,7 +10,7 @@ import {
   type ResultsListParams,
 } from '@/features/result'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFDivider, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import { PFDivider, PFLoadingSpinner, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
@@ -119,9 +119,7 @@ export function ResultsPage() {
 
         <div className={styles.list}>
           {remoteList.isPending ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              결과를 불러오는 중이에요.
-            </PFText>
+            <PFLoadingSpinner centered label="결과를 불러오는 중" />
           ) : remoteList.isError ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
               결과를 불러오지 못했어요.

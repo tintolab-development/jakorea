@@ -7,7 +7,7 @@ import {
   type ImpactStoryDetailStatus,
 } from '@/features/impact-story'
 import { RichTextViewer } from '@/shared/rich-text'
-import { PFButton, PFCategoryBadge, PFDivider, PFText } from '@/shared/ui'
+import { PFButton, PFCategoryBadge, PFDivider, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
@@ -16,7 +16,6 @@ function formatViewCount(count: number) {
 }
 
 function statusMessage(status: ImpactStoryDetailStatus) {
-  if (status === 'loading') return '임팩트 스토리를 불러오는 중입니다.'
   if (status === 'error') return '임팩트 스토리를 불러오지 못했습니다.'
   return '임팩트 스토리를 찾을 수 없습니다.'
 }
@@ -46,9 +45,13 @@ export function ImpactStoryDetailPage() {
             <ProgramBackButton label="이전으로" onClick={handleBackToList} />
           </div>
           <div className={styles.status}>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-              {statusMessage(status === 'ready' ? 'not-found' : status)}
-            </PFText>
+            {status === 'loading' ? (
+              <PFLoadingSpinner centered label="임팩트 스토리를 불러오는 중" />
+            ) : (
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                {statusMessage(status)}
+              </PFText>
+            )}
             {status === 'error' ? (
               <PFButton variant="tertiary" size="large" onClick={refetch}>
                 다시 시도

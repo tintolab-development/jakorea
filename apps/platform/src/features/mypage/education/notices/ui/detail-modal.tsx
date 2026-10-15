@@ -42,7 +42,14 @@ import jaSendGrayUrl from '@/shared/assets/icons/ja-send-gray.svg'
 import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
-import { PFAlertModal, PFCarouselButton, PFModal, PFOptionList, PFText } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFCarouselButton,
+  PFLoadingSpinner,
+  PFModal,
+  PFOptionList,
+  PFText,
+} from '@/shared/ui'
 import { EducationNoticeCommentDeleteConfirm } from './comment-delete-confirm'
 import { EducationNoticeCommentList } from './comment-list'
 import { EducationNoticeDeleteConfirm } from './delete-confirm'
@@ -683,12 +690,8 @@ export function EducationInProgressNoticeDetailModal({
               {isRemote ? (
                 <>
                   {isContentImagesLoading ? (
-                    // TODO(ui): 임시 스피너 — 디자인 확정 시 공통 컴포넌트로 교체
                     <div className={styles.contentLoading} role="status">
-                      <span className={styles.spinner} aria-hidden="true" />
-                      <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                        이미지를 불러오는 중입니다
-                      </PFText>
+                      <PFLoadingSpinner label="이미지를 불러오는 중" />
                     </div>
                   ) : null}
                   <RichTextViewer

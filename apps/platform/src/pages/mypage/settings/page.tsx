@@ -25,7 +25,7 @@ import {
   platformMediaQueries,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
-import { PFText } from '@/shared/ui'
+import { PFLoadingSpinner, PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import styles from './page.module.css'
 
@@ -151,9 +151,7 @@ export function MypageSettingsPage() {
 
   if (isRemoteSession && isLoading) {
     return wrap(
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        회원 정보를 불러오는 중이에요…
-      </PFText>
+      <PFLoadingSpinner centered label="회원 정보를 불러오는 중" />
     )
   }
 

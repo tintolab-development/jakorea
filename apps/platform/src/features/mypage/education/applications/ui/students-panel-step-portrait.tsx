@@ -3,7 +3,7 @@ import type { PortalOrganizationPortraitConsent } from '../api/student-documents
 import illustHackerUrl from '@/shared/assets/illustration/illust-hacker.svg'
 import fileDownloadMintUrl from '@/shared/assets/icons/file-download-mint.svg'
 import fileUploadBlackUrl from '@/shared/assets/icons/file-upload-black.svg'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './students-panel.module.css'
 
 const PORTRAIT_UPLOAD_ACCEPT =
@@ -102,10 +102,8 @@ export function StudentsPanelStepPortrait({
       />
 
       {isLoading ? (
-        <div className={styles.portraitBox}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
-            초상권 동의서를 불러오는 중입니다.
-          </PFText>
+        <div className={styles.portraitBox} role="status" aria-busy="true">
+          <PFLoadingSpinner label="초상권 동의서를 불러오는 중" />
         </div>
       ) : hasSubmission ? (
         <div className={styles.portraitBox}>

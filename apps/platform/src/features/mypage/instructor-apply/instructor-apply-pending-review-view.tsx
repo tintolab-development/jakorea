@@ -5,7 +5,7 @@ import type { InstructorRoleRequestSummary } from './api/types'
 import { formatInstructorApplyRequestedAtLabel } from './lib/format-instructor-apply-datetime'
 import { resolveInstructorApplySubmittedSnapshot } from './lib/resolve-submitted-snapshot'
 import styles from './instructor-apply-pending-review-view.module.css'
-import { PFText } from '@/shared/ui'
+import { PFLoadingSpinner, PFText } from '@/shared/ui'
 
 const REVIEW_MESSAGE =
   '관리자가 신청서를 검토하고 있어요. 승인 결과는 알림과 이메일로 안내해 드릴게요.'
@@ -25,9 +25,9 @@ export function InstructorApplyPendingReviewView({
 
   if (isDetailLoading) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        신청 내용을 불러오는 중…
-      </PFText>
+      <div className={styles.loadingState} role="status" aria-busy="true">
+        <PFLoadingSpinner centered label="신청 내용을 불러오는 중" />
+      </div>
     )
   }
 

@@ -4,7 +4,7 @@ import { buildPlatformConsentFillOptions, isCrimeConsentTemplate } from '@jakore
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
-import { PFPagination, PFText } from '@/shared/ui'
+import { PFPagination, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { fetchPortalConsentDocument } from '../api/consents'
 import {
   buildConsentDocumentPreviewHeaderTitle,
@@ -181,9 +181,7 @@ export function ConsentDocumentPreviewOverlay({
 
       <div className={styles.documentScroll}>
         {isLoading ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            동의서를 불러오는 중이에요…
-          </PFText>
+          <PFLoadingSpinner label="동의서를 불러오는 중" />
         ) : null}
 
         {!isLoading && loadFailed ? (

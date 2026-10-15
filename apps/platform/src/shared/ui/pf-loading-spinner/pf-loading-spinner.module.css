@@ -1,0 +1,42 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+}
+
+.centered {
+  /* AppLayout의 main(헤더와 푸터 사이 본문)을 기준으로 중앙 정렬 */
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  min-height: 100%;
+  pointer-events: none;
+}
+
+.spinner {
+  display: block;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  border: 3px solid var(--color-neutral-cool-200);
+  border-top-color: var(--color-primary-500);
+  border-radius: 50%;
+  animation: pf-loading-spinner 0.8s linear infinite;
+}
+
+@keyframes pf-loading-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

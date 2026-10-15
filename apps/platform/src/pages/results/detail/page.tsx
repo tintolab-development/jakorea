@@ -12,6 +12,7 @@ import {
   PFButton,
   PFCategoryBadge,
   PFDivider,
+  PFLoadingSpinner,
   PFText,
 } from '@/shared/ui'
 import styles from './page.module.css'
@@ -48,9 +49,9 @@ export function ResultDetailPage() {
         <div className={styles.back}>
           <ProgramBackButton label="이전으로" onClick={handleBackToList} />
         </div>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          결과를 불러오는 중이에요.
-        </PFText>
+        <div className={styles.loadingState}>
+          <PFLoadingSpinner centered label="결과를 불러오는 중" />
+        </div>
       </section>
     )
   }

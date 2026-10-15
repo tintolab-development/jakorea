@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
-import { mapTeacherInstitutionFromApplicationAnswers } from './institution-basic-info-from-answers'
+import { mapTeacherInstitutionFromApplicationAnswers } from './institution-basic-info-from-answers.ts'
 
 const basicKey = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
 const answers = {

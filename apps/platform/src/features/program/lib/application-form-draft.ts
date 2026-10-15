@@ -719,6 +719,7 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     return paragraph.selectedPreviewMultipleIds ?? []
   }
   if (isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
+    if (!hasDynamicOptionArrayState(paragraph)) return undefined
     /** 면접·봉사 일정 placeholder — BE는 option id 문자열 배열만 받는다. */
     if ('selectedPreviewMultipleIds' in paragraph) {
       return paragraph.selectedPreviewMultipleIds ?? []
@@ -742,6 +743,20 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     }
   }
   return undefined
+}
+
+/** CMS seed placeholder에는 동적 선택지 답변 키를 만들지 않는다. */
+function hasDynamicOptionArrayState(paragraph: WritingFormParagraph): boolean {
+  const row = paragraph as unknown as Record<string, unknown>
+  if ('selectedPreviewMultipleIds' in row || 'selectedPreviewSingleId' in row) return true
+  if (row.runtimeResolved === true) return true
+  if (typeof row.runtimeInputMode === 'string' && row.runtimeInputMode.trim().length > 0) {
+    return true
+  }
+  return (
+    (Array.isArray(row.items) && row.items.length > 0) ||
+    (Array.isArray(row.options) && row.options.length > 0)
+  )
 }
 
 export function isRequiredParagraph(paragraph: WritingFormParagraph): boolean {

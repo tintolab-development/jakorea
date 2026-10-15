@@ -5,7 +5,7 @@ import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import fileDownloadMintUrl from '@/shared/assets/icons/file-download-mint.svg'
 import fileUploadBlackUrl from '@/shared/assets/icons/file-upload-black.svg'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import {
   STUDENT_ROSTER_FILE_ACCEPT,
   STUDENT_ROSTER_UPLOAD_HINT,
@@ -139,10 +139,8 @@ export function StudentsPanelStepRoster({
       />
 
       {isLoading ? (
-        <div className={styles.contentBox}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
-            학생 명단을 불러오는 중입니다.
-          </PFText>
+        <div className={styles.contentBox} role="status" aria-busy="true">
+          <PFLoadingSpinner label="학생 명단을 불러오는 중" />
         </div>
       ) : hasStudents ? (
         <div className={styles.rosterTableBox}>

@@ -6,7 +6,7 @@ import portalBlackUrl from '@/shared/assets/icons/portal-black.svg'
 import closeDarkMintUrl from '@/shared/assets/icons/close-dark-mint.svg'
 import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
 import { EducationSessionGuideBlock } from '../../shared'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
 import styles from './assignment-block.module.css'
 
@@ -44,7 +44,11 @@ export function EducationScheduleAssignmentBlock({
   const feedbackBody =
     remoteFeedbackText?.trim() ||
     assignment.feedback?.trim() ||
-    (feedbackQuery.isFetching ? '피드백을 불러오는 중입니다…' : '등록된 피드백이 없습니다.')
+    (feedbackQuery.isFetching ? (
+      <PFLoadingSpinner label="피드백을 불러오는 중" />
+    ) : (
+      '등록된 피드백이 없습니다.'
+    ))
 
   return (
     <>

@@ -5,7 +5,14 @@ import { settingsConsentWritePath } from '@/features/mypage'
 import { useQueryClient } from '@tanstack/react-query'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import { PFAlertModal, PFButton, PFStateBadge, PFText, PFToggle } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFLoadingSpinner,
+  PFStateBadge,
+  PFText,
+  PFToggle,
+} from '@/shared/ui'
 import {
   putPortalMarketingConsent,
   TYPE_WITHDRAWABLE_CONSENT_TYPES,
@@ -418,9 +425,9 @@ export function SettingsConsentsView() {
 
   if (consents.isLoading) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        동의 현황을 불러오는 중이에요…
-      </PFText>
+      <div className={styles.page} role="status" aria-busy="true">
+        <PFLoadingSpinner centered label="동의 현황을 불러오는 중" />
+      </div>
     )
   }
 

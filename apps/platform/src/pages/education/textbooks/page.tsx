@@ -16,7 +16,7 @@ import {
   type TextbookSortKey,
   type TextbooksListParams,
 } from '@/features/textbook'
-import { PFButton, PFPagination, PFTabs, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFPagination, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TextbooksPage() {
@@ -91,9 +91,7 @@ export function TextbooksPage() {
         </header>
 
         {isPending ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-            교육 콘텐츠를 불러오는 중입니다.
-          </PFText>
+          <PFLoadingSpinner centered label="교육 콘텐츠를 불러오는 중" />
         ) : isError ? (
           <div className={styles.status}>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

@@ -109,7 +109,9 @@ export function AppLayout({
         inverse={inverseHeader}
         onDarkSurface={headerTheme === 'inverse'}
       />
-      <main className={mainClassName}>{mainContent}</main>
+      <main className={mainClassName} data-pf-main="true">
+        {mainContent}
+      </main>
       <Footer />
     </div>
   )

@@ -108,9 +108,8 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
         onDelete={handleDelete}
-        emptyMessage={
-          remoteInquiries.isLoading ? '문의내역을 불러오는 중입니다.' : '등록된 1:1 문의가 없습니다.'
-        }
+        loading={remoteInquiries.isLoading}
+        emptyMessage="등록된 1:1 문의가 없습니다."
       />
 
       {sortedItems.length > 0 ? (

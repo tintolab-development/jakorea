@@ -23,6 +23,7 @@ import {
 import { useDebouncedValue, useSearchFilters } from '@/shared/hooks'
 import {
   PFPagination,
+  PFLoadingSpinner,
   PFSearchDateFilter,
   PFSearchFilter,
   PFSearchInput,
@@ -181,9 +182,7 @@ export function ProgramsPage() {
       >
         <div className={styles.list}>
           {isPending ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              프로그램을 불러오는 중입니다.
-            </PFText>
+            <PFLoadingSpinner centered label="프로그램을 불러오는 중" />
           ) : isError ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
               프로그램을 불러오지 못했습니다.

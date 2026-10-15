@@ -196,3 +196,4 @@ export type {
 export { PFSort } from './pf-sort'
 export type { PFSortOption, PFSortProps } from './pf-sort'
 export { SkeletonBlock } from './skeleton-block'
+export { PFLoadingSpinner } from './pf-loading-spinner'
