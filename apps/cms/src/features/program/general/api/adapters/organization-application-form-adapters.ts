@@ -389,13 +389,8 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     (hasCanonicalField(canonicalDetail, 'otherRequests')
       ? undefined
       : pickAnswer(map, 'otherRequests') || nestedBasic.otherRequests)
-  const educationType =
-    row.detail?.educationType?.trim() ||
-    (hasCanonicalField(canonicalDetail, 'requestedEducationFormat')
-      ? undefined
-      : pickAnswer(map, 'educationFormat', 'educationType') ||
-        nestedBasic.educationFormat ||
-        nestedBasic.educationType)
+  // 교육 형태는 canonical 상세 응답만 사용한다. 상세 응답이 없으면 UI에서 '-'로 표시한다.
+  const educationType = row.detail?.educationType?.trim()
   const teacherNameFromForm = hasCanonicalField(canonicalDetail, 'teacherName')
     ? undefined
     : pickAnswer(map, 'teacherName')
