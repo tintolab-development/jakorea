@@ -168,16 +168,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
   )
 
-  const educationScheduleOptions = useMemo(
-    () => getSchoolDetailAttendanceEducationScheduleOptions(row, program),
-    [program, row]
-  )
-
-  const filterFields = useMemo(
-    () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions),
-    [educationScheduleOptions]
-  )
-
   const remoteSessionGroups = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null) return []
     return mergeSchoolDetailAttendanceRemoteData({
@@ -187,6 +177,24 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       attendancesByScheduleId: remoteQuery.data.attendancesByScheduleId,
     })
   }, [program, remoteEnabled, remoteQuery.data, row])
+
+  const educationScheduleOptions = useMemo(() => {
+    // The program schedule list also contains institution-unassigned rows.
+    // After the attendance response arrives, expose only its canonical groups.
+    if (remoteEnabled) {
+      if (remoteQuery.data == null) return []
+      return remoteSessionGroups.map(session => ({
+        label: session.headerTitle,
+        value: session.filterValue,
+      }))
+    }
+    return getSchoolDetailAttendanceEducationScheduleOptions(row, program)
+  }, [program, remoteEnabled, remoteQuery.data, remoteSessionGroups, row])
+
+  const filterFields = useMemo(
+    () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions),
+    [educationScheduleOptions]
+  )
 
   const sessionGroups = useMemo(() => {
     if (!remoteEnabled) return []

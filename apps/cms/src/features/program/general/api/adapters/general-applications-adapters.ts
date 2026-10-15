@@ -925,6 +925,9 @@ export function mapPreferredEducationSchedulesToSessions(
       format: '-',
       classNum: `${round}지망`,
       timeRange,
+      // 희망 일정은 아직 진행 상태가 확정되지 않은 일정이다.
+      // 상태가 없다는 이유로 미진행(UNSCHEDULED)으로 표시하지 않는다.
+      status: 'pending',
       ...(label ? { scheduleLabel: label } : {}),
       resolvedScheduleId: hasResolvedSchedule ? scheduleId : null,
       ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),

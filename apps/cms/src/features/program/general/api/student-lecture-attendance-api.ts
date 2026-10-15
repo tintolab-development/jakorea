@@ -65,14 +65,15 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
     scheduleIdList
   )
 
-  const sessions: LectureAttendanceSession[] = withIds.map(row => {
-    const items = attendancesByScheduleId[String(row.scheduleId)] ?? []
+  const sessions: LectureAttendanceSession[] = withIds.flatMap(row => {
+    const items = attendancesByScheduleId[String(row.scheduleId)]
+    if (!Array.isArray(items) || items.length === 0) return []
     const mine = items.find(item => Number(item.participantId) === input.participantId)
-    return {
+    return [{
       roundNumber: row.roundNumber,
       scheduleId: row.scheduleId,
       status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
-    }
+    }]
   })
 
   const { attended, held } = countLectureAttendanceHeldAndAttended(sessions)

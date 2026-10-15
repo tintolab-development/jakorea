@@ -2631,6 +2631,23 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               await queryClient.invalidateQueries({
                 queryKey: generalProgramProgressQueryKeys.institutions(programId),
               })
+              // A schedule move changes the canonical schedule set used by
+              // attendance screens. Clear all institution attendance variants
+              // so an old schedule cannot remain visible after the move.
+              await queryClient.invalidateQueries({
+                queryKey: [
+                  ...generalProgramProgressQueryKeys.all,
+                  'institution-attendance',
+                  programId,
+                  String(detail.id),
+                ],
+              })
+              await queryClient.invalidateQueries({
+                queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
+              })
+              await queryClient.invalidateQueries({
+                queryKey: generalProgramProgressQueryKeys.participants(programId, 'ORGANIZATION'),
+              })
               setScheduleChangeModalOpen(false)
               showAlert({
                 title: '일정 변경',

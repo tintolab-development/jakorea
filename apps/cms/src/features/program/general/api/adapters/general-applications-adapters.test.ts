@@ -281,6 +281,7 @@ describe('general-applications-adapters', () => {
     expect(row.preferredEducationSchedules).toHaveLength(2)
     expect(row.sessions).toHaveLength(2)
     expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+    expect(row.sessions?.[0]?.status).toBe('pending')
     expect(row.sessions?.[1]?.scheduleUnresolved).toBe(true)
     expect(row.sessions?.[1]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
   })

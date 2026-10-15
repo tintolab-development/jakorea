@@ -192,7 +192,11 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
   const roster = individuals.length > 0 ? individuals : params.participants
 
   return params.schedules
-    .filter(s => s.scheduleId != null)
+    .filter(s => {
+      if (s.scheduleId == null) return false
+      const attendances = params.attendancesByScheduleId[String(s.scheduleId)]
+      return Array.isArray(attendances) && attendances.length > 0
+    })
     .map((schedule, index) => {
       const scheduleId = String(schedule.scheduleId)
       const attendances = params.attendancesByScheduleId[scheduleId] ?? []
