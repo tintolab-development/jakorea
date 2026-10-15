@@ -386,6 +386,7 @@ export function ApplicantList({
   )
 
   const [instructorFeePolicyError, setInstructorFeePolicyError] = useState<string | null>(null)
+  const [instructorApprovalSubmitting, setInstructorApprovalSubmitting] = useState(false)
 
   const instructorCancelApprovalInstructor = useMemo(() => {
     if (!instructorCancelApprovalTarget) return null
@@ -1588,8 +1589,7 @@ export function ApplicantList({
               : undefined
           if (detailVariant === 'general') {
             void (async () => {
-              const reason =
-                payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+              const reason = payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
               const success = await handleCancelRejectInstructor(
                 id,
                 reason,
@@ -1691,7 +1691,7 @@ export function ApplicantList({
                 timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                 scheduledAt:
                   notifyOptions.notifyTiming === 'manual'
-                    ? notifyOptions.manualNotifyAt?.toISOString() ?? null
+                    ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
                     : null,
               })
               return
@@ -1774,6 +1774,7 @@ export function ApplicantList({
         instructorFeeGradeLabel={instructorApprovalInstructor?.instructorFeeGradeLabel}
         feePolicyContext={instructorFeePolicyContext}
         feePolicyError={instructorFeePolicyError}
+        submitting={instructorApprovalSubmitting}
         onCancel={() => {
           setInstructorFeePolicyError(null)
           setInstructorApprovalTarget(null)
@@ -1858,32 +1859,32 @@ export function ApplicantList({
                 return
               }
               setInstructorFeePolicyError(null)
-              const remote = await applyRemoteInstructorDecision(
-                [id],
-                'approve',
-                undefined,
-                {
+              setInstructorApprovalSubmitting(true)
+              try {
+                const remote = await applyRemoteInstructorDecision([id], 'approve', undefined, {
                   assignments: remoteAssignments,
                   feePolicy: feePolicy!,
                   notification: {
                     timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                     scheduledAt:
                       detail.notifyTiming === 'manual'
-                        ? detail.manualNotifyAt?.toISOString() ?? null
+                        ? (detail.manualNotifyAt?.toISOString() ?? null)
                         : null,
                   },
+                })
+                if (remote === 'invalid_fee_policy') {
+                  setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+                  return
                 }
-              )
-              if (remote === 'invalid_fee_policy') {
-                setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
-                return
-              }
-              if (remote === 'error') return
-              if (remote === 'ok') {
-                setInstructorApprovalTarget(null)
-                applyLocalApproval()
-                showApplicationApprovalCompletedAlert()
-                return
+                if (remote === 'error') return
+                if (remote === 'ok') {
+                  setInstructorApprovalTarget(null)
+                  applyLocalApproval()
+                  showApplicationApprovalCompletedAlert()
+                  return
+                }
+              } finally {
+                setInstructorApprovalSubmitting(false)
               }
             }
             setInstructorApprovalTarget(null)
@@ -1939,7 +1940,6 @@ export function ApplicantList({
                   <FilterTableToolbarButton
                     icon={<ButtonCalendarIcon />}
                     variant="secondary"
-
                     onClick={handleViewCalendar}
                   >
                     캘린더 뷰로 보기
@@ -1949,7 +1949,6 @@ export function ApplicantList({
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonListIcon />}
-
                     onClick={handleViewList}
                   >
                     리스트 뷰로 보기
@@ -1971,7 +1970,9 @@ export function ApplicantList({
                     : 'applicant-details__table-wrap'
                 }
               >
-                <CmsDataTable<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
+                <CmsDataTable<
+                  ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow
+                >
                   rowKey="id"
                   columns={
                     columns as ColumnsType<

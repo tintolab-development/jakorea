@@ -20,7 +20,10 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { getDefaultManualNotifyAt } from '@/shared/lib/notification-schedule'
+import {
+  getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
+} from '@/shared/lib/notification-schedule'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
@@ -38,6 +41,7 @@ export type InstructorFeeApprovalModalProps = {
   feePolicyContext?: InstructorApplicationFeePolicyContext
   feePolicyError?: string | null
   onConfirm: (detail: InstructorFeeApprovalConfirmDetail) => void
+  submitting?: boolean
 }
 
 function buildDescription(instructorName: string): string {
@@ -52,6 +56,7 @@ export function InstructorFeeApprovalModal({
   feePolicyContext,
   feePolicyError,
   onConfirm,
+  submitting = false,
 }: InstructorFeeApprovalModalProps) {
   const {
     lectureFeeBasisType,
@@ -110,10 +115,10 @@ export function InstructorFeeApprovalModal({
               variant="primary"
               size="large"
               type="button"
-              disabled={!canConfirm}
+              disabled={!canConfirm || submitting}
               onClick={handleConfirm}
             >
-              승인
+              {submitting ? '승인 중...' : '승인'}
             </CmsButton>
           </div>
         }
@@ -241,6 +246,7 @@ export function InstructorFeeApprovalModal({
           setDateTimePickerOpen(false)
           setNotifyError('')
         }}
+        minDateTime={getMinimumManualNotifyAt()}
         zIndex={dateTimePickerZ}
       />
     </>
