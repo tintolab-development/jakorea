@@ -7,7 +7,10 @@ import { buildE2eWebServerEnv } from './tests/e2e/helpers/e2e-web-server-env'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const e2eMockAuth = process.env.E2E_MOCK_AUTH === '1'
 const e2ePort = Number(process.env.E2E_PORT ?? 3000)
-const baseURL = process.env.E2E_BASE_URL?.trim() || `http://127.0.0.1:${e2ePort}`
+const baseURL =
+  process.env.CMS_BASE_URL?.trim() ||
+  process.env.E2E_BASE_URL?.trim() ||
+  `http://127.0.0.1:${e2ePort}`
 const isCI = Boolean(process.env.CI)
 
 export default defineConfig({
