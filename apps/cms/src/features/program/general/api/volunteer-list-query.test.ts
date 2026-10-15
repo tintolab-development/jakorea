@@ -13,10 +13,8 @@ import {
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 
 describe('buildGeneralVolunteerDoc1ListQuery', () => {
-  it('defaults document stage to PENDING when screening status is ALL', () => {
-    expect(buildGeneralVolunteerDoc1ListQuery(DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS)).toEqual({
-      documentStatus: 'PENDING',
-    })
+  it('does not restrict document status when screening status is ALL', () => {
+    expect(buildGeneralVolunteerDoc1ListQuery(DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS)).toEqual({})
   })
 
   it('maps searchable filters to OpenAPI query params', () => {
@@ -43,7 +41,7 @@ describe('buildGeneralVolunteerDoc1ListQuery', () => {
         ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
         jaVolunteerExperience: 'no',
       })
-    ).toEqual({ documentStatus: 'PENDING', isReparticipation: false })
+    ).toEqual({ isReparticipation: false })
   })
 })
 

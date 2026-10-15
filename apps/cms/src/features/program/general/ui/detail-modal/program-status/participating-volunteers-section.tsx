@@ -109,6 +109,7 @@ export function ParticipatingVolunteersSection({
   const {
     volunteerList,
     applicationsLoading,
+    isSuccess: isVolunteerListSuccess,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -423,10 +424,10 @@ export function ParticipatingVolunteersSection({
   useEffect(() => {
     if (!volunteerIdFromUrl || !onClearVolunteerId) return
     // 목록 로딩 전 빈 배열에서 URL 상세를 지우지 않음
-    if (volunteerList.length === 0) return
+    if (!isVolunteerListSuccess) return
     const row = volunteerList.find(r => r.id === volunteerIdFromUrl)
     if (!row) onClearVolunteerId()
-  }, [volunteerIdFromUrl, volunteerList, onClearVolunteerId])
+  }, [isVolunteerListSuccess, volunteerIdFromUrl, volunteerList, onClearVolunteerId])
 
   const prevVolunteerDetailId = useRef<string | null>(null)
   useEffect(() => {

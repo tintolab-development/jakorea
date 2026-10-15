@@ -121,7 +121,7 @@ export function buildGeneralVolunteerDoc1ListQuery(
   const documentStatus =
     filters.documentScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL
       ? DOC_STATUS_TO_API[filters.documentScreeningStatus]
-      : 'PENDING'
+      : undefined
   const managerAEvaluation = pickMapped(filters.managerAEvaluation, MANAGER_EVAL_TO_API)
   const managerBEvaluation = pickMapped(filters.managerBEvaluation, MANAGER_EVAL_TO_API)
   const isReparticipation =
@@ -133,7 +133,7 @@ export function buildGeneralVolunteerDoc1ListQuery(
 
   return {
     ...(keyword ? { keyword } : {}),
-    documentStatus,
+    ...(documentStatus ? { documentStatus } : {}),
     ...(managerAEvaluation ? { managerAEvaluation } : {}),
     ...(managerBEvaluation ? { managerBEvaluation } : {}),
     ...(isReparticipation != null ? { isReparticipation } : {}),

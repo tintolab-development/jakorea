@@ -3,6 +3,7 @@ import {
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
+  mapPreferredEducationSchedulesToSessions,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
@@ -149,7 +150,16 @@ function attachPreferredEducationSchedulesToParticipatingSchools(
     if (!applicationId) return row
     const preferred = preferredByApplicationId.get(applicationId)
     if (!preferred?.length) return row
-    return { ...row, preferredEducationSchedules: preferred }
+    // 기관 신청 목록(B)의 희망 일정은 참여기관 목록(A) 응답에 없을 수 있다.
+    // 테이블은 sessions를 렌더링하므로 preferredEducationSchedules만 병합하면
+    // API에 일정이 있어도 화면에는 빈 값으로 표시된다.
+    const sessions = mapPreferredEducationSchedulesToSessions(preferred)
+    return {
+      ...row,
+      preferredEducationSchedules: preferred,
+      sessions,
+      lectureRound: sessions.length > 0 ? String(sessions.length) : row.lectureRound,
+    }
   })
 }
 
