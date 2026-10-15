@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { isAxiosError } from 'axios'
 
 const POLL_INTERVAL_MS = 2_000
 const POLL_MAX_ATTEMPTS = 30
@@ -31,6 +32,7 @@ const FAILED_SCAN_STATUSES = new Set(['INFECTED', 'FAILED'])
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 const XLSX_MIME_ALIASES = new Set(['application/haansoftxlsx'])
+const VOLUNTEER_EVIDENCE_MAX_BYTES = 15 * 1024 * 1024
 
 function fileExtension(fileName: string): string {
   const name = fileName.trim().toLowerCase()
@@ -60,6 +62,39 @@ export class MemberFileRejectedError extends Error {
   }
 }
 
+/** 파일이 비어 있어 업로드 요청 자체를 만들 수 없는 경우 */
+export class MemberFileEmptyError extends Error {
+  constructor() {
+    super('빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.')
+    this.name = 'MemberFileEmptyError'
+  }
+}
+
+export class MemberFileTooLargeError extends Error {
+  constructor() {
+    super('파일은 15MB 이하만 첨부할 수 있습니다.')
+    this.name = 'MemberFileTooLargeError'
+  }
+}
+
+function responseHasFileSizeField(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const body = value as Record<string, unknown>
+  if (body.field === 'fileSize') return true
+  if (body.error && responseHasFileSizeField(body.error)) return true
+  if (body.data && responseHasFileSizeField(body.data)) return true
+  if (body.details && responseHasFileSizeField(body.details)) return true
+  return false
+}
+
+/** upload-request/confirm 응답이 fileSize 검증 오류인지 판별 */
+export function isMemberFileSizeUploadError(error: unknown): boolean {
+  return (
+    error instanceof MemberFileEmptyError ||
+    (isAxiosError(error) && responseHasFileSizeField(error.response?.data))
+  )
+}
+
 function isAvailable(file: MemberFileResponse): boolean {
   return (
     file.scanStatus?.trim().toUpperCase() === 'CLEAN' &&
@@ -79,6 +114,21 @@ export async function uploadMemberPortalFile(input: {
   file: File
   filePurpose: string
 }): Promise<number> {
+  // 일부 브라우저/로컬 파일 provider는 선택 직후 File.size를 0으로
+  // 노출할 수 있다. 실제 바이트를 확인해 정상 파일을 빈 파일로 오판하지
+  // 않도록 하고, fallback으로 읽은 바이트를 PUT body에도 사용한다.
+  const declaredFileSize = input.file.size
+  const fileBytes = declaredFileSize > 0 ? null : await input.file.arrayBuffer()
+  const fileSize = fileBytes?.byteLength ?? declaredFileSize
+  if (!Number.isFinite(fileSize) || fileSize <= 0) {
+    throw new MemberFileEmptyError()
+  }
+  if (
+    input.filePurpose === 'VOLUNTEER_APPLICATION_EVIDENCE' &&
+    fileSize > VOLUNTEER_EVIDENCE_MAX_BYTES
+  ) {
+    throw new MemberFileTooLargeError()
+  }
   const contentType = resolveMemberPortalUploadContentType(input.file)
   const prepared = unwrap<MemberFileUploadResponse>(
     (
@@ -88,7 +138,7 @@ export async function uploadMemberPortalFile(input: {
           filePurpose: input.filePurpose,
           originalFileName: input.file.name,
           contentType,
-          fileSize: input.file.size,
+          fileSize,
         },
         { headers: { 'Idempotency-Key': crypto.randomUUID() } }
       )
@@ -101,7 +151,7 @@ export async function uploadMemberPortalFile(input: {
   const uploadResponse = await fetch(prepared.uploadUrl, {
     method: prepared.method?.trim() || 'PUT',
     headers,
-    body: input.file,
+    body: fileBytes ?? input.file,
   })
   if (!uploadResponse.ok) {
     const detail = await uploadResponse.text().catch(() => '')
@@ -117,7 +167,7 @@ export async function uploadMemberPortalFile(input: {
   unwrap(
     (
       await axiosClient.post(confirmPath, {
-        fileSize: input.file.size,
+        fileSize,
         contentType,
       })
     ).data

@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import {
+  isMemberFileSizeUploadError,
+  MemberFileEmptyError,
   MemberFileRejectedError,
+  MemberFileTooLargeError,
   uploadMemberPortalFile,
 } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import { PFFormFileAttach } from '@/shared/ui'
@@ -95,7 +98,11 @@ export function ApplyVolunteerEvidenceAttach({
         setUploadError(
           error instanceof MemberFileRejectedError
             ? '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.'
-            : '증빙서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            : error instanceof MemberFileTooLargeError
+              ? '파일은 15MB 이하만 첨부할 수 있습니다.'
+            : error instanceof MemberFileEmptyError || isMemberFileSizeUploadError(error)
+              ? '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.'
+              : '증빙서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         )
       })
       .finally(() => {

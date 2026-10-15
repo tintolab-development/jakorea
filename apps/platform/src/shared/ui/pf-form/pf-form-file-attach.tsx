@@ -78,8 +78,16 @@ export function PFFormFileAttach({
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    // input을 초기화하면 원본 File이 비동기 업로드 중 0바이트처럼 보이는
+    // 브라우저/파일 provider가 있다. 선택 순간 독립된 File 스냅샷을 만든다.
+    if (file) {
+      const snapshot = new File([file], file.name, {
+        type: file.type,
+        lastModified: file.lastModified,
+      })
+      onFileSelect(snapshot)
+    }
     event.target.value = ''
-    if (file) onFileSelect(file)
   }
 
   return (
