@@ -63,7 +63,9 @@ const APPROVAL_INSTRUCTOR: PlatformAccount = {
 }
 
 const APPROVAL_VOLUNTEER: PlatformAccount = {
-  email: 'volunteer@test.com',
+  // volunteer@test.com은 반복 실행으로 기존 기관형 봉사 배정 일정과
+  // 겹칠 수 있으므로, 상대적으로 배정 이력이 적은 계정을 사용한다.
+  email: 'general@test.com',
   applicationType: 'VOLUNTEER',
   mypagePath: '/mypage/volunteer',
 }
@@ -208,42 +210,101 @@ function toIsoAtLocalDate(daysFromToday: number, hour: number): string {
   return value.toISOString()
 }
 
+function scheduleTitleHash(programTitle: string): number {
+  return [...programTitle].reduce((total, character) => {
+    return (total * 31 + character.charCodeAt(0)) % 500
+  }, 0)
+}
+
 function uniqueScheduleOffsets(programTitle: string): [number, number] {
   // 기관형 봉사자 배정은 같은 날짜의 다른 활성 봉사 배정을 허용하지 않는다.
   // 반복 실행 간에도 기존 QA 데이터와 겹치지 않도록 고유 프로그램명에서
-  // 안정적인 오프셋을 만들어 실행마다 다른 미래 날짜를 사용한다.
-  const hash = [...programTitle].reduce((total, character) => {
-    return (total * 31 + character.charCodeAt(0)) % 300
-  }, 0)
-  // 생성 UI가 제공하는 운영기간과 Platform 신청 폼의 일정 범위 안에서
-  // 반복 실행 간 충돌을 줄인다.
-  const firstOffset = 45 + (hash % 15)
+  // 다음 달의 한 달 안에서 서로 다른 날짜를 사용한다. 캘린더가 운영
+  // 종료월부터 열리는 Platform 동작과도 맞고, 실행 간 충돌 범위도 분산된다.
+  const hash = scheduleTitleHash(programTitle)
+  const today = new Date()
+  const firstDate = new Date(today.getFullYear(), today.getMonth() + 1, 10 + (hash % 9))
+  const firstOffset = Math.round((firstDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
   return [firstOffset, firstOffset + 7]
+}
+
+function uniqueScheduleStartHour(programTitle: string): number {
+  return 9 + (scheduleTitleHash(programTitle) % 4) * 3
+}
+
+function localDateKeyFromOffset(daysFromToday: number): string {
+  const value = new Date()
+  value.setDate(value.getDate() + daysFromToday)
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function educationScheduleLine(dateKey: string, startHour: number, endHour: number): string {
+  const date = new Date(`${dateKey}T00:00:00+09:00`)
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getUTCDay()]
+  const [year, month, day] = dateKey.split('-')
+  return `${year.slice(-2)}년 ${Number(month)}월 ${Number(day)}일(${weekday}) ${String(startHour).padStart(2, '0')}:00 ~ ${String(endHour).padStart(2, '0')}:00`
+}
+
+function serviceDetailWithEducationScheduleLines(
+  serviceDetailJson: string,
+  dateKeys: [string, string],
+  startHour: number
+): string {
+  let parsed: JsonRecord
+  try {
+    parsed = JSON.parse(serviceDetailJson) as JsonRecord
+  } catch {
+    throw new Error('통합 E2E 프로그램의 serviceDetailJson을 JSON으로 해석할 수 없습니다.')
+  }
+  const common =
+    parsed.generalCommonInfo && typeof parsed.generalCommonInfo === 'object'
+      ? (parsed.generalCommonInfo as JsonRecord)
+      : parsed
+  common.educationScheduleLines = [
+    educationScheduleLine(dateKeys[0], startHour, startHour + 2),
+    educationScheduleLine(dateKeys[1], startHour + 3, startHour + 5),
+  ]
+  return JSON.stringify(parsed)
 }
 
 async function ensureEducationSchedules(
   page: Page,
   program: CmsProgramSnapshot,
-  schedules: ProgramSchedule[]
+  _schedules: ProgramSchedule[]
 ): Promise<ProgramSchedule[]> {
-  if (schedules.some(schedule => schedule.allDay === false)) return schedules
-
   // 등록 UI가 serviceDetailJson의 교육 일정 라인은 저장했지만
   // program_schedule 실체를 만들지 못하는 환경에서는, 동일 관리자 권한의
-  // 공식 프로그램 수정 API로 실제 회차를 생성한다. DB 직접 삽입은 하지 않는다.
-  // 기존 QA 프로그램의 일정과 같은 날짜가 되지 않도록 충분히 먼 미래로 둔다.
+  // 공식 프로그램 수정 API로 실제 회차를 생성한다. 이미 회차가 있더라도
+  // 새 테스트의 일정 공간으로 교체해 반복 실행 간 회원별 날짜 충돌을
+  // 방지한다. DB 직접 삽입은 하지 않는다.
   const [firstDayOffset, secondDayOffset] = uniqueScheduleOffsets(program.title)
-  const startAt = toIsoAtLocalDate(firstDayOffset, 10)
-  const firstEndAt = toIsoAtLocalDate(firstDayOffset, 12)
-  const secondStartAt = toIsoAtLocalDate(secondDayOffset, 13)
-  const secondEndAt = toIsoAtLocalDate(secondDayOffset, 15)
+  const operationStartDate = localDateKeyFromOffset(1)
+  const operationEndDate = localDateKeyFromOffset(secondDayOffset + 1)
+  const scheduleStartHour = uniqueScheduleStartHour(program.title)
+  const scheduleDateKeys = [
+    localDateKeyFromOffset(firstDayOffset),
+    localDateKeyFromOffset(secondDayOffset),
+  ] as [string, string]
   await adminRequest(page, `/api/admin/programs/${program.programId}`, 'PATCH', {
+    businessStartDate: operationStartDate,
+    businessEndDate: operationEndDate,
+    // 신청 폼의 동적 일정 선택지는 canonical educationScheduleLines와
+    // 실제 program_schedule의 날짜가 겹칠 때만 노출된다. 일정만 추가하면
+    // UI에서 선택 카드가 비어 있으므로 두 원본을 같은 공식 PATCH로 맞춘다.
+    serviceDetailJson: serviceDetailWithEducationScheduleLines(
+      program.serviceDetailJson,
+      scheduleDateKeys,
+      scheduleStartHour
+    ),
     schedules: [
       {
         sessionNo: 1,
         scheduleName: `${program.title} 교육 1회차`,
-        startAt,
-        endAt: firstEndAt,
+        startAt: toIsoAtLocalDate(firstDayOffset, scheduleStartHour),
+        endAt: toIsoAtLocalDate(firstDayOffset, scheduleStartHour + 2),
         allDay: false,
         locationName: null,
         address: null,
@@ -254,8 +315,8 @@ async function ensureEducationSchedules(
       {
         sessionNo: 2,
         scheduleName: `${program.title} 교육 2회차`,
-        startAt: secondStartAt,
-        endAt: secondEndAt,
+        startAt: toIsoAtLocalDate(secondDayOffset, scheduleStartHour + 3),
+        endAt: toIsoAtLocalDate(secondDayOffset, scheduleStartHour + 5),
         allDay: false,
         locationName: null,
         address: null,
@@ -266,7 +327,12 @@ async function ensureEducationSchedules(
     ],
   })
 
-  return fetchSchedules(page, program.programId)
+  const updatedSchedules = await fetchSchedules(page, program.programId)
+  expect(
+    updatedSchedules.filter(schedule => schedule.allDay === false).length,
+    `실제 교육 회차가 없습니다: ${program.programId}`
+  ).toBeGreaterThanOrEqual(2)
+  return updatedSchedules
 }
 
 function scheduleId(schedule: ProgramSchedule): number {
