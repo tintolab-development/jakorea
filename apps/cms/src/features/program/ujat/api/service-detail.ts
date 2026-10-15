@@ -71,6 +71,7 @@ export type UjatServiceDetailExtras = {
   blockedDatesH2?: unknown
   listCaps?: unknown
   semesterCalendars?: unknown
+  ujatRegionCapacities?: unknown
   surveyMenuKeys?: string[]
 }
 
@@ -199,6 +200,7 @@ export function parseUjatServiceDetailExtras(
       blockedDatesH2: root.blockedDatesH2,
       listCaps: root.listCaps,
       semesterCalendars: root.semesterCalendars ?? root.calendars,
+      ujatRegionCapacities: root.ujatRegionCapacities,
       surveyMenuKeys,
     }
   } catch {

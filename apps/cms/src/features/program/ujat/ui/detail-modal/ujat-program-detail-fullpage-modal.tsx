@@ -89,6 +89,13 @@ import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/uj
 import { hydrateUjatRecruitTemplatesForProgram } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
+import {
+  replaceUjatRegionCapacitiesRemote,
+  type UjatRegionCapacityUpsert,
+} from '@/features/program/ujat/api/region-capacities-client'
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import { resolveUjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import {
   patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
@@ -282,6 +289,29 @@ const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
+
+function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUpsert[] {
+  const overlay = readUjatRegistrationOverlayFromProgram(program)
+  const regions = listUjatEducationRegionsActive()
+  const halves = [
+    ['FIRST_HALF', 'h1'],
+    ['SECOND_HALF', 'h2'],
+  ] as const
+
+  return halves.flatMap(([semesterType, half]) => {
+    const values = resolveUjatRegionCapacitySemesterValues(half, overlay)
+    return regions.map(region => ({
+      semesterType,
+      educationRegionCode: region.key,
+      maxClassCount: Number.parseInt(values[region.label]?.classCount ?? '', 10) || 0,
+      maxVolunteerCount: Number.parseInt(values[region.label]?.volunteerCount ?? '', 10) || 0,
+    }))
+  })
+}
+
+function ujatRegionCapacitySnapshot(program: Program): string {
+  return JSON.stringify(buildUjatRegionCapacityUpserts(program))
+}
 
 function buildUjatSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
@@ -675,8 +705,10 @@ export function UjatProgramDetailFullPageModal({
     const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
     if (overlayHydrateStampRef.current !== stamp) {
       overlayHydrateStampRef.current = stamp
+      // programId가 바뀌면 이전 프로그램의 전역 overlay를 먼저 제거한다.
+      // 새 상세 응답에 값이 없어도 이전 프로그램 값이 남지 않아야 한다.
+      resetUjatProgramRegistrationOverlay()
       if (Object.keys(overlay).length > 0) {
-        resetUjatProgramRegistrationOverlay()
         patchUjatProgramRegistrationOverlay(overlay)
       }
     }
@@ -1210,6 +1242,18 @@ export function UjatProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+                if (
+                  shouldUseRemoteApi() &&
+                  displayProgram &&
+                  ujatRegionCapacitySnapshot(displayProgram) !==
+                    ujatRegionCapacitySnapshot(draftWithOverlay)
+                ) {
+                  // 지역 정원 PUT 성공 후 공통정보 PATCH/상세 GET을 수행한다.
+                  await replaceUjatRegionCapacitiesRemote(
+                    draftWithOverlay.id,
+                    buildUjatRegionCapacityUpserts(draftWithOverlay)
+                  )
+                }
                 if (onUpdateProgram) {
                   await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
                 } else {

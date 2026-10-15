@@ -6,10 +6,10 @@ import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 
 export type UjatBusinessKpiDisplay = {
-  finalParticipants: number
-  volunteerCount: number
-  finalSchools: number
-  finalClasses: number
+  finalParticipants: number | null
+  volunteerCount: number | null
+  finalSchools: number | null
+  finalClasses: number | null
   hasVolunteerRecruitment: boolean
 }
 
@@ -30,23 +30,21 @@ export function resolveUjatBusinessKpiDisplay(
   program: Program,
   overlayInput?: Record<string, unknown>
 ): UjatBusinessKpiDisplay {
+  const kpi = program.generalCommonInfo?.kpi
+  const kpiNumber = (value: unknown): number | null => {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null
+  }
   const overlay = resolveUjatRegistrationBasicInfoOverlay({
     ...readUjatRegistrationOverlayFromProgram(program),
     ...overlayInput,
   })
-  const kpi = program.generalCommonInfo?.kpi
-  const overlayNumber = (key: string): number | undefined => {
-    const v = overlay[key]
-    return typeof v === 'number' && Number.isFinite(v) ? v : undefined
-  }
   return {
-    finalParticipants:
-      overlayNumber('ujat.kpi.participantCount') ?? kpi?.finalParticipants ?? program.approvedStudentCount ?? 0,
-    volunteerCount:
-      overlayNumber('ujat.kpi.volunteer') ?? kpi?.volunteerCount ?? program.generalVolunteers ?? 0,
-    finalSchools:
-      overlayNumber('ujat.kpi.dispatchedSchool') ?? kpi?.finalSchools ?? program.participatingSchoolCount ?? 0,
-    finalClasses: overlayNumber('ujat.kpi.dispatchedClass') ?? kpi?.finalClasses ?? 0,
+    // 상세 응답 최상위 KPI를 adapter가 generalCommonInfo.kpi에 복사한다.
+    // 목록/세션 오버레이/기본값을 fallback으로 사용하지 않는다.
+    finalParticipants: kpiNumber(kpi?.finalParticipants),
+    volunteerCount: kpiNumber(kpi?.volunteerCount),
+    finalSchools: kpiNumber(kpi?.finalSchools),
+    finalClasses: kpiNumber(kpi?.finalClasses),
     hasVolunteerRecruitment: resolveUjatHasVolunteerRecruitment(overlay),
   }
 }

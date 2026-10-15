@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/program-execution/programs/{id}/ujat/region-capacities
+ * GET/PUT /api/admin/program-execution/programs/{id}/ujat/region-capacities
  * OpenAPI 스키마에 없는 필드는 Record fallback으로 읽는다.
  */
 
@@ -29,6 +29,13 @@ export type UjatRegionCapacitiesResponse = {
   capacities?: UjatRegionCapacityDto[]
 }
 
+export type UjatRegionCapacityUpsert = {
+  semesterType: 'FIRST_HALF' | 'SECOND_HALF'
+  educationRegionCode: string
+  maxClassCount: number
+  maxVolunteerCount: number
+}
+
 function asList(payload: UjatRegionCapacitiesResponse | UjatRegionCapacityDto[]): UjatRegionCapacityDto[] {
   if (Array.isArray(payload)) return payload
   return payload.items ?? payload.content ?? payload.capacities ?? []
@@ -41,6 +48,20 @@ export async function fetchUjatRegionCapacitiesRemote(
     await customInstance({
       url: `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/ujat/region-capacities`,
       method: 'GET',
+    })
+  )
+  return asList(body)
+}
+
+export async function replaceUjatRegionCapacitiesRemote(
+  programId: string,
+  capacities: UjatRegionCapacityUpsert[]
+): Promise<UjatRegionCapacityDto[]> {
+  const body = await unwrapApiBody<UjatRegionCapacitiesResponse | UjatRegionCapacityDto[]>(
+    await customInstance({
+      url: `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/ujat/region-capacities`,
+      method: 'PUT',
+      data: { capacities },
     })
   )
   return asList(body)

@@ -47,6 +47,9 @@ export function useUjatInstitutionScheduleAssign(
   const [version, setVersion] = useState(0)
   const [hydrating, setHydrating] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [organizationNamesByApplicationId, setOrganizationNamesByApplicationId] = useState<
+    Record<string, string>
+  >({})
   const hydratedKeyRef = useRef<string | null>(null)
 
   const remoteQuery = useInfiniteQuery({
@@ -80,8 +83,16 @@ export function useUjatInstitutionScheduleAssign(
   const applicationRows = useMemo(() => {
     void version
     const rows = remoteQuery.data?.pages.flatMap(page => page.rows) ?? []
-    return rows.filter(row => row.regionKey === regionKey)
-  }, [regionKey, remoteQuery.data, version])
+    return rows
+      .filter(row => row.regionKey === regionKey)
+      .map(row => ({
+        ...row,
+        // 기관 신청 목록의 명칭이 비어 있거나 ID로 내려오는 경우에도
+        // 임시 배정 API의 organizationName을 표시값으로 사용한다.
+        institutionName:
+          organizationNamesByApplicationId[row.id]?.trim() || row.institutionName,
+      }))
+  }, [organizationNamesByApplicationId, regionKey, remoteQuery.data, version])
 
   useEffect(() => {
     if (!remoteEnabled || !programId) return
@@ -96,15 +107,21 @@ export function useUjatInstitutionScheduleAssign(
         let draft = getUjatScheduleAssignDraftRegionState(regionKey)
         const assignmentList = await fetchUjatOrganizationScheduleAssignments(String(programId))
         const slots = assignmentList.content ?? []
+        const organizationNames: Record<string, string> = {}
         const byApp = new Map<string, typeof slots>()
         for (const slot of slots) {
           const appId = slot.organizationApplicationId
           if (appId == null) continue
           const key = String(appId)
+          if (slot.organizationName?.trim()) {
+            organizationNames[key] = slot.organizationName.trim()
+          }
           const list = byApp.get(key) ?? []
           list.push(slot)
           byApp.set(key, list)
         }
+
+        if (!cancelled) setOrganizationNamesByApplicationId(organizationNames)
 
         const regionCode = toUjatEducationRegionCode(regionKey)
         for (const [appId, appSlots] of byApp) {
@@ -168,6 +185,8 @@ export function useUjatInstitutionScheduleAssign(
     return getUjatScheduleAssignDraftRegionState(regionKey)
   }, [regionKey, version])
 
+  const organizationNamesByApplicationIdForView = organizationNamesByApplicationId
+
   const bump = useCallback(() => setVersion(v => v + 1), [])
 
   const assignDates = useMemo(
@@ -191,10 +210,25 @@ export function useUjatInstitutionScheduleAssign(
   const schoolsByDate = useMemo(() => {
     const map: Record<string, ReturnType<typeof listTempAssignedSchoolsForDate>> = {}
     for (const { isoDate } of assignDates) {
-      map[isoDate] = listTempAssignedSchoolsForDate(applicationRows, regionKey, isoDate)
+      const available = listTempAssignedSchoolsForDate(applicationRows, regionKey, isoDate)
+      const assignedIds = new Set(
+        regionState.days[isoDate]?.rows
+          .map(row => row.institutionRowId)
+          .filter((id): id is string => Boolean(id)) ?? []
+      )
+
+      // 기존 임시 배정 행은 날짜별 scheduleSlots가 비어 있어도
+      // 선택값을 유지해야 하므로, 현재 날짜에 이미 배정된 기관을 옵션에 보강한다.
+      const byId = new Map(available.map(row => [row.id, row]))
+      for (const row of applicationRows) {
+        if (row.tempAssignmentStatus === 'temp_assigned' && assignedIds.has(row.id)) {
+          byId.set(row.id, row)
+        }
+      }
+      map[isoDate] = [...byId.values()]
     }
     return map
-  }, [applicationRows, regionKey, assignDates])
+  }, [applicationRows, regionKey, assignDates, regionState])
 
   const addAssignmentRow = useCallback(
     (isoDate: string) => {
@@ -340,6 +374,7 @@ export function useUjatInstitutionScheduleAssign(
     assignDates,
     regionState,
     schoolsByDate,
+    organizationNamesByApplicationId: organizationNamesByApplicationIdForView,
     addAssignmentRow,
     updateAssignmentRow,
     removeAssignmentRow,
