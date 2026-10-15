@@ -492,6 +492,8 @@ export function useGeneralProgramRegistrationFlow(
       sessionRound: registrationVm.sessionRoundType,
       educationScheduleMode: registrationVm.educationScheduleMode,
       recruitTemplateCode: applicantRecruitTemplateCodeForBridge,
+      curriculumSessionCount: registrationVm.curriculumSessionCount,
+      curriculumChartSessionCount: registrationVm.curriculumChartSessionCount,
     }),
     [
       registrationFormVariant,
@@ -499,6 +501,8 @@ export function useGeneralProgramRegistrationFlow(
       registrationVm.programType,
       registrationVm.sessionRoundType,
       registrationVm.educationScheduleMode,
+      registrationVm.curriculumSessionCount,
+      registrationVm.curriculumChartSessionCount,
     ]
   )
 

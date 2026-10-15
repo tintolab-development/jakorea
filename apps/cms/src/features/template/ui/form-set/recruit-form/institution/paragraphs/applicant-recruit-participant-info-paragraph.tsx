@@ -1,5 +1,4 @@
 import {
-  isInstitutionApplicationBridgeTemplateAuthoring,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
@@ -29,6 +28,8 @@ const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 �
 
 export type ApplicantRecruitParticipantInfoParagraphProps = {
   showInstitutionApplicationLimits?: boolean
+  /** 양식 템플릿 편집(프로그램 미연동) — 최대 일정·차시 필드 레이아웃용 상시 노출 */
+  isTemplateAuthoringMode?: boolean
   layoutVariant?: 'general' | 'economy' | 'trainedTeachers'
   defaults?: {
     studentListRequired?: 'need' | 'none'
@@ -53,23 +54,21 @@ function RecruitProgressHintField() {
 /** 프로그램 참여자 모집 폼 (학교) — 참여자 모집 정보 */
 export function ApplicantRecruitParticipantInfoParagraph({
   showInstitutionApplicationLimits = true,
+  isTemplateAuthoringMode = false,
   layoutVariant = 'general',
   defaults,
 }: ApplicantRecruitParticipantInfoParagraphProps = {}) {
   const institutionApplicationBridge = useInstitutionApplicationProgramBridge()
   const isTrainedTeachers = layoutVariant === 'trainedTeachers'
-  const isTemplateAuthoring = isInstitutionApplicationBridgeTemplateAuthoring(
-    institutionApplicationBridge
-  )
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
     (isTrainedTeachers ||
-      isTemplateAuthoring ||
+      isTemplateAuthoringMode ||
       shouldShowInstitutionApplicationMaxScheduleFields(institutionApplicationBridge))
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
     (isTrainedTeachers ||
-      isTemplateAuthoring ||
+      isTemplateAuthoringMode ||
       shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge))
 
   const limitDefaults = defaults

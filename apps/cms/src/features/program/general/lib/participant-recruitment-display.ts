@@ -21,9 +21,11 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
+  getInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
+  type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
@@ -160,6 +162,18 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   notes: string
 }
 
+/** 등록·상세 공통정보 수정 중 라이브 브리지가 있으면 일정 유형 노출 조건에 반영 */
+function resolveRecruitmentInstitutionLimitsBridge(
+  program: Program
+): InstitutionApplicationProgramBridge {
+  const fromProgram = resolveInstitutionApplicationProgramBridge(program)
+  const live = getInstitutionApplicationProgramBridge()
+  if (live.educationStructure == null || live.sessionRound == null) {
+    return fromProgram
+  }
+  return { ...fromProgram, ...live }
+}
+
 export function resolveGeneralProgramParticipantRecruitmentDisplay(
   program: Program,
   options?: {
@@ -172,7 +186,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
-  const bridge = resolveInstitutionApplicationProgramBridge(program)
+  const bridge = resolveRecruitmentInstitutionLimitsBridge(program)
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
     shouldShowInstitutionApplicationMaxScheduleFields(bridge)

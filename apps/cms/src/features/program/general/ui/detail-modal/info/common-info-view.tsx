@@ -54,6 +54,7 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
@@ -2119,7 +2120,7 @@ function MultiRoundCurriculumSessionForm({
                         inputSize="medium"
                         withAllOption={false}
                         placeholder="진행 차시"
-                        width={120}
+                        width={144}
                         options={GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS}
                         value={field.value || undefined}
                         onChange={v => field.onChange(String(v ?? ''))}
@@ -4476,6 +4477,9 @@ function ScheduleSettingsEditFields({
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
   })
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
+  const disableScheduleSelectionTime = shouldDisableEducationScheduleSelectionTimeInput({
+    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+  })
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const groupTimeSlotsKey = JSON.stringify(
     scheduleDetails.flatMap(detail => detail.groupTimes ?? [])
@@ -4616,17 +4620,34 @@ function ScheduleSettingsEditFields({
           label="교육 진행 일정 선택"
           edit={
             scheduleMode === 'date' ? (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode="date"
-                customizable={false}
-                showPeriodToggle={false}
-                showTimeToggle={false}
-                suppressAutoTodayWhenEmpty
-                value={singleDate}
-                onChange={handleDateApply}
-                width={240}
-              />
+              disableScheduleSelectionTime ? (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="date"
+                  customizable={false}
+                  showPeriodToggle={false}
+                  showTimeToggle={false}
+                  suppressAutoTodayWhenEmpty
+                  value={singleDate}
+                  onChange={handleDateApply}
+                  width={240}
+                />
+              ) : (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="schedule"
+                  customizable={false}
+                  showPeriodToggle={false}
+                  showTimeToggle={false}
+                  lockTimeToggleOn
+                  lockPeriodToggleOn
+                  suppressAutoTodayWhenEmpty
+                  value={singleDate}
+                  onChange={handleDateApply}
+                  onRangeChange={handleScheduleRangeApply}
+                  width={240}
+                />
+              )
             ) : (
               <ParagraphDatePicker
                 mode="single"

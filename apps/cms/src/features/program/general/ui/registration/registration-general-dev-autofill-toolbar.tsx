@@ -12,7 +12,7 @@ type RegistrationGeneralDevAutofillToolbarProps = {
   onAutofill: (caseId: GeneralRegistrationDevAutofillCaseId) => void | Promise<void>
 }
 
-/** 일반 프로그램 등록 — DEV 9케이스 자동입력 (체크된 교사/봉사자 모집·신청도 채움) */
+/** 일반 프로그램 등록 — DEV 10케이스 자동입력 (체크된 교사/봉사자 모집·신청도 채움) */
 export function RegistrationGeneralDevAutofillToolbar({
   caseId,
   onCaseIdChange,

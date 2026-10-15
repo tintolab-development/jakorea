@@ -679,10 +679,8 @@
   border-color: var(--color-border-input-secondary) !important;
 }
 
-/* 정산 계좌: 은행명 Select 140px (네이티브 select 포함) */
-.add-instructor-modal__bank-account-row .add-instructor-modal__bank-account-select.ant-select,
-.add-instructor-modal__bank-account-row .add-instructor-modal__bank-account-select .ant-select-selector,
-.add-instructor-modal__bank-account-row .add-instructor-modal__native-select.add-instructor-modal__bank-account-select {
+/* 정산 계좌: 은행명 텍스트 입력 140px */
+.add-instructor-modal__bank-account-row .add-instructor-modal__bank-account-input {
   width: 140px !important;
   min-width: 140px !important;
   max-width: 140px !important;

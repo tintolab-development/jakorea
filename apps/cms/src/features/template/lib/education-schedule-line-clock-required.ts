@@ -24,3 +24,14 @@ export function isEducationScheduleProgressLineMissingOrWithoutClock(
   if (!trimmed) return true
   return !isEducationScheduleProgressLineWithRequiredClock(trimmed)
 }
+
+/** 비어 있거나 파싱 불가면 true — 일정형 진행 일정(날짜만) 검증용 */
+export function isEducationScheduleProgressLineMissing(
+  line: string | null | undefined
+): boolean {
+  const trimmed = line?.trim()
+  if (!trimmed) return true
+  const range =
+    parseEducationScheduleLineToRange(trimmed) ?? parseStoredEducationScheduleRange(trimmed)
+  return !range
+}

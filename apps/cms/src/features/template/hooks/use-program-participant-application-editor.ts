@@ -1828,6 +1828,8 @@ export function useProgramParticipantApplicationEditor(
             ? 'trainedTeachers'
             : editorOptions?.applicantRecruitInstitutionLayoutVariant,
       applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
+      applicantRecruitInstitutionTemplateAuthoringMode:
+        isRecruitmentEditorVariant(variant) && !programLinkedPreview,
       applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
       recruitFormInstructor: variant === 'recruit-instructor',
       recruitFormVolunteer: variant === 'recruit-volunteer',

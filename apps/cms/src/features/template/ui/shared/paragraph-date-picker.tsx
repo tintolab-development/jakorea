@@ -487,11 +487,17 @@ function ParagraphDatePickerSingleInner({
 
   const effectivePlaceholder = placeholder ?? PARAGRAPH_DATE_PRESET_PLACEHOLDERS[presetMode]
 
-  const triggerDisplayText = formatParagraphDatePickerTriggerDisplay(
-    resolvedValue,
-    surfaceRange,
-    surfaceAppliedWithTime
-  )
+  /** 목록(교육 진행 예정일 등)에만 노출하고 트리거는 placeholder 유지 */
+  const omitTriggerSurfaceDisplay =
+    suppressAutoTodayWhenEmpty && resolvedValue == null && !hasExternalSurfaceControl
+
+  const triggerDisplayText = omitTriggerSurfaceDisplay
+    ? null
+    : formatParagraphDatePickerTriggerDisplay(
+        resolvedValue,
+        surfaceRange,
+        surfaceAppliedWithTime
+      )
   const triggerIsEmpty = triggerDisplayText == null
   const presetDisplay = presetDisplayText?.trim()
   const showPresetAsFilled = triggerIsEmpty && Boolean(presetDisplay)

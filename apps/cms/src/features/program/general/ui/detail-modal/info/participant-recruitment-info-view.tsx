@@ -7,6 +7,7 @@ import { Controller } from 'react-hook-form'
 import {
   patchInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
+  useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
@@ -109,6 +110,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
 }) {
+  useInstitutionApplicationProgramBridge()
   const display = resolveGeneralProgramParticipantRecruitmentDisplay(
     program,
     isEdit && form

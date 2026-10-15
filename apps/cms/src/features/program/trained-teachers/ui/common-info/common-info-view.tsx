@@ -894,7 +894,7 @@ function MultiRoundSessionBlock({
                       inputSize="medium"
                       withAllOption={false}
                       placeholder="진행 차시"
-                      width={120}
+                      width={144}
                       options={GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS}
                       value={session.title || undefined}
                       onChange={v => onChange?.({ title: String(v ?? '') })}

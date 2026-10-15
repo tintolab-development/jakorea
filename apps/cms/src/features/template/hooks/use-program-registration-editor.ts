@@ -1359,6 +1359,8 @@ export function useProgramRegistrationEditor(
           sessionRound: typeSettings.sessionRoundType,
           educationScheduleMode: typeSettings.educationScheduleMode,
           recruitTemplateCode: 'recruitment-participant-school',
+          curriculumSessionCount,
+          curriculumChartSessionCount,
         })
       }
     },
@@ -1776,6 +1778,8 @@ export function useProgramRegistrationEditor(
     programType,
     sessionRoundType,
     educationScheduleMode,
+    curriculumSessionCount,
+    curriculumChartSessionCount,
     hasIncompleteRequiredFields,
     listIncompleteRequiredFieldKeys,
     getIncompleteRequiredFieldsReason,

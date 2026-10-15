@@ -14,6 +14,7 @@ import {
   trimTrailingBlankRegularCurriculumSessions,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
   shouldLockProgressSchedulePeriodToggle,
   shouldUseScheduleEventBlockLayout,
@@ -506,14 +507,25 @@ describe('shouldLockEducationScheduleCalendarToggles', () => {
   })
 })
 
+describe('shouldDisableEducationScheduleSelectionTimeInput', () => {
+  it('일정형만 교육 진행 일정 선택 팝오버 시간을 끈다', () => {
+    expect(
+      shouldDisableEducationScheduleSelectionTimeInput({ educationStructure: 'schedule' })
+    ).toBe(true)
+    expect(
+      shouldDisableEducationScheduleSelectionTimeInput({ educationStructure: 'curriculum' })
+    ).toBe(false)
+  })
+})
+
 describe('shouldDisableEducationSchedulePeriodMode', () => {
-  it('단일 회차이면 기관 여부와 무관하게 기간 지정을 막는다', () => {
+  it('단일 회차이면 기관은 기간 지정을 허용하고 개인만 막는다', () => {
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: true,
         sessionRound: 'single',
       })
-    ).toBe(true)
+    ).toBe(false)
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: false,

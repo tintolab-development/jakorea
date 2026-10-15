@@ -9,6 +9,7 @@ import { ApplicantRecruitDetailInfoParagraph } from '@/features/template/ui/form
 
 export type ApplicantRecruitFormInstitutionParagraphBodyOptions = {
   showInstitutionApplicationLimits?: boolean
+  isTemplateAuthoringMode?: boolean
   layoutVariant?: ApplicantRecruitParticipantInfoParagraphProps['layoutVariant']
   defaults?: ApplicantRecruitParticipantInfoParagraphProps['defaults']
 }
@@ -22,6 +23,7 @@ export function renderApplicantRecruitFormInstitutionParagraphBody(
   if (!enabled) return null
   const limitsProps: ApplicantRecruitParticipantInfoParagraphProps = {
     showInstitutionApplicationLimits: options?.showInstitutionApplicationLimits ?? true,
+    isTemplateAuthoringMode: options?.isTemplateAuthoringMode === true,
     layoutVariant: options?.layoutVariant,
     defaults: options?.defaults,
   }
