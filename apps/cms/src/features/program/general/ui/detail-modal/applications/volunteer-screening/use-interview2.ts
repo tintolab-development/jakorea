@@ -49,6 +49,7 @@ import { MESSAGES } from '@/shared/constants/messages'
 import {
   requestGeneralVolunteerInterview2BulkFail,
   requestGeneralVolunteerInterview2BulkPass,
+  isGeneralVolunteerInterview2SelectableForResult,
 } from './general-volunteer-interview2-actions'
 import type { GeneralInterview2BulkPassConfirmPayload } from './general-volunteer-interview2-bulk-pass-modal'
 import {
@@ -90,7 +91,9 @@ export function useGeneralVolunteerInterview2({
   }))
   const listQuery = useMemo(
     () =>
-      subjectKind === 'volunteer' ? buildGeneralVolunteerInterview2ListQuery(appliedFilters) : undefined,
+      subjectKind === 'volunteer'
+        ? buildGeneralVolunteerInterview2ListQuery(appliedFilters)
+        : undefined,
     [appliedFilters, subjectKind]
   )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
@@ -245,6 +248,7 @@ export function useGeneralVolunteerInterview2({
   )
 
   const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     if (!guardGeneralVolunteerInterview2Pass(applicant)) return
     setPassModalVolunteer(applicant)
   }, [])
@@ -254,6 +258,7 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const openFailModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     if (!guardGeneralVolunteerInterview2Fail(applicant)) return
     setFailModalVolunteer(applicant)
   }, [])
@@ -451,7 +456,9 @@ export function useGeneralVolunteerInterview2({
 
   const openCancelPassModal = useCallback(
     (row: GeneralVolunteerApplicantRow) => {
-      if (!hasExplicitApplicationAction(row.availableActions, APPLICATION_ACTION_CANCEL_FINAL_PASS)) {
+      if (
+        !hasExplicitApplicationAction(row.availableActions, APPLICATION_ACTION_CANCEL_FINAL_PASS)
+      ) {
         return
       }
       setCancelPassVolunteer(withFinalResultNotifyTiming(row))
@@ -465,7 +472,9 @@ export function useGeneralVolunteerInterview2({
 
   const openCancelFailModal = useCallback(
     (row: GeneralVolunteerApplicantRow) => {
-      if (!hasExplicitApplicationAction(row.availableActions, APPLICATION_ACTION_CANCEL_FINAL_FAIL)) {
+      if (
+        !hasExplicitApplicationAction(row.availableActions, APPLICATION_ACTION_CANCEL_FINAL_FAIL)
+      ) {
         return
       }
       setCancelFailVolunteer(withFinalResultNotifyTiming(row))
@@ -487,10 +496,15 @@ export function useGeneralVolunteerInterview2({
       if (!cancelPassVolunteer) return
       const { id } = cancelPassVolunteer
       const notify = toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
-      const ok = await applySecondInterviewStatus([id], 'fail', payload.reason.trim() || '합격 취소', {
-        notifyTiming: notify.notifyTiming,
-        scheduledAt: notify.scheduledAt,
-      })
+      const ok = await applySecondInterviewStatus(
+        [id],
+        'fail',
+        payload.reason.trim() || '합격 취소',
+        {
+          notifyTiming: notify.notifyTiming,
+          scheduledAt: notify.scheduledAt,
+        }
+      )
       if (!ok) return
       setFinalResultNotifyById(prev => ({ ...prev, [id]: payload.notifyTiming }))
       setCancelPassVolunteer(null)
@@ -519,9 +533,7 @@ export function useGeneralVolunteerInterview2({
         return
       }
       const reason =
-        payload.variant === 'alreadySent'
-          ? payload.reason
-          : payload.reason.trim() || '불합격 취소'
+        payload.variant === 'alreadySent' ? payload.reason : payload.reason.trim() || '불합격 취소'
       const notification =
         payload.variant === 'alreadySent'
           ? toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification

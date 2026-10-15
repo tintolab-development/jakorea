@@ -4,6 +4,7 @@ import {
   resolveGeneralEffectiveSecondInterviewStatus,
   type GeneralEffectiveSecondInterviewStatus,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import { isGeneralVolunteerInterview2SelectableForResult } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-actions'
 
 export type GeneralVolunteerInterview2CalendarListRow = {
   /** 지원자 id — 체크박스·rowKey */
@@ -14,6 +15,7 @@ export type GeneralVolunteerInterview2CalendarListRow = {
   slotLabel: string
   effectiveStatus: GeneralEffectiveSecondInterviewStatus
   totalScore: number | null
+  selectableForResult: boolean
 }
 
 export function buildGeneralVolunteerInterview2CalendarListRows(
@@ -26,5 +28,6 @@ export function buildGeneralVolunteerInterview2CalendarListRows(
     slotLabel: event.slotLabel,
     effectiveStatus: resolveGeneralEffectiveSecondInterviewStatus(event.originalItem),
     totalScore: computeGeneralInterviewTotalScore(event.originalItem),
+    selectableForResult: isGeneralVolunteerInterview2SelectableForResult(event.originalItem),
   }))
 }

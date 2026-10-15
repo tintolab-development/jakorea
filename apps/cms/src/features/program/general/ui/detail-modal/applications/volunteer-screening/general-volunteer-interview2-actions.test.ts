@@ -12,24 +12,30 @@ vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
   cmsAlertModal: { show: vi.fn() },
 }))
 
-vi.mock('@/features/program/general/lib/general-volunteer-interview2-display', async importOriginal => {
-  const actual =
-    await importOriginal<
-      typeof import('@/features/program/general/lib/general-volunteer-interview2-display')
-    >()
-  return {
-    ...actual,
-    resolveGeneralEffectiveSecondInterviewStatus: vi.fn(
-      (row: { secondInterviewScreeningStatus: string }) => row.secondInterviewScreeningStatus
-    ),
+vi.mock(
+  '@/features/program/general/lib/general-volunteer-interview2-display',
+  async importOriginal => {
+    const actual =
+      await importOriginal<
+        typeof import('@/features/program/general/lib/general-volunteer-interview2-display')
+      >()
+    return {
+      ...actual,
+      resolveGeneralEffectiveSecondInterviewStatus: vi.fn(
+        (row: { secondInterviewScreeningStatus: string }) => row.secondInterviewScreeningStatus
+      ),
+    }
   }
-})
+)
 
 const waitingRow = {
   interviewAssignmentStatus: 'assigned' as const,
   secondInterviewScreeningStatus: 'waiting' as const,
   assignedInterviewDateLabel: '26. 12. 01(화)',
   assignedInterviewTime: '14:00 ~ 14:30',
+  availableActions: ['APPROVE', 'REJECT'],
+  managerAScore: 4,
+  managerBScore: 5,
 }
 
 const completedRow = {
@@ -42,6 +48,16 @@ const passedRow = {
   secondInterviewScreeningStatus: 'pass' as const,
 }
 
+const completedWithoutEvaluationRow = {
+  ...completedRow,
+  managerBScore: null,
+}
+
+const completedWithoutResultActionRow = {
+  ...completedRow,
+  availableActions: ['VIEW'],
+}
+
 describe('general-volunteer-interview2-actions', () => {
   const onOpenSinglePass = vi.fn()
   const onOpenBulkPass = vi.fn()
@@ -52,14 +68,20 @@ describe('general-volunteer-interview2-actions', () => {
     vi.clearAllMocks()
   })
 
-  it('treats waiting as selectable and completed/pass as processed', () => {
-    expect(isGeneralVolunteerInterview2SelectableForResult(waitingRow)).toBe(true)
-    expect(isGeneralVolunteerInterview2SelectableForResult(completedRow)).toBe(false)
+  it('requires completed status, complete evaluation, and result actions', () => {
+    expect(isGeneralVolunteerInterview2SelectableForResult(waitingRow)).toBe(false)
+    expect(isGeneralVolunteerInterview2SelectableForResult(completedRow)).toBe(true)
+    expect(isGeneralVolunteerInterview2SelectableForResult(completedWithoutEvaluationRow)).toBe(
+      false
+    )
+    expect(isGeneralVolunteerInterview2SelectableForResult(completedWithoutResultActionRow)).toBe(
+      false
+    )
     expect(isGeneralVolunteerInterview2SelectableForResult(passedRow)).toBe(false)
-    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('waiting')).toBe(true)
+    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('waiting')).toBe(false)
     expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('pass')).toBe(false)
     expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('withdrawn')).toBe(false)
-    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('completed')).toBe(false)
+    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('completed')).toBe(true)
   })
 
   it('blocks bulk pass when selection includes processed rows', () => {
@@ -75,17 +97,15 @@ describe('general-volunteer-interview2-actions', () => {
     expect(onOpenBulkPass).not.toHaveBeenCalled()
   })
 
-  it('blocks bulk pass when selection includes completed (interview done) rows', () => {
+  it('opens bulk pass when selection includes completed rows without a final result', () => {
     requestGeneralVolunteerInterview2BulkPass({
       selectedIds: ['1', '2'],
-      selectedRows: [waitingRow, completedRow],
+      selectedRows: [completedRow, completedRow],
       onOpenSinglePass,
       onOpenBulkPass,
     })
-    expect(cmsAlertModal.show).toHaveBeenCalledWith(
-      buildInterview2ProcessedSelectionAlert('volunteer')
-    )
-    expect(onOpenBulkPass).not.toHaveBeenCalled()
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(onOpenBulkPass).toHaveBeenCalledTimes(1)
   })
 
   it('blocks bulk pass with participant noun when subjectKind is participant', () => {
@@ -101,15 +121,17 @@ describe('general-volunteer-interview2-actions', () => {
     )
   })
 
-  it('opens bulk pass for waiting-only selection', () => {
+  it('blocks bulk pass for waiting-only selection', () => {
     requestGeneralVolunteerInterview2BulkPass({
       selectedIds: ['1', '2'],
       selectedRows: [waitingRow, waitingRow],
       onOpenSinglePass,
       onOpenBulkPass,
     })
-    expect(cmsAlertModal.show).not.toHaveBeenCalled()
-    expect(onOpenBulkPass).toHaveBeenCalledTimes(1)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith(
+      buildInterview2ProcessedSelectionAlert('volunteer')
+    )
+    expect(onOpenBulkPass).not.toHaveBeenCalled()
   })
 
   it('blocks bulk fail for single already-failed row', () => {
