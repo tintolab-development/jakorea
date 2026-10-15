@@ -9,6 +9,11 @@ git_dir=$(git rev-parse --git-dir)
 validation_dir="$git_dir/jakorea/pre-commit-validation"
 mkdir -p "$validation_dir"
 
+if [ "${JAKOREA_VALIDATION_SESSION:-}" = "validated" ]; then
+  echo "[pre-commit] 검증 완료 세션을 사용합니다."
+  exit 0
+fi
+
 working_tree_snapshot=$(git stash create --include-untracked 2>/dev/null || true)
 if [ -n "$working_tree_snapshot" ]; then
   tracked_tree=$(git rev-parse "$working_tree_snapshot^{tree}")
