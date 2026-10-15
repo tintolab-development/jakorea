@@ -98,12 +98,20 @@ export function useOrganizationStudentRosterQuery(
   })
 }
 
+export type OrganizationStudentDocumentPolicyQueryOptions = {
+  /** 기본 true — 교사 탭 노출 판단 등에서 불필요한 policy 조회를 막을 때 false */
+  enabled?: boolean
+}
+
 export function useOrganizationStudentDocumentPolicyQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   scope?: OrganizationStudentDocumentsScope,
+  options?: OrganizationStudentDocumentPolicyQueryOptions,
 ) {
-  const enabled = isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId, scope)
+  const enabled =
+    isOrganizationStudentDocumentsQueryEnabled(applicationType, applicationId, scope) &&
+    (options?.enabled ?? true)
   const id = resolveOrganizationApplicationId(applicationId) ?? ''
 
   return useQuery({

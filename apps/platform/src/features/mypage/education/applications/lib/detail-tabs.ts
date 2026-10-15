@@ -59,6 +59,11 @@ type ActivityTabOptions = {
   surveyConfigured?: boolean
   /** 프로그램에 만족도조사 항목이 설정된 경우. false면 탭 비노출. 기본 true */
   satisfactionConfigured?: boolean
+  /**
+   * 교사 회원 — 학생 명단 탭(출석 관리 탭 추가 시 동일 플래그).
+   * `GET .../student-documents/policy`의 `studentDocumentsSupported === false`이면 false.
+   */
+  teacherStudentDocumentTabsVisible?: boolean
 }
 
 function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
@@ -70,6 +75,18 @@ function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
 
 function isConfigured(flag: boolean | undefined): boolean {
   return flag !== false
+}
+
+function isTeacherStudentDocumentTabsVisible(options: ActivityTabOptions): boolean {
+  return options.teacherStudentDocumentTabsVisible !== false
+}
+
+function appendTeacherStudentDocumentTabs(
+  items: EducationDetailTabItem[],
+  options: ActivityTabOptions,
+): void {
+  if (!isTeacherStudentDocumentTabsVisible(options)) return
+  items.push({ key: 'students', label: '학생 명단' })
 }
 
 function appendSurveySatisfactionTabs(
@@ -110,8 +127,8 @@ export function buildTeacherInProgressDetailTabItems(
   const items: EducationDetailTabItem[] = [
     { key: 'notice', label: '안내사항' },
     { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
-    { key: 'students', label: '학생 명단' },
   ]
+  appendTeacherStudentDocumentTabs(items, options)
   appendSurveySatisfactionTabs(items, options)
   return items
 }

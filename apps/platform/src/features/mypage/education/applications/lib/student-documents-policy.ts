@@ -18,6 +18,20 @@ export function isPortalStudentDocumentsUnsupported(
   return policy?.studentDocumentsSupported === false
 }
 
+/** 교사 교육현황 — 학생 명단(·출석 관리) 탭 노출. `GET .../student-documents/policy` SSOT */
+export function shouldShowTeacherStudentDocumentDependentTabs(
+  policy: PortalStudentDocumentPolicy | null | undefined,
+  options: { policyQueryEnabled: boolean; policyLoading: boolean },
+): boolean {
+  if (!options.policyQueryEnabled) {
+    return true
+  }
+  if (options.policyLoading || policy == null) {
+    return false
+  }
+  return !isPortalStudentDocumentsUnsupported(policy)
+}
+
 /** `studentDocumentsSupported === true`일 때만 호출 */
 export function resolveRosterUploadBlockedMessage(
   policy: PortalStudentDocumentPolicy | null | undefined,
