@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createProgramParticipantApplicationDraft } from '../../dist/paragraph-ids/program-application-form-individual-draft.js'
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   readInstitutionFixedScheduleChoiceItems,
@@ -209,6 +210,32 @@ assert.equal(
     ],
   }),
   false
+)
+
+const individualDraft = createProgramParticipantApplicationDraft()
+const individualCurriculumDatePatched = syncApplicationScheduleChoiceParagraphsInDraft(
+  individualDraft,
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualScheduleParagraph = individualCurriculumDatePatched.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.ok(
+  individualScheduleParagraph && individualScheduleParagraph.variant === 'multiple_choice'
+)
+assert.equal((individualScheduleParagraph as MultipleChoiceParagraph).items.length, 2)
+assert.equal(
+  individualScheduleParagraph.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
 
 console.log('program-application-parity.test: ok')
