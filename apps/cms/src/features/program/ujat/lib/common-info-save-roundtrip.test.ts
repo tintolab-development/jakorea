@@ -20,6 +20,11 @@ const capacity = {
   h2: { 부산: { classCount: '1', volunteerCount: '2' } },
 }
 
+const canonicalRegionCapacities = {
+  FIRST_HALF: { SEOUL: { maxSchools: 2, maxVolunteers: 4 } },
+  SECOND_HALF: { BUSAN: { maxSchools: 1, maxVolunteers: 2 } },
+}
+
 function baseProgram(): Program {
   return {
     id: 'ujat-roundtrip',
@@ -113,13 +118,15 @@ describe('UJAT 공통정보 저장 왕복', () => {
       '2026-05-15',
     ])
 
+    const persisted = JSON.parse(request.serviceDetailJson ?? '{}') as Record<string, unknown>
+    persisted.ujatRegionCapacities = canonicalRegionCapacities
     const mapped = fromDetail({
       id: program.id,
       title: program.title,
       sponsorId: '163388',
       ips: 'Inspire',
       educationStructure: 'CURRICULUM',
-      serviceDetailJson: request.serviceDetailJson,
+      serviceDetailJson: JSON.stringify(persisted),
     } as ProgramResponse)
 
     expect(mapped.ips).toBe('Inspire')
@@ -149,11 +156,13 @@ describe('UJAT 공통정보 저장 왕복', () => {
       { draft, overlay }
     )
     expect(request.ips).toBe('Succeed')
+    const persisted = JSON.parse(request.serviceDetailJson ?? '{}') as Record<string, unknown>
+    persisted.ujatRegionCapacities = canonicalRegionCapacities
     const mapped = fromDetail({
       id: 'ujat-roundtrip',
       title: 'UJAT',
       ips: 'Succeed',
-      serviceDetailJson: request.serviceDetailJson,
+      serviceDetailJson: JSON.stringify(persisted),
     } as ProgramResponse)
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.ipsCategory']).toBe('succeed')
     expect(mapped.ujatRegistrationOverlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
