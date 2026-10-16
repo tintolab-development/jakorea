@@ -6,7 +6,10 @@ import {
   type CurriculumMultiDateFixedScheduleMetaInput,
 } from './curriculum-multi-date-fixed-schedule.js'
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
-import type { ApplicationScheduleVisibilityInput } from './schedule-paragraph-visibility.js'
+import {
+  expandEducationScheduleChoiceSlots,
+  type ApplicationScheduleVisibilityInput,
+} from './schedule-paragraph-visibility.js'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -87,13 +90,10 @@ function readInstitutionFixedScheduleRawItems(
 function choiceItemsFromEducationScheduleLines(
   lines: readonly string[]
 ): Array<{ id: string; label: string }> {
-  const items: Array<{ id: string; label: string }> = []
-  lines.forEach((line, index) => {
-    const label = line.trim()
-    if (!label) return
-    items.push({ id: `line:${index}`, label })
-  })
-  return items
+  return expandEducationScheduleChoiceSlots(lines).map((label, index) => ({
+    id: `line:${index}`,
+    label,
+  }))
 }
 
 export function institutionFixedScheduleOptionToken(item: Record<string, unknown>): string {

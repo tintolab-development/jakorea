@@ -1,4 +1,5 @@
 import {
+  expandEducationScheduleChoiceSlots,
   shouldShowApplicationPreferredScheduleParagraph,
   shouldShowApplicationScheduleParagraph,
   type ApplicationScheduleVisibilityInput,
@@ -156,7 +157,7 @@ export function resolveFixedScheduleLinesToChoiceItems(
   lines: readonly string[],
   meta: CurriculumMultiDateFixedScheduleMeta
 ): Array<{ id: string; label: string }> {
-  const trimmed = lines.map(line => line.trim()).filter(Boolean)
+  const trimmed = expandEducationScheduleChoiceSlots(lines)
   if (shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)) {
     const roundCount = meta.educationRoundCount ?? 1
     return buildCurriculumMultiDateFixedScheduleChoiceItems(trimmed, roundCount)
