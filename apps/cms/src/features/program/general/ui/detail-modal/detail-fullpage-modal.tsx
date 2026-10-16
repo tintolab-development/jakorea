@@ -18,6 +18,7 @@ import { useGeneralProgramNavigation } from '@/features/program/general/hooks/us
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { useProgramStore } from '@/features/program/general/model/program-store'
+import { refreshAdminSessionFromMe } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import {
   GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL,
@@ -484,6 +485,11 @@ export function GeneralProgramDetailFullPageModal({
   const routerSearchParamsKey = routerSearchParams.toString()
   const programId =
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
+
+  useEffect(() => {
+    if (!open || !programId) return
+    void refreshAdminSessionFromMe()
+  }, [open, programId])
 
   const { updateProgram, setSelectedProgram } = useProgramStore()
   const remoteEnabled = useGeneralProgramsRemoteEnabled(

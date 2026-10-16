@@ -37,16 +37,14 @@ export function isMockAdminSession(): boolean {
 }
 
 function buildPendingAdminUser(email: string): Omit<User, 'password'> {
-  const now = new Date().toISOString()
   return {
     id: `pending-admin-${email}`,
     email,
     name: email.split('@')[0] ?? '관리자',
     role: 'ADMIN',
     isActive: true,
-    createdAt: now,
-    updatedAt: now,
-    lastLoginAt: now,
+    createdAt: null,
+    updatedAt: null,
     programRoles: {},
   }
 }

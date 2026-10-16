@@ -257,7 +257,6 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       const nextPhone = result.verifiedPhone?.trim()
       updateUser({
         ...(nextPhone ? { phone: nextPhone } : {}),
-        updatedAt: new Date().toISOString(),
       })
       showAlert({
         title: '인증 완료',

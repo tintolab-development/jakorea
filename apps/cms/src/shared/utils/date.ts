@@ -63,8 +63,15 @@ export function formatDateRangeDot(
   return `${startLabel} ~ ${endLabel}`
 }
 
-export function formatDate(value: Date | string | number, options: Intl.DateTimeFormatOptions = {}) {
+export function formatDate(
+  value: Date | string | number | null | undefined,
+  options: Intl.DateTimeFormatOptions = {}
+) {
+  if (value == null || value === '') return '-'
+
   const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
   return new Intl.DateTimeFormat(defaultLocale, {
     year: 'numeric',
     month: 'short',
@@ -84,4 +91,3 @@ export function timeSince(value: Date | string | number) {
   const days = Math.floor(hours / 24)
   return `${days}일 전`
 }
-
