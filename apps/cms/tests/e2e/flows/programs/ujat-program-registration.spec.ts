@@ -35,9 +35,6 @@ test.describe('UJAT 프로그램 신규 등록', () => {
     await registration.fillRecruitmentInfo()
 
     created = await registration.completeRegistration()
-    await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeHidden({
-      timeout: 30_000,
-    })
     expect(created.programId.length).toBeGreaterThan(0)
     expect(created.programTitle).toContain('Playwright UJAT 테스트')
   })

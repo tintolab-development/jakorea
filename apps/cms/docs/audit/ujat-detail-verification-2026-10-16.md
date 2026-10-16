@@ -353,3 +353,121 @@ apps/cms pnpm typecheck: exit 0
 ### 현재 결론
 
 전용 DB 안전성 확인 후 실제 서버 mutation 4개와 저장 후 GET 재조회, 상태 충돌 보호, mutation 이후 상세 회귀까지 완료했다. 현재 남은 작업은 신규 등록 POM의 동적 필수 일정 입력 보강과 승인 가능한 봉사자/배정 fixture 확보 후 자동·직접 배정 및 봉사 심사 mutation을 별도 실행하는 것이다. 제품 코드에서 실패를 숨기거나 fallback으로 성공 처리하지 않았다.
+
+## M. 잔여 BLOCKED·SKIP 해소 후속 검증 결과 (2026-10-16)
+
+### 실행 환경
+
+- CMS `http://localhost:3000`과 전용 UJAT E2E 백엔드 `http://localhost:18080`을 사용했다.
+- 전용 PostgreSQL 환경을 사용했으며 기존 `localhost:8080` 백엔드는 변경하지 않았다.
+- 만료된 관리자 세션은 MFA setup으로 갱신한 뒤 테스트를 재실행했다. 인증 코드·토큰·비밀번호는 기록하지 않았다.
+- 직접 DB 삽입·수정은 수행하지 않았다.
+
+### 최종 결과 요약
+
+| 검증 범위 | 결과 | 근거 |
+|---|---|---|
+| UJAT 신규 프로그램 등록 | PASS | 신규 등록 스펙 2건 통과. 실제 POST 성공, 생성 `programId` 확보, canonical 상세 GET에서 `programId`와 `mainTitle` 일치, 목록 재조회 확인 |
+| UJAT mutation 재검증 | PASS | 지역 정원, 기관 임시 일정, 출석 bulk-upsert, 일정 변경 충돌 경계 등 4건 통과 |
+| mutation 후 읽기 회귀 | PASS | 저장 후 UJAT read-only 회귀 16건 통과, API error 0건 및 HTTP 5xx 미관찰 |
+| UJAT 수정 저장 E2E | PARTIAL/BLOCKED | 기존 fixture 진입 단계는 통과했으나 실제 수정 저장은 필수 정원 입력 검증에 막혔고, 보정 후 재실행은 CMS 빈 화면으로 렌더링되지 않아 완료 판정 불가 |
+| 봉사자 심사 mutation | NOT RUN/BLOCKED | 승인·반려 가능한 전용 봉사자 fixture가 없어 실행하지 않음 |
+| 자동·직접 배정·취소 | NOT RUN/BLOCKED | 승인된 participant·배정 가능한 slot fixture가 없어 실행하지 않음 |
+| React Query UI 캐시 왕복 | PARTIAL | API 저장 후 GET 재조회는 PASS. 실제 브라우저 mutation 직후 관련 화면 캐시 무효화까지는 전용 fixture 부족으로 미검증 |
+
+### 1. 신규 등록 검증
+
+실행 대상:
+
+```text
+tests/e2e/flows/programs/ujat-program-registration.spec.ts
+```
+
+최종 결과:
+
+```text
+2 passed
+```
+
+확인 내용:
+
+- DEV 자동입력 완료 이벤트를 기다린 뒤 모집 정보와 공통 정보 입력을 진행하도록 테스트 동기화를 보강했다.
+- 자동입력 이후 controlled overlay 값을 다시 덮어써 필수 일정이 초기화되던 문제를 방지했다.
+- 실제 `POST /api/admin/programs` 성공을 확인했다.
+- 생성 응답의 `programId`를 확보했다.
+- 생성 직후 canonical `GET /api/admin/programs/{programId}`를 호출해 HTTP 200, ID 일치, 프로그램명 일치를 확인했다.
+- 프로그램 목록 재조회 후 생성 프로그램이 노출되는 것을 확인했다.
+
+### 2. mutation 및 저장 후 재조회
+
+실행 대상:
+
+```text
+tests/e2e/flows/programs/ujat/ujat-mutation-revalidation.spec.ts
+```
+
+최종 결과:
+
+```text
+4 passed
+```
+
+| 케이스 | 결과 |
+|---|---|
+| 교육 지역 정원 PUT 후 GET | PASS |
+| 기관 임시 일정 PUT 후 GET | PASS |
+| 출석 bulk-upsert 후 회차 GET | PASS |
+| 일정 변경 요청의 상태 충돌 409 | PASS |
+
+첫 실행에서 만료된 관리자 JWT로 401이 발생했으나, 제품 API 오류가 아니라 인증 세션 만료로 분류했다. 관리자 auth setup 갱신 후 동일 스펙을 재실행해 4건 모두 통과했다.
+
+### 3. UJAT 수정 E2E 잔여 상태
+
+수정 대상:
+
+```text
+tests/e2e/flows/programs/ujat-program-edit.spec.ts
+tests/e2e/pages/ujat-program-edit.page.ts
+```
+
+확인 결과:
+
+- 목록의 고정 더미 행이 없는 경우 canonical UJAT 프로그램 목록 API에서 Playwright 생성 프로그램을 찾도록 보강했다.
+- 상세 진입 후 canonical 상세 API의 실제 프로그램명을 사용하도록 보강했다.
+- 수정 저장 시 필수 `최대 학급 수`·`최대 봉사자 수` 입력 누락으로 저장 모달이 막히던 테스트 문제를 보완했다.
+- 그러나 보정 후 재실행에서는 CMS 화면이 빈 화면으로 렌더링되어 신규 등록 진입 단계에서 중단됐다.
+- 따라서 수정 저장 성공, 저장 후 상세 왕복, 목록 반영은 아직 PASS로 판정하지 않는다.
+
+남은 확인 조건:
+
+1. CMS 빈 화면이 재현되지 않는 안정적인 브라우저 세션 확보
+2. 수정 대상 프로그램의 상세 진입 및 필수 필드 입력 확인
+3. PATCH 성공 응답 확인
+4. 상세·목록·새로고침에서 서버 원본 값 일치 확인
+
+### 4. 아직 실행하지 않은 범위
+
+- 상·하반기 봉사자 서류 심사 및 최종 결과 mutation
+- 자동 배정·직접 배정·배정 취소
+- 승인된 participant 기준의 진행 현황·출석 UI mutation 왕복
+- 실제 브라우저 화면에서 mutation 직후 React Query 캐시가 관련 목록·상세·진행 화면 전체에 반영되는지 확인
+
+위 항목은 테스트를 생략한 것이 아니라, 승인 상태의 전용 봉사자·participant·slot fixture가 없어 안전하게 실행할 수 없었던 범위다. 기존 실제 데이터에 임의로 승인·배정·반려를 적용하지 않았다.
+
+### 5. 정적 품질 검증
+
+```text
+git diff --check: 통과
+변경 E2E/registration 파일 ESLint: 통과
+apps/cms pnpm typecheck: 통과
+```
+
+ESLint 실행 중 baseline-browser-mapping 업데이트 안내가 출력됐지만 오류는 아니며, 최종 exit code는 0이다.
+
+### 최종 판정
+
+- 신규 UJAT 생성과 핵심 mutation API 저장·재조회는 PASS다.
+- mutation 이후 읽기 전용 상세 회귀도 PASS다.
+- UJAT 수정 저장, 봉사자 심사 mutation, 자동·직접 배정·취소, 실제 UI 캐시 왕복은 아직 완료되지 않았다.
+- 실패한 범위를 성공으로 보정하거나 fallback 데이터로 대체하지 않았다.
+- 현재 작업 트리는 기존 변경사항과 이번 보완사항이 함께 남아 있으며, 이번 검증에서는 커밋·푸시하지 않았다.

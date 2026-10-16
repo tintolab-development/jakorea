@@ -92,7 +92,29 @@ export class UjatProgramEditPage {
     try {
       await expect(row).toBeVisible({ timeout: 12_000 })
     } catch {
-      return null
+      // 신규 등록 E2E가 만든 전용 프로그램을 canonical 목록 API에서 찾는다.
+      // 목록 테이블의 표시 컬럼이 대표명을 생략해도 다른 프로그램을 선택하지 않는다.
+      const candidate = await this.page.evaluate(async () => {
+        const token = localStorage.getItem('auth_token')
+        const response = await fetch('/api/admin/programs?page=0&size=100&programType=UJAT', {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        const body = (await response.json().catch(() => null)) as {
+          items?: Array<{ id?: string | number; mainTitle?: string }>
+          content?: Array<{ id?: string | number; mainTitle?: string }>
+        } | Array<{ id?: string | number; mainTitle?: string }> | null
+        const rows = Array.isArray(body) ? body : body?.items ?? body?.content ?? []
+        const match = rows.find(
+          item => typeof item.mainTitle === 'string' && item.mainTitle.startsWith('Playwright UJAT 테스트·')
+        )
+        return match?.id != null
+          ? { id: String(match.id), mainTitle: String(match.mainTitle) }
+          : null
+      })
+      if (!candidate) return null
+      await this.page.goto(`/programs/ujat?programId=${candidate.id}&lnb=info&tab=info`)
+      await this.expectDetailShellReady()
+      return { programId: candidate.id, programTitle: candidate.mainTitle }
     }
 
     await row.click()
@@ -104,7 +126,23 @@ export class UjatProgramEditPage {
       throw new Error('상세 URL에 programId 가 없습니다.')
     }
 
-    return { programId, programTitle: EDITABLE_UJAT_DUMMY_TITLE }
+    const detail = await this.page.evaluate(async id => {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      const body = (await response.json().catch(() => null)) as {
+        data?: { mainTitle?: string }
+        mainTitle?: string
+      } | null
+      return {
+        status: response.status,
+        mainTitle: body?.data?.mainTitle ?? body?.mainTitle ?? '',
+      }
+    }, programId)
+    expect(detail.status).toBe(200)
+    expect(detail.mainTitle).toBeTruthy()
+    return { programId, programTitle: detail.mainTitle }
   }
 
   async openEditableDummy(): Promise<UjatEditableDummyOpenResult> {
@@ -184,6 +222,10 @@ export class UjatProgramEditPage {
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
 
+    await clickSectionNavIfVisible(this.page, '지역 별 교육 진행 가능 학급 및 봉사단 수')
+    await fillAllByPlaceholder(this.page, '최대 학급 수', '1')
+    await fillAllByPlaceholder(this.page, '최대 봉사자 수', '1')
+
     this.commonEdited = {
       titleEn: EDIT_EN_NAME,
       managementName: EDIT_MANAGEMENT_NAME,
@@ -196,14 +238,17 @@ export class UjatProgramEditPage {
     await expect(this.page).not.toHaveURL(/edit=info/, { timeout: 30_000 })
   }
 
-  async expectCommonInfoUpdated(snapshot?: UjatCommonInfoEditedSnapshot | null) {
+  async expectCommonInfoUpdated(
+    snapshot?: UjatCommonInfoEditedSnapshot | null,
+    programTitle: string = EDITABLE_UJAT_DUMMY_TITLE
+  ) {
     const s = snapshot ?? this.commonEdited
     await this.ensureCommonInfoTab()
 
     await expectDetailInfoFieldContains(
       this.page,
       '대표 프로그램명 (국문)',
-      EDITABLE_UJAT_DUMMY_TITLE
+      programTitle
     )
 
     if (!s) {
@@ -346,7 +391,7 @@ export class UjatProgramEditPage {
     await expect(this.page.getByText(/봉사자 신청/).first()).toBeVisible({ timeout: 30_000 })
   }
 
-  async expectDummyVisibleInList(programId: string) {
+  async expectDummyVisibleInList(programId: string, programTitle = EDITABLE_UJAT_DUMMY_TITLE) {
     await this.page.goto('/programs/ujat')
     await expect(this.page.getByRole('button', { name: /신규 등록/ })).toBeVisible({
       timeout: 30_000,
@@ -354,7 +399,7 @@ export class UjatProgramEditPage {
 
     const row = this.page
       .locator('tbody.ant-table-tbody tr.ant-table-row')
-      .filter({ hasText: EDITABLE_UJAT_DUMMY_TITLE })
+      .filter({ hasText: programTitle })
       .first()
     await expect(row).toBeVisible({ timeout: 30_000 })
 

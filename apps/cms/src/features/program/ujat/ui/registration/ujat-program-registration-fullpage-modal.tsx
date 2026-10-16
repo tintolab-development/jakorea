@@ -333,8 +333,8 @@ function UjatProgramRegistrationFullpageModalInner({
         }
         headerActionsLeading={
           <RegistrationDevAutofillButton
-            onClick={() => {
-              void applyDevProgramRegistrationAutofill('ujat')
+            onClick={async () => {
+              await applyDevProgramRegistrationAutofill('ujat')
             }}
           />
         }

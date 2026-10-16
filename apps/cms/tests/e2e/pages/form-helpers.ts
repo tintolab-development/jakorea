@@ -468,7 +468,11 @@ async function fillParagraphDateByPlaceholderOnce(
       .locator('.detail-info-form__field:visible')
       .filter({ has: fieldLabel })
       .locator('.paragraph-date-picker__trigger:visible')
-    return byPlaceholder.or(byFieldLabel).first()
+    // 일부 등록 폼에서는 트리거가 날짜 picker 전용 class 대신
+    // 접근성 button으로만 노출된다. 동일 placeholder의 실제 버튼을
+    // fallback으로 포함해 동적 반복 일정도 놓치지 않는다.
+    const byRole = page.getByRole('button', { name: placeholder, exact: true })
+    return byRole.or(byPlaceholder).or(byFieldLabel).first()
   }
 
   let trigger = triggerLocator()
@@ -662,10 +666,11 @@ export async function fillAllParagraphDatesByPlaceholder(
   mode: 'single' | 'range' = 'range',
   options?: FillParagraphDateOptions
 ) {
-  const triggers = page
+  const styledTriggers = page
     .locator('.paragraph-date-picker__trigger:visible')
     .filter({ hasText: placeholder })
-  const count = await triggers.count()
+  const roleTriggers = page.getByRole('button', { name: placeholder, exact: true })
+  const count = Math.max(await styledTriggers.count(), await roleTriggers.count())
   for (let i = 0; i < count; i += 1) {
     // 매번 첫 번째 남은 placeholder 트리거를 채움 (설정 후 텍스트가 바뀜)
     await fillParagraphDateByPlaceholder(page, placeholder, mode, options)
