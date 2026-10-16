@@ -1505,8 +1505,13 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
   }
 }): Record<string, unknown> {
   const basicPrefix = 'trainedTeachersRegistration.basicInfo'
-  const scheduleLine =
+  const educationScheduleLine =
     input.educationScheduleLines.find(line => line.trim()) ?? scheduleLineAt(1)
+  // 교육 연수 진행 일정은 날짜만 있는 기간형 교육 일정과 달리 시간까지
+  // 입력해야 한다. 기본 교육 일정의 period/date 선택값은 그대로 보존하고,
+  // 교육 연수 필드에만 시간 포함 일정을 사용한다.
+  const teacherTrainingScheduleLine =
+    input.layout.teacherTrainingEnabled === true ? scheduleLineAt(1) : educationScheduleLine
   const participant = input.layout.participant ?? {
     ...TRAINED_TEACHERS_AUTOFILL_PARTICIPANT,
     organization: input.layout.participantOrganization,
@@ -1530,11 +1535,13 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
     [`${basicPrefix}.managerContactId`]: input.resolved.contactId,
     [`${basicPrefix}.managerContactIds`]: input.resolved.contactId ? [input.resolved.contactId] : [],
     'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
-    'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine': scheduleLine,
+    'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
+      teacherTrainingScheduleLine,
     'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm':
       input.typeSettings.educationForm,
     'generalRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
-    'generalRegistration.educationCurriculum.preEducationScheduleLine': scheduleLine,
+    'generalRegistration.educationCurriculum.preEducationScheduleLine':
+      teacherTrainingScheduleLine,
   }
   const requiredContext: TrainedTeachersRegistrationRequiredFieldContext = {
     participant,
@@ -1554,7 +1561,7 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
     programTitleKo: input.sample.titleKo,
   }
   return completeTrainedTeachersDevAutofillOverlay(overlay, requiredContext, {
-    scheduleLine,
+    scheduleLine: teacherTrainingScheduleLine,
     titleEn: input.sample.titleEn,
     publicTitle: input.sample.publicTitle,
     operationRange: { ...input.sample.operationRange },
