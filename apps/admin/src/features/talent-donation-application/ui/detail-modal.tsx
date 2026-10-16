@@ -11,7 +11,11 @@ import type { TalentDonationApplication } from '@/entities/talent-donation-appli
 import { shouldUseTalentDonationApplicationRemoteApi } from '@/features/talent-donation-application/api/capabilities'
 import { downloadTalentDonationApplicationAttachmentService } from '@/features/talent-donation-application/api/service'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/talent-donation-application/api/store'
-import { formatDateDot, formatDateRangeDot } from '@/shared/lib/format-display'
+import {
+  formatDateDot,
+  formatDateRangeDot,
+  formatDateTimeDotWithKoreanWeekday,
+} from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
 import './detail-modal.css'
@@ -26,13 +30,6 @@ type Props = {
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
-}
-
-function formatDateTimeWithWeekday(iso: string | null | undefined): string {
-  if (!iso) return '-'
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD(ddd) HH:mm')
 }
 
 function statusLabel(status: TalentDonationApplication['status']): string {
@@ -105,7 +102,7 @@ export function TalentDonationApplicationDetailModal({
     const name = data.confirmedByName?.trim() || DEFAULT_CONFIRM_ACTOR
     return (
       <span className="talent-app-detail-modal__confirmed">
-        <span>{formatDateTimeWithWeekday(data.confirmedAt)}</span>
+        <span>{formatDateTimeDotWithKoreanWeekday(data.confirmedAt)}</span>
         <DetailInfoForm.TdDivider />
         <span>{name}</span>
       </span>
@@ -240,7 +237,7 @@ export function TalentDonationApplicationDetailModal({
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
                     label="신청일시"
-                    view={<span>{formatDateTimeWithWeekday(data.appliedAt)}</span>}
+                    view={<span>{formatDateTimeDotWithKoreanWeekday(data.appliedAt)}</span>}
                     edit={null}
                     readOnlyDisplay
                   />

@@ -16,6 +16,7 @@ import type {
 } from '@/entities/recruit-applicant/model/types'
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { downloadRecruitApplicantAttachmentService } from '@/features/recruit-applicant/api/service'
+import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
 import './detail-modal.css'
@@ -54,13 +55,6 @@ const EDUCATION_LABEL: Record<RecruitEducationLevel, string> = {
   master: '석사 졸업',
   doctor: '박사 졸업',
   other: '기타',
-}
-
-function formatDateTimeWithWeekday(iso: string | null | undefined): string {
-  if (!iso) return '-'
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD(ddd) HH:mm')
 }
 
 function joinParts(parts: Array<string | null | undefined>, separator: string): string {
@@ -120,7 +114,7 @@ export function RecruitApplicantDetailModal({
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) return <span>-</span>
-    const when = formatDateTimeWithWeekday(data.confirmedAt)
+    const when = formatDateTimeDotWithKoreanWeekday(data.confirmedAt)
     const name = data.confirmedByName?.trim()
     if (!name) return <span>{when}</span>
     return (
@@ -251,7 +245,7 @@ export function RecruitApplicantDetailModal({
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
                       label="신청일시"
-                      view={<span>{formatDateTimeWithWeekday(data.appliedAt)}</span>}
+                      view={<span>{formatDateTimeDotWithKoreanWeekday(data.appliedAt)}</span>}
                       edit={null}
                       readOnlyDisplay
                     />

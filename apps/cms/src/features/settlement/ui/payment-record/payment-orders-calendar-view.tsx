@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { formatYmdCompactWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import {
@@ -210,7 +211,7 @@ function paymentEventToSettlementListRow(
         : undefined,
     settlementListTitleVariant: isProgramExposure ? 'bracket-program' : 'plain-instructor',
     institutionName,
-    lectureDateDisplay: ev.date.format('YYYY.MM.DD (ddd)'),
+    lectureDateDisplay: formatYmdCompactWithKoreanWeekday(ev.date),
     calendarDate,
     status: uiStatus,
     scheduledAmount: ev.amount,

@@ -5,9 +5,15 @@
  * - 숫자: 천단위 구분, 후행 0 제거
  */
 
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 
-function parseDisplayDate(value: Date | string | number) {
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+function koreanWeekdayLabel(value: Dayjs): string {
+  return WEEKDAY_KO[value.day()] ?? ''
+}
+
+function parseDisplayDate(value: Date | string | number | Dayjs) {
   if (typeof value === 'string') {
     const trimmed = value.trim()
     // ISO-8601 (`2026-09-20T01:00:00Z`) — 아래 날짜 정규식이 `T` 앞만 잘라
@@ -37,6 +43,24 @@ export function formatDateTimeDot(value: Date | string | number | null | undefin
   const parsed = parseDisplayDate(value)
   if (!parsed.isValid()) return '-'
   return parsed.format('YYYY.MM.DD HH:mm')
+}
+
+/** `YYYY.MM.DD(금) HH:mm` — dayjs `ddd` 영문 요일 사용 금지 */
+type DisplayDateInput = Date | string | number | Dayjs | null | undefined
+
+export function formatDateTimeDotWithKoreanWeekday(value: DisplayDateInput): string {
+  if (value == null || value === '') return '-'
+  const parsed = parseDisplayDate(value)
+  if (!parsed.isValid()) return '-'
+  return `${parsed.format('YYYY.MM.DD')}(${koreanWeekdayLabel(parsed)}) ${parsed.format('HH:mm')}`
+}
+
+/** `2026년 04월 03일(금)` */
+export function formatKoreanYearMonthDayWithWeekday(value: DisplayDateInput): string {
+  if (value == null || value === '') return '-'
+  const parsed = parseDisplayDate(value)
+  if (!parsed.isValid()) return '-'
+  return `${parsed.format('YYYY년 MM월 DD일')}(${koreanWeekdayLabel(parsed)})`
 }
 
 export function formatDateRangeDot(

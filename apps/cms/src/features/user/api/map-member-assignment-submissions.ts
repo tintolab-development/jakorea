@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatYmdSpacedParenWeekday } from '@/shared/lib/format-date-korean-weekday'
 import type { MemberAssignmentSubmissionResponse } from '@/shared/api/generated/members/schemas/memberAssignmentSubmissionResponse'
 import type {
   AssignmentSubmissionDetail,
@@ -47,7 +48,7 @@ function mapLectureProgress(raw?: string): LectureProgressDisplayKey {
 function formatSubmittedAt(value?: string): string {
   if (!value?.trim()) return '-'
   const parsed = dayjs(value)
-  return parsed.isValid() ? parsed.format('YYYY. MM. DD (ddd)') : value
+  return parsed.isValid() ? formatYmdSpacedParenWeekday(parsed) : value
 }
 
 function formatPeriodLabel(start?: string, end?: string, label?: string): string {

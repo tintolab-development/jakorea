@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatShortYearMdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import {
   EMPTY_UJAT_HALF_EVENT_RANGE_SEAL,
   type UjatHalfEventRangeSeal,
@@ -27,9 +28,7 @@ function formatScheduleDateLabel(iso: string | null | undefined): string {
   if (!iso) return ''
   const d = dayjs(iso)
   if (!d.isValid()) return ''
-  const yy = String(d.year()).slice(-2)
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${weekdays[d.day()]})`
+  return formatShortYearMdWithKoreanWeekday(d)
 }
 
 export function formatUjatEventRangeLabel(seal: UjatHalfEventRangeSeal): string {
@@ -37,9 +36,9 @@ export function formatUjatEventRangeLabel(seal: UjatHalfEventRangeSeal): string 
   const start = seal.start ? dayjs(seal.start) : null
   const end = seal.end ? dayjs(seal.end) : null
   if (start?.isValid() && end?.isValid()) {
-    return `${start.format('YYYY년 M월 D일(ddd)')} ~ ${formatScheduleDateLabel(seal.end)}`
+    return `${formatScheduleDateLabel(seal.start)} ~ ${formatScheduleDateLabel(seal.end)}`
   }
-  if (start?.isValid()) return start.format('YYYY년 M월 D일(ddd)')
+  if (start?.isValid()) return formatScheduleDateLabel(seal.start)
   return formatScheduleDateLabel(seal.end) || '-'
 }
 

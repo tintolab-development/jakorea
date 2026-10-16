@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { formatShortYearMdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
   EMPTY_UJAT_HALF_EVENT_RANGE_SEAL,
@@ -28,9 +29,7 @@ import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-e
 function formatIsoDateLabel(iso: string): string {
   const d = dayjs(iso)
   if (!d.isValid()) return ''
-  const yy = String(d.year()).slice(-2)
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${weekdays[d.day()]})`
+  return formatShortYearMdWithKoreanWeekday(d)
 }
 
 function UnavailableDatesView({

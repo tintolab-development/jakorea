@@ -15,6 +15,7 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { formatUjatDotDateWithWeekday } from '@/features/program/ujat/lib/ujat-date-display'
 import {
   resolveUjatRecruitAnnouncementTitle,
   ujatRecruitDisplayKindFromVolunteerHalf,
@@ -53,7 +54,6 @@ import {
   UjatRecruitFormPeriodDatePicker,
   UjatRecruitVolunteerNotesField,
 } from '../recruit-lib/ujat-recruit-form-fields'
-import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
@@ -78,7 +78,7 @@ function dateMethodLine(date: string | Date | undefined, method: string | undefi
   if (!date) return '-'
   const methodLabel = method?.trim() || fallbackMethod
   return (
-    <UjatInlineDividedSegments segments={[dayjs(date).format('YYYY.MM.DD(ddd)'), methodLabel]} />
+    <UjatInlineDividedSegments segments={[formatUjatDotDateWithWeekday(date), methodLabel]} />
   )
 }
 

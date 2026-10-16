@@ -11,6 +11,7 @@ import type { CorporateConsultation } from '@/entities/corporate-consultation/mo
 import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
 import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/corporate-consultation/api/store'
+import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
 import './detail-modal.css'
@@ -25,13 +26,6 @@ type Props = {
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
-}
-
-function formatDateTimeWithWeekday(iso: string | null | undefined): string {
-  if (!iso) return '-'
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD(ddd) HH:mm')
 }
 
 function statusLabel(status: CorporateConsultation['status']): string {
@@ -91,7 +85,7 @@ export function CorporateConsultationDetailModal({
     const name = data.confirmedByName?.trim() || DEFAULT_CONFIRM_ACTOR
     return (
       <span className="corp-consult-detail-modal__confirmed">
-        <span>{formatDateTimeWithWeekday(data.confirmedAt)}</span>
+        <span>{formatDateTimeDotWithKoreanWeekday(data.confirmedAt)}</span>
         <DetailInfoForm.TdDivider />
         <span>{name}</span>
       </span>
@@ -229,7 +223,7 @@ export function CorporateConsultationDetailModal({
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
                       label="신청일시"
-                      view={<span>{formatDateTimeWithWeekday(data.appliedAt)}</span>}
+                      view={<span>{formatDateTimeDotWithKoreanWeekday(data.appliedAt)}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
