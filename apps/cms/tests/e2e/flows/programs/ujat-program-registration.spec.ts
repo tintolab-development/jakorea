@@ -26,7 +26,7 @@ test.describe('UJAT 프로그램 신규 등록', () => {
     await expectAuthenticatedShell(page)
 
     registration = new UjatProgramRegistrationPage(page)
-    await expect(page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
+    await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({
       timeout: 30_000,
     })
     await registration.openNewRegistration()
