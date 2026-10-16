@@ -8,7 +8,6 @@ import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
-import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import {
@@ -36,15 +35,12 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
+import { ApplicantPreferredScheduleDetailSection } from './applicant-preferred-schedule-detail-section'
 import {
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationGuidanceParagraph,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import {
-  formatInstitutionApplicationScheduleRowLabel,
-  shouldShowInstitutionApplicationDetailScheduleSection,
-} from '@/features/program/general/lib/institution-application-session-display'
+import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import { institutionHopeScheduleEmptyMessage } from '@/features/program/general/lib/institution-hope-schedule-empty-message'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
@@ -52,7 +48,6 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
   INSTITUTION_APPLICATION_INFO_COLGROUP,
-  INSTITUTION_APPLICATION_SCHEDULE_COLGROUP,
   InstitutionApplicationTableRowFullWidth,
   InstitutionApplicationTableRowSingleCol,
   InstitutionApplicationTableRowTwoCols,
@@ -201,27 +196,6 @@ function buildTeacherInfoCell(
   if (segments.length === 1) return segments[0]
   return (
     <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(segments)}</ProgramDetailTdSegmentWrap>
-  )
-}
-
-function PreferredScheduleRow({
-  rank,
-  session,
-  bridge,
-}: {
-  rank: number
-  session: ParticipatingSchoolSession
-  bridge?: ReturnType<typeof resolveInstitutionApplicationProgramBridge> | null
-}) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {formatInstitutionApplicationScheduleRowLabel(rank, bridge)}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        <GeneralDetailSessionLine session={session} bridge={bridge} />
-      </td>
-    </tr>
   )
 }
 
@@ -534,35 +508,11 @@ export function ApplicantGeneralInstitutionBasicInfo({
       ) : null}
 
       {showScheduleSection ? (
-      <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">진행 희망 교육 일정</h3>
-        <div className="applicant-institution-basic-info__table-wrap">
-          <table className="applicant-institution-basic-info__table">
-            {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
-            <tbody>
-              {sessions.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={2}
-                    className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-                  >
-                    {institutionHopeScheduleEmptyMessage(institution)}
-                  </td>
-                </tr>
-              ) : (
-                sessions.map((session, index) => (
-                  <PreferredScheduleRow
-                    key={session.round}
-                    rank={index + 1}
-                    session={session}
-                    bridge={institutionApplicationBridge}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <ApplicantPreferredScheduleDetailSection
+          sessions={sessions}
+          bridge={institutionApplicationBridge}
+          emptyMessage={institutionHopeScheduleEmptyMessage(institution)}
+        />
       ) : null}
     </div>
   )
