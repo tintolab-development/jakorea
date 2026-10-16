@@ -1,6 +1,6 @@
 import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
-import { mapPreferredEducationSchedulesToSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
+import { parseOrganizationPreferredScheduleId } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import type { GeneralProgramSessionRoundKind } from '@/types/domain'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import {
@@ -23,7 +23,16 @@ export type OrganizationApproveScheduleValidation = {
 }
 
 const UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE =
-  '승인 가능한 실제 교육 일정이 없습니다. 백엔드에서 기관 희망 일정과 프로그램 교육 일정의 연결 상태를 확인해 주세요.'
+  '희망 교육 일정이 없거나 표시할 수 없습니다. 신청 상세의 preferredEducationSchedules를 확인해 주세요.'
+
+export const ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE =
+  '선택한 희망 교육 일정에 운영 일정 ID(scheduleId)가 없어 승인할 수 없습니다. 신청 상세 API에서 preferredEducationSchedules.scheduleId를 반영해 주세요.'
+
+export type OrganizationApproveAssignedPreviewRow = {
+  label: string
+  grade: string
+  className: string
+}
 
 function parseIsoDateTime(value: unknown): number | null {
   if (typeof value !== 'string') return null
@@ -53,8 +62,79 @@ function formatScheduleLabel(schedule: PreferredEducationSchedule): string {
 }
 
 /**
- * 승인 슬롯은 신청 희망 일정과 실제 program_schedule가 정확히 일치할 때만 만든다.
- * `line:N` 같은 표시용 값은 숫자 ID로 추정하거나 변환하지 않는다.
+ * 승인 모달 선택지 — 해당 신청의 `preferredEducationSchedules`만 노출한다.
+ * 프로그램 schedules GET·시각 교차 검증은 하지 않는다.
+ */
+export function resolveOrganizationApproveScheduleOptionsFromPreferred(
+  preferred: PreferredEducationSchedule[] | undefined
+): OrganizationApproveScheduleValidation {
+  const list = preferred ?? []
+  if (list.length === 0) {
+    return {
+      options: [],
+      invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+      duplicateScheduleIds: [],
+    }
+  }
+
+  const options: OrganizationApproveScheduleOption[] = []
+  const seenPositiveIds = new Set<number>()
+
+  for (let index = 0; index < list.length; index++) {
+    const schedule = list[index]
+    const label =
+      (typeof schedule.label === 'string' ? schedule.label.trim() : '') ||
+      formatScheduleLabel(schedule)
+    const scheduleId = parseOrganizationPreferredScheduleId(schedule.scheduleId)
+
+    if (scheduleId != null) {
+      if (seenPositiveIds.has(scheduleId)) continue
+      seenPositiveIds.add(scheduleId)
+      options.push({
+        scheduleId,
+        label: label || `일정 ${scheduleId}`,
+      })
+      continue
+    }
+
+    if (!label) continue
+    options.push({ scheduleId: -(index + 1), label })
+  }
+
+  return options.length > 0
+    ? { options, invalidReason: null, duplicateScheduleIds: [] }
+    : {
+        options: [],
+        invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        duplicateScheduleIds: [],
+      }
+}
+
+/** 승인 API용 scheduleId — UI placeholder(음수)는 preferred 항목의 scheduleId로만 해석한다. */
+export function resolveOrganizationApproveScheduleIdsFromSelection(
+  preferred: PreferredEducationSchedule[] | undefined,
+  selectedOptionIds: readonly number[]
+): number[] {
+  const list = preferred ?? []
+  const resolved: number[] = []
+  for (const optionId of selectedOptionIds) {
+    if (Number.isInteger(optionId) && optionId > 0) {
+      resolved.push(optionId)
+      continue
+    }
+    if (!Number.isInteger(optionId) || optionId >= 0) continue
+    const entry = list[-optionId - 1]
+    const scheduleId = parseOrganizationPreferredScheduleId(entry?.scheduleId)
+    if (scheduleId != null) {
+      resolved.push(scheduleId)
+    }
+  }
+  return resolved
+}
+
+/**
+ * @deprecated 승인 모달은 {@link resolveOrganizationApproveScheduleOptionsFromPreferred} 사용.
+ * program_schedule 교차 검증이 필요한 레거시·테스트용.
  */
 export function validateOrganizationApproveScheduleOptions(
   preferred: PreferredEducationSchedule[] | undefined,
@@ -153,24 +233,7 @@ export function validateOrganizationApproveScheduleOptions(
 export function listOrganizationApproveScheduleOptions(
   preferred: PreferredEducationSchedule[] | undefined
 ): OrganizationApproveScheduleOption[] {
-  const sessions = mapPreferredEducationSchedulesToSessions(preferred)
-  const seen = new Set<number>()
-  const options: OrganizationApproveScheduleOption[] = []
-  for (const session of sessions) {
-    const scheduleId = session.resolvedScheduleId
-    if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) continue
-    if (seen.has(scheduleId)) continue
-    seen.add(scheduleId)
-    const dateLabel = [session.date, session.dayOfWeek !== '-' ? `(${session.dayOfWeek})` : '']
-      .filter(Boolean)
-      .join('')
-    const timeLabel = session.timeRange !== '-' ? ` ${session.timeRange}` : ''
-    options.push({
-      scheduleId,
-      label: `${dateLabel}${timeLabel}`.trim() || `일정 ${scheduleId}`,
-    })
-  }
-  return options
+  return resolveOrganizationApproveScheduleOptionsFromPreferred(preferred).options
 }
 
 export function hasUnresolvedOrganizationApprovePreferredSchedules(
@@ -185,6 +248,40 @@ export function hasUnresolvedOrganizationApprovePreferredSchedules(
       (entry.scheduleId == null || entry.scheduleId <= 0) &&
       Boolean(entry.label?.trim() || entry.startAt?.trim())
   )
+}
+
+/** 승인 API용 scheduleId 없이도 UI 「배정된 일정」 미리보기를 그린다. */
+export function buildOrganizationApproveAssignedPreview(input: {
+  sessionRound: GeneralProgramSessionRoundKind
+  selectedOptionIds: readonly number[]
+  scheduleOptions: OrganizationApproveScheduleOption[]
+  educationGrade: string
+  classCount: number
+}): OrganizationApproveAssignedPreviewRow[] {
+  const grade = input.educationGrade.trim()
+  const classTotal = Math.max(1, input.classCount || 1)
+  const optionsById = new Map(input.scheduleOptions.map(option => [option.scheduleId, option]))
+  const distinctSelected = [...new Set(input.selectedOptionIds)]
+  if (distinctSelected.length === 0) return []
+
+  if (input.sessionRound === 'single') {
+    const optionId = distinctSelected[0]
+    const label = optionsById.get(optionId)?.label?.trim() ?? ''
+    if (!label) return []
+    return Array.from({ length: classTotal }, (_, index) => ({
+      label,
+      grade,
+      className: `${index + 1}반`,
+    }))
+  }
+
+  const rows: OrganizationApproveAssignedPreviewRow[] = []
+  for (const optionId of distinctSelected) {
+    const label = optionsById.get(optionId)?.label?.trim() ?? ''
+    if (!label) continue
+    rows.push({ label, grade, className: '1반' })
+  }
+  return rows
 }
 
 export function buildOrganizationApproveSlotsForSelection(input: {
@@ -228,7 +325,7 @@ export function validateOrganizationApproveSlotsClient(input: {
     return '학년·학급 정보를 확인해 주세요.'
   }
   if (!input.slots.every(slot => Number.isInteger(slot.scheduleId) && slot.scheduleId > 0)) {
-    return UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE
+    return ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE
   }
   const allowed = new Set(input.allowedScheduleIds)
   if (input.slots.some(slot => !allowed.has(slot.scheduleId))) {
@@ -257,7 +354,7 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
   ORGANIZATION_APPROVE_SLOTS_REQUIRED: '승인하려면 교육 일정·학급 배정이 필요합니다.',
   ORGANIZATION_APPROVE_SLOT_COUNT_INVALID:
     '선택한 교육 일정 수가 프로그램 회차 유형과 맞지 않습니다.',
-  ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+  ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED: ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED:
     '신청자가 희망하지 않은 교육 일정입니다. 희망 일정을 다시 확인해 주세요.',
   GENERAL_ORGANIZATION_ASSIGNMENT_SCHEDULE_INVALID:

@@ -10,9 +10,33 @@ export type ApplicantSessionLineInput = {
   scheduleLabel?: string
 }
 
+import { appendCurriculumSingleDateFixedScheduleSessionSuffix } from '@jakorea/form-schema/program-application'
 import type { SessionLinePreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
+
+/** 신청 폼 고정 일정 선택지와 동일 — 커리큘럼·단일·날짜 `예정일 | N차시` */
+export function enrichGeneralDetailScheduleLineLabel(
+  baseLabel: string,
+  bridge?: InstitutionApplicationProgramBridge | null
+): string {
+  const trimmed = baseLabel.trim()
+  if (!trimmed || !bridge) return trimmed || baseLabel
+  return appendCurriculumSingleDateFixedScheduleSessionSuffix(
+    trimmed,
+    {
+      educationStructure: bridge.educationStructure,
+      sessionRound: bridge.sessionRound,
+      educationScheduleMode: bridge.educationScheduleMode,
+      educationScheduleLines: bridge.educationScheduleLines,
+    },
+    {
+      curriculumChartSessionCount: bridge.curriculumChartSessionCount,
+      educationRoundCount: bridge.educationRoundCount,
+      sessionsPerRound: bridge.sessionsPerRound,
+    }
+  )
+}
 
 /** 날짜·시간·교시 구간 텍스트 (participating-institutions-section과 동일) */
 export function getSessionLineParts(
@@ -45,8 +69,10 @@ export function formatGeneralDetailSessionLine(
   bridge?: InstitutionApplicationProgramBridge | null
 ): string {
   const scheduleLabel = s.scheduleLabel?.trim()
-  if (scheduleLabel) return scheduleLabel
+  if (scheduleLabel) return enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge)
   const { datePart, durationPart, periodPart } = getSessionLineParts(s, 'general-detail', bridge)
-  if (!periodPart) return `${datePart} ${durationPart}`
+  if (!periodPart) {
+    return enrichGeneralDetailScheduleLineLabel(`${datePart} ${durationPart}`, bridge)
+  }
   return `${datePart} ${durationPart} | ${periodPart}`
 }
