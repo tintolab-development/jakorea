@@ -22,6 +22,7 @@ import {
   shouldShowInstitutionApplicationPreferredScheduleParagraph,
   shouldShowInstitutionApplicationPreferredScheduleSessionSelect,
   shouldShowInstitutionApplicationSchedulePeriodDateOnlyPreferred,
+  shouldShowInstitutionApplicationGuidanceParagraph,
   shouldShowInstitutionApplicationScheduleParagraph,
   syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from './institution-application-program-bridge'
@@ -43,6 +44,17 @@ describe('resolveInstitutionApplicationProgramBridge', () => {
     } as unknown as Program)
 
     expect(bridge.showPreferredEducationForm).toBe(true)
+  })
+
+  it('모집 사전 안내 해당 없음이면 preEducationNoticeRequired가 false다', () => {
+    const bridge = resolveInstitutionApplicationProgramBridge({
+      id: 'prog-no-preguidance',
+      generalCommonInfo: {
+        participantRecruitmentInfo: { preEducationNoticeRequired: false },
+      },
+    } as unknown as Program)
+    expect(bridge.preEducationNoticeRequired).toBe(false)
+    expect(shouldShowInstitutionApplicationGuidanceParagraph(bridge)).toBe(false)
   })
 
   it('프로그램 공통 정보의 교육 진행 예정일을 브리지에 포함한다', () => {
@@ -302,7 +314,7 @@ describe('shouldShowInstitutionApplicationScheduleParagraph', () => {
     expect(shouldShowInstitutionApplicationPreferredScheduleParagraph(input)).toBe(false)
   })
 
-  it('날짜 지정 + 고유 일자 하루이면 단락을 숨긴다', () => {
+  it('날짜 지정 + 같은 날 슬롯 2개이면 단락을 노출한다', () => {
     expect(
       shouldShowInstitutionApplicationScheduleParagraph({
         educationStructure: 'curriculum',
@@ -312,6 +324,18 @@ describe('shouldShowInstitutionApplicationScheduleParagraph', () => {
           '26년 4월 20일(월) 09:30 ~ 12:20',
           '26년 4월 20일(월) 13:00 ~ 15:50',
         ],
+        preEducationNoticeRequired: true,
+      })
+    ).toBe(true)
+  })
+
+  it('날짜 지정 + 슬롯 1개이면 단락을 숨긴다', () => {
+    expect(
+      shouldShowInstitutionApplicationScheduleParagraph({
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
         preEducationNoticeRequired: true,
       })
     ).toBe(false)
@@ -332,7 +356,7 @@ describe('shouldShowInstitutionApplicationScheduleParagraph', () => {
     expect(shouldShowInstitutionApplicationPreferredScheduleParagraph(input)).toBe(false)
   })
 
-  it('일정형 + 단일 + 날짜 — 고유 일자 하루이면 단락 숨김', () => {
+  it('일정형 + 단일 + 날짜 — 같은 날 슬롯 2개이면 단락 노출', () => {
     expect(
       shouldShowInstitutionApplicationScheduleParagraph({
         educationStructure: 'schedule',
@@ -344,7 +368,7 @@ describe('shouldShowInstitutionApplicationScheduleParagraph', () => {
         ],
         preEducationNoticeRequired: true,
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 })
 
@@ -379,7 +403,7 @@ describe('getInstitutionApplicationFormHiddenParagraphIds', () => {
     expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance)).toBeFalsy()
   })
 
-  it('일정형 + 단일 + 날짜 + 고유 일자 하루이면 scheduleChoice를 숨긴다', () => {
+  it('일정형 + 단일 + 날짜 + 같은 날 슬롯 2개이면 scheduleChoice를 숨기지 않는다', () => {
     const hidden = getInstitutionApplicationFormHiddenParagraphIds({
       educationStructure: 'schedule',
       sessionRound: 'single',
@@ -388,6 +412,17 @@ describe('getInstitutionApplicationFormHiddenParagraphIds', () => {
         '26년 4월 20일(월) 09:30 ~ 12:20',
         '26년 4월 20일(월) 13:00 ~ 15:50',
       ],
+      preEducationNoticeRequired: true,
+    })
+    expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)).toBeFalsy()
+  })
+
+  it('일정형 + 단일 + 날짜 + 슬롯 1개이면 scheduleChoice를 숨긴다', () => {
+    const hidden = getInstitutionApplicationFormHiddenParagraphIds({
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
       preEducationNoticeRequired: true,
     })
     expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)).toBe(true)
@@ -410,7 +445,7 @@ describe('resolveInstitutionApplicationProgramBridge — 일정형 단일 날짜
     expect(shouldShowInstitutionApplicationPreferredScheduleParagraph(bridge)).toBe(false)
   })
 
-  it('GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID — scheduleChoice 숨김', () => {
+  it('GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID — 같은 날 슬롯 2개면 scheduleChoice 노출', () => {
     const bridge = resolveInstitutionApplicationProgramBridge({
       id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID,
       generalProgramEducationStructure: 'schedule',
@@ -418,12 +453,13 @@ describe('resolveInstitutionApplicationProgramBridge — 일정형 단일 날짜
     } as Program)
 
     expect(bridge.educationScheduleMode).toBe('date')
-    expect(shouldShowInstitutionApplicationScheduleParagraph(bridge)).toBe(false)
+    expect(bridge.educationScheduleLines?.length).toBe(2)
+    expect(shouldShowInstitutionApplicationScheduleParagraph(bridge)).toBe(true)
     const hidden = getInstitutionApplicationFormHiddenParagraphIds({
       ...bridge,
       preEducationNoticeRequired: bridge.preEducationNoticeRequired ?? true,
     })
-    expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)).toBe(true)
+    expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)).toBeFalsy()
   })
 })
 
@@ -488,7 +524,7 @@ describe('shouldShowInstitutionApplicationPreferredScheduleParagraph', () => {
     ).toBe(true)
   })
 
-  it('날짜 지정 + 고유 일자 하루이면 희망 일정 본문도 숨긴다', () => {
+  it('날짜 지정(고정 일정)이면 희망 일정 본문을 숨긴다', () => {
     expect(
       shouldShowInstitutionApplicationPreferredScheduleParagraph({
         educationStructure: 'curriculum',

@@ -5,6 +5,10 @@
 import { Fragment, type ReactNode } from 'react'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import {
+  resolveInstitutionApplicationProgramBridge,
+  shouldShowInstitutionApplicationGuidanceParagraph,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import { CmsButton } from '@/shared/ui'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
@@ -186,6 +190,10 @@ export function ParticipatingInstitutionApplicationInfo({
   useCompanySchoolScheduleFormat = false,
   onScheduleChangeClick,
 }: ParticipatingInstitutionApplicationInfoProps) {
+  const showGuidanceSection = shouldShowInstitutionApplicationGuidanceParagraph(
+    resolveInstitutionApplicationProgramBridge(program)
+  )
+
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
       {showAdminComment ? (
@@ -288,35 +296,37 @@ export function ParticipatingInstitutionApplicationInfo({
         </div>
       </section>
 
-      <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">안내 사항</h3>
-        <div className="applicant-institution-basic-info__table-wrap">
-          <table className="applicant-institution-basic-info__table">
-            {INSTITUTION_APPLICATION_INFO_COLGROUP}
-            <tbody>
-              <InstitutionApplicationTableRowSingleCol
-                label="강의 공간 내 컴퓨터 여부"
-                value={computerInRoom}
-              />
-              <InstitutionApplicationTableRowSingleCol label="대기 장소 안내" value={waitingPlace} />
-              <InstitutionApplicationTableRowSingleCol
-                label="식사 가능 여부 및 안내"
-                value={mealInfo}
-              />
-              <InstitutionApplicationTableRowSingleCol
-                label={institutionApplicationTableLabelWithParenthesisHint(
-                  INSTITUTION_OTHER_NOTES_TABLE_LABEL
-                )}
-                value={otherNotes}
-              />
-              <InstitutionApplicationTableRowSingleCol
-                label="성범죄 경력 조회서 요청"
-                value={criminalCheck}
-              />
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {showGuidanceSection ? (
+        <section className="applicant-institution-basic-info__section">
+          <h3 className="applicant-institution-basic-info__title">안내 사항</h3>
+          <div className="applicant-institution-basic-info__table-wrap">
+            <table className="applicant-institution-basic-info__table">
+              {INSTITUTION_APPLICATION_INFO_COLGROUP}
+              <tbody>
+                <InstitutionApplicationTableRowSingleCol
+                  label="강의 공간 내 컴퓨터 여부"
+                  value={computerInRoom}
+                />
+                <InstitutionApplicationTableRowSingleCol label="대기 장소 안내" value={waitingPlace} />
+                <InstitutionApplicationTableRowSingleCol
+                  label="식사 가능 여부 및 안내"
+                  value={mealInfo}
+                />
+                <InstitutionApplicationTableRowSingleCol
+                  label={institutionApplicationTableLabelWithParenthesisHint(
+                    INSTITUTION_OTHER_NOTES_TABLE_LABEL
+                  )}
+                  value={otherNotes}
+                />
+                <InstitutionApplicationTableRowSingleCol
+                  label="성범죄 경력 조회서 요청"
+                  value={criminalCheck}
+                />
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <section className="applicant-institution-basic-info__section">
         <div className="participating-institution-application-info__schedule-header">

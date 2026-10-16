@@ -149,7 +149,7 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(false)
   })
 
-  it('개인 · 일정형 · 단일 · 날짜(1일) — scheduleChoice 숨김', () => {
+  it('개인 · 일정형 · 단일 · 날짜(같은 날 슬롯 2개) — scheduleChoice 노출', () => {
     const program = {
       id: 'individual-schedule-single-one-day',
       generalProgramAudience: 'individual',
@@ -169,10 +169,30 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
       paragraphs: [],
       institutionBridge: bridge,
     })
+    expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(false)
+  })
+
+  it('개인 · 일정형 · 단일 · 날짜(슬롯 1개) — scheduleChoice 숨김', () => {
+    const program = {
+      id: 'individual-schedule-single-one-slot',
+      generalProgramAudience: 'individual',
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        educationScheduleMode: 'date',
+        educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+      },
+    } as Program
+    const bridge = resolveInstitutionApplicationProgramBridge(program)
+    const hidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program,
+      paragraphs: [],
+      institutionBridge: bridge,
+    })
     expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(true)
   })
 
-  it('등록 위저드 sync 후 개인 신청 — 고유 일자 1일이면 scheduleChoice를 숨긴다', () => {
+  it('등록 위저드 sync 후 개인 신청 — 같은 날 슬롯 2개이면 scheduleChoice를 숨기지 않는다', () => {
     resetInstitutionApplicationProgramBridge()
     resetProgramRegistrationOverlay()
     replaceProgramRegistrationOverlay({
@@ -195,9 +215,9 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
       institutionBridge: bridge,
       programLinkedApplicationFormPreview: true,
     })
-    expect(options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(
-      true
-    )
+    expect(
+      options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+    ).toBeFalsy()
   })
 
   it('등록 스냅샷 — 개인 참여면 teamInfo를 숨기고 팀 참여면 노출한다', () => {

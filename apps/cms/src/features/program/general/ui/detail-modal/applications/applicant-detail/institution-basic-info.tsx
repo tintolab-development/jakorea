@@ -37,7 +37,10 @@ import {
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
-import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  resolveInstitutionApplicationProgramBridge,
+  shouldShowInstitutionApplicationGuidanceParagraph,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   formatInstitutionApplicationScheduleRowLabel,
   shouldShowInstitutionApplicationDetailScheduleSection,
@@ -273,6 +276,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
     institutionApplicationBridge,
     institution
   )
+  const showGuidanceSection =
+    institutionApplicationBridge == null ||
+    shouldShowInstitutionApplicationGuidanceParagraph(institutionApplicationBridge)
   /** 합반 신청 — 승인 완료 시 노출. 교재명은 프로그램 진행 현황(참여 기관 상세)에서만 */
   const showCombinedClass = institution.approvalStatus === 'approved' && !hideCombinedClass
   const classAndCount: ReactNode =
@@ -492,38 +498,40 @@ export function ApplicantGeneralInstitutionBasicInfo({
         </div>
       </section>
 
-      <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">안내 사항</h3>
-        <div className="applicant-institution-basic-info__table-wrap">
-          <table className="applicant-institution-basic-info__table">
-            {INSTITUTION_APPLICATION_INFO_COLGROUP}
-            <tbody>
-              <InstitutionApplicationTableRowSingleCol
-                label="강의 공간 내 컴퓨터 여부"
-                value={computerValue}
-              />
-              <InstitutionApplicationTableRowSingleCol
-                label="대기 장소 안내"
-                value={waitingPlaceValue}
-              />
-              <InstitutionApplicationTableRowSingleCol
-                label="식사 가능 여부 및 안내"
-                value={mealValue}
-              />
-              <InstitutionApplicationTableRowSingleCol
-                label={institutionApplicationTableLabelWithParenthesisHint(
-                  INSTITUTION_OTHER_NOTES_TABLE_LABEL
-                )}
-                value={otherNotesValue}
-              />
-              <InstitutionApplicationTableRowSingleCol
-                label="성범죄 경력 조회서 요청"
-                value={sexOffenseRequestDisplay}
-              />
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {showGuidanceSection ? (
+        <section className="applicant-institution-basic-info__section">
+          <h3 className="applicant-institution-basic-info__title">안내 사항</h3>
+          <div className="applicant-institution-basic-info__table-wrap">
+            <table className="applicant-institution-basic-info__table">
+              {INSTITUTION_APPLICATION_INFO_COLGROUP}
+              <tbody>
+                <InstitutionApplicationTableRowSingleCol
+                  label="강의 공간 내 컴퓨터 여부"
+                  value={computerValue}
+                />
+                <InstitutionApplicationTableRowSingleCol
+                  label="대기 장소 안내"
+                  value={waitingPlaceValue}
+                />
+                <InstitutionApplicationTableRowSingleCol
+                  label="식사 가능 여부 및 안내"
+                  value={mealValue}
+                />
+                <InstitutionApplicationTableRowSingleCol
+                  label={institutionApplicationTableLabelWithParenthesisHint(
+                    INSTITUTION_OTHER_NOTES_TABLE_LABEL
+                  )}
+                  value={otherNotesValue}
+                />
+                <InstitutionApplicationTableRowSingleCol
+                  label="성범죄 경력 조회서 요청"
+                  value={sexOffenseRequestDisplay}
+                />
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       {showScheduleSection ? (
       <section className="applicant-institution-basic-info__section">
