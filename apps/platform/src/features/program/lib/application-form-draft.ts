@@ -17,10 +17,14 @@ import {
 import { migrateProgramParticipantApplicationParagraphs } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { resolveApplicationAnswerKey } from './application-answer-key.ts'
 import {
+  isApplicationBasicInfoParagraphId,
+  isApplicationGuidanceParagraphId,
   isApplicationSexOffenseInquiryParagraphId,
+  isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
   isPortalDynamicOptionArrayParagraphId,
 } from './apply-form-paragraph-ids.ts'
+import { remapInstitutionSchedulePreviewSlotIds } from './apply-form-schedule.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -738,6 +742,15 @@ export function writingFormDraftFromApplicationForm(
 }
 
 function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
+  if (
+    isApplicationSexOffenseInquiryParagraphId(paragraph.id) ||
+    isApplicationSexOffenseSubmissionParagraphId(paragraph.id) ||
+    isApplicationBasicInfoParagraphId(paragraph.id) ||
+    isApplicationGuidanceParagraphId(paragraph.id)
+  ) {
+    /** sidecar 객체는 override 가 정본. 표 fieldDataRows 를 answers로 보내지 않는다. */
+    return undefined
+  }
   if ('showBottomConsent' in paragraph && paragraph.showBottomConsent) {
     /** BE는 제3자 동의 등 표 본문(`fieldDataRows`)과 하단 동의를 함께 검증한다. */
     if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
@@ -762,11 +775,7 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
     /** 단일 선택은 라디오가 `selectedPreviewSingleId`에 쓴다. 서버는 선택지 값 하나를 받는다. */
     if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
-    return paragraph.selectedPreviewMultipleIds ?? []
-  }
-  if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
-    /** sidecar 조회 방식 — 표 fieldDataRows 를 answers로 보내지 않는다. */
-    return undefined
+    return remapInstitutionSchedulePreviewSlotIds(paragraph.selectedPreviewMultipleIds ?? [])
   }
   if (isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
     if (!hasDynamicOptionArrayState(paragraph)) return undefined
@@ -845,7 +854,14 @@ export function buildApplicationAnswersFromDraft(
       continue
     }
     if (isRequiredParagraph(paragraph) && !isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
-      if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) continue
+      if (
+        isApplicationSexOffenseInquiryParagraphId(paragraph.id) ||
+        isApplicationSexOffenseSubmissionParagraphId(paragraph.id) ||
+        isApplicationBasicInfoParagraphId(paragraph.id) ||
+        isApplicationGuidanceParagraphId(paragraph.id)
+      ) {
+        continue
+      }
       answers[key] = {}
     }
   }

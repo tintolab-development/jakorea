@@ -34,6 +34,10 @@ import {
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
 } from '@/features/program/lib/application-api-error'
+import {
+  readApplicationApiErrorEnvelope,
+  summarizePortalApplicationSubmit,
+} from '@/features/program/lib/summarize-portal-application-submit'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
@@ -1732,7 +1736,12 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
       }
       const guidanceParagraph = findDraftParagraph(displayDraft, isApplicationGuidanceParagraphId)
-      if (guidanceParagraph) {
+      if (
+        guidanceParagraph &&
+        !hiddenParagraphIds.has(guidanceParagraph.id) &&
+        !runtimeHiddenAnswerKeys.has(guidanceParagraph.id) &&
+        !runtimeHiddenAnswerKeys.has(resolveApplicationAnswerKey(guidanceParagraph))
+      ) {
         overrides[resolveApplicationAnswerKey(guidanceParagraph)] =
           guidanceAnswerFromValues(guidanceAnswers)
       }
@@ -1822,6 +1831,13 @@ export function ProgramApplyPage() {
         }
         if (
           hiddenParagraphIds.has(paragraph.id) &&
+          isApplicationGuidanceParagraphId(paragraph.id)
+        ) {
+          omitParagraphIds.add(paragraph.id)
+          omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
+        }
+        if (
+          hiddenParagraphIds.has(paragraph.id) &&
           (isUjatVolunteerPreviousTermParagraphId(paragraph.id) ||
             isUjatVolunteerFreeTextItemsParagraphId(paragraph.id))
         ) {
@@ -1852,13 +1868,23 @@ export function ProgramApplyPage() {
       const classCount = Number.parseInt(basicInfo.classCount, 10)
       const studentCount = Number.parseInt(basicInfo.studentCount, 10)
 
+      const submitBody = {
+        recruitmentId: bundle.option.recruitmentId,
+        applicationType: bundle.option.applicationType,
+        formBindingId: bundle.option.formBindingId,
+        answers,
+        preferredScheduleBlocks,
+      }
+      const submitDebug = summarizePortalApplicationSubmit({
+        programId: numericProgramId,
+        templateVersionId: remoteForm?.templateVersionId ?? null,
+        body: submitBody,
+      })
+      console.info('[portal-application-submit]', submitDebug)
+
       try {
         await submitMutation.mutateAsync({
-          recruitmentId: bundle.option.recruitmentId,
-          applicationType: bundle.option.applicationType,
-          formBindingId: bundle.option.formBindingId,
-          answers,
-          preferredScheduleBlocks,
+          ...submitBody,
           ...(Number.isFinite(classCount) && classCount > 0
             ? { requestedClassCount: classCount }
             : {}),
@@ -1887,6 +1913,12 @@ export function ProgramApplyPage() {
         const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
         const errorCode = getApplicationApiErrorCode(error)
         const validationFailed = errorCode === 'VALIDATION_FAILED'
+        const invalidValue = errorCode === 'INVALID_VALUE'
+        const errorEnvelope = readApplicationApiErrorEnvelope(error)
+        console.info('[portal-application-submit-error]', {
+          ...submitDebug,
+          error: errorEnvelope,
+        })
         const resolveDescription = (interviewVisible: boolean) => {
           if (validationFailed) return PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE
           if (usesOsaAvailableSchedule) return OSA_AVAILABLE_SCHEDULE_STALE_MESSAGE
@@ -1903,7 +1935,8 @@ export function ProgramApplyPage() {
           return
         }
         // 런타임 선택지(면접·OSA 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
-        if (!promptSettingsGrade && !validationFailed) {
+        // INVALID_VALUE 는 문항을 단정하지 않고 POST 를 반복하지 않는다.
+        if (!promptSettingsGrade && !validationFailed && !invalidValue) {
           const option = applicationFormQuery.bundle?.option
           if (numericProgramId != null && option?.formBindingId != null && option.recruitmentId != null) {
             void queryClient.invalidateQueries({
