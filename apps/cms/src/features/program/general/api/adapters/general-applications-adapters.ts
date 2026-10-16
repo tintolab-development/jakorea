@@ -871,7 +871,8 @@ function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
 }
 
 /**
- * 운영 일정(startAt 있음)을 시작 시각 순으로 두고, `line:N`(startAt 없음)은 응답 순서를 유지한다.
+ * startAt이 있으면 시작 시각 순으로 정렬하고, 없으면 응답 순서를 유지한다.
+ * line:N도 materialized program_schedule이면 startAt·scheduleId가 함께 온다.
  */
 function orderPreferredEducationSchedules(
   schedules: PreferredEducationSchedule[]
@@ -906,7 +907,7 @@ export function mapPreferredEducationSchedulesToSessions(
     const timeRange =
       validStart && validEnd
         ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
-        : '-'
+        : scheduleLabel || '-'
     const duration =
       validStart && validEnd && end.getTime() > start.getTime()
         ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`

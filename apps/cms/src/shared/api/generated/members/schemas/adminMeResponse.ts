@@ -27,6 +27,6 @@ export interface AdminMeResponse {
   /** 관리자 약관 4종 최신 상태. MARKETING은 admin_marketing_consent를 정본으로 사용합니다. */
   termsAgreements?: AdminTermsAgreementResponse[];
   lastLoginAt?: string;
-  createdAt?: string | null;
-  updatedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -7,15 +7,15 @@
  */
 
 /**
- * 신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule) 선택이면 scheduleId/round/startAt/endAt, 공통정보 교육 진행 예정일(line:N) 선택이면 label만 채운다.
+ * 신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule)과 공통정보 교육 진행 예정일(line:N) 모두 materialized program_schedule의 scheduleId/round/startAt/endAt을 반환하며, line:N 선택은 원래 표시 문자열을 label에 함께 반환한다.
  */
 export interface PreferredEducationScheduleResponse {
-  /** program_schedule id. line:N 선택이면 null. */
+  /** 해당 프로그램의 materialized program_schedule id. 일정이 아직 materialize되지 않은 레거시 데이터만 null일 수 있다. */
   scheduleId?: number | null;
   round?: number | null;
-  /** line:N 선택이면 null. */
+  /** 선택 일정의 시작 시각. */
   startAt?: string | null;
-  /** line:N 선택이면 null. */
+  /** 선택 일정의 종료 시각. */
   endAt?: string | null;
   /** 공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null. */
   label?: string | null;

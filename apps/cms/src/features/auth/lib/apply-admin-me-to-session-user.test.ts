@@ -28,13 +28,22 @@ describe('applyAdminMeToSessionUser', () => {
     expect(normalizeAdminDate(1792137600000 as unknown as string)).toBeNull()
   })
 
-  it('GET /api/admin/me의 null 날짜는 기존 세션 날짜로 fallback하지 않는다', () => {
+  it('GET /api/admin/me의 빈 createdAt·updatedAt는 기존 세션 날짜로 fallback하지 않는다', () => {
     const next = applyAdminMeToSessionUser(current, {
-      createdAt: null,
-      updatedAt: null,
+      createdAt: '',
+      updatedAt: '',
     })
     expect(next.createdAt).toBeNull()
     expect(next.updatedAt).toBeNull()
+  })
+
+  it('GET /api/admin/me에 createdAt·updatedAt가 없으면 기존 세션 날짜를 유지한다', () => {
+    const next = applyAdminMeToSessionUser(current, {
+      uuid: 'admin-uuid',
+      email: 'pm@jakorea.org',
+    })
+    expect(next.createdAt).toBe(current.createdAt)
+    expect(next.updatedAt).toBe(current.updatedAt)
   })
 
   it('GET /api/admin/me roleCode를 세션에 반영하고 MASTER로 올리지 않는다', () => {
