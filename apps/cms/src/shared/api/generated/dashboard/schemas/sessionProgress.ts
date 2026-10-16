@@ -17,7 +17,7 @@ export interface SessionProgress {
   requestedScheduleId?: number | null;
   /** 출석/배정 mutation에 쓰는 실제 program_schedule id. 값이 없으면 null */
   resolvedScheduleId?: number | null;
-  /** 미확정 희망 일정이면 true. 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다 */
+  /** 미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다 */
   scheduleUnresolved?: boolean | null;
   /** 프로그램 일정 회차. 확정된 희망 일정은 preference_order */
   sessionNo?: number | null;

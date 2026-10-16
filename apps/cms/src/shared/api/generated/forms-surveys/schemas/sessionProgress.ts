@@ -27,7 +27,7 @@ export interface SessionProgress {
      */
   resolvedScheduleId?: number | null;
   /**
-     * 미확정 희망 일정이면 true. 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다
+     * 미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다
      * @nullable
      */
   scheduleUnresolved?: boolean | null;
