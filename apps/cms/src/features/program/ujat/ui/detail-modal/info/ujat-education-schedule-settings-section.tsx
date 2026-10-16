@@ -20,12 +20,10 @@ import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-s
 import { buildRecurringUnavailableLabel } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { useKoreanPublicHolidayDateKeys } from '@/features/program/ujat/api/korean-public-holidays'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-schedule-settings-paragraph.css'
-
-const FRIDAY_DAY = 5
-const disableNonFriday = (date: Dayjs) => date.day() !== FRIDAY_DAY
 
 function formatIsoDateLabel(iso: string): string {
   const d = dayjs(iso)
@@ -74,23 +72,36 @@ function SemesterScheduleTableBlock({
     settingsKeys.unavailableDates,
     display.unavailableDates
   )
-  const [exclusion, setExclusion] = useUjatProgramRegistrationOverlayKv<
-    UjatEducationScheduleSettingsExclusionOverlay
-  >(settingsKeys.exclusion, display.exclusion)
+  const [exclusion, setExclusion] =
+    useUjatProgramRegistrationOverlayKv<UjatEducationScheduleSettingsExclusionOverlay>(
+      settingsKeys.exclusion,
+      display.exclusion
+    )
 
   const range: [Dayjs | null, Dayjs | null] = useMemo(
-    () => [eventSeal.start ? dayjs(eventSeal.start) : null, eventSeal.end ? dayjs(eventSeal.end) : null],
+    () => [
+      eventSeal.start ? dayjs(eventSeal.start) : null,
+      eventSeal.end ? dayjs(eventSeal.end) : null,
+    ],
     [eventSeal.end, eventSeal.start]
   )
   const [rangeStart, rangeEnd] = range
   const educationScheduleRangeComplete = rangeStart != null && rangeEnd != null
+
+  // 직접 추가 모달의 공휴일 제외가 이 단락 단독 진입에서도 동작하도록
+  // 교육 진행 일정 범위의 공휴일을 먼저 조회한다.
+  useKoreanPublicHolidayDateKeys({
+    from: rangeStart?.toISOString() ?? null,
+    to: rangeEnd?.toISOString() ?? null,
+    enabled: mode === 'edit' && educationScheduleRangeComplete,
+  })
 
   const disableUnavailableDate = useCallback(
     (date: Dayjs) => {
       if (rangeStart == null || rangeEnd == null) return true
       const start = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
       const end = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
-      return disableNonFriday(date) || date.isBefore(start, 'day') || date.isAfter(end, 'day')
+      return date.isBefore(start, 'day') || date.isAfter(end, 'day')
     },
     [rangeStart, rangeEnd]
   )
@@ -129,7 +140,7 @@ function SemesterScheduleTableBlock({
                       end: next[1]?.toISOString() ?? null,
                     })
                   }
-                  placeholder={['시작일', '종료일']}
+                  placeholder={['시간을 선택해 주세요', '시간을 선택해 주세요']}
                   className="ujat-education-schedule-settings__range-picker"
                 />
               ) : undefined
@@ -140,7 +151,9 @@ function SemesterScheduleTableBlock({
           <DetailInfoForm.Field
             label="교육 진행 불가일"
             fullRow
-            view={<UnavailableDatesView exclusion={exclusion} unavailableDates={unavailableDates} />}
+            view={
+              <UnavailableDatesView exclusion={exclusion} unavailableDates={unavailableDates} />
+            }
             edit={
               mode === 'edit' ? (
                 <UnavailableDatesBulkExclusionsRow
