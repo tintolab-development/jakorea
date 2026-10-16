@@ -253,6 +253,24 @@ export function programToUjatRecruitTemplateFormValues(
   if (typeof targetDetail === 'string' && targetDetail.trim()) {
     next.volunteerTargetDetail = targetDetail
   }
+  const activityTermKey =
+    volunteerHalf === 'h2' ? VOLUNTEER_KEYS.activityTermH2 : VOLUNTEER_KEYS.activityTermH1
+  const activityTerm = overlay[activityTermKey]
+  const roundIndex = volunteerHalf === 'h2' ? 1 : 0
+  if (typeof activityTerm === 'string' && activityTerm.trim() && next.rounds?.[roundIndex]) {
+    next.rounds = next.rounds.map((round, index) =>
+      index === roundIndex ? { ...round, curriculum: activityTerm.trim() } : round
+    )
+  }
+  if (volunteerHalf === 'h2') {
+    const noticeExposure = overlay[VOLUNTEER_KEYS.noticeExposure]
+    if (typeof noticeExposure === 'string' && noticeExposure.trim()) {
+      next.volunteerRecruitmentNoticeExposure = noticeExposure as
+        | 'start-day'
+        | 'one-day-before'
+        | 'one-week-before'
+    }
+  }
   const volunteerTargets = readOverlayStringList(overlay, VOLUNTEER_KEYS.volunteerTargets)
   if (Array.isArray(overlay[VOLUNTEER_KEYS.volunteerTargets])) {
     next.volunteerTargets = normalizeVolunteerTargetList(volunteerTargets ?? [])
@@ -386,7 +404,10 @@ export function useUjatRecruitTemplateFormOverlaySync(
 ): void {
   const readyRef = useRef(false)
   const programRef = useRef(program)
-  programRef.current = program
+
+  useEffect(() => {
+    programRef.current = program
+  }, [program])
 
   useEffect(() => {
     readyRef.current = false
@@ -410,5 +431,29 @@ export function useUjatRecruitTemplateFormOverlaySync(
       )
     })
     return () => subscription.unsubscribe()
+  }, [form, kind, volunteerHalf])
+
+  // 모집 단계의 주요 필드는 RHF 값을 렌더링하고, DEV 자동입력은 overlay를
+  // 갱신한다. 버튼을 현재 모집 단계에서 누른 경우 overlay만 바뀌고 RHF가
+  // 기존 빈 값을 계속 들고 있던 문제를 자동입력 완료 이벤트에서 한 번만
+  // 재수화해 해결한다. 일반적인 사용자 입력 변경에는 반응하지 않아
+  // 입력 중인 값이 되돌아가지 않는다.
+  useEffect(() => {
+    const handleDevAutofillComplete = () => {
+      readyRef.current = false
+      form.reset(
+        programToUjatRecruitTemplateFormValues(programRef.current, kind, volunteerHalf),
+        { keepDefaultValues: false }
+      )
+      readyRef.current = true
+    }
+
+    window.addEventListener('cms:registration-dev-autofill-complete', handleDevAutofillComplete)
+    return () => {
+      window.removeEventListener(
+        'cms:registration-dev-autofill-complete',
+        handleDevAutofillComplete
+      )
+    }
   }, [form, kind, volunteerHalf])
 }

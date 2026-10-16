@@ -1,9 +1,19 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
+  hydrateMissingVolunteerInterviewOverlay,
   listFilledVolunteerInterviewExceptionBlockIds,
   listVolunteerInterviewExceptionBlockIds,
   reconcileVolunteerInterviewExceptionBlockKeys,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import {
+  getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
+  resetGeneralRecruitOverlayStoreForTests,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+
+afterEach(() => {
+  resetGeneralRecruitOverlayStoreForTests()
+})
 
 describe('listVolunteerInterviewExceptionBlockIds', () => {
   it('예외 블록 id만 추가 순서로 읽는다', () => {
@@ -78,5 +88,53 @@ describe('reconcileVolunteerInterviewExceptionBlockKeys', () => {
         count: 1,
       })
     ).toEqual([10, 20])
+  })
+})
+
+describe('hydrateMissingVolunteerInterviewOverlay', () => {
+  it('네임스페이스 밖의 canonical 형제 키도 명시하면 복원한다', () => {
+    const rangeSealKey = 'recruit.volunteer.h1.interviewRangeSeal'
+    const rangeSeal = {
+      start: '2026-10-29T15:00:00.000Z',
+      end: '2026-10-29T15:00:00.000Z',
+    }
+
+    hydrateMissingVolunteerInterviewOverlay({
+      source: {
+        [rangeSealKey]: rangeSeal,
+        'recruit.volunteer.h1.interview.exception.10.exceptionDate': '2026-10-30',
+      },
+      store: 'recruit',
+      namespace: 'recruit.volunteer.h1.interview',
+      additionalKeys: [rangeSealKey],
+    })
+
+    expect(getGeneralRecruitOverlayRecord()[rangeSealKey]).toEqual(rangeSeal)
+    expect(
+      getGeneralRecruitOverlayRecord()['recruit.volunteer.h1.interview.exception.10.exceptionDate']
+    ).toBe('2026-10-30')
+  })
+
+  it('live 값이 있으면 저장된 값으로 덮어쓰지 않는다', () => {
+    const rangeSealKey = 'recruit.volunteer.h1.interviewRangeSeal'
+    const liveRangeSeal = {
+      start: '2026-11-01T15:00:00.000Z',
+      end: '2026-11-01T15:00:00.000Z',
+    }
+
+    patchGeneralRecruitOverlay({ [rangeSealKey]: liveRangeSeal })
+    hydrateMissingVolunteerInterviewOverlay({
+      source: {
+        [rangeSealKey]: {
+          start: '2026-10-29T15:00:00.000Z',
+          end: '2026-10-29T15:00:00.000Z',
+        },
+      },
+      store: 'recruit',
+      namespace: 'recruit.volunteer.h1.interview',
+      additionalKeys: [rangeSealKey],
+    })
+
+    expect(getGeneralRecruitOverlayRecord()[rangeSealKey]).toEqual(liveRangeSeal)
   })
 })

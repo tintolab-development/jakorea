@@ -18,6 +18,7 @@ import {
   hydrateMissingVolunteerInterviewOverlay,
   listFilledVolunteerInterviewExceptionBlockIds,
   syncVolunteerInterviewRangeSealOverlay,
+  VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { ensureRecruitOperationalEditScope } from '@/features/program/general/lib/detail-operational-save-merge'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
@@ -168,7 +169,11 @@ function useVolunteerInterviewOverlayHydration(
       !Array.isArray(program.registrationOverlay)
         ? program.registrationOverlay
         : undefined
-    hydrateMissingVolunteerInterviewOverlay({ source, store: 'recruit' })
+    hydrateMissingVolunteerInterviewOverlay({
+      source,
+      store: 'recruit',
+      additionalKeys: [VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY],
+    })
     syncVolunteerInterviewRangeSealOverlay(interviewStartIso, interviewEndIso)
     const filled = listFilledVolunteerInterviewExceptionBlockIds(
       { ...(source ?? {}), ...getGeneralRecruitOverlayRecord() },
