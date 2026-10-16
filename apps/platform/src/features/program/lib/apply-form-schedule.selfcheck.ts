@@ -14,6 +14,7 @@ import {
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
   normalizeInstitutionFixedScheduleAnswerTokens,
+  remapInstitutionSchedulePreviewSlotIds,
   shouldUseInstitutionAllowedSchedulePeriodDates,
   resolveApplyPreferredScheduleMaxBlocks,
   shouldShowApplyPreferredSchedule,
@@ -358,5 +359,48 @@ const enabled = buildEnabledDatesFromAllowedSchedulePeriods(periods!)
 assert.equal(enabled.has('2026-10-28'), true)
 assert.equal(enabled.has('2026-10-30'), false)
 assert.equal(enabled.has('2026-11-11'), true)
+
+assert.deepEqual(
+  remapInstitutionSchedulePreviewSlotIds([
+    'institution-schedule-slot-1',
+    'institution-schedule-slot-2',
+  ]),
+  ['line:0', 'line:1'],
+)
+assert.deepEqual(
+  remapInstitutionSchedulePreviewSlotIds(['line:0', 'institution-schedule-slot-1', 'line:1']),
+  ['line:0', 'line:1'],
+)
+
+const keepLineTokens = normalizeInstitutionFixedScheduleAnswerTokens(
+  ['line:0', 'line:1'],
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 30일(금) 13:30 ~ 15:30', scheduleId: null },
+      { id: 'line:1', label: '26년 10월 30일(금) 9:30 ~ 11:30', scheduleId: null },
+    ],
+  },
+  {
+    items: [
+      { id: 'institution-schedule-slot-1', label: 'seed 1' },
+      { id: 'institution-schedule-slot-2', label: 'seed 2' },
+    ],
+  },
+)
+assert.deepEqual(keepLineTokens, ['line:0', 'line:1'])
+
+const remappedPreview = normalizeInstitutionFixedScheduleAnswerTokens(
+  ['institution-schedule-slot-1', 'institution-schedule-slot-2'],
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 30일(금) 13:30 ~ 15:30', scheduleId: null },
+      { id: 'line:1', label: '26년 10월 30일(금) 9:30 ~ 11:30', scheduleId: null },
+    ],
+  },
+  { items: [{ id: 'institution-schedule-slot-1', label: 'seed 1' }] },
+)
+assert.deepEqual(remappedPreview, ['line:0', 'line:1'])
 
 console.log('apply-form-schedule.selfcheck: ok')

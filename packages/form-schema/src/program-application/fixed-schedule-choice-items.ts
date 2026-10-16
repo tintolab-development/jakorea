@@ -1,8 +1,6 @@
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '../paragraph-ids/program-application-form-institution-draft.js'
 import {
-  readCurriculumMultiDateFixedScheduleMeta,
   resolveFixedScheduleLinesToChoiceItems,
-  shouldUseCurriculumMultiDateFixedScheduleMatrix,
   type CurriculumMultiDateFixedScheduleMetaInput,
 } from './curriculum-multi-date-fixed-schedule.js'
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
@@ -87,14 +85,6 @@ function readInstitutionFixedScheduleRawItems(
   )
 }
 
-function choiceItemsFromEducationScheduleLines(
-  lines: readonly string[]
-): Array<{ id: string; label: string }> {
-  return expandEducationScheduleChoiceSlots(lines).map((label, index) => ({
-    id: `line:${index}`,
-    label,
-  }))
-}
 
 export function institutionFixedScheduleOptionToken(item: Record<string, unknown>): string {
   for (const key of ['option_value', 'value'] as const) {
@@ -171,16 +161,23 @@ export function readInstitutionFixedScheduleChoiceItems(
     educationScheduleMode: options?.educationScheduleMode,
     educationScheduleLines: lines,
   }
-  const meta = readCurriculumMultiDateFixedScheduleMeta(options ?? {})
-  const expandedFallback = shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)
-    ? resolveFixedScheduleLinesToChoiceItems(visibility, lines, meta)
-    : choiceItemsFromEducationScheduleLines(lines)
+  const expandedFallback = resolveFixedScheduleLinesToChoiceItems(
+    visibility,
+    lines,
+    options ?? {}
+  )
 
   if (items.length === 0) {
     return expandedFallback.length > 0 ? expandedFallback : null
   }
   if (expandedFallback.length > items.length) {
     return expandedFallback
+  }
+  if (expandedFallback.length === items.length && expandedFallback.length > 0) {
+    return expandedFallback.map(fallback => ({
+      id: fallback.id,
+      label: fallback.label,
+    }))
   }
   return items
 }

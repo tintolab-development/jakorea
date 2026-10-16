@@ -11,7 +11,7 @@ import {
   isApplicationScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
   mergeApplicationScheduleVisibilityInput,
-  normalizeInstitutionFixedScheduleAnswerTokens,
+  normalizeInstitutionFixedScheduleAnswerTokens as normalizeInstitutionFixedScheduleAnswerTokensFromSchema,
   readApplicationScheduleInputMode,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
@@ -195,9 +195,44 @@ export function readInstitutionApplyScheduleDateBounds(
 export {
   isInstitutionApplyScheduleChoiceParagraphId,
   institutionFixedScheduleOptionToken,
-  normalizeInstitutionFixedScheduleAnswerTokens,
   readInstitutionFixedScheduleChoiceItems,
   type ReadInstitutionFixedScheduleChoiceOptions,
+}
+
+const INSTITUTION_SCHEDULE_PREVIEW_SLOT_RE = /^institution-schedule-slot-(\d+)$/i
+
+function isInstitutionSchedulePreviewSlotId(value: string): boolean {
+  return INSTITUTION_SCHEDULE_PREVIEW_SLOT_RE.test(value.trim())
+}
+
+/** 시드 미리보기 ID(`institution-schedule-slot-N`) → 런타임 `line:N-1`. */
+export function remapInstitutionSchedulePreviewSlotIds(
+  selectedIds: readonly string[],
+): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const selected of selectedIds) {
+    const trimmed = selected.trim()
+    if (!trimmed) continue
+    const match = trimmed.match(INSTITUTION_SCHEDULE_PREVIEW_SLOT_RE)
+    const token = match ? `line:${Number(match[1]) - 1}` : trimmed
+    if (!token || isInstitutionSchedulePreviewSlotId(token) || seen.has(token)) continue
+    seen.add(token)
+    out.push(token)
+  }
+  return out
+}
+
+export function normalizeInstitutionFixedScheduleAnswerTokens(
+  selectedIds: readonly string[],
+  runtime: unknown,
+  paragraph: unknown,
+): string[] {
+  return normalizeInstitutionFixedScheduleAnswerTokensFromSchema(
+    remapInstitutionSchedulePreviewSlotIds(selectedIds),
+    runtime,
+    paragraph,
+  )
 }
 
 export function shouldShowApplyPreferredSchedule(program: ApplyScheduleVisibilityFields): boolean {

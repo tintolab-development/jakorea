@@ -678,4 +678,109 @@ assert.equal(
   true,
 )
 
+const institutionSidecarForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: 'program-application-institution-seed-personal-info',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      answerRequired: true,
+      showBottomConsent: true,
+      bottomConsent: 'agree',
+      tableFlavor: 'field',
+      columnHeaders: ['수집 항목', '수집·이용 목적', '보유기간'],
+      dataRows: [['', '', '']],
+      fieldDataRows: [[{ kind: 'text', value: '이름, 학교명' }]],
+    },
+    {
+      id: 'program-application-institution-seed-basic-info',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      answerRequired: true,
+      tableFlavor: 'text',
+      columnHeaders: ['항목', '내용'],
+      dataRows: [['', '']],
+      fieldDataRows: [],
+    },
+    {
+      id: 'program-application-institution-seed-guidance',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      answerRequired: true,
+      tableFlavor: 'field',
+      columnHeaders: ['항목', '내용'],
+      dataRows: [['', '']],
+      fieldDataRows: [],
+    },
+    {
+      id: 'program-application-institution-seed-sex-offense-consent-submission',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      answerRequired: true,
+      tableFlavor: 'text',
+      columnHeaders: ['항목', '내용'],
+      dataRows: [['', '']],
+      fieldDataRows: [],
+    },
+    {
+      id: 'program-application-institution-seed-schedule',
+      kind: 'single_item',
+      variant: 'multiple_choice',
+      answerRequired: true,
+      allowMultiple: true,
+      items: [
+        { id: 'institution-schedule-slot-1', label: 'seed 1' },
+        { id: 'institution-schedule-slot-2', label: 'seed 2' },
+      ],
+      selectedPreviewMultipleIds: ['institution-schedule-slot-1', 'institution-schedule-slot-2'],
+    },
+  ],
+}
+const institutionSidecarDraft = writingFormDraftFromApplicationForm(institutionSidecarForm)
+assert.ok(institutionSidecarDraft)
+const institutionSidecarAnswers = buildApplicationAnswersFromDraft(institutionSidecarDraft, {
+  overrides: {
+    'program-application-institution-seed-basic-info': { dataRows: [['', '']] },
+    'program-application-institution-seed-sex-offense-consent-submission': {
+      submissionRequest: 'request',
+    },
+  },
+  omitParagraphIds: new Set(['program-application-institution-seed-guidance']),
+})
+assert.equal(
+  typeof institutionSidecarAnswers['program-application-institution-seed-personal-info'],
+  'object',
+)
+assert.equal(
+  Array.isArray(institutionSidecarAnswers['program-application-institution-seed-personal-info']),
+  false,
+)
+assert.equal(
+  typeof institutionSidecarAnswers['program-application-institution-seed-basic-info'],
+  'object',
+)
+assert.equal(
+  Array.isArray(institutionSidecarAnswers['program-application-institution-seed-basic-info']),
+  false,
+)
+assert.equal(
+  'program-application-institution-seed-guidance' in institutionSidecarAnswers,
+  false,
+)
+assert.deepEqual(
+  institutionSidecarAnswers['program-application-institution-seed-schedule'],
+  ['line:0', 'line:1'],
+)
+const emptySidecarDraft = writingFormDraftFromApplicationForm(institutionSidecarForm)
+assert.ok(emptySidecarDraft)
+const emptySidecarAnswers = buildApplicationAnswersFromDraft(emptySidecarDraft)
+assert.equal('program-application-institution-seed-basic-info' in emptySidecarAnswers, false)
+assert.equal('program-application-institution-seed-guidance' in emptySidecarAnswers, false)
+assert.equal(
+  'program-application-institution-seed-sex-offense-consent-submission' in emptySidecarAnswers,
+  false,
+)
+
 console.log('application-form-draft.selfcheck: ok')

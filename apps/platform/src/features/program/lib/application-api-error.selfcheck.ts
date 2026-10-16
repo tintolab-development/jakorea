@@ -10,6 +10,7 @@ import {
   isIndividualApplicationEnrolledGradeRequiredError,
   messageForApplicationBlockedReason,
 } from './application-api-error.ts'
+import { readApplicationApiErrorEnvelope } from './summarize-portal-application-submit.ts'
 
 const MISMATCH = '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.'
 
@@ -96,5 +97,33 @@ assert.equal(
   enrolledGradeBody.message,
 )
 assert.equal(isIndividualApplicationEnrolledGradeRequiredError(enrolledGradeErr), true)
+
+const invalidValueBody = {
+  success: false,
+  data: null,
+  message: '입력값 또는 요청 조건을 확인해 주세요.',
+  error: {
+    code: 'INVALID_VALUE',
+    message: '입력값 또는 요청 조건을 확인해 주세요.',
+    field: null,
+    traceId: '1717d8300ae84334814cd4aeb5103204',
+    details: null,
+  },
+}
+const invalidValueErr = new AxiosError('Request failed', undefined, undefined, undefined, {
+  status: 400,
+  data: invalidValueBody,
+  statusText: 'Bad Request',
+  headers: {},
+  config: {} as never,
+})
+assert.equal(getApplicationApiErrorCode(invalidValueErr), 'INVALID_VALUE')
+assert.deepEqual(readApplicationApiErrorEnvelope(invalidValueErr), {
+  code: 'INVALID_VALUE',
+  message: '입력값 또는 요청 조건을 확인해 주세요.',
+  field: null,
+  traceId: '1717d8300ae84334814cd4aeb5103204',
+  details: null,
+})
 
 console.log('application-api-error.selfcheck: ok')

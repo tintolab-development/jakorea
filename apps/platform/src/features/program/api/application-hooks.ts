@@ -243,6 +243,7 @@ export function useProgramApplicationForm(
 export function useSubmitProgramApplication(programId: number | null) {
   const queryClient = useQueryClient()
   return useMutation({
+    retry: false,
     mutationFn: (body: PortalSaveApplicationRequest) => {
       if (programId == null) {
         throw new Error('programId is required')

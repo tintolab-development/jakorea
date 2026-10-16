@@ -105,7 +105,13 @@ assert.equal(
 const individualDraft = createProgramParticipantApplicationDraft()
 const individualPatched = applyProgramLinkedApplicationDraftPatches(individualDraft, {
   applyCase: 'individual-general',
-  program: program as unknown as import('../model/types.ts').ProgramDetail,
+  program: {
+    ...program,
+    sessions: [
+      { sessionLabel: '1차시', title: 'A' },
+      { sessionLabel: '2차시', title: 'B' },
+    ],
+  } as unknown as import('../model/types.ts').ProgramDetail,
   runtimeContext: {
     scheduleInputMode: 'fixed_schedule_options',
     scheduleOptions: [
@@ -127,6 +133,10 @@ assert.equal(individualSchedule.items.length, 3)
 assert.equal(
   individualSchedule.paragraphDescription,
   '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+)
+assert.equal(
+  individualSchedule.items[0]?.label,
+  '26년 10월 26일(월) 10:00 ~ 12:00 | 2차시'
 )
 const individualSameDayTwoSlots = applyProgramLinkedApplicationDraftPatches(
   createProgramParticipantApplicationDraft(),

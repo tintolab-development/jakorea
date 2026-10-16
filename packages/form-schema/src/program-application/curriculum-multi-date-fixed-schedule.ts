@@ -152,15 +152,50 @@ export function buildCurriculumMultiDateFixedScheduleChoiceItems(
   return items
 }
 
+const FIXED_SCHEDULE_SESSION_SUFFIX_RE = /\|\s*\d+\s*차시\s*$/
+
+function hasFixedScheduleLineSessionSuffix(label: string): boolean {
+  return FIXED_SCHEDULE_SESSION_SUFFIX_RE.test(label.trim())
+}
+
+/** 커리큘럼·단일·날짜 고정 일정 — 예정일 라벨 우측 `| N차시` (교육 진행 커리큘럼 차시 수) */
+export function appendCurriculumSingleDateFixedScheduleSessionSuffix(
+  baseLabel: string,
+  visibility: ApplicationScheduleVisibilityInput,
+  metaInput: CurriculumMultiDateFixedScheduleMetaInput
+): string {
+  const trimmed = baseLabel.trim()
+  if (!trimmed) return baseLabel
+  if (visibility.educationStructure !== 'curriculum') return trimmed
+  if (visibility.sessionRound !== 'single') return trimmed
+  if (visibility.educationScheduleMode === 'period') return trimmed
+  if (shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)) return trimmed
+  if (hasFixedScheduleLineSessionSuffix(trimmed)) return trimmed
+
+  const sessions = readCurriculumPreferredScheduleDailySessionCountForCopy({
+    sessionRound: 'single',
+    curriculumChartSessionCount: metaInput.curriculumChartSessionCount,
+    curriculumSessions: metaInput.curriculumSessions,
+    sessionsPerRound: metaInput.sessionsPerRound,
+    educationRoundCount: metaInput.educationRoundCount,
+  })
+  if (sessions == null || sessions <= 0) return trimmed
+  return `${trimmed} | ${sessions}차시`
+}
+
 export function resolveFixedScheduleLinesToChoiceItems(
   visibility: ApplicationScheduleVisibilityInput,
   lines: readonly string[],
-  meta: CurriculumMultiDateFixedScheduleMeta
+  metaInput: CurriculumMultiDateFixedScheduleMetaInput = {}
 ): Array<{ id: string; label: string }> {
+  const meta = readCurriculumMultiDateFixedScheduleMeta(metaInput)
   const trimmed = expandEducationScheduleChoiceSlots(lines)
   if (shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)) {
     const roundCount = meta.educationRoundCount ?? 1
     return buildCurriculumMultiDateFixedScheduleChoiceItems(trimmed, roundCount)
   }
-  return trimmed.map((label, index) => ({ id: `line:${index}`, label }))
+  return trimmed.map((label, index) => ({
+    id: `line:${index}`,
+    label: appendCurriculumSingleDateFixedScheduleSessionSuffix(label, visibility, metaInput),
+  }))
 }
