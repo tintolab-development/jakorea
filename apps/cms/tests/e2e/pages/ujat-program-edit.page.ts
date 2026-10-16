@@ -80,7 +80,7 @@ export class UjatProgramEditPage {
   /** 목록에서 시드 행을 찾아 상세 진입. 없으면 null */
   async tryOpenEditableDummyOnce(): Promise<UjatEditableDummyOpenResult | null> {
     await this.page.goto('/programs/ujat')
-    await expect(this.page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
+    await expect(this.page.getByRole('button', { name: /신규 등록/ })).toBeVisible({
       timeout: 30_000,
     })
 
@@ -348,7 +348,7 @@ export class UjatProgramEditPage {
 
   async expectDummyVisibleInList(programId: string) {
     await this.page.goto('/programs/ujat')
-    await expect(this.page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
+    await expect(this.page.getByRole('button', { name: /신규 등록/ })).toBeVisible({
       timeout: 30_000,
     })
 

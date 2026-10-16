@@ -147,7 +147,7 @@ function UjatRegionDateMultiScheduleRows({
             mode="multiple"
             withAllOption={false}
             style={{ width: 360 }}
-            placeholder="지역을 선택하세요"
+            placeholder="교육 지역을 선택해 주세요"
             options={getRowRegionOptions(id, regionByRow, regions)}
             value={regionByRow[id] ?? []}
             onChange={next =>
@@ -169,6 +169,7 @@ function UjatRegionDateMultiScheduleRows({
             presetMode="schedule"
             customizable={false}
             suppressAutoTodayWhenEmpty
+            placeholder="일정을 선택해 주세요"
             value={dateByRow[id] ?? null}
             onChange={next =>
               updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(
@@ -261,27 +262,24 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
         <CmsRadio value="instructor_outsource">강사 섭외</CmsRadio>
       </CmsRadioGroup>
       {mode === 'instructor_outsource' ? (
-        <CmsSelect
-          showSearch
-          optionFilterProp="label"
-          placeholder="교재 교육 강사 선택"
-          style={{ minWidth: 200, flex: 1 }}
-          options={instructorOptions}
-          value={instructorId}
-          onChange={v => setInstructorId(v == null || v === '' ? undefined : String(v))}
-        />
+        <>
+          <DetailInfoForm.InputsSeparator />
+          <CmsSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder="교재 교육 강사를 선택해 주세요"
+            style={{ minWidth: 200, flex: 1 }}
+            options={instructorOptions}
+            value={instructorId}
+            onChange={v => setInstructorId(v == null || v === '' ? undefined : String(v))}
+          />
+        </>
       ) : null}
     </div>
   )
 }
 
-function UjatScheduleNameField({
-  overlayKey,
-  fallback,
-}: {
-  overlayKey: string
-  fallback: string
-}) {
+function UjatScheduleNameField({ overlayKey, fallback }: { overlayKey: string; fallback: string }) {
   const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(overlayKey, fallback)
   return (
     <CmsInput
@@ -417,7 +415,7 @@ function UjatEventScheduleBlock({
                       end: next[1]?.toISOString() ?? null,
                     })
                   }
-                  placeholder={['시작일', '종료일']}
+                  placeholder={['교육 진행 일정을 선택해 주세요', '교육 진행 일정을 선택해 주세요']}
                   className="half-education-schedule__range-picker"
                 />
               ) : undefined

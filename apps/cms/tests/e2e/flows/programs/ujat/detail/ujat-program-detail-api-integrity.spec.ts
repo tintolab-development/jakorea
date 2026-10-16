@@ -62,9 +62,13 @@ test.describe('UJAT 프로그램 상세 API 정합성', () => {
     await expectAuthenticatedShell(page)
     const token = await page.evaluate(() => localStorage.getItem('auth_token'))
     expect(token, '브라우저 세션에 관리자 auth_token이 없습니다').toBeTruthy()
-    const response = await page.request.get(`/api/admin/programs/${encodeURIComponent(programId)}`, {
+    const apiOrigin = process.env.E2E_API_PROXY_TARGET?.replace(/\/$/, '') ?? ''
+    const response = await page.request.get(
+      `${apiOrigin}/api/admin/programs/${encodeURIComponent(programId)}`,
+      {
       headers: { Authorization: `Bearer ${token}` },
-    })
+      }
+    )
     expect(response.ok(), `상세 API HTTP ${response.status()}`).toBe(true)
 
     const payload = unwrap(await response.json())

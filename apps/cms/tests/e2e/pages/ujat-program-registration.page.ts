@@ -14,6 +14,7 @@ import {
   fillAllByPlaceholder,
   fillByPlaceholderIfVisible,
   fillParagraphDateByPlaceholder,
+  fillAllParagraphDatesByPlaceholder,
   fillVisibleFreeTextFields,
   selectByPlaceholderIfVisible,
   selectNearLabelIfVisible,
@@ -58,7 +59,7 @@ export class UjatProgramRegistrationPage {
   }
 
   async openNewRegistration() {
-    await this.page.getByRole('button', { name: '프로그램 신규 등록' }).click()
+    await this.page.getByRole('button', { name: /신규 등록/ }).click()
 
     const draftDialog = this.page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
     if (await draftDialog.isVisible().catch(() => false)) {
@@ -101,6 +102,7 @@ export class UjatProgramRegistrationPage {
     )
 
     await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 과정을 선택하세요')
     await fillParagraphDateByPlaceholder(
       this.page,
       '사업 운영 기간을 선택하세요',
@@ -132,18 +134,30 @@ export class UjatProgramRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '교육 진행 일정 설정')
     await checkRadioIfVisible(this.page, '날짜 지정')
-    await fillParagraphDateByPlaceholder(
+    await fillAllParagraphDatesByPlaceholder(
       this.page,
       '일정을 선택하세요',
       'single',
       OPERATION_DATE_OPTS
     )
-    await fillParagraphDateByPlaceholder(
+    await fillAllParagraphDatesByPlaceholder(
       this.page,
       '기간을 선택하세요',
       'range',
       OPERATION_DATE_OPTS
     )
+
+    const regionSelects = this.page
+      .locator('.ant-select:visible')
+      .filter({
+        has: this.page.locator('.ant-select-selection-placeholder', {
+          hasText: '교육 지역을 선택해 주세요',
+        }),
+      })
+    const regionCount = await regionSelects.count()
+    for (let i = 0; i < regionCount; i += 1) {
+      await selectByPlaceholderIfVisible(this.page, '교육 지역을 선택해 주세요')
+    }
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
@@ -299,7 +313,7 @@ export class UjatProgramRegistrationPage {
 
   async expectProgramVisibleInList(created: UjatRegistrationCompleteResult) {
     await this.page.goto(LIST_PATH)
-    await expect(this.page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
+    await expect(this.page.getByRole('button', { name: /신규 등록/ })).toBeVisible({
       timeout: 30_000,
     })
 

@@ -180,19 +180,26 @@ export class UjatEducationRegionsPage {
     await expect(row).toBeVisible({ timeout: 30_000 })
     await row.getByRole('button', { name: '수정' }).click()
 
-    const nameInput = row.getByPlaceholder('교육 지역명')
+    // 편집 모드에서는 지역명이 input value로 이동해 `hasText: currentName`
+    // 기반 row locator가 더 이상 매칭되지 않는다. 저장 버튼이 있는 현재
+    // 편집 행을 다시 찾은 뒤 입력과 저장을 수행한다.
+    const editingRow = this.table()
+      .locator('tbody.ant-table-tbody tr.ant-table-row')
+      .filter({ has: this.page.getByRole('button', { name: '저장' }) })
+      .first()
+    const nameInput = editingRow.getByPlaceholder('교육 지역명')
     await expect(nameInput).toBeVisible({ timeout: 10_000 })
     await nameInput.fill(next.name)
 
     if (next.active != null) {
       const label = next.active ? '사용' : '미사용'
-      const radio = row.getByRole('radio', { name: label }).first()
+      const radio = editingRow.getByRole('radio', { name: label }).first()
       if ((await radio.count()) > 0) {
         await radio.check({ force: true }).catch(async () => {
-          await row.getByText(label, { exact: true }).first().click()
+          await editingRow.getByText(label, { exact: true }).first().click()
         })
       } else {
-        await row.getByText(label, { exact: true }).first().click()
+        await editingRow.getByText(label, { exact: true }).first().click()
       }
     }
 
@@ -200,7 +207,7 @@ export class UjatEducationRegionsPage {
       .waitForResponse(res => isEducationRegionsApi(res, 'PATCH'), { timeout: 30_000 })
       .catch(() => null)
 
-    await row.getByRole('button', { name: '저장' }).click()
+    await editingRow.getByRole('button', { name: '저장' }).click()
 
     const patchRes = await patchWait
     let remoteOk = true

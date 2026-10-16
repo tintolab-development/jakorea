@@ -32,6 +32,8 @@ export function checkUjatRegionClassCapacityExceeded(args: {
   regionKey: UjatInstitutionApplicationRegionKey
   rowsAfterAssign: UjatInstitutionApplicationRow[]
   half?: UjatRegionCapacitySemesterKey
+  /** 서버 region-capacities 조회값. 전달되면 로컬 overlay보다 우선한다. */
+  serverMaxClassCount?: number | null
 }): {
   exceeded: boolean
   regionLabel: UjatRegionCapacityRegionName
@@ -41,7 +43,10 @@ export function checkUjatRegionClassCapacityExceeded(args: {
   const half = args.half ?? 'h1'
   const regionLabel = getUjatEducationRegionLabel(args.regionKey, args.regionKey)
   const capacityValues = resolveUjatRegionCapacitySemesterValues(half)
-  const maxClassCount = parseMaxClassCount(capacityValues[regionLabel]?.classCount)
+  const maxClassCount =
+    args.serverMaxClassCount != null
+      ? args.serverMaxClassCount
+      : parseMaxClassCount(capacityValues[regionLabel]?.classCount)
   const totalAfterAssign = sumUjatRegionAssignedClassCount(args.rowsAfterAssign, args.regionKey, {
     onlyTempAssigned: true,
   })

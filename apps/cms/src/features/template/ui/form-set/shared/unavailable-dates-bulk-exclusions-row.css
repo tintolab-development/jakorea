@@ -6,6 +6,7 @@
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
+  column-gap: 4px;
   width: 100%;
   min-width: 0;
 }
@@ -19,5 +20,6 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 16px;
   min-width: 0;
 }
