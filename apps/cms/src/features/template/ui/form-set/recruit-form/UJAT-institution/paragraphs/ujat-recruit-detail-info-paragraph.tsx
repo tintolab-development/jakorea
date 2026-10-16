@@ -20,6 +20,8 @@ export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps 
         form={props.form}
         onRegisterGetAdditionalContentHtml={props.onRegisterGetAdditionalContentHtml}
         showThumbnail
+        showRecruitmentMethod
+        recruitmentMethodLabel="지원 방법"
         sectionTitle={props.sectionTitle ?? '상세 정보'}
         sectionDescription={UJAT_PARTICIPANT_DETAIL_INFO_DESCRIPTION}
         emptyReadDisplay="dash"

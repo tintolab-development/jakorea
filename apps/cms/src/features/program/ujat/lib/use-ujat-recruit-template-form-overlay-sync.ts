@@ -62,6 +62,7 @@ const INSTITUTION_DIRTY_FIELD_KEYS: Record<string, readonly string[]> = {
   oneLineIntroduction: [INSTITUTION_KEYS.notes],
   participantRecruitmentNotesNotApplicable: [INSTITUTION_KEYS.notes],
   participantRecruitmentAnnouncementPublished: [INSTITUTION_KEYS.announcementPublished],
+  applicationMethod: [INSTITUTION_KEYS.applicationMethod],
 }
 
 const VOLUNTEER_DIRTY_FIELD_KEYS: Record<string, readonly string[]> = {
@@ -240,6 +241,8 @@ export function programToUjatRecruitTemplateFormValues(
     if (!next.applicationEndDate && recruitRange?.end?.trim()) {
       next.applicationEndDate = recruitRange.end
     }
+    const applicationMethod = overlay[INSTITUTION_KEYS.applicationMethod]
+    if (typeof applicationMethod === 'string') next.applicationMethod = applicationMethod
     return applyUjatRecruitmentRowCopyToForm(next, program, 'institution')
   }
   const contact = readOverlayContact(overlay, VOLUNTEER_KEYS.contact)
