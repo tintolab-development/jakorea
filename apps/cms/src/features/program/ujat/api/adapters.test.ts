@@ -212,7 +212,10 @@ describe('UJAT program adapters', () => {
       serviceDetailJson: updated.serviceDetailJson ?? undefined,
     })
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
-    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual(capacity)
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
+      h1: {},
+      h2: {},
+    })
   })
 
   it('부분 수정에 ips와 후원 담당자 sponsors를 싣고 재조회한다', () => {
@@ -359,7 +362,98 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repEn']).toBe(
       'Local Spending and Saving'
     )
-    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
+    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBeUndefined()
+  })
+
+  it('기본 semesterCalendars의 교육일정을 등록 화면 overlay로 매핑한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      serviceDetailJson: JSON.stringify({
+        semesterCalendars: {
+          FIRST_HALF: {
+            preTrainingDate: '2026-07-07',
+            educationFridays: ['2026-07-17', '2026-07-24'],
+            closingDate: '2026-08-21',
+            blockedDates: ['2026-07-20'],
+            mode: 'none',
+          },
+        },
+      }),
+    })
+
+    expect(mapped.ujatRegistrationOverlay?.['ujat.h1.pre.multi']).toEqual({
+      rowIds: [0],
+      regionByRow: { '0': [] },
+      dateByRow: { '0': '2026-07-07' },
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.h1.event.range']).toEqual({
+      start: '2026-07-17',
+      end: '2026-07-24',
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.h1.closing.multi']).toEqual({
+      rowIds: [0],
+      regionByRow: { '0': [] },
+      dateByRow: { '0': '2026-08-21' },
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.h1.eduSchedule.unavailableDates']).toEqual([
+      '2026-07-20',
+    ])
+  })
+
+  it('상세 응답 KPI와 serviceDetailJson 지역 정원을 canonical source로 매핑한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      generalVolunteers: 60,
+      instructors: 0,
+      finalSchools: 30,
+      finalClasses: 30,
+      educationProcess: null as unknown as string,
+      serviceDetailJson: JSON.stringify({
+        ujatRegionCapacities: {
+          FIRST_HALF: { SEOUL: { maxSchools: 20, maxVolunteers: 40 } },
+          SECOND_HALF: { SEOUL: { maxSchools: 24, maxVolunteers: 48 } },
+        },
+        registration: {
+          overlay: {
+            'ujat.kpi.volunteer': 999,
+            'ujat.capacity.byRegion': { h1: { 서울: { classCount: '999' } } },
+            'ujat.basicInfo.ipOwned': 'ja',
+            'ujat.basicInfo.partnerInvolvement': 'no',
+            'ujat.basicInfo.detailedProgramId': '__stale__',
+          },
+        },
+      }),
+    })
+
+    expect(mapped.ujatRegistrationOverlay).toMatchObject({
+      'ujat.kpi.instructor': 0,
+      'ujat.kpi.volunteer': 60,
+      'ujat.kpi.dispatchedSchool': 30,
+      'ujat.kpi.dispatchedClass': 30,
+      'ujat.capacity.byRegion': {
+        h1: { 서울: { classCount: '20', volunteerCount: '40' } },
+        h2: { 서울: { classCount: '24', volunteerCount: '48' } },
+      },
+      'ujat.basicInfo.educationCourse': '',
+      'ujat.basicInfo.ipOwned': '',
+      'ujat.basicInfo.partnerInvolvement': '',
+      'ujat.basicInfo.detailedProgramId': '',
+    })
+    expect(mapped.generalCommonInfo?.kpi).toEqual({
+      finalParticipants: undefined,
+      instructorCount: 0,
+      volunteerCount: 60,
+      finalSchools: 30,
+      finalClasses: 30,
+    })
   })
 
   it('등록 overlay 모집 공고명·설명을 create body와 상세 매핑에 남긴다', () => {

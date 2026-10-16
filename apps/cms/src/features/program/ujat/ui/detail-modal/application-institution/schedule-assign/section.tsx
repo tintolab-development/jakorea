@@ -21,6 +21,7 @@ export function UjatInstitutionScheduleAssignSection({
     assignDates,
     regionState,
     schoolsByDate,
+    organizationNamesByApplicationId,
     addAssignmentRow,
     updateAssignmentRow,
     removeAssignmentRow,
@@ -50,6 +51,7 @@ export function UjatInstitutionScheduleAssignSection({
               title={title}
               day={day}
               schoolOptions={schoolsByDate[isoDate] ?? []}
+              organizationNamesByApplicationId={organizationNamesByApplicationId}
               onAddRow={() => addAssignmentRow(isoDate)}
               onUpdateRow={(rowId, patch) => updateAssignmentRow(isoDate, rowId, patch)}
               onRemoveRow={rowId => removeAssignmentRow(isoDate, rowId)}

@@ -17,6 +17,7 @@ import {
   selectNearLabelIfVisible,
   uploadTinyPngIfPresent,
 } from './form-helpers'
+import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/general/lib/registration-dev-autofill-cases'
 
 /** 등록 폼 8종 — 대분류(audience) × 중분류(structure) × 소분류(session) */
 export type RegistrationCase = {
@@ -116,6 +117,23 @@ export type RegistrationCompleteResult = {
   caseLabel: string
 }
 
+export type GeneralProgramRegistrationOptions = {
+  /** 통합 E2E처럼 실행 시점에 바로 신청해야 하는 경우 모집 기간을 현재 월로 연다. */
+  openRecruitment?: boolean
+  /** 기획된 통합 E2E 이름을 그대로 사용하기 위한 제목 override. */
+  programTitle?: string
+  /** DEV 등록 화면의 자동입력 케이스를 사용한다. 날짜·기본값은 화면의 자동입력 로직을 따른다. */
+  devAutofillCaseId?: GeneralRegistrationDevAutofillCaseId
+  /** 통합 신청 E2E에서는 API 계약과 무관한 선택 파일 업로드를 생략한다. */
+  skipOptionalUploads?: boolean
+  /** 일반 기관 프로그램 생성 정책에 맞는 지급 항목만 선택한다. */
+  safeWagePaymentItems?: boolean
+  /** 기존 시스템 신청 양식은 편집하지 않고 생성된 binding으로 바로 신청한다. */
+  skipApplicationFormEdits?: boolean
+  /** 자동입력 케이스의 과거 날짜를 실행 시점 이후로 다시 맞춘다. */
+  ensureFutureDates?: boolean
+}
+
 async function clickButtonIfVisible(page: Page, name: string | RegExp) {
   const button = page.getByRole('button', { name }).first()
   if ((await button.count()) === 0) return
@@ -134,10 +152,122 @@ export class GeneralProgramRegistrationPage {
 
   constructor(
     private readonly page: Page,
-    regCase: RegistrationCase
+    regCase: RegistrationCase,
+    options?: GeneralProgramRegistrationOptions
   ) {
     this.regCase = regCase
-    this.programTitle = createUniqueProgramTitle(regCase.label)
+    this.programTitle = options?.programTitle ?? createUniqueProgramTitle(regCase.label)
+    this.openRecruitment = options?.openRecruitment === true
+    this.devAutofillCaseId = options?.devAutofillCaseId
+    this.skipOptionalUploads = options?.skipOptionalUploads === true
+    this.safeWagePaymentItems = options?.safeWagePaymentItems === true
+    this.skipApplicationFormEdits = options?.skipApplicationFormEdits === true
+    this.ensureFutureDates = options?.ensureFutureDates === true
+  }
+
+  private readonly openRecruitment: boolean
+  private readonly devAutofillCaseId?: GeneralRegistrationDevAutofillCaseId
+  private readonly skipOptionalUploads: boolean
+  private readonly safeWagePaymentItems: boolean
+  private readonly skipApplicationFormEdits: boolean
+  private readonly ensureFutureDates: boolean
+
+  private async selectSafeWagePaymentItemIfNeeded() {
+    if (!this.safeWagePaymentItems) return
+
+    await clickSectionNavIfVisible(this.page, '임금 정보')
+    const field = this.page
+      .locator('.detail-info-form__field')
+      .filter({
+        has: this.page.locator('.detail-info-form__field-label-text', {
+          hasText: /^지급 항목$/,
+        }),
+      })
+      .first()
+    const trigger = field.locator('.cms-select-multi__trigger').first()
+    if ((await trigger.count()) === 0 || !(await trigger.isVisible().catch(() => false))) return
+
+    await trigger.click()
+    const panel = this.page.locator('.cms-select-multi__panel:visible').last()
+    await expect(panel).toBeVisible({ timeout: 10_000 })
+    const rows = panel.locator('.cms-select-multi__row')
+    await expect(rows.first()).toBeVisible({ timeout: 10_000 })
+
+    const rowCount = await rows.count()
+    for (let index = 0; index < rowCount; index += 1) {
+      const row = rows.nth(index)
+      if ((await row.locator('.ant-checkbox-checked').count()) === 0) continue
+      await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+    }
+
+    for (let index = 0; index < rowCount; index += 1) {
+      const row = rows.nth(index)
+      const text = (await row.innerText()).trim()
+      if (!text || /숙박비|lodging/i.test(text) || /해당 없음/.test(text)) continue
+      await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+      break
+    }
+    await trigger.click({ force: true })
+  }
+
+  private async applyDevAutofillCase() {
+    const caseId = this.devAutofillCaseId
+    if (caseId == null) return false
+
+    const caseSelect = this.page.locator('[aria-label="개발용 자동입력 케이스"]').first()
+    await expect(caseSelect).toBeVisible({ timeout: 10_000 })
+    await caseSelect.click()
+    const option = this.page
+      .locator('.cms-select-dropdown .ant-select-item-option')
+      .filter({ hasText: new RegExp(`^${caseId}\\.`) })
+      .first()
+    await expect(option).toBeVisible({ timeout: 5_000 })
+    await option.click()
+
+    // 자동입력 훅은 호출 시점의 참여자 상태로 모집 overlay 대상을 계산한다.
+    // 기관·강사·봉사자 모집을 모두 만들 통합 케이스이므로 먼저 상태를 확정한다.
+    await checkCheckboxIfVisible(this.page, '학교/기관')
+    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, '봉사자')
+    await this.page.waitForTimeout(300)
+    await this.page.getByRole('button', { name: '자동입력(개발용)' }).click()
+    // 자동입력은 controlled 참여자 상태와 overlay를 함께 갱신하므로
+    // 다음 체크박스 조작 전에 한 번의 렌더 사이클을 기다린다.
+    await this.page.waitForTimeout(500)
+
+    // 자동입력 후 제목을 덮어쓰는 controlled state 동기화가 끝난 뒤
+    // 마지막에 고유한 제목을 주입한다.
+    const titleField = (label: string) =>
+      this.page
+        .locator('.detail-info-form__field')
+        .filter({
+          has: this.page.locator('.detail-info-form__field-label-text', { hasText: label }),
+        })
+        .first()
+    // 케이스 preset은 기관을 고정하고 교사·봉사자는 현재 선택값을 유지한다.
+    // 통합 신청 플로우에서는 세 모집을 모두 생성해야 하므로 명시적으로 켠다.
+    await checkCheckboxIfVisible(this.page, '학교/기관')
+    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, '봉사자')
+    await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
+    await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
+    await this.selectSafeWagePaymentItemIfNeeded()
+    await clickSectionNavIfVisible(this.page, '기본 정보')
+    await expect(titleField('대표 프로그램명 (국문)')).toBeVisible({ timeout: 10_000 })
+    await titleField('대표 프로그램명 (국문)')
+      .getByPlaceholder('대표 프로그램명을 입력하세요')
+      .fill(this.programTitle)
+    await titleField('대표 프로그램명 (영문)')
+      .getByPlaceholder('대표 프로그램명을 입력하세요')
+      .fill(PROGRAM_EN_NAME)
+
+    // DEV 자동입력 케이스의 기본값은 복수 회차라도 한 개의 상세 일정만
+    // 만들 수 있다. 통합 신청 검증은 실제 회차 매핑을 확인해야 하므로,
+    // 일정형 케이스는 생성 화면에서 일정 입력을 한 번 더 수행한다.
+    if (this.regCase.structure === 'schedule') {
+      await this.fillEducationProgress()
+    }
+    return true
   }
 
   /** 대시보드에서 LNB: 프로그램 관리 → 일반 프로그램 */
@@ -156,7 +286,7 @@ export class GeneralProgramRegistrationPage {
   }
 
   async openNewRegistration() {
-    await this.page.getByRole('button', { name: '프로그램 신규 등록' }).click()
+    await this.page.getByRole('button', { name: /^(프로그램 )?신규 등록$/ }).click()
 
     const draftDialog = this.page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
     if (await draftDialog.isVisible().catch(() => false)) {
@@ -222,7 +352,10 @@ export class GeneralProgramRegistrationPage {
     for (let i = 0; i < rowCount; i += 1) {
       const row = rows.nth(i)
       const text = (
-        await row.locator('.cms-select-multi__label-pill').innerText().catch(() => '')
+        await row
+          .locator('.cms-select-multi__label-pill')
+          .innerText()
+          .catch(() => '')
       ).trim()
       if (!text || text === '전체' || text.includes('선택하세요')) continue
 
@@ -262,9 +395,7 @@ export class GeneralProgramRegistrationPage {
     }
 
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
-    await expect
-      .poll(managerFilled, { timeout: 10_000 })
-      .toBeTruthy()
+    await expect.poll(managerFilled, { timeout: 10_000 }).toBeTruthy()
   }
 
   /** 공통 정보 — 케이스별 대·중·소분류 + 보이는 입력 채움 */
@@ -273,9 +404,34 @@ export class GeneralProgramRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
+    if (await this.applyDevAutofillCase()) {
+      // DEV 자동입력은 교육 일정이 현재 연도 안에서 무작위로 생성될 수 있다.
+      // 통합 E2E에서는 공통 운영 기간을 넓게 다시 잡아 교육 일정이 운영 기간
+      // 밖으로 밀리지 않도록 한다.
+      if (this.ensureFutureDates) {
+        await fillParagraphDateByPlaceholder(
+          this.page,
+          '사업 운영 기간을 선택하세요',
+          'range',
+          { futureStartWindow: true }
+        )
+      }
+      return
+    }
+
     await fillByPlaceholder(this.page, '대표 프로그램명을 입력하세요', this.programTitle)
-    await fillByPlaceholder(this.page, '상세 프로그램명을 입력하세요', PROGRAM_EN_NAME)
-    await fillByPlaceholder(this.page, '모집 시 노출될 프로그램명을 입력하세요', PROGRAM_PUBLIC_NAME)
+    const representativeProgramNameInputs =
+      this.page.getByPlaceholder('대표 프로그램명을 입력하세요')
+    if ((await representativeProgramNameInputs.count()) > 1) {
+      await representativeProgramNameInputs.nth(1).fill(PROGRAM_EN_NAME)
+    } else {
+      await fillByPlaceholder(this.page, '대표 프로그램명(영문)을 입력하세요', PROGRAM_EN_NAME)
+    }
+    await fillByPlaceholder(
+      this.page,
+      '모집 시 노출될 프로그램명을 입력하세요',
+      PROGRAM_PUBLIC_NAME
+    )
 
     await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
     await fillParagraphDateByPlaceholder(
@@ -329,11 +485,7 @@ export class GeneralProgramRegistrationPage {
     await this.ensureSponsorManagerSelected(sponsorField)
 
     await checkRadioIfVisible(this.page, '기관 안')
-    await fillByPlaceholder(
-      this.page,
-      '교육이 진행될 상세 장소를 입력해 주세요',
-      EDUCATION_PLACE
-    )
+    await fillByPlaceholder(this.page, '교육이 진행될 상세 장소를 입력해 주세요', EDUCATION_PLACE)
 
     await checkCheckboxIfVisible(this.page, '설문조사')
     await checkCheckboxIfVisible(this.page, '만족도조사')
@@ -346,10 +498,7 @@ export class GeneralProgramRegistrationPage {
 
     // 중·소분류 — 프로그램 유형 설정
     await clickSectionNavIfVisible(this.page, '프로그램 유형 설정')
-    await checkRadioIfVisible(
-      this.page,
-      structure === 'curriculum' ? '커리큘럼형' : '일정형'
-    )
+    await checkRadioIfVisible(this.page, structure === 'curriculum' ? '커리큘럼형' : '일정형')
     await checkRadioIfVisible(this.page, session === 'single' ? '단일 회차' : '복수 회차')
 
     // 유형 전환 후 교육 진행 섹션이 바뀔 때까지 대기
@@ -422,11 +571,16 @@ export class GeneralProgramRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (일정형)')
     if (session === 'multi') {
-      await clickButtonIfVisible(this.page, /강의 세부 일정 추가|강의 행사 일정 추가/)
+      const detailNameInputs = this.page.getByPlaceholder('행사 일정명을 작성하세요')
+      const existingDetailCount = await detailNameInputs.count()
+      if (existingDetailCount < 2) {
+        await clickButtonIfVisible(this.page, /강의 세부 일정 추가|강의 행사 일정 추가/)
+        await this.page.waitForTimeout(300)
+      }
     }
     await fillAllByPlaceholder(this.page, '세부 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
     await fillAllByPlaceholder(this.page, '행사 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
-    await fillParagraphDateByPlaceholder(
+    await fillAllParagraphDatesByPlaceholder(
       this.page,
       '일정을 선택하세요',
       'single',
@@ -470,12 +624,19 @@ export class GeneralProgramRegistrationPage {
     }
     await checkRadioIfVisible(this.page, '게시')
 
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '프로그램 운영 기간을 선택하세요',
-      'range',
-      OPERATION_DATE_OPTS
-    )
+    const operationDateOptions = this.ensureFutureDates
+      ? { futureStartWindow: true }
+      : OPERATION_DATE_OPTS
+    if (!this.devAutofillCaseId || this.ensureFutureDates) {
+      await fillParagraphDateByPlaceholder(
+        this.page,
+        '프로그램 운영 기간을 선택하세요',
+        'range',
+        this.ensureFutureDates
+          ? { futureStartWindow: true }
+          : operationDateOptions
+      )
+    }
     await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(
@@ -488,18 +649,17 @@ export class GeneralProgramRegistrationPage {
       '상세 모집 대상을 입력하세요',
       EDUCATION_TARGET_DETAIL
     )
+    const recruitmentDateOptions = this.openRecruitment
+      ? { currentMonthWindow: true }
+      : RECRUIT_DATE_OPTS
+
     await fillParagraphDateByPlaceholder(
       this.page,
       '모집 기간을 선택하세요',
       'range',
-      RECRUIT_DATE_OPTS
+      recruitmentDateOptions
     )
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '합격자 발표일',
-      'single',
-      ANNOUNCE_DATE_OPTS
-    )
+    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillParagraphDateByPlaceholder(this.page, '발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillByPlaceholderIfVisible(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
     await fillByPlaceholderIfVisible(this.page, '담당 문의처', CONTACT_NAME)
@@ -527,7 +687,7 @@ export class GeneralProgramRegistrationPage {
       'E2E 기타 안내입니다.'
     )
     await fillVisibleFreeTextFields(this.page, 'E2E 모집 상세')
-    await uploadTinyPngIfPresent(this.page)
+    if (!this.skipOptionalUploads) await uploadTinyPngIfPresent(this.page)
   }
 
   private async fillRecruitParticipantTab() {
@@ -545,22 +705,19 @@ export class GeneralProgramRegistrationPage {
       this.page,
       '모집 기간을 선택하세요',
       'range',
-      RECRUIT_DATE_OPTS
+      this.openRecruitment ? { currentMonthWindow: true } : RECRUIT_DATE_OPTS
     )
     await fillParagraphDateByPlaceholder(this.page, '발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillParagraphDateByPlaceholder(
       this.page,
       '면접 기간을 선택하세요',
       'range',
-      RECRUIT_DATE_OPTS
+      this.openRecruitment || this.ensureFutureDates
+        ? { currentMonthWindow: true }
+        : RECRUIT_DATE_OPTS
     )
     await fillByPlaceholderIfVisible(this.page, '면접 유형', '대면 면접')
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '합격자 발표일',
-      'single',
-      ANNOUNCE_DATE_OPTS
-    )
+    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillAllByPlaceholder(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
   }
 
@@ -574,6 +731,7 @@ export class GeneralProgramRegistrationPage {
 
   /** 신청 정보 — 참여자·강사·봉사자 탭 전부 채움 */
   async fillApplicationInfo() {
+    if (this.skipApplicationFormEdits) return
     await this.fillApplicationParticipantTab()
     await clickRegistrationTabIfVisible(this.page, '강사 신청 정보')
     await this.fillApplicationInstructorTab()
@@ -610,7 +768,7 @@ export class GeneralProgramRegistrationPage {
   private async fillApplicationInstructorTab() {
     await this.fillApplicationConsentIfPresent()
     await fillVisibleFreeTextFields(this.page, 'E2E 강사 신청')
-    await uploadTinyPngIfPresent(this.page)
+    if (!this.skipOptionalUploads) await uploadTinyPngIfPresent(this.page)
   }
 
   private async fillApplicationVolunteerTab() {
@@ -631,7 +789,7 @@ export class GeneralProgramRegistrationPage {
     )
     await fillParagraphTimeIfVisible(this.page, '시간을 선택해 주세요')
     await fillVisibleFreeTextFields(this.page, 'E2E 봉사자 신청')
-    await uploadTinyPngIfPresent(this.page)
+    if (!this.skipOptionalUploads) await uploadTinyPngIfPresent(this.page)
   }
 
   /** 실 API 등록 완료 → programId 반환. 실패 모달이면 에러 */
@@ -678,16 +836,32 @@ export class GeneralProgramRegistrationPage {
       )
     }
 
+    let programId = ''
+    try {
+      const json = (await createResponse.json()) as { data?: { id?: string | number } }
+      programId = String(json?.data?.id ?? '')
+    } catch {
+      programId = ''
+    }
+
     await expect(successDialog).toBeVisible({ timeout: 30_000 })
     await successDialog.getByRole('button', { name: '확인' }).click()
 
-    await expect(this.page).toHaveURL(/programId=/, { timeout: 60_000 })
-    await expect(this.page).not.toHaveURL(/new=1/)
-
-    const programId = new URL(this.page.url()).searchParams.get('programId')
     if (!programId) {
-      throw new Error('등록 후 URL에 programId 가 없습니다.')
+      // 실 API 성공 후에도 현재 화면을 목록에 남겨 두는 환경이 있으므로,
+      // URL 전환을 전제로 하지 않고 생성 제목으로 다시 연다.
+      await this.page.goto('/programs/general')
+      const row = this.page
+        .locator('tbody.ant-table-tbody tr.ant-table-row')
+        .filter({ hasText: this.programTitle })
+        .first()
+      await expect(row).toBeVisible({ timeout: 60_000 })
+      await row.click()
+      await expect(this.page).toHaveURL(/programId=/, { timeout: 30_000 })
+      programId = new URL(this.page.url()).searchParams.get('programId') ?? ''
     }
+
+    expect(programId).toMatch(/^\d+$/)
 
     return {
       programId,
