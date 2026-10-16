@@ -169,10 +169,13 @@ import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
   formatEducationScheduleLineFromRange,
+  mergeUniqueEducationScheduleLines,
   normalizeEducationSchedulePeriodLineDateOnly,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
 } from '@/features/template/lib/format-education-schedule-line'
+import { resolveEducationScheduleGroupTimeSlots } from '@/features/program/general/lib/education-schedule-lines-display'
+import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
@@ -4470,7 +4473,6 @@ function ScheduleSettingsEditFields({
   const educationStructure = form.watch('educationStructure')
   const sessionRound = form.watch('sessionRound')
   const participantOrganization = form.watch('participantOrganization')
-  const scheduleDetails = form.watch('scheduleDetails') ?? []
   const autoFillFromScheduleGroupTimes = shouldAutoFillEducationScheduleFromGroupTimes({
     educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
@@ -4499,20 +4501,26 @@ function ScheduleSettingsEditFields({
         : lines,
     [disableSchedulePeriodTime, lines]
   )
-  const groupTimeSlotsKey = JSON.stringify(
-    scheduleDetails.flatMap(detail => detail.groupTimes ?? [])
-  )
+  const resolveGroupTimeSlots = useCallback(() => {
+    const details = form.getValues('scheduleDetails') ?? []
+    return resolveEducationScheduleGroupTimeSlots({
+      scheduleDetails: details,
+      overlay: getProgramRegistrationOverlayRecord(),
+    })
+  }, [form])
+
+  const groupTimeSlotsKey = JSON.stringify(resolveGroupTimeSlots())
 
   useEffect(() => {
     if (!autoFillDatePicker) return
+    const slots = resolveGroupTimeSlots()
+    if (slots.length === 0) return
     const current = form.getValues('educationScheduleLines') ?? []
     if (current.length === 0) return
-    const details = form.getValues('scheduleDetails') ?? []
-    const slots = details.flatMap(detail => detail.groupTimes ?? [])
     const next = rebuildEducationScheduleLinesFromGroupTimes(current, slots)
     if (educationScheduleLinesEqual(current, next)) return
     form.setValue('educationScheduleLines', next, { shouldDirty: true })
-  }, [autoFillDatePicker, form, groupTimeSlotsKey])
+  }, [autoFillDatePicker, form, groupTimeSlotsKey, resolveGroupTimeSlots])
 
   useEffect(() => {
     if (scheduleMode !== 'period') return
@@ -4557,33 +4565,32 @@ function ScheduleSettingsEditFields({
     [form]
   )
 
-  const appendLineIfNew = useCallback(
-    (line: string) => {
-      const trimmed = line.trim()
-      if (!trimmed) return
-      const current = form.getValues('educationScheduleLines') ?? []
-      if (current.includes(trimmed)) return
-      form.setValue('educationScheduleLines', [...current, trimmed], { shouldDirty: true })
-    },
-    [form]
-  )
-
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      const details = form.getValues('scheduleDetails') ?? []
-      const slots = details.flatMap(detail => detail.groupTimes ?? [])
-      const lines = educationScheduleLinesFromSelectionRangeApply({
+      const slots = resolveGroupTimeSlots()
+      const newLines = educationScheduleLinesFromSelectionRangeApply({
         range,
         autoFillFromScheduleGroupTimes,
         educationScheduleMode: scheduleMode,
         groupTimeSlots: slots,
         dateOnlyPeriodRange: disableSchedulePeriodTime,
       })
-      for (const line of lines) appendLineIfNew(line)
+      const current = form.getValues('educationScheduleLines') ?? []
+      form.setValue(
+        'educationScheduleLines',
+        mergeUniqueEducationScheduleLines(current, newLines),
+        { shouldDirty: true }
+      )
       setSingleDate(null)
       setPeriodDate(null)
     },
-    [appendLineIfNew, autoFillFromScheduleGroupTimes, disableSchedulePeriodTime, form, scheduleMode]
+    [
+      autoFillFromScheduleGroupTimes,
+      disableSchedulePeriodTime,
+      form,
+      resolveGroupTimeSlots,
+      scheduleMode,
+    ]
   )
 
   const handleDateApply = useCallback(

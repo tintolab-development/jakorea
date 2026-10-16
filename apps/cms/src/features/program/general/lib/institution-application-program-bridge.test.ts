@@ -111,7 +111,7 @@ describe('resolveInstitutionApplicationProgramBridge', () => {
 })
 
 describe('resolveInstitutionApplicationRecruitLimitsVisibilityBridge', () => {
-  it('educationScheduleRange가 있으면 기간 지정으로 간주한다', () => {
+  it('educationScheduleRange만으로 educationScheduleMode를 period로 덮지 않는다', () => {
     const bridge = resolveInstitutionApplicationRecruitLimitsVisibilityBridge({
       preEducationNoticeRequired: true,
       educationStructure: 'curriculum',
@@ -122,7 +122,8 @@ describe('resolveInstitutionApplicationRecruitLimitsVisibilityBridge', () => {
         end: '2026-06-30T00:00:00.000Z',
       },
     })
-    expect(shouldShowInstitutionApplicationMaxScheduleFields(bridge)).toBe(true)
+    expect(bridge.educationScheduleMode).toBe('date')
+    expect(shouldShowInstitutionApplicationMaxScheduleFields(bridge)).toBe(false)
   })
 })
 

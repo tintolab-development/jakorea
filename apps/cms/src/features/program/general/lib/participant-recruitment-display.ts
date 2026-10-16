@@ -21,13 +21,13 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
+  buildInstitutionApplicationRecruitLimitVisibilityBridge,
   getInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
-  resolveInstitutionApplicationRecruitLimitsVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
-  type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
@@ -163,26 +163,29 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   notes: string
 }
 
-/** 등록·상세 공통정보 수정 중 라이브 브리지가 있으면 일정 유형 노출 조건에 반영 */
-function resolveRecruitmentInstitutionLimitsBridge(
-  program: Program
-): InstitutionApplicationProgramBridge {
+/** 프로그램 상세 모집 — 등록 위저드와 동일하게 유형·회차·일정 모드 SSOT만으로 한도 필드 노출 */
+function resolveRecruitmentInstitutionLimitsBridge(program: Program) {
   const fromProgram = resolveInstitutionApplicationProgramBridge(program)
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const programMode = commonInfo?.educationScheduleMode ?? fromProgram.educationScheduleMode ?? 'date'
+  const base = buildInstitutionApplicationRecruitLimitVisibilityBridge({
+    educationStructure: fromProgram.educationStructure,
+    sessionRound: fromProgram.sessionRound,
+    educationScheduleMode: programMode,
+  })
   const live = getInstitutionApplicationProgramBridge()
-  if (live.educationStructure == null || live.sessionRound == null) {
-    return resolveInstitutionApplicationRecruitLimitsVisibilityBridge(fromProgram)
+  if (
+    live.educationStructure === fromProgram.educationStructure &&
+    live.sessionRound === fromProgram.sessionRound &&
+    live.educationScheduleMode != null
+  ) {
+    return buildInstitutionApplicationRecruitLimitVisibilityBridge({
+      educationStructure: fromProgram.educationStructure,
+      sessionRound: fromProgram.sessionRound,
+      educationScheduleMode: live.educationScheduleMode,
+    })
   }
-  const merged: InstitutionApplicationProgramBridge = { ...fromProgram, ...live }
-  const programMode = fromProgram.educationScheduleMode
-  const liveMode = live.educationScheduleMode ?? 'date'
-  if (merged.educationScheduleRange != null) {
-    merged.educationScheduleMode = 'period'
-  } else if (liveMode === 'period') {
-    merged.educationScheduleMode = 'period'
-  } else if (programMode === 'period' && liveMode === 'date') {
-    merged.educationScheduleMode = 'period'
-  }
-  return resolveInstitutionApplicationRecruitLimitsVisibilityBridge(merged)
+  return base
 }
 
 export function resolveGeneralProgramParticipantRecruitmentDisplay(

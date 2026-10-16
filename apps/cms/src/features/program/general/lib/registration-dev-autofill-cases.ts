@@ -4,7 +4,7 @@ import type {
   ProgramRegistrationDevAutofillTypeSettings,
 } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 
-/** 일반 프로그램 등록 DEV 자동입력 — 10개 기본 케이스 (강사·봉사자 제외) */
+/** 일반 프로그램 등록 DEV 자동입력 — 11개 기본 케이스 (강사·봉사자 제외) */
 export type GeneralRegistrationDevAutofillCaseId =
   | 1
   | 2
@@ -16,6 +16,7 @@ export type GeneralRegistrationDevAutofillCaseId =
   | 8
   | 9
   | 10
+  | 11
 
 export type GeneralRegistrationDevAutofillAssignmentPolicy =
   | 'none'
@@ -118,10 +119,11 @@ export const GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_LABELS: Record<
   8: '8. 개인 · 일정 · 단일 · 날짜',
   9: '9. 개인 · 일정 · 복수 · 일정별 일시',
   10: '10. 기관 · 일정 · 단일 · 기간',
+  11: '11. 기관 · 커리큘럼 · 단일 · 기간',
 }
 
 export const GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS: readonly GeneralRegistrationDevAutofillCaseId[] =
-  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 /**
  * 케이스 preset은 기관/개인만 고정한다. 화면에서 체크한 교사/봉사자는 에디터 값을 유지한다.
@@ -470,6 +472,39 @@ export function resolveGeneralRegistrationDevAutofillPreset(
         overlayBehavior: {
           assignmentPolicy: 'disabled',
           scheduleSingleUsesGroupTimes: true,
+          scheduleMultiUsesDetailDates: false,
+        },
+      }
+    case 11:
+      return {
+        id: 11,
+        label: GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_LABELS[11],
+        ...devAutofillCaseTitles({
+          structure: '커리큘럼형',
+          round: '단일 회차',
+          schedule: '기간 지정',
+          audience: '기관',
+        }),
+        participantFlags: organizationParticipant(),
+        layout: layoutFromPreset({
+          organization: true,
+          programType: 'curriculum',
+          sessionRoundType: 'single',
+          curriculumSessionCount: 1,
+          curriculumChartSessionCount: 2,
+          scheduleCurriculumDetailCount: 1,
+          scheduleCurriculumGroupCount: 1,
+          participant: organizationParticipant(),
+        }),
+        typeSettings: {
+          programType: 'curriculum',
+          sessionRoundType: 'single',
+          educationScheduleMode: 'period',
+          ...COMMON_TYPE_FIELDS,
+        },
+        overlayBehavior: {
+          assignmentPolicy: 'none',
+          scheduleSingleUsesGroupTimes: false,
           scheduleMultiUsesDetailDates: false,
         },
       }

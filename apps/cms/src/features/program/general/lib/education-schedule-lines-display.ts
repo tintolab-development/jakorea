@@ -6,6 +6,7 @@
 import {
   flattenGroupTimeSlotsByDetail,
   formatEducationScheduleLineFromRange,
+  isCompleteEducationScheduleGroupTimeSlot,
   parseEducationScheduleLineToRange,
   parseStoredEducationScheduleRange,
   normalizeEducationSchedulePeriodLineDateOnly,
@@ -78,8 +79,28 @@ function slotsFromProgressTimeSummary(
   return slots
 }
 
+export type EducationScheduleGroupTimeSlotSourceDetail = {
+  groupTimes?: Array<EducationScheduleGroupTimeSlot | null | undefined>
+  progressTimeSummary?: string
+}
+
+function slotsFromScheduleDetailsGroupTimes(
+  details: Array<EducationScheduleGroupTimeSlotSourceDetail> | undefined
+): EducationScheduleGroupTimeSlot[] {
+  if (!details?.length) return []
+  const slots: EducationScheduleGroupTimeSlot[] = []
+  for (const detail of details) {
+    for (const slot of detail.groupTimes ?? []) {
+      if (isCompleteEducationScheduleGroupTimeSlot(slot)) {
+        slots.push({ startTime: slot!.startTime, endTime: slot!.endTime })
+      }
+    }
+  }
+  return slots
+}
+
 function slotsFromScheduleDetails(
-  details: Array<{ progressTimeSummary?: string }> | undefined
+  details: Array<EducationScheduleGroupTimeSlotSourceDetail> | undefined
 ): EducationScheduleGroupTimeSlot[] {
   if (!details?.length) return []
   return details.flatMap(detail => slotsFromProgressTimeSummary(detail.progressTimeSummary))
@@ -97,6 +118,23 @@ function slotsFromOverlayGroupTimes(
 }
 
 /**
+ * 진행 시간 슬롯 SSOT — apply / effect / 조회 동일 우선순위.
+ * 1. scheduleDetails.groupTimes (완전한 슬롯만)
+ * 2. scheduleDetails.progressTimeSummary
+ * 3. 등록 overlay groupTimesByDetail
+ */
+export function resolveEducationScheduleGroupTimeSlots(input: {
+  scheduleDetails?: Array<EducationScheduleGroupTimeSlotSourceDetail>
+  overlay?: Record<string, unknown>
+}): EducationScheduleGroupTimeSlot[] {
+  const fromGroupTimes = slotsFromScheduleDetailsGroupTimes(input.scheduleDetails)
+  if (fromGroupTimes.length > 0) return fromGroupTimes
+  const fromSummary = slotsFromScheduleDetails(input.scheduleDetails)
+  if (fromSummary.length > 0) return fromSummary
+  return slotsFromOverlayGroupTimes(input.overlay)
+}
+
+/**
  * 등록 overlay를 우선한다. 개인·일정형·단일 회차는 진행 시간으로 예정일 시각을 다시 입힌다.
  */
 export function resolveEducationScheduleLinesForView(input: {
@@ -105,7 +143,7 @@ export function resolveEducationScheduleLinesForView(input: {
   autoFillFromScheduleGroupTimes?: boolean
   /** 기관 · 일정형 · 단일 · 기간 — 예정일 표시는 날짜만 */
   dateOnlyPeriodLines?: boolean
-  scheduleDetails?: Array<{ progressTimeSummary?: string }>
+  scheduleDetails?: Array<EducationScheduleGroupTimeSlotSourceDetail>
 }): string[] {
   const fromCommon = normalizeEducationScheduleLines(input.educationScheduleLines)
   const fromOverlay = normalizeEducationScheduleLines(
@@ -124,10 +162,10 @@ export function resolveEducationScheduleLinesForView(input: {
     return normalized
   }
 
-  const slots =
-    slotsFromScheduleDetails(input.scheduleDetails).length > 0
-      ? slotsFromScheduleDetails(input.scheduleDetails)
-      : slotsFromOverlayGroupTimes(input.overlay)
+  const slots = resolveEducationScheduleGroupTimeSlots({
+    scheduleDetails: input.scheduleDetails,
+    overlay: input.overlay,
+  })
   if (slots.length === 0) return normalized
 
   return normalizeEducationScheduleLinesForView(
