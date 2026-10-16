@@ -8,10 +8,7 @@ import {
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   resolveApplicationScheduleParagraphDescription,
 } from './application-schedule-paragraph-copy.js'
-import { readCurriculumMultiDateFixedScheduleMeta } from './curriculum-multi-date-fixed-schedule.js'
-import {
-  resolveFixedScheduleLinesToChoiceItems,
-} from './curriculum-multi-date-fixed-schedule.js'
+import { resolveFixedScheduleLinesToChoiceItems } from './curriculum-multi-date-fixed-schedule.js'
 import {
   shouldShowApplicationPreferredScheduleParagraph,
   type ApplicationScheduleVisibilityInput,
@@ -128,6 +125,7 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
               educationScheduleMode: input.educationScheduleMode,
               educationRoundCount: input.educationRoundCount,
               sessionsPerRound: input.sessionsPerRound,
+              curriculumChartSessionCount: input.curriculumChartSessionCount,
               curriculumSessions: input.curriculumSessions,
             }
           ) ?? []
@@ -144,8 +142,7 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
         if (!scheduleParagraphDescription) return paragraph
         return { ...paragraph, paragraphDescription: scheduleParagraphDescription }
       }
-      const meta = readCurriculumMultiDateFixedScheduleMeta(input)
-      const choiceItems = resolveFixedScheduleLinesToChoiceItems(input, lines, meta)
+      const choiceItems = resolveFixedScheduleLinesToChoiceItems(input, lines, input)
       return {
         ...paragraph,
         paragraphDescription: scheduleParagraphDescription,

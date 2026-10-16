@@ -202,6 +202,27 @@ describe('curriculum multi date fixed schedule matrix', () => {
     expect(matrix).toHaveLength(4)
   })
 
+  it('커리큘럼 단일 날짜 — 라벨 우측 차시 수', () => {
+    const lines = [
+      '26년 4월 20일(월) 09:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ]
+    const items = resolveFixedScheduleLinesToChoiceItems(
+      {
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: lines,
+      },
+      lines,
+      { curriculumChartSessionCount: 2 }
+    )
+    expect(items).toEqual([
+      { id: 'line:0', label: `${lines[0]} | 2차시` },
+      { id: 'line:1', label: `${lines[1]} | 2차시` },
+    ])
+  })
+
   it('일정형 단일 날짜 — 라벨 원문·line:i (matrix 없음)', () => {
     const lines = [
       '26년 4월 20일(월) 9:30 ~ 12:20',

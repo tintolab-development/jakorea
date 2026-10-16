@@ -298,6 +298,7 @@ const individualCurriculumDatePatched = syncApplicationScheduleChoiceParagraphsI
       '26년 4월 20일(월) 9:30 ~ 12:20',
       '26년 4월 27일(월) 13:00 ~ 15:50',
     ],
+    curriculumChartSessionCount: 2,
     runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
   }
 )
@@ -311,6 +312,10 @@ assert.equal((individualScheduleParagraph as MultipleChoiceParagraph).items.leng
 assert.equal(
   individualScheduleParagraph.paragraphDescription,
   '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+)
+assert.equal(
+  (individualScheduleParagraph as MultipleChoiceParagraph).items[0]?.label,
+  '26년 4월 20일(월) 9:30 ~ 12:20 | 2차시'
 )
 
 const individualScheduleSingleDatePatched = syncApplicationScheduleChoiceParagraphsInDraft(
