@@ -100,13 +100,34 @@ export class UjatProgramEditPage {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         const body = (await response.json().catch(() => null)) as {
-          items?: Array<{ id?: string | number; mainTitle?: string }>
-          content?: Array<{ id?: string | number; mainTitle?: string }>
-        } | Array<{ id?: string | number; mainTitle?: string }> | null
+          items?: Array<{
+            id?: string | number
+            mainTitle?: string
+            periodStatus?: string
+            businessStartDate?: string
+          }>
+          content?: Array<{
+            id?: string | number
+            mainTitle?: string
+            periodStatus?: string
+            businessStartDate?: string
+          }>
+        } | Array<{
+          id?: string | number
+          mainTitle?: string
+          periodStatus?: string
+          businessStartDate?: string
+        }> | null
         const rows = Array.isArray(body) ? body : body?.items ?? body?.content ?? []
-        const match = rows.find(
-          item => typeof item.mainTitle === 'string' && item.mainTitle.startsWith('Playwright UJAT 테스트·')
+        const candidates = rows.filter(
+          item =>
+            typeof item.mainTitle === 'string' &&
+            item.mainTitle.startsWith('Playwright UJAT 테스트·')
         )
+        const match =
+          candidates.find(item => item.periodStatus === 'SCHEDULED') ??
+          candidates.find(item => item.businessStartDate && item.businessStartDate > new Date().toISOString().slice(0, 10)) ??
+          candidates[0]
         return match?.id != null
           ? { id: String(match.id), mainTitle: String(match.mainTitle) }
           : null
@@ -455,5 +476,14 @@ export class UjatProgramEditPage {
         throw new Error(`프로그램 수정 실패: ${message || '(메시지 없음)'}`)
       }),
     ])
+
+    const completedDialog = this.page
+      .getByRole('dialog')
+      .filter({ hasText: '수정 완료' })
+    await completedDialog.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined)
+    if (await completedDialog.isVisible().catch(() => false)) {
+      await completedDialog.getByRole('button', { name: '확인' }).click()
+      await expect(completedDialog).toBeHidden({ timeout: 10_000 })
+    }
   }
 }
