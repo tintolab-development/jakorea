@@ -10,6 +10,8 @@ import { withAuthenticatedPage } from '../../../../helpers/with-authenticated-pa
  * 시드: `[수정 가능] UJAT 프로그램 더미` → `[UJAT더미]…` → FE mock 목록 title
  */
 test.describe('UJAT 프로그램 상세 smoke', () => {
+  test.describe.configure({ mode: 'serial' })
+
   let programId = ''
 
   test.beforeAll(async ({ browser }) => {
