@@ -7,8 +7,8 @@ import {
 import { listDevAutofillRecruitOverlayTargets } from '@/features/program/shared/lib/dev-autofill-recruit-overlay'
 
 describe('resolveGeneralRegistrationDevAutofillPreset', () => {
-  it('9개 케이스 id를 모두 정의한다', () => {
-    expect(GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS).toHaveLength(9)
+  it('10개 케이스 id를 모두 정의한다', () => {
+    expect(GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS).toHaveLength(10)
   })
 
   it('케이스3은 기관 커리큘럼 복수 기간 지정이다', () => {
@@ -25,6 +25,16 @@ describe('resolveGeneralRegistrationDevAutofillPreset', () => {
     expect(preset.typeSettings.sessionRoundType).toBe('multi')
     expect(preset.overlayBehavior.scheduleMultiUsesDetailDates).toBe(true)
     expect(preset.layout.scheduleCurriculumDetailCount).toBeGreaterThanOrEqual(2)
+  })
+
+  it('케이스10은 기관 일정 단일 기간 지정이다', () => {
+    const preset = resolveGeneralRegistrationDevAutofillPreset(10)
+    expect(preset.participantFlags.organization).toBe(true)
+    expect(preset.typeSettings.programType).toBe('schedule')
+    expect(preset.typeSettings.sessionRoundType).toBe('single')
+    expect(preset.typeSettings.educationScheduleMode).toBe('period')
+    expect(preset.layout.scheduleCurriculumGroupCount).toBe(1)
+    expect(preset.overlayBehavior.scheduleSingleUsesGroupTimes).toBe(true)
   })
 
   it('케이스7은 개인 커리큘럼 복수이며 기간 지정을 쓰지 않는다', () => {

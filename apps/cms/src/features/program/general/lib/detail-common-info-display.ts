@@ -620,6 +620,16 @@ function shouldAutoFillEducationScheduleFromGroupTimes(program: Program): boolea
   )
 }
 
+function shouldShowEducationSchedulePeriodDateOnlyLines(program: Program): boolean {
+  const common = program.generalCommonInfo
+  return (
+    program.generalProgramEducationStructure === 'schedule' &&
+    program.generalProgramSessionRound === 'single' &&
+    common?.educationScheduleMode === 'period' &&
+    program.generalProgramAudience === 'organization'
+  )
+}
+
 function withResolvedEducationScheduleLines(
   commonInfo: NonNullable<Program['generalCommonInfo']>,
   program: Program
@@ -628,6 +638,7 @@ function withResolvedEducationScheduleLines(
     educationScheduleLines: commonInfo.educationScheduleLines,
     overlay: program.registrationOverlay,
     autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+    dateOnlyPeriodLines: shouldShowEducationSchedulePeriodDateOnlyLines(program),
     scheduleDetails: commonInfo.scheduleDetails,
   })
   if (
@@ -852,6 +863,7 @@ export function resolveGeneralProgramCommonInfo(
     educationScheduleLines: resolveEducationScheduleLinesForView({
       overlay,
       autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+      dateOnlyPeriodLines: shouldShowEducationSchedulePeriodDateOnlyLines(program),
     }),
     wageGradeRows: [
       { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },

@@ -47,16 +47,19 @@ describe('UJAT 기관 신청 상세 adapter', () => {
       teacherName: '목록 담당자',
       applicationStatus: 'APPROVED',
     })
-    const detail = enrichUjatInstitutionDetailFromRemote(row, {
-      organizationAddress: null,
-      organizationAddressDetail: null,
-      managerComment: null,
-      teacherName: null,
-      teacherTel: null,
-      teacherPhone: null,
-      teacherEmail: null,
-      preferredEducationDates: null,
-    })
+    const detail = enrichUjatInstitutionDetailFromRemote(
+      row,
+      {
+        organizationAddress: null,
+        organizationAddressDetail: null,
+        managerComment: null,
+        teacherName: null,
+        teacherTel: null,
+        teacherPhone: null,
+        teacherEmail: null,
+        preferredEducationDates: null,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse
+    )
 
     expect(detail.address).toBe('')
     expect(detail.addressDetail).toBe('')

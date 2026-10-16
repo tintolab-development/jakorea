@@ -319,7 +319,7 @@ export function useApplicantInstitutionDetailEdit({
         const textbookPatch = textbookChanged
           ? {
               textbookId: textbookIsNotUsed
-                ? null
+                ? undefined
                 : Number.isFinite(textbookIdNumber)
                   ? textbookIdNumber
                   : undefined,

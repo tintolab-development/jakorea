@@ -3,6 +3,7 @@ import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/l
 import {
   isDetailedProgramMasterId,
   omitIfDetailedProgramNameAlias,
+  omitMirroredDetailedProgramMasterIdFromCommonInfo,
   parseDetailedProgramMasterId,
 } from './detailed-program-request-id'
 
@@ -30,6 +31,17 @@ describe('isDetailedProgramMasterId', () => {
     expect(isDetailedProgramMasterId('해당없음')).toBe(false)
     expect(isDetailedProgramMasterId('')).toBe(false)
     expect(isDetailedProgramMasterId(undefined)).toBe(false)
+  })
+})
+
+describe('omitMirroredDetailedProgramMasterIdFromCommonInfo', () => {
+  it('removes BE-mirrored detailedProgramId from commonInfo', () => {
+    const next = omitMirroredDetailedProgramMasterIdFromCommonInfo({
+      detailedProgramName: '일정 A',
+      detailedProgramId: 163006,
+    } as never)
+    expect(next).toEqual({ detailedProgramName: '일정 A' })
+    expect(Object.prototype.hasOwnProperty.call(next, 'detailedProgramId')).toBe(false)
   })
 })
 

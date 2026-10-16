@@ -42,6 +42,13 @@ import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui
 import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/shared/ui/program-registration-curriculum-title-actions'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveInstitutionApplicationScheduleMetaForRegistrationWizard } from '@/features/program/general/lib/institution-application-schedule-meta'
+import {
+  getProgramRegistrationOverlayRecord,
+  readGeneralRegistrationOverlayScheduleLines,
+  subscribeProgramRegistrationOverlayKeys,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 function extrasWithParticipant(
   extras: GeneralRegistrationEditorExtras,
@@ -114,6 +121,41 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     extras.programType === 'schedule' && extras.sessionRoundType === 'multi'
 
   const scheduleCurriculumGroupCount = extras.scheduleCurriculumGroupCount ?? 1
+
+  useEffect(() => {
+    if (!participant.organization) return
+    const syncBridgeFromOverlay = () => {
+      const scheduleMeta = resolveInstitutionApplicationScheduleMetaForRegistrationWizard({
+        sessionRound: extras.sessionRoundType,
+        curriculumSessionCount: extras.curriculumSessionCount,
+        curriculumChartSessionCount: extras.curriculumChartSessionCount,
+        overlay: getProgramRegistrationOverlayRecord(),
+      })
+      patchInstitutionApplicationProgramBridge({
+        educationStructure: extras.programType,
+        sessionRound: extras.sessionRoundType,
+        educationScheduleMode: extras.educationScheduleMode ?? 'date',
+        educationScheduleLines: readGeneralRegistrationOverlayScheduleLines(),
+        educationRoundCount: scheduleMeta.educationRoundCount,
+        sessionsPerRound: scheduleMeta.sessionsPerRound,
+        curriculumChartSessionCount: extras.curriculumChartSessionCount,
+      })
+    }
+    syncBridgeFromOverlay()
+    return subscribeProgramRegistrationOverlayKeys(
+      [
+        'generalRegistration.educationScheduleSettings.scheduleLines',
+        'generalRegistration.educationCurriculum.progressSessionByRound',
+      ],
+      syncBridgeFromOverlay
+    )
+  }, [
+    participant.organization,
+    extras.programType,
+    extras.sessionRoundType,
+    extras.educationScheduleMode,
+    extras.curriculumSessionCount,
+  ])
 
   const isScheduleStructure = extras.programType === 'schedule'
   const curriculumTitle = isScheduleStructure
@@ -391,6 +433,8 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
             participantOrganization: participant.organization,
             sessionRound: extras.sessionRoundType,
           })}
+          programType={extras.programType}
+          sessionRound={extras.sessionRoundType}
         />
         </ProgramCommonInfoEditSection>
       )}

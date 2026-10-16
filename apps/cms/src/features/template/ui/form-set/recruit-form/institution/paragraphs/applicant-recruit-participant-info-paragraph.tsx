@@ -1,9 +1,12 @@
 import {
-  isInstitutionApplicationBridgeTemplateAuthoring,
+  buildInstitutionApplicationRecruitLimitVisibilityBridge,
+  resolveInstitutionApplicationRecruitLimitsVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
+  type InstitutionApplicationRecruitLimitVisibilityInput,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { useMemo } from 'react'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import {
   ApplicantRecruitAnnouncementPublishedField,
@@ -29,6 +32,10 @@ const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 �
 
 export type ApplicantRecruitParticipantInfoParagraphProps = {
   showInstitutionApplicationLimits?: boolean
+  /** 양식 템플릿 편집(프로그램 미연동) — 최대 일정·차시 필드 레이아웃용 상시 노출 */
+  isTemplateAuthoringMode?: boolean
+  /** 등록 위저드 — 유형 설정·교육 일정 모드 SSOT (브리지 기본 date와 분리) */
+  recruitLimitVisibility?: InstitutionApplicationRecruitLimitVisibilityInput
   layoutVariant?: 'general' | 'economy' | 'trainedTeachers'
   defaults?: {
     studentListRequired?: 'need' | 'none'
@@ -53,24 +60,32 @@ function RecruitProgressHintField() {
 /** 프로그램 참여자 모집 폼 (학교) — 참여자 모집 정보 */
 export function ApplicantRecruitParticipantInfoParagraph({
   showInstitutionApplicationLimits = true,
+  isTemplateAuthoringMode = false,
+  recruitLimitVisibility,
   layoutVariant = 'general',
   defaults,
 }: ApplicantRecruitParticipantInfoParagraphProps = {}) {
   const institutionApplicationBridge = useInstitutionApplicationProgramBridge()
+  const recruitLimitsVisibilityBridge = useMemo(() => {
+    if (recruitLimitVisibility) {
+      return buildInstitutionApplicationRecruitLimitVisibilityBridge(recruitLimitVisibility)
+    }
+    return resolveInstitutionApplicationRecruitLimitsVisibilityBridge(institutionApplicationBridge)
+  }, [institutionApplicationBridge, recruitLimitVisibility])
   const isTrainedTeachers = layoutVariant === 'trainedTeachers'
-  const isTemplateAuthoring = isInstitutionApplicationBridgeTemplateAuthoring(
-    institutionApplicationBridge
-  )
+  /** 등록 위저드는 `recruitLimitVisibility`로 판단 — 양식 관리(미연동)만 authoring 상시 노출 */
+  const templateAuthoringLimitsPreview =
+    isTemplateAuthoringMode && recruitLimitVisibility == null
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
     (isTrainedTeachers ||
-      isTemplateAuthoring ||
-      shouldShowInstitutionApplicationMaxScheduleFields(institutionApplicationBridge))
+      templateAuthoringLimitsPreview ||
+      shouldShowInstitutionApplicationMaxScheduleFields(recruitLimitsVisibilityBridge))
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
     (isTrainedTeachers ||
-      isTemplateAuthoring ||
-      shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge))
+      templateAuthoringLimitsPreview ||
+      shouldShowInstitutionApplicationMaxSessionsPerDayField(recruitLimitsVisibilityBridge))
 
   const limitDefaults = defaults
 

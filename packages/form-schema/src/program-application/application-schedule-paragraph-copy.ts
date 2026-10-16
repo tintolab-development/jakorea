@@ -1,7 +1,13 @@
 import {
-  shouldShowApplicationMaxSessionsPerDayField,
+  readCurriculumMultiDateFixedScheduleMeta,
+  readCurriculumPreferredScheduleDailySessionCountForCopy,
+  shouldUseCurriculumMultiDateFixedScheduleMatrix,
+  type CurriculumMultiDateFixedScheduleMetaInput,
+} from './curriculum-multi-date-fixed-schedule.js'
+import {
   shouldShowApplicationPreferredScheduleParagraph,
   shouldShowApplicationScheduleParagraph,
+  shouldShowApplicationSchedulePeriodDateOnlyPreferred,
   type ApplicationScheduleVisibilityInput,
 } from './schedule-paragraph-visibility.js'
 
@@ -11,13 +17,29 @@ const FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND =
 const FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND =
   'N차시*N회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 
-export type ApplicationScheduleParagraphCopyInput = ApplicationScheduleVisibilityInput & {
-  maxScheduleCount?: number
-  maxSessionsPerDay?: number
-}
+export type ApplicationScheduleParagraphCopyInput = ApplicationScheduleVisibilityInput &
+  CurriculumMultiDateFixedScheduleMetaInput & {
+    maxScheduleCount?: number
+    maxSessionsPerDay?: number
+  }
 
 function countOrN(value: number | undefined): string {
   return value != null && value > 0 ? String(value) : 'N'
+}
+
+function resolveMultiRoundFixedScheduleDescription(
+  input: ApplicationScheduleParagraphCopyInput
+): string {
+  if (!shouldUseCurriculumMultiDateFixedScheduleMatrix(input)) {
+    return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND
+  }
+  const meta = readCurriculumMultiDateFixedScheduleMeta(input)
+  const sessions = countOrN(meta.sessionsPerRound)
+  const rounds = countOrN(meta.educationRoundCount)
+  return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND.replace('N차시', `${sessions}차시`).replace(
+    'N회',
+    `${rounds}회`
+  )
 }
 
 /** 날짜 지정 — 고정 일정 체크박스 안내 (CMS `resolveInstitutionFixedScheduleDescription`) */
@@ -25,17 +47,20 @@ export function resolveApplicationFixedScheduleParagraphDescription(
   input: ApplicationScheduleParagraphCopyInput
 ): string {
   if (input.sessionRound === 'multi') {
-    return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND
+    return resolveMultiRoundFixedScheduleDescription(input)
   }
   return FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND
 }
 
-/** 커리큘럼형 + 복수 회차 + 기간 지정 — 희망 일정 카드 설명 */
+/** 기간 지정 지망 카드 설명 — 일정형 단일은 날짜만, 커리큘럼은 차시·시간 포함 */
 export function resolveApplicationPreferredScheduleParagraphDescription(
   input: ApplicationScheduleParagraphCopyInput
 ): string {
-  const sessions = countOrN(input.maxSessionsPerDay)
   const max = countOrN(input.maxScheduleCount)
+  if (shouldShowApplicationSchedulePeriodDateOnlyPreferred(input)) {
+    return `교육을 희망하는 날짜를 모두 작성해 주세요. (최대 ${max}개까지 희망 일정 신청이 가능합니다.)`
+  }
+  const sessions = countOrN(readCurriculumPreferredScheduleDailySessionCountForCopy(input))
   return `교육을 희망하는 날짜와 수업 시간을 모두 작성해 주세요. 수업은 1일, ${sessions}차시 운영됩니다. (최대 ${max}개까지 희망 일정 신청이 가능합니다.)`
 }
 

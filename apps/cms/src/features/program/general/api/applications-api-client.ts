@@ -1,7 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import { getJABackendAdminAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
-import type { DocumentResultRequestNotifyTiming } from '@/shared/api/generated/dashboard/schemas/documentResultRequestNotifyTiming'
+import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
@@ -70,7 +69,7 @@ export type ApplicationsListQuery = {
   totalScoreUnevaluated?: boolean
 }
 
-const generalApplicationsDashboardApi = getJABackendAdminAPIDashboardSubset()
+const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
 
 export interface ApplicationsPageDto<T> {
   items?: T[]
@@ -149,7 +148,7 @@ export type ApplicationDecisionCancelRequestWithNotification = Omit<
 }
 
 export type ScreeningResultNotifyFields = {
-  notifyTiming?: DocumentResultRequestNotifyTiming
+  notifyTiming?: string
   scheduledAt?: string
 }
 
@@ -370,7 +369,7 @@ export async function updateVolunteerDocumentEvaluationRemote(
   if (!Number.isSafeInteger(numericApplicationId)) {
     throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
   }
-  return generalApplicationsDashboardApi.putVolunteerDocumentManagerEvaluation(
+  return generalApplicationsDashboardApi.recordVolunteerDocumentEvaluation(
     numericApplicationId,
     managerSlot,
     payload

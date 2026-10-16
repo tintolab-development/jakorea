@@ -1,9 +1,10 @@
 import { useEffect, useMemo, type ReactNode } from 'react'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { buildInstitutionSessionCountOptions } from '@/features/template/lib/participant-recruitment-institution-limits'
 import {
   getInstitutionApplicationProgramBridge,
-  shouldShowInstitutionApplicationMaxSessionsPerDayField,
+  shouldShowInstitutionApplicationPreferredScheduleSessionSelect,
+  shouldShowInstitutionApplicationSchedulePeriodDateOnlyPreferred,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
@@ -11,6 +12,7 @@ import {
   resolveInstitutionPreferredScheduleInitialBlockCount,
   resolveInstitutionPreferredScheduleMaxBlocks,
 } from '@/features/template/lib/institution-application-schedule-copy'
+import { resolvePreferredScheduleBlockTitle } from '@jakorea/form-schema/program-application'
 import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
@@ -56,38 +58,49 @@ function PreferenceScheduleFields({
   onPatch,
   sessionOptions,
   showSessionSelect,
+  dateOnlyPreferred,
+  disabledDate,
 }: {
   block: ScheduleBlockState
   onPatch: (patch: Partial<ScheduleBlockState>) => void
   sessionOptions: { value: string; label: string }[]
   showSessionSelect: boolean
+  dateOnlyPreferred: boolean
+  disabledDate?: (date: Dayjs) => boolean
 }) {
+  const dateField = (
+    <DetailInfoForm.Field
+      label="희망 교육일"
+      edit={
+        <ParagraphDatePicker
+          mode="single"
+          presetMode="date"
+          customizable={false}
+          suppressAutoTodayWhenEmpty
+          placeholder="희망 교육 날짜를 선택하세요"
+          value={block.date}
+          onChange={next => onPatch({ date: next })}
+          disabledDate={disabledDate}
+          width={220}
+          className="institution-preferred-schedule-paragraph__date-picker"
+          style={{ flex: '0 0 220px', width: 220 }}
+        />
+      }
+      view="-"
+    />
+  )
+
+  const timeInputsDisabled = dateOnlyPreferred
+
   return (
     <>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="희망 교육일"
-          edit={
-            <ParagraphDatePicker
-              mode="single"
-              presetMode="date"
-              customizable={false}
-              suppressAutoTodayWhenEmpty
-              placeholder="희망 교육 날짜를 선택하세요"
-              value={block.date}
-              onChange={next => onPatch({ date: next })}
-              width={220}
-              className="institution-preferred-schedule-paragraph__date-picker"
-              style={{ flex: '0 0 220px', width: 220 }}
-            />
-          }
-          view="-"
-        />
+        {dateField}
         <DetailInfoForm.Field
           label="희망 교육 시간"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap institution-preferred-schedule-paragraph__time-inputs">
-              {showSessionSelect ? (
+              {showSessionSelect && !dateOnlyPreferred ? (
                 <>
                   <CmsSelect
                     inputSize="medium"
@@ -99,6 +112,7 @@ function PreferenceScheduleFields({
                       onPatch({ session: value == null ? undefined : String(value) })
                     }
                     options={sessionOptions}
+                    disabled={timeInputsDisabled}
                   />
                   <DetailInfoForm.InputsSeparator />
                 </>
@@ -109,6 +123,7 @@ function PreferenceScheduleFields({
                 placeholder="수업 시작"
                 width={140}
                 showEndTimeToggle={false}
+                disabled={timeInputsDisabled}
               />
               <span className="institution-preferred-schedule-paragraph__tilde">~</span>
               <ParagraphTimePicker
@@ -117,7 +132,7 @@ function PreferenceScheduleFields({
                 placeholder="수업 종료"
                 width={140}
                 showEndTimeToggle={false}
-                disabled={block.start == null}
+                disabled={timeInputsDisabled || block.start == null}
               />
             </div>
           }
@@ -134,6 +149,8 @@ function ScheduleBlock({
   onPatch,
   sessionOptions,
   showSessionSelect,
+  dateOnlyPreferred,
+  disabledDate,
   deleteAction,
 }: {
   title: string
@@ -141,20 +158,26 @@ function ScheduleBlock({
   onPatch: (patch: Partial<ScheduleBlockState>) => void
   sessionOptions: { value: string; label: string }[]
   showSessionSelect: boolean
+  dateOnlyPreferred: boolean
+  disabledDate?: (date: Dayjs) => boolean
   deleteAction?: ReactNode
 }) {
   return (
     <div className="institution-preferred-schedule-paragraph__block-row">
       <div className="institution-preferred-schedule-paragraph__block-body">
-        <div className="detail-info-form--text-bold institution-preferred-schedule-paragraph__block-title">
-          {title}
-        </div>
-        <DetailInfoForm title={title} hideHeader mode="edit">
+        {title ? (
+          <div className="detail-info-form--text-bold institution-preferred-schedule-paragraph__block-title">
+            {title}
+          </div>
+        ) : null}
+        <DetailInfoForm title={title || '희망 교육 일정'} hideHeader mode="edit">
           <PreferenceScheduleFields
             block={block}
             onPatch={onPatch}
             sessionOptions={sessionOptions}
             showSessionSelect={showSessionSelect}
+            dateOnlyPreferred={dateOnlyPreferred}
+            disabledDate={disabledDate}
           />
         </DetailInfoForm>
       </div>
@@ -168,7 +191,8 @@ function ScheduleBlock({
 export const INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY =
   'application.institution.preferredSchedules' as const
 
-function isBlankScheduleBlock(block: ScheduleBlockState): boolean {
+function isBlankScheduleBlock(block: ScheduleBlockState, dateOnlyPreferred = false): boolean {
+  if (dateOnlyPreferred) return block.date == null
   return block.date == null && block.session == null && block.start == null && block.end == null
 }
 
@@ -230,11 +254,21 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
   const bridge = useInstitutionApplicationProgramBridge()
   const maxBlocks = resolveInstitutionPreferredScheduleMaxBlocks(bridge)
   const initialBlockCount = resolveInstitutionPreferredScheduleInitialBlockCount(bridge)
-  const showSessionSelect = shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
+  const showSessionSelect = shouldShowInstitutionApplicationPreferredScheduleSessionSelect(bridge)
+  const dateOnlyPreferred = shouldShowInstitutionApplicationSchedulePeriodDateOnlyPreferred(bridge)
   const sessionOptions = useMemo(
     () => buildInstitutionSessionCountOptions(bridge.maxSessionsPerDay),
     [bridge.maxSessionsPerDay]
   )
+
+  const disabledDate = useMemo(() => {
+    const range = bridge.educationScheduleRange
+    if (!range) return undefined
+    const start = dayjs(range.start).startOf('day')
+    const end = dayjs(range.end).endOf('day')
+    if (!start.isValid() || !end.isValid()) return undefined
+    return (date: Dayjs) => date.isBefore(start, 'day') || date.isAfter(end, 'day')
+  }, [bridge.educationScheduleRange])
 
   const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
     INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
@@ -247,7 +281,12 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
       prev => {
         const current = (prev ?? []) as ScheduleBlockState[]
         if (current.length >= initialBlockCount) return current
-        if (current.length > 0 && !current.every(isBlankScheduleBlock)) return current
+        if (
+          current.length > 0 &&
+          !current.every(block => isBlankScheduleBlock(block, dateOnlyPreferred))
+        ) {
+          return current
+        }
         return [
           ...current,
           ...Array.from({ length: initialBlockCount - current.length }, () =>
@@ -262,6 +301,7 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     bridge.sessionRound,
     bridge.educationScheduleMode,
     bridge.maxScheduleCount,
+    dateOnlyPreferred,
   ])
 
   const displayBlocks =
@@ -290,16 +330,21 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     )
   }
 
+  const blockTitle = (index: number) =>
+    resolvePreferredScheduleBlockTitle(index, displayBlocks.length, maxBlocks)
+
   return (
     <div className="program-registration-paragraph institution-preferred-schedule-paragraph">
       {displayBlocks.map((block, index) => (
         <ScheduleBlock
           key={index}
-          title={`■ ${index + 1}지망`}
+          title={blockTitle(index)}
           block={block}
           onPatch={patch => patchBlock(index, patch)}
           sessionOptions={sessionOptions}
           showSessionSelect={showSessionSelect}
+          dateOnlyPreferred={dateOnlyPreferred}
+          disabledDate={disabledDate}
           deleteAction={
             !readOnlyPreview && index > 0 ? (
               <ItemDeleteButton
@@ -314,6 +359,18 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
           }
         />
       ))}
+      {displayBlocks.length < maxBlocks ? (
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          className="cms-button--no-label-ellipsis institution-preferred-schedule-paragraph__add"
+          icon={<ButtonAddIcon />}
+          onClick={() => addInstitutionPreferredScheduleBlock()}
+        >
+          희망 교육 일정 추가
+        </CmsButton>
+      ) : null}
     </div>
   )
 }

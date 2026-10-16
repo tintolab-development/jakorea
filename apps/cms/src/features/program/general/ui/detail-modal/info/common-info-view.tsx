@@ -54,6 +54,8 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  shouldDisableEducationSchedulePeriodTimeInput,
+  shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
@@ -166,6 +168,8 @@ import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
   formatEducationScheduleLineFromRange,
+  normalizeEducationSchedulePeriodLineDateOnly,
+  normalizeEducationSchedulePeriodRangeDateOnly,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -2119,7 +2123,7 @@ function MultiRoundCurriculumSessionForm({
                         inputSize="medium"
                         withAllOption={false}
                         placeholder="진행 차시"
-                        width={120}
+                        width={144}
                         options={GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS}
                         value={field.value || undefined}
                         onChange={v => field.onChange(String(v ?? ''))}
@@ -4476,7 +4480,22 @@ function ScheduleSettingsEditFields({
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
   })
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
+  const disableScheduleSelectionTime = shouldDisableEducationScheduleSelectionTimeInput({
+    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+  })
+  const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
+    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
+    sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
+    educationScheduleMode: scheduleMode,
+  })
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
+  const previewScheduleLines = useMemo(
+    () =>
+      disableSchedulePeriodTime
+        ? lines.map(line => normalizeEducationSchedulePeriodLineDateOnly(line)).filter(Boolean)
+        : lines,
+    [disableSchedulePeriodTime, lines]
+  )
   const groupTimeSlotsKey = JSON.stringify(
     scheduleDetails.flatMap(detail => detail.groupTimes ?? [])
   )
@@ -4540,11 +4559,14 @@ function ScheduleSettingsEditFields({
 
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      appendLineIfNew(formatEducationScheduleLineFromRange(range))
+      const normalized = disableSchedulePeriodTime
+        ? normalizeEducationSchedulePeriodRangeDateOnly(range)
+        : range
+      appendLineIfNew(formatEducationScheduleLineFromRange(normalized))
       setSingleDate(null)
       setPeriodDate(null)
     },
-    [appendLineIfNew]
+    [appendLineIfNew, disableSchedulePeriodTime]
   )
 
   const handleDateApply = useCallback(
@@ -4616,17 +4638,34 @@ function ScheduleSettingsEditFields({
           label="교육 진행 일정 선택"
           edit={
             scheduleMode === 'date' ? (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode="date"
-                customizable={false}
-                showPeriodToggle={false}
-                showTimeToggle={false}
-                suppressAutoTodayWhenEmpty
-                value={singleDate}
-                onChange={handleDateApply}
-                width={240}
-              />
+              disableScheduleSelectionTime ? (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="date"
+                  customizable={false}
+                  showPeriodToggle={false}
+                  showTimeToggle={false}
+                  suppressAutoTodayWhenEmpty
+                  value={singleDate}
+                  onChange={handleDateApply}
+                  width={240}
+                />
+              ) : (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="schedule"
+                  customizable={false}
+                  showPeriodToggle={false}
+                  showTimeToggle={false}
+                  lockTimeToggleOn
+                  lockPeriodToggleOn
+                  suppressAutoTodayWhenEmpty
+                  value={singleDate}
+                  onChange={handleDateApply}
+                  onRangeChange={handleScheduleRangeApply}
+                  width={240}
+                />
+              )
             ) : (
               <ParagraphDatePicker
                 mode="single"
@@ -4634,6 +4673,8 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
+                lockTimeToggleOn={disableSchedulePeriodTime}
+                disableTimeInputs={disableSchedulePeriodTime}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}
@@ -4650,7 +4691,7 @@ function ScheduleSettingsEditFields({
           label="교육 진행 예정일"
           fullRow
           readOnlyDisplay
-          view={<EducationSchedulePreviewLines lines={lines} onRemove={removeLine} />}
+          view={<EducationSchedulePreviewLines lines={previewScheduleLines} onRemove={removeLine} />}
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

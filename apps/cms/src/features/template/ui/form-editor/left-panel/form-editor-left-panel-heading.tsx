@@ -66,10 +66,7 @@ import {
   shouldUseInstitutionFixedScheduleCardCopy,
   shouldUseInstitutionPreferredScheduleCardCopy,
 } from '@/features/template/lib/institution-application-schedule-copy'
-import {
-  InstitutionPreferredScheduleCardDescription,
-  InstitutionPreferredScheduleCardTitleTrailing,
-} from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-preferred-schedule-paragraph'
+import { InstitutionPreferredScheduleCardTitleTrailing } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-preferred-schedule-paragraph'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
@@ -348,25 +345,29 @@ export function withInstitutionApplicationPreferredScheduleHeading(
   paragraph: WritingFormParagraph,
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
 ): ParagraphCardEditableHeading {
+  const institutionApplicationForm =
+    paragraphBodyOptions?.programApplicationFormInstitution === true ||
+    paragraphBodyOptions?.programLinkedInstitutionApplicationForm === true
   if (
-    paragraphBodyOptions?.programApplicationFormInstitution !== true ||
+    !institutionApplicationForm ||
     paragraph.id !== PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
   ) {
     return heading
   }
-  const bridge = getInstitutionApplicationProgramBridge()
+  const bridge =
+    paragraphBodyOptions?.institutionApplicationProgramBridge ??
+    getInstitutionApplicationProgramBridge()
   if (!shouldUseInstitutionPreferredScheduleCardCopy(bridge)) {
     return heading
   }
   const description = resolveInstitutionPreferredScheduleDescription(bridge)
-  const readOnly = paragraphBodyOptions.paragraphInteractionMode === 'preview'
   return {
     ...heading,
     descriptionValue: description,
     descriptionIsEditMode: false,
     showDescription: true,
-    descriptionViewContent: <InstitutionPreferredScheduleCardDescription />,
-    titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing readOnly={readOnly} />,
+    descriptionViewContent: <>{description}</>,
+    titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing />,
   }
 }
 
@@ -386,7 +387,8 @@ export function withProgramApplicationFixedScheduleHeading(
   if (!isProgramApplicationScheduleChoiceParagraphId(paragraph.id)) return heading
   if (
     paragraphBodyOptions?.programApplicationFormInstitution !== true &&
-    paragraphBodyOptions?.programApplicationFormIndividual !== true
+    paragraphBodyOptions?.programApplicationFormIndividual !== true &&
+    paragraphBodyOptions?.programLinkedIndividualApplicationForm !== true
   ) {
     return heading
   }

@@ -18,19 +18,22 @@ const baseDetail: SchoolDetailForModal = {
 
 describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
   it('상세 응답의 명시적 null·빈 값은 목록 캐시 값으로 되살리지 않는다', () => {
-    const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
-      organizationName: null,
-      organizationAddress: '',
-      organizationAddressDetail: null,
-      requestedGrade: null,
-      requestedClassCount: null,
-      requestedStudentCount: null,
-      teacherName: null,
-      teacherPhone: null,
-      teacherEmail: null,
-      applicationReason: null,
-      otherRequests: '',
-    })
+    const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(
+      baseDetail,
+      {
+        organizationName: null,
+        organizationAddress: '',
+        organizationAddressDetail: null,
+        requestedGrade: null,
+        requestedClassCount: null,
+        requestedStudentCount: null,
+        teacherName: null,
+        teacherPhone: null,
+        teacherEmail: null,
+        applicationReason: null,
+        otherRequests: '',
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse
+    )
 
     expect(merged.schoolName).toBe('-')
     expect(merged.region).toBe('-')

@@ -205,6 +205,10 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    */
   lockPeriodToggleOn?: boolean
   /**
+   * true면 시간 입력 UI는 노출하되 비활성(기관 일정형 단일 기간 등). 적용 시 시각은 제거한다.
+   */
+  disableTimeInputs?: boolean
+  /**
    * 트리거 값은 비운 채, 모달을 열 때만 캘린더·시간 초안으로 쓴다.
    * `value` / `appliedSurfaceRange`에는 영향을 주지 않는다.
    */
@@ -256,6 +260,7 @@ interface ParagraphDatePickerSingleInnerProps {
   showPeriodToggle?: boolean
   lockTimeToggleOn?: boolean
   lockPeriodToggleOn?: boolean
+  disableTimeInputs?: boolean
   initialPopoverRange?: [Dayjs, Dayjs] | null
 }
 
@@ -285,6 +290,7 @@ function ParagraphDatePickerSingleInner({
   showPeriodToggle = true,
   lockTimeToggleOn = false,
   lockPeriodToggleOn = false,
+  disableTimeInputs = false,
   initialPopoverRange = null,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
@@ -347,7 +353,8 @@ function ParagraphDatePickerSingleInner({
   const [timeOn, setTimeOn] = useState(() => lockTimeToggleOn)
   const timeToggleLocked = lockTimeToggleOn
   const periodToggleLocked = presetMode === 'period' || lockPeriodToggleOn
-  const effectiveTimeOn = lockTimeToggleOn || (showTimeToggle && timeOn)
+  const effectiveTimeOn =
+    disableTimeInputs || lockTimeToggleOn || (showTimeToggle && timeOn)
   const showTimeToggleInFooter = showTimeToggle && !lockTimeToggleOn
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('9')
@@ -487,11 +494,17 @@ function ParagraphDatePickerSingleInner({
 
   const effectivePlaceholder = placeholder ?? PARAGRAPH_DATE_PRESET_PLACEHOLDERS[presetMode]
 
-  const triggerDisplayText = formatParagraphDatePickerTriggerDisplay(
-    resolvedValue,
-    surfaceRange,
-    surfaceAppliedWithTime
-  )
+  /** 목록(교육 진행 예정일 등)에만 노출하고 트리거는 placeholder 유지 */
+  const omitTriggerSurfaceDisplay =
+    suppressAutoTodayWhenEmpty && resolvedValue == null && !hasExternalSurfaceControl
+
+  const triggerDisplayText = omitTriggerSurfaceDisplay
+    ? null
+    : formatParagraphDatePickerTriggerDisplay(
+        resolvedValue,
+        surfaceRange,
+        surfaceAppliedWithTime
+      )
   const triggerIsEmpty = triggerDisplayText == null
   const presetDisplay = presetDisplayText?.trim()
   const showPresetAsFilled = triggerIsEmpty && Boolean(presetDisplay)
@@ -644,7 +657,15 @@ function ParagraphDatePickerSingleInner({
       const sDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
       const eDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
 
-      if (effectiveTimeOn) {
+      if (disableTimeInputs) {
+        const s = sDay.startOf('day')
+        const e = eDay.startOf('day')
+        onRangeChange?.([s, e])
+        if (onRangeChange == null) onChange(s)
+        setSurfaceRange([s, e])
+        setSurfaceAppliedWithTime(false)
+        setSurfacePeriodOn(true)
+      } else if (effectiveTimeOn) {
         const start = buildTimeFrom24Hour(sDay, parseNum(startHour, 0), parseNum(startMinute, 0))
         const end = buildTimeFrom24Hour(eDay, parseNum(endHour, 0), parseNum(endMinute, 0))
         if (!end.isAfter(start)) {
@@ -890,6 +911,7 @@ function ParagraphDatePickerSingleInner({
         isRangeCalendarMode={isRangeCalendarMode || lockPeriodToggleOn}
         sameDayTimeRange={sameDayTimeRange}
         timeOn={effectiveTimeOn}
+        timeInputsDisabled={disableTimeInputs}
         calendarMonth={calendarMonth}
         onCalendarMonthChange={setCalendarMonth}
         draft={draft}
@@ -1165,6 +1187,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           showPeriodToggle={props.mode === 'single' ? (props.showPeriodToggle ?? true) : true}
           lockTimeToggleOn={props.mode === 'single' ? Boolean(props.lockTimeToggleOn) : false}
           lockPeriodToggleOn={props.mode === 'single' ? Boolean(props.lockPeriodToggleOn) : false}
+          disableTimeInputs={props.mode === 'single' ? Boolean(props.disableTimeInputs) : false}
           initialPopoverRange={props.mode === 'single' ? props.initialPopoverRange : null}
         />
       )}

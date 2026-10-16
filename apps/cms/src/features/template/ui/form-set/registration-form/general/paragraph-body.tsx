@@ -287,6 +287,8 @@ export function renderProgramRegistrationParagraphBody(
               participantOrganization: options.participant.organization,
               sessionRound: options.sessionRoundType,
             })}
+            programType={options.programType}
+            sessionRound={options.sessionRoundType}
           />
         )
       }

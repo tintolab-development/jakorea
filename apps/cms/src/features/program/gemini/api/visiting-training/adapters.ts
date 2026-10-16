@@ -401,8 +401,8 @@ export function mapGeminiRecruitmentDetailToDetail(
         trainingRequestStartDate: dto.trainingRequestStartDate ?? undefined,
         trainingRequestEndDate: dto.trainingRequestEndDate ?? undefined,
         draftStatus: dto.draftStatus,
-        organizationApplicationCount: dto.organizationApplicationCount ?? null,
-        approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount ?? null,
+        organizationApplicationCount: dto.organizationApplicationCount ?? undefined,
+        approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount ?? undefined,
       },
       0
     )

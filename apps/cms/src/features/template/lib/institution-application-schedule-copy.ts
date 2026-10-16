@@ -14,7 +14,14 @@ import {
 export function resolveInstitutionFixedScheduleDescription(
   bridge: InstitutionApplicationProgramBridge
 ): string {
-  return resolveApplicationFixedScheduleParagraphDescription(bridge)
+  return resolveApplicationFixedScheduleParagraphDescription({
+    educationStructure: bridge.educationStructure,
+    sessionRound: bridge.sessionRound,
+    educationScheduleMode: bridge.educationScheduleMode,
+    educationScheduleLines: bridge.educationScheduleLines,
+    educationRoundCount: bridge.educationRoundCount,
+    sessionsPerRound: bridge.sessionsPerRound,
+  })
 }
 
 /**
@@ -30,7 +37,9 @@ export function resolveInstitutionPreferredScheduleDescription(
     educationScheduleMode: bridge.educationScheduleMode,
     educationScheduleLines: bridge.educationScheduleLines,
     maxScheduleCount: bridge.maxScheduleCount,
-    maxSessionsPerDay: bridge.maxSessionsPerDay,
+    sessionsPerRound: bridge.sessionsPerRound,
+    educationRoundCount: bridge.educationRoundCount,
+    curriculumChartSessionCount: bridge.curriculumChartSessionCount,
   })
 }
 
@@ -52,7 +61,9 @@ export function shouldUseInstitutionFixedScheduleCardCopy(
 export function resolveInstitutionPreferredScheduleMaxBlocks(
   bridge: InstitutionApplicationProgramBridge
 ): number {
-  const fallback = shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge) ? 10 : undefined
+  const fallback = shouldShowInstitutionApplicationPreferredScheduleParagraph(bridge)
+    ? 10
+    : undefined
   return clampInstitutionScheduleBlockCount(bridge.maxScheduleCount ?? fallback)
 }
 

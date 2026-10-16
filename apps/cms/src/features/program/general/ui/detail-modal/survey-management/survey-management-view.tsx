@@ -72,6 +72,7 @@ import {
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
+import { shouldShowSurveyPollScheduleSelectField } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -309,6 +310,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     program,
     surveyPollCreateModalOpen
+  )
+  const showSurveyPollScheduleSelectField = useMemo(
+    () => shouldShowSurveyPollScheduleSelectField(program),
+    [program]
   )
 
   const activeSatisfactionSurveyId =
@@ -738,13 +743,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const submitCreateModal = useCallback(async () => {
     if (createModalKind == null || selectedTemplateId == null || selectedTemplateId === '') return
-    if (
-      createModalKind === 'survey' &&
-      (selectedSurveyScheduleValue == null ||
+    if (createModalKind === 'survey' && showSurveyPollScheduleSelectField) {
+      if (
+        selectedSurveyScheduleValue == null ||
         selectedSurveyScheduleValue === '' ||
-        !surveyScheduleOptionsQuery.hasSessionSchedules)
-    ) {
-      return
+        !surveyScheduleOptionsQuery.hasSessionSchedules
+      ) {
+        return
+      }
     }
     if (!surveyTemplateOptions.some(option => option.value === selectedTemplateId)) {
       void showAlert({
@@ -790,14 +796,28 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           payload.targetScopeId = lectureTarget.targetScopeId
         }
         if (createModalKind === 'survey') {
-          try {
-            Object.assign(payload, resolveSurveyPollBindingTarget(selectedSurveyScheduleValue!))
-          } catch {
-            void showAlert({
-              title: '등록 실패',
-              content: '설문 대상 일정을 다시 선택해 주세요.',
-            })
-            return
+          if (showSurveyPollScheduleSelectField) {
+            try {
+              Object.assign(payload, resolveSurveyPollBindingTarget(selectedSurveyScheduleValue!))
+            } catch {
+              void showAlert({
+                title: '등록 실패',
+                content: '설문 대상 일정을 다시 선택해 주세요.',
+              })
+              return
+            }
+          } else {
+            const surveyTarget = await resolveLectureEvalBindingTarget(String(program.id))
+            if (surveyTarget == null) {
+              void showAlert({
+                title: '등록 실패',
+                content:
+                  '설문조사는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
+              })
+              return
+            }
+            payload.targetScope = surveyTarget.targetScope
+            payload.targetScopeId = surveyTarget.targetScopeId
           }
         }
         const result = await createBinding(payload)
@@ -854,6 +874,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     selectedSurveyScheduleValue,
     selectedTemplateId,
     showAlert,
+    showSurveyPollScheduleSelectField,
     surveyScheduleOptionsQuery.hasSessionSchedules,
     surveysRemote,
     surveyTemplateOptions,
@@ -1517,6 +1538,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         onScheduleChange={setSelectedSurveyScheduleValue}
         schedulesLoading={surveyScheduleOptionsQuery.isLoading}
         hasSessionSchedules={surveyScheduleOptionsQuery.hasSessionSchedules}
+        showScheduleField={showSurveyPollScheduleSelectField}
         onCancel={closeCreateModal}
         onSubmit={() => {
           void submitCreateModal()

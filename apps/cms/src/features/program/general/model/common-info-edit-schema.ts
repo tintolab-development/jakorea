@@ -17,6 +17,7 @@ import {
   resolveGeneralProgramCommonInfo,
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
+import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
 import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   isProgramPaymentNoneOnly,
@@ -1799,46 +1800,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
   })
 
   const representativeTitleKo = values.mainTitle.trim()
-  return {
-    title: representativeTitleKo || existing.title,
-    mainTitle: representativeTitleKo || existing.mainTitle,
-    titleEn: values.titleEn?.trim() || undefined,
-    startDate: values.startDate,
-    endDate: values.endDate,
-    businessArea: businessAreaToProgramValue(values.businessArea),
-    category: primaryCategory,
-    generalParticipantTypes: participantTypes,
-    generalSurveyMenuKeys: surveyKeysFromFlags(values),
-    institutionType: institutionTypeFromVenueKind(values.venueKind),
-    venue: values.venueKind === 'other' ? values.venueDetail?.trim() || undefined : undefined,
-    detailedProgramId: isScheduleType
-      ? undefined
-      : values.detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
-        ? undefined
-        : values.detailedProgramId.trim() || undefined,
-    educationProcess: educationProcessToProgramValue(values.educationProcess),
-    ipOwned: ipOwnedToProgramValue(values.ipOwned),
-    courseDeliveredBy: courseDeliveredToProgramValue(values.courseDeliveredBy),
-    partnerInvolvement: values.partnerInvolvement === 'yes',
-    type: programType,
-    ips: ipsCapitalized,
-    programCategory,
-    programChannel,
-    approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
-    totalParticipants: values.kpiFinalParticipants ?? existing.totalParticipants,
-    instructors: values.kpiInstructorCount ?? existing.instructors,
-    instructorCapacity: values.kpiInstructorCount ?? existing.instructorCapacity,
-    generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
-    participatingSchoolCount: kpiFinalSchools,
-    generalProgramAudience: audienceKind,
-    generalProgramEducationStructure: values.educationStructure,
-    generalProgramSessionRound: values.sessionRound,
-    /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
-    sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
-    // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음
-    ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
-    ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
-    generalCommonInfo: {
+  const generalCommonInfoForPatch = {
       ...existingCommonWithoutRecruitment(existing.generalCommonInfo),
       announcementTitle: values.announcementTitle.trim(),
       detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
@@ -2028,7 +1990,52 @@ export function generalCommonInfoEditValuesToProgramPatch(
         finalSchools: kpiFinalSchools,
         finalClasses: kpiFinalClasses,
       },
-    },
+  }
+
+  const generalCommonInfo = isScheduleType
+    ? omitMirroredDetailedProgramMasterIdFromCommonInfo(generalCommonInfoForPatch)
+    : generalCommonInfoForPatch
+
+  return {
+    title: representativeTitleKo || existing.title,
+    mainTitle: representativeTitleKo || existing.mainTitle,
+    titleEn: values.titleEn?.trim() || undefined,
+    startDate: values.startDate,
+    endDate: values.endDate,
+    businessArea: businessAreaToProgramValue(values.businessArea),
+    category: primaryCategory,
+    generalParticipantTypes: participantTypes,
+    generalSurveyMenuKeys: surveyKeysFromFlags(values),
+    institutionType: institutionTypeFromVenueKind(values.venueKind),
+    venue: values.venueKind === 'other' ? values.venueDetail?.trim() || undefined : undefined,
+    detailedProgramId: isScheduleType
+      ? undefined
+      : values.detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : values.detailedProgramId.trim() || undefined,
+    educationProcess: educationProcessToProgramValue(values.educationProcess),
+    ipOwned: ipOwnedToProgramValue(values.ipOwned),
+    courseDeliveredBy: courseDeliveredToProgramValue(values.courseDeliveredBy),
+    partnerInvolvement: values.partnerInvolvement === 'yes',
+    type: programType,
+    ips: ipsCapitalized,
+    programCategory,
+    programChannel,
+    approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
+    totalParticipants: values.kpiFinalParticipants ?? existing.totalParticipants,
+    instructors: values.kpiInstructorCount ?? existing.instructors,
+    instructorCapacity: values.kpiInstructorCount ?? existing.instructorCapacity,
+    generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
+    participatingSchoolCount: kpiFinalSchools,
+    generalProgramAudience: audienceKind,
+    generalProgramEducationStructure: values.educationStructure,
+    generalProgramSessionRound: values.sessionRound,
+    /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
+    sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
+    // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음
+    ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
+    ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
+    generalCommonInfo,
   }
 }
 

@@ -599,8 +599,31 @@ function finalPassAnnouncementPatch(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program,
   info: { finalPassAnnouncementDate?: string; finalPassAnnouncementMethod?: string } | undefined,
-  options: { nestedFields: boolean }
+  options: {
+    nestedFields: boolean
+    recruitmentAudience?: ProgramDetailRecruitmentAudience
+  }
 ): Record<string, string | undefined> {
+  const audience = options.recruitmentAudience
+  const formOwned =
+    (audience === 'instructor' && !options.nestedFields) ||
+    (audience === 'volunteer' && options.nestedFields)
+  if (formOwned) {
+    const date = values.finalPassAnnouncementDate
+    const method = values.finalPassAnnouncementMethod
+    const label = formatAnnouncementLabel(date, method)
+    return {
+      resultAnnouncementLabel: label,
+      finalAnnouncementLabel: label,
+      ...(options.nestedFields
+        ? {
+            finalPassAnnouncementDate:
+              date == null ? undefined : dayjs(date).toISOString(),
+            finalPassAnnouncementMethod: method?.trim() || undefined,
+          }
+        : {}),
+    }
+  }
   const changed =
     (values.finalPassAnnouncementDate !== undefined &&
       !sameAnnouncementPart(values.finalPassAnnouncementDate, existing.finalPassAnnouncementDate)) ||
@@ -638,22 +661,20 @@ type VolunteerInterviewNestedInfo = {
  */
 export function volunteerDocumentInterviewNestedPatch(
   values: ProgramDetailEditFormValues,
-  existingNested: VolunteerInterviewNestedInfo | undefined
+  _existingNested: VolunteerInterviewNestedInfo | undefined
 ): VolunteerInterviewNestedInfo {
   return {
     documentPassAnnouncementDate: values.documentPassAnnouncementDate
       ? dayjs(values.documentPassAnnouncementDate).toISOString()
-      : existingNested?.documentPassAnnouncementDate,
-    documentPassAnnouncementMethod:
-      values.documentPassAnnouncementMethod?.trim() ||
-      existingNested?.documentPassAnnouncementMethod,
+      : undefined,
+    documentPassAnnouncementMethod: values.documentPassAnnouncementMethod?.trim() || undefined,
     interviewStartDate: values.interviewStartDate
       ? dayjs(values.interviewStartDate).toISOString()
-      : existingNested?.interviewStartDate,
+      : undefined,
     interviewEndDate: values.interviewEndDate
       ? dayjs(values.interviewEndDate).toISOString()
-      : existingNested?.interviewEndDate,
-    interviewMethod: values.interviewMethod?.trim() || existingNested?.interviewMethod,
+      : undefined,
+    interviewMethod: values.interviewMethod?.trim() || undefined,
   }
 }
 
@@ -1085,6 +1106,17 @@ export type ProgramDetailEditPatchOptions = {
   recruitmentAudience?: ProgramDetailRecruitmentAudience
 }
 
+/** 모집 탭 저장 시 해당 audience 필드는 빈 값(undefined)도 폼 의도대로 반영한다. */
+function recruitAudienceScalar<T>(
+  value: T | undefined,
+  existingValue: T | undefined,
+  activeAudience: ProgramDetailRecruitmentAudience | undefined,
+  fieldAudience: ProgramDetailRecruitmentAudience
+): T | undefined {
+  if (activeAudience === fieldAudience) return value
+  return value ?? existingValue
+}
+
 function resolveRecruitmentOperationPeriodLabels(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program,
@@ -1174,10 +1206,18 @@ export function detailEditValuesToProgramPatch(
   )
   const applicationStartDate = values.applicationStartDate
   const applicationEndDate = values.applicationEndDate
-  const resultAnnouncementDate =
-    values.resultAnnouncementDate ?? existing.resultAnnouncementDate
-  const resultAnnouncementMethod =
-    values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod
+  const resultAnnouncementDate = recruitAudienceScalar(
+    values.resultAnnouncementDate,
+    existing.resultAnnouncementDate,
+    recruitmentAudience,
+    'participant'
+  )
+  const resultAnnouncementMethod = recruitAudienceScalar(
+    values.resultAnnouncementMethod,
+    existing.resultAnnouncementMethod,
+    recruitmentAudience,
+    'participant'
+  )
   const targetLabel =
     values.targetLevels && values.targetLevels.length > 0
       ? formatTargetLevelsLabel(values.targetLevels)
@@ -1186,8 +1226,18 @@ export function detailEditValuesToProgramPatch(
     periodLabelFromRange(applicationStartDate, applicationEndDate) ??
     existing.generalCommonInfo?.participantRecruitmentInfo?.recruitmentPeriodLabel
   const operationPeriodLabel = operationPeriodLabels.participant
-  const contactPhone = values.contactPhone ?? existing.contactPhone
-  const contactEmail = values.contactEmail ?? existing.contactEmail
+  const contactPhone = recruitAudienceScalar(
+    values.contactPhone,
+    existing.contactPhone,
+    recruitmentAudience,
+    'participant'
+  )
+  const contactEmail = recruitAudienceScalar(
+    values.contactEmail,
+    existing.contactEmail,
+    recruitmentAudience,
+    'participant'
+  )
   const isTrainedTeacherProgram =
     existing.backendProgramType === 'TRAINED_TEACHER' ||
     looksLikeTrainedTeacherProgramId(existing.id)
@@ -1203,18 +1253,27 @@ export function detailEditValuesToProgramPatch(
   const instructorContactOrganizationName =
     values.instructorRecruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName
-  const instructorContactPhone =
-    values.instructorContactPhone ??
-    existing.generalCommonInfo?.instructorRecruitmentInfo?.inquiryTel
-  const instructorContactEmail =
-    values.instructorContactEmail ??
-    existing.generalCommonInfo?.instructorRecruitmentInfo?.inquiryEmail
+  const instructorContactPhone = recruitAudienceScalar(
+    values.instructorContactPhone,
+    existing.generalCommonInfo?.instructorRecruitmentInfo?.inquiryTel,
+    recruitmentAudience,
+    'instructor'
+  )
+  const instructorContactEmail = recruitAudienceScalar(
+    values.instructorContactEmail,
+    existing.generalCommonInfo?.instructorRecruitmentInfo?.inquiryEmail,
+    recruitmentAudience,
+    'instructor'
+  )
   const volunteerContactOrganizationName =
     values.volunteerRecruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName
-  const volunteerContactPhone =
-    values.volunteerContactPhone ??
-    existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryTel
+  const volunteerContactPhone = recruitAudienceScalar(
+    values.volunteerContactPhone,
+    existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryTel,
+    recruitmentAudience,
+    'volunteer'
+  )
   const surveyKeysTouched =
     values.surveySurvey != null ||
     values.surveySatisfaction != null ||
@@ -1233,9 +1292,12 @@ export function detailEditValuesToProgramPatch(
           generalSurveyMenuKeys
         )
       : undefined
-  const volunteerContactEmail =
-    values.volunteerContactEmail ??
-    existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
+  const volunteerContactEmail = recruitAudienceScalar(
+    values.volunteerContactEmail,
+    existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail,
+    recruitmentAudience,
+    'volunteer'
+  )
 
   return {
     title:
@@ -1490,17 +1552,10 @@ export function detailEditValuesToProgramPatch(
               : existing.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided,
         maxAssignableInstructors: isTrainedTeacherProgram
           ? 0
-          : values.participantRecruitmentMaxInstructors ??
-            existing.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
-        maxClassCount:
-          values.participantRecruitmentMaxClassCount ??
-          existing.generalCommonInfo?.participantRecruitmentInfo?.maxClassCount,
-        maxScheduleCount:
-          values.participantRecruitmentMaxScheduleCount ??
-          existing.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount,
-        maxSessionsPerDay:
-          values.participantRecruitmentMaxSessionsPerDay ??
-          existing.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
+          : values.participantRecruitmentMaxInstructors,
+        maxClassCount: values.participantRecruitmentMaxClassCount,
+        maxScheduleCount: values.participantRecruitmentMaxScheduleCount,
+        maxSessionsPerDay: values.participantRecruitmentMaxSessionsPerDay,
         interviewEnabled:
           values.participantRecruitmentInterviewEnabled === 'yes'
             ? true
@@ -1565,12 +1620,20 @@ export function detailEditValuesToProgramPatch(
             ? values.instructorTargetDetail.trim() || undefined
             : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
         recruitmentPeriodLabel:
-          periodLabelFromRange(
-            values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
-            values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate
-          ) ?? existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentPeriodLabel,
+          recruitmentAudience === 'instructor'
+            ? periodLabelFromRange(
+                values.instructorApplicationStartDate,
+                values.instructorApplicationEndDate
+              )
+            : periodLabelFromRange(
+                values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
+                values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate
+              ) ?? existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentPeriodLabel,
         operationPeriodLabel: operationPeriodLabels.instructor,
-        ...finalPassAnnouncementPatch(values, existing, undefined, { nestedFields: false }),
+        ...finalPassAnnouncementPatch(values, existing, undefined, {
+          nestedFields: false,
+          recruitmentAudience,
+        }),
       },
       volunteerRecruitmentInfo: {
         ...existing.generalCommonInfo?.volunteerRecruitmentInfo,
@@ -1599,10 +1662,15 @@ export function detailEditValuesToProgramPatch(
             ? values.volunteerTargetDetail.trim() || undefined
             : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
         recruitmentPeriodLabel:
-          periodLabelFromRange(
-            values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
-            values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate
-          ) ?? existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentPeriodLabel,
+          recruitmentAudience === 'volunteer'
+            ? periodLabelFromRange(
+                values.volunteerApplicationStartDate,
+                values.volunteerApplicationEndDate
+              )
+            : periodLabelFromRange(
+                values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
+                values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate
+              ) ?? existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentPeriodLabel,
         operationPeriodLabel: operationPeriodLabels.volunteer,
         volunteerInterviewEnabled:
           values.volunteerRecruitmentInterviewEnabled === 'yes'
@@ -1622,7 +1690,7 @@ export function detailEditValuesToProgramPatch(
           existing.generalCommonInfo?.volunteerRecruitmentInfo as
             | { finalPassAnnouncementDate?: string; finalPassAnnouncementMethod?: string }
             | undefined,
-          { nestedFields: true }
+          { nestedFields: true, recruitmentAudience }
         ),
       },
     },
@@ -1638,22 +1706,62 @@ export function detailEditValuesToProgramPatch(
         : values.participantRecruitmentInterviewEnabled === 'no'
           ? false
           : existing.generalParticipantInterviewEnabled,
-    instructorCapacity: values.instructorCapacity ?? existing.instructorCapacity,
-    instructorApplicationStartDate:
-      values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
-    instructorApplicationEndDate:
-      values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate,
-    documentPassAnnouncementDate:
-      values.documentPassAnnouncementDate ?? existing.documentPassAnnouncementDate,
-    documentPassAnnouncementMethod:
-      values.documentPassAnnouncementMethod ?? existing.documentPassAnnouncementMethod,
-    interviewStartDate: values.interviewStartDate ?? existing.interviewStartDate,
-    interviewEndDate: values.interviewEndDate ?? existing.interviewEndDate,
-    interviewMethod: values.interviewMethod ?? existing.interviewMethod,
+    instructorCapacity: recruitAudienceScalar(
+      values.instructorCapacity,
+      existing.instructorCapacity,
+      recruitmentAudience,
+      'instructor'
+    ),
+    instructorApplicationStartDate: recruitAudienceScalar(
+      values.instructorApplicationStartDate,
+      existing.instructorApplicationStartDate,
+      recruitmentAudience,
+      'instructor'
+    ),
+    instructorApplicationEndDate: recruitAudienceScalar(
+      values.instructorApplicationEndDate,
+      existing.instructorApplicationEndDate,
+      recruitmentAudience,
+      'instructor'
+    ),
+    documentPassAnnouncementDate: recruitAudienceScalar(
+      values.documentPassAnnouncementDate,
+      existing.documentPassAnnouncementDate,
+      recruitmentAudience,
+      'instructor'
+    ),
+    documentPassAnnouncementMethod: recruitAudienceScalar(
+      values.documentPassAnnouncementMethod,
+      existing.documentPassAnnouncementMethod,
+      recruitmentAudience,
+      'instructor'
+    ),
+    interviewStartDate: recruitAudienceScalar(
+      values.interviewStartDate,
+      existing.interviewStartDate,
+      recruitmentAudience,
+      'instructor'
+    ),
+    interviewEndDate: recruitAudienceScalar(
+      values.interviewEndDate,
+      existing.interviewEndDate,
+      recruitmentAudience,
+      'instructor'
+    ),
+    interviewMethod: recruitAudienceScalar(
+      values.interviewMethod,
+      existing.interviewMethod,
+      recruitmentAudience,
+      'instructor'
+    ),
     finalPassAnnouncementDate:
-      values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
+      recruitmentAudience === 'instructor' || recruitmentAudience === 'volunteer'
+        ? values.finalPassAnnouncementDate
+        : values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
-      values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
+      recruitmentAudience === 'instructor' || recruitmentAudience === 'volunteer'
+        ? values.finalPassAnnouncementMethod
+        : values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
     instructorTargets:
       values.instructorTargets != null ? values.instructorTargets : undefined,
     instructorTarget:
@@ -1666,10 +1774,18 @@ export function detailEditValuesToProgramPatch(
       values.instructorTargetDetail != null
         ? values.instructorTargetDetail
         : existing.instructorTargetDetail,
-    volunteerApplicationStartDate:
-      values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
-    volunteerApplicationEndDate:
-      values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate,
+    volunteerApplicationStartDate: recruitAudienceScalar(
+      values.volunteerApplicationStartDate,
+      existing.volunteerApplicationStartDate,
+      recruitmentAudience,
+      'volunteer'
+    ),
+    volunteerApplicationEndDate: recruitAudienceScalar(
+      values.volunteerApplicationEndDate,
+      existing.volunteerApplicationEndDate,
+      recruitmentAudience,
+      'volunteer'
+    ),
     volunteerTargets: values.volunteerTargets != null ? values.volunteerTargets : undefined,
     volunteerTarget:
       values.volunteerTargets != null

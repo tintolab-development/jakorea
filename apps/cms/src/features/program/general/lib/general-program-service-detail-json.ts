@@ -9,6 +9,8 @@ import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/temp
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -397,10 +399,15 @@ export function serializeGeneralProgramServiceDetailJson(
   const withAudienceRule = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
+  const commonAfterScheduleMasterStrip =
+    program.generalProgramEducationStructure === 'schedule' &&
+    !isTrainedTeachersDetailProgram(program)
+      ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
+      : withAudienceRule
   const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
     options?.omitRecruitmentWindow
-      ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
-      : withVolunteerInterviewSchedulePeriod(program, withAudienceRule)
+      ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
+      : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
   )
   const nestedProgram: Program = {
     ...program,

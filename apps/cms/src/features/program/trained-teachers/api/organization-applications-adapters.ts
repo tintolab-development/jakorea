@@ -12,6 +12,7 @@ import {
 import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
+import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 
 /** YYYY-MM-DD → YYYY.MM.DD (목록 세션 표시용). 이미 점 구분 문자열이면 공백만 정리. */
 function formatPreferredScheduleDateForSession(raw: string): string {
@@ -63,7 +64,10 @@ export function mapPreferredScheduleBlocksToSessions(
 }
 
 /** BE DTO는 OpenAPI 축소본보다 runtime 필드가 더 있을 수 있음 — 기존 투영 유지 */
-type TrainedTeacherOrganizationApplicationDto = TrainedTeacherOrganizationApplicationDetailResponse & {
+type TrainedTeacherOrganizationApplicationDto = (
+  | TrainedTeacherOrganizationApplicationDetailResponse
+  | TrainedTeacherOrganizationApplicationResponse
+) & {
   schoolName?: string | null
   organizationName?: string | null
   schoolId?: number

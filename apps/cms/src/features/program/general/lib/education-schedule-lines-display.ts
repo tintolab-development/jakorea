@@ -8,6 +8,7 @@ import {
   formatEducationScheduleLineFromRange,
   parseEducationScheduleLineToRange,
   parseStoredEducationScheduleRange,
+  normalizeEducationSchedulePeriodLineDateOnly,
   rebuildEducationScheduleLinesFromGroupTimes,
   educationScheduleRangeHasClock,
   type EducationScheduleGroupTimeSlot,
@@ -102,6 +103,8 @@ export function resolveEducationScheduleLinesForView(input: {
   educationScheduleLines?: readonly string[]
   overlay?: Record<string, unknown>
   autoFillFromScheduleGroupTimes?: boolean
+  /** 기관 · 일정형 · 단일 · 기간 — 예정일 표시는 날짜만 */
+  dateOnlyPeriodLines?: boolean
   scheduleDetails?: Array<{ progressTimeSummary?: string }>
 }): string[] {
   const fromCommon = normalizeEducationScheduleLines(input.educationScheduleLines)
@@ -111,7 +114,10 @@ export function resolveEducationScheduleLinesForView(input: {
   const fromIso = educationScheduleLinesFromOverlayDates(input.overlay)
   const picked =
     fromOverlay.length > 0 ? fromOverlay : fromCommon.length > 0 ? fromCommon : fromIso
-  const normalized = normalizeEducationScheduleLinesForView(picked)
+  let normalized = normalizeEducationScheduleLinesForView(picked)
+  if (input.dateOnlyPeriodLines) {
+    normalized = normalized.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+  }
 
   if (!input.autoFillFromScheduleGroupTimes || normalized.length === 0) {
     return normalized

@@ -42,7 +42,6 @@ export function EducationProgressScheduleDatePicker({
     programType,
     sessionRound,
   })
-
   return (
     <ParagraphDatePicker
       mode="single"

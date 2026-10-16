@@ -98,6 +98,39 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(patch.mainTitle).toBe('수정1')
   })
 
+  it('커리큘럼→일정 전환 시 generalCommonInfo의 BE 미러 detailedProgramId를 제거한다', () => {
+    const program = baseProgram({
+      detailedProgramId: '163006',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        detailedProgramName: '커리큘럼 세부명',
+      },
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'single'
+    values.detailedProgramId = '__detailed_program_none__'
+    values.scheduleDetails = [
+      {
+        scheduleLabel: '세부 일정 01',
+        name: '일정 A',
+        blockKind: 'sub',
+        scheduleDate: '',
+        groupTimes: [{ startTime: '20:28', endTime: '21:28' }],
+        educationForm: 'offline',
+        participationMethod: 'individual',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(patch.detailedProgramId).toBeUndefined()
+    expect(patch.generalCommonInfo).toBeDefined()
+    expect(
+      Object.prototype.hasOwnProperty.call(patch.generalCommonInfo, 'detailedProgramId')
+    ).toBe(false)
+  })
+
   it('참여 방식(팀) 저장 후 다시 로드하면 팀으로 유지된다', () => {
     const program = baseProgram({
       generalProgramAudience: 'individual',

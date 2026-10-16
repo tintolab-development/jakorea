@@ -62,16 +62,6 @@ function CloseXIcon({ maskId }: { maskId: string }) {
   )
 }
 
-const BANK_OPTIONS = [
-  { label: '국민은행', value: 'kb' },
-  { label: '신한은행', value: 'shinhan' },
-  { label: '우리은행', value: 'woori' },
-  { label: '하나은행', value: 'hana' },
-  { label: '농협은행', value: 'nh' },
-  { label: '기업은행', value: 'ibk' },
-  { label: '카카오뱅크', value: 'kakao' },
-]
-
 export interface EducationItem {
   schoolType?: string
   status?: string
@@ -510,10 +500,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     >
                       <div className="add-instructor-modal__bank-account-row">
                         <Form.Item name="bankName" noStyle>
-                          <NativeSelect
+                          <CmsInput
+                            inputSize="medium"
+                            width={140}
                             placeholder="은행명"
-                            options={BANK_OPTIONS}
-                            className="add-instructor-modal__table-input add-instructor-modal__bank-account-select"
+                            className="add-instructor-modal__table-input add-instructor-modal__bank-account-input"
                           />
                         </Form.Item>
                         <Form.Item

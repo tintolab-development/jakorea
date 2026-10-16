@@ -80,7 +80,6 @@ import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
-import type { DocumentManagerEvaluation } from '@/shared/api/generated/dashboard/schemas/documentManagerEvaluation'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
@@ -560,7 +559,7 @@ export async function updateGeneralVolunteerDocumentEvaluation(
   assertApplicationsRemoteReady()
   await updateVolunteerDocumentEvaluationRemote(applicationId, managerSlot, {
     // BE pattern: PASS|NEUTRAL|FAIL|UNREVIEWED
-    evaluation: evaluation.toUpperCase() as DocumentManagerEvaluation,
+    evaluation: evaluation.toUpperCase(),
   })
 }
 

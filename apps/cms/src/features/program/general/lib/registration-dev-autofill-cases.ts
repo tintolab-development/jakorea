@@ -4,8 +4,18 @@ import type {
   ProgramRegistrationDevAutofillTypeSettings,
 } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 
-/** 일반 프로그램 등록 DEV 자동입력 — 9개 기본 케이스 (강사·봉사자 제외) */
-export type GeneralRegistrationDevAutofillCaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+/** 일반 프로그램 등록 DEV 자동입력 — 10개 기본 케이스 (강사·봉사자 제외) */
+export type GeneralRegistrationDevAutofillCaseId =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
 
 export type GeneralRegistrationDevAutofillAssignmentPolicy =
   | 'none'
@@ -107,13 +117,14 @@ export const GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_LABELS: Record<
   7: '7. 개인 · 커리큘럼 · 복수 · 날짜',
   8: '8. 개인 · 일정 · 단일 · 날짜',
   9: '9. 개인 · 일정 · 복수 · 일정별 일시',
+  10: '10. 기관 · 일정 · 단일 · 기간',
 }
 
 export const GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS: readonly GeneralRegistrationDevAutofillCaseId[] =
-  [1, 2, 3, 4, 5, 6, 7, 8, 9]
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 /**
- * 9케이스 preset은 기관/개인만 고정한다. 화면에서 체크한 교사/봉사자는 에디터 값을 유지한다.
+ * 케이스 preset은 기관/개인만 고정한다. 화면에서 체크한 교사/봉사자는 에디터 값을 유지한다.
  */
 export function mergeGeneralDevAutofillParticipant(
   caseParticipant: GeneralProgramRegistrationParticipantFlags,
@@ -427,6 +438,39 @@ export function resolveGeneralRegistrationDevAutofillPreset(
           assignmentPolicy: 'disabled',
           scheduleSingleUsesGroupTimes: false,
           scheduleMultiUsesDetailDates: true,
+        },
+      }
+    case 10:
+      return {
+        id: 10,
+        label: GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_LABELS[10],
+        ...devAutofillCaseTitles({
+          structure: '일정형',
+          round: '단일 회차',
+          schedule: '기간 지정',
+          audience: '기관',
+        }),
+        participantFlags: organizationParticipant(),
+        layout: layoutFromPreset({
+          organization: true,
+          programType: 'schedule',
+          sessionRoundType: 'single',
+          curriculumSessionCount: 1,
+          curriculumChartSessionCount: 1,
+          scheduleCurriculumDetailCount: 1,
+          scheduleCurriculumGroupCount: 1,
+          participant: organizationParticipant(),
+        }),
+        typeSettings: {
+          programType: 'schedule',
+          sessionRoundType: 'single',
+          educationScheduleMode: 'period',
+          ...COMMON_TYPE_FIELDS,
+        },
+        overlayBehavior: {
+          assignmentPolicy: 'disabled',
+          scheduleSingleUsesGroupTimes: true,
+          scheduleMultiUsesDetailDates: false,
         },
       }
     default: {

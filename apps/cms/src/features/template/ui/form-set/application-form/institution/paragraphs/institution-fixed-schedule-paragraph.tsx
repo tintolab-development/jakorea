@@ -1,5 +1,9 @@
 import { useMemo } from 'react'
 import {
+  readCurriculumMultiDateFixedScheduleMeta,
+  resolveFixedScheduleLinesToChoiceItems,
+} from '@jakorea/form-schema/program-application'
+import {
   useInstitutionApplicationProgramBridge,
   type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -20,31 +24,49 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
 }) {
   const storeBridge = useInstitutionApplicationProgramBridge()
   const bridge = programBridge ?? storeBridge
-  const lines = useMemo(() => {
-    const fromBridge = bridge.educationScheduleLines
-      ?.map(line => line.trim())
-      .filter(Boolean)
-    return fromBridge ?? []
-  }, [bridge.educationScheduleLines])
+  const choiceItems = useMemo(() => {
+    const lines =
+      bridge.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ?? []
+    const meta = readCurriculumMultiDateFixedScheduleMeta({
+      educationRoundCount: bridge.educationRoundCount,
+      sessionsPerRound: bridge.sessionsPerRound,
+    })
+    return resolveFixedScheduleLinesToChoiceItems(
+      {
+        educationStructure: bridge.educationStructure,
+        sessionRound: bridge.sessionRound,
+        educationScheduleMode: bridge.educationScheduleMode,
+        educationScheduleLines: lines,
+      },
+      lines,
+      meta
+    )
+  }, [
+    bridge.educationRoundCount,
+    bridge.educationScheduleLines,
+    bridge.educationScheduleMode,
+    bridge.educationStructure,
+    bridge.sessionRound,
+    bridge.sessionsPerRound,
+  ])
 
-  const [selectedLines] = useGeneralApplicationOverlayKv<string[]>(
+  const [selectedIds] = useGeneralApplicationOverlayKv<string[]>(
     'application.institution.fixedScheduleSelected',
     []
   )
 
-  const toggleLine = (line: string, checked: boolean) => {
+  const toggleOption = (optionId: string, checked: boolean) => {
     if (readOnlyPreview) return
     updateGeneralApplicationOverlayKey<string[]>('application.institution.fixedScheduleSelected', prev => {
       const current = (prev ?? []) as string[]
       if (checked) {
-        return current.includes(line) ? current : [...current, line]
-      } else {
-        return current.filter((l: string) => l !== line)
+        return current.includes(optionId) ? current : [...current, optionId]
       }
+      return current.filter(id => id !== optionId)
     })
   }
 
-  if (lines.length === 0) {
+  if (choiceItems.length === 0) {
     return (
       <span className="form-editor-template-field-hint-text">
         선택 가능한 교육 일정이 없습니다.
@@ -54,14 +76,14 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
 
   return (
     <div className="multiple-choice-body">
-      {lines.map(line => (
-        <div key={line} role="presentation" className="multiple-choice-row">
+      {choiceItems.map(item => (
+        <div key={item.id} role="presentation" className="multiple-choice-row">
           <CmsCheckbox
             disabled={readOnlyPreview}
-            checked={selectedLines.includes(line)}
-            onChange={event => toggleLine(line, event.target.checked)}
+            checked={selectedIds.includes(item.id)}
+            onChange={event => toggleOption(item.id, event.target.checked)}
           />
-          <span className="multiple-choice-row__label">{line}</span>
+          <span className="multiple-choice-row__label">{item.label}</span>
         </div>
       ))}
     </div>

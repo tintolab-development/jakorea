@@ -8,6 +8,10 @@ import {
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   resolveApplicationScheduleParagraphDescription,
 } from './application-schedule-paragraph-copy.js'
+import { readCurriculumMultiDateFixedScheduleMeta } from './curriculum-multi-date-fixed-schedule.js'
+import {
+  resolveFixedScheduleLinesToChoiceItems,
+} from './curriculum-multi-date-fixed-schedule.js'
 import {
   shouldShowApplicationPreferredScheduleParagraph,
   type ApplicationScheduleVisibilityInput,
@@ -22,28 +26,16 @@ export function isApplicationScheduleChoiceParagraphId(id: string): boolean {
   return APPLICATION_SCHEDULE_CHOICE_PARAGRAPH_IDS.has(id)
 }
 
-function applyDateScheduleItems(
-  paragraph: MultipleChoiceParagraph,
-  lines: readonly string[]
-): MultipleChoiceParagraph {
-  const items = lines.map((line, index) => ({
-    id: `line:${index}`,
-    label: line,
-  }))
-  return {
-    ...paragraph,
-    items,
-    selectedPreviewSingleId: null,
-    selectedPreviewMultipleIds: [],
-  }
-}
-
 export type ApplyScheduleDraftSyncInput = ApplicationScheduleVisibilityInput & {
   runtimeContext?: unknown
   scheduleParagraphRaw?: unknown
   /** Platform `maxPreferredScheduleCount` · CMS `maxScheduleCount` */
   maxScheduleCount?: number
   maxSessionsPerDay?: number
+  educationRoundCount?: number
+  sessionsPerRound?: number
+  curriculumChartSessionCount?: number
+  curriculumSessions?: ReadonlyArray<{ sessionLabel?: string; title?: string }>
 }
 
 /**
@@ -129,7 +121,15 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
           readInstitutionFixedScheduleChoiceItems(
             input.runtimeContext,
             input.scheduleParagraphRaw ?? paragraph,
-            { educationScheduleLines: lines }
+            {
+              educationScheduleLines: lines,
+              educationStructure: input.educationStructure,
+              sessionRound: input.sessionRound,
+              educationScheduleMode: input.educationScheduleMode,
+              educationRoundCount: input.educationRoundCount,
+              sessionsPerRound: input.sessionsPerRound,
+              curriculumSessions: input.curriculumSessions,
+            }
           ) ?? []
         if (choiceItems.length === 0) return paragraph
         return {
@@ -144,9 +144,14 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
         if (!scheduleParagraphDescription) return paragraph
         return { ...paragraph, paragraphDescription: scheduleParagraphDescription }
       }
+      const meta = readCurriculumMultiDateFixedScheduleMeta(input)
+      const choiceItems = resolveFixedScheduleLinesToChoiceItems(input, lines, meta)
       return {
-        ...applyDateScheduleItems(paragraph as MultipleChoiceParagraph, lines),
+        ...paragraph,
         paragraphDescription: scheduleParagraphDescription,
+        items: choiceItems.map(item => ({ id: item.id, label: item.label })),
+        selectedPreviewSingleId: null,
+        selectedPreviewMultipleIds: [],
       }
     }),
   }

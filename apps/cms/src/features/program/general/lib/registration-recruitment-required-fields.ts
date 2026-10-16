@@ -22,9 +22,9 @@ import {
   listVolunteerInterviewExceptionBlockIds,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
+  buildInstitutionApplicationRecruitLimitVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
-  type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 
 export type GeneralProgramRecruitmentRequiredFieldContext = {
@@ -165,15 +165,12 @@ function pushProgramAndRecruitPeriodIncomplete(
   )
 }
 
-function buildInstitutionLimitsBridge(
-  ctx: GeneralProgramRecruitmentRequiredFieldContext
-): InstitutionApplicationProgramBridge {
-  return {
-    preEducationNoticeRequired: true,
+function buildInstitutionLimitsBridge(ctx: GeneralProgramRecruitmentRequiredFieldContext) {
+  return buildInstitutionApplicationRecruitLimitVisibilityBridge({
     educationStructure: ctx.programType,
     sessionRound: ctx.sessionRoundType,
     educationScheduleMode: ctx.educationScheduleMode,
-  }
+  })
 }
 
 function listIncompleteInstitutionRecruitInfo(

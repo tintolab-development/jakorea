@@ -26,8 +26,12 @@ import {
   subscribeProgramRegistrationOverlayKeys,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { subscribeApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { resolveInstitutionApplicationScheduleMetaForRegistrationWizard } from '@/features/program/general/lib/institution-application-schedule-meta'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 import dayjs from 'dayjs'
+
+const CURRICULUM_PROGRESS_SESSION_BY_ROUND_KEY =
+  'generalRegistration.educationCurriculum.progressSessionByRound' as const
 
 const TRAINED_TEACHERS_SCHEDULE_LINES_KEY =
   'trainedTeachersRegistration.educationScheduleSettings.scheduleLines' as const
@@ -41,6 +45,8 @@ export type SyncInstitutionApplicationBridgeForRegistrationWizardArgs = {
   sessionRound: ProgramRegistrationSessionRoundType
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   recruitTemplateCode: string | null | undefined
+  curriculumSessionCount?: number
+  curriculumChartSessionCount?: number
 }
 
 function readStringArrayFromOverlay(
@@ -143,12 +149,21 @@ export function syncInstitutionApplicationBridgeForRegistrationWizard(
       args.programType === 'schedule' && args.sessionRound === 'multi'
     const lines = hideScheduleSettings ? [] : readGeneralRegistrationOverlayScheduleLines()
     const mode = args.educationScheduleMode as InstitutionApplicationEducationScheduleMode
+    const scheduleMeta = resolveInstitutionApplicationScheduleMetaForRegistrationWizard({
+      sessionRound: args.sessionRound,
+      curriculumSessionCount: args.curriculumSessionCount,
+      curriculumChartSessionCount: args.curriculumChartSessionCount,
+      overlay,
+    })
     patchInstitutionApplicationProgramBridge({
       ...recruitLimits,
       educationStructure: args.programType,
       sessionRound: args.sessionRound,
       educationScheduleMode: mode,
       educationScheduleLines: lines,
+      educationRoundCount: scheduleMeta.educationRoundCount,
+      sessionsPerRound: scheduleMeta.sessionsPerRound,
+      curriculumChartSessionCount: scheduleMeta.curriculumChartSessionCount,
       educationScheduleRange: mode === 'period' ? resolvePeriodRangeFromLines(lines) : undefined,
       ...(preEducationFromRecruit !== undefined
         ? { preEducationNoticeRequired: preEducationFromRecruit }
@@ -219,6 +234,7 @@ export function registrationWizardBridgeOverlayKeys(
   if (variant === 'general') {
     return [
       GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+      CURRICULUM_PROGRESS_SESSION_BY_ROUND_KEY,
       ...PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS,
     ]
   }

@@ -31,6 +31,29 @@ import type {
   PortalVolunteerInterviewSchedule,
 } from './types'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
+import {
+  educationScheduleDetailCardLabel,
+  formatEducationScheduleLineForDetailCard,
+} from '../lib/education-schedule-detail-display.ts'
+import { shouldShowApplicationPreferredScheduleParagraph } from '@jakorea/form-schema/program-application'
+
+function mapPortalMaxPreferredScheduleCount(
+  remote: PortalProgramDetail,
+  isTrainedTeacher: boolean,
+  usesEducationProgressFields: boolean
+): number {
+  if (isTrainedTeacher) return 2
+  if (!usesEducationProgressFields) return 1
+  const visibility = {
+    educationStructure:
+      remote.educationStructure === 'schedule' ? ('schedule' as const) : ('curriculum' as const),
+    sessionRound: remote.sessionRound === 'multi' ? ('multi' as const) : ('single' as const),
+    educationScheduleMode:
+      remote.educationScheduleMode === 'period' ? ('period' as const) : ('date' as const),
+    educationScheduleLines: remote.educationScheduleLines ?? [],
+  }
+  return shouldShowApplicationPreferredScheduleParagraph(visibility) ? 10 : 1
+}
 
 const RECRUITMENT_STATUS = {
   scheduled: 'scheduled',
@@ -729,12 +752,18 @@ function mapEducationTargetDetailLabel(remote: PortalProgramDetail, fallbackLabe
   return fallbackLabel
 }
 
-/** 세부내용 「교육 일정 N」. 일정형 복수 회차는 배열이 있어도 카드를 숨긴다. */
+/** 세부내용 「교육 일정」 카드. 일정형 복수 회차는 배열이 있어도 카드를 숨긴다. */
 function mapPortalEducationScheduleCards(remote: PortalProgramDetail): ProgramLabeledValue[] {
-  if (remote.educationStructure === 'schedule' && isMultiSessionRound(remote.sessionRound)) return []
-  return (remote.educationScheduleLines ?? []).map((line, index) => ({
-    label: `교육 일정 ${index + 1}`,
-    value: line,
+  if (remote.educationStructure === 'schedule' && isMultiSessionRound(remote.sessionRound)) {
+    return []
+  }
+  const mode = remote.educationScheduleMode === 'period' ? 'period' : 'date'
+  const lines = (remote.educationScheduleLines ?? []).map(line =>
+    formatEducationScheduleLineForDetailCard(line, mode)
+  )
+  return lines.map((value, index) => ({
+    label: educationScheduleDetailCardLabel(index, lines.length),
+    value,
   }))
 }
 
@@ -1053,7 +1082,11 @@ export function mapPortalProgramDetail(
     educationScheduleLines: usesEducationProgressFields
       ? [...(remote.educationScheduleLines ?? [])]
       : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-'),
-    maxPreferredScheduleCount: isTrainedTeacher ? 2 : 1,
+    maxPreferredScheduleCount: mapPortalMaxPreferredScheduleCount(
+      remote,
+      isTrainedTeacher,
+      usesEducationProgressFields
+    ),
     sessions,
     eventSchedules,
     recruitmentPhaseGroupLabel: '모집 및 선별 기간',
@@ -1067,7 +1100,7 @@ export function mapPortalProgramDetail(
     educationSchedules: usesEducationProgressFields
       ? mapPortalEducationScheduleCards(remote)
       : eventSchedules.map((item, index) => ({
-          label: `교육 일정 ${index + 1}`,
+          label: educationScheduleDetailCardLabel(index, eventSchedules.length),
           value: `${item.name} · ${item.dateLabel}`,
         })),
     ...(volunteerInterviewSchedule ? { volunteerInterviewSchedule } : {}),

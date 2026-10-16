@@ -91,7 +91,7 @@ export function useGeneralProgramCommonInfoSave({
           educationStructure: extras.programType,
           sessionRound: extras.sessionRoundType,
         },
-        program,
+        draftToSave,
         sponsorContext,
         detailedProgramCatalog,
         paymentItemOptions

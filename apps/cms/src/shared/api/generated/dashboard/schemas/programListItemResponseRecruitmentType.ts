@@ -8,7 +8,6 @@
 
 /**
  * 이 행의 모집 유형.
- * @nullable
  */
 export type ProgramListItemResponseRecruitmentType = typeof ProgramListItemResponseRecruitmentType[keyof typeof ProgramListItemResponseRecruitmentType] | null;
 
