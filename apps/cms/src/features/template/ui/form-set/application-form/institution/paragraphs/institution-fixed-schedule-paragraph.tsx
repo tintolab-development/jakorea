@@ -1,8 +1,5 @@
 import { useMemo } from 'react'
-import {
-  readCurriculumMultiDateFixedScheduleMeta,
-  resolveFixedScheduleLinesToChoiceItems,
-} from '@jakorea/form-schema/program-application'
+import { resolveFixedScheduleLinesToChoiceItems } from '@jakorea/form-schema/program-application'
 import {
   useInstitutionApplicationProgramBridge,
   type InstitutionApplicationProgramBridge,
@@ -27,10 +24,11 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
   const choiceItems = useMemo(() => {
     const lines =
       bridge.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ?? []
-    const meta = readCurriculumMultiDateFixedScheduleMeta({
+    const metaInput = {
       educationRoundCount: bridge.educationRoundCount,
       sessionsPerRound: bridge.sessionsPerRound,
-    })
+      curriculumChartSessionCount: bridge.curriculumChartSessionCount,
+    }
     return resolveFixedScheduleLinesToChoiceItems(
       {
         educationStructure: bridge.educationStructure,
@@ -39,9 +37,10 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
         educationScheduleLines: lines,
       },
       lines,
-      meta
+      metaInput
     )
   }, [
+    bridge.curriculumChartSessionCount,
     bridge.educationRoundCount,
     bridge.educationScheduleLines,
     bridge.educationScheduleMode,
