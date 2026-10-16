@@ -61,6 +61,7 @@ import {
   type InstructorApplicationApprovalRequest,
   type InstructorApplicationDecisionWithReasonRequest,
   type InstructorApplicationNotificationRequest,
+  type OrganizationApplicationApprovePayload,
   type OrganizationDecisionNotifyRequest,
   type ScreeningResultNotifyFields,
   type InterviewAssignmentEvaluationPayload,
@@ -338,7 +339,7 @@ export async function fetchGeneralVolunteerScreeningApplicationsPage(
 
 export async function approveGeneralOrganizationApplication(
   applicationId: string,
-  payload?: OrganizationDecisionNotifyRequest
+  payload?: OrganizationApplicationApprovePayload
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await approveOrganizationApplicationRemote(applicationId, payload)

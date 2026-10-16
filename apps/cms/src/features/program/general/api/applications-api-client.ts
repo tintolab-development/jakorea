@@ -139,6 +139,18 @@ export type OrganizationDecisionNotifyRequest = {
   scheduledAt?: string
 }
 
+/** OpenAPI `SlotRequest` — GENERAL_ORGANIZATION 승인 시 필수 */
+export type OrganizationApplicationApproveSlotRequest = {
+  scheduleId: number
+  grade: string
+  className: string
+}
+
+/** OpenAPI `OrganizationApplicationApproveRequest` (slots는 GENERAL_ORGANIZATION 승인 시 필수) */
+export type OrganizationApplicationApprovePayload = OrganizationDecisionNotifyRequest & {
+  slots?: OrganizationApplicationApproveSlotRequest[]
+}
+
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
 export type ApplicationDecisionCancelRequestWithNotification = Omit<
   ApplicationDecisionCancelRequest,
@@ -446,7 +458,7 @@ export async function cancelVolunteerApplicationRejectionRemote(
 
 export async function approveOrganizationApplicationRemote(
   applicationId: string,
-  payload?: OrganizationDecisionNotifyRequest
+  payload?: OrganizationApplicationApprovePayload
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({

@@ -27,6 +27,7 @@ import { formatApplicationEligibilityConflictMessage } from '@/features/program/
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
@@ -103,7 +104,11 @@ import {
   toFlatDecisionNotifyTiming,
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
-import type { OrganizationDecisionNotifyRequest } from '@/features/program/general/api/applications-api-client'
+import type {
+  OrganizationApplicationApprovePayload,
+  OrganizationDecisionNotifyRequest,
+} from '@/features/program/general/api/applications-api-client'
+import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 import {
@@ -267,7 +272,9 @@ export function useApplicantsDetail({
       showAlert({
         title: '처리 실패',
         content:
+          formatOrganizationApplicationApproveErrorMessage(error) ??
           formatApplicationEligibilityConflictMessage(error) ??
+          formatApplicationStatusConflictMessage(error) ??
           '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
       })
     },
@@ -321,7 +328,8 @@ export function useApplicantsDetail({
       ids: string[],
       decision: 'approve' | 'reject',
       reason?: string,
-      notify?: OrganizationDecisionNotifyRequest
+      notify?: OrganizationDecisionNotifyRequest,
+      approvePayload?: OrganizationApplicationApprovePayload
     ): Promise<'ok' | 'error' | 'skipped'> => {
       if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
       try {
@@ -352,8 +360,10 @@ export function useApplicantsDetail({
         } else {
           for (const id of ids) {
             if (decision === 'approve') {
-              if (generalRemote && notify) {
-                await generalRemote.approveOrganization(id, notify)
+              const body: OrganizationApplicationApprovePayload | undefined =
+                approvePayload ?? (notify ? { ...notify } : notify)
+              if (generalRemote && body) {
+                await generalRemote.approveOrganization(id, body)
               } else {
                 await institutionApplicationsRemote.approveOrganization(id)
               }
@@ -370,6 +380,23 @@ export function useApplicantsDetail({
           }
         }
         await institutionApplicationsRemote.invalidateApplications()
+        if (decision === 'approve') {
+          if (programId) {
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramQueryKeys.formBindings(programId),
+            })
+          }
+          if (approvePayload?.slots?.length) {
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.all,
+            })
+            for (const id of ids) {
+              await queryClient.invalidateQueries({
+                queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+              })
+            }
+          }
+        }
         return 'ok'
       } catch (error) {
         notifyRemoteDecisionFailure(error)
@@ -381,6 +408,8 @@ export function useApplicantsDetail({
       institutionApplicationsRemote,
       isTrainedTeachersSurface,
       notifyRemoteDecisionFailure,
+      programId,
+      queryClient,
       showAlert,
     ]
   )

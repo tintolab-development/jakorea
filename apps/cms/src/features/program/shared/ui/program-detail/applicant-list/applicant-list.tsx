@@ -1,4 +1,5 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -95,7 +96,12 @@ import {
 } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-modal'
 import { InstructorBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal'
 import { InstitutionBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
-import { InstitutionApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
+import {
+  InstitutionApproveModal,
+  type InstitutionApproveConfirmPayload,
+} from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
+import { hydrateOrganizationApplicationSchedules } from '@/features/program/general/api/admin-applications-service'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
 import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
@@ -151,6 +157,7 @@ export function ApplicantList({
   individualScreeningStage,
 }: ApplicantListProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const {
     applicantsCalendarGranularity,
     setApplicantsCalendarGranularity,
@@ -266,6 +273,81 @@ export function ApplicantList({
     id: string
     name: string
   } | null>(null)
+  const [institutionApproveRow, setInstitutionApproveRow] = useState<ApplicantSchoolRow | null>(
+    null
+  )
+  const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
+  const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
+  const requiresGeneralOrganizationApproveSlots = isGeneralOrganizationProgram(program)
+  const institutionApproveSessionRound: 'single' | 'multi' =
+    program?.generalProgramSessionRound === 'multi' ? 'multi' : 'single'
+
+  useEffect(() => {
+    if (!institutionApproveTarget || !requiresGeneralOrganizationApproveSlots) {
+      setInstitutionApproveRow(null)
+      setInstitutionApproveHydrating(false)
+      return
+    }
+    const sourceRow =
+      institutionList.find(row => row.id === institutionApproveTarget.id) ??
+      (selectedItem &&
+      'schoolName' in selectedItem &&
+      selectedItem.id === institutionApproveTarget.id
+        ? (selectedItem as ApplicantSchoolRow)
+        : null)
+    if (!sourceRow) {
+      setInstitutionApproveRow(null)
+      return
+    }
+    let cancelled = false
+    setInstitutionApproveHydrating(true)
+    void (async () => {
+      const [hydrated] = await hydrateOrganizationApplicationSchedules(
+        [sourceRow],
+        queryClient,
+        { applicationIds: [sourceRow.id] }
+      )
+      if (cancelled) return
+      setInstitutionApproveRow(hydrated)
+      setInstitutionApproveHydrating(false)
+      setInstitutionList(prev =>
+        prev.map(row => (row.id === hydrated.id ? hydrated : row))
+      )
+      if (
+        selectedItem &&
+        'schoolName' in selectedItem &&
+        selectedItem.id === hydrated.id
+      ) {
+        setSelectedItem(hydrated)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    institutionApproveTarget?.id,
+    institutionList,
+    queryClient,
+    requiresGeneralOrganizationApproveSlots,
+    selectedItem,
+    setInstitutionList,
+    setSelectedItem,
+  ])
+
+  const institutionApproveScheduleConfig = useMemo(() => {
+    if (!requiresGeneralOrganizationApproveSlots || !institutionApproveRow) return null
+    return {
+      sessionRound: institutionApproveSessionRound,
+      educationGrade: institutionApproveRow.educationGrade,
+      classCount: institutionApproveRow.classCount,
+      preferredEducationSchedules: institutionApproveRow.preferredEducationSchedules,
+    }
+  }, [
+    institutionApproveRow,
+    institutionApproveSessionRound,
+    requiresGeneralOrganizationApproveSlots,
+  ])
+
   const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
     id: string
     name: string
@@ -1057,45 +1139,62 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
-        onCancel={() => setInstitutionApproveTarget(null)}
-        onConfirm={payload => {
+        scheduleConfig={
+          requiresGeneralOrganizationApproveSlots ? institutionApproveScheduleConfig : null
+        }
+        confirmLoading={institutionApproveHydrating || institutionApproveSubmitting}
+        onCancel={() => {
+          setInstitutionApproveTarget(null)
+          setInstitutionApproveRow(null)
+        }}
+        onConfirm={(payload: InstitutionApproveConfirmPayload) => {
           if (!institutionApproveTarget) return
           const { id } = institutionApproveTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
+          const notify = toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
           const run = async () => {
-            const remote = await applyRemoteInstitutionDecision(
-              [id],
-              'approve',
-              undefined,
-              toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
-            )
-            if (remote === 'error') return
-            if (remote === 'skipped') {
-              notifyProgramApiUnavailable(
-                'general-org-application-decision',
-                '일반 프로그램 · 기관 신청 승인·반려'
+            setInstitutionApproveSubmitting(true)
+            try {
+              const approvePayload =
+                payload.slots?.length ? { ...notify, slots: payload.slots } : undefined
+              const remote = await applyRemoteInstitutionDecision(
+                [id],
+                'approve',
+                undefined,
+                notify,
+                approvePayload
               )
-              return
-            }
-            setInstitutionApproveTarget(null)
-            const sourceRow =
-              institutionList.find(row => row.id === id) ??
-              (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
-                ? (selectedItem as ApplicantSchoolRow)
-                : null)
-            const patchedRow = sourceRow
-              ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
-              : null
-            if (patchedRow) {
-              setInstitutionList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
-              if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id) {
-                setSelectedItem(patchedRow)
+              if (remote === 'error') return
+              if (remote === 'skipped') {
+                notifyProgramApiUnavailable(
+                  'general-org-application-decision',
+                  '일반 프로그램 · 기관 신청 승인·반려'
+                )
+                return
               }
+              setInstitutionApproveTarget(null)
+              setInstitutionApproveRow(null)
+              const sourceRow =
+                institutionList.find(row => row.id === id) ??
+                (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
+                  ? (selectedItem as ApplicantSchoolRow)
+                  : null)
+              const patchedRow = sourceRow
+                ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
+                : null
+              if (patchedRow) {
+                setInstitutionList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
+                if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id) {
+                  setSelectedItem(patchedRow)
+                }
+              }
+              showApplicationApprovalCompletedAlert()
+            } finally {
+              setInstitutionApproveSubmitting(false)
             }
-            showApplicationApprovalCompletedAlert()
           }
           void run()
         }}
