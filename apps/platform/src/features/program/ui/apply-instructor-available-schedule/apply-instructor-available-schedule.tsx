@@ -91,14 +91,18 @@ function runtimeScheduleSlotFromOption(
   if (!start) return { id, label: displayLabel }
   const end = seoulDateTimeParts(option.endAt ?? meta.endAt)
   const organizationName = String(option.organizationName ?? meta.organizationName ?? '').trim()
+  const grade = String(option.grade ?? meta.grade ?? '').trim()
+  const className = String(option.className ?? meta.className ?? '').trim()
+  const classLabel = [grade, className].filter(Boolean).join(' ')
   const allDay =
     end != null && start.time === '00:00' && end.time === '00:00' && end.dateKey > start.dateKey
+  const timeLabel = allDay ? '종일' : end ? `${start.time} ~ ${end.time}` : start.time
   return {
     id,
     label: displayLabel,
     dateKey: start.dateKey,
     title: organizationName || displayLabel.split(' | ')[0] || displayLabel,
-    detail: allDay ? '종일' : end ? `${start.time} ~ ${end.time}` : start.time,
+    detail: [timeLabel, classLabel].filter(Boolean).join(' · '),
   }
 }
 
@@ -159,14 +163,18 @@ export function readPortalApplicationBindingOptionSlots(
 
 /**
  * form-bindings 응답의 강사 일정 런타임 선택지 (`items[].id/label` 또는 `options[].option_value/option_label`).
- * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null — 프로그램 일정 줄로 만든다.
+ * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null.
+ * GENERAL_ORGANIZATION 강사/봉사는 호출측에서 null을 프로그램 공통 일정으로 대체하지 않는다.
  */
 export function readRuntimeInstructorScheduleSlots(
   paragraph: unknown,
 ): ApplyInstructorScheduleSlot[] | null {
   if (!paragraph || typeof paragraph !== 'object') return null
   const row = paragraph as Record<string, unknown>
-  if (typeof row.runtimeResolved !== 'boolean') return null
+  if (typeof row.runtimeResolved !== 'boolean') {
+    const fromItems = bindingOptionSlotsFromParagraphRow(row)
+    return fromItems.length > 0 ? fromItems : null
+  }
   return bindingOptionSlotsFromParagraphRow(row)
 }
 

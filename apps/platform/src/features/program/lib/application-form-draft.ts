@@ -17,6 +17,7 @@ import {
 import { migrateProgramParticipantApplicationParagraphs } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { resolveApplicationAnswerKey } from './application-answer-key.ts'
 import {
+  isApplicationSexOffenseInquiryParagraphId,
   isApplicationTeamInfoParagraphId,
   isPortalDynamicOptionArrayParagraphId,
 } from './apply-form-paragraph-ids.ts'
@@ -89,10 +90,9 @@ function conditionValueSet(value: unknown): Set<string> {
   return out
 }
 
-/** `runtimeContext.audienceApplication.conditionalQuestions` — 다른 문항 답에 따라 숨겨지는 문항 */
-export function collectRuntimeConditionalQuestions(form: unknown): RuntimeConditionalQuestion[] {
-  const document = coerceApplicationFormDocument(form)
-  const runtime = document?.runtimeContext
+function collectAudienceRuntimeConditionalQuestions(
+  runtime: unknown
+): RuntimeConditionalQuestion[] {
   if (!isRecord(runtime)) return []
   const audience = runtime.audienceApplication
   if (!isRecord(audience) || !isRecord(audience.conditionalQuestions)) return []
@@ -108,6 +108,52 @@ export function collectRuntimeConditionalQuestions(form: unknown): RuntimeCondit
     })
   }
   return out
+}
+
+function isSexOffenseRequestedRuntimeCondition(condition: Record<string, unknown>): boolean {
+  return String(condition.conditionKind ?? '').trim().toUpperCase() === 'SEX_OFFENSE_CONSENT_REQUESTED'
+}
+
+/** 단락 `runtimeCondition` — audienceApplication.conditionalQuestions 가 없어도 본다. */
+function collectParagraphRuntimeConditionalQuestions(
+  paragraphs: unknown
+): RuntimeConditionalQuestion[] {
+  if (!Array.isArray(paragraphs)) return []
+  const out: RuntimeConditionalQuestion[] = []
+  for (const paragraph of paragraphs) {
+    if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) continue
+    const condition = paragraph.runtimeCondition
+    if (!isRecord(condition) || typeof condition.dependsOnQuestionKey !== 'string') continue
+    const questionKey = paragraph.id.trim()
+    const sexOffenseCondition = isSexOffenseRequestedRuntimeCondition(condition)
+    if (
+      !sexOffenseCondition &&
+      !isApplicationSexOffenseInquiryParagraphId(questionKey)
+    ) {
+      continue
+    }
+    out.push({
+      questionKey,
+      dependsOnQuestionKey: condition.dependsOnQuestionKey.trim(),
+      dependsOnField: 'submissionRequest',
+      visibleValues: new Set(['REQUEST']),
+      hiddenValues: new Set(['NO_SUBMIT']),
+    })
+  }
+  return out
+}
+
+/** `runtimeContext.audienceApplication.conditionalQuestions` + 단락 `runtimeCondition` */
+export function collectRuntimeConditionalQuestions(form: unknown): RuntimeConditionalQuestion[] {
+  const document = coerceApplicationFormDocument(form)
+  const byKey = new Map<string, RuntimeConditionalQuestion>()
+  for (const item of collectAudienceRuntimeConditionalQuestions(document?.runtimeContext)) {
+    byKey.set(item.questionKey, item)
+  }
+  for (const item of collectParagraphRuntimeConditionalQuestions(document?.paragraphs)) {
+    byKey.set(item.questionKey, item)
+  }
+  return [...byKey.values()]
 }
 
 /**
@@ -718,6 +764,10 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
     return paragraph.selectedPreviewMultipleIds ?? []
   }
+  if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
+    /** sidecar 조회 방식 — 표 fieldDataRows 를 answers로 보내지 않는다. */
+    return undefined
+  }
   if (isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
     if (!hasDynamicOptionArrayState(paragraph)) return undefined
     /** 면접·봉사 일정 placeholder — BE는 option id 문자열 배열만 받는다. */
@@ -795,6 +845,7 @@ export function buildApplicationAnswersFromDraft(
       continue
     }
     if (isRequiredParagraph(paragraph) && !isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
+      if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) continue
       answers[key] = {}
     }
   }

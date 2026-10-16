@@ -1,4 +1,5 @@
 import type { ProgramAttachment } from '../../model/types'
+import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { PFCircleIconButton, PFFileDownload, PFText } from '@/shared/ui'
@@ -50,7 +51,16 @@ export function ProgramInfoAside({
           hasBannerImage ? styles.bannerHasImage : styles.bannerNoImage,
         ].join(' ')}
       >
-        {hasBannerImage ? <img className={styles.bannerImage} src={bannerUrl} alt="" /> : null}
+        {hasBannerImage ? (
+          <img className={styles.bannerImage} src={bannerUrl} alt="" />
+        ) : (
+          <img
+            className={styles.bannerPlaceholderLogo}
+            src={jaLogoGrayCompactUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       {showApplyCta ? (

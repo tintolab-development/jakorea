@@ -643,4 +643,39 @@ const volunteerInterviewDraft = writingFormDraftFromApplicationForm(volunteerInt
 assert.ok(volunteerInterviewDraft)
 assert.equal(volunteerInterviewKey in buildApplicationAnswersFromDraft(volunteerInterviewDraft!), false)
 
+const sexOffenseInquiryKey = 'program-application-institution-seed-sex-offense-consent-inquiry'
+const sexOffenseSubmissionKey = 'program-application-institution-seed-sex-offense-consent-submission'
+const sexOffenseForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: sexOffenseInquiryKey,
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      answerRequired: true,
+      tableFlavor: 'text',
+      columnHeaders: ['항목', '내용'],
+      dataRows: [['', '']],
+      fieldDataRows: [[{ kind: 'text', value: 'stale' }, { kind: 'subjective', value: '' }]],
+      runtimeCondition: {
+        dependsOnQuestionKey: sexOffenseSubmissionKey,
+        operator: 'semantic_requested',
+        conditionKind: 'SEX_OFFENSE_CONSENT_REQUESTED',
+      },
+    },
+  ],
+}
+const sexOffenseInquiryDraft = writingFormDraftFromApplicationForm(sexOffenseForm)
+assert.ok(sexOffenseInquiryDraft)
+assert.equal(
+  sexOffenseInquiryKey in buildApplicationAnswersFromDraft(sexOffenseInquiryDraft),
+  false,
+)
+const paragraphSexOffenseConditionals = collectRuntimeConditionalQuestions(sexOffenseForm)
+assert.equal(
+  paragraphSexOffenseConditionals.some(item => item.questionKey === sexOffenseInquiryKey),
+  true,
+)
+
 console.log('application-form-draft.selfcheck: ok')

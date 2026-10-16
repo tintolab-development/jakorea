@@ -9,6 +9,7 @@ import {
   readEducationScheduleLinesForApplicationForm,
   shouldShowApplicationScheduleParagraphResolved,
 } from '@jakorea/form-schema/program-application'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
@@ -45,6 +46,8 @@ export type ResolvePortalApplicationHiddenParagraphIdsInput = {
   volunteerInterviewEnabled?: boolean
   /** 봉사 진행 가능 일정 — 면접과 독립 (optionCount 0이면 false) */
   volunteerActivityScheduleEnabled?: boolean
+  /** 강사 강의 진행 가능 일정 — OSA 0건이면 false */
+  instructorAvailableScheduleEnabled?: boolean
   volunteerJaExperienceParagraph?: WritingFormParagraph
 }
 
@@ -113,6 +116,10 @@ export function resolvePortalApplicationHiddenParagraphIds(
     })
   ) {
     hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+  }
+
+  if (applyCase === 'instructor' && input.instructorAvailableScheduleEnabled === false) {
+    hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
   }
 
   if (applyCase === 'individual-volunteer') {
