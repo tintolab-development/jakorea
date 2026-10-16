@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import {
   resolveInstitutionFixedScheduleDescription,
   resolveInstitutionPreferredScheduleDescription,
@@ -7,6 +9,7 @@ import {
   resolveInstitutionPreferredScheduleMaxBlocks,
   shouldUseInstitutionFixedScheduleCardCopy,
   shouldUseInstitutionPreferredScheduleCardCopy,
+  shouldUseProgramApplicationScheduleTemplateAuthoringMode,
 } from './institution-application-schedule-copy'
 
 const CURRICULUM_MULTI_PERIOD: InstitutionApplicationProgramBridge = {
@@ -44,6 +47,35 @@ const SCHEDULE_SINGLE_DATE: InstitutionApplicationProgramBridge = {
   educationScheduleMode: 'date',
   educationScheduleLines: SCHEDULE_SINGLE_DATE_LINES,
 }
+
+describe('program application schedule template authoring mode', () => {
+  it('등록 위저드 program-linked 미리보기에서는 authoring도 연동 본문을 쓴다', () => {
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+        'authoring',
+        { programLinkedInstitutionApplicationForm: true }
+      )
+    ).toBe(false)
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
+        'authoring',
+        { programLinkedIndividualApplicationForm: true }
+      )
+    ).toBe(false)
+  })
+
+  it('템플릿 관리 authoring은 기본 힌트를 쓴다', () => {
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+        'authoring',
+        {}
+      )
+    ).toBe(true)
+  })
+})
 
 describe('institution preferred schedule card copy', () => {
   it('커리큘럼형 + 복수 회차 + 기간 지정은 시안 설명과 기본 2지망을 쓴다', () => {

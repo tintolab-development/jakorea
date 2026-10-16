@@ -264,6 +264,32 @@ export function educationScheduleLinesEqual(a: string[], b: string[]): boolean {
   return a.every((line, index) => line === b[index])
 }
 
+export function isCompleteEducationScheduleGroupTimeSlot(
+  slot: EducationScheduleGroupTimeSlot | null | undefined
+): boolean {
+  if (!slot) return false
+  const ref = dayjs().startOf('day')
+  return (
+    parseEducationScheduleClock(slot.startTime, ref) != null &&
+    parseEducationScheduleClock(slot.endTime, ref) != null
+  )
+}
+
+/** 예정일 목록에 새 줄을 중복 없이 합친다 (overlay·폼 단일 갱신용). */
+export function mergeUniqueEducationScheduleLines(
+  current: readonly string[],
+  incoming: readonly string[]
+): string[] {
+  const next = [...current]
+  for (const line of incoming) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    if (next.includes(trimmed)) continue
+    next.push(trimmed)
+  }
+  return next
+}
+
 export function seoulCalendarDateKey(now: Date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Seoul',

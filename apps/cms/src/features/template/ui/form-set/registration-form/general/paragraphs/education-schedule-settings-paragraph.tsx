@@ -4,12 +4,13 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
   educationScheduleLinesEqual,
-  flattenGroupTimeSlotsByDetail,
   educationScheduleLinesFromSelectionRangeApply,
+  mergeUniqueEducationScheduleLines,
   normalizeEducationSchedulePeriodLineDateOnly,
   rebuildEducationScheduleLinesFromGroupTimes,
   type EducationScheduleGroupTimeSlot,
 } from '@/features/template/lib/format-education-schedule-line'
+import { resolveEducationScheduleGroupTimeSlots } from '@/features/program/general/lib/education-schedule-lines-display'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
   EducationSchedulePreviewLines,
@@ -109,37 +110,29 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
 
   const scheduleLinesKey = `${overlayKeyPrefix}.scheduleLines`
 
-  const appendLineIfNew = useCallback(
-    (line: string) => {
-      const trimmed = line.trim()
-      if (!trimmed) return
-      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
-        const current = prev ?? []
-        return current.includes(trimmed) ? current : [...current, trimmed]
-      })
-    },
-    [scheduleLinesKey]
-  )
-
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      const slots = flattenGroupTimeSlotsByDetail(groupTimesByDetail)
-      const lines = educationScheduleLinesFromSelectionRangeApply({
+      const slots = resolveEducationScheduleGroupTimeSlots({
+        overlay: { [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: groupTimesByDetail },
+      })
+      const newLines = educationScheduleLinesFromSelectionRangeApply({
         range,
         autoFillFromScheduleGroupTimes,
         educationScheduleMode: scheduleMode,
         groupTimeSlots: slots,
         dateOnlyPeriodRange: disableSchedulePeriodTime,
       })
-      for (const line of lines) appendLineIfNew(line)
+      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
+        mergeUniqueEducationScheduleLines(prev ?? [], newLines)
+      )
       setSingleDate(null)
       setPeriodDate(null)
     },
     [
-      appendLineIfNew,
       autoFillFromScheduleGroupTimes,
       disableSchedulePeriodTime,
       groupTimesByDetail,
+      scheduleLinesKey,
       scheduleMode,
     ]
   )
@@ -182,7 +175,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   }, [lockDateMode, onEducationScheduleModeChange, overlayKeyPrefix, scheduleMode])
 
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
-  const groupTimeSlotsKey = JSON.stringify(flattenGroupTimeSlotsByDetail(groupTimesByDetail))
+  const groupTimeSlotsKey = JSON.stringify(
+    resolveEducationScheduleGroupTimeSlots({
+      overlay: { [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: groupTimesByDetail },
+    })
+  )
   const previewScheduleLines = useMemo(
     () =>
       scheduleMode === 'period'
@@ -202,14 +199,17 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
 
   useEffect(() => {
     if (!autoFillDatePicker) return
-    const slots = flattenGroupTimeSlotsByDetail(groupTimesByDetail)
+    const slots = resolveEducationScheduleGroupTimeSlots({
+      overlay: { [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: groupTimesByDetail },
+    })
+    if (slots.length === 0) return
     updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
       const current = prev ?? []
       if (current.length === 0) return current
       const next = rebuildEducationScheduleLinesFromGroupTimes(current, slots)
       return educationScheduleLinesEqual(current, next) ? current : next
     })
-  }, [autoFillDatePicker, groupTimeSlotsKey, scheduleLinesKey])
+  }, [autoFillDatePicker, groupTimeSlotsKey, groupTimesByDetail, scheduleLinesKey])
 
   return (
     <DetailInfoForm

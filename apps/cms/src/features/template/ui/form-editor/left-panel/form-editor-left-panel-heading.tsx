@@ -37,14 +37,10 @@ import {
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import {
-  PROGRAM_PARTICIPANT_APPLICATION_IDS,
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
   shouldHideMultipleChoiceAllowMultipleTitleHint,
 } from '@/features/template/model/program-application-form-individual-draft'
-import {
-  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
-  PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
-} from '@/features/template/model/program-application-form-institution-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/economy-recruit-form-institution-draft'
@@ -62,6 +58,8 @@ import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/sh
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  isProgramApplicationScheduleChoiceParagraphId,
+  isProgramLinkedGeneralApplicationSchedulePreview,
   resolveInstitutionFixedScheduleDescription,
   resolveInstitutionPreferredScheduleDescription,
   shouldUseInstitutionFixedScheduleCardCopy,
@@ -367,13 +365,12 @@ export function withInstitutionApplicationPreferredScheduleHeading(
   paragraph: WritingFormParagraph,
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
 ): ParagraphCardEditableHeading {
-  const institutionApplicationForm =
+  const generalApplicationScheduleForm =
     paragraphBodyOptions?.programApplicationFormInstitution === true ||
-    paragraphBodyOptions?.programLinkedInstitutionApplicationForm === true
-  if (
-    !institutionApplicationForm ||
-    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
-  ) {
+    paragraphBodyOptions?.programLinkedInstitutionApplicationForm === true ||
+    paragraphBodyOptions?.programApplicationFormIndividual === true ||
+    paragraphBodyOptions?.programLinkedIndividualApplicationForm === true
+  if (!generalApplicationScheduleForm || !isProgramApplicationScheduleChoiceParagraphId(paragraph.id)) {
     return heading
   }
   const bridge =
@@ -393,13 +390,6 @@ export function withInstitutionApplicationPreferredScheduleHeading(
   }
 }
 
-function isProgramApplicationScheduleChoiceParagraphId(paragraphId: string): boolean {
-  return (
-    paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice ||
-    paragraphId === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
-  )
-}
-
 /** 날짜 지정 고정 일정 — 시드 placeholder 대신 배정 안내를 카드 설명 슬롯에 둔다 */
 export function withProgramApplicationFixedScheduleHeading(
   heading: ParagraphCardEditableHeading,
@@ -414,7 +404,12 @@ export function withProgramApplicationFixedScheduleHeading(
   ) {
     return heading
   }
-  if (paragraphBodyOptions.paragraphInteractionMode === 'authoring') return heading
+  if (
+    paragraphBodyOptions.paragraphInteractionMode === 'authoring' &&
+    !isProgramLinkedGeneralApplicationSchedulePreview(paragraphBodyOptions)
+  ) {
+    return heading
+  }
   const bridge =
     paragraphBodyOptions.institutionApplicationProgramBridge ??
     getInstitutionApplicationProgramBridge()

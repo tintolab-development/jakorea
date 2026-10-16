@@ -9,6 +9,7 @@ import {
   isEducationScheduleLineBeforeSeoulToday,
   isEducationScheduleLineUpcoming,
   parseEducationScheduleLineToRange,
+  mergeUniqueEducationScheduleLines,
   rebuildEducationScheduleLinesFromGroupTimes,
   shiftEducationScheduleLineToDate,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -108,6 +109,20 @@ describe('rebuildEducationScheduleLinesFromGroupTimes', () => {
         [{ startTime: '10:00', endTime: '11:00' }]
       )
     ).toEqual(['26년 4월 20일(월) 10:00 ~ 11:00'])
+  })
+})
+
+describe('mergeUniqueEducationScheduleLines', () => {
+  it('중복 줄은 넣지 않고 순서를 유지한다', () => {
+    expect(
+      mergeUniqueEducationScheduleLines(
+        ['26년 4월 20일(월) 9:00 ~ 12:00'],
+        ['26년 4월 20일(월) 9:00 ~ 12:00', '26년 4월 20일(월) 13:00 ~ 15:00']
+      )
+    ).toEqual([
+      '26년 4월 20일(월) 9:00 ~ 12:00',
+      '26년 4월 20일(월) 13:00 ~ 15:00',
+    ])
   })
 })
 
