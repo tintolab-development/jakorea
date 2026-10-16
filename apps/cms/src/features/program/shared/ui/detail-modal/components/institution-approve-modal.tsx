@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import {
   PermissionModal,
   PermissionModalMessage,
@@ -7,9 +6,12 @@ import {
 } from '@/shared/components/permission-modal'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import {
+  buildOrganizationApproveAssignedPreview,
   buildOrganizationApproveSlotsForSelection,
+  ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
+  resolveOrganizationApproveScheduleIdsFromSelection,
+  resolveOrganizationApproveScheduleOptionsFromPreferred,
   UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
-  validateOrganizationApproveScheduleOptions,
   validateOrganizationApproveSlotsClient,
   type OrganizationApplicationApproveSlot,
 } from '@/features/program/general/lib/organization-application-approve-slots'
@@ -24,7 +26,6 @@ export type InstitutionApproveScheduleConfig = {
   educationGrade: string
   classCount: number
   preferredEducationSchedules?: PreferredEducationSchedule[]
-  programSchedules?: ProgramScheduleResponse[]
 }
 
 export type InstitutionApproveConfirmPayload = PermissionModalPayload & {
@@ -63,11 +64,10 @@ export function InstitutionApproveModal({
   const { showAlert } = useCmsAlert()
   const scheduleValidation = useMemo(
     () =>
-      validateOrganizationApproveScheduleOptions(
-        scheduleConfig?.preferredEducationSchedules,
-        scheduleConfig?.programSchedules
+      resolveOrganizationApproveScheduleOptionsFromPreferred(
+        scheduleConfig?.preferredEducationSchedules
       ),
-    [scheduleConfig?.preferredEducationSchedules, scheduleConfig?.programSchedules]
+    [scheduleConfig?.preferredEducationSchedules]
   )
   const scheduleOptions = scheduleValidation.options
   const [selectedScheduleIds, setSelectedScheduleIds] = useState<number[]>([])
@@ -99,30 +99,51 @@ export function InstitutionApproveModal({
     scheduleValidation.invalidReason,
   ])
 
-  const assignedSlots = useMemo(() => {
+  const resolvedSelectedScheduleIds = useMemo(
+    () =>
+      resolveOrganizationApproveScheduleIdsFromSelection(
+        scheduleConfig?.preferredEducationSchedules,
+        selectedScheduleIds
+      ),
+    [scheduleConfig?.preferredEducationSchedules, selectedScheduleIds]
+  )
+
+  const assignedPreviewRows = useMemo(() => {
     if (!usesScheduleSlots || selectedScheduleIds.length === 0) return []
-    return buildOrganizationApproveSlotsForSelection({
+    return buildOrganizationApproveAssignedPreview({
       sessionRound,
-      selectedScheduleIds,
+      selectedOptionIds: selectedScheduleIds,
+      scheduleOptions,
       educationGrade: scheduleConfig?.educationGrade ?? '',
       classCount: scheduleConfig?.classCount ?? 1,
     })
   }, [
     scheduleConfig?.classCount,
     scheduleConfig?.educationGrade,
+    scheduleOptions,
     selectedScheduleIds,
     sessionRound,
     usesScheduleSlots,
   ])
 
+  const approveSlots = useMemo(() => {
+    if (!usesScheduleSlots || resolvedSelectedScheduleIds.length === 0) return []
+    return buildOrganizationApproveSlotsForSelection({
+      sessionRound,
+      selectedScheduleIds: resolvedSelectedScheduleIds,
+      educationGrade: scheduleConfig?.educationGrade ?? '',
+      classCount: scheduleConfig?.classCount ?? 1,
+    })
+  }, [
+    scheduleConfig?.classCount,
+    scheduleConfig?.educationGrade,
+    resolvedSelectedScheduleIds,
+    sessionRound,
+    usesScheduleSlots,
+  ])
+
   const toggleSchedule = (scheduleId: number) => {
-    if (sessionRound === 'single') {
-      setSelectedScheduleIds(prev => (prev.includes(scheduleId) ? [] : [scheduleId]))
-      return
-    }
-    setSelectedScheduleIds(prev =>
-      prev.includes(scheduleId) ? prev.filter(id => id !== scheduleId) : [...prev, scheduleId]
-    )
+    setSelectedScheduleIds(prev => (prev.includes(scheduleId) ? [] : [scheduleId]))
   }
 
   const handleConfirm = (payload: PermissionModalPayload) => {
@@ -137,10 +158,24 @@ export function InstitutionApproveModal({
       })
       return
     }
+    if (selectedScheduleIds.length === 0) {
+      showAlert({
+        title: '필수 항목 확인',
+        content: '희망 교육 일정을 선택해 주세요.',
+      })
+      return
+    }
+    if (resolvedSelectedScheduleIds.length === 0) {
+      showAlert({
+        title: '승인 불가',
+        content: ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
+      })
+      return
+    }
     const validation = validateOrganizationApproveSlotsClient({
       sessionRound,
-      slots: assignedSlots,
-      allowedScheduleIds: scheduleOptions.map(option => option.scheduleId),
+      slots: approveSlots,
+      allowedScheduleIds: resolvedSelectedScheduleIds,
     })
     if (validation) {
       showAlert({
@@ -149,7 +184,7 @@ export function InstitutionApproveModal({
       })
       return
     }
-    onConfirm({ ...payload, slots: assignedSlots })
+    onConfirm({ ...payload, slots: approveSlots })
   }
 
   const scheduleSection = usesScheduleSlots ? (
@@ -178,30 +213,25 @@ export function InstitutionApproveModal({
           </div>
           <div className="institution-approve-modal__assigned">
             <span className="institution-approve-modal__schedule-label">배정된 일정</span>
-            {assignedSlots.length === 0 ? (
+            {assignedPreviewRows.length === 0 ? (
               <p className="institution-approve-modal__notice">선택한 교육 일정이 없습니다.</p>
             ) : (
               <div className="institution-approve-modal__assigned-tags">
-                {assignedSlots.map((slot, index) => {
-                  const label =
-                    scheduleOptions.find(option => option.scheduleId === slot.scheduleId)?.label ??
-                    `일정 ${slot.scheduleId}`
-                  return (
-                    <span
-                      key={`${slot.scheduleId}-${slot.className}-${index}`}
-                      className="institution-approve-modal__assigned-tag"
-                    >
-                      {label} · {slot.grade} {slot.className}
-                    </span>
-                  )
-                })}
+                {assignedPreviewRows.map((row, index) => (
+                  <span
+                    key={`${row.label}-${row.className}-${index}`}
+                    className="institution-approve-modal__assigned-tag"
+                  >
+                    {row.label} · {row.grade} {row.className}
+                  </span>
+                ))}
               </div>
             )}
           </div>
           <p className="institution-approve-modal__notice">
             {sessionRound === 'single'
-              ? '단일 회차 프로그램은 하나의 교육 일정을 선택합니다. 같은 일정에 신청 학급 수만큼 반이 배정됩니다.'
-              : '복수 회차 프로그램은 희망 교육 일정 중 진행할 일정을 모두 선택합니다.'}
+              ? '희망 교육 일정 중 하나를 선택합니다. 같은 일정에 신청 학급 수만큼 반이 배정됩니다.'
+              : '희망 교육 일정 중 진행할 일정을 하나 선택합니다.'}
           </p>
         </>
       )}

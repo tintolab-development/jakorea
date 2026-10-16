@@ -104,9 +104,7 @@ import {
 import { hydrateOrganizationApplicationSchedules } from '@/features/program/general/api/admin-applications-service'
 import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
@@ -284,30 +282,46 @@ export function ApplicantList({
   )
   const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
   const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
-  const [institutionApproveProgramSchedules, setInstitutionApproveProgramSchedules] = useState<
-    ProgramScheduleResponse[]
-  >([])
   const requiresGeneralOrganizationApproveSlots = isGeneralOrganizationProgram(program)
   const institutionApproveSessionRound: 'single' | 'multi' =
     program?.generalProgramSessionRound === 'multi' ? 'multi' : 'single'
+  const institutionApproveTargetId = institutionApproveTarget?.id ?? null
+  /** 목록/상세 row 참조가 바뀌어도 id가 같으면 effect를 다시 돌리지 않는다 (무한 fetch 방지). */
+  const institutionApproveHydrationKey = useMemo(() => {
+    if (!institutionApproveTargetId) return null
+    if (institutionList.some(row => row.id === institutionApproveTargetId)) {
+      return institutionApproveTargetId
+    }
+    if (
+      selectedItem &&
+      'schoolName' in selectedItem &&
+      selectedItem.id === institutionApproveTargetId
+    ) {
+      return institutionApproveTargetId
+    }
+    return 'pending'
+  }, [institutionApproveTargetId, institutionList, selectedItem])
 
   useEffect(() => {
-    if (!institutionApproveTarget || !requiresGeneralOrganizationApproveSlots) {
+    if (!institutionApproveTargetId || !requiresGeneralOrganizationApproveSlots) {
       setInstitutionApproveRow(null)
-      setInstitutionApproveProgramSchedules([])
+      setInstitutionApproveHydrating(false)
+      return
+    }
+    if (institutionApproveHydrationKey !== institutionApproveTargetId) {
+      setInstitutionApproveRow(null)
       setInstitutionApproveHydrating(false)
       return
     }
     const sourceRow =
-      institutionList.find(row => row.id === institutionApproveTarget.id) ??
+      institutionList.find(row => row.id === institutionApproveTargetId) ??
       (selectedItem &&
       'schoolName' in selectedItem &&
-      selectedItem.id === institutionApproveTarget.id
+      selectedItem.id === institutionApproveTargetId
         ? (selectedItem as ApplicantSchoolRow)
         : null)
     if (!sourceRow) {
       setInstitutionApproveRow(null)
-      setInstitutionApproveProgramSchedules([])
       setInstitutionApproveHydrating(false)
       return
     }
@@ -316,14 +330,11 @@ export function ApplicantList({
     void (async () => {
       try {
         // 승인 모달은 목록 스냅샷이 아니라 기관 신청 상세 응답을 정본으로 사용한다.
-        const [detail, programSchedules] = await Promise.all([
-          queryClient.fetchQuery({
-            queryKey: generalApplicationsQueryKeys.organizationDetail(sourceRow.id),
-            queryFn: () => fetchOrganizationApplicationDetailRemote(sourceRow.id),
-            staleTime: 0,
-          }),
-          programId ? fetchAdminProgramSchedulesRemote(programId) : Promise.resolve([]),
-        ])
+        const detail = await queryClient.fetchQuery({
+          queryKey: generalApplicationsQueryKeys.organizationDetail(sourceRow.id),
+          queryFn: () => fetchOrganizationApplicationDetailRemote(sourceRow.id),
+          staleTime: 0,
+        })
         const canonicalRow = mapOrganizationApplicationDetailToApplicantSchoolRow(detail, sourceRow)
         const [hydrated] = await hydrateOrganizationApplicationSchedules(
           [canonicalRow],
@@ -332,7 +343,6 @@ export function ApplicantList({
         )
         if (cancelled) return
         setInstitutionApproveRow(hydrated)
-        setInstitutionApproveProgramSchedules(programSchedules)
         setInstitutionList(prev => prev.map(row => (row.id === hydrated.id ? hydrated : row)))
         if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === hydrated.id) {
           setSelectedItem(hydrated)
@@ -341,7 +351,6 @@ export function ApplicantList({
         if (cancelled) return
         // 불완전한 일정 정보를 캐시나 목록 값으로 대체하지 않고 승인 불가 상태로 유지한다.
         setInstitutionApproveRow(null)
-        setInstitutionApproveProgramSchedules([])
       } finally {
         if (!cancelled) setInstitutionApproveHydrating(false)
       }
@@ -350,14 +359,10 @@ export function ApplicantList({
       cancelled = true
     }
   }, [
-    institutionApproveTarget?.id,
-    institutionList,
+    institutionApproveTargetId,
+    institutionApproveHydrationKey,
     queryClient,
-    programId,
     requiresGeneralOrganizationApproveSlots,
-    selectedItem,
-    setInstitutionList,
-    setSelectedItem,
   ])
 
   const institutionApproveScheduleConfig = useMemo(() => {
@@ -367,14 +372,8 @@ export function ApplicantList({
       educationGrade: institutionApproveRow.educationGrade,
       classCount: institutionApproveRow.classCount,
       preferredEducationSchedules: institutionApproveRow.preferredEducationSchedules,
-      programSchedules: institutionApproveProgramSchedules,
     }
-  }, [
-    institutionApproveRow,
-    institutionApproveProgramSchedules,
-    institutionApproveSessionRound,
-    requiresGeneralOrganizationApproveSlots,
-  ])
+  }, [institutionApproveRow, institutionApproveSessionRound, requiresGeneralOrganizationApproveSlots])
 
   const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
     id: string
