@@ -6,7 +6,7 @@ import {
   teacherGuidanceContentFromFormState,
 } from './institution-guidance-from-answers'
 import { emptyInstitutionGuidanceAnswers } from '@/features/program/ui/apply-institution-guidance/apply-institution-guidance'
-import { emptyInstitutionSexOffense } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
+import { emptyInstitutionSexOffense } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense-answers.ts'
 
 const guidanceKey = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
 const answers = {
@@ -29,6 +29,25 @@ const patch = buildInstitutionGuidanceAnswerPatch(
   'general',
 )
 assert.ok(patch[guidanceKey])
+assert.ok(
+  patch[PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod],
+)
+
+const noSubmitPatch = buildInstitutionGuidanceAnswerPatch(
+  {
+    guidance: formState.guidance,
+    sexOffense: { ...emptyInstitutionSexOffense(), submissionRequest: 'no_submit' },
+  },
+  'general',
+)
+assert.equal(
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod in noSubmitPatch,
+  false,
+)
+assert.deepEqual(
+  noSubmitPatch[PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest],
+  { submissionRequest: 'no_submit' },
+)
 
 const content = teacherGuidanceContentFromFormState({
   guidance: emptyInstitutionGuidanceAnswers(),

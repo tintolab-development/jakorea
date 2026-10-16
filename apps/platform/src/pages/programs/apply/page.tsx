@@ -4,7 +4,9 @@ import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-s
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import {
   buildApplyFormSeedDraft,
   getProgramIdFromPath,
@@ -73,9 +75,15 @@ import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/li
 import { readApplyScheduleMetaFromProgram } from '@/features/program/lib/apply-form-schedule-meta'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
 import {
+  resolveInstructorPortalAvailableScheduleEnabledForHidden,
   resolveVolunteerPortalActivityScheduleEnabledForHidden,
   resolveVolunteerPortalInterviewEnabledForHidden,
 } from '@/features/program/lib/portal-volunteer-interview-visibility'
+import {
+  OSA_AVAILABLE_SCHEDULE_STALE_MESSAGE,
+  pruneSelectedSlotIdsToCurrentOptions,
+  usesConfirmedOsaAvailableSchedule,
+} from '@/features/program/lib/portal-confirmed-osa-schedule'
 import {
   isApplyScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
@@ -141,6 +149,7 @@ import {
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
   sexOffenseValuesFromDraftAnswers,
+  omitSexOffenseInquiryAnswersIfNotRequested,
   shouldShowSexOffenseInquiry,
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
@@ -512,6 +521,10 @@ export function ProgramApplyPage() {
     () => (institutionDateOnlyPreferred ? { dateOnly: true } : undefined),
     [institutionDateOnlyPreferred],
   )
+  const usesOsaAvailableSchedule = usesConfirmedOsaAvailableSchedule({
+    program,
+    applyCase,
+  })
   const runtimeInstructorScheduleSlots = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -523,17 +536,18 @@ export function ProgramApplyPage() {
     )
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
   }, [applicationFormDocument])
-  const instructorScheduleSlots = useMemo(
-    () =>
+  const instructorScheduleSlots = useMemo(() => {
+    if (usesOsaAvailableSchedule) return runtimeInstructorScheduleSlots ?? []
+    return (
       runtimeInstructorScheduleSlots ??
       (program
         ? buildInstructorApplyScheduleSlots({
             educationScheduleLines: program.educationScheduleLines,
             educationSchedules: program.educationSchedules,
           })
-        : []),
-    [program, runtimeInstructorScheduleSlots],
-  )
+        : [])
+    )
+  }, [program, runtimeInstructorScheduleSlots, usesOsaAvailableSchedule])
   const interviewBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -564,6 +578,22 @@ export function ProgramApplyPage() {
     () => readPortalApplicationBindingOptionSlots(volunteerActivityBindingParagraph),
     [volunteerActivityBindingParagraph],
   )
+  useEffect(() => {
+    const currentIds = instructorScheduleSlots.map(slot => slot.id)
+    setInstructorSchedule(prev => {
+      const nextIds = pruneSelectedSlotIdsToCurrentOptions(prev.selectedSlotIds, currentIds)
+      if (nextIds.length === prev.selectedSlotIds.length) return prev
+      return { selectedSlotIds: nextIds }
+    })
+  }, [instructorScheduleSlots])
+  useEffect(() => {
+    const currentIds = volunteerActivitySlots.map(slot => slot.id)
+    setVolunteerActivitySchedule(prev => {
+      const nextIds = pruneSelectedSlotIdsToCurrentOptions(prev.selectedSlotIds, currentIds)
+      if (nextIds.length === prev.selectedSlotIds.length) return prev
+      return { selectedSlotIds: nextIds }
+    })
+  }, [volunteerActivitySlots])
   const runtimeHiddenAnswerKeys = useMemo(
     () => collectRuntimeHiddenAnswerKeys(remoteForm),
     [remoteForm],
@@ -609,7 +639,7 @@ export function ProgramApplyPage() {
             runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
           })
           const bindingMergedDraft =
-            applyCaseForDraft === 'individual-volunteer'
+            applyCaseForDraft === 'individual-volunteer' || applyCaseForDraft === 'instructor'
               ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
               : programLinkedDraft
           setDraft(
@@ -1303,8 +1333,22 @@ export function ProgramApplyPage() {
                 formBinding: remoteForm,
               })
             : undefined,
+        instructorAvailableScheduleEnabled:
+          applyCase === 'instructor'
+            ? resolveInstructorPortalAvailableScheduleEnabledForHidden({
+                formBinding: remoteForm,
+              })
+            : undefined,
       }),
     )
+    if (usesOsaAvailableSchedule) {
+      if (applyCase === 'instructor' && instructorScheduleSlots.length === 0) {
+        hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
+      }
+      if (applyCase === 'individual-volunteer' && volunteerActivitySlots.length === 0) {
+        hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule)
+      }
+    }
     if (displayDraft) {
       const ujatApplicationType = ujatVolunteerBasicInfo.applicationType
       for (const paragraph of displayDraft.paragraphs) {
@@ -1339,12 +1383,15 @@ export function ProgramApplyPage() {
     applyCase,
     applicationFormDocument,
     displayDraft,
+    instructorScheduleSlots.length,
     program,
     remoteForm,
     runtimeConditionalQuestions,
     runtimeHiddenAnswerKeys,
     sexOffense,
     ujatVolunteerBasicInfo.applicationType,
+    usesOsaAvailableSchedule,
+    volunteerActivitySlots.length,
   ])
 
   const evidenceFilesForSubmit = volunteerEvidenceFiles.filter(
@@ -1518,7 +1565,10 @@ export function ProgramApplyPage() {
         scheduleParagraphCandidate && !hiddenParagraphIds.has(scheduleParagraphCandidate.id)
           ? scheduleParagraphCandidate
           : null
-      if (instructorScheduleParagraph) {
+      if (
+        instructorScheduleParagraph &&
+        !(usesOsaAvailableSchedule && instructorScheduleSlots.length === 0)
+      ) {
         const scheduleError = findIncompleteInstructorAvailableScheduleMessage(
           instructorSchedule,
           instructorScheduleSlots,
@@ -1579,7 +1629,11 @@ export function ProgramApplyPage() {
         !hiddenParagraphIds.has(volunteerActivityBindingParagraph.id)
           ? visibleDraftParagraph(id => id === volunteerActivityBindingParagraph.id)
           : null
-      if (volunteerActivityParagraph && isRequiredParagraph(volunteerActivityParagraph)) {
+      if (
+        volunteerActivityParagraph &&
+        isRequiredParagraph(volunteerActivityParagraph) &&
+        !(usesOsaAvailableSchedule && volunteerActivitySlots.length === 0)
+      ) {
         const activityError = findIncompleteVolunteerActivityScheduleMessage(
           volunteerActivitySchedule,
           volunteerActivitySlots,
@@ -1609,18 +1663,22 @@ export function ProgramApplyPage() {
         }
       }
 
-      // 고정 교육 일정이 서버 응답상 1개뿐이면 선택 UI를 숨기는 정책을
-      // 유지하되, 서버가 필수로 검증하는 일정 답변은 실제 runtime option을
-      // 자동 제출한다. 화면에서 선택할 수 없다는 이유로 canonical API 값이
-      // payload에서 빠지면 단일 회차 기관 신청이 400으로 거절된다.
-      const singleFixedInstitutionSchedule =
+      // 고정 일정이 1개뿐이라 선택 UI를 숨긴 경우에만 runtime option을 자동 제출한다.
+      // 선택지가 2개 이상이면 사용자 체크 값을 그대로 보내고, 첫 항목으로 덮지 않는다.
+      const fixedInstitutionScheduleChoices =
         applyCase === 'institution-general' &&
         institutionScheduleInputMode === 'fixed_schedule_options'
           ? readInstitutionFixedScheduleChoiceItems(
               applicationFormDocument?.runtimeContext,
               institutionScheduleParagraph,
               { educationScheduleLines: educationScheduleLinesForApply },
-            )?.[0]
+            )
+          : null
+      const singleFixedInstitutionSchedule =
+        fixedInstitutionScheduleChoices?.length === 1 &&
+        institutionScheduleParagraph != null &&
+        hiddenParagraphIds.has(institutionScheduleParagraph.id)
+          ? fixedInstitutionScheduleChoices[0]
           : undefined
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
@@ -1638,7 +1696,8 @@ export function ProgramApplyPage() {
         applyCase === 'institution-general' &&
         !showGeneralPreferredSchedule &&
         institutionScheduleParagraph &&
-        institutionScheduleInputMode === 'fixed_schedule_options'
+        institutionScheduleInputMode === 'fixed_schedule_options' &&
+        singleFixedInstitutionSchedule == null
       ) {
         const scheduleParagraph = displayDraft.paragraphs.find(
           paragraph =>
@@ -1685,9 +1744,9 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
           instructorCrimeRecordAnswerFromValues(instructorCrimeRecord)
       }
-      if (instructorScheduleParagraph) {
+      if (instructorScheduleParagraph && instructorScheduleSlots.length > 0) {
         overrides[resolveApplicationAnswerKey(instructorScheduleParagraph)] =
-          runtimeInstructorScheduleSlots != null
+          runtimeInstructorScheduleSlots != null || usesOsaAvailableSchedule
             ? instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
             : instructorAvailableScheduleAnswerFromValues(
                 instructorSchedule,
@@ -1711,7 +1770,7 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(volunteerFreeTextParagraph)] =
           volunteerFreeTextItemsAnswerFromValues(volunteerFreeText)
       }
-      if (volunteerActivityParagraph) {
+      if (volunteerActivityParagraph && volunteerActivitySlots.length > 0) {
         overrides[resolveApplicationAnswerKey(volunteerActivityParagraph)] =
           instructorAvailableScheduleOptionValues(volunteerActivitySchedule, volunteerActivitySlots)
       }
@@ -1769,15 +1828,25 @@ export function ProgramApplyPage() {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
         }
+        if (
+          hiddenParagraphIds.has(paragraph.id) &&
+          (isInstructorAvailableScheduleParagraphId(paragraph.id) ||
+            isVolunteerActivityScheduleParagraphId(paragraph.id))
+        ) {
+          omitParagraphIds.add(paragraph.id)
+          omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
+        }
       }
 
-      const answers = omitRuntimeHiddenAnswers(
-        buildApplicationAnswersFromDraft(displayDraft, {
-          overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
-          omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
-        }),
-        runtimeHiddenAnswerKeys,
-        runtimeConditionalQuestions,
+      const answers = omitSexOffenseInquiryAnswersIfNotRequested(
+        omitRuntimeHiddenAnswers(
+          buildApplicationAnswersFromDraft(displayDraft, {
+            overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+            omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
+          }),
+          runtimeHiddenAnswerKeys,
+          runtimeConditionalQuestions,
+        ),
       )
 
       const classCount = Number.parseInt(basicInfo.classCount, 10)
@@ -1820,6 +1889,7 @@ export function ProgramApplyPage() {
         const validationFailed = errorCode === 'VALIDATION_FAILED'
         const resolveDescription = (interviewVisible: boolean) => {
           if (validationFailed) return PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE
+          if (usesOsaAvailableSchedule) return OSA_AVAILABLE_SCHEDULE_STALE_MESSAGE
           if (interviewVisible) {
             return `${message} 면접 진행 가능 일정이 바뀌었을 수 있어 신청서를 새로 불러왔습니다. 일정을 다시 확인한 뒤 신청해 주세요.`
           }
@@ -1832,8 +1902,19 @@ export function ProgramApplyPage() {
           })
           return
         }
-        // 런타임 선택지(면접 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
+        // 런타임 선택지(면접·OSA 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
         if (!promptSettingsGrade && !validationFailed) {
+          const option = applicationFormQuery.bundle?.option
+          if (numericProgramId != null && option?.formBindingId != null && option.recruitmentId != null) {
+            void queryClient.invalidateQueries({
+              queryKey: platformQueryKeys.program.applicationForm({
+                programId: String(numericProgramId),
+                bindingId: option.formBindingId,
+                recruitmentId: option.recruitmentId,
+                applicationType: String(option.applicationType ?? ''),
+              }),
+            })
+          }
           applicationFormQuery.refetch()
         }
         const interviewVisible =
@@ -1857,16 +1938,6 @@ export function ProgramApplyPage() {
     setCompleteModalOpen(true)
   }
 
-  const visibleInstructorScheduleParagraph = displayDraft
-    ? findDraftParagraph(
-        displayDraft,
-        id => isInstructorAvailableScheduleParagraphId(id) && !hiddenParagraphIds.has(id),
-      )
-    : null
-  const instructorScheduleUnavailable =
-    visibleInstructorScheduleParagraph != null &&
-    runtimeInstructorScheduleSlots != null &&
-    runtimeInstructorScheduleSlots.length === 0
   const visibleInstructorCrimeParagraph = displayDraft
     ? findDraftParagraph(
         displayDraft,
@@ -1926,12 +1997,6 @@ export function ProgramApplyPage() {
             </FormTemplateHost>
           ) : null}
 
-          {instructorScheduleUnavailable ? (
-            <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
-              선택 가능한 강의 일정이 없어 신청할 수 없습니다. 관리자에게 문의해 주세요.
-            </PFText>
-          ) : null}
-
           <div className={styles.actions}>
             <PFButton
               size="xlarge"
@@ -1940,7 +2005,6 @@ export function ProgramApplyPage() {
               disabled={
                 submitMutation.isPending ||
                 !displayDraft ||
-                instructorScheduleUnavailable ||
                 instructorCrimeRecordUnconfirmed ||
                 Boolean(blockedMessage && remoteApplyEnabled)
               }

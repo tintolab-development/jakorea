@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict'
 import { createProgramParticipantApplicationDraft } from '../../dist/paragraph-ids/program-application-form-individual-draft.js'
 import {
+  countUniqueEducationScheduleCalendarDays,
+  expandEducationScheduleChoiceSlots,
   getInstitutionApplicationFormHiddenParagraphIds,
   readInstitutionFixedScheduleChoiceItems,
+  resolveFixedScheduleLinesToChoiceItems,
   shouldShowApplicationScheduleParagraph,
   shouldShowApplicationScheduleParagraphResolved,
   syncApplicationScheduleChoiceParagraphsInDraft,
@@ -99,6 +102,13 @@ assert.equal(
 )
 
 assert.equal(
+  countUniqueEducationScheduleCalendarDays([
+    '26년 4월 20일(월) 09:30 ~ 12:20',
+    '26년 4월 20일(월) 13:00 ~ 15:50',
+  ]),
+  1
+)
+assert.equal(
   shouldShowApplicationScheduleParagraph({
     educationStructure: 'curriculum',
     sessionRound: 'single',
@@ -108,7 +118,52 @@ assert.equal(
       '26년 4월 20일(월) 13:00 ~ 15:50',
     ],
   }),
+  true
+)
+assert.equal(
+  shouldShowApplicationScheduleParagraph({
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+  }),
   false
+)
+const pipedSameDaySlots = [
+  '26년 10월 30일(금) 13:30 ~ 15:30 | 26년 10월 30일(금) 09:30 ~ 11:30',
+]
+assert.deepEqual(expandEducationScheduleChoiceSlots(pipedSameDaySlots), [
+  '26년 10월 30일(금) 13:30 ~ 15:30',
+  '26년 10월 30일(금) 09:30 ~ 11:30',
+])
+assert.deepEqual(
+  expandEducationScheduleChoiceSlots(['26년 4월 20일(월) 9:30 ~ 12:20 | 1회차']),
+  ['26년 4월 20일(월) 9:30 ~ 12:20 | 1회차']
+)
+assert.equal(
+  shouldShowApplicationScheduleParagraph({
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: pipedSameDaySlots,
+  }),
+  true
+)
+assert.deepEqual(
+  resolveFixedScheduleLinesToChoiceItems(
+    {
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleLines: pipedSameDaySlots,
+    },
+    pipedSameDaySlots,
+    {}
+  ),
+  [
+    { id: 'line:0', label: '26년 10월 30일(금) 13:30 ~ 15:30' },
+    { id: 'line:1', label: '26년 10월 30일(금) 09:30 ~ 11:30' },
+  ]
 )
 
 const multiMatrixPatched = syncApplicationScheduleChoiceParagraphsInDraft(institutionDraft, {
@@ -183,22 +238,26 @@ assert.equal(
   }),
   true
 )
-const scheduleOneDayHidden = syncApplicationScheduleChoiceParagraphsInDraft(institutionDraft, {
-  educationStructure: 'schedule',
-  sessionRound: 'single',
-  educationScheduleMode: 'date',
-  educationScheduleLines: [
-    '26년 4월 20일(월) 09:30 ~ 12:20',
-    '26년 4월 20일(월) 13:00 ~ 15:50',
-  ],
-  scheduleParagraphRaw: scheduleParagraph,
-})
-assert.equal(
-  scheduleOneDayHidden.paragraphs.some(
-    p => p.id === 'program-application-institution-seed-schedule'
-  ),
-  false
+const scheduleSameDayTwoSlots = syncApplicationScheduleChoiceParagraphsInDraft(
+  institutionDraft,
+  {
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 4월 20일(월) 09:30 ~ 12:20',
+      '26년 4월 20일(월) 13:00 ~ 15:50',
+    ],
+    scheduleParagraphRaw: scheduleParagraph,
+  }
 )
+const scheduleSameDayParagraph = scheduleSameDayTwoSlots.paragraphs.find(
+  p => p.id === 'program-application-institution-seed-schedule'
+)
+assert.ok(
+  scheduleSameDayParagraph && scheduleSameDayParagraph.variant === 'multiple_choice'
+)
+assert.equal((scheduleSameDayParagraph as MultipleChoiceParagraph).items.length, 2)
 assert.equal(
   shouldShowApplicationScheduleParagraph({
     educationStructure: 'schedule',
@@ -209,6 +268,22 @@ assert.equal(
       '26년 4월 20일(월) 13:00 ~ 15:50',
     ],
   }),
+  true
+)
+const scheduleOneSlotHidden = syncApplicationScheduleChoiceParagraphsInDraft(
+  institutionDraft,
+  {
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+    scheduleParagraphRaw: scheduleParagraph,
+  }
+)
+assert.equal(
+  scheduleOneSlotHidden.paragraphs.some(
+    p => p.id === 'program-application-institution-seed-schedule'
+  ),
   false
 )
 

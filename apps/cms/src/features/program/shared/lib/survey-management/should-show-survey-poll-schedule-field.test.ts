@@ -13,14 +13,14 @@ describe('shouldShowSurveyPollScheduleSelectField', () => {
     expect(shouldShowSurveyPollScheduleSelectField(undefined)).toBe(true)
   })
 
-  it('returns false for single calendar day (same as hidden application schedule paragraph)', () => {
+  it('returns true for same-day two slots (same as application schedule paragraph)', () => {
     expect(
       shouldShowSurveyPollScheduleSelectField({
         id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID,
         generalProgramEducationStructure: 'schedule',
         generalProgramSessionRound: 'single',
       } as Program)
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('returns true for date mode with multiple unique calendar days', () => {

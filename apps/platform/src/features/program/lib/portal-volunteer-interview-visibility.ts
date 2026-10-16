@@ -3,6 +3,7 @@
  * 프로그램 상세 `interviewEnabled`만으로 숨기면 모집·바인딩과 어긋날 수 있다.
  */
 
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { shouldIncludeInterviewStages } from './detail-case.ts'
 import {
@@ -12,6 +13,7 @@ import {
 } from './application-form-draft.ts'
 import {
   isDynamicVolunteerInterviewParagraph,
+  isInstructorAvailableScheduleParagraphId,
   isVolunteerInterviewScheduleParagraphId,
 } from './apply-form-paragraph-ids.ts'
 
@@ -118,4 +120,20 @@ export function resolveVolunteerPortalActivityScheduleEnabledForHidden(input: {
   if (optionCount === 0) return false
   if (optionCount != null && optionCount > 0) return true
   return undefined
+}
+
+/** 강사 강의 진행 가능 일정 — OSA optionCount 0 / hiddenQuestionKeys 이면 숨김 */
+export function resolveInstructorPortalAvailableScheduleEnabledForHidden(input: {
+  formBinding?: unknown
+  runtimeContext?: unknown
+}): boolean | undefined {
+  const scheduleId = PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
+  return resolveVolunteerDynamicQuestionEnabledForHidden(
+    input,
+    scheduleId,
+    paragraph =>
+      isInstructorAvailableScheduleParagraphId(
+        String((paragraph as { id?: string }).id ?? ''),
+      ),
+  )
 }

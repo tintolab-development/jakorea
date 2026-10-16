@@ -5,11 +5,18 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SlotRequest } from './slotRequest';
 
 /**
- * 기관 신청 승인 알림 시점. body를 생략하면 즉시 발송합니다.
+ * GENERAL 기관 신청 승인 요청. 승인 시 slots로 교육 일정·학급을 함께 확정합니다. body를 생략하면 기존 비일반 프로그램 승인만 허용됩니다.
  */
 export interface OrganizationApplicationApproveRequest {
+  /**
+     * GENERAL 기관 승인 시 확정할 교육 일정·학급. GENERAL_ORGANIZATION에서는 필수이며 OSA PUT과 동일한 구조입니다.
+     * @minItems 0
+     * @maxItems 500
+     */
+  slots?: SlotRequest[];
   /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */

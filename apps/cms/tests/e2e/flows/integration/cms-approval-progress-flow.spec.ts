@@ -449,12 +449,21 @@ async function createElapsedInterviewSlot(page: Page, programId: number): Promis
   return asPositiveNumber(body.id ?? body.interviewSlotId, 'interviewSlotId')
 }
 
-async function approveOrganization(page: Page, applicationId: number) {
+async function approveOrganization(
+  page: Page,
+  applicationId: number,
+  scheduleId: number,
+  grade = '1학년',
+  className = '1반'
+) {
   const payload = await adminRequest(
     page,
     `/api/admin/organization-applications/${applicationId}/approve`,
     'POST',
-    { timing: 'IMMEDIATE' }
+    {
+      timing: 'IMMEDIATE',
+      slots: [{ scheduleId, grade, className }],
+    }
   )
   expect(applicationStatus(asRecord(unwrap(payload)))).toBe('APPROVED')
 }
@@ -757,13 +766,12 @@ test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 
     const { program, schedules, organization, instructor, volunteer } = fixture.approval
     const educationScheduleId = selectEducationScheduleId(schedules)
 
-    await approveOrganization(page, organization.applicationId)
+    await approveOrganization(page, organization.applicationId, educationScheduleId)
     const organizationDetail = await fetchDetail(
       page,
       `/api/admin/organization-applications/${organization.applicationId}`
     )
     expect(applicationStatus(organizationDetail)).toBe('APPROVED')
-    await assignOrganizationSchedule(page, program.programId, organization.applicationId, educationScheduleId)
 
     await approveInstructor(
       page,

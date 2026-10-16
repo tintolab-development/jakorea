@@ -128,7 +128,7 @@ assert.equal(
   individualSchedule.paragraphDescription,
   '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
-const individualOneDay = applyProgramLinkedApplicationDraftPatches(
+const individualSameDayTwoSlots = applyProgramLinkedApplicationDraftPatches(
   createProgramParticipantApplicationDraft(),
   {
     applyCase: 'individual-general',
@@ -141,8 +141,27 @@ const individualOneDay = applyProgramLinkedApplicationDraftPatches(
     } as unknown as import('../model/types.ts').ProgramDetail,
   }
 )
+const individualSameDayParagraph = individualSameDayTwoSlots.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.ok(
+  individualSameDayParagraph &&
+    individualSameDayParagraph.kind === 'single_item' &&
+    individualSameDayParagraph.variant === 'multiple_choice'
+)
+assert.equal(individualSameDayParagraph.items.length, 2)
+const individualOneSlot = applyProgramLinkedApplicationDraftPatches(
+  createProgramParticipantApplicationDraft(),
+  {
+    applyCase: 'individual-general',
+    program: {
+      ...program,
+      educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+    } as unknown as import('../model/types.ts').ProgramDetail,
+  }
+)
 assert.equal(
-  individualOneDay.paragraphs.some(p => p.id === 'program-participant-application-seed-schedule'),
+  individualOneSlot.paragraphs.some(p => p.id === 'program-participant-application-seed-schedule'),
   false
 )
 

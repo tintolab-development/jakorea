@@ -69,6 +69,15 @@ function testScheduleParagraphVisibility() {
         '26년 4월 20일(월) 13:00 ~ 15:50',
       ],
     }),
+    true
+  )
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+    }),
     false
   )
 
@@ -178,7 +187,23 @@ function testScheduleParagraphVisibility() {
         '26년 4월 20일(월) 13:00 ~ 15:50',
       ],
     }),
+    true
+  )
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      ...scheduleSingleDateTwoDays,
+      educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+    }),
     false
+  )
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      ...scheduleSingleDateTwoDays,
+      educationScheduleLines: [
+        '26년 10월 30일(금) 13:30 ~ 15:30 | 26년 10월 30일(금) 09:30 ~ 11:30',
+      ],
+    }),
+    true
   )
 
   const individualScheduleTwoDays = {

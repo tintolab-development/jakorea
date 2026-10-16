@@ -423,6 +423,27 @@ describe('approveOrganizationApplicationRemote', () => {
     })
   })
 
+  it('GENERAL 승인은 slots와 알림 timing을 함께 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
+
+    await approveOrganizationApplicationRemote('101', {
+      timing: 'IMMEDIATE',
+      slots: [{ scheduleId: 88001, grade: '3학년', className: '1반' }],
+    })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/101/approve',
+      method: 'POST',
+      data: {
+        timing: 'IMMEDIATE',
+        slots: [{ scheduleId: 88001, grade: '3학년', className: '1반' }],
+      },
+    })
+  })
+
   it('직접설정은 SCHEDULED + scheduledAt만 보낸다', async () => {
     vi.mocked(customInstance).mockResolvedValue({
       applicationId: 101,

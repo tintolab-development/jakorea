@@ -222,4 +222,32 @@ describe('curriculum multi date fixed schedule matrix', () => {
       { id: 'line:1', label: lines[1] },
     ])
   })
+
+  it('파이프로 이은 날짜 일정은 슬롯 두 개로 나눈다', () => {
+    const lines = ['26년 10월 30일(금) 13:30 ~ 15:30 | 26년 10월 30일(금) 09:30 ~ 11:30']
+    const items = resolveFixedScheduleLinesToChoiceItems(
+      {
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: lines,
+      },
+      lines,
+      {}
+    )
+    expect(items).toEqual([
+      { id: 'line:0', label: '26년 10월 30일(금) 13:30 ~ 15:30' },
+      { id: 'line:1', label: '26년 10월 30일(금) 09:30 ~ 11:30' },
+    ])
+  })
+
+  it('회차 접미사는 별도 슬롯으로 나누지 않는다', () => {
+    const lines = ['26년 4월 20일(월) 9:30 ~ 12:20 | 1회차']
+    const items = resolveFixedScheduleLinesToChoiceItems(
+      { ...MATRIX_VISIBILITY, sessionRound: 'single' },
+      lines,
+      { educationRoundCount: 2 }
+    )
+    expect(items).toEqual([{ id: 'line:0', label: lines[0] }])
+  })
 })
