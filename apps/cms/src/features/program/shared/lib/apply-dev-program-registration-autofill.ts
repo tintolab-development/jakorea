@@ -82,6 +82,10 @@ import {
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
+  resolveUjatDefaultPaymentItemValues,
+  UJAT_WAGE_OVERLAY_PAYMENT_KEY,
+} from '@/features/program/ujat/lib/ujat-wage-info-display'
+import {
   ujatVolunteerHalfOverlayKey,
   ujatVolunteerRecruitDetailInfoPrefix,
   ujatVolunteerRecruitInterviewNamespace,
@@ -418,6 +422,10 @@ function recruitDetailPatch(
   }
   const patch: Record<string, unknown> = {
     [`${prefix}.thumbFileName`]: null,
+    // DEV 자동입력은 실제 파일을 업로드하지 않으므로 이전 실행의 첨부
+    // 메타데이터가 남아 입력 누락처럼 보이지 않도록 빈 상태를 명시한다.
+    [`${prefix}.attachmentFileNames`]: [],
+    [`${prefix}.attachmentFileObjectIds`]: [],
     [`${prefix}.additionalContentHtml`]:
       copyOverride?.additionalContentHtml ??
       `<p>${titleKo} 참여를 희망하는 학교와 강사는 모집 기간 안에 신청해 주세요.</p>`,
@@ -622,8 +630,12 @@ function buildUjatRecruitInfoOverlay(
     [institutionKeys.notes]: pick(RECRUIT_NOTES),
     [institutionKeys.description]: `${titleKo}는 학교 현장에서 경제·금융 기초를 익히는 참여형 교육입니다.`,
     [institutionKeys.recruitmentGuide]: '신청서 제출 후 담당자 확인을 거쳐 참여 학교를 확정합니다.',
+    [institutionKeys.applicationMethod]: '온라인 신청서 작성 후 제출해 주세요. 추가 서류는 담당자가 안내합니다.',
     [institutionKeys.learningSupportContent]:
       '교재와 활동지를 제공하고, 수업 전 강사 사전 연수를 진행합니다.',
+    [institutionKeys.additionalContentHtml]:
+      `<p>${titleKo} 참여를 희망하는 학교는 모집 기간 안에 신청해 주세요.</p>`,
+    [institutionKeys.attachmentFileNames]: [],
     ...buildUjatVolunteerHalfRecruitOverlay('h1', titleKo, {
       programSeal,
       recruitSeal,
@@ -688,6 +700,9 @@ function buildUjatVolunteerHalfRecruitOverlay(
     [ujatVolunteerHalfOverlayKey(half, 'description')]: `${titleKo} ${halfLabel} 봉사단과 함께 학교 교육을 진행합니다.`,
     [ujatVolunteerHalfOverlayKey(half, 'recruitmentGuide')]: `${halfLabel} 서류 심사 후 면접을 진행합니다.`,
     [ujatVolunteerHalfOverlayKey(half, 'applicationMethod')]: `${halfLabel} 온라인 신청서 작성 후 제출해 주세요.`,
+    [ujatVolunteerHalfOverlayKey(half, 'additionalContentHtml')]:
+      `<p>${titleKo} ${halfLabel} 모집 관련 안내입니다.</p>`,
+    [ujatVolunteerHalfOverlayKey(half, 'attachmentFileNames')]: [],
   }
 }
 
@@ -1460,6 +1475,9 @@ function buildUjatOverlay(
     // id만 넣고 name을 비워두면 실제 저장되는 세부 프로그램명이 어긋날 수 있다 — 항상 짝지어 넣는다.
     'ujat.basicInfo.detailedProgramName': UJAT_DETAILED_PROGRAM_UJAT_LABEL,
     'ujat.basicInfo.operationRangeSeal': { ...sample.operationRange },
+    // 기간형 date picker가 표시할 기준일도 함께 기록한다. range만
+    // 채우면 내부 anchor가 비어 있어 화면상 미입력으로 남을 수 있다.
+    'ujat.basicInfo.operationAnchorIso': sample.operationRange.start,
     'ujat.basicInfo.businessField': sample.businessField,
     'ujat.basicInfo.educationCourse': sample.educationCourse,
     'ujat.basicInfo.ipOwned': sample.ipOwned,
@@ -1469,13 +1487,16 @@ function buildUjatOverlay(
     'ujat.basicInfo.sponsorId': sponsorId,
     'ujat.basicInfo.sponsorContactId': contactId,
     'ujat.basicInfo.sponsorContactIds': contactId ? [contactId] : [],
+    'ujat.basicInfo.participant.individual': false,
     'ujat.basicInfo.participant.organization': true,
+    'ujat.basicInfo.participant.teacher': false,
     'ujat.basicInfo.participant.volunteer': true,
     'ujat.basicInfo.surveyItems': { ...sample.survey },
     'ujat.kpi.participantCount': sample.kpi.participant,
     'ujat.kpi.volunteer': sample.kpi.volunteer,
     'ujat.kpi.dispatchedSchool': sample.kpi.school,
     'ujat.kpi.dispatchedClass': sample.kpi.classCount,
+    [UJAT_WAGE_OVERLAY_PAYMENT_KEY]: resolveUjatDefaultPaymentItemValues(),
     [UJAT_REGION_CAPACITY_OVERLAY_KEY]: buildUjatRegionCapacity(),
     ...buildUjatHalfSchedule('h1', sample, getUjatProgramRegistrationOverlayRecord()),
     ...buildUjatHalfSchedule('h2', sample, getUjatProgramRegistrationOverlayRecord()),
@@ -1710,6 +1731,12 @@ export async function applyDevProgramRegistrationAutofill(
       ujatInstitution: pickUjatRecruitInstitutionOverlay(ujatOverlay),
       ujatVolunteer: pickUjatRecruitVolunteerOverlay(ujatOverlay),
       general: {
+        ...recruitDetailPatch('ujatRecruit.detailInfo', [
+          'programDescription',
+          'recruitmentGuide',
+          'applicationMethod',
+          'learningSupportContent',
+        ], sample.titleKo),
         ...(['h1', 'h2'] as const).reduce((acc, half) => {
           const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
           const detailPrefix = ujatVolunteerRecruitDetailInfoPrefix(half)
