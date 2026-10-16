@@ -79,6 +79,7 @@ import {
 import { mapLectureAssignItemsToApprovalAssignments } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import {
   toFlatDecisionNotifyTiming,
+  toOrganizationApproveNotifyTiming,
   toNestedDecisionNotification,
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
@@ -101,6 +102,11 @@ import {
   type InstitutionApproveConfirmPayload,
 } from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
 import { hydrateOrganizationApplicationSchedules } from '@/features/program/general/api/admin-applications-service'
+import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
+import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
@@ -278,6 +284,9 @@ export function ApplicantList({
   )
   const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
   const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
+  const [institutionApproveProgramSchedules, setInstitutionApproveProgramSchedules] = useState<
+    ProgramScheduleResponse[]
+  >([])
   const requiresGeneralOrganizationApproveSlots = isGeneralOrganizationProgram(program)
   const institutionApproveSessionRound: 'single' | 'multi' =
     program?.generalProgramSessionRound === 'multi' ? 'multi' : 'single'
@@ -285,6 +294,7 @@ export function ApplicantList({
   useEffect(() => {
     if (!institutionApproveTarget || !requiresGeneralOrganizationApproveSlots) {
       setInstitutionApproveRow(null)
+      setInstitutionApproveProgramSchedules([])
       setInstitutionApproveHydrating(false)
       return
     }
@@ -297,28 +307,43 @@ export function ApplicantList({
         : null)
     if (!sourceRow) {
       setInstitutionApproveRow(null)
+      setInstitutionApproveProgramSchedules([])
+      setInstitutionApproveHydrating(false)
       return
     }
     let cancelled = false
     setInstitutionApproveHydrating(true)
     void (async () => {
-      const [hydrated] = await hydrateOrganizationApplicationSchedules(
-        [sourceRow],
-        queryClient,
-        { applicationIds: [sourceRow.id] }
-      )
-      if (cancelled) return
-      setInstitutionApproveRow(hydrated)
-      setInstitutionApproveHydrating(false)
-      setInstitutionList(prev =>
-        prev.map(row => (row.id === hydrated.id ? hydrated : row))
-      )
-      if (
-        selectedItem &&
-        'schoolName' in selectedItem &&
-        selectedItem.id === hydrated.id
-      ) {
-        setSelectedItem(hydrated)
+      try {
+        // 승인 모달은 목록 스냅샷이 아니라 기관 신청 상세 응답을 정본으로 사용한다.
+        const [detail, programSchedules] = await Promise.all([
+          queryClient.fetchQuery({
+            queryKey: generalApplicationsQueryKeys.organizationDetail(sourceRow.id),
+            queryFn: () => fetchOrganizationApplicationDetailRemote(sourceRow.id),
+            staleTime: 0,
+          }),
+          programId ? fetchAdminProgramSchedulesRemote(programId) : Promise.resolve([]),
+        ])
+        const canonicalRow = mapOrganizationApplicationDetailToApplicantSchoolRow(detail, sourceRow)
+        const [hydrated] = await hydrateOrganizationApplicationSchedules(
+          [canonicalRow],
+          queryClient,
+          { applicationIds: [canonicalRow.id] }
+        )
+        if (cancelled) return
+        setInstitutionApproveRow(hydrated)
+        setInstitutionApproveProgramSchedules(programSchedules)
+        setInstitutionList(prev => prev.map(row => (row.id === hydrated.id ? hydrated : row)))
+        if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === hydrated.id) {
+          setSelectedItem(hydrated)
+        }
+      } catch {
+        if (cancelled) return
+        // 불완전한 일정 정보를 캐시나 목록 값으로 대체하지 않고 승인 불가 상태로 유지한다.
+        setInstitutionApproveRow(null)
+        setInstitutionApproveProgramSchedules([])
+      } finally {
+        if (!cancelled) setInstitutionApproveHydrating(false)
       }
     })()
     return () => {
@@ -328,6 +353,7 @@ export function ApplicantList({
     institutionApproveTarget?.id,
     institutionList,
     queryClient,
+    programId,
     requiresGeneralOrganizationApproveSlots,
     selectedItem,
     setInstitutionList,
@@ -341,9 +367,11 @@ export function ApplicantList({
       educationGrade: institutionApproveRow.educationGrade,
       classCount: institutionApproveRow.classCount,
       preferredEducationSchedules: institutionApproveRow.preferredEducationSchedules,
+      programSchedules: institutionApproveProgramSchedules,
     }
   }, [
     institutionApproveRow,
+    institutionApproveProgramSchedules,
     institutionApproveSessionRound,
     requiresGeneralOrganizationApproveSlots,
   ])
@@ -1142,6 +1170,8 @@ export function ApplicantList({
         scheduleConfig={
           requiresGeneralOrganizationApproveSlots ? institutionApproveScheduleConfig : null
         }
+        programId={programId}
+        organizationApplicationId={institutionApproveTarget?.id}
         confirmLoading={institutionApproveHydrating || institutionApproveSubmitting}
         onCancel={() => {
           setInstitutionApproveTarget(null)
@@ -1150,16 +1180,23 @@ export function ApplicantList({
         onConfirm={(payload: InstitutionApproveConfirmPayload) => {
           if (!institutionApproveTarget) return
           const { id } = institutionApproveTarget
+          if (requiresGeneralOrganizationApproveSlots && !payload.slots?.length) {
+            return
+          }
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
-          const notify = toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+          const notify = toOrganizationApproveNotifyTiming(
+            payload.notifyTiming,
+            payload.manualNotifyAt
+          )
           const run = async () => {
             setInstitutionApproveSubmitting(true)
             try {
-              const approvePayload =
-                payload.slots?.length ? { ...notify, slots: payload.slots } : undefined
+              const approvePayload = payload.slots?.length
+                ? { ...notify, slots: payload.slots }
+                : undefined
               const remote = await applyRemoteInstitutionDecision(
                 [id],
                 'approve',

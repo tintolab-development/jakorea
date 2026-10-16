@@ -103,6 +103,8 @@ export type PermissionModalProps = {
   confirmVariant?: 'delete' | 'primary'
   /** API 요청 중 확인 버튼 중복 클릭 방지 */
   confirmLoading?: boolean
+  /** 상위 모달의 도메인 필수 조건이 충족되기 전 확인 버튼 비활성화 */
+  confirmDisabled?: boolean
   width?: number
   requireReason?: boolean
   reasonLabel?: string
@@ -159,6 +161,7 @@ export function PermissionModal({
   confirmLabel: confirmLabelProp,
   confirmVariant: confirmVariantProp,
   confirmLoading = false,
+  confirmDisabled = false,
   width = 600,
   requireReason: requireReasonProp,
   reasonLabel: reasonLabelProp,
@@ -260,7 +263,7 @@ export function PermissionModal({
               size="medium"
               type="button"
               loading={confirmLoading}
-              disabled={confirmLoading}
+              disabled={confirmLoading || confirmDisabled}
               onClick={handleConfirm}
             >
               {confirmLabel}

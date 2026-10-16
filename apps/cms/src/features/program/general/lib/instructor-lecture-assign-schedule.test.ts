@@ -85,6 +85,39 @@ describe('instructor-lecture-assign-schedule', () => {
     expect(slots[0]?.disabled).toBe(false)
   })
 
+  it('시간이 누락된 기관 일정도 승인 모달용 슬롯으로 안전하게 변환한다', () => {
+    const institution = {
+      id: '1691405',
+      no: 1,
+      schoolName: '서울 미래초',
+      region: '서울',
+      educationGrade: '초1',
+      classCount: 1,
+      studentCount: 20,
+      teacherName: '김교사',
+      approvalStatus: 'approved',
+      programId: '186234',
+      sessions: [
+        {
+          round: 1,
+          date: '2026. 10. 20',
+          dayOfWeek: '화',
+          duration: '1차시',
+          format: '단독',
+          classNum: '1교시',
+          timeRange: undefined,
+        },
+      ],
+    } as unknown as ApplicantSchoolRow
+
+    const slots =
+      parseInstructorLectureAssignScheduleFromInstitutions([institution]).slotsByDateKey.get(
+        '2026-10-20'
+      ) ?? []
+
+    expect(slots[0]?.timeRange).toBe('종일')
+  })
+
   it('배정 항목 삭제 시 해당 날짜 기관 잠금이 해제된다', () => {
     const assigned: InstructorLectureAssignItem[] = [toLectureAssignItem(gangseoSlot)]
     const cleared: InstructorLectureAssignItem[] = []

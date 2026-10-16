@@ -115,8 +115,10 @@ function parseSessionDateKey(dateRaw: string): string | null {
   return `${y}-${m}-${d}`
 }
 
-function normalizeTimeRange(timeRange: string): string {
-  const normalized = timeRange.replace(/\s*~\s*/g, ' ~ ').trim()
+function normalizeTimeRange(timeRange: string | null | undefined): string {
+  const normalized = (timeRange ?? '').replace(/\s*~\s*/g, ' ~ ').trim()
+  if (!normalized) return '종일'
+
   const parts = normalized.split('~').map(part => {
     const p = part.trim()
     const m = p.match(/^(\d{1,2}):(\d{2})$/)
