@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import {
   resolveInstitutionFixedScheduleDescription,
   resolveInstitutionPreferredScheduleDescription,
@@ -7,6 +9,7 @@ import {
   resolveInstitutionPreferredScheduleMaxBlocks,
   shouldUseInstitutionFixedScheduleCardCopy,
   shouldUseInstitutionPreferredScheduleCardCopy,
+  shouldUseProgramApplicationScheduleTemplateAuthoringMode,
 } from './institution-application-schedule-copy'
 
 const CURRICULUM_MULTI_PERIOD: InstitutionApplicationProgramBridge = {
@@ -44,6 +47,35 @@ const SCHEDULE_SINGLE_DATE: InstitutionApplicationProgramBridge = {
   educationScheduleMode: 'date',
   educationScheduleLines: SCHEDULE_SINGLE_DATE_LINES,
 }
+
+describe('program application schedule template authoring mode', () => {
+  it('등록 위저드 program-linked 미리보기에서는 authoring도 연동 본문을 쓴다', () => {
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+        'authoring',
+        { programLinkedInstitutionApplicationForm: true }
+      )
+    ).toBe(false)
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
+        'authoring',
+        { programLinkedIndividualApplicationForm: true }
+      )
+    ).toBe(false)
+  })
+
+  it('템플릿 관리 authoring은 기본 힌트를 쓴다', () => {
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+        'authoring',
+        {}
+      )
+    ).toBe(true)
+  })
+})
 
 describe('institution preferred schedule card copy', () => {
   it('커리큘럼형 + 복수 회차 + 기간 지정은 시안 설명과 기본 2지망을 쓴다', () => {
@@ -122,6 +154,25 @@ describe('institution preferred schedule card copy', () => {
       })
     ).toBe('2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.')
     expect(resolveInstitutionPreferredScheduleInitialBlockCount(bridge)).toBe(1)
+  })
+
+  it('커리큘럼 + 복수 + 날짜 지정 — N차시*N회 설명(1회차 차시 기준)', () => {
+    const bridge: InstitutionApplicationProgramBridge = {
+      preEducationNoticeRequired: true,
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 4월 20일(월) 9:30 ~ 12:20',
+        '26년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+      educationRoundCount: 2,
+      sessionsPerRound: 2,
+    }
+    expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
+    expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
+      '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+    )
   })
 
   it('일정형 + 단일 + 날짜 지정 — 고정 일정 1타임 설명·희망 카드 아님', () => {

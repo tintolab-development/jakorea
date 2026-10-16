@@ -238,4 +238,58 @@ assert.equal(
   '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
 
+const individualScheduleSingleDatePatched = syncApplicationScheduleChoiceParagraphsInDraft(
+  createProgramParticipantApplicationDraft(),
+  {
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 4월 20일(월) 09:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualScheduleTypeParagraph = individualScheduleSingleDatePatched.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.ok(individualScheduleTypeParagraph && individualScheduleTypeParagraph.variant === 'multiple_choice')
+assert.equal((individualScheduleTypeParagraph as MultipleChoiceParagraph).items.length, 2)
+assert.ok(
+  !(individualScheduleTypeParagraph as MultipleChoiceParagraph).items.some(item =>
+    item.label.includes('|')
+  )
+)
+assert.equal(
+  individualScheduleTypeParagraph.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+)
+
+const individualMultiDraft = createProgramParticipantApplicationDraft()
+const individualMultiPatched = syncApplicationScheduleChoiceParagraphsInDraft(
+  individualMultiDraft,
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+    educationRoundCount: 2,
+    sessionsPerRound: 2,
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualMultiParagraph = individualMultiPatched.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.ok(individualMultiParagraph && individualMultiParagraph.variant === 'multiple_choice')
+assert.equal((individualMultiParagraph as MultipleChoiceParagraph).items.length, 4)
+assert.equal(
+  individualMultiParagraph.paragraphDescription,
+  '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+)
+
 console.log('program-application-parity.test: ok')

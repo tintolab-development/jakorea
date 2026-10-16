@@ -180,6 +180,7 @@ export {
 } from './shared/ui'
 export {
   canSubmitInstructorRoleRequest,
+  getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   getInstructorApplyConsentPath,
   getInstructorRoleRequestStatusMessage,

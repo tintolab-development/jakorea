@@ -25,7 +25,10 @@ import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/feature
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
 import { resolveGeneralRegistrationKpiFieldAvailability } from '@/features/program/general/lib/participant-audience-selection'
-import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
+import {
+  shouldAutoFillEducationScheduleFromGroupTimes,
+  shouldDisableEducationSchedulePeriodMode,
+} from '@/features/program/general/lib/schedule-detail-form'
 
 export type ProgramRegistrationType = 'curriculum' | 'schedule'
 
@@ -278,17 +281,17 @@ export function renderProgramRegistrationParagraphBody(
           <ProgramRegistrationEducationScheduleSettingsParagraph
             educationScheduleMode={options.educationScheduleMode}
             onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-            autoFillFromScheduleGroupTimes={
-              options.programType === 'schedule' &&
-              options.sessionRoundType === 'single' &&
-              !options.participant.organization
-            }
+            autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+              educationStructure: options.programType,
+              sessionRound: options.sessionRoundType,
+            })}
             disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
               participantOrganization: options.participant.organization,
               sessionRound: options.sessionRoundType,
             })}
             programType={options.programType}
             sessionRound={options.sessionRoundType}
+            participantOrganization={options.participant.organization}
           />
         )
       }

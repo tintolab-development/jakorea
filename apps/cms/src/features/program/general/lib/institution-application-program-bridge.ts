@@ -305,14 +305,12 @@ export function buildInstitutionApplicationRecruitLimitVisibilityBridge(
 }
 
 /**
- * live 브리지 기본값(`educationScheduleMode: date`)이 기간 지정·range와 어긋날 때 모집 필드 노출을 맞춘다.
+ * 모집 한도 필드 노출은 `educationScheduleMode` SSOT만 사용한다.
+ * `educationScheduleRange`는 신청 캘린더·사업 기간 폴백용이며 기간 지정 유형으로 간주하지 않는다.
  */
 export function resolveInstitutionApplicationRecruitLimitsVisibilityBridge(
   bridge: InstitutionApplicationProgramBridge
 ): InstitutionApplicationProgramBridge {
-  if (bridge.educationScheduleRange != null && bridge.educationScheduleMode !== 'period') {
-    return { ...bridge, educationScheduleMode: 'period' }
-  }
   return bridge
 }
 

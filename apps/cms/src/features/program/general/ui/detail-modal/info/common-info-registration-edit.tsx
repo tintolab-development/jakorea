@@ -24,6 +24,7 @@ import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/feature
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
 import {
+  shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -405,11 +406,10 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               programId={program.id}
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"
               educationScheduleMode={extras.educationScheduleMode ?? 'date'}
-              autoFillFromScheduleGroupTimes={
-                extras.programType === 'schedule' &&
-                extras.sessionRoundType === 'single' &&
-                !participant.organization
-              }
+              autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+                educationStructure: extras.programType,
+                sessionRound: extras.sessionRoundType,
+              })}
               lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
                 participantOrganization: participant.organization,
                 educationStructure: extras.programType,
@@ -424,17 +424,17 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           onEducationScheduleModeChange={value =>
             commitExtras({ ...extras, educationScheduleMode: value })
           }
-          autoFillFromScheduleGroupTimes={
-            extras.programType === 'schedule' &&
-            extras.sessionRoundType === 'single' &&
-            !participant.organization
-          }
+          autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+            educationStructure: extras.programType,
+            sessionRound: extras.sessionRoundType,
+          })}
           disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
             participantOrganization: participant.organization,
             sessionRound: extras.sessionRoundType,
           })}
           programType={extras.programType}
           sessionRound={extras.sessionRoundType}
+          participantOrganization={participant.organization}
         />
         </ProgramCommonInfoEditSection>
       )}

@@ -52,6 +52,8 @@ import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/singl
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed } from '@/features/template/model/program-application-form-volunteer-draft'
+import { shouldUseProgramApplicationScheduleTemplateAuthoringMode } from '@/features/template/lib/institution-application-schedule-copy'
+import { resolveProgramApplicationFormScheduleIsTemplateAuthoringMode } from '@/features/template/lib/resolve-program-application-form-schedule-authoring-mode'
 import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-schedule-paragraph'
 import type { GeminiVisitingTrainingApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import type { EconomyProgramApplicationParagraphBodyOptions } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
@@ -118,6 +120,11 @@ export type RegistrationWizardValidationHighlightOptions = {
 export type RenderFormParagraphBodyOptions = {
   /** 프로그램 등록 위저드 — 필수 미입력 강조 */
   registrationWizardValidation?: RegistrationWizardValidationHighlightOptions
+  /**
+   * 등록 위저드 강사·봉사 신청 단계 — 일정 단락은 연동 슬롯 대신 시안 플레이스홀더.
+   * 프로그램 상세 신청 미리보기에는 설정하지 않는다.
+   */
+  registrationWizardApplicationSchedulePlaceholder?: boolean
   horizontalTableRowSelection?: HorizontalTableRowSelection | null
   onHorizontalTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
   /** 세로형 테이블 본문 행 선택(캔버스) — 폼 에디터에서 단일 전역 */
@@ -553,9 +560,15 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormInstructor,
-                  isTemplateAuthoringMode:
-                    paragraphInteractionMode === 'authoring' &&
-                    options.programApplicationFormInstructor.programLinkedPreview !== true,
+                  isTemplateAuthoringMode: resolveProgramApplicationFormScheduleIsTemplateAuthoringMode(
+                    {
+                      paragraphInteractionMode,
+                      programLinkedPreview:
+                        options.programApplicationFormInstructor.programLinkedPreview,
+                      registrationWizardApplicationSchedulePlaceholder:
+                        options.registrationWizardApplicationSchedulePlaceholder,
+                    }
+                  ),
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -564,9 +577,15 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormVolunteer,
-                  isTemplateAuthoringMode:
-                    paragraphInteractionMode === 'authoring' &&
-                    options.programApplicationFormVolunteer.programLinkedPreview !== true,
+                  isTemplateAuthoringMode: resolveProgramApplicationFormScheduleIsTemplateAuthoringMode(
+                    {
+                      paragraphInteractionMode,
+                      programLinkedPreview:
+                        options.programApplicationFormVolunteer.programLinkedPreview,
+                      registrationWizardApplicationSchedulePlaceholder:
+                        options.registrationWizardApplicationSchedulePlaceholder,
+                    }
+                  ),
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -736,7 +755,11 @@ export function renderFormParagraphBody(
         return (
           <ProgramApplicationFormInstitutionScheduleParagraph
             readOnlyPreview={isPreviewReadonly}
-            isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
+            isTemplateAuthoringMode={shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+              p.id,
+              paragraphInteractionMode,
+              options
+            )}
             programBridge={options?.institutionApplicationProgramBridge}
           />
         )
@@ -749,7 +772,11 @@ export function renderFormParagraphBody(
         return (
           <ProgramApplicationFormIndividualScheduleParagraph
             readOnlyPreview={isPreviewReadonly}
-            isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
+            isTemplateAuthoringMode={shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+              p.id,
+              paragraphInteractionMode,
+              options
+            )}
             programBridge={options?.institutionApplicationProgramBridge}
           />
         )

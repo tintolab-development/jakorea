@@ -1,4 +1,8 @@
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import {
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   shouldShowInstitutionApplicationPreferredScheduleParagraph,
@@ -9,6 +13,36 @@ import {
   resolveApplicationFixedScheduleParagraphDescription,
   resolveApplicationPreferredScheduleParagraphDescription,
 } from '@jakorea/form-schema/program-application'
+
+export function isProgramApplicationScheduleChoiceParagraphId(paragraphId: string): boolean {
+  return (
+    paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice ||
+    paragraphId === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+  )
+}
+
+/** 등록 위저드·프로그램 상세 연동 미리보기 — 템플릿 기본 힌트 대신 공통정보 기반 일정 UI */
+export function isProgramLinkedGeneralApplicationSchedulePreview(
+  options?: Pick<
+    RenderFormParagraphBodyOptions,
+    'programLinkedInstitutionApplicationForm' | 'programLinkedIndividualApplicationForm'
+  >
+): boolean {
+  return (
+    options?.programLinkedInstitutionApplicationForm === true ||
+    options?.programLinkedIndividualApplicationForm === true
+  )
+}
+
+export function shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+  paragraphId: string,
+  paragraphInteractionMode: ParagraphBodyInteractionMode,
+  options?: RenderFormParagraphBodyOptions
+): boolean {
+  if (paragraphInteractionMode !== 'authoring') return false
+  if (!isProgramApplicationScheduleChoiceParagraphId(paragraphId)) return true
+  return !isProgramLinkedGeneralApplicationSchedulePreview(options)
+}
 
 /** 날짜 지정 — 고정 일정 체크박스 안내 문구 */
 export function resolveInstitutionFixedScheduleDescription(

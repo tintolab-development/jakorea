@@ -19,6 +19,7 @@ import {
 } from '../api/portal-consent-documents'
 import { PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY } from './settings-consent-key'
 import type { FormSignatureValue } from '@/shared/ui/pf-form-signature-block/types'
+import { buildPortalPortraitRightsConsentCreateRequest } from './portal-portrait-consent-create-request'
 import { resolvePortraitPortalCompleteHints } from './resolve-portrait-portal-complete'
 
 const SIGNATURE_FILE_PURPOSE = 'MEMBER_ELECTRONIC_SIGNATURE'
@@ -142,8 +143,10 @@ export async function submitPortalConsentDocumentFromWriteState(
 /** 마이페이지 — 초상권 수집·이용 동의서 */
 export async function submitPortalPortraitConsentFromWriteState(
   state: PortraitPortalConsentWriteState,
+  options?: { memberId?: number },
 ): Promise<void> {
-  const created = await createPortalConsentDocument({ consentType: 'PORTRAIT_RIGHTS' })
+  const createBody = await buildPortalPortraitRightsConsentCreateRequest(options?.memberId)
+  const created = await createPortalConsentDocument(createBody)
   const documentId = created.documentId
   if (documentId == null) {
     throw new Error('동의서 문서를 만들지 못했습니다.')

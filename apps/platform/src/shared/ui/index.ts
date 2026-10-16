@@ -171,6 +171,8 @@ export type {
   PFTextareaSize,
   PFTextareaVariant,
 } from './pf-textarea'
+export { PFTimeInput } from './pf-time-input'
+export type { PFTimeInputProps } from './pf-time-input'
 export { PFDateInput } from './pf-date-input'
 export type {
   PFDateInputMessageStatus,

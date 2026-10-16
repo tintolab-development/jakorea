@@ -65,6 +65,8 @@ import {
   isOrganizationEducationApplication,
   resolveOrganizationApplicationTypeForContent,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
+import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
+import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import type { EducationApplicationListItem } from '@/features/mypage/education/applications/model/types'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -194,6 +196,33 @@ export function MypageEducationDetailPage() {
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
 
+  const isTeacherOrgActivityDetail =
+    isTeacher &&
+    Boolean(application && program) &&
+    (isActivityStatus || isWithdrawnDuring) &&
+    isOrganizationEducationApplication(application, program)
+
+  const studentDocumentPolicyQuery = useOrganizationStudentDocumentPolicyQuery(
+    routeApplicationType ?? application?.applicationType ?? null,
+    applicationId,
+    { organizationProgram: program?.programAudience === 'organization' },
+    { enabled: isTeacherOrgActivityDetail },
+  )
+
+  const teacherStudentDocumentTabsVisible = useMemo(() => {
+    if (!isTeacher) return undefined
+    if (!isTeacherOrgActivityDetail) return true
+    return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
+      policyQueryEnabled: true,
+      policyLoading: studentDocumentPolicyQuery.isLoading,
+    })
+  }, [
+    isTeacher,
+    isTeacherOrgActivityDetail,
+    studentDocumentPolicyQuery.data,
+    studentDocumentPolicyQuery.isLoading,
+  ])
+
   const activityTabOptions = useMemo(
     () =>
       program
@@ -202,9 +231,12 @@ export function MypageEducationDetailPage() {
             scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
+            ...(isTeacher
+              ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
+              : {}),
           }
         : null,
-    [program],
+    [isTeacher, program, teacherStudentDocumentTabsVisible],
   )
 
   const inProgressTabItems = useMemo(() => {

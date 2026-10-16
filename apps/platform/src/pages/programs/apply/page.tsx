@@ -70,6 +70,7 @@ import {
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
+import { readApplyScheduleMetaFromProgram } from '@/features/program/lib/apply-form-schedule-meta'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
 import {
   resolveVolunteerPortalActivityScheduleEnabledForHidden,
@@ -419,6 +420,10 @@ export function ProgramApplyPage() {
         program?.educationScheduleLines,
       ) ?? program?.educationScheduleLines ?? [],
     [applicationFormDocument, program?.educationScheduleLines],
+  )
+  const applyScheduleChoiceMeta = useMemo(
+    () => (program ? readApplyScheduleMetaFromProgram(program) : undefined),
+    [program],
   )
   const institutionScheduleParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
@@ -1074,6 +1079,9 @@ export function ProgramApplyPage() {
                     educationStructure: program.educationStructure,
                     sessionRound: program.sessionRound,
                     educationScheduleMode: program.educationScheduleMode,
+                    educationRoundCount: applyScheduleChoiceMeta?.educationRoundCount,
+                    sessionsPerRound: applyScheduleChoiceMeta?.sessionsPerRound,
+                    curriculumSessions: applyScheduleChoiceMeta?.curriculumSessions,
                   },
                 ) ?? paragraph.items)
             : paragraph.items
@@ -1244,10 +1252,12 @@ export function ProgramApplyPage() {
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
 
       if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
-      if (preferredBlocks.length >= preferredScheduleMaxBlocks) return null
+
+      const atPreferredScheduleMax = preferredBlocks.length >= preferredScheduleMaxBlocks
 
       return (
         <ApplyPreferredScheduleAddButton
+          disabled={atPreferredScheduleMax}
           onClick={() => {
             setPreferredBlocks(prev => {
               if (prev.length >= preferredScheduleMaxBlocks) return prev

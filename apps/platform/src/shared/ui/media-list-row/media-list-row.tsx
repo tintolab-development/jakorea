@@ -1,4 +1,5 @@
 import type { KeyboardEvent, ReactNode } from 'react'
+import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import styles from './media-list-row.module.css'
 
 type MediaListRowProps = {
@@ -67,7 +68,14 @@ export function MediaListRow({
       >
         {hasThumbnailImage ? (
           <img className={styles.thumbnail} src={thumbnailUrl} alt="" />
-        ) : null}
+        ) : (
+          <img
+            className={styles.thumbnailPlaceholderLogo}
+            src={jaLogoGrayUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       <div className={[styles.content, contentClassName].filter(Boolean).join(' ')}>{content}</div>

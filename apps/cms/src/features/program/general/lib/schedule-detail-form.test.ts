@@ -13,7 +13,11 @@ import {
   PRE_EDUCATION_SCHEDULE_LABEL,
   trimTrailingBlankRegularCurriculumSessions,
   shouldAllowScheduleProgressGroupAdd,
+  getEducationScheduleSelectionDatePickerProps,
+  shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleDateMode,
+  shouldDisableEducationSchedulePeriodTimeInput,
   shouldDisableEducationScheduleSelectionTimeInput,
   shouldLockEducationScheduleCalendarToggles,
   shouldLockProgressSchedulePeriodToggle,
@@ -508,13 +512,179 @@ describe('shouldLockEducationScheduleCalendarToggles', () => {
 })
 
 describe('shouldDisableEducationScheduleSelectionTimeInput', () => {
-  it('일정형만 교육 진행 일정 선택 팝오버 시간을 끈다', () => {
+  it('커리큘럼형은 시간 입력을 막지 않는다', () => {
+    expect(
+      shouldDisableEducationScheduleSelectionTimeInput({ educationStructure: 'curriculum' })
+    ).toBe(false)
+  })
+
+  it('일정형은 기본적으로 시간을 막고, 기관·단일·날짜 지정만 허용한다', () => {
     expect(
       shouldDisableEducationScheduleSelectionTimeInput({ educationStructure: 'schedule' })
     ).toBe(true)
     expect(
-      shouldDisableEducationScheduleSelectionTimeInput({ educationStructure: 'curriculum' })
+      shouldDisableEducationScheduleSelectionTimeInput({
+        educationStructure: 'schedule',
+        participantOrganization: true,
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+      })
     ).toBe(false)
+    expect(
+      shouldDisableEducationScheduleSelectionTimeInput({
+        educationStructure: 'schedule',
+        participantOrganization: true,
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+      })
+    ).toBe(true)
+    expect(
+      shouldDisableEducationScheduleSelectionTimeInput({
+        educationStructure: 'schedule',
+        participantOrganization: false,
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+      })
+    ).toBe(true)
+  })
+})
+
+describe('shouldAutoFillEducationScheduleFromGroupTimes', () => {
+  it('일정형 단일 회차이면 기관·개인 모두 진행 시간 자동 반영', () => {
+    expect(
+      shouldAutoFillEducationScheduleFromGroupTimes({
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toBe(true)
+    expect(
+      shouldAutoFillEducationScheduleFromGroupTimes({
+        educationStructure: 'schedule',
+        sessionRound: 'multi',
+      })
+    ).toBe(false)
+    expect(
+      shouldAutoFillEducationScheduleFromGroupTimes({
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+      })
+    ).toBe(false)
+  })
+})
+
+describe('shouldDisableEducationSchedulePeriodTimeInput', () => {
+  it('기간 지정이면 교육 구조·회차와 무관하게 시간 비활성(날짜만)', () => {
+    expect(
+      shouldDisableEducationSchedulePeriodTimeInput({
+        educationStructure: 'curriculum',
+        sessionRound: 'multi',
+        educationScheduleMode: 'period',
+      })
+    ).toBe(true)
+    expect(
+      shouldDisableEducationSchedulePeriodTimeInput({
+        educationStructure: 'schedule',
+        sessionRound: 'multi',
+        educationScheduleMode: 'period',
+      })
+    ).toBe(true)
+    expect(
+      shouldDisableEducationSchedulePeriodTimeInput({
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+      })
+    ).toBe(true)
+  })
+
+  it('날짜 지정이면 false', () => {
+    expect(
+      shouldDisableEducationSchedulePeriodTimeInput({
+        educationStructure: 'schedule',
+        educationScheduleMode: 'date',
+      })
+    ).toBe(false)
+  })
+})
+
+describe('getEducationScheduleSelectionDatePickerProps', () => {
+  it('기관·커리큘럼·복수·기간 — 시간 노출·비활성', () => {
+    expect(
+      getEducationScheduleSelectionDatePickerProps({
+        educationStructure: 'curriculum',
+        participantOrganization: true,
+        sessionRound: 'multi',
+        scheduleMode: 'period',
+      })
+    ).toEqual({
+      presetMode: 'period',
+      lockTimeToggleOn: true,
+      disableTimeInputs: true,
+    })
+  })
+
+  it('기관·일정·단일·날짜 — 시간 편집 허용 예외', () => {
+    expect(
+      getEducationScheduleSelectionDatePickerProps({
+        educationStructure: 'schedule',
+        participantOrganization: true,
+        sessionRound: 'single',
+        scheduleMode: 'date',
+      })
+    ).toEqual({
+      presetMode: 'schedule',
+      lockPeriodToggleOn: true,
+      lockTimeToggleOn: true,
+      disableTimeInputs: false,
+    })
+  })
+
+  it('일정·단일·날짜·개인 — 시간 비활성', () => {
+    expect(
+      getEducationScheduleSelectionDatePickerProps({
+        educationStructure: 'schedule',
+        participantOrganization: false,
+        sessionRound: 'single',
+        scheduleMode: 'date',
+      })
+    ).toEqual({
+      presetMode: 'schedule',
+      lockPeriodToggleOn: true,
+      lockTimeToggleOn: false,
+      disableTimeInputs: true,
+    })
+  })
+})
+
+describe('shouldLockEducationScheduleDateMode', () => {
+  it('기관·일정·단일 — 진행 시간 자동 반영과 별도로 기간 지정 잠금하지 않음', () => {
+    expect(
+      shouldLockEducationScheduleDateMode({
+        participantOrganization: true,
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toBe(false)
+  })
+
+  it('개인·일정·단일 — 날짜 지정 고정(기간 라디오 잠금)', () => {
+    expect(
+      shouldLockEducationScheduleDateMode({
+        participantOrganization: false,
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toBe(true)
+  })
+
+  it('개인·커리큘럼 — 기간 지정 정책으로 날짜 고정', () => {
+    expect(
+      shouldLockEducationScheduleDateMode({
+        participantOrganization: false,
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+      })
+    ).toBe(true)
   })
 })
 

@@ -140,6 +140,12 @@ function getDefaultEducationScheduleMode(
 const GENERAL_BASIC_INFO_LOCK_NOTICE =
   PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
 
+const GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.registrationDescription
+
+const GENERAL_EDUCATION_SCHEDULE_DETAIL_EDIT_NOTICE =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
+
 function withRegistrationBasicInfoDescriptionForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant
@@ -160,6 +166,28 @@ function withRegistrationBasicInfoDescriptionForVariant(
   return changed ? { ...draft, paragraphs } : draft
 }
 
+function withRegistrationEducationScheduleSettingsDescriptionForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  if (variant !== 'general') return draft
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationScheduleSettings) return paragraph
+    const current = paragraph.paragraphDescription.trim()
+    if (current === GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION) return paragraph
+    if (current === '' || current === GENERAL_EDUCATION_SCHEDULE_DETAIL_EDIT_NOTICE) {
+      changed = true
+      return {
+        ...paragraph,
+        paragraphDescription: GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION,
+      }
+    }
+    return paragraph
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 function filterProgramRegistrationDraftForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant
@@ -173,7 +201,8 @@ function filterProgramRegistrationDraftForVariant(
             paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
           ),
         }
-  return withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
+  const withBasicInfo = withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
+  return withRegistrationEducationScheduleSettingsDescriptionForVariant(withBasicInfo, variant)
 }
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */

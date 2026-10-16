@@ -1858,6 +1858,17 @@ export function useProgramParticipantApplicationEditor(
           : programApplicationFormVolunteerOptions,
       programLinkedInstitutionApplicationForm,
       programLinkedIndividualApplicationForm: variant === 'individual' && programLinkedPreview,
+      registrationWizardApplicationSchedulePlaceholder:
+        usesRegistrationWizardDraft &&
+        programLinkedPreview &&
+        (variant === 'instructor' || variant === 'volunteer'),
+      ...(programLinkedPreview &&
+      (variant === 'institution' ||
+        variant === 'individual' ||
+        variant === 'economy-application-institution' ||
+        variant === 'trained-teachers-application-institution')
+        ? { institutionApplicationProgramBridge: institutionApplicationBridge }
+        : {}),
     }
     },
     [

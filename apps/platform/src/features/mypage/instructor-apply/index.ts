@@ -1,4 +1,5 @@
 export {
+  getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   getInstructorApplyConsentPath,
   isInstructorApplyConsentKey,

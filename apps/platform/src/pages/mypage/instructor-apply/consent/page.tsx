@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ConsentWriteFormPage } from '@/features/mypage/consent/ui/consent-write-form-page'
 import {
   INSTRUCTOR_APPLY_PATH,
+  getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
   isInstructorApplyConsentKey,
@@ -28,12 +29,14 @@ export function MypageInstructorApplyConsentPage() {
   }
 
   const title = getInstructorApplyConsentPageTitle(consentKey)
+  const description = getInstructorApplyConsentPageDescription(consentKey)
   const [titleAside, setTitleAside] = useState<ReactNode>(null)
 
   return (
     <ConsentWriteFormPage
       ariaLabel={title}
       title={title}
+      description={description}
       titleAside={titleAside}
       onBack={() => navigate(returnTo)}
     >

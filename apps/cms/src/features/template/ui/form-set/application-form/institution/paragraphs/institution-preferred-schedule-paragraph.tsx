@@ -227,13 +227,15 @@ export function InstitutionPreferredScheduleCardTitleTrailing({
     []
   )
   const maxBlocks = resolveInstitutionPreferredScheduleMaxBlocks(bridge)
-  if (readOnly || blocks.length >= maxBlocks) return null
+  const atMax = blocks.length >= maxBlocks
+  if (readOnly) return null
   return (
     <CmsButton
       type="button"
       variant="secondary"
       size="medium"
       className="cms-button--no-label-ellipsis"
+      disabled={atMax}
       icon={<ButtonAddIcon />}
       onClick={event => {
         event.stopPropagation()
@@ -253,7 +255,10 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
   const maxBlocks = resolveInstitutionPreferredScheduleMaxBlocks(bridge)
-  const initialBlockCount = resolveInstitutionPreferredScheduleInitialBlockCount(bridge)
+  /** 프로그램 상세 신청 정보 미리보기 — 기본 노출은 1지망만 (추가는 헤더 버튼으로만) */
+  const initialBlockCount = readOnlyPreview
+    ? 1
+    : resolveInstitutionPreferredScheduleInitialBlockCount(bridge)
   const showSessionSelect = shouldShowInstitutionApplicationPreferredScheduleSessionSelect(bridge)
   const dateOnlyPreferred = shouldShowInstitutionApplicationSchedulePeriodDateOnlyPreferred(bridge)
   const sessionOptions = useMemo(
@@ -304,8 +309,11 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     dateOnlyPreferred,
   ])
 
-  const displayBlocks =
-    blocks.length === 0
+  const displayBlocks = readOnlyPreview
+    ? blocks.length === 0
+      ? [createEmptyBlockState()]
+      : blocks.slice(0, 1).map(coerceScheduleBlock)
+    : blocks.length === 0
       ? Array.from({ length: initialBlockCount }, () => createEmptyBlockState())
       : blocks.slice(0, maxBlocks).map(coerceScheduleBlock)
 
@@ -359,18 +367,6 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
           }
         />
       ))}
-      {displayBlocks.length < maxBlocks ? (
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="medium"
-          className="cms-button--no-label-ellipsis institution-preferred-schedule-paragraph__add"
-          icon={<ButtonAddIcon />}
-          onClick={() => addInstitutionPreferredScheduleBlock()}
-        >
-          희망 교육 일정 추가
-        </CmsButton>
-      ) : null}
     </div>
   )
 }

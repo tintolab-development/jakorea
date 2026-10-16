@@ -13,6 +13,7 @@ import {
   resolveEffectiveGeneralProgramTypeFields,
 } from '@/features/program/general/lib/curriculum-display'
 import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
+import { shouldAutoFillEducationScheduleFromGroupTimes } from '@/features/program/general/lib/schedule-detail-form'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
   buildGeneralProgramVariantTitle,
@@ -612,22 +613,18 @@ export function resolveGeneralProgramDetailedProgramNameDisplay(
   return commonInfo.detailedProgramName?.trim() || '-'
 }
 
-function shouldAutoFillEducationScheduleFromGroupTimes(program: Program): boolean {
-  return (
-    program.generalProgramEducationStructure === 'schedule' &&
-    program.generalProgramSessionRound === 'single' &&
-    program.generalProgramAudience === 'individual'
-  )
-}
 
 function shouldShowEducationSchedulePeriodDateOnlyLines(program: Program): boolean {
   const common = program.generalCommonInfo
-  return (
-    program.generalProgramEducationStructure === 'schedule' &&
-    program.generalProgramSessionRound === 'single' &&
-    common?.educationScheduleMode === 'period' &&
-    program.generalProgramAudience === 'organization'
-  )
+  return common?.educationScheduleMode === 'period'
+}
+
+function autoFillEducationScheduleFromGroupTimesForProgram(program: Program): boolean {
+  return shouldAutoFillEducationScheduleFromGroupTimes({
+    educationStructure:
+      program.generalProgramEducationStructure === 'schedule' ? 'schedule' : 'curriculum',
+    sessionRound: program.generalProgramSessionRound === 'multi' ? 'multi' : 'single',
+  })
 }
 
 function withResolvedEducationScheduleLines(
@@ -637,7 +634,7 @@ function withResolvedEducationScheduleLines(
   const educationScheduleLines = resolveEducationScheduleLinesForView({
     educationScheduleLines: commonInfo.educationScheduleLines,
     overlay: program.registrationOverlay,
-    autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+    autoFillFromScheduleGroupTimes: autoFillEducationScheduleFromGroupTimesForProgram(program),
     dateOnlyPeriodLines: shouldShowEducationSchedulePeriodDateOnlyLines(program),
     scheduleDetails: commonInfo.scheduleDetails,
   })
@@ -862,7 +859,7 @@ export function resolveGeneralProgramCommonInfo(
     educationScheduleMode: 'date',
     educationScheduleLines: resolveEducationScheduleLinesForView({
       overlay,
-      autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+      autoFillFromScheduleGroupTimes: autoFillEducationScheduleFromGroupTimesForProgram(program),
       dateOnlyPeriodLines: shouldShowEducationSchedulePeriodDateOnlyLines(program),
     }),
     wageGradeRows: [

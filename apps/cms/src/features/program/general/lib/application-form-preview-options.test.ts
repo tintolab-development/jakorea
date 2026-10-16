@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import {
+  resolveInstitutionFixedScheduleDescription,
+  shouldUseInstitutionFixedScheduleCardCopy,
+} from '@/features/template/lib/institution-application-schedule-copy'
+import {
   buildGeneralApplicationFormPreviewParagraphBodyOptions,
   resolveGeneralApplicationFormHiddenParagraphIds,
 } from './application-form-preview-options'
@@ -88,7 +92,36 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     ).toBe(false)
   })
 
-  it('개인 · 일정형 · 단일 · 날짜(2일) — scheduleChoice 노출', () => {
+  it('개인 · 커리큘럼 · 복수 · 날짜(2일) — scheduleChoice 노출·회차 메타', () => {
+    const program = {
+      id: 'individual-curriculum-multi-date',
+      generalProgramAudience: 'individual',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        educationScheduleMode: 'date',
+        educationScheduleLines: [
+          '26년 4월 20일(월) 9:30 ~ 12:20',
+          '26년 4월 27일(월) 13:00 ~ 15:50',
+        ],
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '2' },
+          { sessionLabel: '2회차', title: '2' },
+        ],
+      },
+    } as Program
+    const bridge = resolveInstitutionApplicationProgramBridge(program)
+    expect(bridge.educationRoundCount).toBe(2)
+    expect(bridge.sessionsPerRound).toBe(2)
+    const hidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program,
+      paragraphs: [],
+      institutionBridge: bridge,
+    })
+    expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(false)
+  })
+
+  it('개인 · 일정형 · 단일 · 날짜(2일) — 1타임 설명·scheduleChoice 노출', () => {
     const program = {
       id: 'individual-schedule-single',
       generalProgramAudience: 'individual',
@@ -104,12 +137,39 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     } as Program
     const bridge = resolveInstitutionApplicationProgramBridge(program)
     expect(bridge.educationStructure).toBe('schedule')
+    expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
+    expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
+      '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+    )
     const hidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
       program,
       paragraphs: [],
       institutionBridge: bridge,
     })
     expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(false)
+  })
+
+  it('개인 · 일정형 · 단일 · 날짜(1일) — scheduleChoice 숨김', () => {
+    const program = {
+      id: 'individual-schedule-single-one-day',
+      generalProgramAudience: 'individual',
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        educationScheduleMode: 'date',
+        educationScheduleLines: [
+          '26년 4월 20일(월) 09:30 ~ 12:20',
+          '26년 4월 20일(월) 13:00 ~ 15:50',
+        ],
+      },
+    } as Program
+    const bridge = resolveInstitutionApplicationProgramBridge(program)
+    const hidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program,
+      paragraphs: [],
+      institutionBridge: bridge,
+    })
+    expect(hidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(true)
   })
 
   it('등록 위저드 sync 후 개인 신청 — 고유 일자 1일이면 scheduleChoice를 숨긴다', () => {

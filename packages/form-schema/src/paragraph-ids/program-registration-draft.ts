@@ -131,7 +131,8 @@ export function createProgramRegistrationDraft(
       PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
       PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title,
       variant !== 'economy'
-        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
+        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings
+            .registrationDescription
         : '교육이 실행되는 일정을 설정해 주세요.'
     )
   )

@@ -180,6 +180,18 @@ function testScheduleParagraphVisibility() {
     }),
     false
   )
+
+  const individualScheduleTwoDays = {
+    educationStructure: 'schedule' as const,
+    sessionRound: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+  }
+  assert.equal(shouldShowApplyScheduleParagraph(individualScheduleTwoDays), true)
+  assert.equal(shouldShowApplyPreferredSchedule(individualScheduleTwoDays), false)
 }
 
 testUniqueCalendarDays()

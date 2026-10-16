@@ -85,6 +85,24 @@ assert.deepEqual(
   ['notice', 'schedule', 'students'],
 )
 
+const teacherNoStudentDocuments = buildTeacherInProgressDetailTabItems({
+  ...options,
+  teacherStudentDocumentTabsVisible: false,
+})
+assert.deepEqual(
+  teacherNoStudentDocuments.map(item => item.key),
+  ['notice', 'schedule', 'survey', 'satisfaction'],
+)
+
+const teacherWithdrawnNoStudentDocuments = buildTeacherWithdrawnDuringDetailTabItems({
+  ...options,
+  teacherStudentDocumentTabsVisible: false,
+})
+assert.deepEqual(
+  teacherWithdrawnNoStudentDocuments.map(item => item.key),
+  ['schedule', 'survey', 'satisfaction'],
+)
+
 const teacherInstructorProgramCase = buildTeacherInProgressDetailTabItems({
   detailCase: 'instructor',
   scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,

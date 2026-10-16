@@ -35,6 +35,23 @@ function commonOnlyProgram(): Program {
 }
 
 describe('모집 정보 display — 공통정보 폴백 금지', () => {
+  it('기관·날짜 지정 프로그램은 사업 기간이 있어도 최대 일정 수 필드를 노출하지 않는다', () => {
+    const program = {
+      ...commonOnlyProgram(),
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        educationScheduleMode: 'date',
+      },
+    } as Program
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
+    expect(display.showInstitutionApplicationLimits).toBe(true)
+    expect(display.showMaxScheduleCountField).toBe(false)
+    expect(display.showMaxSessionsPerDayField).toBe(false)
+  })
+
   it('공통 Program 필드만 있으면 대상·기간·문의처는 -', () => {
     const program = commonOnlyProgram()
     const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
