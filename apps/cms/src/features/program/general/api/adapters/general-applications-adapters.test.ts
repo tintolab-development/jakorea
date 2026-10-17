@@ -25,6 +25,7 @@ import {
   mapTextbookDeliveryStatusToBadge,
   mapTextbookStatusKeyToDeliveryStatus,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
+  mapOrganizationApplicationListSessionsToConfirmedSessions,
   mapOrganizationApplicationToApplicantSchoolRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
@@ -129,40 +130,90 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teacherPhone).toBe('010-1111-2222')
   })
 
-  it('uses detail sessions before preferred schedule projections', () => {
+  it('keeps preferred hope sessions when detail dto.sessions has OSA or assigned rows', () => {
+    const preferred = [
+      { scheduleId: 180101, round: 1, startAt: '2026-10-10T01:00:00Z', endAt: '2026-10-10T03:00:00Z' },
+      { scheduleId: 180102, round: 2, startAt: '2026-10-11T01:00:00Z', endAt: '2026-10-11T03:00:00Z' },
+      { scheduleId: 180103, round: 3, startAt: '2026-10-12T01:00:00Z', endAt: '2026-10-12T03:00:00Z' },
+      { scheduleId: 180104, round: 4, startAt: '2026-10-13T01:00:00Z', endAt: '2026-10-13T03:00:00Z' },
+    ] as never[]
+    const base = {
+      id: '104',
+      no: 1,
+      schoolName: '학교',
+      region: '서울',
+      educationGrade: '1학년',
+      classCount: 1,
+      studentCount: 10,
+      teacherName: '교사',
+      approvalStatus: 'approved' as const,
+      programId: '186101',
+    }
+
     const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
       {
         id: 104,
+        programType: 'GENERAL_ORGANIZATION',
         sessions: [
           {
             scheduleId: 180001,
-            sessionNo: 2,
-            scheduleName: '확정 일정',
+            resolvedScheduleId: 180001,
+            sessionNo: 1,
+            scheduleName: 'OSA 배정',
             startAt: '2026-10-15T01:00:00Z',
             endAt: '2026-10-15T03:00:00Z',
           },
         ],
-        preferredEducationSchedules: [
-          { scheduleId: 180002, round: 1 } as never,
-        ],
+        preferredEducationSchedules: preferred,
       },
-      {
-        id: '104',
-        no: 1,
-        schoolName: '학교',
-        region: '서울',
-        educationGrade: '1학년',
-        classCount: 1,
-        studentCount: 10,
-        teacherName: '교사',
-        approvalStatus: 'approved',
-        programId: '186101',
-      }
+      base
     )
 
-    expect(row.sessions).toHaveLength(1)
-    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(180001)
-    expect(row.sessions?.[0]?.format).toBe('확정 일정')
+    expect(row.sessions).toHaveLength(4)
+    expect(row.sessions?.map(s => s.resolvedScheduleId)).toEqual([180101, 180102, 180103, 180104])
+  })
+
+  it('isolates hope sessions per organization application (multi-institution)', () => {
+    const preferredA = [
+      { scheduleId: 1, round: 1, startAt: '2026-10-10T01:00:00Z', endAt: '2026-10-10T03:00:00Z' },
+      { scheduleId: 2, round: 2, startAt: '2026-10-11T01:00:00Z', endAt: '2026-10-11T03:00:00Z' },
+      { scheduleId: 3, round: 3, startAt: '2026-10-12T01:00:00Z', endAt: '2026-10-12T03:00:00Z' },
+      { scheduleId: 4, round: 4, startAt: '2026-10-13T01:00:00Z', endAt: '2026-10-13T03:00:00Z' },
+    ] as never[]
+    const preferredB = [
+      { scheduleId: 21, round: 1, startAt: '2026-10-20T01:00:00Z', endAt: '2026-10-20T03:00:00Z' },
+      { scheduleId: 22, round: 2, startAt: '2026-10-21T01:00:00Z', endAt: '2026-10-21T03:00:00Z' },
+    ] as never[]
+
+    const rowA = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1001,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '기관 A',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: preferredA,
+        sessions: [{ scheduleId: 999, roundNumber: 1, startAt: '2026-10-15T01:00:00Z' }],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186903'
+    )
+    const rowB = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1002,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '기관 B',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: preferredB,
+        sessions: [],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      1,
+      '186903'
+    )
+
+    expect(rowA.sessions).toHaveLength(4)
+    expect(rowB.sessions).toHaveLength(2)
+    expect(rowA.sessions?.[0]?.resolvedScheduleId).toBe(1)
+    expect(rowB.sessions?.[0]?.resolvedScheduleId).toBe(21)
   })
 
   it('does not restore omitted detail fields from the list row', () => {
@@ -1535,5 +1586,72 @@ describe('general-program-service-detail-json', () => {
     expect(parsed.generalProgramEducationStructure).toBe('curriculum')
     expect(parsed.generalProgramSessionRound).toBe('single')
     expect(parsed.generalProgramAudience).toBe('organization')
+  })
+})
+
+describe('mapOrganizationApplicationListSessionsToConfirmedSessions', () => {
+  it('maps CONFIRMED list sessions with scheduleId and startAt', () => {
+    const sessions = mapOrganizationApplicationListSessionsToConfirmedSessions([
+      {
+        scheduleId: 42,
+        roundNumber: 2,
+        startAt: '2026-01-07T09:20:00+09:00',
+        status: 'CONFIRMED',
+      },
+      {
+        scheduleId: 43,
+        startAt: '2026-01-08T10:00:00+09:00',
+        status: 'CANCELLED',
+      },
+    ])
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]?.resolvedScheduleId).toBe(42)
+    expect(sessions[0]?.round).toBe(2)
+    expect(sessions[0]?.date).toMatch(/2026\.01\.07/)
+  })
+
+  it('sets confirmedListAssignmentSessions on organization list rows', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1,
+        organizationName: '동탄초등학교',
+        regionSido: '경기도',
+        regionSigungu: '화성시',
+        sessions: [
+          {
+            scheduleId: 10,
+            roundNumber: 1,
+            startAt: '2026-01-07T09:00:00+09:00',
+            status: 'TEMP_ASSIGNED',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      'prog-1'
+    )
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(10)
+  })
+
+  it('maps list sessions with assignmentStatus (no status field) to confirmed sessions', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 2,
+        organizationName: '부명초등학교',
+        sessions: [
+          {
+            scheduleId: 186907,
+            sessionNo: 5,
+            startAt: '2026-11-12T15:00:00Z',
+            assignmentStatus: 'TEMP_ASSIGNED',
+          },
+        ],
+      } as unknown as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      'prog-1'
+    )
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(186907)
+    expect(row.confirmedListAssignmentSessions?.[0]?.round).toBe(5)
   })
 })

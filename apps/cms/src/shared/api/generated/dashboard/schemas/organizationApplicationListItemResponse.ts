@@ -44,7 +44,7 @@ export interface OrganizationApplicationListItemResponse {
   regionSido?: string;
   regionSigungu?: string;
   sessions?: Session[];
-  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 학급·회차 확정 전에도 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
+  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   mergeGroupId?: number;
   mergeStatus?: string;

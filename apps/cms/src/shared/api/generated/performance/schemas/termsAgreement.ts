@@ -12,4 +12,14 @@ export interface TermsAgreement {
   required?: boolean;
   agreed?: boolean;
   agreedAt?: string;
+  /**
+     * Document bound to this application; null for legacy requests
+     * @nullable
+     */
+  portalConsentDocumentId?: number | null;
+  /**
+     * Consent record ID for the application document; null for legacy requests
+     * @nullable
+     */
+  consentRecordId?: number | null;
 }

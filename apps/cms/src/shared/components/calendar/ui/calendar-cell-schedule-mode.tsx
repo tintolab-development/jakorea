@@ -96,7 +96,7 @@ export function CalendarCellScheduleMode(props: CalendarCellProps) {
                 <div
                   key={entity.id}
                   className={`calendar-event calendar-event--span-${spanRole}`}
-                  style={{ backgroundColor: colorPair.bg, border: `1px solid ${colorPair.border}` }}
+                  style={{ backgroundColor: colorPair.bg }}
                 >
                   <span className="calendar-event-title">{entity.title}</span>
                 </div>

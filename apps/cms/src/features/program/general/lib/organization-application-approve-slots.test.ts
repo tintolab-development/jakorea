@@ -68,6 +68,28 @@ describe('organization-application-approve-slots', () => {
     expect(result.options.every(option => option.confirmableScheduleId == null)).toBe(true)
   })
 
+  it('marks confirmable id null when program schedules mismatch preferred time', () => {
+    const result = resolveOrganizationApproveScheduleOptionsFromPreferred(
+      [
+        {
+          scheduleId: 88,
+          startAt: '2026-10-30T04:30:00Z',
+          endAt: '2026-10-30T06:30:00Z',
+          label: 'slot',
+        },
+      ],
+      [
+        {
+          id: 88,
+          startAt: '2026-10-30T00:30:00Z',
+          endAt: '2026-10-30T02:30:00Z',
+        },
+      ]
+    )
+    expect(result.options[0]?.confirmableScheduleId).toBeNull()
+    expect(result.options[0]?.scheduleId).toBe(88)
+  })
+
   it('only exposes a positive numeric id whose program schedule has the same time range', () => {
     const result = validateOrganizationApproveScheduleOptions(
       [

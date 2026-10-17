@@ -6,6 +6,7 @@ export function parseOrganizationPreferredScheduleId(value: unknown): number | n
   }
   if (typeof value === 'string') {
     const trimmed = value.trim()
+    if (/^line:/i.test(trimmed)) return null
     if (!/^\d+$/.test(trimmed)) return null
     const parsed = Number(trimmed)
     return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null

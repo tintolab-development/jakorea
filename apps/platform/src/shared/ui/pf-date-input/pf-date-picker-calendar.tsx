@@ -45,6 +45,11 @@ export type PFDatePickerCalendarProps = {
   maxDate?: string | null
   /** true면 팝오버 그림자 없이 본문에 인라인 배치 (`role="group"`) */
   inline?: boolean
+  /**
+   * 신청 양식 일정 선택 — 연한/진한 민트 일자 (모바일은 추가로 300px 미니 레이아웃)
+   * @deprecated `miniview`는 `applySchedule`와 동일
+   */
+  variant?: 'default' | 'applySchedule' | 'miniview'
   className?: string
   id?: string
   'aria-label'?: string
@@ -84,6 +89,7 @@ export function PFDatePickerCalendar({
   minDate = null,
   maxDate = null,
   inline = false,
+  variant = 'default',
   className,
   id,
   'aria-label': ariaLabel = '날짜 선택',
@@ -153,7 +159,14 @@ export function PFDatePickerCalendar({
   return (
     <div
       id={id}
-      className={[styles.popover, inline ? styles.popoverInline : undefined, className]
+      className={[
+        styles.popover,
+        inline ? styles.popoverInline : undefined,
+        variant === 'default'
+          ? undefined
+          : styles.popoverApplySchedule,
+        className,
+      ]
         .filter(Boolean)
         .join(' ')}
       role={inline ? 'group' : 'dialog'}

@@ -449,20 +449,14 @@ async function createElapsedInterviewSlot(page: Page, programId: number): Promis
   return asPositiveNumber(body.id ?? body.interviewSlotId, 'interviewSlotId')
 }
 
-async function approveOrganization(
-  page: Page,
-  applicationId: number,
-  scheduleId: number,
-  grade = '1학년',
-  className = '1반'
-) {
+async function approveOrganization(page: Page, applicationId: number, scheduleId: number) {
   const payload = await adminRequest(
     page,
     `/api/admin/organization-applications/${applicationId}/approve`,
     'POST',
     {
       timing: 'IMMEDIATE',
-      slots: [{ scheduleId, grade, className }],
+      selectedScheduleId: scheduleId,
     }
   )
   expect(applicationStatus(asRecord(unwrap(payload)))).toBe('APPROVED')
@@ -489,7 +483,7 @@ async function assignOrganizationSchedule(
     `/api/admin/programs/${programId}/organization-applications/${applicationId}/schedule-assignments`,
     'PUT',
     {
-      slots: [{ scheduleId, grade: '1학년', className: '1반' }],
+      slots: [{ scheduleId }],
       changeReason: 'E2E 승인 후 기관 일정 배정',
     }
   )

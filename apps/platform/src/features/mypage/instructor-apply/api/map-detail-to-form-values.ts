@@ -213,7 +213,7 @@ function mapTermsToConsent(
   return { consentPartial, consentAgreedAt }
 }
 
-function mapSettlementToForm(
+export function mapInstructorSettlementToFormPartial(
   settlement: InstructorRoleRequestDetail['settlement'],
 ): Partial<InstructorSharedProfileFormValues> {
   if (!settlement) return {}
@@ -239,7 +239,7 @@ export function mapInstructorRoleRequestDetailToSubmittedSnapshot(
   const values: InstructorSharedProfileFormValues = {
     ...INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
     ...mapInstructorCmsProfileToFormPartial(detail.profile),
-    ...mapSettlementToForm(detail.settlement),
+    ...mapInstructorSettlementToFormPartial(detail.settlement),
     ...consentPartial,
     name: detail.name?.trim() ?? '',
     gender: toInstructorFormGender(detail.gender) || INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES.gender,

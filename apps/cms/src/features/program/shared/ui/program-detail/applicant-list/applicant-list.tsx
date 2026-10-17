@@ -431,9 +431,11 @@ export function ApplicantList({
     useGeneralInstructorBulkActionModal ||
     useGeneralParticipantActionModal
 
+  /** 기관 신청 — 캘린더 우측 목록 상단 기관 multi select 미노출 */
   /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
   const showCalendarEntityFilter =
-    menu !== 'individual-applications' || !program || getGeneralParticipantInterviewEnabled(program)
+    menu !== 'institutions' &&
+    (menu !== 'individual-applications' || !program || getGeneralParticipantInterviewEnabled(program))
 
   /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
   const isIndividualDoc1Screening =
@@ -750,14 +752,25 @@ export function ApplicantList({
           | ApplicantSchoolRow[]
           | ApplicantInstructorRow[]
           | GeneralIndividualApplicantRow[],
-        menu
+        menu,
+        menu === 'instructors' && instructorColumnPreset === 'general-detail'
+          ? { institutionRows: institutionList }
+          : undefined
       ),
-    [tableData, menu]
+    [tableData, menu, institutionList, instructorColumnPreset]
   )
 
   const institutionCalendarScheduleEmptyHint =
     menu === 'institutions' && tableData.length > 0 && applicantCalendarEvents.length === 0
       ? '신청은 있으나 교육 일정(preferredEducationSchedules·requested-schedules)이 없어 캘린더에 표시할 수 없습니다.'
+      : undefined
+
+  const instructorCalendarScheduleEmptyHint =
+    menu === 'instructors' &&
+    instructorColumnPreset === 'general-detail' &&
+    tableData.length > 0 &&
+    applicantCalendarEvents.length === 0
+      ? '신청은 있으나 배정 확정된 기관 교육 일정이 없어 캘린더에 표시할 수 없습니다.'
       : undefined
 
   const showInstitutionDetail =
@@ -2157,7 +2170,9 @@ export function ApplicantList({
                 <ApplicantCalendarView
                   useSplitCardPageScroll={detailVariant === 'general'}
                   events={applicantCalendarEvents}
-                  scheduleListEmptyDescription={institutionCalendarScheduleEmptyHint}
+                  scheduleListEmptyDescription={
+                    instructorCalendarScheduleEmptyHint ?? institutionCalendarScheduleEmptyHint
+                  }
                   loading={applicationsLoading}
                   selectedRowKeys={selectedRowKeys}
                   onSelectionChange={setSelectedRowKeys}

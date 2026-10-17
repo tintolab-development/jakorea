@@ -23,7 +23,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function readPreEducationNoticeRequired(runtime: unknown): boolean | null {
+/** CMS 모집 「사전 안내 사항 작성 여부」 — runtime `preEducationNoticeRequired` */
+export function readPreEducationNoticeRequiredFromRuntime(runtime: unknown): boolean | null {
   if (!isRecord(runtime)) return null
   const raw = runtime.preEducationNoticeRequired ?? runtime.advanceGuidanceRequired
   if (typeof raw === 'boolean') return raw
@@ -97,7 +98,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
   }
 
   if (applyCase === 'institution-general') {
-    const preEducation = readPreEducationNoticeRequired(runtimeContext) ?? true
+    const preEducation = readPreEducationNoticeRequiredFromRuntime(runtimeContext) ?? true
     const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
       ...scheduleVisibility,
       preEducationNoticeRequired: preEducation,

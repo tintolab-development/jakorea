@@ -13,6 +13,7 @@ import {
 import { normalizeEducationScheduleLineForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import { filterProgramSchedulesForNewEducationAssignment } from '@/features/program/shared/lib/program-schedule-canonical'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import type { Program } from '@/types/domain'
 
@@ -188,8 +189,9 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
   program: Program,
   apiSchedules: ReadonlyArray<ProgramScheduleResponse>
 ): SurveyPollScheduleSelectOption[] {
+  const assignableSchedules = filterProgramSchedulesForNewEducationAssignment(apiSchedules)
   const bridge = resolveInstitutionApplicationProgramBridge(program)
-  const dashboard = mapAdminSchedulesToDashboard(apiSchedules)
+  const dashboard = mapAdminSchedulesToDashboard(assignableSchedules)
   const sessionRows = resolveEmployeeVolunteerSessionRows(program)
   const rowToScheduleId = buildEmployeeVolunteerSessionRowScheduleMap(sessionRows, dashboard)
   const eventRoundsOnly = isSurveyPollScheduleMultiEventProgram(bridge)
@@ -203,7 +205,7 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
   const mappableCount = mappableRows.length
 
   const lines = resolveGeneralProgramCommonInfo(program).educationScheduleLines ?? []
-  const scheduleById = buildScheduleByIdMap(apiSchedules)
+  const scheduleById = buildScheduleByIdMap(assignableSchedules)
 
   const sessionOptions: SurveyPollScheduleSelectOption[] = []
   for (const { row, scheduleId, mappableIndex } of mappableRows) {
@@ -222,7 +224,7 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
     })
   }
 
-  if (sessionOptions.length === 0) {
+  if (sessionOptions.length === 0 && assignableSchedules.length > 0) {
     return buildSurveyPollScheduleSelectOptions(apiSchedules)
   }
 
@@ -233,7 +235,9 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
 export function buildSurveyPollScheduleSelectOptions(
   schedules: ReadonlyArray<ProgramScheduleResponse>
 ): SurveyPollScheduleSelectOption[] {
-  const sorted = sortSchedulesForSurveyPoll(schedules)
+  const sorted = sortSchedulesForSurveyPoll(
+    filterProgramSchedulesForNewEducationAssignment(schedules)
+  )
   const sessionOptions: SurveyPollScheduleSelectOption[] = []
   for (let index = 0; index < sorted.length; index += 1) {
     const schedule = sorted[index]

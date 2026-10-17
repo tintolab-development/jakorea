@@ -154,6 +154,12 @@ export type PortalProfileResponse = {
   accountStatus?: string
   joinedAt?: string
   instructorProfile?: InstructorPortalProfileResponse
+  socialAccounts?: string[]
+  listMetrics?: {
+    settlementStatusLabel?: string
+    jaEvaluationGrade?: string
+    instructorFeeGradeLabel?: string
+  }
 }
 
 /** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityConfirmRequest` */

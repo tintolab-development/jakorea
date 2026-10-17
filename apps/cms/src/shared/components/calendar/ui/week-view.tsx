@@ -141,7 +141,7 @@ function weekTimeGridItemColors(
       bg: surface.bg,
       border: surface.border,
       text: surface.text,
-    } as ScheduleColorPair
+    }
   }
   return resolveEventColors?.(item) ?? resolvedDayColors.get(item.id) ?? SCHEDULE_COLORS[0]
 }
@@ -159,30 +159,20 @@ function weekProgramItemColor(
 function WeekTimeGridEventText({
   title,
   subtext,
-  textColor,
 }: {
   title: string
   subtext?: string
-  textColor: string
 }) {
   if (subtext) {
     return (
-      <span
-        className="calendar-event-title calendar-week-time-grid__event-text"
-        style={{ color: textColor }}
-      >
+      <span className="calendar-event-title calendar-week-time-grid__event-text">
         <span>{title}</span>
         <span className="calendar-week-time-grid__event-subtext">{subtext}</span>
       </span>
     )
   }
   return (
-    <span
-      className="calendar-event-title calendar-week-time-grid__event-text"
-      style={{ color: textColor }}
-    >
-      {title}
-    </span>
+    <span className="calendar-event-title calendar-week-time-grid__event-text">{title}</span>
   )
 }
 
@@ -346,7 +336,6 @@ export function WeekView({
                             ...buildWeekTimeGridGroupStyle(group),
                             zIndex: 20 + idx,
                             '--calendar-week-event-overlay-bg': colors.bg,
-                            border: isSelected ? 'none' : `1px solid ${colors.border}`,
                           }
                           return (
                             <div
@@ -366,11 +355,7 @@ export function WeekView({
                                 style={pos}
                                 onClick={e => e.stopPropagation()}
                               >
-                                <WeekTimeGridEventText
-                                  title={displayTitle}
-                                  subtext={subtext}
-                                  textColor={colors.text}
-                                />
+                                <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
                               </div>
                             </div>
                           )
@@ -429,7 +414,6 @@ export function WeekView({
                         ...buildWeekTimeGridGroupStyle(group),
                         zIndex: 20 + idx,
                         '--calendar-week-event-overlay-bg': colors.bg,
-                        border: `1px solid ${colors.border}`,
                       }
                       const displayTitle = item.title ?? weekTimeGridItemLabel(item)
                       const subtext = resolveWeekTimeGridSubtext(
@@ -464,11 +448,7 @@ export function WeekView({
                                     onProgramClick?.(item.original)
                                 }}
                               >
-                                <WeekTimeGridEventText
-                                  title={displayTitle}
-                                  subtext={subtext}
-                                  textColor={colors.text}
-                                />
+                                <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
                               </div>
                             </div>,
                             true,

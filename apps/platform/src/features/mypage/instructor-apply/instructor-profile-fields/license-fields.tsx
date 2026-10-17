@@ -7,18 +7,23 @@ import {
   PFDateInput,
   PFFormField,
   PFFormFieldRow,
-  PFFormFieldTable,
   PFFormInlineSeparatedFields,
   PFTextInput,
 } from '@/shared/ui'
 import styles from '../instructor-apply-form.module.css'
 import { ListRowActions } from './list-row-actions'
+import {
+  InstructorProfileFieldTable,
+  resolveInstructorProfileFieldLayout,
+} from './profile-field-table'
 import type { InstructorProfileFieldsProps } from './types'
 
 export function InstructorLicenseProfileFields({
   values,
   onValuesChange,
+  surface = 'apply',
 }: InstructorProfileFieldsProps) {
+  const fieldLayout = resolveInstructorProfileFieldLayout(surface)
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
     next: InstructorSharedProfileFormValues[K],
@@ -27,9 +32,9 @@ export function InstructorLicenseProfileFields({
   }
 
   return (
-    <PFFormFieldTable>
+    <InstructorProfileFieldTable surface={surface}>
       <PFFormFieldRow type="single">
-        <PFFormField label="자격 및 면허 내역">
+        <PFFormField label="자격 및 면허 내역" layout={fieldLayout}>
           <div className={styles.fieldStack}>
             {values.licenseRows.map((row, index) => (
               <div key={`license-${index}`} className={styles.fieldStackRow}>
@@ -92,6 +97,6 @@ export function InstructorLicenseProfileFields({
           </div>
         </PFFormField>
       </PFFormFieldRow>
-    </PFFormFieldTable>
+    </InstructorProfileFieldTable>
   )
 }

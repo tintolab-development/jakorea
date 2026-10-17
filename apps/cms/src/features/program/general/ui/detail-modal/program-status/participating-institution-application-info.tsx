@@ -60,6 +60,8 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   criminalCheck: ReactNode
   program: Program
   sessions: ParticipatingSchoolSession[]
+  /** 배정 일정 없음·로딩 등 — 기본: 등록된 교육 일정이 없습니다. */
+  scheduleSessionsEmptyMessage?: string
   useCompanySchoolScheduleFormat?: boolean
   onScheduleChangeClick?: () => void
 }
@@ -175,6 +177,7 @@ export function ParticipatingInstitutionApplicationInfo({
   criminalCheck,
   program,
   sessions,
+  scheduleSessionsEmptyMessage = '등록된 교육 일정이 없습니다.',
   useCompanySchoolScheduleFormat = false,
   onScheduleChangeClick,
 }: ParticipatingInstitutionApplicationInfoProps) {
@@ -413,14 +416,17 @@ export function ParticipatingInstitutionApplicationInfo({
         {sessions.length === 0 ? (
           <DetailInfoForm.Row type="custom">
             <p className="participating-institution-application-info__schedule-empty">
-              등록된 교육 일정이 없습니다.
+              {scheduleSessionsEmptyMessage}
             </p>
           </DetailInfoForm.Row>
         ) : useCompanySchoolScheduleFormat ? (
           <CompanySchoolProgressScheduleFields sessions={sessions} />
         ) : (
-          sessions.map(session => (
-            <DetailInfoForm.Row type="single" key={`${session.round}-${session.date}`}>
+          sessions.map((session, index) => (
+            <DetailInfoForm.Row
+              type="single"
+              key={`${session.osaAssignmentId ?? 's'}-${session.resolvedScheduleId ?? 'r'}-${session.round}-${index}`}
+            >
               <DetailInfoForm.Field
                 label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
                 fullRow

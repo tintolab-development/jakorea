@@ -31,6 +31,8 @@ export interface InstructorApplicationListItemResponse {
   instructorFeeGradeSnapshot?: string;
   distanceKm?: number;
   longDistance?: boolean;
+  programDispatchCount?: number;
+  programLongDistanceDispatchCount?: number;
   instructorProfileStatus?: string;
   primaryActivityType?: string;
   availableScheduleIds?: number[];

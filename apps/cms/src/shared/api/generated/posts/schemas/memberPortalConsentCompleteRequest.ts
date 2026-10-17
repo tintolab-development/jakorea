@@ -14,8 +14,8 @@ export interface MemberPortalConsentCompleteRequest {
   consentStatus?: MemberPortalConsentCompleteRequestConsentStatus;
   /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
   programEligible?: boolean;
-  /** PORTRAIT_RIGHTS 작성 완료 WritingFormDraft 전체 객체. PARTIAL 완료 시 필수입니다. */
+  /** Completed authored form for portrait, payment statement, facilitator pledge, and administrative information consents */
   filledDocument?: FilledDocumentRequest;
-  /** 호환 입력 필드입니다. 최신 법적 운영정책에 따라 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 값이 있으면 400입니다. */
+  /** Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED */
   evidenceFileObjectId?: number;
 }

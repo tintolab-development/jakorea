@@ -69,7 +69,7 @@ describe('mapEmployeeVolunteerCountsGetToSessionCounts', () => {
   it('confirmed=false이면 미등록(빈 값)으로 복원한다', () => {
     const counts = mapEmployeeVolunteerCountsGetToSessionCounts(
       sessionRows,
-      [{ scheduleId: 1, sessionNo: 1, scheduleName: '진행' }],
+      [{ scheduleId: 1, sessionNo: 1, scheduleName: '프로그램 진행' }],
       [
         {
           scheduleId: 1,
@@ -86,7 +86,7 @@ describe('mapEmployeeVolunteerCountsGetToSessionCounts', () => {
   it('confirmed=true이고 0명이면 저장된 0으로 복원한다', () => {
     const counts = mapEmployeeVolunteerCountsGetToSessionCounts(
       sessionRows,
-      [{ scheduleId: 1, sessionNo: 1, scheduleName: '진행' }],
+      [{ scheduleId: 1, sessionNo: 1, scheduleName: '프로그램 진행' }],
       [
         {
           scheduleId: 1,
@@ -168,6 +168,20 @@ describe('buildEmployeeVolunteerCountsPutRequest', () => {
         previousEntries: [{ scheduleId: 99, revision: 0 }],
       })
     ).toThrow(EmployeeVolunteerScheduleMappingError)
+  })
+
+  it('program_progress는 regularSchedules[0] 폴백 없이 이름 매칭만 한다', () => {
+    const progressRow: EmployeeVolunteerSessionRow = {
+      id: 'program_progress',
+      label: '프로그램 진행',
+      round: 1,
+      isPreEducation: false,
+      countsTowardParticipants: false,
+    }
+    const map = buildEmployeeVolunteerSessionRowScheduleMap([progressRow], [
+      { scheduleId: 20, sessionNo: 1, scheduleName: '다른 이름' },
+    ])
+    expect(map.has('program_progress')).toBe(false)
   })
 
   it('GET entries scheduleName으로 동일 sessionNo 일정을 구분한다', () => {

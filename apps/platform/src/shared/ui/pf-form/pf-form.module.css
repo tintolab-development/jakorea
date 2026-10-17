@@ -312,6 +312,27 @@
   min-width: 0;
 }
 
+.fieldLabelColumnVertical {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+}
+
+.fieldLabelTitleRowVertical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.fieldLabelColumnVertical .fieldLabelDescriptionVertical {
+  flex: none;
+  width: 100%;
+}
+
 .fieldLabelDescriptionVertical {
   flex: 1 1 12rem;
   min-width: 0;
@@ -444,6 +465,12 @@
   flex: 0 1 auto;
   align-items: center;
   gap: var(--spacing-12);
+}
+
+/** 인풋·셀렉트 우측 단위·보조 문구(개 학급, 명 등) — cluster 내 가로 정렬 유지 */
+.controlClusterSuffix {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .periodPair {
@@ -657,15 +684,25 @@
   .controlCluster {
     display: flex;
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
     gap: var(--spacing-8);
   }
 
   .controlCluster > * {
     box-sizing: border-box;
-    width: 100% !important;
+    flex: 0 1 auto;
+    min-width: 0;
+    width: auto !important;
     max-width: 100%;
+  }
+
+  .controlClusterSuffix {
+    flex: 0 0 auto;
+    width: auto !important;
+    max-width: none;
   }
 
   .inlineSegment > *:not(.periodPair),

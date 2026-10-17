@@ -116,7 +116,7 @@ export interface OrganizationApplicationDetailResponse {
      */
   preferredEducationDates?: string[] | null;
   /**
-     * CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 활성 기관별 일정 배정의 gradeLabel/classes.classNo, UJAT은 교육 학급 카탈로그를 사용합니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.
+     * CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 독립된 학생 명단의 grade/className, UJAT은 교육 학급 카탈로그를 사용합니다. 교육 일정 배정의 scheduleId와 학급을 연결하지 않습니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.
      * @nullable
      */
   gradeBlocks?: GradeBlock[] | null;

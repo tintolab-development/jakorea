@@ -42,6 +42,8 @@ export interface MemberSignupRequest {
   identityVerificationSessionId?: number;
   /** 보호자 인증/동의 세션 ID. 만 14세 미만 일반회원은 필수입니다. */
   guardianVerificationSessionId?: number;
+  /** 서버가 발급한 만 14세 미만 회원가입 절차 ID */
+  signupIntentId?: string;
   /** 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
   schoolEnrollmentStatus?: string;
   /** 기존 CMS 학교 PK. 학교 검색 응답의 organizationId를 그대로 전달할 수 있으며 schoolOrganizationId, schoolId 등도 호환합니다. */

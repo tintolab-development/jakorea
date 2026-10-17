@@ -1,6 +1,7 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   PFFormControlCluster,
+  PFFormControlSuffix,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
@@ -209,9 +210,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   value={value.classCount || undefined}
                   onValueChange={next => patch({ classCount: next })}
                 />
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
-                  개 학급
-                </PFText>
+                <PFFormControlSuffix>개 학급</PFFormControlSuffix>
               </PFFormControlCluster>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
@@ -226,9 +225,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   value={value.studentCount}
                   onValueChange={next => patch({ studentCount: next.replace(/[^\d]/g, '') })}
                 />
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
-                  명
-                </PFText>
+                <PFFormControlSuffix>명</PFFormControlSuffix>
               </PFFormControlCluster>
             </PFFormInlineSegment>
           </PFFormInlineRow>

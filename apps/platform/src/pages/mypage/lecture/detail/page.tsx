@@ -33,6 +33,8 @@ import {
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
+import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
@@ -295,6 +297,22 @@ export function MypageLectureDetailPage() {
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
   }
 
+  const instructorAvailableScheduleLines = useMemo(
+    () =>
+      resolveInstructorAvailableScheduleLines({
+        answers: application?.applicationAnswers,
+        preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
+        preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
+        program: programDetailToPreferredScheduleLookup(program),
+      }),
+    [
+      application?.applicationAnswers,
+      application?.preferredEducationScheduleLabel,
+      application?.preferredScheduleOptionValues,
+      program,
+    ],
+  )
+
   if (isDetailLoading) {
     return (
       <EducationApplicationDetailLoading
@@ -354,6 +372,7 @@ export function MypageLectureDetailPage() {
       <EducationApplicationContent
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        instructorAvailableScheduleLines={instructorAvailableScheduleLines}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

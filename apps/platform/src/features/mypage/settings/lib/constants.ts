@@ -62,11 +62,21 @@ export const MOCK_INSTRUCTOR_SETTINGS_PROFILE: SettingsProfileInput = {
   address: '서울시 강남구 테헤란로 1',
   addressDetail: '10층',
   instructor: true,
+  socialAccounts: ['kakao', 'google'],
+  listMetrics: {
+    settlementStatusLabel: '계좌 지급 완료',
+    jaEvaluationGrade: 'A등급',
+    instructorFeeGradeLabel: '3급 강사비',
+  },
   instructorProfile: {
     profile: {
       memberType: 'GENERAL' as const,
-      affiliation: { organizationNames: ['JA학습지'] },
+      affiliation: { organizationNames: ['JA 강사단'] },
       instructorCareerSummary: '3년',
+      oneLineIntro:
+        '적극적인 소통으로 재미있고 활기차게 강의를 이끌어가는 스타일입니다 ^^',
+      defaultJaGrade: 'A등급',
+      defaultFeeGrade: '3급 강사비',
       homeAddress: { line: '서울시 강남구 테헤란로 1', detail: '10층' },
       education: {
         highestSchoolType: 'college4' as const,
@@ -114,6 +124,12 @@ export const MOCK_INSTRUCTOR_SETTINGS_PROFILE: SettingsProfileInput = {
         freeWrite3: '청소년과의 소통에 대한 생각 예시입니다.',
         freeWrite4: '예기치 않은 상황 대처 사례 예시입니다.',
       },
+    },
+    settlement: {
+      businessIncome: false,
+      bankName: '농협',
+      accountNumber: '******_**_******',
+      accountHolder: '김*이',
     },
   },
 }

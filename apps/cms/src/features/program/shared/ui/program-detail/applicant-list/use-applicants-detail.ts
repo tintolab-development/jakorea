@@ -28,6 +28,7 @@ import { formatApplicationStatusConflictMessage } from '@/features/program/share
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
@@ -385,6 +386,7 @@ export function useApplicantsDetail({
             await queryClient.invalidateQueries({
               queryKey: generalProgramQueryKeys.formBindings(programId),
             })
+            await invalidateProgramAdminSchedulesQuery(queryClient, programId)
           }
           if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
             await queryClient.invalidateQueries({
@@ -395,6 +397,14 @@ export function useApplicantsDetail({
                 queryKey: generalApplicationsQueryKeys.organizationDetail(id),
               })
             }
+          }
+          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
+            await queryClient.invalidateQueries({
+              queryKey: [
+                ...generalProgramProgressQueryKeys.all,
+                'organization-schedule-assignments',
+              ],
+            })
           }
         }
         return 'ok'
@@ -840,6 +850,9 @@ export function useApplicantsDetail({
       void queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.instructorList(programId),
       })
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.organizationList(programId),
+      })
     }
   }, [
     instructorColumnPreset,
@@ -859,8 +872,10 @@ export function useApplicantsDetail({
   )
 
   useEffect(() => {
+    const hydrateForInstructorCalendar =
+      menu === 'instructors' && instructorColumnPreset === 'general-detail'
     if (
-      menu !== 'institutions' ||
+      (menu !== 'institutions' && !hydrateForInstructorCalendar) ||
       !usesProgramInstitutionApplications ||
       viewMode !== 'calendar' ||
       !programId ||
@@ -906,6 +921,7 @@ export function useApplicantsDetail({
     institutionColumnPreset,
     institutionScheduleHydrationSignature,
     institutionList.length,
+    instructorColumnPreset,
     menu,
     programId,
     queryClient,

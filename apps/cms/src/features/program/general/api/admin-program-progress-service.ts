@@ -3,8 +3,12 @@ import {
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
-  mapPreferredEducationSchedulesToSessions,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  buildHopeEducationSessionsFromPreferred,
+  buildOrganizationApplicationScheduleScopeKey,
+  readPreferredEducationSchedulesForScope,
+} from '@/features/program/general/lib/organization-education-schedule-sources'
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   fetchProgramAssignmentSubmissionsRemote,
@@ -117,19 +121,26 @@ const ORG_APPLICATIONS_ENRICH_PAGE_LIMIT = 40
 async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
   programId: string
 ): Promise<Map<string, PreferredEducationSchedule[]>> {
+  const normalizedProgramId = programId.trim()
   const index = new Map<string, PreferredEducationSchedule[]>()
   let page = 0
   for (;;) {
-    const response = await fetchOrganizationApplicationsRemote(programId, {
+    const response = await fetchOrganizationApplicationsRemote(normalizedProgramId, {
       page,
       size: ORG_APPLICATIONS_ENRICH_PAGE_SIZE,
     })
     const items = response.items ?? []
     for (const item of items) {
       if (item.id == null) continue
+      const itemProgramId =
+        item.programId != null ? String(item.programId).trim() : normalizedProgramId
+      if (itemProgramId !== normalizedProgramId) continue
       const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
       if (preferred.length > 0) {
-        index.set(String(item.id), preferred)
+        index.set(
+          buildOrganizationApplicationScheduleScopeKey(normalizedProgramId, String(item.id)),
+          preferred
+        )
       }
     }
     const totalPages = response.totalPages ?? 0
@@ -141,24 +152,32 @@ async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
 }
 
 function attachPreferredEducationSchedulesToParticipatingSchools(
+  programId: string,
   rows: ParticipatingSchoolRow[],
-  preferredByApplicationId: Map<string, PreferredEducationSchedule[]>
+  preferredByScopeKey: Map<string, PreferredEducationSchedule[]>
 ): ParticipatingSchoolRow[] {
-  if (preferredByApplicationId.size === 0) return rows
+  if (preferredByScopeKey.size === 0) return rows
+  const normalizedProgramId = programId.trim()
   return rows.map(row => {
-    const applicationId = row.organizationApplicationId
+    const applicationId = row.organizationApplicationId?.trim()
     if (!applicationId) return row
-    const preferred = preferredByApplicationId.get(applicationId)
+    if (row.programId != null && String(row.programId).trim() !== normalizedProgramId) {
+      return row
+    }
+    const preferred = readPreferredEducationSchedulesForScope(preferredByScopeKey, {
+      programId: normalizedProgramId,
+      organizationApplicationId: applicationId,
+    })
     if (!preferred?.length) return row
-    // 기관 신청 목록(B)의 희망 일정은 참여기관 목록(A) 응답에 없을 수 있다.
-    // 테이블은 sessions를 렌더링하므로 preferredEducationSchedules만 병합하면
-    // API에 일정이 있어도 화면에는 빈 값으로 표시된다.
-    const sessions = mapPreferredEducationSchedulesToSessions(preferred)
+    const hopeEducationSessions = buildHopeEducationSessionsFromPreferred(preferred)
     return {
       ...row,
       preferredEducationSchedules: preferred,
-      sessions,
-      lectureRound: sessions.length > 0 ? String(sessions.length) : row.lectureRound,
+      hopeEducationSessions,
+      lectureRound:
+        hopeEducationSessions.length > 0
+          ? String(hopeEducationSessions.length)
+          : row.lectureRound,
     }
   })
 }
@@ -176,6 +195,7 @@ export async function fetchGeneralParticipatingInstitutionsPage(
   const preferredByApplicationId =
     await fetchOrganizationPreferredEducationSchedulesByApplicationId(programId)
   const rows = attachPreferredEducationSchedulesToParticipatingSchools(
+    programId,
     (page.items ?? []).map((item, index) =>
       mapParticipantToParticipatingSchoolRow(
         item,

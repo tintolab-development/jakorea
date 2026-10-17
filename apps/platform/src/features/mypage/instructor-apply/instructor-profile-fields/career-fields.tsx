@@ -9,7 +9,6 @@ import {
   PFDateInput,
   PFFormField,
   PFFormFieldRow,
-  PFFormFieldTable,
   PFFormInlineSeparatedFields,
   PFFormPeriodPair,
   PFFormPeriodTilde,
@@ -17,10 +16,19 @@ import {
 } from '@/shared/ui'
 import styles from '../instructor-apply-form.module.css'
 import { ListRowActions } from './list-row-actions'
+import {
+  InstructorProfileFieldTable,
+  resolveInstructorProfileFieldLayout,
+} from './profile-field-table'
 import { InstructorProfileRadioGroup } from './radio-group'
 import type { InstructorProfileFieldsProps } from './types'
 
-export function InstructorCareerProfileFields({ values, onValuesChange }: InstructorProfileFieldsProps) {
+export function InstructorCareerProfileFields({
+  values,
+  onValuesChange,
+  surface = 'apply',
+}: InstructorProfileFieldsProps) {
+  const fieldLayout = resolveInstructorProfileFieldLayout(surface)
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
     next: InstructorSharedProfileFormValues[K],
@@ -29,9 +37,9 @@ export function InstructorCareerProfileFields({ values, onValuesChange }: Instru
   }
 
   return (
-    <PFFormFieldTable>
+    <InstructorProfileFieldTable surface={surface}>
       <PFFormFieldRow type="single">
-        <PFFormField label="경력 구분">
+        <PFFormField label="경력 구분" layout={fieldLayout}>
           <InstructorProfileRadioGroup
             name="careerLevel"
             value={values.careerLevel}
@@ -42,7 +50,7 @@ export function InstructorCareerProfileFields({ values, onValuesChange }: Instru
       </PFFormFieldRow>
       {values.careerLevel === 'experienced' ? (
         <PFFormFieldRow type="single">
-          <PFFormField label="경력 사항">
+          <PFFormField label="경력 사항" layout={fieldLayout}>
             <div className={styles.fieldStack}>
               {values.careers.map((row, index) => (
                 <div key={`career-${index}`} className={styles.fieldStackRow}>
@@ -133,6 +141,6 @@ export function InstructorCareerProfileFields({ values, onValuesChange }: Instru
           </PFFormField>
         </PFFormFieldRow>
       ) : null}
-    </PFFormFieldTable>
+    </InstructorProfileFieldTable>
   )
 }

@@ -81,10 +81,8 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
-import {
-  fetchGeneralInstructorAssignmentBoard,
-  findScheduleIdForLectureDate,
-} from '@/features/program/general/api/instructor-assignment-board-service'
+import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
+import { resolveInstructorAssignmentScheduleId } from '@/features/program/general/lib/resolve-instructor-assignment-schedule-id'
 import {
   buildCompanySchoolWaitingInstructorRows,
   buildCompanySchoolAssignedInstructorRows,
@@ -186,6 +184,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
+import { OrganizationScheduleAssignmentSection } from './organization-schedule-assignment-section'
 import { ParticipatingInstitutionScheduleChangeModal } from './participating-institution-schedule-change-modal'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
@@ -193,6 +192,14 @@ import {
   resolveParticipatingInstitutionActivityWithdrawStopScheduleId,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { buildParticipatingSchoolPreferredScheduleLines } from '@/features/program/general/lib/participating-school-session-display'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
+  organizationScheduleAssignmentsQueryKey,
+  resolveParticipatingSchoolHopeSessions,
+} from '@/features/program/general/lib/organization-education-schedule-sources'
 import {
   ActivityWithdrawScheduleModal,
   type ActivityWithdrawScheduleModalPayload,
@@ -540,9 +547,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     staleTime: 30_000,
   })
   const remoteAdminComment = resolveLatestAdminCommentText(adminCommentQuery.data)
+  const programId = String(program.id)
   const organizationApplicationIdForDetail = row.organizationApplicationId?.trim() ?? ''
   const organizationDetailQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.organizationDetail(organizationApplicationIdForDetail),
+    queryKey: generalApplicationsQueryKeys.organizationDetailInProgram(
+      programId,
+      organizationApplicationIdForDetail
+    ),
     queryFn: () => fetchOrganizationApplicationDetailRemote(organizationApplicationIdForDetail),
     enabled:
       activeTab === 'application' &&
@@ -557,7 +568,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
     ...savedBasicPatches[detail.id],
   }
-  const sessions = row.sessions ?? []
+  const participantSessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
   const availableActions = mergedDetail.availableActions ?? row.availableActions
   const canRequestActivityWithdraw =
@@ -565,9 +576,105 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const showActivityWithdrawButton =
     isActivityWithdrawn || availableActions == null || availableActions.includes('GIVE_UP')
   const isCompanySchool = isCompanySchoolProgram(program)
+  const isGeneralOrgProgram = isGeneralOrganizationProgram(program)
   const requiredInstructorCount = resolveRequiredInstructorCount(program)
-  const programId = String(program.id)
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+
+  const organizationScheduleAssignmentsQuery = useQuery({
+    queryKey: organizationScheduleAssignmentsQueryKey(
+      programId,
+      organizationApplicationIdForDetail || '__none__'
+    ),
+    queryFn: () =>
+      fetchOrganizationScheduleAssignmentsRemote(
+        programId,
+        organizationApplicationIdForDetail
+      ),
+    enabled:
+      isGeneralOrgProgram &&
+      organizationApplicationIdForDetail.length > 0 &&
+      shouldUseOrganizationApplicationRemoteApi(),
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const programSchedulesForOsaQuery = useQuery({
+    queryKey: generalProgramQueryKeys.schedules(programId),
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId),
+    enabled:
+      isGeneralOrgProgram &&
+      organizationApplicationIdForDetail.length > 0 &&
+      shouldUseOrganizationApplicationRemoteApi(),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const assignedEducationSessions = useMemo(() => {
+    if (!isGeneralOrgProgram) return []
+    const slots = organizationScheduleAssignmentsQuery.data
+    if (!slots?.length) return []
+    if (!organizationApplicationIdForDetail) return []
+    return mapOrganizationScheduleAssignmentSlotsToAssignedSessions(
+      slots,
+      programSchedulesForOsaQuery.data ?? [],
+      {
+        programId,
+        organizationApplicationId: organizationApplicationIdForDetail,
+      }
+    )
+  }, [
+    isGeneralOrgProgram,
+    organizationApplicationIdForDetail,
+    organizationScheduleAssignmentsQuery.data,
+    programId,
+    programSchedulesForOsaQuery.data,
+  ])
+
+  const applicationTabScheduleSessions = useMemo(() => {
+    if (isCompanySchool) return participantSessions
+    if (isGeneralOrgProgram) return assignedEducationSessions
+    return participantSessions
+  }, [
+    assignedEducationSessions,
+    isCompanySchool,
+    isGeneralOrgProgram,
+    participantSessions,
+  ])
+
+  const applicationTabScheduleEmptyMessage = useMemo(() => {
+    if (!isGeneralOrgProgram) return '등록된 교육 일정이 없습니다.'
+    if (organizationScheduleAssignmentsQuery.isLoading) {
+      return '배정된 교육 일정을 불러오는 중입니다.'
+    }
+    if (organizationScheduleAssignmentsQuery.isError) {
+      return '배정된 교육 일정을 불러오지 못했습니다.'
+    }
+    return '배정된 교육 일정이 없습니다.'
+  }, [
+    isGeneralOrgProgram,
+    organizationScheduleAssignmentsQuery.isError,
+    organizationScheduleAssignmentsQuery.isLoading,
+  ])
+
+  const hopeEducationSessions = useMemo(
+    () =>
+      resolveParticipatingSchoolHopeSessions(row, {
+        programId,
+        organizationApplicationId: organizationApplicationIdForDetail,
+      }),
+    [organizationApplicationIdForDetail, programId, row]
+  )
+
+  const instructorAssignScheduleSessions = useMemo(() => {
+    if (isGeneralOrgProgram && assignedEducationSessions.length > 0) {
+      return assignedEducationSessions
+    }
+    return participantSessions
+  }, [
+    assignedEducationSessions,
+    isGeneralOrgProgram,
+    participantSessions,
+  ])
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
   /** 1사1교 conflicts ON 또는 일반 progress remote ON */
@@ -628,8 +735,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   }, [assignmentBoard, assignmentBoardRemoteEnabled, row.organizationApplicationId])
 
   const activityWithdrawScheduleOptions = useMemo(
-    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
-    [program, sessions]
+    () =>
+      getParticipatingInstitutionActivityWithdrawScheduleOptions(program, participantSessions),
+    [program, participantSessions]
   )
 
   const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
@@ -854,7 +962,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     async (payload: ActivityWithdrawScheduleModalPayload) => {
       const patch = resolveParticipatingInstitutionActivityWithdrawPatch(
         program,
-        sessions,
+        participantSessions,
         payload.stopSessionKey
       )
       if (!patch) return
@@ -864,7 +972,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         try {
           if (progressRemoteEnabled) {
             const stopScheduleId = resolveParticipatingInstitutionActivityWithdrawStopScheduleId(
-              sessions,
+              participantSessions,
               payload.stopSessionKey
             )
             await giveUpGeneralParticipatingInstitution(programId, detail.id, {
@@ -910,7 +1018,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       programId,
       progressRemoteEnabled,
       queryClient,
-      sessions,
+      participantSessions,
       showAlert,
     ]
   )
@@ -1021,9 +1129,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           if (a.instructorMemberId != null) assignedMemberIds.add(String(a.instructorMemberId))
         }
       }
+      const waitingHopeSessions =
+        isGeneralOrgProgram && hopeEducationSessions.length > 0
+          ? hopeEducationSessions
+          : (row.sessions ?? [])
       return buildCompanySchoolWaitingInstructorRows({
         schoolName: row.schoolName,
-        sessions: row.sessions,
+        sessions: waitingHopeSessions,
         approvedInstructors: assignmentBoard.approvedInstructorApplications,
         assignedInstructorMemberIds: assignedMemberIds,
         occupiedLectureDatesByInstructorId,
@@ -1051,6 +1163,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     row.schoolName,
     row.sessions,
     row.organizationApplicationId,
+    hopeEducationSessions,
+    isGeneralOrgProgram,
     instructorList,
     participatingSchoolList,
     isCompanySchool,
@@ -1141,22 +1255,18 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               return
             }
 
-            let scheduleId: number | undefined =
-              typeof resolvedScheduleId === 'number' && resolvedScheduleId > 0
-                ? resolvedScheduleId
-                : undefined
-            if (scheduleId == null && requestedScheduleId == null) {
-              scheduleId =
-                findScheduleIdForLectureDate(
-                  assignmentBoard.schedules,
-                  waitingRow.hopeDate ?? waitingRow.hopeScheduleLine
-                ) ?? undefined
-            }
+            const scheduleId =
+              resolveInstructorAssignmentScheduleId({
+                schedules: assignmentBoard.schedules,
+                resolvedScheduleId,
+                hopeDateOrLine: waitingRow.hopeDate ?? waitingRow.hopeScheduleLine,
+                timeRangeLabel: waitingRow.hopeScheduleLine,
+              }) ?? undefined
             if (scheduleId == null && requestedScheduleId == null) {
               showAlert({
                 title: '안내',
                 content:
-                  '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+                  '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.',
               })
               return
             }
@@ -2105,10 +2215,24 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               }
               criminalCheck={formatGuidanceSegmentValue(mergedDetail.criminalCheckRequest)}
               program={program}
-              sessions={sessions}
+              sessions={applicationTabScheduleSessions}
+              scheduleSessionsEmptyMessage={applicationTabScheduleEmptyMessage}
               useCompanySchoolScheduleFormat={isCompanySchool}
               onScheduleChangeClick={() => setScheduleChangeModalOpen(true)}
             />
+            {isGeneralOrgProgram && shouldUseOrganizationApplicationRemoteApi() ? (
+              <OrganizationScheduleAssignmentSection
+                programId={programId}
+                organizationApplicationId={organizationApplicationIdForDetail}
+                canEdit={row.approvalStatus === 'approved' && !isActivityWithdrawn}
+                slots={organizationScheduleAssignmentsQuery.data}
+                slotsLoading={organizationScheduleAssignmentsQuery.isLoading}
+                slotsError={organizationScheduleAssignmentsQuery.isError}
+                programSchedules={programSchedulesForOsaQuery.data}
+                schedulesLoading={programSchedulesForOsaQuery.isLoading}
+                schedulesError={programSchedulesForOsaQuery.isError}
+              />
+            ) : null}
           </div>
         )}
 
@@ -2260,7 +2384,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               programId={String(program.id)}
               schoolId={row.id}
               schoolName={row.schoolName}
-              schoolSessions={row.sessions}
+              schoolSessions={instructorAssignScheduleSessions}
               participatingInstructorList={instructorList}
               participatingSchoolList={participatingSchoolList}
               assignedInstructorNames={assignedInstructorNames}
@@ -2299,7 +2423,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     }
 
                     const sessionIds = _meta?.sessionIds ?? []
-                    const selectedSessions = (row.sessions ?? []).filter(session =>
+                    const selectedSessions = instructorAssignScheduleSessions.filter(session =>
                       sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
                     )
                     if (selectedSessions.length === 0) {
@@ -2328,22 +2452,19 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                           })
                           return
                         }
-                        let scheduleId: number | undefined =
-                          typeof session.resolvedScheduleId === 'number' &&
-                          session.resolvedScheduleId > 0
-                            ? session.resolvedScheduleId
-                            : undefined
                         const requestedScheduleId = session.requestedScheduleId
-                        if (scheduleId == null && requestedScheduleId == null) {
-                          scheduleId =
-                            findScheduleIdForLectureDate(assignmentBoard.schedules, session.date) ??
-                            undefined
-                        }
+                        const scheduleId =
+                          resolveInstructorAssignmentScheduleId({
+                            schedules: assignmentBoard.schedules,
+                            resolvedScheduleId: session.resolvedScheduleId,
+                            hopeDateOrLine: session.date,
+                            timeRangeLabel: session.timeRange,
+                          }) ?? undefined
                         if (scheduleId == null && requestedScheduleId == null) {
                           showAlert({
                             title: '안내',
                             content:
-                              '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+                              '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.',
                           })
                           return
                         }
@@ -2601,7 +2722,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       <ParticipatingInstitutionScheduleChangeModal
         open={scheduleChangeModalOpen}
         program={program}
-        sessions={sessions}
+        sessions={applicationTabScheduleSessions}
         onCancel={() => {
           if (scheduleChangeSubmitting) return
           setScheduleChangeModalOpen(false)
@@ -2648,6 +2769,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               await queryClient.invalidateQueries({
                 queryKey: generalProgramProgressQueryKeys.participants(programId, 'ORGANIZATION'),
               })
+              if (organizationApplicationIdForDetail) {
+                await queryClient.invalidateQueries({
+                  queryKey: organizationScheduleAssignmentsQueryKey(
+                    programId,
+                    organizationApplicationIdForDetail
+                  ),
+                })
+              }
               setScheduleChangeModalOpen(false)
               showAlert({
                 title: '일정 변경',

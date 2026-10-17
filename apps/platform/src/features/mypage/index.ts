@@ -142,11 +142,13 @@ export {
 } from './lecture'
 export {
   getSettingsLnbItems,
+  mapInstructorBasicSettingsRows,
   mapPortalProfileToSettingsView,
   SettingsConsentsView,
   SettingsEditForm,
   SettingsSocialAccountsView,
   SettingsView,
+  useSettingsLinkedSocialProviders,
   useSettingsView,
 } from './settings'
 export type {

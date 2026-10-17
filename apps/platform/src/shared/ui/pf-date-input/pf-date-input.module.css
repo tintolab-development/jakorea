@@ -502,3 +502,135 @@
   outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
+
+/* —— 신청 양식 일정 선택 (강의/면접/봉사 진행 가능 일정) —— */
+
+.popoverApplySchedule .dayMarked::after {
+  display: none;
+}
+
+.popoverApplySchedule .dayMarked:not(.daySelected):not(.dayRangeStart):not(.dayRangeEnd):not(.dayInRange) {
+  border-radius: var(--radius-12);
+  background: var(
+    --color-primary-100,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+}
+
+.popoverApplySchedule .daySelected {
+  border-radius: var(--radius-12);
+  background: var(--color-primary-500, #00a0af);
+  color: var(--color-neutral-white);
+}
+
+.popoverApplySchedule .daySelected:hover {
+  background: var(--color-primary-500, #00a0af);
+  color: var(--color-neutral-white);
+}
+
+@media (--bp-pc-up) {
+  .popoverApplySchedule .day {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-12);
+    font-size: 15px;
+    line-height: 1;
+    gap: 0;
+  }
+
+  .popoverApplySchedule .weekdayRow,
+  .popoverApplySchedule .week {
+    --day-cell-size: 40px;
+    --day-cell-gap: var(--spacing-12);
+  }
+
+  .popoverApplySchedule .weekday {
+    width: 40px;
+    height: auto;
+    opacity: 1;
+    color: var(--color-neutral-cool-600);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    line-height: 12px;
+  }
+}
+
+@media not (--bp-pc-up) {
+  .popoverApplySchedule {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 300px;
+    min-height: 332px;
+    align-self: center;
+    gap: var(--spacing-16);
+    padding: var(--spacing-20);
+    border-radius: var(--radius-16);
+  }
+
+  .popoverApplySchedule .header {
+    gap: var(--spacing-8);
+  }
+
+  .popoverApplySchedule .yearMonth {
+    color: var(--main-BK, #3d3d3d);
+    text-align: center;
+    font-feature-settings:
+      'liga' off,
+      'clig' off;
+    font-family: var(--font-family-number);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 18px;
+  }
+
+  .popoverApplySchedule .body {
+    gap: var(--spacing-16);
+    align-items: stretch;
+    overflow-x: visible;
+  }
+
+  .popoverApplySchedule .weekdayRow,
+  .popoverApplySchedule .week {
+    --day-cell-size: 30px;
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    justify-items: center;
+    gap: 0;
+  }
+
+  .popoverApplySchedule .weeks {
+    width: 100%;
+    gap: var(--spacing-12);
+    overflow-x: visible;
+  }
+
+  .popoverApplySchedule .weekday {
+    width: 100%;
+    max-width: var(--day-cell-size);
+    height: auto;
+    flex: none;
+    opacity: 1;
+    color: var(--color-neutral-cool-600);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    line-height: 12px;
+  }
+
+  .popoverApplySchedule .day {
+    width: 100%;
+    max-width: var(--day-cell-size);
+    height: auto;
+    flex: none;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-12);
+    font-size: 15px;
+    line-height: 1;
+    gap: 0;
+  }
+}

@@ -2,10 +2,10 @@ import {
   resolveInstitutionApplicationProgramBridge,
   type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
-import type { SurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import { countEducationScheduleChoiceSlots } from '@jakorea/form-schema/program-application'
 import type { Program } from '@/types/domain'
+
+export { resolveSurveyPollBindingTargetWhenScheduleFieldHidden } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-hidden-schedule-binding'
 
 export function isSurveyPollPeriodProgram(program: Program | null | undefined): boolean {
   if (program == null) return false
@@ -34,15 +34,4 @@ export function shouldShowSurveyPollScheduleSelectField(
   if (bridge.educationScheduleMode === 'period') return false
   if (isSurveyPollScheduleMultiEventProgram(bridge)) return true
   return countEducationScheduleChoiceSlots(bridge.educationScheduleLines) > 1
-}
-
-/** 일정 필드 숨김 시 설문 바인딩 — 기간형 PROGRAM, 그 외 첫 회차 SCHEDULE */
-export async function resolveSurveyPollBindingTargetWhenScheduleFieldHidden(
-  program: Program
-): Promise<SurveyPollBindingTarget | null> {
-  if (isSurveyPollPeriodProgram(program)) {
-    return { targetScope: 'PROGRAM' }
-  }
-  const scheduleTarget = await resolveLectureEvalBindingTarget(String(program.id))
-  return scheduleTarget
 }

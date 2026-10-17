@@ -12,8 +12,7 @@ import { CalendarApprovalStatusBadge } from '@/shared/components/calendar/ui/ite
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
 import {
   findInstitutionSessionsForDate,
-  formatInstitutionCalendarSessionsTimeDisplay,
-  getInstitutionRegionShort,
+  formatInstitutionCalendarHoverMetaLine,
 } from './applicant-institution-calendar-session'
 
 function resolveInstitutionFromCalendarItem(item: CalendarItem): {
@@ -50,6 +49,8 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
 }): ReactNode {
+  const seenInstitutionIds = new Set<string>()
+
   return (
     <div className="participating-institutions-calendar-popover">
       {events.map(item => {
@@ -57,19 +58,26 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
         if (resolved == null) return null
 
         const { institution, dateKey } = resolved
+        const institutionKey =
+          typeof institution.id === 'string' && institution.id.trim() !== ''
+            ? institution.id.trim()
+            : String(item.id)
+        if (seenInstitutionIds.has(institutionKey)) return null
+        seenInstitutionIds.add(institutionKey)
+
         const sessions = findInstitutionSessionsForDate(institution, dateKey)
         const titleColor = colorMap.get(item.id)?.text
-        const sessionLine = formatInstitutionCalendarSessionsTimeDisplay(
+        const metaLine = formatInstitutionCalendarHoverMetaLine(
+          institution,
           sessions,
           institution.desiredEducationPeriod
         )
-        const gradeLabel = institution.educationGrade?.trim() || '-'
         const approvalStatus = approvalStatusModifier(
           institution.approvalStatus as ApprovalStatusKey | undefined
         )
 
         return (
-          <div key={String(item.id)} className="participating-institutions-calendar-popover__entry">
+          <div key={institutionKey} className="participating-institutions-calendar-popover__entry">
             <div className="participating-institutions-calendar-popover__title-row">
               <span
                 className="participating-institutions-calendar-popover__title"
@@ -80,24 +88,9 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
               <CalendarApprovalStatusBadge status={approvalStatus} />
             </div>
             <div className="participating-institutions-calendar-popover__meta">
-              <span className="participating-institutions-calendar-popover__meta-part">
-                {getInstitutionRegionShort(institution.region)}
+              <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
+                {metaLine}
               </span>
-              <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-              <span className="participating-institutions-calendar-popover__meta-part">
-                {gradeLabel}
-              </span>
-              {sessionLine !== '-' ? (
-                <>
-                  <span
-                    className="participating-institutions-calendar-popover__meta-sep"
-                    aria-hidden
-                  />
-                  <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
-                    {sessionLine}
-                  </span>
-                </>
-              ) : null}
             </div>
           </div>
         )

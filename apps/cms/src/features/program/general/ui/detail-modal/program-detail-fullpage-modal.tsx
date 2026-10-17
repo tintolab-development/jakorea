@@ -14,6 +14,8 @@
  */
 
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
 import { useLocation, useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
@@ -308,6 +310,7 @@ export function ProgramDetailFullPageModal({
     rawSetSearchParams(nextInit, navigateOpts)
   }, [rawSetSearchParams])
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
   const programId = program?.id
   const {
@@ -1473,6 +1476,9 @@ export function ProgramDetailFullPageModal({
       }
       detailRequiredHighlight.clear()
       setEditMode(null)
+      if (displayProgram?.id != null) {
+        await invalidateProgramAdminSchedulesQuery(queryClient, String(displayProgram.id))
+      }
     } finally {
       endOverlay()
     }
@@ -1484,6 +1490,7 @@ export function ProgramDetailFullPageModal({
     infoTriggerSave,
     isCompanySchoolDetail,
     isTrainedTeachersDetail,
+    queryClient,
     showAlert,
   ])
 

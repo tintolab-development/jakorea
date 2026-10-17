@@ -12,6 +12,8 @@ export type TeacherApplicationContentProps = {
   applicationType?: ProgramApplicationType
   content: TeacherApplicationContentModel
   showGuidanceWriteLink?: boolean
+  /** 기관 안내사항 양식이 없는 프로그램(교육받은 교사 등)은 false */
+  institutionGuidanceEnabled?: boolean
   showPreferredEducationForm?: boolean
 }
 
@@ -20,6 +22,7 @@ export function TeacherApplicationContent({
   applicationType,
   content,
   showGuidanceWriteLink = false,
+  institutionGuidanceEnabled = true,
   showPreferredEducationForm = false,
 }: TeacherApplicationContentProps) {
   const [guidance, setGuidance] = useState(content.guidance)
@@ -29,7 +32,8 @@ export function TeacherApplicationContent({
   }, [applicationId, content.guidance])
 
   const showGuidanceSection =
-    showGuidanceWriteLink || hasTeacherApplicationGuidanceContent(guidance)
+    hasTeacherApplicationGuidanceContent(guidance) ||
+    (institutionGuidanceEnabled && showGuidanceWriteLink)
 
   return (
     <div className={styles.root}>

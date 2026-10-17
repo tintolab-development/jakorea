@@ -78,3 +78,11 @@
   margin: 0 var(--spacing-12);
   background: var(--color-border-default);
 }
+
+.instructorScheduleLines {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}

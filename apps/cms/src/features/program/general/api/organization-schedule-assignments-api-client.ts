@@ -1,5 +1,5 @@
 /**
- * GENERAL_ORGANIZATION 기관 신청 교육일정·학급 임시배정 (OSA)
+ * GENERAL_ORGANIZATION 기관 신청 교육 일정 배정 (OSA, schedule-only)
  * GET/PUT /api/admin/programs/{programId}/organization-applications/{applicationId}/schedule-assignments
  */
 
@@ -8,11 +8,9 @@ import customInstance from '@/shared/api/orval-mutator'
 import type { AssignmentResponse } from '@/shared/api/generated/dashboard/schemas/assignmentResponse'
 import type { SlotResponse } from '@/shared/api/generated/dashboard/schemas/slotResponse'
 
-/** OpenAPI `SlotRequest` — 일정만 필수, grade/className optional */
+/** GENERAL_ORGANIZATION 일정 배정 — scheduleId만 전송 (grade/className 미사용) */
 export type OrganizationScheduleAssignmentSlotRequest = {
   scheduleId: number
-  grade?: string
-  className?: string
 }
 
 export type OrganizationScheduleAssignmentReplaceRequest = {

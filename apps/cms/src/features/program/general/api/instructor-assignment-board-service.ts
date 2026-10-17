@@ -178,16 +178,12 @@ export async function fetchGeneralInstructorAssignmentBoard(
   return fetchInstructorAssignmentBoardData(programId)
 }
 
-/** hope 날짜(YYYY-MM-DD)에 매칭되는 program schedule id — 레거시 폴백 */
+/**
+ * @deprecated 날짜-only 첫 매치 제거. {@link resolveInstructorAssignmentScheduleId} 사용.
+ */
 export function findScheduleIdForLectureDate(
-  schedules: ProgramScheduleResponse[],
-  hopeDateOrLine: string | null | undefined
+  _schedules: ProgramScheduleResponse[],
+  _hopeDateOrLine: string | null | undefined
 ): number | null {
-  const hopeKey = extractLectureDateKey(hopeDateOrLine)
-  if (!hopeKey) return null
-  for (const schedule of schedules) {
-    const key = extractLectureDateKey(schedule.startAt ?? schedule.startDate)
-    if (key === hopeKey && schedule.id != null) return schedule.id
-  }
   return null
 }

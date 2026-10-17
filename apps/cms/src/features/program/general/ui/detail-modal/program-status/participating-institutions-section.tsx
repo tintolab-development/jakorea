@@ -72,6 +72,7 @@ import type { GeneralProgramNavigationCapabilities } from '@/features/program/ge
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { resolveParticipatingSchoolHopeSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 
@@ -365,10 +366,17 @@ export function ParticipatingInstitutionsSection({
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
+          const applicationId = record.organizationApplicationId?.trim()
+          const hopeSessions = resolveParticipatingSchoolHopeSessions(
+            record,
+            programId && applicationId
+              ? { programId: String(programId), organizationApplicationId: applicationId }
+              : undefined
+          )
           const sessionLines =
             isCompanySchool || isTrainedTeachersSurface
               ? buildParticipatingSchoolPreferredScheduleLines(record.sessions)
-              : (record.sessions ?? []).map(formatSessionLine)
+              : hopeSessions.map(formatSessionLine)
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessionLines.slice(0, showCount)
