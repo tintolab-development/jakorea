@@ -3,14 +3,14 @@
  */
 
 import type { ReactNode } from 'react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import type { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import {
-  TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS,
+  getTrainedTeachersInstitutionDetailTabKeys,
   TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS,
   normalizeTrainedTeachersInstitutionDetailTab,
   type TrainedTeachersInstitutionDetailTabKey,
@@ -53,9 +53,27 @@ export function TrainedTeachersApplicantInstitutionDetailContents({
   const [searchParams, setSearchParams] = useSearchParams()
 
   const activeTab = useMemo(
-    () => normalizeTrainedTeachersInstitutionDetailTab(searchParams.get(DETAIL_TAB_PARAM)),
-    [searchParams]
+    () =>
+      normalizeTrainedTeachersInstitutionDetailTab(
+        searchParams.get(DETAIL_TAB_PARAM),
+        program?.generalCommonInfo?.educationJournalEnabled
+      ),
+    [program?.generalCommonInfo?.educationJournalEnabled, searchParams]
   )
+
+  useEffect(() => {
+    const raw = searchParams.get(DETAIL_TAB_PARAM)
+    const normalized = normalizeTrainedTeachersInstitutionDetailTab(
+      raw,
+      program?.generalCommonInfo?.educationJournalEnabled
+    )
+    if (raw === normalized || (raw == null && normalized === 'application')) return
+
+    const next = new URLSearchParams(searchParams)
+    if (normalized === 'application') next.delete(DETAIL_TAB_PARAM)
+    else next.set(DETAIL_TAB_PARAM, normalized)
+    setSearchParams(next, { replace: true })
+  }, [program?.generalCommonInfo?.educationJournalEnabled, searchParams, setSearchParams])
 
   const setActiveTab = useCallback(
     (key: string) => {
@@ -72,11 +90,13 @@ export function TrainedTeachersApplicantInstitutionDetailContents({
 
   const tabDefs = useMemo(
     () =>
-      TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS.map(key => ({
+      getTrainedTeachersInstitutionDetailTabKeys(
+        program?.generalCommonInfo?.educationJournalEnabled
+      ).map(key => ({
         key,
         label: TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS[key],
       })),
-    []
+    [program?.generalCommonInfo?.educationJournalEnabled]
   )
 
   const applicationPanel = (

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getTrainedTeachersInstitutionDetailTabKeys } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
+import {
+  getTrainedTeachersInstitutionDetailTabKeys,
+  normalizeTrainedTeachersInstitutionDetailTab,
+} from '@/features/program/trained-teachers/lib/institution-detail-tabs'
 import { getGeneralParticipatingInstitutionDetailTabKeys } from './participating-institution-detail-tabs'
 
 describe('프로그램 진행 현황 하위 capability', () => {
@@ -37,5 +40,11 @@ describe('프로그램 진행 현황 하위 capability', () => {
 
   it('교육일지 capability가 없으면 교육받은 교사 기존 탭 fallback을 유지한다', () => {
     expect(getTrainedTeachersInstitutionDetailTabKeys()).toEqual(['application', 'journal'])
+  })
+
+  it('교육일지 OFF 상태의 legacy 딥링크를 신청 정보로 정규화한다', () => {
+    expect(normalizeTrainedTeachersInstitutionDetailTab('journal', false)).toBe('application')
+    expect(normalizeTrainedTeachersInstitutionDetailTab('journal', true)).toBe('journal')
+    expect(normalizeTrainedTeachersInstitutionDetailTab('journal')).toBe('journal')
   })
 })

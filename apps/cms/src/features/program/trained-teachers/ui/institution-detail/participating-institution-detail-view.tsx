@@ -97,6 +97,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   detail,
   row,
   navigationCapabilities,
+  navigationCapabilitiesLoading = false,
   participatingSchoolList = [],
   activeTab: activeTabFromUrl,
   onTabChange,
@@ -568,6 +569,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
     )
   )
+
+  if (navigationCapabilitiesLoading) {
+    return (
+      <div className="school-detail-fullpage-view" role="status">
+        교육일지 설정을 확인하는 중입니다.
+      </div>
+    )
+  }
 
   if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTab === 'application') {
     return (

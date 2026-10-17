@@ -206,11 +206,12 @@ const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
 
 function parseSchoolTabFromSearch(
   searchParams: URLSearchParams,
-  program?: Program | null
+  program?: Program | null,
+  educationJournalEnabled?: boolean
 ): ParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
   if (t && isParticipatingInstitutionDetailTabKeyForProgram(t, program)) {
-    return normalizeParticipatingInstitutionDetailTab(t, program)
+    return normalizeParticipatingInstitutionDetailTab(t, program, educationJournalEnabled)
   }
   return 'application'
 }
@@ -510,6 +511,7 @@ export function GeneralProgramDetailFullPageModal({
   const {
     disabledLnbKeys,
     capabilities: navigationCapabilities,
+    loading: navigationLoading,
     navigation,
     isRemoteDataSource: isNavigationRemote,
   } = useGeneralProgramNavigation(open ? programId : undefined, open)
@@ -695,7 +697,11 @@ export function GeneralProgramDetailFullPageModal({
   const editTab = open ? searchParams.get(EDIT_PARAM) : null
   const schoolIdFromUrl = open ? searchParams.get(SCHOOL_ID_PARAM) : null
   const activeSchoolTab = schoolIdFromUrl
-    ? parseSchoolTabFromSearch(searchParams, displayProgram)
+    ? parseSchoolTabFromSearch(
+        searchParams,
+        displayProgram,
+        navigationCapabilities.educationJournalEnabled
+      )
     : 'application'
   const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
   const activeInstructorTab = useMemo(() => {
@@ -1523,7 +1529,11 @@ export function GeneralProgramDetailFullPageModal({
           const next = new URLSearchParams(prev)
           next.set(
             SCHOOL_TAB_PARAM,
-            normalizeParticipatingInstitutionDetailTab(tab, displayProgramRef.current)
+            normalizeParticipatingInstitutionDetailTab(
+              tab,
+              displayProgramRef.current,
+              navigationCapabilities.educationJournalEnabled
+            )
           )
           preserveGeneralProgramDetailProgramId(prev, next)
           return next
@@ -1531,7 +1541,7 @@ export function GeneralProgramDetailFullPageModal({
         { replace: true }
       )
     },
-    [setSearchParams]
+    [navigationCapabilities.educationJournalEnabled, setSearchParams]
   )
 
   const setInstructorTab = useCallback(
@@ -1713,7 +1723,11 @@ export function GeneralProgramDetailFullPageModal({
       prev => {
         if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(SCHOOL_TAB_PARAM)
-        const normalized = parseSchoolTabFromSearch(prev, displayProgram)
+        const normalized = parseSchoolTabFromSearch(
+          prev,
+          displayProgram,
+          navigationCapabilities.educationJournalEnabled
+        )
         if (raw === normalized) return prev
         const next = new URLSearchParams(prev)
         next.set(SCHOOL_TAB_PARAM, normalized)
@@ -1721,7 +1735,13 @@ export function GeneralProgramDetailFullPageModal({
       },
       { replace: true }
     )
-  }, [open, schoolIdFromUrl, displayProgram, setSearchParams])
+  }, [
+    open,
+    schoolIdFromUrl,
+    displayProgram,
+    setSearchParams,
+    navigationCapabilities.educationJournalEnabled,
+  ])
 
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return
@@ -2113,6 +2133,7 @@ export function GeneralProgramDetailFullPageModal({
                     programId={displayProgram.id}
                     program={displayProgram}
                     navigationCapabilities={navigationCapabilities}
+                    navigationCapabilitiesLoading={navigationLoading}
                     schoolIdFromUrl={schoolIdFromUrl}
                     schoolTabFromUrl={activeSchoolTab}
                     onSchoolTabChange={setSchoolTab}
