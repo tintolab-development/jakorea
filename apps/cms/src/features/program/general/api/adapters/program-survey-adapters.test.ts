@@ -222,6 +222,42 @@ describe('resolveLectureEvalSubmitContext', () => {
 })
 
 describe('pickLectureEvalSurveyFromRemote', () => {
+  it('prefers PROGRAM scope lecture binding over SCHEDULE', () => {
+    const row = pickLectureEvalSurveyFromRemote({
+      classified: [
+        {
+          kind: 'lecture_evaluation',
+          binding: { bindingId: 1, targetScope: 'SCHEDULE', targetScopeId: 99 },
+          survey: {
+            id: '1',
+            title: '일정별',
+            templateId: '9',
+            status: 'in_progress',
+            responseCount: 0,
+            participantTotal: 1,
+            bindingId: '1',
+          },
+        },
+        {
+          kind: 'lecture_evaluation',
+          binding: { bindingId: 5, targetScope: 'PROGRAM' },
+          survey: {
+            id: '5',
+            title: '프로그램 공통',
+            templateId: '9',
+            status: 'in_progress',
+            responseCount: 0,
+            participantTotal: 1,
+            bindingId: '5',
+          },
+        },
+      ],
+      surveys: [],
+    })
+    expect(row?.title).toBe('프로그램 공통')
+    expect(row?.bindingId).toBe('5')
+  })
+
   it('uses classified lecture binding first', () => {
     const row = pickLectureEvalSurveyFromRemote({
       classified: [

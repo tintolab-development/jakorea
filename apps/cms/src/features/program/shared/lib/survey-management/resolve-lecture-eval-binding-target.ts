@@ -1,17 +1,22 @@
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { resolveLectureEvalBindingTargetContract } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target-contract'
 
-export type LectureEvalBindingTarget = {
-  targetScope: 'SCHEDULE'
-  targetScopeId: number
-}
+export type LectureEvalBindingTarget =
+  | {
+      targetScope: 'SCHEDULE'
+      targetScopeId: number
+    }
+  | {
+      targetScope: 'PROGRAM'
+      targetScopeId: null
+    }
 
 /**
- * 강의평가 바인딩은 프로그램 단위가 아니라 교육 일정(회차)이 필수다.
- * 등록 화면은 회차를 고르지 않으므로 가장 앞 회차에 연결한다.
+ * @deprecated 일정별(SCHEDULE) 자동 바인딩. 신규 등록은 {@link resolveLectureEvalBindingTargetForCreate}.
  */
 export async function resolveLectureEvalBindingTarget(
   programId: string
-): Promise<LectureEvalBindingTarget | null> {
+): Promise<Extract<LectureEvalBindingTarget, { targetScope: 'SCHEDULE' }> | null> {
   const schedules = await fetchAdminProgramSchedulesRemote(programId)
   const withId = schedules.filter(
     (item): item is typeof item & { id: number } =>
@@ -25,4 +30,11 @@ export async function resolveLectureEvalBindingTarget(
   const first = withId[0]
   if (first == null) return null
   return { targetScope: 'SCHEDULE', targetScopeId: Math.trunc(first.id) }
+}
+
+/** 강의평가 등록 — 프로그램 공통 PROGRAM 바인딩 (targetScopeId null) */
+export async function resolveLectureEvalBindingTargetForCreate(
+  _programId: string
+): Promise<LectureEvalBindingTarget> {
+  return resolveLectureEvalBindingTargetContract()
 }

@@ -70,7 +70,7 @@ import {
   surveyBindingResolutionAlert,
   type SurveySubmissionPeriod,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
-import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
+import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
@@ -798,17 +798,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           pendingSatisfactionAudience
         )
         if (createModalKind === 'lecture') {
-          const lectureTarget = await resolveLectureEvalBindingTarget(String(program.id))
-          if (lectureTarget == null) {
-            void showAlert({
-              title: '등록 실패',
-              content:
-                '강의평가는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
-            })
-            return
-          }
+          const lectureTarget = await resolveLectureEvalBindingTargetForCreate(String(program.id))
           payload.targetScope = lectureTarget.targetScope
-          payload.targetScopeId = lectureTarget.targetScopeId
+          if (lectureTarget.targetScopeId != null) {
+            payload.targetScopeId = lectureTarget.targetScopeId
+          } else {
+            delete payload.targetScopeId
+          }
         }
         if (createModalKind === 'survey') {
           if (showSurveyPollScheduleSelectField) {

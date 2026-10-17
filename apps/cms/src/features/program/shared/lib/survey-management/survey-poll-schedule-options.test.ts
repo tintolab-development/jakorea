@@ -73,6 +73,25 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
     ])
   })
 
+  it('ambiguous program_progress mapping yields no fallback options', () => {
+    const program = baseProgram({
+      generalProgramSessionRound: 'single',
+      generalProgramEducationStructure: 'schedule',
+      generalCommonInfo: {
+        educationScheduleLines: [
+          '26년 10월 30일(금) 13:30 ~ 15:30',
+          '26년 10월 30일(금) 9:30 ~ 11:30',
+        ],
+      },
+    })
+    const options = buildSurveyPollScheduleSelectOptionsForProgram(program, [
+      { id: 186892, sessionNo: 1, allDay: true, startAt: '2026-10-30T00:00:00+09:00', endAt: '2026-10-30T23:59:00+09:00' },
+      { id: 186896, sessionNo: 4, startAt: '2026-10-30T13:30:00+09:00', endAt: '2026-10-30T15:30:00+09:00' },
+      { id: 186897, sessionNo: 5, startAt: '2026-10-30T09:30:00+09:00', endAt: '2026-10-30T11:30:00+09:00' },
+    ])
+    expect(options).toEqual([])
+  })
+
   it('zips education schedule lines for schedule multi event rows only', () => {
     const program = baseProgram({
       generalProgramAudience: 'individual',
