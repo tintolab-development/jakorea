@@ -562,22 +562,28 @@ export function instructorAvailableScheduleValuesFromDraftAnswer(
   return { selectedSlotIds: ids }
 }
 
+export type ApplyScheduleSlotChipStyle = 'lecture' | 'interview'
+
 export type ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: string
   summaryLabel: string
   emptyMessage: string
+  /** 강의·봉사(lecture) vs 면접(interview) 칩 시안 */
+  slotChipStyle?: ApplyScheduleSlotChipStyle
 }
 
 const INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '강의 진행 가능 일정 날짜',
   summaryLabel: '강의 진행 가능일',
   emptyMessage: '선택 가능한 강의 일정이 없습니다.',
+  slotChipStyle: 'lecture',
 }
 
 export const INDIVIDUAL_INTERVIEW_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '면접 진행 가능 일정 날짜',
   summaryLabel: '면접 진행 가능일',
   emptyMessage: '선택 가능한 면접 일정이 없습니다.',
+  slotChipStyle: 'interview',
 }
 
 /** 봉사자 신청 — CMS `VolunteerActivityAvailableScheduleParagraph` (강사 일정 UI 재사용) */
@@ -585,6 +591,7 @@ export const VOLUNTEER_ACTIVITY_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '봉사 진행 가능 일정 날짜',
   summaryLabel: '봉사 진행 가능일',
   emptyMessage: '선택 가능한 봉사 일정이 없습니다.',
+  slotChipStyle: 'lecture',
 }
 
 export function findIncompleteVolunteerActivityScheduleMessage(
@@ -665,6 +672,8 @@ export function ApplyInstructorAvailableSchedule({
 
   const emptyMessage =
     slots.length === 0 ? copy.emptyMessage : '이 날짜에 선택할 수 있는 일정이 없습니다.'
+  const slotChipStyle = copy.slotChipStyle ?? 'lecture'
+  const slotChipInterview = slotChipStyle === 'interview'
 
   return (
     <div className={styles.root}>
@@ -683,7 +692,12 @@ export function ApplyInstructorAvailableSchedule({
             onSelectDate={setSelectedDateKey}
           />
         ) : null}
-        <div className={styles.slotGrid} role="list">
+        <div
+          className={[styles.slotGrid, slotChipInterview ? styles.slotGridInterview : undefined]
+            .filter(Boolean)
+            .join(' ')}
+          role="list"
+        >
           {visibleSlots.length === 0 ? (
             <PFText as="p" typo="bd-md-md" color="neutral-cool-600" className={styles.empty}>
               {emptyMessage}
@@ -698,7 +712,11 @@ export function ApplyInstructorAvailableSchedule({
                   type="button"
                   role="listitem"
                   aria-pressed={active}
-                  className={[styles.slotCard, active ? styles.slotCardActive : undefined]
+                  className={[
+                    styles.slotCard,
+                    slotChipInterview ? styles.slotCardInterview : undefined,
+                    active ? styles.slotCardActive : undefined,
+                  ]
                     .filter(Boolean)
                     .join(' ')}
                   onClick={() => toggle(slot.id)}

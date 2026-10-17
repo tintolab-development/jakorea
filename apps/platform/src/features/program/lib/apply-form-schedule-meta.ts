@@ -1,4 +1,7 @@
-import { readCurriculumMultiDateFixedScheduleMeta } from '@jakorea/form-schema/program-application'
+import {
+  readCurriculumMultiDateFixedScheduleMeta,
+  readCurriculumPreferredScheduleDailySessionCountForCopy,
+} from '@jakorea/form-schema/program-application'
 import type { ProgramDetail } from '../model/types.ts'
 
 export function readApplyScheduleMetaFromProgram(
@@ -15,8 +18,11 @@ export function readApplyScheduleMetaFromProgram(
   }))
   const meta = readCurriculumMultiDateFixedScheduleMeta({ curriculumSessions })
   const curriculumChartSessionCount =
-    program.sessionRound === 'single' && curriculumSessions?.length
-      ? curriculumSessions.length
+    program.sessionRound === 'single'
+      ? readCurriculumPreferredScheduleDailySessionCountForCopy({
+          sessionRound: 'single',
+          curriculumSessions,
+        })
       : undefined
   return {
     educationRoundCount: meta.educationRoundCount,
