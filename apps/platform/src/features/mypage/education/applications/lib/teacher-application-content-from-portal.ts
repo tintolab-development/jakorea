@@ -1,6 +1,9 @@
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import type { ProgramApplicationType } from '../api/types'
-import { isOrganizationEducationApplication } from './organization-education-application'
+import {
+  isOrganizationEducationApplication,
+  resolveTeacherApplicationProgramGroup,
+} from './organization-education-application'
 import type { EducationTeacherApplicationContent } from '../model/types'
 import { mapTeacherInstitutionFromApplicationAnswers } from './institution-basic-info-from-answers'
 import {
@@ -41,19 +44,29 @@ export type BuildTeacherApplicationContentInput = {
 
 export function buildTeacherApplicationContentFromPortal(
   input: BuildTeacherApplicationContentInput,
-  program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules' | 'programAudience'>,
+  program?: Pick<
+    ProgramDetail,
+    'educationScheduleLines' | 'eventSchedules' | 'programAudience' | 'programType' | 'registrationKind'
+  >,
 ): EducationTeacherApplicationContent | undefined {
+  const programForAudience =
+    program ??
+    (input.programAudience
+      ? { programAudience: input.programAudience, programType: undefined, registrationKind: undefined }
+      : undefined)
+
   const isOrganization = isOrganizationEducationApplication(
     { applicationType: input.applicationType },
-    program ?? (input.programAudience ? { programAudience: input.programAudience } : undefined),
+    programForAudience,
   )
   if (!isOrganization) return input.existing
 
   const answers = input.answers ?? {}
   const hasAnswers = Object.keys(answers).length > 0
+  const programGroup = resolveTeacherApplicationProgramGroup(programForAudience, input.programGroup)
 
   const institutionFromAnswers = hasAnswers
-    ? mapTeacherInstitutionFromApplicationAnswers(answers, input.detailCase, input.programGroup)
+    ? mapTeacherInstitutionFromApplicationAnswers(answers, input.detailCase, programGroup)
     : null
   const guidanceForm = hasAnswers
     ? mapInstitutionGuidanceFromApplicationAnswers(answers, input.detailCase)

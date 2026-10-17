@@ -6,6 +6,7 @@ import {
   resolvePreferredEducationScheduleLabelFromAnswers,
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
+import { isOrganizationEducationApplication } from '../lib/organization-education-application'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
@@ -337,16 +338,24 @@ export function mapPortalProgramApplicationDetail(
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
 
   const applicationType = readApplicationType(detail.applicationType)
-  const nestedProgramAudience = (
-    detail.program as { programAudience?: ProgramDetail['programAudience'] } | undefined
-  )?.programAudience
-  const isOrganizationApplication =
-    applicationType === 'ORGANIZATION' || nestedProgramAudience === 'organization'
+  const nestedProgram = detail.program as
+    | Pick<
+        ProgramDetail,
+        'programAudience' | 'programType' | 'registrationKind' | 'educationScheduleLines' | 'eventSchedules'
+      >
+    | undefined
+  const isOrganizationApplication = isOrganizationEducationApplication(
+    {
+      applicationType: applicationType ?? undefined,
+      categoryLabel: mapped.categoryLabel,
+    },
+    nestedProgram,
+  )
   if (isOrganizationApplication) {
     mapped.teacherApplicationContent = buildTeacherApplicationContentFromPortal(
       {
         applicationType: 'ORGANIZATION',
-        programAudience: nestedProgramAudience,
+        programAudience: nestedProgram?.programAudience,
         detailCase: mapped.detailCase,
         programGroup: detail.programGroup ?? detail.program?.programGroup,
         answers,
@@ -354,7 +363,7 @@ export function mapPortalProgramApplicationDetail(
         preferredScheduleOptionValues: mapped.preferredScheduleOptionValues,
         preferredEducationScheduleLabel: mapped.preferredEducationScheduleLabel,
       },
-      undefined,
+      nestedProgram,
     )
   }
 

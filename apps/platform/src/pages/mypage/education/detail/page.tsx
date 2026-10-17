@@ -58,12 +58,14 @@ import {
 } from '@/shared/lib'
 import {
   shouldShowTeacherInstitutionGuidanceEditLink,
+  shouldShowTeacherInstitutionGuidanceOnApplicationTab,
   shouldShowTeacherInstitutionGuidanceWrite,
 } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
 import { buildTeacherApplicationContentFromPortal } from '@/features/mypage/education/applications/lib/teacher-application-content-from-portal'
 import {
   isOrganizationEducationApplication,
   resolveOrganizationApplicationTypeForContent,
+  resolveTeacherApplicationProgramGroup,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
@@ -276,14 +278,16 @@ export function MypageEducationDetailPage() {
 
     const contentApplicationType = resolveOrganizationApplicationTypeForContent(
       application.applicationType,
-      program.programAudience,
+      program,
     )
+    const programGroup = resolveTeacherApplicationProgramGroup(program)
 
     return buildTeacherApplicationContentFromPortal(
       {
         applicationType: contentApplicationType,
         programAudience: program.programAudience,
         detailCase: application.detailCase,
+        programGroup,
         answers: application.applicationAnswers,
         preferredScheduleBlocks: application.preferredScheduleBlocks,
         preferredScheduleOptionValues: application.preferredScheduleOptionValues,
@@ -294,11 +298,20 @@ export function MypageEducationDetailPage() {
     )
   }, [application, program])
 
+  const showTeacherInstitutionGuidanceOnTab = useMemo(
+    () =>
+      program && application
+        ? shouldShowTeacherInstitutionGuidanceOnApplicationTab(program, { application })
+        : false,
+    [application, program],
+  )
+
   const showTeacherGuidanceEditLink = useMemo(() => {
     if (!application || !program) return false
     return shouldShowTeacherInstitutionGuidanceEditLink({
       isTeacher,
-      programAudience: program.programAudience,
+      application,
+      program,
       displayStatus: application.displayStatus,
     })
   }, [application, isTeacher, program])
@@ -316,13 +329,14 @@ export function MypageEducationDetailPage() {
     const contentApplicationType =
       application.applicationType ??
       routeApplicationType ??
-      resolveOrganizationApplicationTypeForContent(undefined, program.programAudience)
+      resolveOrganizationApplicationTypeForContent(undefined, program)
     return (
       <TeacherApplicationContent
         applicationId={application.id}
         applicationType={contentApplicationType}
         content={teacherApplicationContent}
         showGuidanceWriteLink={showTeacherGuidanceEditLink}
+        institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
         showPreferredEducationForm={program.educationForm === 'participant_choice'}
       />
     )
@@ -335,6 +349,7 @@ export function MypageEducationDetailPage() {
     program?.educationForm,
     routeApplicationType,
     showTeacherGuidanceEditLink,
+    showTeacherInstitutionGuidanceOnTab,
     teacherApplicationContent,
   ])
 
@@ -552,7 +567,8 @@ export function MypageEducationDetailPage() {
 
   const showTeacherNoticeWrite = shouldShowTeacherInstitutionGuidanceWrite({
     isTeacher,
-    programAudience: program.programAudience,
+    application,
+    program,
     displayStatus: application.displayStatus,
   })
 
@@ -568,6 +584,7 @@ export function MypageEducationDetailPage() {
           applicationType={application.applicationType}
           content={teacherApplicationContent}
           showGuidanceWriteLink={showTeacherGuidanceEditLink}
+          institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
           showPreferredEducationForm={program.educationForm === 'participant_choice'}
         />
       ) : (

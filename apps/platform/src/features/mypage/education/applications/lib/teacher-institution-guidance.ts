@@ -1,6 +1,13 @@
 import type { PlatformMemberProfile } from '@/features/mypage/model/types'
 import type { ProgramDetail } from '@/features/program'
+import { resolveProgramApplyFormCase } from '@/features/program/lib/apply-form-case'
+import { readPreEducationNoticeRequiredFromRuntime } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
 import { isSchoolTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
+import {
+  isOrganizationEducationApplication,
+  isTrainedTeachersEducationProgram,
+} from './organization-education-application'
+import type { EducationApplicationListItem } from '../model/types'
 import type {
   EducationDisplayStatus,
   EducationTeacherApplicationGuidance,
@@ -14,39 +21,89 @@ const GUIDANCE_WRITE_DISPLAY_STATUSES = new Set<EducationDisplayStatus>([
   'completed',
 ])
 
+function isTeacherOrganizationProgramContext(
+  application: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'> | undefined,
+  program: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'> | undefined,
+): boolean {
+  return isOrganizationEducationApplication(application, program)
+}
+
 export function shouldShowTeacherInstitutionGuidanceWrite(options: {
   isTeacher: boolean
-  programAudience: ProgramDetail['programAudience'] | undefined
+  application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
+  program?: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'>
   displayStatus: EducationDisplayStatus
 }): boolean {
   if (!options.isTeacher) return false
-  if (options.programAudience !== 'organization') return false
+  if (!isTeacherOrganizationProgramContext(options.application, options.program)) return false
   return GUIDANCE_WRITE_DISPLAY_STATUSES.has(options.displayStatus)
 }
 
 /** 신청 내용 탭 — 기관 안내 양식(4항목·성범죌) 수정 진입 */
 export function shouldShowTeacherInstitutionGuidanceEditOnApplicationTab(options: {
   isTeacher: boolean
-  programAudience: ProgramDetail['programAudience'] | undefined
+  application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
+  program?: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'>
   displayStatus: EducationDisplayStatus
 }): boolean {
   if (!options.isTeacher) return false
-  if (options.programAudience !== 'organization') return false
+  if (!isTeacherOrganizationProgramContext(options.application, options.program)) return false
   return canShowEducationApplicationContent(options.displayStatus)
 }
 
 /** 신청 내용 탭·진행중 신청 정보 팝업 — 「안내사항 수정하기」 */
 export function shouldShowTeacherInstitutionGuidanceEditLink(options: {
   isTeacher: boolean
-  programAudience: ProgramDetail['programAudience'] | undefined
+  application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
+  program?: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'>
   displayStatus: EducationDisplayStatus
 }): boolean {
   if (!options.isTeacher) return false
-  if (options.programAudience !== 'organization') return false
+  if (!isTeacherOrganizationProgramContext(options.application, options.program)) return false
   return (
     canShowEducationApplicationContent(options.displayStatus) ||
     GUIDANCE_WRITE_DISPLAY_STATUSES.has(options.displayStatus)
   )
+}
+
+/** 신청 양식에 기관 안내사항 단락이 있고, 모집 설정이 「사전 안내 작성」인 프로그램 */
+export function shouldShowTeacherInstitutionGuidanceOnApplicationTab(
+  program:
+    | Pick<
+        ProgramDetail,
+        | 'id'
+        | 'programType'
+        | 'registrationKind'
+        | 'programAudience'
+        | 'detailCase'
+        | 'applicationType'
+        | 'participationMethod'
+        | 'category'
+      >
+    | null
+    | undefined,
+  options?: {
+    application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
+    applicationFormRuntimeContext?: unknown
+  },
+): boolean {
+  if (!program) return false
+  if (isTrainedTeachersEducationProgram(program)) return false
+
+  const applyCase = resolveProgramApplyFormCase({
+    ...program,
+    applicationType: options?.application?.applicationType ?? program.applicationType,
+  })
+
+  if (applyCase === 'institution-economy' || applyCase === 'institution-gemini') {
+    return true
+  }
+  if (applyCase === 'institution-general') {
+    const preEducation =
+      readPreEducationNoticeRequiredFromRuntime(options?.applicationFormRuntimeContext) ?? true
+    return preEducation
+  }
+  return false
 }
 
 export function hasTeacherApplicationGuidanceContent(
@@ -62,12 +119,14 @@ export function hasTeacherApplicationGuidanceContent(
 
 export function shouldShowTeacherInstitutionGuidanceWriteForProfile(
   profile: PlatformMemberProfile,
-  program: Pick<ProgramDetail, 'programAudience'> | undefined,
+  program: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'> | undefined,
   displayStatus: EducationDisplayStatus,
+  application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>,
 ): boolean {
   return shouldShowTeacherInstitutionGuidanceWrite({
     isTeacher: isSchoolTeacherMypageProfile(profile),
-    programAudience: program?.programAudience,
+    application,
+    program,
     displayStatus,
   })
 }
