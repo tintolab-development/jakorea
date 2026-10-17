@@ -1,3 +1,9 @@
+import type {
+  InstructorPortalEditableProfile,
+  InstructorRoleRequestProfile,
+  InstructorRoleRequestSettlement,
+} from '@/features/mypage/instructor-apply/api/types'
+
 /** 포털 회원 로그인 OpenAPI 최소 타입 (앱 경계 — CMS generated import 금지) */
 
 export type MemberLoginRequest = {
@@ -82,6 +88,19 @@ export type UpdatePortalProfileRequest = {
   schoolEnrollmentStatus?: string | null
   teacherEmploymentStatus?: string | null
   external1365Id?: string | null
+  instructorProfile?: InstructorPortalProfileUpdate
+}
+
+/** PATCH — 강사 포탈 프로필 (editable profile + optional settlement) */
+export type InstructorPortalProfileUpdate = {
+  profile?: InstructorPortalEditableProfile
+  settlement?: InstructorRoleRequestSettlement
+}
+
+/** GET — 강사 포탈 프로필 응답 */
+export type InstructorPortalProfileResponse = {
+  profile?: InstructorRoleRequestProfile
+  settlement?: InstructorRoleRequestSettlement
 }
 
 /** GET /api/portal/me/profile — PortalTeacherOrganizationResponse */
@@ -134,6 +153,7 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
+  instructorProfile?: InstructorPortalProfileResponse
 }
 
 /** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityConfirmRequest` */
