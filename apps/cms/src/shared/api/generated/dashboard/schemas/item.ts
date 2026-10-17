@@ -5,12 +5,11 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { CertificateSerialAllocateResponse } from './certificateSerialAllocateResponse';
 
 export interface Item {
-  instructorMemberId?: number;
-  lectureDate?: string;
-  organizationApplicationId?: number;
-  assignmentId?: number;
-  scheduleId?: number;
-  activeYn?: boolean;
+  rosterId?: number;
+  participantId?: number;
+  reused?: boolean;
+  issuance?: CertificateSerialAllocateResponse;
 }

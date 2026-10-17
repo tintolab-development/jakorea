@@ -12,10 +12,10 @@ export interface SlotRequest {
      * @minLength 0
      * @maxLength 100
      */
-  grade: string;
+  grade?: string;
   /**
      * @minLength 0
      * @maxLength 100
      */
-  className: string;
+  className?: string;
 }

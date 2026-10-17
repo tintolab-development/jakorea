@@ -21,6 +21,10 @@ export interface ProgramScheduleResponse {
   ujatPartnerAssignmentEligible?: boolean;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
+  educationSlotKey?: string;
+  scheduleRole?: string;
+  scheduleStatus?: string;
+  publiclyVisible?: boolean;
   startDate?: string;
   endDate?: string;
 }
