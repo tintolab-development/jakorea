@@ -173,6 +173,10 @@
       "description": "일반 사용자 회원 포탈 회원가입 API. CMS 관리자 API와 분리된 public surface입니다."
     },
     {
+      "name": "기타 API",
+      "description": "GENERAL_ORGANIZATION 신청기관과 교육 일정만 연결하는 canonical 임시배정"
+    },
+    {
       "name": "외부 연동 제공자",
       "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
     },
@@ -215,10 +219,6 @@
     {
       "name": "기타 API",
       "description": "GENERAL_ORGANIZATION 동일 기관 신청 학년 합반 canonical API"
-    },
-    {
-      "name": "기타 API",
-      "description": "GENERAL_ORGANIZATION 신청기관의 교육 일정/학급 canonical 임시배정"
     },
     {
       "name": "기타 API",

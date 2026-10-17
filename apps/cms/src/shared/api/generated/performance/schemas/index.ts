@@ -627,6 +627,7 @@ export * from './instructorPortalEditableProfileLicensesItem';
 export * from './instructorPortalProfileResponse';
 export * from './instructorPortalProfileUpdate';
 export * from './instructorPreferredOrganizationResponse';
+export * from './instructorPreferredOrganizationResponseDistanceStatus';
 export * from './instructorRoleBulkReviewRequest';
 export * from './instructorRoleRequestCreateRequest';
 export * from './instructorRoleRequestDetailResponse';

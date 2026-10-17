@@ -173,6 +173,10 @@
       "description": "일반 사용자 회원 포탈 회원가입 API. CMS 관리자 API와 분리된 public surface입니다."
     },
     {
+      "name": "기타 API",
+      "description": "GENERAL_ORGANIZATION 신청기관과 교육 일정만 연결하는 canonical 임시배정"
+    },
+    {
       "name": "외부 연동 제공자",
       "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
     },
@@ -215,10 +219,6 @@
     {
       "name": "기타 API",
       "description": "GENERAL_ORGANIZATION 동일 기관 신청 학년 합반 canonical API"
-    },
-    {
-      "name": "기타 API",
-      "description": "GENERAL_ORGANIZATION 신청기관의 교육 일정/학급 canonical 임시배정"
     },
     {
       "name": "기타 API",
@@ -4987,16 +4987,6 @@
           "scheduleId": {
             "type": "integer",
             "format": "int64"
-          },
-          "grade": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0
-          },
-          "className": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0
           }
         },
         "required": [
@@ -5005,7 +4995,7 @@
       },
       "AssignmentResponse": {
         "type": "object",
-        "description": "GENERAL_ORGANIZATION 신청기관의 현재 일정/학급 임시배정. 전체 저장은 revision 단위로 교체됩니다.",
+        "description": "GENERAL_ORGANIZATION 신청기관의 현재 교육 일정 임시배정. 전체 저장은 revision 단위로 교체됩니다. 일정에는 학년·학급을 연결하지 않습니다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -5016,10 +5006,6 @@
             "format": "int64"
           },
           "revision": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalClassCount": {
             "type": "integer",
             "format": "int32"
           },
@@ -5049,15 +5035,6 @@
           "scheduleId": {
             "type": "integer",
             "format": "int64"
-          },
-          "grade": {
-            "type": "string"
-          },
-          "className": {
-            "type": "string"
-          },
-          "classLabel": {
-            "type": "string"
           },
           "revision": {
             "type": "integer",
@@ -14771,10 +14748,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -19679,7 +19656,7 @@
               "array",
               "null"
             ],
-            "description": "CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 활성 기관별 일정 배정의 gradeLabel/classes.classNo, UJAT은 교육 학급 카탈로그를 사용합니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.",
+            "description": "CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 독립된 학생 명단의 grade/className, UJAT은 교육 학급 카탈로그를 사용합니다. 교육 일정 배정의 scheduleId와 학급을 연결하지 않습니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.",
             "items": {
               "$ref": "#/components/schemas/GradeBlock"
             }
@@ -19824,11 +19801,11 @@
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 기존 slots 호환 입력을 지원합니다.",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.",
         "properties": {
           "slots": {
             "type": "array",
-            "description": "기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보내도 됩니다.",
+            "description": "기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보냅니다.",
             "items": {
               "$ref": "#/components/schemas/SlotRequest"
             },
@@ -39839,7 +39816,7 @@
           },
           "preferredEducationSchedules": {
             "type": "array",
-            "description": "승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 학급·회차 확정 전에도 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개.",
+            "description": "승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개.",
             "items": {
               "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
             }
@@ -40307,6 +40284,14 @@
           "longDistance": {
             "type": "boolean"
           },
+          "programDispatchCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programLongDistanceDispatchCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "instructorProfileStatus": {
             "type": "string"
           },
@@ -40372,6 +40357,14 @@
             ],
             "description": "희망 기관(학교)명."
           },
+          "organizationApplicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "기관 신청 ID. 기관명 문자열 매칭 대신 사용하는 식별자."
+          },
           "educationGrade": {
             "type": [
               "string",
@@ -40409,6 +40402,31 @@
             ],
             "format": "date-time",
             "description": "운영 일정 종료."
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "강사 자택에서 기관까지 편도 도로 이동거리(km). 계산되지 않으면 null."
+          },
+          "distanceStatus": {
+            "type": "string",
+            "description": "기관별 거리 계산 상태.",
+            "enum": [
+              "CALCULATED",
+              "PENDING",
+              "FAILED",
+              "ADDRESS_UNAVAILABLE"
+            ]
+          },
+          "distanceCalculatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "거리 계산 완료 시각. 계산되지 않으면 null."
           }
         }
       },
