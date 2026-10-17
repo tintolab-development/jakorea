@@ -193,6 +193,7 @@ import {
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { buildParticipatingSchoolPreferredScheduleLines } from '@/features/program/general/lib/participating-school-session-display'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { fetchProgramPlannedEducationSlots } from '@/features/program/general/lib/program-planned-education-slots'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
@@ -602,6 +603,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const programSchedulesForOsaQuery = useQuery({
     queryKey: generalProgramQueryKeys.schedules(programId),
     queryFn: () => fetchAdminProgramSchedulesRemote(programId),
+    enabled:
+      isGeneralOrgProgram &&
+      organizationApplicationIdForDetail.length > 0 &&
+      shouldUseOrganizationApplicationRemoteApi(),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const plannedEducationSlotsForOsaQuery = useQuery({
+    queryKey: generalProgramQueryKeys.educationSlots(programId),
+    queryFn: () => fetchProgramPlannedEducationSlots(programId),
     enabled:
       isGeneralOrgProgram &&
       organizationApplicationIdForDetail.length > 0 &&
@@ -2229,9 +2241,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 slots={organizationScheduleAssignmentsQuery.data}
                 slotsLoading={organizationScheduleAssignmentsQuery.isLoading}
                 slotsError={organizationScheduleAssignmentsQuery.isError}
-                programSchedules={programSchedulesForOsaQuery.data}
-                schedulesLoading={programSchedulesForOsaQuery.isLoading}
-                schedulesError={programSchedulesForOsaQuery.isError}
+                programSchedules={plannedEducationSlotsForOsaQuery.data}
+                schedulesLoading={plannedEducationSlotsForOsaQuery.isLoading}
+                schedulesError={plannedEducationSlotsForOsaQuery.isError}
               />
             ) : null}
           </div>

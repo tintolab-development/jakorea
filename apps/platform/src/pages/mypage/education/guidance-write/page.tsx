@@ -15,7 +15,7 @@ import {
   useProbeEducationApplicationType,
 } from '@/features/mypage/education/applications'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
-import { isSchoolTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
+import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFFormPage, PFText } from '@/shared/ui'
@@ -27,7 +27,7 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     applicationType?: string
   }>()
   const member = useMypageMember()
-  const isTeacher = isSchoolTeacherMypageProfile(member.profile)
+  const isTeacher = hasTeacherMypageProfile(member.profile)
 
   const remoteEnabled = isRemoteApiConfigured()
   const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)

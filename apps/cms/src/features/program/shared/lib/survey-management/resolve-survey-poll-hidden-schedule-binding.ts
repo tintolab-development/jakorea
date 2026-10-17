@@ -1,4 +1,4 @@
-import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { fetchProgramPlannedEducationSlots } from '@/features/program/general/lib/program-planned-education-slots'
 import { buildSurveyPollScheduleSelectOptionsForProgram } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import { isSurveyPollPeriodProgram } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import type { SurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
@@ -18,7 +18,7 @@ export async function resolveSurveyPollBindingTargetWhenScheduleFieldHidden(
   const programId = program.id != null ? String(program.id).trim() : ''
   if (!programId) return null
 
-  const apiSchedules = await fetchAdminProgramSchedulesRemote(programId)
+  const apiSchedules = await fetchProgramPlannedEducationSlots(programId)
   const options = buildSurveyPollScheduleSelectOptionsForProgram(program, apiSchedules)
   if (options.length !== 1) return null
 

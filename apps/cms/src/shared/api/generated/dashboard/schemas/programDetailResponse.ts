@@ -60,7 +60,12 @@ export interface ProgramDetailResponse {
   /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
   educationTargets?: string[];
   educationTargetDetail?: string;
-  recruitmentTargetDetail?: string;
+  /** 강사·봉사자 모집 공고 포커스일 때 nested recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null. */
+  recruitmentTarget?: string | null;
+  /** 강사·봉사자 모집 대상 코드 배열. recruitmentTarget 없을 때 FE 라벨 조합용. 참여자 포커스는 생략. */
+  recruitmentTargets?: string[] | null;
+  /** 모집 대상 상세. 포커스 모집 역할 nested 값만(참여자 값을 강사·봉사자에 복사하지 않음). */
+  recruitmentTargetDetail?: string | null;
   targetGradeFrom?: string;
   targetGradeTo?: string;
   thumbnailFileObjectId?: number;

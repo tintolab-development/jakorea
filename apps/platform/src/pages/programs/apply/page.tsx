@@ -578,10 +578,19 @@ export function ProgramApplyPage() {
       ) ?? null
     )
   }, [applicationFormDocument])
-  const volunteerActivitySlots = useMemo(
-    () => readPortalApplicationBindingOptionSlots(volunteerActivityBindingParagraph),
-    [volunteerActivityBindingParagraph],
-  )
+  const volunteerActivitySlots = useMemo(() => {
+    const runtimeVolunteer = readRuntimeInstructorScheduleSlots(volunteerActivityBindingParagraph)
+    if (usesOsaAvailableSchedule) return runtimeVolunteer ?? []
+    return (
+      runtimeVolunteer ??
+      (program
+        ? buildInstructorApplyScheduleSlots({
+            educationScheduleLines: program.educationScheduleLines,
+            educationSchedules: program.educationSchedules,
+          })
+        : [])
+    )
+  }, [program, usesOsaAvailableSchedule, volunteerActivityBindingParagraph])
   useEffect(() => {
     const currentIds = instructorScheduleSlots.map(slot => slot.id)
     setInstructorSchedule(prev => {
@@ -1115,6 +1124,8 @@ export function ProgramApplyPage() {
                     educationScheduleMode: program.educationScheduleMode,
                     educationRoundCount: applyScheduleChoiceMeta?.educationRoundCount,
                     sessionsPerRound: applyScheduleChoiceMeta?.sessionsPerRound,
+                    curriculumChartSessionCount:
+                      applyScheduleChoiceMeta?.curriculumChartSessionCount,
                     curriculumSessions: applyScheduleChoiceMeta?.curriculumSessions,
                   },
                 ) ?? paragraph.items)

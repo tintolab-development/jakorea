@@ -1033,6 +1033,7 @@ export * from './programDraftSaveRequest';
 export * from './programDraftSaveResponse';
 export * from './programDraftUpsertRequest';
 export * from './programDraftUpsertRequestDraftPayload';
+export * from './programEducationSlotResponse';
 export * from './programFormBindingRequest';
 export * from './programFormBindingResponse';
 export * from './programFormBindingResponseProgressStatus';

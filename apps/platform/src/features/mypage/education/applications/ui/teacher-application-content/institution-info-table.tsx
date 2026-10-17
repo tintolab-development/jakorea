@@ -1,5 +1,6 @@
 import type { EducationTeacherApplicationInstitution } from '../../model/types'
 import { PFFormField, PFFormFieldRow, PFFormFieldTable } from '@/shared/ui'
+import { PipeSeparatedFieldValue } from './pipe-separated-field-value'
 import styles from './teacher-application-content.module.css'
 
 type InstitutionInfoTableProps = {
@@ -41,7 +42,7 @@ export function InstitutionInfoTable({
           labelWidth="wider"
           fullWidth={!showPreferredForm}
         >
-          <p className={styles.fieldValue}>{institution.classAndHeadcount}</p>
+          <PipeSeparatedFieldValue value={institution.classAndHeadcount} />
         </PFFormField>
         {showPreferredForm ? (
           <PFFormField label="희망 교육 형태" labelWidth="wider">
@@ -58,7 +59,7 @@ export function InstitutionInfoTable({
       ) : null}
       <PFFormFieldRow>
         <PFFormField label="담당 교사 정보" labelWidth="wider" fullWidth>
-          <p className={styles.fieldValue}>{institution.teacherContact}</p>
+          <PipeSeparatedFieldValue value={institution.teacherContact} />
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow>

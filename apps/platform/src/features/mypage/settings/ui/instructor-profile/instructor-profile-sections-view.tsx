@@ -15,6 +15,7 @@ import {
   type InstructorSettingsSectionId,
 } from '../../lib/format-instructor-settings-display'
 import { SettingsInstructorSectionEditForm } from './section-edit-form'
+import pipeDividerStyles from '@/features/mypage/education/applications/ui/pipe-separated-inline-text.module.css'
 import styles from './instructor-profile-section.module.css'
 import viewStyles from '../view.module.css'
 
@@ -91,7 +92,7 @@ function ListSection({
                 </PFText>
                 {row.secondary ? (
                   <>
-                    <PFText as="span" typo="bd-md-rg" color="neutral-cool-500">|</PFText>
+                    <span className={pipeDividerStyles.divider} aria-hidden="true" />
                     <PFText as="p" typo="bd-md-rg" color="black" className={styles.content}>
                       {row.secondary}
                     </PFText>

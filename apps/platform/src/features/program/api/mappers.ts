@@ -35,7 +35,10 @@ import {
   educationScheduleDetailCardLabel,
   formatEducationScheduleLineForDetailCard,
 } from '../lib/education-schedule-detail-display.ts'
-import { shouldShowApplicationPreferredScheduleParagraph } from '@jakorea/form-schema/program-application'
+import {
+  appendCurriculumSingleDateFixedScheduleSessionSuffix,
+  shouldShowApplicationPreferredScheduleParagraph,
+} from '@jakorea/form-schema/program-application'
 
 function mapPortalMaxPreferredScheduleCount(
   remote: PortalProgramDetail,
@@ -53,6 +56,34 @@ function mapPortalMaxPreferredScheduleCount(
     educationScheduleLines: remote.educationScheduleLines ?? [],
   }
   return shouldShowApplicationPreferredScheduleParagraph(visibility) ? 10 : 1
+}
+
+function appendSessionSuffixToEducationScheduleLines(
+  lines: readonly string[],
+  input: {
+    educationStructure: ProgramDetail['educationStructure']
+    sessionRound: ProgramDetail['sessionRound']
+    educationScheduleMode: ProgramDetail['educationScheduleMode']
+    sessions: readonly ProgramSession[]
+  },
+): string[] {
+  return lines.map(line =>
+    appendCurriculumSingleDateFixedScheduleSessionSuffix(
+      line,
+      {
+        educationStructure: input.educationStructure,
+        sessionRound: input.sessionRound,
+        educationScheduleMode: input.educationScheduleMode,
+        educationScheduleLines: lines,
+      },
+      {
+        curriculumSessions: input.sessions.map(session => ({
+          sessionLabel: session.sessionLabel,
+          title: session.title,
+        })),
+      },
+    )
+  )
 }
 
 const RECRUITMENT_STATUS = {
@@ -757,12 +788,15 @@ function mapEducationTargetDetailLabel(remote: PortalProgramDetail, fallbackLabe
 }
 
 /** 세부내용 「교육 일정」 카드. 일정형 복수 회차는 배열이 있어도 카드를 숨긴다. */
-function mapPortalEducationScheduleCards(remote: PortalProgramDetail): ProgramLabeledValue[] {
+function mapPortalEducationScheduleCards(
+  remote: PortalProgramDetail,
+  educationScheduleLines: readonly string[],
+): ProgramLabeledValue[] {
   if (remote.educationStructure === 'schedule' && isMultiSessionRound(remote.sessionRound)) {
     return []
   }
   const mode = remote.educationScheduleMode === 'period' ? 'period' : 'date'
-  const lines = (remote.educationScheduleLines ?? []).map(line =>
+  const lines = educationScheduleLines.map(line =>
     formatEducationScheduleLineForDetailCard(line, mode)
   )
   return lines.map((value, index) => ({
@@ -1072,6 +1106,33 @@ export function mapPortalProgramDetail(
         rowVisibility
       )
     : legacyEventSchedules
+  const educationStructure = usesEducationProgressFields
+    ? remote.educationStructure === 'schedule'
+      ? 'schedule'
+      : 'curriculum'
+    : sessions.length > 0
+      ? 'curriculum'
+      : 'schedule'
+  const sessionRound = usesEducationProgressFields
+    ? isMultiSessionRound(remote.sessionRound)
+      ? 'multi'
+      : 'single'
+    : sessions.length > 1 || eventSchedules.length > 1
+      ? 'multi'
+      : 'single'
+  const educationScheduleMode = usesEducationProgressFields
+    ? remote.educationScheduleMode === 'period'
+      ? 'period'
+      : 'date'
+    : 'period'
+  const educationScheduleLines = usesEducationProgressFields
+    ? appendSessionSuffixToEducationScheduleLines(remote.educationScheduleLines ?? [], {
+        educationStructure,
+        sessionRound,
+        educationScheduleMode,
+        sessions,
+      })
+    : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-')
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
@@ -1173,28 +1234,10 @@ export function mapPortalProgramDetail(
       recruitmentTargetDetailLabel,
       educationVenueLabel,
     }),
-    educationStructure: usesEducationProgressFields
-      ? remote.educationStructure === 'schedule'
-        ? 'schedule'
-        : 'curriculum'
-      : sessions.length > 0
-        ? 'curriculum'
-        : 'schedule',
-    sessionRound: usesEducationProgressFields
-      ? isMultiSessionRound(remote.sessionRound)
-        ? 'multi'
-        : 'single'
-      : sessions.length > 1 || eventSchedules.length > 1
-        ? 'multi'
-        : 'single',
-    educationScheduleMode: usesEducationProgressFields
-      ? remote.educationScheduleMode === 'period'
-        ? 'period'
-        : 'date'
-      : 'period',
-    educationScheduleLines: usesEducationProgressFields
-      ? [...(remote.educationScheduleLines ?? [])]
-      : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-'),
+    educationStructure,
+    sessionRound,
+    educationScheduleMode,
+    educationScheduleLines,
     maxPreferredScheduleCount: mapPortalMaxPreferredScheduleCount(
       remote,
       isTrainedTeacher,
@@ -1211,7 +1254,7 @@ export function mapPortalProgramDetail(
           : remote.recruitments,
     ),
     educationSchedules: usesEducationProgressFields
-      ? mapPortalEducationScheduleCards(remote)
+      ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
       : eventSchedules.map((item, index) => ({
           label: educationScheduleDetailCardLabel(index, eventSchedules.length),
           value: `${item.name} · ${item.dateLabel}`,

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { fetchProgramPlannedEducationSlots } from '@/features/program/general/lib/program-planned-education-slots'
 import { buildSurveyPollScheduleSelectOptionsForProgram } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
 
@@ -11,8 +11,8 @@ export function useProgramSurveyScheduleOptions(
 ) {
   const programId = program?.id != null ? String(program.id) : undefined
   const query = useQuery({
-    queryKey: generalProgramQueryKeys.schedules(programId ?? ''),
-    queryFn: () => fetchAdminProgramSchedulesRemote(programId!),
+    queryKey: generalProgramQueryKeys.educationSlots(programId ?? ''),
+    queryFn: () => fetchProgramPlannedEducationSlots(programId!),
     enabled: enabled && programId != null && programId.trim() !== '',
   })
 

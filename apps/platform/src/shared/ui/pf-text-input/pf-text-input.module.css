@@ -181,6 +181,13 @@
   letter-spacing: 0;
 }
 
+.messageEnd {
+  align-self: stretch;
+  padding-left: 0;
+  padding-right: var(--spacing-8);
+  text-align: right;
+}
+
 .messageNeutral {
   color: var(--color-neutral-warm-500);
 }

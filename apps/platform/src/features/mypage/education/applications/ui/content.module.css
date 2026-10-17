@@ -62,21 +62,8 @@
   margin: 0;
 }
 
-.schedulePartWrap {
-  display: inline-flex;
-  align-items: center;
-}
-
 .schedulePart {
   margin: 0;
-}
-
-.schedulePartDivider {
-  flex-shrink: 0;
-  width: 1px;
-  height: 14px;
-  margin: 0 var(--spacing-12);
-  background: var(--color-border-default);
 }
 
 .instructorScheduleLines {

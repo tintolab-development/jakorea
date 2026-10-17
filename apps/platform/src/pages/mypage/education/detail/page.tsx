@@ -25,10 +25,10 @@ import {
   EducationSurveyFillPanel,
   DocumentPassBanner,
   getEducationSurveyTabAvailability,
+  hasTeacherMypageProfile,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
   isParticipantRoleApplication,
-  isSchoolTeacherMypageProfile,
   isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
@@ -164,7 +164,7 @@ export function MypageEducationDetailPage() {
   const cancelMutation = useCancelMyProgramApplicationMutation()
   const queryClient = useQueryClient()
   const member = useMypageMember()
-  const isTeacher = isSchoolTeacherMypageProfile(member.profile)
+  const isTeacher = hasTeacherMypageProfile(member.profile)
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(
     resolvedApplicationType,

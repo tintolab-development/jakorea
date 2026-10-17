@@ -2,7 +2,7 @@ import type { PlatformMemberProfile } from '@/features/mypage/model/types'
 import type { ProgramDetail } from '@/features/program'
 import { resolveProgramApplyFormCase } from '@/features/program/lib/apply-form-case'
 import { readPreEducationNoticeRequiredFromRuntime } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
-import { isSchoolTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
+import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import {
   isOrganizationEducationApplication,
   isTrainedTeachersEducationProgram,
@@ -124,7 +124,7 @@ export function shouldShowTeacherInstitutionGuidanceWriteForProfile(
   application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>,
 ): boolean {
   return shouldShowTeacherInstitutionGuidanceWrite({
-    isTeacher: isSchoolTeacherMypageProfile(profile),
+    isTeacher: hasTeacherMypageProfile(profile),
     application,
     program,
     displayStatus,

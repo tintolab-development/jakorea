@@ -8,6 +8,7 @@ import {
 import { PFText } from '../pf-text'
 import cancelIconUrl from './icons/cancel.svg'
 import searchIconUrl from './icons/search.svg'
+import { isCharCountMessage } from '../pf-textarea/is-char-count-message'
 import styles from './pf-text-input.module.css'
 
 type PFTextInputSize = 'medium' | 'large' | 'xlarge' | 'mobile'
@@ -99,7 +100,13 @@ export function PFTextInput({
     success: styles.messageSuccess,
     error: styles.messageError,
   } as const
-  const messageClassName = [styles.message, messageStatusClassMap[messageStatus]].join(' ')
+  const messageClassName = [
+    styles.message,
+    messageStatusClassMap[messageStatus],
+    isCharCountMessage(message) ? styles.messageEnd : undefined,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!isControlled) {

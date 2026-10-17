@@ -102,6 +102,58 @@
   color: rgba(61, 61, 61, 0.65);
 }
 
+/* 면접 진행 가능 일정 칩 — Body/Large/semibold · 54×min160 */
+.slotGridInterview {
+  align-content: start;
+  justify-items: stretch;
+}
+
+.slotCardInterview {
+  display: flex;
+  height: 54px;
+  min-width: 160px;
+  box-sizing: border-box;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-4);
+  padding: 13px var(--spacing-28);
+  text-align: center;
+  color: var(--color-neutral-black, #3d3d3d);
+}
+
+.slotCardInterview .slotCardTitle,
+.slotCardInterview .slotCardDetail {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  color: inherit;
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+  opacity: 1;
+}
+
+.slotCardInterview.slotCardActive {
+  border-color: var(--color-border-focus, #01a1af);
+  color: var(--color-border-focus, #01a1af);
+}
+
+.slotCardInterview.slotCardActive .slotCardTitle,
+.slotCardInterview.slotCardActive .slotCardDetail {
+  color: inherit;
+}
+
 .empty {
   grid-column: 1 / -1;
   margin: 0;
@@ -123,6 +175,10 @@
   .slotGrid {
     grid-template-rows: repeat(2, fit-content(100%));
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .slotGridInterview {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
   }
 }
 
