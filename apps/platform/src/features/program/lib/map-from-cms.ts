@@ -37,6 +37,10 @@ import {
 } from './detail-case.ts'
 import { PROGRAM_TAB_LABEL } from './constants.ts'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from './html-body.ts'
+import {
+  educationScheduleDetailCardLabel,
+  formatEducationScheduleLineForDetailCard,
+} from './education-schedule-detail-display.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -278,6 +282,7 @@ function resolveContactValue(program: CmsProgramLike): string {
 
 function resolveTargetLabels(program: CmsProgramLike): {
   educationTargetKey: EducationTargetKey | null
+  educationTargetKeys: EducationTargetKey[]
   educationTargetLabel: string
   educationTargetGroupLabel: string
   educationTargetDetailLabel: string
@@ -288,6 +293,7 @@ function resolveTargetLabels(program: CmsProgramLike): {
     const labels = TARGET_LEVEL_LABELS[level]
     return {
       educationTargetKey: level,
+      educationTargetKeys: [level],
       educationTargetLabel: labels.educationTargetLabel,
       educationTargetGroupLabel: labels.educationTargetGroupLabel,
       educationTargetDetailLabel: detailOverride || labels.educationTargetLabel,
@@ -295,6 +301,7 @@ function resolveTargetLabels(program: CmsProgramLike): {
   }
   return {
     educationTargetKey: null,
+    educationTargetKeys: [],
     educationTargetLabel: '전체',
     educationTargetGroupLabel: '전체',
     educationTargetDetailLabel: detailOverride || '전체',
@@ -521,6 +528,12 @@ function mapEducationScheduleLines(program: CmsProgramLike): string[] {
     .filter(line => line && !isUnavailableScheduleLine(line))
 }
 
+function mapMaxSessionsPerDay(program: CmsProgramLike): number | undefined {
+  const raw = program.generalCommonInfo?.maxSessionsPerDay
+  if (raw == null || raw < 1) return undefined
+  return Math.min(Math.floor(raw), 16)
+}
+
 function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
   if (program.registrationKind === 'trainedTeachers') {
     const raw = program.generalCommonInfo?.maxScheduleCount
@@ -568,6 +581,7 @@ function mapEducationSchedules(
     .filter(line => line && !isUnavailableScheduleLine(line))
 
   if (lines.length) {
+    const scheduleMode = mapEducationScheduleMode(program)
     return lines.map((line, index) => {
       // UJAT 기관: "상반기: …" 형태면 label 분리
       if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
@@ -579,8 +593,8 @@ function mapEducationSchedules(
         }
       }
       return {
-        label: `교육 일정 ${index + 1}`,
-        value: line,
+        label: educationScheduleDetailCardLabel(index, lines.length),
+        value: formatEducationScheduleLineForDetailCard(line, scheduleMode),
       }
     })
   }
@@ -594,7 +608,7 @@ function mapEducationSchedules(
   if (start || end) {
     return [
       {
-        label: '교육 일정 1',
+        label: educationScheduleDetailCardLabel(0, 1),
         value: formatOperatingPeriodLabel(start, end),
       },
     ]
@@ -779,6 +793,7 @@ export function mapCmsProgramToPlatformDetail(
     applicationPeriodLabel: recruitmentPeriodLabel,
     recruitmentStatus,
     educationTargetKey: targets.educationTargetKey,
+    educationTargetKeys: targets.educationTargetKeys,
     educationTargetLabel: targets.educationTargetLabel,
     educationForm,
     educationFormLabel,
@@ -821,6 +836,7 @@ export function mapCmsProgramToPlatformDetail(
     educationScheduleMode: mapEducationScheduleMode(program),
     educationScheduleLines: mapEducationScheduleLines(program),
     maxPreferredScheduleCount: mapMaxPreferredScheduleCount(program),
+    maxSessionsPerDay: mapMaxSessionsPerDay(program),
     sessions: mapSessions(program),
     eventSchedules: mapEventSchedules(program),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
@@ -853,6 +869,7 @@ export function mapCmsProgramToPlatformListItem(
     recruitmentPeriodLabel: detail.recruitmentPeriodLabel,
     recruitmentStatus: detail.recruitmentStatus,
     educationTargetKey: detail.educationTargetKey,
+    educationTargetKeys: detail.educationTargetKeys,
     educationTargetLabel: detail.educationTargetLabel,
     educationForm: detail.educationForm,
     educationFormLabel: detail.educationFormLabel,

@@ -13,6 +13,7 @@ import {
   resolveEffectiveGeneralProgramTypeFields,
 } from '@/features/program/general/lib/curriculum-display'
 import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
+import { shouldAutoFillEducationScheduleFromGroupTimes } from '@/features/program/general/lib/schedule-detail-form'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
   buildGeneralProgramVariantTitle,
@@ -612,12 +613,18 @@ export function resolveGeneralProgramDetailedProgramNameDisplay(
   return commonInfo.detailedProgramName?.trim() || '-'
 }
 
-function shouldAutoFillEducationScheduleFromGroupTimes(program: Program): boolean {
-  return (
-    program.generalProgramEducationStructure === 'schedule' &&
-    program.generalProgramSessionRound === 'single' &&
-    program.generalProgramAudience === 'individual'
-  )
+
+function shouldShowEducationSchedulePeriodDateOnlyLines(program: Program): boolean {
+  const common = program.generalCommonInfo
+  return common?.educationScheduleMode === 'period'
+}
+
+function autoFillEducationScheduleFromGroupTimesForProgram(program: Program): boolean {
+  return shouldAutoFillEducationScheduleFromGroupTimes({
+    educationStructure:
+      program.generalProgramEducationStructure === 'schedule' ? 'schedule' : 'curriculum',
+    sessionRound: program.generalProgramSessionRound === 'multi' ? 'multi' : 'single',
+  })
 }
 
 function withResolvedEducationScheduleLines(
@@ -627,7 +634,8 @@ function withResolvedEducationScheduleLines(
   const educationScheduleLines = resolveEducationScheduleLinesForView({
     educationScheduleLines: commonInfo.educationScheduleLines,
     overlay: program.registrationOverlay,
-    autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+    autoFillFromScheduleGroupTimes: autoFillEducationScheduleFromGroupTimesForProgram(program),
+    dateOnlyPeriodLines: shouldShowEducationSchedulePeriodDateOnlyLines(program),
     scheduleDetails: commonInfo.scheduleDetails,
   })
   if (
@@ -851,7 +859,8 @@ export function resolveGeneralProgramCommonInfo(
     educationScheduleMode: 'date',
     educationScheduleLines: resolveEducationScheduleLinesForView({
       overlay,
-      autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+      autoFillFromScheduleGroupTimes: autoFillEducationScheduleFromGroupTimesForProgram(program),
+      dateOnlyPeriodLines: shouldShowEducationSchedulePeriodDateOnlyLines(program),
     }),
     wageGradeRows: [
       { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },

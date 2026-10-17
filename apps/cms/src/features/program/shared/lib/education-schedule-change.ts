@@ -36,6 +36,92 @@ export function isOutsideEducationOperationRange(
   return false
 }
 
+export type EducationScheduleChangePeriodIssue = {
+  index: number
+  fromDate: string
+  toDate: string
+  sourceOutsideOperationRange: boolean
+  targetOutsideOperationRange: boolean
+}
+
+export function findEducationScheduleLinesOutsideOperationRange(
+  lines: readonly string[],
+  operationStart: unknown,
+  operationEnd: unknown
+): number[] {
+  const start = toEducationOperationDayjs(operationStart)
+  const end = toEducationOperationDayjs(operationEnd)
+  if (start == null && end == null) return []
+
+  return lines.reduce<number[]>((indices, line, index) => {
+    const range = parseEducationScheduleLineToChangeRange(line)
+    if (educationScheduleRangeOutsideOperationRange(range, start, end)) {
+      indices.push(index)
+    }
+    return indices
+  }, [])
+}
+
+function educationScheduleRangeOutsideOperationRange(
+  range: [Dayjs, Dayjs] | null,
+  start: Dayjs | null,
+  end: Dayjs | null
+): boolean {
+  if (range == null) return false
+  return (
+    isOutsideEducationOperationRange(range[0], start, end) ||
+    isOutsideEducationOperationRange(range[1], start, end)
+  )
+}
+
+/**
+ * 사업 운영기간 변경 뒤 일정 변경 API가 거절할 수 있는 이동을 미리 찾는다.
+ * 특히 기간을 줄여 기존 일정의 fromDate가 기간 밖에 남은 경우를 저장 전에 막는다.
+ */
+export function findEducationScheduleChangePeriodIssues(
+  previousLines: readonly string[],
+  nextLines: readonly string[],
+  operationStart: unknown,
+  operationEnd: unknown
+): EducationScheduleChangePeriodIssue[] {
+  const start = toEducationOperationDayjs(operationStart)
+  const end = toEducationOperationDayjs(operationEnd)
+  if (start == null && end == null) return []
+
+  const length = Math.max(previousLines.length, nextLines.length)
+  const issues: EducationScheduleChangePeriodIssue[] = []
+  for (let index = 0; index < length; index += 1) {
+    const previousLine = previousLines[index] ?? ''
+    const nextLine = nextLines[index] ?? ''
+    if (previousLine === nextLine) continue
+
+    const previousRange = parseEducationScheduleLineToChangeRange(previousLine)
+    const nextRange = parseEducationScheduleLineToChangeRange(nextLine)
+    if (previousRange == null || nextRange == null) continue
+
+    const sourceOutsideOperationRange = educationScheduleRangeOutsideOperationRange(
+      previousRange,
+      start,
+      end
+    )
+    const targetOutsideOperationRange = educationScheduleRangeOutsideOperationRange(
+      nextRange,
+      start,
+      end
+    )
+    if (!sourceOutsideOperationRange && !targetOutsideOperationRange) continue
+
+    issues.push({
+      index,
+      fromDate: previousRange[0].format('YYYY-MM-DD'),
+      toDate: nextRange[0].format('YYYY-MM-DD'),
+      sourceOutsideOperationRange,
+      targetOutsideOperationRange,
+    })
+  }
+  return issues
+}
+
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 export const EDUCATION_SCHEDULE_CHANGE_MODAL_TITLE = '교육 진행 일정 변경'

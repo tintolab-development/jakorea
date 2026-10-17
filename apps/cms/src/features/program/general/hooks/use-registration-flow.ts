@@ -380,10 +380,26 @@ export function useGeneralProgramRegistrationFlow(
   const isProgramStep = coercedActiveStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(coercedActiveStep)
   const { buildCurrentProgramSnapshot } = registrationVm
+  const registrationOverlayVersionFrozenRef = useRef(getProgramRegistrationOverlayVersion())
+  const subscribeRegistrationOverlayForLinkedProgram = useCallback(
+    (onStoreChange: () => void) => {
+      if (!open || !isParticipantStep) return () => {}
+      return subscribeProgramRegistrationOverlay(onStoreChange)
+    },
+    [open, isParticipantStep]
+  )
+  const getRegistrationOverlayVersionForLinkedProgram = useCallback(() => {
+    if (!open || !isParticipantStep) {
+      return registrationOverlayVersionFrozenRef.current
+    }
+    const next = getProgramRegistrationOverlayVersion()
+    registrationOverlayVersionFrozenRef.current = next
+    return next
+  }, [open, isParticipantStep])
   const registrationOverlayVersion = useSyncExternalStore(
-    subscribeProgramRegistrationOverlay,
-    getProgramRegistrationOverlayVersion,
-    getProgramRegistrationOverlayVersion
+    subscribeRegistrationOverlayForLinkedProgram,
+    getRegistrationOverlayVersionForLinkedProgram,
+    getRegistrationOverlayVersionForLinkedProgram
   )
   const registrationWizardLinkedProgram = useMemo(() => {
     if (!open || !isParticipantStep) return null
@@ -452,6 +468,14 @@ export function useGeneralProgramRegistrationFlow(
               maxSessionsPerDay: 8,
             }
           : undefined,
+      applicantRecruitInstitutionRecruitLimitVisibility:
+        registrationFormVariant === 'general' && !isCompanySchoolRegistration
+          ? {
+              educationStructure: registrationVm.programType,
+              sessionRound: registrationVm.sessionRoundType,
+              educationScheduleMode: registrationVm.educationScheduleMode,
+            }
+          : undefined,
       /** 1사1교 — 단락 타이틀 옆 필수(*) (공유 강사 모집 상세 등 선택 시드 포함) */
       forceSeedParagraphsRequired: isCompanySchoolRegistration,
     }
@@ -476,6 +500,8 @@ export function useGeneralProgramRegistrationFlow(
       sessionRound: registrationVm.sessionRoundType,
       educationScheduleMode: registrationVm.educationScheduleMode,
       recruitTemplateCode: applicantRecruitTemplateCodeForBridge,
+      curriculumSessionCount: registrationVm.curriculumSessionCount,
+      curriculumChartSessionCount: registrationVm.curriculumChartSessionCount,
     }),
     [
       registrationFormVariant,
@@ -483,6 +509,8 @@ export function useGeneralProgramRegistrationFlow(
       registrationVm.programType,
       registrationVm.sessionRoundType,
       registrationVm.educationScheduleMode,
+      registrationVm.curriculumSessionCount,
+      registrationVm.curriculumChartSessionCount,
     ]
   )
 
@@ -493,6 +521,7 @@ export function useGeneralProgramRegistrationFlow(
 
   useEffect(() => {
     if (!open || !isParticipantStep) return
+    syncInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
     return subscribeInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
   }, [open, isParticipantStep, institutionBridgeSyncArgs])
 

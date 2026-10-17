@@ -353,7 +353,7 @@ describe('company-school adapters', () => {
       startDate: String(program.startDate),
       endDate: String(program.endDate),
       status: program.status,
-      serviceDetailJson: updateRequest.serviceDetailJson,
+      serviceDetailJson: updateRequest.serviceDetailJson ?? undefined,
     })
 
     expect(detail.generalParticipantTypes).toEqual([

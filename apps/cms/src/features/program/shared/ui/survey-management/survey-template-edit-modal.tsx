@@ -25,6 +25,10 @@ import {
   saveSurveyWritingTemplate,
 } from '../../lib/survey-management/survey-writing-draft'
 import {
+  SurveyWritingValidationHighlightProvider,
+  useSurveyWritingSaveValidationFeedback,
+} from '../../lib/survey-management/use-survey-writing-save-validation-feedback'
+import {
   resolveProgramSurveyFormEditFailure,
   saveProgramSurveyFormEdit,
   type ProgramSurveyFormEditTarget,
@@ -47,7 +51,15 @@ export type SurveyTemplateEditModalProps = {
   onBindingsStale?: () => void
 }
 
-export function SurveyTemplateEditModal({
+export function SurveyTemplateEditModal(props: SurveyTemplateEditModalProps) {
+  return (
+    <SurveyWritingValidationHighlightProvider variant="survey">
+      <SurveyTemplateEditModalInner {...props} />
+    </SurveyWritingValidationHighlightProvider>
+  )
+}
+
+function SurveyTemplateEditModalInner({
   open,
   templateId,
   onClose,
@@ -56,6 +68,7 @@ export function SurveyTemplateEditModal({
   onBindingsStale,
 }: SurveyTemplateEditModalProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const { handleDraftValidationFailure } = useSurveyWritingSaveValidationFeedback()
   const templateRow = useMemo(
     () => (open && programEdit == null ? findWritingTemplateRowByDefinitionId(templateId) : null),
     [open, programEdit, templateId]
@@ -108,6 +121,10 @@ export function SurveyTemplateEditModal({
             : await saveSurveyWritingTemplate(templateId, draftRef.current)
         if (!result.ok) {
           if ('refetchBindings' in result && result.refetchBindings) onBindingsStale?.()
+          if (result.incompleteKeys != null && result.incompleteKeys.length > 0) {
+            handleDraftValidationFailure(result)
+            return
+          }
           showSaveFailure(new Error(result.message))
           return
         }
@@ -125,7 +142,15 @@ export function SurveyTemplateEditModal({
         showSaveFailure(new Error(programFailure.message))
       }
     })()
-  }, [onBindingsStale, onSaved, programEdit, showSaveFailure, showSaveSuccess, templateId])
+  }, [
+    handleDraftValidationFailure,
+    onBindingsStale,
+    onSaved,
+    programEdit,
+    showSaveFailure,
+    showSaveSuccess,
+    templateId,
+  ])
 
   const tableRowSelection = useTableRowSelectionState({
     paragraphs: editor.draft.paragraphs,

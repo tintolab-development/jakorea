@@ -1,10 +1,9 @@
 import { ProgramBackButton } from '@/features/program'
 import {
-  getAdjacentResults,
+  getEmptyAdjacentResults,
   getResultIdFromPath,
   ResultAdjacentNav,
   RESULTS_PATH,
-  useMockResultDetail,
   useProgramResultDetail,
 } from '@/features/result'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -13,6 +12,7 @@ import {
   PFButton,
   PFCategoryBadge,
   PFDivider,
+  PFLoadingSpinner,
   PFText,
 } from '@/shared/ui'
 import styles from './page.module.css'
@@ -25,14 +25,11 @@ function formatViewCount(count: number) {
 export function ResultDetailPage() {
   const navigate = useNavigate()
   const resultId = getResultIdFromPath()
-  const mockDetail = useMockResultDetail(resultId)
   const remoteDetail = useProgramResultDetail(resultId)
-  const detail = remoteDetail.isRemoteEnabled ? remoteDetail.data : mockDetail
+  const detail = remoteDetail.isRemoteEnabled ? remoteDetail.data : null
   const adjacent = remoteDetail.isRemoteEnabled
     ? { previous: remoteDetail.previous, next: remoteDetail.next }
-    : detail
-      ? getAdjacentResults(detail.id)
-      : { previous: null, next: null }
+    : getEmptyAdjacentResults()
 
   const handleBackToList = () => {
     if (window.history.length > 1) {
@@ -52,9 +49,9 @@ export function ResultDetailPage() {
         <div className={styles.back}>
           <ProgramBackButton label="이전으로" onClick={handleBackToList} />
         </div>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          결과를 불러오는 중이에요.
-        </PFText>
+        <div className={styles.loadingState}>
+          <PFLoadingSpinner centered label="결과를 불러오는 중" />
+        </div>
       </section>
     )
   }

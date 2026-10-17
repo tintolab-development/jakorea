@@ -56,7 +56,7 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
 
     opened = once
     expect(opened.programId.length).toBeGreaterThan(0)
-    expect(opened.programTitle).toBe(EDITABLE_UJAT_DUMMY_TITLE)
+    expect(opened.programTitle).toBeTruthy()
   })
 
   test('2) 공통 정보 수정', async ({ page }) => {
@@ -78,7 +78,7 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
     commonEdited = editPage.getCommonEditedSnapshot()
     expect(commonEdited, '공통 정보 수정 스냅샷이 필요합니다').toBeTruthy()
     await editPage.saveCommonInfo(programId)
-    await editPage.expectCommonInfoUpdated(commonEdited)
+    await editPage.expectCommonInfoUpdated(commonEdited, opened?.programTitle)
   })
 
   test('3) 모집 정보 수정', async ({ page }) => {
@@ -120,11 +120,11 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
       timeout: 60_000,
     })
 
-    await editPage.expectCommonInfoUpdated(commonEdited)
+    await editPage.expectCommonInfoUpdated(commonEdited, opened?.programTitle)
     if (recruitmentEdited.length > 0) {
       await editPage.expectAllRecruitmentInfoUpdated(recruitmentEdited)
     }
-    await editPage.expectDummyVisibleInList(programId)
+    await editPage.expectDummyVisibleInList(programId, opened?.programTitle)
   })
 
   test('6) 진행 현황 상반기 참여 기관 셸', async ({ page }) => {

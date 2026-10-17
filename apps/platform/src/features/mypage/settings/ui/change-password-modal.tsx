@@ -92,6 +92,7 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
       open={open}
       size="md"
       title="비밀번호 변경"
+      mobilePlacement="full"
       ariaDescribedBy={descriptionId}
       onClose={handleClose}
     >
@@ -171,7 +172,7 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
               void handleSubmit()
             }}
           >
-            {isBusy ? '변경 중…' : '수정완료'}
+            수정완료
           </PFButton>
         </div>
       </div>

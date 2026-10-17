@@ -88,6 +88,19 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     })
     expect(display.publicProgramTitle).toBe('-')
   })
+
+  it('educationProcess가 비어 있으면 curriculum 원문을 조회용으로 표시한다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      educationProcess: undefined,
+      curriculum: 'UJAT-04 / EDUCATION_IN_PROGRESS',
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.educationCourse': '',
+      },
+    })
+    expect(display.educationCourse).toBe('UJAT-04 / EDUCATION_IN_PROGRESS')
+  })
+
   it('일정형이면 overlay에 남은 봉사단 세부명을 무시하고 해당없음으로 표시한다', () => {
     const display = resolveUjatRegistrationBasicInfoDisplay({
       ...baseProgram(),

@@ -2,12 +2,17 @@
  * CmsSelect `mode="multiple"` — AppMultiSelect와 동일 UX (검색·체크·pill, 닫힘 시 쉼표 구분)
  */
 
-import { useCallback, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type UIEvent } from 'react'
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import { useDebouncedValue } from '@/shared/hooks/use-debounced-value'
 import { Input, Popover } from 'antd'
 import { CmsCheckbox } from './cms-checkbox'
 import { CmsClearIconSvg, joinCmsClassNames } from './cms-field'
 import { FieldChevronDownIcon } from './icons/FieldIcons'
+import {
+  isSponsorContactUnselected,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 export type CmsSelectMultipleOption = {
   value: string
@@ -43,6 +48,17 @@ export type CmsSelectMultipleProps = {
   /** 에러 테두리 (disabled 이면 무시) */
   error?: boolean
   allowClear?: boolean
+  /** 옵션 목록 API 로딩 중 — 빈 목록일 때 검색 없음 문구 대신 표시 */
+  optionsLoading?: boolean
+  /** false면 검색어로 options를 클라이언트 필터하지 않음 (서버 검색) */
+  filterLocally?: boolean
+  /** 설정 시 검색어를 디바운스해 `onSearchChange`에 전달 */
+  searchDebounceMs?: number
+  onSearchChange?: (query: string) => void
+  hasMore?: boolean
+  loadingMore?: boolean
+  onLoadMore?: () => void
+  onOpenChange?: (open: boolean) => void
   className?: string
   id?: string
   style?: CSSProperties
@@ -57,6 +73,14 @@ export function CmsSelectMultiple({
   disabled = false,
   error = false,
   allowClear = true,
+  optionsLoading = false,
+  filterLocally = true,
+  searchDebounceMs,
+  onSearchChange,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
+  onOpenChange,
   className,
   id: idProp,
   style,
@@ -66,6 +90,16 @@ export function CmsSelectMultiple({
   const listId = idProp ?? `cms-select-multi-${reactId.replace(/:/g, '')}`
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, searchDebounceMs ?? 0)
+
+  useEffect(() => {
+    if (!onSearchChange) return
+    if (searchDebounceMs != null && searchDebounceMs > 0) {
+      onSearchChange(debouncedSearch)
+      return
+    }
+    onSearchChange(search)
+  }, [debouncedSearch, onSearchChange, search, searchDebounceMs])
 
   const valueSet = useMemo(() => new Set(value), [value])
 
@@ -77,16 +111,33 @@ export function CmsSelectMultiple({
 
   const displayText = useMemo(() => {
     if (value.length === 0) return ''
-    return value.map(v => optionByValue.get(v)?.label ?? v).join(', ')
+    return value
+      .map(v => {
+        if (isSponsorContactUnselected(v)) return SPONSOR_CONTACT_UNSELECTED_LABEL
+        return optionByValue.get(v)?.label ?? v
+      })
+      .join(', ')
   }, [value, optionByValue])
 
   const filteredOptions = useMemo(() => {
+    if (!filterLocally) return options
     const q = search.trim().toLowerCase()
     if (!q) return options
     return options.filter(
       o => o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
     )
-  }, [options, search])
+  }, [filterLocally, options, search])
+
+  const handleListScroll = useCallback(
+    (event: UIEvent<HTMLUListElement>) => {
+      if (!hasMore || loadingMore || !onLoadMore) return
+      const el = event.currentTarget
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 32) {
+        onLoadMore()
+      }
+    },
+    [hasMore, loadingMore, onLoadMore]
+  )
 
   const toggle = useCallback(
     (v: string, checked: boolean) => {
@@ -119,9 +170,16 @@ export function CmsSelectMultiple({
         allowClear
         onClick={e => e.stopPropagation()}
       />
-      <ul className="cms-select-multi__list" role="listbox" aria-multiselectable>
+      <ul
+        className="cms-select-multi__list"
+        role="listbox"
+        aria-multiselectable
+        onScroll={handleListScroll}
+      >
         {filteredOptions.length === 0 ? (
-          <li className="cms-select-multi__empty">검색 결과가 없습니다.</li>
+          <li className="cms-select-multi__empty">
+            {optionsLoading ? '목록을 불러오는 중입니다.' : '검색 결과가 없습니다.'}
+          </li>
         ) : (
           filteredOptions.map((opt, index) => {
             const originalIndex = options.indexOf(opt)
@@ -151,6 +209,9 @@ export function CmsSelectMultiple({
             )
           })
         )}
+        {loadingMore ? (
+          <li className="cms-select-multi__empty">목록을 불러오는 중입니다.</li>
+        ) : null}
       </ul>
     </div>
   )
@@ -161,8 +222,12 @@ export function CmsSelectMultiple({
         open={disabled ? false : open}
         onOpenChange={next => {
           if (!disabled) {
+            onOpenChange?.(next)
             setOpen(next)
-            if (!next) setSearch('')
+            if (!next) {
+              setSearch('')
+              onSearchChange?.('')
+            }
           }
         }}
         trigger="click"
@@ -172,6 +237,7 @@ export function CmsSelectMultiple({
       >
         <button
           type="button"
+          onMouseDown={() => onOpenChange?.(true)}
           className={joinCmsClassNames(
             'cms-select-multi__trigger',
             'cms-field__box',

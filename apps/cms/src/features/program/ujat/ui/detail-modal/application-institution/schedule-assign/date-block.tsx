@@ -17,6 +17,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
   title,
   day,
   schoolOptions,
+  organizationNamesByApplicationId,
   onAddRow,
   onUpdateRow,
   onRemoveRow,
@@ -24,6 +25,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
   title: string
   day: UjatScheduleAssignDayState
   schoolOptions: UjatInstitutionApplicationRow[]
+  organizationNamesByApplicationId: Record<string, string>
   onAddRow: () => void
   onUpdateRow: (rowId: string, patch: Partial<UjatScheduleAssignDayState['rows'][number]>) => void
   onRemoveRow: (rowId: string) => void
@@ -34,12 +36,23 @@ export function UjatInstitutionScheduleAssignDateBlock({
   )
 
   const schoolSelectOptions = useMemo(
-    () =>
-      schoolOptions.map(row => ({
+    () => {
+      const options = schoolOptions.map(row => ({
         value: row.id,
         label: row.institutionName,
-      })),
-    [schoolOptions]
+      }))
+      const knownIds = new Set(options.map(option => option.value))
+
+      for (const row of day.rows) {
+        const id = row.institutionRowId
+        const name = id ? organizationNamesByApplicationId[id]?.trim() : ''
+        if (id && name && !knownIds.has(id)) {
+          options.push({ value: id, label: name })
+        }
+      }
+      return options
+    },
+    [day.rows, organizationNamesByApplicationId, schoolOptions]
   )
 
   const showRowDelete = day.rows.length >= 2

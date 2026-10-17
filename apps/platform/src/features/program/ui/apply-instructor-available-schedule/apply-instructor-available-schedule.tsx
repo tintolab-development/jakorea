@@ -18,9 +18,9 @@ export type ApplyInstructorScheduleSlot = {
   label: string
   /** 일정 시작일 `YYYY-MM-DD` (Asia/Seoul) — 있으면 달력에서 날짜별로 노출 */
   dateKey?: string
-  /** 카드 1행 (기관명 등) */
+  /** 카드 1행 — CMS `학교 | 지역` */
   title?: string
-  /** 카드 2행 (차시 · 시간) */
+  /** 카드 2행 — CMS `차시 | 시간` */
   detail?: string
 }
 
@@ -51,6 +51,331 @@ function optionMetadata(option: Record<string, unknown>): Record<string, unknown
   return meta && typeof meta === 'object' && !Array.isArray(meta)
     ? (meta as Record<string, unknown>)
     : option
+}
+
+const SCHEDULE_DISPLAY_PLACEHOLDER = '미지정'
+
+function isScheduleDisplayPlaceholder(value: string): boolean {
+  const trimmed = value.trim()
+  return trimmed.length === 0 || trimmed === SCHEDULE_DISPLAY_PLACEHOLDER
+}
+
+function readScheduleMetaString(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+  keys: readonly string[],
+): string {
+  for (const key of keys) {
+    const raw = option[key] ?? meta[key]
+    if (typeof raw !== 'string') continue
+    const trimmed = raw.trim()
+    if (!isScheduleDisplayPlaceholder(trimmed)) return trimmed
+  }
+  return ''
+}
+
+function readScheduleRegion(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+): string {
+  const direct = readScheduleMetaString(option, meta, [
+    'region',
+    'organizationRegion',
+    'regionLabel',
+    'location',
+    'locationName',
+  ])
+  if (direct) return direct
+  const sido = String(option.regionSido ?? meta.regionSido ?? '').trim()
+  const sigungu = String(option.regionSigungu ?? meta.regionSigungu ?? '').trim()
+  const parts = [sido, sigungu].filter(part => !isScheduleDisplayPlaceholder(part))
+  return parts.join(' ')
+}
+
+function formatScheduleClockTime(hhmm: string): string {
+  const match = hhmm.match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return hhmm
+  return `${match[1]!.padStart(2, '0')}:${match[2]}`
+}
+
+function buildScheduleTimeRangeLabel(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+  start: { time: string },
+  end: { time: string; dateKey: string } | null,
+  startDateKey: string,
+): string {
+  const fromApi = readScheduleMetaString(option, meta, ['timeRange', 'timeLabel', 'time'])
+  if (fromApi) return fromApi
+  const allDay =
+    end != null &&
+    start.time === '00:00' &&
+    end.time === '00:00' &&
+    end.dateKey > startDateKey
+  if (allDay) return '종일'
+  if (end) {
+    return `${formatScheduleClockTime(start.time)} ~ ${formatScheduleClockTime(end.time)}`
+  }
+  return formatScheduleClockTime(start.time)
+}
+
+function readScheduleSessionLabel(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+): string {
+  const direct = readScheduleMetaString(option, meta, [
+    'sessionLabel',
+    'sessionName',
+    'roundLabel',
+    'curriculumSessionLabel',
+  ])
+  if (direct) return direct
+  const round = option.sessionRound ?? meta.sessionRound ?? option.roundNumber ?? meta.roundNumber
+  if (typeof round === 'number' && Number.isFinite(round) && round > 0) {
+    return `${round}차시`
+  }
+  if (typeof round === 'string' && /^\d+$/.test(round.trim())) {
+    return `${round.trim()}차시`
+  }
+  return ''
+}
+
+function joinScheduleCardLine(parts: readonly string[]): string {
+  const seen = new Set<string>()
+  return parts
+    .map(part => part.trim())
+    .filter(part => !isScheduleDisplayPlaceholder(part))
+    .filter(part => {
+      const key = part.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .join(' | ')
+}
+
+function isScheduleDateLikeText(value: string): boolean {
+  return /^\d{2,4}년\s*\d{1,2}월\s*\d{1,2}일/.test(value.trim())
+}
+
+function isTimeRangeLikeText(value: string): boolean {
+  return /\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2}/.test(value.trim())
+}
+
+function readRegionFromLabelTail(tail: string): string {
+  const trimmed = tail.trim()
+  if (!trimmed || isScheduleDateLikeText(trimmed) || isTimeRangeLikeText(trimmed)) return ''
+  return trimmed
+}
+
+function splitPipeLabel(label: string): { head: string; tail: string } {
+  const segments = label
+    .split('|')
+    .map(part => part.trim())
+    .filter(part => !isScheduleDisplayPlaceholder(part))
+  if (segments.length >= 2) {
+    const head = segments[0]!
+    const tail = segments.slice(1).join(' | ')
+    if (isScheduleDateLikeText(head)) return { head: '', tail: '' }
+    return { head, tail }
+  }
+  if (segments.length === 1) return { head: segments[0]!, tail: '' }
+  return { head: '', tail: '' }
+}
+
+const KOREAN_SCHEDULE_LINE_RE =
+  /^(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일(?:\([^)]*\))?(?:\s+(.*))?$/
+
+const SCHEDULE_SESSION_SUFFIX_RE = /\s*\|\s*((?:\d+\s*차시|\d+\s*회차|사전\s*교육).*?)\s*$/i
+
+type ParsedKoreanScheduleLabel = {
+  dateKey?: string
+  timeRange?: string
+  sessionLabel?: string
+}
+
+function parseKoreanEducationScheduleLabel(raw: string): ParsedKoreanScheduleLabel {
+  let text = raw.trim()
+  if (!text) return {}
+
+  let sessionLabel = ''
+  const sessionSuffix = text.match(SCHEDULE_SESSION_SUFFIX_RE)
+  if (sessionSuffix) {
+    sessionLabel = sessionSuffix[1]!.trim()
+    text = text.slice(0, sessionSuffix.index).trim()
+  }
+
+  const scheduleMatch = text.match(KOREAN_SCHEDULE_LINE_RE)
+  if (!scheduleMatch) {
+    return sessionLabel ? { sessionLabel } : {}
+  }
+
+  const yearRaw = scheduleMatch[1]!
+  const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw
+  const month = scheduleMatch[2]!.padStart(2, '0')
+  const day = scheduleMatch[3]!.padStart(2, '0')
+  const tail = (scheduleMatch[4] ?? '').trim()
+  const timeMatch = tail.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
+  const timeRange = timeMatch
+    ? `${formatScheduleClockTime(timeMatch[1]!)} ~ ${formatScheduleClockTime(timeMatch[2]!)}`
+    : tail && !isScheduleDateLikeText(tail)
+      ? tail
+      : undefined
+
+  return {
+    dateKey: `${year}-${month}-${day}`,
+    timeRange,
+    sessionLabel: sessionLabel || undefined,
+  }
+}
+
+function sanitizeScheduleSessionLabel(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed || isScheduleDisplayPlaceholder(trimmed)) return ''
+  if (isScheduleDateLikeText(trimmed) || isTimeRangeLikeText(trimmed)) return ''
+  return trimmed
+}
+
+function buildScheduleSlotCardDisplay(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+  displayLabel: string,
+  start: { dateKey: string; time: string } | null,
+  end: { dateKey: string; time: string } | null,
+): { dateKey?: string; title: string; detail?: string } {
+  const parsedLabel = parseKoreanEducationScheduleLabel(displayLabel)
+  const labelParts = splitPipeLabel(displayLabel)
+  const schoolName =
+    readScheduleMetaString(option, meta, ['organizationName', 'schoolName', 'school']) ||
+    (!isScheduleDateLikeText(labelParts.head) ? labelParts.head : '') ||
+    ''
+  const region =
+    readScheduleRegion(option, meta) || readRegionFromLabelTail(labelParts.tail)
+  const sessionLabel =
+    sanitizeScheduleSessionLabel(readScheduleSessionLabel(option, meta)) ||
+    sanitizeScheduleSessionLabel(parsedLabel.sessionLabel ?? '')
+  const timeRange = start
+    ? buildScheduleTimeRangeLabel(option, meta, start, end, start.dateKey)
+    : parsedLabel.timeRange ?? ''
+  const title = joinScheduleCardLine([schoolName, region])
+  const detail = joinScheduleCardLine([sessionLabel, timeRange])
+  const dateKey = start?.dateKey ?? parsedLabel.dateKey
+
+  return {
+    dateKey,
+    title: title || schoolName,
+    detail: detail || undefined,
+  }
+}
+
+export function resolveScheduleSlotCardLines(slot: ApplyInstructorScheduleSlot): {
+  primary: string
+  secondary?: string
+} {
+  const title = slot.title?.trim()
+  const detail = slot.detail?.trim()
+  if (title && !isScheduleDateLikeText(title)) {
+    return { primary: title, secondary: detail || undefined }
+  }
+
+  const parsed = parseKoreanEducationScheduleLabel(slot.label)
+  const secondary = joinScheduleCardLine([
+    parsed.sessionLabel ?? '',
+    parsed.timeRange ?? '',
+  ])
+  if (secondary) {
+    return { primary: title && !isScheduleDateLikeText(title) ? title : '', secondary }
+  }
+
+  return { primary: slot.label.trim(), secondary: undefined }
+}
+
+/** CMS `extractClockTimeRangeForScheduleSummary` — 요약 괄호 안 시각만 */
+function extractClockTimeRangeForSummary(timeRange: string): string {
+  const trimmed = timeRange.trim()
+  let lastParenContent: string | undefined
+  for (const match of trimmed.matchAll(/\(([^)]+)\)/g)) {
+    lastParenContent = match[1]?.trim()
+  }
+  if (lastParenContent != null && /\d{1,2}:\d{2}/.test(lastParenContent)) {
+    return lastParenContent.replace(/–/g, '-').replace(/\s*-\s*/g, ' ~ ')
+  }
+  const direct = trimmed.match(/(\d{1,2}:\d{2})\s*[-–~]\s*(\d{1,2}:\d{2})/)
+  if (direct) {
+    return `${formatScheduleClockTime(direct[1]!)} ~ ${formatScheduleClockTime(direct[2]!)}`
+  }
+  return trimmed.replace(/–/g, '-').replace(/\s*-\s*/g, ' ~ ')
+}
+
+function formatScheduleSummaryDateLabel(dateKey: string): string {
+  const [yearRaw, monthRaw, dayRaw] = dateKey.split('-')
+  const year = Number(yearRaw)
+  const month = Number(monthRaw)
+  const day = Number(dayRaw)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return ''
+  return `${year}년 ${month}월 ${day}일`
+}
+
+function readSchoolNameForScheduleSummary(slot: ApplyInstructorScheduleSlot): string {
+  const title = slot.title?.trim()
+  if (title) {
+    const school = title.split('|')[0]?.trim() ?? ''
+    if (school && !isScheduleDateLikeText(school)) return school
+  }
+  const labelHead = splitPipeLabel(slot.label).head
+  if (labelHead && !isScheduleDateLikeText(labelHead)) return labelHead
+  return ''
+}
+
+function readTimeRangeForScheduleSummary(slot: ApplyInstructorScheduleSlot): string {
+  const secondary = resolveScheduleSlotCardLines(slot).secondary ?? ''
+  for (const part of secondary.split('|').map(value => value.trim())) {
+    if (isTimeRangeLikeText(part)) return part
+  }
+  const parsed = parseKoreanEducationScheduleLabel(slot.label)
+  return parsed.timeRange ?? ''
+}
+
+function readSessionLabelForScheduleSummary(slot: ApplyInstructorScheduleSlot): string {
+  const secondary = resolveScheduleSlotCardLines(slot).secondary ?? ''
+  for (const part of secondary.split('|').map(value => value.trim())) {
+    const session = sanitizeScheduleSessionLabel(part)
+    if (session) return session
+  }
+  const parsed = parseKoreanEducationScheduleLabel(slot.label)
+  return sanitizeScheduleSessionLabel(parsed.sessionLabel ?? '')
+}
+
+function resolveScheduleSummaryDateKey(slot: ApplyInstructorScheduleSlot): string | undefined {
+  if (slot.dateKey) return slot.dateKey
+  return parseKoreanEducationScheduleLabel(slot.label).dateKey
+}
+
+/**
+ * 하단 「강의 진행 가능일」 — `강서초등학교 : 2026년 3월 9일 (09:20 ~ 12:00)`
+ * (면접 등 기관명 없으면 `3차시 : …` 형태)
+ */
+export function formatApplyScheduleSummarySegment(slot: ApplyInstructorScheduleSlot): string {
+  const dateKey = resolveScheduleSummaryDateKey(slot)
+  const datePart = dateKey ? formatScheduleSummaryDateLabel(dateKey) : ''
+  const timePart = extractClockTimeRangeForSummary(readTimeRangeForScheduleSummary(slot))
+  const timeSuffix = timePart ? ` (${timePart})` : ''
+
+  const school = readSchoolNameForScheduleSummary(slot)
+  if (school && datePart) {
+    return `${school} : ${datePart}${timeSuffix}`
+  }
+
+  const sessionLabel = readSessionLabelForScheduleSummary(slot)
+  if (sessionLabel && datePart) {
+    return `${sessionLabel} : ${datePart}${timeSuffix}`
+  }
+
+  if (datePart) {
+    return `${datePart}${timeSuffix}`.trim()
+  }
+
+  return slot.label.trim()
 }
 
 function seoulDateTimeParts(value: unknown): { dateKey: string; time: string } | null {
@@ -88,17 +413,17 @@ function runtimeScheduleSlotFromOption(
   }
 
   const start = seoulDateTimeParts(option.startAt ?? meta.startAt)
-  if (!start) return { id, label: displayLabel }
   const end = seoulDateTimeParts(option.endAt ?? meta.endAt)
-  const organizationName = String(option.organizationName ?? meta.organizationName ?? '').trim()
-  const allDay =
-    end != null && start.time === '00:00' && end.time === '00:00' && end.dateKey > start.dateKey
+  const card = buildScheduleSlotCardDisplay(option, meta, displayLabel, start, end)
+  if (!card.dateKey && !start) {
+    return { id, label: displayLabel }
+  }
   return {
     id,
     label: displayLabel,
-    dateKey: start.dateKey,
-    title: organizationName || displayLabel.split(' | ')[0] || displayLabel,
-    detail: allDay ? '종일' : end ? `${start.time} ~ ${end.time}` : start.time,
+    dateKey: card.dateKey,
+    title: card.title,
+    detail: card.detail,
   }
 }
 
@@ -118,7 +443,16 @@ export function buildInstructorApplyScheduleSlots(input: {
     .map(line => line.trim())
     .filter(Boolean)
   if (lines.length > 0) {
-    return lines.map((label, index) => ({ id: `line:${index}`, label }))
+    return lines.map((label, index) => {
+      const parsed = parseKoreanEducationScheduleLabel(label)
+      const detail = joinScheduleCardLine([parsed.sessionLabel ?? '', parsed.timeRange ?? ''])
+      return {
+        id: `line:${index}`,
+        label,
+        dateKey: parsed.dateKey,
+        detail: detail || undefined,
+      }
+    })
   }
   return (input.educationSchedules ?? [])
     .map((row, index) => {
@@ -159,14 +493,18 @@ export function readPortalApplicationBindingOptionSlots(
 
 /**
  * form-bindings 응답의 강사 일정 런타임 선택지 (`items[].id/label` 또는 `options[].option_value/option_label`).
- * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null — 프로그램 일정 줄로 만든다.
+ * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null.
+ * GENERAL_ORGANIZATION 강사/봉사는 호출측에서 null을 프로그램 공통 일정으로 대체하지 않는다.
  */
 export function readRuntimeInstructorScheduleSlots(
   paragraph: unknown,
 ): ApplyInstructorScheduleSlot[] | null {
   if (!paragraph || typeof paragraph !== 'object') return null
   const row = paragraph as Record<string, unknown>
-  if (typeof row.runtimeResolved !== 'boolean') return null
+  if (typeof row.runtimeResolved !== 'boolean') {
+    const fromItems = bindingOptionSlotsFromParagraphRow(row)
+    return fromItems.length > 0 ? fromItems : null
+  }
   return bindingOptionSlotsFromParagraphRow(row)
 }
 
@@ -197,10 +535,11 @@ export function instructorAvailableScheduleAnswerFromValues(
 ): Record<string, unknown> {
   const selected = slots.filter(slot => values.selectedSlotIds.includes(slot.id))
   const selectedLabels = selected.map(slot => slot.label)
+  const summarySegments = selected.map(slot => formatApplyScheduleSummarySegment(slot))
   return {
     selectedSlotIds: selected.map(slot => slot.id),
     selectedLabels,
-    summary: selectedLabels.join(' / '),
+    summary: summarySegments.join(' | '),
   }
 }
 
@@ -223,22 +562,28 @@ export function instructorAvailableScheduleValuesFromDraftAnswer(
   return { selectedSlotIds: ids }
 }
 
+export type ApplyScheduleSlotChipStyle = 'lecture' | 'interview'
+
 export type ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: string
   summaryLabel: string
   emptyMessage: string
+  /** 강의·봉사(lecture) vs 면접(interview) 칩 시안 */
+  slotChipStyle?: ApplyScheduleSlotChipStyle
 }
 
 const INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '강의 진행 가능 일정 날짜',
   summaryLabel: '강의 진행 가능일',
   emptyMessage: '선택 가능한 강의 일정이 없습니다.',
+  slotChipStyle: 'lecture',
 }
 
 export const INDIVIDUAL_INTERVIEW_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '면접 진행 가능 일정 날짜',
   summaryLabel: '면접 진행 가능일',
   emptyMessage: '선택 가능한 면접 일정이 없습니다.',
+  slotChipStyle: 'interview',
 }
 
 /** 봉사자 신청 — CMS `VolunteerActivityAvailableScheduleParagraph` (강사 일정 UI 재사용) */
@@ -246,6 +591,7 @@ export const VOLUNTEER_ACTIVITY_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '봉사 진행 가능 일정 날짜',
   summaryLabel: '봉사 진행 가능일',
   emptyMessage: '선택 가능한 봉사 일정이 없습니다.',
+  slotChipStyle: 'lecture',
 }
 
 export function findIncompleteVolunteerActivityScheduleMessage(
@@ -326,6 +672,8 @@ export function ApplyInstructorAvailableSchedule({
 
   const emptyMessage =
     slots.length === 0 ? copy.emptyMessage : '이 날짜에 선택할 수 있는 일정이 없습니다.'
+  const slotChipStyle = copy.slotChipStyle ?? 'lecture'
+  const slotChipInterview = slotChipStyle === 'interview'
 
   return (
     <div className={styles.root}>
@@ -334,6 +682,7 @@ export function ApplyInstructorAvailableSchedule({
           <PFDatePickerCalendar
             key={anchorDateKey ?? 'empty'}
             inline
+            variant="applySchedule"
             className={styles.calendar}
             aria-label={copy.calendarAriaLabel}
             selectedDate={selectedDateKey}
@@ -343,7 +692,12 @@ export function ApplyInstructorAvailableSchedule({
             onSelectDate={setSelectedDateKey}
           />
         ) : null}
-        <div className={styles.slotGrid} role="list">
+        <div
+          className={[styles.slotGrid, slotChipInterview ? styles.slotGridInterview : undefined]
+            .filter(Boolean)
+            .join(' ')}
+          role="list"
+        >
           {visibleSlots.length === 0 ? (
             <PFText as="p" typo="bd-md-md" color="neutral-cool-600" className={styles.empty}>
               {emptyMessage}
@@ -351,20 +705,27 @@ export function ApplyInstructorAvailableSchedule({
           ) : (
             visibleSlots.map(slot => {
               const active = value.selectedSlotIds.includes(slot.id)
+              const cardLines = resolveScheduleSlotCardLines(slot)
               return (
                 <button
                   key={slot.id}
                   type="button"
                   role="listitem"
                   aria-pressed={active}
-                  className={[styles.slotCard, active ? styles.slotCardActive : undefined]
+                  className={[
+                    styles.slotCard,
+                    slotChipInterview ? styles.slotCardInterview : undefined,
+                    active ? styles.slotCardActive : undefined,
+                  ]
                     .filter(Boolean)
                     .join(' ')}
                   onClick={() => toggle(slot.id)}
                 >
-                  <span className={styles.slotCardTitle}>{slot.title ?? slot.label}</span>
-                  {slot.detail ? (
-                    <span className={styles.slotCardDetail}>{slot.detail}</span>
+                  {cardLines.primary ? (
+                    <span className={styles.slotCardTitle}>{cardLines.primary}</span>
+                  ) : null}
+                  {cardLines.secondary ? (
+                    <span className={styles.slotCardDetail}>{cardLines.secondary}</span>
                   ) : null}
                 </button>
               )
@@ -385,7 +746,9 @@ export function ApplyInstructorAvailableSchedule({
                   <Fragment key={slot.id}>
                     {index > 0 ? <PFFormInlineSeparator /> : null}
                     <PFFormInlineSegment>
-                      <PFFormFieldValueText>{slot.label}</PFFormFieldValueText>
+                      <PFFormFieldValueText>
+                        {formatApplyScheduleSummarySegment(slot)}
+                      </PFFormFieldValueText>
                     </PFFormInlineSegment>
                   </Fragment>
                 ))}

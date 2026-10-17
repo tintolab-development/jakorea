@@ -11,9 +11,6 @@ export interface SlotResponse {
   programId?: number;
   organizationApplicationId?: number;
   scheduleId?: number;
-  grade?: string;
-  className?: string;
-  classLabel?: string;
   revision?: number;
   assignmentStatus?: string;
   active?: boolean;

@@ -168,22 +168,24 @@
 
 @media (--bp-below-pc) {
   .schoolModalFilterRow {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--spacing-8);
   }
 
   .schoolModalFilterRow > * {
+    width: 100%;
     min-width: 0;
   }
 
   .schoolModalSearchRow {
-    grid-template-columns: minmax(0, 1fr) 72px;
+    grid-template-columns: 1fr;
     gap: var(--spacing-8);
   }
 
   .schoolModalSearchButton {
-    min-width: 0 !important;
-    padding: 13px var(--spacing-8) !important;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
   }
 
   .schoolModalMain {

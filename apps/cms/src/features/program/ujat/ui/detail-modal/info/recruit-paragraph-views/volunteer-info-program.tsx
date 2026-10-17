@@ -15,6 +15,7 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { formatUjatDotDateWithWeekday } from '@/features/program/ujat/lib/ujat-date-display'
 import {
   resolveUjatRecruitAnnouncementTitle,
   ujatRecruitDisplayKindFromVolunteerHalf,
@@ -53,7 +54,6 @@ import {
   UjatRecruitFormPeriodDatePicker,
   UjatRecruitVolunteerNotesField,
 } from '../recruit-lib/ujat-recruit-form-fields'
-import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
@@ -78,7 +78,7 @@ function dateMethodLine(date: string | Date | undefined, method: string | undefi
   if (!date) return '-'
   const methodLabel = method?.trim() || fallbackMethod
   return (
-    <UjatInlineDividedSegments segments={[dayjs(date).format('YYYY.MM.DD(ddd)'), methodLabel]} />
+    <UjatInlineDividedSegments segments={[formatUjatDotDateWithWeekday(date), methodLabel]} />
   )
 }
 
@@ -197,6 +197,11 @@ export function UjatRecruitVolunteerInfoProgramView({
       '-'
     )
   const formMode = isEdit && form ? 'edit' : 'view'
+  const recruitmentContactName =
+    program.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName?.trim() ||
+    program.contactName?.trim() ||
+    sponsorName?.trim() ||
+    ''
   const announcementPublishedEdit =
     isEdit && form ? (
       <Controller
@@ -245,8 +250,7 @@ export function UjatRecruitVolunteerInfoProgramView({
           highlightParagraphId={highlightParagraphId}
         />
       ) : null}
-      <div className="ujat-recruit-volunteer-info-program__forms">
-      <DetailInfoForm title="봉사자 모집 정보(설정)" hideHeader mode={formMode}>
+      <DetailInfoForm title="봉사자 모집 정보" hideHeader mode={formMode}>
         {showNoticeExposure ? (
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
@@ -273,9 +277,6 @@ export function UjatRecruitVolunteerInfoProgramView({
             />
           </DetailInfoForm.Row>
         )}
-      </DetailInfoForm>
-
-      <DetailInfoForm title="봉사자 모집 정보" hideHeader mode={formMode}>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="공고용 프로그램명"
@@ -373,7 +374,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                       mode="multiple"
                       withAllOption={false}
                       inputSize="medium"
-                      width="100%"
+                      width={240}
                       value={normalizeRecruitmentTargetSelectValues(field.value)}
                       onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
                       placeholder="모집 대상을 선택하세요"
@@ -498,7 +499,7 @@ export function UjatRecruitVolunteerInfoProgramView({
             fullRow
             view={
               <ProgramDetailContactReadRow
-                contactName={sponsorName}
+                contactName={recruitmentContactName}
                 contactPhone={program.contactPhone}
                 contactEmail={program.contactEmail}
                 padEmptySegments
@@ -579,7 +580,6 @@ export function UjatRecruitVolunteerInfoProgramView({
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
-      </div>
     </div>
   )
 }

@@ -26,7 +26,7 @@ import {
   ProgramRegistrationMultiRoundAssignmentFields,
   type ProgramRegistrationMultiRoundAssignmentValue,
 } from './program-registration-multi-round-assignment-fields'
-import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
@@ -101,6 +101,7 @@ const PRE_EDUCATION_SESSION_INDEX = 0
 
 type ProgramRegistrationEducationCurriculumParagraphProps = {
   sessionRoundType: ProgramRegistrationSessionRoundType
+  participantIndividual: boolean
   /** 참여자 유형 학교/기관 — 교육 형태에 「참여자 선택」 포함 */
   participantOrganization: boolean
   curriculumSessionCount: number
@@ -215,7 +216,7 @@ function ProgramRegistrationMultiRoundClassRow({
               inputSize="medium"
               withAllOption={false}
               placeholder="진행 차시"
-              width={120}
+              width={144}
               options={GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS}
               value={progressSession || undefined}
               onChange={v => onProgressSessionChange(String(v ?? ''))}
@@ -296,6 +297,7 @@ function ProgramRegistrationCurriculumChartSessionBlock({
 
 export function ProgramRegistrationEducationCurriculumParagraph({
   sessionRoundType,
+  participantIndividual,
   participantOrganization,
   curriculumSessionCount,
   onDeleteCurriculumSession,
@@ -522,11 +524,11 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   validationKey="curriculum.preEducationScheduleLine"
                   edit={
                     <div className="detail-info-form-inputs-wrapper-no-gap">
-                      <ParagraphDatePicker
-                        mode="single"
-                        presetMode="schedule"
-                        customizable={false}
-                        suppressAutoTodayWhenEmpty
+                      <EducationProgressScheduleDatePicker
+                        participantIndividual={participantIndividual}
+                        participantOrganization={participantOrganization}
+                        programType="curriculum"
+                        sessionRound={sessionRoundType}
                         value={scheduleRange?.[0] ?? null}
                         appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
                         appliedSurfaceWithTime={scheduleHasClock}
@@ -537,8 +539,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                             () => formatEducationScheduleLineFromRange([start, end])
                           )
                         }
-                        width="100%"
-                        placeholder="일정을 선택하세요"
                       />
                     </div>
                   }

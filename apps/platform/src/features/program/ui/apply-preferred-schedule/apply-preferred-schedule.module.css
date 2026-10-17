@@ -1,4 +1,5 @@
 .root {
+  --detail-info-label-w: 120px;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16, 16px);
@@ -6,50 +7,23 @@
   min-width: 0;
 }
 
-.block {
+.blockRow {
   display: flex;
   align-items: stretch;
   gap: 8px;
-  width: 100%;
   min-width: 0;
 }
 
 .blockBody {
   flex: 1 1 0;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-12, 12px);
 }
 
-.title {
-  margin: 0;
+.blockTitle {
+  margin: 0 0 8px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8, 8px);
-  min-width: 0;
-}
-
-.fieldLabel {
-  margin: 0;
-}
-
-.timeRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.timeUnit {
-  flex-shrink: 0;
-}
-
-.delete {
+.deleteCell {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -57,11 +31,127 @@
   align-self: stretch;
 }
 
-.add {
-  align-self: flex-start;
-  padding: 0;
-  border: none;
-  background: none;
+.scheduleForm .detail-info-form__body {
+  border: 1px solid var(--table-line, #e0e0e0);
+}
+
+.scheduleForm .detail-info-form__row--double {
+  flex-wrap: nowrap;
+}
+
+.scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type {
+  flex: 0 1 36%;
+  max-width: 42%;
+}
+
+.scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
+  flex: 1 1 64%;
+  min-width: 0;
+}
+
+.datePicker {
+  flex: 0 0 220px;
+  width: 220px;
+  max-width: 100%;
+}
+
+.timeInputs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 0;
+}
+
+.timeInputs > :global(.pf-text-input-root) {
+  flex: 0 0 120px;
+  width: 120px;
+}
+
+.timeInputs .sessionSelect {
+  flex: 0 0 140px;
+  width: 140px;
+  min-width: 140px;
+}
+
+.timeInputs .timePicker {
+  flex: 0 0 140px;
+  width: 140px;
+  min-width: 140px;
+}
+
+.tilde {
+  flex-shrink: 0;
+  margin: 0 8px;
+  color: var(--color-neutral-cool-500, #757575);
+}
+
+.timeUnit {
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.headerAddButton {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/*
+ * form-template-host typo unset 회귀 시 — 시안 secondary(mint 테두리·배경) 유지.
+ * @see apply-volunteer-evidence-attach.module.css
+ */
+:global(.form-template-host) .headerAddButton {
+  display: inline-flex;
+  box-sizing: border-box;
+  min-width: 120px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border: 1px solid var(--color-primary-500, #01a1af);
+  border-radius: var(--radius-12, 12px);
+  background:
+    linear-gradient(0deg, var(--color-element-hover, rgb(1 161 175 / 6%)) 0%, var(--color-element-hover, rgb(1 161 175 / 6%)) 100%),
+    var(--color-neutral-white, #fff);
+  color: var(--color-primary-500, #01a1af);
+  font-family: var(--font-family-base, Pretendard, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
   cursor: pointer;
-  color: var(--color-primary-500, #0b6b6b);
+}
+
+:global(.form-template-host) .headerAddButton:hover:not(:disabled) {
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover-strong, rgb(1 161 175 / 12%)) 0%,
+      var(--color-element-hover-strong, rgb(1 161 175 / 12%)) 100%
+    ),
+    var(--color-neutral-white, #fff);
+}
+
+:global(.form-template-host) .headerAddButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.addButtonLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* CMS ButtonAddIcon(13×13) 대응 — secondary 글자색(currentColor) */
+.addButtonIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  background: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13'%3E%3Cpath fill='black' d='M6 0h1v13H6V0zm-6 6h13v1H0V6z'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
 }

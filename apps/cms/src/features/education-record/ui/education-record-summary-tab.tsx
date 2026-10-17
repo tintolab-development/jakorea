@@ -7,7 +7,7 @@
 import { Alert, Spin } from 'antd'
 import type { SummaryTabView } from '@/features/education-record/api/adapters/performance-summary-adapters'
 import { SUMMARY_CATEGORIES } from '@/features/education-record/model/education-record-summary-config'
-import { SUMMARY_EMPTY_ROW } from '@/features/education-record/model/education-record-summary-mock'
+import { SUMMARY_EMPTY_ROW } from '@/features/education-record/model/education-record-summary-empty'
 import { EducationRecordSummaryCategory } from './education-record-summary-category'
 import { EducationRecordSummaryTable } from './education-record-summary-table'
 import './education-record-summary-tab.css'

@@ -11,6 +11,7 @@ import {
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import { getWritingFormHeadMiddlePinnedTail } from '@/features/template/model/writing-form-draft.schema'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { isSurveyExplanationTextParagraph } from '@/features/template/lib/survey-paragraph-editor-locks'
 import { isTitleWithPeriodParagraph } from '@/features/template/lib/title-with-period-settings'
 
 export type MiddleParagraphActionsHandlers = {
@@ -60,8 +61,9 @@ export function useWritingFormMiddleParagraphActions(
       let duplicated = false
       setDraft(prev => {
         const target = prev.paragraphs.find(p => p.id === paragraphId)
-        if (!surveyFreeForm && target != null && isTitleWithPeriodParagraph(target)) {
-          return prev
+        if (target != null) {
+          if (isTitleWithPeriodParagraph(target)) return prev
+          if (surveyFreeForm && isSurveyExplanationTextParagraph(target)) return prev
         }
         const next = surveyFreeForm
           ? duplicateSurveyParagraph(prev.paragraphs, paragraphId, newId)
@@ -83,8 +85,9 @@ export function useWritingFormMiddleParagraphActions(
       setDraft(prev => {
         const before = prev.paragraphs
         const target = before.find(p => p.id === paragraphId)
-        if (!surveyFreeForm && target != null && isTitleWithPeriodParagraph(target)) {
-          return prev
+        if (target != null) {
+          if (isTitleWithPeriodParagraph(target)) return prev
+          if (surveyFreeForm && isSurveyExplanationTextParagraph(target)) return prev
         }
         if (surveyFreeForm) {
           const nextParas = removeSurveyParagraph(before, paragraphId)

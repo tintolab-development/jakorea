@@ -4,23 +4,28 @@ import {
   UJAT_PROGRAM_REGISTRATION_STEP_KEYS,
   UJAT_PROGRAM_REGISTRATION_STEPS,
   getUjatProgramRegistrationPhase,
+  getUjatProgramRegistrationPhaseValidationTarget,
   normalizeUjatProgramRegistrationStepKey,
   recruitmentPreviewAudienceFromUjatRegistrationStep,
 } from './ujat-program-registration-flow'
 
 describe('ujat-program-registration-flow', () => {
-  it('wizard steps are program + recruitment only', () => {
+  it('wizard steps are program + recruitment + application', () => {
     expect([...UJAT_PROGRAM_REGISTRATION_STEP_KEYS]).toEqual([
       'program',
       'recruit-participant',
       'recruit-volunteer-h1',
       'recruit-volunteer-h2',
+      'application-ujat-school',
+      'application-ujat-volunteer',
     ])
     expect(UJAT_PROGRAM_REGISTRATION_STEPS.map(step => step.phase)).toEqual([
       'program',
       'recruitment',
       'recruitment',
       'recruitment',
+      'application',
+      'application',
     ])
   })
 
@@ -31,14 +36,15 @@ describe('ujat-program-registration-flow', () => {
     ])
   })
 
-  it('maps legacy application query/draft steps to recruitment', () => {
+  it('maps legacy application query/draft steps to application tabs', () => {
     expect(normalizeUjatProgramRegistrationStepKey('application-school')).toBe(
-      'recruit-participant'
+      'application-ujat-school'
     )
     expect(normalizeUjatProgramRegistrationStepKey('application-volunteer')).toBe(
-      'recruit-participant'
+      'application-ujat-volunteer'
     )
     expect(getUjatProgramRegistrationPhase('recruit-participant')).toBe('recruitment')
+    expect(getUjatProgramRegistrationPhase('application-ujat-school')).toBe('application')
   })
 
   it('maps recruit steps to platform preview audiences', () => {
@@ -51,5 +57,22 @@ describe('ujat-program-registration-flow', () => {
     expect(recruitmentPreviewAudienceFromUjatRegistrationStep('recruit-volunteer-h2')).toBe(
       'volunteers'
     )
+  })
+
+  it('uses the common-information gate before entering recruitment', () => {
+    expect(getUjatProgramRegistrationPhaseValidationTarget('program', 'recruitment')).toBe(
+      'program'
+    )
+  })
+
+  it('uses the recruitment gate before entering application', () => {
+    expect(getUjatProgramRegistrationPhaseValidationTarget('recruitment', 'application')).toBe(
+      'recruitment'
+    )
+  })
+
+  it('does not validate when moving backwards or within the same phase', () => {
+    expect(getUjatProgramRegistrationPhaseValidationTarget('application', 'recruitment')).toBeNull()
+    expect(getUjatProgramRegistrationPhaseValidationTarget('recruitment', 'recruitment')).toBeNull()
   })
 })

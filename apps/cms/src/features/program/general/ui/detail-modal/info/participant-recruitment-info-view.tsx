@@ -7,6 +7,7 @@ import { Controller } from 'react-hook-form'
 import {
   patchInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
+  useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
@@ -62,6 +63,16 @@ const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 const FORM_CLASS = 'program-registration-paragraph'
 
+/** 수정 중 빈 칸(undefined)은 기존 program 값으로 덮지 않는다 */
+function recruitmentLimitForBridge(
+  fieldValue: number | undefined,
+  baseline: number | undefined,
+  editing: boolean
+): number | undefined {
+  if (editing) return fieldValue
+  return fieldValue ?? baseline
+}
+
 function NumberWithSuffixEdit({
   form,
   name,
@@ -109,6 +120,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
 }) {
+  useInstitutionApplicationProgramBridge()
   const display = resolveGeneralProgramParticipantRecruitmentDisplay(
     program,
     isEdit && form
@@ -135,13 +147,26 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           : preEducationField === 'not_required'
             ? false
             : base.preEducationNoticeRequired,
-      maxAssignableInstructors: maxInstructorsField ?? base.maxAssignableInstructors,
-      maxClassCount: maxClassField ?? base.maxClassCount,
-      maxScheduleCount: maxScheduleField ?? base.maxScheduleCount,
-      maxSessionsPerDay: maxSessionsField ?? base.maxSessionsPerDay,
+      maxAssignableInstructors: recruitmentLimitForBridge(
+        maxInstructorsField,
+        base.maxAssignableInstructors,
+        isEdit
+      ),
+      maxClassCount: recruitmentLimitForBridge(maxClassField, base.maxClassCount, isEdit),
+      maxScheduleCount: recruitmentLimitForBridge(
+        maxScheduleField,
+        base.maxScheduleCount,
+        isEdit
+      ),
+      maxSessionsPerDay: recruitmentLimitForBridge(
+        maxSessionsField,
+        base.maxSessionsPerDay,
+        isEdit
+      ),
     })
   }, [
     program,
+    isEdit,
     preEducationField,
     maxInstructorsField,
     maxClassField,
@@ -461,18 +486,26 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="startDate"
+                    name="participantProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
                       <ParagraphDatePicker
                         mode="range"
                         value={[
                           toDayjs(field.value as string | Date | undefined),
-                          toDayjs(form.watch('endDate') as string | Date | undefined),
+                          toDayjs(
+                            form.watch('participantProgramOperationEndDate') as
+                              | string
+                              | Date
+                              | undefined
+                          ),
                         ]}
                         onChange={([start, end]) => {
                           field.onChange(start ? start.toISOString() : '')
-                          form.setValue('endDate', end ? end.toISOString() : '')
+                          form.setValue(
+                            'participantProgramOperationEndDate',
+                            end ? end.toISOString() : ''
+                          )
                         }}
                         placeholder={['운영 시작일', '운영 종료일']}
                         width="100%"

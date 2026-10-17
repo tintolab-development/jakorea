@@ -6,11 +6,24 @@
  * OpenAPI spec version: v9
  */
 import type { MemberPortalEducationScheduleItem } from './memberPortalEducationScheduleItem';
+import type { MemberPortalEducationScheduleListResponseEducationStructure } from './memberPortalEducationScheduleListResponseEducationStructure';
 import type { MemberPortalEducationScheduleListResponseScopeStatus } from './memberPortalEducationScheduleListResponseScopeStatus';
+import type { MemberPortalEducationScheduleListResponseSessionRound } from './memberPortalEducationScheduleListResponseSessionRound';
 
 export interface MemberPortalEducationScheduleListResponse {
   applicationId?: number;
   applicationType?: string;
+  /**
+     * 교육 진행 구조. 이 API는 UPPERCASE. 프로그램 상세 portal wire(lowercase)와 다름.
+     * @nullable
+     */
+  educationStructure?: MemberPortalEducationScheduleListResponseEducationStructure;
+  /**
+     * 회차 유형. 이 API는 UPPERCASE.
+     * @nullable
+     */
+  sessionRound?: MemberPortalEducationScheduleListResponseSessionRound;
+  /** 카드 개수·순서는 프로그램 교육 진행 정의(curriculumSessions/scheduleDetails)가 SSOT. 정의가 비면 scoped program_schedule 폴백. */
   items?: MemberPortalEducationScheduleItem[];
   /** 필드 설명: Schedule evidence scope. For GENERAL_INDIVIDUAL INDIVIDUAL/VOLUNTEER: ASSIGNMENT_SCOPED uses the CMS-confirmed scope (including an explicitly empty scope); RECORDED_ONLY is read-only historical evidence, not the complete curriculum; NO_SCOPE_EVIDENCE has no confirmed scope or recorded rows. PROGRAM_SCHEDULE preserves other program preview semantics, including UJAT. Visibility is not permission to submit attendance. */
   scopeStatus?: MemberPortalEducationScheduleListResponseScopeStatus;

@@ -43,15 +43,52 @@
   box-sizing: border-box;
   padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-16);
   background: var(--color-neutral-white);
 }
 
-/* rows=1 — PFTextInput large(44px)와 비슷한 한 줄 박스. 리사이즈로 확장 가능 */
+.medium {
+  composes: medium from '../pf-control-field-size/pf-control-field-size.module.css';
+}
+
+.large {
+  composes: large from '../pf-control-field-size/pf-control-field-size.module.css';
+}
+
+.xlarge {
+  composes: xlarge from '../pf-control-field-size/pf-control-field-size.module.css';
+}
+
+.mobile {
+  composes: mobile from '../pf-control-field-size/pf-control-field-size.module.css';
+}
+
+.field.medium:not(.fieldRows1),
+.field.large:not(.fieldRows1),
+.field.xlarge:not(.fieldRows1),
+.field.mobile:not(.fieldRows1) {
+  height: auto;
+}
+
+/* rows=1 — 한 줄 박스. 리사이즈로 확장 가능 */
 .fieldRows1 {
   align-items: center;
-  min-height: 44px;
   padding: 10px 14px;
+}
+
+.fieldRows1.medium {
+  min-height: 40px;
+}
+
+.fieldRows1.large {
+  min-height: 44px;
+}
+
+.fieldRows1.xlarge {
+  min-height: 54px;
+}
+
+.fieldRows1.mobile {
+  min-height: 52px;
 }
 
 .field:hover:not(.disabled),
@@ -195,6 +232,34 @@
   font-weight: 500;
   line-height: 140%;
   letter-spacing: 0;
+}
+
+.messageEnd {
+  align-self: stretch;
+  padding-left: 0;
+  padding-right: var(--spacing-8);
+  text-align: right;
+}
+
+/* formPage 글자 수(0/1000) — 입력창 하단 우측 (리사이즈 핸들 왼쪽) */
+.fieldCharCount {
+  position: absolute;
+  right: 28px;
+  bottom: 10px;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  color: var(--color-neutral-warm-500);
+  pointer-events: none;
+}
+
+.fieldRows1 .fieldCharCount {
+  right: 26px;
+  bottom: 12px;
 }
 
 .messageNeutral {

@@ -62,14 +62,9 @@ describe('buildApplicantInstitutionTextbookOptions', () => {
     expect(options.map(o => o.label)).toContain('중등 교재 중학교')
   })
 
-  it('program materials에 포함된 교재만 노출한다', () => {
-    const options = buildApplicantInstitutionTextbookOptions(
-      program,
-      '3학년',
-      catalog,
-      new Set(['101'])
-    )
-    expect(options.map(o => o.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '101'])
+  it('program materials 후보와 무관하게 matches 교재를 노출한다', () => {
+    const options = buildApplicantInstitutionTextbookOptions(program, '3학년', catalog)
+    expect(options.map(o => o.value)).toContain('101')
   })
 })
 

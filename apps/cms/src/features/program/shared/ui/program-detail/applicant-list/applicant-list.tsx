@@ -1,10 +1,11 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  CMS_ACTION_BUTTON_WIDTH,
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
   useCmsAlert,
@@ -70,10 +71,15 @@ import {
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
-import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  isInstructorApplicationFeePolicyRequestValid,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import { mapLectureAssignItemsToApprovalAssignments } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import {
   toFlatDecisionNotifyTiming,
+  toOrganizationApproveNotifyTiming,
   toNestedDecisionNotification,
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
@@ -91,7 +97,15 @@ import {
 } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-modal'
 import { InstructorBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal'
 import { InstitutionBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
-import { InstitutionApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
+import {
+  InstitutionApproveModal,
+  type InstitutionApproveConfirmPayload,
+} from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
+import { hydrateOrganizationApplicationSchedules } from '@/features/program/general/api/admin-applications-service'
+import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
+import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
 import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
@@ -147,6 +161,7 @@ export function ApplicantList({
   individualScreeningStage,
 }: ApplicantListProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const {
     applicantsCalendarGranularity,
     setApplicantsCalendarGranularity,
@@ -262,6 +277,99 @@ export function ApplicantList({
     id: string
     name: string
   } | null>(null)
+  const [institutionApproveRow, setInstitutionApproveRow] = useState<ApplicantSchoolRow | null>(
+    null
+  )
+  const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
+  const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
+  const requiresGeneralOrganizationApproveSlots = isGeneralOrganizationProgram(program)
+  const institutionApproveTargetId = institutionApproveTarget?.id ?? null
+  /** 목록/상세 row 참조가 바뀌어도 id가 같으면 effect를 다시 돌리지 않는다 (무한 fetch 방지). */
+  const institutionApproveHydrationKey = useMemo(() => {
+    if (!institutionApproveTargetId) return null
+    if (institutionList.some(row => row.id === institutionApproveTargetId)) {
+      return institutionApproveTargetId
+    }
+    if (
+      selectedItem &&
+      'schoolName' in selectedItem &&
+      selectedItem.id === institutionApproveTargetId
+    ) {
+      return institutionApproveTargetId
+    }
+    return 'pending'
+  }, [institutionApproveTargetId, institutionList, selectedItem])
+
+  useEffect(() => {
+    if (!institutionApproveTargetId || !requiresGeneralOrganizationApproveSlots) {
+      setInstitutionApproveRow(null)
+      setInstitutionApproveHydrating(false)
+      return
+    }
+    if (institutionApproveHydrationKey !== institutionApproveTargetId) {
+      setInstitutionApproveRow(null)
+      setInstitutionApproveHydrating(false)
+      return
+    }
+    const sourceRow =
+      institutionList.find(row => row.id === institutionApproveTargetId) ??
+      (selectedItem &&
+      'schoolName' in selectedItem &&
+      selectedItem.id === institutionApproveTargetId
+        ? (selectedItem as ApplicantSchoolRow)
+        : null)
+    if (!sourceRow) {
+      setInstitutionApproveRow(null)
+      setInstitutionApproveHydrating(false)
+      return
+    }
+    let cancelled = false
+    setInstitutionApproveHydrating(true)
+    void (async () => {
+      try {
+        // 승인 모달은 목록 스냅샷이 아니라 기관 신청 상세 응답을 정본으로 사용한다.
+        const detail = await queryClient.fetchQuery({
+          queryKey: generalApplicationsQueryKeys.organizationDetail(sourceRow.id),
+          queryFn: () => fetchOrganizationApplicationDetailRemote(sourceRow.id),
+          staleTime: 0,
+        })
+        const canonicalRow = mapOrganizationApplicationDetailToApplicantSchoolRow(detail, sourceRow)
+        const [hydrated] = await hydrateOrganizationApplicationSchedules(
+          [canonicalRow],
+          queryClient,
+          { applicationIds: [canonicalRow.id] }
+        )
+        if (cancelled) return
+        setInstitutionApproveRow(hydrated)
+        setInstitutionList(prev => prev.map(row => (row.id === hydrated.id ? hydrated : row)))
+        if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === hydrated.id) {
+          setSelectedItem(hydrated)
+        }
+      } catch {
+        if (cancelled) return
+        // 불완전한 일정 정보를 캐시나 목록 값으로 대체하지 않고 승인 불가 상태로 유지한다.
+        setInstitutionApproveRow(null)
+      } finally {
+        if (!cancelled) setInstitutionApproveHydrating(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    institutionApproveTargetId,
+    institutionApproveHydrationKey,
+    queryClient,
+    requiresGeneralOrganizationApproveSlots,
+  ])
+
+  const institutionApproveScheduleConfig = useMemo(() => {
+    if (!requiresGeneralOrganizationApproveSlots || !institutionApproveRow) return null
+    return {
+      preferredEducationSchedules: institutionApproveRow.preferredEducationSchedules,
+    }
+  }, [institutionApproveRow, requiresGeneralOrganizationApproveSlots])
+
   const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
     id: string
     name: string
@@ -323,9 +431,11 @@ export function ApplicantList({
     useGeneralInstructorBulkActionModal ||
     useGeneralParticipantActionModal
 
+  /** 기관 신청 — 캘린더 우측 목록 상단 기관 multi select 미노출 */
   /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
   const showCalendarEntityFilter =
-    menu !== 'individual-applications' || !program || getGeneralParticipantInterviewEnabled(program)
+    menu !== 'institutions' &&
+    (menu !== 'individual-applications' || !program || getGeneralParticipantInterviewEnabled(program))
 
   /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
   const isIndividualDoc1Screening =
@@ -373,6 +483,16 @@ export function ApplicantList({
         : null)
     )
   }, [instructorApprovalTarget, instructorList, selectedItem])
+
+  const instructorFeePolicyContext = useMemo(
+    () => ({
+      programWageGradeRows: program?.generalCommonInfo?.wageGradeRows,
+    }),
+    [program?.generalCommonInfo?.wageGradeRows]
+  )
+
+  const [instructorFeePolicyError, setInstructorFeePolicyError] = useState<string | null>(null)
+  const [instructorApprovalSubmitting, setInstructorApprovalSubmitting] = useState(false)
 
   const instructorCancelApprovalInstructor = useMemo(() => {
     if (!instructorCancelApprovalTarget) return null
@@ -632,14 +752,25 @@ export function ApplicantList({
           | ApplicantSchoolRow[]
           | ApplicantInstructorRow[]
           | GeneralIndividualApplicantRow[],
-        menu
+        menu,
+        menu === 'instructors' && instructorColumnPreset === 'general-detail'
+          ? { institutionRows: institutionList }
+          : undefined
       ),
-    [tableData, menu]
+    [tableData, menu, institutionList, instructorColumnPreset]
   )
 
   const institutionCalendarScheduleEmptyHint =
     menu === 'institutions' && tableData.length > 0 && applicantCalendarEvents.length === 0
       ? '신청은 있으나 교육 일정(preferredEducationSchedules·requested-schedules)이 없어 캘린더에 표시할 수 없습니다.'
+      : undefined
+
+  const instructorCalendarScheduleEmptyHint =
+    menu === 'instructors' &&
+    instructorColumnPreset === 'general-detail' &&
+    tableData.length > 0 &&
+    applicantCalendarEvents.length === 0
+      ? '신청은 있으나 배정 확정된 기관 교육 일정이 없어 캘린더에 표시할 수 없습니다.'
       : undefined
 
   const showInstitutionDetail =
@@ -1043,45 +1174,73 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
-        onCancel={() => setInstitutionApproveTarget(null)}
-        onConfirm={payload => {
+        scheduleConfig={
+          requiresGeneralOrganizationApproveSlots ? institutionApproveScheduleConfig : null
+        }
+        programId={programId}
+        organizationApplicationId={institutionApproveTarget?.id}
+        confirmLoading={institutionApproveHydrating || institutionApproveSubmitting}
+        onCancel={() => {
+          setInstitutionApproveTarget(null)
+          setInstitutionApproveRow(null)
+        }}
+        onConfirm={(payload: InstitutionApproveConfirmPayload) => {
           if (!institutionApproveTarget) return
           const { id } = institutionApproveTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
+          const notify = toOrganizationApproveNotifyTiming(
+            payload.notifyTiming,
+            payload.manualNotifyAt
+          )
           const run = async () => {
-            const remote = await applyRemoteInstitutionDecision(
-              [id],
-              'approve',
-              undefined,
-              toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
-            )
-            if (remote === 'error') return
-            if (remote === 'skipped') {
-              notifyProgramApiUnavailable(
-                'general-org-application-decision',
-                '일반 프로그램 · 기관 신청 승인·반려'
+            setInstitutionApproveSubmitting(true)
+            try {
+              const approvePayload = requiresGeneralOrganizationApproveSlots
+                ? {
+                    ...notify,
+                    ...(payload.selectedScheduleId != null
+                      ? { selectedScheduleId: payload.selectedScheduleId }
+                      : {}),
+                  }
+                : notify
+              const remote = await applyRemoteInstitutionDecision(
+                [id],
+                'approve',
+                undefined,
+                notify,
+                approvePayload
               )
-              return
-            }
-            setInstitutionApproveTarget(null)
-            const sourceRow =
-              institutionList.find(row => row.id === id) ??
-              (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
-                ? (selectedItem as ApplicantSchoolRow)
-                : null)
-            const patchedRow = sourceRow
-              ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
-              : null
-            if (patchedRow) {
-              setInstitutionList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
-              if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id) {
-                setSelectedItem(patchedRow)
+              if (remote === 'error') return
+              if (remote === 'skipped') {
+                notifyProgramApiUnavailable(
+                  'general-org-application-decision',
+                  '일반 프로그램 · 기관 신청 승인·반려'
+                )
+                return
               }
+              setInstitutionApproveTarget(null)
+              setInstitutionApproveRow(null)
+              const sourceRow =
+                institutionList.find(row => row.id === id) ??
+                (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
+                  ? (selectedItem as ApplicantSchoolRow)
+                  : null)
+              const patchedRow = sourceRow
+                ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
+                : null
+              if (patchedRow) {
+                setInstitutionList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
+                if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id) {
+                  setSelectedItem(patchedRow)
+                }
+              }
+              showApplicationApprovalCompletedAlert()
+            } finally {
+              setInstitutionApproveSubmitting(false)
             }
-            showApplicationApprovalCompletedAlert()
           }
           void run()
         }}
@@ -1575,8 +1734,7 @@ export function ApplicantList({
               : undefined
           if (detailVariant === 'general') {
             void (async () => {
-              const reason =
-                payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+              const reason = payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
               const success = await handleCancelRejectInstructor(
                 id,
                 reason,
@@ -1678,7 +1836,7 @@ export function ApplicantList({
                 timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                 scheduledAt:
                   notifyOptions.notifyTiming === 'manual'
-                    ? notifyOptions.manualNotifyAt?.toISOString() ?? null
+                    ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
                     : null,
               })
               return
@@ -1759,7 +1917,13 @@ export function ApplicantList({
         open={instructorApprovalTarget?.step === 'fee' && menu === 'instructors'}
         instructorName={instructorApprovalTarget?.name ?? ''}
         instructorFeeGradeLabel={instructorApprovalInstructor?.instructorFeeGradeLabel}
-        onCancel={() => setInstructorApprovalTarget(null)}
+        feePolicyContext={instructorFeePolicyContext}
+        feePolicyError={instructorFeePolicyError}
+        submitting={instructorApprovalSubmitting}
+        onCancel={() => {
+          setInstructorFeePolicyError(null)
+          setInstructorApprovalTarget(null)
+        }}
         onConfirm={detail => {
           if (!instructorApprovalTarget || instructorApprovalTarget.step !== 'fee') return
           const { id, assignments } = instructorApprovalTarget
@@ -1821,36 +1985,51 @@ export function ApplicantList({
                 })
                 return
               }
-              const remote = await applyRemoteInstructorDecision(
-                [id],
-                'approve',
-                undefined,
+              const feePolicy = toInstructorApplicationFeePolicy(
                 {
+                  basisType: detail.lectureFeeBasisType,
+                  measure: detail.lectureFeeMeasure,
+                  amount: detail.lectureFeeAmount,
+                  instructorFeeGrade:
+                    detail.instructorFeeGrade?.trim() ||
+                    detail.instructorFeeGradeLabel?.trim() ||
+                    instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
+                    '',
+                },
+                instructorFeePolicyContext
+              )
+              const assignmentCount = useInstructorAssignFlow ? remoteAssignments.length : 1
+              if (!isInstructorApplicationFeePolicyRequestValid(feePolicy, assignmentCount)) {
+                setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+                return
+              }
+              setInstructorFeePolicyError(null)
+              setInstructorApprovalSubmitting(true)
+              try {
+                const remote = await applyRemoteInstructorDecision([id], 'approve', undefined, {
                   assignments: remoteAssignments,
-                  feePolicy: toInstructorApplicationFeePolicy({
-                    basisType: detail.lectureFeeBasisType,
-                    measure: detail.lectureFeeMeasure,
-                    amount: detail.lectureFeeAmount,
-                    instructorFeeGrade:
-                      detail.instructorFeeGradeLabel?.trim() ||
-                      instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
-                      '미지정',
-                  }),
+                  feePolicy: feePolicy!,
                   notification: {
                     timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                     scheduledAt:
                       detail.notifyTiming === 'manual'
-                        ? detail.manualNotifyAt?.toISOString() ?? null
+                        ? (detail.manualNotifyAt?.toISOString() ?? null)
                         : null,
                   },
+                })
+                if (remote === 'invalid_fee_policy') {
+                  setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+                  return
                 }
-              )
-              if (remote === 'error') return
-              if (remote === 'ok') {
-                setInstructorApprovalTarget(null)
-                applyLocalApproval()
-                showApplicationApprovalCompletedAlert()
-                return
+                if (remote === 'error') return
+                if (remote === 'ok') {
+                  setInstructorApprovalTarget(null)
+                  applyLocalApproval()
+                  showApplicationApprovalCompletedAlert()
+                  return
+                }
+              } finally {
+                setInstructorApprovalSubmitting(false)
               }
             }
             setInstructorApprovalTarget(null)
@@ -1885,19 +2064,19 @@ export function ApplicantList({
             title={title}
             description={`${tableData.length}건`}
             actions={
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="program-application-list-toolbar">
                 <FilterTableToolbarButton
                   variant="delete"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
+                  className="cms-button--application-list-bulk"
+                  width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                   onClick={handleBulkRejectClick}
                 >
                   선택 반려
                 </FilterTableToolbarButton>
                 <FilterTableToolbarButton
                   variant="secondary"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
+                  className="cms-button--application-list-bulk"
+                  width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                   onClick={handleBulkApproveClick}
                 >
                   선택 승인
@@ -1906,7 +2085,6 @@ export function ApplicantList({
                   <FilterTableToolbarButton
                     icon={<ButtonCalendarIcon />}
                     variant="secondary"
-
                     onClick={handleViewCalendar}
                   >
                     캘린더 뷰로 보기
@@ -1916,7 +2094,6 @@ export function ApplicantList({
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonListIcon />}
-
                     onClick={handleViewList}
                   >
                     리스트 뷰로 보기
@@ -1938,7 +2115,9 @@ export function ApplicantList({
                     : 'applicant-details__table-wrap'
                 }
               >
-                <CmsDataTable<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
+                <CmsDataTable<
+                  ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow
+                >
                   rowKey="id"
                   columns={
                     columns as ColumnsType<
@@ -1991,7 +2170,9 @@ export function ApplicantList({
                 <ApplicantCalendarView
                   useSplitCardPageScroll={detailVariant === 'general'}
                   events={applicantCalendarEvents}
-                  scheduleListEmptyDescription={institutionCalendarScheduleEmptyHint}
+                  scheduleListEmptyDescription={
+                    instructorCalendarScheduleEmptyHint ?? institutionCalendarScheduleEmptyHint
+                  }
                   loading={applicationsLoading}
                   selectedRowKeys={selectedRowKeys}
                   onSelectionChange={setSelectedRowKeys}

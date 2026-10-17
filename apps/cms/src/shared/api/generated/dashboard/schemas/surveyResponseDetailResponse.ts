@@ -16,16 +16,10 @@ export interface SurveyResponseDetailResponse {
   contextId?: number;
   responseStatus?: string;
   submittedByMemberId?: number;
-  /**
-     * 제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null
-     * @nullable
-     */
+  /** 제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null */
   submittedByMemberName?: string | null;
   submittedByAdminId?: number;
-  /**
-     * 대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null
-     * @nullable
-     */
+  /** 대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null */
   submittedByAdminName?: string | null;
   submittedAt?: string;
   createdAt?: string;

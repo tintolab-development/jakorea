@@ -508,6 +508,9 @@ describe('trained teacher schedule-type detailedProgramName (버그 수정)', ()
 
     expect(next.generalCommonInfo?.detailedProgramName).not.toBe('실제 선택한 세부 프로그램명')
     expect(next.detailedProgramId).toBeUndefined()
+    expect(
+      Object.prototype.hasOwnProperty.call(next.generalCommonInfo, 'detailedProgramId')
+    ).toBe(false)
   })
 
   it('커리큘럼형 — 수동 선택한 세부 프로그램명이 그대로 반영된다', () => {

@@ -34,6 +34,10 @@ export const dataManagementQueryKeys = {
     contacts: (sponsorId: string, paramsKey: string) =>
       [...dataManagementQueryKeys.sponsors.contactsAll(sponsorId), paramsKey] as const,
     options: () => [...dataManagementQueryKeys.sponsors.all(), 'options'] as const,
+    optionsInfiniteAll: () =>
+      [...dataManagementQueryKeys.sponsors.all(), 'options-infinite'] as const,
+    optionsInfinite: (keyword: string) =>
+      [...dataManagementQueryKeys.sponsors.optionsInfiniteAll(), keyword] as const,
     programHistoriesAll: (sponsorId: string) =>
       [...dataManagementQueryKeys.sponsors.all(), 'program-histories', sponsorId] as const,
     programHistories: (sponsorId: string, paramsKey: string) =>

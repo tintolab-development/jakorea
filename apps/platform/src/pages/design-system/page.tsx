@@ -599,7 +599,7 @@ const categoryBadgeIconVariants = ['primary', 'secondary'] as const
 const stateBadgeTones = ['progress', 'success', 'error', 'disabled'] as const
 const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
-const inputSizes = ['medium', 'large', 'xlarge'] as const
+const inputSizes = ['medium', 'large', 'xlarge', 'mobile'] as const
 
 const selectDemoOptions = [
   { value: 'edit', label: '수정하기' },

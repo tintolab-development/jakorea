@@ -1,0 +1,12 @@
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.titleDivider {
+  flex-shrink: 0;
+  width: 2px;
+  height: 30px;
+  background: var(--color-neutral-cool-400);
+}

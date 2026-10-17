@@ -5,30 +5,47 @@ import {
   buildSettlementWritePath,
   clearSettlementWriteDraft,
   EducationSettlementConfirmView,
-  getMockEducationSettlements,
   loadSettlementWriteDraft,
   type SettlementWriteDraftLocationState,
 } from '@/features/mypage/education/settlements'
-import { getMockEducationApplicationById } from '@/features/mypage'
+import {
+  useMyProgramApplicationDetail,
+  useProbeEducationApplicationType,
+} from '@/features/mypage/education/applications'
+import { useApplicationSettlementsQuery } from '@/features/mypage/education/applications/api/activity-hooks'
+import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFFormPage } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function MypageEducationSettlementConfirmPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { applicationId = '' } = useParams<{ applicationId: string }>()
+  const { applicationId = '', applicationType: applicationTypeParam } = useParams<{
+    applicationId: string
+    applicationType?: string
+  }>()
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('sessionId') ?? ''
-
-  const application = useMemo(
-    () => (applicationId ? getMockEducationApplicationById(applicationId) : undefined),
-    [applicationId]
+  const remoteEnabled = isRemoteApiConfigured()
+  const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)
+  const typeProbe = useProbeEducationApplicationType(applicationId, routeApplicationType)
+  const applicationType = routeApplicationType ?? typeProbe.applicationType ?? 'INDIVIDUAL'
+  const remoteQuery = useMyProgramApplicationDetail(
+    remoteEnabled ? applicationType : null,
+    remoteEnabled ? applicationId : null,
   )
+  const application = remoteQuery.application
+  const remoteSettlements = useApplicationSettlementsQuery(
+    applicationType,
+    applicationId,
+    application?.programId ?? '',
+  )
+
   const session = useMemo(() => {
-    if (!application) return undefined
-    const items = getMockEducationSettlements(application.programId)
-    return items.find(item => item.id === sessionId)
-  }, [application, sessionId])
+    if (!remoteSettlements.enabled) return undefined
+    return remoteSettlements.items.find(item => item.id === sessionId)
+  }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const draft = useMemo(() => {
     const state = location.state as SettlementWriteDraftLocationState | null

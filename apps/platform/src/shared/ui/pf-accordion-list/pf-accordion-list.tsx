@@ -1,5 +1,6 @@
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
+import { PFLoadingSpinner } from '../pf-loading-spinner'
 import styles from './pf-accordion-list.module.css'
 
 export type PFAccordionListItem = {
@@ -15,6 +16,7 @@ export type PFAccordionListProps = {
   expandedId?: string | null
   onExpandedChange?: (id: string | null) => void
   emptyMessage?: string
+  loading?: boolean
   className?: string
 }
 
@@ -23,6 +25,7 @@ export function PFAccordionList({
   expandedId = null,
   onExpandedChange,
   emptyMessage = '등록된 FAQ가 없습니다.',
+  loading = false,
   className,
 }: PFAccordionListProps) {
   const rootClassName = [styles.list, className].filter(Boolean).join(' ')
@@ -30,9 +33,13 @@ export function PFAccordionList({
   if (items.length === 0) {
     return (
       <div className={rootClassName}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-          {emptyMessage}
-        </PFText>
+        {loading ? (
+          <PFLoadingSpinner centered label="목록을 불러오는 중" />
+        ) : (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+            {emptyMessage}
+          </PFText>
+        )}
       </div>
     )
   }

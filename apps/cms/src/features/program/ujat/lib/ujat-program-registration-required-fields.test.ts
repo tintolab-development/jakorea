@@ -122,6 +122,25 @@ function filledVolunteerInterviewSchedules(): Record<string, unknown> {
   }
 }
 
+function filledInstitutionRecruitment(): Record<string, unknown> {
+  return {
+    [IK.announcementPublished]: true,
+    [IK.programRange]: RANGE,
+    [IK.targetLevels]: ['elementary'],
+    [IK.district]: '초등',
+    [IK.recruitRange]: RANGE,
+    [IK.resultAnnounce]: { date: '2026-10-01T00:00:00.000Z', method: '이메일' },
+    [IK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
+    [IK.notes]: '-',
+  }
+}
+
+function setupCompleteRecruitment(): void {
+  replaceUjatRecruitInstitutionOverlay(filledInstitutionRecruitment())
+  replaceUjatRecruitVolunteerOverlay(filledVolunteerBothHalves())
+  replaceGeneralRecruitOverlay(filledVolunteerInterviewSchedules())
+}
+
 describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
   beforeEach(() => {
     resetUjatProgramRegistrationOverlay()
@@ -220,6 +239,25 @@ describe('hasIncompleteUjatProgramRecruitmentRequiredFields', () => {
     expect(describeIncompleteUjatProgramRecruitmentRequiredFields()).toBe(
       'recruit.volunteer.h2.interviewSchedule'
     )
+    expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(true)
+  })
+
+  it.each([
+    ['REG-03 참여기관 모집', 'institution', IK.notes],
+    ['REG-04 상반기 봉사자 모집', 'volunteer', VK.activityTermH1],
+    ['REG-05 하반기 봉사자 모집', 'volunteer', VK.activityTermH2],
+  ] as const)('%s만 비우면 신청 단계 이동 gate가 미완료를 반환한다', (_label, scope, key) => {
+    setupCompleteRecruitment()
+    if (scope === 'institution') {
+      const institution = filledInstitutionRecruitment()
+      delete institution[key]
+      replaceUjatRecruitInstitutionOverlay(institution)
+    } else {
+      const volunteer = filledVolunteerBothHalves()
+      delete volunteer[key]
+      replaceUjatRecruitVolunteerOverlay(volunteer)
+    }
+
     expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(true)
   })
 })

@@ -7,14 +7,13 @@
  */
 
 /**
- * PORTRAIT_RIGHTS 전용 상태
+ * PORTRAIT_RIGHTS 전용 상태 FULL은 deprecated이며 PARTIAL로 정규화됩니다.
  * @nullable
  */
 export type MemberTermsAgreementRowConsentStatus = typeof MemberTermsAgreementRowConsentStatus[keyof typeof MemberTermsAgreementRowConsentStatus] | null;
 
 
 export const MemberTermsAgreementRowConsentStatus = {
-  FULL: 'FULL',
   PARTIAL: 'PARTIAL',
   DISAGREED: 'DISAGREED',
 } as const;

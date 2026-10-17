@@ -42,7 +42,7 @@ describe('normalizeMemberConsentWriteDraft', () => {
     )
   })
 
-  it('keeps notice purpose text and locks id type to resident registration number', () => {
+  it('keeps notice purpose text and clears id type radio selection', () => {
     const draft = normalizeMemberConsentWriteDraft(
       normalizeWritingFormDraft(createAgreementNoticeDraft()),
       'agreement-notice'
@@ -76,7 +76,7 @@ describe('normalizeMemberConsentWriteDraft', () => {
       table?.kind === 'single_item' &&
         table.variant === 'horizontal_table' &&
         table.idTypeWithInput?.selectedOptionId
-    ).toBe('agreement-notice-id-resident')
+    ).toBeNull()
     expect(
       table?.kind === 'single_item' &&
         table.variant === 'horizontal_table' &&

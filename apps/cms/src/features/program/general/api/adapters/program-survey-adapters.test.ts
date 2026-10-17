@@ -222,6 +222,42 @@ describe('resolveLectureEvalSubmitContext', () => {
 })
 
 describe('pickLectureEvalSurveyFromRemote', () => {
+  it('prefers PROGRAM scope lecture binding over SCHEDULE', () => {
+    const row = pickLectureEvalSurveyFromRemote({
+      classified: [
+        {
+          kind: 'lecture_evaluation',
+          binding: { bindingId: 1, targetScope: 'SCHEDULE', targetScopeId: 99 },
+          survey: {
+            id: '1',
+            title: '일정별',
+            templateId: '9',
+            status: 'in_progress',
+            responseCount: 0,
+            participantTotal: 1,
+            bindingId: '1',
+          },
+        },
+        {
+          kind: 'lecture_evaluation',
+          binding: { bindingId: 5, targetScope: 'PROGRAM' },
+          survey: {
+            id: '5',
+            title: '프로그램 공통',
+            templateId: '9',
+            status: 'in_progress',
+            responseCount: 0,
+            participantTotal: 1,
+            bindingId: '5',
+          },
+        },
+      ],
+      surveys: [],
+    })
+    expect(row?.title).toBe('프로그램 공통')
+    expect(row?.bindingId).toBe('5')
+  })
+
   it('uses classified lecture binding first', () => {
     const row = pickLectureEvalSurveyFromRemote({
       classified: [
@@ -459,6 +495,36 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
       title: '신규 설문조사 1',
       templateId: '200',
     })
+  })
+
+  it('keeps multiple SURVEY poll bindings (same schedule, different template versions)', () => {
+    const rows = mergeSurveysWithBindings(
+      [],
+      [
+        {
+          bindingId: 1,
+          templateId: 10,
+          templateVersionId: 100,
+          formType: 'SURVEY',
+          templateName: '설문 A',
+          targetScope: 'SCHEDULE',
+          targetScopeId: 186682,
+          active: true,
+        },
+        {
+          bindingId: 2,
+          templateId: 11,
+          templateVersionId: 101,
+          formType: 'SURVEY',
+          templateName: '설문 B',
+          targetScope: 'SCHEDULE',
+          targetScopeId: 186682,
+          active: true,
+        },
+      ]
+    )
+    expect(rows).toHaveLength(2)
+    expect(rows.map(r => r.id).sort()).toEqual(['100', '101'])
   })
 
   it('lists a SURVEY binding on the poll tab when the template name looks like satisfaction', () => {

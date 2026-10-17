@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -7,16 +7,17 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import {
+  getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
+  isFutureNotificationTime,
+} from '@/shared/lib/notification-schedule'
+import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import './permission-modal.css'
 
 /** 직접 설정 최초값 — 호출 시점의 현재 날짜·시간(초 이하 절삭) */
-function nowManualNotifyAt(): Dayjs {
-  return dayjs().second(0).millisecond(0)
-}
-
 /** 풀페이지 상세 위 중첩 모달(antd 스택 ~2000)보다 위 */
 const DEFAULT_PERMISSION_MODAL_Z = 2500
 const DATE_TIME_PICKER_Z_OFFSET = 100
@@ -102,6 +103,8 @@ export type PermissionModalProps = {
   confirmVariant?: 'delete' | 'primary'
   /** API 요청 중 확인 버튼 중복 클릭 방지 */
   confirmLoading?: boolean
+  /** 상위 모달의 도메인 필수 조건이 충족되기 전 확인 버튼 비활성화 */
+  confirmDisabled?: boolean
   width?: number
   requireReason?: boolean
   reasonLabel?: string
@@ -158,6 +161,7 @@ export function PermissionModal({
   confirmLabel: confirmLabelProp,
   confirmVariant: confirmVariantProp,
   confirmLoading = false,
+  confirmDisabled = false,
   width = 600,
   requireReason: requireReasonProp,
   reasonLabel: reasonLabelProp,
@@ -209,6 +213,17 @@ export function PermissionModal({
       showIncompleteRequiredAlert()
       return
     }
+    if (
+      showNotifyTiming &&
+      notifyTiming === 'manual' &&
+      !isFutureNotificationTime(manualNotifyAt)
+    ) {
+      showAlert({
+        title: '알림 발송 일시 확인',
+        content: '현재 시각보다 최소 1분 이후의 시간을 선택해 주세요.',
+      })
+      return
+    }
     onConfirm({
       reason: trimmed,
       notifyTiming,
@@ -219,7 +234,7 @@ export function PermissionModal({
   const handleNotifyTimingChange = (next: PermissionModalNotifyTiming) => {
     setNotifyTiming(next)
     if (next === 'manual') {
-      setManualNotifyAt(nowManualNotifyAt())
+      setManualNotifyAt(getDefaultManualNotifyAt())
       setDateTimePickerOpen(true)
     } else {
       setDateTimePickerOpen(false)
@@ -248,7 +263,7 @@ export function PermissionModal({
               size="medium"
               type="button"
               loading={confirmLoading}
-              disabled={confirmLoading}
+              disabled={confirmLoading || confirmDisabled}
               onClick={handleConfirm}
             >
               {confirmLabel}
@@ -285,7 +300,7 @@ export function PermissionModal({
                     size="medium"
                     onClick={() => {
                       if (notifyTiming === 'manual') {
-                        setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                        setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                         setDateTimePickerOpen(true)
                       }
                     }}
@@ -341,7 +356,7 @@ export function PermissionModal({
                     size="medium"
                     onClick={() => {
                       if (notifyTiming === 'manual') {
-                        setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                        setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                         setDateTimePickerOpen(true)
                       }
                     }}
@@ -367,12 +382,13 @@ export function PermissionModal({
           onClose={() => setDateTimePickerOpen(false)}
           anchorRef={manualRadioAnchorRef}
           dismissExcludeRef={modalContentRef}
-          value={manualNotifyAt ?? nowManualNotifyAt()}
+          value={manualNotifyAt ?? getDefaultManualNotifyAt()}
           onChange={setManualNotifyAt}
           onApply={value => {
             setManualNotifyAt(value)
             setDateTimePickerOpen(false)
           }}
+          minDateTime={getMinimumManualNotifyAt()}
           zIndex={dateTimePickerZ}
         />
       ) : null}

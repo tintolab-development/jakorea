@@ -11,6 +11,12 @@ export interface CapacityStatus {
   semesterType?: string;
   educationRegionCode?: string;
   educationRegionName?: string;
+  maxSchools?: number;
+  maxVolunteers?: number;
+  assignedSchools?: number;
+  assignedVolunteers?: number;
+  remainingSchools?: number;
+  remainingVolunteers?: number;
   maxClassCount?: number;
   currentClassCount?: number;
   maxVolunteerCount?: number;

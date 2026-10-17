@@ -1,7 +1,8 @@
+import type { Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { UjatInterviewAssignConfirmPayload } from './modal'
-import { formatInterviewSummaryDate } from './schedule-utils'
+import { normalizeTimeRangeKey } from './schedule-utils'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
 import './complete-modal.css'
 
@@ -9,12 +10,24 @@ const MODAL_WIDTH = 600
 /** 풀페이지 상세(기본 z-index) 위에 완료 모달이 항상 보이도록 */
 const MODAL_Z_INDEX = 10000
 
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+/** 완료 모달 시안 — `2026년 9월 15일(화) 09:00 ~ 09:30` */
+export function formatInterviewAssignCompleteScheduleDisplay(
+  date: Dayjs,
+  timeRange: string
+): string {
+  const weekday = WEEKDAY_KO[date.day()]
+  const time = normalizeTimeRangeKey(timeRange)
+  return `${date.year()}년 ${date.month() + 1}월 ${date.date()}일(${weekday}) ${time}`
+}
+
 export type UjatVolunteerInterviewAssignCompleteModalProps = {
   open: boolean
   applicantName: string
   mode: 'assign' | 'reassign'
   payload: UjatInterviewAssignConfirmPayload
-  /** 본문 호칭 — 기본 `봉사자`, 참여자 신청 목록에서는 `참여자` */
+  /** @deprecated 시안은 `님의` 고정. 하위 호환용으로만 유지 */
   subjectNoun?: string
   onClose: () => void
 }
@@ -23,8 +36,8 @@ export function buildInterviewAssignCompleteScheduleSummary(
   payload: UjatInterviewAssignConfirmPayload
 ): string {
   const parsed = parseUjatInterviewDateLabel(payload.dateLabel)
-  const datePart = parsed ? formatInterviewSummaryDate(parsed) : payload.dateLabel
-  return `${datePart} ${payload.timeRange}`
+  if (!parsed) return `${payload.dateLabel} ${normalizeTimeRangeKey(payload.timeRange)}`
+  return formatInterviewAssignCompleteScheduleDisplay(parsed, payload.timeRange)
 }
 
 export function UjatVolunteerInterviewAssignCompleteModal({
@@ -32,12 +45,11 @@ export function UjatVolunteerInterviewAssignCompleteModal({
   applicantName,
   mode,
   payload,
-  subjectNoun = '봉사자',
   onClose,
 }: UjatVolunteerInterviewAssignCompleteModalProps) {
   const title = mode === 'reassign' ? '면접일 재배정 완료' : '면접일 배정 완료'
   const descriptionAction =
-    mode === 'reassign' ? '면접일 재배정이 완료 되었습니다.' : '면접일 배정이 완료 되었습니다.'
+    mode === 'reassign' ? '면접일 재배정이 완료되었습니다.' : '면접일 배정이 완료되었습니다.'
   const scheduleSummary = buildInterviewAssignCompleteScheduleSummary(payload)
 
   return (
@@ -48,7 +60,7 @@ export function UjatVolunteerInterviewAssignCompleteModal({
       width={MODAL_WIDTH}
       zIndex={MODAL_Z_INDEX}
       className="ujat-volunteer-interview-assign-complete-modal"
-      description={`**[${applicantName}]** ${subjectNoun}의 ${descriptionAction}`}
+      description={`**[${applicantName}]** 님의 ${descriptionAction}`}
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           확인

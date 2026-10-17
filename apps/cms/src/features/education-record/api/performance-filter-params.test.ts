@@ -28,7 +28,7 @@ describe('performance-filter-params', () => {
     expect(performanceListParamsFromSearchParams(search)).toMatchObject({
       year: 2026,
       page: 0,
-      size: 50,
+      size: 20,
     })
   })
 

@@ -75,6 +75,14 @@ function parseOperatingPeriodFilter(value: string | null): string {
 
 /** 기간 기반 3단 모집현황 필터 */
 const VALID_RECRUITMENT_STATUS = new Set(['recruiting', 'closed', 'scheduled', 'all'])
+const VALID_PROGRAM_TYPES = new Set(['all', 'UJAT'])
+
+function parseProgramTypeFilter(value: string | null): string {
+  const normalized = value?.trim().toUpperCase()
+  return normalized && VALID_PROGRAM_TYPES.has(normalized)
+    ? normalized
+    : DEFAULT_PROGRAMS_LIST_PARAMS.programType
+}
 
 function parseRecruitmentStatusFilter(value: string | null): string {
   if (!value || value === 'all') {
@@ -92,6 +100,7 @@ export function readProgramsListParams(search = window.location.search): Program
   return {
     category: parseCategory(params.get('category')),
     q: params.get('q') ?? DEFAULT_PROGRAMS_LIST_PARAMS.q,
+    programType: parseProgramTypeFilter(params.get('programType')),
     recruitmentTarget: parseEducationTargetFilter(params.get('recruitmentTarget')),
     recruitmentStatus: parseRecruitmentStatusFilter(params.get('recruitmentStatus')),
     operatingPeriod: parseOperatingPeriodFilter(params.get('operatingPeriod')),
@@ -110,6 +119,9 @@ export function buildProgramsListPath(params: ProgramsListParams) {
   }
   if (params.q) {
     searchParams.set('q', params.q)
+  }
+  if (params.programType !== DEFAULT_PROGRAMS_LIST_PARAMS.programType) {
+    searchParams.set('programType', params.programType)
   }
   if (params.recruitmentTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget) {
     searchParams.set('recruitmentTarget', params.recruitmentTarget)

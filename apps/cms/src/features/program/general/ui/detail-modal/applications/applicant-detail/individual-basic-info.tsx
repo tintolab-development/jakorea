@@ -2,7 +2,6 @@
  * 일반 프로그램 — 개인 유형 참여자 신청 상세
  */
 
-import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
@@ -34,12 +33,11 @@ import type { GeneralManagerEvaluation } from '@/features/program/general/lib/vo
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { getProgramProgressDisplayStatus } from '@/shared/constants/status'
-import { ParticipatingProgressScheduleRow } from '@/features/program/general/ui/detail-modal/program-status/participating-progress-schedule-row'
+import { ParticipatingProgressScheduleValue } from '@/features/program/general/ui/detail-modal/program-status/participating-progress-schedule-row'
 import '@/features/program/general/ui/detail-modal/program-status/participating-institution-application-info.css'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { formatInstitutionApplicationScheduleRowLabel } from '@/features/program/general/lib/institution-application-session-display'
 import { renderIndividualApplicantNameWithHistoryBadges } from '@/features/program/general/lib/individual-application-name-change-count'
-import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
+import { ApplicantPreferredScheduleDetailSection } from './applicant-preferred-schedule-detail-section'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -301,69 +299,34 @@ const TEAM_MEMBER_COUNT_OPTIONS = [
   { label: '직접 입력', value: 'custom' },
 ] as const
 
-function TableRowTwoCols({
-  label1,
-  value1,
-  label2,
-  value2,
+function IndividualApplicantProgressScheduleSection({
+  program,
+  sessions,
 }: {
-  label1: string
-  value1: ReactNode
-  label2: string
-  value2: ReactNode
+  program: Program
+  sessions: readonly ParticipatingSchoolSession[]
 }) {
   return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label1}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        {value1}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label2}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        {value2}
-      </td>
-    </tr>
-  )
-}
-
-function TableRowFullWidth({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label}
-      </td>
-      <td
-        colSpan={3}
-        className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-      >
-        {value}
-      </td>
-    </tr>
-  )
-}
-
-function PreferredScheduleRow({
-  rank,
-  session,
-  bridge,
-}: {
-  rank: number
-  session: ParticipatingSchoolSession
-  bridge?: ReturnType<typeof resolveInstitutionApplicationProgramBridge> | null
-}) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {formatInstitutionApplicationScheduleRowLabel(rank, bridge)}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        <GeneralDetailSessionLine session={session} bridge={bridge} />
-      </td>
-    </tr>
+    <DetailInfoForm title="교육 진행 일정" mode="view">
+      {sessions.length === 0 ? (
+        <DetailInfoForm.Row type="custom">
+          <p className="general-volunteer-applicant-detail__empty-schedule">
+            등록된 교육 일정이 없습니다.
+          </p>
+        </DetailInfoForm.Row>
+      ) : (
+        sessions.map((session, index) => (
+          <DetailInfoForm.Row type="single" key={`${session.round}-${session.date}-${index}`}>
+            <DetailInfoForm.Field
+              label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
+              fullRow
+              readOnlyDisplay
+              view={<ParticipatingProgressScheduleValue session={session} />}
+            />
+          </DetailInfoForm.Row>
+        ))
+      )}
+    </DetailInfoForm>
   )
 }
 
@@ -508,7 +471,7 @@ export function ApplicantGeneralIndividualBasicInfo({
     </ProgramDetailTdSegmentWrap>
   )
 
-  const textbookEditValue =
+  const textbookEditCell =
     isEditMode && draft && onDraftChange ? (
       <div className="institution-basic-info__field-stack">
         <CmsSelect
@@ -554,9 +517,7 @@ export function ApplicantGeneralIndividualBasicInfo({
           <span className="institution-basic-info__field-error">{validationErrors.textbookId}</span>
         ) : null}
       </div>
-    ) : (
-      textbookViewValue
-    )
+    ) : undefined
 
   const teamNameAndMemberEditCell =
     isEditMode && draft && onDraftChange ? (
@@ -609,144 +570,58 @@ export function ApplicantGeneralIndividualBasicInfo({
       </div>
     ) : null
 
-  const colgroup = (
-    <colgroup>
-      <col style={{ width: '200px' }} />
-      <col />
-      <col style={{ width: '200px' }} />
-      <col />
-    </colgroup>
-  )
-
-  const scheduleColgroup = (
-    <colgroup>
-      <col style={{ width: '200px' }} />
-      <col />
-    </colgroup>
-  )
-
-  const selfIntroSection = (
-    <section className="instructor-resume-section instructor-resume-section--free-writing">
-      <h3 className="instructor-resume-section-title instructor-resume-section-title--free-writing">
-        자기소개 및 지원동기
-      </h3>
-      <div className="instructor-resume-free-writing-card">
-        <p className="instructor-resume-free-writing-text">
-          {detail?.selfIntroduction?.trim() || '-'}
-        </p>
-      </div>
-    </section>
-  )
-
   const teamSection = showTeamSection ? (
-    <section className="applicant-institution-basic-info__section">
-      <h3 className="applicant-institution-basic-info__title">팀 정보</h3>
-      <div className="applicant-institution-basic-info__table-wrap">
-        <table className="applicant-institution-basic-info__table">
-          {colgroup}
-          <tbody>
-            <TableRowFullWidth
-              label="팀 명 및 팀원"
-              value={
-                isEditMode ? (
-                  teamNameAndMemberEditCell
-                ) : (
-                  <ProgramDetailTdSegmentWrap>
-                    {withProgramDetailTdDivider([
-                      detail?.teamName?.trim() || '-',
-                      formatTeamMemberCountDisplay(detail),
-                    ])}
-                  </ProgramDetailTdSegmentWrap>
-                )
-              }
-            />
-            <TableRowFullWidth
-              label="역할"
-              value={
-                detail?.teamRole
-                  ? onTeamRoleChange != null
-                    ? (
-                        <GeneralIndividualTeamRoleDropdown
-                          applicantId={applicant.id}
-                          teamRole={detail.teamRole}
-                          canEdit
-                          onChange={onTeamRoleChange}
-                        />
-                      )
-                    : <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
-                  : '-'
-              }
-            />
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <DetailInfoForm title="팀 정보" mode={isEditMode ? 'edit' : 'view'}>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="팀 명 및 팀원"
+          fullRow
+          readOnlyDisplay={!isEditMode}
+          view={
+            <ProgramDetailTdSegmentWrap>
+              {withProgramDetailTdDivider([
+                detail?.teamName?.trim() || '-',
+                formatTeamMemberCountDisplay(detail, isEditMode ? draft : undefined),
+              ])}
+            </ProgramDetailTdSegmentWrap>
+          }
+          edit={isEditMode ? teamNameAndMemberEditCell : undefined}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="역할"
+          fullRow
+          readOnlyDisplay
+          view={
+            detail?.teamRole
+              ? onTeamRoleChange != null
+                ? (
+                    <GeneralIndividualTeamRoleDropdown
+                      applicantId={applicant.id}
+                      teamRole={detail.teamRole}
+                      canEdit
+                      onChange={onTeamRoleChange}
+                    />
+                  )
+                : <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
+              : '-'
+          }
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   ) : null
 
   const preferredScheduleSection = showPreferredScheduleSection ? (
-    <section className="applicant-institution-basic-info__section">
-      <h3 className="applicant-institution-basic-info__title">진행 희망 교육 일정</h3>
-      <div className="applicant-institution-basic-info__table-wrap">
-        <table className="applicant-institution-basic-info__table">
-          {scheduleColgroup}
-          <tbody>
-            {sessions.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={2}
-                  className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-                >
-                  등록된 교육 일정이 없습니다.
-                </td>
-              </tr>
-            ) : (
-              sessions.map((session, index) => (
-                <PreferredScheduleRow
-                  key={session.round}
-                  rank={index + 1}
-                  session={session}
-                  bridge={institutionApplicationBridge}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <ApplicantPreferredScheduleDetailSection
+      sessions={sessions}
+      bridge={institutionApplicationBridge}
+    />
   ) : null
 
   const progressScheduleSection =
     showProgressScheduleSection && program ? (
-      <section
-        className="applicant-institution-basic-info__section applicant-institution-basic-info__section--progress-schedule"
-      >
-        <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
-        <div className="applicant-institution-basic-info__table-wrap">
-          <table className="applicant-institution-basic-info__table">
-            {scheduleColgroup}
-            <tbody>
-              {sessions.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={2}
-                    className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-                  >
-                    등록된 교육 일정이 없습니다.
-                  </td>
-                </tr>
-              ) : (
-                sessions.map((session, index) => (
-                  <ParticipatingProgressScheduleRow
-                    key={`${session.round}-${session.date}-${index}`}
-                    rowLabel={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
-                    session={session}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <IndividualApplicantProgressScheduleSection program={program} sessions={sessions} />
     ) : null
 
   const programProgressStatusCell =
@@ -805,8 +680,10 @@ export function ApplicantGeneralIndividualBasicInfo({
     )
   }
 
+  const basicInfoFormMode = isEditMode ? 'edit' : 'view'
+
   return (
-    <div className="general-volunteer-applicant-detail__body applicant-institution-basic-info">
+    <div className="general-volunteer-applicant-detail__body">
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={applicant.adminComment}
@@ -814,72 +691,77 @@ export function ApplicantGeneralIndividualBasicInfo({
         />
       ) : null}
 
-      <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
-        <div className="applicant-institution-basic-info__basic-info-fields">
-          <div className="applicant-institution-basic-info__table-wrap">
-            <table className="applicant-institution-basic-info__table">
-              {colgroup}
-              <tbody>
-                <TableRowFullWidth
-                  label={isProgressContext ? '프로그램 진행 현황' : '프로그램 승인 현황'}
-                  value={
-                    isProgressContext ? (
-                      programProgressStatusCell
-                    ) : (
-                      <ProgramApprovalStatusValue
-                        applicant={applicant}
-                        onResendNotificationClick={onResendNotificationClick}
-                      />
-                    )
-                  }
-                />
-                {!isProgressContext && showTextbookField ? (
-                  <TableRowFullWidth label="교재명" value={textbookEditValue} />
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-          <div className="applicant-institution-basic-info__table-wrap">
-            <table className="applicant-institution-basic-info__table">
-              {colgroup}
-              <tbody>
-                {isProgressContext && showTextbookField ? (
-                  <TableRowFullWidth label="교재명" value={textbookEditValue} />
-                ) : null}
-                <TableRowTwoCols
-                  label1="성명"
-                  value1={nameCell}
-                  label2="성별 및 생년월일"
-                  value2={
-                    <ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>
-                  }
-                />
-                <TableRowTwoCols
-                  label1="학교 재학 여부"
-                  value1={detail?.schoolEnrollmentStatus ?? '-'}
-                  label2="소속"
-                  value2={affiliationDisplay}
-                />
-                <TableRowTwoCols
-                  label1="연락처"
-                  value1={contactDisplay}
-                  label2="이메일"
-                  value2={emailDisplay}
-                />
-                <TableRowTwoCols
-                  label1="자택 주소지"
-                  value1={homeAddressDisplay}
-                  label2="1365 ID"
-                  value2={id1365Cell}
-                />
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <section className="general-volunteer-applicant-basic-info">
+        <DetailInfoForm title="기본 정보" mode={basicInfoFormMode}>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label={isProgressContext ? '프로그램 진행 현황' : '프로그램 승인 현황'}
+              fullRow
+              readOnlyDisplay
+              view={
+                isProgressContext ? (
+                  programProgressStatusCell
+                ) : (
+                  <ProgramApprovalStatusValue
+                    applicant={applicant}
+                    onResendNotificationClick={onResendNotificationClick}
+                  />
+                )
+              }
+            />
+          </DetailInfoForm.Row>
+          {!isProgressContext && showTextbookField ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="교재명"
+                fullRow
+                readOnlyDisplay={!isEditMode}
+                view={textbookViewValue}
+                edit={textbookEditCell}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+        </DetailInfoForm>
+        <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
+          {isProgressContext && showTextbookField ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="교재명"
+                fullRow
+                readOnlyDisplay={!isEditMode}
+                view={textbookViewValue}
+                edit={textbookEditCell}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="성명" readOnlyDisplay view={nameCell} />
+            <DetailInfoForm.Field
+              label="성별 및 생년월일"
+              readOnlyDisplay
+              view={<ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="학교 재학 여부"
+              readOnlyDisplay
+              view={detail?.schoolEnrollmentStatus ?? '-'}
+            />
+            <DetailInfoForm.Field label="소속" readOnlyDisplay view={affiliationDisplay} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="연락처" readOnlyDisplay view={contactDisplay} />
+            <DetailInfoForm.Field label="이메일" readOnlyDisplay view={emailDisplay} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="자택 주소지" readOnlyDisplay view={homeAddressDisplay} />
+            <DetailInfoForm.Field label="1365 ID" readOnlyDisplay view={id1365Cell} />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </section>
 
-      {selfIntroSection}
+      <IndividualApplicantScreeningSelfIntroSection selfIntroduction={detail?.selfIntroduction} />
       {teamSection}
       {preferredScheduleSection}
       {progressScheduleSection}

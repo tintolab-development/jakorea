@@ -40,12 +40,17 @@
   align-self: stretch;
 }
 
-/* 셀 고정 높이(calendar-cell.css) 유지 — min-height:0 이면 「외 N개」 오버플로 시 날짜 원이 찌그러짐 */
+/* 셀 min-height 124px — 일정·「외 N개」에 따라 높이 증가 (날짜 원은 flex-shrink:0) */
+.calendar-cell-tooltip-trigger--full-cell {
+  height: auto;
+  min-height: 100%;
+}
+
 .calendar-cell-tooltip-trigger--full-cell > .calendar-cell {
   flex: 1 1 auto;
   min-height: var(--calendar-cell-min-height, 124px);
-  height: var(--calendar-cell-min-height, 124px);
-  max-height: var(--calendar-cell-min-height, 124px);
+  height: auto;
+  max-height: none;
 }
 
 .calendar-cell-tooltip-trigger--full-cell .calendar-cell-events {

@@ -20,70 +20,6 @@
   padding: 0;
 }
 
-.participating-institutions-section__filter-layout .filter-table-layout__divider {
-  padding: 32px 0;
-}
-
-.participating-institutions-section__filter-layout .table-filter-group__container {
-  gap: var(--filter-field-gap);
-}
-
-.participating-institutions-section__filter-layout .table-filter-group__fields-inner.ant-row {
-  gap: var(--filter-field-gap);
-}
-
-/* 가로 스크롤·열 고정 — 래퍼만 스크롤 포트 (cms-data-table overflow와 이중 스크롤 방지) */
-.participating-institutions-section__table-wrap {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable;
-}
-
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table
-  table.ant-table {
-  table-layout: fixed !important;
-  /* 공통 cms-data-table의 width: 100% !important가 scroll.x 숫자 폭을 덮지 않도록 복원 */
-  width: var(--participating-institutions-table-width, 100%) !important;
-  min-width: 100%;
-}
-
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table
-  .ant-table-thead
-  > tr
-  > th,
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table
-  .ant-table-tbody
-  > tr
-  > td {
-  overflow: visible;
-  text-overflow: clip;
-}
-
-/* 교육 학급 수 열: 헤더 텍스트 nowrap 시 우측 보더 잘림 방지 */
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table
-  .ant-table-thead
-  > tr
-  > th.participating-institutions-section__th-class-count,
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table
-  .ant-table-tbody
-  > tr
-  > td.participating-institutions-section__td-class-count {
-  width: 112px !important;
-  min-width: 112px !important;
-  max-width: 112px !important;
-  box-sizing: border-box;
-}
-
 /* 교육 진행 일정 열: 360px 고정 (scroll.x가 뷰포트보다 넓어져도 열 확장 방지) */
 .participating-institutions-section__table-wrap
   .participating-institutions-section__table
@@ -95,9 +31,9 @@
   .ant-table-tbody
   > tr
   > td.participating-institutions-section__td-sessions {
-  width: 360px !important;
-  min-width: 360px !important;
-  max-width: 360px !important;
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
   box-sizing: border-box;
 }
 
@@ -112,24 +48,7 @@
   > tr:hover
   > td.participating-institutions-section__td-sessions {
   white-space: normal !important;
-  padding: 12px 24px !important;
-  vertical-align: top !important;
   overflow: hidden;
-  height: auto !important;
-  max-height: none !important;
-}
-
-/* 기관 목록: hover 시 공통 cms-data-table 치수·정렬이 덮어쓰지 않도록 (다줄 행) */
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td,
-.participating-institutions-section__table-wrap
-  .participating-institutions-section__table.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
-  > td {
   height: auto !important;
   max-height: none !important;
 }
@@ -140,6 +59,7 @@
   flex-direction: column;
   gap: 4px;
   text-align: left;
+  align-items: flex-start;
   padding: 0;
   margin: 0;
   min-width: 0;
@@ -150,22 +70,51 @@
   overflow: hidden;
 }
 
-/* 강의 회차 라인: 회차별 한 줄 처리 */
-.participating-institutions-section__session-line {
-  display: inline-flex;
+/* 교육 참여 기관 목록 — 진행 희망 교육 일정 셀·일정 행 중앙 정렬 */
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-institutions-section__th-sessions--center,
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center
+  .participating-institutions-section__sessions-cell {
   align-items: center;
-  gap: 12px;
-  min-width: 0;
+  text-align: center;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center
+  .participating-institutions-section__session-line {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
   max-width: 100%;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-sizing: border-box;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center
+  .participating-institutions-section__session-more {
+  text-align: center;
+  width: 100%;
 }
 
 .participating-institutions-section__session-line .program-detail-td-segment-wrap {
@@ -661,7 +610,9 @@
   width: auto;
 }
 
-.participating-participants-section .participating-institutions-section__session-line .general-detail-session-line {
+.participating-participants-section
+  .participating-institutions-section__session-line
+  .general-detail-session-line {
   display: inline-flex;
   justify-content: flex-start;
 }

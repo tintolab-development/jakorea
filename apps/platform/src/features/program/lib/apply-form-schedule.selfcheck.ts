@@ -14,10 +14,14 @@ import {
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
   normalizeInstitutionFixedScheduleAnswerTokens,
+  remapInstitutionSchedulePreviewSlotIds,
   shouldUseInstitutionAllowedSchedulePeriodDates,
+  resolveApplyPreferredScheduleMaxBlocks,
   shouldShowApplyPreferredSchedule,
+  shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldShowApplyScheduleParagraph,
 } from './apply-form-schedule.ts'
+import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 
@@ -67,6 +71,15 @@ function testScheduleParagraphVisibility() {
         '26년 4월 20일(월) 13:00 ~ 15:50',
       ],
     }),
+    true
+  )
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+    }),
     false
   )
 
@@ -104,6 +117,30 @@ function testScheduleParagraphVisibility() {
   )
 
   assert.equal(
+    resolveApplyPreferredScheduleMaxBlocks({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+      educationScheduleLines: [],
+      maxPreferredScheduleCount: 1,
+    }),
+    10
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocks(
+      {
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+        educationScheduleLines: [],
+        maxPreferredScheduleCount: 4,
+      },
+      { maxScheduleCount: 4 }
+    ),
+    4
+  )
+
+  assert.equal(
     shouldShowApplyPreferredSchedule({
       educationStructure: 'curriculum',
       sessionRound: 'single',
@@ -115,6 +152,73 @@ function testScheduleParagraphVisibility() {
     }),
     false
   )
+
+  assert.equal(
+    shouldShowApplySchedulePeriodDateOnlyPreferred({
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+    }),
+    true
+  )
+  assert.equal(
+    shouldShowApplySchedulePeriodDateOnlyPreferred({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+    }),
+    false
+  )
+
+  const scheduleSingleDateTwoDays = {
+    educationStructure: 'schedule' as const,
+    sessionRound: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+  }
+  assert.equal(shouldShowApplyScheduleParagraph(scheduleSingleDateTwoDays), true)
+  assert.equal(shouldShowApplyPreferredSchedule(scheduleSingleDateTwoDays), false)
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      ...scheduleSingleDateTwoDays,
+      educationScheduleLines: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+      ],
+    }),
+    true
+  )
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      ...scheduleSingleDateTwoDays,
+      educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
+    }),
+    false
+  )
+  assert.equal(
+    shouldShowApplyScheduleParagraph({
+      ...scheduleSingleDateTwoDays,
+      educationScheduleLines: [
+        '26년 10월 30일(금) 13:30 ~ 15:30 | 26년 10월 30일(금) 09:30 ~ 11:30',
+      ],
+    }),
+    true
+  )
+
+  const individualScheduleTwoDays = {
+    educationStructure: 'schedule' as const,
+    sessionRound: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+  }
+  assert.equal(shouldShowApplyScheduleParagraph(individualScheduleTwoDays), true)
+  assert.equal(shouldShowApplyPreferredSchedule(individualScheduleTwoDays), false)
 }
 
 testUniqueCalendarDays()
@@ -256,5 +360,74 @@ const enabled = buildEnabledDatesFromAllowedSchedulePeriods(periods!)
 assert.equal(enabled.has('2026-10-28'), true)
 assert.equal(enabled.has('2026-10-30'), false)
 assert.equal(enabled.has('2026-11-11'), true)
+
+assert.deepEqual(
+  remapInstitutionSchedulePreviewSlotIds([
+    'institution-schedule-slot-1',
+    'institution-schedule-slot-2',
+  ]),
+  ['line:0', 'line:1'],
+)
+assert.deepEqual(
+  remapInstitutionSchedulePreviewSlotIds(['line:0', 'institution-schedule-slot-1', 'line:1']),
+  ['line:0', 'line:1'],
+)
+
+const keepLineTokens = normalizeInstitutionFixedScheduleAnswerTokens(
+  ['line:0', 'line:1'],
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 30일(금) 13:30 ~ 15:30', scheduleId: null },
+      { id: 'line:1', label: '26년 10월 30일(금) 9:30 ~ 11:30', scheduleId: null },
+    ],
+  },
+  {
+    items: [
+      { id: 'institution-schedule-slot-1', label: 'seed 1' },
+      { id: 'institution-schedule-slot-2', label: 'seed 2' },
+    ],
+  },
+)
+assert.deepEqual(keepLineTokens, ['line:0', 'line:1'])
+
+const remappedPreview = normalizeInstitutionFixedScheduleAnswerTokens(
+  ['institution-schedule-slot-1', 'institution-schedule-slot-2'],
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 30일(금) 13:30 ~ 15:30', scheduleId: null },
+      { id: 'line:1', label: '26년 10월 30일(금) 9:30 ~ 11:30', scheduleId: null },
+    ],
+  },
+  { items: [{ id: 'institution-schedule-slot-1', label: 'seed 1' }] },
+)
+assert.deepEqual(remappedPreview, ['line:0', 'line:1'])
+
+function testPreEducationExcludedFromCurriculumChartSessionCount() {
+  const scheduleLine = '26년 11월 2일(월) 10:00 ~ 12:00'
+  const meta = readApplyScheduleMetaFromProgram({
+    sessionRound: 'single',
+    sessions: [
+      { sessionLabel: '사전 교육', title: '사전 교육', description: '' },
+      { sessionLabel: '1차시', title: '필요와 욕구', description: '' },
+      { sessionLabel: '2차시', title: '저축 목표', description: '' },
+    ],
+  })
+  assert.equal(meta.curriculumChartSessionCount, 2)
+
+  const items = readInstitutionFixedScheduleChoiceItems(null, {}, {
+    educationScheduleLines: [scheduleLine],
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    curriculumChartSessionCount: meta.curriculumChartSessionCount,
+    curriculumSessions: meta.curriculumSessions,
+  })
+  assert.equal(items?.length, 1)
+  assert.equal(items?.[0]?.label, `${scheduleLine} | 2차시`)
+}
+
+testPreEducationExcludedFromCurriculumChartSessionCount()
 
 console.log('apply-form-schedule.selfcheck: ok')

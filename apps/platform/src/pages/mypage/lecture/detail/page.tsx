@@ -6,7 +6,6 @@ import {
   buildWithdrawnDuringDetailTabItems,
   canCancelEducationApplication,
   canShowEducationApplicationContent,
-  cancelMockEducationApplication,
   educationApplicationDetailPath,
   EducationApplicationContent,
   resolvePreferredEducationScheduleDisplayLabel,
@@ -19,8 +18,7 @@ import {
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
   DocumentPassBanner,
-  getEducationSurveyMockAvailability,
-  getMockEducationApplicationById,
+  getEducationSurveyTabAvailability,
   isInstructorRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
@@ -35,15 +33,16 @@ import {
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
+import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
-import { ProgramInfoBody, useMockProgramById, useProgramDetail } from '@/features/program'
+import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
   isRemoteApiConfigured,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from '../../education/detail/page.module.css'
 
@@ -128,23 +127,17 @@ export function MypageLectureDetailPage() {
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
 
-  const mockEnabled = useShouldUsePlatformMockData()
-  const mockApplication = useMemo(
-    () => getMockEducationApplicationById(applicationId),
-    [applicationId, mockEnabled],
-  )
   const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
-  const application = remoteDetailEnabled ? remoteApplicationQuery.application : mockApplication
-  const mockProgramQuery = useMockProgramById(remoteDetailEnabled ? '' : (application?.programId ?? ''))
+  const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
   const remoteProgramQuery = useProgramDetail(
-    remoteDetailEnabled ? application?.programId : null,
+    application?.programId ?? null,
     { fresh: true },
   )
-  const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const program = remoteProgramQuery.program
   const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
-    : mockProgramQuery.isLoading
+    : false
   const isDetailLoading =
     !isAuthReady ||
     isChecking ||
@@ -286,7 +279,11 @@ export function MypageLectureDetailPage() {
     if (remoteDetailEnabled && application?.applicationType) {
       if (cancelMutation.isPending) return
       cancelMutation.mutate(
-        { applicationType: application.applicationType, applicationId: application.id },
+        {
+          applicationType: application.applicationType,
+          applicationId: application.id,
+          programId: application.programId,
+        },
         {
           onSuccess: () => {
             setIsCancelConfirmOpen(false)
@@ -296,10 +293,25 @@ export function MypageLectureDetailPage() {
       )
       return
     }
-    cancelMockEducationApplication(applicationId)
     setIsCancelConfirmOpen(false)
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
   }
+
+  const instructorAvailableScheduleLines = useMemo(
+    () =>
+      resolveInstructorAvailableScheduleLines({
+        answers: application?.applicationAnswers,
+        preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
+        preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
+        program: programDetailToPreferredScheduleLookup(program),
+      }),
+    [
+      application?.applicationAnswers,
+      application?.preferredEducationScheduleLabel,
+      application?.preferredScheduleOptionValues,
+      program,
+    ],
+  )
 
   if (isDetailLoading) {
     return (
@@ -360,6 +372,7 @@ export function MypageLectureDetailPage() {
       <EducationApplicationContent
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        instructorAvailableScheduleLines={instructorAvailableScheduleLines}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
@@ -393,7 +406,7 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'survey') {
-      const surveyAvailability = getEducationSurveyMockAvailability({
+      const surveyAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
         configured: program.surveyConfigured,
@@ -414,7 +427,7 @@ export function MypageLectureDetailPage() {
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
-      const satisfactionAvailability = getEducationSurveyMockAvailability({
+      const satisfactionAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
         configured: program.satisfactionConfigured,

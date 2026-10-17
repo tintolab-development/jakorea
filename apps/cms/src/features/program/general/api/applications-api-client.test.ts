@@ -128,6 +128,31 @@ describe('bulkIndividualDocumentResultsRemote', () => {
       },
     })
   })
+
+  it('즉시 발송이면 scheduledAt을 제거한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      requestedCount: 1,
+      successCount: 1,
+      failureCount: 0,
+    })
+
+    await bulkIndividualDocumentResultsRemote({
+      ids: [1690625],
+      result: 'PASS',
+      notifyTiming: 'IMMEDIATE',
+      scheduledAt: '2026-10-20T00:00:00.000Z',
+    })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/document-results/bulk',
+      method: 'POST',
+      data: {
+        ids: [1690625],
+        result: 'PASS',
+        notifyTiming: 'IMMEDIATE',
+      },
+    })
+  })
 })
 
 describe('updateIndividualDocumentEvaluationRemote', () => {
@@ -385,7 +410,10 @@ describe('approveOrganizationApplicationRemote', () => {
   })
 
   it('시점 없으면 body 없이 즉시 발송한다', async () => {
-    vi.mocked(customInstance).mockResolvedValue({ applicationId: 101, applicationStatus: 'APPROVED' })
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
 
     await approveOrganizationApplicationRemote('101')
 
@@ -395,8 +423,47 @@ describe('approveOrganizationApplicationRemote', () => {
     })
   })
 
+  it('GENERAL 승인은 selectedScheduleId와 알림 timing을 함께 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
+
+    await approveOrganizationApplicationRemote('101', {
+      timing: 'IMMEDIATE',
+      selectedScheduleId: 88001,
+    })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/101/approve',
+      method: 'POST',
+      data: {
+        timing: 'IMMEDIATE',
+        selectedScheduleId: 88001,
+      },
+    })
+  })
+
+  it('GENERAL 승인만 timing으로 보낼 수 있다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
+
+    await approveOrganizationApplicationRemote('101', { timing: 'IMMEDIATE' })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/101/approve',
+      method: 'POST',
+      data: { timing: 'IMMEDIATE' },
+    })
+  })
+
   it('직접설정은 SCHEDULED + scheduledAt만 보낸다', async () => {
-    vi.mocked(customInstance).mockResolvedValue({ applicationId: 101, applicationStatus: 'APPROVED' })
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
 
     await approveOrganizationApplicationRemote('101', {
       timing: 'SCHEDULED',
@@ -483,10 +550,10 @@ describe('updateInstructorApplication', () => {
     await updateInstructorApplication('201', {
       managerComment: '배정 후 강사비 재확인',
       feePolicy: {
-        basisType: 'special_lecture',
-        measure: '출강 1회당',
+        basisType: 'RECRUITMENT',
+        measure: 'PER_SESSION',
         amount: 150000,
-        instructorFeeGrade: '3급 강사비',
+        instructorFeeGrade: 'GRADE_3',
       },
       businessIncomeEarnerStatus: '해당 없음',
     })
@@ -497,10 +564,10 @@ describe('updateInstructorApplication', () => {
       data: {
         managerComment: '배정 후 강사비 재확인',
         feePolicy: {
-          basisType: 'special_lecture',
-          measure: '출강 1회당',
+          basisType: 'RECRUITMENT',
+          measure: 'PER_SESSION',
           amount: 150000,
-          instructorFeeGrade: '3급 강사비',
+          instructorFeeGrade: 'GRADE_3',
         },
         businessIncomeEarnerStatus: '해당 없음',
       },

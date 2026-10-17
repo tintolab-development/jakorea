@@ -32,89 +32,38 @@ export interface ProgramRecruitmentRequest {
   minCount?: number;
   /** 선발 방식 코드. 예: ADMIN_REVIEW */
   selectionMethod?: string;
-  /**
-     * 수정할 모집 행 id. 보내면 그 행만 수정하고, 요청에 없는 행은 그대로 둔다. id 또는 applicationType 이 하나라도 있으면 행 단위 저장으로 처리한다.
-     * @nullable
-     */
+  /** 수정할 모집 행 id. 보내면 그 행만 수정하고, 요청에 없는 행은 그대로 둔다. id 또는 applicationType 이 하나라도 있으면 행 단위 저장으로 처리한다. */
   id?: number | null;
-  /**
-     * 이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다.
-     * @nullable
-     */
+  /** 이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다. */
   applicationType?: ProgramRecruitmentRequestApplicationType;
-  /**
-     * UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null.
-     * @nullable
-     */
+  /** UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null. */
   recruitTerm?: ProgramRecruitmentRequestRecruitTerm;
-  /**
-     * 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움
-     * @nullable
-     */
+  /** 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움 */
   announcementTitle?: string | null;
-  /**
-     * 한 줄 소개. null 유지, "" 비움
-     * @nullable
-     */
+  /** 한 줄 소개. null 유지, "" 비움 */
   summary?: string | null;
-  /**
-     * 프로그램 설명. null 유지, "" 비움
-     * @nullable
-     */
+  /** 프로그램 설명. null 유지, "" 비움 */
   programDescription?: string | null;
-  /**
-     * 모집 안내. null 유지, "" 비움
-     * @nullable
-     */
+  /** 모집 안내. null 유지, "" 비움 */
   recruitmentGuide?: string | null;
-  /**
-     * 신청 방법. null 유지, "" 비움
-     * @nullable
-     */
+  /** 신청 방법. null 유지, "" 비움 */
   applicationMethod?: string | null;
-  /**
-     * 학습 지원. null 유지, "" 비움
-     * @nullable
-     */
+  /** 학습 지원. null 유지, "" 비움 */
   learningSupportContent?: string | null;
-  /**
-     * 추가 내용 HTML. null 유지, "" 비움
-     * @nullable
-     */
+  /** 추가 내용 HTML. null 유지, "" 비움 */
   additionalContentHtml?: string | null;
-  /**
-     * 비고. null 유지, "" 비움
-     * @nullable
-     */
+  /** 비고. null 유지, "" 비움 */
   remarks?: string | null;
-  /**
-     * 담당자 이름. null 유지, "" 비움
-     * @nullable
-     */
+  /** 담당자 이름. null 유지, "" 비움 */
   contactName?: string | null;
-  /**
-     * 담당자 연락처. null 유지, "" 비움
-     * @nullable
-     */
+  /** 담당자 연락처. null 유지, "" 비움 */
   contactPhone?: string | null;
-  /**
-     * 담당자 이메일. null 유지, "" 비움
-     * @nullable
-     */
+  /** 담당자 이메일. null 유지, "" 비움 */
   contactEmail?: string | null;
-  /**
-     * 강사·봉사자 기타사항. null 유지, "" 비움. 참여자 행에는 저장해도 포털 참여자 상세에는 내려가지 않는다.
-     * @nullable
-     */
+  /** 강사·봉사자 기타사항. null 유지, "" 비움. 참여자 행에는 저장해도 포털 참여자 상세에는 내려가지 않는다. */
   otherMatters?: string | null;
-  /**
-     * 면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다.
-     * @nullable
-     */
+  /** 면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다. */
   interviewEnabled?: boolean | null;
-  /**
-     * null 로 비울 필드 이름. 예: ["maxCount","remarks"]
-     * @nullable
-     */
+  /** null 로 비울 필드 이름. 예: ["maxCount","remarks"] */
   clearFields?: string[] | null;
 }

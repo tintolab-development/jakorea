@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-10-17T07:19:46.121Z",
+  "errorCount": 0,
+  "rules": [
+    {
+      "id": "getGeneralRecruitOverlayRecord_in_save_hooks",
+      "pattern": "getGeneralRecruitOverlayRecord\\(",
+      "glob": "**/hooks/use-*save*.{ts,tsx}",
+      "severity": "error",
+      "files": []
+    },
+    {
+      "id": "preferOverlay_true_in_detail_registration",
+      "pattern": "preferOverlay:\\s*true",
+      "glob": "{detail-modal,registration}/**/*.{ts,tsx}",
+      "severity": "warn",
+      "files": []
+    },
+    {
+      "id": "registrationOverlay_direct_index",
+      "pattern": "registrationOverlay\\s*\\[",
+      "glob": "{detail-modal,registration}/**/*.{ts,tsx}",
+      "severity": "warn",
+      "files": []
+    }
+  ]
+}

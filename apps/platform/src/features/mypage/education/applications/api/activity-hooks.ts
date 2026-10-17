@@ -5,6 +5,10 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import {
+  mapPortalNoticeAuthorFields,
+  portalEducationNoticeActorLabel,
+} from '../../notices/lib/author-label'
 import type {
   EducationInProgressFile,
   EducationInProgressNotice,
@@ -12,11 +16,17 @@ import type {
   EducationNoticeReactionSummary,
   EducationNoticeReactionUser,
 } from '../../notices/model/types'
-import type { EducationScheduleItem } from '../../schedules/model/types'
-import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
-import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
+import { mapPortalEducationSchedule } from '../../schedules/lib/map-from-portal'
 import {
+  getEducationSchedulesQueryErrorCode,
+  getEducationSchedulesQueryTraceId,
+} from '../../schedules/lib/schedules-query-error'
+import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
+import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
+import {
+  createApplicationNotice,
   createApplicationNoticeComment,
+  putApplicationNoticeAttachments,
   deleteApplicationNoticeComment,
   deleteApplicationNoticeReaction,
   fetchApplicationForms,
@@ -31,9 +41,7 @@ import {
   fetchPortalSurveyFormBinding,
   fetchSettlementApplications,
   submitPortalSurveyResponse,
-  type PortalEducationSchedule,
   type PortalExpenseReceipt,
-  type PortalFormListItem,
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
   type PortalNoticeDetail,
@@ -43,6 +51,8 @@ import {
   type PortalSurveySubmitBody,
 } from './activity-client'
 import type { ProgramApplicationType } from './types'
+import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
+import { PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE } from '../../notices/lib/notice-attach-policy'
 
 const STALE_MS = 30_000
 const GC_MS = 10 * 60_000
@@ -69,17 +79,19 @@ function queryOptions() {
 
 function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null {
   if (item.postId == null) return null
+  const author = mapPortalNoticeAuthorFields(item)
   return {
     id: String(item.postId),
-    title: item.title?.trim() || '안내',
+    title: item.title?.trim() || '안내사항',
     content: '',
-    authorName: '안내',
+    authorName: author.authorName,
+    authorIsStaff: author.authorIsStaff,
     publishedAt: item.createdAt ?? '',
     read: item.unread === false,
     viewCount: item.readCount ?? 0,
     commentCount: item.commentCount ?? 0,
     reactionCount: item.reactionCount ?? 0,
-    isAuthor: false,
+    isAuthor: author.isAuthor,
     attachmentCount: item.attachmentCount ?? 0,
   }
 }
@@ -98,23 +110,12 @@ function mapNoticeAttachmentListItem(
   }
 }
 
-function portalActorLabel(
-  displayName: string | null | undefined,
-  actorType: string | undefined,
-  mine: boolean | undefined,
-): string {
-  const named = displayName?.trim()
-  if (named) return named
-  const normalized = (actorType ?? '').toUpperCase()
-  if (normalized === 'ADMIN' || normalized === 'CMS' || normalized === 'SYSTEM') {
-    return 'JA KOREA 알림'
-  }
-  if (mine) return '나'
-  return '회원'
-}
-
 function noticeCommentAuthorLabel(comment: PortalNoticeComment): string {
-  return portalActorLabel(comment.authorDisplayName, comment.authorType, comment.mine)
+  return portalEducationNoticeActorLabel(
+    comment.authorDisplayName,
+    comment.authorType,
+    comment.mine,
+  )
 }
 
 function mapNoticeDetail(detail: PortalNoticeDetail): {
@@ -123,10 +124,14 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
   comments: EducationNoticeComment[]
 } {
   const id = detail.postId == null ? '' : String(detail.postId)
+  const author = mapPortalNoticeAuthorFields(detail)
   return {
     notice: {
       title: detail.title,
       content: detail.content ?? '',
+      authorName: author.authorName,
+      authorIsStaff: author.authorIsStaff,
+      isAuthor: author.isAuthor,
       publishedAt: detail.createdAt,
       read: detail.unread === false,
       viewCount: detail.readCount ?? 0,
@@ -185,7 +190,11 @@ function mapNoticeReactions(
           {
             id: `${postId}-${row.actorType ?? 'actor'}-${row.actorId ?? index}-${emojiType}`,
             noticeId: postId,
-            authorName: portalActorLabel(row.actorDisplayName, row.actorType, row.mine),
+            authorName: portalEducationNoticeActorLabel(
+              row.actorDisplayName,
+              row.actorType,
+              row.mine,
+            ),
             emojiType,
             reactedAt: row.reactedAt ?? '',
           },
@@ -197,55 +206,6 @@ function mapNoticeReactions(
     myReactionTypes: (state?.myReactions ?? []).filter(Boolean),
     total: summary.reduce((sum, row) => sum + row.count, 0),
     users,
-  }
-}
-
-function mapAttendance(
-  value: string | undefined,
-): EducationScheduleItem['attendanceStatus'] {
-  switch ((value ?? '').toUpperCase()) {
-    case 'PRESENT':
-    case 'ATTENDED':
-      return 'present'
-    case 'LATE':
-      return 'late'
-    case 'ABSENT':
-      return 'absent'
-    case 'EXCUSED':
-      return 'excused'
-    default:
-      return null
-  }
-}
-
-function mapSchedule(item: PortalEducationSchedule, index: number): EducationScheduleItem | null {
-  if (item.scheduleId == null || !item.startAt) return null
-  return {
-    id: String(item.scheduleId),
-    sessionNumber: item.sessionNo ?? index + 1,
-    heldAt: item.startAt,
-    title: item.title?.trim() || item.locationName?.trim() || `${index + 1}회차`,
-    attendanceStatus: mapAttendance(item.attendanceStatus),
-  }
-}
-
-function mapForm(item: PortalFormListItem): EducationSurveyListEntry | null {
-  const bindingId = item.bindingId ?? item.formBindingId ?? item.id
-  if (bindingId == null) return null
-  const status = (item.status ?? '').toUpperCase()
-  const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
-  return {
-    id: String(bindingId),
-    title: item.title?.trim() || '설문',
-    status: submitted ? 'submitted' : 'in_progress',
-    startAt: item.submissionStartAt?.slice(0, 10),
-    endAt: item.submissionEndAt?.slice(0, 10),
-    createdAt: item.submissionStartAt,
-    templateVersionId: item.templateVersionId,
-    form: item.form,
-    formResponseId: item.formResponseId,
-    answers: item.answers,
-    draftAnswers: item.draftAnswers,
   }
 }
 
@@ -460,6 +420,79 @@ export function useApplicationNoticeReactionsQuery(
   return { enabled, ...reactions }
 }
 
+export type CreateApplicationNoticeInput = {
+  /** 생략·공백 시 BE는 "" 처리 */
+  title?: string
+  content: string
+  visibilityType: string
+  organizationApplicationId?: number
+  attachmentFiles?: File[]
+}
+
+export function useCreateApplicationNoticeMutation(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: CreateApplicationNoticeInput) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('application scope is required')
+      }
+      const files = input.attachmentFiles ?? []
+      const fileObjectIds =
+        files.length > 0
+          ? await Promise.all(
+              files.map(file =>
+                uploadMemberPortalFile({
+                  file,
+                  filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
+                }),
+              ),
+            )
+          : []
+
+      const created = await createApplicationNotice(applicationType, applicationId, {
+        title: input.title?.trim() ?? '',
+        content: input.content,
+        visibilityType: input.visibilityType,
+        organizationApplicationId: input.organizationApplicationId,
+      })
+      const postId = created.postId
+      if (postId == null) {
+        throw new Error('PORTAL_NOTICE_CREATE_MISSING_POST_ID')
+      }
+      if (fileObjectIds.length > 0) {
+        await putApplicationNoticeAttachments(
+          applicationType,
+          applicationId,
+          String(postId),
+          fileObjectIds,
+        )
+      }
+      return String(postId)
+    },
+    onSuccess: () => {
+      if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType,
+          applicationId,
+        ),
+        exact: true,
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+        ],
+      })
+    },
+  })
+}
+
 /** 댓글 등록·수정·삭제 후 상세(댓글)와 목록(댓글 수)을 다시 받는다. */
 export function useApplicationNoticeCommentMutations(
   applicationType: ProgramApplicationType | null | undefined,
@@ -598,14 +631,20 @@ export function useApplicationSchedulesQuery(
     enabled,
     ...queryOptions(),
   })
+  const items = useMemo(
+    () => (query.data?.items ?? []).map((item, index) => mapPortalEducationSchedule(item, index)),
+    [query.data?.items],
+  )
   return {
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
-    items: (query.data ?? []).flatMap((item, index) => {
-      const mapped = mapSchedule(item, index)
-      return mapped ? [mapped] : []
-    }),
+    isRefetching: enabled && query.isFetching && !query.isPending,
+    items,
+    scopeStatus: query.data?.scopeStatus ?? null,
+    refetch: query.refetch,
+    errorCode: query.isError ? getEducationSchedulesQueryErrorCode(query.error) : null,
+    traceId: query.isError ? getEducationSchedulesQueryTraceId(query.error) : null,
   }
 }
 
@@ -628,7 +667,7 @@ export function useApplicationFormsQuery(
   const items = useMemo(
     () =>
       (query.data ?? []).flatMap(item => {
-        const mapped = mapForm(item)
+        const mapped = mapPortalFormListItem(item)
         return mapped ? [mapped] : []
       }),
     [query.data],

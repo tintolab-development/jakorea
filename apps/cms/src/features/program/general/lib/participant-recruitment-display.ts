@@ -21,10 +21,13 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
+  buildInstitutionApplicationRecruitLimitVisibilityBridge,
+  getInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
@@ -160,6 +163,31 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   notes: string
 }
 
+/** 프로그램 상세 모집 — 등록 위저드와 동일하게 유형·회차·일정 모드 SSOT만으로 한도 필드 노출 */
+function resolveRecruitmentInstitutionLimitsBridge(program: Program) {
+  const fromProgram = resolveInstitutionApplicationProgramBridge(program)
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const programMode = commonInfo?.educationScheduleMode ?? fromProgram.educationScheduleMode ?? 'date'
+  const base = buildInstitutionApplicationRecruitLimitVisibilityBridge({
+    educationStructure: fromProgram.educationStructure,
+    sessionRound: fromProgram.sessionRound,
+    educationScheduleMode: programMode,
+  })
+  const live = getInstitutionApplicationProgramBridge()
+  if (
+    live.educationStructure === fromProgram.educationStructure &&
+    live.sessionRound === fromProgram.sessionRound &&
+    live.educationScheduleMode != null
+  ) {
+    return buildInstitutionApplicationRecruitLimitVisibilityBridge({
+      educationStructure: fromProgram.educationStructure,
+      sessionRound: fromProgram.sessionRound,
+      educationScheduleMode: live.educationScheduleMode,
+    })
+  }
+  return base
+}
+
 export function resolveGeneralProgramParticipantRecruitmentDisplay(
   program: Program,
   options?: {
@@ -172,7 +200,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
-  const bridge = resolveInstitutionApplicationProgramBridge(program)
+  const bridge = resolveRecruitmentInstitutionLimitsBridge(program)
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
     shouldShowInstitutionApplicationMaxScheduleFields(bridge)

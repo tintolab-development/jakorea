@@ -8,7 +8,7 @@ import {
   RevenueTable,
   usePublicTransparency,
 } from '@/features/transparency'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TransparencyPage() {
@@ -18,9 +18,7 @@ export function TransparencyPage() {
     return (
       <section className={styles.page}>
         <div className={styles.content}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            투명경영 정보를 불러오는 중입니다.
-          </PFText>
+          <PFLoadingSpinner centered label="투명경영 정보를 불러오는 중" />
         </div>
       </section>
     )

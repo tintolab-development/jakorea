@@ -4,6 +4,14 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'organization', programId, status ?? 'all'] as const,
   organizationDetail: (applicationId: string) =>
     [...generalApplicationsQueryKeys.all, 'organization-detail', applicationId] as const,
+  /** 동일 신청 id가 다른 프로그램 컨텍스트와 섞이지 않도록 programId 포함 (참여 기관 상세 등) */
+  organizationDetailInProgram: (programId: string, applicationId: string) =>
+    [
+      ...generalApplicationsQueryKeys.all,
+      'organization-detail',
+      programId.trim(),
+      applicationId.trim(),
+    ] as const,
   organizationRequestedSchedules: (applicationId: string) =>
     [
       ...generalApplicationsQueryKeys.all,
@@ -15,7 +23,11 @@ export const generalApplicationsQueryKeys = {
   instructorDetail: (applicationId: string) =>
     [...generalApplicationsQueryKeys.all, 'instructor-detail', applicationId] as const,
   instructorLectureAssignInstitutions: (programId: string) =>
-    [...generalApplicationsQueryKeys.all, 'instructor-lecture-assign-institutions', programId] as const,
+    [
+      ...generalApplicationsQueryKeys.all,
+      'instructor-lecture-assign-institutions',
+      programId,
+    ] as const,
   individualLists: (programId: string) =>
     [...generalApplicationsQueryKeys.all, 'individual', programId] as const,
   individualList: (programId: string, status?: string | null) =>
@@ -29,11 +41,7 @@ export const generalApplicationsQueryKeys = {
   volunteerDetail: (applicationId: string) =>
     [...generalApplicationsQueryKeys.volunteerDetails(), applicationId] as const,
   /** form_response by application context (기관/강사/봉사 신청 상세 hydrate) */
-  formByContext: (
-    programId: string,
-    contextType: string,
-    contextId: string
-  ) =>
+  formByContext: (programId: string, contextType: string, contextId: string) =>
     [
       ...generalApplicationsQueryKeys.all,
       'form-by-context',
@@ -41,20 +49,22 @@ export const generalApplicationsQueryKeys = {
       contextType,
       contextId,
     ] as const,
+  formDetail: (responseId: string) =>
+    [...generalApplicationsQueryKeys.all, 'form-detail', responseId] as const,
   /** admin_comment by application target */
   commentsByTarget: (targetType: string, targetId: string) =>
-    [
-      ...generalApplicationsQueryKeys.all,
-      'comments-by-target',
-      targetType,
-      targetId,
-    ] as const,
+    [...generalApplicationsQueryKeys.all, 'comments-by-target', targetType, targetId] as const,
 }
 
 export const generalProgramProgressQueryKeys = {
   all: ['general-program-progress'] as const,
   participants: (programId: string, participantType?: string | null) =>
-    [...generalProgramProgressQueryKeys.all, 'participants', programId, participantType ?? 'all'] as const,
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'participants',
+      programId,
+      participantType ?? 'all',
+    ] as const,
   institutions: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'institutions', programId] as const,
   instructors: (programId: string) =>
@@ -81,9 +91,7 @@ export const generalProgramProgressQueryKeys = {
       ...generalProgramProgressQueryKeys.all,
       'lecture-reports',
       programId,
-      instructorMemberId != null && instructorMemberId !== ''
-        ? String(instructorMemberId)
-        : 'all',
+      instructorMemberId != null && instructorMemberId !== '' ? String(instructorMemberId) : 'all',
     ] as const,
   posts: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'posts', programId] as const,
@@ -97,8 +105,7 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
-  educationScopes: () =>
-    [...generalProgramProgressQueryKeys.all, 'education-scope'] as const,
+  educationScopes: () => [...generalProgramProgressQueryKeys.all, 'education-scope'] as const,
   educationScope: (programId: string, participantId: string) =>
     [...generalProgramProgressQueryKeys.educationScopes(), programId, participantId] as const,
   submissionTeam: (programId: string, participantId: string) =>

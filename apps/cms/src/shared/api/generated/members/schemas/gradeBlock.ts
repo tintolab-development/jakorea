@@ -8,7 +8,7 @@
 import type { ClassRoom } from './classRoom';
 
 /**
- * 학년 한 묶음. classes가 비어 있으면 학급별 인원은 없고 classCount와 신청 총원만 있다.
+ * 학년 한 묶음. classes[].classNo가 실제 등록 반의 SSOT입니다. classes가 비어 있으면 classCount는 신청 메타일 뿐 반 번호 목록이 아닙니다.
  */
 export interface GradeBlock {
   /** @nullable */

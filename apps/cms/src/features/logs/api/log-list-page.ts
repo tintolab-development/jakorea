@@ -1,7 +1,7 @@
 /** 로그 목록 공통 페이지네이션 — BE `LogListPageResponse`와 동일 */
 
 export const LOG_LIST_PAGE_SIZE = 20
-export const LOG_LIST_MAX_PAGE_SIZE = 100
+export const LOG_LIST_MAX_PAGE_SIZE = 20
 
 export type LogListPage<T> = {
   items: T[]

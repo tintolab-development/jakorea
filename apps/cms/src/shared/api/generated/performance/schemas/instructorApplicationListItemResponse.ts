@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorPreferredOrganizationResponse } from './instructorPreferredOrganizationResponse';
 
 export interface InstructorApplicationListItemResponse {
   id?: number;
@@ -30,10 +31,14 @@ export interface InstructorApplicationListItemResponse {
   instructorFeeGradeSnapshot?: string;
   distanceKm?: number;
   longDistance?: boolean;
+  programDispatchCount?: number;
+  programLongDistanceDispatchCount?: number;
   instructorProfileStatus?: string;
   primaryActivityType?: string;
   availableScheduleIds?: number[];
   availableScheduleMemo?: string;
+  /** 캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 []. */
+  preferredOrganizations?: InstructorPreferredOrganizationResponse[];
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;

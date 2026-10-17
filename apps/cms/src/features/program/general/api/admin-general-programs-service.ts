@@ -29,6 +29,7 @@ import {
   deleteAdminProgramPostRemote,
   deleteAdminProgramPostReactionRemote,
   fetchAdminProgramByIdRemote,
+  fetchAdminProgramSponsorsRemote,
   fetchAdminProgramFormBindingsRemote,
   fetchAdminProgramManagersRemote,
   fetchAdminProgramNavigationRemote,
@@ -56,6 +57,7 @@ import {
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
 } from '@/features/program/general/api/programs-api-client'
+import { mergeProgramSponsorAssignments } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { updateFormResponseRemote } from '@/features/program/general/api/form-responses-api-client'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramRole } from '@/types/user'
@@ -155,17 +157,33 @@ export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgra
   }
 }
 
-export async function fetchGeneralProgramRemoteById(programId: string): Promise<Program> {
+/** 핵심 프로그램 상세만 조회한다. 첫 상세 화면의 critical path에서 사용한다. */
+export async function fetchGeneralProgramCoreRemoteById(programId: string): Promise<Program> {
   assertGeneralProgramsRemoteReady()
   const dto = await fetchAdminProgramByIdRemote(programId)
-  const mapped = mapAdminProgramDetailToProgram(dto)
-  const { withFetchedProgramSponsorAssignments } = await import(
-    '@/features/program/shared/lib/merge-program-sponsor-assignments'
-  )
-  const { fetchAdminProgramSponsorsRemote } = await import(
-    '@/features/program/general/api/programs-api-client'
-  )
-  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
+  return mapAdminProgramDetailToProgram(dto)
+}
+
+/** 프로그램 상세에 종속된 후원사 배정 정보 — 화면 보조 데이터 */
+export async function fetchGeneralProgramSponsorAssignmentsRemote(
+  programId: string
+) {
+  assertGeneralProgramsRemoteReady()
+  return fetchAdminProgramSponsorsRemote(programId)
+}
+
+/**
+ * 기존 호출부 호환용 전체 상세 조회.
+ * 핵심 상세와 후원사 배정을 병렬로 요청해 기존 순차 waterfall을 제거한다.
+ */
+export async function fetchGeneralProgramRemoteById(programId: string): Promise<Program> {
+  const [mapped, assignments] = await Promise.all([
+    fetchGeneralProgramCoreRemoteById(programId),
+    fetchGeneralProgramSponsorAssignmentsRemote(programId).catch(() => null),
+  ])
+  return assignments == null
+    ? mapped
+    : mergeProgramSponsorAssignments(mapped, assignments)
 }
 
 export async function createGeneralProgram(
@@ -187,12 +205,13 @@ export async function createGeneralProgram(
 export async function updateGeneralProgram(
   programId: string,
   program: Program,
-  patch?: Partial<Program>
+  patch?: Partial<Program>,
+  baseline?: Program
 ): Promise<Program> {
   assertGeneralProgramsRemoteReady()
   const dto = await updateAdminProgramRemote(
     programId,
-    mapGeneralProgramToUpdateRequest(program, patch)
+    mapGeneralProgramToUpdateRequest(program, patch, baseline)
   )
   const mapped = mapAdminProgramDetailToProgram(dto)
   const { withFetchedProgramSponsorAssignments } = await import(

@@ -1,5 +1,9 @@
 import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 
+export function isMinorMemberNameValid(name: string) {
+  return name.trim().length > 0
+}
+
 export function isProfileStepValid(
   address: string,
   addressDetail: string,

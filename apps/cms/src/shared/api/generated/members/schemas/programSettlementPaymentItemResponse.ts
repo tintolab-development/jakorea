@@ -10,4 +10,5 @@ export interface ProgramSettlementPaymentItemResponse {
   id?: number;
   itemType?: string;
   useYn?: boolean;
+  evidenceRequired?: boolean;
 }

@@ -1,7 +1,7 @@
 /**
  * 상·하반기 교육 일정 블록 — 등록 양식·프로그램 상세 공통
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
@@ -27,31 +27,24 @@ import { CmsCircleAddButton } from '@/shared/ui/cms-circle-add-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { fetchAllMembersPagesRemote } from '@/features/user/api/fetch-all-members-pages-remote'
+import { instructorListRolesExactAnyOf } from '@/features/user/api/map-roles-exact-any-of'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './half-education-schedule-section.css'
 
+/**
+ * 진행 일정 조회 텍스트.
+ * `\n` 다중 행을 fragment+span으로 나누면 `.detail-info-form__field-content`(display:flex)
+ * 직계 자식이 가로로 나열되어 일정이 옆으로 붙는다 → 단일 래퍼 + pre-line 로 세로 유지.
+ */
 function ScheduleTextView({ text }: { text: string }) {
   if (!text || text === '-') return <>-</>
-  const lines = text.split('\n')
-  return (
-    <>
-      {lines.map((line, i) => (
-        <span key={i}>
-          {i > 0 ? <br /> : null}
-          {line}
-        </span>
-      ))}
-    </>
-  )
+  return <span className="half-education-schedule__schedule-text">{text}</span>
 }
 
 function HalfEducationScheduleSubheading({ children }: { children: string }) {
   return <div className="half-education-schedule__subheading">{children}</div>
 }
-function getUjatTextbookInstructorOptions(): Array<{ value: string; label: string }> {
-  return []
-}
-
 function getRowRegionOptions(
   rowId: number,
   regionByRow: Record<number, string[]>,
@@ -152,7 +145,7 @@ function UjatRegionDateMultiScheduleRows({
             mode="multiple"
             withAllOption={false}
             style={{ width: 360 }}
-            placeholder="지역을 선택하세요"
+            placeholder="교육 지역을 선택해 주세요"
             options={getRowRegionOptions(id, regionByRow, regions)}
             value={regionByRow[id] ?? []}
             onChange={next =>
@@ -174,6 +167,7 @@ function UjatRegionDateMultiScheduleRows({
             presetMode="schedule"
             customizable={false}
             suppressAutoTodayWhenEmpty
+            placeholder="일정을 선택해 주세요"
             value={dateByRow[id] ?? null}
             onChange={next =>
               updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(
@@ -245,7 +239,9 @@ function ScheduleEducationRadioRow({
 
 function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  const instructorOptions = useMemo(() => getUjatTextbookInstructorOptions(), [])
+  const [instructorOptions, setInstructorOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([])
   const [mode, setMode] = useUjatProgramRegistrationOverlayKv<UjatTextbookEducationMode>(
     keys.preTextbookMode,
     'ja'
@@ -255,38 +251,62 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
     undefined
   )
 
+  useEffect(() => {
+    if (mode !== 'instructor_outsource') return
+    let cancelled = false
+    void fetchAllMembersPagesRemote({
+      rolesExactAnyOf: instructorListRolesExactAnyOf(),
+    })
+      .then(users => {
+        if (cancelled) return
+        setInstructorOptions(
+          users
+            .map(user => ({ value: String(user.id), label: user.name.trim() }))
+            .filter(option => option.value && option.label)
+        )
+      })
+      .catch(() => {
+        // 회원 API가 비활성화된 로컬/템플릿 환경에서는 빈 선택지로 유지한다.
+        if (!cancelled) setInstructorOptions([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [mode])
+
   return (
     <div className="detail-info-form-inputs-wrapper half-education-schedule__textbook-row">
       <CmsRadioGroup
         size="large"
         value={mode}
-        onChange={e => setMode(e.target.value as UjatTextbookEducationMode)}
+        onChange={e => {
+          const next = e.target.value as UjatTextbookEducationMode
+          setMode(next)
+          if (next === 'ja') setInstructorId(undefined)
+        }}
       >
         <CmsRadio value="ja">JA 진행</CmsRadio>
         <CmsRadio value="instructor_outsource">강사 섭외</CmsRadio>
       </CmsRadioGroup>
       {mode === 'instructor_outsource' ? (
-        <CmsSelect
-          showSearch
-          optionFilterProp="label"
-          placeholder="교재 교육 강사 선택"
-          style={{ minWidth: 200, flex: 1 }}
-          options={instructorOptions}
-          value={instructorId}
-          onChange={v => setInstructorId(v == null || v === '' ? undefined : String(v))}
-        />
+        <>
+          <DetailInfoForm.InputsSeparator />
+          <CmsSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder="교재 교육 강사를 선택해 주세요"
+            style={{ minWidth: 200, flex: 1 }}
+            options={instructorOptions}
+            value={instructorId}
+            onChange={v => setInstructorId(v == null || v === '' ? undefined : String(v))}
+          />
+        </>
       ) : null}
     </div>
   )
 }
 
-function UjatScheduleNameField({
-  overlayKey,
-  fallback,
-}: {
-  overlayKey: string
-  fallback: string
-}) {
+function UjatScheduleNameField({ overlayKey, fallback }: { overlayKey: string; fallback: string }) {
   const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(overlayKey, fallback)
   return (
     <CmsInput
@@ -422,7 +442,7 @@ function UjatEventScheduleBlock({
                       end: next[1]?.toISOString() ?? null,
                     })
                   }
-                  placeholder={['시작일', '종료일']}
+                  placeholder={['교육 진행 일정을 선택해 주세요', '교육 진행 일정을 선택해 주세요']}
                   className="half-education-schedule__range-picker"
                 />
               ) : undefined

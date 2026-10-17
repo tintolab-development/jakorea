@@ -104,19 +104,43 @@ describe('saveProgramSurveyFormEdit', () => {
     expect(updateBinding).not.toHaveBeenCalled()
   })
 
+  it('등록 직후(기간 null·IN_PROGRESS)에는 기간을 먼저 넣고 양식 저장을 진행한다', async () => {
+    listBindings
+      .mockResolvedValueOnce([
+        { bindingId: 900, progressStatus: 'IN_PROGRESS', submittedCount: 0 },
+      ])
+      .mockResolvedValueOnce([
+        {
+          bindingId: 900,
+          progressStatus: 'BEFORE_START',
+          submittedCount: 0,
+          availableActions: ['UPDATE_TEMPLATE'],
+        },
+      ])
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: true,
+      templateId: 2001,
+      templateVersionId: 400,
+    })
+
+    expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
+      submissionStartAt: '2026-10-20T00:00:00.000Z',
+    })
+    expect(copyVersion).toHaveBeenCalled()
+  })
+
   it.each([
-    { progressStatus: 'IN_PROGRESS', submittedCount: 0 },
+    { progressStatus: 'IN_PROGRESS', submittedCount: 0, submissionStartAt: '2020-01-01T00:00:00.000Z' },
     { progressStatus: 'BEFORE_START', submittedCount: 2 },
   ])('does not copy when the binding is no longer swappable (%o)', async binding => {
     listBindings.mockResolvedValue([{ bindingId: 900, ...binding }])
 
-    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
       ok: false,
-      message: '진행 중이거나 응답이 있는 설문은 양식을 수정할 수 없습니다.',
       refetchBindings: true,
     })
     expect(copyVersion).not.toHaveBeenCalled()
-    expect(updateBinding).not.toHaveBeenCalled()
   })
 })
 

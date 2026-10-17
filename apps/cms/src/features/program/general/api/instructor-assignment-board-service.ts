@@ -23,6 +23,7 @@ import {
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
 export type InstructorAssignmentBoardData = {
   assignments: InstructorAssignmentListItemEnriched[]
@@ -85,6 +86,22 @@ function enrichScheduleLabelFromAssignments(
   return map
 }
 
+async function fetchAllInstructorAssignments(
+  programId: string
+): Promise<InstructorAssignmentListItemEnriched[]> {
+  return fetchAllApiPages((page, size) =>
+    fetchInstructorAssignmentsRemote({ programId, page, size })
+  )
+}
+
+async function fetchAllInstructorApplications(
+  programId: string
+): Promise<InstructorApplicationListItemResponse[]> {
+  return fetchAllApiPages((page, size) =>
+    fetchInstructorApplicationsRemote(programId, { page, size })
+  )
+}
+
 async function fetchCalendarSafe(
   programId: string
 ): Promise<ReturnType<typeof buildOccupiedLectureDatesFromCalendar>> {
@@ -103,15 +120,14 @@ async function fetchCalendarSafe(
 export async function fetchInstructorAssignmentBoardData(
   programId: string
 ): Promise<InstructorAssignmentBoardData> {
-  const [assignmentsPage, instructorAppsPage, schedules, calendarOccupied] = await Promise.all([
-    fetchInstructorAssignmentsRemote({ programId, page: 0, size: 200 }),
-    fetchInstructorApplicationsRemote(programId, { page: 0, size: 100 }),
+  const [assignments, instructorApplications, schedules, calendarOccupied] = await Promise.all([
+    fetchAllInstructorAssignments(programId),
+    fetchAllInstructorApplications(programId),
     fetchAdminProgramSchedulesRemote(programId),
     fetchCalendarSafe(programId),
   ])
 
-  const assignments = (assignmentsPage.items ?? []) as InstructorAssignmentListItemEnriched[]
-  const approvedInstructorApplications = (instructorAppsPage.items ?? []).filter(app => {
+  const approvedInstructorApplications = instructorApplications.filter(app => {
     const status = (app.applicationStatus ?? '').toUpperCase()
     return ['APPROVED', 'WAITING_ASSIGNMENT', 'ASSIGNED'].includes(status)
   })
@@ -162,16 +178,12 @@ export async function fetchGeneralInstructorAssignmentBoard(
   return fetchInstructorAssignmentBoardData(programId)
 }
 
-/** hope 날짜(YYYY-MM-DD)에 매칭되는 program schedule id — 레거시 폴백 */
+/**
+ * @deprecated 날짜-only 첫 매치 제거. {@link resolveInstructorAssignmentScheduleId} 사용.
+ */
 export function findScheduleIdForLectureDate(
-  schedules: ProgramScheduleResponse[],
-  hopeDateOrLine: string | null | undefined
+  _schedules: ProgramScheduleResponse[],
+  _hopeDateOrLine: string | null | undefined
 ): number | null {
-  const hopeKey = extractLectureDateKey(hopeDateOrLine)
-  if (!hopeKey) return null
-  for (const schedule of schedules) {
-    const key = extractLectureDateKey(schedule.startAt ?? schedule.startDate)
-    if (key === hopeKey && schedule.id != null) return schedule.id
-  }
   return null
 }

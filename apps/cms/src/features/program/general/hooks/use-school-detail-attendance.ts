@@ -9,10 +9,21 @@ import {
   fetchSchoolDetailAttendanceBundle,
   saveSchoolDetailAttendanceSessionRemote,
 } from '@/features/program/general/api/school-detail-attendance-api'
+import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
+import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import {
+  evaluateOrganizationAttendanceScopeReadiness,
+  formatOrganizationAttendanceScopeBlockedDescription,
+  ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_TITLE,
+  resolveOrganizationAttendanceScopeErrorMessage,
+  type OrganizationAttendanceScopeReadiness,
+} from '@/features/program/general/lib/organization-schedule-attendance-scope'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
+import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { buildSchoolDetailAttendanceFilterFields } from '../lib/school-detail-attendance-filter-fields'
 import {
@@ -73,6 +84,7 @@ function institutionAttendanceQueryKey(
 
 export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: Program) {
   const queryClient = useQueryClient()
+  const { showAlert } = useCmsAlert()
   const programId = String(row.programId ?? program.id ?? '').trim()
   const organizationApplicationId =
     row.organizationApplicationId != null && String(row.organizationApplicationId).trim() !== ''
@@ -86,6 +98,8 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       programId &&
       organizationApplicationId
   )
+  const requiresAssignmentScopeForAttendance =
+    remoteEnabled && isGeneralOrganizationProgram(program)
 
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
@@ -124,21 +138,23 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     retry: false,
   })
 
+  const assignmentScopeQuery = useQuery({
+    queryKey: organizationScheduleAssignmentsQueryKey(
+      programId || '__none__',
+      organizationApplicationId || '__none__'
+    ),
+    enabled: requiresAssignmentScopeForAttendance,
+    queryFn: () =>
+      fetchOrganizationScheduleAssignmentsRemote(programId, organizationApplicationId),
+    staleTime: 15_000,
+    retry: false,
+  })
+
   const [pendingFilters, setPendingFilters] = useState<SchoolDetailAttendanceFilters>(
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
   )
   const [appliedFilters, setAppliedFilters] = useState<SchoolDetailAttendanceFilters>(
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
-  )
-
-  const educationScheduleOptions = useMemo(
-    () => getSchoolDetailAttendanceEducationScheduleOptions(row, program),
-    [program, row]
-  )
-
-  const filterFields = useMemo(
-    () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions),
-    [educationScheduleOptions]
   )
 
   const remoteSessionGroups = useMemo(() => {
@@ -151,10 +167,81 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     })
   }, [program, remoteEnabled, remoteQuery.data, row])
 
+  const educationScheduleOptions = useMemo(() => {
+    // The program schedule list also contains institution-unassigned rows.
+    // After the attendance response arrives, expose only its canonical groups.
+    if (remoteEnabled) {
+      if (remoteQuery.data == null) return []
+      return remoteSessionGroups.map(session => ({
+        label: session.headerTitle,
+        value: session.filterValue,
+      }))
+    }
+    return getSchoolDetailAttendanceEducationScheduleOptions(row, program)
+  }, [program, remoteEnabled, remoteQuery.data, remoteSessionGroups, row])
+
+  const filterFields = useMemo(
+    () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions),
+    [educationScheduleOptions]
+  )
+
   const sessionGroups = useMemo(() => {
     if (!remoteEnabled) return []
     return filterSessionGroups(remoteSessionGroups, appliedFilters)
   }, [appliedFilters, remoteEnabled, remoteSessionGroups])
+
+  const sessionScopeReadinessBySessionId = useMemo(() => {
+    if (!requiresAssignmentScopeForAttendance) return {}
+    if (assignmentScopeQuery.data == null) return {}
+
+    const rosterStudents = remoteQuery.data?.rosterStudents ?? []
+    const readinessBySessionId: Record<string, OrganizationAttendanceScopeReadiness> = {}
+
+    for (const session of remoteSessionGroups) {
+      const scheduleId = session.scheduleId
+      if (scheduleId == null || !(scheduleId > 0)) {
+        readinessBySessionId[session.id] = {
+          ready: false,
+          missingStep: 'SCHEDULE_ASSIGNMENT',
+          unassignedStudentCount: rosterStudents.filter(
+            student =>
+              student.participantId != null &&
+              Number.isFinite(Number(student.participantId)) &&
+              Number(student.participantId) > 0
+          ).length,
+          missingByGradeClass: [],
+        }
+        continue
+      }
+
+      readinessBySessionId[session.id] = evaluateOrganizationAttendanceScopeReadiness({
+        programId,
+        organizationApplicationId,
+        scheduleId,
+        educationGrade: row.educationGrade,
+        rosterStudents,
+        assignmentSlots: assignmentScopeQuery.data,
+      })
+    }
+
+    return readinessBySessionId
+  }, [
+    assignmentScopeQuery.data,
+    organizationApplicationId,
+    programId,
+    remoteQuery.data?.rosterStudents,
+    remoteSessionGroups,
+    requiresAssignmentScopeForAttendance,
+    row.educationGrade,
+  ])
+
+  const getSessionScopeReadiness = useCallback(
+    (sessionId: string): OrganizationAttendanceScopeReadiness | undefined => {
+      if (!requiresAssignmentScopeForAttendance) return undefined
+      return sessionScopeReadinessBySessionId[sessionId]
+    },
+    [requiresAssignmentScopeForAttendance, sessionScopeReadinessBySessionId]
+  )
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -185,6 +272,34 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
         )
         throw new Error('scheduleId unresolved')
       }
+      if (requiresAssignmentScopeForAttendance) {
+        if (assignmentScopeQuery.isLoading || assignmentScopeQuery.data == null) {
+          showAlert({
+            title: ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_TITLE,
+            content:
+              '학급 일정 배정 정보를 확인하는 중입니다. 잠시 후 다시 시도해 주세요.',
+          })
+          throw new Error('attendance assignment scope pending')
+        }
+        const scopeReadiness = evaluateOrganizationAttendanceScopeReadiness({
+          programId,
+          organizationApplicationId,
+          scheduleId,
+          educationGrade: row.educationGrade,
+          rosterStudents: remoteQuery.data?.rosterStudents ?? [],
+          assignmentSlots: assignmentScopeQuery.data,
+        })
+        if (!scopeReadiness.ready) {
+          showAlert({
+            title: ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_TITLE,
+            content: formatOrganizationAttendanceScopeBlockedDescription(
+              scopeReadiness,
+              session?.headerTitle
+            ),
+          })
+          throw new Error('attendance assignment scope not ready')
+        }
+      }
       await saveSchoolDetailAttendanceSessionRemote({
         programId,
         scheduleId,
@@ -206,8 +321,28 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       await queryClient.invalidateQueries({
         queryKey: generalProgramProgressQueryKeys.studentRoster(organizationApplicationId),
       })
+      if (requiresAssignmentScopeForAttendance) {
+        await queryClient.invalidateQueries({
+          queryKey: organizationScheduleAssignmentsQueryKey(programId, organizationApplicationId),
+        })
+      }
     },
     onError: error => {
+      const scopeMessage = resolveOrganizationAttendanceScopeErrorMessage(error)
+      if (scopeMessage) {
+        showAlert({
+          title: ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_TITLE,
+          content: scopeMessage,
+        })
+        return
+      }
+      if (
+        error instanceof Error &&
+        (error.message === 'attendance assignment scope not ready' ||
+          error.message === 'attendance assignment scope pending')
+      ) {
+        return
+      }
       handleError(error, { context: 'useSchoolDetailAttendance.save' })
     },
   })
@@ -247,7 +382,10 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
 
   const refetchAttendance = useCallback(() => {
     void remoteQuery.refetch()
-  }, [remoteQuery])
+    if (requiresAssignmentScopeForAttendance) {
+      void assignmentScopeQuery.refetch()
+    }
+  }, [assignmentScopeQuery, remoteQuery, requiresAssignmentScopeForAttendance])
 
   return {
     pendingFilters,
@@ -267,5 +405,9 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     isRefetching: remoteQuery.isRefetching,
     isSaving: saveMutation.isPending,
     remoteEnabled,
+    requiresAssignmentScopeForAttendance,
+    assignmentScopeLoading: assignmentScopeQuery.isLoading,
+    assignmentScopeLoadError: assignmentScopeQuery.isError,
+    getSessionScopeReadiness,
   }
 }

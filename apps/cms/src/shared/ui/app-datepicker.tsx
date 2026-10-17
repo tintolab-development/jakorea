@@ -18,6 +18,11 @@ import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import type { DatePickerProps } from 'antd'
 import type { Dayjs } from 'dayjs'
+import {
+  applySplitDateRangeEndChange,
+  applySplitDateRangeStartChange,
+} from '@/shared/lib/split-date-range-on-change'
+import { formatYmdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import './app-datepicker.css'
 
 /** DatePicker ref 공개 형태(선언 파일에 rc-picker 경로가 새지 않도록 명시) */
@@ -30,15 +35,12 @@ export type AppDatePickerRef = {
 type InternalDatePickerRef = ComponentRef<typeof DatePicker>
 type RangePickerProps = ComponentProps<typeof DatePicker.RangePicker>
 
-/** 일~토 한 글자 요일 (표시용) */
-const WEEKDAY_KO_MIN = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 /** placeholder 미지정 시 공통 기본값 */
 export const DEFAULT_APP_DATE_PLACEHOLDER = '날짜를 선택하세요'
 
 export function formatAppDatepickerDisplay(value: Dayjs | null | undefined): string {
   if (value == null) return ''
-  return `${value.format('YYYY. MM. DD')}(${WEEKDAY_KO_MIN[value.day()]})`
+  return formatYmdWithKoreanWeekday(value)
 }
 
 /** 날짜+시분초: YYYY. MM. DD(요일) HH:mm:ss */
@@ -179,19 +181,13 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
   }))
 
   const handleStartChange = (d: Dayjs | null) => {
-    if (d && end && d.isAfter(end)) {
-      onChange?.([d, d], ['', ''])
-    } else {
-      onChange?.([d, end], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeStartChange(end, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const handleEndChange = (d: Dayjs | null) => {
-    if (d && start && d.isBefore(start)) {
-      onChange?.([d, start], ['', ''])
-    } else {
-      onChange?.([start, d], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeEndChange(start, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const wrapperCn = [

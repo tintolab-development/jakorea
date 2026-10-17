@@ -8,6 +8,7 @@
 import type { ClassTimeRow } from './classTimeRow';
 import type { GradeBlock } from './gradeBlock';
 import type { OrganizationApplicationDetailResponsePreviousYearParticipation } from './organizationApplicationDetailResponsePreviousYearParticipation';
+import type { OrganizationApplicationDetailResponseScheduleConfirmStatus } from './organizationApplicationDetailResponseScheduleConfirmStatus';
 import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 import type { SessionResponse } from './sessionResponse';
 
@@ -115,7 +116,7 @@ export interface OrganizationApplicationDetailResponse {
      */
   preferredEducationDates?: string[] | null;
   /**
-     * 학년별 학급. 저장된 학급 구성이 없으면 null. 학급별 인원이 없으면 classes는 []
+     * CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 독립된 학생 명단의 grade/className, UJAT은 교육 학급 카탈로그를 사용합니다. 교육 일정 배정의 scheduleId와 학급을 연결하지 않습니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.
      * @nullable
      */
   gradeBlocks?: GradeBlock[] | null;
@@ -124,4 +125,29 @@ export interface OrganizationApplicationDetailResponse {
      * @nullable
      */
   classTimeRows?: ClassTimeRow[] | null;
+  /**
+     * UJAT 임시배정 워크플로 상태. 비대상 프로그램이면 null.
+     * @nullable
+     */
+  temporaryAssignmentStatus?: string | null;
+  /**
+     * UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 비대상 프로그램이면 null.
+     * @nullable
+     */
+  educationRegionCode?: string | null;
+  /**
+     * UJAT 일정 확인 상태. 정의된 wire enum 또는 null.
+     * @nullable
+     */
+  scheduleConfirmStatus?: OrganizationApplicationDetailResponseScheduleConfirmStatus;
+  /**
+     * UJAT 신청에 배정된 강사 수. 0명은 null.
+     * @nullable
+     */
+  assignedInstructorCount?: number | null;
+  /**
+     * UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null.
+     * @nullable
+     */
+  operatingStudentCount?: number | null;
 }

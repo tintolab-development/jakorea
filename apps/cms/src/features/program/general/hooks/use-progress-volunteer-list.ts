@@ -3,9 +3,8 @@
  * remote only · mock/로컬 append 금지
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { type ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
   fetchGeneralParticipatingVolunteersPage,
   registerGeneralVolunteerParticipant,
@@ -40,17 +39,15 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
     retry: false,
   })
 
-  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() => [])
-
-  useEffect(() => {
-    if (remoteEnabled) {
-      if (remoteQuery.data) {
-        setVolunteerList(remoteQuery.data.pages.flatMap(page => page.rows))
-      }
-      return
-    }
-    setVolunteerList([])
-  }, [remoteEnabled, remoteQuery.data])
+  // 서버 응답을 그대로 파생해 사용한다. 별도 로컬 목록을 두면 재조회 결과가
+  // 빈 배열인 경우에도 이전 목록이 남거나 프로그램 전환 시 stale row가 보일 수 있다.
+  const volunteerList = useMemo(
+    () =>
+      remoteEnabled && remoteQuery.data
+        ? remoteQuery.data.pages.flatMap(page => page.rows)
+        : [],
+    [remoteEnabled, remoteQuery.data]
+  )
 
   const registerVolunteerParticipant = useCallback(
     async (payload: VolunteerParticipantRegisterRequest): Promise<boolean> => {
@@ -79,6 +76,7 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
       ? remoteQuery.isFetching && remoteQuery.data === undefined
       : false,
     isRemoteDataSource: remoteEnabled,
+    isSuccess: remoteQuery.isSuccess,
     hasNextPage: remoteQuery.hasNextPage ?? false,
     isFetchingNextPage: remoteQuery.isFetchingNextPage,
     fetchNextPage: remoteQuery.fetchNextPage,

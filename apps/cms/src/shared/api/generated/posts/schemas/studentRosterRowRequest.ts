@@ -7,7 +7,11 @@
  */
 
 export interface StudentRosterRowRequest {
-  rosterId?: number;
+  /**
+     * 기존 활성 roster row를 지정하면 전체 교체 후에도 동일 rosterId를 유지합니다. 신규 행은 생략합니다.
+     * @nullable
+     */
+  rosterId?: number | null;
   memberId?: number;
   /**
      * @minLength 0

@@ -24,6 +24,21 @@ function parseClassCount(raw: string): number {
   return Math.min(n, MAX_CLASS_COUNT)
 }
 
+export function normalizeUjatApplicationGradeDetailForClassCount(
+  detail: UjatApplicationGradeDetail
+): UjatApplicationGradeDetail {
+  const count = parseClassCount(detail.classCountInput)
+  const keepIndexes = (source: Record<number, string>) =>
+    Object.fromEntries(
+      Object.entries(source).filter(([index]) => Number(index) < count)
+    ) as Record<number, string>
+  return {
+    ...detail,
+    classNoByIndex: keepIndexes(detail.classNoByIndex),
+    studentCountByIndex: keepIndexes(detail.studentCountByIndex),
+  }
+}
+
 const EMPTY_GRADE_DETAIL: UjatApplicationGradeDetail = {
   classCountInput: '',
   classNoByIndex: {},
@@ -41,9 +56,16 @@ function useGradeDetailForBlock(blockKey: string): [
   const detail = gradeDetailByBlock[blockKey] ?? EMPTY_GRADE_DETAIL
 
   const patchDetail = (patch: Partial<UjatApplicationGradeDetail>) => {
+    const nextDetail = { ...detail, ...patch }
+    // 학급 수를 줄이면 화면에서 사라진 반의 번호·학생 수가 overlay에
+    // 남지 않도록 즉시 같은 인덱스 범위로 정리한다. 다음에 학급 수를
+    // 늘렸을 때 이전 반의 값이 다른 반으로 재사용되는 것도 방지한다.
+    if (patch.classCountInput != null) {
+      Object.assign(nextDetail, normalizeUjatApplicationGradeDetailForClassCount(nextDetail))
+    }
     setGradeDetailByBlock({
       ...gradeDetailByBlock,
-      [blockKey]: { ...detail, ...patch },
+      [blockKey]: nextDetail,
     })
   }
 

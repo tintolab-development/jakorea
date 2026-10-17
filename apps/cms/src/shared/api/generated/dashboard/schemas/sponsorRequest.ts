@@ -31,4 +31,10 @@ export interface SponsorRequest {
   sponsorshipStatus?: SponsorRequestSponsorshipStatus;
   /** 후원 시작일. POST 등록 시 필수. ISO-8601 날짜(YYYY-MM-DD) 또는 offset datetime. */
   sponsorshipStartDate?: string;
+  /**
+     * 로고 전체 교체용 파일 ID 목록. 생략하면 유지, []이면 모두 해제. 최대 20개, 배열 순서가 표시 순서이며 중복 불가. logoFileId와 동시 지정 불가.
+     * @minItems 0
+     * @maxItems 20
+     */
+  logoFileIds?: number[];
 }

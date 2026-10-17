@@ -54,6 +54,7 @@ function reverseBusinessField(value: string | undefined): string {
 }
 
 function reverseIpOwned(value: string | undefined): string {
+  if (!value) return ''
   if (value === 'JA') return 'ja'
   if (value === 'Partner') return 'partner'
   if (value === 'Jointly') return 'jointly'
@@ -66,8 +67,8 @@ function reverseIps(value: Program['ips']): string {
   return 'prepare'
 }
 
-function reversePartnerInvolvement(value: boolean | undefined): 'yes' | 'no' {
-  return value ? 'yes' : 'no'
+function reversePartnerInvolvement(value: boolean | null | undefined): 'yes' | 'no' | '' {
+  return value == null ? '' : value ? 'yes' : 'no'
 }
 
 function participantFlagsFromUjatProgram(program: Program): {
@@ -85,13 +86,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
 ): Record<string, unknown> {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
   const topLevelDetailedName = program.generalCommonInfo?.detailedProgramName?.trim()
-  const detailedProgramId =
-    program.detailedProgramId?.trim() ||
-    (topLevelDetailedName === '해당없음'
-      ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
-      : program.teamDivision?.trim() === UJAT_DETAILED_PROGRAM_UJAT_LABEL
-        ? UJAT_DETAILED_PROGRAM_UJAT_VALUE
-        : defaults.detailedProgramId)
+  const detailedProgramId = program.detailedProgramId?.trim() || ''
   // id만 복원하고 name을 비워두면 편집 재개 시 세부 프로그램명이 어긋날 수 있다 — 항상 짝지어 복원한다.
   const detailedProgramName =
     topLevelDetailedName ||
@@ -125,7 +120,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.ipOwned': reverseIpOwned(program.ipOwned),
     'ujat.basicInfo.courseDeliveredBy': reverseIpOwned(program.courseDeliveredBy),
     'ujat.basicInfo.ipsCategory': reverseIps(program.ips),
-    'ujat.basicInfo.educationCourse': program.educationProcess ?? defaults.educationCourse,
+    'ujat.basicInfo.educationCourse': program.educationProcess ?? '',
     'ujat.basicInfo.partnerInvolvement': reversePartnerInvolvement(program.partnerInvolvement),
     'ujat.basicInfo.participant.individual': participantFlags.individual,
     'ujat.basicInfo.participant.organization': participantFlags.organization,
@@ -133,8 +128,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.participant.volunteer': participantFlags.volunteer,
     'ujat.basicInfo.surveyItems': ujatSurveyItemsFromProgramKeys(program.generalSurveyMenuKeys),
     'ujat.kpi.participantCount': program.generalCommonInfo?.kpi?.finalParticipants ?? null,
-    'ujat.kpi.instructor':
-      program.generalCommonInfo?.kpi?.instructorCount ?? program.instructors ?? null,
+    'ujat.kpi.instructor': program.generalCommonInfo?.kpi?.instructorCount ?? null,
     'ujat.kpi.volunteer': program.generalCommonInfo?.kpi?.volunteerCount ?? null,
     'ujat.kpi.dispatchedSchool': program.generalCommonInfo?.kpi?.finalSchools ?? null,
     'ujat.kpi.dispatchedClass': program.generalCommonInfo?.kpi?.finalClasses ?? null,
@@ -278,7 +272,7 @@ export type UjatApiOverlayReconcileInput = {
   generalSurveyMenuKeys?: readonly string[]
   sponsorManagerContactIds?: readonly string[]
   sponsorManagerLine?: string | null
-  kpi?: NonNullable<Program['generalCommonInfo']>['kpi']
+  kpi?: Partial<NonNullable<Program['generalCommonInfo']>['kpi']>
 }
 
 /** GET 응답 top-level·envelope 값으로 stale registration.overlay 보정 */
@@ -297,30 +291,28 @@ export function reconcileUjatRegistrationOverlayFromApi(
   if (dto.title?.trim()) {
     next['ujat.basicInfo.programManagementName'] = dto.title.trim()
   }
-  if (dto.detailedProgramName?.trim() === '해당없음') {
-    next['ujat.basicInfo.detailedProgramId'] = TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
-    next['ujat.basicInfo.detailedProgramName'] = '해당없음'
-  }
   if (dto.businessArea?.trim()) {
     next['ujat.basicInfo.businessField'] = reverseBusinessField(dto.businessArea)
   }
   if (dto.sponsorId?.trim()) {
     next['ujat.basicInfo.sponsorId'] = dto.sponsorId.trim()
   }
-  if (dto.educationProcess?.trim()) {
-    next['ujat.basicInfo.educationCourse'] = dto.educationProcess.trim()
-  }
-  if (dto.ipOwned) {
-    next['ujat.basicInfo.ipOwned'] = reverseIpOwned(dto.ipOwned)
-  }
+  next['ujat.basicInfo.educationCourse'] = dto.educationProcess?.trim() ?? ''
+  next['ujat.basicInfo.ipOwned'] = reverseIpOwned(dto.ipOwned ?? undefined)
   if (dto.courseDeliveredBy) {
     next['ujat.basicInfo.courseDeliveredBy'] = reverseIpOwned(dto.courseDeliveredBy)
   }
   if (dto.ips) {
     next['ujat.basicInfo.ipsCategory'] = reverseIps(dto.ips)
   }
-  if (dto.partnerInvolvement != null) {
-    next['ujat.basicInfo.partnerInvolvement'] = reversePartnerInvolvement(dto.partnerInvolvement)
+  next['ujat.basicInfo.partnerInvolvement'] = reversePartnerInvolvement(dto.partnerInvolvement)
+  if (dto.detailedProgramName?.trim() === '해당없음') {
+    next['ujat.basicInfo.detailedProgramId'] = TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    next['ujat.basicInfo.detailedProgramName'] = '해당없음'
+  } else {
+    next['ujat.basicInfo.detailedProgramId'] =
+      dto.detailedProgramId == null ? '' : String(dto.detailedProgramId)
+    next['ujat.basicInfo.detailedProgramName'] = dto.detailedProgramName?.trim() ?? ''
   }
   if (dto.startDate && dto.endDate) {
     next['ujat.basicInfo.operationRangeSeal'] = {
@@ -362,7 +354,7 @@ export function reconcileUjatRegistrationOverlayFromProgramResponse(
     generalSurveyMenuKeys?: readonly string[]
     sponsorManagerContactIds?: readonly string[]
     sponsorManagerLine?: string | null
-    kpi?: NonNullable<Program['generalCommonInfo']>['kpi']
+    kpi?: Partial<NonNullable<Program['generalCommonInfo']>['kpi']>
   }
 ): Record<string, unknown> {
   return reconcileUjatRegistrationOverlayFromApi(

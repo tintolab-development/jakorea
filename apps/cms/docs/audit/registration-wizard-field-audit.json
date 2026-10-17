@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-10-17T06:14:24.352Z",
+  "multipleSelectViolations": [],
+  "catalogHardDisabled": [],
+  "overlayKvDensity": [
+    {
+      "file": "src/features/template/ui/form-set/registration-form/1c-1s/paragraphs/basic-info-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 16
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/1c-1s/paragraphs/education-curriculum-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 3
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/1c-1s/paragraphs/wage-info-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 3
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-overlay-fields.tsx",
+      "useProgramRegistrationOverlayKv": 9
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-sponsor-fields.tsx",
+      "useProgramRegistrationOverlayKv": 5
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 9
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-curriculum-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 9
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 6
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 6
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 3
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/shared/registration-overlay-fields.tsx",
+      "useProgramRegistrationOverlayKv": 3
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-curriculum-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 4
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-schedule-settings-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 5
+    },
+    {
+      "file": "src/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/type-settings-paragraph.tsx",
+      "useProgramRegistrationOverlayKv": 4
+    }
+  ]
+}

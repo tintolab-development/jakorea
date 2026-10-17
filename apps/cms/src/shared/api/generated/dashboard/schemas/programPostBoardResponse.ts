@@ -32,10 +32,7 @@ export interface ProgramPostBoardResponse {
   createdByActorType?: string;
   /** 작성자 actor ID */
   createdByActorId?: number;
-  /**
-     * 작성자 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다.
-     * @nullable
-     */
+  /** 작성자 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다. */
   createdByDisplayName?: string | null;
   /** 게시글 생성 시각 */
   createdAt?: string;

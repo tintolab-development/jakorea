@@ -5,12 +5,17 @@
 .form-template-host {
   --detail-info-form-body-radius: 8px;
 
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-self: stretch;
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--default-BK);
-  min-width: 0;
 }
 
 .form-template-host[data-surface='cmsAdmin'] {
@@ -21,8 +26,12 @@
   --detail-info-form-body-radius: 16px;
 }
 
-/* Platform 전역 typo utility가 CMS surface 안으로 스며드는 것 방지 */
-.form-template-host :is([class*='typo-']) {
+/*
+ * Platform 전역 typo utility가 CMS surface 안으로 스며드는 것 방지.
+ * button/input 등 컨트롤은 PFButton 등에 typo 클래스가 붙어도 unset 하면 테두리·배경이 사라진다.
+ */
+.form-template-host
+  :is([class*='typo-']):not(:where(button, input, textarea, select, optgroup, option)) {
   all: unset;
   font-family: inherit;
   font-size: inherit;

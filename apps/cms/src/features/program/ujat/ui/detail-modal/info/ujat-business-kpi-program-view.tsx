@@ -15,8 +15,8 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { formatNumberDisplay } from '@/shared/utils'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
-function KpiNumber({ value }: { value: number }) {
-  return <span style={{ fontWeight: 700 }}>{formatNumberDisplay(value)}</span>
+function KpiNumber({ value }: { value: number | null }) {
+  return <span style={{ fontWeight: 700 }}>{value == null ? '-' : formatNumberDisplay(value)}</span>
 }
 
 function NotApplicableText() {

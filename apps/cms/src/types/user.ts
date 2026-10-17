@@ -164,8 +164,10 @@ export interface User {
   // 계정 상태
   isActive: boolean
   lastLoginAt?: DateValue
-  createdAt: DateValue
-  updatedAt: DateValue
+  /** GET /api/admin/me canonical ISO-8601 datetime or null */
+  createdAt: string | null
+  /** GET /api/admin/me canonical ISO-8601 datetime or null */
+  updatedAt: string | null
 
   /** CMS 회원 상세 — 관리자 공유 메모(빈 값이면 UI에서 안내 문구 표시) */
   adminComment?: string
@@ -302,6 +304,5 @@ export interface LoginResponse {
   token: string // JWT 토큰 (Mock)
   expiresAt: DateValue
 }
-
 
 

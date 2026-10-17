@@ -1,7 +1,7 @@
 /**
  * CMS 전용 텍스트 인풋 — Ant Input borderless + `.cms-field__box` 크롬 (`cms-field.css` 공통 스펙)
  * - size: xlarge 52 | large 44 | medium 40 | small 36
- * - 라벨 / 하단 메세지(선택) / value 있을 때 clear
+ * - 라벨 / 하단 메세지(선택) / value 있을 때 clear(hover·focus 시에만 노출)
  *
  * clear는 Ant `allowClear`(affix suffix)를 쓰지 않고 `.cms-input__control` flex 형제로 둔다.
  * affix + `width:100%` input 조합에서 클리어가 테두리에 잘리는 문제를 막기 위함.

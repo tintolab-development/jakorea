@@ -2,6 +2,7 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { downloadBlob } from '@/shared/utils/file-download'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
 export type ProgramAbsenceReasonItem = {
   submissionId?: number
@@ -25,15 +26,21 @@ type AbsenceReasonPage = {
 export async function fetchProgramAbsenceReasons(
   programId: number
 ): Promise<ProgramAbsenceReasonItem[]> {
-  const page = unwrapApiBody<AbsenceReasonPage | ProgramAbsenceReasonItem[]>(
-    await customInstance({
-      url: `/api/admin/program-execution/programs/${programId}/absence-reasons`,
-      method: 'GET',
-      params: { latestOnly: true, page: 0, size: 100 },
-    })
-  )
-  if (Array.isArray(page)) return page
-  return page.items ?? page.content ?? []
+  return fetchAllApiPages(async (page, size) => {
+    const response = unwrapApiBody<AbsenceReasonPage | ProgramAbsenceReasonItem[]>(
+      await customInstance({
+        url: `/api/admin/program-execution/programs/${programId}/absence-reasons`,
+        method: 'GET',
+        params: { latestOnly: true, page, size },
+      })
+    )
+    if (Array.isArray(response)) {
+      return { items: response, totalPages: 1 }
+    }
+    const items = response.items ?? response.content ?? []
+    const record = response as { totalPages?: number }
+    return { items, totalPages: record.totalPages }
+  })
 }
 
 /**

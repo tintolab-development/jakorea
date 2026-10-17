@@ -70,6 +70,12 @@ jobs:
       - name: Verify CMS output
         run: test -f apps/cms/dist/index.html
 
+      - name: CMS program detail parity tests
+        run: pnpm --filter cms test:parity
+
+      - name: CMS program detail parity static scan
+        run: pnpm --filter cms parity:scan
+
       - name: Build Platform
         run: pnpm --filter platform build
 

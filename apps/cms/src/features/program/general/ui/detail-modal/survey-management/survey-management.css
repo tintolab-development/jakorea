@@ -17,21 +17,11 @@
   gap: 16px;
 }
 
-.survey-management-create-modal__field {
+.survey-management-create-modal__fields {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: 16px;
-}
-
-.survey-management-create-modal__label {
-  margin: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
+  gap: 24px;
 }
 
 .survey-management-create-modal .cms-select {

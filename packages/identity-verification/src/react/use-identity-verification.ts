@@ -118,12 +118,20 @@ export function useIdentityVerification({
         return
       }
 
+      const pendingChallenge = client.state.getPendingChallenge()
+
       if (event.data.type === 'IDENTITY_CANCELLED') {
+        if (!pendingChallenge) {
+          return
+        }
         handleCancel()
         return
       }
 
       if (event.data.type === 'IDENTITY_FAILED') {
+        if (!pendingChallenge) {
+          return
+        }
         if (completingRef.current) {
           return
         }
@@ -142,6 +150,13 @@ export function useIdentityVerification({
       }
 
       if (event.data.type === 'IDENTITY_VERIFIED') {
+        const verified = event.data
+        if (
+          !pendingChallenge ||
+          pendingChallenge.sessionId !== verified.sessionId
+        ) {
+          return
+        }
         if (completingRef.current) {
           return
         }
@@ -151,7 +166,6 @@ export function useIdentityVerification({
         setStatus('completing')
         setErrorMessage(null)
 
-        const verified = event.data
         onSuccessRef.current({
           sessionId: verified.sessionId,
           sessionUuid: verified.sessionUuid,
@@ -159,6 +173,7 @@ export function useIdentityVerification({
           verifiedName: verified.verifiedName,
           verifiedPhone: verified.verifiedPhone,
           verifiedBirthDate: verified.verifiedBirthDate,
+          verifiedGender: verified.verifiedGender,
           verifiedAt: verified.verifiedAt,
         })
         setStatus('idle')

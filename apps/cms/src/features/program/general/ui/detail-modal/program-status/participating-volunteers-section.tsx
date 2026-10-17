@@ -61,7 +61,10 @@ import {
 import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
 import { buildParticipatingVolunteerCalendarEvents } from '../../../lib/build-participating-volunteer-calendar-events'
 import { getSchoolNamesForDateFromVolunteerEvents } from '../../../lib/participating-calendar-date-schools'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '../../../lib/participating-institutions-table'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '../../../lib/participating-institutions-table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -109,6 +112,7 @@ export function ParticipatingVolunteersSection({
   const {
     volunteerList,
     applicationsLoading,
+    isSuccess: isVolunteerListSuccess,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -423,10 +427,10 @@ export function ParticipatingVolunteersSection({
   useEffect(() => {
     if (!volunteerIdFromUrl || !onClearVolunteerId) return
     // 목록 로딩 전 빈 배열에서 URL 상세를 지우지 않음
-    if (volunteerList.length === 0) return
+    if (!isVolunteerListSuccess) return
     const row = volunteerList.find(r => r.id === volunteerIdFromUrl)
     if (!row) onClearVolunteerId()
-  }, [volunteerIdFromUrl, volunteerList, onClearVolunteerId])
+  }, [isVolunteerListSuccess, volunteerIdFromUrl, volunteerList, onClearVolunteerId])
 
   const prevVolunteerDetailId = useRef<string | null>(null)
   useEffect(() => {
@@ -492,11 +496,7 @@ export function ParticipatingVolunteersSection({
         key: 'sessions',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => {
           const sessions = record.sessions ?? []
           const total = sessions.length
@@ -603,7 +603,7 @@ export function ParticipatingVolunteersSection({
         title="참여 봉사자 목록"
         description={`${filteredVolunteers.length}건`}
         actions={
-          <>
+          <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
               variant="secondary"
               style={{ minWidth: 180 }}
@@ -645,7 +645,7 @@ export function ParticipatingVolunteersSection({
             >
               봉사자 등록
             </FilterTableToolbarButton>
-          </>
+          </div>
         }
         excelExport={{
           columns,

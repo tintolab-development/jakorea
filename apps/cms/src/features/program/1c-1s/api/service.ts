@@ -25,9 +25,9 @@ import {
   type CompanySchoolListFilters,
 } from './list-params'
 import type { CompanySchoolOverviewStageCounts } from '@/features/program/1c-1s/lib/overview-stage-counts'
+import { API_LIST_PAGE_SIZE, fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
-/** 복수 periodStatus 합집합 조회 상한 (1사1교 목록 규모 · 카드·목록 동일 집합) */
-const COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE = 500
+const COMPANY_SCHOOL_PERIOD_UNION_PAGE_SIZE = API_LIST_PAGE_SIZE
 
 function assertRemoteReady(): void {
   if (shouldUseCompanySchoolRemoteApi()) return
@@ -44,26 +44,35 @@ export type CompanySchoolProgramsRemoteListPage = {
   hasMore: boolean
 }
 
+async function fetchCompanySchoolProgramsForPeriodStatus(
+  filters: CompanySchoolListFilters,
+  periodStatus: string
+) {
+  return fetchAllApiPages((page, size) =>
+    fetchAdminProgramsRemote({
+      programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
+      keyword: filters.keyword?.trim() || undefined,
+      periodStatus,
+      businessYear: filters.businessYear,
+      page,
+      size,
+    })
+  )
+}
+
 async function listCompanySchoolProgramsByPeriodStatusUnion(
   filters: CompanySchoolListFilters,
   periodStatuses: readonly string[]
 ): Promise<CompanySchoolProgramsRemoteListPage> {
   const remotes = await Promise.all(
     periodStatuses.map(periodStatus =>
-      fetchAdminProgramsRemote({
-        programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
-        keyword: filters.keyword?.trim() || undefined,
-        periodStatus,
-        businessYear: filters.businessYear,
-        page: 0,
-        size: COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE,
-      })
+      fetchCompanySchoolProgramsForPeriodStatus(filters, periodStatus)
     )
   )
 
   const byId = new Map<string, Program>()
-  for (const page of remotes) {
-    for (const item of page.items ?? []) {
+  for (const items of remotes) {
+    for (const item of items) {
       const program = mapCompanySchoolListItemToProgram(item)
       if (!program.id) continue
       byId.set(program.id, program)
@@ -74,7 +83,7 @@ async function listCompanySchoolProgramsByPeriodStatusUnion(
   return {
     programs,
     page: 0,
-    size: COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE,
+    size: COMPANY_SCHOOL_PERIOD_UNION_PAGE_SIZE,
     totalElements: programs.length,
     hasMore: false,
   }
@@ -93,7 +102,7 @@ export async function listCompanySchoolProgramsPage(
       return {
         programs: [],
         page: pageParam,
-        size: COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE,
+        size: COMPANY_SCHOOL_PERIOD_UNION_PAGE_SIZE,
         totalElements: 0,
         hasMore: false,
       }

@@ -12,6 +12,7 @@ export const UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   notes: 'ujat.recruit.institution.notes',
   description: 'ujat.recruit.institution.description',
   recruitmentGuide: 'ujat.recruit.institution.recruitmentGuide',
+  applicationMethod: 'ujat.recruit.institution.applicationMethod',
   learningSupportContent: 'ujat.recruit.institution.learningSupportContent',
   additionalContentHtml: 'ujat.recruit.institution.additionalContentHtml',
   attachmentFileNames: 'ujat.recruit.institution.attachmentFileNames',

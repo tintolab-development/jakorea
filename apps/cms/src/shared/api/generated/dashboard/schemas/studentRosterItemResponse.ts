@@ -25,15 +25,9 @@ export interface StudentRosterItemResponse {
   portraitConsentStatus?: string;
   /** 초상권 동의 근거 문서 ID. 파일 다운로드 ID가 아니다. */
   portraitConsentSourceArtifactId?: number;
-  /**
-     * 관리자 파일 다운로드에 쓰는 fileObjectId. CONSENTED이면 파일이 있을 때 채운다. 없으면 null
-     * @nullable
-     */
+  /** 관리자 파일 다운로드에 쓰는 fileObjectId. CONSENTED이면 파일이 있을 때 채운다. 없으면 null */
   portraitConsentFileObjectId?: number | null;
   portraitConsentUpdatedAt?: string;
-  /**
-     * 프로그램에 만족도조사가 없으면 null. 있으면 제출 완료 여부
-     * @nullable
-     */
+  /** 프로그램에 만족도조사가 없으면 null. 있으면 제출 완료 여부 */
   satisfactionSurveyCompleted?: boolean | null;
 }

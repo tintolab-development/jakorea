@@ -1,4 +1,5 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import type { InstructorPortalProfileResponse } from '@/features/auth/sign-in/api/types'
 import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 
 export type SettingsProfileInput = {
@@ -21,12 +22,26 @@ export type SettingsProfileInput = {
   teacherEmploymentStatus?: string
   email?: string
   external1365Id?: string
+  instructor?: boolean
+  instructorProfile?: InstructorPortalProfileResponse
+  socialAccounts?: string[]
+  listMetrics?: PortalProfileListMetrics
+}
+
+export type PortalProfileListMetrics = {
+  settlementStatusLabel?: string
+  jaEvaluationGrade?: string
+  instructorFeeGradeLabel?: string
 }
 
 export type SettingsInfoRow = {
   label: string
   value: string
   action?: '1365-shortcut'
+  /** 소셜 계정 행 아래 구분선 (강사 기본 정보) */
+  dividerBefore?: boolean
+  /** 한 줄 소개 등 여러 줄 표시 */
+  multiline?: boolean
 }
 
 export type SettingsGuardianView = {

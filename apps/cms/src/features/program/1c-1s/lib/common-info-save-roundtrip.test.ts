@@ -127,8 +127,8 @@ describe('1사1교 공통정보 저장 왕복', () => {
     expect(request.generalVolunteers).toBe(0)
     expect(request.rounds?.[0]?.startDate).toBe(applied.startDate)
     expect(request.rounds?.[0]?.endDate).toBe(applied.endDate)
-    const screenStart = seoulCalendarDate(request.startDate)
-    const screenEnd = seoulCalendarDate(request.endDate)
+    const screenStart = seoulCalendarDate(request.startDate ?? undefined)
+    const screenEnd = seoulCalendarDate(request.endDate ?? undefined)
 
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       program?: {
@@ -168,8 +168,10 @@ describe('1사1교 공통정보 저장 왕복', () => {
       businessEndDate: screenEnd,
       rounds: request.rounds?.map(round => ({
         ...round,
-        startDate: seoulCalendarDate(round.startDate),
-        endDate: seoulCalendarDate(round.endDate),
+        startDate: seoulCalendarDate(
+          typeof round.startDate === 'string' ? round.startDate : undefined
+        ),
+        endDate: seoulCalendarDate(typeof round.endDate === 'string' ? round.endDate : undefined),
       })),
       generalVolunteers: request.generalVolunteers,
       serviceDetailJson: request.serviceDetailJson,

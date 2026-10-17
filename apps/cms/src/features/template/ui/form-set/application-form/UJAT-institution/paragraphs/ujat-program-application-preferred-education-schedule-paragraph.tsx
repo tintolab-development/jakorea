@@ -1,4 +1,5 @@
-import { Fragment, useMemo } from 'react'
+import { Fragment, useMemo, useSyncExternalStore } from 'react'
+import dayjs from 'dayjs'
 import '@/features/template/ui/paragraph/single-item/user-info.css'
 import './ujat-program-application-preferred-education-schedule-paragraph.css'
 import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
@@ -9,6 +10,13 @@ import {
   UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
   useUjatApplicationInstitutionOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import {
+  getUjatProgramRegistrationOverlayRecord,
+  getUjatProgramRegistrationOverlayVersion,
+  subscribeUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
+import { formatShortYearMdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 
 /** 템플릿 편집(authoring) — 교육 진행 희망일 값 영역 */
 const AUTHORING_PREFERRED_DATES_HINT = '관리자가 선택한 진행 가능일이 노출됩니다.'
@@ -17,8 +25,8 @@ const AUTHORING_SCHEDULE_PLACEHOLDER_HINT =
   '프로그램 등록 시 관리자가 설정한 진행 일정이 노출됩니다.'
 
 /**
- * Mock: 프로그램 등록 > 교육 진행 일정 설정에서 내려올 금요일 후보(추후 API 연동).
- * `paragraphInteractionMode === 'user'`(미리보기 등)에서만 노출.
+ * 사용자 미리보기에서 선택할 수 있는 일정 후보.
+ * 등록 위저드의 연동 모드에서는 아래 후보를 사용하지 않고 공통정보 overlay를 표시한다.
  */
 const MOCK_FRIDAY_SCHEDULE_OPTIONS: readonly { id: string; display: string }[] = (() => {
   const rows: { id: string; display: string }[] = []
@@ -76,6 +84,37 @@ const INITIAL_SELECTED_IDS = new Set<string>([
   '2026-11-20',
 ])
 
+type PreferredScheduleOption = { id: string; display: string }
+
+/** 등록 위저드에서는 템플릿용 고정 금요일 목록을 사용하지 않는다. */
+export function buildProgramLinkedScheduleOptions(
+  overlay: Record<string, unknown>
+): PreferredScheduleOption[] {
+  const options: PreferredScheduleOption[] = []
+  for (const half of ['h1', 'h2'] as const) {
+    const display = resolveUjatEducationScheduleSettingsSemesterDisplay(half, overlay)
+    const start = display.eventRange.start ? dayjs(display.eventRange.start).startOf('day') : null
+    const end = display.eventRange.end ? dayjs(display.eventRange.end).startOf('day') : null
+    if (start == null || end == null || !start.isValid() || !end.isValid()) continue
+
+    const first = start.isBefore(end, 'day') ? start : end
+    const last = start.isBefore(end, 'day') ? end : start
+    const unavailable = new Set(display.unavailableDates)
+    for (let cursor = first; !cursor.isAfter(last, 'day'); cursor = cursor.add(1, 'day')) {
+      // UJAT 신청 폼의 진행 희망일 후보는 기존 사용자 폼과 동일하게 금요일만
+      // 만들고, 관리자가 지정한 반기별 교육 진행 불가일은 제외한다.
+      if (cursor.day() !== 5) continue
+      const dateKey = cursor.format('YYYY-MM-DD')
+      if (unavailable.has(dateKey)) continue
+      options.push({
+        id: `${half}:${dateKey}`,
+        display: `${half === 'h1' ? '상반기' : '하반기'} ${formatShortYearMdWithKoreanWeekday(cursor)}`,
+      })
+    }
+  }
+  return options
+}
+
 function PreferredScheduleSummaryRow({
   paragraphInteractionMode,
   orderedSelected,
@@ -112,6 +151,7 @@ function PreferredScheduleSummaryRow({
 
 type UjatProgramApplicationPreferredEducationScheduleParagraphProps = {
   paragraphInteractionMode?: ParagraphBodyInteractionMode
+  programLinkedPreview?: boolean
 }
 
 /**
@@ -121,22 +161,73 @@ type UjatProgramApplicationPreferredEducationScheduleParagraphProps = {
  */
 export function UjatProgramApplicationPreferredEducationScheduleParagraph({
   paragraphInteractionMode = 'authoring',
+  programLinkedPreview = false,
 }: UjatProgramApplicationPreferredEducationScheduleParagraphProps) {
+  const registrationOverlayVersion = useSyncExternalStore(
+    subscribeUjatProgramRegistrationOverlay,
+    getUjatProgramRegistrationOverlayVersion,
+    getUjatProgramRegistrationOverlayVersion
+  )
+  const linkedScheduleOptions = useMemo(
+    () => buildProgramLinkedScheduleOptions(getUjatProgramRegistrationOverlayRecord()),
+    [registrationOverlayVersion]
+  )
+
   const [selectedIdList, setSelectedIdList] = useUjatApplicationInstitutionOverlayKv<string[]>(
     UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.preferredScheduleSelectedIds,
     [...INITIAL_SELECTED_IDS]
   )
   const selectedIds = useMemo(() => new Set(selectedIdList), [selectedIdList])
 
-  const orderedSelected = useMemo(() => {
-    return MOCK_FRIDAY_SCHEDULE_OPTIONS.filter(o => selectedIds.has(o.id))
-  }, [selectedIds])
+  const scheduleOptions = programLinkedPreview
+    ? linkedScheduleOptions
+    : MOCK_FRIDAY_SCHEDULE_OPTIONS
+  const orderedSelected = useMemo(
+    () => scheduleOptions.filter(o => selectedIds.has(o.id)),
+    [scheduleOptions, selectedIds]
+  )
 
   const toggle = (id: string) => {
     const set = new Set(selectedIdList)
     if (set.has(id)) set.delete(id)
     else set.add(id)
     setSelectedIdList([...set])
+  }
+
+  if (programLinkedPreview) {
+    return (
+      <div className="program-registration-paragraph">
+        <div className="ujat-preferred-education-schedule__grid-wrap">
+          {linkedScheduleOptions.length > 0 ? (
+            <div className="user-info-grid user-info-grid--edit">
+              {linkedScheduleOptions.map(option => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={[
+                    'user-info-grid__item',
+                    selectedIds.has(option.id) ? 'user-info-grid__item--selected' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => toggle(option.id)}
+                >
+                  {option.display}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="form-editor-template-field-hint-text">
+              공통정보에서 교육 진행 일정을 먼저 선택해 주세요.
+            </span>
+          )}
+        </div>
+        <PreferredScheduleSummaryRow
+          paragraphInteractionMode="user"
+          orderedSelected={orderedSelected}
+        />
+      </div>
+    )
   }
 
   if (paragraphInteractionMode === 'authoring') {

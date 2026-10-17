@@ -1,0 +1,42 @@
+.paragraphStack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+/* form-template ParagraphCard와 동일 shell */
+.closingCard {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.closingText {
+  margin: 0;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-base), sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  text-align: left;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  padding-top: var(--spacing-8);
+}

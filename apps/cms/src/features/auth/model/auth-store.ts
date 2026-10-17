@@ -295,7 +295,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearProgramQueryCache()
       clearNotificationsQueryCache()
       void flushSocialPendingLinks()
-      void hydrateAdminSessionFromMe()
+      void refreshAdminSessionFromMe()
     },
 
     clearPasswordChangeRequired: () => {
@@ -306,7 +306,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     beginAdminMfaChallenge: input => {
-      const now = new Date().toISOString()
       const placeholderUser: Omit<User, 'password'> = {
         id: 'social-sso-mfa-pending',
         email: 'admin@social-login.local',
@@ -314,8 +313,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         role: 'ADMIN',
         roleCode: 'VIEWER',
         isActive: true,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: null,
+        updatedAt: null,
       }
       set({
         user: withSessionAdminRole(placeholderUser),
@@ -352,8 +351,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         role: 'ADMIN',
         roleCode: 'VIEWER',
         isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: null,
+        updatedAt: null,
       }
       const normalizedUser = withSessionAdminRole(placeholderUser)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
@@ -379,7 +378,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearProgramQueryCache()
       clearNotificationsQueryCache()
       void flushSocialPendingLinks()
-      void hydrateAdminSessionFromMe()
+      void refreshAdminSessionFromMe()
     },
 
     logout: () => {
@@ -515,7 +514,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               expiresAt,
               isAuthenticated: true,
             })
-            void hydrateAdminSessionFromMe()
+            void refreshAdminSessionFromMe()
           } else {
             if (!storedUser || !storedUser.isActive) {
               console.warn('User not found or inactive, logging out')
@@ -529,7 +528,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
                 expiresAt,
                 isAuthenticated: true,
               })
-              void hydrateAdminSessionFromMe()
+              void refreshAdminSessionFromMe()
             }
           }
         } catch (error) {
@@ -545,7 +544,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
                 expiresAt,
                 isAuthenticated: true,
               })
-              void hydrateAdminSessionFromMe()
+              void refreshAdminSessionFromMe()
             } else {
               get().logout()
             }
@@ -690,7 +689,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
   }
 })
 
-async function hydrateAdminSessionFromMe(): Promise<void> {
+export async function refreshAdminSessionFromMe(): Promise<void> {
   if (!isRealApiModuleEnabled('adminAuth')) return
   if (isAdminFirstLoginOnboardingIncomplete()) return
   try {

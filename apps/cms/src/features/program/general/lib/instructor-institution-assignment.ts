@@ -18,7 +18,12 @@ function hash(s: string): number {
   return Math.abs(h)
 }
 
-export type InstructorWaitingAssignmentStatus = 'waiting' | 'cancelled' | 'assigned'
+export type InstructorWaitingAssignmentStatus =
+  | 'waiting'
+  | 'cancelled'
+  | 'assigned'
+  /** 승인 희망일·requested/OSA 등 BE 인정 배정 근거 없음 */
+  | 'no_assignable_schedule'
 
 /** 배정 완료 행은 No.와 무관하게 목록 하단에 노출 */
 export function sortWaitingRowsAssignedToBottom<

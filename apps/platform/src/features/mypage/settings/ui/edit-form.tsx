@@ -16,6 +16,7 @@ import {
   SchoolSearchModal,
   schoolGradeOptions,
   type SchoolStatus,
+  type SelectedSchool,
 } from '@/features/auth/sign-up'
 import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
@@ -28,6 +29,7 @@ import {
   mapProfileToSettingsEditForm,
   mapProfileToTeacherSettingsEditForm,
   nullifyEmptyProfileUpdateFields,
+  sanitizeSettingsEditSchoolFields,
   SETTINGS_TEACHER_EMPLOYMENT_OPTIONS,
   toSettingsGender,
 } from '../lib/map-edit'
@@ -61,6 +63,10 @@ export function SettingsEditForm({
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(
     initial.schoolOrganizationId,
   )
+  const [schoolAddress, setSchoolAddress] = useState(profile.schoolAddress?.trim() ?? '')
+  const [schoolNeisCode, setSchoolNeisCode] = useState('')
+  const [schoolEducationOfficeCode, setSchoolEducationOfficeCode] = useState('')
+  const [schoolSource, setSchoolSource] = useState<'neis' | 'careerNet' | undefined>()
   const [grade, setGrade] = useState(initial.grade)
   const [affiliationName, setAffiliationName] = useState(initial.affiliationName)
   const [address, setAddress] = useState(initial.address)
@@ -194,17 +200,33 @@ export function SettingsEditForm({
     if (status === 'none') {
       setSchoolName('')
       setSchoolOrganizationId(null)
+      setSchoolAddress('')
+      setSchoolNeisCode('')
+      setSchoolEducationOfficeCode('')
+      setSchoolSource(undefined)
       setGrade('')
     } else {
       setAffiliationName('')
     }
   }
 
-  const handleSchoolNameChange = (value: string) => {
-    setSchoolName(value)
-    setSchoolOrganizationId(
-      value.trim() === initial.schoolName.trim() ? initial.schoolOrganizationId : null,
-    )
+  const handleSchoolSelect = (school: SelectedSchool) => {
+    if (isTeacher) {
+      setTeacherSchoolName(school.name)
+      setTeacherSchoolOrganizationId(school.organizationId ?? null)
+      setTeacherSchoolAddress(school.address ?? '')
+      setTeacherSchoolNeisCode(school.neisCode ?? '')
+      setTeacherSchoolEducationOfficeCode(school.educationOfficeCode ?? '')
+      setTeacherSchoolSource(school.source)
+    } else {
+      setSchoolName(school.name)
+      setSchoolOrganizationId(school.organizationId ?? null)
+      setSchoolAddress(school.address ?? '')
+      setSchoolNeisCode(school.neisCode ?? '')
+      setSchoolEducationOfficeCode(school.educationOfficeCode ?? '')
+      setSchoolSource(school.source ?? (school.neisCode ? 'neis' : undefined))
+    }
+    setIsSchoolSearchOpen(false)
   }
 
   const handleSubmit = async () => {
@@ -213,9 +235,16 @@ export function SettingsEditForm({
     }
 
     setSubmitError(undefined)
+    const sanitizedForm = sanitizeSettingsEditSchoolFields({
+      ...form,
+      schoolAddress,
+      schoolNeisCode,
+      schoolEducationOfficeCode,
+      schoolSource,
+    })
     const next = isTeacher
       ? applyTeacherSettingsEditToSnapshot(profile, teacherForm)
-      : applySettingsEditToSnapshot(profile, form)
+      : applySettingsEditToSnapshot(profile, sanitizedForm)
 
     if (isRemoteApiConfigured()) {
       try {
@@ -224,12 +253,8 @@ export function SettingsEditForm({
             isTeacher
               ? mapTeacherSettingsEditToPortalProfileUpdate(teacherForm)
               : mapAdminRegisteredEditToPortalProfileUpdate({
-                  ...form,
-                  schoolAddress: profile.schoolAddress,
-                  portalProfile: {
-                    ...profile,
-                    schoolOrganizationId: profile.schoolOrganizationId ?? undefined,
-                  },
+                  ...sanitizedForm,
+                  portalProfile: profile,
                 }),
           ),
         )
@@ -417,14 +442,29 @@ export function SettingsEditForm({
 
               {schoolStatus === 'enrolled' ? (
                 <>
-                  <PFTextInput
-                    size="xlarge"
-                    label="소속/학교명"
-                    placeholder="소속 또는 학교명을 입력해 주세요"
-                    required
-                    value={schoolName}
-                    onValueChange={handleSchoolNameChange}
-                  />
+                  <div className={styles.addressField}>
+                    <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                      소속/학교명 <span className={styles.inlineRequiredMark}>*</span>
+                    </PFText>
+                    <div className={styles.inlineRow}>
+                      <PFTextInput
+                        size="xlarge"
+                        placeholder="검색으로 학교를 선택해 주세요"
+                        required
+                        value={schoolName}
+                        readOnly
+                        onClick={() => setIsSchoolSearchOpen(true)}
+                      />
+                      <PFButton
+                        size="xlarge"
+                        variant="secondary"
+                        type="button"
+                        onClick={() => setIsSchoolSearchOpen(true)}
+                      >
+                        검색
+                      </PFButton>
+                    </div>
+                  </div>
                   <PFSelect
                     size="xlarge"
                     label="학년"
@@ -532,15 +572,7 @@ export function SettingsEditForm({
       <SchoolSearchModal
         open={isSchoolSearchOpen}
         onClose={() => setIsSchoolSearchOpen(false)}
-        onSelect={school => {
-          setTeacherSchoolName(school.name)
-          setTeacherSchoolOrganizationId(school.organizationId ?? null)
-          setTeacherSchoolAddress(school.address ?? '')
-          setTeacherSchoolNeisCode(school.neisCode ?? '')
-          setTeacherSchoolEducationOfficeCode(school.educationOfficeCode ?? '')
-          setTeacherSchoolSource(school.source)
-          setIsSchoolSearchOpen(false)
-        }}
+        onSelect={handleSchoolSelect}
       />
     </div>
   )

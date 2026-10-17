@@ -1,9 +1,18 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
+import { settingsConsentWritePath } from '@/features/mypage'
 import { useQueryClient } from '@tanstack/react-query'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import { PFAlertModal, PFButton, PFStateBadge, PFText, PFToggle } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFLoadingSpinner,
+  PFStateBadge,
+  PFText,
+  PFToggle,
+} from '@/shared/ui'
 import {
   putPortalMarketingConsent,
   TYPE_WITHDRAWABLE_CONSENT_TYPES,
@@ -14,7 +23,12 @@ import {
 import { useSettingsConsents } from '../hooks/use-settings-consents'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
 import { formatConsentDate, SETTINGS_CONSENT_TYPE_BY_ID } from '../lib/map-consents'
+import {
+  isSettingsDocumentConsentItemId,
+  settingsConsentItemIdToWriteKey,
+} from '../lib/settings-consent-key'
 import { ConsentWithdrawComplete, ConsentWithdrawConfirm } from './consent-withdraw-confirm'
+import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overlay'
 import styles from './consents-view.module.css'
 
 const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
@@ -61,7 +75,35 @@ type WithdrawCopy = {
   completeGuide: string
 }
 
-/** 기본 동의항목 철회 확인·완료 문구. 동의서·서약서 항목은 추후 추가 */
+const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> = {
+  paymentStatement: {
+    title: '지급조서 사전 동의를 철회할까요?',
+    description:
+      '철회 시 급여 항목 지급·정산 신청이 제한될 수 있습니다. 다시 이용하려면 동의서를 작성해 주세요.',
+    completeTitle: '지급조서 사전 동의가 철회되었어요.',
+    completeGuide: '정산을 신청하려면 [약관 및 정책 동의 관리]에서 동의서를 다시 작성해 주세요.',
+  },
+  educatorPledge: {
+    title: '교육진행자 서약을 철회할까요?',
+    description: '철회 시 UJAT·프로그램 강의 참여가 제한될 수 있습니다.',
+    completeTitle: '교육진행자 서약 동의가 철회되었어요.',
+    completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 서약서를 작성해 주세요.',
+  },
+  administrativeJoint: {
+    title: '행정정보 공동이용 사전동의를 철회할까요?',
+    description: '철회 시 UJAT·프로그램 강의 참여가 제한될 수 있습니다.',
+    completeTitle: '행정정보 공동이용 사전동의가 철회되었어요.',
+    completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 동의서를 작성해 주세요.',
+  },
+  sexOffenseCheck: {
+    title: '성범죄 경력 조회 동의를 철회할까요?',
+    description: '철회 시 UJAT·프로그램 강의 참여가 제한될 수 있습니다.',
+    completeTitle: '성범죄 경력 조회 동의가 철회되었어요.',
+    completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 동의서를 작성해 주세요.',
+  },
+}
+
+/** 기본 동의항목 철회 확인·완료 문구 */
 const BASIC_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> = {
   portrait: {
     title: '초상권 수집·이용 동의를 철회할까요?',
@@ -71,7 +113,8 @@ const BASIC_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> 
       '동의하지 않은 상태에서는 JA Korea의 프로그램 신청 및 참여가 제한됩니다.',
     ].join('\n'),
     completeTitle: '초상권 수집·이용 동의가 철회되었어요.',
-    completeGuide: '프로그램 참여를 원하시면 [내 정보 수정]에서 다시 동의해 주세요.',
+    completeGuide:
+      '프로그램 참여를 원하시면 [약관 및 정책 동의 관리]에서 동의서를 다시 작성해 주세요.',
   },
   childPrivacy: {
     title: '만 14세 미만 아동 개인정보 수집·이용 동의를 철회할까요?',
@@ -118,12 +161,16 @@ function ConsentCard({
   marketingAgreed,
   onMarketingChange,
   onViewTerms,
+  onViewDocument,
+  onWriteDocument,
   onWithdraw,
 }: {
   item: SettingsConsentItem
   marketingAgreed: boolean
   onMarketingChange: (next: boolean) => void
   onViewTerms: (item: SettingsConsentItem) => void
+  onViewDocument?: (item: SettingsConsentItem) => void
+  onWriteDocument?: (item: SettingsConsentItem) => void
   onWithdraw?: (item: SettingsConsentItem) => void
 }) {
   const agreed = item.kind === 'toggle' ? marketingAgreed : item.agreed
@@ -211,10 +258,20 @@ function ConsentCard({
               동의 철회
             </PFButton>
           ) : null}
-          <PFButton size="medium" variant="tertiary" className={styles.actionButton}>
+          <PFButton
+            size="medium"
+            variant="tertiary"
+            className={styles.actionButton}
+            onClick={() => onViewDocument?.(item)}
+          >
             동의서 확인
           </PFButton>
-          <PFButton size="medium" variant="primary" className={styles.actionButton}>
+          <PFButton
+            size="medium"
+            variant="primary"
+            className={styles.actionButton}
+            onClick={() => onWriteDocument?.(item)}
+          >
             동의서 재작성
           </PFButton>
         </div>
@@ -222,7 +279,12 @@ function ConsentCard({
 
       {item.kind === 'document' && !agreed ? (
         <div className={styles.actions}>
-          <PFButton size="medium" variant="primary" width="100%">
+          <PFButton
+            size="medium"
+            variant="primary"
+            width="100%"
+            onClick={() => onWriteDocument?.(item)}
+          >
             동의서 작성
           </PFButton>
         </div>
@@ -232,6 +294,7 @@ function ConsentCard({
 }
 
 export function SettingsConsentsView() {
+  const navigate = useNavigate()
   const terms = useTermsViewModal()
   const queryClient = useQueryClient()
   const consents = useSettingsConsents()
@@ -251,8 +314,19 @@ export function SettingsConsentsView() {
     id: SettingsConsentItemId
     withdrawnAt: string
   } | null>(null)
-  const withdrawCopy = withdrawTarget ? BASIC_WITHDRAW_COPY[withdrawTarget.id] : undefined
-  const completeCopy = withdrawComplete ? BASIC_WITHDRAW_COPY[withdrawComplete.id] : undefined
+  const [documentPreviewItem, setDocumentPreviewItem] = useState<SettingsConsentItem | null>(null)
+  const resolveWithdrawCopy = (id: SettingsConsentItemId) =>
+    BASIC_WITHDRAW_COPY[id] ?? DOCUMENT_WITHDRAW_COPY[id]
+
+  const withdrawCopy = withdrawTarget ? resolveWithdrawCopy(withdrawTarget.id) : undefined
+  const completeCopy = withdrawComplete ? resolveWithdrawCopy(withdrawComplete.id) : undefined
+
+  const handleWriteDocument = (item: SettingsConsentItem) => {
+    if (!isSettingsDocumentConsentItemId(item.id)) return
+    const consentKey = settingsConsentItemIdToWriteKey(item.id)
+    if (!consentKey) return
+    navigate(settingsConsentWritePath(consentKey))
+  }
 
   const showWithdrawComplete = (id: SettingsConsentItemId, changedAt?: string | null) => {
     setWithdrawComplete({
@@ -351,9 +425,9 @@ export function SettingsConsentsView() {
 
   if (consents.isLoading) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        동의 현황을 불러오는 중이에요…
-      </PFText>
+      <div className={styles.page} role="status" aria-busy="true">
+        <PFLoadingSpinner centered label="동의 현황을 불러오는 중" />
+      </div>
     )
   }
 
@@ -380,6 +454,8 @@ export function SettingsConsentsView() {
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
             }}
+            onViewDocument={item.kind === 'document' ? setDocumentPreviewItem : undefined}
+            onWriteDocument={item.kind === 'document' ? handleWriteDocument : undefined}
             onWithdraw={BASIC_WITHDRAW_COPY[item.id] ? setWithdrawTarget : undefined}
           />
         ))}
@@ -398,9 +474,19 @@ export function SettingsConsentsView() {
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
             }}
+            onViewDocument={setDocumentPreviewItem}
+            onWriteDocument={handleWriteDocument}
+            onWithdraw={resolveWithdrawCopy(item.id) ? setWithdrawTarget : undefined}
           />
         ))}
       </section>
+
+      <ConsentDocumentPreviewOverlay
+        open={documentPreviewItem != null}
+        item={documentPreviewItem}
+        isRemoteSession={consents.isRemoteSession}
+        onClose={() => setDocumentPreviewItem(null)}
+      />
 
       {terms.openType ? (
         <TermsViewModal open={terms.isOpen} type={terms.openType} onClose={terms.close} />

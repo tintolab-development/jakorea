@@ -27,11 +27,43 @@
 
 .genderField,
 .schoolStatusField,
-.addressField {
+.addressField,
+.settlementAccountField {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
+}
+
+.settlementAccountSplit {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.settlementAccountSplit > :first-child {
+  flex: 1.75 1 0;
+  min-width: 0;
+}
+
+.settlementAccountSplit > :last-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (--bp-below-pc) {
+  .settlementAccountSplit {
+    flex-direction: column;
+    gap: var(--spacing-8);
+  }
+
+  .settlementAccountSplit > :first-child,
+  .settlementAccountSplit > :last-child {
+    flex: none;
+    width: 100%;
+  }
 }
 
 .fieldLabel {
@@ -96,4 +128,12 @@
 .fieldError {
   margin: 0;
   padding-left: var(--spacing-8);
+}
+
+.inlineEdit {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
 }

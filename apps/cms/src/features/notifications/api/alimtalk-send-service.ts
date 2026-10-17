@@ -20,6 +20,7 @@ import {
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import {
   isNotificationSendWithoutProgram,
+  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -64,7 +65,7 @@ export async function getAlimtalkRecipientCandidates(input: {
   size: number
   totalPages: number
 }> {
-  const size = input.size ?? 50
+  const size = input.size ?? 20
   const page = input.page ?? 0
   if (!shouldUseAlimtalkSendRemoteApi()) {
     return {
@@ -93,8 +94,27 @@ export async function getAlimtalkRecipientCandidates(input: {
     total,
     page: dto.page ?? page,
     size: resolvedSize,
-    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 50)), 1),
+    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 20)), 1),
   }
+}
+
+export async function fetchAllAlimtalkRecipientCandidates(input: {
+  programId?: number
+  keyword?: string
+  participantType?: string
+  memberType?: string
+}): Promise<AlimtalkSendRecipient[]> {
+  const collected: AlimtalkSendRecipient[] = []
+  let page = 0
+  let totalPages = 1
+  while (page < totalPages && collected.length < NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT) {
+    const result = await getAlimtalkRecipientCandidates({ ...input, page, size: 20 })
+    collected.push(...result.items)
+    totalPages = result.totalPages
+    if (result.items.length === 0) break
+    page += 1
+  }
+  return collected.slice(0, NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT)
 }
 
 export async function getAlimtalkTemplateVariables(

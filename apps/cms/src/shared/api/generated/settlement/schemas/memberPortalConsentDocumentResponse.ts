@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FilledDocumentRequest } from './filledDocumentRequest';
 import type { MemberPortalConsentEvent } from './memberPortalConsentEvent';
 import type { MemberPortalConsentSignatureField } from './memberPortalConsentSignatureField';
 
@@ -34,4 +35,6 @@ export interface MemberPortalConsentDocumentResponse {
   programEligible?: boolean;
   signatureFields?: MemberPortalConsentSignatureField[];
   events?: MemberPortalConsentEvent[];
+  /** Completed member-authored form; null for drafts and forms without a body */
+  filledDocument?: FilledDocumentRequest | null;
 }

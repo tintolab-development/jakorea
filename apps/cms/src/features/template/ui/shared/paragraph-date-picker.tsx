@@ -1,5 +1,5 @@
 import type { CSSProperties, KeyboardEvent, ReactNode, RefObject } from 'react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
@@ -23,6 +23,57 @@ import './paragraph-date-picker.css'
 
 function formatTriggerClock(d: Dayjs): string {
   return d.format('HH:mm')
+}
+
+/** 캘린더 1·2번 클릭(필드 포커스 없음) — 날짜 순으로 시작·종료 시각 부여 */
+function chronologicalRangeFromTwoPicks(
+  firstPick: Dayjs,
+  secondPick: Dayjs,
+  startHour: string,
+  startMinute: string,
+  endHour: string,
+  endMinute: string
+): [Dayjs, Dayjs] {
+  const a = firstPick.startOf('day')
+  const b = secondPick.startOf('day')
+  const earlier = a.isAfter(b, 'day') ? secondPick : firstPick
+  const later = a.isAfter(b, 'day') ? firstPick : secondPick
+  return [
+    buildTimeFrom24Hour(earlier, parseNum(startHour, 0), parseNum(startMinute, 0)),
+    buildTimeFrom24Hour(later, parseNum(endHour, 0), parseNum(endMinute, 0)),
+  ]
+}
+
+/**
+ * 종료일 날짜가 시작일에 고정된 같은 날 일정 — 종료 시각이 시작 이전이면 종료를 뒤로 맞춘다.
+ */
+function alignLockedSameDayEndTime(
+  day: Dayjs,
+  startHour: string,
+  startMinute: string,
+  endHour: string,
+  endMinute: string
+): { endHour: string; endMinute: string; rangeEnd: Dayjs } {
+  const start = buildTimeFrom24Hour(day, parseNum(startHour, 0), parseNum(startMinute, 0))
+  let end = buildTimeFrom24Hour(day, parseNum(endHour, 0), parseNum(endMinute, 0))
+  if (end.isAfter(start)) {
+    const tb = dayjsTimeParts(end)
+    return { endHour: tb.h, endMinute: tb.m, rangeEnd: end }
+  }
+
+  const byHour = start.add(1, 'hour')
+  if (byHour.isSame(start, 'day') && byHour.isAfter(start)) {
+    end = byHour
+  } else {
+    const byMinute = start.add(1, 'minute')
+    end =
+      byMinute.isSame(start, 'day') && byMinute.isAfter(start)
+        ? byMinute
+        : start.endOf('day').set('second', 0).set('millisecond', 0)
+  }
+
+  const tb = dayjsTimeParts(end)
+  return { endHour: tb.h, endMinute: tb.m, rangeEnd: end }
 }
 
 /** 트리거 한 줄 표시 (이미지 시안: 동일일 일정은 날짜 한 번 + `시작 ~ 종료시`) */
@@ -55,6 +106,22 @@ function formatParagraphDatePickerTriggerDisplay(
     return `${formatAppDatepickerDisplay(eff)} ${formatTriggerClock(eff)}`
   }
   return formatAppDatepickerDisplay(eff)
+}
+
+/** 저장된 구간·시각으로 팝오버 「기간」토글 ON 여부 복원 (잠금 해제·일정형만) */
+function resolveSchedulePeriodOnFromStoredRange(
+  range: [Dayjs, Dayjs],
+  withTime: boolean,
+  opts: {
+    presetMode: ParagraphDatePresetMode
+    lockPeriodToggleOn: boolean
+    lockTimeToggleOn: boolean
+  }
+): boolean {
+  if (opts.presetMode === 'period' || opts.lockPeriodToggleOn) return true
+  if (!range[0].isSame(range[1], 'day')) return true
+  if (opts.presetMode === 'schedule' && opts.lockTimeToggleOn && withTime) return false
+  return false
 }
 
 export type ParagraphDatePresetMode = 'date' | 'period' | 'schedule'
@@ -146,7 +213,7 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   /** 모달(포털) 열림·닫힘 — 테이블 행 포커스 등 상위 동기화용 */
   onOpenChange?: (open: boolean) => void
   /**
-   * false면 푸터 「시간」 토글 숨김 (`timeOn` 고정 false).
+   * false면 푸터 「시간」 토글 숨김 (`timeOn` 고정 false, `lockTimeToggleOn` 없을 때).
    * 기본 true — 다른 피커 동작 유지.
    */
   showTimeToggle?: boolean
@@ -159,16 +226,20 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    */
   showPeriodToggle?: boolean
   /**
-   * true면 「시간」을 ON으로 고정하고 조작 불가 토글은 숨김. `showTimeToggle`이 false면 무시.
+   * true면 시간 입력 항상 ON. 푸터 「시간」 토글은 숨김(`showTimeToggle`과 무관).
    * 기본 false — 다른 피커는 기존처럼 토글을 조작할 수 있음.
    */
   lockTimeToggleOn?: boolean
   /**
-   * true면 「기간」을 ON으로 고정하고 조작 불가 토글은 숨김.
+   * true면 「기간」을 ON으로 고정하고 푸터 토글은 비활성(ON)으로 표시.
    * `showPeriodToggle`이 false여도 `presetMode: 'period'`이면 기간 모드는 유지.
    * 기본 false.
    */
   lockPeriodToggleOn?: boolean
+  /**
+   * true면 시간 입력 UI는 노출하되 비활성(기관 일정형 단일 기간 등). 적용 시 시각은 제거한다.
+   */
+  disableTimeInputs?: boolean
   /**
    * 트리거 값은 비운 채, 모달을 열 때만 캘린더·시간 초안으로 쓴다.
    * `value` / `appliedSurfaceRange`에는 영향을 주지 않는다.
@@ -183,6 +254,10 @@ export type ParagraphDatePickerProps =
 function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
   if (width == null) return undefined
   return { width: typeof width === 'number' ? `${width}px` : width }
+}
+
+function isFullWidthPicker(width: number | string | undefined): boolean {
+  return width === '100%' || width === '100vw'
 }
 
 function formatDualPeriodCellText(d: Dayjs, withTime: boolean): string {
@@ -217,6 +292,7 @@ interface ParagraphDatePickerSingleInnerProps {
   showPeriodToggle?: boolean
   lockTimeToggleOn?: boolean
   lockPeriodToggleOn?: boolean
+  disableTimeInputs?: boolean
   initialPopoverRange?: [Dayjs, Dayjs] | null
 }
 
@@ -246,6 +322,7 @@ function ParagraphDatePickerSingleInner({
   showPeriodToggle = true,
   lockTimeToggleOn = false,
   lockPeriodToggleOn = false,
+  disableTimeInputs = false,
   initialPopoverRange = null,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
@@ -266,17 +343,23 @@ function ParagraphDatePickerSingleInner({
     findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate).startOf('month')
   )
   const [periodOn, setPeriodOn] = useState(
-    presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
+    presetMode === 'period' || lockPeriodToggleOn
   )
 
   useEffect(() => {
-    if (presetMode === 'period') {
+    if (presetMode === 'period' || lockPeriodToggleOn) {
       setPeriodOn(true)
       return
     }
     if (showPeriodToggle) return
     setPeriodOn(false)
-  }, [showPeriodToggle, presetMode])
+  }, [
+    customizable,
+    lockPeriodToggleOn,
+    lockTimeToggleOn,
+    presetMode,
+    showPeriodToggle,
+  ])
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
     findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
   )
@@ -287,15 +370,24 @@ function ParagraphDatePickerSingleInner({
     )
   )
   const [rangeFocus, setRangeFocus] = useState<'start' | 'end'>('start')
+  /** 시작일/종료일 필드를 직접 눌렀을 때만 — 캘린더는 해당 필드만 수정 */
+  const [explicitRangeFieldFocus, setExplicitRangeFieldFocus] = useState<'start' | 'end' | null>(
+    null
+  )
+  /** 필드 포커스 없이 캘린더 2번 클릭으로 기간 잡는 중 */
+  const [awaitingSecondRangePick, setAwaitingSecondRangePick] = useState(false)
   /** [설정]으로 확정된 기간 — 트리거에 시작/종료 UI 표시 */
   const [surfaceRange, setSurfaceRange] = useState<[Dayjs, Dayjs] | null>(null)
   /** 마지막 [설정] 시 시간 토글이 켜져 있었는지 — 트리거에 날짜+시간 인풋 표시 */
   const [surfaceAppliedWithTime, setSurfaceAppliedWithTime] = useState(false)
-  const [timeOn, setTimeOn] = useState(lockTimeToggleOn && showTimeToggle)
-  const timeToggleLocked = lockTimeToggleOn && showTimeToggle
-  const periodToggleLocked =
-    presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
-  const effectiveTimeOn = showTimeToggle ? timeOn : false
+  /** 마지막 [설정] 시 기간 토글 ON — 잠금 해제 시 팝오버 복원용 */
+  const [surfacePeriodOn, setSurfacePeriodOn] = useState<boolean | null>(null)
+  const [timeOn, setTimeOn] = useState(() => lockTimeToggleOn)
+  const timeToggleLocked = lockTimeToggleOn
+  const periodToggleLocked = presetMode === 'period' || lockPeriodToggleOn
+  const effectiveTimeOn =
+    disableTimeInputs || lockTimeToggleOn || (showTimeToggle && timeOn)
+  const showTimeToggleInFooter = showTimeToggle && !lockTimeToggleOn
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('9')
   const [singleMinute, setSingleMinute] = useState('0')
@@ -304,28 +396,53 @@ function ParagraphDatePickerSingleInner({
   const [endHour, setEndHour] = useState('10')
   const [endMinute, setEndMinute] = useState('0')
 
+  /** 조작 불가(잠금)일 때는 푸터에 기간 토글 미노출 */
   const showPeriodToggleInFooter =
-    (showPeriodToggle && (customizable || presetMode === 'schedule')) ||
-    (lockPeriodToggleOn && showPeriodToggle)
+    !periodToggleLocked &&
+    showPeriodToggle &&
+    (customizable || presetMode === 'schedule')
 
   useEffect(() => {
-    if (!timeToggleLocked) return
+    if (!lockTimeToggleOn) return
     setTimeOn(true)
-  }, [timeToggleLocked])
+  }, [lockTimeToggleOn])
 
   useEffect(() => {
     if (!periodToggleLocked) return
     setPeriodOn(true)
   }, [periodToggleLocked])
 
+  /** 진행 일정 — 기간 토글 ON 고정 시 같은 날만, 종료일 날짜는 비활성 노출 */
+  const lockRangeEndDate = lockPeriodToggleOn && presetMode === 'schedule'
+  /** 일정 + 기간 토글 조작 가능 — OFF일 때도 종료일 인풋은 노출하고 날짜만 비활성 */
+  const periodToggleManipulable = presetMode === 'schedule' && showPeriodToggleInFooter
+  const lockEndDateToStartDay =
+    lockRangeEndDate || (periodToggleManipulable && !periodOn)
+
+  useEffect(() => {
+    if (!open || !lockEndDateToStartDay) return
+    setRangeFocus('start')
+    setRangeEnd(
+      buildTimeFrom24Hour(rangeStart, parseNum(endHour, 0), parseNum(endMinute, 0))
+    )
+  }, [open, lockEndDateToStartDay, rangeStart, endHour, endMinute])
+
   /** `presetMode: 'period'` — 토글 숨김이어도 기간(range) 캘린더 고정 */
   const isRangeCalendarMode = useMemo(() => {
     if (presetMode === 'period') return true
+    if (lockPeriodToggleOn) return true
     if (!showPeriodToggle) return false
     if (customizable) return periodOn
     if (presetMode === 'date') return false
     return periodOn
-  }, [customizable, presetMode, periodOn, showPeriodToggle])
+  }, [
+    customizable,
+    lockPeriodToggleOn,
+    lockTimeToggleOn,
+    presetMode,
+    periodOn,
+    showPeriodToggle,
+  ])
   /** 일정 + 시간 — ParagraphTimePicker(종료 시간 고정)와 같이 같은 날 시작·종료 */
   const sameDayTimeRange = presetMode === 'schedule' && effectiveTimeOn && !isRangeCalendarMode
 
@@ -350,6 +467,7 @@ function ParagraphDatePickerSingleInner({
     if (hasExternalSurfaceControl) return
     setSurfaceRange(null)
     setSurfaceAppliedWithTime(false)
+    setSurfacePeriodOn(null)
   }, [resolvedValue, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
 
   const appliedSurfaceSyncKey = useMemo(() => {
@@ -371,6 +489,13 @@ function ParagraphDatePickerSingleInner({
       setSurfaceRange([appliedSurfaceRange[0], appliedSurfaceRange[1]])
       const withTime = Boolean(appliedSurfaceWithTime)
       setSurfaceAppliedWithTime(withTime)
+      setSurfacePeriodOn(
+        resolveSchedulePeriodOnFromStoredRange(
+          [appliedSurfaceRange[0], appliedSurfaceRange[1]],
+          withTime,
+          { presetMode, lockPeriodToggleOn, lockTimeToggleOn }
+        )
+      )
       if (withTime) {
         setTimeOn(true)
         const ta = dayjsTimeParts(appliedSurfaceRange[0])
@@ -385,6 +510,7 @@ function ParagraphDatePickerSingleInner({
     } else {
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(false)
+      setSurfacePeriodOn(null)
       setTimeOn(false)
     }
   }, [
@@ -393,15 +519,24 @@ function ParagraphDatePickerSingleInner({
     appliedSurfaceSyncKey,
     appliedSurfaceRange,
     appliedSurfaceWithTime,
+    lockPeriodToggleOn,
+    lockTimeToggleOn,
+    presetMode,
   ])
 
   const effectivePlaceholder = placeholder ?? PARAGRAPH_DATE_PRESET_PLACEHOLDERS[presetMode]
 
-  const triggerDisplayText = formatParagraphDatePickerTriggerDisplay(
-    resolvedValue,
-    surfaceRange,
-    surfaceAppliedWithTime
-  )
+  /** 목록(교육 진행 예정일 등)에만 노출하고 트리거는 placeholder 유지 */
+  const omitTriggerSurfaceDisplay =
+    suppressAutoTodayWhenEmpty && resolvedValue == null && !hasExternalSurfaceControl
+
+  const triggerDisplayText = omitTriggerSurfaceDisplay
+    ? null
+    : formatParagraphDatePickerTriggerDisplay(
+        resolvedValue,
+        surfaceRange,
+        surfaceAppliedWithTime
+      )
   const triggerIsEmpty = triggerDisplayText == null
   const presetDisplay = presetDisplayText?.trim()
   const showPresetAsFilled = triggerIsEmpty && Boolean(presetDisplay)
@@ -425,7 +560,7 @@ function ParagraphDatePickerSingleInner({
       surfaceRange &&
       allowSurfaceRestore &&
       !surfaceHasDisabledDate &&
-      (showPeriodToggle || presetMode === 'period')
+      (showPeriodToggle || presetMode === 'period' || lockPeriodToggleOn)
     )
 
     if (presetMode === 'date' && !customizable) {
@@ -451,7 +586,14 @@ function ParagraphDatePickerSingleInner({
     setCalendarMonth(d.startOf('month'))
 
     if (useSurface) {
-      setPeriodOn(true)
+      const restoredPeriodOn =
+        surfacePeriodOn ??
+        resolveSchedulePeriodOnFromStoredRange(
+          surfaceRange!,
+          surfaceAppliedWithTime,
+          { presetMode, lockPeriodToggleOn, lockTimeToggleOn }
+        )
+      setPeriodOn(restoredPeriodOn)
       setRangeStart(surfaceRange![0])
       setRangeEnd(surfaceRange![1])
       setRangeFocus('start')
@@ -483,13 +625,16 @@ function ParagraphDatePickerSingleInner({
         /* period/time already false above */
       } else if (presetMode === 'period') {
         setPeriodOn(true)
-        setTimeOn(false)
-      } else {
+        if (!lockTimeToggleOn) setTimeOn(false)
+      } else if (!lockPeriodToggleOn) {
         setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
       }
     } else {
       setRangeStart(d)
-      const nextEnd = findNextEnabledDate(d.add(1, 'day'), disabledDate)
+      const nextEnd =
+        presetMode === 'period' && !customizable
+          ? d
+          : findNextEnabledDate(d.add(1, 'day'), disabledDate)
       setRangeEnd(nextEnd)
       setRangeFocus('start')
       const ta = dayjsTimeParts(d)
@@ -503,10 +648,10 @@ function ParagraphDatePickerSingleInner({
         /* period/time already false above */
       } else if (presetMode === 'period') {
         setPeriodOn(true)
-        setTimeOn(false)
-      } else {
+        if (!lockTimeToggleOn) setTimeOn(false)
+      } else if (!lockPeriodToggleOn) {
         setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
-        setTimeOn(false)
+        if (!lockTimeToggleOn) setTimeOn(false)
       }
     }
 
@@ -526,35 +671,67 @@ function ParagraphDatePickerSingleInner({
     }
 
     setInvalidTimeRange(false)
-    if (timeToggleLocked) setTimeOn(true)
-    if (periodToggleLocked) setPeriodOn(true)
+    if (lockTimeToggleOn) setTimeOn(true)
+    if (periodToggleLocked || lockPeriodToggleOn) setPeriodOn(true)
+    setExplicitRangeFieldFocus(null)
+    setAwaitingSecondRangePick(false)
     setOpen(true)
   }
+
+  const handleRangeFocusChange = useCallback((focus: 'start' | 'end') => {
+    setRangeFocus(focus)
+    setExplicitRangeFieldFocus(focus)
+    setAwaitingSecondRangePick(false)
+  }, [])
 
   const handleApply = () => {
     if (isRangeCalendarMode) {
       const sDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
       const eDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
 
-      if (effectiveTimeOn) {
+      if (disableTimeInputs) {
+        const s = sDay.startOf('day')
+        const e = eDay.startOf('day')
+        onRangeChange?.([s, e])
+        if (onRangeChange == null) onChange(s)
+        setSurfaceRange([s, e])
+        setSurfaceAppliedWithTime(false)
+        setSurfacePeriodOn(true)
+      } else if (effectiveTimeOn) {
         const start = buildTimeFrom24Hour(sDay, parseNum(startHour, 0), parseNum(startMinute, 0))
-        const end = buildTimeFrom24Hour(eDay, parseNum(endHour, 0), parseNum(endMinute, 0))
+        let end = buildTimeFrom24Hour(eDay, parseNum(endHour, 0), parseNum(endMinute, 0))
+        if (lockEndDateToStartDay && sDay.isSame(eDay, 'day') && !end.isAfter(start)) {
+          const aligned = alignLockedSameDayEndTime(
+            sDay,
+            startHour,
+            startMinute,
+            endHour,
+            endMinute
+          )
+          end = aligned.rangeEnd
+          setEndHour(aligned.endHour)
+          setEndMinute(aligned.endMinute)
+          setRangeEnd(aligned.rangeEnd)
+        }
         if (!end.isAfter(start)) {
           setInvalidTimeRange(true)
           return
         }
         setInvalidTimeRange(false)
         onRangeChange?.([start, end])
-        onChange(start)
+        // 기간 확정 시 onChange(시작일)까지 호출하면 onRangeChange 직후 부모가 [d,d]로 덮어쓰는 패턴이 깨진다.
+        if (onRangeChange == null) onChange(start)
         setSurfaceRange([start, end])
         setSurfaceAppliedWithTime(true)
+        setSurfacePeriodOn(true)
       } else {
         const s = sDay.startOf('day')
-        const e = eDay.startOf('day')
+        const e = eDay.endOf('day')
         onRangeChange?.([s, e])
-        onChange(s)
+        if (onRangeChange == null) onChange(s)
         setSurfaceRange([s, e])
         setSurfaceAppliedWithTime(false)
+        setSurfacePeriodOn(true)
       }
     } else if (effectiveTimeOn && sameDayTimeRange) {
       const start = buildTimeFrom24Hour(draft, parseNum(startHour, 0), parseNum(startMinute, 0))
@@ -568,6 +745,7 @@ function ParagraphDatePickerSingleInner({
       onChange(start)
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(true)
+      setSurfacePeriodOn(false)
     } else if (effectiveTimeOn) {
       const applied = buildTimeFrom24Hour(
         draft,
@@ -580,6 +758,7 @@ function ParagraphDatePickerSingleInner({
       }
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(true)
+      setSurfacePeriodOn(false)
     } else {
       onChange(draft)
       if (presetMode === 'schedule' && onRangeChange) {
@@ -588,6 +767,7 @@ function ParagraphDatePickerSingleInner({
       }
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(false)
+      setSurfacePeriodOn(false)
     }
     setOpen(false)
   }
@@ -597,13 +777,73 @@ function ParagraphDatePickerSingleInner({
 
     setInvalidTimeRange(false)
     if (isRangeCalendarMode) {
-      if (rangeFocus === 'start') {
+      if (lockEndDateToStartDay) {
         setRangeStart(next)
-        if (rangeEnd.isBefore(next, 'day')) setRangeEnd(next)
+        setRangeEnd(
+          buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+        )
+        setExplicitRangeFieldFocus(null)
+        setAwaitingSecondRangePick(false)
+        setRangeFocus('start')
+      } else if (explicitRangeFieldFocus === 'start') {
+        const newStart = buildTimeFrom24Hour(
+          next,
+          parseNum(startHour, 0),
+          parseNum(startMinute, 0)
+        )
+        setRangeStart(newStart)
+        if (newStart.isAfter(rangeEnd, 'day')) {
+          setRangeEnd(
+            buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+          )
+        }
+        // 시작일을 직접 지정한 뒤에는 다음 캘린더 선택을 종료일로 처리한다.
+        setExplicitRangeFieldFocus(null)
+        setAwaitingSecondRangePick(true)
+        setRangeFocus('end')
+      } else if (explicitRangeFieldFocus === 'end') {
+        const newEnd = buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+        setRangeEnd(newEnd)
+        if (rangeStart.isAfter(next, 'day')) {
+          setRangeStart(
+            buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))
+          )
+        }
+        // 종료일을 직접 지정한 뒤에는 기간 선택을 완료하고 다음 선택을 새 시작일로 연다.
+        setExplicitRangeFieldFocus(null)
+        setAwaitingSecondRangePick(false)
+        setRangeFocus('end')
+      } else if (!awaitingSecondRangePick) {
+        setRangeStart(
+          buildTimeFrom24Hour(next, parseNum(startHour, 0), parseNum(startMinute, 0))
+        )
+        setRangeEnd(
+          buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+        )
+        setAwaitingSecondRangePick(true)
+        setRangeFocus('end')
       } else {
-        setRangeEnd(next)
-        if (rangeStart.isAfter(next, 'day')) setRangeStart(next)
+        const [sortedStart, sortedEnd] = chronologicalRangeFromTwoPicks(
+          rangeStart,
+          next,
+          startHour,
+          startMinute,
+          endHour,
+          endMinute
+        )
+        setRangeStart(sortedStart)
+        setRangeEnd(sortedEnd)
+        setAwaitingSecondRangePick(false)
+        setRangeFocus('end')
       }
+      setDraft(next)
+      setCalendarMonth(next.startOf('month'))
+    } else if (lockEndDateToStartDay) {
+      setRangeStart(next)
+      setRangeEnd(
+        buildTimeFrom24Hour(next, parseNum(endHour, 0), parseNum(endMinute, 0))
+      )
+      setDraft(next)
       setCalendarMonth(next.startOf('month'))
     } else {
       setDraft(next)
@@ -615,6 +855,8 @@ function ParagraphDatePickerSingleInner({
   const triggerWidthStyle = customizable && surfaceRange != null ? { width: '500px' } : widthStyle
 
   const useDualPeriodTrigger = dualPeriodTrigger && presetMode === 'period'
+  const useDualFluidLayout = useDualPeriodTrigger && isFullWidthPicker(width)
+  const dualShellWidthStyle = useDualFluidLayout ? toWidthStyle('100%') : undefined
   const dualStartText =
     surfaceRange != null
       ? formatDualPeriodCellText(surfaceRange[0], surfaceAppliedWithTime)
@@ -655,9 +897,11 @@ function ParagraphDatePickerSingleInner({
           className={cn(
             'paragraph-date-picker__trigger',
             'paragraph-date-picker__trigger--dual-shell',
+            useDualFluidLayout && 'paragraph-date-picker__trigger--dual-fluid',
             disabled && 'paragraph-date-picker__trigger--disabled',
             readOnly && !disabled && 'paragraph-date-picker__trigger--readonly'
           )}
+          style={dualShellWidthStyle}
           aria-label={dualTriggerAriaLabel}
         >
           <div className="paragraph-date-picker__trigger-dual-row">
@@ -709,16 +953,17 @@ function ParagraphDatePickerSingleInner({
         panelId={panelId}
         disabled={disabled}
         disabledDate={disabledDate}
-        isRangeCalendarMode={isRangeCalendarMode}
+        isRangeCalendarMode={isRangeCalendarMode || lockPeriodToggleOn}
         sameDayTimeRange={sameDayTimeRange}
         timeOn={effectiveTimeOn}
+        timeInputsDisabled={disableTimeInputs}
         calendarMonth={calendarMonth}
         onCalendarMonthChange={setCalendarMonth}
         draft={draft}
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
         rangeFocus={rangeFocus}
-        onRangeFocusChange={setRangeFocus}
+        onRangeFocusChange={handleRangeFocusChange}
         onCalendarSelect={handleCalendarSelect}
         singleHour={singleHour}
         singleMinute={singleMinute}
@@ -735,31 +980,88 @@ function ParagraphDatePickerSingleInner({
         onStartHourChange={v => {
           setStartHour(v)
           setInvalidTimeRange(false)
+          if (lockEndDateToStartDay) {
+            const newStart = buildTimeFrom24Hour(rangeStart, parseNum(v, 0), parseNum(startMinute, 0))
+            setRangeStart(newStart)
+            const aligned = alignLockedSameDayEndTime(
+              newStart,
+              v,
+              startMinute,
+              endHour,
+              endMinute
+            )
+            if (aligned.endHour !== endHour) setEndHour(aligned.endHour)
+            if (aligned.endMinute !== endMinute) setEndMinute(aligned.endMinute)
+            setRangeEnd(aligned.rangeEnd)
+          }
         }}
         onStartMinuteChange={v => {
           setStartMinute(v)
           setInvalidTimeRange(false)
+          if (lockEndDateToStartDay) {
+            const newStart = buildTimeFrom24Hour(rangeStart, parseNum(startHour, 0), parseNum(v, 0))
+            setRangeStart(newStart)
+            const aligned = alignLockedSameDayEndTime(
+              newStart,
+              startHour,
+              v,
+              endHour,
+              endMinute
+            )
+            if (aligned.endHour !== endHour) setEndHour(aligned.endHour)
+            if (aligned.endMinute !== endMinute) setEndMinute(aligned.endMinute)
+            setRangeEnd(aligned.rangeEnd)
+          }
         }}
         endHour={endHour}
         endMinute={endMinute}
         onEndHourChange={v => {
           setEndHour(v)
           setInvalidTimeRange(false)
+          if (lockEndDateToStartDay) {
+            setRangeEnd(
+              buildTimeFrom24Hour(rangeStart, parseNum(v, 0), parseNum(endMinute, 0))
+            )
+          }
         }}
         onEndMinuteChange={v => {
           setEndMinute(v)
           setInvalidTimeRange(false)
+          if (lockEndDateToStartDay) {
+            setRangeEnd(
+              buildTimeFrom24Hour(rangeStart, parseNum(endHour, 0), parseNum(v, 0))
+            )
+          }
         }}
+        rangeEndDateDisabled={lockEndDateToStartDay}
         invalidTimeRange={invalidTimeRange}
         showPeriodToggle={showPeriodToggleInFooter}
-        showTimeToggle={showTimeToggle}
+        showTimeToggle={showTimeToggleInFooter}
         periodToggleDisabled={periodToggleLocked}
-        timeToggleDisabled={timeToggleLocked}
+        timeToggleDisabled={timeToggleLocked && showTimeToggleInFooter}
         periodOn={periodOn}
         onPeriodOnChange={next => {
           if (periodToggleLocked) return
           setPeriodOn(next)
           setInvalidTimeRange(false)
+          if (!next && periodToggleManipulable) {
+            const day = rangeStart.startOf('day')
+            setDraft(day)
+            setRangeEnd(
+              buildTimeFrom24Hour(rangeStart, parseNum(endHour, 0), parseNum(endMinute, 0))
+            )
+            setRangeFocus('start')
+            setCalendarMonth(day.startOf('month'))
+          } else if (
+            !next &&
+            presetMode === 'schedule' &&
+            lockTimeToggleOn &&
+            !lockPeriodToggleOn
+          ) {
+            const day = rangeStart.startOf('day')
+            setDraft(day)
+            setCalendarMonth(day.startOf('month'))
+          }
         }}
         onTimeOnChange={next => {
           if (timeToggleLocked) return
@@ -891,11 +1193,21 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
       : 'date'
   const singleCustomizable = props.mode === 'single' ? Boolean(props.customizable) : false
   const resolvedWidth = props.width ?? '500px'
+  const dualFluidRoot =
+    props.mode !== 'range' &&
+    Boolean(props.dualPeriodTrigger) &&
+    isFullWidthPicker(props.width)
 
   return (
     <div
       ref={rootRef}
-      className={['paragraph-date-picker', className].filter(Boolean).join(' ')}
+      className={[
+        'paragraph-date-picker',
+        dualFluidRoot && 'paragraph-date-picker--dual-fluid',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, ...style }}
     >
       {label != null ? <span className="fs-16 nowrap">{label}</span> : null}
@@ -938,6 +1250,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           showPeriodToggle={props.mode === 'single' ? (props.showPeriodToggle ?? true) : true}
           lockTimeToggleOn={props.mode === 'single' ? Boolean(props.lockTimeToggleOn) : false}
           lockPeriodToggleOn={props.mode === 'single' ? Boolean(props.lockPeriodToggleOn) : false}
+          disableTimeInputs={props.mode === 'single' ? Boolean(props.disableTimeInputs) : false}
           initialPopoverRange={props.mode === 'single' ? props.initialPopoverRange : null}
         />
       )}

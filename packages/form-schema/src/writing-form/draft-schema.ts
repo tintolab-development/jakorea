@@ -2607,7 +2607,7 @@ function migrateAgreementNoticeSeedRequiredMarks(
 /** 행정정보 공동이용 — 식별번호 유형 고정값(주민등록번호) */
 export const AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID = 'agreement-notice-id-resident'
 
-const AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER = '텍스트를 작성해 주세요'
+const AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER = '예시 이용기관명'
 const AGREEMENT_NOTICE_PURPOSE_PLACEHOLDER = '이용 목적을 입력해 주세요'
 const AGREEMENT_NOTICE_SUBJECT_NAME_PLACEHOLDER = '성명을 입력해 주세요'
 const AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER = '생년월일 8자리를 입력해 주세요'
@@ -3261,7 +3261,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         requiredMark: true,
         paragraphTitle: '대상자 본인',
         paragraphDescription: '',
-        participatesInTitleNumbering: false,
+        participatesInTitleNumbering: true,
         answerRequired: true,
         showItemTitle: true,
         itemInputRows: 1,

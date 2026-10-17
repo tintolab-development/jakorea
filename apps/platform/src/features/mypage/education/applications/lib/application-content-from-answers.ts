@@ -8,6 +8,7 @@ import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/pa
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 
@@ -21,6 +22,7 @@ const SELF_INTRO_ANSWER_KEYS = [
 
 const PREFERRED_SCHEDULE_ANSWER_KEYS = [
   PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
   /** BE handoff 예시 단축 키 */
   'scheduleChoice',
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule,
@@ -281,6 +283,15 @@ export function collectPreferredScheduleOptionValues(
   const seen = new Set<string>()
   for (const key of PREFERRED_SCHEDULE_ANSWER_KEYS) {
     if (key === 'preferredScheduleBlocks' || !(key in answers)) continue
+    const row = asRecord(answers[key])
+    if (row && Array.isArray(row.selectedSlotIds)) {
+      for (const id of row.selectedSlotIds) {
+        const token = readTrimmedString(id)
+        if (!token || !isOpaqueScheduleOptionToken(token) || seen.has(token)) continue
+        seen.add(token)
+        out.push(token)
+      }
+    }
     for (const value of flattenAnswerStrings(answers[key])) {
       if (!isOpaqueScheduleOptionToken(value) || seen.has(value)) continue
       seen.add(value)
@@ -390,6 +401,33 @@ function resolveOneScheduleOptionToken(
  * 신청 내용 「진행 희망 교육 일정」표시 문구.
  * opaque option_value는 프로그램 일정·교육 진행 예정일 라인으로 해석한다.
  */
+export function resolvePreferredScheduleLabelsFromAnswers(input: {
+  answers?: Record<string, unknown> | null
+  preferredScheduleOptionValues?: readonly string[]
+  educationScheduleLines?: readonly string[]
+  schedules?: PreferredScheduleProgramLookup['schedules']
+}): string[] {
+  const lookup: PreferredScheduleProgramLookup = {
+    educationScheduleLines: input.educationScheduleLines,
+    schedules: input.schedules,
+  }
+  const optionValues =
+    input.preferredScheduleOptionValues && input.preferredScheduleOptionValues.length > 0
+      ? input.preferredScheduleOptionValues
+      : collectPreferredScheduleOptionValues(input.answers)
+  if (optionValues.length > 0) {
+    return optionValues
+      .map(value => resolveOneScheduleOptionToken(value, lookup))
+      .filter((value): value is string => Boolean(value))
+  }
+  const fallback = resolvePreferredEducationScheduleLabelFromAnswers(input.answers ?? undefined)
+  if (!fallback) return []
+  return fallback
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !isOpaqueScheduleOptionToken(line))
+}
+
 export function resolvePreferredEducationScheduleDisplayLabel(input: {
   preferredEducationScheduleLabel?: string
   preferredScheduleOptionValues?: readonly string[]

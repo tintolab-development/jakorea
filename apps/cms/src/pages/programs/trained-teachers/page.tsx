@@ -9,6 +9,7 @@ import { ProgramList } from '@/features/program/general/ui/program-list'
 import {
   LazyGeneralProgramRegistrationFullpageModal,
   LazyProgramDetailFullPageModal,
+  preloadGeneralProgramRegistrationModal,
   ProgramModalWhenOpen,
 } from '@/pages/programs/lazy-program-modals'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
@@ -257,6 +258,7 @@ function TrainedTeachersProgramPageContent() {
 
   const openNewRegistration = useCallback(
     (mode?: 'continue' | 'fresh') => {
+      preloadGeneralProgramRegistrationModal()
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -281,6 +283,7 @@ function TrainedTeachersProgramPageContent() {
   )
 
   const handleProgramCreateClick = useCallback(() => {
+    preloadGeneralProgramRegistrationModal()
     void (async () => {
       try {
         assertRegistrationWizardRemoteReady()
@@ -428,12 +431,7 @@ function TrainedTeachersProgramPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <FilterTableToolbarButton
-          variant="delete"
-          width={140}
-          onClick={handleBulkDeleteClick}
-          className="program-list-page__bulk-delete-button"
-        >
+        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
           선택 삭제
         </FilterTableToolbarButton>
       )}
@@ -531,7 +529,7 @@ function TrainedTeachersProgramPageContent() {
         />
       </ProgramModalWhenOpen>
 
-      <ProgramModalWhenOpen open={isTrainedTeachersRegistrationOpen}>
+      <ProgramModalWhenOpen open={isTrainedTeachersRegistrationOpen} registrationEntry>
         <LazyGeneralProgramRegistrationFullpageModal
           open={isTrainedTeachersRegistrationOpen}
           onClose={handleCloseRegistrationFullpage}

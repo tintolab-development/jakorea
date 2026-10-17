@@ -38,7 +38,12 @@ import {
   type CalendarVolunteerInterview2ListRow,
 } from './item-list/ujat-volunteer-interview2'
 import { settlementEventStatusColorPair } from './preview-tooltip/settlement'
-import { isApplicationApprovalPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
+import {
+  buildApplicationProcessedSelectionAlert,
+  isApplicationApprovalPendingForBulkSelect,
+  type ApplicationBulkSubjectNoun,
+} from '@/features/program/general/lib/application-processed-selection-alert'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
   PROGRAM_DAY_SCHEDULE_STATUS_CONFIG,
   getProgramDayScheduleEventStatus,
@@ -52,6 +57,36 @@ import {
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
+
+function toggleGeneralApplicationCalendarListSelection({
+  key,
+  checked,
+  rows,
+  selectedRowKeys,
+  selectedSet,
+  onSelectionChange,
+  bulkSubjectNoun,
+}: {
+  key: string
+  checked: boolean
+  rows: { id: string; approvalStatus: string }[]
+  selectedRowKeys: Key[]
+  selectedSet: Set<string>
+  onSelectionChange: (keys: Key[]) => void
+  bulkSubjectNoun: ApplicationBulkSubjectNoun
+}): void {
+  if (checked) {
+    const row = rows.find(item => item.id === key)
+    if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) {
+      cmsAlertModal.show(buildApplicationProcessedSelectionAlert(bulkSubjectNoun))
+      return
+    }
+    if (selectedSet.has(key)) return
+    onSelectionChange([...selectedRowKeys, key])
+    return
+  }
+  onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
+}
 
 type CalendarListItemProgramProps = {
   title?: string
@@ -317,14 +352,15 @@ export function CalendarSubRightGeneralInstitutionApplicationList({
 
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
-      if (checked) {
-        const row = rows.find(item => item.id === key)
-        if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) return
-        if (selectedSet.has(key)) return
-        onSelectionChange([...selectedRowKeys, key])
-      } else {
-        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
-      }
+      toggleGeneralApplicationCalendarListSelection({
+        key,
+        checked,
+        rows,
+        selectedRowKeys,
+        selectedSet,
+        onSelectionChange,
+        bulkSubjectNoun: 'institution',
+      })
     },
     [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )
@@ -390,14 +426,15 @@ export function CalendarSubRightGeneralInstructorApplicationList({
 
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
-      if (checked) {
-        const row = rows.find(item => item.id === key)
-        if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) return
-        if (selectedSet.has(key)) return
-        onSelectionChange([...selectedRowKeys, key])
-      } else {
-        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
-      }
+      toggleGeneralApplicationCalendarListSelection({
+        key,
+        checked,
+        rows,
+        selectedRowKeys,
+        selectedSet,
+        onSelectionChange,
+        bulkSubjectNoun: 'instructor',
+      })
     },
     [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )
@@ -459,14 +496,15 @@ export function CalendarSubRightGeneralIndividualApplicationList({
 
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
-      if (checked) {
-        const row = rows.find(item => item.id === key)
-        if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) return
-        if (selectedSet.has(key)) return
-        onSelectionChange([...selectedRowKeys, key])
-      } else {
-        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
-      }
+      toggleGeneralApplicationCalendarListSelection({
+        key,
+        checked,
+        rows,
+        selectedRowKeys,
+        selectedSet,
+        onSelectionChange,
+        bulkSubjectNoun: 'participant',
+      })
     },
     [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )

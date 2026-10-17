@@ -122,8 +122,10 @@ export function getProgramWagePaymentItemOptions(
 export type ProgramWagePaymentItemOptionsState = PaymentItemCatalogState
 
 /** 정산 항목 설정(지급) 목록 + 「해당없음」 + 로딩·실패 상태 — 등록·상세 편집 UI용 */
-export function useProgramWagePaymentItemOptionsState(): ProgramWagePaymentItemOptionsState {
-  const catalog = usePaymentItemCatalogState()
+export function useProgramWagePaymentItemOptionsState(
+  catalogEnabled = true
+): ProgramWagePaymentItemOptionsState {
+  const catalog = usePaymentItemCatalogState(catalogEnabled)
   return useMemo(
     () => ({
       ...catalog,

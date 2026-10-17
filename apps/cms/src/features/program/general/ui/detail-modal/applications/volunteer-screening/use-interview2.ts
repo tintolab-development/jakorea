@@ -12,9 +12,11 @@ import {
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   filterGeneralInterview2Applicants,
+  filterGeneralInterview2ApplicantsRemoteClientOnly,
   filterGeneralInterview2CalendarApplicants,
   type GeneralVolunteerInterview2Filters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { buildGeneralVolunteerInterview2ListQuery } from '@/features/program/general/api/volunteer-list-query'
 import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
@@ -29,11 +31,25 @@ import {
   type GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
-import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-import { toScreeningNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
+import type {
+  PermissionModalNotifyTiming,
+  PermissionModalPayload,
+} from '@/shared/components/permission-modal'
+import {
+  toNestedDecisionNotification,
+  toScreeningNotifyFields,
+} from '@/features/program/general/lib/application-decision-notify-timing'
+import type { VolunteerInterview2CancelFailConfirmPayload } from '@/features/program/general/lib/volunteer-interview2-cancel-fail'
+import {
+  APPLICATION_ACTION_CANCEL_FINAL_FAIL,
+  APPLICATION_ACTION_CANCEL_FINAL_PASS,
+  hasExplicitApplicationAction,
+} from '@/features/program/shared/lib/application-available-actions'
+import { MESSAGES } from '@/shared/constants/messages'
 import {
   requestGeneralVolunteerInterview2BulkFail,
   requestGeneralVolunteerInterview2BulkPass,
+  isGeneralVolunteerInterview2SelectableForResult,
 } from './general-volunteer-interview2-actions'
 import type { GeneralInterview2BulkPassConfirmPayload } from './general-volunteer-interview2-bulk-pass-modal'
 import {
@@ -42,7 +58,7 @@ import {
   guardGeneralVolunteerInterview2Pass,
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
-import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import type { ApplicationGiveUpReasonModalPayload } from '@/features/program/shared/ui/application-give-up-reason-modal'
 
 export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 
@@ -70,23 +86,30 @@ export function useGeneralVolunteerInterview2({
     '프로그램 신청 · 봉사자 2차 면접'
   )
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => [])
+  const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
+    ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
+  }))
+  const listQuery = useMemo(
+    () =>
+      subjectKind === 'volunteer'
+        ? buildGeneralVolunteerInterview2ListQuery(appliedFilters)
+        : undefined,
+    [appliedFilters, subjectKind]
+  )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'interview2',
     subjectKind,
     enabled: true,
+    listQuery,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   }))
-  const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
-    ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
-  }))
   const [viewMode, setViewMode] = useState<GeneralVolunteerInterview2ViewMode>('list')
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
-  const [evaluationTargetId, setEvaluationTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [bulkFailModalOpen, setBulkFailModalOpen] = useState(false)
   const [bulkFailCompleteCount, setBulkFailCompleteCount] = useState<number | null>(null)
@@ -101,8 +124,34 @@ export function useGeneralVolunteerInterview2({
     name: string
     reason: string
   } | null>(null)
+  const [cancelPassVolunteer, setCancelPassVolunteer] =
+    useState<GeneralVolunteerApplicantRow | null>(null)
+  const [cancelFailVolunteer, setCancelFailVolunteer] =
+    useState<GeneralVolunteerApplicantRow | null>(null)
+  /** 세션 내 합격/불합격 알림 시점 — 취소 모달 alreadySent/pending 분기 */
+  const [finalResultNotifyById, setFinalResultNotifyById] = useState<
+    Record<string, PermissionModalNotifyTiming>
+  >({})
 
-  useGeneralInterview2EffectiveStatusTick(list)
+  const withFinalResultNotifyTiming = useCallback(
+    (row: GeneralVolunteerApplicantRow): GeneralVolunteerApplicantRow => {
+      const timing = finalResultNotifyById[row.id] ?? row.finalResultNotifyTiming
+      return timing ? { ...row, finalResultNotifyTiming: timing } : row
+    },
+    [finalResultNotifyById]
+  )
+
+  const effectiveStatusServerFilterActive =
+    subjectKind === 'volunteer' &&
+    volunteerRemote.remoteEnabled &&
+    (appliedFilters.secondInterviewScreeningStatus === 'waiting' ||
+      appliedFilters.secondInterviewScreeningStatus === 'completed')
+
+  useGeneralInterview2EffectiveStatusTick(list, {
+    onServerRefetch: effectiveStatusServerFilterActive
+      ? volunteerRemote.refetchVolunteerList
+      : undefined,
+  })
 
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
@@ -112,7 +161,6 @@ export function useGeneralVolunteerInterview2({
     setViewMode('list')
     setSelectedRowKeys([])
     setWithdrawTargetId(null)
-    setEvaluationTargetId(null)
     setBulkPassModalOpen(false)
     setBulkFailModalOpen(false)
     setBulkFailCompleteCount(null)
@@ -120,6 +168,9 @@ export function useGeneralVolunteerInterview2({
     setFailModalVolunteer(null)
     setPassCompleteVolunteerName(null)
     setFailCompleteVolunteer(null)
+    setCancelPassVolunteer(null)
+    setCancelFailVolunteer(null)
+    setFinalResultNotifyById({})
   }, [programId, subjectKind, volunteerRemote.remoteEnabled])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
@@ -130,22 +181,36 @@ export function useGeneralVolunteerInterview2({
     setAppliedFilters({ ...pendingFilters })
   }, [pendingFilters])
 
-  const tableData = useMemo(
-    () => sortInterview2Rows(filterGeneralInterview2Applicants(list, appliedFilters)),
-    [appliedFilters, list, sortInterview2Rows]
-  )
+  const tableData = useMemo(() => {
+    const filtered =
+      volunteerRemote.remoteEnabled && subjectKind === 'volunteer'
+        ? filterGeneralInterview2ApplicantsRemoteClientOnly(list)
+        : filterGeneralInterview2Applicants(list, appliedFilters)
+    return sortInterview2Rows(filtered)
+  }, [appliedFilters, list, sortInterview2Rows, subjectKind, volunteerRemote.remoteEnabled])
 
-  const calendarFilteredData = useMemo(
-    () => sortInterview2Rows(filterGeneralInterview2CalendarApplicants(list, appliedFilters)),
-    [appliedFilters, list, sortInterview2Rows]
-  )
+  const calendarFilteredData = useMemo(() => {
+    const filtered =
+      volunteerRemote.remoteEnabled && subjectKind === 'volunteer'
+        ? filterGeneralInterview2ApplicantsRemoteClientOnly(list)
+        : filterGeneralInterview2CalendarApplicants(list, appliedFilters)
+    return sortInterview2Rows(filtered)
+  }, [appliedFilters, list, sortInterview2Rows, subjectKind, volunteerRemote.remoteEnabled])
 
   const calendarEvents = useMemo(
     () => mapGeneralVolunteerAssignedInterviewToCalendarEvents(calendarFilteredData),
     [calendarFilteredData]
   )
 
-  const count = viewMode === 'calendar' ? calendarFilteredData.length : tableData.length
+  const count =
+    volunteerRemote.remoteEnabled &&
+    subjectKind === 'volunteer' &&
+    volunteerRemote.listTotalElements != null &&
+    viewMode === 'list'
+      ? volunteerRemote.listTotalElements
+      : viewMode === 'calendar'
+        ? calendarFilteredData.length
+        : tableData.length
 
   const handleViewCalendar = useCallback(() => {
     setSelectedRowKeys([])
@@ -183,6 +248,7 @@ export function useGeneralVolunteerInterview2({
   )
 
   const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     if (!guardGeneralVolunteerInterview2Pass(applicant)) return
     setPassModalVolunteer(applicant)
   }, [])
@@ -192,6 +258,7 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const openFailModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     if (!guardGeneralVolunteerInterview2Fail(applicant)) return
     setFailModalVolunteer(applicant)
   }, [])
@@ -220,6 +287,7 @@ export function useGeneralVolunteerInterview2({
       )
       setPassModalVolunteer(null)
       if (!ok) return
+      setFinalResultNotifyById(prev => ({ ...prev, [id]: payload.notifyTiming }))
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setPassCompleteVolunteerName(volunteerName)
     },
@@ -238,6 +306,7 @@ export function useGeneralVolunteerInterview2({
       )
       setFailModalVolunteer(null)
       if (!ok) return
+      setFinalResultNotifyById(prev => ({ ...prev, [id]: payload.notifyTiming }))
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setFailCompleteVolunteer({ name, reason: payload.reason })
     },
@@ -343,7 +412,7 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmWithdrawActivity = useCallback(
-    async (payload: ActivityWithdrawScheduleModalPayload) => {
+    async (payload: ApplicationGiveUpReasonModalPayload) => {
       if (!withdrawTargetId) return
       const row = list.find(item => item.id === withdrawTargetId)
       if (!row) {
@@ -355,10 +424,7 @@ export function useGeneralVolunteerInterview2({
         setWithdrawTargetId(null)
         return
       }
-      const handled = await volunteerRemote.applyRemoteGiveUp?.(
-        withdrawTargetId,
-        payload.stopScheduleLabel
-      )
+      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, payload.reason)
       setWithdrawTargetId(null)
       if (!handled) return
       showAlert({
@@ -388,48 +454,143 @@ export function useGeneralVolunteerInterview2({
     [openFailModal]
   )
 
-  const openEvaluationModal = useCallback((row: GeneralVolunteerApplicantRow) => {
-    if (!guardGeneralVolunteerInterview2Evaluation(row)) return
-    setEvaluationTargetId(row.id)
+  const openCancelPassModal = useCallback(
+    (row: GeneralVolunteerApplicantRow) => {
+      if (
+        !hasExplicitApplicationAction(row.availableActions, APPLICATION_ACTION_CANCEL_FINAL_PASS)
+      ) {
+        return
+      }
+      setCancelPassVolunteer(withFinalResultNotifyTiming(row))
+    },
+    [withFinalResultNotifyTiming]
+  )
+
+  const closeCancelPassModal = useCallback(() => {
+    setCancelPassVolunteer(null)
   }, [])
 
-  const closeEvaluationModal = useCallback(() => {
-    setEvaluationTargetId(null)
+  const openCancelFailModal = useCallback(
+    (row: GeneralVolunteerApplicantRow) => {
+      if (
+        !hasExplicitApplicationAction(row.availableActions, APPLICATION_ACTION_CANCEL_FINAL_FAIL)
+      ) {
+        return
+      }
+      setCancelFailVolunteer(withFinalResultNotifyTiming(row))
+    },
+    [withFinalResultNotifyTiming]
+  )
+
+  const closeCancelFailModal = useCallback(() => {
+    setCancelFailVolunteer(null)
   }, [])
 
-  const evaluationTarget = useMemo(
-    () => (evaluationTargetId ? list.find(row => row.id === evaluationTargetId) : undefined),
-    [evaluationTargetId, list]
+  /**
+   * 합격 취소 → 자동 반려(FAIL).
+   * Notion/시안 공통 승인 취소 팝업과 동일 UX. API는 final-result FAIL
+   * (서류 승인 취소를 건드리지 않도록 문서 cancel-approval 미사용).
+   */
+  const handleCancelPassConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!cancelPassVolunteer) return
+      const { id } = cancelPassVolunteer
+      const notify = toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      const ok = await applySecondInterviewStatus(
+        [id],
+        'fail',
+        payload.reason.trim() || '합격 취소',
+        {
+          notifyTiming: notify.notifyTiming,
+          scheduledAt: notify.scheduledAt,
+        }
+      )
+      if (!ok) return
+      setFinalResultNotifyById(prev => ({ ...prev, [id]: payload.notifyTiming }))
+      setCancelPassVolunteer(null)
+      showAlert({
+        title: '취소 완료',
+        content: MESSAGES.success.cancelled,
+      })
+    },
+    [applySecondInterviewStatus, cancelPassVolunteer, showAlert]
+  )
+
+  /**
+   * 불합격 취소 → 심사 대기.
+   * Notion 공통 반려 취소 팝업과 동일 UX.
+   * BE cancel-rejection이 final FAIL(서류 PASS 유지)을 waiting으로 되돌리는 계약을 사용.
+   */
+  const handleCancelFailConfirm = useCallback(
+    async (payload: VolunteerInterview2CancelFailConfirmPayload) => {
+      if (!cancelFailVolunteer) return
+      if (!volunteerRemote.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-volunteer-interview2-cancel-fail',
+          '봉사자 면접 불합격 취소'
+        )
+        setCancelFailVolunteer(null)
+        return
+      }
+      const reason =
+        payload.variant === 'alreadySent' ? payload.reason : payload.reason.trim() || '불합격 취소'
+      const notification =
+        payload.variant === 'alreadySent'
+          ? toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification
+          : undefined
+      const ok = await volunteerRemote.applyRemoteDocumentCancelRejection(
+        cancelFailVolunteer.id,
+        reason,
+        notification
+      )
+      if (!ok) return
+      setFinalResultNotifyById(prev => {
+        const next = { ...prev }
+        delete next[cancelFailVolunteer.id]
+        return next
+      })
+      setCancelFailVolunteer(null)
+      showAlert({
+        title: '취소 완료',
+        content: MESSAGES.success.cancelled,
+      })
+    },
+    [cancelFailVolunteer, showAlert, volunteerRemote]
   )
 
   const saveInterviewEvaluation = useCallback(
-    async (payload: GeneralVolunteerInterviewEvaluationPayload) => {
-      if (!evaluationTargetId) return
-      const target = list.find(row => row.id === evaluationTargetId)
-      if (payload.managerAScore == null && payload.managerBScore == null) return
+    async (
+      row: GeneralVolunteerApplicantRow,
+      payload: GeneralVolunteerInterviewEvaluationPayload
+    ): Promise<boolean> => {
+      if (!guardGeneralVolunteerInterview2Evaluation(row)) return false
+      if (payload.managerAScore == null && payload.managerBScore == null) return false
 
       if (!volunteerRemote.remoteEnabled) {
         notifyProgramApiUnavailable('general-volunteer-interview-evaluation', '봉사자 면접 평가')
-        return
+        return false
       }
       const result = await volunteerRemote.applyRemoteInterviewEvaluation?.(
-        target?.interviewAssignmentId,
+        row.interviewAssignmentId,
         {
           ...(payload.managerAScore != null ? { managerAScore: payload.managerAScore } : {}),
           ...(payload.managerBScore != null ? { managerBScore: payload.managerBScore } : {}),
           comment: payload.interviewEvaluationRemark?.trim() || undefined,
         }
       )
-      if (result === 'missing_assignment' || result === 'error' || result === 'skipped') return
+      if (result === 'missing_assignment' || result === 'error' || result === 'skipped') {
+        return false
+      }
       if (result === 'ok') {
         showAlert({
           title: '면접 평가',
           content: '면접 평가가 저장되었습니다.',
         })
-        setEvaluationTargetId(null)
+        return true
       }
+      return false
     },
-    [evaluationTargetId, list, showAlert, volunteerRemote]
+    [showAlert, volunteerRemote]
   )
 
   const columns = useGeneralVolunteerInterview2Columns({ subjectKind })
@@ -476,9 +637,14 @@ export function useGeneralVolunteerInterview2({
     withdrawTarget,
     requestInterview2Pass,
     requestInterview2Fail,
-    openEvaluationModal,
-    closeEvaluationModal,
-    evaluationTarget,
+    cancelPassVolunteer,
+    cancelFailVolunteer,
+    openCancelPassModal,
+    closeCancelPassModal,
+    openCancelFailModal,
+    closeCancelFailModal,
+    handleCancelPassConfirm,
+    handleCancelFailConfirm,
     saveInterviewEvaluation,
     filterRowsSource: list,
     applicationsLoading: volunteerRemote.applicationsLoading,

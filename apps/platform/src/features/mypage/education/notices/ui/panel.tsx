@@ -10,21 +10,22 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { useDebouncedValue } from '@/shared/hooks'
-import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
+import type { EducationInProgressFile } from '../model/types'
 import {
   downloadEducationNoticeFile,
   downloadRemoteEducationNoticeFile,
   hasRemoteDownloadPath,
 } from '../lib/download-file'
-import { readNoticeIdFromLocation, writeNoticeIdToLocation } from '../lib/notice-url'
 import {
-  getMockEducationInProgressFiles,
-  getMockEducationInProgressNotices,
-} from '../lib/mock-notices'
+  readCommentIdFromLocation,
+  readNoticeIdFromLocation,
+  writeNoticeIdToLocation,
+} from '../lib/notice-url'
 import { EducationInProgressFileRow } from './file-row'
 import { EducationInProgressNoticeCard } from './card'
 import { EducationInProgressNoticeDetailModal } from './detail-modal'
 import { EducationProgramInfoModal } from './program-info-modal'
+import { EducationProgramNoticeWriteModal } from './notice-write-modal'
 import { PFAlertModal, PFButton, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './panel.module.css'
 
@@ -34,31 +35,37 @@ type EducationInProgressNoticePanelProps = {
   program: ProgramDetail
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 진행중 「신청 정보」 팝업 — 교사·기관 신청 내용 탭과 동일 */
+  applicationInfoBody?: ReactNode
   /** 봉사현황 기관 안내사항 등 — 안내 목록 위 슬롯 */
   leading?: ReactNode
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  /** 교사·기관 프로그램 — 안내사항 작성 모달 */
+  noticeWriteEnabled?: boolean
+  noticeWriteAuthorDisplayName?: string
 }
 
 export function EducationInProgressNoticePanel({
   program,
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  applicationInfoBody,
   leading,
   applicationType,
   applicationId,
+  noticeWriteEnabled = false,
+  noticeWriteAuthorDisplayName = '담당교사님',
 }: EducationInProgressNoticePanelProps) {
-  const programId = program.id
+  const [isNoticeWriteOpen, setIsNoticeWriteOpen] = useState(false)
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const [draftFileQuery, setDraftFileQuery] = useState('')
   const debouncedFileQuery = useDebouncedValue(draftFileQuery, SEARCH_DEBOUNCE_MS)
   const remoteNotices = useApplicationNoticesQuery(applicationType, applicationId)
-  const [localNotices, setLocalNotices] = useState<EducationInProgressNotice[]>(() =>
-    getMockEducationInProgressNotices(programId),
-  )
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(readNoticeIdFromLocation)
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(readCommentIdFromLocation)
   const [downloadErrorOpen, setDownloadErrorOpen] = useState(false)
   /** 이 패널이 push 한 history 엔트리 위에 있으면 닫을 때 back 으로 되돌린다. */
   const pushedNoticeEntryRef = useRef(false)
@@ -68,7 +75,7 @@ export function EducationInProgressNoticePanel({
     remoteNotices.enabled ? selectedNoticeId : null,
   )
 
-  const notices = remoteNotices.enabled ? remoteNotices.items : localNotices
+  const notices = remoteNotices.enabled ? remoteNotices.items : []
   /** 상세 본문은 팝업에만 합친다 — 목록 카드에 넣으면 열린 카드만 높이가 바뀌어 순서가 바뀐 듯 보인다 */
   const modalNotices = useMemo(() => {
     const detailNotice = remoteDetail.detail?.notice
@@ -88,8 +95,8 @@ export function EducationInProgressNoticePanel({
   )
   const files = useMemo(() => {
     if (remoteNotices.enabled) return remoteFiles.files
-    return getMockEducationInProgressFiles(programId)
-  }, [programId, remoteFiles.files, remoteNotices.enabled])
+    return []
+  }, [remoteFiles.files, remoteNotices.enabled])
 
   const filteredFiles = useMemo(() => {
     if (remoteNotices.enabled && remoteFiles.isFullList) return files
@@ -102,6 +109,7 @@ export function EducationInProgressNoticePanel({
     const handlePopState = () => {
       pushedNoticeEntryRef.current = false
       setSelectedNoticeId(readNoticeIdFromLocation())
+      setSelectedCommentId(readCommentIdFromLocation())
     }
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
@@ -136,11 +144,6 @@ export function EducationInProgressNoticePanel({
   }
 
   const openNoticeDetail = (noticeId: string) => {
-    if (!remoteNotices.enabled) {
-      setLocalNotices(prev =>
-        prev.map(notice => (notice.id === noticeId ? { ...notice, read: true } : notice)),
-      )
-    }
     if (selectedNoticeId === null) {
       writeNoticeIdToLocation(noticeId, 'push')
       pushedNoticeEntryRef.current = true
@@ -166,10 +169,7 @@ export function EducationInProgressNoticePanel({
     openComingSoon()
   }
 
-  const deleteNotice = (noticeId: string) => {
-    if (!remoteNotices.enabled) {
-      setLocalNotices(prev => prev.filter(notice => notice.id !== noticeId))
-    }
+  const deleteNotice = (_noticeId: string) => {
     closeNoticeDetail()
   }
 
@@ -267,6 +267,19 @@ export function EducationInProgressNoticePanel({
             신청 정보
           </PFButton>
         </div>
+
+        {noticeWriteEnabled && applicationType && applicationId ? (
+          <PFButton
+            type="button"
+            className={styles.noticeWriteCta}
+            variant="secondary"
+            size="xlarge"
+            width="100%"
+            onClick={() => setIsNoticeWriteOpen(true)}
+          >
+            안내사항 작성하기
+          </PFButton>
+        ) : null}
       </div>
 
       <EducationInProgressNoticeDetailModal
@@ -274,29 +287,14 @@ export function EducationInProgressNoticePanel({
         notices={modalNotices}
         files={files}
         noticeId={selectedNoticeId}
+        commentId={selectedCommentId}
         onClose={closeNoticeDetail}
         onNoticeChange={openNoticeDetail}
         onDelete={deleteNotice}
         applicationType={applicationType}
         applicationId={applicationId}
-        onReactionCountChange={(noticeId, reactionCount) => {
-          if (!remoteNotices.enabled) {
-            setLocalNotices(prev =>
-              prev.map(notice =>
-                notice.id === noticeId ? { ...notice, reactionCount } : notice,
-              ),
-            )
-          }
-        }}
-        onCommentCountChange={(noticeId, commentCount) => {
-          if (!remoteNotices.enabled) {
-            setLocalNotices(prev =>
-              prev.map(notice =>
-                notice.id === noticeId ? { ...notice, commentCount } : notice,
-              ),
-            )
-          }
-        }}
+        onReactionCountChange={undefined}
+        onCommentCountChange={undefined}
       />
 
       <EducationProgramInfoModal
@@ -309,8 +307,20 @@ export function EducationInProgressNoticePanel({
         open={isApplicationInfoOpen}
         selfIntroMotivation={selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        applicationBody={applicationInfoBody}
         onClose={() => setIsApplicationInfoOpen(false)}
       />
+
+      {noticeWriteEnabled && applicationType && applicationId ? (
+        <EducationProgramNoticeWriteModal
+          open={isNoticeWriteOpen}
+          onClose={() => setIsNoticeWriteOpen(false)}
+          applicationType={applicationType}
+          applicationId={applicationId}
+          program={program}
+          authorDisplayName={noticeWriteAuthorDisplayName}
+        />
+      ) : null}
 
       <PFAlertModal
         open={isComingSoonOpen}

@@ -1,10 +1,13 @@
 /**
- * 프로그램 등록 완료 성공 안내
+ * 프로그램 등록 완료 — 공통 ActionResultModal (모든 프로그램 유형)
  */
 
-import { CmsButton, ContentModal } from '@/shared/ui'
+import { ActionResultModal } from '@/shared/ui/action-result-modal'
+import { MESSAGES } from '@/shared/constants/messages'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
-import './registration-complete-success-modal.css'
+
+export const PROGRAM_REGISTRATION_COMPLETE_MODAL_TITLE = '등록 완료'
+export const PROGRAM_REGISTRATION_COMPLETE_MODAL_BODY = MESSAGES.success.created
 
 export type RegistrationCompleteSuccessModalProps = {
   open: boolean
@@ -16,22 +19,12 @@ export function RegistrationCompleteSuccessModal({
   onConfirm,
 }: RegistrationCompleteSuccessModalProps) {
   return (
-    <ContentModal
+    <ActionResultModal
       open={open}
-      title="프로그램 등록 완료"
-      width={600}
+      onClose={onConfirm}
+      title={PROGRAM_REGISTRATION_COMPLETE_MODAL_TITLE}
+      body={PROGRAM_REGISTRATION_COMPLETE_MODAL_BODY}
       zIndex={CMS_ALERT_MODAL_Z_INDEX}
-      onCancel={onConfirm}
-      className="registration-complete-success-modal"
-      footer={
-        <CmsButton variant="primary" size="medium" type="button" onClick={onConfirm}>
-          확인
-        </CmsButton>
-      }
-    >
-      <p className="registration-complete-success-modal__body">
-        신규 프로그램 등록이 완료되었습니다.
-      </p>
-    </ContentModal>
+    />
   )
 }

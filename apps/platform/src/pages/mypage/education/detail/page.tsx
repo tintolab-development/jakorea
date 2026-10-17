@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   buildInProgressDetailTabItems,
@@ -8,7 +10,6 @@ import {
   buildWithdrawnDuringDetailTabItems,
   canCancelEducationApplication,
   canShowEducationApplicationContent,
-  cancelMockEducationApplication,
   educationApplicationDetailPath,
   EducationApplicationContent,
   resolvePreferredEducationScheduleDisplayLabel,
@@ -23,12 +24,11 @@ import {
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
   DocumentPassBanner,
-  getEducationSurveyMockAvailability,
-  getMockEducationApplicationById,
+  getEducationSurveyTabAvailability,
+  hasTeacherMypageProfile,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
   isParticipantRoleApplication,
-  isSchoolTeacherMypageProfile,
   isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
@@ -36,26 +36,40 @@ import {
   MYPAGE_EDUCATION_PATH,
   resolveEducationListBackPath,
   volunteerApplicationDetailPath,
-  resolveEducationScheduleTabLabel,
+  EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   shouldShowDocumentPassBanner,
   TeacherApplicationContent,
   TeacherEducationAssignmentAside,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  useProbeEducationApplicationType,
   useMypageMember,
   EducationApplicationDetailLoading,
   type EducationActivitySection,
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
-import { ProgramInfoBody, useMockProgramById, useProgramDetail } from '@/features/program'
+import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
   isRemoteApiConfigured,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
+import {
+  shouldShowTeacherInstitutionGuidanceEditLink,
+  shouldShowTeacherInstitutionGuidanceOnApplicationTab,
+  shouldShowTeacherInstitutionGuidanceWrite,
+} from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
+import { buildTeacherApplicationContentFromPortal } from '@/features/mypage/education/applications/lib/teacher-application-content-from-portal'
+import {
+  isOrganizationEducationApplication,
+  resolveOrganizationApplicationTypeForContent,
+  resolveTeacherApplicationProgramGroup,
+} from '@/features/mypage/education/applications/lib/organization-education-application'
+import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
+import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
+import type { EducationApplicationListItem } from '@/features/mypage/education/applications/model/types'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -139,32 +153,35 @@ export function MypageEducationDetailPage() {
     applicationType?: string
   }>()
   const routeApplicationType = readEducationApplicationType(applicationType)
-  const remoteDetailEnabled = isRemoteApiConfigured() && routeApplicationType != null
+  const { applicationType: probedApplicationType, isProbing: isProbingApplicationType } =
+    useProbeEducationApplicationType(applicationId, routeApplicationType)
+  const resolvedApplicationType = routeApplicationType ?? probedApplicationType
+  const remoteDetailEnabled = isRemoteApiConfigured() && resolvedApplicationType != null
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [section, setSection] = useState(readSection)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
+  const queryClient = useQueryClient()
   const member = useMypageMember()
-  const isTeacher = isSchoolTeacherMypageProfile(member.profile)
+  const isTeacher = hasTeacherMypageProfile(member.profile)
 
-  const mockEnabled = useShouldUsePlatformMockData()
-  const mockApplication = useMemo(
-    () => getMockEducationApplicationById(applicationId),
-    [applicationId, mockEnabled],
+  const remoteApplicationQuery = useMyProgramApplicationDetail(
+    resolvedApplicationType,
+    applicationId,
   )
-  const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
-  const application = remoteDetailEnabled ? remoteApplicationQuery.application : mockApplication
-  const mockProgramQuery = useMockProgramById(remoteDetailEnabled ? '' : (application?.programId ?? ''))
+  const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
   const remoteProgramQuery = useProgramDetail(
-    remoteDetailEnabled ? application?.programId : null,
+    application?.programId ?? null,
     { fresh: true },
   )
-  const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
-  const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
+  const program = remoteProgramQuery.program
+  const isApplicationLoading =
+    (isRemoteApiConfigured() && isProbingApplicationType) ||
+    (remoteDetailEnabled && remoteApplicationQuery.isLoading)
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
-    : mockProgramQuery.isLoading
+    : false
   const isDetailLoading =
     !isAuthReady ||
     isChecking ||
@@ -181,16 +198,47 @@ export function MypageEducationDetailPage() {
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
 
+  const isTeacherOrgActivityDetail =
+    isTeacher &&
+    Boolean(application && program) &&
+    (isActivityStatus || isWithdrawnDuring) &&
+    isOrganizationEducationApplication(application, program)
+
+  const studentDocumentPolicyQuery = useOrganizationStudentDocumentPolicyQuery(
+    routeApplicationType ?? application?.applicationType ?? null,
+    applicationId,
+    { organizationProgram: program?.programAudience === 'organization' },
+    { enabled: isTeacherOrgActivityDetail },
+  )
+
+  const teacherStudentDocumentTabsVisible = useMemo(() => {
+    if (!isTeacher) return undefined
+    if (!isTeacherOrgActivityDetail) return true
+    return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
+      policyQueryEnabled: true,
+      policyLoading: studentDocumentPolicyQuery.isLoading,
+    })
+  }, [
+    isTeacher,
+    isTeacherOrgActivityDetail,
+    studentDocumentPolicyQuery.data,
+    studentDocumentPolicyQuery.isLoading,
+  ])
+
   const activityTabOptions = useMemo(
     () =>
       program
         ? {
             detailCase: program.detailCase,
+            scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
+            ...(isTeacher
+              ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
+              : {}),
           }
         : null,
-    [program],
+    [isTeacher, program, teacherStudentDocumentTabsVisible],
   )
 
   const inProgressTabItems = useMemo(() => {
@@ -214,6 +262,131 @@ export function MypageEducationDetailPage() {
     () => withdrawnDuringTabItems.map(item => item.key),
     [withdrawnDuringTabItems],
   )
+
+  const teacherApplicationContent = useMemo(() => {
+    if (!application || !program) return undefined
+    if (!isOrganizationEducationApplication(application, program)) {
+      return application.teacherApplicationContent
+    }
+
+    const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
+      preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
+      preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+      educationScheduleLines: program.educationScheduleLines,
+      schedules: program.eventSchedules,
+    })
+
+    const contentApplicationType = resolveOrganizationApplicationTypeForContent(
+      application.applicationType,
+      program,
+    )
+    const programGroup = resolveTeacherApplicationProgramGroup(program)
+
+    return buildTeacherApplicationContentFromPortal(
+      {
+        applicationType: contentApplicationType,
+        programAudience: program.programAudience,
+        detailCase: application.detailCase,
+        programGroup,
+        answers: application.applicationAnswers,
+        preferredScheduleBlocks: application.preferredScheduleBlocks,
+        preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+        preferredEducationScheduleLabel,
+        existing: application.teacherApplicationContent,
+      },
+      program,
+    )
+  }, [application, program])
+
+  const showTeacherInstitutionGuidanceOnTab = useMemo(
+    () =>
+      program && application
+        ? shouldShowTeacherInstitutionGuidanceOnApplicationTab(program, { application })
+        : false,
+    [application, program],
+  )
+
+  const showTeacherGuidanceEditLink = useMemo(() => {
+    if (!application || !program) return false
+    return shouldShowTeacherInstitutionGuidanceEditLink({
+      isTeacher,
+      application,
+      program,
+      displayStatus: application.displayStatus,
+    })
+  }, [application, isTeacher, program])
+
+  const applicationInfoBody = useMemo(() => {
+    if (
+      !application ||
+      !program ||
+      !isTeacher ||
+      !isOrganizationEducationApplication(application, program) ||
+      !teacherApplicationContent
+    ) {
+      return undefined
+    }
+    const contentApplicationType =
+      application.applicationType ??
+      routeApplicationType ??
+      resolveOrganizationApplicationTypeForContent(undefined, program)
+    return (
+      <TeacherApplicationContent
+        applicationId={application.id}
+        applicationType={contentApplicationType}
+        content={teacherApplicationContent}
+        showGuidanceWriteLink={showTeacherGuidanceEditLink}
+        institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
+        showPreferredEducationForm={program.educationForm === 'participant_choice'}
+      />
+    )
+  }, [
+    application,
+    application?.applicationType,
+    application?.id,
+    isTeacher,
+    program,
+    program?.educationForm,
+    routeApplicationType,
+    showTeacherGuidanceEditLink,
+    showTeacherInstitutionGuidanceOnTab,
+    teacherApplicationContent,
+  ])
+
+  useEffect(() => {
+    if (!probedApplicationType || routeApplicationType || !applicationId) return
+    navigate(
+      `${educationApplicationDetailPath(applicationId, probedApplicationType)}${location.search}`,
+      { replace: true },
+    )
+  }, [applicationId, location.search, navigate, probedApplicationType, routeApplicationType])
+
+  useEffect(() => {
+    if (!isRemoteApiConfigured() || routeApplicationType || probedApplicationType || !applicationId) {
+      return
+    }
+
+    const listQueries = queryClient.getQueriesData<{ items?: EducationApplicationListItem[] }>({
+      queryKey: platformQueryKeys.mypage.programApplications.all(),
+    })
+    for (const [, data] of listQueries) {
+      const match = data?.items?.find(item => item.id === applicationId)
+      if (match?.applicationType) {
+        navigate(
+          `${educationApplicationDetailPath(applicationId, match.applicationType)}${location.search}`,
+          { replace: true },
+        )
+        return
+      }
+    }
+  }, [
+    applicationId,
+    location.search,
+    navigate,
+    probedApplicationType,
+    queryClient,
+    routeApplicationType,
+  ])
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -323,7 +496,11 @@ export function MypageEducationDetailPage() {
     if (remoteDetailEnabled && application?.applicationType) {
       if (cancelMutation.isPending) return
       cancelMutation.mutate(
-        { applicationType: application.applicationType, applicationId: application.id },
+        {
+          applicationType: application.applicationType,
+          applicationId: application.id,
+          programId: application.programId,
+        },
         {
           onSuccess: () => {
             setIsCancelConfirmOpen(false)
@@ -333,7 +510,6 @@ export function MypageEducationDetailPage() {
       )
       return
     }
-    cancelMockEducationApplication(applicationId)
     setIsCancelConfirmOpen(false)
     navigate(MYPAGE_EDUCATION_PATH, { replace: true })
   }
@@ -389,12 +565,27 @@ export function MypageEducationDetailPage() {
     schedules: program.eventSchedules,
   })
 
+  const showTeacherNoticeWrite = shouldShowTeacherInstitutionGuidanceWrite({
+    isTeacher,
+    application,
+    program,
+    displayStatus: application.displayStatus,
+  })
+
+  const noticeWriteAuthorDisplayName = member.displayName
+    ? `${member.displayName} 담당교사님`
+    : '담당교사님'
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      isTeacher && application.teacherApplicationContent ? (
+      isTeacher && teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
-          content={application.teacherApplicationContent}
+          applicationType={application.applicationType}
+          content={teacherApplicationContent}
+          showGuidanceWriteLink={showTeacherGuidanceEditLink}
+          institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
+          showPreferredEducationForm={program.educationForm === 'participant_choice'}
         />
       ) : (
         <EducationApplicationContent
@@ -415,8 +606,11 @@ export function MypageEducationDetailPage() {
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+          applicationInfoBody={applicationInfoBody}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          noticeWriteEnabled={showTeacherNoticeWrite}
+          noticeWriteAuthorDisplayName={noticeWriteAuthorDisplayName}
         />
       )
     }
@@ -429,13 +623,18 @@ export function MypageEducationDetailPage() {
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
-          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
+          listTitle={EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL}
         />
       )
     }
     if (active === 'students') {
       return (
         <EducationStudentsPanel
+          applicationId={application.id}
+          applicationType={routeApplicationType ?? application.applicationType ?? null}
+          organizationProgram={
+            routeApplicationType === 'ORGANIZATION' || program.programAudience === 'organization'
+          }
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
@@ -443,7 +642,7 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'survey') {
-      const surveyAvailability = getEducationSurveyMockAvailability({
+      const surveyAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
         configured: program.surveyConfigured,
@@ -458,13 +657,14 @@ export function MypageEducationDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
+            pendingSurveyCount={application.pendingSurveyCount}
           />
         )
       }
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
-      const satisfactionAvailability = getEducationSurveyMockAvailability({
+      const satisfactionAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
         configured: program.satisfactionConfigured,

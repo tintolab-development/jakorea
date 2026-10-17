@@ -19,9 +19,7 @@ import {
 import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
-import {
-  CONSENT_RADIO_OPTIONS,
-} from '@/features/user/shared/ui/instructor-profile-form'
+import { CONSENT_RADIO_OPTIONS } from '@/features/user/shared/ui/instructor-profile-form'
 import {
   isMemberCrimeConsentField,
   resolveMemberConsentTemplateByLabel,
@@ -322,7 +320,7 @@ function ConsentDocumentRow({
       </span>
       {agreed ? (
         <>
-          <CmsButton variant="secondary" size="medium" width={120} onClick={open} disabled={!open}>
+          <CmsButton variant="secondary" size="h32" width={100} onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
           {agreedAtDisplay ? (
@@ -378,13 +376,7 @@ function resolveConsentFieldView(
   }
 }
 
-function ConsentDocumentFieldEdit({
-  agreed,
-  onWrite,
-}: {
-  agreed: boolean
-  onWrite: () => void
-}) {
+function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrite: () => void }) {
   return (
     <span className="user-consent-agreement-section__document-edit">
       <span className="user-consent-agreement-section__document-edit-status">

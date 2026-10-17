@@ -11,7 +11,7 @@ import {
   type ImpactStoriesListParams,
 } from '@/features/impact-story'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import { PFPagination, PFLoadingSpinner, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 const CATEGORY_TAB_ITEMS = getImpactStoryCategoryTabItems()
@@ -109,9 +109,7 @@ export function ImpactStoriesPage() {
         </div>
 
         {list.isPending ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-            임팩트 스토리를 불러오는 중입니다.
-          </PFText>
+          <PFLoadingSpinner centered label="임팩트 스토리를 불러오는 중" />
         ) : list.items.length === 0 ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
             검색 결과가 없습니다.

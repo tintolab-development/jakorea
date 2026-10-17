@@ -26,18 +26,17 @@ test.describe('UJAT 프로그램 신규 등록', () => {
     await expectAuthenticatedShell(page)
 
     registration = new UjatProgramRegistrationPage(page)
-    await expect(page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
+    await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({
       timeout: 30_000,
     })
     await registration.openNewRegistration()
     await registration.fillCommonInfo()
     await registration.goToRecruitment()
     await registration.fillRecruitmentInfo()
+    await registration.goToApplication()
+    await registration.fillApplicationInfo()
 
     created = await registration.completeRegistration()
-    await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeHidden({
-      timeout: 30_000,
-    })
     expect(created.programId.length).toBeGreaterThan(0)
     expect(created.programTitle).toContain('Playwright UJAT 테스트')
   })

@@ -4,6 +4,8 @@
     var(--color-mint-01, #01a1af) 6%,
     #fff
   );
+  /* cms-data-table cursor:pointer hover의 반투명 --color-table-row-hover 덮어쓰기 */
+  --color-table-row-hover: var(--ujat-doc-screening-row-hover-bg);
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -355,24 +357,34 @@
 /* 좌측 고정 열(선택·No.·성함·학년·희망 지역): 스크롤·호버 시 본문 텍스트가 비치지 않도록 */
 .ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left,
 .ujat-volunteer-doc-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left {
-  z-index: 2;
-  background: var(--color-bg-base, #fff);
+  z-index: 3;
+  background: var(--color-bg-base, #fff) !important;
+  background-color: var(--color-bg-base, #fff) !important;
 }
 
 .ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left-last,
 .ujat-volunteer-doc-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left-last {
-  z-index: 3;
-  background: var(--color-bg-base, #fff);
+  z-index: 4;
+  background: var(--color-bg-base, #fff) !important;
+  background-color: var(--color-bg-base, #fff) !important;
 }
 
-.ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left {
-  background: var(
-    --BG-header,
-    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
-    #fff
-  );
+.ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left,
+.ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left-last {
+  z-index: 5;
+  background: var(--BG-header) !important;
 }
 
+.ujat-volunteer-doc-screening
+  .cms-data-table.clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row[style*='cursor: pointer']:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left,
+.ujat-volunteer-doc-screening
+  .cms-data-table.clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row[style*='cursor: pointer']:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left-last,
 .ujat-volunteer-doc-screening
   .clickable-table
   .ant-table-tbody
@@ -384,6 +396,8 @@
   > tr.ant-table-row:hover:not(.ant-table-row-selected)
   > td.ant-table-cell-fix-left-last {
   background: var(--ujat-doc-screening-row-hover-bg) !important;
+  background-color: var(--ujat-doc-screening-row-hover-bg) !important;
+  z-index: 4;
 }
 
 /* 서술형 1~4번 컬럼 헤더 리사이즈 */
@@ -522,6 +536,8 @@
   text-align: center;
   vertical-align: middle;
 }
+
+@import '../../../../../../shared/ui/program-application-list-toolbar.css';
 
 .ujat-volunteer-doc-screening__actions {
   display: flex;

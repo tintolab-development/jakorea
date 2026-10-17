@@ -1,3 +1,9 @@
+import type {
+  InstructorPortalEditableProfile,
+  InstructorRoleRequestProfile,
+  InstructorRoleRequestSettlement,
+} from '@/features/mypage/instructor-apply/api/types'
+
 /** 포털 회원 로그인 OpenAPI 최소 타입 (앱 경계 — CMS generated import 금지) */
 
 export type MemberLoginRequest = {
@@ -38,6 +44,7 @@ export type HomepageMeResponse = {
   /** `UNDER_14` | `OVER_14` */
   ageGroup?: string
   teacher?: boolean
+  instructor?: boolean
   identityVerified?: boolean
   lastLoginAt?: string
   registeredByAdmin?: boolean
@@ -82,6 +89,19 @@ export type UpdatePortalProfileRequest = {
   schoolEnrollmentStatus?: string | null
   teacherEmploymentStatus?: string | null
   external1365Id?: string | null
+  instructorProfile?: InstructorPortalProfileUpdate
+}
+
+/** PATCH — 강사 포탈 프로필 (editable profile + optional settlement) */
+export type InstructorPortalProfileUpdate = {
+  profile?: InstructorPortalEditableProfile
+  settlement?: InstructorRoleRequestSettlement
+}
+
+/** GET — 강사 포탈 프로필 응답 */
+export type InstructorPortalProfileResponse = {
+  profile?: InstructorRoleRequestProfile
+  settlement?: InstructorRoleRequestSettlement
 }
 
 /** GET /api/portal/me/profile — PortalTeacherOrganizationResponse */
@@ -134,6 +154,13 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
+  instructorProfile?: InstructorPortalProfileResponse
+  socialAccounts?: string[]
+  listMetrics?: {
+    settlementStatusLabel?: string
+    jaEvaluationGrade?: string
+    instructorFeeGradeLabel?: string
+  }
 }
 
 /** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityConfirmRequest` */
@@ -149,13 +176,17 @@ export type PhoneIdentityChangeResponse = {
   changedAt?: string
 }
 
+/** POST /api/portal/me/withdrawals — `confirmationText` 고정 확인 문구 (OpenAPI example·enum) */
+export const PORTAL_WITHDRAWAL_CONFIRMATION_TEXT = '회원탈퇴'
+
 /**
  * POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalRequest`
- * 본인 확인 SoT는 `currentPassword`만. `confirmationText`는 optional·서버 무시(보내지 않음).
+ * 본인 확인 SoT는 `currentPassword`. `confirmationText`는 서버 `@NotBlank` 검증(고정 문구 `회원탈퇴`).
  */
 export type PortalWithdrawalRequest = {
   currentPassword: string
   reason: string
+  confirmationText?: string
 }
 
 /** POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalResponse` */

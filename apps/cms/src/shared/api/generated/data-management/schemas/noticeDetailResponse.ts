@@ -26,4 +26,21 @@ export interface NoticeDetailResponse {
   readCount?: number;
   /** 반응 총합(모든 reactionType 합계). 반응이 없으면 0입니다. */
   reactionCount?: number;
+  /**
+     * 게시글 작성 actor 유형. MEMBER 또는 ADMIN 등입니다.
+     * @nullable
+     */
+  createdByActorType?: string | null;
+  /**
+     * 게시글 작성 actor ID. 탈퇴·삭제·미존재 actor면 null일 수 있습니다.
+     * @nullable
+     */
+  createdByActorId?: number | null;
+  /**
+     * 게시글 작성자 표시명. 탈퇴·삭제·미존재 actor면 null이며 FE가 안내로 대체할 수 있습니다.
+     * @nullable
+     */
+  createdByDisplayName?: string | null;
+  /** 현재 로그인 회원이 작성한 게시글이면 true입니다. */
+  mine?: boolean;
 }

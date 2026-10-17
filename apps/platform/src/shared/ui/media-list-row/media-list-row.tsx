@@ -1,4 +1,5 @@
 import type { KeyboardEvent, ReactNode } from 'react'
+import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
 import styles from './media-list-row.module.css'
 
 type MediaListRowProps = {
@@ -6,6 +7,8 @@ type MediaListRowProps = {
   content: ReactNode
   aside: ReactNode
   className?: string
+  thumbnailWrapClassName?: string
+  contentClassName?: string
   asideClassName?: string
   muted?: boolean
   interactive?: boolean
@@ -17,6 +20,8 @@ export function MediaListRow({
   content,
   aside,
   className,
+  thumbnailWrapClassName,
+  contentClassName,
   asideClassName,
   muted = false,
   interactive = false,
@@ -56,14 +61,24 @@ export function MediaListRow({
         className={[
           styles.thumbnailWrap,
           hasThumbnailImage ? styles.thumbnailWrapHasImage : styles.thumbnailWrapNoImage,
-        ].join(' ')}
+          thumbnailWrapClassName,
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {hasThumbnailImage ? (
           <img className={styles.thumbnail} src={thumbnailUrl} alt="" />
-        ) : null}
+        ) : (
+          <img
+            className={styles.thumbnailPlaceholderLogo}
+            src={jaLogoGrayCompactUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        )}
       </div>
 
-      <div className={styles.content}>{content}</div>
+      <div className={[styles.content, contentClassName].filter(Boolean).join(' ')}>{content}</div>
 
       <div className={[styles.aside, asideClassName].filter(Boolean).join(' ')}>{aside}</div>
     </div>

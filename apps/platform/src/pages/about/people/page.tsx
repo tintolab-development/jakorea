@@ -4,7 +4,7 @@ import {
   PEOPLE_HERO_TITLE,
   usePublicPeople,
 } from '@/features/people'
-import { PFButton, PFDivider, PFText } from '@/shared/ui'
+import { PFButton, PFDivider, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function PeoplePage() {
@@ -26,9 +26,7 @@ export function PeoplePage() {
         </header>
 
         {isPending ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-            함께하는 사람들 정보를 불러오는 중입니다.
-          </PFText>
+          <PFLoadingSpinner centered label="함께하는 사람들 정보를 불러오는 중" />
         ) : isError ? (
           <div className={styles.status}>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

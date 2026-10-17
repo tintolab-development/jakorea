@@ -336,8 +336,6 @@ export function Footer() {
       <TermsViewModal
         open={privacyNotice.isOpen}
         type={privacyNotice.openType ?? 'privacyNotice'}
-        actionLabel={privacyNotice.openType === 'serviceTerms' ? '닫기' : '확인'}
-        actionVariant={privacyNotice.openType === 'serviceTerms' ? 'outline' : 'primary'}
         onClose={privacyNotice.close}
       />
     </footer>

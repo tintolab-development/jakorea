@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  instructorApplicationListItemFixture,
+  organizationApplicationListItemFixture,
+  participantListItemFixture,
+} from '@/shared/test/openapi-dashboard-fixtures'
+import { asOpenApiFixture } from '@/shared/test/openapi-fixture-cast'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
+import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
+import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
+import {
   filterIndividualDoc1Rows,
   mapApiApplicationStatusToApprovalStatus,
   mapApiInterviewStatusToAssignmentStatus,
@@ -15,8 +25,8 @@ import {
   mapTextbookDeliveryStatusToBadge,
   mapTextbookStatusKeyToDeliveryStatus,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
+  mapOrganizationApplicationListSessionsToConfirmedSessions,
   mapOrganizationApplicationToApplicantSchoolRow,
-  softMergeOrganizationApplicationDetailOntoRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
@@ -31,8 +41,9 @@ import type { Program } from '@/types/domain'
 
 describe('general-applications-adapters', () => {
   it('maps requested grade onto the applicant grade cell', () => {
-    const row = softMergeOrganizationApplicationDetailOntoRow(
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
       {
+        id: 1691187,
         requestedGrade: '2',
         organizationAddressDetail: '3층 교무실',
         applicationReason: '금융 교육',
@@ -94,6 +105,165 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.educationType).toBe('오프라인')
   })
 
+  it('keeps detail teacherTel and teacherPhone in their separate canonical fields', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 103,
+        teacherTel: '02-1234-5678',
+        teacherPhone: '010-1111-2222',
+      },
+      {
+        id: '103',
+        no: 1,
+        schoolName: '학교',
+        region: '서울',
+        educationGrade: '1학년',
+        classCount: 1,
+        studentCount: 10,
+        teacherName: '교사',
+        approvalStatus: 'approved',
+        programId: '186101',
+      }
+    )
+
+    expect(row.detail?.teacherTel).toBe('02-1234-5678')
+    expect(row.detail?.teacherPhone).toBe('010-1111-2222')
+  })
+
+  it('keeps preferred hope sessions when detail dto.sessions has OSA or assigned rows', () => {
+    const preferred = [
+      { scheduleId: 180101, round: 1, startAt: '2026-10-10T01:00:00Z', endAt: '2026-10-10T03:00:00Z' },
+      { scheduleId: 180102, round: 2, startAt: '2026-10-11T01:00:00Z', endAt: '2026-10-11T03:00:00Z' },
+      { scheduleId: 180103, round: 3, startAt: '2026-10-12T01:00:00Z', endAt: '2026-10-12T03:00:00Z' },
+      { scheduleId: 180104, round: 4, startAt: '2026-10-13T01:00:00Z', endAt: '2026-10-13T03:00:00Z' },
+    ] as never[]
+    const base = {
+      id: '104',
+      no: 1,
+      schoolName: '학교',
+      region: '서울',
+      educationGrade: '1학년',
+      classCount: 1,
+      studentCount: 10,
+      teacherName: '교사',
+      approvalStatus: 'approved' as const,
+      programId: '186101',
+    }
+
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 104,
+        programType: 'GENERAL_ORGANIZATION',
+        sessions: [
+          {
+            scheduleId: 180001,
+            resolvedScheduleId: 180001,
+            sessionNo: 1,
+            scheduleName: 'OSA 배정',
+            startAt: '2026-10-15T01:00:00Z',
+            endAt: '2026-10-15T03:00:00Z',
+          },
+        ],
+        preferredEducationSchedules: preferred,
+      },
+      base
+    )
+
+    expect(row.sessions).toHaveLength(4)
+    expect(row.sessions?.map(s => s.resolvedScheduleId)).toEqual([180101, 180102, 180103, 180104])
+  })
+
+  it('isolates hope sessions per organization application (multi-institution)', () => {
+    const preferredA = [
+      { scheduleId: 1, round: 1, startAt: '2026-10-10T01:00:00Z', endAt: '2026-10-10T03:00:00Z' },
+      { scheduleId: 2, round: 2, startAt: '2026-10-11T01:00:00Z', endAt: '2026-10-11T03:00:00Z' },
+      { scheduleId: 3, round: 3, startAt: '2026-10-12T01:00:00Z', endAt: '2026-10-12T03:00:00Z' },
+      { scheduleId: 4, round: 4, startAt: '2026-10-13T01:00:00Z', endAt: '2026-10-13T03:00:00Z' },
+    ] as never[]
+    const preferredB = [
+      { scheduleId: 21, round: 1, startAt: '2026-10-20T01:00:00Z', endAt: '2026-10-20T03:00:00Z' },
+      { scheduleId: 22, round: 2, startAt: '2026-10-21T01:00:00Z', endAt: '2026-10-21T03:00:00Z' },
+    ] as never[]
+
+    const rowA = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1001,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '기관 A',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: preferredA,
+        sessions: [{ scheduleId: 999, roundNumber: 1, startAt: '2026-10-15T01:00:00Z' }],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186903'
+    )
+    const rowB = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1002,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '기관 B',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: preferredB,
+        sessions: [],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      1,
+      '186903'
+    )
+
+    expect(rowA.sessions).toHaveLength(4)
+    expect(rowB.sessions).toHaveLength(2)
+    expect(rowA.sessions?.[0]?.resolvedScheduleId).toBe(1)
+    expect(rowB.sessions?.[0]?.resolvedScheduleId).toBe(21)
+  })
+
+  it('does not restore omitted detail fields from the list row', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 102,
+        applicationStatus: 'APPROVED',
+      },
+      {
+        id: '102',
+        no: 1,
+        schoolName: '목록 기관명',
+        region: '목록 지역',
+        educationGrade: '3학년',
+        classCount: 2,
+        studentCount: 30,
+        teacherName: '목록 담당자',
+        contact: '목록 전화번호',
+        approvalStatus: 'approved',
+        programId: '186101',
+        sessions: [{ date: '2026-10-15', dayOfWeek: '목' } as never],
+        preferredEducationSchedules: [
+          {
+            preferenceRank: 1,
+            date: '2026-10-15',
+            dayOfWeek: '목',
+            sessionCount: 1,
+            sessionTimes: [],
+          } as never,
+        ],
+        detail: {
+          educationType: '온라인',
+          applicationReason: '기존 사유',
+          teacherPhone: '기존 전화번호',
+        },
+      }
+    )
+
+    expect(row.schoolName).toBe('-')
+    expect(row.region).toBe('-')
+    expect(row.educationGrade).toBe('-')
+    expect(row.teacherName).toBe('-')
+    expect(row.contact).toBeUndefined()
+    expect(row.sessions).toEqual([])
+    expect(row.preferredEducationSchedules).toEqual([])
+    expect(row.detail?.educationType).toBeUndefined()
+    expect(row.detail?.applicationReason).toBeUndefined()
+    expect(row.detail?.teacherPhone).toBeUndefined()
+  })
+
   it('maps company-school economy fields from organization list and detail GET', () => {
     const listRow = mapOrganizationApplicationToApplicantSchoolRow(
       {
@@ -133,7 +303,7 @@ describe('general-applications-adapters', () => {
   })
 
   it('does not show the program grade range when the application has no requested grade', () => {
-    const row = softMergeOrganizationApplicationDetailOntoRow(
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
       { requestedEducationFormat: 'HYBRID' },
       {
         id: '1',
@@ -148,7 +318,7 @@ describe('general-applications-adapters', () => {
         programId: '186010',
       }
     )
-    expect(row.educationGrade).toBe('')
+    expect(row.educationGrade).toBe('-')
     expect(row.detail?.educationType).toBe('온/오프라인')
   })
 
@@ -162,7 +332,7 @@ describe('general-applications-adapters', () => {
 
   it('maps organization application list item to applicant row', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
-      {
+      organizationApplicationListItemFixture({
         id: 101,
         organizationId: 8801,
         teacherMemberId: 9901,
@@ -174,7 +344,7 @@ describe('general-applications-adapters', () => {
         submittedAt: '2026-04-01T00:00:00Z',
         availableActions: ['VIEW'],
         sessions: [],
-      },
+      }),
       0,
       '5001'
     )
@@ -190,14 +360,14 @@ describe('general-applications-adapters', () => {
 
   it('maps organization resultNotificationSentAt and RESEND_NOTIFICATION', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
-      {
+      organizationApplicationListItemFixture({
         id: 1691123,
         organizationName: '승인학교',
         applicationStatus: 'APPROVED',
         resultNotificationSentAt: '2026-09-27T05:00:00Z',
         availableActions: ['VIEW', 'RESEND_NOTIFICATION', 'CANCEL_APPROVAL'],
         sessions: [],
-      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      }),
       0,
       '168001'
     )
@@ -271,8 +441,37 @@ describe('general-applications-adapters', () => {
     expect(row.preferredEducationSchedules).toHaveLength(2)
     expect(row.sessions).toHaveLength(2)
     expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+    expect(row.sessions?.[0]?.status).toBe('pending')
     expect(row.sessions?.[1]?.scheduleUnresolved).toBe(true)
     expect(row.sessions?.[1]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
+  })
+
+  it('maps materialized line:N preferred schedules with scheduleId and startAt', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691207,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '서울공항초',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: [
+          {
+            scheduleId: 902,
+            round: 1,
+            startAt: '2026-11-02T04:30:00Z',
+            endAt: '2026-11-02T07:00:00Z',
+            label: '26년 11월 2일(월) 13:30 ~ 16:00',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186084'
+    )
+
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(902)
+    expect(row.sessions?.[0]?.scheduleUnresolved).toBeUndefined()
+    expect(row.sessions?.[0]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
+    expect(row.sessions?.[0]?.timeRange).toContain('~')
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
@@ -425,12 +624,12 @@ describe('general-applications-adapters', () => {
   })
 
   it('maps saved affiliation fallback for individual, instructor, and volunteer participants', () => {
-    const dto = {
+    const dto = participantListItemFixture({
       participantId: 1691500,
       memberName: '기존 회원',
       organizationId: 8801,
       organizationName: '기존 소속 기관',
-    }
+    })
 
     const individual = mapParticipantToParticipatingIndividualRow(dto, 0, '168001')
     const instructor = mapParticipantToParticipatingInstructorRow(dto, 0, '168001')
@@ -466,7 +665,7 @@ describe('general-applications-adapters', () => {
             attendanceStatus: 'COMPLETED',
           },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168001'
     )
@@ -499,7 +698,7 @@ describe('general-applications-adapters', () => {
             endAt: '2026-10-15T23:59:00+09:00',
           },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '186089'
     )
@@ -518,7 +717,7 @@ describe('general-applications-adapters', () => {
           { scheduleId: 702, sessionNo: 2, attendanceStatus: 'LATE' },
           { scheduleId: 703, sessionNo: 3, attendanceStatus: 'EXCUSED' },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168001'
     )
@@ -556,12 +755,22 @@ describe('general-applications-adapters', () => {
 
   it('maps list birthDate and gender into detail for certificate issuance', () => {
     const withProfile = mapParticipantToParticipatingIndividualRow(
-      { participantId: 1694731, memberName: '이건희일반', birthDate: '1994-07-29', gender: 'MALE' },
+      participantListItemFixture({
+        participantId: 1694731,
+        memberName: '이건희일반',
+        birthDate: '1994-07-29',
+        gender: 'MALE',
+      }),
       0,
       '186046'
     )
     const legacyGender = mapParticipantToParticipatingIndividualRow(
-      { participantId: 1694732, memberName: '레거시', birthDate: null, gender: 'X' },
+      participantListItemFixture({
+        participantId: 1694732,
+        memberName: '레거시',
+        birthDate: null,
+        gender: 'X',
+      }),
       1,
       '186046'
     )
@@ -619,7 +828,7 @@ describe('general-applications-adapters', () => {
             attendanceStatus: 'COMPLETED',
           },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168001'
     )
@@ -654,7 +863,7 @@ describe('general-applications-adapters', () => {
         settlementStatus: 'awaiting_confirmation',
         assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
         lectureReportSubmitted: true,
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168006'
     )
@@ -697,7 +906,7 @@ describe('general-applications-adapters', () => {
         participantId: 1691502,
         memberName: '박강사',
         sourceApplicationId: 77001,
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168006'
     )
@@ -714,7 +923,7 @@ describe('general-applications-adapters', () => {
           { scheduleId: 501, sessionNo: 1, scheduleName: '1차 교육', startAt: '2026-05-01T09:00:00' },
           { scheduleId: 502, sessionNo: 2, scheduleName: '2차 교육', startAt: '2026-05-08T09:00:00' },
         ],
-      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
       0,
       '168006'
     )
@@ -743,7 +952,7 @@ describe('general-applications-adapters', () => {
 
   it('maps instructor application list item to applicant row', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 77,
         instructorMemberId: 9001,
         affiliationOrganizationId: 8801,
@@ -754,7 +963,9 @@ describe('general-applications-adapters', () => {
         submittedAt: '2026-04-02T00:00:00Z',
         rejectReason: '서류 미비',
         preferredOrganizations: [],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '5001'
     )
@@ -771,7 +982,7 @@ describe('general-applications-adapters', () => {
 
   it('maps instructor preferredOrganizations to preferredSchools for calendar', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 88,
         programId: 5001,
         instructorName: '김강사',
@@ -784,7 +995,9 @@ describe('general-applications-adapters', () => {
             dateRangeLabel: '2026.06.01(월) ~ 2026.06.02(화)',
           },
         ],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '5001'
     )
@@ -796,14 +1009,16 @@ describe('general-applications-adapters', () => {
 
   it('fills affiliation and settlement from instructorCmsProfile and settlement on detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 1,
         instructorMemberId: 9001,
         programId: 186081,
         instructorName: '이강사',
         applicationStatus: 'SUBMITTED',
         preferredOrganizations: [],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '186081'
     )
@@ -832,14 +1047,16 @@ describe('general-applications-adapters', () => {
 
   it('merges instructorCmsProfile resume onto instructor application detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      instructorApplicationListItemFixture({
         id: 1694639,
         instructorMemberId: 190001,
         programId: 186048,
         instructorName: '이건희',
         applicationStatus: 'SUBMITTED',
         preferredOrganizations: [],
-      },
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
       0,
       '186048'
     )
@@ -861,7 +1078,10 @@ describe('general-applications-adapters', () => {
     }
 
     const row = mapInstructorApplicationDetailToApplicantRow(
-      { id: 1694639, instructorCmsProfile },
+      asOpenApiFixture<InstructorApplicationDetailResponse>({
+        id: 1694639,
+        instructorCmsProfile,
+      }),
       { ...base, freeWriting2: '기존 작성' }
     )
 
@@ -875,18 +1095,20 @@ describe('general-applications-adapters', () => {
 
   it('keeps base resume when instructorCmsProfile is absent', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      {
+      asOpenApiFixture<InstructorApplicationListItemResponse>({
         id: 1,
         programId: 1,
         instructorName: '강사',
         applicationStatus: 'SUBMITTED',
         preferredOrganizations: [],
-      },
+        availableScheduleIds: [],
+        availableActions: [],
+      }),
       0,
       '1'
     )
     const row = mapInstructorApplicationDetailToApplicantRow(
-      { id: 1 },
+      asOpenApiFixture<InstructorApplicationDetailResponse>({ id: 1 }),
       { ...base, freeWriting1: '기존' }
     )
     expect(row.freeWriting1).toBe('기존')
@@ -894,7 +1116,7 @@ describe('general-applications-adapters', () => {
 
   it('maps volunteer application list item to screening row', () => {
     const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
-      {
+      asOpenApiFixture<VolunteerApplicationListItemResponse>({
         id: 55,
         programId: 5001,
         affiliationOrganizationId: undefined,
@@ -910,7 +1132,7 @@ describe('general-applications-adapters', () => {
         canEditManagerAEvaluation: true,
         canEditManagerBEvaluation: false,
         availableActions: ['VIEW', 'UPDATE_DOCUMENT_EVALUATION'],
-      },
+      }),
       0,
       '5001'
     )
@@ -992,7 +1214,7 @@ describe('general-applications-adapters', () => {
 
   it('maps individual application list item with screening fields', () => {
     const row = mapIndividualApplicationToApplicantRow(
-      {
+      asOpenApiFixture<IndividualApplicationListItemEnriched>({
         id: 55,
         programId: 5001,
         affiliationOrganizationId: 8802,
@@ -1037,7 +1259,7 @@ describe('general-applications-adapters', () => {
             endAt: '2026-09-20T02:00:00Z',
           },
         ],
-      },
+      }),
       0,
       '5001'
     )
@@ -1081,7 +1303,7 @@ describe('general-applications-adapters', () => {
 
   it('shows line schedule labels and keeps them after operational schedules', () => {
     const row = mapIndividualApplicationToApplicantRow(
-      {
+      asOpenApiFixture<IndividualApplicationListItemEnriched>({
         id: 56,
         programId: 186021,
         memberName: '이참여자',
@@ -1096,7 +1318,7 @@ describe('general-applications-adapters', () => {
           { label: '26년 10월 13일(화) 10:00 ~ 12:00' },
         ],
         applicationStatus: 'WAITING_REVIEW',
-      },
+      }),
       0,
       '186021'
     )
@@ -1364,5 +1586,72 @@ describe('general-program-service-detail-json', () => {
     expect(parsed.generalProgramEducationStructure).toBe('curriculum')
     expect(parsed.generalProgramSessionRound).toBe('single')
     expect(parsed.generalProgramAudience).toBe('organization')
+  })
+})
+
+describe('mapOrganizationApplicationListSessionsToConfirmedSessions', () => {
+  it('maps CONFIRMED list sessions with scheduleId and startAt', () => {
+    const sessions = mapOrganizationApplicationListSessionsToConfirmedSessions([
+      {
+        scheduleId: 42,
+        roundNumber: 2,
+        startAt: '2026-01-07T09:20:00+09:00',
+        status: 'CONFIRMED',
+      },
+      {
+        scheduleId: 43,
+        startAt: '2026-01-08T10:00:00+09:00',
+        status: 'CANCELLED',
+      },
+    ])
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]?.resolvedScheduleId).toBe(42)
+    expect(sessions[0]?.round).toBe(2)
+    expect(sessions[0]?.date).toMatch(/2026\.01\.07/)
+  })
+
+  it('sets confirmedListAssignmentSessions on organization list rows', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1,
+        organizationName: '동탄초등학교',
+        regionSido: '경기도',
+        regionSigungu: '화성시',
+        sessions: [
+          {
+            scheduleId: 10,
+            roundNumber: 1,
+            startAt: '2026-01-07T09:00:00+09:00',
+            status: 'TEMP_ASSIGNED',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      'prog-1'
+    )
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(10)
+  })
+
+  it('maps list sessions with assignmentStatus (no status field) to confirmed sessions', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 2,
+        organizationName: '부명초등학교',
+        sessions: [
+          {
+            scheduleId: 186907,
+            sessionNo: 5,
+            startAt: '2026-11-12T15:00:00Z',
+            assignmentStatus: 'TEMP_ASSIGNED',
+          },
+        ],
+      } as unknown as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      'prog-1'
+    )
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(186907)
+    expect(row.confirmedListAssignmentSessions?.[0]?.round).toBe(5)
   })
 })

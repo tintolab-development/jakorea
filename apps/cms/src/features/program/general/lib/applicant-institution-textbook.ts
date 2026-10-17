@@ -17,20 +17,14 @@ export const APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL = '해당 없음'
 
 /**
  * 기관 신청·참여 기관 교재 셀렉 — 개인과 동일:
- * matches(사업분야+학년) ∩ materials, 라벨 `교재명 educationTarget`, 맨 앞 「해당 없음」.
+ * matches(사업분야+학년), 라벨 `교재명 educationTarget`, 맨 앞 「해당 없음」.
  */
 export function buildApplicantInstitutionTextbookOptions(
   program: Program | null | undefined,
   educationGrade: string | undefined,
-  catalog?: TextbookRow[],
-  programMaterialTextbookIds?: ReadonlySet<string> | null
+  catalog?: TextbookRow[]
 ): TextbookSelectOption[] {
-  return buildIndividualApplicantTextbookOptions(
-    program,
-    educationGrade?.trim() ?? '',
-    catalog,
-    programMaterialTextbookIds
-  )
+  return buildIndividualApplicantTextbookOptions(program, educationGrade?.trim() ?? '', catalog)
 }
 
 /** CMS 기관 신청·참여 상세 — 교재명 educationTarget 표시. 예: 성공하는 경제생활 초등학교 */
@@ -69,7 +63,12 @@ export function resolveApplicantInstitutionTextbookDisplayLabel(params: {
     return resolveIndividualTextbookOptionLabel(matched)
   }
 
-  if (program && grade && textbookName && textbookName !== APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL) {
+  if (
+    program &&
+    grade &&
+    textbookName &&
+    textbookName !== APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL
+  ) {
     const filtered = filterTextbooksForIndividualApplicant(program, grade, catalog)
     const fromFilter =
       (textbookId ? filtered.find(row => row.id === textbookId) : undefined) ??

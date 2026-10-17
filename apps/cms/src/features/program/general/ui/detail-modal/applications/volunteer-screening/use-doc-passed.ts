@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { buildGeneralVolunteerDocPassedListQuery } from '@/features/program/general/api/volunteer-list-query'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { toNestedDecisionNotification } from '@/features/program/general/lib/application-decision-notify-timing'
+import type { VolunteerDocumentCancelRejectionConfirmPayload } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
@@ -15,7 +21,10 @@ import {
   type GeneralVolunteerDocPassedFilters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
-import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import {
+  assignGeneralIndividualInterview,
+  assignGeneralVolunteerInterview,
+} from '@/features/program/general/api/admin-applications-service'
 import { toInterviewAssignNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -27,7 +36,7 @@ import {
   guardGeneralVolunteerAssignInterview,
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
-import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import type { ApplicationGiveUpReasonModalPayload } from '@/features/program/shared/ui/application-give-up-reason-modal'
 import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
 import { useGeneralVolunteerDocPassedColumns } from './doc-passed-columns'
 import {
@@ -35,6 +44,7 @@ import {
   mergeAssignedInterviewIntoAvailability,
 } from '@/features/program/general/lib/interview-availability-utils'
 import { mapGeneralVolunteerInterviewAvailabilityToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
+import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
 
 export type GeneralVolunteerDocPassedViewMode = 'list' | 'calendar'
 
@@ -62,6 +72,7 @@ export function useGeneralVolunteerDocPassed({
   subjectKind?: ScreeningSubjectKind
 }) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const remoteEnabled = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
@@ -69,21 +80,28 @@ export function useGeneralVolunteerDocPassed({
     '프로그램 신청 · 봉사자 1차 서류 합격자'
   )
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => [])
+  const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
+    ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
+  }))
+  const listQuery = useMemo(
+    () => buildGeneralVolunteerDocPassedListQuery(appliedFilters),
+    [appliedFilters]
+  )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'docPassed',
     subjectKind,
     enabled: true,
+    listQuery: subjectKind === 'volunteer' ? listQuery : undefined,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   }))
-  const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
-    ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
-  }))
   const [viewMode, setViewMode] = useState<GeneralVolunteerDocPassedViewMode>('list')
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
+  const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
+  const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
   const [assignFlow, setAssignFlow] = useState<GeneralInterviewAssignFlow | null>(null)
   const assignFlowRef = useRef(assignFlow)
   assignFlowRef.current = assignFlow
@@ -105,12 +123,15 @@ export function useGeneralVolunteerDocPassed({
   }, [pendingFilters])
 
   const tableData = useMemo(() => {
-    const filtered = filterGeneralDocPassedApplicants(list, appliedFilters)
+    const filtered =
+      volunteerRemote.remoteEnabled && subjectKind === 'volunteer'
+        ? list
+        : filterGeneralDocPassedApplicants(list, appliedFilters)
     if (subjectKind === 'participant') {
       return sortGeneralParticipantDocPassedVolunteerRows(filtered)
     }
     return sortGeneralVolunteerDocPassedApplicants(filtered)
-  }, [appliedFilters, list, subjectKind])
+  }, [appliedFilters, list, subjectKind, volunteerRemote.remoteEnabled])
 
   const calendarEvents = useMemo(
     () => mapGeneralVolunteerInterviewAvailabilityToCalendarEvents(tableData),
@@ -158,53 +179,71 @@ export function useGeneralVolunteerDocPassed({
         })
         return
       }
+      let interviewAssignmentId: number | undefined
       try {
         const assignNotify = toInterviewAssignNotifyFields(
           payload.notifyTiming,
           payload.manualNotifyAt
         )
         if (subjectKind === 'participant') {
-          await assignGeneralIndividualInterview({
+          const assignment = await assignGeneralIndividualInterview({
             programId,
             applicationId: target.id,
             ...slotTimes,
             ...assignNotify,
           })
+          interviewAssignmentId = assignment.interviewAssignmentId
         } else {
-          await assignGeneralVolunteerInterview({
+          const assignment = await assignGeneralVolunteerInterview({
             programId,
             applicationId: target.id,
             ...slotTimes,
             ...assignNotify,
           })
+          interviewAssignmentId = assignment.interviewAssignmentId
         }
+        if (interviewAssignmentId == null) {
+          showAlert({
+            title: '면접 배정 실패',
+            content: '면접 배정 ID를 확인할 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        const interviewAvailability = mergeAssignedInterviewIntoAvailability({
+          ...target,
+          interviewAssignmentStatus: 'assigned',
+          assignedInterviewDateLabel: payload.dateLabel,
+          assignedInterviewTime: payload.timeRange,
+        })
+
+        updateRow(target.id, {
+          interviewAssignmentStatus: 'assigned',
+          interviewAssignmentId,
+          assignedInterviewDateLabel: payload.dateLabel,
+          assignedInterviewTime: payload.timeRange,
+          secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+          interviewAvailability,
+          interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
+        })
+
+        await queryClient.invalidateQueries({
+          queryKey:
+            subjectKind === 'participant'
+              ? generalApplicationsQueryKeys.individualDetail(target.id)
+              : generalApplicationsQueryKeys.volunteerDetail(target.id),
+        })
         await volunteerRemote.invalidateVolunteerApplications?.()
       } catch (error) {
         console.debug('interview assign remote failed', error)
+        const scheduleError = getNotificationScheduleError(error)
         showAlert({
           title: '면접 배정 실패',
-          content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          content:
+            scheduleError?.message ?? '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
         })
         return
       }
 
-      const assignedApplicant: GeneralVolunteerApplicantRow = {
-        ...target,
-        interviewAssignmentStatus: 'assigned',
-        assignedInterviewDateLabel: payload.dateLabel,
-        assignedInterviewTime: payload.timeRange,
-        secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
-      }
-      const interviewAvailability = mergeAssignedInterviewIntoAvailability(assignedApplicant)
-
-      updateRow(target.id, {
-        interviewAssignmentStatus: 'assigned',
-        assignedInterviewDateLabel: payload.dateLabel,
-        assignedInterviewTime: payload.timeRange,
-        secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
-        interviewAvailability,
-        interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
-      })
       setAssignFlow({
         type: 'complete',
         applicantName: target.name,
@@ -212,7 +251,7 @@ export function useGeneralVolunteerDocPassed({
         payload,
       })
     },
-    [programId, showAlert, subjectKind, updateRow, volunteerRemote]
+    [programId, queryClient, showAlert, subjectKind, updateRow, volunteerRemote]
   )
 
   const closeAssignCompleteModal = useCallback(() => {
@@ -229,7 +268,7 @@ export function useGeneralVolunteerDocPassed({
   }, [])
 
   const confirmWithdrawActivity = useCallback(
-    async (payload: ActivityWithdrawScheduleModalPayload) => {
+    async (payload: ApplicationGiveUpReasonModalPayload) => {
       if (!withdrawTargetId) return
       const row = list.find(item => item.id === withdrawTargetId)
       if (!row) {
@@ -241,10 +280,7 @@ export function useGeneralVolunteerDocPassed({
         setWithdrawTargetId(null)
         return
       }
-      const handled = await volunteerRemote.applyRemoteGiveUp?.(
-        withdrawTargetId,
-        payload.stopScheduleLabel
-      )
+      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, payload.reason)
       setWithdrawTargetId(null)
       if (!handled) return
       showAlert({
@@ -258,6 +294,103 @@ export function useGeneralVolunteerDocPassed({
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
     [list, withdrawTargetId]
+  )
+
+  const cancelApprovalVolunteer = useMemo(
+    () =>
+      cancelApprovalTargetId ? (list.find(row => row.id === cancelApprovalTargetId) ?? null) : null,
+    [cancelApprovalTargetId, list]
+  )
+
+  const cancelRejectVolunteer = useMemo(
+    () =>
+      cancelRejectTargetId ? (list.find(row => row.id === cancelRejectTargetId) ?? null) : null,
+    [cancelRejectTargetId, list]
+  )
+
+  const applyDocumentScreeningCancelApproval = useCallback(
+    async (
+      id: string,
+      reason: string,
+      notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
+    ) => {
+      if (volunteerRemote.remoteEnabled) {
+        return volunteerRemote.applyRemoteDocumentCancelApproval(id, reason, notification)
+      }
+      notifyProgramApiUnavailable(
+        'general-volunteer-document-cancel-approval',
+        '봉사자 서류 승인 취소'
+      )
+      return false
+    },
+    [volunteerRemote]
+  )
+
+  const applyDocumentScreeningCancelRejection = useCallback(
+    async (
+      id: string,
+      reason: string,
+      notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
+    ) => {
+      if (volunteerRemote.remoteEnabled) {
+        return volunteerRemote.applyRemoteDocumentCancelRejection(id, reason, notification)
+      }
+      notifyProgramApiUnavailable(
+        'general-volunteer-document-cancel-rejection',
+        '봉사자 서류 반려 취소'
+      )
+      return false
+    },
+    [volunteerRemote]
+  )
+
+  const openCancelApprovalModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setCancelApprovalTargetId(applicant.id)
+  }, [])
+
+  const openCancelRejectModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setCancelRejectTargetId(applicant.id)
+  }, [])
+
+  const closeCancelApprovalModal = useCallback(() => {
+    setCancelApprovalTargetId(null)
+  }, [])
+
+  const closeCancelRejectModal = useCallback(() => {
+    setCancelRejectTargetId(null)
+  }, [])
+
+  const handleCancelApprovalConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!cancelApprovalVolunteer) return
+      const ok = await applyDocumentScreeningCancelApproval(
+        cancelApprovalVolunteer.id,
+        payload.reason,
+        toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification
+      )
+      if (!ok) return
+      setCancelApprovalTargetId(null)
+    },
+    [applyDocumentScreeningCancelApproval, cancelApprovalVolunteer]
+  )
+
+  const handleCancelRejectConfirm = useCallback(
+    async (payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
+      if (!cancelRejectVolunteer) return
+      const reason = payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+      const notification =
+        payload.variant === 'alreadySent'
+          ? toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification
+          : undefined
+      const ok = await applyDocumentScreeningCancelRejection(
+        cancelRejectVolunteer.id,
+        reason,
+        notification
+      )
+      if (!ok) return
+      setCancelRejectTargetId(null)
+    },
+    [applyDocumentScreeningCancelRejection, cancelRejectVolunteer]
   )
 
   const columns = useGeneralVolunteerDocPassedColumns({
@@ -280,7 +413,10 @@ export function useGeneralVolunteerDocPassed({
     handleSearch,
     tableData,
     columns,
-    count: tableData.length,
+    count:
+      volunteerRemote.remoteEnabled && volunteerRemote.listTotalElements != null
+        ? volunteerRemote.listTotalElements
+        : tableData.length,
     handleAssignInterview,
     assignFlow,
     closeAssignModal,
@@ -290,6 +426,14 @@ export function useGeneralVolunteerDocPassed({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    cancelApprovalVolunteer,
+    cancelRejectVolunteer,
+    closeCancelApprovalModal,
+    closeCancelRejectModal,
+    openCancelApprovalModal,
+    openCancelRejectModal,
+    handleCancelApprovalConfirm,
+    handleCancelRejectConfirm,
     viewMode,
     handleViewCalendar,
     handleViewList,

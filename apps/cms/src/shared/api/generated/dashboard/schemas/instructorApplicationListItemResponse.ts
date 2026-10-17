@@ -31,15 +31,17 @@ export interface InstructorApplicationListItemResponse {
   instructorFeeGradeSnapshot?: string;
   distanceKm?: number;
   longDistance?: boolean;
+  programDispatchCount?: number;
+  programLongDistanceDispatchCount?: number;
   instructorProfileStatus?: string;
   primaryActivityType?: string;
   availableScheduleIds?: number[];
   availableScheduleMemo?: string;
+  /** 캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 []. */
+  preferredOrganizations?: InstructorPreferredOrganizationResponse[];
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
   rejectReason?: string;
   availableActions?: string[];
-  /** 희망 배정 기관·일정 요약(캘린더·목록). 없으면 빈 배열. */
-  preferredOrganizations: InstructorPreferredOrganizationResponse[];
 }

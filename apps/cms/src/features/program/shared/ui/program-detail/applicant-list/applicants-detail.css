@@ -127,6 +127,11 @@
 
 .applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--center .applicant-details__sessions-cell {
   align-items: center;
+  text-align: center;
+}
+
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--center .applicant-details__session-line {
+  justify-content: center;
 }
 
 .applicant-details__sessions-cell {

@@ -61,10 +61,12 @@ import {
   type InstructorApplicationApprovalRequest,
   type InstructorApplicationDecisionWithReasonRequest,
   type InstructorApplicationNotificationRequest,
+  type OrganizationApplicationApprovePayload,
   type OrganizationDecisionNotifyRequest,
   type ScreeningResultNotifyFields,
   type InterviewAssignmentEvaluationPayload,
 } from '@/features/program/general/api/applications-api-client'
+import { toInterviewAssignmentNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
   sortGeneralVolunteerByInterviewSlotCount,
@@ -90,6 +92,7 @@ export interface GeneralApplicationsListPage<Row> {
   page: number
   size: number
   totalElements: number
+  totalPages?: number
   hasMore: boolean
 }
 
@@ -106,11 +109,12 @@ function resolveApplicationsListPage<Row>(
   const page = response.page ?? requestedPage
   const size = response.size ?? GENERAL_PROGRAM_DETAIL_PAGE_SIZE
   const totalElements = response.totalElements ?? page * size + rows.length
+  const totalPages = response.totalPages
   const hasMore =
-    response.totalPages != null
-      ? page + 1 < response.totalPages
+    totalPages != null
+      ? page + 1 < totalPages
       : (page + 1) * size < totalElements || rows.length === size
-  return { rows, page, size, totalElements, hasMore }
+  return { rows, page, size, totalElements, totalPages, hasMore }
 }
 
 function toBulkNumericApplicationIds(ids: string[]): number[] | null {
@@ -326,16 +330,16 @@ export async function fetchGeneralVolunteerScreeningApplicationsPage(
   })
   const rows =
     stage === 'docPassed'
-      ? sortGeneralVolunteerDocPassedApplicants(filterVolunteerDocPassedRows(page.rows))
+      ? sortGeneralVolunteerDocPassedApplicants(page.rows)
       : stage === 'interview2'
-        ? sortGeneralVolunteerInterview2Applicants(filterVolunteerInterview2Rows(page.rows))
-        : sortGeneralVolunteerByInterviewSlotCount(filterVolunteerDoc1Rows(page.rows))
+        ? sortGeneralVolunteerInterview2Applicants(page.rows)
+        : sortGeneralVolunteerByInterviewSlotCount(page.rows)
   return { ...page, rows }
 }
 
 export async function approveGeneralOrganizationApplication(
   applicationId: string,
-  payload?: OrganizationDecisionNotifyRequest
+  payload?: OrganizationApplicationApprovePayload
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await approveOrganizationApplicationRemote(applicationId, payload)
@@ -495,12 +499,15 @@ export async function rejectGeneralIndividualApplication(
 
 export async function cancelGeneralIndividualApplicationRejection(
   applicationId: string,
-  reason: string
-): Promise<void> {
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
+): Promise<ApplicationDecisionResponse> {
   assertApplicationsRemoteReady()
-  await cancelIndividualApplicationRejectionRemote(applicationId, {
+  const payload: ApplicationDecisionCancelRequestWithNotification = {
     reason: reason.trim() || '반려 취소',
-  })
+    ...(notification ? { notification } : {}),
+  }
+  return cancelIndividualApplicationRejectionRemote(applicationId, payload)
 }
 
 export async function cancelGeneralIndividualApplicationApproval(
@@ -652,12 +659,12 @@ export async function submitGeneralIndividualFinalResult(
 
 export async function giveUpGeneralVolunteerApplication(
   applicationId: string,
-  reason: string
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
-  const trimmed = reason.trim()
+  const trimmed = payload.reason.trim()
   await giveUpVolunteerApplicationRemote(applicationId, {
-    reason: trimmed.length >= 2 ? trimmed : '활동 포기',
+    reason: trimmed,
   })
 }
 
@@ -722,11 +729,14 @@ export async function assignGeneralVolunteerInterview(params: {
 
   const interviewSlotId = await resolveInterviewSlotId(params)
 
+  const notifyFields = toInterviewAssignmentNotifyFields({
+    notifyTiming: params.notifyTiming,
+    scheduledAt: params.scheduledAt,
+  })
   const assignment = await createInterviewAssignmentRemote({
     volunteerApplicationId,
     interviewSlotId,
-    ...(params.notifyTiming ? { notifyTiming: params.notifyTiming } : {}),
-    ...(params.scheduledAt ? { scheduledAt: params.scheduledAt } : {}),
+    ...notifyFields,
   })
 
   return {
@@ -758,11 +768,14 @@ export async function assignGeneralIndividualInterview(params: {
 
   const interviewSlotId = await resolveInterviewSlotId(params)
 
+  const notifyFields = toInterviewAssignmentNotifyFields({
+    notifyTiming: params.notifyTiming,
+    scheduledAt: params.scheduledAt,
+  })
   const assignment = await createInterviewAssignmentRemote({
     individualApplicationId,
     interviewSlotId,
-    ...(params.notifyTiming ? { notifyTiming: params.notifyTiming } : {}),
-    ...(params.scheduledAt ? { scheduledAt: params.scheduledAt } : {}),
+    ...notifyFields,
   })
 
   return {

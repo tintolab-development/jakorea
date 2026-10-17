@@ -26,8 +26,8 @@ import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
 import { resolveGeneralRegistrationKpiFieldAvailability } from '@/features/program/general/lib/participant-audience-selection'
 import {
+  shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodMode,
-  shouldLockEducationScheduleCalendarToggles,
 } from '@/features/program/general/lib/schedule-detail-form'
 
 export type ProgramRegistrationType = 'curriculum' | 'schedule'
@@ -218,6 +218,7 @@ export function renderProgramRegistrationParagraphBody(
               onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
               ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
               sessionRoundType={options.sessionRoundType}
+              participantIndividual={options.participant.individual}
               participantOrganization={options.participant.organization}
               educationFormScheduleDetail={options.educationFormScheduleDetail}
               participationScheduleDetail={options.participationScheduleDetail}
@@ -246,6 +247,7 @@ export function renderProgramRegistrationParagraphBody(
           onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
           ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
           sessionRoundType={options.sessionRoundType}
+          participantIndividual={options.participant.individual}
           participantOrganization={options.participant.organization}
           educationFormScheduleDetail={options.educationFormScheduleDetail}
           participationScheduleDetail={options.participationScheduleDetail}
@@ -256,6 +258,7 @@ export function renderProgramRegistrationParagraphBody(
         <ProgramRegistrationEducationCurriculumParagraph
           key={`pr-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.participationScheduleDetail}-${options.ipsScheduleDetail}-${options.participant.organization ? 'org' : 'ind'}`}
           sessionRoundType={options.sessionRoundType}
+          participantIndividual={options.participant.individual}
           participantOrganization={options.participant.organization}
           curriculumSessionCount={options.curriculumSessionCount}
           onDeleteCurriculumSession={options.onDeleteCurriculumSession}
@@ -278,19 +281,17 @@ export function renderProgramRegistrationParagraphBody(
           <ProgramRegistrationEducationScheduleSettingsParagraph
             educationScheduleMode={options.educationScheduleMode}
             onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-            autoFillFromScheduleGroupTimes={
-              options.programType === 'schedule' &&
-              options.sessionRoundType === 'single' &&
-              !options.participant.organization
-            }
+            autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+              educationStructure: options.programType,
+              sessionRound: options.sessionRoundType,
+            })}
             disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
               participantOrganization: options.participant.organization,
               sessionRound: options.sessionRoundType,
             })}
-            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
-              participantOrganization: options.participant.organization,
-              educationStructure: options.programType,
-            })}
+            programType={options.programType}
+            sessionRound={options.sessionRoundType}
+            participantOrganization={options.participant.organization}
           />
         )
       }

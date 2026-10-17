@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
-import { getMypageLnbItems } from './lnb-config'
-import type { PlatformMemberProfile } from '../model/types'
+import { getMypageLnbItems } from './lnb-config.ts'
+import type { PlatformMemberProfile } from '../model/types.ts'
 
 function keysOf(profile: PlatformMemberProfile) {
   return getMypageLnbItems(profile).map(item => item.key)

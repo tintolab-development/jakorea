@@ -1,5 +1,5 @@
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
-import { FORM_TEMPLATE_SMOKE_DRAFT } from '@/features/form-template/mock-smoke-draft'
+import { FORM_TEMPLATE_SMOKE_DRAFT } from '@/features/form-template/form-template-smoke-draft'
 import { PFText } from '@/shared/ui'
 import styles from './form-template-smoke-demo.module.css'
 

@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { resolveUjatEducationScheduleSettingsSemesterDisplay } from './ujat-education-schedule-settings-display'
+import {
+  formatUjatEventRangeLabel,
+  resolveUjatEducationScheduleSettingsSemesterDisplay,
+} from './ujat-education-schedule-settings-display'
 import { ujatHalfScheduleOverlayKeys } from './ujat-half-education-schedule-types'
 import { ujatEducationScheduleSettingsOverlayKeys } from './ujat-education-schedule-settings-types'
+
+describe('formatUjatEventRangeLabel', () => {
+  it('기간 시작·종료 모두 한글 요일·2자리 연도로 표기한다', () => {
+    const text = formatUjatEventRangeLabel({
+      start: '2026-11-20T00:00:00.000Z',
+      end: '2026-12-11T00:00:00.000Z',
+    })
+    expect(text).not.toMatch(/\(Mon|Tue|Wed|Thu|Fri|Sat|Sun\)/)
+    expect(text).toMatch(/26년 11월 20일\(금\) ~ 26년 12월 11일\(금\)/)
+  })
+})
 
 describe('resolveUjatEducationScheduleSettingsSemesterDisplay', () => {
   it('신규 등록 폼(overlay 비어 있음)에서는 목업 기본값이 노출되지 않는다 (버그 수정 확인)', () => {

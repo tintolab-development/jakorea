@@ -37,10 +37,9 @@ describe('buildCombinedClassTextbookSelectOptions', () => {
     })
   })
 
-  it('program materials로 교재를 교집합한다', () => {
-    const options = buildCombinedClassTextbookSelectOptions(program, catalog, new Set(['999']))
-    expect(options).toHaveLength(1)
-    expect(options[0].value).toBe(TEXTBOOK_NOT_USED_OPTION_VALUE)
+  it('program materials 후보와 무관하게 합반용 카탈로그를 노출한다', () => {
+    const options = buildCombinedClassTextbookSelectOptions(program, catalog)
+    expect(options.map(option => option.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '101'])
   })
 })
 
@@ -52,10 +51,7 @@ describe('buildParticipatingInstitutionTextbookSelectOptions', () => {
       gradeCatalog: [],
       programCatalog: catalog,
     })
-    expect(options.map(option => option.value)).toEqual([
-      TEXTBOOK_NOT_USED_OPTION_VALUE,
-      '101',
-    ])
+    expect(options.map(option => option.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '101'])
   })
 
   it('학년 matches가 있으면 해당 학년 교재만 쓴다', () => {
@@ -73,10 +69,7 @@ describe('buildParticipatingInstitutionTextbookSelectOptions', () => {
       gradeCatalog,
       programCatalog: catalog,
     })
-    expect(options.map(option => option.value)).toEqual([
-      TEXTBOOK_NOT_USED_OPTION_VALUE,
-      '201',
-    ])
+    expect(options.map(option => option.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '201'])
   })
 
   it('배정 교재가 학년 matches와 안 맞으면 전학년 교재를 유지한다', () => {
@@ -101,36 +94,27 @@ describe('buildParticipatingInstitutionTextbookSelectOptions', () => {
       educationGrade: '3학년',
       gradeCatalog: [allGrades],
       programCatalog: [allGrades],
-      programMaterialTextbookIds: new Set(['186980']),
     })
-    expect(options.map(option => option.value)).toEqual([
-      TEXTBOOK_NOT_USED_OPTION_VALUE,
-      '186981',
-    ])
+    expect(options.map(option => option.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '186981'])
     expect(options[1]?.label).toBe('경제금융(중학교재) 중학교')
   })
 
-  it('배정 교재가 matches에 있으면 그 교재만 남긴다', () => {
+  it('program materials 후보와 무관하게 사업분야·학년 matches를 노출한다', () => {
     const options = buildParticipatingInstitutionTextbookSelectOptions({
       program,
       educationGrade: '1학년',
       gradeCatalog: [],
       programCatalog: catalog,
-      programMaterialTextbookIds: new Set(['101']),
     })
-    expect(options.map(option => option.value)).toEqual([
-      TEXTBOOK_NOT_USED_OPTION_VALUE,
-      '101',
-    ])
+    expect(options.map(option => option.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '101'])
   })
 
-  it('materials가 비어 있으면 교집합하지 않는다', () => {
+  it('program materials가 비어 있어도 matches를 노출한다', () => {
     const options = buildParticipatingInstitutionTextbookSelectOptions({
       program,
       educationGrade: '1학년',
       gradeCatalog: [],
       programCatalog: catalog,
-      programMaterialTextbookIds: new Set(),
     })
     expect(options).toHaveLength(2)
     expect(options[1].value).toBe('101')

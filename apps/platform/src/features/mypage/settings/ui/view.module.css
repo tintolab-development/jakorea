@@ -54,6 +54,16 @@
   gap: var(--spacing-12);
 }
 
+.basicInfoRowDivider {
+  border-top-width: 2px;
+  border-top-color: var(--color-border-default);
+}
+
+.basicInfoValueMultiline {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .withdrawAction:disabled {
   border: 1px solid var(--color-border-default);
   background: var(--color-neutral-white);

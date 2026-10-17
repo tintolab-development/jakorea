@@ -56,6 +56,9 @@ export function UjatRecruitInterviewScheduleProgramView({
   const interviewNamespace = volunteerHalf
     ? ujatVolunteerRecruitInterviewNamespace(volunteerHalf)
     : undefined
+  const interviewRangeSealKey = volunteerHalf
+    ? ujatVolunteerRecruitInterviewRangeSealKey(volunteerHalf)
+    : 'recruit.volunteer.interviewRangeSeal'
   const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>([])
   const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
     () => editSeed?.excludeNone ?? false
@@ -78,6 +81,7 @@ export function UjatRecruitInterviewScheduleProgramView({
       source,
       store: 'recruit',
       namespace: interviewNamespace,
+      additionalKeys: [interviewRangeSealKey],
     })
     setExceptionBlockKeys(prev => {
       if (prev.length > 0) return prev
@@ -88,7 +92,13 @@ export function UjatRecruitInterviewScheduleProgramView({
       )
       return ids.length > 0 ? ids : prev
     })
-  }, [interviewNamespace, program.id, program.registrationOverlay, program.ujatRegistrationOverlay])
+  }, [
+    interviewNamespace,
+    interviewRangeSealKey,
+    program.id,
+    program.registrationOverlay,
+    program.ujatRegistrationOverlay,
+  ])
 
   const isFormEdit = Boolean(isEdit && form)
 
@@ -133,9 +143,7 @@ export function UjatRecruitInterviewScheduleProgramView({
           overlayNamespace={
             volunteerHalf ? ujatVolunteerRecruitInterviewNamespace(volunteerHalf) : undefined
           }
-          interviewRangeSealKey={
-            volunteerHalf ? ujatVolunteerRecruitInterviewRangeSealKey(volunteerHalf) : undefined
-          }
+          interviewRangeSealKey={interviewRangeSealKey}
         />
       ) : (
         <UjatVolunteerInterviewScheduleReadonly data={display} />

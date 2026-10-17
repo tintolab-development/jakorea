@@ -207,8 +207,12 @@ export function useUjatVolunteerDocScreening({
 
   const onManagerAEvaluationChange = useCallback(
     (id: string, evaluation: UjatManagerEvaluation) => {
+      const previousEvaluation = list.find(row => row.id === id)?.managerAEvaluation
       updateRow(id, { managerAEvaluation: evaluation })
       void updateUjatVolunteerDocumentEvaluationRemote(id, 'A', evaluation).catch(() => {
+        if (previousEvaluation != null) {
+          updateRow(id, { managerAEvaluation: previousEvaluation })
+        }
         showAlert({
           title: '담당자 평가 저장 실패',
           content: '담당자 A 평가를 저장하지 못했습니다. 다시 시도해 주세요.',
@@ -216,13 +220,17 @@ export function useUjatVolunteerDocScreening({
         void invalidateVolunteerLists()
       })
     },
-    [invalidateVolunteerLists, showAlert, updateRow]
+    [invalidateVolunteerLists, list, showAlert, updateRow]
   )
 
   const onManagerBEvaluationChange = useCallback(
     (id: string, evaluation: UjatManagerEvaluation) => {
+      const previousEvaluation = list.find(row => row.id === id)?.managerBEvaluation
       updateRow(id, { managerBEvaluation: evaluation })
       void updateUjatVolunteerDocumentEvaluationRemote(id, 'B', evaluation).catch(() => {
+        if (previousEvaluation != null) {
+          updateRow(id, { managerBEvaluation: previousEvaluation })
+        }
         showAlert({
           title: '담당자 평가 저장 실패',
           content: '담당자 B 평가를 저장하지 못했습니다. 다시 시도해 주세요.',
@@ -230,7 +238,7 @@ export function useUjatVolunteerDocScreening({
         void invalidateVolunteerLists()
       })
     },
-    [invalidateVolunteerLists, showAlert, updateRow]
+    [invalidateVolunteerLists, list, showAlert, updateRow]
   )
 
   const columns = useUjatVolunteerDocScreeningColumns({

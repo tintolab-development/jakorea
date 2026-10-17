@@ -3,16 +3,6 @@
   min-width: 0;
 }
 
-.ujat-recruit-volunteer-info-program__forms {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ujat-recruit-volunteer-info-program__forms > .detail-info-form {
-  margin: 0;
-}
-
 .ujat-recruit-activity-term-field > .cms-input {
   flex: 1 1 0;
   min-width: 0;

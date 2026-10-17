@@ -3,6 +3,7 @@ import {
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
+  PFFormFieldValueText,
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
@@ -16,90 +17,29 @@ import {
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS,
 } from '@jakorea/form-schema/program-application'
 import { ApplyFormRadioGroup } from '../apply-form-radio'
+import hostStyles from '../apply-form-field-host.module.css'
 import styles from './apply-institution-sex-offense.module.css'
+import {
+  emptyInstitutionSexOffense,
+  type ApplyInstitutionSexOffenseValues,
+  type ApplySexOffenseSiteSubmission,
+  type ApplySexOffenseSubmissionRequest,
+} from './apply-institution-sex-offense-answers.ts'
 
-/** CMS `application.institution.sexOffense.*` 와 동일 */
-export type ApplySexOffenseSubmissionRequest = 'request' | 'no_submit'
-export type ApplySexOffenseInquiryMethod = 'ja_system' | 'criminal_record_site'
-export type ApplySexOffenseSiteSubmission = 'direct' | 'online'
-
-export type ApplyInstitutionSexOffenseValues = {
-  submissionRequest: ApplySexOffenseSubmissionRequest
-  inquiryMethod: ApplySexOffenseInquiryMethod
-  siteSubmission: ApplySexOffenseSiteSubmission
-  institutionId: string
-  verificationNumber: string
-}
-
-/** 조회 방식 선택 항목 제거 — 저장 값은 범죄경력회보서 사이트 이용으로 고정 */
-const FIXED_INQUIRY_METHOD: ApplySexOffenseInquiryMethod = 'criminal_record_site'
-
-export function emptyInstitutionSexOffense(): ApplyInstitutionSexOffenseValues {
-  return {
-    submissionRequest: 'request',
-    inquiryMethod: FIXED_INQUIRY_METHOD,
-    siteSubmission: 'online',
-    institutionId: '',
-    verificationNumber: '',
-  }
-}
-
-export function shouldShowSexOffenseInquiry(
-  values: ApplyInstitutionSexOffenseValues,
-): boolean {
-  return values.submissionRequest === 'request'
-}
-
-export function findIncompleteSexOffenseMessage(
-  values: ApplyInstitutionSexOffenseValues,
-): string | null {
-  if (values.submissionRequest !== 'request') return null
-  if (values.siteSubmission !== 'online') return null
-  if (!values.institutionId.trim()) return '성범죄 경력조회 기관 아이디를 입력해 주세요.'
-  if (!values.verificationNumber.trim()) return '성범죄 경력조회 검증번호를 입력해 주세요.'
-  return null
-}
-
-export function sexOffenseSubmissionAnswerFromValues(
-  values: ApplyInstitutionSexOffenseValues,
-): Record<string, unknown> {
-  return { submissionRequest: values.submissionRequest }
-}
-
-export function sexOffenseInquiryAnswerFromValues(
-  values: ApplyInstitutionSexOffenseValues,
-): Record<string, unknown> {
-  return {
-    inquiryMethod: FIXED_INQUIRY_METHOD,
-    siteSubmission: values.siteSubmission,
-    institutionId: values.institutionId.trim(),
-    verificationNumber: values.verificationNumber.trim(),
-  }
-}
-
-export function sexOffenseValuesFromDraftAnswers(
-  submission: unknown,
-  inquiry: unknown,
-): ApplyInstitutionSexOffenseValues | null {
-  const empty = emptyInstitutionSexOffense()
-  const sub = submission && typeof submission === 'object' && !Array.isArray(submission)
-    ? (submission as Record<string, unknown>)
-    : null
-  const inq = inquiry && typeof inquiry === 'object' && !Array.isArray(inquiry)
-    ? (inquiry as Record<string, unknown>)
-    : null
-  if (!sub && !inq) return null
-  return {
-    ...empty,
-    submissionRequest:
-      sub?.submissionRequest === 'no_submit' ? 'no_submit' : empty.submissionRequest,
-    inquiryMethod: FIXED_INQUIRY_METHOD,
-    siteSubmission: inq?.siteSubmission === 'direct' ? 'direct' : empty.siteSubmission,
-    institutionId: typeof inq?.institutionId === 'string' ? inq.institutionId : '',
-    verificationNumber:
-      typeof inq?.verificationNumber === 'string' ? inq.verificationNumber : '',
-  }
-}
+export {
+  emptyInstitutionSexOffense,
+  findIncompleteSexOffenseMessage,
+  omitSexOffenseInquiryAnswersIfNotRequested,
+  readSexOffenseSubmissionRequest,
+  sexOffenseInquiryAnswerFromValues,
+  sexOffenseSubmissionAnswerFromValues,
+  sexOffenseValuesFromDraftAnswers,
+  shouldShowSexOffenseInquiry,
+  type ApplyInstitutionSexOffenseValues,
+  type ApplySexOffenseInquiryMethod,
+  type ApplySexOffenseSiteSubmission,
+  type ApplySexOffenseSubmissionRequest,
+} from './apply-institution-sex-offense-answers.ts'
 
 type SubmissionProps = {
   value: ApplyInstitutionSexOffenseValues
@@ -108,17 +48,19 @@ type SubmissionProps = {
 
 export function ApplyInstitutionSexOffenseSubmission({ value, onChange }: SubmissionProps) {
   return (
-    <div className={styles.root}>
+    <div className={[styles.root, hostStyles.root].join(' ')}>
       <ApplyFormRadioGroup
         name="apply-sex-offense-submission"
         value={value.submissionRequest}
         options={INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS}
-        onChange={next =>
-          onChange({
-            ...value,
-            submissionRequest: next as ApplySexOffenseSubmissionRequest,
-          })
-        }
+        onChange={next => {
+          const submissionRequest = next as ApplySexOffenseSubmissionRequest
+          if (submissionRequest === 'no_submit') {
+            onChange({ ...emptyInstitutionSexOffense(), submissionRequest })
+            return
+          }
+          onChange({ ...value, submissionRequest })
+        }}
       />
     </div>
   )
@@ -128,8 +70,8 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
   const showOnlineCredentials = value.siteSubmission === 'online'
 
   return (
-    <div className={styles.root}>
-      <PFFormFieldTable>
+    <div className={[styles.root, hostStyles.root].join(' ')}>
+      <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
         <PFFormFieldRow type={showOnlineCredentials ? 'double' : 'single'}>
           <PFFormField label="사이트 제출 방식" fullWidth={!showOnlineCredentials}>
             <ApplyFormRadioGroup
@@ -149,7 +91,7 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
               <PFFormInlineRow>
                 <PFFormInlineSegment>
                   <PFFormControlCluster>
-                    <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                    <PFText as="span" typo="bd-md-md" color="neutral-cool-700">
                       ID
                     </PFText>
                     <PFTextInput
@@ -165,7 +107,7 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
                 <PFFormInlineSeparator />
                 <PFFormInlineSegment>
                   <PFFormControlCluster>
-                    <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                    <PFText as="span" typo="bd-md-md" color="neutral-cool-700">
                       검증번호
                     </PFText>
                     <PFTextInput
@@ -186,14 +128,14 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
       <div className={styles.notes}>
         <ul className={styles.noteList}>
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES.map(note => (
-            <PFText key={note} as="li" typo="bd-sm-rg" color="neutral-cool-700">
+            <PFFormFieldValueText key={note} as="li" className={styles.noteItem}>
               {note}
-            </PFText>
+            </PFFormFieldValueText>
           ))}
         </ul>
-        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-700">
+        <PFFormFieldValueText as="p" className={styles.caution}>
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION}
-        </PFText>
+        </PFFormFieldValueText>
       </div>
     </div>
   )

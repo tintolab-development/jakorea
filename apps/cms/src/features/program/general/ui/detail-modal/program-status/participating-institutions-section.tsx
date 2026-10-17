@@ -6,9 +6,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Spin } from 'antd'
-import { FilterTableLayout,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableLayout, FilterTableToolbarButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -41,6 +39,7 @@ import {
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE,
+  participatingScheduleTableColumnLayout,
 } from '../../../lib/participating-institutions-table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
@@ -73,6 +72,7 @@ import type { GeneralProgramNavigationCapabilities } from '@/features/program/ge
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { resolveParticipatingSchoolHopeSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 
@@ -95,6 +95,7 @@ export interface ParticipatingInstitutionsSectionProps {
   /** 프로그램 정보. 교재 배송 현황 필터는 program에 교재 필드(textbookName 등)가 있을 때만 노출 */
   program?: Program | null
   navigationCapabilities?: GeneralProgramNavigationCapabilities
+  navigationCapabilitiesLoading?: boolean
   /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
   schoolIdFromUrl?: string | null
   /** URL의 학교 상세 탭(application | students | instructors | posts | journal). 쿼리 파라미터 연동용 */
@@ -115,6 +116,7 @@ export function ParticipatingInstitutionsSection({
   programId,
   program,
   navigationCapabilities,
+  navigationCapabilitiesLoading,
   schoolIdFromUrl,
   schoolTabFromUrl,
   onSchoolTabChange,
@@ -364,16 +366,19 @@ export function ParticipatingInstitutionsSection({
         key: 'sessions',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
+          const applicationId = record.organizationApplicationId?.trim()
+          const hopeSessions = resolveParticipatingSchoolHopeSessions(
+            record,
+            programId && applicationId
+              ? { programId: String(programId), organizationApplicationId: applicationId }
+              : undefined
+          )
           const sessionLines =
             isCompanySchool || isTrainedTeachersSurface
               ? buildParticipatingSchoolPreferredScheduleLines(record.sessions)
-              : (record.sessions ?? []).map(formatSessionLine)
+              : hopeSessions.map(formatSessionLine)
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessionLines.slice(0, showCount)
@@ -416,7 +421,11 @@ export function ParticipatingInstitutionsSection({
                       className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
                     },
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
-                if (status === 'not_applicable') return '-'
+                const hasTextbook = Boolean(
+                  record.textbookId?.trim() || record.textbookName?.trim()
+                )
+                if (!hasTextbook)
+                  return <ParticipatingInstitutionTextbookStatusBadge status="not_applicable" />
                 return (
                   <StatusDropdownCell<TextbookStatusKey>
                     status={status ?? null}
@@ -551,6 +560,7 @@ export function ParticipatingInstitutionsSection({
           detail={mergedDetail}
           row={selectedRowFromUrl}
           navigationCapabilities={navigationCapabilities}
+          navigationCapabilitiesLoading={navigationCapabilitiesLoading}
           participatingSchoolList={schoolList}
           activeTab={schoolTabFromUrl ?? undefined}
           onTabChange={onSchoolTabChange}
@@ -601,25 +611,27 @@ export function ParticipatingInstitutionsSection({
         title="교육 참여 기관 목록"
         description={`${filteredSchools.length}건`}
         actions={
-          viewMode === 'list' ? (
-            <FilterTableToolbarButton
-              variant="secondary"
-              style={{ minWidth: 180 }}
-              icon={<ButtonCalendarIcon />}
-              onClick={handleCalendarView}
-            >
-              캘린더 뷰로 보기
-            </FilterTableToolbarButton>
-          ) : (
-            <FilterTableToolbarButton
-              variant="secondary"
-              style={{ minWidth: 180 }}
-              icon={<ButtonListIcon />}
-              onClick={handleListView}
-            >
-              리스트 뷰로 보기
-            </FilterTableToolbarButton>
-          )
+          <div className="program-application-list-toolbar">
+            {viewMode === 'list' ? (
+              <FilterTableToolbarButton
+                variant="secondary"
+                style={{ minWidth: 180 }}
+                icon={<ButtonCalendarIcon />}
+                onClick={handleCalendarView}
+              >
+                캘린더 뷰로 보기
+              </FilterTableToolbarButton>
+            ) : (
+              <FilterTableToolbarButton
+                variant="secondary"
+                style={{ minWidth: 180 }}
+                icon={<ButtonListIcon />}
+                onClick={handleListView}
+              >
+                리스트 뷰로 보기
+              </FilterTableToolbarButton>
+            )}
+          </div>
         }
         excelExport={{
           columns,
@@ -629,7 +641,7 @@ export function ParticipatingInstitutionsSection({
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <CmsDataTable<ParticipatingSchoolRow>
-              className="cms-data-table cms-data-table--variable-row-height participating-institutions-section__table participating-institutions-section__table--textbook-dropdown participating-institutions-section__table--clickable"
+              className="cms-data-table participating-institutions-section__table participating-institutions-section__table--textbook-dropdown participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}

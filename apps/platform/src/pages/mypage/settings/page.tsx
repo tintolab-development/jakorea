@@ -1,8 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
+import type { PortalProfileResponse } from '@/features/auth/sign-in/api/types'
 import {
   getSettingsLnbItems,
+  isInstructorMypageProfile,
   isSchoolTeacherMypageProfile,
   mapPortalProfileToSettingsView,
   MYPAGE_PATH,
@@ -13,9 +16,18 @@ import {
   SettingsView,
   useMypageMember,
   useSettingsView,
+  mapInstructorBasicSettingsRows,
+  useSettingsLinkedSocialProviders,
   type MypageLnbItemKey,
   type SettingsProfileInput,
 } from '@/features/mypage'
+import { mapInstructorFormValuesToCmsProfile } from '@/features/mypage/instructor-apply/api/map-create-request'
+import type { InstructorSettingsSectionId } from '@/features/mypage/settings/lib/format-instructor-settings-display'
+import { INSTRUCTOR_SETTINGS_ESSAY_SECTIONS } from '@/features/mypage/settings/lib/format-instructor-settings-display'
+import { buildInstructorSettingsFormValues } from '@/features/mypage/settings/lib/map-instructor-settings-form'
+import { mergeInstructorBasicEditToSettingsProfile } from '@/features/mypage/settings/ui/instructor-profile/basic-edit-form'
+import type { InstructorSettingsEditTarget } from '@/features/mypage/settings/ui/view'
+import { INSTRUCTOR_FORM_SECTION_BASE_TITLES } from '@jakorea/domain/instructor/form-layout'
 import { ProgramBackButton } from '@/features/program'
 import { useMediaQuery } from '@/shared/hooks'
 import {
@@ -25,12 +37,39 @@ import {
   platformMediaQueries,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
-import { PFText } from '@/shared/ui'
+import { PFLoadingSpinner, PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import styles from './page.module.css'
 
 type SettingsTab = 'profile' | 'social' | 'consents'
-type SettingsMode = 'view' | 'edit-basic'
+type SettingsInstructorEditMode = `edit-instructor-${InstructorSettingsSectionId}`
+type SettingsMode = 'view' | 'edit-basic' | SettingsInstructorEditMode
+
+const INSTRUCTOR_EDIT_PREFIX = 'edit-instructor-'
+
+function parseInstructorSectionFromMode(mode: SettingsMode): InstructorSettingsSectionId | null {
+  if (!mode.startsWith(INSTRUCTOR_EDIT_PREFIX)) return null
+  return mode.slice(INSTRUCTOR_EDIT_PREFIX.length) as InstructorSettingsSectionId
+}
+
+function resolveInstructorEditPageTitle(section: InstructorSettingsSectionId): string {
+  const essay = INSTRUCTOR_SETTINGS_ESSAY_SECTIONS.find(item => item.id === section)
+  if (essay) return `${essay.title} 수정`
+  switch (section) {
+    case 'education':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.education} 수정`
+    case 'career':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.career} 수정`
+    case 'ja':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.ja} 수정`
+    case 'license':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.license} 수정`
+    case 'award':
+      return '수상 및 수료 내역 수정'
+    default:
+      return '프로필 수정'
+  }
+}
 
 function readSettingsTab(params: URLSearchParams): SettingsTab {
   const tab = params.get('tab')
@@ -38,15 +77,26 @@ function readSettingsTab(params: URLSearchParams): SettingsTab {
   return 'profile'
 }
 
-function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
+function resolvePageTitle(tab: SettingsTab, mode: SettingsMode, isInstructor: boolean) {
+  const instructorSection = parseInstructorSectionFromMode(mode)
+  if (isInstructor && (mode === 'edit-basic' || instructorSection)) {
+    return '회원정보 설정'
+  }
+  if (instructorSection) return resolveInstructorEditPageTitle(instructorSection)
   if (mode === 'edit-basic') return '회원정보 수정'
-  if (tab === 'social') return '소셜 계정 연동'
+  if (tab === 'social') return '소셜 계정 연동 관리'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
   return '회원정보 설정'
 }
 
 function resolveLnbKey(tab: SettingsTab, mode: SettingsMode) {
-  if (mode === 'edit-basic' || tab === 'profile') return 'settingsProfile' as const
+  if (
+    tab === 'profile' ||
+    mode === 'edit-basic' ||
+    mode.startsWith(INSTRUCTOR_EDIT_PREFIX)
+  ) {
+    return 'settingsProfile' as const
+  }
   if (tab === 'social') return 'settingsSocial' as const
   return 'settingsConsents' as const
 }
@@ -64,12 +114,48 @@ export function MypageSettingsPage() {
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const effectiveProfile = localProfile ?? profile
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
-  const view = mapPortalProfileToSettingsView(effectiveProfile, guardian, {
-    variant: isTeacher ? 'teacher' : 'individual',
-  })
+  const isInstructor = isInstructorMypageProfile(member.profile)
+  const instructorSection = parseInstructorSectionFromMode(mode)
+  const [instructorFormValues, setInstructorFormValues] =
+    useState<InstructorSharedProfileFormValues | null>(null)
+
+  useEffect(() => {
+    if (!isInstructor) {
+      setInstructorFormValues(null)
+      return
+    }
+    setInstructorFormValues(
+      buildInstructorSettingsFormValues(effectiveProfile as PortalProfileResponse),
+    )
+  }, [effectiveProfile, isInstructor])
+
+  const instructorProfileForView = useMemo(() => {
+    if (!isInstructor) return null
+    return (
+      instructorFormValues ??
+      buildInstructorSettingsFormValues(effectiveProfile as PortalProfileResponse)
+    )
+  }, [effectiveProfile, instructorFormValues, isInstructor])
+  const linkedSocialProviders = useSettingsLinkedSocialProviders(isRemoteSession)
+  const view = useMemo(() => {
+    if (isInstructor) {
+      return {
+        basicRows: mapInstructorBasicSettingsRows(effectiveProfile, {
+          linkedSocialAccounts:
+            linkedSocialProviders ?? effectiveProfile.socialAccounts,
+        }),
+        guardian: null,
+      }
+    }
+    return mapPortalProfileToSettingsView(effectiveProfile, guardian, {
+      variant: isTeacher ? 'teacher' : 'individual',
+    })
+  }, [effectiveProfile, guardian, isInstructor, isTeacher, linkedSocialProviders])
   const lnbActiveKey = resolveLnbKey(tab, mode)
   const lnbItems = getSettingsLnbItems(lnbActiveKey)
-  const pageTitle = resolvePageTitle(tab, mode)
+  const pageTitle = resolvePageTitle(tab, mode, isInstructor)
+  const instructorEditingTarget: InstructorSettingsEditTarget | null =
+    mode === 'edit-basic' ? 'basic' : instructorSection
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -115,11 +201,7 @@ export function MypageSettingsPage() {
   }
 
   const backButton = (
-    <ProgramBackButton
-      size="small"
-      label="마이페이지로"
-      onClick={() => navigate(MYPAGE_PATH)}
-    />
+    <ProgramBackButton size="small" label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
   )
 
   const pageTitleNode = (
@@ -155,9 +237,7 @@ export function MypageSettingsPage() {
 
   if (isRemoteSession && isLoading) {
     return wrap(
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        회원 정보를 불러오는 중이에요…
-      </PFText>
+      <PFLoadingSpinner centered label="회원 정보를 불러오는 중" />
     )
   }
 
@@ -169,7 +249,7 @@ export function MypageSettingsPage() {
     )
   }
 
-  if (mode === 'edit-basic') {
+  if (mode === 'edit-basic' && !isInstructor) {
     return wrap(
       <SettingsEditForm
         profile={effectiveProfile}
@@ -193,11 +273,47 @@ export function MypageSettingsPage() {
     return wrap(<SettingsConsentsView />)
   }
 
+  const handleInstructorSectionSaved = (next: InstructorSharedProfileFormValues) => {
+    setInstructorFormValues(next)
+    if (!isRemoteSession) {
+      setLocalProfile(prev => ({
+        ...(prev ?? effectiveProfile),
+        instructorProfile: {
+          profile: mapInstructorFormValuesToCmsProfile(next),
+        },
+      }))
+    }
+    setMode('view')
+  }
+
   return wrap(
     <SettingsView
       basicRows={view.basicRows}
       guardian={view.guardian}
       onEditBasic={() => setMode('edit-basic')}
+      instructorProfileValues={instructorProfileForView}
+      onEditInstructorSection={
+        isInstructor
+          ? section => setMode(`edit-instructor-${section}` as SettingsInstructorEditMode)
+          : undefined
+      }
+      instructorEditingTarget={isInstructor ? instructorEditingTarget : null}
+      settingsProfile={isInstructor ? effectiveProfile : undefined}
+      onCancelInstructorEdit={isInstructor ? () => setMode('view') : undefined}
+      onInstructorBasicSaved={
+        isInstructor
+          ? next => {
+              setInstructorFormValues(next)
+              if (!isRemoteSession) {
+                setLocalProfile(prev =>
+                  mergeInstructorBasicEditToSettingsProfile(prev ?? effectiveProfile, next),
+                )
+              }
+              setMode('view')
+            }
+          : undefined
+      }
+      onInstructorSectionSaved={isInstructor ? handleInstructorSectionSaved : undefined}
     />
   )
 }

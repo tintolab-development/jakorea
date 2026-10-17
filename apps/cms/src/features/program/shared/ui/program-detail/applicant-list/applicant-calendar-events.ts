@@ -1,4 +1,6 @@
 import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
@@ -8,12 +10,21 @@ import {
   resolveSessionCalendarDateKey,
   resolveSessionCalendarIsoRange,
 } from './applicant-institution-calendar-session'
-import { mapPreferredEducationSchedulesToSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  mapPreferredEducationSchedulesToSessions,
+  readOrganizationApplicationConfirmedSessionsForInstructorCalendar,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
+import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
+
+dayjs.extend(isSameOrAfter)
+dayjs.extend(isSameOrBefore)
 
 /** 강사 캘린더 집계 이벤트용 — `calendarInstitutionSummary` 있으면 팝오버는 기관·인원, 우측 목록은 `calendarInstitutionInstructors`로 강사별 행 */
 export type ApplicantInstructorCalendarEventItem = ApplicantInstructorRow & {
   /** 일·기관 bucket의 희망 배정 학교명 (`row.schoolName`과 다를 수 있음) */
   calendarBucketSchoolName?: string
+  calendarInstitutionRow?: ApplicantSchoolRow
+  sessionsOnDate?: ParticipatingSchoolSession[]
   calendarInstitutionSummary?: {
     applicantCount: number
     regionDisplay: string
@@ -29,6 +40,8 @@ export function resolveInstructorCalendarInstitutionName(
 ): string {
   const bucket = item?.calendarBucketSchoolName?.trim()
   if (bucket) return bucket
+  const fromInstitution = item?.calendarInstitutionRow?.schoolName?.trim()
+  if (fromInstitution && fromInstitution !== '-') return fromInstitution
   const fromRow = item?.schoolName?.trim()
   if (fromRow && fromRow !== '-') return fromRow
   const fromPreferred = item?.preferredSchools
@@ -50,9 +63,11 @@ export type ApplicantCalendarEvent = {
     | ApplicantInstructorCalendarEventItem
 }
 
-const MAX_INSTRUCTOR_CALENDAR_DAY_SPAN = 366
+export type MapApplicantCalendarEventsOptions = {
+  institutionRows?: ApplicantSchoolRow[]
+}
 
-/** 월간 셀·필터 라벨 — 희망 기관명이 아니라 신청 강사명 */
+/** @deprecated 우측 카드·레거시 호환 — 신규 캘린더는 기관명 필터용 `resolveGeneralInstructorCalendarEventTitle` 사용 */
 export function formatGeneralInstructorCalendarEventTitle(
   instructors: ApplicantInstructorRow[]
 ): string {
@@ -64,24 +79,30 @@ export function formatGeneralInstructorCalendarEventTitle(
   return `${names[0]} 외 ${names.length - 1}명`
 }
 
+export function formatGeneralInstructorCalendarCellTitleParts(
+  item: ApplicantInstructorCalendarEventItem | undefined
+): { left: string; right?: string } {
+  const left = resolveInstructorCalendarInstitutionName(item)
+  const rawRegion =
+    item?.calendarInstitutionRow?.region?.trim() ||
+    item?.calendarInstitutionSummary?.regionDisplay?.trim() ||
+    ''
+  const right = formatInstitutionRegionForTableDisplay(rawRegion)
+  if (!right || right === '-') {
+    return { left }
+  }
+  return { left, right }
+}
+
 export function resolveGeneralInstructorCalendarEventTitle(
   item: ApplicantInstructorCalendarEventItem | undefined,
   fallbackTitle = ''
 ): string {
-  if (!item) return fallbackTitle.trim()
-  const fromBucket = formatGeneralInstructorCalendarEventTitle(
-    item.calendarInstitutionInstructors ?? []
-  )
-  if (fromBucket) return fromBucket
-  const single = item.instructorName?.trim()
-  if (single) return single
+  const school = resolveInstructorCalendarInstitutionName(item)
+  if (school && school !== INSTRUCTOR_CALENDAR_INSTITUTION_FALLBACK_LABEL) {
+    return school
+  }
   return fallbackTitle.trim()
-}
-
-function regionTokenFromAddress(address: string | undefined): string {
-  const t = (address ?? '').trim()
-  if (!t) return '-'
-  return t.split(/\s+/)[0] ?? '-'
 }
 
 function parseInstructorDateRangeString(
@@ -106,102 +127,120 @@ function parseInstructorDateRangeString(
   return null
 }
 
-function parseInstructorPreferredDateRange(
-  row: ApplicantInstructorRow
-): { start: dayjs.Dayjs; end: dayjs.Dayjs } | null {
-  return parseInstructorDateRangeString(row.preferredSchools?.[0]?.dateRange)
+function dateKeyInPreferredRange(dateKey: string, dateRange?: string): boolean {
+  const range = parseInstructorDateRangeString(dateRange)
+  if (!range) return false
+  const d = dayjs(dateKey)
+  return d.isSameOrAfter(range.start, 'day') && d.isSameOrBefore(range.end, 'day')
 }
 
-export function buildInstructorInstitutionCalendarEvents(
-  rows: ApplicantInstructorRow[]
-): ApplicantCalendarEvent[] {
-  type Bucket = { schoolName: string; dateKey: string; instructors: ApplicantInstructorRow[] }
-  const buckets = new Map<string, Bucket>()
-
-  for (const row of rows) {
-    const preferredSchools = row.preferredSchools ?? []
-    if (preferredSchools.length > 0) {
-      for (const school of preferredSchools) {
-        const schoolLabel = school.schoolName?.trim() ?? ''
-        const hasOrgName = schoolLabel.length > 0 && schoolLabel !== '-'
-        const range = parseInstructorDateRangeString(school.dateRange)
-        if (!range) continue
-
-        let d = range.start
-        const end = range.end
-        let dayCount = 0
-        while (d.valueOf() <= end.valueOf() && dayCount < MAX_INSTRUCTOR_CALENDAR_DAY_SPAN) {
-          const dateKey = d.format('YYYY-MM-DD')
-          const bucketSchoolName = hasOrgName ? schoolLabel : ''
-          const key = hasOrgName
-            ? `${dateKey}|${schoolLabel}`
-            : `${dateKey}|instructor-${row.id}`
-          const prev = buckets.get(key)
-          if (prev) {
-            prev.instructors.push(row)
-          } else {
-            buckets.set(key, { schoolName: bucketSchoolName, dateKey, instructors: [row] })
-          }
-          d = d.add(1, 'day')
-          dayCount += 1
-        }
-      }
-      continue
+function instructorMatchesInstitutionSession(
+  instructor: ApplicantInstructorRow,
+  institution: ApplicantSchoolRow,
+  session: ParticipatingSchoolSession,
+  dateKey: string
+): boolean {
+  const scheduleId = session.resolvedScheduleId
+  const schoolName = institution.schoolName?.trim()
+  for (const pref of instructor.preferredSchools ?? []) {
+    if (
+      scheduleId != null &&
+      Number.isFinite(scheduleId) &&
+      pref.schoolId === String(Math.trunc(scheduleId))
+    ) {
+      return true
     }
-
-    const range = parseInstructorPreferredDateRange(row)
-    if (!range) continue
-    const schoolName = row.schoolName?.trim()
-    if (!schoolName) continue
-
-    let d = range.start
-    const end = range.end
-    let dayCount = 0
-    while (d.valueOf() <= end.valueOf() && dayCount < MAX_INSTRUCTOR_CALENDAR_DAY_SPAN) {
-      const dateKey = d.format('YYYY-MM-DD')
-      const key = `${dateKey}|${schoolName}`
-      const prev = buckets.get(key)
-      if (prev) {
-        prev.instructors.push(row)
-      } else {
-        buckets.set(key, { schoolName, dateKey, instructors: [row] })
-      }
-      d = d.add(1, 'day')
-      dayCount += 1
+    const prefName = pref.schoolName?.trim()
+    if (schoolName && prefName && prefName === schoolName) {
+      if (dateKeyInPreferredRange(dateKey, pref.dateRange)) return true
     }
   }
+  return false
+}
 
+function buildInstructorCalendarTitleFromParts(parts: { left: string; right?: string }): string {
+  if (parts.right) {
+    return `${parts.left} | ${parts.right}`
+  }
+  return parts.left
+}
+
+function createCalendarEventRepresentativeInstructor(
+  matched: ApplicantInstructorRow[],
+  institution: ApplicantSchoolRow,
+  eventKey: string
+): ApplicantInstructorRow {
+  if (matched[0]) return matched[0]
+  return {
+    id: `calendar-${eventKey}`,
+    no: 0,
+    instructorName: '',
+    lectureExperienceYears: 0,
+    educationLevel: '-',
+    educationSchoolName: '-',
+    contact: '-',
+    email: '-',
+    address: '',
+    approvalStatus: 'pending',
+    schoolName: institution.schoolName?.trim() || '',
+  }
+}
+
+/** 강사 신청 캘린더 — 기관 배정 확정 일정 × 희망 신청 강사 매칭 */
+export function buildInstructorInstitutionCalendarEvents(
+  institutions: ApplicantSchoolRow[],
+  instructors: ApplicantInstructorRow[]
+): ApplicantCalendarEvent[] {
   const events: ApplicantCalendarEvent[] = []
 
-  for (const [key, bucket] of buckets) {
-    const sorted = [...bucket.instructors].sort((a, b) => a.id.localeCompare(b.id))
-    const representative = sorted[0]!
-    const regionShort = regionTokenFromAddress(representative.address)
-    const count = bucket.instructors.length
-    const dayIso = `${bucket.dateKey}T00:00:00`
+  for (const institution of institutions) {
+    const confirmedSessions =
+      readOrganizationApplicationConfirmedSessionsForInstructorCalendar(institution)
+    const schoolName = institution.schoolName?.trim() || '-'
+    const regionDisplay = formatInstitutionRegionForTableDisplay(institution.region)
 
-    const bucketSchoolName = bucket.schoolName.trim()
-    const originalItem: ApplicantInstructorCalendarEventItem = {
-      ...representative,
-      schoolName: bucketSchoolName || representative.schoolName || '',
-      calendarBucketSchoolName: bucketSchoolName || undefined,
-      calendarInstitutionSummary: {
-        applicantCount: count,
-        regionDisplay: regionShort,
-      },
-      calendarInstitutionInstructors: sorted,
+    for (const session of confirmedSessions) {
+      const dateKey = resolveSessionCalendarDateKey(session)
+      if (!dateKey) continue
+      const resolved = resolveSessionCalendarIsoRange(session)
+      if (!resolved) continue
+
+      const scheduleKey = session.resolvedScheduleId ?? session.round
+      const eventKey = `${dateKey}|${institution.id}|${scheduleKey}`
+
+      const matchedInstructors = instructors
+        .filter(row => instructorMatchesInstitutionSession(row, institution, session, dateKey))
+        .sort((a, b) => a.id.localeCompare(b.id))
+
+      const representative = createCalendarEventRepresentativeInstructor(
+        matchedInstructors,
+        institution,
+        eventKey
+      )
+
+      const originalItem: ApplicantInstructorCalendarEventItem = {
+        ...representative,
+        schoolName,
+        calendarBucketSchoolName: schoolName,
+        calendarInstitutionRow: institution,
+        sessionsOnDate: [session],
+        calendarInstitutionSummary: {
+          applicantCount: matchedInstructors.length,
+          regionDisplay,
+        },
+        calendarInstitutionInstructors: matchedInstructors,
+      }
+
+      const titleParts = formatGeneralInstructorCalendarCellTitleParts(originalItem)
+
+      events.push({
+        id: eventKey,
+        title: buildInstructorCalendarTitleFromParts(titleParts),
+        startDate: resolved.startDate,
+        endDate: resolved.endDate,
+        originalItem,
+      })
     }
-
-    const title =
-      formatGeneralInstructorCalendarEventTitle(sorted) || bucket.schoolName || '강사'
-
-    events.push({
-      id: key,
-      title,
-      startDate: dayIso,
-      endDate: dayIso,
-      originalItem,
-    })
   }
 
   return events
@@ -294,10 +333,16 @@ function mapSchoolLikePeriodToEvent(
 
 export function mapApplicantDataToCalendarEvents(
   data: ApplicantSchoolRow[] | ApplicantInstructorRow[] | GeneralIndividualApplicantRow[],
-  currentMenu: ApplicantListMenu | ''
+  currentMenu: ApplicantListMenu | '',
+  options?: MapApplicantCalendarEventsOptions
 ): ApplicantCalendarEvent[] {
   if (currentMenu === 'instructors') {
-    return buildInstructorInstitutionCalendarEvents(data as ApplicantInstructorRow[])
+    const institutions = options?.institutionRows ?? []
+    if (institutions.length === 0) return []
+    return buildInstructorInstitutionCalendarEvents(
+      institutions,
+      data as ApplicantInstructorRow[]
+    )
   }
 
   if (currentMenu === 'individual-applications') {

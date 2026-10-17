@@ -69,6 +69,28 @@ describe('student-lecture-attendance-api', () => {
     ).rejects.toThrow('500')
   })
 
+  it('does not create not-held sessions for empty/unassigned schedules', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 10, sessionNo: 1 },
+      { scheduleId: 11, sessionNo: 2 },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '10': [{ participantId: 77, status: 'PRESENT' }],
+      '11': [],
+    })
+
+    const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+      programId: 'p1',
+      participantId: 77,
+      studentName: '김학생',
+    })
+
+    expect(detail.sessions).toEqual([
+      { roundNumber: 1, scheduleId: 10, status: 'attended' },
+    ])
+    expect(detail.attendanceRatePercent).toBe(100)
+  })
+
   it('upserts only editable sessions with scheduleId', async () => {
     bulkUpsertProgramAttendancesRemoteMock.mockResolvedValue({})
     await saveStudentLectureAttendanceByParticipantRemote({

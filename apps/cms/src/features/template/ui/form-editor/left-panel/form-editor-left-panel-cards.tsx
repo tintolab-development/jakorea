@@ -24,6 +24,7 @@ import {
   withProgramApplicationFixedScheduleHeading,
   withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
+  withProgramRegistrationEducationScheduleSettingsRegistrationDescription,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
   withMultipleChoiceAllowMultipleTitleHint,
@@ -163,8 +164,12 @@ function PinnedFormCardInner({
         withProgramApplicationFormVolunteerTitleTrailing(
           withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
             withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-              withProgramRegistrationCurriculumTitleTrailing(
-                editableHeadingBase as ParagraphCardEditableHeading,
+              withProgramRegistrationEducationScheduleSettingsRegistrationDescription(
+                withProgramRegistrationCurriculumTitleTrailing(
+                  editableHeadingBase as ParagraphCardEditableHeading,
+                  paragraph,
+                  paragraphBodyOptions
+                ),
                 paragraph,
                 paragraphBodyOptions
               ),
@@ -361,8 +366,12 @@ function SortableMiddleFormCardInner({
         withProgramApplicationFormVolunteerTitleTrailing(
           withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
             withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-              withProgramRegistrationCurriculumTitleTrailing(
-                editableHeadingBase as ParagraphCardEditableHeading,
+              withProgramRegistrationEducationScheduleSettingsRegistrationDescription(
+                withProgramRegistrationCurriculumTitleTrailing(
+                  editableHeadingBase as ParagraphCardEditableHeading,
+                  paragraph,
+                  paragraphBodyOptions
+                ),
                 paragraph,
                 paragraphBodyOptions
               ),

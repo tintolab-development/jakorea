@@ -12,6 +12,11 @@ import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-templa
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
+import { validateSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import {
+  SurveyWritingValidationHighlightProvider,
+  useSurveyWritingSaveValidationFeedback,
+} from '@/features/program/shared/lib/survey-management/use-survey-writing-save-validation-feedback'
 import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
@@ -47,15 +52,20 @@ function resolveSurveyTemplateName(draft: WritingFormDraft): string {
   return '신규 설문 양식'
 }
 
-function hasMinimumSurveyParagraphs(draft: WritingFormDraft): boolean {
-  return draft.paragraphs.length >= 1
+export default function NewSurveyForm() {
+  return (
+    <SurveyWritingValidationHighlightProvider variant="survey">
+      <NewSurveyFormInner />
+    </SurveyWritingValidationHighlightProvider>
+  )
 }
 
-export default function NewSurveyForm() {
+function NewSurveyFormInner() {
   const queryClient = useQueryClient()
   const { setParams } = useQueryParams<NewSurveyFormQuery>()
   const { sections } = useWritingFormSections()
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const { handleDraftValidationFailure } = useSurveyWritingSaveValidationFeedback()
   const [draft, setDraft] = useState<WritingFormDraft>(() => createNewSurveyDraft())
   const [templateId, setTemplateId] = useState<string | null>(null)
   const { displayName: modalTitle, commitTitle: commitModalTitle } = useFormTemplateModalTitle({
@@ -138,8 +148,9 @@ export default function NewSurveyForm() {
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    if (!hasMinimumSurveyParagraphs(draft)) {
-      showSaveFailure()
+    const validation = validateSurveyWritingDraft(draft)
+    if (!validation.ok) {
+      handleDraftValidationFailure(validation)
       return
     }
 
@@ -182,7 +193,17 @@ export default function NewSurveyForm() {
         showSaveFailure(error)
       }
     })()
-  }, [draft, modalTitle, queryClient, sections, setParams, showSaveFailure, showSaveSuccess, templateId])
+  }, [
+    draft,
+    handleDraftValidationFailure,
+    modalTitle,
+    queryClient,
+    sections,
+    setParams,
+    showSaveFailure,
+    showSaveSuccess,
+    templateId,
+  ])
 
   const handleSelectParagraph = useCallback((id: string) => {
     setActiveParagraphId(id)
@@ -210,7 +231,7 @@ export default function NewSurveyForm() {
       open
       onClose={handleClose}
       title={modalTitle}
-      description="* 등록 시 제목글과 마무리글, 설문자 정보를 제외하고 최소 1개 이상의 단락이 존재해야 합니다."
+      description="* 설문 제목(제목형 단락)은 필수입니다. 제목·마무리글·설문자 정보를 제외한 문항 단락은 최소 1개 이상 필요합니다."
       templateTabType="writing"
       onTitleCommit={commitModalTitle}
       leftContent={

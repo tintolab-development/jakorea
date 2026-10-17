@@ -42,7 +42,9 @@
   .ant-table-tbody
   > tr.ant-table-row:hover:not(.ant-table-row-selected):not(.cms-data-table__row--disabled)
   > td {
-  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+  /* volunteer-screening 루트의 불투명 --color-table-row-hover 사용 */
+  background: var(--color-table-row-hover) !important;
+  background-color: var(--color-table-row-hover) !important;
 }
 
 .general-volunteer-doc-passed__center-cell {

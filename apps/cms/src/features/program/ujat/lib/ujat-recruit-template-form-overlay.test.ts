@@ -46,6 +46,7 @@ describe('UJAT recruit form overlay', () => {
       contactPhone: '02-6085-6028',
       contactEmail: 'recruit@jakorea.org',
       district: '서울 지역 초등학교',
+      applicationMethod: '<p>온라인 신청서 제출</p>',
     }
     const overlay = buildUjatRecruitInstitutionOverlayFromDetailEditValues(values)
     expect(overlay[INSTITUTION_KEYS.publicTitle]).toBe('참여 기관 모집 공고')
@@ -75,6 +76,7 @@ describe('UJAT recruit form overlay', () => {
     expect(restored.recruitmentContactOrganizationName).toBe('JA Korea 문의')
     expect(restored.contactPhone).toBe('02-6085-6028')
     expect(restored.district).toBe('서울 지역 초등학교')
+    expect(restored.applicationMethod).toBe('<p>온라인 신청서 제출</p>')
   })
 
   it('봉사자 모집 문의처·활동 기수를 overlay에 넣고 다시 폼으로 복원한다', () => {

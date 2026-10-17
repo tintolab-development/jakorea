@@ -73,6 +73,16 @@ describe('fetchAttendancesByScheduleIdsRemote', () => {
     await Promise.all([first, second])
     expect(customInstance).toHaveBeenCalledTimes(1)
   })
+
+  it('응답에 없는 scheduleId에 빈 출석 버킷을 합성하지 않는다', async () => {
+    vi.mocked(customInstance).mockResolvedValue([
+      { scheduleId: 10, participantId: 77, status: 'PRESENT' },
+    ])
+
+    await expect(fetchAttendancesByScheduleIdsRemote('p1', [10, 11])).resolves.toEqual({
+      '10': [{ scheduleId: 10, participantId: 77, status: 'PRESENT' }],
+    })
+  })
 })
 
 describe('createProgramInstructorParticipantRemote', () => {

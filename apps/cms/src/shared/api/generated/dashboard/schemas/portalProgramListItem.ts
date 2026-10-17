@@ -5,8 +5,14 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { PortalProgramListItemApplicationType } from './portalProgramListItemApplicationType';
+import type { PortalProgramListItemEducationForm } from './portalProgramListItemEducationForm';
+import type { PortalProgramListItemEducationTarget } from './portalProgramListItemEducationTarget';
+import type { PortalProgramListItemEducationTargetsItem } from './portalProgramListItemEducationTargetsItem';
 import type { PortalProgramListItemPortalCategoriesItem } from './portalProgramListItemPortalCategoriesItem';
 import type { PortalProgramListItemRecruitmentStatus } from './portalProgramListItemRecruitmentStatus';
+import type { PortalProgramListItemRecruitmentType } from './portalProgramListItemRecruitmentType';
+import type { PortalProgramListItemRecruitTerm } from './portalProgramListItemRecruitTerm';
 
 /**
  * Platform GET /api/portal/programs 목록 행. MemberPortalProgramSummary(교육현황 nested)와 다르다.
@@ -45,10 +51,62 @@ export interface PortalProgramListItem {
      * @nullable
      */
   thumbnailFileObjectId?: number | null;
-  /** @nullable */
-  educationTarget?: string | null;
+  /**
+     * 교육 대상 첫 값. educationTargets[0]과 같다.
+     * @nullable
+     */
+  educationTarget?: PortalProgramListItemEducationTarget;
+  /**
+     * 교육 대상 코드 배열. 값이 없으면 생략된다. 필터 educationTarget은 이 배열의 포함 여부로 매칭한다.
+     * @nullable
+     */
+  educationTargets?: PortalProgramListItemEducationTargetsItem[] | null;
   /** @nullable */
   targetGradeFrom?: string | null;
   /** @nullable */
   targetGradeTo?: string | null;
+  /**
+     * 공통정보 교육 형태. operationMethod와 별개.
+     * @nullable
+     */
+  educationForm?: PortalProgramListItemEducationForm;
+  /**
+     * Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼. 미노출이면 false 또는 null.
+     * @nullable
+     */
+  featuredOnHome?: boolean | null;
+  /**
+     * 홈 캐러셀 정렬 순서(오름차순). 미노출이면 null.
+     * @nullable
+     */
+  homeDisplayOrder?: number | null;
+  /**
+     * 이 목록 행의 모집 id. 같은 프로그램의 모집·신청 유형마다 한 행이다.
+     * @nullable
+     */
+  recruitmentId?: number | null;
+  /** @nullable */
+  recruitmentType?: PortalProgramListItemRecruitmentType;
+  /** @nullable */
+  targetType?: string | null;
+  /**
+     * 이 행의 신청 양식 하나. availableApplicationTypes와 같다.
+     * @nullable
+     */
+  applicationType?: PortalProgramListItemApplicationType;
+  /**
+     * UJAT 봉사자 모집 상·하반기 canonical 값. 그 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: PortalProgramListItemRecruitTerm;
+  /**
+     * 모집 기준 운영 시작일(없으면 businessStartDate).
+     * @nullable
+     */
+  operationStartDate?: string | null;
+  /**
+     * 모집 기준 운영 종료일(없으면 businessEndDate).
+     * @nullable
+     */
+  operationEndDate?: string | null;
 }

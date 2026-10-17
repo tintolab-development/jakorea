@@ -2,7 +2,6 @@ import type { TextbookStatusKey } from '@/features/program/general/model/partici
 import { TEXTBOOK_STATUS_LABELS } from '@/features/program/general/model/participating-schools'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { Program } from '@/types/domain'
-import { calculateParticipatingTextbookKitQuantity } from '@/features/program/general/lib/participating-institution-textbook'
 import {
   filterTextbooksForIndividualApplicant,
   resolveIndividualTextbookOptionLabel,
@@ -15,14 +14,13 @@ export const TEXTBOOK_NOT_USED_OPTION_VALUE = '__TEXTBOOK_NOT_USED__'
 
 /**
  * 승인 완료 후 교재 셀렉트 옵션.
- * matches(사업분야+학년) ∩ program materials. 라벨은 `교재명 educationTarget`.
+ * matches(사업분야+학년). 라벨은 `교재명 educationTarget`.
  * 맨 앞 「해당 없음」→ 저장 시 null.
  */
 export function buildIndividualApplicantTextbookOptions(
   program: Program | null | undefined,
   educationGrade: string,
-  catalog?: TextbookRow[],
-  programMaterialTextbookIds?: ReadonlySet<string> | null
+  catalog?: TextbookRow[]
 ): TextbookSelectOption[] {
   if (!program) {
     return [
@@ -34,11 +32,7 @@ export function buildIndividualApplicantTextbookOptions(
   // catalog undefined = 로딩 중 → 옵션은 해당 없음만 (store 폴백 금지)
   const rows =
     catalog !== undefined && grade && businessArea
-      ? filterTextbooksForIndividualApplicant(program, grade, catalog).filter(row => {
-          if (programMaterialTextbookIds == null) return true
-          if (programMaterialTextbookIds.size === 0) return false
-          return programMaterialTextbookIds.has(row.id)
-        })
+      ? filterTextbooksForIndividualApplicant(program, grade, catalog)
       : []
 
   return [
@@ -111,20 +105,14 @@ export function resolveIndividualApplicantTextbookDisplay(
     ? resolveIndividualTextbookOptionLabel(matched)
     : row.textbookName?.trim() || '해당 없음'
 
-  const participantCount = row.detail?.teamMemberCount ?? 1
-  const kitQuantity = program
-    ? calculateParticipatingTextbookKitQuantity(
-        program,
-        participantCount,
-        matched?.educationTarget
-      )
-    : { textbookKits: 0, textbookQuantity: 0 }
+  const textbookKits = row.textbookKits
+  const textbookQuantity = row.textbookQuantity
 
   return {
     name: displayName,
     kitsLabel:
-      kitQuantity.textbookKits > 0
-        ? `${kitQuantity.textbookKits}키트 (${kitQuantity.textbookQuantity}권)`
+      textbookKits != null || textbookQuantity != null
+        ? `${textbookKits ?? '-'}키트 (${textbookQuantity ?? '-'}권)`
         : '-',
     status: row.textbookStatus ?? 'preparing',
     isUnspecified: false,

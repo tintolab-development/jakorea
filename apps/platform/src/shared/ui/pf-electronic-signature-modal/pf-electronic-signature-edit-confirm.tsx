@@ -17,11 +17,13 @@ export function PFElectronicSignatureEditConfirm({
             전자서명을 수정하시겠습니까?
           </PFText>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
-            전자서명을 수정하면 해당 동의서의 모든 서명이 취소되며 다시 서명해야 합니다.
+            전자서명을 수정하면 해당 동의서의
+            <br />
+            모든 서명이 취소되며 다시 서명해야 합니다.
           </PFText>
         </div>
         <div className={styles.actions}>
-          <PFButton type="button" variant="secondary" size="xlarge" onClick={onCancel}>
+          <PFButton type="button" variant="tertiary" size="xlarge" onClick={onCancel}>
             취소
           </PFButton>
           <PFButton type="button" variant="primary" size="xlarge" onClick={onConfirm}>

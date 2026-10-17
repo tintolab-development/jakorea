@@ -15,7 +15,6 @@ import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone
 import { formatConsentBirthDateInput } from '@jakorea/form-schema/consent'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import {
-  NOTICE_CONFIRMATION,
   NOTICE_CONSENT_LINES,
   NOTICE_TABLE_FIRST_ROW,
   NOTICE_TABLE_FOOTER,
@@ -159,9 +158,6 @@ export function NoticeConsentForm({
             </li>
           ))}
         </ul>
-        <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
-          {NOTICE_CONFIRMATION}
-        </PFText>
         <PFFormFieldTable>
           <PFFormFieldRow type="single">
             <PFFormField label="동의 여부" required>

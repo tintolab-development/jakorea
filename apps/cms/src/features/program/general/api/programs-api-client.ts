@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { syncProgramInlineImages } from '@/features/program/shared/api/program-inline-images'
+import { omitSchedulesFromProgramUpdateRequest } from '@/features/program/shared/lib/program-update-schedules-payload-guard'
 import {
   PROGRAM_HARD_DELETE_BLOCKED_CODE,
   ProgramHardDeleteBlockedError,
@@ -175,14 +176,15 @@ export async function updateAdminProgramRemote(
   programId: string,
   payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
 ): Promise<ProgramResponse> {
+  const safePayload = omitSchedulesFromProgramUpdateRequest(payload)
   const updated = unwrapApiBody<ProgramResponse>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}`,
       method: 'PATCH',
-      data: payload,
+      data: safePayload,
     })
   )
-  await syncProgramInlineImages(programId, [payload, updated])
+  await syncProgramInlineImages(programId, [safePayload, updated])
   return updated
 }
 
@@ -511,7 +513,7 @@ type SurveyResponseListItem =
   import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse
 
 /** 서버 `size` 최대값 */
-const SURVEY_RESPONSES_PAGE_SIZE = 100
+const SURVEY_RESPONSES_PAGE_SIZE = 20
 /** 비정상 헤더·무한 페이지 방지 */
 const SURVEY_RESPONSES_MAX_PAGES = 50
 

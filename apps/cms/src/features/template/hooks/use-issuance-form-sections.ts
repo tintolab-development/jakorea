@@ -1,9 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  getIssuanceFormSectionsRemote,
-  getMockIssuanceFormSections,
-} from '@/features/template/api/admin-form-templates-service'
+import { getIssuanceFormSectionsRemote } from '@/features/template/api/admin-form-templates-service'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useFormsSurveysRemoteEnabled } from '@/features/template/hooks/use-forms-surveys-remote-enabled'
 import { ISSUANCE_FORM_SECTION_CATALOG } from '@/features/template/api/form-template-catalog'
@@ -30,12 +27,8 @@ export function useIssuanceFormSections() {
   })
 
   const sections = useMemo<TemplateSection[]>(() => {
-    if (!remoteEnabled) {
-      return getMockIssuanceFormSections()
-    }
-    if (query.isError || query.data == null) {
-      return emptyIssuanceSections()
-    }
+    if (!remoteEnabled) return emptyIssuanceSections()
+    if (query.isError || query.data == null) return emptyIssuanceSections()
     return query.data
   }, [remoteEnabled, query.isError, query.data])
 
@@ -43,7 +36,7 @@ export function useIssuanceFormSections() {
     sections,
     isLoading: remoteEnabled && query.isLoading,
     isRemote: remoteEnabled && !query.isError && query.data != null,
-    isMockCatalog: !remoteEnabled,
+    isFormsApiUnavailable: !remoteEnabled,
     isError: remoteEnabled && query.isError,
     error: remoteEnabled ? query.error : null,
   }

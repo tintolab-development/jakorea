@@ -3,6 +3,8 @@ export type EducationInProgressNotice = {
   title: string
   content: string
   authorName: string
+  /** CMS·관리자 작성 — 작성자명 primary 강조 */
+  authorIsStaff?: boolean
   publishedAt: string
   read: boolean
   viewCount: number

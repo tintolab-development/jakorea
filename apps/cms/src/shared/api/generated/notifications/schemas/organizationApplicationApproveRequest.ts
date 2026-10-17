@@ -5,11 +5,20 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SlotRequest } from './slotRequest';
 
 /**
- * 기관 신청 승인 알림 시점. body를 생략하면 즉시 발송합니다.
+ * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.
  */
 export interface OrganizationApplicationApproveRequest {
+  /**
+     * 기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보냅니다.
+     * @minItems 0
+     * @maxItems 500
+     */
+  slots?: SlotRequest[];
+  /** 선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다. */
+  selectedScheduleId?: number;
   /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */

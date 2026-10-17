@@ -28,6 +28,10 @@ import { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 import '@/shared/components/calendar/styles/calendar.css'
 import { useApplicantCalendarColorMaps } from './applicant-calendar-schedule-helpers'
 import { renderGeneralInstructorCalendarMonthEventContent } from './applicant-instructor-calendar-month-event'
+import {
+  buildGeneralInstitutionCalendarMonthCellRows,
+  renderGeneralInstitutionCalendarMonthEventContent,
+} from './applicant-institution-calendar-month-cells'
 import { renderGeneralInstitutionCalendarPreviewTooltipContent } from './applicant-general-institution-calendar-popover'
 import { renderGeneralIndividualCalendarPreviewTooltipContent } from './applicant-general-individual-calendar-popover'
 import { renderGeneralInstructorCalendarPreviewTooltipContent } from './applicant-general-instructor-calendar-popover'
@@ -374,7 +378,12 @@ export function ApplicantCalendarView({
       }
       {...(isGeneralInstructor
         ? { renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent }
-        : {})}
+        : isGeneralInstitution
+          ? {
+              buildMonthCellRows: buildGeneralInstitutionCalendarMonthCellRows,
+              renderMonthEventContent: renderGeneralInstitutionCalendarMonthEventContent,
+            }
+          : {})}
     />
   )
 

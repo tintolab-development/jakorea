@@ -50,6 +50,24 @@
   gap: var(--spacing-8);
 }
 
+.titleRow {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+}
+
+.titleRow .pageTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.titleAside {
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
 .pageTitle {
   margin: 0;
 }
@@ -285,6 +303,61 @@
   text-align: left;
 }
 
+.fieldLabelRowVertical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.fieldLabelRowVertical > .fieldLabelTitleRowVertical {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* CMS volunteer-free-text-items__card-header — 타이틀 우측 보조 문구 */
+.fieldLabelRowVertical > .fieldLabelDescriptionVertical {
+  flex: 0 1 auto;
+  margin-left: auto;
+  text-align: right;
+}
+
+.fieldLabelColumnVertical {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+}
+
+.fieldLabelTitleRowVertical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.fieldLabelColumnVertical .fieldLabelDescriptionVertical {
+  flex: none;
+  width: 100%;
+}
+
+.fieldLabelDescriptionVertical {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  opacity: 0.6;
+}
+
 .fieldContentVertical {
   min-height: auto;
   flex: 1 1 auto;
@@ -393,7 +466,7 @@
   align-self: center;
   width: 1px;
   height: 13px;
-  margin-inline: var(--spacing-12);
+  margin-inline: var(--spacing-16);
   opacity: 0.5;
   background: var(--default-BK, #3d3d3d);
 }
@@ -404,6 +477,12 @@
   flex: 0 1 auto;
   align-items: center;
   gap: var(--spacing-12);
+}
+
+/** 인풋·셀렉트 우측 단위·보조 문구(개 학급, 명 등) — cluster 내 가로 정렬 유지 */
+.controlClusterSuffix {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .periodPair {
@@ -489,6 +568,23 @@
 
   .titleBlock {
     margin-bottom: var(--spacing-20);
+  }
+
+  .titleRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-16);
+  }
+
+  .titleAside {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .titleAside > * {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
   }
 
   /* hd-lg 대체 — 24/700/normal/-0.48 (완전 일치 토큰 없음) */
@@ -600,15 +696,25 @@
   .controlCluster {
     display: flex;
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
     gap: var(--spacing-8);
   }
 
   .controlCluster > * {
     box-sizing: border-box;
-    width: 100% !important;
+    flex: 0 1 auto;
+    min-width: 0;
+    width: auto !important;
     max-width: 100%;
+  }
+
+  .controlClusterSuffix {
+    flex: 0 0 auto;
+    width: auto !important;
+    max-width: none;
   }
 
   .inlineSegment > *:not(.periodPair),

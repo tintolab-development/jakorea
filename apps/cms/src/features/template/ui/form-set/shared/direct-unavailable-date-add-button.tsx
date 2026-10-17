@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
-import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import { getPublicHolidayDateKeysForSchedule } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -14,7 +14,7 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 /** 강사 배정 안내 캘린더와 동일 — 공휴일 숫자 색(빨강)용 (모듈 top-level 호출 금지 — schedule-utils 순환 import) */
 function unavailableModalHolidayDateKeys(): Set<string> {
-  return getMockHolidayDateKeys()
+  return getPublicHolidayDateKeysForSchedule()
 }
 
 /** 모달 칩 토큰 — 폼 체크박스(토·일·공휴일 제외)와 양방향 연동 */

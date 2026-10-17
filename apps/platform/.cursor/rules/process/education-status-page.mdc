@@ -117,11 +117,7 @@ alwaysApply: false
 #### 진행·완료 탭 세부
 
 - **설문조사·만족도조사**: 진행 중 내용이 없어도 **탭 유지**. 단 프로그램 등록 시 해당 항목을 **설정하지 않은** 경우(`surveyConfigured` / `satisfactionConfigured === false`) 탭 **비노출**
-- **교육 일정** 라벨 (`resolveEducationScheduleTabLabel`):
-  - 봉사(`volunteer`) → **배정현황**
-  - UJAT(`ujat-volunteer` / `ujat-participant`) → **배정 및 출결 현황**
-  - 강사(`instructor`) → **강의 일정**
-  - 그 외 → **교육일정**
+- **교육 일정** 탭·패널 제목: 교육현황 상세는 **`교육일정` 고정** (`EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL` · `program.detailCase` 무관). 봉사·강의현황은 `resolveEducationScheduleTabLabel(detailCase)` 유지.
 - 구현: [`detail-tabs.ts`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts)
 
 탭 여백: top 48 / bottom 56. section query: `?section=program|application|notice|schedule|survey|satisfaction|settlement`
@@ -190,6 +186,13 @@ alwaysApply: false
 
 컴포넌트: [`EducationSchedulePanel`](apps/platform/src/features/mypage/education/schedules/ui/panel.tsx)  
 규칙·문구: [`schedule-rules.ts`](apps/platform/src/features/mypage/education/schedules/lib/schedule-rules.ts)
+
+### API · BE (GENERAL_INDIVIDUAL `INDIVIDUAL`)
+
+- 목록 SSOT: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules` only. 신청 `line:N` / `preferredEducationSchedules` 와 **FE에서 merge·필터하지 않음**.
+- 기대(제품): **사전교육 + 해당 신청자 선택 일정**이 BE `items[]`·participant education-scope에 반영. `scopeStatus=ASSIGNMENT_SCOPED`·`scheduleId` join 후 출석 UI.
+- **Admin `education-scope`**: 개인 **참여자**용 CMS 화면 **없음** (API만 존재). 봉사자 「봉사 배정 현황」만 호출. 검증·핸드오프는 JABACK API 직접 — FE/QA에 CMS에서 스코프 JSON 보라고 요청하지 않음.
+- 계약·이슈: [`education-schedules-api-integration.md`](apps/platform/docs/api/education-schedules-api-integration.md) §GENERAL_INDIVIDUAL · BE handoff [`portal-individual-education-schedules-scope-backend-request-2026-10-14.md`](apps/platform/docs/api/portal-individual-education-schedules-scope-backend-request-2026-10-14.md) (예: application `1694669`, participant `1694770`, program `186099`).
 
 ### 목록
 
@@ -261,6 +264,50 @@ alwaysApply: false
 
 목록·응답 API 후속.
 
+## 학생 명단 탭 (교사 회원 · 진행중/완료/교육중 포기)
+
+컴포넌트: [`EducationStudentsPanel`](apps/platform/src/features/mypage/education/applications/ui/students-panel.tsx)  
+탭 노출: [`buildTeacherInProgressDetailTabItems`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts) — 일반 회원 정산 탭 대신 **학생 명단**.
+
+### 레이아웃
+
+- PC: Step1(좌·`flex:1`) + Step2(우·360px) · gap 80 · min-height 560 — 안내사항 [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 2열 패턴
+- 모바일(~1079): 세로 스택
+
+### Step 1 — 학생 명단
+
+| 요소 | 규칙 |
+| --- | --- |
+| 제목 | `Step 1 학생 명단을 등록해 주세요` (`hl-sm`) |
+| 설명 | `프로그램 시작 전, 참여 학생 명단을 등록해야 해요. 제공된 양셀 양식을 작성해 업로드 해주세요.` + 보조 안내: XLSX·CSV, 20MB, 500명, 첫 시트, `.xls` 미지원 (`bd-md-rg` cool-500) |
+| 양식 다운로드 | `POST .../organization-applications/{id}/student-roster/template` |
+| 파일 업로드 | XLSX·CSV만 ([`student-roster-upload-policy.ts`](apps/platform/src/features/mypage/education/applications/lib/student-roster-upload-policy.ts)). `filePurpose=STUDENT_ROSTER` → `POST .../student-roster/import` |
+| 수료증 발급하기 | 명단 1명 이상일 때 활성(비활성은 명단 없음만). 클릭 → [`StudentsPanelCertificateModal`](apps/platform/src/features/mypage/education/applications/ui/students-panel-certificate-modal.tsx) (학생 선택·수료증 다운받기). 다운로드 API 미연동 시 준비 중 안내. 상세 `certificateAvailable`은 BE 발급 가능 여부 플래그(버튼 disabled와 무관·후속 연동) |
+| 빈 상태 | `illust-quotation-no-bg` + `아직 등록된 학생이 없어요` (`hl-lg`) |
+| 등록 후 | `참여 학생 N명` + 이름·학년·반·번호 요약 목록(CMS급 테이블·필터 후속) |
+
+### Step 2 — 초상권 동의서
+
+| 요소 | 규칙 |
+| --- | --- |
+| 제목 | `Step 2 학생 초상권 동의서를 업로드 해주세요` |
+| 설명 | `제공된 양식에 초상권 동의를 받은 후 업로드 해주세요.` |
+| 양식 다운로드 | `POST .../portrait-consent/template` |
+| 파일 업로드 | `filePurpose=PORTRAIT_CONSENT` → `PUT .../portrait-consent` |
+| 빈 상태 | 일러스트 + `아직 초상권 동의서가 등록되지 않았어요` |
+| 제출 후 | 제출일·상태 요약 |
+
+### API · remote
+
+- Base: `/api/portal/me/organization-applications/{applicationId}` — 신청 id는 교육현황 상세 `:applicationId`와 동일
+- **policy SSOT:** `GET .../student-documents/policy` — 탭 진입 시 최우선 조회 ([`student-documents-policy.ts`](apps/platform/src/features/mypage/education/applications/lib/student-documents-policy.ts))
+  - `studentDocumentsSupported === false` → Step UI 비노출, 안내: `이 프로그램은 학생 명단 및 초상권 동의서 제출 대상이 아닙니다.` · import/template/초상권 API 호출 금지
+  - `studentDocumentsSupported === true` → 명단·초상권 각각 `studentRosterUploadAllowed` / `portraitConsentUploadAllowed`로 독립 판단 (기한 종료 ≠ 기능 미지원)
+  - `firstEducationDate` null — 일정 미배정; `*UploadAllowed`가 최종 기준
+- import 오류: `PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED` · `STUDENT_ROSTER_DEADLINE_PASSED` · `PORTRAIT_CONSENT_DEADLINE_PASSED` · `BAD_REQUEST` → [`student-documents-errors.ts`](apps/platform/src/features/mypage/education/applications/lib/student-documents-errors.ts)
+- 클라이언트: [`student-documents-client.ts`](apps/platform/src/features/mypage/education/applications/api/student-documents-client.ts) · 훅 [`student-documents-hooks.ts`](apps/platform/src/features/mypage/education/applications/api/student-documents-hooks.ts)
+- remote off(mock): 빈 명단·빈 초상권 UI만 노출(업로드 시 로그인 안내)
+
 ## 신청 내용 탭
 
 노출: `waiting_result` | `document_passed` | `rejected` | `withdrawn`(교육 전·중 팝업/탭).  
@@ -282,6 +329,25 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 - 본문: 신청 내용 탭과 동일 `EducationApplicationContent` (자기소개·진행 희망 일정)
 - 긴 본문 스크롤 시 헤더(타이틀·닫기) 고정 — body만 overflow
 
+## 교사 회원 · 기관 프로그램 (진행중·진행완료)
+
+- **노출:** `isSchoolTeacherMypageProfile` + `program.programAudience === 'organization'` + `displayStatus` ∈ `in_progress` | `completed` ([`teacher-institution-guidance.ts`](apps/platform/src/features/mypage/education/applications/lib/teacher-institution-guidance.ts))
+
+### CMS 게시글형 안내사항 (목록·상세 모달과 동일 도메인)
+
+- **안내사항 탭** [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 하단 — 전폭 **`안내사항 작성하기`** → [`EducationProgramNoticeWriteModal`](apps/platform/src/features/mypage/education/notices/ui/notice-write-modal.tsx) (`PFModal` lg · mobile full)
+- **저장:** mock `appendMockEducationInProgressNotice` · remote `useCreateApplicationNoticeMutation` — 첨부 `PROGRAM_POST_ATTACHMENT` upload → `POST .../notices` → `PUT .../notices/{postId}/attachments` ([`activity-client.ts`](apps/platform/src/features/mypage/education/applications/api/activity-client.ts)). 본문 인라인 `<img>` 금지(CMS 동일). 403 `NOTICE_WRITE_NOT_ALLOWED` / `PARTICIPATION_REQUIRED` 등 → [`notice-write-errors.ts`](apps/platform/src/features/mypage/education/notices/lib/notice-write-errors.ts)
+- **작성자 표시:** 목록·상세 `createdByDisplayName` / `createdByActorType` / `mine` — [`mapPortalNoticeAuthorFields`](apps/platform/src/features/mypage/education/notices/lib/author-label.ts) · ADMIN·CMS·SYSTEM(+표시명 없으면 JA Korea 담당자) · null 표시명 → `작성자 정보 없음` · `mine===true`만 상세 수정·삭제 더보기
+
+### 기관 신청 안내 양식 (4항목·성범죄 — 신청 폼 SSOT)
+
+- **진입:** **신청 내용 탭** [`GuidanceSection`](apps/platform/src/features/mypage/education/applications/ui/teacher-application-content/guidance-section.tsx) **`안내사항 수정하기`** 만 → `/mypage/education/:applicationId/guidance/write`
+- **화면:** [`MypageEducationInstitutionGuidanceWritePage`](apps/platform/src/pages/mypage/education/guidance-write/page.tsx) · [`INSTITUTION_GUIDANCE_FIELDS`](packages/form-schema/src/lib/institution-guidance-field-definitions.ts) + 성범죄 단락 ([`ApplyInstitutionGuidance`](apps/platform/src/features/program/ui/apply-institution-guidance/apply-institution-guidance) / [`ApplyInstitutionSexOffense*`](apps/platform/src/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense.tsx) 재사용)
+- **신청 내용 탭** 안내 블록은 **읽기 전용** (인라인 편집 없음)
+- **저장:** mock `updateMockTeacherInstitutionGuidanceFormState` · remote `PATCH /api/portal/me/organization-applications/{applicationId}/application-answers` — [`savePortalTeacherInstitutionGuidance`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-client.ts) · body는 [`buildInstitutionGuidanceAnswerPatch`](apps/platform/src/features/mypage/education/applications/lib/institution-guidance-from-answers.ts)만 사용(URL·path id 변경 없음) · 성공·409 시 신청 상세 query invalidate ([`institution-guidance-hooks.ts`](apps/platform/src/features/mypage/education/applications/api/institution-guidance-hooks.ts))
+- **BE(2026-10-14):** 과거 409 「최신 제출본 없음」은 PATCH `context_type` 불일치(`ORGANIZATION` vs GET `ORGANIZATION_APPLICATION`) — BE 정렬 후 FE 계약 동일 · 스모크 `1691243` — [`portal-organization-guidance-patch-409-backend-request-2026-10-14.md`](apps/platform/docs/api/portal-organization-guidance-patch-409-backend-request-2026-10-14.md) §0
+- **remote 사전 검사:** 상세 `formResponseId`·`formResponseStatus`(SUBMITTED/APPROVED/COMPLETED)·`answers` 비어 있으면 PATCH 전 안내 — [`institution-guidance-patch-readiness.ts`](apps/platform/src/features/mypage/education/applications/lib/institution-guidance-patch-readiness.ts)
+
 ## 안내사항 상세 모달 (진행중)
 
 - 목록 카드 클릭 → [`EducationInProgressNoticeDetailModal`](apps/platform/src/features/mypage/education/notices/ui/detail-modal.tsx)
@@ -302,7 +368,7 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock)                                           | 취소 API 연동                                     |
 | 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨                                            | 교육 일정·설문·만족도 탭                          |
 | 신청 내용 (결과 대기·서류 합격) mock UI                                                      | 신청 내용 API 연동                                |
-| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문·만족도 CMS 시드 fill / 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
+| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문·만족도 CMS 시드 fill / 빈 상태** · **교사 학생 명단 Step1/2** | 결석/과제/피드백 팝업 · 설문 목록 UI · 수료증 발급 · 학생명단 CMS급 테이블 · 정산 · API |
 | **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT                                                | 교육일정·설문 UI + 회차 필터 연동                 |
 | 비-applied 상태 placeholder                                                                  | 진행 완료 안내사항 탭                             |
 
@@ -328,4 +394,4 @@ remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platfo
 - 설문·만족도: `EducationSurveyFillPanel` (active, CMS `createDefaultSurveyDraft` 시드) · `EducationSurveyEmptyPanel` (empty)
 - 역할 판정: remote API는 신청 건 `applicationType`이 SoT. [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts)는 `applicationType` 우선, mock/레거시 항목만 `detailCase` fallback.
 
-**Last updated:** 2026-09-28 (포털 신청 API `applicationType` 기반 연동 — 교육현황은 INDIVIDUAL/ORGANIZATION 합집합)
+**Last updated:** 2026-10-14 (학생 명단 import BE 계약: XLSX·CSV, 20MB, 500행, 첫 시트)

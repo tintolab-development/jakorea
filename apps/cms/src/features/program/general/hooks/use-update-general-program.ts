@@ -16,11 +16,13 @@ export function useUpdateGeneralProgram() {
       programId,
       program,
       patch,
+      baseline,
     }: {
       programId: string
       program: Program
       patch?: Partial<Program>
-    }) => updateGeneralProgram(programId, program, patch),
+      baseline?: Program
+    }) => updateGeneralProgram(programId, program, patch, baseline),
     onSuccess: async (updated, variables) => {
       const detailKey = generalProgramQueryKeys.detail(variables.programId)
       await syncOpenProgramDetailCache(

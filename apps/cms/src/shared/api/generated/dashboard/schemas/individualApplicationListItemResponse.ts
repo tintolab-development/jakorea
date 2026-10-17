@@ -25,17 +25,14 @@ export interface IndividualApplicationListItemResponse {
   memberName?: string;
   /** 신청 시점 소속명 우선의 목록 표시값 */
   affiliationName?: string;
-  /** 신청 시점 학년 또는 교육 단계 */
+  /** 재학(ENROLLED) 신청자의 신청 시점 학년. TEACHER_SCHOOL·NOT_ENROLLED·강사 등 학년 없는 유형은 null */
   applicationGrade?: string;
   /** 상세 번지를 제외한 목록용 주소 요약 */
   homeAddressSummary?: string;
   /** 해당 신청 건에서 선택한 교육 일정. 미선택 시 빈 배열 */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   applicationStatus?: string;
-  /**
-     * Admin CMS 전용 최신 관리자 코멘트
-     * @nullable
-     */
+  /** Admin CMS 전용 최신 관리자 코멘트 */
   managerComment?: string | null;
   documentStatus?: string;
   managerAEvaluation?: string;

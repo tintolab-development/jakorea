@@ -1,6 +1,7 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   PFFormControlCluster,
+  PFFormControlSuffix,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
@@ -149,7 +150,7 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFTextInput
             variant="formPage"
             size="large"
-            width="200px"
+            width="100%"
             placeholder={
               answerKeyPlaceholders && schoolNameLocked ? 'schoolName' : '로그인 교사의 소속 학교'
             }
@@ -176,7 +177,7 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFTextInput
             variant="formPage"
             size="large"
-            width="200px"
+            width="100%"
             placeholder={answerKeyPlaceholders ? 'regionLabel' : '기관 등록 주소'}
             value={regionDisplay}
             disabled
@@ -209,9 +210,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   value={value.classCount || undefined}
                   onValueChange={next => patch({ classCount: next })}
                 />
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
-                  개 학급
-                </PFText>
+                <PFFormControlSuffix>개 학급</PFFormControlSuffix>
               </PFFormControlCluster>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
@@ -226,9 +225,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   value={value.studentCount}
                   onValueChange={next => patch({ studentCount: next.replace(/[^\d]/g, '') })}
                 />
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
-                  명
-                </PFText>
+                <PFFormControlSuffix>명</PFFormControlSuffix>
               </PFFormControlCluster>
             </PFFormInlineSegment>
           </PFFormInlineRow>
@@ -278,6 +275,9 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFFormInlineRow>
             <PFFormInlineSegment>
               <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  담당 교사
+                </PFText>
                 <PFTextInput
                   variant="formPage"
                   size="large"
@@ -287,6 +287,14 @@ export function ApplyTrainedTeachersBasicInfo({
                   disabled
                   onValueChange={() => {}}
                 />
+              </PFFormControlCluster>
+            </PFFormInlineSegment>
+            <PFFormInlineSeparator />
+            <PFFormInlineSegment>
+              <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  Tel
+                </PFText>
                 <PFTextInput
                   variant="formPage"
                   size="large"
@@ -301,29 +309,39 @@ export function ApplyTrainedTeachersBasicInfo({
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="담당 교사의 휴대폰 번호"
-                value={formatKoreanPhoneNumber(value.teacherMobile)}
-                onValueChange={next =>
-                  patch({ teacherMobile: formatKoreanPhoneNumber(next) })
-                }
-              />
+              <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  M
+                </PFText>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="담당 교사의 휴대폰 번호"
+                  value={formatKoreanPhoneNumber(value.teacherMobile)}
+                  onValueChange={next =>
+                    patch({ teacherMobile: formatKoreanPhoneNumber(next) })
+                  }
+                />
+              </PFFormControlCluster>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                placeholder="담당 교사의 이메일"
-                value={value.teacherEmail}
-                onValueChange={next => patch({ teacherEmail: next })}
-              />
+              <PFFormControlCluster>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  E-mail
+                </PFText>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  placeholder="담당 교사의 이메일"
+                  value={value.teacherEmail}
+                  onValueChange={next => patch({ teacherEmail: next })}
+                />
+              </PFFormControlCluster>
             </PFFormInlineSegment>
           </PFFormInlineRow>
         </PFFormField>
@@ -382,6 +400,7 @@ export function findIncompleteTrainedTeachersBasicInfoMessage(
   values: ApplyTrainedTeachersBasicInfoValues,
 ): string | null {
   if (!values.schoolName.trim()) return '신청 기관명(학교명)을 확인해 주세요.'
+  if (!values.regionLabel.trim()) return '기관 소재지를 확인해 주세요.'
   if (!values.applicationGrade.trim()) return '신청 학년을 선택해 주세요.'
   if (!values.addressDetail.trim()) return '상세 주소를 입력해 주세요.'
   const classCount = Number.parseInt(values.classCount, 10)
@@ -392,8 +411,14 @@ export function findIncompleteTrainedTeachersBasicInfoMessage(
   return null
 }
 
+export type BasicInfoAnswerFromValuesOptions = {
+  /** 프로그램 `educationForm === participant_choice` 일 때만 희망 교육 형태·장소를 보낸다. */
+  includePreferredEducationFields?: boolean
+}
+
 export function basicInfoAnswerFromValues(
   values: ApplyTrainedTeachersBasicInfoValues,
+  options?: BasicInfoAnswerFromValuesOptions,
 ): Record<string, unknown> | null {
   const schoolName = values.schoolName.trim()
   if (!schoolName) return null
@@ -401,20 +426,25 @@ export function basicInfoAnswerFromValues(
   const studentCount = Number.parseInt(values.studentCount, 10)
   const applicationGrade = values.applicationGrade.trim()
   const addressDetail = values.addressDetail.trim()
+  const regionLabel = values.regionLabel.trim()
+  const includePreferredEducation = options?.includePreferredEducationFields === true
 
   return {
     schoolName,
+    ...(regionLabel ? { regionLabel, organizationRegion: regionLabel } : {}),
     ...(applicationGrade ? { applicationGrade, educationGrade: applicationGrade } : {}),
     ...(addressDetail ? { addressDetail, detailAddress: addressDetail } : {}),
     ...(Number.isFinite(classCount) && classCount > 0 ? { classCount } : {}),
     ...(Number.isFinite(studentCount) && studentCount > 0
       ? { studentCount, totalStudents: studentCount }
       : {}),
-    ...(values.educationFormat.trim()
+    ...(includePreferredEducation && values.educationFormat.trim()
       ? { educationFormat: values.educationFormat.trim() }
       : {}),
-    ...(values.educationPlace.trim() ? { educationPlace: values.educationPlace.trim() } : {}),
-    ...(values.educationPlaceDetail.trim()
+    ...(includePreferredEducation && values.educationPlace.trim()
+      ? { educationPlace: values.educationPlace.trim() }
+      : {}),
+    ...(includePreferredEducation && values.educationPlaceDetail.trim()
       ? { educationPlaceDetail: values.educationPlaceDetail.trim() }
       : {}),
     ...(values.teacherName.trim() ? { teacherName: values.teacherName.trim() } : {}),
@@ -448,6 +478,7 @@ export function basicInfoValuesFromDraftAnswer(
   const row = answer as Record<string, unknown>
   const schoolName = readStringField(row, 'schoolName')
   const applicationGrade = readStringField(row, 'applicationGrade', 'educationGrade')
+  const regionLabel = readStringField(row, 'regionLabel', 'organizationRegion')
   const addressDetail = readStringField(row, 'addressDetail', 'detailAddress')
   const classCount = readStringField(row, 'classCount')
   const studentCount = readStringField(row, 'studentCount', 'totalStudents')
@@ -476,6 +507,7 @@ export function basicInfoValuesFromDraftAnswer(
   return {
     ...emptyTrainedTeachersBasicInfo(),
     schoolName,
+    regionLabel,
     applicationGrade,
     addressDetail,
     classCount,

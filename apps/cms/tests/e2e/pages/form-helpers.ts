@@ -22,9 +22,7 @@ async function getSelectSelectedText(select: Locator): Promise<string> {
 
 /** Ant Design Select disabled는 보통 class만 붙고 div에는 disabled attr이 없다. */
 async function isAntSelectDisabled(select: Locator): Promise<boolean> {
-  return select
-    .evaluate(el => el.classList.contains('ant-select-disabled'))
-    .catch(() => false)
+  return select.evaluate(el => el.classList.contains('ant-select-disabled')).catch(() => false)
 }
 
 async function getCmsMultiSelectedText(field: Locator): Promise<string> {
@@ -34,11 +32,7 @@ async function getCmsMultiSelectedText(field: Locator): Promise<string> {
 }
 
 /** CmsSelect `mode="multiple"` — Popover + 체크박스 UI */
-async function selectCmsMultiOnField(
-  page: Page,
-  field: Locator,
-  optionLabel?: string
-) {
+async function selectCmsMultiOnField(page: Page, field: Locator, optionLabel?: string) {
   const trigger = field.locator('.cms-select-multi__trigger').first()
   await expect(trigger).toBeVisible({ timeout: 10_000 })
 
@@ -65,10 +59,7 @@ async function selectCmsMultiOnField(
         hasText: new RegExp(`^${escapeRegExp(optionLabel)}$`),
       }),
     })
-    row =
-      (await exact.count()) > 0
-        ? exact.first()
-        : rows.filter({ hasText: optionLabel }).first()
+    row = (await exact.count()) > 0 ? exact.first() : rows.filter({ hasText: optionLabel }).first()
   } else {
     row = rows.first()
     const count = await rows.count()
@@ -80,9 +71,7 @@ async function selectCmsMultiOnField(
         .then(n => n > 0)
         .catch(() => false)
       if (checked) continue
-      const text = (
-        await candidate.locator('.cms-select-multi__label-pill').innerText()
-      ).trim()
+      const text = (await candidate.locator('.cms-select-multi__label-pill').innerText()).trim()
       if (text && !isEmptySelectValue(text)) {
         row = candidate
         break
@@ -121,15 +110,14 @@ async function isSelectOpen(select: Locator): Promise<boolean> {
 
 /** 열린 Ant Select 드롭다운에서 옵션 클릭 (가상 스크롤·비가시 옵션 대응) */
 async function clickSelectOption(dropdown: Locator, optionLabel?: string) {
-  const options = dropdown.locator(
-    '.ant-select-item-option:not(.ant-select-item-option-disabled)'
-  )
+  const options = dropdown.locator('.ant-select-item-option:not(.ant-select-item-option-disabled)')
   await expect(options.first()).toBeAttached({ timeout: 10_000 })
 
   let option: Locator
   if (optionLabel) {
     const exact = options.filter({ hasText: new RegExp(`^${escapeRegExp(optionLabel)}$`) })
-    option = (await exact.count()) > 0 ? exact.first() : options.filter({ hasText: optionLabel }).first()
+    option =
+      (await exact.count()) > 0 ? exact.first() : options.filter({ hasText: optionLabel }).first()
   } else {
     option = options.first()
     const count = await options.count()
@@ -172,9 +160,7 @@ async function openSelectDropdown(page: Page, select: Locator) {
   const dropdown = page.locator('.ant-select-dropdown:visible').last()
   await expect(dropdown).toBeVisible({ timeout: 5_000 })
 
-  const options = dropdown.locator(
-    '.ant-select-item-option:not(.ant-select-item-option-disabled)'
-  )
+  const options = dropdown.locator('.ant-select-item-option:not(.ant-select-item-option-disabled)')
   const empty = dropdown.getByText(/No data|데이터 없음|검색 결과 없음/)
   await expect(async () => {
     if ((await options.count()) > 0) return
@@ -225,7 +211,10 @@ async function selectOnLocator(
         break
       }
       if (alternateIdx >= 0) {
-        await optionNodes.nth(alternateIdx).scrollIntoViewIfNeeded().catch(() => undefined)
+        await optionNodes
+          .nth(alternateIdx)
+          .scrollIntoViewIfNeeded()
+          .catch(() => undefined)
         await optionNodes.nth(alternateIdx).click({ force: true })
         await expect(page.locator('.ant-select-dropdown:visible'))
           .toHaveCount(0, { timeout: 5_000 })
@@ -255,11 +244,7 @@ async function selectOnLocator(
 }
 
 /** Ant Design Select — placeholder가 있는 `.ant-select` 클릭 후 옵션 선택 */
-export async function selectByPlaceholder(
-  page: Page,
-  placeholder: string,
-  optionLabel?: string
-) {
+export async function selectByPlaceholder(page: Page, placeholder: string, optionLabel?: string) {
   await expect(async () => {
     const byPlaceholder = page
       .locator('.ant-select:visible')
@@ -345,11 +330,7 @@ export async function selectNearLabel(
   }).toPass({ timeout: 30_000 })
 }
 
-export async function selectNearLabelIfVisible(
-  page: Page,
-  label: string,
-  optionLabel?: string
-) {
+export async function selectNearLabelIfVisible(page: Page, label: string, optionLabel?: string) {
   const field = page
     .locator('.detail-info-form__field')
     .filter({
@@ -389,7 +370,15 @@ export async function selectNearLabelIfVisible(
 
 /** 모달/패널 안에서 placeholder로 입력 */
 export async function fillByPlaceholder(root: Page | Locator, placeholder: string, value: string) {
-  await root.getByPlaceholder(placeholder).fill(value)
+  const candidates = root.getByPlaceholder(placeholder)
+  for (let index = 0; index < (await candidates.count()); index += 1) {
+    const candidate = candidates.nth(index)
+    if (await candidate.isVisible().catch(() => false)) {
+      await candidate.fill(value)
+      return
+    }
+  }
+  throw new Error(`보이는 입력란을 찾지 못했습니다: ${placeholder}`)
 }
 
 /** placeholder 입력이 보일 때만 채움 */
@@ -408,11 +397,7 @@ export async function fillByPlaceholderIfVisible(
 }
 
 /** 동일 placeholder를 가진 보이는 입력란을 모두 채움 (KPI·강사비 등) */
-export async function fillAllByPlaceholder(
-  page: Page,
-  placeholder: string,
-  value: string
-) {
+export async function fillAllByPlaceholder(page: Page, placeholder: string, value: string) {
   const inputs = page.getByPlaceholder(placeholder)
   const count = await inputs.count()
   for (let i = 0; i < count; i += 1) {
@@ -429,7 +414,11 @@ export async function checkRadioIfVisible(page: Page, label: string | RegExp) {
   const radio = page.getByRole('radio', { name: label }).first()
   if ((await radio.count()) === 0) return
   if (!(await radio.isVisible().catch(() => false))) return
-  await radio.check({ force: true })
+  if (await radio.isChecked().catch(() => false)) return
+  await radio.click({ force: true })
+  if (!(await radio.isChecked().catch(() => false))) {
+    await page.getByText(label, { exact: true }).first().click({ force: true })
+  }
   await expect(page.getByRole('radio', { name: label }).first()).toBeChecked({ timeout: 5_000 })
 }
 
@@ -453,6 +442,12 @@ export type FillParagraphDateOptions = {
    * range: 월 후반 구간 (기본은 초반 0~4일)
    */
   preferLaterDays?: boolean
+  /** 실행일을 포함하는 현재 월 구간. 모집 기간처럼 즉시 신청 가능한 범위에 사용한다. */
+  currentMonthWindow?: boolean
+  /** 현재 월 1일부터 두 달 뒤 월말까지의 넓은 운영 기간. 자동입력 일정 범위를 수용한다. */
+  wideCurrentYearWindow?: boolean
+  /** 운영 시작일을 오늘 이후로 선택해 일정 배정 E2E에서 과거 회차가 되지 않게 한다. */
+  futureStartWindow?: boolean
 }
 
 /**
@@ -465,11 +460,24 @@ async function fillParagraphDateByPlaceholderOnce(
   mode: 'single' | 'range' = 'range',
   options?: FillParagraphDateOptions
 ) {
-  const triggerLocator = () =>
-    page
+  const labelText = placeholder.replace(/을 선택하세요$/, '')
+  const triggerLocator = () => {
+    const byPlaceholder = page
       .locator('.paragraph-date-picker__trigger:visible')
       .filter({ hasText: placeholder })
-      .first()
+    const fieldLabel = page
+      .locator('.detail-info-form__field-label-text')
+      .filter({ hasText: labelText })
+    const byFieldLabel = page
+      .locator('.detail-info-form__field:visible')
+      .filter({ has: fieldLabel })
+      .locator('.paragraph-date-picker__trigger:visible')
+    // 일부 등록 폼에서는 트리거가 날짜 picker 전용 class 대신
+    // 접근성 button으로만 노출된다. 동일 placeholder의 실제 버튼을
+    // fallback으로 포함해 동적 반복 일정도 놓치지 않는다.
+    const byRole = page.getByRole('button', { name: placeholder, exact: true })
+    return byRole.or(byPlaceholder).or(byFieldLabel).first()
+  }
 
   let trigger = triggerLocator()
   if ((await trigger.count()) === 0) return
@@ -491,6 +499,26 @@ async function fillParagraphDateByPlaceholderOnce(
   await expect(dialog).toBeVisible({ timeout: 10_000 })
 
   const clicks = options?.futureMonthClicks ?? 0
+  if (
+    options?.currentMonthWindow === true ||
+    options?.wideCurrentYearWindow === true ||
+    options?.futureStartWindow === true
+  ) {
+    const now = new Date()
+    const targetMonth = now.getFullYear() * 12 + now.getMonth()
+    for (let attempt = 0; attempt < 24; attempt += 1) {
+      const title = (await dialog.locator('.calendar-mini-title').innerText()).trim()
+      const match = /^(\d{4})\.(\d{1,2})$/.exec(title)
+      if (!match) break
+      const displayedMonth = Number(match[1]) * 12 + Number(match[2]) - 1
+      if (displayedMonth === targetMonth) break
+      const navigationButton =
+        displayedMonth < targetMonth
+          ? dialog.locator('button.calendar-mini-nav-btn').last()
+          : dialog.locator('button.calendar-mini-nav-btn').first()
+      await navigationButton.click()
+    }
+  }
   if (clicks > 0) {
     for (let i = 0; i < clicks; i += 1) {
       // 월 이동마다 CalendarMini가 다시 렌더되므로 버튼을 새로 조회한다.
@@ -500,38 +528,85 @@ async function fillParagraphDateByPlaceholderOnce(
     }
   }
 
+  // ParagraphDatePicker uses the shared CalendarMini rather than Ant Design's
+  // calendar cells. Select only enabled days in the displayed month so the
+  // test does not accidentally choose a trailing day from the adjacent month.
   const dayCells = dialog.locator(
-    'td.ant-picker-cell-in-view:not(.ant-picker-cell-disabled)'
+    'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month)'
   )
   await expect(dayCells.first()).toBeVisible({ timeout: 5_000 })
   const dayCount = await dayCells.count()
 
   // preferLaterDays: 발표일 등 — 모집(초반)보다 뒤 날짜
-  const startIdx = options?.preferLaterDays
-    ? mode === 'single'
-      ? Math.max(dayCount - 2, 0)
-      : Math.min(Math.max(dayCount - 8, 0), Math.max(dayCount - 2, 0))
-    : 0
-  const endIdx = Math.min(startIdx + 4, dayCount - 1)
-  const startDate = await dayCells.nth(startIdx).getAttribute('title')
-  const endDate = await dayCells.nth(endIdx).getAttribute('title')
-
-  if (!startDate || (mode === 'range' && !endDate)) {
+  const currentMonthWindow = options?.currentMonthWindow === true
+  const wideCurrentYearWindow = options?.wideCurrentYearWindow === true
+  const futureStartWindow = options?.futureStartWindow === true
+  const currentDate = new Date()
+  const currentDay = currentDate.getDate()
+  // Date-only values are serialized by the app at the local-day boundary. Pick
+  // two days before the browser date so the resulting UTC instant is already
+  // active even when the test runs near midnight in the local timezone.
+  const activeStartDay = Math.max(currentDay - 2, 1)
+  const futureStartDay = Math.min(currentDay + 1, 28)
+  const dayTexts = currentMonthWindow
+    ? await dayCells.evaluateAll(elements =>
+        elements.map(element => element.textContent?.trim() ?? '')
+      )
+    : []
+  const currentDayIdx = currentMonthWindow
+    ? dayTexts.findIndex(text => text === String(activeStartDay))
+    : -1
+  const futureStartDayIdx = futureStartWindow
+    ? dayCells.evaluateAll(
+        (elements, day) =>
+          elements.findIndex(element => element.textContent?.trim() === String(day)),
+        futureStartDay
+      )
+    : -1
+  const startIdx = wideCurrentYearWindow
+    ? 0
+    : futureStartWindow
+    ? futureStartDayIdx >= 0
+      ? futureStartDayIdx
+      : Math.max(dayCount - 1, 0)
+    : currentMonthWindow
+    ? currentDayIdx >= 0
+      ? currentDayIdx
+      : Math.max(dayCount - 2, 0)
+    : options?.preferLaterDays
+      ? mode === 'single'
+        ? Math.max(dayCount - 2, 0)
+        : Math.min(Math.max(dayCount - 8, 0), Math.max(dayCount - 2, 0))
+      : 0
+  const endIdx = currentMonthWindow
+    ? Math.max(dayCount - 1, startIdx + 1)
+    : Math.min(startIdx + 4, dayCount - 1)
+  const resolvedStartIdx = startIdx
+  if (startIdx >= dayCount || (mode === 'range' && endIdx >= dayCount)) {
     throw new Error(`날짜 셀 식별 실패: "${placeholder}"`)
   }
 
-  await dialog
-    .locator(`td.ant-picker-cell-in-view[title="${startDate}"] .calendar-mini-cell`)
-    .click({ force: true })
+  await dayCells.nth(resolvedStartIdx).click({ force: true })
   if (mode === 'range' && dayCount > 1) {
     const endField = dialog
       .locator('.date-time-picker-popover__field')
       .filter({ hasText: '종료일' })
       .first()
     await endField.click()
-    await dialog
-      .locator(`td.ant-picker-cell-in-view[title="${endDate}"] .calendar-mini-cell`)
-      .click({ force: true })
+    if (wideCurrentYearWindow || futureStartWindow) {
+      for (let monthOffset = 0; monthOffset < 2; monthOffset += 1) {
+        const nextBtn = dialog.locator('button.calendar-mini-nav-btn').last()
+        await expect(nextBtn).toBeVisible({ timeout: 5_000 })
+        await nextBtn.click()
+      }
+      const endMonthCells = dialog.locator(
+        'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month)'
+      )
+      await expect(endMonthCells.last()).toBeVisible({ timeout: 5_000 })
+      await endMonthCells.last().click({ force: true })
+    } else {
+      await dayCells.nth(endIdx).click({ force: true })
+    }
   }
 
   await dialog.getByRole('button', { name: '설정' }).click()
@@ -568,15 +643,9 @@ export async function fillParagraphDateByPlaceholder(
 }
 
 /** ParagraphTimePicker — placeholder 트리거 클릭 후 「설정」 */
-export async function fillParagraphTimeIfVisible(
-  page: Page,
-  placeholder = '시간 선택'
-) {
+export async function fillParagraphTimeIfVisible(page: Page, placeholder = '시간 선택') {
   const triggerLocator = () =>
-    page
-      .locator('.paragraph-time-picker__trigger:visible')
-      .filter({ hasText: placeholder })
-      .first()
+    page.locator('.paragraph-time-picker__trigger:visible').filter({ hasText: placeholder }).first()
   let trigger = triggerLocator()
   if ((await trigger.count()) === 0) return
   if (!(await trigger.isVisible().catch(() => false))) return
@@ -601,10 +670,11 @@ export async function fillAllParagraphDatesByPlaceholder(
   mode: 'single' | 'range' = 'range',
   options?: FillParagraphDateOptions
 ) {
-  const triggers = page
+  const styledTriggers = page
     .locator('.paragraph-date-picker__trigger:visible')
     .filter({ hasText: placeholder })
-  const count = await triggers.count()
+  const roleTriggers = page.getByRole('button', { name: placeholder, exact: true })
+  const count = Math.max(await styledTriggers.count(), await roleTriggers.count())
   for (let i = 0; i < count; i += 1) {
     // 매번 첫 번째 남은 placeholder 트리거를 채움 (설정 후 텍스트가 바뀜)
     await fillParagraphDateByPlaceholder(page, placeholder, mode, options)
@@ -747,4 +817,3 @@ export async function expectDetailInfoFieldContains(
     await expect(content).toContainText(expected, { timeout })
   }
 }
-

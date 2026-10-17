@@ -11,7 +11,7 @@ import {
   type TransparencyReportsListParams,
 } from '@/features/transparency'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import { PFLoadingSpinner, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 const PAGE_CONFIG: Record<
@@ -131,7 +131,11 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
         <div className={styles.body}>
           <div className={styles.toolbar}>
             <PFText as="span" typo="hd-sm" color="black" className={styles.count}>
-              {listQuery.isPending ? '불러오는 중…' : `총 ${listQuery.totalCount}건`}
+              {listQuery.isPending ? (
+                <PFLoadingSpinner label="보고서 건수를 불러오는 중" />
+              ) : (
+                `총 ${listQuery.totalCount}건`
+              )}
             </PFText>
             <div className={styles.search}>
               <PFSearchInput
@@ -149,9 +153,7 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
               보고서 목록을 불러오지 못했습니다.
             </PFText>
           ) : listQuery.isPending ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              불러오는 중…
-            </PFText>
+            <PFLoadingSpinner centered label="보고서 목록을 불러오는 중" />
           ) : listQuery.items.length === 0 ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
               검색 결과가 없습니다.

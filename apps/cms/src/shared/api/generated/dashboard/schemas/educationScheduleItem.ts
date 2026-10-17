@@ -5,22 +5,45 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { EducationScheduleAssignment } from './educationScheduleAssignment';
+import type { EducationScheduleItemBlockKind } from './educationScheduleItemBlockKind';
+import type { ScheduleGroupTime } from './scheduleGroupTime';
 
 export interface EducationScheduleItem {
-  scheduleId?: number;
+  /** 운영 program_schedule.id. GENERAL_INDIVIDUAL 승인 참여자는 확정된 교육범위의 각 카드에 채워지며, 미확정 신청/정의 전용 카드만 null일 수 있습니다. */
+  scheduleId?: number | null;
   sessionNo?: number;
   title?: string;
-  startAt?: string;
-  endAt?: string;
+  startAt?: string | null;
+  endAt?: string | null;
   allDay?: boolean;
   locationName?: string;
   address?: string;
   addressDetail?: string;
   scheduleStatus?: string;
-  attendanceStatus?: string;
+  /** PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이거나 운영 행이 없으면 null. */
+  attendanceStatus?: string | null;
   absenceReasonStatus?: string;
+  /** 저장된 결석 사유 본문. 없으면 null. */
+  absenceReason?: string | null;
   assignmentCount?: number;
   surveyCount?: number;
   satisfactionCount?: number;
   availableActions?: string[];
+  /** 커리큘럼 행 라벨. 예: 1차시 / 1회차. */
+  sessionLabel?: string | null;
+  /** 단원명. title과 같으면 생략 가능. */
+  unitName?: string | null;
+  /** 교육내용(커리큘럼 description). */
+  content?: string | null;
+  /** 일정형 행 라벨. 예: 세부 일정 01 / 행사 일정 01. */
+  scheduleLabel?: string | null;
+  /** 일정명. title과 같으면 생략 가능. */
+  scheduleName?: string | null;
+  /** 일정형만. PRE_EDUCATION | SUB | EVENT. */
+  blockKind?: EducationScheduleItemBlockKind;
+  progressTimeLabel?: string | null;
+  groupTimes?: ScheduleGroupTime[] | null;
+  /** 과제 블록. 없거나 enabled=false면 FE가 과제 UI만 숨긴다. */
+  assignment?: EducationScheduleAssignment | null;
 }

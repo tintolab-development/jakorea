@@ -12,4 +12,5 @@ export interface GuardianChallengeCreateRequest {
   guardianPhone?: string;
   guardianRelation?: string;
   agreementSnapshotJson?: string;
+  signupIntentId?: string;
 }

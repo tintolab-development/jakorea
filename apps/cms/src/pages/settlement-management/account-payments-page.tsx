@@ -48,6 +48,11 @@ import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import { getPaymentOrdersDefaultDateRange } from './payment-orders-date-range'
 import {
+  AP_YEAR_PARAM,
+  parseAccountPaymentsYearParam,
+  shiftTransferDateRangeToYear,
+} from './account-payments-year'
+import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentConfirmationPayloadForSelection,
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
@@ -94,6 +99,12 @@ const AP_DETAIL_ID = 'ap_detail'
 
 /** `FilterTableLayout` 툴바 — `FilterTableToolbarButton` h40, width=auto에 최소 폭 180px 적용 */
 const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 160 } as const
+
+/**
+ * 목록 가로 스크롤 기준 폭.
+ * 선택80 + No.80 + 신청자88 + 프로그램420 + 기관130 + 차시100 + 현황130 + 금액110 + 이체일140
+ */
+const ACCOUNT_PAYMENTS_LIST_SCROLL_X = 80 + 80 + 88 + 420 + 130 + 100 + 130 + 110 + 140
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
 function formatYyMmDd(d: Dayjs): string {
@@ -192,13 +203,16 @@ export default function AccountPaymentsPage() {
     [calendarYear]
   )
 
-  const [selectedYear, setSelectedYear] = useState(() => dayjs().year())
-  /** 탭 구간(금년~3년 전) 밖 값은 표시·집계 시 클램프 — 연도 전환 후에도 동기 */
+  /** 탭 구간(금년~3년 전) — URL `ap_year`가 SSOT */
   const selectedYearScoped = useMemo(() => {
     const lo = calendarYear - 3
     const hi = calendarYear
-    return Math.min(hi, Math.max(lo, selectedYear))
-  }, [calendarYear, selectedYear])
+    return parseAccountPaymentsYearParam(searchParams.get(AP_YEAR_PARAM), {
+      minYear: lo,
+      maxYear: hi,
+      fallback: hi,
+    })
+  }, [calendarYear, searchParams])
 
   const [viewMode, setViewMode] = useState<PageViewMode>('list')
   const [draftInstructor, setDraftInstructor] = useState('')
@@ -213,6 +227,27 @@ export default function AccountPaymentsPage() {
     accountStatus: 'all',
     transferDateRange: getPaymentOrdersDefaultDateRange(),
   }))
+
+  /** 최초 진입·잘못된 값이면 `ap_year`를 현재 탭 연도로 맞춤 */
+  useEffect(() => {
+    const lo = calendarYear - 3
+    const hi = calendarYear
+    const raw = searchParams.get(AP_YEAR_PARAM)
+    const parsed = parseAccountPaymentsYearParam(raw, {
+      minYear: lo,
+      maxYear: hi,
+      fallback: hi,
+    })
+    if (raw === String(parsed)) return
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(AP_YEAR_PARAM, String(parsed))
+        return next
+      },
+      { replace: true }
+    )
+  }, [calendarYear, searchParams, setSearchParams])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [accountPayConfirmSelection, setAccountPayConfirmSelection] = useState<
     AccountPaymentRow[] | null
@@ -319,9 +354,10 @@ export default function AccountPaymentsPage() {
           : ('all' as const),
       fromDate: applied.transferDateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: applied.transferDateRange?.[1]?.format('YYYY-MM-DD'),
-      // year는 예산 카드 전용. dateRange가 있을 때 목록 refetch 트리거로 쓰지 않음
+      /** 이체일 구간이 있으면 BE가 year보다 from/to 우선. 구간 없을 때만 year 윈도우 */
+      year: selectedYearScoped,
     }),
-    [applied]
+    [applied, selectedYearScoped]
   )
 
   const budgetSummaryQuery = useSettlementBudgetSummaryQuery(
@@ -420,10 +456,26 @@ export default function AccountPaymentsPage() {
     setSelectedRowKeys([])
   }, [draftAccountStatus, draftDateRange, draftInstructor, draftProgram])
 
-  const handleYearTabSelect = useCallback((y: number) => {
-    setSelectedYear(y)
-    setSelectedRowKeys([])
-  }, [])
+  const handleYearTabSelect = useCallback(
+    (y: number) => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(AP_YEAR_PARAM, String(y))
+          return next
+        },
+        { replace: true }
+      )
+      // 이체 예정일 필터의 연도만 맞춰 목록이 같이 바뀌게 함 (from/to가 year를 덮음)
+      setDraftDateRange(prev => shiftTransferDateRangeToYear(prev, y))
+      setApplied(prev => ({
+        ...prev,
+        transferDateRange: shiftTransferDateRangeToYear(prev.transferDateRange, y),
+      }))
+      setSelectedRowKeys([])
+    },
+    [setSearchParams]
+  )
 
   const rowSelection = useMemo(
     () => ({
@@ -439,32 +491,34 @@ export default function AccountPaymentsPage() {
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 80,
+        width: 64,
         align: 'center',
       },
       {
         title: '신청자명',
         dataIndex: 'instructorName',
         key: 'instructorName',
+        className: 'account-payments-page__col-instructor',
         ellipsis: { showTitle: true },
-        width: 120,
+        width: 88,
         align: 'center',
       },
       {
         title: '프로그램명',
         dataIndex: 'programName',
         key: 'programName',
+        className: 'account-payments-page__col-program',
         ellipsis: { showTitle: true },
-        width: 320,
-        minWidth: 200,
+        width: 420,
         align: 'center',
       },
       {
         title: '참여 기관명',
         dataIndex: 'institutionName',
         key: 'institutionName',
+        className: 'account-payments-page__col-institution',
         ellipsis: { showTitle: true },
-        width: 140,
+        width: 130,
         align: 'center',
         render: (v: string) => formatAccountPaymentInstitutionDisplay(v),
       },
@@ -472,7 +526,8 @@ export default function AccountPaymentsPage() {
         title: '강의 진행 차시',
         dataIndex: 'sessionLabel',
         key: 'sessionLabel',
-        width: 120,
+        className: 'account-payments-page__col-session',
+        width: 100,
         align: 'center',
         render: (v: string) => formatAccountPaymentSessionLabelDisplay(v),
       },
@@ -480,7 +535,8 @@ export default function AccountPaymentsPage() {
         title: '계좌 지급 현황',
         dataIndex: 'accountPaymentStatus',
         key: 'accountPaymentStatus',
-        width: 160,
+        className: 'account-payments-page__col-status',
+        width: 130,
         align: 'center',
         render: (s: AccountPaymentTransferStatus) => (
           <span className={getAccountPaymentStatusClassName(s)}>
@@ -492,7 +548,8 @@ export default function AccountPaymentsPage() {
         title: '정산 예정금',
         dataIndex: 'amount',
         key: 'amount',
-        width: 140,
+        className: 'account-payments-page__col-amount',
+        width: 110,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
@@ -500,7 +557,8 @@ export default function AccountPaymentsPage() {
         title: '이체 예정일',
         dataIndex: 'transferScheduledDate',
         key: 'transferScheduledDate',
-        width: 168,
+        className: 'account-payments-page__col-transfer-date',
+        width: 140,
         align: 'center',
         render: (iso: string) => formatTransferCell(iso),
       },
@@ -975,12 +1033,13 @@ export default function AccountPaymentsPage() {
               </div>
             ) : (
               <CmsDataTable<AccountPaymentRow>
-                className="cms-data-table"
+                className="cms-data-table account-payments-page__table"
                 rowKey="id"
                 columns={columns}
                 dataSource={filteredRows}
                 pagination={false}
                 rowSelection={rowSelection}
+                scroll={{ x: ACCOUNT_PAYMENTS_LIST_SCROLL_X }}
                 rowClassName={() => 'account-payments-page__table-row--clickable'}
                 onRow={record => ({
                   onClick: e => {

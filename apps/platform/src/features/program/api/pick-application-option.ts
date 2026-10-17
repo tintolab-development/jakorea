@@ -15,6 +15,14 @@ function hasFormBinding(row: PortalApplicationOption): boolean {
   return row.formBindingId != null
 }
 
+/** 모집 id와 신청 유형을 함께 써서 같은 모집의 다른 신청 유형을 구분한다. */
+export function applicationOptionKey(row: PortalApplicationOption): string | null {
+  const recruitmentId = row.recruitmentId
+  const applicationType = row.applicationType?.trim().toUpperCase()
+  if (recruitmentId == null || !applicationType) return null
+  return `${recruitmentId}:${applicationType}`
+}
+
 function normalizeApplicationTypes(selection?: ProgramApplicationSelection | null): string[] {
   return (selection?.applicationTypes ?? [])
     .map(type => type.trim().toUpperCase())
@@ -58,8 +66,17 @@ export function pickApplicationOption(
 
   const applicationTypes = normalizeApplicationTypes(selection)
   const exactId = resolveExactRecruitmentId(selection)
+  const byKey = new Map(
+    identifiable.flatMap(row => {
+      const key = applicationOptionKey(row)
+      return key ? [[key, row] as const] : []
+    }),
+  )
 
   if (exactId != null) {
+    if (applicationTypes.length === 1) {
+      return byKey.get(`${exactId}:${applicationTypes[0]}`) ?? null
+    }
     let matches = identifiable.filter(row => row.recruitmentId === exactId)
     matches = filterByApplicationTypes(matches, applicationTypes)
     if (matches.length !== 1) return null

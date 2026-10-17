@@ -38,6 +38,10 @@ import {
 } from './app-datepicker'
 import type { AppDatePickerRef } from './app-datepicker'
 import { FieldCalendarIcon } from './icons/FieldIcons'
+import {
+  applySplitDateRangeEndChange,
+  applySplitDateRangeStartChange,
+} from '@/shared/lib/split-date-range-on-change'
 import './cms-datepicker.css'
 
 export type CmsDatePickerRef = AppDatePickerRef
@@ -292,19 +296,13 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
       onChange?.([d, d.add(1, 'month')], ['', ''])
       return
     }
-    if (d && end && d.isAfter(end)) {
-      onChange?.([d, d], ['', ''])
-    } else {
-      onChange?.([d, end], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeStartChange(end, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const handleEndChange = (d: Dayjs | null) => {
-    if (d && start && d.isBefore(start)) {
-      onChange?.([d, start], ['', ''])
-    } else {
-      onChange?.([start, d], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeEndChange(start, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const rootCn = joinCmsClassNames(

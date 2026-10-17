@@ -12,6 +12,7 @@ import type {
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
@@ -258,6 +259,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   /** 프로그램 유형 설정에서 IPS 유형이「일정 별 상이」일 때만 (단일·일부 복수 조합) 세부 일정 하단에 IPS 행 */
   ipsPerSchedule?: boolean
   sessionRoundType: ProgramRegistrationSessionRoundType
+  participantIndividual: boolean
   participantOrganization: boolean
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind
   participationScheduleDetail: ProgramRegistrationScheduleDetailKind
@@ -282,6 +284,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   onDeleteScheduleCurriculumGroup,
   ipsPerSchedule = false,
   sessionRoundType,
+  participantIndividual,
   participantOrganization,
   educationFormScheduleDetail,
   participationScheduleDetail,
@@ -923,11 +926,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     )
     return (
       <div className="detail-info-form-inputs-wrapper-no-gap">
-        <ParagraphDatePicker
-          mode="single"
-          presetMode="schedule"
-          customizable={false}
-          suppressAutoTodayWhenEmpty
+        <EducationProgressScheduleDatePicker
+          participantIndividual={participantIndividual}
+          participantOrganization={participantOrganization}
+          programType="schedule"
+          sessionRound={sessionRoundType}
           value={scheduleRange?.[0] ?? null}
           appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
           appliedSurfaceWithTime={scheduleHasClock}
@@ -941,8 +944,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               })
             )
           }
-          width="100%"
-          placeholder="일정을 선택하세요"
         />
       </div>
     )

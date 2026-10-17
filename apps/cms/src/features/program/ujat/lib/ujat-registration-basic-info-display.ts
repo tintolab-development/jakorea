@@ -226,13 +226,17 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     overlayString(overlay, 'ujat.basicInfo.courseDeliveredBy') ?? defaults.courseDeliveredBy
   const ipsCategory =
     overlayString(overlay, 'ujat.basicInfo.ipsCategory') ?? defaults.ipsCategory
-  const educationCourse =
-    overlayString(overlay, 'ujat.basicInfo.educationCourse') ?? defaults.educationCourse
+  const educationCourseValue =
+    overlayString(overlay, 'ujat.basicInfo.educationCourse')?.trim() ||
+    program.educationProcess?.trim() ||
+    ''
   const partnerInvolvementRaw = overlayString(overlay, 'ujat.basicInfo.partnerInvolvement')
   const partnerInvolvement =
     partnerInvolvementRaw === 'yes' || partnerInvolvementRaw === 'no'
       ? partnerInvolvementRaw
-      : defaults.partnerInvolvement
+      : partnerInvolvementRaw === ''
+        ? ''
+        : defaults.partnerInvolvement
 
   const operationSeal = readOperationRangeSeal(overlay)
   const surveyItems = resolveUjatSurveyItemFlags(program)
@@ -243,10 +247,11 @@ export function resolveUjatRegistrationBasicInfoDisplay(
 
   // 일정형(UJAT 기본·수정 잠금과 동일): stale overlay의 봉사단 세부명을 무시하고「해당없음」.
   // 커리큘럼형: BE top-level detailedProgramName / detailedProgramId를 overlay보다 우선.
-  const isScheduleStructure = program.generalProgramEducationStructure !== 'curriculum'
+  const isScheduleStructure = program.generalProgramEducationStructure === 'schedule'
   const topLevelDetailedName = program.generalCommonInfo?.detailedProgramName?.trim()
   const detailedProgramName = (() => {
     if (isScheduleStructure) return '해당없음'
+    if (!program.detailedProgramId?.trim() && !topLevelDetailedName) return '-'
     if (topLevelDetailedName === '해당없음' || !program.detailedProgramId?.trim()) {
       if (topLevelDetailedName === '해당없음') return '해당없음'
     }
@@ -268,7 +273,9 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     sponsorName: resolveSponsorName(sponsorId, sponsorName, sponsors),
     sponsorManager,
     surveyItems: resolveSurveyItemsText(surveyItems),
-    educationCourse: optionLabel([...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS], educationCourse),
+    educationCourse: educationCourseValue
+      ? optionLabel([...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS], educationCourseValue)
+      : program.curriculum?.trim() || '-',
     ipOwned: optionLabel([...TEMPLATE_FORM_IP_OWNED_OPTIONS], ipOwned),
     courseDeliveredBy: optionLabel([...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS], courseDeliveredBy),
     partnerInvolvement: optionLabel(TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS, partnerInvolvement),

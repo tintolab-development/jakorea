@@ -13,6 +13,13 @@
   width: 100%;
 }
 
+.loadingState {
+  display: flex;
+  min-height: 160px;
+  align-items: center;
+  justify-content: center;
+}
+
 .layout {
   display: flex;
   width: 100%;

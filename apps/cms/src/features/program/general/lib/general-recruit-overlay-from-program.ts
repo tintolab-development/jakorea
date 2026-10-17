@@ -2,6 +2,7 @@
  * 일반 모집 overlay ← nested *RecruitmentInfo · 컬럼.
  * leftover overlay가 같은 필드를 이기지 않게 저장·serialize에서 재생성한다.
  */
+import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import type { Program } from '@/types/domain'
 import dayjs from 'dayjs'
 import {
@@ -159,6 +160,15 @@ function needNone(value: boolean | undefined): 'need' | 'none' | undefined {
   return undefined
 }
 
+function audienceProgramRangeSeal(
+  program: Program,
+  audience: 'participant' | 'instructor' | 'volunteer',
+  operationPeriodLabel?: string | null
+): { start: string; end: string } | undefined {
+  const iso = resolveAudienceProgramOperationIsoRange(program, audience)
+  return rangeSeal(iso.start, iso.end, operationPeriodLabel ?? undefined)
+}
+
 /** 중첩·컬럼에서 모집 overlay 키를 채운다. 빈 값도 leftover를 덮는다. */
 export function buildGeneralRecruitOverlayFromProgram(
   program: Program
@@ -183,10 +193,20 @@ export function buildGeneralRecruitOverlayFromProgram(
     program.applicationEndDate,
     participant?.recruitmentPeriodLabel
   )
-  const participantProgram = rangeSeal(
-    program.startDate,
-    program.endDate,
+  const participantProgram = audienceProgramRangeSeal(
+    program,
+    'participant',
     participant?.operationPeriodLabel
+  )
+  const instructorProgram = audienceProgramRangeSeal(
+    program,
+    'instructor',
+    instructor?.operationPeriodLabel
+  )
+  const volunteerProgram = audienceProgramRangeSeal(
+    program,
+    'volunteer',
+    volunteer?.operationPeriodLabel
   )
   const instructorRecruit = rangeSeal(
     program.instructorApplicationStartDate,
@@ -303,9 +323,9 @@ export function buildGeneralRecruitOverlayFromProgram(
     overlay[keys.individual.programRangeSeal] = participantProgram
   }
   if (instructorRecruit) overlay[keys.instructor.recruitRangeSeal] = instructorRecruit
-  if (participantProgram) overlay[keys.instructor.programRangeSeal] = participantProgram
+  if (instructorProgram) overlay[keys.instructor.programRangeSeal] = instructorProgram
   if (volunteerRecruit) overlay[keys.volunteer.recruitRangeSeal] = volunteerRecruit
-  if (participantProgram) overlay[keys.volunteer.programRangeSeal] = participantProgram
+  if (volunteerProgram) overlay[keys.volunteer.programRangeSeal] = volunteerProgram
   if (volunteerInterviewRange) overlay[keys.volunteer.interviewRangeSeal] = volunteerInterviewRange
 
   const volunteerDocDeadline = isoOrUndefined(

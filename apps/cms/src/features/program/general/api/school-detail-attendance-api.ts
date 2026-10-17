@@ -97,7 +97,14 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
   const { schoolId, program, sessions, rosterStudents, attendancesByScheduleId } = input
   const total = rosterStudents.length
 
-  return sessions.map(session => {
+  return sessions.filter(session => {
+    const scheduleId = session.resolvedScheduleId
+    const attendances =
+      typeof scheduleId === 'number' && Number.isFinite(scheduleId) && scheduleId > 0
+        ? attendancesByScheduleId[String(scheduleId)]
+        : undefined
+    return Array.isArray(attendances) && attendances.length > 0
+  }).map(session => {
     const id = resolveSessionGroupId(schoolId, session)
     const scheduleId =
       typeof session.resolvedScheduleId === 'number' &&
@@ -105,8 +112,7 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
       session.resolvedScheduleId > 0
         ? session.resolvedScheduleId
         : null
-    const attendances =
-      scheduleId != null ? (attendancesByScheduleId[String(scheduleId)] ?? []) : []
+    const attendances = scheduleId != null ? attendancesByScheduleId[String(scheduleId)] ?? [] : []
     const byParticipant = new Map(
       attendances
         .filter(item => item.participantId != null)
