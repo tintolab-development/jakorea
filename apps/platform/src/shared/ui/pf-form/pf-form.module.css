@@ -307,9 +307,21 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.35em;
+  gap: 10px;
   width: 100%;
   min-width: 0;
+}
+
+.fieldLabelRowVertical > .fieldLabelTitleRowVertical {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* CMS volunteer-free-text-items__card-header — 타이틀 우측 보조 문구 */
+.fieldLabelRowVertical > .fieldLabelDescriptionVertical {
+  flex: 0 1 auto;
+  margin-left: auto;
+  text-align: right;
 }
 
 .fieldLabelColumnVertical {

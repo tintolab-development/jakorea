@@ -241,6 +241,27 @@
   text-align: right;
 }
 
+/* formPage 글자 수(0/1000) — 입력창 하단 우측 (리사이즈 핸들 왼쪽) */
+.fieldCharCount {
+  position: absolute;
+  right: 28px;
+  bottom: 10px;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  color: var(--color-neutral-warm-500);
+  pointer-events: none;
+}
+
+.fieldRows1 .fieldCharCount {
+  right: 26px;
+  bottom: 12px;
+}
+
 .messageNeutral {
   color: var(--color-neutral-warm-500);
 }

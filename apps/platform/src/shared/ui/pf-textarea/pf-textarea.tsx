@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { PFText } from '../pf-text'
 import resizeIconUrl from './icons/resize.svg'
+import { isCharCountMessage } from './is-char-count-message'
 import styles from './pf-textarea.module.css'
 
 export type PFTextareaSize = 'medium' | 'large' | 'xlarge' | 'mobile'
@@ -109,10 +110,14 @@ export function PFTextarea({
     success: styles.messageSuccess,
     error: styles.messageError,
   } as const
+  const isCharCount = isCharCountMessage(message)
+  const showCharCountInField = isCharCount && isFormPage
+  const resolvedMessageAlign =
+    messageAlign === 'end' || (isCharCount && !showCharCountInField) ? 'end' : 'start'
   const messageClassName = [
     styles.message,
     messageStatusClassMap[messageStatus],
-    messageAlign === 'end' ? styles.messageEnd : undefined,
+    resolvedMessageAlign === 'end' ? styles.messageEnd : undefined,
   ]
     .filter(Boolean)
     .join(' ')
@@ -193,8 +198,13 @@ export function PFTextarea({
         >
           <img className={styles.resizeIcon} src={resizeIconUrl} alt="" aria-hidden="true" />
         </button>
+        {showCharCountInField && message ? (
+          <span className={styles.fieldCharCount} aria-live="polite">
+            {message}
+          </span>
+        ) : null}
       </div>
-      {message ? <p className={messageClassName}>{message}</p> : null}
+      {message && !showCharCountInField ? <p className={messageClassName}>{message}</p> : null}
     </div>
   )
 }
