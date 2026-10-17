@@ -26,7 +26,7 @@ export function settlementEventStatusColorPair(
     text: style.color,
     border: style.border,
     bg: style.bg,
-  } as ScheduleColorPair
+  }
 }
 
 /** `CalendarMain` 이벤트 모드 `previewTooltipContent`용 */

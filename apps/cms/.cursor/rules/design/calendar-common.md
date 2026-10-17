@@ -296,9 +296,11 @@ const {
 
 **공통 (모든 events 모드):**
 
-- `.calendar-event` strip shell — `backgroundColor`, 선택 상태, overflow `+N`
-- `SCHEDULE_COLORS` / `resolveEventColors` / `colorMap` — bg·text·border 강조색
-- strip 크기·border-radius — `calendar-split-card-main.css` 등 공통 CSS
+- `.calendar-event` strip shell — 인라인은 **`backgroundColor`만** (`SCHEDULE_COLORS[].bg`). 테두리·타이포는 `calendar-cell.css` SSOT: `border-radius` 4px, `padding` 4×6px, `gap` 6px, `border` `--Border-alpha-06`, 제목 13px `--Netural-black`, `-webkit-line-clamp: 1`
+- `.calendar-cell-events` 칩 간 `gap: 5px`. overflow `외 N개` — `.calendar-event-more` 13px `--Content-disabled`, `padding: 0 4px`
+- `SCHEDULE_COLORS` — **5 Tag색** (green / pink·`Tag-red` / sky / purple / yellow), `hash % 5`·`buildResolvedScheduleColorMapForPrograms` 유지. `text`·`border`는 전역 통일(검정 텍스트·alpha-06 테두리); 구분은 **배경만**
+- `resolveEventColors` / `colorMap` — 동일 팔레트. 선택 상태 `.calendar-event--selected` 텍스트 강조는 split-card 등 기존 CSS 유지
+- 7:3 split-card — 칩 shell **오버라이드 금지** (`calendar-split-card-main.css`는 gap·divider flex만). 월간 셀 상호작용은 `calendar-cell.css` 단일 소스
 
 **페이지별 (hook으로만 주입, 공통에 도메인 로직 금지):**
 

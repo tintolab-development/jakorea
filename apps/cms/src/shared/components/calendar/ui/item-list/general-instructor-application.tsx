@@ -72,11 +72,7 @@ export function CalendarListItemContentGeneralInstructorApplication({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <CmsCheckbox
-          checked={checked}
-          disabled={row.approvalStatus !== 'pending'}
-          onChange={e => onToggle(row.id, e.target.checked)}
-        />
+        <CmsCheckbox checked={checked} onChange={e => onToggle(row.id, e.target.checked)} />
       </div>
     </div>
   )

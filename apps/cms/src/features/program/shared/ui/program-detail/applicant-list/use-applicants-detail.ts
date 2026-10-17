@@ -850,6 +850,9 @@ export function useApplicantsDetail({
       void queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.instructorList(programId),
       })
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.organizationList(programId),
+      })
     }
   }, [
     instructorColumnPreset,
@@ -869,8 +872,10 @@ export function useApplicantsDetail({
   )
 
   useEffect(() => {
+    const hydrateForInstructorCalendar =
+      menu === 'instructors' && instructorColumnPreset === 'general-detail'
     if (
-      menu !== 'institutions' ||
+      (menu !== 'institutions' && !hydrateForInstructorCalendar) ||
       !usesProgramInstitutionApplications ||
       viewMode !== 'calendar' ||
       !programId ||
@@ -916,6 +921,7 @@ export function useApplicantsDetail({
     institutionColumnPreset,
     institutionScheduleHydrationSignature,
     institutionList.length,
+    instructorColumnPreset,
     menu,
     programId,
     queryClient,
