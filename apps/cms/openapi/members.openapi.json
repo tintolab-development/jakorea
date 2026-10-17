@@ -16892,11 +16892,11 @@
       },
       "Notification": {
         "type": "object",
-        "description": "IMMEDIATE | SCHEDULED. 기관 승인 body의 평탄 timing과 섞지 않습니다.",
+        "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 기관 승인 body의 평탄 timing과 섞지 않습니다.",
         "properties": {
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE",
             "example": "SCHEDULED"
           },
           "scheduledAt": {
@@ -19449,10 +19449,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -28295,6 +28295,9 @@
           "publiclyVisible": {
             "type": "boolean"
           },
+          "scheduleOrigin": {
+            "type": "string"
+          },
           "startDate": {
             "type": "string"
           },
@@ -35739,8 +35742,29 @@
           "educationTargetDetail": {
             "type": "string"
           },
+          "recruitmentTarget": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강사·봉사자 모집 공고 포커스일 때 nested recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null."
+          },
+          "recruitmentTargets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "강사·봉사자 모집 대상 코드 배열. recruitmentTarget 없을 때 FE 라벨 조합용. 참여자 포커스는 생략.",
+            "items": {
+              "type": "string"
+            }
+          },
           "recruitmentTargetDetail": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "모집 대상 상세. 포커스 모집 역할 nested 값만(참여자 값을 강사·봉사자에 복사하지 않음)."
           },
           "targetGradeFrom": {
             "type": "string"
@@ -45361,6 +45385,42 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ProgramEducationSlotResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "educationSlotKey": {
+            "type": "string"
+          },
+          "scheduleRole": {
+            "type": "string"
+          },
+          "scheduleStatus": {
+            "type": "string"
+          },
+          "scheduleOrigin": {
+            "type": "string"
           }
         }
       },
