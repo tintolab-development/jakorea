@@ -72,7 +72,10 @@ import {
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
-import { shouldShowSurveyPollScheduleSelectField } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
+import {
+  resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
+  shouldShowSurveyPollScheduleSelectField,
+} from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -315,6 +318,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     () => shouldShowSurveyPollScheduleSelectField(program),
     [program]
   )
+
+  useEffect(() => {
+    if (!surveyPollCreateModalOpen || !showSurveyPollScheduleSelectField) return
+    const options = surveyScheduleOptionsQuery.options ?? []
+    if (options.length === 1 && options[0]?.value) {
+      setSelectedSurveyScheduleValue(String(options[0].value))
+    }
+  }, [
+    surveyPollCreateModalOpen,
+    showSurveyPollScheduleSelectField,
+    surveyScheduleOptionsQuery.options,
+  ])
 
   const activeSatisfactionSurveyId =
     satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
@@ -807,7 +822,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               return
             }
           } else {
-            const surveyTarget = await resolveLectureEvalBindingTarget(String(program.id))
+            const surveyTarget = await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(program)
             if (surveyTarget == null) {
               void showAlert({
                 title: '등록 실패',
@@ -817,7 +832,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               return
             }
             payload.targetScope = surveyTarget.targetScope
-            payload.targetScopeId = surveyTarget.targetScopeId
+            if (surveyTarget.targetScopeId != null) {
+              payload.targetScopeId = surveyTarget.targetScopeId
+            }
           }
         }
         const result = await createBinding(payload)
