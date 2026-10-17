@@ -1,4 +1,5 @@
 import { Children, Fragment, type HTMLAttributes, type ReactNode } from 'react'
+import { PFText } from '../pf-text'
 import { PFFormFieldValueText } from './pf-form-field'
 import styles from './pf-form.module.css'
 
@@ -98,10 +99,29 @@ export type PFFormControlClusterProps = {
   className?: string
 }
 
-/** PC 가로 / 모바일(≤1079) 세로 스택 — 은행명+계좌, 학교+전공 등 */
+/** 컨트롤 + 라벨·suffix를 한 줄(모바일 포함 wrap)로 묶음 */
 export function PFFormControlCluster({ children, className }: PFFormControlClusterProps) {
   return (
     <div className={[styles.controlCluster, className].filter(Boolean).join(' ')}>{children}</div>
+  )
+}
+
+export type PFFormControlSuffixProps = {
+  children: ReactNode
+  className?: string
+}
+
+/** `PFFormControlCluster` 내 인풋 우측 단위·보조 문구 */
+export function PFFormControlSuffix({ children, className }: PFFormControlSuffixProps) {
+  return (
+    <PFText
+      as="span"
+      typo="bd-md-rg"
+      color="neutral-cool-700"
+      className={[styles.controlClusterSuffix, className].filter(Boolean).join(' ')}
+    >
+      {children}
+    </PFText>
   )
 }
 

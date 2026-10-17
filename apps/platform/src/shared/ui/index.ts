@@ -61,6 +61,7 @@ export {
   PFFormFieldValueText,
   PFFormFileAttach,
   PFFormControlCluster,
+  PFFormControlSuffix,
   PFFormInlineJoinedValues,
   PFFormInlineRow,
   PFFormInlineSeparatedFields,
@@ -76,6 +77,7 @@ export {
 } from './pf-form'
 export type {
   PFFormControlClusterProps,
+  PFFormControlSuffixProps,
   PFFormFieldHintTextProps,
   PFFormFieldLabelWidth,
   PFFormFieldLayout,
