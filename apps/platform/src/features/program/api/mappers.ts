@@ -187,20 +187,23 @@ function isMultiSessionRound(value: string | null | undefined): boolean {
 
 function mapEducationTarget(value: string | undefined): {
   key: EducationTargetKey | null
+  keys: EducationTargetKey[]
   educationTargetLabel: string
   educationTargetGroupLabel: string
 } {
   const key = (value ?? '').trim().toLowerCase()
   if (key in TARGET_LABELS) {
     const labels = TARGET_LABELS[key as EducationTargetKey]
-    return { key: key as EducationTargetKey, ...labels }
+    const typed = key as EducationTargetKey
+    return { key: typed, keys: [typed], ...labels }
   }
-  return { key: null, educationTargetLabel: '전체', educationTargetGroupLabel: '전체' }
+  return { key: null, keys: [], educationTargetLabel: '전체', educationTargetGroupLabel: '전체' }
 }
 
 /** Portal 복수 `educationTargets` 우선. 없을 때만 단수 `educationTarget`. */
 function mapEducationTargets(remote: { educationTarget?: string; educationTargets?: string[] }): {
   key: EducationTargetKey | null
+  keys: EducationTargetKey[]
   educationTargetLabel: string
   educationTargetGroupLabel: string
 } {
@@ -234,6 +237,7 @@ function mapEducationTargets(remote: { educationTarget?: string; educationTarget
   const joined = keys.map(key => CMS_TARGET_LEVEL_LABEL[key]).join(', ')
   return {
     key: keys[0] ?? null,
+    keys,
     educationTargetLabel: joined,
     educationTargetGroupLabel: joined,
   }
@@ -1016,6 +1020,7 @@ export function mapPortalProgramDetail(
     applicationPeriodLabel: recruitmentPeriodLabel,
     recruitmentStatus,
     educationTargetKey: targets.key,
+    educationTargetKeys: targets.keys,
     educationTargetLabel: targets.educationTargetLabel,
     educationForm,
     educationFormLabel: educationFormLabelForDetail,
@@ -1170,6 +1175,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     recruitmentPeriodLabel: formatCompactRange(appStart, appEnd),
     recruitmentStatus,
     educationTargetKey: targets.key,
+    educationTargetKeys: targets.keys,
     educationTargetLabel:
       targets.key != null ? targets.educationTargetLabel : PROGRAM_TAB_LABEL[category],
     educationForm,

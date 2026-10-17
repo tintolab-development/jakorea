@@ -73,8 +73,8 @@ export type PortalProgramListQuery = {
   keyword?: string
   portalTab?: string
   recruitmentStatus?: string
-  recruitmentTarget?: string
-  educationTarget?: string
+  /** 목록 필터 — 프로그램 `educationTargets` 포함(OR) 매칭. UI `recruitmentTarget`/`educationTarget` 병합값 */
+  educationTargets?: string
   educationMethod?: string
   operatingFrom?: string
   operatingTo?: string

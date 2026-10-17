@@ -89,8 +89,7 @@ export const platformQueryKeys = {
       keyword: string
       portalTab: string
       recruitmentStatus: string
-      recruitmentTarget: string
-      educationTarget: string
+      educationTargets: string
       educationMethod: string
       operatingFrom: string
       operatingTo: string
@@ -104,8 +103,7 @@ export const platformQueryKeys = {
         params.keyword,
         params.portalTab,
         params.recruitmentStatus,
-        params.recruitmentTarget,
-        params.educationTarget,
+        params.educationTargets,
         params.educationMethod,
         params.operatingFrom,
         params.operatingTo,

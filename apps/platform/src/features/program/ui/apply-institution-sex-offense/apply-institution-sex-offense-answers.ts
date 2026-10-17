@@ -7,9 +7,9 @@ export type ApplySexOffenseInquiryMethod = 'ja_system' | 'criminal_record_site'
 export type ApplySexOffenseSiteSubmission = 'direct' | 'online'
 
 export type ApplyInstitutionSexOffenseValues = {
-  submissionRequest: ApplySexOffenseSubmissionRequest
+  submissionRequest: ApplySexOffenseSubmissionRequest | ''
   inquiryMethod: ApplySexOffenseInquiryMethod
-  siteSubmission: ApplySexOffenseSiteSubmission
+  siteSubmission: ApplySexOffenseSiteSubmission | ''
   institutionId: string
   verificationNumber: string
 }
@@ -54,9 +54,9 @@ export function omitSexOffenseInquiryAnswersIfNotRequested(
 
 export function emptyInstitutionSexOffense(): ApplyInstitutionSexOffenseValues {
   return {
-    submissionRequest: 'request',
+    submissionRequest: '',
     inquiryMethod: FIXED_INQUIRY_METHOD,
-    siteSubmission: 'online',
+    siteSubmission: '',
     institutionId: '',
     verificationNumber: '',
   }
@@ -71,7 +71,13 @@ export function shouldShowSexOffenseInquiry(
 export function findIncompleteSexOffenseMessage(
   values: ApplyInstitutionSexOffenseValues,
 ): string | null {
+  if (values.submissionRequest !== 'request' && values.submissionRequest !== 'no_submit') {
+    return '성범죄 경력조회 동의서 제출 여부를 선택해 주세요.'
+  }
   if (values.submissionRequest !== 'request') return null
+  if (values.siteSubmission !== 'online' && values.siteSubmission !== 'direct') {
+    return '사이트 제출 방식을 선택해 주세요.'
+  }
   if (values.siteSubmission !== 'online') return null
   if (!values.institutionId.trim()) return '성범죄 경력조회 기관 아이디를 입력해 주세요.'
   if (!values.verificationNumber.trim()) return '성범죄 경력조회 검증번호를 입력해 주세요.'
@@ -110,11 +116,17 @@ export function sexOffenseValuesFromDraftAnswers(
   if (sub?.submissionRequest === 'no_submit') {
     return { ...empty, submissionRequest: 'no_submit' }
   }
+  const siteSubmission =
+    inq?.siteSubmission === 'direct'
+      ? 'direct'
+      : inq?.siteSubmission === 'online'
+        ? 'online'
+        : ''
   return {
     ...empty,
     submissionRequest: 'request',
     inquiryMethod: FIXED_INQUIRY_METHOD,
-    siteSubmission: inq?.siteSubmission === 'direct' ? 'direct' : empty.siteSubmission,
+    siteSubmission,
     institutionId: typeof inq?.institutionId === 'string' ? inq.institutionId : '',
     verificationNumber:
       typeof inq?.verificationNumber === 'string' ? inq.verificationNumber : '',

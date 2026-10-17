@@ -1,5 +1,6 @@
 import type { ProgramListItem, ProgramsListParams } from '../model/types'
 import { DEFAULT_PROGRAMS_LIST_PARAMS } from './constants'
+import { programMatchesEducationTargetFilter } from './education-target-filter'
 import {
   programIncludesOperatingDate,
   programOverlapsOperatingDateRange,
@@ -75,11 +76,15 @@ export function filterAndSortPrograms(
   }
 
   if (params.recruitmentTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget) {
-    items = items.filter(program => program.educationTargetKey === params.recruitmentTarget)
+    items = items.filter(program =>
+      programMatchesEducationTargetFilter(program, params.recruitmentTarget),
+    )
   }
 
   if (params.educationTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.educationTarget) {
-    items = items.filter(program => program.educationTargetKey === params.educationTarget)
+    items = items.filter(program =>
+      programMatchesEducationTargetFilter(program, params.educationTarget),
+    )
   }
 
   if (params.recruitmentStatus !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus) {

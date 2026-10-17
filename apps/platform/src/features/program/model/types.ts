@@ -39,8 +39,10 @@ export type ProgramListItem = {
   applicationEndDate: string | null
   recruitmentPeriodLabel: string
   recruitmentStatus: RecruitmentStatus
-  /** 도메인 education-target value — 모집대상·교육대상 필터 */
+  /** 도메인 education-target value — 표시·단일 fallback (복수일 때 첫 코드) */
   educationTargetKey: EducationTargetKey | null
+  /** `educationTargets` 전체 — 목록 모집대상·교육대상 필터(OR 포함) */
+  educationTargetKeys: EducationTargetKey[]
   educationTargetLabel: string
   educationForm: EducationForm
   educationFormLabel: string

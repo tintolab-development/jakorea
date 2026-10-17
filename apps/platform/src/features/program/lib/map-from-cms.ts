@@ -282,6 +282,7 @@ function resolveContactValue(program: CmsProgramLike): string {
 
 function resolveTargetLabels(program: CmsProgramLike): {
   educationTargetKey: EducationTargetKey | null
+  educationTargetKeys: EducationTargetKey[]
   educationTargetLabel: string
   educationTargetGroupLabel: string
   educationTargetDetailLabel: string
@@ -292,6 +293,7 @@ function resolveTargetLabels(program: CmsProgramLike): {
     const labels = TARGET_LEVEL_LABELS[level]
     return {
       educationTargetKey: level,
+      educationTargetKeys: [level],
       educationTargetLabel: labels.educationTargetLabel,
       educationTargetGroupLabel: labels.educationTargetGroupLabel,
       educationTargetDetailLabel: detailOverride || labels.educationTargetLabel,
@@ -299,6 +301,7 @@ function resolveTargetLabels(program: CmsProgramLike): {
   }
   return {
     educationTargetKey: null,
+    educationTargetKeys: [],
     educationTargetLabel: '전체',
     educationTargetGroupLabel: '전체',
     educationTargetDetailLabel: detailOverride || '전체',
@@ -790,6 +793,7 @@ export function mapCmsProgramToPlatformDetail(
     applicationPeriodLabel: recruitmentPeriodLabel,
     recruitmentStatus,
     educationTargetKey: targets.educationTargetKey,
+    educationTargetKeys: targets.educationTargetKeys,
     educationTargetLabel: targets.educationTargetLabel,
     educationForm,
     educationFormLabel,
@@ -865,6 +869,7 @@ export function mapCmsProgramToPlatformListItem(
     recruitmentPeriodLabel: detail.recruitmentPeriodLabel,
     recruitmentStatus: detail.recruitmentStatus,
     educationTargetKey: detail.educationTargetKey,
+    educationTargetKeys: detail.educationTargetKeys,
     educationTargetLabel: detail.educationTargetLabel,
     educationForm: detail.educationForm,
     educationFormLabel: detail.educationFormLabel,

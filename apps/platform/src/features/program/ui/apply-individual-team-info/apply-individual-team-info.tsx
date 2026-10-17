@@ -40,7 +40,7 @@ export function emptyIndividualTeamInfo(): ApplyIndividualTeamInfoValues {
     teamName: '',
     memberCountSelect: '',
     customMemberCount: '',
-    teamRole: 'leader',
+    teamRole: '',
   }
 }
 
@@ -78,7 +78,7 @@ export function teamInfoValuesFromDraftAnswer(
     typeof row.memberCountSelect === 'string' ? row.memberCountSelect : ''
   const customMemberCount =
     typeof row.customMemberCount === 'string' ? row.customMemberCount : ''
-  const teamRole = typeof row.teamRole === 'string' && row.teamRole ? row.teamRole : 'leader'
+  const teamRole = typeof row.teamRole === 'string' ? row.teamRole : ''
   if (!teamName && !memberCountSelect) return null
   return { teamName, memberCountSelect, customMemberCount, teamRole }
 }
@@ -131,7 +131,7 @@ export function ApplyIndividualTeamInfo({ value, onChange }: ApplyIndividualTeam
         <PFFormField label="팀 내 역할">
           <ApplyFormRadioGroup
             name="apply-team-role"
-            value={value.teamRole || 'leader'}
+            value={value.teamRole}
             options={TEAM_ROLE_OPTIONS}
             onChange={next => patch({ teamRole: next })}
           />

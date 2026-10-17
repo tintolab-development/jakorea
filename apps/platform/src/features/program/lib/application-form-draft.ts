@@ -4,6 +4,7 @@
  */
 
 import {
+  clearWritingFormFillPreviewAnswers,
   fieldCellValueToPlainText,
   normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
@@ -727,12 +728,13 @@ export function writingFormDraftFromApplicationForm(
    * runtime hidden 은 제출 키에서만 제외한다 (`buildApplicationAnswersFromDraft`).
    */
   const normalized = normalizeWritingFormDraft(document as unknown as WritingFormDraft)
+  const cleared = clearWritingFormFillPreviewAnswers(normalized)
   const withAnswers =
     !draftAnswers || Object.keys(draftAnswers).length === 0
-      ? normalized
+      ? cleared
       : {
-          ...normalized,
-          paragraphs: normalized.paragraphs.map(paragraph => {
+          ...cleared,
+          paragraphs: cleared.paragraphs.map(paragraph => {
             const key = resolveApplicationAnswerKey(paragraph)
             if (!key || !(key in draftAnswers)) return paragraph
             return mergeAnswerIntoParagraph(paragraph, draftAnswers[key])
