@@ -1,4 +1,5 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import type { InstructorPortalProfileResponse } from '@/features/auth/sign-in/api/types'
 import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 
 export type SettingsProfileInput = {
@@ -21,6 +22,8 @@ export type SettingsProfileInput = {
   teacherEmploymentStatus?: string
   email?: string
   external1365Id?: string
+  instructor?: boolean
+  instructorProfile?: InstructorPortalProfileResponse
 }
 
 export type SettingsInfoRow = {

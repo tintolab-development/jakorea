@@ -1,6 +1,7 @@
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type {
+  InstructorPortalEditableProfile,
   InstructorRoleRequestCreateRequest,
   InstructorRoleRequestEducationGraduateRow,
   InstructorRoleRequestEducationSchoolRow,
@@ -130,7 +131,9 @@ function mapGraduateRowToApi(
   }
 }
 
-function mapProfile(values: InstructorSharedProfileFormValues): InstructorRoleRequestProfile {
+export function mapInstructorFormValuesToCmsProfile(
+  values: InstructorSharedProfileFormValues,
+): InstructorRoleRequestProfile {
   const memberType = values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL'
   const employmentStatus = toApiEmploymentStatus(values.employmentStatus)
   const affiliation =
@@ -267,6 +270,14 @@ function mapProfile(values: InstructorSharedProfileFormValues): InstructorRoleRe
   }
 }
 
+/** 포탈 PATCH `instructorProfile.profile` — memberType 제외 */
+export function mapInstructorFormValuesToPortalEditableProfile(
+  values: InstructorSharedProfileFormValues,
+): InstructorPortalEditableProfile {
+  const { memberType: _memberType, ...editable } = mapInstructorFormValuesToCmsProfile(values)
+  return editable
+}
+
 function mapSettlement(values: InstructorSharedProfileFormValues): InstructorRoleRequestSettlement {
   const bankName = values.bankName.trim()
   const accountNumber = values.accountNumber.trim()
@@ -321,7 +332,7 @@ export function mapInstructorApplyFormToCreateRequest(
     /** BE는 `010-1234-5678` 하이픈 형식을 요구 (가입 API와 동일) */
     phone: formatKoreanPhoneNumber(values.contact.trim()),
     email: values.email.trim(),
-    profile: mapProfile(values),
+    profile: mapInstructorFormValuesToCmsProfile(values),
     settlement: mapSettlement(values),
     termsAgreements: mapTermsAgreements(values),
   }

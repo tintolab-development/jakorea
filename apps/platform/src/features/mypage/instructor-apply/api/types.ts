@@ -1,4 +1,7 @@
 /** CMS `InstructorCmsProfile` 정렬 — Platform 국소 타입 (CMS generated import 없음) */
+/** PATCH /api/portal/me/profile — 강사가 포탈에서 직접 수정 가능한 프로필 */
+export type InstructorPortalEditableProfile = Omit<InstructorRoleRequestProfile, 'memberType'>
+
 export type InstructorRoleRequestProfile = {
   memberType: 'GENERAL' | 'SCHOOL_TEACHER'
   affiliation: {

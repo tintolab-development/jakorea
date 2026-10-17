@@ -1,3 +1,6 @@
+import type { InstructorRoleRequestProfile } from '@/features/mypage/instructor-apply/api/types'
+import type { SettingsProfileInput } from './map-view'
+
 export const VOLUNTEER_1365_URL = 'https://www.1365.go.kr'
 
 export const EMPTY_SETTINGS_VALUE = '-'
@@ -47,3 +50,70 @@ export const MOCK_SETTINGS_GUARDIAN = {
   phone: '010-1234-5678',
   relationship: '아빠',
 } as const
+
+/** 로컬/dev — 강사 회원 설정 + instructorProfile mock */
+export const MOCK_INSTRUCTOR_SETTINGS_PROFILE: SettingsProfileInput = {
+  joinedAt: '2026-09-15',
+  name: '김강사',
+  phone: '010-9876-5432',
+  birthDate: '1990-05-20',
+  gender: 'M',
+  email: 'instructor@example.com',
+  address: '서울시 강남구 테헤란로 1',
+  addressDetail: '10층',
+  instructor: true,
+  instructorProfile: {
+    profile: {
+      memberType: 'GENERAL' as const,
+      affiliation: { organizationNames: ['JA학습지'] },
+      instructorCareerSummary: '3년',
+      homeAddress: { line: '서울시 강남구 테헤란로 1', detail: '10층' },
+      education: {
+        highestSchoolType: 'college4' as const,
+        highestStatus: 'graduated' as const,
+        detailKeys: ['high', 'college4'] as InstructorRoleRequestProfile['education']['detailKeys'],
+        highSchool: {
+          schoolName: '고등학교',
+          admitYear: '2017-03',
+          gradYear: '2020-02',
+        },
+        college4: [
+          {
+            schoolName: '대학교(대학교4년제)',
+            major: '경제학과',
+            admitYear: '2020-03',
+            gradYear: '2025-02',
+          },
+        ],
+      },
+      career: {
+        level: 'experienced' as const,
+        summaryYears: '3년',
+        rows: [
+          {
+            companyName: 'JA학습지',
+            roleName: '학습지 방문 교육',
+            periodStart: '2020-03',
+            currentlyEmployed: true,
+          },
+          {
+            companyName: 'JA학원',
+            roleName: '초등학생 수학강의',
+            periodStart: '2023-01',
+            periodEnd: '2024-01',
+            currentlyEmployed: false,
+          },
+        ],
+      },
+      jaKoreaActivities: [],
+      licenses: [],
+      awards: [],
+      essays: {
+        freeWrite1: '자기소개 및 지원동기 예시 텍스트입니다.',
+        freeWrite2: '청소년 경제 교육의 중요성에 대한 생각 예시입니다.',
+        freeWrite3: '청소년과의 소통에 대한 생각 예시입니다.',
+        freeWrite4: '예기치 않은 상황 대처 사례 예시입니다.',
+      },
+    },
+  },
+}

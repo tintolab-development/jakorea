@@ -1,11 +1,20 @@
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useMypageMember } from '../../hooks/use-mypage-member'
-import { isSchoolTeacherMypageProfile } from '../../lib/member-profile'
-import { MOCK_SETTINGS_GUARDIAN, MOCK_SETTINGS_PROFILE, MOCK_TEACHER_SETTINGS_PROFILE } from '../lib/constants'
+import {
+  isInstructorDualMypageProfile,
+  isInstructorMypageProfile,
+  isSchoolTeacherMypageProfile,
+} from '../../lib/member-profile'
+import {
+  MOCK_INSTRUCTOR_SETTINGS_PROFILE,
+  MOCK_SETTINGS_GUARDIAN,
+  MOCK_SETTINGS_PROFILE,
+  MOCK_TEACHER_SETTINGS_PROFILE,
+} from '../lib/constants'
+import type { SettingsProfileInput } from '../lib/map-view'
 import {
   mapPortalProfileToSettingsView,
   type SettingsGuardianView,
-  type SettingsProfileInput,
   type SettingsViewModel,
 } from '../lib/map-view'
 
@@ -22,8 +31,15 @@ export function useSettingsView(): {
 
   if (!member.isRemoteSession) {
     const isTeacher = isSchoolTeacherMypageProfile(member.profile)
-    const profile = isTeacher ? MOCK_TEACHER_SETTINGS_PROFILE : MOCK_SETTINGS_PROFILE
-    const guardian = isTeacher ? null : MOCK_SETTINGS_GUARDIAN
+    const isInstructor = isInstructorMypageProfile(member.profile)
+    const profile: SettingsProfileInput = isInstructorDualMypageProfile(member.profile)
+      ? { ...MOCK_TEACHER_SETTINGS_PROFILE, ...MOCK_INSTRUCTOR_SETTINGS_PROFILE }
+      : isInstructor
+        ? { ...MOCK_INSTRUCTOR_SETTINGS_PROFILE }
+        : isTeacher
+          ? { ...MOCK_TEACHER_SETTINGS_PROFILE }
+          : { ...MOCK_SETTINGS_PROFILE }
+    const guardian = isTeacher || isInstructor ? null : MOCK_SETTINGS_GUARDIAN
     return {
       isRemoteSession: false,
       isLoading: false,
