@@ -242,7 +242,7 @@ import {
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
-import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
+import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
@@ -2260,16 +2260,9 @@ export function UjatProgramDetailFullPageModal({
           })
           return
         }
-        const lectureTarget =
-          programId == null ? null : await resolveLectureEvalBindingTarget(String(programId))
-        if (lectureTarget == null) {
-          void showAlert({
-            title: '등록 실패',
-            content:
-              '강의평가는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
-          })
-          return
-        }
+        const lectureTarget = await resolveLectureEvalBindingTargetForCreate(
+          programId == null ? '' : String(programId)
+        )
         const payload: ProgramFormBindingRequest = {
           formType: 'LECTURE_EVALUATION',
           templateId: resolved.templateId,
@@ -2278,7 +2271,9 @@ export function UjatProgramDetailFullPageModal({
           submissionEndAt: resolved.submissionEndAt,
           targetRole: 'ADMIN',
           targetScope: lectureTarget.targetScope,
-          targetScopeId: lectureTarget.targetScopeId,
+          ...(lectureTarget.targetScopeId != null
+            ? { targetScopeId: lectureTarget.targetScopeId }
+            : {}),
           active: true,
           required: false,
         }

@@ -4,6 +4,14 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'organization', programId, status ?? 'all'] as const,
   organizationDetail: (applicationId: string) =>
     [...generalApplicationsQueryKeys.all, 'organization-detail', applicationId] as const,
+  /** 동일 신청 id가 다른 프로그램 컨텍스트와 섞이지 않도록 programId 포함 (참여 기관 상세 등) */
+  organizationDetailInProgram: (programId: string, applicationId: string) =>
+    [
+      ...generalApplicationsQueryKeys.all,
+      'organization-detail',
+      programId.trim(),
+      applicationId.trim(),
+    ] as const,
   organizationRequestedSchedules: (applicationId: string) =>
     [
       ...generalApplicationsQueryKeys.all,

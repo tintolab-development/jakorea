@@ -10,6 +10,7 @@ import {
   saveSchoolDetailAttendanceSessionRemote,
 } from '@/features/program/general/api/school-detail-attendance-api'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
+import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import {
   evaluateOrganizationAttendanceScopeReadiness,
@@ -78,18 +79,6 @@ function institutionAttendanceQueryKey(
     programId,
     organizationApplicationId,
     scheduleIdsKey,
-  ] as const
-}
-
-function organizationScheduleAssignmentsQueryKey(
-  programId: string,
-  organizationApplicationId: string
-) {
-  return [
-    ...generalProgramProgressQueryKeys.all,
-    'organization-schedule-assignments',
-    programId,
-    organizationApplicationId,
   ] as const
 }
 
