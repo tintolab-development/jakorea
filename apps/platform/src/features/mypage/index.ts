@@ -158,6 +158,7 @@ export type {
 } from './settings'
 export {
   getMypageProfileLabel,
+  hasTeacherMypageProfile,
   isInstructorMypageProfile,
   isSchoolTeacherMypageProfile,
   showInstructorApplyCta,

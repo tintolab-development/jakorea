@@ -1,6 +1,6 @@
 import { PFText } from '@/shared/ui'
-import { splitPipeSeparatedParts } from './teacher-application-content/split-pipe-parts'
 import { InstructorAvailableSchedulesSection } from './instructor-available-schedules-section'
+import { PipeSeparatedInlineText } from './pipe-separated-inline-text'
 import styles from './content.module.css'
 
 type EducationApplicationContentProps = {
@@ -61,7 +61,6 @@ export function EducationApplicationContent({
       {hasSchedule ? (
         <div className={styles.scheduleList}>
           {scheduleLines.map((line, index) => {
-            const parts = splitPipeSeparatedParts(line)
             return (
               <section
                 key={`preferred-schedule-${index + 1}`}
@@ -71,23 +70,12 @@ export function EducationApplicationContent({
                 <PFText as="h2" typo="bd-md-sb" color="black" className={styles.scheduleCardTitle}>
                   진행 희망 교육 일정 {index + 1}
                 </PFText>
-                <div className={styles.scheduleValue}>
-                  {parts.map((part, partIndex) => (
-                    <span key={partIndex} className={styles.schedulePartWrap}>
-                      {partIndex > 0 ? (
-                        <span className={styles.schedulePartDivider} aria-hidden="true" />
-                      ) : null}
-                      <PFText
-                        as="span"
-                        typo={partIndex === 0 ? 'bd-md-md' : 'bd-md-bd'}
-                        color="black"
-                        className={styles.schedulePart}
-                      >
-                        {part}
-                      </PFText>
-                    </span>
-                  ))}
-                </div>
+                <PipeSeparatedInlineText
+                  value={line}
+                  emphasizeTail
+                  className={styles.scheduleValue}
+                  partClassName={styles.schedulePart}
+                />
               </section>
             )
           })}

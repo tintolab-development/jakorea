@@ -6,12 +6,23 @@ export function mapPortalMemberToPlatformProfile(input: {
   me?: HomepageMeResponse | null
   profile?: PortalProfileResponse | null
 }): PlatformMemberProfile {
-  const teacher = input.profile?.teacher ?? input.me?.teacher ?? false
-  const instructor = input.profile?.instructor ?? false
+  const memberType = (input.profile?.memberType ?? input.me?.memberType)?.trim().toUpperCase()
+  const instructorMemberType = input.profile?.instructorProfile?.profile?.memberType
+    ?.trim()
+    .toUpperCase()
+  const teacher =
+    input.profile?.teacher === true ||
+    input.me?.teacher === true ||
+    memberType === 'TEACHER' ||
+    instructorMemberType === 'SCHOOL_TEACHER'
+  const instructor =
+    input.profile?.instructor === true ||
+    input.me?.instructor === true ||
+    Boolean(input.profile?.instructorProfile)
 
   if (teacher && instructor) return 'instructor_dual'
   if (instructor) return 'instructor_only'
-  if (teacher || input.me?.memberType?.toUpperCase() === 'TEACHER') return 'school_teacher'
+  if (teacher) return 'school_teacher'
   return 'individual'
 }
 

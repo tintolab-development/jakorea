@@ -44,6 +44,7 @@ export type HomepageMeResponse = {
   /** `UNDER_14` | `OVER_14` */
   ageGroup?: string
   teacher?: boolean
+  instructor?: boolean
   identityVerified?: boolean
   lastLoginAt?: string
   registeredByAdmin?: boolean

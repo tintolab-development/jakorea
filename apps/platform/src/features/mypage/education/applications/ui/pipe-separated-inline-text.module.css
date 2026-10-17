@@ -1,0 +1,19 @@
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.partWrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--spacing-12);
+  background: var(--color-border-default);
+}
