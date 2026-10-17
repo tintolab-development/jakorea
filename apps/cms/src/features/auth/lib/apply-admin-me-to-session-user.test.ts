@@ -32,7 +32,7 @@ describe('applyAdminMeToSessionUser', () => {
     const next = applyAdminMeToSessionUser(current, {
       createdAt: null,
       updatedAt: null,
-    })
+    } as unknown as import('@/shared/api/generated/members/schemas/adminMeResponse').AdminMeResponse)
     expect(next.createdAt).toBeNull()
     expect(next.updatedAt).toBeNull()
   })
