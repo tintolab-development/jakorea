@@ -1163,6 +1163,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
 
   return {
     id: String(programId),
+    programType: readString(remote.programType)?.toUpperCase() ?? '',
     category,
     categories,
     categoryLabel: programTabLabels(categories),

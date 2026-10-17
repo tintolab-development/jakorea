@@ -47,6 +47,7 @@ export function filterAndSortPrograms(
     ProgramsListParams,
     | 'category'
     | 'q'
+    | 'programType'
     | 'recruitmentTarget'
     | 'recruitmentStatus'
     | 'operatingPeriod'
@@ -69,6 +70,11 @@ export function filterAndSortPrograms(
   if (params.q.trim()) {
     const query = params.q.trim().toLowerCase()
     items = items.filter(program => program.title.toLowerCase().includes(query))
+  }
+
+  if (params.programType !== DEFAULT_PROGRAMS_LIST_PARAMS.programType) {
+    const programType = params.programType.trim().toUpperCase()
+    items = items.filter(program => program.programType?.trim().toUpperCase() === programType)
   }
 
   if (params.operatingPeriod !== DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod) {

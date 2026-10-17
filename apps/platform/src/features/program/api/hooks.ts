@@ -31,6 +31,7 @@ function listKeyParams(query: PortalProgramListQuery) {
   return {
     keyword: query.keyword ?? '',
     portalTab: query.portalTab ?? '',
+    programType: query.programType ?? '',
     recruitmentStatus: query.recruitmentStatus ?? '',
     educationTargets: query.educationTargets ?? '',
     educationMethod: query.educationMethod ?? '',

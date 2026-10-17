@@ -14,6 +14,8 @@ export type EducationTargetKey = EducationTarget
 
 export type ProgramListItem = {
   id: string
+  /** 원장 프로그램 유형 — 목록 유형 필터용 */
+  programType?: string
   /**
    * 신청 양식 등 단일 분기에 쓰는 대표 탭.
    * 배지는 `categories` 전체를 그린다.
@@ -261,6 +263,8 @@ export type ProgramsListParams = {
   /** 상단 탭 — 프로그램 유형 (청소년·기관·강사) */
   category: ProgramCategory
   q: string
+  /** 원장 프로그램 유형 필터 (예: UJAT) */
+  programType: string
   /** 모집대상 필터 — 초등~성인 (탭과 분리) */
   recruitmentTarget: string
   recruitmentStatus: string
