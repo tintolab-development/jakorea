@@ -59,6 +59,7 @@
   flex-direction: column;
   gap: 4px;
   text-align: left;
+  align-items: flex-start;
   padding: 0;
   margin: 0;
   min-width: 0;
@@ -67,6 +68,53 @@
   box-sizing: border-box;
   line-height: 150%;
   overflow: hidden;
+}
+
+/* 교육 참여 기관 목록 — 진행 희망 교육 일정 셀·일정 행 중앙 정렬 */
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-institutions-section__th-sessions--center,
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center
+  .participating-institutions-section__sessions-cell {
+  align-items: center;
+  text-align: center;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center
+  .participating-institutions-section__session-line {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions--center
+  .participating-institutions-section__session-more {
+  text-align: center;
+  width: 100%;
 }
 
 .participating-institutions-section__session-line .program-detail-td-segment-wrap {

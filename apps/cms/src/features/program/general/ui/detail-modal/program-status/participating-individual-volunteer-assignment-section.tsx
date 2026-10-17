@@ -32,11 +32,13 @@ import type {
   ParticipatingIndividualVolunteerWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment-types'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
+import { participatingScheduleTableColumnLayout } from '@/features/program/general/lib/participating-institutions-table'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
 import { saveGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import './instructor-assignment-status-text.css'
+import './participating-institutions-section.css'
 
 function renderDistanceFromHomeCell(value: string, educationScopeFetching: boolean) {
   const label = resolveVolunteerAssignmentDistanceCellLabel(value, educationScopeFetching)
@@ -50,7 +52,13 @@ const ASSIGNED_EMPTY_TEXT = '배정된 봉사 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 봉사 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return renderProgramDetailPipeSeparated(label)
+  return (
+    <div className="participating-institutions-section__sessions-cell">
+      <div className="participating-institutions-section__session-line">
+        {renderProgramDetailPipeSeparated(label)}
+      </div>
+    </div>
+  )
 }
 
 export interface ParticipatingIndividualVolunteerAssignmentSectionProps {
@@ -131,11 +139,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           key: 'scheduleLabel',
           width: 500,
           minWidth: 500,
-          className: 'participating-institutions-section__th-sessions',
-          onHeaderCell: () => ({
-            className: 'participating-institutions-section__th-sessions',
-          }),
-          onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+          ...participatingScheduleTableColumnLayout(),
           render: (label: string) => renderScheduleCell(label),
         },
       ],
@@ -167,11 +171,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         key: 'scheduleLabel',
         width: 500,
         minWidth: 500,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (label: string) => renderScheduleCell(label),
       },
       {

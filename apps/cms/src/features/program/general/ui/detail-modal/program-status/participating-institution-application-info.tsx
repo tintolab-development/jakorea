@@ -9,24 +9,21 @@ import {
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationGuidanceParagraph,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
-import { ParticipatingProgressScheduleRow } from './participating-progress-schedule-row'
 import {
-  INSTITUTION_APPLICATION_INFO_COLGROUP,
-  INSTITUTION_APPLICATION_SCHEDULE_COLGROUP,
-  InstitutionApplicationTableRowFullWidth,
-  InstitutionApplicationTableRowSingleCol,
-  InstitutionApplicationTableRowTwoCols,
   institutionApplicationTableLabelWithParenthesisHint,
   INSTITUTION_OTHER_NOTES_TABLE_LABEL,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
+import { ParticipatingProgressScheduleValue } from './participating-progress-schedule-row'
 import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 import './participating-institution-application-info.css'
 
@@ -99,7 +96,7 @@ function groupCompanySchoolSessions(
   return Array.from(groups.values()).map(group => [...group].sort((a, b) => a.round - b.round))
 }
 
-function CompanySchoolProgressScheduleRows({ sessions }: { sessions: ParticipatingSchoolSession[] }) {
+function CompanySchoolProgressScheduleFields({ sessions }: { sessions: ParticipatingSchoolSession[] }) {
   return (
     <>
       {groupCompanySchoolSessions(sessions).map(group => {
@@ -122,33 +119,24 @@ function CompanySchoolProgressScheduleRows({ sessions }: { sessions: Participati
 
         return (
           <Fragment key={`${first.date}-${first.dayOfWeek}`}>
-            <tr>
-              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-                교육 진행 현황
-              </td>
-              <td
-                colSpan={3}
-                className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-              >
-                <span className={`participating-institution-application-info__session-status ${statusClass}`}>
-                  {statusLabel}
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-                교육일 및 차시
-              </td>
-              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-                {scheduleLabel}
-              </td>
-              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-                교육 시간
-              </td>
-              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-                {timeLabel}
-              </td>
-            </tr>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="교육 진행 현황"
+                fullRow
+                readOnlyDisplay
+                view={
+                  <span
+                    className={`participating-institution-application-info__session-status ${statusClass}`}
+                  >
+                    {statusLabel}
+                  </span>
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field label="교육일 및 차시" readOnlyDisplay view={scheduleLabel} />
+              <DetailInfoForm.Field label="교육 시간" readOnlyDisplay view={timeLabel} />
+            </DetailInfoForm.Row>
           </Fragment>
         )
       })}
@@ -193,6 +181,14 @@ export function ParticipatingInstitutionApplicationInfo({
   const showGuidanceSection = shouldShowInstitutionApplicationGuidanceParagraph(
     resolveInstitutionApplicationProgramBridge(program)
   )
+  const basicInfoFormMode = isBasicInfoEditing ? 'edit' : 'view'
+
+  const scheduleChangeButton =
+    isBasicInfoEditing && onScheduleChangeClick ? (
+      <CmsButton variant="secondary" size="medium" type="button" onClick={onScheduleChangeClick}>
+        일정 변경
+      </CmsButton>
+    ) : null
 
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
@@ -206,172 +202,235 @@ export function ParticipatingInstitutionApplicationInfo({
         />
       ) : null}
 
-      <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
-        <div className="applicant-institution-basic-info__basic-info-fields">
-          <div className="applicant-institution-basic-info__table-wrap participating-institution-application-info__table-wrap--overview">
-            <table className="applicant-institution-basic-info__table">
-              {INSTITUTION_APPLICATION_INFO_COLGROUP}
-              <tbody>
-                <InstitutionApplicationTableRowFullWidth
-                  label="프로그램 진행 현황"
-                  value={programProgressCell}
+      <section className="applicant-institution-basic-info__section applicant-instructor-basic-info">
+        <DetailInfoForm
+          title="기본 정보"
+          mode={basicInfoFormMode}
+          className="participating-institution-application-info__table-wrap--overview"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="프로그램 진행 현황"
+              fullRow
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={programProgressCell}
+              edit={programProgressCell}
+            />
+          </DetailInfoForm.Row>
+          {usesTextbook && textbookEditFullWidth ? (
+            <>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="교재명"
+                  fullRow
+                  readOnlyDisplay={!isBasicInfoEditing}
+                  view={textbookCell}
+                  edit={textbookCell}
                 />
-                {usesTextbook && textbookEditFullWidth ? (
-                  <>
-                    <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookCell} />
-                    {!hideCombinedClass ? (
-                      <InstitutionApplicationTableRowFullWidth
-                        label="합반 신청 여부"
-                        value={combinedClassCell}
-                      />
-                    ) : null}
-                  </>
-                ) : null}
-                {usesTextbook && !textbookEditFullWidth ? (
-                  hideCombinedClass ? (
-                    <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookCell} />
-                  ) : (
-                    <InstitutionApplicationTableRowTwoCols
-                      label1="교재명"
-                      value1={textbookCell}
-                      label2="합반 신청 여부"
-                      value2={combinedClassCell}
-                    />
-                  )
-                ) : null}
-                {!usesTextbook && !hideCombinedClass ? (
-                  <InstitutionApplicationTableRowFullWidth
+              </DetailInfoForm.Row>
+              {!hideCombinedClass ? (
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
                     label="합반 신청 여부"
-                    value={combinedClassCell}
+                    fullRow
+                    readOnlyDisplay={!isBasicInfoEditing}
+                    view={combinedClassCell}
+                    edit={combinedClassCell}
                   />
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="applicant-institution-basic-info__table-wrap">
-            <table className="applicant-institution-basic-info__table">
-              {INSTITUTION_APPLICATION_INFO_COLGROUP}
-              <tbody>
-                <InstitutionApplicationTableRowTwoCols
-                  label1="참여 기관명"
-                  value1={schoolName}
-                  label2="교육 학년"
-                  value2={educationGrade}
+                </DetailInfoForm.Row>
+              ) : null}
+            </>
+          ) : null}
+          {usesTextbook && !textbookEditFullWidth ? (
+            hideCombinedClass ? (
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="교재명"
+                  fullRow
+                  readOnlyDisplay={!isBasicInfoEditing}
+                  view={textbookCell}
+                  edit={textbookCell}
                 />
-                <InstitutionApplicationTableRowTwoCols
-                  label1="기관 소재지"
-                  value1={region}
-                  label2="상세 주소"
-                  value2={addressDetail}
+              </DetailInfoForm.Row>
+            ) : (
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="교재명"
+                  readOnlyDisplay={!isBasicInfoEditing}
+                  view={textbookCell}
+                  edit={textbookCell}
                 />
-                {showEducationFormatField ? (
-                  <InstitutionApplicationTableRowTwoCols
-                    label1="신청 학급 수 및 총 인원"
-                    value1={classAndCount}
-                    label2="교육 형태"
-                    value2={educationFormat}
-                  />
-                ) : (
-                  <InstitutionApplicationTableRowSingleCol
-                    label="신청 학급 수 및 총 인원"
-                    value={classAndCount}
-                  />
-                )}
-                <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
-                <InstitutionApplicationTableRowFullWidth
-                  label="신청 사유"
-                  value={applicationReason}
-                  multiline
+                <DetailInfoForm.Field
+                  label="합반 신청 여부"
+                  readOnlyDisplay={!isBasicInfoEditing}
+                  view={combinedClassCell}
+                  edit={combinedClassCell}
                 />
-                <InstitutionApplicationTableRowFullWidth
-                  label="기타 요청사항"
-                  value={otherRequests}
-                  multiline
-                />
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </DetailInfoForm.Row>
+            )
+          ) : null}
+          {!usesTextbook && !hideCombinedClass ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="합반 신청 여부"
+                fullRow
+                readOnlyDisplay={!isBasicInfoEditing}
+                view={combinedClassCell}
+                edit={combinedClassCell}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+        </DetailInfoForm>
+        <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="참여 기관명"
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={schoolName}
+              edit={schoolName}
+            />
+            <DetailInfoForm.Field
+              label="교육 학년"
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={educationGrade}
+              edit={educationGrade}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="기관 소재지"
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={region}
+              edit={region}
+            />
+            <DetailInfoForm.Field
+              label="상세 주소"
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={addressDetail}
+              edit={addressDetail}
+            />
+          </DetailInfoForm.Row>
+          {showEducationFormatField ? (
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="신청 학급 수 및 총 인원"
+                readOnlyDisplay={!isBasicInfoEditing}
+                view={classAndCount}
+                edit={classAndCount}
+              />
+              <DetailInfoForm.Field
+                label="교육 형태"
+                readOnlyDisplay={!isBasicInfoEditing}
+                view={educationFormat}
+                edit={educationFormat}
+              />
+            </DetailInfoForm.Row>
+          ) : (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="신청 학급 수 및 총 인원"
+                fullRow
+                readOnlyDisplay={!isBasicInfoEditing}
+                view={classAndCount}
+                edit={classAndCount}
+              />
+            </DetailInfoForm.Row>
+          )}
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="담당 교사 정보"
+              fullRow
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={teacherInfo}
+              edit={teacherInfo}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="신청 사유" fullRow readOnlyDisplay view={applicationReason} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="기타 요청사항" fullRow readOnlyDisplay view={otherRequests} />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </section>
 
       {showGuidanceSection ? (
-        <section className="applicant-institution-basic-info__section">
-          <h3 className="applicant-institution-basic-info__title">안내 사항</h3>
-          <div className="applicant-institution-basic-info__table-wrap">
-            <table className="applicant-institution-basic-info__table">
-              {INSTITUTION_APPLICATION_INFO_COLGROUP}
-              <tbody>
-                <InstitutionApplicationTableRowSingleCol
-                  label="강의 공간 내 컴퓨터 여부"
-                  value={computerInRoom}
-                />
-                <InstitutionApplicationTableRowSingleCol label="대기 장소 안내" value={waitingPlace} />
-                <InstitutionApplicationTableRowSingleCol
-                  label="식사 가능 여부 및 안내"
-                  value={mealInfo}
-                />
-                <InstitutionApplicationTableRowSingleCol
-                  label={institutionApplicationTableLabelWithParenthesisHint(
-                    INSTITUTION_OTHER_NOTES_TABLE_LABEL
-                  )}
-                  value={otherNotes}
-                />
-                <InstitutionApplicationTableRowSingleCol
-                  label="성범죄 경력 조회서 요청"
-                  value={criminalCheck}
-                />
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <DetailInfoForm title="안내 사항" mode={basicInfoFormMode}>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="강의 공간 내 컴퓨터 여부"
+              fullRow
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={computerInRoom}
+              edit={computerInRoom}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="대기 장소 안내"
+              fullRow
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={waitingPlace}
+              edit={waitingPlace}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="식사 가능 여부 및 안내"
+              fullRow
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={mealInfo}
+              edit={mealInfo}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label={institutionApplicationTableLabelWithParenthesisHint(
+                INSTITUTION_OTHER_NOTES_TABLE_LABEL
+              )}
+              fullRow
+              readOnlyDisplay={!isBasicInfoEditing}
+              view={otherNotes}
+              edit={otherNotes}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="성범죄 경력 조회서 요청"
+              fullRow
+              readOnlyDisplay
+              view={criminalCheck}
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       ) : null}
 
-      <section className="applicant-institution-basic-info__section">
-        <div className="participating-institution-application-info__schedule-header">
-          <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
-          {isBasicInfoEditing && onScheduleChangeClick ? (
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              type="button"
-              onClick={onScheduleChangeClick}
-            >
-              일정 변경
-            </CmsButton>
-          ) : null}
-        </div>
-        <div className="applicant-institution-basic-info__table-wrap">
-          <table className="applicant-institution-basic-info__table">
-            {useCompanySchoolScheduleFormat
-              ? INSTITUTION_APPLICATION_INFO_COLGROUP
-              : INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
-            <tbody>
-              {sessions.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={2}
-                    className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value participating-institution-application-info__schedule-empty"
-                  >
-                    등록된 교육 일정이 없습니다.
-                  </td>
-                </tr>
-              ) : useCompanySchoolScheduleFormat ? (
-                <CompanySchoolProgressScheduleRows sessions={sessions} />
-              ) : (
-                sessions.map(session => (
-                  <ParticipatingProgressScheduleRow
-                    key={`${session.round}-${session.date}`}
-                    rowLabel={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
-                    session={session}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DetailInfoForm
+        title="교육 진행 일정"
+        mode={basicInfoFormMode}
+        titleTrailing={scheduleChangeButton}
+      >
+        {sessions.length === 0 ? (
+          <DetailInfoForm.Row type="custom">
+            <p className="participating-institution-application-info__schedule-empty">
+              등록된 교육 일정이 없습니다.
+            </p>
+          </DetailInfoForm.Row>
+        ) : useCompanySchoolScheduleFormat ? (
+          <CompanySchoolProgressScheduleFields sessions={sessions} />
+        ) : (
+          sessions.map(session => (
+            <DetailInfoForm.Row type="single" key={`${session.round}-${session.date}`}>
+              <DetailInfoForm.Field
+                label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
+                fullRow
+                readOnlyDisplay
+                view={<ParticipatingProgressScheduleValue session={session} />}
+              />
+            </DetailInfoForm.Row>
+          ))
+        )}
+      </DetailInfoForm>
     </div>
   )
 }

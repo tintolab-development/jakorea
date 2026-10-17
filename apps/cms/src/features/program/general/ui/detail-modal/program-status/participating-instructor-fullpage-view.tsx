@@ -87,7 +87,10 @@ import {
   resolveAssignableSchedulePayloadFromSession,
 } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '@/features/program/general/lib/participating-institutions-table'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { AssignGuideModal } from './assign-guide-modal'
@@ -606,11 +609,7 @@ export function ParticipatingInstructorFullpageView({
         key: 'educationScheduleLines',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: InstructorAssignedSchoolRow) =>
           renderEducationScheduleLines(record.educationScheduleLines),
       },
@@ -733,11 +732,7 @@ export function ParticipatingInstructorFullpageView({
         key: 'educationScheduleLines',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: InstructorWaitingSchoolRow) =>
           renderEducationScheduleLines(record.educationScheduleLines),
       },

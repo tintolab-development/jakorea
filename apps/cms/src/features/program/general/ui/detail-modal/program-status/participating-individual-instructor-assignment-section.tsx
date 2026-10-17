@@ -30,7 +30,10 @@ import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
 } from '@/features/program/general/model/school-detail-types'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '@/features/program/general/lib/participating-institutions-table'
 import {
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_SCHEDULE_EXCEL_COLUMNS,
@@ -53,13 +56,20 @@ import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
+import './participating-institutions-section.css'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return renderProgramDetailPipeSeparated(label)
+  return (
+    <div className="participating-institutions-section__sessions-cell">
+      <div className="participating-institutions-section__session-line">
+        {renderProgramDetailPipeSeparated(label)}
+      </div>
+    </div>
+  )
 }
 
 export interface ParticipatingIndividualInstructorAssignmentSectionProps {
@@ -215,11 +225,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           key: 'scheduleLabel',
           width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
           minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          className: 'participating-institutions-section__th-sessions',
-          onHeaderCell: () => ({
-            className: 'participating-institutions-section__th-sessions',
-          }),
-          onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+          ...participatingScheduleTableColumnLayout(),
           render: (label: string) => renderScheduleCell(label),
         },
       ],
@@ -249,11 +255,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           key: 'scheduleLabel',
           width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
           minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          className: 'participating-institutions-section__th-sessions',
-          onHeaderCell: () => ({
-            className: 'participating-institutions-section__th-sessions',
-          }),
-          onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+          ...participatingScheduleTableColumnLayout(),
           render: (label: string) => renderScheduleCell(label),
         },
         {
