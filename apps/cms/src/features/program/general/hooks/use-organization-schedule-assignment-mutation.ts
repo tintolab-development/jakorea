@@ -66,6 +66,9 @@ export function useOrganizationScheduleAssignmentMutation(
           queryKey: generalProgramQueryKeys.schedules(trimmedProgramId),
         }),
         queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.educationSlots(trimmedProgramId),
+        }),
+        queryClient.invalidateQueries({
           queryKey: generalProgramProgressQueryKeys.all,
         }),
       ])

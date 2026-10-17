@@ -5,6 +5,8 @@ import {
   formatSurveyPollScheduleOptionLabel,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
+import { PROGRAM_SCHEDULE_ORIGIN_APPLICATION_MATERIALIZED } from '@/features/program/shared/lib/program-schedule-origin'
+import { filterProgramSchedulesForPlannedEducationDisplay } from '@/features/program/general/lib/program-planned-education-slots'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
   return {
@@ -50,6 +52,22 @@ describe('buildSurveyPollScheduleSelectOptions', () => {
       },
     ])
     expect(options[0]?.label).toBe('26년 3월 1일(일) 10:00 ~ 12:00')
+  })
+
+  it('excludes APPLICATION_MATERIALIZED when using planned schedule list', () => {
+    const planned = filterProgramSchedulesForPlannedEducationDisplay([
+      { id: 1, sessionNo: 1, scheduleRole: 'EDUCATION', scheduleStatus: 'ACTIVE' },
+      {
+        id: 2,
+        sessionNo: 2,
+        scheduleRole: 'EDUCATION',
+        scheduleStatus: 'ACTIVE',
+        scheduleOrigin: PROGRAM_SCHEDULE_ORIGIN_APPLICATION_MATERIALIZED,
+      },
+    ])
+    const options = buildSurveyPollScheduleSelectOptions(planned)
+    expect(options).toHaveLength(1)
+    expect(options[0]?.value).toBe('1')
   })
 })
 

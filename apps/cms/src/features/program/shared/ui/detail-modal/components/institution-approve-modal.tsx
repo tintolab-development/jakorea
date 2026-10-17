@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { fetchProgramPlannedEducationSlots } from '@/features/program/general/lib/program-planned-education-slots'
 import {
   PermissionModal,
   PermissionModalMessage,
@@ -60,8 +60,8 @@ export function InstitutionApproveModal({
 }: InstitutionApproveModalProps) {
   const { showAlert } = useCmsAlert()
   const programSchedulesQuery = useQuery({
-    queryKey: generalProgramQueryKeys.schedules(programId ?? ''),
-    queryFn: () => fetchAdminProgramSchedulesRemote(programId!),
+    queryKey: generalProgramQueryKeys.educationSlots(programId ?? ''),
+    queryFn: () => fetchProgramPlannedEducationSlots(programId!),
     enabled: open && Boolean(programId?.trim()),
     staleTime: 30_000,
     retry: false,

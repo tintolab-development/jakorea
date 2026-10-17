@@ -39,6 +39,9 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'form-bindings', programId] as const,
   schedules: (programId: string) =>
     [...generalProgramQueryKeys.all, 'schedules', programId] as const,
+  /** 프로그램 공통 교육 예정 슬롯 — GET education-slots (schedules 캐시와 분리) */
+  educationSlots: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'education-slots', programId] as const,
   surveyResponses: (programId: string, templateVersionId: string) =>
     [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
   surveyResponseDetail: (programId: string, templateVersionId: string, formResponseId: string) =>

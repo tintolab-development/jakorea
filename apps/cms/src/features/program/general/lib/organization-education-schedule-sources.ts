@@ -9,11 +9,12 @@ import type {
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import type { SlotResponse } from '@/shared/api/generated/dashboard/schemas/slotResponse'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 
 /**
  * 일반 기관 프로그램 — 교육 일정 3종 SSOT (다중 기관·다중 신청)
  *
- * ① 프로그램 교육 진행 예정일: `programId` — 공통정보 / GET programs/{id}/schedules
+ * ① 프로그램 교육 진행 예정일: `programId` — GET programs/{id}/education-slots (공통정보는 lines PATCH)
  * ② 기관 희망 일정: `organizationApplicationId` (목록·상세는 programId로 조회 후 신청 id로 매핑)
  * ③ 실제 배정: `programId` + `organizationApplicationId` — OSA GET schedule-assignments
  *
@@ -59,9 +60,9 @@ export function organizationScheduleAssignmentsQueryKey(
   ] as const
 }
 
-/** 프로그램 공통 일정 — programId only (generalProgramQueryKeys.schedules) */
+/** 프로그램 공통 예정 슬롯 — programId only */
 export function organizationProgramPlannedSchedulesQueryKey(programId: string) {
-  return ['general-program', programId.trim(), 'admin-schedules'] as const
+  return generalProgramQueryKeys.educationSlots(programId.trim())
 }
 
 const DISPLAYABLE_ASSIGNMENT_STATUSES = new Set(['TEMP_ASSIGNED', 'CONFIRMED'])

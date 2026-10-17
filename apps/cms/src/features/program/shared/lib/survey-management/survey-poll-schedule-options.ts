@@ -225,7 +225,7 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
   }
 
   if (sessionOptions.length === 0 && assignableSchedules.length > 0) {
-    return buildSurveyPollScheduleSelectOptions(apiSchedules)
+    return buildSurveyPollScheduleSelectOptions(assignableSchedules)
   }
 
   return sessionOptions
