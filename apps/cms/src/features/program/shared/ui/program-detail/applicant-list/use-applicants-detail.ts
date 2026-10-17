@@ -386,7 +386,7 @@ export function useApplicantsDetail({
               queryKey: generalProgramQueryKeys.formBindings(programId),
             })
           }
-          if (approvePayload?.slots?.length) {
+          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
             await queryClient.invalidateQueries({
               queryKey: generalProgramProgressQueryKeys.all,
             })

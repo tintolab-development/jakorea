@@ -1,7 +1,6 @@
 import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import { parseOrganizationPreferredScheduleId } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
-import type { GeneralProgramSessionRoundKind } from '@/types/domain'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import {
   extractApiErrorMessage,
@@ -12,8 +11,11 @@ import {
 export type OrganizationApplicationApproveSlot = SlotRequest
 
 export type OrganizationApproveScheduleOption = {
+  /** UI 선택 키. 양수 = materialized `program_schedule.id`, 음수 = `line:N` placeholder */
   scheduleId: number
   label: string
+  /** 승인 `selectedScheduleId`로 보낼 수 있는 id. 없으면 칩 비활성 */
+  confirmableScheduleId: number | null
 }
 
 export type OrganizationApproveScheduleValidation = {
@@ -27,12 +29,6 @@ const UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE =
 
 export const ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE =
   '선택한 희망 교육 일정에 운영 일정 ID(scheduleId)가 없어 승인할 수 없습니다. 신청 상세 API에서 preferredEducationSchedules.scheduleId를 반영해 주세요.'
-
-export type OrganizationApproveAssignedPreviewRow = {
-  label: string
-  grade: string
-  className: string
-}
 
 function parseIsoDateTime(value: unknown): number | null {
   if (typeof value !== 'string') return null
@@ -93,12 +89,17 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
       options.push({
         scheduleId,
         label: label || `일정 ${scheduleId}`,
+        confirmableScheduleId: scheduleId,
       })
       continue
     }
 
     if (!label) continue
-    options.push({ scheduleId: -(index + 1), label })
+    options.push({
+      scheduleId: -(index + 1),
+      label,
+      confirmableScheduleId: null,
+    })
   }
 
   return options.length > 0
@@ -130,6 +131,26 @@ export function resolveOrganizationApproveScheduleIdsFromSelection(
     }
   }
   return resolved
+}
+
+/** 승인 API `selectedScheduleId` — 선택한 칩 1건의 materialized id (없으면 undefined). */
+export function resolveOrganizationApproveSelectedScheduleId(
+  preferred: PreferredEducationSchedule[] | undefined,
+  selectedOptionId: number | null | undefined
+): number | undefined {
+  if (selectedOptionId == null) return undefined
+  const [resolved] = resolveOrganizationApproveScheduleIdsFromSelection(preferred, [
+    selectedOptionId,
+  ])
+  return resolved
+}
+
+export function organizationApproveScheduleOptionLabel(
+  scheduleOptions: OrganizationApproveScheduleOption[],
+  selectedOptionId: number | null | undefined
+): string | null {
+  if (selectedOptionId == null) return null
+  return scheduleOptions.find(option => option.scheduleId === selectedOptionId)?.label ?? null
 }
 
 /**
@@ -218,6 +239,7 @@ export function validateOrganizationApproveScheduleOptions(
     options.push({
       scheduleId: numericScheduleId,
       label: formatScheduleLabel(schedule) || `일정 ${numericScheduleId}`,
+      confirmableScheduleId: numericScheduleId,
     })
   }
 
@@ -250,118 +272,13 @@ export function hasUnresolvedOrganizationApprovePreferredSchedules(
   )
 }
 
-/** 승인 API용 scheduleId 없이도 UI 「배정된 일정」 미리보기를 그린다. */
-export function buildOrganizationApproveAssignedPreview(input: {
-  sessionRound: GeneralProgramSessionRoundKind
-  selectedOptionIds: readonly number[]
-  scheduleOptions: OrganizationApproveScheduleOption[]
-  educationGrade: string
-  classCount: number
-}): OrganizationApproveAssignedPreviewRow[] {
-  const grade = input.educationGrade.trim()
-  const classTotal = Math.max(1, input.classCount || 1)
-  const optionsById = new Map(input.scheduleOptions.map(option => [option.scheduleId, option]))
-  const distinctSelected = [...new Set(input.selectedOptionIds)]
-  if (distinctSelected.length === 0) return []
-
-  if (input.sessionRound === 'single') {
-    const optionId = distinctSelected[0]
-    const label = optionsById.get(optionId)?.label?.trim() ?? ''
-    if (!label) return []
-    return Array.from({ length: classTotal }, (_, index) => ({
-      label,
-      grade,
-      className: `${index + 1}반`,
-    }))
-  }
-
-  const rows: OrganizationApproveAssignedPreviewRow[] = []
-  for (const optionId of distinctSelected) {
-    const label = optionsById.get(optionId)?.label?.trim() ?? ''
-    if (!label) continue
-    rows.push({ label, grade, className: '1반' })
-  }
-  return rows
-}
-
-export function buildOrganizationApproveSlotsForSelection(input: {
-  sessionRound: GeneralProgramSessionRoundKind
-  selectedScheduleIds: number[]
-  educationGrade: string
-  classCount: number
-}): OrganizationApplicationApproveSlot[] {
-  const grade = input.educationGrade.trim()
-  const distinctIds = [
-    ...new Set(input.selectedScheduleIds.filter(id => Number.isFinite(id) && id > 0)),
-  ]
-  const classTotal = Math.max(1, input.classCount || 1)
-
-  if (input.sessionRound === 'single') {
-    const scheduleId = distinctIds[0]
-    if (scheduleId == null) return []
-    return Array.from({ length: classTotal }, (_, index) => ({
-      scheduleId,
-      grade,
-      className: `${index + 1}반`,
-    }))
-  }
-
-  return distinctIds.map(scheduleId => ({
-    scheduleId,
-    grade,
-    className: '1반',
-  }))
-}
-
-export function validateOrganizationApproveSlotsClient(input: {
-  sessionRound: GeneralProgramSessionRoundKind
-  slots: OrganizationApplicationApproveSlot[]
-  allowedScheduleIds: number[]
-}): string | null {
-  if (input.slots.length === 0) {
-    return '교육 일정·학급을 선택해 주세요.'
-  }
-  if (!input.slots.every(slot => slot.grade.trim() && slot.className.trim())) {
-    return '학년·학급 정보를 확인해 주세요.'
-  }
-  if (!input.slots.every(slot => Number.isInteger(slot.scheduleId) && slot.scheduleId > 0)) {
-    return ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE
-  }
-  const allowed = new Set(input.allowedScheduleIds)
-  if (input.slots.some(slot => !allowed.has(slot.scheduleId))) {
-    return '선택한 일정이 희망 교육 일정과 일치하지 않습니다. 목록을 새로고침한 후 다시 선택해 주세요.'
-  }
-
-  const distinctScheduleIds = new Set(input.slots.map(slot => slot.scheduleId))
-  if (input.sessionRound === 'single') {
-    if (distinctScheduleIds.size !== 1) {
-      return '단일 회차 프로그램은 하나의 교육 일정만 선택할 수 있습니다.'
-    }
-  }
-  if (distinctScheduleIds.size < 1) {
-    return '복수 회차 프로그램은 하나 이상의 교육 일정을 선택해 주세요.'
-  }
-  const classKeys = new Set<string>()
-  for (const slot of input.slots) {
-    const key = `${slot.grade.trim()}\u0000${slot.className.trim()}`
-    if (classKeys.has(key)) return '동일한 학년·학급을 중복 배정할 수 없습니다.'
-    classKeys.add(key)
-  }
-  return null
-}
-
 const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
-  ORGANIZATION_APPROVE_SLOTS_REQUIRED: '승인하려면 교육 일정·학급 배정이 필요합니다.',
-  ORGANIZATION_APPROVE_SLOT_COUNT_INVALID:
-    '선택한 교육 일정 수가 프로그램 회차 유형과 맞지 않습니다.',
   ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED: ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED:
     '신청자가 희망하지 않은 교육 일정입니다. 희망 일정을 다시 확인해 주세요.',
   GENERAL_ORGANIZATION_ASSIGNMENT_SCHEDULE_INVALID:
     '유효하지 않거나 취소된 교육 일정입니다. 목록을 새로고침한 후 다시 선택해 주세요.',
   GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_DUPLICATED: '동일한 일정·학년·학급이 중복되었습니다.',
-  GENERAL_ORGANIZATION_ASSIGNMENT_EXCEEDS_REQUESTED_CLASS_COUNT:
-    '신청 학급 수를 초과하는 배정입니다.',
   GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE:
     '이미 시작되었거나 출석 이력이 있는 일정은 변경할 수 없습니다.',
 }

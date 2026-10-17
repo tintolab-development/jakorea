@@ -139,16 +139,17 @@ export type OrganizationDecisionNotifyRequest = {
   scheduledAt?: string
 }
 
-/** OpenAPI `SlotRequest` — GENERAL_ORGANIZATION 승인 시 필수 */
+/** OpenAPI `SlotRequest` — 레거시 호환. 신규 GENERAL 승인은 `selectedScheduleId` 사용 */
 export type OrganizationApplicationApproveSlotRequest = {
   scheduleId: number
-  grade: string
-  className: string
+  grade?: string
+  className?: string
 }
 
-/** OpenAPI `OrganizationApplicationApproveRequest` (slots는 GENERAL_ORGANIZATION 승인 시 필수) */
+/** OpenAPI `OrganizationApplicationApproveRequest` + BE handoff `selectedScheduleId` */
 export type OrganizationApplicationApprovePayload = OrganizationDecisionNotifyRequest & {
   slots?: OrganizationApplicationApproveSlotRequest[]
+  selectedScheduleId?: number
 }
 
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */

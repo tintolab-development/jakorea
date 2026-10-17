@@ -283,8 +283,6 @@ export function ApplicantList({
   const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
   const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
   const requiresGeneralOrganizationApproveSlots = isGeneralOrganizationProgram(program)
-  const institutionApproveSessionRound: 'single' | 'multi' =
-    program?.generalProgramSessionRound === 'multi' ? 'multi' : 'single'
   const institutionApproveTargetId = institutionApproveTarget?.id ?? null
   /** 목록/상세 row 참조가 바뀌어도 id가 같으면 effect를 다시 돌리지 않는다 (무한 fetch 방지). */
   const institutionApproveHydrationKey = useMemo(() => {
@@ -368,12 +366,9 @@ export function ApplicantList({
   const institutionApproveScheduleConfig = useMemo(() => {
     if (!requiresGeneralOrganizationApproveSlots || !institutionApproveRow) return null
     return {
-      sessionRound: institutionApproveSessionRound,
-      educationGrade: institutionApproveRow.educationGrade,
-      classCount: institutionApproveRow.classCount,
       preferredEducationSchedules: institutionApproveRow.preferredEducationSchedules,
     }
-  }, [institutionApproveRow, institutionApproveSessionRound, requiresGeneralOrganizationApproveSlots])
+  }, [institutionApproveRow, requiresGeneralOrganizationApproveSlots])
 
   const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
     id: string
@@ -1179,9 +1174,6 @@ export function ApplicantList({
         onConfirm={(payload: InstitutionApproveConfirmPayload) => {
           if (!institutionApproveTarget) return
           const { id } = institutionApproveTarget
-          if (requiresGeneralOrganizationApproveSlots && !payload.slots?.length) {
-            return
-          }
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -1193,9 +1185,14 @@ export function ApplicantList({
           const run = async () => {
             setInstitutionApproveSubmitting(true)
             try {
-              const approvePayload = payload.slots?.length
-                ? { ...notify, slots: payload.slots }
-                : undefined
+              const approvePayload = requiresGeneralOrganizationApproveSlots
+                ? {
+                    ...notify,
+                    ...(payload.selectedScheduleId != null
+                      ? { selectedScheduleId: payload.selectedScheduleId }
+                      : {}),
+                  }
+                : notify
               const remote = await applyRemoteInstitutionDecision(
                 [id],
                 'approve',
