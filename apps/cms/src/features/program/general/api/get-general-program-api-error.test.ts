@@ -211,6 +211,15 @@ describe('getProgramFormBindingErrorMessage', () => {
     ).toContain('동일한 설문 양식 버전')
   })
 
+  it('LECTURE_EVALUATION+PROGRAM 슬롯 충돌은 프로그램 공통 강의평가 중복 안내', () => {
+    expect(
+      getProgramFormBindingErrorMessage(slotConflictError, 'fallback', {
+        formType: 'LECTURE_EVALUATION',
+        targetScope: 'PROGRAM',
+      })
+    ).toContain('이 프로그램에 등록된 강의평가가 이미 있습니다')
+  })
+
   it('만족도 등 다른 formType 슬롯 충돌은 기본 슬롯 안내를 쓴다', () => {
     expect(
       getProgramFormBindingErrorMessage(slotConflictError, 'fallback', {
@@ -218,6 +227,41 @@ describe('getProgramFormBindingErrorMessage', () => {
         targetScope: 'PROGRAM',
       })
     ).toBe('같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다.')
+  })
+})
+
+describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
+  it('maps slot key mismatch to user message', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            data: {
+              error: { code: 'PROGRAM_EDUCATION_SLOT_KEY_MISMATCH' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('educationSlotKey')
+  })
+
+  it('maps PROGRAM_SCHEDULE_NOT_ACTIVE', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        { response: { data: { error: { code: 'PROGRAM_SCHEDULE_NOT_ACTIVE' } } } },
+        'fallback'
+      )
+    ).toContain('비활성')
+  })
+
+  it('maps PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        { response: { data: { error: { code: 'PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT' } } } },
+        'fallback'
+      )
+    ).toContain('EDUCATION')
   })
 })
 

@@ -3,7 +3,7 @@
  * 스크린샷 시안: 기본 정보 / 안내 사항 / 진행 희망 교육 일정
  */
 
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -42,6 +42,7 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import { institutionHopeScheduleEmptyMessage } from '@/features/program/general/lib/institution-hope-schedule-empty-message'
+import { readOrganizationApplicationHopeSessionsForDisplay } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -296,7 +297,14 @@ export function ApplicantGeneralInstitutionBasicInfo({
       buildTeacherInfoCell(institution, detail)
     )
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
-  const sessions = institution.sessions ?? []
+  const sessions = useMemo(
+    () =>
+      readOrganizationApplicationHopeSessionsForDisplay(
+        institution,
+        program?.backendProgramType
+      ),
+    [institution, program?.backendProgramType]
+  )
 
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 

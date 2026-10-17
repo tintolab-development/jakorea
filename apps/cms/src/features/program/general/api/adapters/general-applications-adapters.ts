@@ -232,7 +232,11 @@ function preferredSessionsHaveCalendarDate(sessions: ParticipatingSchoolSession[
   return sessions.some(session => resolveSessionCalendarDateKey(session) != null)
 }
 
-function resolveOrganizationApplicationAssignmentSessions(
+/**
+ * 기관 신청 목록·상세 「진행 희망 교육 일정」.
+ * 상세 DTO `sessions`(OSA·배정 hybrid)는 사용하지 않는다.
+ */
+export function resolveOrganizationApplicationHopeSessions(
   dto: OrganizationApplicationListItemResponse,
   preferred: PreferredEducationSchedule[],
   requestedSchedules?: RequestedScheduleResponse[]
@@ -255,8 +259,32 @@ function resolveOrganizationApplicationAssignmentSessions(
   return fromPreferred
 }
 
-/** 기관 상세 DTO의 `sessions`를 상세 화면 표시 세션으로 변환한다. */
-function mapOrganizationApplicationDetailSessions(
+/** @deprecated 이름만 유지 — 희망 일정은 `resolveOrganizationApplicationHopeSessions` 사용 */
+export const resolveOrganizationApplicationAssignmentSessions =
+  resolveOrganizationApplicationHopeSessions
+
+/** 신청 row·상세 UI용 희망 세션(일반 기관은 dto.sessions·stale row.sessions fallback 금지) */
+export function readOrganizationApplicationHopeSessionsForDisplay(
+  row: ApplicantSchoolRow,
+  programType?: string | null
+): ParticipatingSchoolSession[] {
+  const preferred = row.preferredEducationSchedules ?? []
+  const dto: OrganizationApplicationListItemResponse = {
+    programType: programType?.trim() || 'GENERAL_ORGANIZATION',
+    availableActions: [],
+    sessions: [],
+    preferredEducationSchedules: [],
+  }
+  const fromHope = resolveOrganizationApplicationHopeSessions(dto, preferred)
+  if (fromHope.length > 0) return fromHope
+  if (isCompanySchoolOrganizationApplication(dto)) {
+    return row.sessions ?? []
+  }
+  return fromHope
+}
+
+/** 기관 상세 DTO의 `sessions` — OSA·배정 hybrid. 희망 UI에는 사용하지 않는다. */
+export function mapOrganizationApplicationDetailOperationalSessions(
   sessions: OrganizationApplicationSessionResponse[] | undefined
 ): ParticipatingSchoolSession[] {
   return (sessions ?? []).map((session, index) => {
@@ -305,7 +333,7 @@ export function applyRequestedSchedulesToApplicantSchoolRow(
     sessions: [],
     preferredEducationSchedules: [],
   }
-  const sessions = resolveOrganizationApplicationAssignmentSessions(
+  const sessions = resolveOrganizationApplicationHopeSessions(
     dto,
     preferred,
     requestedSchedules
@@ -324,7 +352,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 ): ApplicantSchoolRow {
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
-  const sessions = resolveOrganizationApplicationAssignmentSessions(
+  const sessions = resolveOrganizationApplicationHopeSessions(
     dto,
     preferred,
     options?.requestedSchedules
@@ -420,22 +448,22 @@ export function readOrganizationApplicationDetailExtendFields(
 
 export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   dto: OrganizationApplicationDetailResponse,
-  base: ApplicantSchoolRow
+  base: ApplicantSchoolRow,
+  options?: {
+    requestedSchedules?: RequestedScheduleResponse[]
+  }
 ): ApplicantSchoolRow {
   const teacherPhone = dto.teacherPhone?.trim()
   const teacherEmail = dto.teacherEmail?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
-  const detailSessions = mapOrganizationApplicationDetailSessions(dto.sessions)
-  const sessions =
-    detailSessions.length > 0
-      ? detailSessions
-      : resolveOrganizationApplicationAssignmentSessions(
-          dto as OrganizationApplicationListItemResponse,
-          preferred,
-          undefined
-        )
+  const listItemShape = dto as OrganizationApplicationListItemResponse
+  const sessions = resolveOrganizationApplicationHopeSessions(
+    listItemShape,
+    preferred,
+    options?.requestedSchedules
+  )
   return {
     ...base,
     id: toId(dto.id) || '',

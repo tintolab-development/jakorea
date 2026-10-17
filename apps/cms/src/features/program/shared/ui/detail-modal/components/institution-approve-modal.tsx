@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
   PermissionModal,
   PermissionModalMessage,
@@ -7,6 +10,7 @@ import {
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import {
   ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
+  ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE,
   organizationApproveScheduleOptionLabel,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
   resolveOrganizationApproveSelectedScheduleId,
@@ -55,12 +59,20 @@ export function InstitutionApproveModal({
   organizationApplicationId,
 }: InstitutionApproveModalProps) {
   const { showAlert } = useCmsAlert()
+  const programSchedulesQuery = useQuery({
+    queryKey: generalProgramQueryKeys.schedules(programId ?? ''),
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId!),
+    enabled: open && Boolean(programId?.trim()),
+    staleTime: 30_000,
+    retry: false,
+  })
   const scheduleValidation = useMemo(
     () =>
       resolveOrganizationApproveScheduleOptionsFromPreferred(
-        scheduleConfig?.preferredEducationSchedules
+        scheduleConfig?.preferredEducationSchedules,
+        programSchedulesQuery.data
       ),
-    [scheduleConfig?.preferredEducationSchedules]
+    [scheduleConfig?.preferredEducationSchedules, programSchedulesQuery.data]
   )
   const scheduleOptions = scheduleValidation.options
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
@@ -74,6 +86,15 @@ export function InstitutionApproveModal({
   const hasPreferredSchedules = scheduleOptions.length > 0 && !scheduleValidation.invalidReason
   const hasUnconfirmableOnly =
     hasPreferredSchedules && scheduleOptions.every(option => option.confirmableScheduleId == null)
+  const hasProgramScheduleMismatch =
+    hasPreferredSchedules &&
+    scheduleOptions.some(
+      option =>
+        option.scheduleId > 0 &&
+        option.confirmableScheduleId == null &&
+        programSchedulesQuery.data != null &&
+        programSchedulesQuery.data.length > 0
+    )
 
   useEffect(() => {
     if (!open || !scheduleValidation.invalidReason || !import.meta.env.DEV) return
@@ -166,6 +187,11 @@ export function InstitutionApproveModal({
             <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
               희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청
               상세의 scheduleId 반영 후 다시 시도해 주세요.
+            </p>
+          ) : null}
+          {hasProgramScheduleMismatch ? (
+            <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
+              {ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE}
             </p>
           ) : null}
           <p className="institution-approve-modal__notice">
