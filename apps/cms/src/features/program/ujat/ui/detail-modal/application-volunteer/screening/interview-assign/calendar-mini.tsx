@@ -20,8 +20,10 @@ export type UjatVolunteerInterviewAssignCalendarMiniProps = {
   selectedDate: Dayjs
   onMonthChange: (month: Dayjs) => void
   onSelectDate: (date: Dayjs) => void
-  /** 봉사자 면접 가능일 — 연한 민트 배경 */
+  /** 프로그램 면접 가능일 — 연한 청색 배경 */
   programDates: Set<string>
+  /** 면접 기간 내 프로그램 지정 불가일 — 회색 배경 (기간 외·미지정일은 배경 없음) */
+  programUnavailableDateKeys?: Set<string>
   /** 관리자 면접 가능일 — 미지정 시 disabledDate만 적용 */
   clickableDates?: Set<string>
   /** 공휴일 (YYYY-MM-DD) */
@@ -49,6 +51,7 @@ function InterviewAssignCalendarMiniCore({
   onMonthChange,
   onSelectDate,
   programDates,
+  programUnavailableDateKeys,
   holidayDateKeys,
   assignedDateKeys,
   disabledDate,
@@ -75,7 +78,8 @@ function InterviewAssignCalendarMiniCore({
   const dateFullCellRender = (date: Dayjs) => {
     if (!date.isSame(currentMonth, 'month')) return null
     const dateKey = date.format('YYYY-MM-DD')
-    const hasSchedule = programDates.has(dateKey)
+    const isProgramAvailable = programDates.has(dateKey)
+    const isProgramUnavailable = programUnavailableDateKeys?.has(dateKey) ?? false
     const hasAssignmentComplete = assignedDateKeys?.has(dateKey) ?? false
     const isSelected = date.isSame(selectedDate, 'day')
     const isDisabled = disabledDate?.(date) ?? false
@@ -86,8 +90,9 @@ function InterviewAssignCalendarMiniCore({
         tabIndex={isDisabled ? -1 : 0}
         className={[
           'calendar-mini-cell',
-          hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
-          hasAssignmentComplete ? 'calendar-mini-cell--assignment-complete' : '',
+          isProgramAvailable && !isSelected ? 'calendar-mini-cell--has-schedule' : '',
+          isProgramUnavailable && !isSelected ? 'calendar-mini-cell--program-unavailable' : '',
+          hasAssignmentComplete && !isSelected ? 'calendar-mini-cell--assignment-complete' : '',
           isSelected ? 'calendar-mini-cell--selected' : '',
           isDisabled ? 'calendar-mini-cell--disabled' : '',
           ...buildInterviewAssignCellWeekendClasses(date, holidayDateKeys),

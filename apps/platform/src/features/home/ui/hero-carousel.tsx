@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
 import { useHomeMain } from '../api/use-home-main'
-import { HOME_HERO_AUTOPLAY_MS, type HomeHeroSlide } from '../lib/mock'
+import { HOME_HERO_AUTOPLAY_MS, type HomeHeroSlide } from '../lib/home-fallback-content'
 import styles from './hero-carousel.module.css'
 
 /** hero-carousel.module.css `.slide` opacity transition과 맞춘다 */

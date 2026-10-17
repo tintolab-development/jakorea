@@ -1,10 +1,11 @@
 import {
+  clearWritingFormFillPreviewAnswers,
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@jakorea/form-schema/writing-form'
-import type { EducationSurveyListEntry } from './mock-survey-list'
+import type { EducationSurveyListEntry } from './survey-list-types'
 
 /** immediate 기간일 때 헤더 시작일(설문 생성일) mock */
 export const EDUCATION_SURVEY_SEED_CREATED_AT = '2024-09-23'
@@ -68,28 +69,9 @@ function applySurveyHeader(
   })
 }
 
-/** CMS 미리보기 선택값(척도 5점 등)을 작성 화면 초기값에서 제거한다. */
+/** CMS 미리보기 선택값(척도·라디오 등)을 작성 화면 초기값에서 제거한다. */
 export function clearEducationSurveyPreviewAnswers(draft: WritingFormDraft): WritingFormDraft {
-  return {
-    ...draft,
-    paragraphs: draft.paragraphs.map(paragraph => {
-      if (paragraph.kind !== 'single_item') return paragraph
-      if (paragraph.variant === 'scale_type') {
-        return { ...paragraph, selectedPreviewItemId: null }
-      }
-      if (paragraph.variant === 'star_rate') {
-        return { ...paragraph, selectedPreviewStars: null }
-      }
-      if (paragraph.variant === 'multiple_choice') {
-        return {
-          ...paragraph,
-          selectedPreviewSingleId: null,
-          selectedPreviewMultipleIds: [],
-        }
-      }
-      return paragraph
-    }),
-  }
+  return clearWritingFormFillPreviewAnswers(draft)
 }
 
 /**

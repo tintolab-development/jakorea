@@ -27,7 +27,8 @@ import {
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
-import { getMockEducationSurveyList, type EducationSurveyListEntry } from '../lib/mock-survey-list'
+import type { EducationSurveyListEntry } from '../lib/survey-list-types'
+import { isPortalFormSubmissionPeriodOpen } from '../lib/portal-form-submission-period'
 import { EducationSurveyEmptyPanel } from './empty-panel'
 import {
   formatEducationPeriodLabel,
@@ -59,6 +60,7 @@ export type EducationSurveyFillPanelProps = {
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
   programId?: string | null
+  pendingSurveyCount?: number
 }
 
 function resolveFillDraft(options: {
@@ -95,6 +97,7 @@ export function EducationSurveyFillPanel({
   applicationType,
   applicationId,
   programId,
+  pendingSurveyCount,
 }: EducationSurveyFillPanelProps) {
   const remoteForms = useApplicationFormsQuery(
     applicationType,
@@ -102,11 +105,17 @@ export function EducationSurveyFillPanel({
     kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
   )
   const surveyList = useMemo(
-    () => (remoteForms.enabled ? remoteForms.items : getMockEducationSurveyList(kind)),
+    () => (remoteForms.enabled ? remoteForms.items : []),
     [kind, remoteForms.enabled, remoteForms.items],
   )
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
+
+  useEffect(() => {
+    if (surveyList.length === 0) return
+    if (surveyList.some(entry => entry.id === selectedId)) return
+    setSelectedId(surveyList[0]?.id ?? '')
+  }, [surveyList, selectedId])
 
   const selectedEntry = useMemo(
     () => surveyList.find(entry => entry.id === selectedId) ?? surveyList[0],
@@ -114,13 +123,21 @@ export function EducationSurveyFillPanel({
   )
   const selectedEntryId = selectedEntry?.id ?? ''
   const listHasForm = selectedEntry?.form != null
+  const canFetchRemoteForm =
+    remoteForms.enabled &&
+    surveyList.length > 0 &&
+    !listHasForm &&
+    Boolean(programId) &&
+    Boolean(selectedEntryId)
 
   const remoteFormQuery = useApplicationSurveyFormQuery(
-    listHasForm ? null : programId,
-    listHasForm ? null : selectedEntryId,
+    canFetchRemoteForm ? programId : null,
+    canFetchRemoteForm ? selectedEntryId : null,
   )
   const submitMutation = useSubmitEducationSurveyMutation(programId, applicationType, applicationId)
-  const readOnly = selectedEntry?.status === 'submitted'
+  const readOnly =
+    selectedEntry?.status === 'submitted' ||
+    (selectedEntry != null && !isPortalFormSubmissionPeriodOpen(selectedEntry))
 
   const remoteFormDocument = listHasForm
     ? {
@@ -323,7 +340,12 @@ export function EducationSurveyFillPanel({
     )
   }
   if (remoteForms.enabled && surveyList.length === 0) {
-    return <EducationSurveyEmptyPanel kind={kind} />
+    return (
+      <EducationSurveyEmptyPanel
+        kind={kind}
+        pendingMismatchHint={kind === 'survey' && (pendingSurveyCount ?? 0) > 0}
+      />
+    )
   }
   // 실패 시 seed 양식이 대신 보이면 CMS 양식과 다른 설문을 제출하게 된다.
   if (remoteFormQuery.isError) {

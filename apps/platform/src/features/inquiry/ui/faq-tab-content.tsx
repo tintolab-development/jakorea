@@ -3,7 +3,6 @@ import {
   FAQ_CATEGORY_OPTIONS,
   FAQ_PAGE_SIZE,
   filterFaqs,
-  useMockFaqsCatalog,
   usePublicFaqsQuery,
   type InquiryListParams,
 } from '@/features/inquiry'
@@ -23,8 +22,7 @@ type FaqTabContentProps = {
 
 export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
   const remoteFaqs = usePublicFaqsQuery()
-  const mockFaqs = useMockFaqsCatalog()
-  const faqs = remoteFaqs.enabled ? remoteFaqs.items : mockFaqs
+  const faqs = remoteFaqs.enabled ? remoteFaqs.items : []
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const filteredFaqs = useMemo(() => filterFaqs(faqs, params), [faqs, params])
@@ -85,9 +83,8 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
         items={accordionItems}
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
-        emptyMessage={
-          remoteFaqs.isLoading ? 'FAQ를 불러오는 중입니다.' : '선택한 카테고리에 등록된 FAQ가 없습니다.'
-        }
+        loading={remoteFaqs.isLoading}
+        emptyMessage="선택한 카테고리에 등록된 FAQ가 없습니다."
       />
 
       {filteredFaqs.length > 0 ? (

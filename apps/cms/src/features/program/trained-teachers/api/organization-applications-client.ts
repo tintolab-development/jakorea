@@ -2,6 +2,7 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 import type { TrainedTeacherOrganizationApplicationsListQuery } from './organization-applications-list-query'
+import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 
 function listUrl(programId: string): string {
   return `/api/admin/programs/${encodeURIComponent(programId)}/trained-teacher/organization-applications`
@@ -31,8 +32,8 @@ export async function fetchTrainedTeacherOrganizationApplicationsRemote(
 export async function fetchTrainedTeacherOrganizationApplicationRemote(
   programId: string,
   applicationId: string
-): Promise<TrainedTeacherOrganizationApplicationResponse> {
-  return unwrapApiBody<TrainedTeacherOrganizationApplicationResponse>(
+): Promise<TrainedTeacherOrganizationApplicationDetailResponse> {
+  return unwrapApiBody<TrainedTeacherOrganizationApplicationDetailResponse>(
     await customInstance({
       url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}`,
       method: 'GET',

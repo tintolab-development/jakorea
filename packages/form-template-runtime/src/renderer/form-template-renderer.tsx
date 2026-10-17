@@ -32,6 +32,10 @@ export type FormTemplateRendererProps = {
   fillOptions?: FillParagraphBodyOptions
   /** 단락 본문 대신 Platform sidecar UI (지급조서 기본정보·전자서명 등) */
   renderParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
+  /** 단락 카드 제목 우측 (예: 희망 교육 일정 추가) */
+  renderParagraphTitleTrailing?: (
+    paragraph: WritingFormParagraph
+  ) => ReactNode | null | undefined
 }
 
 function resolveParagraphDisplayTitle(paragraph: WritingFormParagraph): string {
@@ -96,6 +100,7 @@ export function FormTemplateRenderer({
   onUpdateParagraph,
   fillOptions,
   renderParagraphSlot,
+  renderParagraphTitleTrailing,
 }: FormTemplateRendererProps) {
   const rootClass = ['form-template-renderer', className].filter(Boolean).join(' ')
   let numberedIndex = 0
@@ -143,15 +148,21 @@ export function FormTemplateRenderer({
           )
         }
 
+        const editableHeading = buildParagraphEditableHeading(
+          paragraph,
+          titleIndex,
+          draft.formSettings.titleNumbering,
+        )
+        const titleTrailing = renderParagraphTitleTrailing?.(paragraph)
         return (
           <ParagraphCard
             key={paragraph.id}
             dataParagraphId={paragraph.id}
-            editableHeading={buildParagraphEditableHeading(
-              paragraph,
-              titleIndex,
-              draft.formSettings.titleNumbering,
-            )}
+            editableHeading={
+              titleTrailing != null
+                ? { ...editableHeading, titleTrailing }
+                : editableHeading
+            }
           >
             {body}
           </ParagraphCard>

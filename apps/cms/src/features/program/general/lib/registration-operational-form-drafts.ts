@@ -278,6 +278,10 @@ export function operationalOverlayKeyPrefixesForCatalogId(
       return ['application.instructor']
     case 'application-volunteer':
       return ['application.volunteer']
+    case 'application-ujat-school':
+      return ['ujatApplication', 'application.ujat.inst.basicInfo']
+    case 'application-ujat-volunteer':
+      return ['ujatVolunteerApplication']
     default:
       return []
   }
@@ -367,6 +371,12 @@ export function resetOperationalOverlayForCatalogId(catalogTemplateId: string): 
   if (kind === 'ujat-application-institution') {
     suppressOperationalSeedDefaults('ujat-application-institution', ['*'])
     resetUjatApplicationInstitutionOverlayForScope(catalogTemplateId)
+    replaceSharedOverlayKeysByPrefixes(
+      'application',
+      ['application.ujat.inst.basicInfo'],
+      {},
+      catalogTemplateId
+    )
     return
   }
   if (kind === 'ujat-application-volunteer') {
@@ -477,7 +487,13 @@ function overlayRecordForKind(
     )
   }
   if (kind === 'ujat-application-institution') {
-    return { ...peekUjatApplicationInstitutionOverlayRecord(catalogTemplateId) }
+    return {
+      ...peekUjatApplicationInstitutionOverlayRecord(catalogTemplateId),
+      ...pickOverlayKeysByPrefixes(
+        peekGeneralApplicationOverlayRecord(catalogTemplateId),
+        ['application.ujat.inst.basicInfo']
+      ),
+    }
   }
   if (kind === 'program-registration') {
     return { ...peekProgramRegistrationOverlayRecord(catalogTemplateId) }
@@ -557,7 +573,16 @@ export function applyOperationalOverlayForCatalogId(
     return
   }
   if (kind === 'ujat-application-institution') {
-    replaceUjatApplicationInstitutionOverlayForScope(catalogTemplateId, overlay)
+    replaceUjatApplicationInstitutionOverlayForScope(
+      catalogTemplateId,
+      pickOverlayKeysByPrefixes(overlay, ['ujatApplication'])
+    )
+    replaceSharedOverlayKeysByPrefixes(
+      'application',
+      ['application.ujat.inst.basicInfo'],
+      overlay,
+      catalogTemplateId
+    )
     return
   }
   if (kind === 'program-registration') {

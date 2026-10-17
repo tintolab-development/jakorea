@@ -40,6 +40,8 @@ export interface CreateIdentityVerificationClientOptions {
    * 관리자 등록 온보딩처럼 서버 사전검증이 start를 막는 경우, 검증은 confirm 단계에서만 한다.
    */
   omitExpectedProfileOnStart?: boolean
+  /** true면 remote 비활성 시 mock 팝업 대신 오류 (Platform NICE 실연동) */
+  remoteOnly?: boolean
 }
 
 export interface IdentityVerificationClient {
@@ -207,6 +209,12 @@ export function createIdentityVerificationClient(
     if (options.isRemoteEnabled()) {
       return startChallengeRemote(input)
     }
+    if (options.remoteOnly) {
+      throw new IdentityVerificationApiError(
+        'INVALID_REQUEST',
+        '본인인증 API가 설정되지 않았습니다. VITE_API_SERVER를 확인해 주세요.'
+      )
+    }
     return startChallengeMock(input)
   }
 
@@ -263,9 +271,10 @@ export function createIdentityVerificationClient(
         sessionId,
         provider: 'NICE',
         status: VERIFIED_SESSION_STATUS,
-        name: '홍길동',
+        name: pending?.name?.trim() || '홍길동',
         phone: '010-1234-5678',
         birthDate: pending?.birthDate ? toApiBirthDate(pending.birthDate) : undefined,
+        gender: pending?.gender,
         verifiedAt: new Date().toISOString(),
       }
     }
@@ -301,6 +310,7 @@ export function createIdentityVerificationClient(
       verifiedName: pending?.name?.trim() || '홍길동',
       verifiedPhone: '010-1234-5678',
       verifiedBirthDate: input.birthDate ? toVerifiedBirthDate(input.birthDate) : undefined,
+      verifiedGender: input.gender,
       verifiedAt: new Date().toISOString(),
     }
   }

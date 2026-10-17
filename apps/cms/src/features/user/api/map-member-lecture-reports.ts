@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatYyMdSpacedWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import type { MemberLectureReportResponse } from '@/shared/api/generated/members/schemas/memberLectureReportResponse'
 
 /** OpenAPI 미반영 확장 필드 — PH-015 BE 스키마 확장 시 매핑 SSOT */
@@ -27,7 +28,7 @@ export interface MemberLectureReportTableRow {
 function formatDateLabel(value?: string): string {
   if (!value?.trim()) return '-'
   const parsed = dayjs(value)
-  return parsed.isValid() ? parsed.format('YY. MM. DD (ddd)') : value
+  return parsed.isValid() ? formatYyMdSpacedWithKoreanWeekday(parsed) : value
 }
 
 function formatPeriodLabel(start?: string, end?: string, label?: string): string {

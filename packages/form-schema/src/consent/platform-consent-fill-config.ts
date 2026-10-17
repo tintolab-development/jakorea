@@ -1,5 +1,6 @@
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
 } from '../writing-form/draft-schema.js'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
@@ -12,10 +13,19 @@ export const PAYMENT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
 
 export const EDUCATOR_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
+  /** violationClosing + ConsentSignatureStatement — CMS admin-proxy 확인 카드와 동일 */
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature,
 ])
 
+/** 행정정보 — 날짜는 `PFFormSignatureBlock` sidecar. 서명란은 초상권과 같이 `systemSignature` 슬롯(JA KOREA 귀하) 노출 */
 export const NOTICE_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
+  /** 시드 `body: ''` — 작성 화면 문구 없음(A4 구분용). Platform copy fallback 금지 */
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+])
+
+export const PORTRAIT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemDate,
 ])
 
 export function resolvePlatformConsentHiddenParagraphIds(templateId: string): Set<string> {
@@ -27,6 +37,9 @@ export function resolvePlatformConsentHiddenParagraphIds(templateId: string): Se
   }
   if (templateId === 'agreement-notice') {
     return NOTICE_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS
+  }
+  if (templateId === 'agreement-portrait') {
+    return PORTRAIT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS
   }
   return new Set<string>()
 }

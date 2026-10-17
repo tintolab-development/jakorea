@@ -10,7 +10,11 @@ import {
   hydrateOrganizationApplicationSchedules,
 } from '@/features/program/general/api/admin-applications-service'
 import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
-import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
+import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import {
   buildIndividualLectureAssignSlotsFromScheduleSlots,
   getApplicantPreferredDateKeys,
@@ -100,8 +104,15 @@ export function useInstructorLectureAssignModal(params: {
 
   const organizationApplicationsQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.instructorLectureAssignInstitutions(programId),
-    queryFn: () =>
-      fetchApprovedOrganizationApplicationsForLectureAssign(programId, queryClient),
+    queryFn: () => fetchApprovedOrganizationApplicationsForLectureAssign(programId, queryClient),
+    enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const instructorAssignmentBoardQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
+    queryFn: () => fetchGeneralInstructorAssignmentBoard(programId),
     enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
     staleTime: 30_000,
     retry: false,
@@ -192,8 +203,7 @@ export function useInstructorLectureAssignModal(params: {
     instructor.id,
   ])
 
-  const useAvailableScheduleSlotsUi =
-    useRemoteInstructorDetail && instructorDetailQuery.isSuccess
+  const useAvailableScheduleSlotsUi = useRemoteInstructorDetail && instructorDetailQuery.isSuccess
 
   const legacyIndividualSlots = useMemo(() => {
     if (!isIndividual || !individualProgram || useRemoteInstructorDetail) return []
@@ -266,7 +276,7 @@ export function useInstructorLectureAssignModal(params: {
         const nextItem = usePeriodStyleItem
           ? toIndividualLectureAssignItem(slot)
           : toLectureAssignItem(slot)
-        return [...prev, nextItem]
+        return [...prev, { ...nextItem, scheduleLead: prev.length === 0 }]
       })
     },
     [isIndividual, useAvailableScheduleSlotsUi]
@@ -275,6 +285,23 @@ export function useInstructorLectureAssignModal(params: {
   const handleRemoveAssignment = useCallback((slotKey: string) => {
     setAssignedItems(prev => prev.filter(item => item.slotKey !== slotKey))
   }, [])
+
+  const handleToggleScheduleLead = useCallback((slotKey: string, scheduleLead: boolean) => {
+    setAssignedItems(prev =>
+      prev.map(item => (item.slotKey === slotKey ? { ...item, scheduleLead } : item))
+    )
+  }, [])
+
+  const existingLeadScheduleIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const assignment of instructorAssignmentBoardQuery.data?.assignments ?? []) {
+      if (assignment.scheduleLead !== true || assignment.scheduleId == null) continue
+      const status = assignment.assignmentStatus?.toUpperCase()
+      if (status === 'CANCELLED' || status === 'CANCELED' || status === 'INACTIVE') continue
+      ids.add(assignment.scheduleId)
+    }
+    return ids
+  }, [instructorAssignmentBoardQuery.data?.assignments])
 
   const canConfirm = assignedItems.length > 0
 
@@ -323,6 +350,9 @@ export function useInstructorLectureAssignModal(params: {
     handleSelectDate,
     handleAddSlot,
     handleRemoveAssignment,
+    handleToggleScheduleLead,
+    existingLeadScheduleIds,
+    existingLeadQueryReady: instructorAssignmentBoardQuery.isSuccess,
     canConfirm,
   }
 }

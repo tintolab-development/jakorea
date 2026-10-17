@@ -1,15 +1,14 @@
-import { SMS_SEND_HISTORY_MOCK } from '@/features/notifications/model/sms-send-history/mock'
 import type { SmsSendHistoryRow } from '@/features/notifications/model/sms-send-history/types'
 import type { SmsSendDraft } from '@/features/notifications/model/sms-send/types'
 
-let sessionSmsSendHistory: SmsSendHistoryRow[] = [...SMS_SEND_HISTORY_MOCK]
+let sessionSmsSendHistory: SmsSendHistoryRow[] = []
 
 export function getSmsSendHistoryMockRows(): SmsSendHistoryRow[] {
   return sessionSmsSendHistory
 }
 
 export function resetSmsSendHistoryMockRows(): void {
-  sessionSmsSendHistory = [...SMS_SEND_HISTORY_MOCK]
+  sessionSmsSendHistory = []
 }
 
 export function prependSmsSendHistoryMockRows(rows: SmsSendHistoryRow[]): void {

@@ -13,6 +13,7 @@ assert.equal(all.page, 0)
 assert.equal(all.size, 10)
 assert.equal(all.portalTab, undefined)
 assert.equal(all.keyword, undefined)
+assert.equal(all.programType, undefined)
 assert.equal(all.sort, 'LATEST')
 
 const filtered = toPortalProgramListQuery(
@@ -20,6 +21,7 @@ const filtered = toPortalProgramListQuery(
     ...DEFAULT_PROGRAMS_LIST_PARAMS,
     category: 'youth',
     q: '금융',
+    programType: 'UJAT',
     recruitmentStatus: 'scheduled',
     educationForm: 'online',
     educationTarget: 'university',
@@ -32,10 +34,28 @@ const filtered = toPortalProgramListQuery(
 )
 assert.equal(filtered.portalTab, 'YOUTH_YOUNG')
 assert.equal(filtered.keyword, '금융')
+assert.equal(filtered.programType, 'UJAT')
 assert.equal(filtered.recruitmentStatus, 'UPCOMING')
 assert.equal(filtered.educationMethod, 'ONLINE')
-assert.equal(filtered.educationTarget, 'university')
-assert.equal(filtered.recruitmentTarget, 'high')
+assert.equal(filtered.educationTargets, undefined)
+
+const recruitmentOnly = toPortalProgramListQuery(
+  {
+    ...DEFAULT_PROGRAMS_LIST_PARAMS,
+    recruitmentTarget: 'high',
+  },
+  10,
+)
+assert.equal(recruitmentOnly.educationTargets, 'high')
+
+const educationOnly = toPortalProgramListQuery(
+  {
+    ...DEFAULT_PROGRAMS_LIST_PARAMS,
+    educationTarget: 'university',
+  },
+  10,
+)
+assert.equal(educationOnly.educationTargets, 'university')
 assert.equal(filtered.operatingFrom, '2026-09-01')
 assert.equal(filtered.operatingTo, '2026-12-31')
 assert.equal(filtered.sort, 'CLOSING_SOON')

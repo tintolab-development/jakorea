@@ -97,7 +97,7 @@ export function useGeneralIndividualApplicantColumns(
         }),
         onCell: () => ({
           className:
-            'applicant-details__td-sessions applicant-details__td-sessions--general-detail',
+            'applicant-details__td-sessions applicant-details__td-sessions--general-detail applicant-details__td-sessions--center',
         }),
         render: (_: unknown, record: GeneralIndividualApplicantRow) => {
           const sessions = record.sessions ?? []

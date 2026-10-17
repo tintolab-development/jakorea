@@ -36,9 +36,9 @@ function compactParams(query: PortalProgramListQuery): Record<string, string | n
   }
   if (query.keyword) params.keyword = query.keyword
   if (query.portalTab) params.portalTab = query.portalTab
+  if (query.programType) params.programType = query.programType
   if (query.recruitmentStatus) params.recruitmentStatus = query.recruitmentStatus
-  if (query.recruitmentTarget) params.recruitmentTarget = query.recruitmentTarget
-  if (query.educationTarget) params.educationTarget = query.educationTarget
+  if (query.educationTargets) params.educationTargets = query.educationTargets
   if (query.educationMethod) params.educationMethod = query.educationMethod
   if (query.operatingFrom) params.operatingFrom = query.operatingFrom
   if (query.operatingTo) params.operatingTo = query.operatingTo

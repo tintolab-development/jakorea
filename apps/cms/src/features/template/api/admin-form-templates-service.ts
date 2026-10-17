@@ -35,17 +35,12 @@ import {
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
+import { shouldUseRemoteDraftApiForTemplateCode } from '@/features/template/lib/form-template-remote-draft'
 import {
-  isFormTemplateLocalFallbackEnabled,
-  shouldUseRemoteDraftApiForTemplateCode,
-} from '@/features/template/lib/form-template-remote-draft'
-import {
-  loadWritingFormTemplateSave,
   removeWritingFormTemplateSave,
   type WritingFormTemplateSaveRecord,
 } from '@/features/template/lib/writing-form-template-local-save'
-import { issuanceFormSections } from '@/features/template/model/issuance-form.schema'
-import { writingSections, type TemplateSection } from '@/features/template/model/template.schema'
+import type { TemplateSection } from '@/features/template/model/template.schema'
 import {
   createDefaultDirectAgreementDraft,
   createNewSurveyDraft,
@@ -91,8 +86,8 @@ export function shouldUseFormsSurveysRemoteApi(): boolean {
   return isRealApiModuleEnabled('formsSurveys') && hasRemoteAdminJwt()
 }
 
-const FORM_TEMPLATE_LIST_PAGE_SIZE = 100
-const FORM_TEMPLATE_LIST_MAX_PAGES = 20
+const FORM_TEMPLATE_LIST_PAGE_SIZE = 20
+const FORM_TEMPLATE_LIST_MAX_PAGES = 100
 
 async function fetchAllFormTemplateListItems(
   params: Omit<ListTemplatesParams, 'page' | 'size'>
@@ -125,10 +120,6 @@ export async function getWritingFormSectionsRemote(): Promise<TemplateSection[]>
   return buildWritingFormSectionsFromApiItems(items)
 }
 
-export function getMockWritingFormSections(): TemplateSection[] {
-  return writingSections
-}
-
 export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]> {
   assertFormsSurveysRemoteReady()
   const items = await fetchAllFormTemplateListItems({
@@ -137,10 +128,6 @@ export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]
   })
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildIssuanceFormSectionsFromApiItems(items)
-}
-
-export function getMockIssuanceFormSections(): TemplateSection[] {
-  return issuanceFormSections
 }
 
 async function warmTemplateListCaches(): Promise<void> {
@@ -274,24 +261,21 @@ export function buildSaveRecordFromVersionResponse(args: {
 }
 
 /**
- * Remote SSOT load. Dev-only local fallback when `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1`.
+ * Remote SSOT load.
  * 프로그램 등록 `localOnly`는 `loadWritingFormTemplateDraft(..., { localOnly: true })` 경로.
- * remote 실패 시 local을 쓰지 않고 `null`(에디터 seed hydrate).
+ * remote 실패 시 `null`(에디터 seed hydrate) — localStorage fallback 없음.
  */
 export async function loadFormTemplateVersionDraft(
   templateCode: string
 ): Promise<WritingFormTemplateSaveRecord | null> {
-  const allowLocalFallback = isFormTemplateLocalFallbackEnabled()
-  const local = allowLocalFallback ? loadWritingFormTemplateSave(templateCode) : null
-
   if (!shouldUseRemoteDraftApiForTemplate(templateCode)) {
-    return allowLocalFallback ? local : null
+    return null
   }
 
   try {
     const versionId = await resolveTemplateVersionId(templateCode)
     if (versionId == null) {
-      return allowLocalFallback ? local : null
+      return null
     }
 
     const version = await fetchFormTemplateVersionRemote(versionId)
@@ -303,7 +287,7 @@ export async function loadFormTemplateVersionDraft(
       updatedAt: version.updatedAt,
     })
     if (remote == null) {
-      return allowLocalFallback ? local : null
+      return null
     }
 
     const cached = getFormTemplateVersionCacheEntry(templateCode)
@@ -319,8 +303,7 @@ export async function loadFormTemplateVersionDraft(
 
     return remote
   } catch (error) {
-    if (allowLocalFallback) return local
-    console.warn('[form-templates] remote draft load failed; using seed (no local fallback)', error)
+    console.warn('[form-templates] remote draft load failed; using seed hydrate', error)
     return null
   }
 }

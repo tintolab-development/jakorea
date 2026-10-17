@@ -1,12 +1,16 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH,
-  FilterTableToolbarButton
+import {
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import type {
+  UjatVolunteerApplicantRow,
+  UjatVolunteerInterviewEvaluationPayload,
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerInterview2FilterRows } from './filter-fields'
 import { useUjatVolunteerInterview2 } from './use-list'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
@@ -14,7 +18,6 @@ import { filterScheduleDatesByHalf } from '@/features/program/ujat/ui/detail-mod
 import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
 import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
-import { UjatVolunteerInterviewEvaluationModal } from '../interview-assign/evaluation-modal'
 import { UjatVolunteerInterview2BulkPassModal } from './bulk-pass-modal'
 import { UjatVolunteerInterview2CalendarView } from './calendar-view'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
@@ -73,9 +76,6 @@ export function Interview2Section({
     withdrawTarget,
     requestInterview2Pass,
     requestInterview2Fail,
-    openEvaluationModal,
-    closeEvaluationModal,
-    evaluationTarget,
     saveInterviewEvaluation,
     fetchNextPage,
     hasNextPage,
@@ -162,10 +162,13 @@ export function Interview2Section({
     requestInterview2Pass(selectedApplicant)
   }, [requestInterview2Pass, selectedApplicant])
 
-  const handleDetailOpenEvaluation = useCallback(() => {
-    if (!selectedApplicant) return
-    openEvaluationModal(selectedApplicant)
-  }, [openEvaluationModal, selectedApplicant])
+  const handleDetailSaveInterviewEvaluation = useCallback(
+    async (payload: UjatVolunteerInterviewEvaluationPayload) => {
+      if (!selectedApplicant) return false
+      return saveInterviewEvaluation(selectedApplicant, payload)
+    },
+    [saveInterviewEvaluation, selectedApplicant]
+  )
 
   const interview2ConfirmModal =
     interview2Confirm != null ? (
@@ -202,16 +205,6 @@ export function Interview2Section({
     />
   )
 
-  const evaluationModal =
-    evaluationTarget != null ? (
-      <UjatVolunteerInterviewEvaluationModal
-        open
-        applicant={evaluationTarget}
-        onCancel={closeEvaluationModal}
-        onConfirm={saveInterviewEvaluation}
-      />
-    ) : null
-
   if (selectedApplicant) {
     return (
       <>
@@ -221,12 +214,11 @@ export function Interview2Section({
           onWithdrawActivity={handleDetailWithdrawActivity}
           onInterviewFail={handleDetailInterviewFail}
           onInterviewPass={handleDetailInterviewPass}
-          onOpenInterviewEvaluation={handleDetailOpenEvaluation}
+          onSaveInterviewEvaluation={handleDetailSaveInterviewEvaluation}
         />
         {interview2ConfirmModal}
         {withdrawConfirmModal}
         {bulkPassModal}
-        {evaluationModal}
       </>
     )
   }
@@ -236,7 +228,6 @@ export function Interview2Section({
       {interview2ConfirmModal}
       {withdrawConfirmModal}
       {bulkPassModal}
-      {evaluationModal}
       <FilterTableLayout
         bordered={false}
         className="ujat-volunteer-interview2__filter-layout"
@@ -254,8 +245,8 @@ export function Interview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              className="cms-button--application-list-bulk"
+              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
               onClick={handleBulkFail}
             >
               선택 불합격
@@ -263,8 +254,8 @@ export function Interview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              className="cms-button--application-list-bulk"
+              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
               onClick={handleBulkPass}
             >
               선택 합격

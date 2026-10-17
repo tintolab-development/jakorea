@@ -507,8 +507,14 @@ export async function getDashboardShortcuts(): Promise<DashboardShortcutItem[]> 
     const dto = await fetchDashboardShortcutsRemote()
     const items = dto.items ?? []
     return items
-      .filter(item => item.shortcutKey)
-      .map(item => ({
+      .filter((item: { shortcutKey?: string }) => item.shortcutKey)
+      .map((item: {
+        shortcutKey?: string
+        shortcutName?: string
+        targetUrl?: string
+        iconKey?: string
+        useYn?: boolean
+      }) => ({
         id: item.shortcutKey!,
         label: item.shortcutName ?? item.shortcutKey!,
         path: item.targetUrl ?? DASHBOARD_HOME_PATH,

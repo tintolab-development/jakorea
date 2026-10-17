@@ -54,3 +54,12 @@ export function getSchoolTeacherEmploymentStatusLabel(
     value,
   )
 }
+
+/** CMS `EditableStatusBadge` 톤 — ACTIVE만 blue, 그 외 gray */
+export type SchoolTeacherEmploymentBadgeTone = 'blue' | 'gray'
+
+export function getSchoolTeacherEmploymentBadgeTone(
+  status: SchoolTeacherEmploymentStatus,
+): SchoolTeacherEmploymentBadgeTone {
+  return status === SCHOOL_TEACHER_EMPLOYMENT_STATUS.active ? 'blue' : 'gray'
+}

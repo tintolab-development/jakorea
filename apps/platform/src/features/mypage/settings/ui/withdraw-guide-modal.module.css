@@ -1,0 +1,58 @@
+.content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-28);
+  margin-top: var(--spacing-28);
+}
+
+.description {
+  width: 100%;
+  margin: 0;
+  white-space: pre-line;
+  word-break: keep-all;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+}
+
+.actions .dangerButton {
+  border: 1px solid var(--color-status-error-default);
+  background:
+    linear-gradient(0deg, var(--color-status-error-bg) 0%, var(--color-status-error-bg) 100%),
+    var(--color-neutral-white);
+  color: var(--color-status-error-default);
+}
+
+.actions .dangerButton:hover:not(:disabled) {
+  border-color: var(--color-status-error-strong);
+  background:
+    linear-gradient(0deg, var(--color-status-error-soft) 0%, var(--color-status-error-soft) 100%),
+    var(--color-neutral-white);
+  color: var(--color-status-error-strong);
+}
+
+@media (--bp-below-pc) {
+  .actions {
+    flex-direction: column-reverse;
+    flex-wrap: nowrap;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+}

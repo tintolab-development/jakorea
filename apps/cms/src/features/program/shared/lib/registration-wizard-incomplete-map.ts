@@ -7,6 +7,8 @@ import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/para
 import { UJAT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-recruit-form-institution-draft'
 import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-recruit-form-volunteer-draft'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
+import { DEFAULT_SURVEY_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
+import { SURVEY_WRITING_INCOMPLETE_KEYS } from '@/features/program/shared/lib/survey-management/survey-writing-draft-validation'
 
 const GENERAL_PROGRAM_SECTION_PARAGRAPH: Record<string, string> = {
   basicInfo: PROGRAM_REGISTRATION_IDS.basicInfo,
@@ -89,6 +91,7 @@ export type RegistrationWizardIncompleteMapVariant =
   | 'economy'
   | 'trainedTeachers'
   | 'ujat'
+  | 'survey'
 
 /** 진단 키 → 단락 id (카드 테두리·제목 강조) */
 export function resolveRegistrationWizardIncompleteParagraphIds(
@@ -96,6 +99,20 @@ export function resolveRegistrationWizardIncompleteParagraphIds(
   variant: RegistrationWizardIncompleteMapVariant
 ): Set<string> {
   const ids = new Set<string>()
+  if (variant === 'survey') {
+    for (const key of keys) {
+      if (key === SURVEY_WRITING_INCOMPLETE_KEYS.title) {
+        ids.add(DEFAULT_SURVEY_PARAGRAPH_IDS.title)
+        continue
+      }
+      const middlePrefix = `${SURVEY_WRITING_INCOMPLETE_KEYS.middleParagraphs}:`
+      if (key.startsWith(middlePrefix)) {
+        const paragraphId = key.slice(middlePrefix.length)
+        if (paragraphId) ids.add(paragraphId)
+      }
+    }
+    return ids
+  }
   for (const key of keys) {
     if (key.startsWith('application.thirdParty.')) {
       const parts = key.split('.')

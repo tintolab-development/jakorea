@@ -78,7 +78,12 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
       )
     }
   }
-  push(keys, blankText(values.startDate) || blankText(values.endDate), `${prefix}.programRangeSeal`)
+  push(
+    keys,
+    blankText(values.participantProgramOperationStartDate) ||
+      blankText(values.participantProgramOperationEndDate),
+    `${prefix}.programRangeSeal`
+  )
   push(keys, blankList(values.targetLevels), `${prefix}.targetLevels`)
   push(keys, blankText(values.educationTargetDetail), `${prefix}.targetLevelDetail`)
   push(
@@ -101,7 +106,12 @@ function listInstructor(values: ProgramDetailEditFormValues): string[] {
   const keys: string[] = []
   const prefix = 'recruit.instructor'
   push(keys, blankText(values.instructorRecruitmentAnnouncementPublished), `${prefix}.announcementPublished`)
-  push(keys, blankText(values.startDate) || blankText(values.endDate), `${prefix}.programRangeSeal`)
+  push(
+    keys,
+    blankText(values.instructorProgramOperationStartDate) ||
+      blankText(values.instructorProgramOperationEndDate),
+    `${prefix}.programRangeSeal`
+  )
   push(keys, blankList(values.instructorTargets), `${prefix}.recruitTargets`)
   push(keys, blankText(values.instructorTargetDetail), `${prefix}.recruitTargetDetail`)
   push(
@@ -127,7 +137,12 @@ function listVolunteer(program: Program, values: ProgramDetailEditFormValues): s
   )
   push(keys, blankText(values.volunteerRecruitmentAnnouncementPublished), `${prefix}.announcementPublished`)
   push(keys, blankText(values.volunteerRecruitmentInterviewEnabled), `${prefix}.interviewRequired`)
-  push(keys, blankText(values.startDate) || blankText(values.endDate), `${prefix}.programRangeSeal`)
+  push(
+    keys,
+    blankText(values.volunteerProgramOperationStartDate) ||
+      blankText(values.volunteerProgramOperationEndDate),
+    `${prefix}.programRangeSeal`
+  )
   push(keys, blankList(values.volunteerTargets), `${prefix}.volunteerTargets`)
   push(keys, blankText(values.volunteerTargetDetail), `${prefix}.volunteerTargetDetail`)
   push(

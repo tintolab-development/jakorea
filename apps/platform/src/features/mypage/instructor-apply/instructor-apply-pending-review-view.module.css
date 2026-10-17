@@ -1,0 +1,35 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  width: 100%;
+  min-width: 0;
+}
+
+.loadingState {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+}
+
+.reviewBanner {
+  display: flex;
+  padding: var(--spacing-24);
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--spacing-6);
+  align-self: stretch;
+  border-radius: var(--radius-16);
+  background: var(--color-element-hover);
+}
+
+.reviewMessage {
+  margin: 0;
+}
+
+.requestedAt {
+  margin: 0;
+  color: var(--color-neutral-cool-550);
+}

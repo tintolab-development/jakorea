@@ -18,6 +18,8 @@ const ROW_COPY_KEYS = [
   'contactEmail',
   'startAt',
   'endAt',
+  'operationStartDate',
+  'operationEndDate',
 ] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
 
 /** 생성된 요청 타입에 아직 없는 행 필드. 면접 여부는 넣지 않는다. */

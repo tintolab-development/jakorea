@@ -8,8 +8,76 @@ import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/gener
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
+
+export const GENERAL_REGISTRATION_WAGE_OVERLAY_PREFIX = 'generalRegistration.wageInfo.' as const
+
+function wageGradeRowsSignature(
+  rows: NonNullable<Program['generalCommonInfo']>['wageGradeRows'] | undefined
+): string {
+  if (!rows?.length) return ''
+  return JSON.stringify(
+    rows.map(row => ({
+      grade: row.grade ?? '',
+      pricing: row.pricing ?? '',
+    }))
+  )
+}
+
+export function wageCommonInfoFieldsUnchanged(
+  next: Program['generalCommonInfo'] | undefined,
+  existing: Program['generalCommonInfo'] | undefined
+): boolean {
+  const nextPayment = coerceProgramPaymentItemsText(next?.paymentItems).trim()
+  const existingPayment = coerceProgramPaymentItemsText(existing?.paymentItems).trim()
+  const nextDeduction = (next?.deductionItems ?? '').trim()
+  const existingDeduction = (existing?.deductionItems ?? '').trim()
+  return (
+    nextPayment === existingPayment &&
+    nextDeduction === existingDeduction &&
+    wageGradeRowsSignature(next?.wageGradeRows) ===
+      wageGradeRowsSignature(existing?.wageGradeRows)
+  )
+}
+
+export function stripWageKeysFromRegistrationOverlay(
+  overlay: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!overlay) return undefined
+  const entries = Object.entries(overlay).filter(
+    ([key]) => !key.startsWith(GENERAL_REGISTRATION_WAGE_OVERLAY_PREFIX)
+  )
+  if (entries.length === 0) return undefined
+  return Object.fromEntries(entries)
+}
+
+/**
+ * 모집·학생 명단 등 임금을 건드리지 않은 PATCH에서 legacy `paymentItems`(예: 숙박비)가
+ * serviceDetailJson에 재전송되며 BE 검증(400)이 나는 것을 막는다.
+ */
+export function omitUnchangedWageFieldsFromProgramForServiceDetail(
+  program: Program,
+  baseline: Program
+): Program {
+  const common = program.generalCommonInfo
+  if (!common || !wageCommonInfoFieldsUnchanged(common, baseline.generalCommonInfo)) {
+    return program
+  }
+  const { paymentItems: _paymentItems, deductionItems: _deductionItems, wageGradeRows: _wageGradeRows, ...rest } =
+    common
+  void _paymentItems
+  void _deductionItems
+  void _wageGradeRows
+  return {
+    ...program,
+    generalCommonInfo: rest,
+    registrationOverlay: stripWageKeysFromRegistrationOverlay(program.registrationOverlay),
+  }
+}
 
 export interface GeneralProgramServiceDetailJsonV1 {
   schemaVersion?: typeof GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION | number
@@ -325,16 +393,21 @@ export function withVolunteerInterviewSchedulePeriod(
 
 export function serializeGeneralProgramServiceDetailJson(
   program: Program,
-  options?: { omitRecruitmentWindow?: boolean }
+  options?: { omitRecruitmentWindow?: boolean; omitUnchangedWageOverlay?: boolean }
 ): string | undefined {
   const isIndividual = isGeneralIndividualProgram(program)
   const withAudienceRule = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
+  const commonAfterScheduleMasterStrip =
+    program.generalProgramEducationStructure === 'schedule' &&
+    !isTrainedTeachersDetailProgram(program)
+      ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
+      : withAudienceRule
   const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
     options?.omitRecruitmentWindow
-      ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
-      : withVolunteerInterviewSchedulePeriod(program, withAudienceRule)
+      ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
+      : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
   )
   const nestedProgram: Program = {
     ...program,
@@ -360,13 +433,16 @@ export function serializeGeneralProgramServiceDetailJson(
   const scheduleLines = generalCommonInfo?.educationScheduleLines
     ?.map(line => line.trim())
     .filter(Boolean)
-  const registrationOverlay =
+  let registrationOverlay =
     scheduleLines && scheduleLines.length > 0
       ? {
           ...(persistedOverlay ?? {}),
           [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: scheduleLines,
         }
       : persistedOverlay
+  if (options?.omitUnchangedWageOverlay) {
+    registrationOverlay = stripWageKeysFromRegistrationOverlay(registrationOverlay)
+  }
   const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,

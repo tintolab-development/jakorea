@@ -15,6 +15,8 @@ import type { OrganizationApplicationDetailResponse } from '@/shared/api/generat
 import type { OrganizationApplicationNotificationResendRequest as OrganizationApplicationNotificationResendRequestDto } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequest'
 import type { OrganizationApplicationNotificationResendRequestTiming } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequestTiming'
 import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
+import type { OrganizationApplicationApproveRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationApproveRequest'
+import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
@@ -41,8 +43,12 @@ export type ApplicationsListQuery = {
   keyword?: string
   /** 서류 상태. PASS/FAIL 별칭 허용 */
   documentStatus?: string
-  /** 면접 상태 */
+  /** 면접 상태 (`interviewStage`와 동시 전송 불가) */
   interviewStatus?: string
+  /** 2차 면접 stage 프리셋 (예: SECOND_ROUND). `interviewStatus`와 동시 전송 불가 */
+  interviewStage?: string
+  /** 2차 면접 유효 심사 현황(자동) — WAITING | COMPLETED */
+  effectiveSecondInterviewStatus?: string
   /** 최종 결과 상태. APPROVED/REJECTED 별칭 허용 */
   finalResultStatus?: string
   /** JA 봉사 재참여 여부 */
@@ -55,6 +61,14 @@ export type ApplicationsListQuery = {
   recruitHalf?: string
   /** 모집 ID 직접 지정 (선택) */
   recruitmentId?: number | string
+  /** 배정 면접일 YYYY-MM-DD (KST) */
+  assignedInterviewDate?: string
+  /** 활성 면접 슬롯 start_at 시각 (ISO LocalTime, 예: 10:00:00, KST) */
+  assignedInterviewTime?: string
+  /** 현재 면접 배정 score 합 정확 일치 (`totalScoreUnevaluated`와 동시 전송 불가) */
+  totalScore?: number
+  /** 총점 미평가 — 유효 score_total 제출 평가자 2명 미만 (`totalScore`와 동시 전송 불가) */
+  totalScoreUnevaluated?: boolean
 }
 
 const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
@@ -127,6 +141,12 @@ export type OrganizationDecisionNotifyRequest = {
   scheduledAt?: string
 }
 
+/** OpenAPI `SlotRequest` — 레거시 slots 호환 입력 */
+export type OrganizationApplicationApproveSlotRequest = SlotRequest
+
+/** OpenAPI `OrganizationApplicationApproveRequest`와 동일한 승인 payload */
+export type OrganizationApplicationApprovePayload = OrganizationApplicationApproveRequest
+
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
 export type ApplicationDecisionCancelRequestWithNotification = Omit<
   ApplicationDecisionCancelRequest,
@@ -138,6 +158,24 @@ export type ApplicationDecisionCancelRequestWithNotification = Omit<
 export type ScreeningResultNotifyFields = {
   notifyTiming?: string
   scheduledAt?: string
+}
+
+function sanitizeScreeningResultPayload<T extends ScreeningResultNotifyFields>(payload: T): T {
+  const { scheduledAt, ...rest } = payload
+  return {
+    ...rest,
+    ...(payload.notifyTiming === 'MANUAL' && scheduledAt ? { scheduledAt } : {}),
+  } as T
+}
+
+function sanitizeInterviewAssignmentPayload<
+  T extends { notifyTiming?: string | null; scheduledAt?: string | null },
+>(payload: T): T {
+  const { scheduledAt, ...rest } = payload
+  return {
+    ...rest,
+    ...(payload.notifyTiming === 'MANUAL' && scheduledAt ? { scheduledAt } : {}),
+  } as T
 }
 
 export type IndividualApplicationUpdatePayload = Omit<
@@ -416,7 +454,7 @@ export async function cancelVolunteerApplicationRejectionRemote(
 
 export async function approveOrganizationApplicationRemote(
   applicationId: string,
-  payload?: OrganizationDecisionNotifyRequest
+  payload?: OrganizationApplicationApprovePayload
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -666,7 +704,7 @@ export async function rejectIndividualApplicationRemote(
 
 export async function cancelIndividualApplicationRejectionRemote(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -802,7 +840,7 @@ export async function submitIndividualDocumentResultRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -815,7 +853,7 @@ export async function submitIndividualFinalResultRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -828,7 +866,7 @@ export async function submitVolunteerDocumentResultRemote(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/document-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -841,7 +879,7 @@ export async function bulkVolunteerDocumentResultsRemote(
     await customInstance({
       url: '/api/admin/volunteer-applications/document-results/bulk',
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -853,7 +891,7 @@ export async function bulkIndividualDocumentResultsRemote(
     await customInstance({
       url: '/api/admin/individual-applications/document-results/bulk',
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -866,7 +904,7 @@ export async function submitVolunteerFinalResultRemote(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -879,7 +917,7 @@ export async function bulkVolunteerFinalResultsRemote(
     await customInstance({
       url: '/api/admin/volunteer-applications/final-results/bulk',
       method: 'POST',
-      data: payload,
+      data: sanitizeScreeningResultPayload(payload),
     })
   )
 }
@@ -956,7 +994,7 @@ export async function createInterviewAssignmentRemote(
     await customInstance({
       url: '/api/admin/interview-assignments',
       method: 'POST',
-      data: payload,
+      data: sanitizeInterviewAssignmentPayload(payload),
     })
   )
 }

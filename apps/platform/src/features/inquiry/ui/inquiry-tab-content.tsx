@@ -4,7 +4,6 @@ import {
   useCreateMyInquiryMutation,
   useDeleteMyInquiryMutation,
   useInquiryWriteOptionsQuery,
-  useMockOneToOneInquiriesCatalog,
   useMyInquiriesQuery,
   useMyInquiryDetailQuery,
   type InquiryListParams,
@@ -46,8 +45,7 @@ function createInquiryItem(
 
 export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentProps) {
   const remoteInquiries = useMyInquiriesQuery()
-  const catalog = useMockOneToOneInquiriesCatalog()
-  const [localItems, setLocalItems] = useState<OneToOneInquiryItem[]>(() => [...catalog])
+  const [localItems, setLocalItems] = useState<OneToOneInquiryItem[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
   const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)
@@ -110,9 +108,8 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
         onDelete={handleDelete}
-        emptyMessage={
-          remoteInquiries.isLoading ? '문의내역을 불러오는 중입니다.' : '등록된 1:1 문의가 없습니다.'
-        }
+        loading={remoteInquiries.isLoading}
+        emptyMessage="등록된 1:1 문의가 없습니다."
       />
 
       {sortedItems.length > 0 ? (

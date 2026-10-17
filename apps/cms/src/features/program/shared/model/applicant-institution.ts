@@ -46,6 +46,8 @@ export interface ApplicantInstitutionDetailExtend {
   /** 담당 교사 정보 (교사명 | Tel | M | E-mail) — 레거시 조합 문자열 */
   teacherInfo?: string
   /** 담당 교사 Tel (구조화 — teacherInfo보다 우선) */
+  teacherTel?: string
+  /** 담당 교사 휴대폰 (상세 API teacherPhone) */
   teacherPhone?: string
   /** 담당 교사 휴대폰 */
   teacherMobile?: string
@@ -98,6 +100,8 @@ export interface ApplicantSchoolRow {
   programId?: string
   /** 강의 회차 별 희망 교육 날짜 및 시간 (참여 기관과 동일 형식) */
   sessions?: ParticipatingSchoolSession[]
+  /** 목록 API `sessions[]` — 배정 확정(CONFIRMED/TEMP_ASSIGNED)만. 강사 신청 캘린더 SSOT */
+  confirmedListAssignmentSessions?: ParticipatingSchoolSession[]
   /** 기관 신청 희망 교육 일정 B (배정 후보 SSOT) */
   preferredEducationSchedules?: PreferredEducationSchedule[]
   /**

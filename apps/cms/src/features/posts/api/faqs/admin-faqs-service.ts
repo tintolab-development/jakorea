@@ -24,6 +24,7 @@ import {
   updateFaqCategoryRemote,
   updateFaqRemote,
 } from '@/features/posts/api/faqs/faqs-api-client'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -133,8 +134,10 @@ export async function deleteFaqs(ids: string[]): Promise<void> {
 
 export async function getFaqCategories(): Promise<CategoryRow[]> {
   assertFaqsRemoteReady()
-  const dto = await fetchFaqCategoriesRemote({ page: 0, size: 100 })
-  return mapCategoryItems(dto.items)
+  const items = await fetchAllApiPages((page, size) =>
+    fetchFaqCategoriesRemote({ page, size })
+  )
+  return mapCategoryItems(items)
 }
 
 export async function createFaqCategory(name: string): Promise<CategoryRow | null> {

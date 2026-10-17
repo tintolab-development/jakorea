@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import dayjs from 'dayjs'
+import { formatMmDdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 
 const { Text } = Typography
 
@@ -43,7 +44,7 @@ export function UpcomingSchedulesList({
         ? '오늘'
         : isTomorrow
           ? '내일'
-          : scheduleDate.format('MM/DD (ddd)'),
+          : formatMmDdWithKoreanWeekday(scheduleDate),
     }
   }
 

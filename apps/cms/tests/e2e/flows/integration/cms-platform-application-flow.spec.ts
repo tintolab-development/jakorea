@@ -1,0 +1,378 @@
+import { expect, type Browser, type Page } from '@playwright/test'
+import { test } from '../../fixtures/test'
+import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
+import {
+  GeneralProgramRegistrationPage,
+  type RegistrationCase,
+} from '../../pages/general-program-registration.page'
+import {
+  activateCmsProgramRecruitmentsForIntegration,
+  fetchCmsProgramSnapshot,
+  recruitmentForType,
+  runPlatformApplication,
+  type CmsProgramSnapshot,
+  type PlatformAccount,
+  type PortalApplicationType,
+} from '../../pages/platform-application-flow.page'
+
+test.describe.configure({ mode: 'serial' })
+
+const ORGANIZATION_ACCOUNT: PlatformAccount = {
+  // general2@test.com은 학교 FK만 있고 활성 기관 멤버십이 없어
+  // 백엔드 application-options에서 ORGANIZATION_MEMBERSHIP_REQUIRED가 된다.
+  // 실제 기관 신청이 가능한 테스트 계정은 활성 재직 기관이 연결된 teacher@test.com이다.
+  email: 'teacher@test.com',
+  applicationType: 'ORGANIZATION',
+  mypagePath: '/mypage/education',
+}
+
+const INSTRUCTOR_ACCOUNT: PlatformAccount = {
+  email: 'general.instructor@test.com',
+  applicationType: 'INSTRUCTOR',
+  mypagePath: '/mypage/lectures',
+}
+
+const VOLUNTEER_ACCOUNT: PlatformAccount = {
+  email: 'volunteer@test.com',
+  applicationType: 'VOLUNTEER',
+  mypagePath: '/mypage/volunteer',
+}
+
+function uniqueIntegrationTitle(session: 'SINGLE' | 'MULTI') {
+  const now = new Date()
+  const timestamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0'),
+    String(now.getSeconds()).padStart(2, '0'),
+  ].join('')
+  const random = Math.random().toString(36).slice(2, 8)
+  return `E2E-기관강사봉사자-신청검증-${session}-${timestamp}-${random}`
+}
+
+type ProgramSchedule = {
+  allDay?: boolean
+  startAt?: string
+}
+
+function unwrap(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+  const row = value as Record<string, unknown>
+  if (row.success === true && 'data' in row) return unwrap(row.data)
+  return value
+}
+
+async function adminSchedules(page: Page, programId: number): Promise<ProgramSchedule[]> {
+  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
+  if (!token) throw new Error('CMS 일정 조회에 필요한 auth_token이 없습니다.')
+  const response = await page.request.get(`/api/admin/programs/${programId}/schedules`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const payload = JSON.parse(await response.text()) as unknown
+  if (!response.ok()) throw new Error(`프로그램 일정 조회 실패: HTTP ${response.status()}`)
+  const body = unwrap(payload)
+  if (!Array.isArray(body)) throw new Error(`프로그램 일정 응답이 배열이 아닙니다: ${programId}`)
+  return body as ProgramSchedule[]
+}
+
+function educationScheduleDateKeys(program: CmsProgramSnapshot): string[] {
+  let detail: unknown
+  try {
+    detail = JSON.parse(program.serviceDetailJson)
+  } catch {
+    throw new Error(`프로그램 교육 일정 원본 JSON을 해석할 수 없습니다: ${program.programId}`)
+  }
+
+  const root = detail && typeof detail === 'object' ? (detail as Record<string, unknown>) : {}
+  const common =
+    root.generalCommonInfo && typeof root.generalCommonInfo === 'object'
+      ? (root.generalCommonInfo as Record<string, unknown>)
+      : root
+  const lines = Array.isArray(common.educationScheduleLines)
+    ? common.educationScheduleLines.filter((line): line is string => typeof line === 'string')
+    : []
+  const dateKeys = lines.flatMap(line => {
+    const match = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(line)
+    if (!match) return []
+    const year = Number(match[1]) < 100 ? 2000 + Number(match[1]) : Number(match[1])
+    return [`${year}-${String(Number(match[2])).padStart(2, '0')}-${String(Number(match[3])).padStart(2, '0')}`]
+  })
+  const unique = [...new Set(dateKeys)]
+  if (unique.length === 0) {
+    throw new Error(`프로그램 교육 일정 날짜가 없습니다: ${program.programId}`)
+  }
+  return unique
+}
+
+function isoAtSeoulDate(dateKey: string, hour: number) {
+  return new Date(`${dateKey}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString()
+}
+
+function seoulDateKey(value: string | undefined): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .formatToParts(date)
+      .map(part => [part.type, part.value])
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+async function ensureMultiProgramSchedules(page: Page, program: CmsProgramSnapshot) {
+  const current = await adminSchedules(page, program.programId)
+  const dateKeys = educationScheduleDateKeys(program)
+  // Dynamic instructor/volunteer options are built from the canonical education
+  // schedule lines and live program_schedule rows. Keep both test rows on the
+  // last canonical line so the backend can expose two distinct schedule IDs.
+  // Previously these rows were created on unrelated arbitrary dates (45+ days
+  // ahead), which correctly produced an empty form-binding option list.
+  const runtimeDateKey = dateKeys.at(-1)!
+  const alignedScheduleCount = current.filter(
+    schedule => schedule.allDay === false && seoulDateKey(schedule.startAt) === runtimeDateKey
+  ).length
+  if (alignedScheduleCount >= 2) return
+
+  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
+  if (!token) throw new Error('CMS 일정 보정에 필요한 auth_token이 없습니다.')
+  const response = await page.request.patch(`/api/admin/programs/${program.programId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      schedules: [
+        {
+          sessionNo: 1,
+          scheduleName: `${program.title} 교육 1회차`,
+          startAt: isoAtSeoulDate(runtimeDateKey, 10),
+          endAt: isoAtSeoulDate(runtimeDateKey, 12),
+          allDay: false,
+          locationName: null,
+          address: null,
+          addressDetail: null,
+          maxParticipantCount: 30,
+          completionRequired: true,
+        },
+        {
+          sessionNo: 2,
+          scheduleName: `${program.title} 교육 2회차`,
+          startAt: isoAtSeoulDate(runtimeDateKey, 13),
+          endAt: isoAtSeoulDate(runtimeDateKey, 15),
+          allDay: false,
+          locationName: null,
+          address: null,
+          addressDetail: null,
+          maxParticipantCount: 30,
+          completionRequired: true,
+        },
+      ],
+    },
+  })
+  if (!response.ok()) throw new Error(`복수 회차 일정 보정 실패: HTTP ${response.status()}`)
+
+  const refreshed = await adminSchedules(page, program.programId)
+  expect(
+    refreshed.filter(schedule => schedule.allDay === false).length,
+    `복수 회차 프로그램의 실제 교육 일정이 2건 미만입니다: ${program.programId}`
+  ).toBeGreaterThanOrEqual(2)
+}
+
+async function createProgram(
+  page: Page,
+  regCase: RegistrationCase,
+  session: 'SINGLE' | 'MULTI'
+): Promise<CmsProgramSnapshot> {
+  await page.goto('/programs/general')
+  await expectAuthenticatedShell(page)
+
+  const registration = new GeneralProgramRegistrationPage(page, regCase, {
+    openRecruitment: true,
+    devAutofillCaseId: session === 'SINGLE' ? 4 : 5,
+    safeWagePaymentItems: true,
+    skipOptionalUploads: true,
+    skipApplicationFormEdits: true,
+    ensureFutureDates: true,
+    programTitle: uniqueIntegrationTitle(session),
+  })
+  await registration.openNewRegistration()
+  await registration.fillCommonInfo()
+  await registration.goToRecruitment()
+  await registration.fillRecruitmentInfo()
+  await registration.goToApplication()
+  await registration.fillApplicationInfo()
+
+  const created = await registration.completeRegistration()
+  expect(created.programId).toMatch(/^\d+$/)
+  expect(created.programTitle).toContain(`E2E-기관강사봉사자-신청검증-${session}-`)
+
+  const snapshot = await fetchCmsProgramSnapshot(page, created.programId)
+  expect(snapshot.programId).toBe(Number(created.programId))
+  expect(snapshot.programType).toBe('GENERAL_ORGANIZATION')
+  expect(snapshot.title).toBe(created.programTitle)
+  expect(snapshot.recruitments).toHaveLength(3)
+
+  const expectedTypes: readonly [PortalApplicationType, string][] = [
+    ['ORGANIZATION', 'PARTICIPANT'],
+    ['INSTRUCTOR', 'INSTRUCTOR'],
+    ['VOLUNTEER', 'VOLUNTEER'],
+  ]
+  for (const [applicationType, recruitmentType] of expectedTypes) {
+    const recruitment = recruitmentForType(snapshot, applicationType)
+    expect(recruitment.recruitmentType).toBe(recruitmentType)
+    expect(recruitment.applicationType).toBe(applicationType)
+    expect(recruitment.formBindingId).toBeGreaterThan(0)
+  }
+
+  await activateCmsProgramRecruitmentsForIntegration(page, snapshot)
+
+  return snapshot
+}
+
+async function submitAsRole(
+  browser: Browser,
+  platformBaseUrl: string,
+  password: string,
+  program: CmsProgramSnapshot,
+  account: PlatformAccount,
+  scheduleIndex = 0
+) {
+  const context = await browser.newContext({ baseURL: platformBaseUrl })
+  try {
+    return await runPlatformApplication(
+      context,
+      platformBaseUrl,
+      password,
+      program,
+      account,
+      recruitmentForType(program, account.applicationType),
+      scheduleIndex
+    )
+  } finally {
+    await context.close()
+  }
+}
+
+async function assertPlatformAvailable(browser: Browser, platformBaseUrl: string) {
+  const context = await browser.newContext({ baseURL: platformBaseUrl })
+  try {
+    const response = await context.request.get('/')
+    if (!response.ok()) {
+      throw new Error(
+        `PLATFORM_BASE_URL에 연결할 수 없습니다: HTTP ${response.status()} (${platformBaseUrl})`
+      )
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('PLATFORM_BASE_URL')) throw error
+    throw new Error(`PLATFORM_BASE_URL에 연결할 수 없습니다: ${platformBaseUrl}`, { cause: error })
+  } finally {
+    await context.close()
+  }
+}
+
+test('CMS 생성 프로그램을 Platform 역할별로 신청하고 모집 매핑을 검증한다', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(1_200_000)
+
+  const platformBaseUrl = process.env.PLATFORM_BASE_URL?.trim()
+  const password = process.env.E2E_PLATFORM_PASSWORD?.trim()
+  if (!platformBaseUrl) throw new Error('PLATFORM_BASE_URL 환경변수가 필요합니다.')
+  if (!password) throw new Error('E2E_PLATFORM_PASSWORD 환경변수가 필요합니다.')
+  await assertPlatformAvailable(browser, platformBaseUrl)
+
+  const single = await createProgram(
+    page,
+    {
+      audience: 'organization',
+      structure: 'schedule',
+      session: 'single',
+      label: '통합_일정형_단일',
+    },
+    'SINGLE'
+  )
+
+  // 단일 회차: 기관 신청 없이 강사·봉사자 신청 → 기관 신청.
+  const singleInstructor = await submitAsRole(
+    browser,
+    platformBaseUrl,
+    password,
+    single,
+    INSTRUCTOR_ACCOUNT
+  )
+  const singleVolunteer = await submitAsRole(
+    browser,
+    platformBaseUrl,
+    password,
+    single,
+    VOLUNTEER_ACCOUNT
+  )
+  const singleOrganization = await submitAsRole(
+    browser,
+    platformBaseUrl,
+    password,
+    single,
+    ORGANIZATION_ACCOUNT
+  )
+  expect(singleInstructor.applicationType).toBe('INSTRUCTOR')
+  expect(singleVolunteer.applicationType).toBe('VOLUNTEER')
+  expect(singleOrganization.applicationType).toBe('ORGANIZATION')
+
+  const multi = await createProgram(
+    page,
+    {
+      audience: 'organization',
+      structure: 'schedule',
+      session: 'multi',
+      label: '통합_일정형_복수',
+    },
+    'MULTI'
+  )
+  await ensureMultiProgramSchedules(page, multi)
+
+  // 복수 회차: 기관 신청(일정 배정 없음) → 강사·봉사자 신청.
+  const multiOrganization = await submitAsRole(
+    browser,
+    platformBaseUrl,
+    password,
+    multi,
+    ORGANIZATION_ACCOUNT
+  )
+  const multiInstructor = await submitAsRole(
+    browser,
+    platformBaseUrl,
+    password,
+    multi,
+    INSTRUCTOR_ACCOUNT,
+    0
+  )
+  const multiVolunteer = await submitAsRole(
+    browser,
+    platformBaseUrl,
+    password,
+    multi,
+    VOLUNTEER_ACCOUNT,
+    1
+  )
+
+  expect(multiOrganization.applicationType).toBe('ORGANIZATION')
+  expect(multiInstructor.applicationType).toBe('INSTRUCTOR')
+  expect(multiVolunteer.applicationType).toBe('VOLUNTEER')
+  expect(multiInstructor.scheduleTokens.length).toBeGreaterThan(0)
+  expect(multiVolunteer.scheduleTokens.length).toBeGreaterThan(0)
+  expect(multiVolunteer.activityScheduleTokens.length).toBeGreaterThan(0)
+  expect(
+    multiInstructor.scheduleTokens[0],
+    `복수 회차 일정 매핑이 분리되지 않았습니다. programId=${multi.programId} ` +
+      `instructor=${JSON.stringify(multiInstructor.scheduleTokens)} ` +
+      `volunteerActivity=${JSON.stringify(multiVolunteer.activityScheduleTokens)}`
+  ).not.toBe(multiVolunteer.activityScheduleTokens[0])
+  expect(multiInstructor.requestBody.recruitmentId).not.toBe(multiOrganization.recruitmentId)
+  expect(multiVolunteer.requestBody.recruitmentId).not.toBe(multiOrganization.recruitmentId)
+})

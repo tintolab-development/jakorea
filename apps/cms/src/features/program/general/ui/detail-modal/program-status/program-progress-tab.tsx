@@ -5,7 +5,11 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Row, Col, Select } from 'antd'
-import { CmsButton } from '@/shared/ui'
+import {
+  CmsButton,
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -203,142 +207,98 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
     []
   )
 
-  const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
-    () => {
-      const base: ColumnsType<ParticipatingSchoolRow> = [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-        {
-          title: '참여 학교명',
-          dataIndex: 'schoolName',
-          key: 'schoolName',
-          width: 180,
-          align: 'center',
-          ellipsis: true,
-        },
-        {
-          title: '지역',
-          dataIndex: 'region',
-          key: 'region',
-          width: 140,
-          align: 'center',
-          ellipsis: true,
-        },
-        {
-          title: '교육 학년',
-          dataIndex: 'educationGrade',
-          key: 'educationGrade',
-          width: 90,
-          align: 'center',
-        },
-        {
-          title: '교육 학급 수',
-          dataIndex: 'classCount',
-          key: 'classCount',
-          width: 90,
-          align: 'center',
-          render: (v: number) => (v != null ? `${v}개` : '-'),
-        },
-        {
-          title: '총 학생 수',
-          dataIndex: 'studentCount',
-          key: 'studentCount',
-          width: 100,
-          align: 'center',
-          render: (v: number) => (v != null ? `${v}명` : '-'),
-        },
-      ]
+  const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(() => {
+    const base: ColumnsType<ParticipatingSchoolRow> = [
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
+      {
+        title: '참여 학교명',
+        dataIndex: 'schoolName',
+        key: 'schoolName',
+        width: 180,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '지역',
+        dataIndex: 'region',
+        key: 'region',
+        width: 140,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '교육 학년',
+        dataIndex: 'educationGrade',
+        key: 'educationGrade',
+        width: 90,
+        align: 'center',
+      },
+      {
+        title: '교육 학급 수',
+        dataIndex: 'classCount',
+        key: 'classCount',
+        width: 90,
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}개` : '-'),
+      },
+      {
+        title: '총 학생 수',
+        dataIndex: 'studentCount',
+        key: 'studentCount',
+        width: 100,
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}명` : '-'),
+      },
+    ]
 
-      if (isTrainedTeachersSurface) {
-        return [
-          ...base,
-          {
-            title: '진행 상태',
-            dataIndex: 'progressLabel',
-            key: 'progressLabel',
-            width: 110,
-            align: 'center',
-            render: (label: string | undefined, record: ParticipatingSchoolRow) =>
-              label?.trim() || record.lectureRound || '-',
-          },
-          {
-            title: '강의 진행 회차',
-            key: 'educationRoundProgress',
-            width: 120,
-            align: 'center',
-            render: (_: unknown, record: ParticipatingSchoolRow) => {
-              const completed = record.completedEducationRoundCount
-              const total = record.totalEducationRoundCount
-              if (completed != null && total != null) return `${completed}/${total}`
-              return record.lectureRound?.trim() || '0/0'
-            },
-          },
-          {
-            title: '교재',
-            dataIndex: 'textbookName',
-            key: 'textbookName',
-            width: 140,
-            align: 'center',
-            ellipsis: true,
-            render: (name: string | undefined) => name?.trim() || '-',
-          },
-          {
-            title: '교육일지',
-            dataIndex: 'educationJournalCount',
-            key: 'educationJournalCount',
-            width: 90,
-            align: 'center',
-            render: (count: number | undefined) => (count != null ? String(count) : '0'),
-          },
-          {
-            title: '교육 완료',
-            dataIndex: 'educationCompletionCount',
-            key: 'educationCompletionCount',
-            width: 90,
-            align: 'center',
-            render: (count: number | undefined) => (count != null ? String(count) : '0'),
-          },
-          {
-            title: '담당 교사',
-            dataIndex: 'teacherName',
-            key: 'teacherName',
-            width: 110,
-            align: 'center',
-          },
-        ]
-      }
-
+    if (isTrainedTeachersSurface) {
       return [
         ...base,
         {
-          title: '강의 진행 회차',
-          dataIndex: 'lectureRound',
-          key: 'lectureRound',
-          width: 120,
+          title: '진행 상태',
+          dataIndex: 'progressLabel',
+          key: 'progressLabel',
+          width: 110,
           align: 'center',
+          render: (label: string | undefined, record: ParticipatingSchoolRow) =>
+            label?.trim() || record.lectureRound || '-',
         },
         {
-          title: '교재 현황',
-          dataIndex: 'textbookStatus',
-          key: 'textbookStatus',
-          width: 116,
+          title: '강의 진행 회차',
+          key: 'educationRoundProgress',
+          width: 120,
           align: 'center',
-          onCell: () => ({
-            className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-          }),
-          render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
-            <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-              <StatusDropdownCell<TextbookStatusKey>
-                status={status}
-                statusOptions={textbookStatusKeys}
-                renderBadge={s => <TextbookStatusBadge status={s} />}
-                isItemDisabled={(cur, opt) => cur === opt}
-                onChange={key => handleTextbookStatusChange(record.id, key)}
-                isOpen={openTextbookDropdownSchoolId === record.id}
-                onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
-                tagLayout="tag100"
-              />
-            </div>
-          ),
+          render: (_: unknown, record: ParticipatingSchoolRow) => {
+            const completed = record.completedEducationRoundCount
+            const total = record.totalEducationRoundCount
+            if (completed != null && total != null) return `${completed}/${total}`
+            return record.lectureRound?.trim() || '0/0'
+          },
+        },
+        {
+          title: '교재',
+          dataIndex: 'textbookName',
+          key: 'textbookName',
+          width: 140,
+          align: 'center',
+          ellipsis: true,
+          render: (name: string | undefined) => name?.trim() || '-',
+        },
+        {
+          title: '교육일지',
+          dataIndex: 'educationJournalCount',
+          key: 'educationJournalCount',
+          width: 90,
+          align: 'center',
+          render: (count: number | undefined) => (count != null ? String(count) : '0'),
+        },
+        {
+          title: '교육 완료',
+          dataIndex: 'educationCompletionCount',
+          key: 'educationCompletionCount',
+          width: 90,
+          align: 'center',
+          render: (count: number | undefined) => (count != null ? String(count) : '0'),
         },
         {
           title: '담당 교사',
@@ -347,25 +307,69 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
           width: 110,
           align: 'center',
         },
-        {
-          title: '담당 강사진',
-          key: 'instructors',
-          width: 160,
-          align: 'center',
-          ellipsis: true,
-          render: (_: unknown, record: ParticipatingSchoolRow) =>
-            getInstructorDisplayForSchool(record.id, record.schoolName),
-        },
       ]
-    },
-    [
-      handleTextbookStatusChange,
-      textbookStatusKeys,
-      getInstructorDisplayForSchool,
-      openTextbookDropdownSchoolId,
-      isTrainedTeachersSurface,
+    }
+
+    return [
+      ...base,
+      {
+        title: '강의 진행 회차',
+        dataIndex: 'lectureRound',
+        key: 'lectureRound',
+        width: 120,
+        align: 'center',
+      },
+      {
+        title: '교재 현황',
+        dataIndex: 'textbookStatus',
+        key: 'textbookStatus',
+        width: 116,
+        align: 'center',
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+        }),
+        render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) =>
+          record.textbookId || record.textbookName ? (
+            <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+              <StatusDropdownCell<TextbookStatusKey>
+                status={status}
+                statusOptions={textbookStatusKeys.filter(key => key !== 'not_applicable')}
+                renderBadge={s => <TextbookStatusBadge status={s} />}
+                isItemDisabled={(cur, opt) => cur === opt}
+                onChange={key => handleTextbookStatusChange(record.id, key)}
+                isOpen={openTextbookDropdownSchoolId === record.id}
+                onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
+                tagLayout="tag100"
+              />
+            </div>
+          ) : (
+            <TextbookStatusBadge status="not_applicable" />
+          ),
+      },
+      {
+        title: '담당 교사',
+        dataIndex: 'teacherName',
+        key: 'teacherName',
+        width: 110,
+        align: 'center',
+      },
+      {
+        title: '담당 강사진',
+        key: 'instructors',
+        width: 160,
+        align: 'center',
+        ellipsis: true,
+        render: (_: unknown, record: ParticipatingSchoolRow) =>
+          getInstructorDisplayForSchool(record.id, record.schoolName),
+      },
     ]
-  )
+  }, [
+    handleTextbookStatusChange,
+    textbookStatusKeys,
+    getInstructorDisplayForSchool,
+    openTextbookDropdownSchoolId,
+    isTrainedTeachersSurface,
+  ])
 
   const instructorColumns: ColumnsType<ParticipatingInstructorRow> = useMemo(
     () => [
@@ -592,14 +596,17 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     총 {filteredSchools.length}건
                   </span>
                 </div>
-                <CmsButton
-                  variant="delete"
-                  size="large"
-                  disabled={selectedSchoolRowKeys.length === 0}
-                  onClick={handleSchoolDeleteClick}
-                >
-                  학교 삭제
-                </CmsButton>
+                <div className="program-progress-tab__table-actions program-application-list-toolbar">
+                  <FilterTableToolbarButton
+                    variant="delete"
+                    className="cms-button--application-list-bulk"
+                    width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
+                    disabled={selectedSchoolRowKeys.length === 0}
+                    onClick={handleSchoolDeleteClick}
+                  >
+                    학교 삭제
+                  </FilterTableToolbarButton>
+                </div>
               </div>
               <CmsDataTable<ParticipatingSchoolRow>
                 className="program-progress-tab__table cms-data-table"
@@ -642,32 +649,31 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     총 {filteredInstructors.length}건
                   </span>
                 </div>
-                <div className="program-progress-tab__table-actions">
-                  <CmsButton
+                <div className="program-progress-tab__table-actions program-application-list-toolbar">
+                  <FilterTableToolbarButton
                     variant="secondary"
-                    size="large"
                     icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
                     }
                   >
                     활동확인서 발급
-                  </CmsButton>
-                  <CmsButton
+                  </FilterTableToolbarButton>
+                  <FilterTableToolbarButton
                     variant="delete"
-                    size="large"
+                    className="cms-button--application-list-bulk"
+                    width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                     disabled={selectedInstructorRowKeys.length === 0}
                     onClick={handleInstructorDeleteClick}
                   >
                     강사 삭제
-                  </CmsButton>
-                  <CmsButton
+                  </FilterTableToolbarButton>
+                  <FilterTableToolbarButton
                     variant="primary"
-                    size="large"
                     onClick={() => setAddInstructorModalOpen(true)}
                   >
                     강사 등록
-                  </CmsButton>
+                  </FilterTableToolbarButton>
                 </div>
               </div>
               <CmsDataTable<ParticipatingInstructorRow>

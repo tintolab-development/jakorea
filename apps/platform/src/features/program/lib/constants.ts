@@ -39,6 +39,7 @@ export const PROGRAM_SORT_OPTIONS: { key: ProgramSort; label: string }[] = [
 export const DEFAULT_PROGRAMS_LIST_PARAMS = {
   category: 'all',
   q: '',
+  programType: 'all',
   recruitmentTarget: 'all',
   recruitmentStatus: 'all',
   operatingPeriod: 'all',
@@ -56,6 +57,7 @@ export const OPERATING_PERIOD_FILTER_OPTIONS = [
 ] as const
 
 export const PROGRAM_FILTER_KEYS = [
+  'programType',
   'recruitmentTarget',
   'recruitmentStatus',
   'operatingPeriod',

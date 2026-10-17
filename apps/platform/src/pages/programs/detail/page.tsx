@@ -3,11 +3,15 @@ import {
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
+  ProgramApplyGateModals,
+  programApplyGateApplicationsPathForType,
+  programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
+  useProgramApplyGate,
   useProgramDetail,
 } from '@/features/program'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -17,9 +21,7 @@ function ProgramDetailLoading() {
   return (
     <section className={[shell.page, styles.page].join(' ')} aria-busy="true">
       <div className={shell.inner}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.loadingStatus}>
-          프로그램을 불러오는 중입니다.
-        </PFText>
+        <PFLoadingSpinner className={styles.loadingStatus} label="프로그램을 불러오는 중" />
         <div className={styles.back}>
           <span className={[styles.skeleton, styles.skeletonBack].join(' ')} />
         </div>
@@ -49,6 +51,18 @@ export function ProgramDetailPage() {
   const focus = readPortalRecruitmentFocus(search)
   const { program, isLoading } = useProgramDetail(programId, { focus })
   const fromPath = new URLSearchParams(search).get('from')
+  const applySelection =
+    program?.focusedRecruitmentIds?.length === 1
+      ? {
+          portalTab: focus?.portalTab,
+          applicationTypes: program.focusedApplicationTypes,
+          recruitmentIds: program.focusedRecruitmentIds,
+        }
+      : focus
+  const { gateModal, closeGateModal, isChecking, runApplyGate } = useProgramApplyGate(
+    programId,
+    applySelection,
+  )
 
   if (isLoading && !program) {
     return <ProgramDetailLoading />
@@ -77,24 +91,42 @@ export function ProgramDetailPage() {
     if (program.recruitmentSelectionAmbiguous) {
       return
     }
-    const nextFocus =
-      program.focusedRecruitmentIds?.length === 1
-        ? {
-            portalTab: focus?.portalTab,
-            applicationTypes: program.focusedApplicationTypes,
-            recruitmentIds: program.focusedRecruitmentIds,
-          }
-        : focus
+    const nextFocus = applySelection
     const applyPath = programApplyPath(program.id, nextFocus, fromPath ?? undefined)
     if (!getDevAuthLoggedIn()) {
       navigate(programApplyRequiredPath(program.id, nextFocus, fromPath ?? undefined))
       return
     }
 
-    navigate(applyPath)
+    void runApplyGate(() => {
+      navigate(applyPath)
+    })
   }
 
   return (
-    <ProgramDetailView program={program} onBackToList={handleBackToList} onApply={handleApply} />
+    <>
+      <ProgramDetailView
+        program={program}
+        onBackToList={handleBackToList}
+        onApply={handleApply}
+        applyChecking={isChecking}
+      />
+      <ProgramApplyGateModals
+        kind={gateModal}
+        onClose={closeGateModal}
+        onEditMemberInfo={() => {
+          closeGateModal()
+          navigate(programApplyGateMemberSettingsPath)
+        }}
+        onViewApplications={() => {
+          closeGateModal()
+          const applicationType =
+            applySelection?.applicationTypes?.length === 1
+              ? applySelection.applicationTypes[0]
+              : program.applicationType
+          navigate(programApplyGateApplicationsPathForType(applicationType))
+        }}
+      />
+    </>
   )
 }

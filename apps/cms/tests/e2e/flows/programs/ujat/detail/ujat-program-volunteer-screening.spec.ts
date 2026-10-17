@@ -75,17 +75,24 @@ test.describe('UJAT 프로그램 신청·봉사 심화', () => {
     await expect(page.getByText(/봉사자/).first()).toBeVisible({ timeout: 15_000 })
   })
 
-  test('4.3) 하반기 봉사자 — 신청 목록 탭', async ({ page }) => {
-    test.setTimeout(120_000)
+  test('4.3) 하반기 봉사자 — 신청·서류·면접 탭', async ({ page }) => {
+    test.setTimeout(180_000)
 
     await page.goto('/programs/ujat')
     await expectAuthenticatedShell(page)
 
     const detail = new UjatProgramDetailPage(page)
-    const opened = await detail.openAnyTabs(programId, 'volunteer_h2', ['vh2_all', 'vh2_doc1'])
+    const opened = await detail.openAnyTabs(programId, 'volunteer_h2', [
+      'vh2_all',
+      'vh2_doc1',
+      'vh2_doc_passed',
+      'vh2_interview2',
+    ])
     test.skip(opened.length === 0, '하반기 봉사자 LNB/탭 없음')
 
+    expect(opened).toContain('vh2_all')
     await expect(page).toHaveURL(/lnb=volunteer_h2/)
+    await expect(page.getByText(/봉사자/).first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('4.4) 일반 「강사 신청」 LNB 부재', async ({ page }) => {

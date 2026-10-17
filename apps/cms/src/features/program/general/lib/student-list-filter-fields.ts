@@ -1,5 +1,6 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
+import { formatStudentGradeClassColumnLabel } from './student-registered-grade-class-options'
 import type { StudentGenderKey } from '../model/school-detail-types'
 
 /** 학생 명단·출석 필터 — 성별 Select 값 (미기재 포함) */
@@ -53,7 +54,10 @@ export function buildStudentClassFilterOptionsFromRows(
   }
   return Array.from(unique)
     .sort((a, b) => a.localeCompare(b, 'ko'))
-    .map(value => ({ label: value, value }))
+    .map(value => ({
+      label: formatStudentGradeClassColumnLabel(value),
+      value,
+    }))
 }
 
 /** 신청 학급 옵션 + 명단 학급 값을 합쳐 필터·추가·수정 Select에 동일 적용 */

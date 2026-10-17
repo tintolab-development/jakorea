@@ -80,14 +80,17 @@ import {
 } from '@/features/program/general/api/instructor-assignments-api-client'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
-  fetchGeneralInstructorAssignmentBoard,
-  findScheduleIdForLectureDate,
-} from '@/features/program/general/api/instructor-assignment-board-service'
-import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
-import {
   mapParticipatingSessionsToInstructorAssignOptions,
 } from '@/features/program/general/lib/instructor-assign-session-options'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
+import {
+  hasAssignableOrganizationInstructorSchedule,
+  resolveAssignableSchedulePayloadFromSession,
+} from '@/features/program/general/lib/organization-instructor-assignable-schedule'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '@/features/program/general/lib/participating-institutions-table'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { AssignGuideModal } from './assign-guide-modal'
@@ -116,6 +119,27 @@ const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string
   waiting: '배정 대기',
   cancelled: '배정 불가',
   assigned: '배정 완료',
+  no_assignable_schedule: '배정 가능 일정 없음',
+}
+
+function sessionOptionId(session: ParticipatingSchoolSession): string {
+  return `session-${session.round}-${session.date}-${session.timeRange}`
+}
+
+function listAssignableSessionsForWaitingRow(
+  waitingRow: InstructorWaitingSchoolRow,
+  selectedSessionKeys: ReadonlySet<string>
+): ParticipatingSchoolSession[] {
+  const sessions = waitingRow.sessions ?? []
+  const assignable = sessions.filter(
+    session => resolveAssignableSchedulePayloadFromSession(session) != null
+  )
+  if (assignable.length === 0) return []
+  if (selectedSessionKeys.size > 0) {
+    return assignable.filter(session => selectedSessionKeys.has(sessionOptionId(session)))
+  }
+  if (assignable.length === 1) return assignable
+  return []
 }
 
 function renderEducationScheduleLines(lines: string[]) {
@@ -585,11 +609,7 @@ export function ParticipatingInstructorFullpageView({
         key: 'educationScheduleLines',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: InstructorAssignedSchoolRow) =>
           renderEducationScheduleLines(record.educationScheduleLines),
       },
@@ -712,11 +732,7 @@ export function ParticipatingInstructorFullpageView({
         key: 'educationScheduleLines',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: InstructorWaitingSchoolRow) =>
           renderEducationScheduleLines(record.educationScheduleLines),
       },
@@ -866,13 +882,18 @@ export function ParticipatingInstructorFullpageView({
     }
 
     try {
-      const board = isCompanySchool
-        ? await fetchCompanySchoolAssignmentBoard(program.id)
-        : await fetchGeneralInstructorAssignmentBoard(program.id)
       let leadAssigned = assignedSchools.some(row => row.role === 'lead')
       const selectedSessionKeys = new Set(assignGuideSessionIds)
 
       for (const waitingRow of rowsToAssign) {
+        if (waitingRow.assignmentStatus !== 'waiting') {
+          showAlert({
+            title: '안내',
+            content: `${waitingRow.schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
+          })
+          return
+        }
+
         const orgAppId = Number(waitingRow.organizationApplicationId)
         if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
           showAlert({
@@ -882,19 +903,20 @@ export function ParticipatingInstructorFullpageView({
           return
         }
 
-        const sessions = waitingRow.sessions ?? []
-        const targetSessions =
-          selectedSessionKeys.size > 0
-            ? sessions.filter(session =>
-                selectedSessionKeys.has(
-                  `session-${session.round}-${session.date}-${session.timeRange}`
-                )
-              )
-            : sessions.length > 0
-              ? [sessions[0]!]
-              : [null]
+        if (!hasAssignableOrganizationInstructorSchedule(waitingRow.sessions)) {
+          showAlert({
+            title: '안내',
+            content: `${waitingRow.schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
+          })
+          return
+        }
 
-        if (selectedSessionKeys.size > 0 && targetSessions.length === 0) {
+        const targetSessions = listAssignableSessionsForWaitingRow(
+          waitingRow,
+          selectedSessionKeys
+        )
+
+        if (targetSessions.length === 0) {
           showAlert({
             title: '안내',
             content: '교육 배정일을 선택해 주세요.',
@@ -903,46 +925,18 @@ export function ParticipatingInstructorFullpageView({
         }
 
         for (const session of targetSessions) {
-          if (session?.scheduleUnresolved || waitingRow.scheduleUnresolved) {
+          const schedulePayload = resolveAssignableSchedulePayloadFromSession(session)
+          if (!schedulePayload) {
             showAlert({
               title: '안내',
-              content: `${waitingRow.schoolName} — 희망일에 대응하는 program schedule이 없습니다.`,
-            })
-            return
-          }
-
-          let scheduleId: number | undefined =
-            session &&
-            typeof session.resolvedScheduleId === 'number' &&
-            session.resolvedScheduleId > 0
-              ? session.resolvedScheduleId
-              : typeof waitingRow.resolvedScheduleId === 'number' &&
-                  waitingRow.resolvedScheduleId > 0
-                ? waitingRow.resolvedScheduleId
-                : undefined
-          const requestedScheduleId =
-            session?.requestedScheduleId ?? waitingRow.requestedScheduleId
-          if (scheduleId == null && requestedScheduleId == null) {
-            const hopeLine =
-              session != null
-                ? `${session.date}`
-                : waitingRow.educationScheduleLines[0]
-            scheduleId =
-              findScheduleIdForLectureDate(board.schedules, hopeLine) ?? undefined
-          }
-          if (scheduleId == null && requestedScheduleId == null) {
-            showAlert({
-              title: '안내',
-              content:
-                '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+              content: `${waitingRow.schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
             })
             return
           }
 
           await createInstructorAssignmentRemote(program.id, {
             instructorMemberId: memberId,
-            ...(scheduleId != null ? { scheduleId } : {}),
-            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            ...schedulePayload,
             organizationApplicationId: orgAppId,
             instructorApplicationId: waitingRow.instructorApplicationId
               ? Number(waitingRow.instructorApplicationId)
@@ -959,11 +953,18 @@ export function ParticipatingInstructorFullpageView({
       setSelectedWaitingSchoolKeys([])
       closeAssignGuideModal()
     } catch (error) {
+      const scopeMessage = formatInstructorOrganizationScheduleScopeMessage(error)
+      if (scopeMessage) {
+        await institutionAssignment.invalidate()
+        setSelectedWaitingSchoolKeys([])
+        closeAssignGuideModal()
+        showAlert({ title: '배정 실패', content: scopeMessage })
+        return
+      }
       const message =
-        formatInstructorOrganizationScheduleScopeMessage(error) ??
-        (error instanceof Error && error.message.trim()
+        error instanceof Error && error.message.trim()
           ? error.message
-          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
       showAlert({ title: '배정 실패', content: message })
     }
   }, [
@@ -974,7 +975,6 @@ export function ParticipatingInstructorFullpageView({
     assignedSchools,
     closeAssignGuideModal,
     institutionAssignment,
-    isCompanySchool,
     instructorList,
     mergedInstructor,
     mergedInstructor.instructorApplicationId,
@@ -1085,7 +1085,9 @@ export function ParticipatingInstructorFullpageView({
           const stopScheduleIdNum = payload.stopScheduleId
             ? Number(payload.stopScheduleId)
             : undefined
-          await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, reason, {
+          await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, {
+            reason,
+            faultParty: 'ADMIN',
             stopScheduleId:
               stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
                 ? stopScheduleIdNum
@@ -1422,6 +1424,7 @@ export function ParticipatingInstructorFullpageView({
                   <CmsButton
                     variant="secondary"
                     size="large"
+                    disabled={addAssignOptions.length === 0}
                     onClick={() => {
                       if (addAssignOptions.length === 0) {
                         return
@@ -1505,7 +1508,9 @@ export function ParticipatingInstructorFullpageView({
                   dataSource={waitingSchools}
                   locale={{ emptyText: renderWaitingTableEmpty() }}
                   rowClassName={record =>
-                    record.assignmentStatus !== 'waiting'
+                    record.assignmentStatus === 'assigned' ||
+                    record.assignmentStatus === 'no_assignable_schedule' ||
+                    record.assignmentStatus === 'cancelled'
                       ? 'school-detail-fullpage-view__waiting-row--assigned'
                       : ''
                   }

@@ -73,6 +73,8 @@ export type CmsProgramCommonInfo = {
    * 기간 지정 신청 — 희망 일정 지망 상한 (CMS participantRecruitmentInfo.maxScheduleCount).
    */
   maxScheduleCount?: number
+  /** 기간 지정 신청 — 1일 최대 차시 (CMS participantRecruitmentInfo.maxSessionsPerDay). */
+  maxSessionsPerDay?: number
   notes?: string
   /** 공통 정보 > 교육 장소 표시 라벨 (venueKind + venueDetail) */
   educationVenueLabel?: string

@@ -1,14 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ProgramBackButton } from '@/features/program'
+import { ConsentWriteFormPage } from '@/features/mypage/consent/ui/consent-write-form-page'
 import {
   INSTRUCTOR_APPLY_PATH,
+  getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
   isInstructorApplyConsentKey,
 } from '@/features/mypage'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
-import { PFFormPage } from '@/shared/ui'
 
 export function MypageInstructorApplyConsentPage() {
   const navigate = useNavigate()
@@ -29,24 +29,24 @@ export function MypageInstructorApplyConsentPage() {
   }
 
   const title = getInstructorApplyConsentPageTitle(consentKey)
+  const description = getInstructorApplyConsentPageDescription(consentKey)
+  const [titleAside, setTitleAside] = useState<ReactNode>(null)
 
   return (
-    <PFFormPage
-      aria-label={title}
-      back={
-        <ProgramBackButton
-          size="small"
-          label="이전으로"
-          onClick={() => navigate(returnTo)}
-        />
-      }
+    <ConsentWriteFormPage
+      ariaLabel={title}
       title={title}
+      description={description}
+      titleAside={titleAside}
+      onBack={() => navigate(returnTo)}
     >
       <InstructorApplyConsentWriteForm
         consentKey={consentKey}
         readOnly={isView}
+        submitContext="instructorApply"
+        onTitleAside={setTitleAside}
         onComplete={() => navigate(returnTo)}
       />
-    </PFFormPage>
+    </ConsentWriteFormPage>
   )
 }

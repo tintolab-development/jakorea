@@ -5,7 +5,7 @@
 import { ALIMTALK_API_CHANNEL_TYPE } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 
 /** 목록·팝업 — BE 기본 size 20, 전량 필요 시 100 */
-export const NOTIFICATION_TEMPLATE_LIST_SIZE = 100
+export const NOTIFICATION_TEMPLATE_LIST_SIZE = 20
 
 export function alimtalkTemplateParamsFromSearchParams(
   searchParams: URLSearchParams

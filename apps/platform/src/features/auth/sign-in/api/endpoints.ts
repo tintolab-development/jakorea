@@ -20,6 +20,9 @@ export const portalMePaths = {
   phoneIdentityConfirm: () => '/api/portal/me/phone/identity/confirm',
   instructorRoleRequests: () => '/api/portal/me/instructor-role-requests',
   instructorRoleRequestCurrent: () => '/api/portal/me/instructor-role-requests/current',
+  /** GET — 내 강사 권한 신청 제출 스냅샷 (승인 대기 읽기 전용 화면) */
+  instructorRoleRequestCurrentDetail: () =>
+    '/api/portal/me/instructor-role-requests/current/detail',
   /** POST /api/portal/me/withdrawals — OpenAPI `withdraw` */
   withdrawals: () => '/api/portal/me/withdrawals',
   /** GET /api/portal/me/form-responses/{formResponseId}/feedback — Wave11 ISSUANCE 포함 */

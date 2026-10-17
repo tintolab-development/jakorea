@@ -33,7 +33,6 @@ import {
   canSelectNotificationSendTemplate,
   isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
-  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
 } from '@/features/notifications/model/send-program-id'
 import {
   canUseNotificationSendTemplateForProgram,
@@ -58,7 +57,7 @@ import {
 } from '@/features/notifications/model/send-scheduled-at'
 import {
   createAlimtalkSendBatch,
-  getAlimtalkRecipientCandidates,
+  fetchAllAlimtalkRecipientCandidates,
   shouldUseAlimtalkSendRemoteApi,
 } from '@/features/notifications/api/alimtalk-send-service'
 import {
@@ -119,7 +118,7 @@ function recipientTotalPages(
   totalPages?: number
 ): number {
   if (totalPages != null && totalPages > 0) return totalPages
-  return Math.max(Math.ceil((total || 0) / (size || 50)), 1)
+  return Math.max(Math.ceil((total || 0) / (size || 20)), 1)
 }
 
 type SendFullpageModalProps = {
@@ -273,7 +272,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
           : undefined,
       page: recipientSearch.page,
-      size: 50,
+      size: 20,
     },
     open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
@@ -795,8 +794,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         fetchAllCandidates={
           remote && (programNumericId != null || isWithoutProgram)
             ? async () => {
-                const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
-                const result = await getAlimtalkRecipientCandidates({
+                return fetchAllAlimtalkRecipientCandidates({
                   programId: programNumericId,
                   keyword: recipientSearch.keyword || undefined,
                   participantType:
@@ -807,11 +805,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     recipientTypeMode === 'member'
                       ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
                       : undefined,
-                  page: 0,
-                  // 배치 상한 500 · 전 페이지를 한 번에 가져와 「전체 선택」
-                  size: Math.min(Math.max(total, 50), NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT),
                 })
-                return result.items
               }
             : undefined
         }

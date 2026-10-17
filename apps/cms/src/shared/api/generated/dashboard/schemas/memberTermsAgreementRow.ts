@@ -15,7 +15,7 @@ export interface MemberTermsAgreementRow {
   /** @nullable */
   agreedAt?: string | null;
   /**
-     * PORTRAIT_RIGHTS 전용 상태
+     * PORTRAIT_RIGHTS 전용 상태 FULL은 deprecated이며 PARTIAL로 정규화됩니다.
      * @nullable
      */
   consentStatus?: MemberTermsAgreementRowConsentStatus;

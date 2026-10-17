@@ -81,6 +81,37 @@ describe('individual instructor lecture assign schedule', () => {
     expect(slots[1]?.sessionLabel).toBe('2차시')
   })
 
+  it('일정별 scheduleLead 선택값을 승인 payload에 그대로 반영한다', () => {
+    const assignments = mapLectureAssignItemsToApprovalAssignments([
+      {
+        slotKey: '186659',
+        scheduleId: 186659,
+        dateKey: '2026-04-20',
+        schoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+        schoolName: '개인 프로그램',
+        sessionLabel: '1차시',
+        timeRange: '09:30 ~ 12:20',
+        dateLabel: '26년 4월 20일(월)',
+        tagLabel: '26년 4월 20일(월) 09:30 ~ 12:20',
+        scheduleLead: false,
+      },
+      {
+        slotKey: '186660',
+        scheduleId: 186660,
+        dateKey: '2026-04-27',
+        schoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+        schoolName: '개인 프로그램',
+        sessionLabel: '2차시',
+        timeRange: '09:30 ~ 12:20',
+        dateLabel: '26년 4월 27일(월)',
+        tagLabel: '26년 4월 27일(월) 09:30 ~ 12:20',
+        scheduleLead: true,
+      },
+    ])
+
+    expect(assignments.map(assignment => assignment.scheduleLead)).toEqual([false, true])
+  })
+
   it('강사 배정 불가 일정은 비활성화한다', () => {
     const program = createIndividualProgram()
     const instructor = createInstructor()

@@ -21,13 +21,131 @@ export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
 
 export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
-/** 일반 — 단일 회차이거나 개인 대상이면 기간 지정 불가 (복수·학교/기관만 기간 허용) */
+/** 교육 진행 일정 설정 — 「교육 진행 일정 선택」 날짜 지정 팝오버 시간 입력 */
+export function shouldDisableEducationScheduleSelectionTimeInput(input: {
+  educationStructure: 'curriculum' | 'schedule'
+  participantOrganization?: boolean
+  sessionRound?: 'single' | 'multi'
+  educationScheduleMode?: 'date' | 'period'
+}): boolean {
+  if (input.educationStructure !== 'schedule') return false
+  if (
+    input.participantOrganization &&
+    (input.sessionRound ?? 'single') === 'single' &&
+    (input.educationScheduleMode ?? 'date') === 'date'
+  ) {
+    return false
+  }
+  return true
+}
+
+/**
+ * 프로그램 공통 「교육 진행 일정 선택」·기간 지정 팝오버 —
+ * 시간 UI는 노출(`lockTimeToggleOn`)하되 입력은 `disableTimeInputs`로만 비활성. 적용·예정일은 날짜만.
+ */
+export function shouldDisableEducationSchedulePeriodTimeInput(input: {
+  educationStructure?: 'curriculum' | 'schedule'
+  sessionRound?: 'single' | 'multi'
+  educationScheduleMode?: 'date' | 'period'
+}): boolean {
+  return input.educationScheduleMode === 'period'
+}
+
+export type EducationScheduleSelectionDatePickerMode = 'date' | 'period'
+
+export type EducationScheduleSelectionDatePickerProps = {
+  presetMode: 'schedule' | 'period'
+  lockPeriodToggleOn?: boolean
+  /** 시간 행 노출(토글 ON 고정). 비활성은 `disableTimeInputs`만 — lockTimeToggleOn ≠ disabled */
+  lockTimeToggleOn: boolean
+  disableTimeInputs: boolean
+}
+
+/** 「교육 진행 일정 선택」 ParagraphDatePicker props SSOT (등록 위저드·상세 공통정보 동일) */
+export function getEducationScheduleSelectionDatePickerProps(input: {
+  educationStructure: 'curriculum' | 'schedule'
+  participantOrganization?: boolean
+  sessionRound?: 'single' | 'multi'
+  scheduleMode: EducationScheduleSelectionDatePickerMode
+}): EducationScheduleSelectionDatePickerProps {
+  const disableSelectionTime = shouldDisableEducationScheduleSelectionTimeInput({
+    educationStructure: input.educationStructure,
+    participantOrganization: input.participantOrganization,
+    sessionRound: input.sessionRound,
+    educationScheduleMode: input.scheduleMode,
+  })
+  const disablePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
+    educationStructure: input.educationStructure,
+    sessionRound: input.sessionRound,
+    educationScheduleMode: input.scheduleMode,
+  })
+
+  if (input.scheduleMode === 'date') {
+    return {
+      presetMode: 'schedule',
+      lockPeriodToggleOn: true,
+      lockTimeToggleOn: !disableSelectionTime,
+      disableTimeInputs: disableSelectionTime,
+    }
+  }
+
+  return {
+    presetMode: 'period',
+    lockTimeToggleOn: true,
+    disableTimeInputs: disablePeriodTime,
+  }
+}
+
+/**
+ * 일정형 · 단일 회차 — 세부 일정 `groupTimes`(그룹별/공통 진행 시간)를
+ * 「교육 진행 일정 선택」 예정일 줄에 자동 반영 (기관·개인 공통).
+ */
+export function shouldAutoFillEducationScheduleFromGroupTimes(input: {
+  educationStructure: 'curriculum' | 'schedule'
+  sessionRound?: 'single' | 'multi'
+}): boolean {
+  return (
+    input.educationStructure === 'schedule' && (input.sessionRound ?? 'single') === 'single'
+  )
+}
+
+/** 일반 — 기관은 기간 지정 항상 허용, 개인은 단일·복수 회차 모두 기간 지정 불가 */
 export function shouldDisableEducationSchedulePeriodMode(input: {
   participantOrganization: boolean
   sessionRound?: 'single' | 'multi'
 }): boolean {
-  if (input.sessionRound === 'single') return true
-  return !input.participantOrganization
+  if (input.participantOrganization) return false
+  return true
+}
+
+/**
+ * 「교육 진행 일정 유형」을 날짜 지정으로 고정(기간 라디오 비활성·period→date 강제).
+ * 진행 시간 자동 반영(`shouldAutoFillEducationScheduleFromGroupTimes`)과 분리 —
+ * 기관·일정·단일은 자동 반영은 켜도 기간 지정은 허용.
+ */
+export function shouldLockEducationScheduleDateMode(input: {
+  participantOrganization: boolean
+  educationStructure: 'curriculum' | 'schedule'
+  sessionRound?: 'single' | 'multi'
+}): boolean {
+  if (
+    shouldDisableEducationSchedulePeriodMode({
+      participantOrganization: input.participantOrganization,
+      sessionRound: input.sessionRound,
+    })
+  ) {
+    return true
+  }
+  if (
+    input.participantOrganization ||
+    !shouldAutoFillEducationScheduleFromGroupTimes({
+      educationStructure: input.educationStructure,
+      sessionRound: input.sessionRound,
+    })
+  ) {
+    return false
+  }
+  return true
 }
 
 /** 일정형 — 진행 그룹 구분 추가는 단일 회차 + 날짜 지정만 */
@@ -44,6 +162,33 @@ export function shouldLockEducationScheduleCalendarToggles(input: {
   educationStructure: 'curriculum' | 'schedule'
 }): boolean {
   return input.educationStructure === 'curriculum'
+}
+
+/**
+ * 등록·공통정보 「진행 일정」(`presetMode: schedule`) 팝오버 — 기간 토글 ON·비활성 고정.
+ *
+ * 조작 허용(잠금 해제)은 **일정형 · 복수 회차**이면서 아래만:
+ * - 개인 (기관 미선택)
+ * - 기관
+ *
+ * 그 외(커리큘럼형, 단일 회차, 일정형·복수이나 개인·기관 아님 등)는 잠금.
+ */
+export function shouldLockProgressSchedulePeriodToggle(input: {
+  participantIndividual: boolean
+  participantOrganization: boolean
+  programType: 'curriculum' | 'schedule'
+  sessionRound: 'single' | 'multi'
+}): boolean {
+  if (input.programType !== 'schedule' || input.sessionRound !== 'multi') {
+    return true
+  }
+  if (input.participantIndividual && !input.participantOrganization) {
+    return false
+  }
+  if (input.participantOrganization) {
+    return false
+  }
+  return true
 }
 
 export function padEventScheduleLabel(index: number): string {

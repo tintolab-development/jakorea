@@ -5,11 +5,35 @@
  * PUT/POST applications
  */
 
+/** HomepageProgramQueryService#blockedReason — canApply=false 일 때만 (canApply=true 이면 omit) */
+export type PortalApplicationBlockedReason =
+  | 'PROGRAM_NOT_APPLICABLE'
+  | 'RECRUITMENT_NOT_STARTED'
+  | 'RECRUITMENT_CLOSED'
+  | 'APPLICATION_FORM_NOT_CONFIGURED'
+  | 'APPLICATION_TYPE_NOT_ALLOWED'
+  | 'MEMBER_NOT_ACTIVE'
+  | 'ORGANIZATION_MEMBERSHIP_REQUIRED'
+  | 'APPROVED_INSTRUCTOR_REQUIRED'
+  | 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'
+  | 'COLLEGE_STUDENT_REQUIRED'
+  | 'ALREADY_APPLIED'
+  | 'CAPACITY_FULL'
+
+export type PortalApplicationType = 'INDIVIDUAL' | 'ORGANIZATION' | 'INSTRUCTOR' | 'VOLUNTEER'
+
+export type PortalExistingApplication = {
+  applicationId?: number
+  applicationType?: string
+  status?: string
+  submittedAt?: string | null
+}
+
 export type PortalApplicationOption = {
   recruitmentId?: number
   recruitmentType?: string
-  targetType?: string
-  applicationType?: string
+  targetType?: string | null
+  applicationType?: PortalApplicationType | string
   formBindingId?: number | null
   formTemplateVersionId?: number | null
   startAt?: string | null
@@ -18,7 +42,9 @@ export type PortalApplicationOption = {
   maxCount?: number | null
   currentApplicationCount?: number
   canApply?: boolean
-  blockedReason?: string | null
+  /** canApply=true 이면 필드 자체를 omit (null 아님) */
+  blockedReason?: PortalApplicationBlockedReason
+  existingApplication?: PortalExistingApplication | null
 }
 
 export type PortalApplicationFormResponse = {

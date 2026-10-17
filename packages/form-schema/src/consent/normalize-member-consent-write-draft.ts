@@ -1,29 +1,14 @@
 import {
+  clearWritingFormParagraphBottomConsent,
+  clearWritingFormParagraphFillPreviewAnswers,
+} from '../writing-form/clear-writing-form-fill-preview-answers.js'
+import {
   AGREEMENT_NOTICE_DEFAULT_PURPOSE,
-  AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
 import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
-
-function clearBottomConsent(paragraph: WritingFormParagraph): WritingFormParagraph {
-  if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) {
-    return paragraph
-  }
-  return { ...paragraph, bottomConsent: undefined }
-}
-
-function clearMultipleChoice(paragraph: WritingFormParagraph): WritingFormParagraph {
-  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'multiple_choice') {
-    return paragraph
-  }
-  return {
-    ...paragraph,
-    selectedPreviewSingleId: null,
-    selectedPreviewMultipleIds: [],
-  }
-}
 
 function clearNoticeInteractiveParagraph(paragraph: WritingFormParagraph): WritingFormParagraph {
   if (paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject) return paragraph
@@ -65,8 +50,8 @@ function clearNoticeIdTypeWithInput(paragraph: WritingFormParagraph): WritingFor
     ...paragraph,
     idTypeWithInput: {
       ...nested,
-      selectedOptionId: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
-      inputPlaceholder: '주민등록번호를 입력해 주세요',
+      selectedOptionId: null,
+      inputPlaceholder: nested.inputPlaceholder?.trim() || '번호를 입력해 주세요',
       inputValue: '',
     },
   }
@@ -76,8 +61,7 @@ function normalizeParagraphForWrite(
   paragraph: WritingFormParagraph,
   templateId: string
 ): WritingFormParagraph {
-  let next = clearBottomConsent(paragraph)
-  next = clearMultipleChoice(next)
+  let next = clearWritingFormParagraphFillPreviewAnswers(paragraph)
 
   if (templateId === 'agreement-notice') {
     next = clearNoticeInteractiveParagraph(next)
@@ -108,7 +92,7 @@ export function normalizeMemberConsentWriteDraft(
     next = overlayPaymentStatementPreConsentSeedHorizontalTables(next)
     next = {
       ...next,
-      paragraphs: next.paragraphs.map(clearBottomConsent),
+      paragraphs: next.paragraphs.map(clearWritingFormParagraphBottomConsent),
     }
   }
 

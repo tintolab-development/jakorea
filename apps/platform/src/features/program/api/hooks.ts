@@ -6,6 +6,7 @@ import type { ProgramDetail, ProgramListItem, ProgramsListParams } from '../mode
 import { fetchPortalProgramDetail, fetchPortalPrograms } from './client'
 import { HOME_PORTAL_PROGRAMS_QUERY, toPortalProgramListQuery } from './list-query'
 import type { PortalRecruitmentFocus } from '../lib/portal-recruitment'
+import { filterProgramsByEducationTargetParams } from '../lib/education-target-filter'
 import { mapPortalProgramDetail, mapPortalProgramListItem, parsePortalProgramId } from './mappers'
 import type { PortalProgramListQuery } from './types'
 
@@ -30,9 +31,9 @@ function listKeyParams(query: PortalProgramListQuery) {
   return {
     keyword: query.keyword ?? '',
     portalTab: query.portalTab ?? '',
+    programType: query.programType ?? '',
     recruitmentStatus: query.recruitmentStatus ?? '',
-    recruitmentTarget: query.recruitmentTarget ?? '',
-    educationTarget: query.educationTarget ?? '',
+    educationTargets: query.educationTargets ?? '',
     educationMethod: query.educationMethod ?? '',
     operatingFrom: query.operatingFrom ?? '',
     operatingTo: query.operatingTo ?? '',
@@ -167,10 +168,13 @@ export function usePortalProgramsList(params: ProgramsListParams): PortalProgram
     }
   }
 
-  const items = (query.data?.items ?? []).flatMap(row => {
-    const mapped = mapPortalProgramListItem(row)
-    return mapped ? [mapped] : []
-  })
+  const items = filterProgramsByEducationTargetParams(
+    (query.data?.items ?? []).flatMap(row => {
+      const mapped = mapPortalProgramListItem(row)
+      return mapped ? [mapped] : []
+    }),
+    params,
+  )
   const totalCount = query.data?.totalElements ?? items.length
   const totalPages = Math.max(1, query.data?.totalPages ?? 1)
 

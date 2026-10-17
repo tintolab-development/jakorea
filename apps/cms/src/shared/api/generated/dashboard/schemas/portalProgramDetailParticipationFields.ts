@@ -18,7 +18,7 @@ export interface PortalProgramDetailParticipationFields {
      */
   applicationMethod?: string | null;
   /**
-     * 모집 행. false면 서류·면접 행을 만들지 않습니다. 컬럼 program_recruitment.interview_enabled, 없으면 JSON interviewEnabled.
+     * 그 모집 행의 면접 여부. 저장된 값이 있으면 null이 아니다. false여도 documentPassAnnouncementAt, interviewStartAt, interviewEndAt, finalPassAnnouncementAt은 저장된 시각을 그대로 둔다. 숨김은 클라이언트가 한다.
      * @nullable
      */
   interviewEnabled?: boolean | null;

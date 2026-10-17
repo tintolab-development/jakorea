@@ -12,62 +12,18 @@ import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionReques
  * 회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.
  */
 export interface UpdatePortalProfileRequest {
-  /**
-     * @minLength 0
-     * @maxLength 30
-     */
   postalCode?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
   address?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
   addressDetail?: string;
-  /**
-     * @minLength 0
-     * @maxLength 100
-     */
   regionSido?: string;
-  /**
-     * @minLength 0
-     * @maxLength 100
-     */
   regionSigungu?: string;
-  /**
-     * @minLength 0
-     * @maxLength 50
-     */
   grade?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
-  affiliationName?: string;
   schoolOrganizationId?: number;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
   schoolName?: string;
   schoolSelection?: PortalSchoolSelectionRequest;
-  /**
-     * @minLength 0
-     * @maxLength 30
-     */
   schoolEnrollmentStatus?: string;
-  /**
-     * @minLength 0
-     * @maxLength 30
-     */
   teacherEmploymentStatus?: string;
-  /**
-     * @minLength 0
-     * @maxLength 100
-     */
-  external1365Id?: string;
   instructorProfile?: InstructorPortalProfileUpdate;
+  affiliationName?: string;
+  external1365Id?: string;
 }

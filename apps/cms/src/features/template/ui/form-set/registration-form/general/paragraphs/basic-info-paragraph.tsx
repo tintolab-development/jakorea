@@ -1,78 +1,28 @@
-import { useEffect, useMemo, type ReactNode } from 'react'
-import type { CheckboxChangeEvent } from 'antd/es/checkbox'
-import dayjs from 'dayjs'
-import type { Dayjs } from 'dayjs'
+import type { ReactNode } from 'react'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   ProgramRegistrationParticipantState,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
-import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
-  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
-} from '@/features/template/lib/template-form-select-options'
-import {
-  PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
-  PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
-  PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
-} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
-import {
-  ProgramRegistrationIpsTypeFields,
-  type ProgramRegistrationIpsTypeValue,
-} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
-import {
-  initialProgramRegistrationSurveyItems,
-  PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
-  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
-  type ProgramRegistrationSurveyItemId,
-} from '@/features/template/lib/program-registration-survey-items'
-import {
-  useProgramRegistrationOverlayKv,
-  updateProgramRegistrationOverlayKey,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { ProgramRegistrationBasicInfoSponsorFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-sponsor-fields'
 import { ProgramRegistrationBasicInfoTitleFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-title-fields'
 import {
-  TRAINED_TEACHERS_REGISTRATION_ALL_VALUE,
-  TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
-  normalizeTrainedTeachersAllSelectValue,
-} from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+  ProgramRegistrationBasicInfoBusinessFieldField,
+  ProgramRegistrationBasicInfoCourseDeliveredByField,
+  ProgramRegistrationBasicInfoEducationCourseField,
+  ProgramRegistrationBasicInfoEducationVenueFields,
+  ProgramRegistrationBasicInfoFooterIpsTypeField,
+  ProgramRegistrationBasicInfoIpOwnedField,
+  ProgramRegistrationBasicInfoOperationRangeField,
+  ProgramRegistrationBasicInfoPartnerInvolvementField,
+  ProgramRegistrationBasicInfoParticipantTypesField,
+  ProgramRegistrationBasicInfoSurveyItemsField,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-overlay-fields'
+import { TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
-
-type OperationRangeSeal = { start: string; end: string } | null
-
-function participantTypeLabel(
-  value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
-) {
-  return TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(o => o.value === value)?.label ?? value
-}
-
-function EducationVenueDetailInput({ overlayKey }: { overlayKey: string }) {
-  const [educationVenueDetail, setEducationVenueDetail] = useProgramRegistrationOverlayKv(
-    overlayKey,
-    ''
-  )
-  return (
-    <CmsInput
-      inputSize="medium"
-      placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-      width="100%"
-      style={{ flex: '1 1 0', minWidth: 0 }}
-      value={educationVenueDetail}
-      onChange={event => setEducationVenueDetail(event.target.value)}
-    />
-  )
-}
 
 type ProgramRegistrationBasicInfoParagraphProps = {
   participant: ProgramRegistrationParticipantState
@@ -80,22 +30,15 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   onOrganizationChange: (checked: boolean) => void
   onTeacherInstructorChange: (checked: boolean) => void
   onVolunteerChange: (checked: boolean) => void
-  /** true면 교육 장소 행 미노출 (교육받은 교사 등록 폼) */
   hideEducationPlace?: boolean
-  /** true면 하단 테이블에 IPS 유형 행 추가 (교육받은 교사 등록 폼) */
   includeFooterIpsType?: boolean
-  /** 참여자 유형 편집 슬롯 — 지정 시 기본 체크박스 그룹 대신 렌더 (교육받은 교사 잠금 UI) */
   participantTypesEdit?: ReactNode
-  /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
   sponsorId?: string
   onSponsorIdChange?: (sponsorId: string) => void
   sponsorContactId?: string
   onSponsorContactIdChange?: (contactId: string) => void
-  /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 (일반 폼 기본값 유지) */
   trainedTeachersDefaults?: boolean
-  /** 일반 등록 — 교육 진행 구조(일정형이면 세부 프로그램명「해당없음」) */
   programType?: ProgramRegistrationType
-  /** 수정 화면 — 참여자 유형은 등록 후에 바꿀 수 없다 */
   lockParticipantTypes?: boolean
 }
 
@@ -120,94 +63,8 @@ export function ProgramRegistrationBasicInfoParagraph({
     ? TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX
     : 'generalRegistration.basicInfo'
 
-  const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
-    `${overlayPrefix}.businessField`,
-    trainedTeachersDefaults ? 'economy_finance' : ''
-  )
-  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
-    'yes' | 'no'
-  >(`${overlayPrefix}.partnerInvolvement`, trainedTeachersDefaults ? 'no' : 'yes')
+  const overlayFieldProps = { overlayPrefix, trainedTeachersDefaults }
 
-  // 기본값을 overlay record에 기록 — 미터치 시에도 create body에 partnerInvolvement가 실리게
-  useEffect(() => {
-    setPartnerInvolvement(partnerInvolvement)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- mount seed only
-
-  const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<
-    string | null
-  >(
-    `${overlayPrefix}.operationAnchorIso`,
-    null
-  )
-  const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
-  const setOperationAnchorDate = (next: Dayjs | null) => {
-    setOperationAnchorIso(next == null ? null : next.toISOString())
-  }
-
-  const [operationRangeSeal, setOperationRangeSeal] = useProgramRegistrationOverlayKv<
-    OperationRangeSeal
-  >(`${overlayPrefix}.operationRangeSeal`, null)
-  const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
-    if (operationRangeSeal == null) return null
-    return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
-  }, [operationRangeSeal])
-  const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
-    if (next == null) {
-      setOperationRangeSeal(null)
-      return
-    }
-    setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
-  }
-  
-  const operationRangeWithTime = useMemo(
-    () =>
-      operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
-    [operationRange]
-  )
-
-  const [educationVenueKind, setEducationVenueKind] = useProgramRegistrationOverlayKv<
-    'inside' | 'outside' | 'other'
-  >(`${overlayPrefix}.educationVenueKind`, 'inside')
-  const educationVenueDetailKey = `${overlayPrefix}.educationVenueDetail`
-  const [educationCourseRaw, setEducationCourse] = useProgramRegistrationOverlayKv(
-    `${overlayPrefix}.educationCourse`,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
-  )
-  const educationCourse = trainedTeachersDefaults
-    ? normalizeTrainedTeachersAllSelectValue(educationCourseRaw)
-    : educationCourseRaw
-  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv(
-    `${overlayPrefix}.ipOwned`,
-    trainedTeachersDefaults ? 'ja' : ''
-  )
-  const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
-    `${overlayPrefix}.courseDeliveredBy`,
-    trainedTeachersDefaults ? 'ja' : ''
-  )
-  const [footerIpsType, setFooterIpsType] = useProgramRegistrationOverlayKv<
-    ProgramRegistrationIpsTypeValue
-  >(
-    `${overlayPrefix}.footerIpsType`,
-    trainedTeachersDefaults
-      ? { category: 'prepare', detail: 'none' }
-      : { category: '', detail: '' }
-  )
-  const surveyItemsDefault = initialProgramRegistrationSurveyItems(trainedTeachersDefaults)
-  const [surveyItems] = useProgramRegistrationOverlayKv<
-    Record<ProgramRegistrationSurveyItemId, boolean>
-  >(`${overlayPrefix}.surveyItems`, surveyItemsDefault)
-
-  const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
-    updateProgramRegistrationOverlayKey<Record<ProgramRegistrationSurveyItemId, boolean>>(
-      `${overlayPrefix}.surveyItems`,
-      prev => ({
-        ...(prev ?? initialProgramRegistrationSurveyItems(trainedTeachersDefaults)),
-        [id]: e.target.checked,
-      })
-    )
-  }
-
-  const educationCourseOptions = [...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]
   return (
     <>
       <DetailInfoForm
@@ -221,31 +78,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           lockDetailedProgramToNone={programType === 'schedule'}
         />
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="사업 운영 기간"
-            validationKey="basicInfo.operationRangeSeal"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="period"
-                  value={operationAnchorDate}
-                  width="100%"
-                  placeholder="사업 운영 기간을 선택하세요"
-                  preferPeriodModeInPopover
-                  suppressAutoTodayWhenEmpty
-                  appliedSurfaceRange={operationRange}
-                  appliedSurfaceWithTime={operationRangeWithTime}
-                  onRangeChange={range => setOperationRange(range)}
-                  onChange={next => {
-                    if (next == null) return
-                    setOperationAnchorDate(next)
-                  }}
-                />
-              </div>
-            }
-            view="-"
-          />
+          <ProgramRegistrationBasicInfoOperationRangeField overlayPrefix={overlayPrefix} />
           <DetailInfoForm.Field
             label="프로그램 진행 현황"
             readOnlyDisplay
@@ -257,58 +90,16 @@ export function ProgramRegistrationBasicInfoParagraph({
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="참여자 유형"
-            validationKey="basicInfo.audience"
-            edit={
-              participantTypesEdit ?? (
-                <div className="detail-info-form-inputs-wrapper">
-                  <GeneralParticipantAudienceCheckboxGroup
-                    individual={participant.individual}
-                    organization={participant.organization}
-                    disabled={lockParticipantTypes}
-                    onIndividualChange={onIndividualChange}
-                    onOrganizationChange={onOrganizationChange}
-                  />
-                  <CmsCheckbox
-                    checkboxSize="large"
-                    checked={participant.teacherInstructor === true}
-                    disabled={lockParticipantTypes}
-                    onChange={e => onTeacherInstructorChange(e.target.checked)}
-                  >
-                    {participantTypeLabel('teacher_instructor')}
-                  </CmsCheckbox>
-                  <CmsCheckbox
-                    checkboxSize="large"
-                    checked={participant.volunteer === true}
-                    disabled={lockParticipantTypes}
-                    onChange={e => onVolunteerChange(e.target.checked)}
-                  >
-                    {participantTypeLabel('volunteer')}
-                  </CmsCheckbox>
-                </div>
-              )
-            }
-            view="-"
+          <ProgramRegistrationBasicInfoParticipantTypesField
+            participant={participant}
+            lockParticipantTypes={lockParticipantTypes}
+            participantTypesEdit={participantTypesEdit}
+            onIndividualChange={onIndividualChange}
+            onOrganizationChange={onOrganizationChange}
+            onTeacherInstructorChange={onTeacherInstructorChange}
+            onVolunteerChange={onVolunteerChange}
           />
-          <DetailInfoForm.Field
-            label="사업 분야"
-            validationKey="basicInfo.businessField"
-            edit={
-              <div className="detail-info-form-inputs-wrapper">
-                <CmsSelect
-                  inputSize="medium"
-                  withAllOption={false}
-                  placeholder="사업 분야를 선택하세요"
-                  width={240}
-                  options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
-                  value={businessField || undefined}
-                  onChange={v => setBusinessField(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
+          <ProgramRegistrationBasicInfoBusinessFieldField {...overlayFieldProps} />
         </DetailInfoForm.Row>
         <ProgramRegistrationBasicInfoSponsorFields
           sponsorId={sponsorIdProp}
@@ -319,51 +110,11 @@ export function ProgramRegistrationBasicInfoParagraph({
         />
         {hideEducationPlace ? null : (
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="교육 장소"
-              validationKey="basicInfo.educationVenueDetail"
-              fullRow
-              edit={
-                <div className="detail-info-form-inputs-wrapper">
-                  <CmsRadioGroup
-                    size="large"
-                    value={educationVenueKind}
-                    onChange={e =>
-                      setEducationVenueKind(e.target.value as 'inside' | 'outside' | 'other')
-                    }
-                  >
-                    <CmsRadio value="inside">기관 안</CmsRadio>
-                    <CmsRadio value="outside">기관 밖</CmsRadio>
-                    <CmsRadio value="other">기타(직접입력)</CmsRadio>
-                  </CmsRadioGroup>
-                  <DetailInfoForm.InputsSeparator />
-                  <EducationVenueDetailInput overlayKey={educationVenueDetailKey} />
-                </div>
-              }
-              view="-"
-            />
+            <ProgramRegistrationBasicInfoEducationVenueFields overlayPrefix={overlayPrefix} />
           </DetailInfoForm.Row>
         )}
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="설문 진행 항목"
-            fullRow
-            edit={
-              <div className="detail-info-form-inputs-wrapper">
-                {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
-                  <CmsCheckbox
-                    key={id}
-                    checkboxSize="large"
-                    checked={surveyItems[id]}
-                    onChange={toggleSurveyItem(id)}
-                  >
-                    {PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[id]}
-                  </CmsCheckbox>
-                ))}
-              </div>
-            }
-            view="-"
-          />
+          <ProgramRegistrationBasicInfoSurveyItemsField {...overlayFieldProps} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
@@ -374,94 +125,16 @@ export function ProgramRegistrationBasicInfoParagraph({
         className="program-registration-paragraph"
       >
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="교육 과정"
-            validationKey="basicInfo.educationCourse"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  inputSize="medium"
-                  placeholder="전체"
-                  withAllOption={trainedTeachersDefaults}
-                  width={240}
-                  options={educationCourseOptions}
-                  value={
-                    trainedTeachersDefaults ? educationCourse : educationCourse || undefined
-                  }
-                  onChange={v => setEducationCourse(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="IP Owned"
-            validationKey="basicInfo.ipOwned"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  inputSize="medium"
-                  placeholder="전체"
-                  withAllOption={false}
-                  width={240}
-                  options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
-                  value={ipOwned || undefined}
-                  onChange={v => setIpOwned(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
+          <ProgramRegistrationBasicInfoEducationCourseField {...overlayFieldProps} />
+          <ProgramRegistrationBasicInfoIpOwnedField {...overlayFieldProps} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="Course Delivered By"
-            validationKey="basicInfo.courseDeliveredBy"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  inputSize="medium"
-                  placeholder="전체"
-                  withAllOption={false}
-                  width={240}
-                  options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
-                  value={courseDeliveredBy || undefined}
-                  onChange={v => setCourseDeliveredBy(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="Partner Involvement"
-            edit={
-              <div className="detail-info-form-inputs-wrapper">
-                <CmsRadioGroup
-                  size="large"
-                  value={partnerInvolvement}
-                  onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
-                >
-                  <CmsRadio value="yes">Yes</CmsRadio>
-                  <CmsRadio value="no">No</CmsRadio>
-                </CmsRadioGroup>
-              </div>
-            }
-            view="-"
-          />
+          <ProgramRegistrationBasicInfoCourseDeliveredByField {...overlayFieldProps} />
+          <ProgramRegistrationBasicInfoPartnerInvolvementField {...overlayFieldProps} />
         </DetailInfoForm.Row>
         {includeFooterIpsType ? (
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="IPS 유형"
-              fullRow
-              edit={
-                <ProgramRegistrationIpsTypeFields
-                  value={footerIpsType}
-                  onChange={setFooterIpsType}
-                />
-              }
-              view="-"
-            />
+            <ProgramRegistrationBasicInfoFooterIpsTypeField {...overlayFieldProps} />
           </DetailInfoForm.Row>
         ) : null}
       </DetailInfoForm>

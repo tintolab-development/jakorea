@@ -1,7 +1,8 @@
 import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { ProgramRegistrationOverlayTextField } from '@/features/template/ui/form-set/registration-form/shared/registration-overlay-fields'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   withDetailedProgramNoneOption,
@@ -25,36 +26,6 @@ type ControlledTitleProps = {
    * 실적·조회에서는 일정명이 세부 프로그램명으로 반영된다.
    */
   lockDetailedProgramToNone?: boolean
-}
-
-function RegistrationOverlayTextField({
-  label,
-  validationKey,
-  overlayKey,
-  placeholder,
-}: {
-  label: string
-  validationKey: string
-  overlayKey: string
-  placeholder: string
-}) {
-  const [value, setValue] = useProgramRegistrationOverlayKv(overlayKey, '')
-  return (
-    <DetailInfoForm.Field
-      label={label}
-      validationKey={validationKey}
-      edit={
-        <CmsInput
-          inputSize="medium"
-          placeholder={placeholder}
-          width="100%"
-          value={value}
-          onChange={event => setValue(event.target.value)}
-        />
-      }
-      view="-"
-    />
-  )
 }
 
 function ProgramRegistrationBasicInfoTitleFieldsInner({
@@ -82,7 +53,12 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     ''
   )
 
-  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
+    overlayBasicInfoPrefix: trainedTeachersDefaults
+      ? 'trainedTeachersRegistration.basicInfo'
+      : 'generalRegistration.basicInfo',
+  })
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(catalogReady)
 
   useEffect(() => {
     if (!lockDetailedProgramToNone) return
@@ -143,13 +119,13 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   return (
     <>
       <DetailInfoForm.Row type="double">
-        <RegistrationOverlayTextField
+        <ProgramRegistrationOverlayTextField
           label="대표 프로그램명 (국문)"
           validationKey="basicInfo.programTitleKo"
           overlayKey={titleKoKey}
           placeholder="대표 프로그램명을 입력하세요"
         />
-        <RegistrationOverlayTextField
+        <ProgramRegistrationOverlayTextField
           label="대표 프로그램명 (영문)"
           validationKey="basicInfo.programTitleEn"
           overlayKey={titleEnKey}
@@ -157,7 +133,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <RegistrationOverlayTextField
+        <ProgramRegistrationOverlayTextField
           label="공고용 프로그램명"
           validationKey="basicInfo.publicProgramTitle"
           overlayKey={publicTitleKey}
@@ -176,6 +152,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
                 options={detailedProgramOptions}
                 value={detailedProgramSelectValue}
                 onChange={v => setDetailedProgramSelection(String(v ?? ''))}
+                onOpenChange={onSelectOpenChange}
                 disabled={lockDetailedProgramToNone}
               />
             </div>

@@ -69,8 +69,7 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
         answerDisplayText: '정문 주차',
       },
       {
-        questionKeySnapshot:
-          'program-application-institution-seed-sex-offense-consent-submission',
+        questionKeySnapshot: 'program-application-institution-seed-sex-offense-consent-submission',
         answerDisplayText: '성범죄 조회 요청 완료',
       },
       {
@@ -158,13 +157,11 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
         }),
       },
       {
-        questionKeySnapshot:
-          'program-application-economy-seed-sex-offense-consent-submission',
+        questionKeySnapshot: 'program-application-economy-seed-sex-offense-consent-submission',
         answerValueJson: JSON.stringify({ submissionRequest: 'request' }),
       },
       {
-        questionKeySnapshot:
-          'program-application-economy-seed-sex-offense-consent-inquiry',
+        questionKeySnapshot: 'program-application-economy-seed-sex-offense-consent-inquiry',
         answerValueJson: JSON.stringify({
           inquiryMethod: 'ja_system',
           siteSubmission: 'direct',
@@ -214,5 +211,70 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.region).toBe('서울')
     expect(hydrated.educationGrade).toBe('중1')
     expect(hydrated.schoolName).toBe('부산 미래고')
+  })
+
+  it('does not resurrect cleared canonical fields from the original form response', () => {
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: { ...baseRow, detail: { applicationReason: '현재 행의 이전 값' } },
+      formResponse: formWithAnswers([
+        { questionKeySnapshot: 'applicationReason', answerDisplayText: '최초 신청 사유' },
+        { questionKeySnapshot: 'otherRequests', answerDisplayText: '최초 요청사항' },
+        { questionKeySnapshot: 'computerAvailability', answerDisplayText: '최초 안내' },
+        { questionKeySnapshot: 'previousYearParticipation', answerDisplayText: 'yes' },
+        { questionKeySnapshot: 'desiredEducationDate', answerDisplayText: '2026.03.10' },
+        {
+          questionKeySnapshot:
+            'program-application-institution-seed-sex-offense-consent-submission',
+          answerDisplayText: '성범죄 조회 요청 완료',
+        },
+      ]),
+      canonicalDetail: {
+        applicationReason: null,
+        otherRequests: null,
+        computerInRoom: null,
+        previousYearParticipation: null,
+        requestedScheduleMemo: null,
+        requestedGrade: null,
+        requestedClassCount: null,
+        requestedStudentCount: null,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse,
+    })
+
+    expect(hydrated.detail?.applicationReason).toBeUndefined()
+    expect(hydrated.detail?.otherRequests).toBeUndefined()
+    expect(hydrated.detail?.computerInSpace).toBeUndefined()
+    expect(hydrated.detail?.previousYearParticipation).toBeUndefined()
+    expect(hydrated.sessions).toBeUndefined()
+    // canonical DTO에 없는 동적 답변은 계속 표시할 수 있다.
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBe('성범죄 조회 요청 완료')
+  })
+
+  it('does not use form answers when the detail snapshot omits optional fields', () => {
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: {
+        ...baseRow,
+        detail: { educationType: '온라인', applicationReason: '목록 값' },
+      },
+      formResponse: formWithAnswers([
+        { questionKeySnapshot: 'applicationReason', answerDisplayText: '이전 사유' },
+        { questionKeySnapshot: 'teacherTel', answerDisplayText: '02-1234-5678' },
+        { questionKeySnapshot: 'teacherMobile', answerDisplayText: '010-1111-2222' },
+        { questionKeySnapshot: 'computerAvailability', answerDisplayText: 'PC 있음' },
+      ]),
+      canonicalDetail: {
+        // 선택 필드는 JSON에서 생략될 수 있으며, 생략도 상세 정본의 값 없음이다.
+        requestedEducationFormat: undefined,
+        applicationReason: undefined,
+        teacherTel: undefined,
+        teacherPhone: undefined,
+        computerInRoom: undefined,
+      },
+    })
+
+    expect(hydrated.detail?.educationType).toBeUndefined()
+    expect(hydrated.detail?.applicationReason).toBeUndefined()
+    expect(hydrated.detail?.teacherTel).toBeUndefined()
+    expect(hydrated.detail?.teacherMobile).toBeUndefined()
+    expect(hydrated.detail?.computerInSpace).toBeUndefined()
   })
 })

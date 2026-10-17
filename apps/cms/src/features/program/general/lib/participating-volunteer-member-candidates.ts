@@ -23,7 +23,7 @@ export type FetchParticipatingVolunteerMemberCandidatesParams = {
   keyword?: string
 }
 
-const CANDIDATE_PAGE_SIZE = 100
+const CANDIDATE_PAGE_SIZE = 20
 const MAX_CANDIDATE_PAGES = 50
 
 function mapRemoteCandidateItems(

@@ -129,6 +129,17 @@
 
 OpenAPI subset 필터: `/api/admin/form-templates*`, `/api/admin/form-template-versions*`, `/api/admin/form-responses*`, `/form-bindings`
 
+### 프로그램 `form-bindings` — 설문조사(SURVEY) 슬롯 (BE V29+)
+
+| 조건 | 활성 바인딩 |
+|------|-------------|
+| `formType=SURVEY` + `targetScope=SCHEDULE` + 동일 `targetScopeId` | **N건** (템플릿 버전이 다르면 각각 등록) |
+| 위와 동일 scope + **동일** `templateVersionId` 재등록 | `409` `PROGRAM_FORM_BINDING_ACTIVE_SLOT_CONFLICT` |
+| `SATISFACTION` / `LECTURE_EVALUATION` | 기존과 동일 — 슬롯당 활성 1건 |
+| `SURVEY` + `targetScope=PROGRAM` (일정 전체) | 슬롯당 활성 1건 |
+
+CMS 등록: `resolve-survey-poll-binding-target.ts` · 에러 문구: `getProgramFormBindingErrorMessage` (`get-general-program-api-error.ts`).
+
 ---
 
 ## localStorage 마이그레이션
@@ -136,7 +147,7 @@ OpenAPI subset 필터: `/api/admin/form-templates*`, `/api/admin/form-template-v
 | 단계 | 동작 |
 |------|------|
 | **양식 관리 (현재)** | remote GET/PUT SSOT. localStorage **미사용**. load 실패 → seed. save 실패 → UI 실패 |
-| Dev fallback | `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1` 때만 load 시 local 허용 |
+| Dev fallback | 없음 — remote 실패 시 seed hydrate |
 | 프로그램 등록 | `localOnly: true` → `cms.jakorea.writingFormTemplateSaves.v1` ([program-draft-local-storage-follow-up.md](./program-draft-local-storage-follow-up.md)) |
 
 상세: [form-template-remote-ssot.md](./form-template-remote-ssot.md)

@@ -14,6 +14,8 @@ export type EducationTargetKey = EducationTarget
 
 export type ProgramListItem = {
   id: string
+  /** 원장 프로그램 유형 — 목록 유형 필터용 */
+  programType?: string
   /**
    * 신청 양식 등 단일 분기에 쓰는 대표 탭.
    * 배지는 `categories` 전체를 그린다.
@@ -39,8 +41,10 @@ export type ProgramListItem = {
   applicationEndDate: string | null
   recruitmentPeriodLabel: string
   recruitmentStatus: RecruitmentStatus
-  /** 도메인 education-target value — 모집대상·교육대상 필터 */
+  /** 도메인 education-target value — 표시·단일 fallback (복수일 때 첫 코드) */
   educationTargetKey: EducationTargetKey | null
+  /** `educationTargets` 전체 — 목록 모집대상·교육대상 필터(OR 포함) */
+  educationTargetKeys: EducationTargetKey[]
   educationTargetLabel: string
   educationForm: EducationForm
   educationFormLabel: string
@@ -102,7 +106,7 @@ export type ProgramLabeledValue = {
   value: string
 }
 
-/** 프로그램 상세 「면접 진행 가능 일정」 — Portal `volunteerInterviewSchedule` */
+/** Portal `volunteerInterviewSchedule` (신청 폼 등 — 프로그램 상세 세부내용에는 비노출) */
 export type ProgramVolunteerInterviewScheduleOption = {
   id: string
   label: string
@@ -215,6 +219,8 @@ export type ProgramDetail = ProgramListItem & {
   educationScheduleLines: string[]
   /** 기간 지정 지망 상한. 없으면 1 */
   maxPreferredScheduleCount: number
+  /** 기간 지정 — 희망 차시 셀렉 상한 (모집 1일 최대 차시). */
+  maxSessionsPerDay?: number
   /** 커리큘럼형 차시/회차 (일정형이면 빈 배열) */
   sessions: ProgramSession[]
   /** 일정형 세부·행사 일정 (커리큘럼형이면 빈 배열) */
@@ -224,8 +230,8 @@ export type ProgramDetail = ProgramListItem & {
   /** 세부내용 「교육 일정 N」 카드 — 보통 educationScheduleLines */
   educationSchedules: ProgramLabeledValue[]
   /**
-   * 봉사자 모집 상세 「면접 진행 가능 일정」.
    * VOLUNTEER 면접 운영 행의 `volunteerInterviewSchedule`이 있을 때만.
+   * 프로그램 상세 UI에는 노출하지 않음(신청서 면접 일정 단락과 분리).
    * `schedules[]`·`educationScheduleLines`·면접 기간만으로 만들지 않는다.
    */
   volunteerInterviewSchedule?: ProgramVolunteerInterviewSchedule
@@ -257,6 +263,8 @@ export type ProgramsListParams = {
   /** 상단 탭 — 프로그램 유형 (청소년·기관·강사) */
   category: ProgramCategory
   q: string
+  /** 원장 프로그램 유형 필터 (예: UJAT) */
+  programType: string
   /** 모집대상 필터 — 초등~성인 (탭과 분리) */
   recruitmentTarget: string
   recruitmentStatus: string

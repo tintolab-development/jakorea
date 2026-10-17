@@ -27,7 +27,7 @@ export type ApplyUjatVolunteerBasicInfoValues = {
   major: string
   applicationRoute: string
   applicationRouteOther: string
-  applicationType: UjatProgramApplicationVolunteerApplicationType
+  applicationType: UjatProgramApplicationVolunteerApplicationType | ''
 }
 
 type ApplyUjatVolunteerBasicInfoProps = {
@@ -53,7 +53,7 @@ export function emptyUjatVolunteerBasicInfo(): ApplyUjatVolunteerBasicInfoValues
     major: '',
     applicationRoute: '',
     applicationRouteOther: '',
-    applicationType: 'new',
+    applicationType: '',
   }
 }
 
@@ -70,6 +70,7 @@ export function findIncompleteUjatVolunteerBasicInfoMessage(
   ) {
     return '기타 지원 경로를 입력해 주세요.'
   }
+  if (!values.applicationType) return '지원 형태를 선택해 주세요.'
   return null
 }
 

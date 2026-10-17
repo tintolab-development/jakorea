@@ -16,13 +16,30 @@ function normalizeScheduleTime(raw: string): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+export type PreferredScheduleBlocksMapOptions = {
+  /** 일정형 단일 기간 — 희망 교육일만 */
+  dateOnly?: boolean
+}
+
 export function toPortalPreferredScheduleBlocks(
   blocks: readonly ApplyPreferredScheduleBlock[],
+  options?: PreferredScheduleBlocksMapOptions,
 ): PortalPreferredScheduleBlock[] {
   const out: PortalPreferredScheduleBlock[] = []
   let rank = 1
   for (const block of blocks) {
     const date = block.date.trim()
+    if (options?.dateOnly) {
+      if (!date) continue
+      out.push({
+        preferenceRank: rank,
+        date,
+        sessionCount: 1,
+        sessionTimes: [],
+      })
+      rank += 1
+      continue
+    }
     const classPeriod = block.classPeriod.trim()
     const startTime = normalizeScheduleTime(block.startTime)
     const endTime = normalizeScheduleTime(block.endTime)
@@ -53,14 +70,16 @@ export function toPortalPreferredScheduleBlocks(
  */
 export function toPreferredScheduleAnswerValue(
   blocks: readonly ApplyPreferredScheduleBlock[],
+  options?: PreferredScheduleBlocksMapOptions,
 ): PortalPreferredScheduleBlock[] | null {
-  const mapped = toPortalPreferredScheduleBlocks(blocks)
+  const mapped = toPortalPreferredScheduleBlocks(blocks, options)
   return mapped.length > 0 ? mapped : null
 }
 
 /** 화면 검증 — 날짜만 있고 교시·시간이 비면 제출 차단 */
 export function findIncompletePreferredScheduleMessage(
   blocks: readonly ApplyPreferredScheduleBlock[],
+  options?: PreferredScheduleBlocksMapOptions,
 ): string | null {
   const hasPartial = blocks.some(block => {
     const date = block.date.trim()
@@ -68,13 +87,19 @@ export function findIncompletePreferredScheduleMessage(
     const startTime = normalizeScheduleTime(block.startTime)
     const endTime = normalizeScheduleTime(block.endTime)
     const any = Boolean(date || classPeriod || startTime || endTime)
+    if (options?.dateOnly) {
+      const complete = Boolean(date)
+      return any && !complete
+    }
     const complete = Boolean(date && classPeriod && startTime && endTime)
     return any && !complete
   })
   if (hasPartial) {
-    return '진행 희망 교육 일정에 날짜·교시·시작/종료 시간을 모두 입력해 주세요.'
+    return options?.dateOnly
+      ? '진행 희망 교육 일정에 희망 교육일을 입력해 주세요.'
+      : '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.'
   }
-  if (toPortalPreferredScheduleBlocks(blocks).length === 0) {
+  if (toPortalPreferredScheduleBlocks(blocks, options).length === 0) {
     return '진행 희망 교육 일정을 한 개 이상 입력해 주세요.'
   }
   return null

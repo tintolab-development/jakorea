@@ -1,11 +1,213 @@
-.panel {
+.shell {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-32);
+  width: 100%;
+  min-width: 0;
+  min-height: 560px;
+}
+
+.unsupportedShell {
   display: flex;
   width: 100%;
   min-width: 0;
+  min-height: 560px;
+  align-items: flex-start;
+}
+
+.stepMain {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.stepSide {
+  display: flex;
+  flex-shrink: 0;
+  width: 360px;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.stepHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.stepTitle {
+  margin: 0;
+}
+
+.stepLabel {
+  color: var(--Color-primary-500_resilient_turquoise, #01a1af);
+}
+
+.stepDescription {
+  margin: 0;
+}
+
+.uploadHint {
+  margin: 0;
+}
+
+.rosterActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-16);
 }
 
-.title {
+.rosterActionGroup,
+.portraitActionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.buttonInner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.certificateIllustration {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.hiddenFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.contentBox,
+.contentBoxEmpty {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 280px;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+}
+
+.contentBox {
+  padding: var(--spacing-24) var(--spacing-32);
+  gap: var(--spacing-16);
+  overflow-y: auto;
+}
+
+.contentBoxEmpty,
+.portraitBoxEmpty {
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-48);
+}
+
+.portraitBox,
+.portraitBoxEmpty {
+  display: flex;
+  min-height: 200px;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: 107px 92px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+}
+
+.portraitBox {
+  padding: var(--spacing-24);
+  justify-content: center;
+}
+
+.portraitEmptyIllustration {
+  display: block;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  margin-bottom: var(--spacing-16);
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 196px;
+}
+
+.illustration {
+  display: block;
+  width: 100px;
+  height: 100px;
+  margin-bottom: var(--spacing-16);
+}
+
+.rosterTableBox {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-self: flex-start;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+}
+
+.rosterTableTitle {
   margin: 0;
+  padding: var(--spacing-20) var(--spacing-20) var(--spacing-12);
+}
+
+.rosterDataTable {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+@media (--bp-below-pc) {
+  .shell {
+    flex-direction: column;
+    gap: var(--spacing-48);
+    min-height: 0;
+  }
+
+  .stepSide {
+    width: 100%;
+  }
+
+  .rosterActionRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rosterActionGroup,
+  .portraitActionGroup {
+    width: 100%;
+  }
+
+  .rosterActionGroup :global(button),
+  .portraitActionGroup :global(button) {
+    flex: 1;
+    min-width: 0;
+  }
 }

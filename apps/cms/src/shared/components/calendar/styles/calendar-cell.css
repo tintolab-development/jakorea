@@ -8,10 +8,11 @@
   width: 100%;
   min-width: var(--calendar-cell-min-width, 116px);
   min-height: var(--calendar-cell-min-height, 124px);
-  height: var(--calendar-cell-min-height, 124px);
-  max-height: var(--calendar-cell-min-height, 124px);
+  height: auto;
+  max-height: none;
   padding: 8px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   background: var(--main-WT, #fff);
   box-sizing: border-box;
 }
@@ -146,19 +147,20 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
-  flex: 1 1 auto;
+  gap: 5px;
+  flex: 0 0 auto;
   min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   margin-top: 6px;
 }
 
-/* 이벤트 strip 래퍼 — 날짜 원 대신 여기서 높이 소비·클리핑 */
-.calendar-cell-events > div {
-  flex: 0 0 auto;
+/* 이벤트 strip 래퍼 — 높이 부족 시 칩만 줄이고 「외 N개」는 유지 */
+.calendar-cell-events > div:not(.calendar-event-more) {
+  flex: 0 1 auto;
   min-width: 0;
+  min-height: 0;
   width: 100%;
+  overflow: hidden;
 }
 
 .calendar-cell--selected .calendar-cell-date {
@@ -170,29 +172,34 @@
 .calendar-event {
   display: flex;
   align-items: center;
+  gap: var(--Spacing-6, 6px);
   flex: 0 0 auto;
-  height: 24px;
-  min-height: 24px;
-  max-height: 24px;
-  padding: 0 8px;
+  min-height: 0;
+  padding: var(--Spacing-4, 4px) var(--Spacing-6, 6px);
   box-sizing: border-box;
-  border: none;
-  border-radius: 2px;
+  border: 1px solid var(--Border-alpha-06, rgba(61, 61, 61, 0.06));
+  border-radius: var(--Radius-4, 4px);
   cursor: pointer;
   transition: filter 0.2s;
   min-width: 0;
   width: 100%;
   max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-family-primary, Pretendard, sans-serif);
 }
 
 .calendar-event-title {
+  flex: 1 0 0;
+  min-width: 0;
   font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-weight: 500;
   line-height: 130%; /* 16.9px */
-  color: var(--main-BK, #3d3d3d);
+  color: var(--Netural-black, #3d3d3d);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
 
 .calendar-event-title--with-divider {
@@ -230,7 +237,7 @@
 .calendar-event-title__right {
   flex: 1 1 auto;
   min-width: 0;
-  color: var(--main-BK, #3d3d3d);
+  color: inherit;
   opacity: 0.6;
   line-height: 130%;
   overflow: hidden;
@@ -240,14 +247,19 @@
 
 .calendar-event-more {
   flex: 0 0 auto;
-  overflow: hidden;
-  color: var(--main-BK, #3d3d3d);
+  flex-shrink: 0;
+  align-self: stretch;
+  margin-top: auto;
+  overflow: visible;
+  padding: 0 4px 1px;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-family: var(--font-family-primary, Pretendard, sans-serif);
+  font-size: 13px;
   font-style: normal;
   font-weight: 500;
-  line-height: 130%; /* 15.6px */
-  opacity: 0.5;
+  line-height: 1.35;
+  min-height: calc(13px * 1.35);
   text-align: left;
 }

@@ -24,6 +24,7 @@ import {
   updateInquiryAnswerRemote,
   updateInquiryCategoryRemote,
 } from '@/features/posts/api/inquiries/inquiries-api-client'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type {
   AdminInquiryDetail,
   AdminInquiryRow,
@@ -110,8 +111,10 @@ export async function deleteInquiries(ids: string[]): Promise<void> {
 
 export async function getInquiryCategories(): Promise<CategoryRow[]> {
   assertInquiriesRemoteReady()
-  const dto = await fetchInquiryCategoriesRemote({ page: 0, size: 100 })
-  return mapCategoryItems(dto.items)
+  const items = await fetchAllApiPages((page, size) =>
+    fetchInquiryCategoriesRemote({ page, size })
+  )
+  return mapCategoryItems(items)
 }
 
 export async function createInquiryCategory(name: string): Promise<CategoryRow | null> {

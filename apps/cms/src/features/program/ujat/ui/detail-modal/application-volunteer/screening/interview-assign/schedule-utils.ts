@@ -7,8 +7,8 @@ const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 import { getKoreanPublicHolidayDateKeysSync } from '@/features/program/ujat/api/korean-public-holidays'
 
-/** @deprecated `getKoreanPublicHolidayDateKeysSync` / `useKoreanPublicHolidayDateKeys` — mock 상수 제거 */
-export function getMockHolidayDateKeys(): Set<string> {
+/** 면접·일정 UI — 동기 공휴일 집합(API prefetch 후 채움, 미로드 시 빈 Set) */
+export function getPublicHolidayDateKeysForSchedule(): Set<string> {
   return getKoreanPublicHolidayDateKeysSync()
 }
 
@@ -203,37 +203,46 @@ export function resolveInterviewAssignModalCalendarState(
   }
 }
 
+/**
+ * 면접일 배정 모달 — 해당일 시간대 목록.
+ * SSOT = 프로그램 면접 가능 시간(`slotsByDateKey`). 신청 `interviewAvailability`로 제한하지 않는다.
+ */
 export function getSlotsForDate(
   schedule: ParsedInterviewSchedule,
   dateKey: string,
-  applicant?: UjatVolunteerApplicantRow
+  _applicant?: UjatVolunteerApplicantRow
 ): InterviewAssignSlot[] {
-  const programSlots = schedule.slotsByDateKey.get(dateKey) ?? []
-  if (!applicant) return programSlots
-
-  const storedLabel = formatStoredInterviewDateLabel(dayjs(dateKey))
-  const dayAvailability = applicant.interviewAvailability.find(
-    day =>
-      day.dateLabel === storedLabel ||
-      parseUjatInterviewDateLabel(day.dateLabel)?.format('YYYY-MM-DD') === dateKey
-  )
-  /** 봉사자가 신청한 시간대만 노출 — 해당일 availability 없으면 빈 목록 */
-  if (!dayAvailability) return []
-
-  const allowed = new Set(dayAvailability.slots.map(normalizeTimeRangeKey))
-  const fromProgram = programSlots.filter(slot => allowed.has(slot.timeRange))
-  if (fromProgram.length > 0) return fromProgram
-
-  /** 프로그램 슬롯과 교집합이 없어도 신청 시간대는 노출 */
-  return [...allowed].map(timeRange => ({
-    key: `${dateKey}|${timeRange}`,
-    timeRange,
-    displayTimeRange: formatDisplayTimeRange(timeRange),
-  }))
+  if (!schedule.clickableDateKeys.has(dateKey)) return []
+  return schedule.slotsByDateKey.get(dateKey) ?? []
 }
 
 export function formatInterviewSummary(date: Dayjs, timeRange: string): string {
   return `${formatInterviewSummaryDate(date)} ${formatDisplayTimeRange(timeRange)}`
+}
+
+/** 면접일 배정 모달 「배정된 일정」 요약 — `2026.03.23(월) 09:00 ~ 09:30` */
+/** 면접 진행 기간 내 프로그램 지정 불가일(토·일·공휴·지정일 등) — 가능일 집합의 여집합 */
+export function buildProgramInterviewUnavailableDateKeys(
+  schedule: ParsedInterviewSchedule
+): Set<string> {
+  const keys = new Set<string>()
+  let cursor = schedule.rangeStart.startOf('day')
+  const end = schedule.rangeEnd.startOf('day')
+  while (!cursor.isAfter(end, 'day')) {
+    const key = cursor.format('YYYY-MM-DD')
+    if (!schedule.clickableDateKeys.has(key)) keys.add(key)
+    cursor = cursor.add(1, 'day')
+  }
+  return keys
+}
+
+export function formatInterviewAssignScheduledSummary(date: Dayjs, timeRange: string): string {
+  const weekday = WEEKDAY_KO[date.day()]
+  const y = date.year()
+  const m = String(date.month() + 1).padStart(2, '0')
+  const d = String(date.date()).padStart(2, '0')
+  const time = normalizeTimeRangeKey(timeRange)
+  return `${y}.${m}.${d}(${weekday}) ${time}`
 }
 
 function dateLabelsMatch(a: string, b: string): boolean {

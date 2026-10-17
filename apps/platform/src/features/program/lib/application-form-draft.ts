@@ -4,6 +4,7 @@
  */
 
 import {
+  clearWritingFormFillPreviewAnswers,
   fieldCellValueToPlainText,
   normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
@@ -17,9 +18,14 @@ import {
 import { migrateProgramParticipantApplicationParagraphs } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { resolveApplicationAnswerKey } from './application-answer-key.ts'
 import {
+  isApplicationBasicInfoParagraphId,
+  isApplicationGuidanceParagraphId,
+  isApplicationSexOffenseInquiryParagraphId,
+  isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
   isPortalDynamicOptionArrayParagraphId,
 } from './apply-form-paragraph-ids.ts'
+import { remapInstitutionSchedulePreviewSlotIds } from './apply-form-schedule.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -89,10 +95,9 @@ function conditionValueSet(value: unknown): Set<string> {
   return out
 }
 
-/** `runtimeContext.audienceApplication.conditionalQuestions` — 다른 문항 답에 따라 숨겨지는 문항 */
-export function collectRuntimeConditionalQuestions(form: unknown): RuntimeConditionalQuestion[] {
-  const document = coerceApplicationFormDocument(form)
-  const runtime = document?.runtimeContext
+function collectAudienceRuntimeConditionalQuestions(
+  runtime: unknown
+): RuntimeConditionalQuestion[] {
   if (!isRecord(runtime)) return []
   const audience = runtime.audienceApplication
   if (!isRecord(audience) || !isRecord(audience.conditionalQuestions)) return []
@@ -108,6 +113,52 @@ export function collectRuntimeConditionalQuestions(form: unknown): RuntimeCondit
     })
   }
   return out
+}
+
+function isSexOffenseRequestedRuntimeCondition(condition: Record<string, unknown>): boolean {
+  return String(condition.conditionKind ?? '').trim().toUpperCase() === 'SEX_OFFENSE_CONSENT_REQUESTED'
+}
+
+/** 단락 `runtimeCondition` — audienceApplication.conditionalQuestions 가 없어도 본다. */
+function collectParagraphRuntimeConditionalQuestions(
+  paragraphs: unknown
+): RuntimeConditionalQuestion[] {
+  if (!Array.isArray(paragraphs)) return []
+  const out: RuntimeConditionalQuestion[] = []
+  for (const paragraph of paragraphs) {
+    if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) continue
+    const condition = paragraph.runtimeCondition
+    if (!isRecord(condition) || typeof condition.dependsOnQuestionKey !== 'string') continue
+    const questionKey = paragraph.id.trim()
+    const sexOffenseCondition = isSexOffenseRequestedRuntimeCondition(condition)
+    if (
+      !sexOffenseCondition &&
+      !isApplicationSexOffenseInquiryParagraphId(questionKey)
+    ) {
+      continue
+    }
+    out.push({
+      questionKey,
+      dependsOnQuestionKey: condition.dependsOnQuestionKey.trim(),
+      dependsOnField: 'submissionRequest',
+      visibleValues: new Set(['REQUEST']),
+      hiddenValues: new Set(['NO_SUBMIT']),
+    })
+  }
+  return out
+}
+
+/** `runtimeContext.audienceApplication.conditionalQuestions` + 단락 `runtimeCondition` */
+export function collectRuntimeConditionalQuestions(form: unknown): RuntimeConditionalQuestion[] {
+  const document = coerceApplicationFormDocument(form)
+  const byKey = new Map<string, RuntimeConditionalQuestion>()
+  for (const item of collectAudienceRuntimeConditionalQuestions(document?.runtimeContext)) {
+    byKey.set(item.questionKey, item)
+  }
+  for (const item of collectParagraphRuntimeConditionalQuestions(document?.paragraphs)) {
+    byKey.set(item.questionKey, item)
+  }
+  return [...byKey.values()]
 }
 
 /**
@@ -677,12 +728,13 @@ export function writingFormDraftFromApplicationForm(
    * runtime hidden 은 제출 키에서만 제외한다 (`buildApplicationAnswersFromDraft`).
    */
   const normalized = normalizeWritingFormDraft(document as unknown as WritingFormDraft)
+  const cleared = clearWritingFormFillPreviewAnswers(normalized)
   const withAnswers =
     !draftAnswers || Object.keys(draftAnswers).length === 0
-      ? normalized
+      ? cleared
       : {
-          ...normalized,
-          paragraphs: normalized.paragraphs.map(paragraph => {
+          ...cleared,
+          paragraphs: cleared.paragraphs.map(paragraph => {
             const key = resolveApplicationAnswerKey(paragraph)
             if (!key || !(key in draftAnswers)) return paragraph
             return mergeAnswerIntoParagraph(paragraph, draftAnswers[key])
@@ -692,7 +744,24 @@ export function writingFormDraftFromApplicationForm(
 }
 
 function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
+  if (
+    isApplicationSexOffenseInquiryParagraphId(paragraph.id) ||
+    isApplicationSexOffenseSubmissionParagraphId(paragraph.id) ||
+    isApplicationBasicInfoParagraphId(paragraph.id) ||
+    isApplicationGuidanceParagraphId(paragraph.id)
+  ) {
+    /** sidecar 객체는 override 가 정본. 표 fieldDataRows 를 answers로 보내지 않는다. */
+    return undefined
+  }
   if ('showBottomConsent' in paragraph && paragraph.showBottomConsent) {
+    /** BE는 제3자 동의 등 표 본문(`fieldDataRows`)과 하단 동의를 함께 검증한다. */
+    if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
+      return {
+        fieldDataRows: 'fieldDataRows' in paragraph ? paragraph.fieldDataRows : [],
+        dataRows: 'dataRows' in paragraph ? paragraph.dataRows : [],
+        bottomConsent: paragraph.bottomConsent ?? null,
+      }
+    }
     return { bottomConsent: paragraph.bottomConsent ?? null }
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'short_essay') {
@@ -708,9 +777,10 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
     /** 단일 선택은 라디오가 `selectedPreviewSingleId`에 쓴다. 서버는 선택지 값 하나를 받는다. */
     if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
-    return paragraph.selectedPreviewMultipleIds ?? []
+    return remapInstitutionSchedulePreviewSlotIds(paragraph.selectedPreviewMultipleIds ?? [])
   }
   if (isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
+    if (!hasDynamicOptionArrayState(paragraph)) return undefined
     /** 면접·봉사 일정 placeholder — BE는 option id 문자열 배열만 받는다. */
     if ('selectedPreviewMultipleIds' in paragraph) {
       return paragraph.selectedPreviewMultipleIds ?? []
@@ -734,6 +804,20 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     }
   }
   return undefined
+}
+
+/** CMS seed placeholder에는 동적 선택지 답변 키를 만들지 않는다. */
+function hasDynamicOptionArrayState(paragraph: WritingFormParagraph): boolean {
+  const row = paragraph as unknown as Record<string, unknown>
+  if ('selectedPreviewMultipleIds' in row || 'selectedPreviewSingleId' in row) return true
+  if (row.runtimeResolved === true) return true
+  if (typeof row.runtimeInputMode === 'string' && row.runtimeInputMode.trim().length > 0) {
+    return true
+  }
+  return (
+    (Array.isArray(row.items) && row.items.length > 0) ||
+    (Array.isArray(row.options) && row.options.length > 0)
+  )
 }
 
 export function isRequiredParagraph(paragraph: WritingFormParagraph): boolean {
@@ -772,6 +856,14 @@ export function buildApplicationAnswersFromDraft(
       continue
     }
     if (isRequiredParagraph(paragraph) && !isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
+      if (
+        isApplicationSexOffenseInquiryParagraphId(paragraph.id) ||
+        isApplicationSexOffenseSubmissionParagraphId(paragraph.id) ||
+        isApplicationBasicInfoParagraphId(paragraph.id) ||
+        isApplicationGuidanceParagraphId(paragraph.id)
+      ) {
+        continue
+      }
       answers[key] = {}
     }
   }

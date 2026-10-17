@@ -1,10 +1,14 @@
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_PROGRAM_REGISTRATION_PHASE_HINT,
+  UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS,
+  UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS,
   UJAT_RECRUIT_TAB_KEYS,
   UJAT_RECRUIT_TAB_LABELS,
+  applicationTabKeyFromRegistrationStep,
   getUjatProgramRegistrationPhase,
   recruitTabKeyFromRegistrationStep,
+  registrationStepFromApplicationTab,
   registrationStepFromRecruitTab,
   type UjatProgramRegistrationStepKey,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
@@ -25,6 +29,26 @@ export function UjatProgramRegistrationBodyHeader({
       <p className="registration-body-header__hint">
         {UJAT_PROGRAM_REGISTRATION_PHASE_HINT.program}
       </p>
+    )
+  }
+
+  if (phase === 'application') {
+    const applicationTab =
+      applicationTabKeyFromRegistrationStep(activeStep) ??
+      UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS[0]
+    return (
+      <CmsTextTabs
+        className="registration-body-header__tabs"
+        variant="list"
+        activeKey={applicationTab}
+        onChange={tab => onSelectStep(registrationStepFromApplicationTab(tab))}
+        wrap
+        ariaLabel="UJAT 신청 정보"
+        items={UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS.map(key => ({
+          key,
+          label: UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS[key],
+        }))}
+      />
     )
   }
 

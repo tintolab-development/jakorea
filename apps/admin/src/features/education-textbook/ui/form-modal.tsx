@@ -17,6 +17,7 @@ import {
   DEFAULT_TEXTBOOK_AUTHOR,
   DEFAULT_TEXTBOOK_THUMBNAIL,
 } from '@/features/education-textbook/lib/defaults'
+import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -89,9 +90,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function formatRegisteredDateTime(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD(ddd) HH:mm')
+  return formatDateTimeDotWithKoreanWeekday(iso)
 }
 
 function ThumbnailFileIcon({ className }: { className?: string }) {

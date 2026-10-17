@@ -25,6 +25,10 @@ import {
   formatAppDatepickerRangePlain,
 } from './app-datepicker'
 import type { AppDatePickerRef } from './app-datepicker'
+import {
+  applySplitDateRangeEndChange,
+  applySplitDateRangeStartChange,
+} from '@/shared/lib/split-date-range-on-change'
 import './cms-datepicker.css'
 
 export type CmsDatePickerRef = AppDatePickerRef
@@ -188,19 +192,13 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
       onChange?.([d, rangeEnd], ['', ''])
       return
     }
-    if (d && end && d.isAfter(end)) {
-      onChange?.([d, d], ['', ''])
-    } else {
-      onChange?.([d, end], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeStartChange(end, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const handleEndChange = (d: Dayjs | null) => {
-    if (d && start && d.isBefore(start)) {
-      onChange?.([d, start], ['', ''])
-    } else {
-      onChange?.([start, d], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeEndChange(start, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const wrapperCn = [

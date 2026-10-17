@@ -30,4 +30,24 @@ page?: number;
  * @maximum 100
  */
 size?: number;
+/**
+ * 기관명 부분 일치. keyword와 별도
+ */
+organizationName?: string;
+/**
+ * 교사명 부분 일치. keyword와 별도
+ */
+teacherName?: string;
+/**
+ * 총 학급 수 정확 일치
+ */
+requestedClassCount?: number;
+/**
+ * UJAT 교육 지역 코드
+ */
+educationRegionCode?: string;
+/**
+ * 해당 일정(KST)에 배정된 기관
+ */
+scheduleDate?: string;
 };

@@ -1,0 +1,28 @@
+{
+  "fixtureId": "general-organization-nested_overlay_conflict",
+  "variant": "general",
+  "label": "nested_overlay_conflict",
+  "program": {
+    "id": "parity-general-org-002",
+    "title": "Parity conflict",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "generalParticipantTypes": ["school_institution"],
+    "generalProgramAudience": "organization",
+    "description": "column-description",
+    "registrationOverlay": {
+      "recruit.detailInfo.programDescription": "overlay-participant-desc",
+      "recruit.individual.notes": "overlay-leftover"
+    },
+    "generalCommonInfo": {
+      "participantRecruitmentInfo": {
+        "programDescription": "nested-participant-desc",
+        "recruitmentGuide": "nested-guide"
+      }
+    }
+  }
+}

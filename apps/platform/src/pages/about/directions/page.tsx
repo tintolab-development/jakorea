@@ -4,7 +4,7 @@ import {
   KakaoMapEmbed,
   usePublicDirections,
 } from '@/features/directions'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function DirectionsPage() {
@@ -26,9 +26,7 @@ export function DirectionsPage() {
         </header>
 
         {isPending ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            오시는 길 정보를 불러오는 중입니다.
-          </PFText>
+          <PFLoadingSpinner centered label="오시는 길 정보를 불러오는 중" />
         ) : isError ? (
           <div className={styles.status}>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

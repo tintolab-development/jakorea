@@ -1,6 +1,6 @@
 import { matchesEducationRecordFilter } from '@/features/education-record/lib/match-education-record-filter'
 import {
-  getMockEducationRecordRows,
+  getEmptyEducationRecordRows,
   mapPerformanceRecordToRow,
 } from '@/features/education-record/api/adapters/performance-adapters'
 import {
@@ -31,7 +31,7 @@ export async function getPerformanceRecordList(
     return records.map(mapPerformanceRecordToRow).filter(row => row.id.length > 0)
   }
 
-  return getMockEducationRecordRows().filter(row => matchesEducationRecordFilter(row, filters))
+  return getEmptyEducationRecordRows().filter(row => matchesEducationRecordFilter(row, filters))
 }
 
 /** 합계 탭 — remote: GET /api/admin/performance/summary, mock: 목록 행 클라이언트 집계. 목록과 동일 솔팅. */
@@ -46,6 +46,6 @@ export async function getPerformanceSummaryTabView(
     return mapPerformanceStatsToSummaryTabView(dto)
   }
   return buildSummaryTabViewFromRows(
-    getMockEducationRecordRows().filter(row => matchesEducationRecordFilter(row, filters))
+    getEmptyEducationRecordRows().filter(row => matchesEducationRecordFilter(row, filters))
   )
 }

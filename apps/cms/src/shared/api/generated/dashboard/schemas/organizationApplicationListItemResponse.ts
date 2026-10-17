@@ -17,30 +17,21 @@ export interface OrganizationApplicationListItemResponse {
   programName?: string;
   programType?: string;
   recruitmentId?: number;
-  /**
-     * 상·하반기. 학교 모집은 연 1회라 null. 명시적 recruit_term이 있는 경우만 FIRST_HALF|SECOND_HALF
-     * @nullable
-     */
+  /** 상·하반기. 학교 모집은 연 1회라 null. 명시적 recruit_term이 있는 경우만 FIRST_HALF|SECOND_HALF */
   recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
   organizationId?: number;
   organizationName?: string;
   teacherMemberId?: number;
   teacherName?: string;
   applicationStatus?: string;
-  /**
-     * UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null
-     * @nullable
-     */
+  /** UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null */
   temporaryAssignmentStatus?: string | null;
   requestedStudentCount?: number;
   requestedClassCount?: number;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt은 바뀌지 않습니다.
-     * @nullable
-     */
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt은 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
   rejectReason?: string;
   availableActions?: string[];
@@ -48,47 +39,26 @@ export interface OrganizationApplicationListItemResponse {
   defaultScheduleName?: string;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
-  /**
-     * 신청 학년 우선. requested_grade 원문(예: 1, 학년 접미사 없음). 비어 있으면 배정/명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null.
-     * @nullable
-     */
+  /** 신청 학년 우선. requested_grade 원문(예: 1, 학년 접미사 없음). 비어 있으면 배정/명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null. */
   grade?: string | null;
   regionSido?: string;
   regionSigungu?: string;
   sessions?: Session[];
-  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 학급·회차 확정 전에도 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
+  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   mergeGroupId?: number;
   mergeStatus?: string;
   mergeLead?: boolean;
-  /**
-     * 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.
-     * @nullable
-     */
+  /** 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null. */
   previousYearParticipation?: OrganizationApplicationListItemResponsePreviousYearParticipation;
-  /**
-     * 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null.
-     * @nullable
-     */
+  /** 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null. */
   affiliatedFinancialCompany?: string | null;
-  /**
-     * UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 없으면 null. regionSido로 대체하지 않음
-     * @nullable
-     */
+  /** UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 없으면 null. regionSido로 대체하지 않음 */
   educationRegionCode?: string | null;
-  /**
-     * UJAT 일정 확인 상태. 저장값이 없으면 null. institution_checking으로 기본값을 넣지 않음
-     * @nullable
-     */
+  /** UJAT 일정 확인 상태. 저장값이 없으면 null. institution_checking으로 기본값을 넣지 않음 */
   scheduleConfirmStatus?: OrganizationApplicationListItemResponseScheduleConfirmStatus;
-  /**
-     * 신청에 배정된 강사 수. 0명이면 null
-     * @nullable
-     */
+  /** 신청에 배정된 강사 수. 0명이면 null */
   assignedInstructorCount?: number | null;
-  /**
-     * 운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null
-     * @nullable
-     */
+  /** 운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null */
   operatingStudentCount?: number | null;
 }

@@ -18,10 +18,12 @@ import {
   getApiErrorCode,
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
+import dayjs from 'dayjs'
 import {
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 
 /** 프로그램 설문 바인딩 1건의 양식 수정 대상 */
 export type ProgramSurveyFormEditTarget = {
@@ -46,11 +48,109 @@ export function buildProgramSurveyFormEditTarget(
 export const PROGRAM_SURVEY_FORM_EDIT_LOCKED_MESSAGE =
   '진행 중이거나 응답이 있는 설문은 양식을 수정할 수 없습니다.'
 
-/** 서버 교체 가드와 동일: 진행 전 + 응답 0건 */
-export function isProgramSurveyFormEditable(
-  binding: Pick<ProgramFormBindingResponse, 'progressStatus' | 'submittedCount'> | undefined
+function bindingHasSubmissionPeriod(
+  binding: Pick<ProgramFormBindingResponse, 'submissionStartAt' | 'submissionEndAt'>
 ): boolean {
-  return binding?.progressStatus === 'BEFORE_START' && (binding.submittedCount ?? 0) === 0
+  return Boolean(binding.submissionStartAt?.trim() || binding.submissionEndAt?.trim())
+}
+
+/** 서버 `availableActions` 우선, 없으면 progressStatus·응답 수로 판단 */
+export function canSwapProgramSurveyFormBinding(
+  binding: ProgramFormBindingResponse | undefined
+): boolean {
+  if (!binding) return false
+  if ((binding.submittedCount ?? 0) > 0) return false
+  const actions = binding.availableActions
+  if (Array.isArray(actions) && actions.length > 0) {
+    return actions.includes('UPDATE_TEMPLATE')
+  }
+  return binding.progressStatus === 'BEFORE_START'
+}
+
+/** @deprecated `canSwapProgramSurveyFormBinding` 사용 */
+export function isProgramSurveyFormEditable(
+  binding: Pick<ProgramFormBindingResponse, 'progressStatus' | 'submittedCount' | 'availableActions'> | undefined
+): boolean {
+  return canSwapProgramSurveyFormBinding(binding as ProgramFormBindingResponse | undefined)
+}
+
+export function resolveProgramSurveyFormSaveBlockedMessage(
+  binding: ProgramFormBindingResponse | undefined
+): string {
+  if (!binding) {
+    return '설문 연결 정보를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
+  }
+  const submitted = binding.submittedCount ?? 0
+  if (submitted > 0) {
+    return `응답이 ${submitted}건 있는 설문은 양식을 수정할 수 없습니다.`
+  }
+  if (binding.progressStatus === 'FINISHED') {
+    return '종료된 설문은 양식을 수정할 수 없습니다.'
+  }
+  const start = binding.submissionStartAt ? dayjs(binding.submissionStartAt) : null
+  if (start?.isValid() && !dayjs().isBefore(start)) {
+    return `작성 기간이 시작된 설문(${formatAppDatepickerDisplay(start)}~)은 양식을 수정할 수 없습니다. 시작일을 오늘 이후로 바꾼 뒤 저장해 주세요.`
+  }
+  return PROGRAM_SURVEY_FORM_EDIT_LOCKED_MESSAGE
+}
+
+async function prepareBindingForSurveyFormSave(
+  programId: string,
+  bindingId: string,
+  draft: WritingFormDraft,
+  initialBinding: ProgramFormBindingResponse | undefined
+): Promise<
+  | { ok: true; binding: ProgramFormBindingResponse }
+  | { ok: false; message: string; refetchBindings: boolean }
+> {
+  let binding = initialBinding
+  if (canSwapProgramSurveyFormBinding(binding)) {
+    return { ok: true, binding: binding! }
+  }
+  if ((binding?.submittedCount ?? 0) > 0) {
+    return {
+      ok: false,
+      message: resolveProgramSurveyFormSaveBlockedMessage(binding),
+      refetchBindings: true,
+    }
+  }
+  if (binding == null || bindingHasSubmissionPeriod(binding)) {
+    return {
+      ok: false,
+      message: resolveProgramSurveyFormSaveBlockedMessage(binding),
+      refetchBindings: true,
+    }
+  }
+
+  // 등록 직후: submission 기간이 null이면 서버는 IN_PROGRESS지만 양식 최초 저장은 가능해야 한다.
+  const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
+  const period = readSurveySubmissionPeriodFromSchema(schemaJson)
+  const draftStart = period.submissionStartAt ? dayjs(period.submissionStartAt) : null
+  const draftStartIsFuture =
+    draftStart?.isValid() === true && dayjs().isBefore(draftStart)
+  const periodPayload = draftStartIsFuture
+    ? {
+        submissionStartAt: period.submissionStartAt!,
+        ...(period.submissionEndAt != null ? { submissionEndAt: period.submissionEndAt } : {}),
+      }
+    : {
+        // 양식 교체는 BEFORE_START에서만 가능 — 등록 직후 1회 저장은 임시 미래 시작으로 연다.
+        submissionStartAt: dayjs().add(1, 'day').startOf('day').toISOString(),
+      }
+
+  await updateAdminProgramFormBindingRemote(programId, bindingId, periodPayload)
+
+  const bindings = await fetchAdminProgramFormBindingsRemote(programId)
+  binding = bindings.find(item => String(item.bindingId) === bindingId)
+  if (canSwapProgramSurveyFormBinding(binding)) {
+    return { ok: true, binding: binding! }
+  }
+
+  return {
+    ok: false,
+    message: resolveProgramSurveyFormSaveBlockedMessage(binding),
+    refetchBindings: true,
+  }
 }
 
 /** 목록 행 기준 「양식 수정」 노출 — 진행 전 + 응답 0건 */
@@ -95,7 +195,7 @@ export function resolveProgramSurveyFormEditFailure(
 
 export type ProgramSurveyFormEditResult =
   | { ok: true; templateId: number; templateVersionId: number }
-  | { ok: false; message: string; refetchBindings?: boolean }
+  | { ok: false; message: string; refetchBindings?: boolean; incompleteKeys?: readonly string[] }
 
 /**
  * 프로그램 설문 양식 수정 — 바인딩된 PUBLISHED version은 수정 불가(409)이고,
@@ -110,11 +210,20 @@ export async function saveProgramSurveyFormEdit(
   const validation = validateSurveyWritingDraft(draft)
   if (!validation.ok) return validation
 
-  // PATCH가 409(FORM_BINDING_TEMPLATE_LOCKED)면 게시된 복제본만 남으므로 copy 전에 확인한다.
   const bindings = await fetchAdminProgramFormBindingsRemote(target.programId)
   const binding = bindings.find(item => String(item.bindingId) === target.bindingId)
-  if (!isProgramSurveyFormEditable(binding)) {
-    return { ok: false, message: PROGRAM_SURVEY_FORM_EDIT_LOCKED_MESSAGE, refetchBindings: true }
+  const prepared = await prepareBindingForSurveyFormSave(
+    target.programId,
+    target.bindingId,
+    draft,
+    binding
+  )
+  if (!prepared.ok) {
+    return {
+      ok: false,
+      message: prepared.message,
+      refetchBindings: prepared.refetchBindings,
+    }
   }
 
   const source = await fetchFormTemplateVersionRemote(target.sourceVersionId)

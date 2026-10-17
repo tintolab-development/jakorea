@@ -1,4 +1,5 @@
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
+import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
@@ -716,11 +717,11 @@ export function mapCompanySchoolToUpdateRequest(
 }
 
 export function mapCompanySchoolToCreateRequest(program: Program): ProgramCreateRequest {
-  return {
+  return omitNullRecordValues({
     ...mapCompanySchoolToUpdateRequest(program),
     programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
     businessStartDate: toDate(program.startDate),
     businessEndDate: toDate(program.endDate),
     autoApplyDefaultFormBindings: true,
-  }
+  }) as ProgramCreateRequest
 }

@@ -240,6 +240,15 @@
   --Content-disabled: rgba(61, 61, 61, 0.5);
   --Border-default: #e0e0e0;
   --Border-alpha-10: rgba(61, 61, 61, 0.1);
+  --Border-alpha-06: rgba(61, 61, 61, 0.06);
+  --Tag-green: #e1f7d9;
+  --Tag-red: #ffebeb;
+  --Tag-sky: #d0efff;
+  --Tag-purple: #ebdff9;
+  --Tag-yellow: #fff2d2;
+  --Radius-4: 4px;
+  --Spacing-4: 4px;
+  --Spacing-6: 6px;
   --Brand-500: #00a0af;
   --Status-red-main: #c32f4a;
   --Background-disabled: linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%), #fff;

@@ -1,0 +1,65 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  width: 100%;
+  min-width: 0;
+}
+
+.loadingState {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+}
+
+.rejectedBanner {
+  display: flex;
+  padding: var(--spacing-24);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+  align-self: stretch;
+  border-radius: var(--radius-16);
+  background: var(--color-status-error-bg);
+}
+
+.bannerLead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-6);
+  width: 100%;
+}
+
+.leadMessage {
+  margin: 0;
+}
+
+.dateMeta {
+  margin: 0;
+  color: var(--color-neutral-cool-550);
+}
+
+.reasonCard {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--spacing-16);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-white);
+}
+
+.reasonText {
+  margin: 0;
+  color: var(--color-neutral-black);
+}
+
+.reasonLabel::after {
+  content: ' ';
+}
+
+.reapplyAction {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}

@@ -51,6 +51,22 @@ describe('progress-attendance-adapters', () => {
     expect(row?.attendanceStatus).toBeUndefined()
   })
 
+  it('does not render schedules missing from the attendance response', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        { scheduleId: 9001, sessionNo: 1, scheduleStatus: 'COMPLETED' },
+        { scheduleId: 9002, sessionNo: 2, scheduleStatus: 'COMPLETED' },
+      ],
+      participants: [{ participantId: 1, memberName: '학생', participantType: 'INDIVIDUAL' }],
+      attendancesByScheduleId: {
+        '9001': [{ participantId: 1, status: 'PRESENT' }],
+        '9002': [],
+      },
+    })
+
+    expect(sessions.map(session => session.id)).toEqual(['9001'])
+  })
+
   it('maps participant roster fields for attendance table columns', () => {
     const sessions = buildProgressAttendanceSessionsFromRemote({
       schedules: [

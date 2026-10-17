@@ -9,7 +9,10 @@
 export interface StudentDocumentPolicyResponse {
   organizationApplicationId?: number;
   programId?: number;
+  studentDocumentsSupported?: boolean;
   programStartDate?: string;
+  /** 해당 기관 신청에 배정된 활성 교육 일정의 첫 교육일. 아직 배정되지 않았으면 null */
+  firstEducationDate?: string;
   studentRosterUploadDeadline?: string;
   studentRosterUploadAllowed?: boolean;
   portraitConsentUploadDeadline?: string;

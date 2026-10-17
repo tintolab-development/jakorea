@@ -8,7 +8,7 @@ import {
   type NoticeDetailStatus,
 } from '@/features/notice'
 import { RichTextViewer } from '@/shared/rich-text'
-import { PFAttachmentDropdown, PFButton, PFDivider, PFText } from '@/shared/ui'
+import { PFAttachmentDropdown, PFButton, PFDivider, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -17,7 +17,6 @@ function formatViewCount(count: number) {
 }
 
 function statusMessage(status: NoticeDetailStatus) {
-  if (status === 'loading') return '공지사항을 불러오는 중입니다.'
   if (status === 'error') return '공지사항을 불러오지 못했습니다.'
   if (status === 'unavailable') return '공개되지 않았거나 삭제된 공지사항입니다.'
   return '공지사항을 찾을 수 없습니다.'
@@ -49,9 +48,13 @@ export function NoticeDetailPage() {
           <ProgramBackButton label="이전으로" onClick={handleBack} />
         </div>
         <div className={styles.status}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            {statusMessage(status === 'ready' ? 'not-found' : status)}
-          </PFText>
+          {status === 'loading' ? (
+            <PFLoadingSpinner centered label="공지사항을 불러오는 중" />
+          ) : (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              {statusMessage(status)}
+            </PFText>
+          )}
           {status === 'error' ? (
             <PFButton variant="tertiary" size="large" onClick={refetch}>
               다시 시도

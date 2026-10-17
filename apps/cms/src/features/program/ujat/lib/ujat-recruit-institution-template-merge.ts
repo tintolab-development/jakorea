@@ -94,6 +94,8 @@ export function buildUjatRecruitInstitutionOverlayFromProgram(
       participant?.programDescription?.trim() || program.description?.trim() || '',
     [OVERLAY_KEYS.recruitmentGuide]:
       participant?.recruitmentGuide?.trim() || program.recruitmentGuide?.trim() || '',
+    [OVERLAY_KEYS.applicationMethod]:
+      participant?.applicationMethod?.trim() || program.applicationMethod?.trim() || '',
     [OVERLAY_KEYS.learningSupportContent]:
       participant?.learningSupportContent?.trim() ||
       program.learningSupportContent?.trim() ||
@@ -136,6 +138,7 @@ export function buildUjatRecruitInstitutionOverlayFromDetailEditValues(
         : (values.oneLineIntroduction?.trim() ?? ''),
     [OVERLAY_KEYS.description]: values.description?.trim() ?? '',
     [OVERLAY_KEYS.recruitmentGuide]: values.recruitmentGuide?.trim() ?? '',
+    [OVERLAY_KEYS.applicationMethod]: values.applicationMethod?.trim() ?? '',
     [OVERLAY_KEYS.learningSupportContent]: values.learningSupportContent?.trim() ?? '',
     [OVERLAY_KEYS.additionalContentHtml]: values.additionalContentHtml?.trim() ?? '',
   }
@@ -194,6 +197,8 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
       overlayString(overlay, OVERLAY_KEYS.description) ?? program.description,
     recruitmentGuide:
       overlayString(overlay, OVERLAY_KEYS.recruitmentGuide) ?? program.recruitmentGuide,
+    applicationMethod:
+      overlayString(overlay, OVERLAY_KEYS.applicationMethod) ?? program.applicationMethod,
     learningSupportContent:
       overlayString(overlay, OVERLAY_KEYS.learningSupportContent) ??
       program.learningSupportContent,
@@ -273,6 +278,10 @@ export function applyUjatRecruitInstitutionTemplateDefaults(program: Program): P
     recruitmentGuide: coalesceString(
       program.recruitmentGuide,
       overlayString(overlay, OVERLAY_KEYS.recruitmentGuide)
+    ),
+    applicationMethod: coalesceString(
+      program.applicationMethod,
+      overlayString(overlay, OVERLAY_KEYS.applicationMethod)
     ),
     learningSupportContent: coalesceString(
       program.learningSupportContent,

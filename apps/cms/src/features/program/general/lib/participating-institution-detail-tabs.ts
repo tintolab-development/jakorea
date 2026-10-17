@@ -83,10 +83,11 @@ export function getParticipatingInstitutionDetailTabKeys(
 
 export function normalizeParticipatingInstitutionDetailTab(
   tab: string | null | undefined,
-  program?: Program | null
+  program?: Program | null,
+  educationJournalEnabled?: boolean
 ): ParticipatingInstitutionDetailTabKey {
   if (isTrainedTeachersDetailProgram(program ?? null)) {
-    return normalizeTrainedTeachersInstitutionDetailTab(tab)
+    return normalizeTrainedTeachersInstitutionDetailTab(tab, educationJournalEnabled)
   }
   const generalTab = (tab ?? 'application') as GeneralParticipatingInstitutionDetailTabKey
   if (

@@ -42,6 +42,21 @@ export function toggleAllAgreementState(
   return nextState
 }
 
+/** 필수 약관만 일괄 동의/해제 (선택 항목은 유지) */
+export function toggleAllRequiredAgreementState(
+  agreements: AgreementState,
+  items: AgreementItem[] = agreementItems,
+): AgreementState {
+  const nextRequired = !isRequiredAgreed(agreements, items)
+  const nextState = { ...agreements }
+  for (const item of items) {
+    if (item.required) {
+      nextState[item.key] = nextRequired
+    }
+  }
+  return nextState
+}
+
 export function getAgreementDerived(
   agreements: AgreementState,
   items: AgreementItem[] = agreementItems,

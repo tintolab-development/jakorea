@@ -9,6 +9,7 @@ import type { Dayjs } from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -214,7 +215,13 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     )
   }
 
-  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
+    overlayBasicInfoPrefix: 'economyRegistration.basicInfo',
+  })
+  const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
+  const sponsorApiOptions = sponsorCatalogQuery.options
+  const sponsorOptionsLoading =
+    catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const contactsQuery = useSponsorContactsQuery(
     sponsorId === ALL_VALUE ? null : sponsorId,
     sponsorId !== ALL_VALUE && Boolean(sponsorId)
@@ -274,7 +281,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   }, [managerContactId, managerContactIds, selectedManagerContactIds])
 
   const { options: remoteDetailedProgramOptions, isSuccess: detailedProgramOptionsLoaded } =
-    useDetailedProgramSelectOptions(true)
+    useDetailedProgramSelectOptions(catalogReady)
 
   // 1사1교는 항상 커리큘럼형 → 카탈로그(숫자 마스터 id)만 노출. 「해당없음」·가짜 대표 옵션은 BE가 거절한다.
   const detailedProgramOptions = remoteDetailedProgramOptions
@@ -357,6 +364,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   options={detailedProgramOptions}
                   value={detailedProgramId}
                   onChange={v => setDetailedProgramSelection(String(v ?? ''))}
+                  onOpenChange={onSelectOpenChange}
                 />
               </div>
             }
@@ -453,6 +461,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   width={240}
                   options={sponsorOptions}
                   value={sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
                   onChange={v => {
                     const next = String(v ?? '')
                     setSponsorId(next)
@@ -479,6 +489,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   options={managerOptions}
                   value={selectedManagerContactIds}
                   disabled={!sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applyManagerContactIds(next)

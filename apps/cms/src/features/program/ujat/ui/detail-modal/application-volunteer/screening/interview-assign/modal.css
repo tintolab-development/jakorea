@@ -1,3 +1,14 @@
+/* 본문·알림 발송·푸터가 잘리지 않도록 고정 높이·내부 스크롤 제거 */
+.ujat-volunteer-interview-assign-modal.content-modal.teal-header-modal .teal-header-modal__content {
+  height: auto !important;
+  max-height: none !important;
+}
+
+.ujat-volunteer-interview-assign-modal.content-modal .teal-header-modal__body {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
 /* 타이틀 ↔ 디스크립션 간격 12px (공통 content-modal 기본 16px override) */
 .ujat-volunteer-interview-assign-modal.content-modal
   .teal-header-modal__body:has(> .content-modal__description) {
@@ -26,7 +37,8 @@
 .ujat-volunteer-interview-assign-modal__schedule-top {
   display: flex;
   gap: 20px;
-  align-items: stretch;
+  /* 슬롯 목록이 길어져도 행 높이는 캘린더 열 높이로 고정 */
+  align-items: flex-start;
 }
 
 .ujat-volunteer-interview-assign-modal__calendar-panel,
@@ -53,18 +65,25 @@
 .ujat-volunteer-interview-assign-modal__slots-panel {
   display: flex;
   flex-direction: column;
-  min-height: var(--program-reg-schedule-calendar-height, 320px);
-  max-height: var(--program-reg-schedule-calendar-height, none);
+  flex: 1 1 0;
+  box-sizing: border-box;
+  height: var(--program-reg-schedule-calendar-height, 424px);
+  min-height: var(--program-reg-schedule-calendar-height, 424px);
+  max-height: var(--program-reg-schedule-calendar-height, 424px);
   overflow: hidden;
 }
 
 .ujat-volunteer-interview-assign-modal__slots-list {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 .ujat-volunteer-interview-assign-modal__slots-empty {
@@ -189,40 +208,53 @@
   line-height: 150%;
 }
 
+.ujat-volunteer-interview-assign-modal__summary-selected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .ujat-volunteer-interview-assign-modal__summary-value {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
+  min-width: 0;
+}
+
+.ujat-volunteer-interview-assign-modal__summary-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(61, 61, 61, 0.12);
+  color: rgba(61, 61, 61, 0.55);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.ujat-volunteer-interview-assign-modal__summary-clear:hover {
+  background: rgba(61, 61, 61, 0.2);
+  color: var(--main-BK, #3d3d3d);
 }
 
 .ujat-volunteer-interview-assign-modal__notify-field {
   margin-top: 24px;
-  display: flex;
-  flex-direction: column;
 }
 
-.ujat-volunteer-interview-assign-modal__notify-label {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  padding: 0 8px;
-  margin-bottom: 16px;
-}
-
-.ujat-volunteer-interview-assign-modal__notify-error {
-  display: block;
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--color-red, #ff4d4f);
-}
-
-.ujat-volunteer-interview-assign-modal__manual-summary {
-  color: rgba(61, 61, 61, 0.65);
-  font-weight: 400;
+.ujat-volunteer-interview-assign-modal__notify-field.permission-modal__field
+  > .cms-choice-field
+  > .cms-choice-field__group {
+  padding-left: 3px;
 }
 
 .ujat-volunteer-interview-assign-modal__footer {

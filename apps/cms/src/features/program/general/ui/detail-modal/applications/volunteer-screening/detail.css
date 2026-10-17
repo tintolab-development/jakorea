@@ -47,6 +47,14 @@
   gap: 32px;
 }
 
+.general-volunteer-applicant-detail__empty-schedule {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .general-volunteer-applicant-basic-info {
   display: flex;
   flex-direction: column;

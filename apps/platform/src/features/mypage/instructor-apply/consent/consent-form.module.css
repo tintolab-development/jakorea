@@ -26,6 +26,23 @@
   }
 }
 
+/* PlatformConsentFormBody — 단락(PFFormSection·bodyOnly) 스택 */
+.paragraphStack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-32);
+}
+
+@media (--bp-below-pc) {
+  .paragraphStack {
+    gap: var(--spacing-16);
+  }
+}
+
 .bodyOnlyWrap {
   box-sizing: border-box;
   width: 100%;
@@ -98,12 +115,100 @@
   max-width: 360px;
 }
 
+.portraitAffiliationRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitAffiliationRow > :first-child {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+/* 초상권 1번 표 — 1행(성명·소속) 4열 그리드, 2행~ 라벨 200px + 본문 (runtime 세로표와 동일) */
+.portraitPersonalVerticalTableWrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitPersonalVerticalTable:global(.form-template-vertical-table) {
+  width: 100%;
+  align-self: stretch;
+}
+
+.portraitPersonalVerticalTable
+  :global(> .form-template-vertical-table__row--portrait-name-affiliation) {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 200px minmax(0, 1fr);
+}
+
+.portraitPersonalVerticalTable
+  :global(> .form-template-vertical-table__row--portrait-name-affiliation)
+  :global(> .form-template-vertical-table__stage) {
+  display: contents;
+}
+
+.portraitPersonalVerticalTable
+  :global(> .form-template-vertical-table__row:not(.form-template-vertical-table__row--portrait-name-affiliation))
+  :global(> .form-template-vertical-table__stage) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitPersonalVerticalTable :global(.form-template-vertical-table__td) {
+  align-items: flex-start;
+}
+
+.portraitPersonalVerticalTable
+  :global(.form-template-vertical-table__row--portrait-name-affiliation)
+  :global(.form-template-vertical-table__td) {
+  align-items: center;
+}
+
+.portraitPersonalVerticalTable :global(.form-template-vertical-table__td) > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitPersonalVerticalTable .cellText {
+  text-align: left;
+  font-weight: 400;
+  line-height: 160%;
+}
+
 .tableBlock {
   display: flex;
   width: 100%;
   min-width: 0;
   flex-direction: column;
   gap: 16px;
+}
+
+.portraitTableDesktop {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitTableMobile {
+  display: none;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (--bp-below-pc) {
+  .portraitTableDesktop {
+    display: none;
+  }
+
+  .portraitTableMobile {
+    display: block;
+  }
 }
 
 .tableAfter {
@@ -199,6 +304,29 @@
 .cellTextEmphasized {
   font-size: 20px;
   font-weight: 700;
+}
+
+/* 모바일 — PFFormFieldTable 내 소속 입력 + 소속 없음 체크 */
+@media (--bp-below-pc) {
+  .portraitAffiliationRow {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--spacing-12);
+  }
+
+  .portraitAffiliationRow > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto !important;
+    max-width: 100%;
+  }
+
+  .portraitAffiliationRow > :last-child {
+    flex-shrink: 0;
+    width: auto !important;
+    max-width: none;
+  }
 }
 
 /* 모바일 — 표 그리드 대신 cool-50 카드 + 항목 라벨 / 값 리스트 */
@@ -358,6 +486,76 @@
   padding-top: 0;
 }
 
+.consentShortEssayStack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-16);
+}
+
+/* 행정정보 — 대상자 본인 섹션 + 전자서명 카드(별도 셸) */
+.paragraphWithCompanion {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-24);
+}
+
+@media (--bp-below-pc) {
+  .paragraphWithCompanion {
+    gap: var(--spacing-16);
+  }
+}
+
+.noticeSubjectSignatureCard {
+  width: 100%;
+}
+
+/* 행정정보 1·2번 — 설명글 본문 입력값 Body/Medium/medium (`typo-bd-md-md`) */
+.noticeExplanationParagraphBody {
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d) !important;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px !important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  letter-spacing: -0.16px !important;
+}
+
+/* placeholder — Body/Medium/regular + 회색 (`#85969d`) */
+.noticeExplanationParagraphBody::placeholder {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d) !important;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px !important;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 150% !important;
+  letter-spacing: -0.16px !important;
+  opacity: 1 !important;
+}
+
+/* 행정정보 — 마무리 확인 문구 (서명은 5. 대상자 본인 섹션) */
+.noticeClosingStatement {
+  margin: 0;
+  width: 100%;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+}
+
 .inlineFields {
   display: flex;
   flex-wrap: wrap;
@@ -371,49 +569,125 @@
   color: var(--color-neutral-cool-600);
 }
 
-.crimeDocument {
+.crimeDownloadRow {
   display: flex;
   width: 100%;
-  flex-direction: column;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-16);
 }
 
-.crimeDocumentActions {
+.crimeDownloadCopy {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-12);
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 
-.crimeDocumentPreview {
+.crimeStepTitle {
+  margin: 0;
+}
+
+.crimeDownloadButton {
+  flex-shrink: 0;
+}
+
+/* `notice-write-modal.module.css` attachSection — 안내사항 작성하기 팝업 파일 첨부와 동일 */
+.crimeAttachSection {
+  display: flex;
   width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.crimeAttachLabel {
   overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: var(--main-WT, #fff);
+  min-width: 0;
+  margin: 0;
+  padding-left: 8px;
+  padding-bottom: 4px;
+  color: var(--color-neutral-warm-600, #7a7a7a);
+  text-overflow: ellipsis;
 }
 
-.crimeDocumentPreview img,
-.crimeDocumentPreviewPdf {
-  display: block;
+.crimeAttachButton {
   width: 100%;
-  height: auto;
+  margin-bottom: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
 }
 
-.crimeDocumentPreviewPdf {
-  height: 720px;
-  border: 0;
-  background: #fff;
-}
-
-.visuallyHiddenFile {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+.crimeAttachHints {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
   padding: 0;
-  margin: -1px;
+  line-height: 1;
+  list-style: none;
+}
+
+.crimeAttachHints li {
+  position: relative;
+  padding-left: 14px;
+  color: var(--color-neutral-cool-600, #667278);
+  opacity: 0.6;
+}
+
+.crimeAttachHints li::before {
+  position: absolute;
+  top: 0.65em;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.crimeAttachHintText {
+  color: inherit;
+}
+
+.crimeAttachList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin: var(--spacing-16) 0 0;
+  padding: var(--spacing-16);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+  list-style: none;
+}
+
+.crimeAttachListRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+
+.crimeAttachFileName {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  text-overflow: ellipsis;
   white-space: nowrap;
-  border: 0;
+}
+
+@media (--bp-below-pc) {
+  .crimeDownloadRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crimeDownloadButton {
+    width: 100%;
+  }
 }

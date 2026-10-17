@@ -1,0 +1,109 @@
+/**
+ * CMS `form-document-preview-body.css` / `--agreement-portrait` 발췌
+ * (A4 1464px 디자인 캔버스 기준 px)
+ */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  font-family: Pretendard, sans-serif;
+  color: #3d3d3d;
+}
+
+.paragraph {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: pre-wrap;
+}
+
+.explanationText {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.closingText {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: pre-wrap;
+}
+
+.bodyPortrait .explanationText {
+  font-size: 20px;
+  line-height: 140%;
+}
+
+.bodyPortrait .paragraph:has(+ .paragraph) {
+  margin-bottom: 0;
+}
+
+.bodyPortrait :global(.form-template-vertical-table-wrap) {
+  gap: 16px;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__th),
+.bodyPortrait :global(.form-template-vertical-table__td) {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__cell-text) {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__bottom-text) {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__bottom-consent) {
+  margin-top: 8px;
+}
+
+.bodyPortrait :global(.app-radio-group) {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.bodyPortrait .tableDescription {
+  font-size: 20px;
+  line-height: 140%;
+}
+
+.body :global(.pf-text-input),
+.body :global(.pf-text-input input) {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.bodyPortrait :global([class*='tableDescription']) {
+  font-size: 20px;
+  line-height: 140%;
+}

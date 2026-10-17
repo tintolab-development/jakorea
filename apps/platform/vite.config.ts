@@ -4,7 +4,6 @@ import path from 'path'
 import type { Plugin, ProxyOptions } from 'vite'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
-import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
 
 function withNgrokSkip(
   target: string,
@@ -81,8 +80,14 @@ export default defineConfig(({ mode }) => {
         // 안내사항 본문 이미지 302 Location(백엔드 절대 주소)을 dev origin 으로 — XHR 이 교차 출처로 넘어가지 않게
         autoRewrite: true,
       }
+      // 회원 파일 업로드 요청이 반환하는 signed uploadUrl은
+      // `/api/admin/files/uploads/raw/*` 경로를 사용한다. `/api` catch-all
+      // 보다 먼저 CMS 백엔드로 라우팅해야 서명된 PUT이 올바른 서버에 도달한다.
+      entries['/api/admin'] = withNgrokSkip(cmsTarget, ngrokSkip)
       // CMS shared auth (NICE start is public). Must beat the catch-all `/api` → 8081.
       entries['/api/auth'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      // 약관 원장 current — JABACK. `/api/public/*` 기본은 Homepage이므로 더 긴 prefix로 분리.
+      entries['/api/public/terms-documents'] = withNgrokSkip(cmsTarget, ngrokSkip)
     }
     if (homepageTarget) {
       entries['/api'] = withNgrokSkip(homepageTarget, ngrokSkip)
@@ -117,7 +122,6 @@ export default defineConfig(({ mode }) => {
       : {}),
     plugins: [
       react(),
-      mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
       ...(isProgramPreviewBuild ? [dropUnreferencedAssetsPlugin()] : []),
     ],
     css: {

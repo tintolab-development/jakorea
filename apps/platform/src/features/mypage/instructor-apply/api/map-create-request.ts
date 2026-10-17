@@ -1,6 +1,7 @@
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type {
+  InstructorPortalEditableProfile,
   InstructorRoleRequestCreateRequest,
   InstructorRoleRequestEducationGraduateRow,
   InstructorRoleRequestEducationSchoolRow,
@@ -11,8 +12,12 @@ import type {
 /** CMS 권한 목록·승인 카피와 맞춘 기본 신청 유형 */
 export const DEFAULT_INSTRUCTOR_REQUESTED_ACTIVITY_TYPE = 'JA 강사단'
 
-/** CMS `ADMIN_PRE_REGISTER_TERMS_VERSION`과 동일 */
-const TERMS_VERSION = '1.0'
+/**
+ * 동기 매핑·오프라인용 fallback.
+ * 원격 제출 직전 `resolveInstructorApplyTermsAgreementVersions`로 current version 덮어씀.
+ * OpenAPI 예·게시 원장과 맞춤 (`2026-01`). 하드코딩 `1.0`은 STALE 거절 원인.
+ */
+const TERMS_VERSION_PLACEHOLDER = '2026-01'
 
 const AGREEMENT_TERMS: {
   formKey: keyof InstructorSharedProfileFormValues
@@ -126,7 +131,9 @@ function mapGraduateRowToApi(
   }
 }
 
-function mapProfile(values: InstructorSharedProfileFormValues): InstructorRoleRequestProfile {
+export function mapInstructorFormValuesToCmsProfile(
+  values: InstructorSharedProfileFormValues,
+): InstructorRoleRequestProfile {
   const memberType = values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL'
   const employmentStatus = toApiEmploymentStatus(values.employmentStatus)
   const affiliation =
@@ -263,7 +270,17 @@ function mapProfile(values: InstructorSharedProfileFormValues): InstructorRoleRe
   }
 }
 
-function mapSettlement(values: InstructorSharedProfileFormValues): InstructorRoleRequestSettlement {
+/** 포탈 PATCH `instructorProfile.profile` — memberType 제외 */
+export function mapInstructorFormValuesToPortalEditableProfile(
+  values: InstructorSharedProfileFormValues,
+): InstructorPortalEditableProfile {
+  const { memberType: _memberType, ...editable } = mapInstructorFormValuesToCmsProfile(values)
+  return editable
+}
+
+export function mapInstructorFormValuesToPortalSettlement(
+  values: InstructorSharedProfileFormValues,
+): InstructorRoleRequestSettlement {
   const bankName = values.bankName.trim()
   const accountNumber = values.accountNumber.trim()
   const accountHolder = values.accountHolder.trim()
@@ -292,7 +309,7 @@ function mapTermsAgreements(
 ): InstructorRoleRequestTermsAgreement[] {
   return AGREEMENT_TERMS.map(item => ({
     termsType: item.termsType,
-    version: TERMS_VERSION,
+    version: TERMS_VERSION_PLACEHOLDER,
     /** CMS 동의서 작성형과 동일 — 가입·등록 필수는 SERVICE/PRIVACY만 */
     required: false,
     agreed: values[item.formKey] === 'agree',
@@ -317,8 +334,8 @@ export function mapInstructorApplyFormToCreateRequest(
     /** BE는 `010-1234-5678` 하이픈 형식을 요구 (가입 API와 동일) */
     phone: formatKoreanPhoneNumber(values.contact.trim()),
     email: values.email.trim(),
-    profile: mapProfile(values),
-    settlement: mapSettlement(values),
+    profile: mapInstructorFormValuesToCmsProfile(values),
+    settlement: mapInstructorFormValuesToPortalSettlement(values),
     termsAgreements: mapTermsAgreements(values),
   }
 }

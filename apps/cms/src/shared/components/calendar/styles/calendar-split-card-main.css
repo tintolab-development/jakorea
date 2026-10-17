@@ -19,7 +19,8 @@
 }
 
 .calendar-split-card--left .ant-picker-content tbody tr {
-  height: var(--calendar-cell-min-height, 124px);
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: auto;
 }
 
 .calendar-split-card--left .ant-picker-cell {
@@ -42,22 +43,23 @@
   min-width: 0;
   max-width: 100%;
   min-height: var(--calendar-cell-min-height, 124px);
-  height: var(--calendar-cell-min-height, 124px);
-  max-height: var(--calendar-cell-min-height, 124px);
+  height: auto;
+  max-height: none;
   padding: 8px;
   display: flex;
   flex-direction: column;
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .calendar-split-card-main .calendar-cell-events {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  gap: 4px;
+  gap: 5px;
   min-height: 0;
   overflow: hidden;
   align-items: stretch;
@@ -65,51 +67,11 @@
   width: 100%;
 }
 
-.calendar-split-card-main .calendar-event {
-  flex: 0 0 auto;
-  font-size: 11px;
-  padding: 0 6px;
-  height: 24px;
-  min-height: 24px;
-  max-height: 24px;
-  align-items: center;
-  border-radius: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #595959;
-  box-sizing: border-box;
-  text-align: left;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
 .calendar-split-card-main .calendar-event--selected {
   color: #096dd9;
 }
 
-.calendar-split-card-main .calendar-event-more {
-  flex: 0 0 auto;
-  overflow: hidden;
-  color: var(--default-BK, #3d3d3d);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: Pretendard, sans-serif;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.5;
-  margin-top: 2px;
-  cursor: default;
-  text-align: left;
-}
-
-.calendar-split-card-main .calendar-event-title {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-  min-width: 0;
+.calendar-split-card-main .calendar-event-title.calendar-event-title--with-divider {
+  display: flex;
+  align-items: center;
 }

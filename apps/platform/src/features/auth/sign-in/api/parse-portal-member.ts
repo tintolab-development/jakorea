@@ -1,9 +1,11 @@
 import type {
+  InstructorPortalProfileResponse,
   HomepageMeResponse,
   PhoneIdentityChangeResponse,
   PortalProfileResponse,
   PortalTeacherOrganizationResponse,
 } from './types'
+import type { InstructorRoleRequestProfile } from '@/features/mypage/instructor-apply/api/types'
 
 function unwrapData(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== 'object') return null
@@ -24,6 +26,52 @@ function optionalNumber(value: unknown) {
 
 function optionalBoolean(value: unknown) {
   return typeof value === 'boolean' ? value : undefined
+}
+
+function optionalObject(value: unknown): Record<string, unknown> | undefined {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>
+  }
+  return undefined
+}
+
+function optionalStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const items = value.filter(
+    (item): item is string => typeof item === 'string' && item.trim().length > 0,
+  )
+  return items.length > 0 ? items : undefined
+}
+
+function parseListMetrics(value: unknown): PortalProfileResponse['listMetrics'] {
+  const root = optionalObject(value)
+  if (!root) return undefined
+  const settlementStatusLabel = optionalString(root.settlementStatusLabel)
+  const jaEvaluationGrade = optionalString(root.jaEvaluationGrade)
+  const instructorFeeGradeLabel = optionalString(root.instructorFeeGradeLabel)
+  if (!settlementStatusLabel && !jaEvaluationGrade && !instructorFeeGradeLabel) {
+    return undefined
+  }
+  return {
+    ...(settlementStatusLabel ? { settlementStatusLabel } : {}),
+    ...(jaEvaluationGrade ? { jaEvaluationGrade } : {}),
+    ...(instructorFeeGradeLabel ? { instructorFeeGradeLabel } : {}),
+  }
+}
+
+function parseInstructorPortalProfile(
+  value: unknown,
+): InstructorPortalProfileResponse | undefined {
+  const root = optionalObject(value)
+  if (!root) return undefined
+  const profile = optionalObject(root.profile)
+  const settlement = optionalObject(root.settlement)
+  return {
+    ...(profile ? { profile: profile as InstructorRoleRequestProfile } : {}),
+    ...(settlement
+      ? { settlement: settlement as InstructorPortalProfileResponse['settlement'] }
+      : {}),
+  }
 }
 
 function parseTeacherOrganization(value: unknown): PortalTeacherOrganizationResponse | undefined {
@@ -105,6 +153,9 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     external1365Id: optionalString(root.external1365Id),
     accountStatus: optionalString(root.accountStatus),
     joinedAt: optionalString(root.joinedAt),
+    instructorProfile: parseInstructorPortalProfile(root.instructorProfile),
+    socialAccounts: optionalStringArray(root.socialAccounts),
+    listMetrics: parseListMetrics(root.listMetrics),
   }
 }
 

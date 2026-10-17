@@ -5,6 +5,7 @@
 
 import { type Browser, type Page } from '@playwright/test'
 import { E2E_ADMIN_AUTH_FILE } from './auth-paths'
+import { installE2eApiProxy } from './e2e-api-proxy'
 
 export async function withAuthenticatedPage<T>(
   browser: Browser,
@@ -12,6 +13,7 @@ export async function withAuthenticatedPage<T>(
 ): Promise<T> {
   const context = await browser.newContext({ storageState: E2E_ADMIN_AUTH_FILE })
   const page = await context.newPage()
+  await installE2eApiProxy(page)
   try {
     return await run(page)
   } finally {

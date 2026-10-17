@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import {
+  resolveInstructorPortalAvailableScheduleEnabledForHidden,
   resolveVolunteerPortalActivityScheduleEnabledForHidden,
   resolveVolunteerPortalInterviewEnabledForHidden,
 } from './portal-volunteer-interview-visibility.ts'
@@ -91,6 +93,35 @@ assert.equal(
         },
         paragraphs: [{ id: activityId }],
       },
+    },
+  }),
+  true,
+)
+
+const instructorScheduleId = PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
+assert.equal(
+  resolveInstructorPortalAvailableScheduleEnabledForHidden({
+    formBinding: {
+      runtimeContext: {
+        audienceApplication: {
+          hiddenQuestionKeys: [instructorScheduleId],
+          dynamicQuestions: { [instructorScheduleId]: { optionCount: 0 } },
+        },
+      },
+      paragraphs: [{ id: instructorScheduleId, runtimeHidden: true }],
+    },
+  }),
+  false,
+)
+assert.equal(
+  resolveInstructorPortalAvailableScheduleEnabledForHidden({
+    formBinding: {
+      runtimeContext: {
+        audienceApplication: {
+          dynamicQuestions: { [instructorScheduleId]: { optionCount: 2 } },
+        },
+      },
+      paragraphs: [{ id: instructorScheduleId, runtimeResolved: true }],
     },
   }),
   true,

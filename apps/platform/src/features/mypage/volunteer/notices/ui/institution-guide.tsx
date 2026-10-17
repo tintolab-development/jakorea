@@ -2,10 +2,6 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import chevronDownUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFOptionList, PFText } from '@/shared/ui'
 import { VOLUNTEER_INSTITUTION_GUIDE_FIELDS } from '../lib/guide-fields'
-import {
-  getMockVolunteerInstitutionGuide,
-  listMockVolunteerAssignedInstitutionNames,
-} from '../lib/mock-institution-guides'
 import styles from './institution-guide.module.css'
 
 type VolunteerInstitutionGuideProps = {
@@ -15,15 +11,12 @@ type VolunteerInstitutionGuideProps = {
 export function VolunteerInstitutionGuide({
   lastParticipatedSession,
 }: VolunteerInstitutionGuideProps) {
-  const schoolNames = useMemo(
-    () => listMockVolunteerAssignedInstitutionNames(lastParticipatedSession),
-    [lastParticipatedSession]
-  )
+  const schoolNames = useMemo(() => [] as string[], [lastParticipatedSession])
   const [selectedSchool, setSelectedSchool] = useState(schoolNames[0] ?? '')
   const [isOpen, setIsOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
-  const guide = selectedSchool ? getMockVolunteerInstitutionGuide(selectedSchool) : null
+  const guide = null
 
   useEffect(() => {
     if (!schoolNames.includes(selectedSchool)) {

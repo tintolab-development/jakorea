@@ -14,6 +14,10 @@ import type { InstructorAssignmentListItemEnriched } from '@/features/program/ge
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
+import {
+  readRuntimeBoolean,
+  readRuntimeNumber,
+} from '@/shared/lib/openapi-runtime-field'
 
 export type CompanySchoolWaitingInstructorRow = {
   id: string
@@ -60,6 +64,18 @@ export type CompanySchoolAssignedInstructorRow = {
 function formatDistanceKm(km: number | undefined): string | undefined {
   const label = formatApiDistanceKmDisplay(km)
   return label === '-' ? undefined : label
+}
+
+function formatWaitingInstructorDistance(
+  app: InstructorApplicationListItemResponse
+): string | undefined {
+  const km = readRuntimeNumber(app, 'distanceKm')
+  const longDistance = readRuntimeBoolean(app, 'longDistance')
+  if (longDistance && km != null) {
+    const core = formatDistanceKm(km)
+    return core ? `${core} (장거리)` : undefined
+  }
+  return formatDistanceKm(km)
 }
 
 function hopeScheduleLineFromSession(session: ParticipatingSchoolSession): string {
@@ -119,7 +135,8 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         scheduleKey,
         no: 0,
         instructorName: app.instructorName?.trim() || '이름 없음',
-        distanceToSchool: formatDistanceKm(app.distanceKm),
+        homeAddress: app.homeAddress?.trim() || undefined,
+        distanceToSchool: formatWaitingInstructorDistance(app),
         assignmentStatus,
         hopeDate: hope.hopeDate,
         hopeTime: hope.hopeTime,

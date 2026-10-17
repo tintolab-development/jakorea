@@ -2,7 +2,7 @@
  * 일반 프로그램(기관·개인) — 강사 승인 2단계: 강사비 책정 및 승인 안내 (600×474)
  */
 
-import dayjs from 'dayjs'
+import { useEffect } from 'react'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import {
   INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS,
@@ -13,21 +13,22 @@ import {
   type InstructorFeeApprovalConfirmDetail,
 } from '@/features/program/general/lib/use-instructor-fee-approval-modal'
 import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
+import type { InstructorApplicationFeePolicyContext } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  getDefaultManualNotifyAt,
+  getMinimumManualNotifyAt,
+} from '@/shared/lib/notification-schedule'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
 const MODAL_Z_INDEX = 2500
 const DATE_TIME_PICKER_Z_OFFSET = 100
-
-function nowManualNotifyAt() {
-  return dayjs().second(0).millisecond(0)
-}
 
 export type { InstructorFeeApprovalConfirmDetail }
 
@@ -37,7 +38,10 @@ export type InstructorFeeApprovalModalProps = {
   instructorName: string
   /** 프로그램 기준 적용 시 자동 선택 */
   instructorFeeGradeLabel?: string
+  feePolicyContext?: InstructorApplicationFeePolicyContext
+  feePolicyError?: string | null
   onConfirm: (detail: InstructorFeeApprovalConfirmDetail) => void
+  submitting?: boolean
 }
 
 function buildDescription(instructorName: string): string {
@@ -49,7 +53,10 @@ export function InstructorFeeApprovalModal({
   onCancel,
   instructorName,
   instructorFeeGradeLabel,
+  feePolicyContext,
+  feePolicyError,
   onConfirm,
+  submitting = false,
 }: InstructorFeeApprovalModalProps) {
   const {
     lectureFeeBasisType,
@@ -72,7 +79,14 @@ export function InstructorFeeApprovalModal({
     handleLectureFeeBasisTypeChange,
     handleNotifyTimingChange,
     buildConfirmDetail,
-  } = useInstructorFeeApprovalModal({ open, instructorFeeGradeLabel })
+  } = useInstructorFeeApprovalModal({ open, instructorFeeGradeLabel, feePolicyContext })
+
+  useEffect(() => {
+    if (!open || !feePolicyError) return
+    document
+      .getElementById('instructor-fee-approval-fee-policy')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [open, feePolicyError])
 
   const handleConfirm = () => {
     const detail = buildConfirmDetail()
@@ -101,16 +115,19 @@ export function InstructorFeeApprovalModal({
               variant="primary"
               size="large"
               type="button"
-              disabled={!canConfirm}
+              disabled={!canConfirm || submitting}
               onClick={handleConfirm}
             >
-              승인
+              {submitting ? '승인 중...' : '승인'}
             </CmsButton>
           </div>
         }
       >
         <div ref={modalContentRef} className="instructor-fee-approval-modal__content">
-          <div className="instructor-fee-approval-modal__field">
+          <div
+            className="instructor-fee-approval-modal__field"
+            id="instructor-fee-approval-fee-policy"
+          >
             <span className="instructor-fee-approval-modal__label">강사비 책정 방식</span>
             <CmsRadio.Group
               className="instructor-fee-approval-modal__radio-group"
@@ -168,6 +185,11 @@ export function InstructorFeeApprovalModal({
                 </div>
               </div>
             ) : null}
+            {feePolicyError ? (
+              <span className="instructor-fee-approval-modal__field-error" role="alert">
+                {feePolicyError}
+              </span>
+            ) : null}
           </div>
 
           <div className="instructor-fee-approval-modal__field">
@@ -180,12 +202,15 @@ export function InstructorFeeApprovalModal({
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
               <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
-              <span ref={manualRadioAnchorRef} className="instructor-fee-approval-modal__manual-anchor">
+              <span
+                ref={manualRadioAnchorRef}
+                className="instructor-fee-approval-modal__manual-anchor"
+              >
                 <CmsRadio
                   value="manual"
                   onClick={() => {
                     if (notifyTiming === 'manual') {
-                      setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                      setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
                       setDateTimePickerOpen(true)
                     }
                   }}
@@ -214,13 +239,14 @@ export function InstructorFeeApprovalModal({
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={modalContentRef}
-        value={manualNotifyAt ?? nowManualNotifyAt()}
+        value={manualNotifyAt ?? getDefaultManualNotifyAt()}
         onChange={setManualNotifyAt}
         onApply={value => {
           setManualNotifyAt(value)
           setDateTimePickerOpen(false)
           setNotifyError('')
         }}
+        minDateTime={getMinimumManualNotifyAt()}
         zIndex={dateTimePickerZ}
       />
     </>

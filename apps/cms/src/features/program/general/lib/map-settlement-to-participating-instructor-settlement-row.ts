@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
@@ -25,7 +26,7 @@ function formatIsoDateTime(iso?: string): string {
   if (!iso?.trim()) return ''
   const parsed = dayjs(iso)
   if (!parsed.isValid()) return iso.trim()
-  return parsed.format('YYYY. MM. DD(ddd) HH:mm')
+  return formatYmdHmWithKoreanWeekday(parsed)
 }
 
 function formatLectureDateOnly(iso?: string): string {

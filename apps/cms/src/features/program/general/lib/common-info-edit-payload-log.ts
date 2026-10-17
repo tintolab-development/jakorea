@@ -56,7 +56,7 @@ export function logGeneralProgramCommonInfoEditCurrentPayload(
     overlay,
     payload: {
       ...request,
-      serviceDetailJson: parseServiceDetailJson(request.serviceDetailJson),
+      serviceDetailJson: parseServiceDetailJson(request.serviceDetailJson ?? undefined),
     },
   })
 }

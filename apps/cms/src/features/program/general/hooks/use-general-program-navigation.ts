@@ -86,10 +86,13 @@ export function useGeneralProgramNavigation(programId: string | undefined, enabl
     retry: false,
   })
 
-  const resolvedNavigation = useMemo(
-    () => resolveGeneralProgramNavigation(query.data?.lnb),
-    [query.data]
-  )
+  const resolvedNavigation = useMemo(() => {
+    const lnb = query.data?.lnb?.map(item => ({
+      ...item,
+      reason: item.reason ?? undefined,
+    }))
+    return resolveGeneralProgramNavigation(lnb)
+  }, [query.data])
 
   return {
     navigation: query.data,

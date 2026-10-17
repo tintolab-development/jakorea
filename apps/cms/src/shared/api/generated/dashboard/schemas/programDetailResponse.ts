@@ -39,18 +39,12 @@ export interface ProgramDetailResponse {
   businessStartDate?: string;
   businessEndDate?: string;
   periodStatus?: string;
-  /**
-     * 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개.
-     * @nullable
-     */
+  /** 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개. */
   recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
   applicationTargetMode?: string;
   businessField?: string;
   venue?: string;
-  /**
-     * 교육 장소 구분. inside=기관 안, outside=기관 밖, other=기타. 없으면 null.
-     * @nullable
-     */
+  /** 교육 장소 구분. inside=기관 안, outside=기관 밖, other=기타. 없으면 null. */
   venueKind?: ProgramDetailResponseVenueKind;
   contactName?: string;
   contactEmail?: string;
@@ -61,15 +55,17 @@ export interface ProgramDetailResponse {
   learningSupportContent?: string;
   otherMatters?: string;
   remarks?: string;
-  /**
-     * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
-     * @nullable
-     */
+  /** 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다. */
   educationTarget?: ProgramDetailResponseEducationTarget;
   /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
   educationTargets?: string[];
   educationTargetDetail?: string;
-  recruitmentTargetDetail?: string;
+  /** 강사·봉사자 모집 공고 포커스일 때 nested recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null. */
+  recruitmentTarget?: string | null;
+  /** 강사·봉사자 모집 대상 코드 배열. recruitmentTarget 없을 때 FE 라벨 조합용. 참여자 포커스는 생략. */
+  recruitmentTargets?: string[] | null;
+  /** 모집 대상 상세. 포커스 모집 역할 nested 값만(참여자 값을 강사·봉사자에 복사하지 않음). */
+  recruitmentTargetDetail?: string | null;
   targetGradeFrom?: string;
   targetGradeTo?: string;
   thumbnailFileObjectId?: number;
@@ -78,82 +74,40 @@ export interface ProgramDetailResponse {
   schedules?: ScheduleResponse[];
   curricula?: CurriculumResponse[];
   attachments?: AttachmentResponse[];
-  /**
-     * 지원방법 안내 문장. applicationPathId와 별개이며 값이 없으면 null입니다.
-     * @nullable
-     */
+  /** 지원방법 안내 문장. applicationPathId와 별개이며 값이 없으면 null입니다. */
   applicationMethod?: string | null;
-  /**
-     * 공통정보 교육 진행 구조. 프로그램 유형별 generalCommonInfo 저장값을 투영하며 값이 없으면 null.
-     * @nullable
-     */
+  /** 공통정보 교육 진행 구조. 프로그램 유형별 generalCommonInfo 저장값을 투영하며 값이 없으면 null. */
   educationStructure?: ProgramDetailResponseEducationStructure;
-  /**
-     * 수업 회차 유형. 프로그램 유형별 공통정보 저장값이 없으면 null.
-     * @nullable
-     */
+  /** 수업 회차 유형. 프로그램 유형별 공통정보 저장값이 없으면 null. */
   sessionRound?: ProgramDetailResponseSessionRound;
-  /**
-     * 사전 교육 토글. 공통정보가 있으면 저장값이 없을 때 false, 공통정보가 없으면 null.
-     * @nullable
-     */
+  /** 사전 교육 토글. 공통정보가 있으면 저장값이 없을 때 false, 공통정보가 없으면 null. */
   scheduleCurriculumPreEducation?: boolean | null;
-  /**
-     * 교육 형태 일정 공통/일정 별 상이.
-     * @nullable
-     */
+  /** 교육 형태 일정 공통/일정 별 상이. */
   educationFormScheduleDetail?: ProgramDetailResponseEducationFormScheduleDetail;
-  /**
-     * 참여 방식 일정 공통/일정 별 상이. GENERAL_ORGANIZATION이면 항상 null.
-     * @nullable
-     */
+  /** 참여 방식 일정 공통/일정 별 상이. GENERAL_ORGANIZATION이면 항상 null. */
   participationScheduleDetail?: ProgramDetailResponseParticipationScheduleDetail;
-  /**
-     * IPS 일정 공통/일정 별 상이.
-     * @nullable
-     */
+  /** IPS 일정 공통/일정 별 상이. */
   ipsScheduleDetail?: ProgramDetailResponseIpsScheduleDetail;
-  /**
-     * 공통정보 교육 형태 코드. operationMethod와 별개. 없으면 null.
-     * @nullable
-     */
+  /** 공통정보 교육 형태 코드. operationMethod와 별개. 없으면 null. */
   educationForm?: ProgramDetailResponseEducationForm;
-  /**
-     * 교육 형태 한글 라벨. educationFormScheduleDetail=perSchedule이면 null(행 라벨 사용).
-     * @nullable
-     */
+  /** 교육 형태 한글 라벨. educationFormScheduleDetail=perSchedule이면 null(행 라벨 사용). */
   educationFormLabel?: string | null;
-  /**
-     * 개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null.
-     * @nullable
-     */
+  /** 개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null. */
   participationMethod?: ProgramDetailResponseParticipationMethod;
-  /**
-     * IPS 표시 문자열. ipsScheduleDetail=perSchedule이면 null(행 값 사용).
-     * @nullable
-     */
+  /** IPS 표시 문자열. ipsScheduleDetail=perSchedule이면 null(행 값 사용). */
   ipsTypeSummary?: string | null;
   /** 공통정보 차시/회차. educationStructure=curriculum일 때만 채우고 그 외는 []. curricula[]와 별개. */
   curriculumSessions?: CurriculumSessionItem[];
   /** 공통정보 사전교육·세부·행사 일정. educationStructure=schedule일 때만 채우고 그 외는 []. scheduleCurriculumPreEducation=true면 첫 원소 blockKind=preEducation. schedules[]와 별개. */
   scheduleDetails?: ScheduleDetailItem[];
-  /**
-     * 교육 진행 예정일 지정 방식.
-     * @nullable
-     */
+  /** 교육 진행 예정일 지정 방식. */
   educationScheduleMode?: ProgramDetailResponseEducationScheduleMode;
   /** 교육 진행 예정일 표시 문자열(공통정보 그대로, 순서 유지). 없으면 []. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스. */
   educationScheduleLines?: string[];
   /** 기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null. */
   educationScheduleRange?: ScheduleRange | null;
-  /**
-     * recruitmentId 조회일 때 그 모집의 시작. 쿼리가 없으면 null.
-     * @nullable
-     */
+  /** recruitmentId 조회일 때 그 모집의 시작. 쿼리가 없으면 null. */
   recruitmentStartAt?: string | null;
-  /**
-     * recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null.
-     * @nullable
-     */
+  /** recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null. */
   recruitmentEndAt?: string | null;
 }

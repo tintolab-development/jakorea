@@ -224,7 +224,12 @@ export function applyDevAutofillRecruitOverlayPartials(
   }
   if (partials.general != null) {
     mergeDevAutofillGeneralRecruitOverlay(
-      [...targets.generalRecruit, ...targets.institutionRecruit, ...targets.ujatVolunteer],
+      [
+        ...targets.generalRecruit,
+        ...targets.institutionRecruit,
+        ...targets.ujatInstitution,
+        ...targets.ujatVolunteer,
+      ],
       partials.general
     )
   }

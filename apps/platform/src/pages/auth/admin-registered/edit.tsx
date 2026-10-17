@@ -17,7 +17,7 @@ import {
   type SelectedSchool,
 } from '@/features/auth/sign-up'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import sharedStyles from './shared.module.css'
@@ -92,9 +92,7 @@ export function AdminRegisteredEditPage() {
   if (isHydrating) {
     return (
       <section>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
-          가입 정보를 불러오는 중…
-        </PFText>
+        <PFLoadingSpinner centered label="가입 정보를 불러오는 중" />
       </section>
     )
   }
@@ -235,9 +233,7 @@ export function AdminRegisteredEditPage() {
         <PFTextInput size="xlarge" label="이름" value={displayName} required disabled />
         <PFTextInput size="xlarge" label="휴대폰 번호" value={displayPhone} required disabled />
         {isHydrating ? (
-          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500">
-            가입 정보를 불러오는 중…
-          </PFText>
+          <PFLoadingSpinner centered label="가입 정보를 불러오는 중" />
         ) : null}
 
         <div className={sharedStyles.schoolStatusField}>

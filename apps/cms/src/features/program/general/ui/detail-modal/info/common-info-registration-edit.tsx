@@ -6,6 +6,7 @@ import type { Program } from '@/types/domain'
 import {
   extrasFromGeneralProgram,
   setGeneralRegistrationDetailEditExtras,
+  seedGeneralRegistrationOverlayFromProgram,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
@@ -23,6 +24,7 @@ import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/feature
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
 import {
+  shouldAutoFillEducationScheduleFromGroupTimes,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -41,6 +43,13 @@ import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui
 import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/shared/ui/program-registration-curriculum-title-actions'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveInstitutionApplicationScheduleMetaForRegistrationWizard } from '@/features/program/general/lib/institution-application-schedule-meta'
+import {
+  getProgramRegistrationOverlayRecord,
+  readGeneralRegistrationOverlayScheduleLines,
+  subscribeProgramRegistrationOverlayKeys,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 function extrasWithParticipant(
   extras: GeneralRegistrationEditorExtras,
@@ -83,7 +92,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     const nextParticipant = participantFlagsFromGeneralProgram(program)
     setExtras(nextExtras)
     setParticipant(nextParticipant)
-    setGeneralRegistrationDetailEditExtras(extrasWithParticipant(nextExtras, nextParticipant))
+    seedGeneralRegistrationOverlayFromProgram(program)
     // program 객체 참조가 바뀌어도 참여자 유형이 같으면 수정 중 체크를 덮지 않는다.
   }, [
     program.id,
@@ -113,6 +122,41 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     extras.programType === 'schedule' && extras.sessionRoundType === 'multi'
 
   const scheduleCurriculumGroupCount = extras.scheduleCurriculumGroupCount ?? 1
+
+  useEffect(() => {
+    if (!participant.organization) return
+    const syncBridgeFromOverlay = () => {
+      const scheduleMeta = resolveInstitutionApplicationScheduleMetaForRegistrationWizard({
+        sessionRound: extras.sessionRoundType,
+        curriculumSessionCount: extras.curriculumSessionCount,
+        curriculumChartSessionCount: extras.curriculumChartSessionCount,
+        overlay: getProgramRegistrationOverlayRecord(),
+      })
+      patchInstitutionApplicationProgramBridge({
+        educationStructure: extras.programType,
+        sessionRound: extras.sessionRoundType,
+        educationScheduleMode: extras.educationScheduleMode ?? 'date',
+        educationScheduleLines: readGeneralRegistrationOverlayScheduleLines(),
+        educationRoundCount: scheduleMeta.educationRoundCount,
+        sessionsPerRound: scheduleMeta.sessionsPerRound,
+        curriculumChartSessionCount: extras.curriculumChartSessionCount,
+      })
+    }
+    syncBridgeFromOverlay()
+    return subscribeProgramRegistrationOverlayKeys(
+      [
+        'generalRegistration.educationScheduleSettings.scheduleLines',
+        'generalRegistration.educationCurriculum.progressSessionByRound',
+      ],
+      syncBridgeFromOverlay
+    )
+  }, [
+    participant.organization,
+    extras.programType,
+    extras.sessionRoundType,
+    extras.educationScheduleMode,
+    extras.curriculumSessionCount,
+  ])
 
   const isScheduleStructure = extras.programType === 'schedule'
   const curriculumTitle = isScheduleStructure
@@ -312,6 +356,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
             }
             ipsPerSchedule={extras.ipsScheduleDetail === 'perSchedule'}
             sessionRoundType={extras.sessionRoundType}
+            participantIndividual={participant.individual}
             participantOrganization={participant.organization}
             educationFormScheduleDetail={extras.educationFormScheduleDetail ?? 'common'}
             participationScheduleDetail={extras.participationScheduleDetail ?? 'common'}
@@ -322,6 +367,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           <ProgramRegistrationEducationCurriculumParagraph
             key={`pr-curriculum-${extras.sessionRoundType}-${extras.educationFormScheduleDetail}-${extras.participationScheduleDetail}-${extras.ipsScheduleDetail}-${participant.organization ? 'org' : 'ind'}`}
             sessionRoundType={extras.sessionRoundType}
+            participantIndividual={participant.individual}
             participantOrganization={participant.organization}
             curriculumSessionCount={extras.curriculumSessionCount ?? 1}
             onDeleteCurriculumSession={() =>
@@ -360,11 +406,10 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               programId={program.id}
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"
               educationScheduleMode={extras.educationScheduleMode ?? 'date'}
-              autoFillFromScheduleGroupTimes={
-                extras.programType === 'schedule' &&
-                extras.sessionRoundType === 'single' &&
-                !participant.organization
-              }
+              autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+                educationStructure: extras.programType,
+                sessionRound: extras.sessionRoundType,
+              })}
               lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
                 participantOrganization: participant.organization,
                 educationStructure: extras.programType,
@@ -372,27 +417,25 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               operationStart={program.startDate}
               operationEnd={program.endDate}
             />
+        }
+      >
+        <ProgramRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={extras.educationScheduleMode ?? 'date'}
+          onEducationScheduleModeChange={value =>
+            commitExtras({ ...extras, educationScheduleMode: value })
           }
-        >
-          <ProgramRegistrationEducationScheduleSettingsParagraph
-            educationScheduleMode={extras.educationScheduleMode ?? 'date'}
-            onEducationScheduleModeChange={value =>
-              commitExtras({ ...extras, educationScheduleMode: value })
-            }
-            autoFillFromScheduleGroupTimes={
-              extras.programType === 'schedule' &&
-              extras.sessionRoundType === 'single' &&
-              !participant.organization
-            }
-            disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
-              participantOrganization: participant.organization,
-              sessionRound: extras.sessionRoundType,
-            })}
-            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
-              participantOrganization: participant.organization,
-              educationStructure: extras.programType,
-            })}
-          />
+          autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
+            educationStructure: extras.programType,
+            sessionRound: extras.sessionRoundType,
+          })}
+          disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
+            participantOrganization: participant.organization,
+            sessionRound: extras.sessionRoundType,
+          })}
+          programType={extras.programType}
+          sessionRound={extras.sessionRoundType}
+          participantOrganization={participant.organization}
+        />
         </ProgramCommonInfoEditSection>
       )}
     </ProgramCommonInfoEditSections>

@@ -1,5 +1,6 @@
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import { PFCategoryBadge, PFCircleIconButton, PFText } from '@/shared/ui'
+import { PFLoadingSpinner } from '@/shared/ui/pf-loading-spinner'
 import type { OneToOneInquiryItem, OneToOneInquiryStatus } from '../model/types'
 import styles from './inquiry-accordion-list.module.css'
 
@@ -11,6 +12,7 @@ export type InquiryAccordionListProps = {
   onExpandedChange?: (id: string | null) => void
   onDelete?: (id: string) => void
   emptyMessage?: string
+  loading?: boolean
   className?: string
 }
 
@@ -25,6 +27,7 @@ export function InquiryAccordionList({
   onExpandedChange,
   onDelete,
   emptyMessage = '등록된 1:1 문의가 없습니다.',
+  loading = false,
   className,
 }: InquiryAccordionListProps) {
   const rootClassName = [styles.list, className].filter(Boolean).join(' ')
@@ -32,9 +35,13 @@ export function InquiryAccordionList({
   if (items.length === 0) {
     return (
       <div className={rootClassName}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-          {emptyMessage}
-        </PFText>
+        {loading ? (
+          <PFLoadingSpinner centered label="문의내역을 불러오는 중" />
+        ) : (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+            {emptyMessage}
+          </PFText>
+        )}
       </div>
     )
   }

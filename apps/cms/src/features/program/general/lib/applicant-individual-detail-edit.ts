@@ -6,9 +6,6 @@ import type {
 } from '@/features/program/general/model/individual-applicant'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
-import {
-  calculateParticipatingTextbookKitQuantity,
-} from '@/features/program/general/lib/participating-institution-textbook'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 
 export interface ApplicantIndividualEditDraft {
@@ -36,13 +33,8 @@ export type ApplicantIndividualEditFormValues = z.infer<typeof applicantIndividu
 
 export function rowToIndividualEditDraft(
   row: GeneralIndividualApplicantRow,
-  program: Program | null = null
+  _program: Program | null = null
 ): ApplicantIndividualEditDraft {
-  const participantCount = row.detail?.teamMemberCount ?? 1
-  const kitQuantity = program
-    ? calculateParticipatingTextbookKitQuantity(program, participantCount)
-    : { textbookKits: row.textbookKits ?? 0, textbookQuantity: row.textbookQuantity ?? 0 }
-
   return {
     adminComment: row.adminComment ?? '',
     textbookId:
@@ -55,8 +47,8 @@ export function rowToIndividualEditDraft(
       row.textbookName === '해당 없음'
         ? '해당 없음'
         : (row.textbookName ?? ''),
-    textbookKits: kitQuantity.textbookKits,
-    textbookQuantity: kitQuantity.textbookQuantity,
+    textbookKits: row.textbookKits ?? 0,
+    textbookQuantity: row.textbookQuantity ?? 0,
     textbookStatus:
       !row.textbookId?.trim() ||
       row.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
@@ -71,32 +63,17 @@ export function rowToIndividualEditDraft(
 
 export function draftToIndividualSavePayload(
   draft: ApplicantIndividualEditDraft,
-  program: Program | null,
+  _program: Program | null,
   _row: GeneralIndividualApplicantRow
 ): GeneralIndividualApplicantDetailSavePayload {
   const parsed = applicantIndividualEditSchema.parse(draft)
   const adminTrimmed = parsed.adminComment.trim()
-
-  const participantCount = parsed.teamMemberCount
-  const kitQuantity = program
-    ? calculateParticipatingTextbookKitQuantity(program, participantCount)
-    : { textbookKits: draft.textbookKits, textbookQuantity: draft.textbookQuantity }
-
   const isTextbookNotUsed = parsed.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE
 
   return {
     adminComment: adminTrimmed || undefined,
     textbookId: isTextbookNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : parsed.textbookId || undefined,
     textbookName: isTextbookNotUsed ? '해당 없음' : parsed.textbookName || undefined,
-    textbookKits: isTextbookNotUsed ? 0 : kitQuantity.textbookKits,
-    textbookQuantity: isTextbookNotUsed ? 0 : kitQuantity.textbookQuantity,
-    textbookStatus: isTextbookNotUsed
-      ? 'not_applicable'
-      : parsed.textbookId
-        ? draft.textbookStatus === 'not_applicable'
-          ? 'preparing'
-          : draft.textbookStatus
-        : undefined,
     teamName: parsed.teamName.trim() || undefined,
     teamMemberCount: parsed.teamMemberCount,
     teamMemberCountSelect: parsed.teamMemberCountSelect,
@@ -105,7 +82,9 @@ export function draftToIndividualSavePayload(
 
 export function parseApplicantIndividualEditDraft(
   draft: ApplicantIndividualEditDraft
-): { success: true; data: ApplicantIndividualEditFormValues } | { success: false; errors: Record<string, string> } {
+):
+  | { success: true; data: ApplicantIndividualEditFormValues }
+  | { success: false; errors: Record<string, string> } {
   const result = applicantIndividualEditSchema.safeParse(draft)
   if (result.success) {
     return { success: true, data: result.data }

@@ -30,6 +30,7 @@ import {
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { resolveScheduleTypeDetailedProgramNameFromDetails } from '@/features/program/general/lib/detail-common-info-display'
+import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
 import type {
   ProgramRegistrationEducationScheduleMode,
   ProgramRegistrationSessionRoundType,
@@ -869,7 +870,9 @@ export function applyGeneralRegistrationOverlayToProgram(
       : {}),
     rounds,
     generalCommonInfo: {
-      ...program.generalCommonInfo,
+      ...(lockDetailedProgramToSchedule
+        ? omitMirroredDetailedProgramMasterIdFromCommonInfo(program.generalCommonInfo)
+        : program.generalCommonInfo),
       announcementTitle,
       detailedProgramName,
       venueKind,

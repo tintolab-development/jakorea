@@ -24,6 +24,7 @@ import styles from './row.module.css'
 type EducationSettlementRowProps = {
   item: EducationSettlementItem
   applicationId: string
+  initialRejectOpen?: boolean
 }
 
 type StatusMarkConfig = {
@@ -105,12 +106,27 @@ const STATUS_CONFIG: Record<EducationSettlementStatus, StatusConfig> = {
   upcoming: {},
 }
 
-export function EducationSettlementRow({ item, applicationId }: EducationSettlementRowProps) {
+export function EducationSettlementRow({
+  item,
+  applicationId,
+  initialRejectOpen = false,
+}: EducationSettlementRowProps) {
   const navigate = useNavigate()
-  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
   const config = STATUS_CONFIG[item.status]
   const writePath = buildSettlementWritePath({ applicationId, sessionId: item.id })
   const viewPath = buildSettlementPaymentConsentPath({ applicationId, mode: 'view' })
+  const closeRejectReason = () => {
+    setRejectOpen(false)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('modal') !== 'reject-reason') return
+    params.delete('modal')
+    params.delete('sessionId')
+    navigate(
+      { search: params.toString() ? `?${params.toString()}` : '' },
+      { replace: true },
+    )
+  }
   const amount = item.amount
   const showAmount = amount != null && config.amountKind != null
   const showGuide = Boolean(config.message)
@@ -230,7 +246,7 @@ export function EducationSettlementRow({ item, applicationId }: EducationSettlem
         open={rejectOpen}
         title="반려사유"
         description={item.rejectReason ?? '반려 사유가 없습니다.'}
-        onConfirm={() => setRejectOpen(false)}
+        onConfirm={closeRejectReason}
       />
     </>
   )

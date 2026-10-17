@@ -1,11 +1,16 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import type { ProgramDetailCase } from '@/features/program'
+import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
   resolvePreferredEducationScheduleLabelFromAnswers,
 } from '../lib/application-content-from-answers'
-import type { EducationApplicationListItem, EducationDisplayStatus } from '../model/types'
+import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
+import { isOrganizationEducationApplication } from '../lib/organization-education-application'
+import type {
+  EducationApplicationListItem,
+  EducationDisplayStatus,
+} from '../model/types'
 import type {
   PortalProgramApplicationDetail,
   PortalProgramApplicationListItem,
@@ -224,6 +229,9 @@ export function mapPortalProgramApplicationListItem(
     thumbnailUrl,
     displayStatus,
     detailCase,
+    ...(row.pendingSurveyCount != null && row.pendingSurveyCount > 0
+      ? { pendingSurveyCount: row.pendingSurveyCount }
+      : {}),
   }
 }
 
@@ -286,6 +294,9 @@ export function mapPortalProgramApplicationDetail(
   mapped.displayStatus = displayStatus
   mapped.recruitmentStatus = mapRecruitmentStatus(displayStatus)
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
+  if (detail.certificateAvailable != null) {
+    mapped.certificateAvailable = detail.certificateAvailable
+  }
   const recruitmentLabel = formatDateRange(
     detail.program?.recruitmentStartAt,
     detail.program?.recruitmentEndAt,
@@ -308,10 +319,53 @@ export function mapPortalProgramApplicationDetail(
   if (fromAnswers.preferredScheduleOptionValues?.length) {
     mapped.preferredScheduleOptionValues = fromAnswers.preferredScheduleOptionValues
   }
+  if (detail.preferredScheduleBlocks?.length) {
+    mapped.preferredScheduleBlocks = detail.preferredScheduleBlocks
+  }
+  if (Object.keys(answers).length > 0) {
+    mapped.applicationAnswers = answers
+  }
+  if (detail.formResponseId != null && Number.isFinite(detail.formResponseId)) {
+    mapped.formResponseId = detail.formResponseId
+  }
+  const formResponseStatus = detail.formResponseStatus?.trim()
+  if (formResponseStatus) {
+    mapped.formResponseStatus = formResponseStatus
+  }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
+
+  const applicationType = readApplicationType(detail.applicationType)
+  const nestedProgram = detail.program as
+    | Pick<
+        ProgramDetail,
+        'programAudience' | 'programType' | 'registrationKind' | 'educationScheduleLines' | 'eventSchedules'
+      >
+    | undefined
+  const isOrganizationApplication = isOrganizationEducationApplication(
+    {
+      applicationType: applicationType ?? undefined,
+      categoryLabel: mapped.categoryLabel,
+    },
+    nestedProgram,
+  )
+  if (isOrganizationApplication) {
+    mapped.teacherApplicationContent = buildTeacherApplicationContentFromPortal(
+      {
+        applicationType: 'ORGANIZATION',
+        programAudience: nestedProgram?.programAudience,
+        detailCase: mapped.detailCase,
+        programGroup: detail.programGroup ?? detail.program?.programGroup,
+        answers,
+        preferredScheduleBlocks: detail.preferredScheduleBlocks,
+        preferredScheduleOptionValues: mapped.preferredScheduleOptionValues,
+        preferredEducationScheduleLabel: mapped.preferredEducationScheduleLabel,
+      },
+      nestedProgram,
+    )
+  }
 
   return mapped
 }

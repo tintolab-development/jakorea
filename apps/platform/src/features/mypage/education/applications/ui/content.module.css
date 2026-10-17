@@ -30,7 +30,15 @@
   white-space: pre-line;
 }
 
-.schedule {
+.scheduleList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.scheduleCard {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -43,6 +51,25 @@
   background: var(--color-neutral-cool-50);
 }
 
-.scheduleValue {
+.scheduleCardTitle {
   margin: 0;
+}
+
+.scheduleValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.schedulePart {
+  margin: 0;
+}
+
+.instructorScheduleLines {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
 }

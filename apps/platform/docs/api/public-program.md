@@ -31,7 +31,7 @@
 | Gemini 찾아가는 연수 | Portal `programType` SSOT = **`GEMINI_TRAINING`** (`GEMINI` alias 없음). 기관 모집만이면 `portalCategories=["ORGANIZATION"]` — 강사 탭 미노출이 정상 |
 | 검색 | `keyword` |
 | 모집 예정/중/완료 | `recruitmentStatus=UPCOMING\|OPEN\|CLOSED` |
-| 모집대상·교육대상 | `recruitmentTarget` / `educationTarget` (`elementary`…`adult`) |
+| 모집대상·교육대상 | API `educationTargets` (`elementary`…`adult`). URL은 `recruitmentTarget` / `educationTarget` |
 | 교육형태 | `educationMethod=ONLINE\|OFFLINE\|HYBRID\|PARTICIPANT_CHOICE` |
 | 운영기간 | `operatingFrom` `operatingTo` |
 | 최신/이름/마감임박 | `sort=LATEST\|NAME\|CLOSING_SOON` |

@@ -17,6 +17,7 @@ import {
   toReportsListParams,
   toReportUpdateRequest,
 } from './mappers'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import { uploadReportPdfAsset, uploadReportThumbnailAsset } from './upload-report-assets'
 
 function jaKoreaApi() {
@@ -27,8 +28,14 @@ async function listRemoteReports(
   kind: ReportKind,
   filter: ReportListFilter,
 ): Promise<TransparencyReport[]> {
-  const response = await jaKoreaApi().reports(toApiReportType(kind), toReportsListParams(filter))
-  return (response.items ?? []).map(mapReportResponseToDomain)
+  const items = await fetchAllApiPages(async (page, size) => {
+    const response = await jaKoreaApi().reports(
+      toApiReportType(kind),
+      toReportsListParams(filter, page, size)
+    )
+    return { items: response.items ?? [], totalPages: response.totalPages }
+  })
+  return items.map(mapReportResponseToDomain)
 }
 
 async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number> {

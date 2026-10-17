@@ -69,6 +69,10 @@ export interface DateTimePickerTimeInlineSelectsProps {
   rowPhase?: 'single' | 'start' | 'end'
   /** 분 선택 스텝(예: 30 → 00/30만). 기본 1분 */
   minuteStep?: number
+  /** 현재 선택 날짜. 최소 일시와 같은 날짜일 때 시간 선택지를 제한한다. */
+  date?: Dayjs
+  /** 예약 가능한 최소 일시 */
+  minDateTime?: Dayjs
 }
 
 /** 날짜·시간 팝오버 공용 시·분 셀렉트 (24시간) */
@@ -83,10 +87,24 @@ export function DateTimePickerTimeInlineSelects({
   invalid = false,
   rowPhase = 'single',
   minuteStep,
+  date,
+  minDateTime,
 }: DateTimePickerTimeInlineSelectsProps) {
-  const minuteOptions = minuteOptionsForStep(minuteStep)
+  const allMinuteOptions = minuteOptionsForStep(minuteStep)
+  const sameMinimumDate =
+    date != null && minDateTime != null && minDateTime.isValid() && date.isSame(minDateTime, 'day')
+  const minimumHour = sameMinimumDate && minDateTime != null ? minDateTime.hour() : undefined
+  const minimumMinute = sameMinimumDate && minDateTime != null ? minDateTime.minute() : undefined
+  const hourOptions =
+    minimumHour == null
+      ? HOUR_OPTIONS
+      : HOUR_OPTIONS.filter(option => Number(option.value) >= minimumHour)
+  const minuteOptions =
+    minimumHour == null || minimumMinute == null || Number(hour) !== minimumHour
+      ? allMinuteOptions
+      : allMinuteOptions.filter(option => Number(option.value) >= minimumMinute)
   const selectCommon = {
-    inputSize: 'large' as const,
+    inputSize: 'medium' as const,
     withAllOption: false,
     getPopupContainer,
     popupMatchSelectWidth: true,
@@ -115,7 +133,7 @@ export function DateTimePickerTimeInlineSelects({
         {...selectCommon}
         className={wrapHour}
         placeholder="시"
-        options={HOUR_OPTIONS}
+        options={hourOptions}
         value={hour}
         onChange={v => onHourChange(String(v ?? '0'))}
         disabled={disabled}

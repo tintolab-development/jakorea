@@ -6,7 +6,8 @@ import type {
   SchoolStatus,
 } from '../model/sign-up.types'
 import { isDateWithinInputBounds } from '@/shared/ui/pf-date-input/date-utils'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from './constants'
+import { maskSignupPhoneForDisplay } from './helpers/mask-phone'
+import { toApiSignupPhone } from './helpers/to-api-phone'
 
 /** 숫자만 입력해도 YYYY.MM.DD 형식으로 `.`을 자동 삽입한다. */
 export function formatBirthDateInput(value: string) {
@@ -79,7 +80,8 @@ export function getMemberTypeLabel(type: MemberType | null) {
 
 export function getGenderLabel(value: GenderType | null) {
   if (value === 'female') return '여성'
-  return '남성'
+  if (value === 'male') return '남성'
+  return '-'
 }
 
 export function getSchoolStatusLabel(value: SchoolStatus) {
@@ -131,9 +133,12 @@ export function buildConfirmationRows(input: {
 }): ConfirmationRow[] {
   const shared: ConfirmationRow[] = [
     { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
-    { label: '이름', value: input.name?.trim() || MOCK_VERIFIED_NAME },
-    { label: '휴대폰 번호', value: input.phone?.trim() || MOCK_VERIFIED_PHONE },
-    { label: '생년월일', value: input.birthDate },
+    { label: '이름', value: input.name?.trim() || '-' },
+    {
+      label: '휴대폰 번호',
+      value: toApiSignupPhone(input.phone) || input.phone?.trim() || '-',
+    },
+    { label: '생년월일', value: input.birthDate.trim() || '-' },
     { label: '성별', value: getGenderLabel(input.gender) },
   ]
 
@@ -161,4 +166,50 @@ export function buildConfirmationRows(input: {
     { label: '이메일 ID', value: input.email },
     { label: '1365 ID', value: input.volunteerId.trim() || '-' },
   ]
+}
+
+export function buildUnderAgeConfirmationRows(input: {
+  birthDate: string
+  gender: GenderType | null
+  schoolStatus: SchoolStatus
+  address: string
+  addressDetail: string
+  email: string
+  volunteerId: string
+  memberName?: string
+  schoolName?: string
+  grade?: string
+  affiliationName?: string
+  guardianName?: string
+  guardianPhone?: string
+  guardianRelationship?: string
+}): ConfirmationRow[] {
+  const rows: ConfirmationRow[] = [
+    { label: '회원 유형', value: '일반 회원' },
+    { label: '이름', value: input.memberName?.trim() || '-' },
+    { label: '생년월일', value: input.birthDate.trim() || '-' },
+    { label: '성별', value: getGenderLabel(input.gender) },
+    { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
+  ]
+
+  if (input.schoolStatus === 'enrolled') {
+    rows.push(
+      { label: '소속/학교명', value: input.schoolName?.trim() || '-' },
+      { label: '학년', value: input.grade?.trim() || '-' },
+    )
+  }
+
+  rows.push(
+    { label: '자택 주소', value: formatHomeAddress(input.address, input.addressDetail) },
+    { label: '이메일 ID', value: input.email },
+    { label: '1365 ID', value: input.volunteerId.trim() || '-' },
+    { label: '보호자 이름', value: input.guardianName?.trim() || '-' },
+    {
+      label: '보호자 휴대폰',
+      value: maskSignupPhoneForDisplay(input.guardianPhone),
+    },
+    { label: '가입자와의 관계', value: input.guardianRelationship?.trim() || '-' },
+  )
+
+  return rows
 }

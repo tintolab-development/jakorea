@@ -3,7 +3,7 @@
  * - inputSize: xlarge | large | medium | small (CmsInput 치수 정렬)
  * - 상단 라벨 / 하단 메세지(선택) · error
  * - `placeholder`: Ant `Select`와 동일. options에 `value: ''`가 없을 때 폼 값이 `''`여도 placeholder가 보이도록 표시용 value만 `undefined`로 맞춤 (`cms-input`과 동일한 empty UX).
- * - 단일 선택: `allowClear`(기본 true)면 값이 있을 때 X와 화살표를 함께 노출(Ant allowClear 대신 suffix 커스텀). `withAllOption`은 「전체」 옵션만 제어하고 ×를 막지 않는다.
+ * - 단일 선택: `allowClear`(기본 true)면 값이 있을 때 X와 화살표를 둠(Ant allowClear 대신 suffix 커스텀). X는 hover / focus·open 시에만 보임. `withAllOption`은 「전체」 옵션만 제어하고 ×를 막지 않는다.
  * - `mode="multiple"`: AppMultiSelect와 동일 UX(검색·체크·pill, 닫힘 시 쉼표 구분) — Ant Select 미사용.
  * - 열린 드롭다운: `.ant-select`가 테두리 박스를 채우므로 Ant 기본 `popupMatchSelectWidth`로 폭·좌측 정렬이 트리거와 일치.
  */
@@ -146,6 +146,13 @@ export interface CmsSelectProps
   withAllOption?: boolean
   /** 값이 있을 때 선택 초기화(×) 표시 (기본 true) */
   allowClear?: boolean
+  /** mode="multiple" — 서버 검색·무한 스크롤 */
+  filterLocally?: boolean
+  searchDebounceMs?: number
+  onSearchChange?: (query: string) => void
+  hasMore?: boolean
+  loadingMore?: boolean
+  onLoadMore?: () => void
 }
 
 export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref) => {
@@ -160,10 +167,18 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
     defaultValue,
     onChange,
     onClear,
+    onOpenChange,
+    loading,
     options,
     mode,
     withAllOption = true,
     allowClear = true,
+    filterLocally,
+    searchDebounceMs,
+    onSearchChange,
+    hasMore,
+    loadingMore,
+    onLoadMore,
     placeholder,
     classNames,
     popupClassName,
@@ -301,6 +316,14 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
         options={multipleOptions}
         value={resolvedValue as string[]}
         allowClear={allowClear}
+        optionsLoading={Boolean(loading)}
+        filterLocally={filterLocally}
+        searchDebounceMs={searchDebounceMs}
+        onSearchChange={onSearchChange}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={onLoadMore}
+        onOpenChange={onOpenChange}
         onChange={next => {
           if (!isControlled) setUncontrolledValue(next)
           onChange?.(next as never, [] as never)
@@ -335,6 +358,8 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
         className={selectClassName}
         disabled={disabled}
         placeholder={placeholder}
+        loading={loading}
+        onOpenChange={onOpenChange}
         {...rest}
         classNames={{ ...classNames, popup: { ...classNames?.popup, root: popupRootCn } }}
         mode={mode}

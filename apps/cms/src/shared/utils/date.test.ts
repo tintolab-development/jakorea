@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { formatDateDot, formatDateRangeDot, formatDateSpaced, formatDateTimeDot } from './date'
+import {
+  formatDate,
+  formatDateDot,
+  formatDateRangeDot,
+  formatDateSpaced,
+  formatDateTimeDot,
+} from './date'
+
+describe('formatDate', () => {
+  it('잘못된 날짜가 들어와도 예외 대신 -를 반환한다', () => {
+    expect(formatDate('not-a-date')).toBe('-')
+    expect(formatDate(null)).toBe('-')
+  })
+})
 
 describe('formatDateDot', () => {
   it('YYYY.MM.DD로 패딩한다', () => {

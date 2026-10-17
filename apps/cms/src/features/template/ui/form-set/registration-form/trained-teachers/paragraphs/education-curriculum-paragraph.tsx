@@ -13,7 +13,7 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
-import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
@@ -92,11 +92,11 @@ function TrainedTeachersTeacherTrainingBlock() {
               fullRow
               edit={
                 <div className="detail-info-form-inputs-wrapper-no-gap">
-                  <ParagraphDatePicker
-                    mode="single"
-                    presetMode="schedule"
-                    customizable={false}
-                    suppressAutoTodayWhenEmpty
+                  <EducationProgressScheduleDatePicker
+                    participantIndividual
+                    participantOrganization={false}
+                    programType="curriculum"
+                    sessionRound="single"
                     value={scheduleRange?.[0] ?? null}
                     appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
                     appliedSurfaceWithTime={scheduleHasClock}
@@ -104,8 +104,6 @@ function TrainedTeachersTeacherTrainingBlock() {
                     onRangeChange={([start, end]) =>
                       setScheduleLine(formatEducationScheduleLineFromRange([start, end]))
                     }
-                    width="100%"
-                    placeholder="일정을 선택하세요"
                   />
                 </div>
               }

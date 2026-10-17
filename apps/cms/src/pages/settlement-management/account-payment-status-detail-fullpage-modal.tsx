@@ -17,7 +17,6 @@ import {
 import { CmsButton } from '@/shared/ui'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import { getMockAccountPaymentStatusDetail } from '@/features/settlement-management/model/account-payments-list'
 import { useAccountPaymentDetailQuery } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
@@ -63,13 +62,13 @@ export function AccountPaymentStatusDetailFullPageModal({
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const detailQuery = useAccountPaymentDetailQuery(row, open && accountPaymentsRemote)
 
-  const mockDetail = useMemo(
-    () => (row && !accountPaymentsRemote ? getMockAccountPaymentStatusDetail(row) : null),
-    [row, accountPaymentsRemote]
-  )
-  const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : mockDetail
+  const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : null
   const detailLoading = accountPaymentsRemote && open && isAwaitingFirstQueryData(detailQuery)
-  const detailError = accountPaymentsRemote ? detailQuery.error : null
+  const detailError = accountPaymentsRemote
+    ? detailQuery.error
+    : open
+      ? new Error('계좌 지급 API가 연결되지 않았습니다.')
+      : null
   const detailForbidden = getApiErrorHttpStatus(detailError) === 403
   const { showAlert } = useCmsAlert()
 

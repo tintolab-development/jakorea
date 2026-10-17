@@ -78,8 +78,9 @@ function resolveScheduleIdForRow(
         )
       : undefined
     if (fromEntries != null) return fromEntries
-    const nonPre = regularSchedules[0]
-    return nonPre?.scheduleId ?? undefined
+    const fromDashboardName = findUniqueScheduleIdByNameMatch(regularSchedules, row)
+    if (fromDashboardName != null) return fromDashboardName
+    return undefined
   }
 
   if (row.round == null) return undefined

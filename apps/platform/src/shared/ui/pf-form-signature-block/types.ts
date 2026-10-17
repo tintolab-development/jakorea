@@ -14,4 +14,10 @@ export type PFFormSignatureBlockProps = {
   signature?: string | FormSignatureValue | null
   onSignatureChange: (value: FormSignatureValue) => void
   className?: string
+  /** 날짜·성명 텍스트 우측 정렬 (행정정보 대상자 본인 하단 카드) */
+  contentAlign?: 'center' | 'end'
+}
+
+export type PFFormSignatureBlockHandle = {
+  requestEdit: () => void
 }

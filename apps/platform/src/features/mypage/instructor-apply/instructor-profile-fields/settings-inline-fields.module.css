@@ -1,0 +1,26 @@
+/** 회원정보 설정 — 인라인 섹션 수정 (PFForm 카드·테이블 배경 제거) */
+.embeddedSection {
+  gap: var(--spacing-16);
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.fieldTablePlain {
+  overflow: visible !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.fieldTablePlain > div {
+  border-bottom: none !important;
+}
+
+@media (--bp-below-pc) {
+  .fieldTablePlain {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+}

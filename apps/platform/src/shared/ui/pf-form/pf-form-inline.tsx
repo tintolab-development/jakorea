@@ -1,4 +1,6 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import { Children, Fragment, type HTMLAttributes, type ReactNode } from 'react'
+import { PFText } from '../pf-text'
+import { PFFormFieldValueText } from './pf-form-field'
 import styles from './pf-form.module.css'
 
 export type PFFormInlineRowProps = {
@@ -40,15 +42,86 @@ export function PFFormInlineSeparator({ className, ...rest }: PFFormInlineSepara
   )
 }
 
+export type PFFormInlineSeparatedFieldsProps = {
+  children: ReactNode
+  className?: string
+}
+
+/** 인라인 필드·텍스트 사이 `PFFormInlineSeparator` (16px 간격) 자동 삽입 */
+export function PFFormInlineSeparatedFields({
+  children,
+  className,
+}: PFFormInlineSeparatedFieldsProps) {
+  const items = Children.toArray(children)
+  if (items.length === 0) return null
+
+  return (
+    <PFFormInlineRow className={className}>
+      {items.map((child, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <PFFormInlineSeparator /> : null}
+          <PFFormInlineSegment>{child}</PFFormInlineSegment>
+        </Fragment>
+      ))}
+    </PFFormInlineRow>
+  )
+}
+
+export type PFFormInlineJoinedValuesProps = {
+  parts: Array<string | null | undefined>
+  emptyFallback?: string
+}
+
+/** 읽기 전용 값 목록 — 문자 `|` 대신 세로 구분선 */
+export function PFFormInlineJoinedValues({
+  parts,
+  emptyFallback = '–',
+}: PFFormInlineJoinedValuesProps) {
+  const items = parts
+    .map(part => (part == null ? '' : String(part).trim()))
+    .filter(Boolean)
+
+  if (items.length === 0) {
+    return <PFFormFieldValueText>{emptyFallback}</PFFormFieldValueText>
+  }
+
+  return (
+    <PFFormInlineSeparatedFields>
+      {items.map((item, index) => (
+        <PFFormFieldValueText key={index}>{item}</PFFormFieldValueText>
+      ))}
+    </PFFormInlineSeparatedFields>
+  )
+}
+
 export type PFFormControlClusterProps = {
   children: ReactNode
   className?: string
 }
 
-/** PC 가로 / 모바일(≤1079) 세로 스택 — 은행명+계좌, 학교+전공 등 */
+/** 컨트롤 + 라벨·suffix를 한 줄(모바일 포함 wrap)로 묶음 */
 export function PFFormControlCluster({ children, className }: PFFormControlClusterProps) {
   return (
     <div className={[styles.controlCluster, className].filter(Boolean).join(' ')}>{children}</div>
+  )
+}
+
+export type PFFormControlSuffixProps = {
+  children: ReactNode
+  className?: string
+}
+
+/** `PFFormControlCluster` 내 인풋 우측 단위·보조 문구 */
+export function PFFormControlSuffix({ children, className }: PFFormControlSuffixProps) {
+  return (
+    <PFText
+      as="span"
+      typo="bd-md-rg"
+      color="neutral-cool-700"
+      className={[styles.controlClusterSuffix, className].filter(Boolean).join(' ')}
+    >
+      {children}
+    </PFText>
   )
 }
 

@@ -36,75 +36,35 @@ export interface GeminiRecruitmentDetailResponse {
   approvedOrganizationApplicationCount?: number;
   /** 교육 대상 코드. elementary|middle|high|university|adult. 없으면 []. */
   targetLevels?: string[];
-  /**
-     * 교육 대상 상세
-     * @nullable
-     */
+  /** 교육 대상 상세 */
   recruitmentTargetDetail?: string | null;
-  /**
-     * 교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다.
-     * @nullable
-     */
+  /** 교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다. */
   educationForm?: GeminiRecruitmentDetailResponseEducationForm;
-  /**
-     * 교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT.
-     * @nullable
-     */
+  /** 교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT. */
   educationStructure?: string | null;
-  /**
-     * 문의처 이름
-     * @nullable
-     */
+  /** 문의처 이름 */
   contactName?: string | null;
-  /**
-     * 문의처 전화
-     * @nullable
-     */
+  /** 문의처 전화 */
   contactPhone?: string | null;
-  /**
-     * 문의처 이메일
-     * @nullable
-     */
+  /** 문의처 이메일 */
   contactEmail?: string | null;
-  /**
-     * 비고. 해당없음이면 null
-     * @nullable
-     */
+  /** 비고. 해당없음이면 null */
   otherMatters?: string | null;
-  /**
-     * 섬네일 파일명
-     * @nullable
-     */
+  /** 섬네일 파일명 */
   thumbnailFileName?: string | null;
-  /**
-     * 모집 안내
-     * @nullable
-     */
+  /** 모집 안내 */
   recruitmentGuide?: string | null;
-  /**
-     * 지원 방법
-     * @nullable
-     */
+  /** 지원 방법 */
   applicationMethod?: string | null;
-  /**
-     * 학습 지원 내용
-     * @nullable
-     */
+  /** 학습 지원 내용 */
   learningSupportContent?: string | null;
-  /**
-     * 추가 내용 HTML/Markdown 저장분
-     * @nullable
-     */
+  /** 추가 내용 HTML/Markdown 저장분 */
   additionalContentHtml?: string | null;
   /** 첨부 파일명. 없으면 []. */
   attachmentFileNames?: string[];
   createdAt?: string;
-  /** @nullable */
   createdByName?: string | null;
   updatedAt?: string;
-  /**
-     * program에 updated_by 컬럼이 없으면 null
-     * @nullable
-     */
+  /** program에 updated_by 컬럼이 없으면 null */
   updatedByName?: string | null;
 }

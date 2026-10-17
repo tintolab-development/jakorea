@@ -126,6 +126,7 @@ export { LoadingButton } from './loading-button'
 export {
   CmsButton,
   CMS_ACTION_BUTTON_WIDTH,
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH,
 } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'

@@ -7,7 +7,6 @@
  */
 
 export interface ClassTimeRow {
-  /** @nullable */
   gradeRangeLabel?: string | null;
   /** 1~4교시 시각 문자열 4개 */
   periods?: string[];

@@ -37,6 +37,8 @@ export interface ParticipatingSchoolSession {
   resolvedScheduleId?: number | null
   /** resolvedScheduleId === null 일 때 true */
   scheduleUnresolved?: boolean
+  /** OSA `assignmentId` — 동일 program scheduleId·학급별 row 구분 */
+  osaAssignmentId?: number
 }
 
 export interface ParticipatingSchoolRow {
@@ -59,9 +61,14 @@ export interface ParticipatingSchoolRow {
   /** 담당 교사 연락처 (마스킹 또는 해제값) */
   contact?: string
   instructors: string
-  /** 강의 회차 별 교육 진행 날짜 및 시간 (참여 기관 페이지 컬럼용) */
+  /**
+   * 참여자 API `sessions[]` (출석·진행 hybrid). 희망·OSA 표시 SSOT가 아님.
+   * 일반 기관 희망/배정 UI는 `hopeEducationSessions`·OSA 조회를 사용한다.
+   */
   sessions?: ParticipatingSchoolSession[]
-  /** 기관 신청 B — 강사·봉사 배정 후보 (organization-applications preferredEducationSchedules) */
+  /** 기관 신청 희망 일정 — 참여 목록 「진행 희망 교육 일정」 SSOT */
+  hopeEducationSessions?: ParticipatingSchoolSession[]
+  /** 기관 신청 B — organization-applications `preferredEducationSchedules` 원본 */
   preferredEducationSchedules?: PreferredEducationSchedule[]
   /** 프로그램 ID (교육받은 교사 등 프로그램별 참여 기관 필터용) */
   programId?: string

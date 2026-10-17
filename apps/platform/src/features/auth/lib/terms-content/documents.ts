@@ -34,8 +34,8 @@ export type TermsDocumentContent = {
 
 /**
  * 서비스·개인정보·마케팅 본문은 CMS `features/auth/lib/terms-content/documents.ts`와 같다.
- * 초상권·교사 회원 항목은 플랫폼 전용이며 본문은 비워 둔다.
- * 법정대리인 동의는 플랫폼 전용 본문이다.
+ * 초상권 본문은 플랫폼 전용이며 비워 둔다(동의서 작성 화면 사용).
+ * 교사 회원·법정대리인 동의는 플랫폼 전용 본문이다.
  */
 
 /** 서비스 이용약관 */
@@ -258,6 +258,59 @@ const EMPTY_TERMS_CONTENT: TermsDocumentContent = {
   sections: [],
 }
 
+/** 교사 회원 가입 및 학교/기관 정보 수집·이용 동의 */
+export const TEACHER_INFO_COLLECTION_CONTENT: TermsDocumentContent = {
+  intro:
+    'JA Korea는 교사 회원 가입 및 교사 회원 서비스 제공을 위해 아래와 같이 추가 정보를 수집·이용합니다.',
+  sections: [
+    {
+      heading: '1. 수집·이용 목적',
+      paragraphs: [
+        '• 교사 회원 가입 및 회원 식별',
+        '• 교사 회원 서비스 제공',
+        '• 교육 프로그램 운영 및 참여 관리',
+        '• 학교/기관 기반 활동 안내 및 운영 지원',
+        '• 교사 회원 대상 알림 및 서비스 안내',
+      ],
+    },
+    {
+      heading: '2. 수집 항목',
+      paragraphs: [],
+      table: {
+        columns: [
+          { key: 'required', label: '필수 항목', width: '28%', align: 'left' },
+          { key: 'optional', label: '선택 항목', width: '18%', align: 'left' },
+          { key: 'notCollected', label: '수집하지 않는 항목', align: 'left' },
+        ],
+        rows: [
+          {
+            id: 'teacher-info-items',
+            cells: {
+              required:
+                '교사명, 성별, 소속 학교/기관명, 재직현황, 학교/기관 주소 또는 소재지',
+              optional: '없음',
+              notCollected:
+                '학교코드, 초대코드, 재직증명서, 재직 증빙 파일, 승인자 정보, 승인 상태, 반려 사유, 심사 상태',
+            },
+          },
+        ],
+      },
+    },
+    {
+      heading: '3. 보유 및 이용기간',
+      paragraphs: [
+        '회원 탈퇴 시까지 보유·이용합니다. 단, 관련 법령에 따라 보관이 필요한 정보는 해당 법령에서 정한 기간 동안 보관할 수 있습니다.',
+      ],
+    },
+    {
+      heading: '4. 동의 거부권 및 불이익',
+      paragraphs: [
+        '교사 회원 가입을 위한 필수 정보 수집·이용에 동의하지 않는 경우 교사 회원 가입 및 교사 회원 서비스 이용이 제한될 수 있습니다.',
+      ],
+    },
+  ],
+}
+
 const GUARDIAN_LEGAL_CONTENT: TermsDocumentContent = {
   intro:
     'JA Korea는 만 14세 미만 아동이 회원가입 및 서비스를 이용하는 경우, 법정대리인의 본인인증 및 동의를 받은 후 회원가입 절차를 진행합니다.',
@@ -335,7 +388,7 @@ export const TERMS_DOCUMENT_BY_TYPE: Record<TermsViewType, TermsDocumentContent>
   mfaSetup: MFA_SETUP_CONTENT,
   marketing: MARKETING_CONSENT_CONTENT,
   portrait: EMPTY_TERMS_CONTENT,
-  teacherInfo: EMPTY_TERMS_CONTENT,
+  teacherInfo: TEACHER_INFO_COLLECTION_CONTENT,
   guardianLegal: GUARDIAN_LEGAL_CONTENT,
   privacyNotice: PRIVACY_NOTICE_CONTENT,
 }

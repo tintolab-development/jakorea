@@ -3,12 +3,7 @@
  */
 
 import { useMemo } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
-import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
-import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
-import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
-import { getUjatInstitutionApplicationDetail } from '@/features/program/ujat/model/ujat-institution-application'
+import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type {
@@ -81,55 +76,35 @@ export function useUjatEducationProgressInstitutionDetail(input: {
   institutionId: string
 }) {
   const { programId, half, institutionId } = input
-  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
-
-  const remoteQuery = useInfiniteQuery({
-    queryKey: [
-      ...ujatQueryKeys.organizationApplications(programId, {
-        status: 'APPROVED',
-        recruitHalf: toUjatRecruitHalfApi(half),
-      }),
-      'edu-progress-detail',
-    ] as const,
-    queryFn: ({ pageParam }) =>
-      listUjatInstitutionApplicationsPage(programId, pageParam, {
-        status: 'APPROVED',
-        recruitHalf: toUjatRecruitHalfApi(half),
-      }),
-    initialPageParam: 0,
-    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled: remoteEnabled && Boolean(institutionId),
-    staleTime: 30_000,
-    retry: false,
+  const applicationDetail = useUjatInstitutionApplicationDetail({
+    institutionId,
+    programId,
   })
 
   const detail = useMemo((): UjatEducationProgressInstitutionDetail | null => {
-    if (remoteEnabled) {
-      const rows = remoteQuery.data?.pages.flatMap(page => page.rows) ?? []
-      const row = rows.find(item => item.id === institutionId)
-      if (!row) return null
-      return {
+    const row = applicationDetail.row
+    const application = applicationDetail.detail
+    if (!row || !application) return null
+    return {
+      institutionId,
+      half,
+      institutionName: row.institutionName,
+      educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
+      adminComment: '',
+      applicationDetail: application,
+      confirmedScheduleRows: buildConfirmedEducationScheduleRows(
         institutionId,
+        row.regionKey,
         half,
-        institutionName: row.institutionName,
-        educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
-        adminComment: '',
-        applicationDetail: getUjatInstitutionApplicationDetail(row),
-        confirmedScheduleRows: buildConfirmedEducationScheduleRows(
-          institutionId,
-          row.regionKey,
-          half,
-          scheduleDates
-        ),
-        guidance: { ...DEFAULT_GUIDANCE },
-      }
+        scheduleDates
+      ),
+      guidance: { ...DEFAULT_GUIDANCE },
     }
-    return null
-  }, [half, institutionId, programId, remoteEnabled, remoteQuery.data, scheduleDates])
+  }, [applicationDetail.detail, applicationDetail.row, half, institutionId, scheduleDates])
 
   return {
     detail,
-    loading: remoteEnabled ? remoteQuery.isLoading || remoteQuery.isFetching : false,
+    loading: applicationDetail.loading,
   }
 }

@@ -4,21 +4,21 @@
  */
 
 import type { ReactNode } from 'react'
-import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
+import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import type {
   ApplicantCalendarEvent,
   ApplicantInstructorCalendarEventItem,
 } from './applicant-calendar-events'
 import { resolveInstructorCalendarInstitutionName } from './applicant-calendar-events'
-import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-calendar-session'
+import { formatInstitutionCalendarSessionsTimeDisplay } from './applicant-institution-calendar-session'
 
 function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
   schoolName: string
   regionDisplay: string
   applicantCount: number
-  instructor: ApplicantInstructorRow
+  sessionLabel: string
 } | null {
   const wrapped = item.original as
     | ApplicantCalendarEvent
@@ -33,18 +33,26 @@ function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
         ? (wrapped as ApplicantInstructorCalendarEventItem)
         : null
 
-  if (row == null || typeof row.schoolName !== 'string') return null
+  if (row == null) return null
 
   const summary = row.calendarInstitutionSummary
   if (summary == null) return null
 
   const schoolName = resolveInstructorCalendarInstitutionName(row)
+  const regionRaw =
+    row.calendarInstitutionRow?.region?.trim() || summary.regionDisplay?.trim() || ''
+  const regionDisplay = formatInstitutionRegionForTableDisplay(regionRaw)
+  const sessionsOnDate = row.sessionsOnDate ?? []
+  const sessionLabel = formatInstitutionCalendarSessionsTimeDisplay(
+    sessionsOnDate,
+    row.calendarInstitutionRow?.desiredEducationPeriod
+  )
 
   return {
     schoolName,
-    regionDisplay: summary.regionDisplay?.trim() || '-',
+    regionDisplay,
     applicantCount: summary.applicantCount,
-    instructor: row,
+    sessionLabel,
   }
 }
 
@@ -61,9 +69,8 @@ export function renderGeneralInstructorCalendarPreviewTooltipContent({
         const resolved = resolveInstructorInstitutionFromCalendarItem(item)
         if (resolved == null) return null
 
-        const { schoolName, regionDisplay, applicantCount, instructor } = resolved
+        const { schoolName, regionDisplay, applicantCount, sessionLabel } = resolved
         const titleColor = colorMap.get(item.id)?.text
-        const sessionLabel = getInstructorCalendarSessionCardLabel(instructor, schoolName)
 
         return (
           <div key={String(item.id)} className="participating-institutions-calendar-popover__entry">

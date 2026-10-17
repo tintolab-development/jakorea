@@ -1,0 +1,64 @@
+/** CMS `MemberPortalConsentDocumentCreateRequest` — Portal POST /me/consents/documents */
+export type PortalConsentDocumentCreateRequest = {
+  consentType: string
+  targetType?: string
+  targetId?: number
+}
+
+/** CMS `MemberPortalConsentDocumentResponse` */
+export type PortalConsentSignatureField = {
+  fieldId?: number
+  fieldKey?: string
+  fieldLabel?: string
+  displayOrder?: number
+  required?: boolean
+  signed?: boolean
+  signatureProfileId?: number
+  signatureFileObjectId?: number
+  signedAt?: string
+}
+
+export type PortalConsentDocumentDetail = {
+  documentId?: number
+  consentType?: string
+  title?: string
+  documentStatus?: string
+  contentFormat?: string
+  content?: string
+  schemaJson?: unknown
+  renderStatus?: string
+  signatureFields?: PortalConsentSignatureField[]
+}
+
+export type PortalConsentSignFieldRequest = {
+  signatureProfileId?: number
+}
+
+export type PortalFilledDocumentRequest = {
+  templateCode?: string
+  schemaJson?: Record<string, unknown>
+  paymentBasicInfo?: Record<string, unknown>
+}
+
+/** CMS `MemberPortalConsentCompleteRequest` */
+export type PortalConsentCompleteRequest = {
+  identityVerificationSessionId?: number
+  /** PORTRAIT_RIGHTS — `PARTIAL` (FULL deprecated) */
+  consentStatus?: string
+  /** PORTRAIT_RIGHTS — 1·2번 항목 동의 기반 힌트(서버 재계산) */
+  programEligible?: boolean
+  filledDocument?: PortalFilledDocumentRequest
+}
+
+export type PortalSignatureProfileRequest = {
+  signatureType: string
+  fileObjectId: number
+  displayName?: string
+  fontStyleCode?: string
+}
+
+export type PortalSignatureProfileResponse = {
+  signatureProfileId?: number
+  signatureType?: string
+  fileObjectId?: number
+}

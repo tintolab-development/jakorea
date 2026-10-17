@@ -40,9 +40,11 @@ import type {
   ApiResponseAdminPermissionRequestNotificationResponse,
   ApiResponseAdminSelfWithdrawalResponse,
   ApiResponseBulkActionResponse,
+  ApiResponseCertificateSerialAllocateResponse,
   ApiResponseVoid,
   ApprovalResetRequest,
   BulkDecisionRequest,
+  CertificateRosterSerialAllocateRequest,
   CertificateSerialAllocateRequest,
   CertificateSerialAllocateResponse,
   ConsentFilledDocumentParams,
@@ -112,6 +114,9 @@ import type {
   SchoolAffiliatedTeacherResponse,
   SchoolOrganizationListItemResponse,
   SchoolOrganizationUpsertRequest,
+  SignedConsentDocumentParams,
+  SignedConsentDocumentResponse,
+  SignedConsentSignatureImageParams,
   TeacherEmploymentStatusUpdateRequest,
   TeacherMemberDetailResponse,
   UserResponse
@@ -650,6 +655,124 @@ const deleteAndAnonymize = (
       {url: `/api/admin/users/${memberId}/delete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminMemberDeleteRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - ?? ?? ?? ??? ????? ?? ??
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요
+ * - 접근 범위: MEMBER_SCOPE 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNATURE_METADATA 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Returns immutable signed snapshot; requires PRIVACY_RAW_READ reason and excludes withdrawn, expired, destroyed documents.
+ * @summary ?? ?? ?? ??? ????? ?? ??
+ */
+const signedConsentDocument = (
+    memberId: number,
+    consentType: string,
+    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
+    params?: SignedConsentDocumentParams,
+ options?: SecondParameter<typeof customInstance<SignedConsentDocumentResponse>>,) => {
+      return customInstance<SignedConsentDocumentResponse>(
+      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminPrivacyUnmaskRequest,
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - ?? ?? ??? ?? ??? ?? ??
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document/signature-fields/{fieldKey}/content`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요
+ * - 접근 범위: MEMBER_SCOPE 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNATURE_IMAGE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: PRIVACY_RAW_READ ? ?? ?? ??; signed field ??? ???, ?? ??, ??/?? ?? ??
+ * @summary ?? ?? ??? ?? ??? ?? ??
+ */
+const signedConsentSignatureImage = (
+    memberId: number,
+    consentType: string,
+    fieldKey: string,
+    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
+    params?: SignedConsentSignatureImageParams,
+ options?: SecondParameter<typeof customInstance<Blob>>,) => {
+      return customInstance<Blob>(
+      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/signature-fields/${fieldKey}/content`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminPrivacyUnmaskRequest,
+        params,
+        responseType: 'blob'
     },
       options);
     }
@@ -2253,6 +2376,60 @@ const allocateCertificateSerial = (
       {url: `/api/admin/certificates/issues/serial`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: certificateSerialAllocateRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 기관 학생 명단 기준 증서 번호 발급
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/certificates/issues/serial/roster`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: CERTIFICATE_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 수료증/참여인증서는 발급 상태와 다운로드 이력을 함께 확인합니다. `COMPLETION_ISSUED`, `PARTICIPATION_ISSUED`, `ISSUED`는 발급 완료 배지로 표시합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 명시한 applicationId/rosterId를 participantId로 서버 매핑
+ * @summary 기관 학생 명단 기준 증서 번호 발급
+ */
+const allocateCertificateSerialByRoster = (
+    certificateRosterSerialAllocateRequest: CertificateRosterSerialAllocateRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseCertificateSerialAllocateResponse>>,) => {
+      return customInstance<ApiResponseCertificateSerialAllocateResponse>(
+      {url: `/api/admin/certificates/issues/serial/roster`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: certificateRosterSerialAllocateRequest
     },
       options);
     }
@@ -5951,7 +6128,7 @@ const deleteProgramRole = (
       options);
     }
 
-return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole}};
+return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,signedConsentDocument,signedConsentSignatureImage,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,allocateCertificateSerialByRoster,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole}};
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
 export type UpdateRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateRolePermissions']>>>
 export type ListProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles']>>>
@@ -5961,6 +6138,8 @@ export type UnmaskInstructorMemberPrivacyResult = NonNullable<Awaited<ReturnType
 export type UnmaskInstructorPrivacyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['unmaskInstructorPrivacy']>>>
 export type UnmaskIndividualMemberPrivacyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['unmaskIndividualMemberPrivacy']>>>
 export type DeleteAndAnonymizeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteAndAnonymize']>>>
+export type SignedConsentDocumentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentDocument']>>>
+export type SignedConsentSignatureImageResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentSignatureImage']>>>
 export type ConsentFilledDocumentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['consentFilledDocument']>>>
 export type ListMemberCommentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listMemberComments']>>>
 export type CreateMemberCommentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['createMemberComment']>>>
@@ -5990,6 +6169,7 @@ export type Approve1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof ge
 export type BulkRejectResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['bulkReject']>>>
 export type BulkApproveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['bulkApprove']>>>
 export type AllocateCertificateSerialResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['allocateCertificateSerial']>>>
+export type AllocateCertificateSerialByRosterResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['allocateCertificateSerialByRoster']>>>
 export type ResetAdminApprovalToPendingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['resetAdminApprovalToPending']>>>
 export type ResendAdminApprovalNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['resendAdminApprovalNotification']>>>
 export type RejectAdminApprovalRequestResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['rejectAdminApprovalRequest']>>>

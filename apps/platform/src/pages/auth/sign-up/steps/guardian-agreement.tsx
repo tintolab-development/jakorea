@@ -44,17 +44,17 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
         <div className={styles.termsContent}>
           <PFToggle
             variant="check-large"
-            checked={agreement.isAllAgreed}
+            checked={agreement.isRequiredAgreed}
             onChange={() => agreement.toggleAll()}
             className={[
               styles.allAgreementButton,
-              agreement.isAllAgreed ? styles.allAgreementButtonChecked : undefined,
+              agreement.isRequiredAgreed ? styles.allAgreementButtonChecked : undefined,
             ]
               .filter(Boolean)
               .join(' ')}
           >
             <PFText typo="bd-lg-sb" color="inherit">
-              전체 동의하기
+              필수 항목 전체 동의하기
             </PFText>
           </PFToggle>
 
@@ -83,7 +83,13 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
                 <button
                   className={styles.termsViewButton}
                   type="button"
-                  onClick={() => terms.open(agreementKeyToTermsView(item.key))}
+                  onClick={() => {
+                    if (item.key === 'portrait') {
+                      agreement.openPortraitConsent()
+                      return
+                    }
+                    terms.open(agreementKeyToTermsView(item.key))
+                  }}
                 >
                   <PFText typo="bd-sm-md" color="inherit">
                     보기

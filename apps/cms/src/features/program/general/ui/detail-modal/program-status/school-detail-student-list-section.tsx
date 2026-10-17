@@ -12,6 +12,7 @@ import { Spin } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import {
   CmsInput,
+  CmsPhoneInput,
   CmsRadio,
   CmsSelect,
   FilterTableLayout,
@@ -40,10 +41,24 @@ import type {
   LectureAttendanceSession,
   SchoolDetailStudentRow,
   StudentListFormValues,
-  StudentListFormStudent,
   StudentGenderKey,
 } from '../../../model/school-detail-types'
 import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
+import {
+  buildStudentEditVisibleRows,
+  formValuesToRows,
+  rowsToFormValues,
+  type StudentEditTableRow,
+} from '../../../lib/school-detail-student-list-form'
+import {
+  validateStudentRosterCommit,
+  validateStudentRosterEditEntry,
+} from '../../../lib/student-roster-commit-safety'
+import {
+  resolveStudentRosterCommitErrorAlert,
+  resolveStudentRosterManualCommitFailureAlert,
+  type StudentRosterCommitSession,
+} from '../../../lib/student-roster-revision'
 import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail'
 import { useOrganizationStudentRosterRemote } from '../../../hooks/use-organization-student-roster-remote'
 import {
@@ -54,12 +69,17 @@ import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { LectureAttendanceDetail } from '../../../model/school-detail-types'
 import {
+  buildStudentAddGradeClassOptions,
+  buildRegisteredGradeClassSelectOptions,
+  buildStudentEditGradeClassOptions,
+  formatStudentGradeClassColumnLabel,
+} from '../../../lib/student-registered-grade-class-options'
+import {
   buildStudentClassFilterOptionsFromRows,
-  buildStudentGradeClassOptions,
   buildStudentListFilterFields,
   matchesStudentListFilters,
-  mergeStudentClassSelectOptions,
 } from '../../../lib/student-list-filter-fields'
+import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
 import {
   formatStudentBirthDateFromDigits,
@@ -106,43 +126,13 @@ function StudentListEditCell({ children }: { children: React.ReactNode }) {
   return <div className="school-detail-student-list-section__edit-cell">{children}</div>
 }
 
-function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues {
-  return {
-    students: rows.map(r => ({
-      id: r.id,
-      no: r.no,
-      name: r.name,
-      gender: r.gender,
-      birthDate: r.birthDate ?? '',
-      gradeClass: r.gradeClass,
-      contact: r.contact ?? '',
-      email: r.email ?? '',
-      notes: r.notes ?? '',
-      lectureAttendance: r.lectureAttendance,
-    })),
-  }
-}
-
-function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStudentRow[] {
-  return students.map(r => ({
-    id: r.id,
-    no: r.no,
-    name: r.name,
-    gender: r.gender,
-    birthDate: r.birthDate?.trim() || undefined,
-    gradeClass: r.gradeClass,
-    contact: r.contact?.trim() || undefined,
-    email: r.email?.trim() || undefined,
-    notes: r.notes?.trim() || undefined,
-    lectureAttendance: r.lectureAttendance,
-  }))
-}
-
 export interface SchoolDetailStudentListSectionProps {
   schoolId: string
   studentCount: number
-  /** 신청 학급 수 — 학급 Select·필터 옵션 상한 (1반 … N반) */
+  /** @deprecated 학급 Select는 `registeredGradeBlocks` 기준. 목록 상단 요약용으로만 유지 */
   classCount?: number
+  /** 기관 신청 상세 `gradeBlocks` — 등록 학급 SSOT */
+  registeredGradeBlocks?: GradeBlock[] | null
   schoolName?: string
   educationGrade?: string
   /**
@@ -177,7 +167,8 @@ export interface SchoolDetailStudentListSectionProps {
 export function SchoolDetailStudentListSection({
   schoolId,
   studentCount,
-  classCount,
+  classCount: _classCount,
+  registeredGradeBlocks = null,
   schoolName = '',
   educationGrade = '',
   organizationApplicationId = null,
@@ -228,6 +219,10 @@ export function SchoolDetailStudentListSection({
   const [portraitConsentExportActive, setPortraitConsentExportActive] = useState(false)
   const portraitConsentExportResultsRef = useRef<Array<{ fileName: string; blob: Blob }>>([])
   const portraitConsentExportStartedRef = useRef(false)
+  /** 정보 수정 세션 — GET 재조회로 revision이 바뀌어도 PUT 기준은 고정 */
+  const rosterEditSessionRef = useRef<StudentRosterCommitSession | null>(null)
+  /** 학생 추가 모달 세션 */
+  const rosterAddSessionRef = useRef<StudentRosterCommitSession | null>(null)
   const { showAlert } = useCmsAlert()
 
   const rosterRemote = useOrganizationStudentRosterRemote({
@@ -252,6 +247,9 @@ export function SchoolDetailStudentListSection({
     if (!rosterRemote.remoteEnabled) return
     setAddedStudents([])
   }, [rosterRemote.remoteEnabled, rosterRemote.students])
+
+  const organizationApplicationKey =
+    organizationApplicationId != null ? String(organizationApplicationId) : ''
 
   const mergedStudentList = useMemo(() => {
     const patchRow = (row: SchoolDetailStudentRow): SchoolDetailStudentRow => {
@@ -509,19 +507,31 @@ export function SchoolDetailStudentListSection({
     [pendingFilters]
   )
 
-  /** 필터·학생 추가·명단 수정 Select 공통 학급 옵션 */
-  const gradeClassOptions = useMemo(
+  const rosterGradeClassFallbackOptions = useMemo(
+    () => buildStudentClassFilterOptionsFromRows(mergedStudentList),
+    [mergedStudentList]
+  )
+
+  const registeredGradeClassOptions = useMemo(
+    () => buildRegisteredGradeClassSelectOptions(registeredGradeBlocks, educationGrade),
+    [registeredGradeBlocks, educationGrade]
+  )
+
+  /** 상단 검색 필터 — 명단에 실제 존재하는 학급만 */
+  const studentListFilterGradeClassOptions = rosterGradeClassFallbackOptions
+
+  const addStudentGradeClassOptions = useMemo(
     () =>
-      mergeStudentClassSelectOptions(
-        buildStudentGradeClassOptions(classCount, educationGrade),
-        buildStudentClassFilterOptionsFromRows(mergedStudentList)
-      ),
-    [classCount, educationGrade, mergedStudentList]
+      buildStudentAddGradeClassOptions({
+        registeredOptions: registeredGradeClassOptions,
+        rosterFallbackOptions: rosterGradeClassFallbackOptions,
+      }),
+    [registeredGradeClassOptions, rosterGradeClassFallbackOptions]
   )
 
   const studentListFilterFields = useMemo(
-    () => buildStudentListFilterFields(gradeClassOptions),
-    [gradeClassOptions]
+    () => buildStudentListFilterFields(studentListFilterGradeClassOptions),
+    [studentListFilterGradeClassOptions]
   )
 
   const studentListForm = useForm<StudentListFormValues>({
@@ -531,36 +541,168 @@ export function SchoolDetailStudentListSection({
   const { isDirty } = formState
   useFieldArray({ control, name: 'students' })
 
+  useEffect(() => {
+    setIsStudentListEditMode(false)
+    reset({ students: [] })
+    setAddedStudents([])
+    setSelectedStudentKeys([])
+    rosterEditSessionRef.current = null
+    rosterAddSessionRef.current = null
+  }, [organizationApplicationKey, schoolId, reset])
+
+  const rosterCommitGuardContext = useMemo(
+    () => ({
+      remoteEnabled: rosterRemote.remoteEnabled,
+      isLoading: rosterRemote.isLoading,
+      isError: rosterRemote.isError,
+      totalCount: rosterRemote.totalCount,
+      baselineRows: mergedStudentList,
+    }),
+    [
+      mergedStudentList,
+      rosterRemote.isError,
+      rosterRemote.isLoading,
+      rosterRemote.remoteEnabled,
+      rosterRemote.totalCount,
+    ]
+  )
+
   const enterStudentListEditMode = useCallback(() => {
-    reset(rowsToFormValues(filteredStudentList))
+    const entryCheck = validateStudentRosterEditEntry({
+      ...rosterCommitGuardContext,
+      revisionNo: rosterRemote.revisionNo,
+    })
+    if (!entryCheck.ok) {
+      showAlert({ title: '안내', content: entryCheck.message })
+      return
+    }
+    if (rosterRemote.remoteEnabled && organizationApplicationKey) {
+      rosterEditSessionRef.current = {
+        organizationApplicationId: organizationApplicationKey,
+        expectedRevisionNo: rosterRemote.revisionNo!,
+      }
+    } else {
+      rosterEditSessionRef.current = null
+    }
+    reset(rowsToFormValues(mergedStudentList))
     setIsStudentListEditMode(true)
-  }, [filteredStudentList, reset])
+  }, [
+    mergedStudentList,
+    organizationApplicationKey,
+    reset,
+    rosterCommitGuardContext,
+    rosterRemote.remoteEnabled,
+    rosterRemote.revisionNo,
+    showAlert,
+  ])
 
   const handleStudentListCancel = useCallback(() => {
-    reset(rowsToFormValues(filteredStudentList))
+    reset(rowsToFormValues(mergedStudentList))
     setIsStudentListEditMode(false)
-  }, [filteredStudentList, reset])
+    rosterEditSessionRef.current = null
+  }, [mergedStudentList, reset])
 
   const handleStudentListSave = useCallback(async () => {
+    if (rosterRemote.isCommitting) return
+
     const values = getValues()
     const rows = formValuesToRows(values.students ?? [])
+
+    const editSession = rosterEditSessionRef.current
+    const commitCheck = validateStudentRosterCommit({
+      ...rosterCommitGuardContext,
+      commitRows: rows,
+      expectedRevisionNo: rosterRemote.remoteEnabled
+        ? editSession?.expectedRevisionNo
+        : undefined,
+    })
+    if (!commitCheck.ok) {
+      showAlert({ title: '저장할 수 없음', content: commitCheck.message })
+      return
+    }
+
     if (rosterRemote.remoteEnabled) {
+      if (
+        !editSession ||
+        editSession.organizationApplicationId !== organizationApplicationKey
+      ) {
+        showAlert({
+          title: '저장할 수 없음',
+          content:
+            '학생 명단 편집 세션이 만료되었습니다. 정보 수정을 다시 시작해 주세요.',
+        })
+        return
+      }
       try {
-        await rosterRemote.commitRows(rows)
+        await rosterRemote.commitRows({
+          rows,
+          expectedRevisionNo: editSession.expectedRevisionNo,
+        })
+        rosterEditSessionRef.current = null
+        setSelectedStudentKeys([])
         setIsStudentListEditMode(false)
         onSaveEdit?.(rows)
-      } catch {
-        showAlert({
-          title: '저장 실패',
-          content:
-            '학생 명단 저장에 실패했습니다. 수동 편집용 sourceFileObjectId 계약이 서버에 반영됐는지 확인해 주세요.',
-        })
+      } catch (error) {
+        const conflictAlert = resolveStudentRosterCommitErrorAlert(error)
+        if (conflictAlert) {
+          void rosterRemote.refetch()
+          showAlert(conflictAlert)
+          return
+        }
+        showAlert(resolveStudentRosterManualCommitFailureAlert(error))
       }
       return
     }
     onSaveEdit?.(rows)
     setIsStudentListEditMode(false)
-  }, [getValues, onSaveEdit, rosterRemote, showAlert])
+  }, [
+    getValues,
+    onSaveEdit,
+    organizationApplicationKey,
+    rosterCommitGuardContext,
+    rosterRemote,
+    showAlert,
+  ])
+
+  const handleOpenAddStudentModal = useCallback(() => {
+    if (isStudentListEditMode) {
+      showStudentListEditModeBlockedAlert()
+      return
+    }
+    const entryCheck = validateStudentRosterEditEntry({
+      remoteEnabled: rosterRemote.remoteEnabled,
+      isLoading: rosterRemote.isLoading,
+      isError: rosterRemote.isError,
+      baselineRows: studentList,
+      totalCount: rosterRemote.totalCount,
+      revisionNo: rosterRemote.revisionNo,
+    })
+    if (!entryCheck.ok) {
+      showAlert({ title: '안내', content: entryCheck.message })
+      return
+    }
+    if (rosterRemote.remoteEnabled && organizationApplicationKey) {
+      rosterAddSessionRef.current = {
+        organizationApplicationId: organizationApplicationKey,
+        expectedRevisionNo: rosterRemote.revisionNo!,
+        baselineRows: [...studentList],
+      }
+    } else {
+      rosterAddSessionRef.current = null
+    }
+    setAddStudentModalOpen(true)
+  }, [
+    isStudentListEditMode,
+    organizationApplicationKey,
+    rosterRemote.isError,
+    rosterRemote.isLoading,
+    rosterRemote.remoteEnabled,
+    rosterRemote.revisionNo,
+    rosterRemote.totalCount,
+    showAlert,
+    showStudentListEditModeBlockedAlert,
+    studentList,
+  ])
 
   const handleAddStudent = useCallback(
     async (values: AddStudentFormValues) => {
@@ -578,19 +720,55 @@ export function SchoolDetailStudentListSection({
       }
 
       if (rosterRemote.remoteEnabled) {
+        const addSession = rosterAddSessionRef.current
+        const baselineRows = addSession?.baselineRows ?? studentList
         try {
-          const nextRows = [...studentList, newRow].map((row, index) => ({
+          const nextRows = [...baselineRows, newRow].map((row, index) => ({
             ...row,
             no: index + 1,
           }))
-          await rosterRemote.commitRows(nextRows)
+          const addCheck = validateStudentRosterCommit({
+            remoteEnabled: true,
+            isLoading: rosterRemote.isLoading,
+            isError: rosterRemote.isError,
+            totalCount: rosterRemote.totalCount,
+            baselineRows,
+            commitRows: nextRows,
+            expectedRevisionNo: addSession?.expectedRevisionNo,
+            disallowExistingRowDrop: true,
+          })
+          if (!addCheck.ok) {
+            showAlert({ title: '등록할 수 없음', content: addCheck.message })
+            return
+          }
+          if (
+            !addSession ||
+            addSession.organizationApplicationId !== organizationApplicationKey
+          ) {
+            showAlert({
+              title: '등록할 수 없음',
+              content: '학생 추가 세션이 만료되었습니다. 모달을 닫고 다시 시도해 주세요.',
+            })
+            return
+          }
+          await rosterRemote.commitRows({
+            rows: nextRows,
+            expectedRevisionNo: addSession.expectedRevisionNo,
+          })
+          rosterAddSessionRef.current = null
+          setSelectedStudentKeys([])
           setAddStudentModalOpen(false)
           onAddStudent?.()
-        } catch {
+        } catch (error) {
+          const conflictAlert = resolveStudentRosterCommitErrorAlert(error)
+          if (conflictAlert) {
+            void rosterRemote.refetch()
+            showAlert(conflictAlert)
+            return
+          }
           showAlert({
+            ...resolveStudentRosterManualCommitFailureAlert(error),
             title: '등록 실패',
-            content:
-              '학생 등록에 실패했습니다. 명단 전체 교체(PUT) 계약과 sourceFileObjectId 요구사항을 확인해 주세요.',
           })
         }
         return
@@ -600,14 +778,26 @@ export function SchoolDetailStudentListSection({
       setAddStudentModalOpen(false)
       onAddStudent?.()
     },
-    [mergedStudentList.length, onAddStudent, rosterRemote, showAlert, studentList]
+    [
+      mergedStudentList.length,
+      onAddStudent,
+      organizationApplicationKey,
+      rosterRemote,
+      showAlert,
+      studentList,
+    ]
   )
 
-  useEffect(() => {
-    if (isStudentListEditMode) {
-      reset(rowsToFormValues(filteredStudentList))
-    }
-  }, [isStudentListEditMode, filteredStudentList, reset])
+  const watchedFormStudents = watch('students') ?? []
+
+  const editModeVisibleRows = useMemo(() => {
+    if (!isStudentListEditMode) return []
+    return buildStudentEditVisibleRows({
+      formStudents: watchedFormStudents,
+      rosterRows: mergedStudentList,
+      appliedFilters,
+    })
+  }, [appliedFilters, isStudentListEditMode, mergedStudentList, watchedFormStudents])
 
   const openLectureAttendance = useCallback(
     async (record: SchoolDetailStudentRow) => {
@@ -728,11 +918,11 @@ export function SchoolDetailStudentListSection({
   ])
 
   const displayCount = isStudentListEditMode
-    ? (watch('students')?.length ?? 0)
+    ? editModeVisibleRows.length
     : filteredStudentList.length
 
   const studentListToolbarActions = (
-    <div className="school-detail-student-list-section__toolbar-actions">
+    <div className="school-detail-student-list-section__toolbar-actions program-application-list-toolbar">
       <FilterTableToolbarButton
         variant="secondary"
         width={180}
@@ -768,13 +958,7 @@ export function SchoolDetailStudentListSection({
           <FilterTableToolbarButton
             variant="primary"
             width={140}
-            onClick={() => {
-              if (isStudentListEditMode) {
-                showStudentListEditModeBlockedAlert()
-                return
-              }
-              setAddStudentModalOpen(true)
-            }}
+            onClick={handleOpenAddStudentModal}
           >
             학생 추가
           </FilterTableToolbarButton>
@@ -853,6 +1037,7 @@ export function SchoolDetailStudentListSection({
         key: 'gradeClass',
         align: 'center',
         ...studentListTableDataColumnSize(4),
+        render: (value: string | undefined) => formatStudentGradeClassColumnLabel(value),
       },
       {
         title: '연락처',
@@ -901,7 +1086,7 @@ export function SchoolDetailStudentListSection({
     [openLectureAttendance]
   )
 
-  const studentColumnsEdit: ColumnsType<StudentListFormStudent> = useMemo(
+  const studentColumnsEdit: ColumnsType<StudentEditTableRow> = useMemo(
     () => [
       {
         title: 'No.',
@@ -915,10 +1100,10 @@ export function SchoolDetailStudentListSection({
         key: 'name',
         align: 'center',
         ...studentListTableDataColumnSize(1),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.name`}
+            name={`students.${record.formIndex}.name`}
             render={({ field }) => (
               <StudentListEditCell>
                 <CmsInput {...field} inputSize="medium" width="100%" />
@@ -932,10 +1117,10 @@ export function SchoolDetailStudentListSection({
         key: 'gender',
         align: 'center',
         ...studentListTableDataColumnSize(2),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.gender`}
+            name={`students.${record.formIndex}.gender`}
             render={({ field }) => (
               <StudentListEditCell>
                 <CmsRadio.Group
@@ -954,10 +1139,10 @@ export function SchoolDetailStudentListSection({
         key: 'birthDate',
         align: 'center',
         ...studentListTableDataColumnSize(3),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.birthDate`}
+            name={`students.${record.formIndex}.birthDate`}
             render={({ field }) => (
               <StudentListEditCell>
                 <CmsDateTextInput
@@ -986,10 +1171,10 @@ export function SchoolDetailStudentListSection({
         key: 'gradeClass',
         align: 'center',
         ...studentListTableDataColumnSize(4),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.gradeClass`}
+            name={`students.${record.formIndex}.gradeClass`}
             render={({ field }) => (
               <StudentListEditCell>
                 <CmsSelect
@@ -997,7 +1182,12 @@ export function SchoolDetailStudentListSection({
                   inputSize="medium"
                   width="100%"
                   withAllOption={false}
-                  options={gradeClassOptions}
+                  options={buildStudentEditGradeClassOptions({
+                    registeredOptions: registeredGradeClassOptions,
+                    studentGradeClass: field.value ?? '',
+                    educationGrade,
+                    rosterFallbackOptions: rosterGradeClassFallbackOptions,
+                  })}
                   getPopupContainer={() => document.body}
                 />
               </StudentListEditCell>
@@ -1010,13 +1200,19 @@ export function SchoolDetailStudentListSection({
         key: 'contact',
         align: 'center',
         ...studentListTableDataColumnSize(5),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.contact`}
+            name={`students.${record.formIndex}.contact`}
             render={({ field }) => (
               <StudentListEditCell>
-                <CmsInput {...field} inputSize="medium" width="100%" />
+                <CmsPhoneInput
+                  {...field}
+                  value={field.value ?? ''}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="010-1234-5678"
+                />
               </StudentListEditCell>
             )}
           />
@@ -1027,10 +1223,10 @@ export function SchoolDetailStudentListSection({
         key: 'email',
         align: 'center',
         ...studentListTableDataColumnSize(6),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.email`}
+            name={`students.${record.formIndex}.email`}
             render={({ field }) => (
               <StudentListEditCell>
                 <CmsInput {...field} inputSize="medium" width="100%" />
@@ -1044,10 +1240,10 @@ export function SchoolDetailStudentListSection({
         key: 'notes',
         align: 'center',
         ...studentListTableDataColumnSize(7),
-        render: (_: unknown, __: unknown, index: number) => (
+        render: (_: unknown, record: StudentEditTableRow) => (
           <Controller
             control={control}
-            name={`students.${index}.notes`}
+            name={`students.${record.formIndex}.notes`}
             render={({ field }) => (
               <StudentListEditCell>
                 <CmsInput {...field} inputSize="medium" width="100%" />
@@ -1074,7 +1270,13 @@ export function SchoolDetailStudentListSection({
         ),
       },
     ],
-    [control, gradeClassOptions, showStudentListEditModeBlockedAlert]
+    [
+      control,
+      educationGrade,
+      registeredGradeClassOptions,
+      rosterGradeClassFallbackOptions,
+      showStudentListEditModeBlockedAlert,
+    ]
   )
 
   return (
@@ -1116,7 +1318,7 @@ export function SchoolDetailStudentListSection({
               scroll={{ x: STUDENT_LIST_TABLE_SCROLL_X }}
               tableLayout="fixed"
               columns={studentColumnsEdit}
-              dataSource={watch('students') ?? []}
+              dataSource={editModeVisibleRows}
               className="school-detail-modal__student-table school-detail-modal__student-table--edit cms-data-table"
             />
           ) : (
@@ -1161,7 +1363,7 @@ export function SchoolDetailStudentListSection({
         open={addStudentModalOpen}
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
-        gradeClassOptions={gradeClassOptions}
+        gradeClassOptions={addStudentGradeClassOptions}
       />
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}

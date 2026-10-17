@@ -20,6 +20,7 @@ export function PFElectronicSignatureModal({
   onClose,
   onSign,
   initialMode = 'draw',
+  title = '전자서명하기',
 }: PFElectronicSignatureModalProps) {
   const [mode, setMode] = useState<ElectronicSignatureMode>(initialMode)
   const [drawHasStroke, setDrawHasStroke] = useState(false)
@@ -82,7 +83,7 @@ export function PFElectronicSignatureModal({
   return (
     <PFModal
       open={open}
-      title="전자서명하기"
+      title={title}
       size="lg"
       mobilePlacement="full"
       onClose={onClose}

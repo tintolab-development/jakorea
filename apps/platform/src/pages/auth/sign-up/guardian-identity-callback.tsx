@@ -2,21 +2,29 @@ import { useEffect, useState } from 'react'
 import { PFText } from '@/shared/ui'
 import {
   buildIdentityCallbackKey,
-  guardianIdentityVerificationClient,
   isIdentityCallbackHandled,
   markIdentityCallbackHandled,
-  processIdentityCallback,
 } from '@/features/auth/identity-verification'
+import {
+  closeIdentityPopupSoon,
+  postIdentityMessageToOpener,
+} from '@jakorea/identity-verification'
+import { pollGuardianSignupStatus } from '@/features/auth/sign-up/api/guardian-signup-bridge/client'
+import { readGuardianSignupBridgeState } from '@/features/auth/sign-up/lib/guardian-signup-bridge-storage'
+import { getSignupApiErrorMessage } from '@/features/auth/sign-up/lib/helpers'
 import styles from './identity-callback.module.css'
 
-const GUARDIAN_IDENTITY_FLOW = 'MEMBER_SIGNUP_GUARDIAN'
+const GUARDIAN_BRIDGE_CALLBACK_FLOW = 'GUARDIAN_SIGNUP_BRIDGE'
 
 export function SignUpGuardianIdentityCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [noOpener, setNoOpener] = useState(false)
 
   useEffect(() => {
-    const callbackKey = buildIdentityCallbackKey(GUARDIAN_IDENTITY_FLOW, window.location.search)
+    const callbackKey = buildIdentityCallbackKey(
+      GUARDIAN_BRIDGE_CALLBACK_FLOW,
+      window.location.search,
+    )
 
     if (isIdentityCallbackHandled(callbackKey)) {
       return
@@ -25,18 +33,80 @@ export function SignUpGuardianIdentityCallbackPage() {
     markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
-      const outcome = await processIdentityCallback(
-        guardianIdentityVerificationClient,
-        new URLSearchParams(window.location.search),
-      )
+      const params = new URLSearchParams(window.location.search)
+      const queryError = params.get('error')
+      const queryMessage = params.get('message') ?? params.get('errorMessage')
 
-      if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
+      if (queryError) {
+        const message = queryMessage ?? '보호자 본인인증에 실패했습니다.'
+        const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
+        if (!posted) {
+          setNoOpener(true)
+          setErrorMessage(message)
+        } else {
+          closeIdentityPopupSoon()
+        }
         return
       }
 
-      if (outcome.kind === 'failed') {
-        setNoOpener(outcome.noOpener)
-        setErrorMessage(outcome.message)
+      const bridge = readGuardianSignupBridgeState()
+      const sessionIdRaw = params.get('sessionId') ?? String(bridge?.identitySessionId ?? '')
+      const identitySessionId = Number(sessionIdRaw)
+
+      if (!bridge || !sessionIdRaw || Number.isNaN(identitySessionId) || identitySessionId <= 0) {
+        const message = '인증 세션 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
+        const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
+        if (!posted) {
+          setNoOpener(true)
+          setErrorMessage(message)
+        } else {
+          closeIdentityPopupSoon()
+        }
+        return
+      }
+
+      try {
+        const status = await pollGuardianSignupStatus({
+          guardianSessionId: bridge.guardianSessionId,
+          statusToken: bridge.guardianStatusToken,
+        })
+
+        if (status?.identityVerified !== true) {
+          const message = '본인인증이 완료되지 않았습니다. 다시 시도해 주세요.'
+          const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
+          if (!posted) {
+            setNoOpener(true)
+            setErrorMessage(message)
+          } else {
+            closeIdentityPopupSoon()
+          }
+          return
+        }
+
+        const posted = postIdentityMessageToOpener({
+          type: 'IDENTITY_VERIFIED',
+          sessionId: identitySessionId,
+          verifiedAt: new Date().toISOString(),
+        })
+        if (posted) {
+          closeIdentityPopupSoon()
+          return
+        }
+
+        setNoOpener(true)
+        setErrorMessage('부모 창을 찾을 수 없습니다. 회원가입 탭으로 돌아가 주세요.')
+      } catch (error) {
+        const message = getSignupApiErrorMessage(
+          error,
+          '보호자 인증 상태를 확인하지 못했습니다. 다시 시도해 주세요.',
+        )
+        const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
+        if (!posted) {
+          setNoOpener(true)
+          setErrorMessage(message)
+        } else {
+          closeIdentityPopupSoon()
+        }
       }
     }
 

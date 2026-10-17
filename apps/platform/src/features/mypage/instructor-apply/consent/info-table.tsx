@@ -1,10 +1,23 @@
 import type { ReactNode } from 'react'
 import styles from './consent-form.module.css'
 
+function pairStartIndex(cellIndex: number): number {
+  return Math.floor(cellIndex / 2) * 2
+}
+
 function isEmptyPair(row: readonly string[], pairStart: number): boolean {
   const serial = row[pairStart]?.trim() ?? ''
   const name = row[pairStart + 1]?.trim() ?? ''
   return serial === '' && name === ''
+}
+
+function shouldRenderCell(
+  row: readonly string[],
+  cellIndex: number,
+  hideEmptyPairs: boolean,
+): boolean {
+  if (!hideEmptyPairs) return true
+  return !isEmptyPair(row, pairStartIndex(cellIndex))
 }
 
 function rowHasVisiblePair(row: readonly string[], colCount: number): boolean {
@@ -56,6 +69,9 @@ export function ConsentInfoTable({
           {bodyRows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {Array.from({ length: colCount }, (_, cellIndex) => {
+                if (!shouldRenderCell(row, cellIndex, hideEmptyPairs)) {
+                  return null
+                }
                 const cell = row[cellIndex] ?? ''
                 return (
                   <td key={`${rowIndex}-${cellIndex}`} data-label={headers[cellIndex] ?? ''}>

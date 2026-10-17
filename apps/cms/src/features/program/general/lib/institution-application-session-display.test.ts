@@ -35,7 +35,7 @@ describe('shouldShowInstitutionApplicationDetailScheduleSection', () => {
     educationStructure: 'curriculum' as const,
     sessionRound: 'single' as const,
     educationScheduleMode: 'date' as const,
-    educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 20일(월) 13:00 ~ 15:50'],
+    educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
     preEducationNoticeRequired: true,
   }
 

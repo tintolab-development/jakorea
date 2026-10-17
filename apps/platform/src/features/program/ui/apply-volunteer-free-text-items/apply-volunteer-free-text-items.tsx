@@ -3,7 +3,7 @@ import {
   PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS,
   type ProgramVolunteerFreeTextQuestion,
 } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
-import { PFFormField, PFFormFieldHintText, PFFormFieldRow, PFFormFieldTable, PFTextarea } from '@/shared/ui'
+import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFTextarea } from '@/shared/ui'
 import hostStyles from '../apply-form-field-host.module.css'
 import styles from './apply-volunteer-free-text-items.module.css'
 
@@ -67,9 +67,12 @@ export function ApplyVolunteerFreeTextItems({ value, onChange }: ApplyVolunteerF
       {PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS.map(question => (
         <PFFormFieldTable key={question.id}>
           <PFFormFieldRow type="single">
-            <PFFormField label={question.label} layout="vertical">
+            <PFFormField
+              label={question.label}
+              labelDescription={question.hint}
+              layout="vertical"
+            >
               <div className={styles.answer}>
-                {question.hint ? <PFFormFieldHintText>{question.hint}</PFFormFieldHintText> : null}
                 <PFTextarea
                   variant="formPage"
                   width="100%"

@@ -11,14 +11,15 @@ import {
   screeningDocPassedListTitle,
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
-import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
-import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { ApplicationGiveUpReasonModal } from '@/features/program/shared/ui/application-give-up-reason-modal'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
 } from './use-detail'
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
+import { GeneralVolunteerDocumentCancelApprovalModal } from './general-volunteer-document-cancel-approval-modal'
+import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-document-cancel-reject-modal'
 import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
@@ -47,11 +48,6 @@ export function GeneralVolunteerDocPassedSection({
     [subjectKind]
   )
   const listTitle = screeningDocPassedListTitle(subjectKind)
-  const activityWithdrawScheduleOptions = useMemo(
-    () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
-    [program]
-  )
-
   const {
     list,
     pendingFilters,
@@ -73,6 +69,14 @@ export function GeneralVolunteerDocPassedSection({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    cancelApprovalVolunteer,
+    cancelRejectVolunteer,
+    closeCancelApprovalModal,
+    closeCancelRejectModal,
+    openCancelApprovalModal,
+    openCancelRejectModal,
+    handleCancelApprovalConfirm,
+    handleCancelRejectConfirm,
     applicationsLoading,
     isRemoteDataSource,
     hasNextPage,
@@ -131,12 +135,28 @@ export function GeneralVolunteerDocPassedSection({
   )
 
   const withdrawConfirmModal = (
-    <ActivityWithdrawScheduleModal
+    <ApplicationGiveUpReasonModal
       open={withdrawTarget != null}
-      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
       onConfirm={confirmWithdrawActivity}
     />
+  )
+
+  const documentCancelModals = (
+    <>
+      <GeneralVolunteerDocumentCancelApprovalModal
+        open={cancelApprovalVolunteer != null}
+        volunteer={cancelApprovalVolunteer}
+        onCancel={closeCancelApprovalModal}
+        onConfirm={handleCancelApprovalConfirm}
+      />
+      <GeneralVolunteerDocumentCancelRejectModal
+        open={cancelRejectVolunteer != null}
+        volunteer={cancelRejectVolunteer}
+        onCancel={closeCancelRejectModal}
+        onConfirm={handleCancelRejectConfirm}
+      />
+    </>
   )
 
   const assignModals = (
@@ -191,6 +211,7 @@ export function GeneralVolunteerDocPassedSection({
             onApplicantDetailMetaChange={handleParticipantDetailMetaChange}
           />
           {assignModals}
+          {documentCancelModals}
         </>
       )
     }
@@ -202,9 +223,12 @@ export function GeneralVolunteerDocPassedSection({
           applicant={selectedApplicant}
           onAssignInterview={handleDetailAssignInterview}
           onWithdrawActivity={handleDetailWithdrawActivity}
+          onCancelDocumentApproval={() => openCancelApprovalModal(selectedApplicant)}
+          onCancelDocumentRejection={() => openCancelRejectModal(selectedApplicant)}
         />
         {withdrawConfirmModal}
         {assignModals}
+        {documentCancelModals}
       </>
     )
   }

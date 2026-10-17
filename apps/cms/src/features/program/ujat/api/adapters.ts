@@ -1,6 +1,7 @@
 import type {
   AdminProgramListItemDto,
 } from '@/features/program/general/api/programs-api-client'
+import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
@@ -15,6 +16,7 @@ import type {
   ProgramFormat,
   ProgramLifecycleStatus,
   ProgramType,
+  GeneralProgramCommonInfoExtension,
 } from '@/types/domain'
 import type { Status } from '@/types/index'
 import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
@@ -76,6 +78,13 @@ import {
   type UjatServiceDetailExtras,
 } from './service-detail'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
+import { ujatHalfScheduleOverlayKeys } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
+import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import {
+  UJAT_REGION_CAPACITY_OVERLAY_KEY,
+  type UjatRegionCapacityBySemesterState,
+} from '@/features/program/ujat/lib/ujat-region-capacity-types'
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
 
@@ -98,6 +107,105 @@ function idOf(value: string | number | undefined): string {
 function overlayText(overlay: Record<string, unknown>, key: string): string | undefined {
   const value = overlay[key]
   return typeof value === 'string' ? value.trim() || undefined : undefined
+}
+
+function recordOf(value: unknown): Record<string, unknown> | null {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function stringOf(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function stringArrayOf(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+    : []
+}
+
+function numberStringOf(value: unknown): string | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : undefined
+}
+
+function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unknown> {
+  const root = recordOf(value)
+  const result: UjatRegionCapacityBySemesterState = { h1: {}, h2: {} }
+  const semesters = [
+    ['h1', root?.FIRST_HALF] as const,
+    ['h2', root?.SECOND_HALF] as const,
+  ]
+
+  for (const [half, raw] of semesters) {
+    const semester = recordOf(raw)
+    if (!semester) continue
+    for (const [regionCode, rawValues] of Object.entries(semester)) {
+      const values = recordOf(rawValues)
+      if (!values) continue
+      const region = listUjatEducationRegionsActive().find(
+        item => item.key.toLowerCase() === regionCode.toLowerCase()
+      )
+      const regionName = region?.label ?? regionCode
+      result[half][regionName] = {
+        classCount: numberStringOf(values.maxSchools),
+        volunteerCount: numberStringOf(values.maxVolunteers),
+      }
+    }
+  }
+
+  // 상세 serviceDetailJson의 지역 정원을 canonical source로 사용한다.
+  // 값이 없으면 이전 registration.overlay 정원을 재사용하지 않도록 빈 상태를 반환한다.
+  return { [UJAT_REGION_CAPACITY_OVERLAY_KEY]: result }
+}
+
+/** Primary UJAT calendar JSON → 등록 overlay 표시/수정 필드 */
+function overlayFromPrimarySemesterCalendars(value: unknown): Record<string, unknown> {
+  const root = recordOf(value)
+  if (!root) return {}
+
+  const result: Record<string, unknown> = {}
+  const semesters = [
+    ['h1', root.FIRST_HALF ?? root.firstHalf] as const,
+    ['h2', root.SECOND_HALF ?? root.secondHalf] as const,
+  ]
+
+  for (const [half, raw] of semesters) {
+    const calendar = recordOf(raw)
+    if (!calendar) continue
+    const keys = ujatHalfScheduleOverlayKeys(half)
+    const blockedDates = stringArrayOf(calendar.blockedDates)
+    const educationFridays = stringArrayOf(calendar.educationFridays)
+    const preTrainingDate = stringOf(calendar.preTrainingDate)
+    const closingDate = stringOf(calendar.closingDate)
+    const eventDate = stringOf(calendar.eventDate)
+    const eventStart = educationFridays[0] ?? eventDate
+    const eventEnd = educationFridays.at(-1) ?? eventDate
+    const regionKeys = stringArrayOf(calendar.educationRegionKeys ?? calendar.regions)
+    const multi = (date: string | null) => ({
+      rowIds: [0],
+      // preTrainingDate/closingDate가 전 지역 공통이라는 정보만 있고
+      // 지역별 매핑이 없으면 지역을 추정하지 않는다.
+      regionByRow: { '0': regionKeys },
+      dateByRow: { '0': date },
+    })
+
+    result[keys.preMulti] = multi(preTrainingDate)
+    result[keys.eventRange] = { start: eventStart, end: eventEnd }
+    result[keys.closingMulti] = multi(closingDate)
+
+    const settingsKeys = ujatEducationScheduleSettingsOverlayKeys(half)
+    result[settingsKeys.unavailableDates] = blockedDates
+    result[settingsKeys.exclusion] = {
+      excludeNone:
+        calendar.none === true || calendar.mode === 'none' || calendar.blockedDatesNone === true,
+      excludeSaturday: false,
+      excludeSunday: false,
+      excludeHoliday: calendar.excludeHolidays === true,
+    }
+  }
+
+  return result
 }
 
 function dateValue(value: Date | string | undefined): string | undefined {
@@ -413,10 +521,24 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   const timestamp = now()
   const details = parseServiceDetail(dto.serviceDetailJson)
   const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
+  const primaryCalendarOverlay = overlayFromPrimarySemesterCalendars(extras.semesterCalendars)
+  const primaryRegionCapacityOverlay = overlayFromPrimaryRegionCapacities(
+    extras.ujatRegionCapacities
+  )
   const surveyKeys =
     details.generalSurveyMenuKeys ??
     extras.surveyMenuKeys ??
     undefined
+
+  // UJAT 상세 응답의 최상위 KPI가 canonical source다. serviceDetailJson 안에
+  // 오래된 KPI가 남아 있어도 상세 응답값(null 포함)으로 덮어쓴다.
+  const responseKpi = {
+    finalParticipants: dto.totalParticipants ?? undefined,
+    instructorCount: dto.instructors ?? undefined,
+    volunteerCount: dto.generalVolunteers ?? undefined,
+    finalSchools: dto.finalSchools ?? undefined,
+    finalClasses: dto.finalClasses ?? undefined,
+  }
 
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
   const generalCommonInfoBase =
@@ -426,25 +548,35 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   const generalCommonInfo = generalCommonInfoBase
     ? {
         ...generalCommonInfoBase,
+        kpi: responseKpi as GeneralProgramCommonInfoExtension['kpi'],
         participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
           generalCommonInfoBase.participantRecruitmentInfo,
           dto
         ),
       }
     : {
-        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
-          undefined,
-          dto
-        ),
-      }
+      participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+        undefined,
+        dto
+      ),
+      kpi: responseKpi as GeneralProgramCommonInfoExtension['kpi'],
+    }
 
   const ips = programIps(dto.ips)
-  const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(dto, rawOverlay, {
-    generalSurveyMenuKeys: surveyKeys,
-    sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
-    sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
-    kpi: generalCommonInfo?.kpi,
-  })
+  const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(
+    dto,
+    {
+      ...rawOverlay,
+      ...primaryCalendarOverlay,
+      ...primaryRegionCapacityOverlay,
+    },
+    {
+      generalSurveyMenuKeys: surveyKeys,
+      sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
+      sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
+      kpi: responseKpi,
+    }
+  )
   const title =
     dto.title?.trim() ||
     dtoExt.nameKo?.trim() ||
@@ -539,12 +671,12 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       maleParticipants: dto.maleParticipants,
       femaleParticipants: dto.femaleParticipants,
       totalParticipants: dto.totalParticipants,
-      generalVolunteers: dto.generalVolunteers ?? 0,
+      generalVolunteers: dto.generalVolunteers,
       staffVolunteers: dto.staffVolunteers ?? 0,
       returningVolunteers: dto.returningVolunteers ?? 0,
       generalTeachers: dto.generalTeachers,
       educatedTeachers: dto.educatedTeachers,
-      instructors: dto.instructors ?? 0,
+      instructors: dto.instructors,
       managerName: dto.managerName,
       venue: dto.venue,
       curriculum: dto.curriculum,
@@ -569,7 +701,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       generalProgramEducationStructure:
         String(dto.educationStructure ?? '').toUpperCase() === 'CURRICULUM'
           ? 'curriculum'
-          : 'schedule',
+          : String(dto.educationStructure ?? '').toUpperCase() === 'SCHEDULE'
+            ? 'schedule'
+            : undefined,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     }),
@@ -962,15 +1096,15 @@ export function toCreateRequest(
       }
     : program
   // programType·serviceDetailJson을 앞에 — DevTools/문서 복사 시 detail 잘림·BE INVALID_VALUE 방지
-  return {
+  return omitNullRecordValues({
     programType: 'UJAT',
-    serviceDetailJson,
+    serviceDetailJson: serviceDetailJson ?? undefined,
     ...coreWithoutDetail,
-    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments, copySource),
+    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments ?? undefined, copySource),
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     autoApplyDefaultFormBindings: true,
-  }
+  }) as ProgramCreateRequest
 }
 
 export function toUpdateRequest(

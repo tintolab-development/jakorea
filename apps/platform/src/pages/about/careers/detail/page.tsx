@@ -15,6 +15,7 @@ import {
   PFButton,
   PFCategoryBadge,
   PFDivider,
+  PFLoadingSpinner,
   PFText,
 } from '@/shared/ui'
 import styles from './page.module.css'
@@ -25,7 +26,6 @@ function formatViewCount(count: number) {
 }
 
 function statusMessage(status: CareerPostingDetailStatus) {
-  if (status === 'loading') return '채용공고를 불러오는 중입니다.'
   if (status === 'error') return '채용공고를 불러오지 못했습니다.'
   if (status === 'unavailable') return '공개되지 않았거나 삭제된 채용공고입니다.'
   return '채용공고를 찾을 수 없습니다.'
@@ -57,9 +57,13 @@ export function CareerPostingDetailPage() {
           <ProgramBackButton label="이전으로" onClick={handleBack} />
         </div>
         <div className={styles.status}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            {statusMessage(status === 'ready' ? 'not-found' : status)}
-          </PFText>
+          {status === 'loading' ? (
+            <PFLoadingSpinner centered label="채용공고를 불러오는 중" />
+          ) : (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              {statusMessage(status)}
+            </PFText>
+          )}
           {status === 'error' ? (
             <PFButton variant="tertiary" size="large" onClick={refetch}>
               다시 시도

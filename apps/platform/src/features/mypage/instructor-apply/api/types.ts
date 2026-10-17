@@ -1,4 +1,7 @@
 /** CMS `InstructorCmsProfile` 정렬 — Platform 국소 타입 (CMS generated import 없음) */
+/** PATCH /api/portal/me/profile — 강사가 포탈에서 직접 수정 가능한 프로필 */
+export type InstructorPortalEditableProfile = Omit<InstructorRoleRequestProfile, 'memberType'>
+
 export type InstructorRoleRequestProfile = {
   memberType: 'GENERAL' | 'SCHOOL_TEACHER'
   affiliation: {
@@ -35,6 +38,9 @@ export type InstructorRoleRequestProfile = {
     freeWrite3?: string
     freeWrite4?: string
   }
+  /** 조회 전용 — 포탈/Cms 프로필 */
+  defaultFeeGrade?: string
+  defaultJaGrade?: string
 }
 
 export type InstructorRoleRequestEducationSchoolRow = {
@@ -83,12 +89,32 @@ export type InstructorRoleRequestSettlement = {
   }>
 }
 
-/** CMS `TermsAgreementRequest` 정렬 */
+/** CMS `TermsAgreement` / 요청 DTO 정렬 */
 export type InstructorRoleRequestTermsAgreement = {
   termsType: string
   version: string
   required: boolean
   agreed: boolean
+  agreedAt?: string
+}
+
+/** GET /api/portal/me/instructor-role-requests/current/detail — CMS `InstructorRoleRequestDetailResponse` 정렬 */
+export type InstructorRoleRequestDetail = {
+  requestId?: number
+  memberId?: number
+  status?: string
+  requestedActivityType?: string
+  requestedAt?: string
+  decidedAt?: string
+  rejectedReason?: string
+  name?: string
+  gender?: string
+  birthDate?: string
+  phone?: string
+  email?: string
+  profile?: InstructorRoleRequestProfile
+  settlement?: InstructorRoleRequestSettlement
+  termsAgreements?: InstructorRoleRequestTermsAgreement[]
 }
 
 /** POST /api/portal/me/instructor-role-requests — InstructorRoleRequestCreateRequest */

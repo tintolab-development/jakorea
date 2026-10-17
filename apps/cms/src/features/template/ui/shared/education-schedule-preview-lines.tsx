@@ -1,9 +1,5 @@
 import { Fragment } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import {
-  isEducationScheduleLineBeforeSeoulToday,
-  isEducationScheduleLineUpcoming,
-} from '@/features/template/lib/format-education-schedule-line'
 import './education-schedule-preview-lines.css'
 
 export const EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER =
@@ -45,9 +41,6 @@ export function EducationSchedulePreviewLines({
   return (
     <div className="education-schedule-preview-lines">
       {lines.map((line, index) => {
-        // 두 브랜치의 보호 로직을 모두 유지: 서울 기준 어제 이전이 아니고(theirs) 아직 예정(HEAD)일 때만 제거 가능.
-        const canRemove =
-          !isEducationScheduleLineBeforeSeoulToday(line) && isEducationScheduleLineUpcoming(line)
         return (
           <Fragment key={`${line}-${index}`}>
             {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
@@ -58,11 +51,7 @@ export function EducationSchedulePreviewLines({
                   type="button"
                   className="education-schedule-preview-lines__remove"
                   aria-label={`${line} 제거`}
-                  disabled={!canRemove}
-                  onClick={() => {
-                    if (!canRemove) return
-                    onRemove(index)
-                  }}
+                  onClick={() => onRemove(index)}
                 >
                   <EducationSchedulePreviewRemoveIcon />
                 </button>

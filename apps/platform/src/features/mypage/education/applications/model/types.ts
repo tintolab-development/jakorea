@@ -111,6 +111,14 @@ export type EducationApplicationListItem = {
    * 표시 시 프로그램 일정·교육 진행 예정일로 해석한다.
    */
   preferredScheduleOptionValues?: string[]
+  /** Portal 신청 상세 `preferredScheduleBlocks` — answers 일정 키 없을 때 fallback */
+  preferredScheduleBlocks?: readonly unknown[]
+  /** Portal 신청 상세 `answers` — 상세 재조회·신청 정보 팝업용 */
+  applicationAnswers?: Record<string, unknown>
+  /** Portal 신청 상세 `formResponseId` — 안내사항 PATCH 전제 */
+  formResponseId?: number
+  /** Portal 신청 상세 `formResponseStatus` — SUBMITTED/APPROVED/COMPLETED 등 */
+  formResponseStatus?: string
   /** `displayStatus === 'withdrawn'` 일 때 포기 시점 */
   withdrawalPhase?: EducationWithdrawalPhase
   /**
@@ -122,6 +130,10 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
+  /** 수료증 발급 가능 — 포털 신청 상세 `certificateAvailable` */
+  certificateAvailable?: boolean
+  /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
+  pendingSurveyCount?: number
 }
 
 /** 교사 회원 신청 내용 — 신청 기관 정보 */

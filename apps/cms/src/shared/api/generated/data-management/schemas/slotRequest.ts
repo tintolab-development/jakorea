@@ -8,14 +8,4 @@
 
 export interface SlotRequest {
   scheduleId: number;
-  /**
-     * @minLength 0
-     * @maxLength 100
-     */
-  grade: string;
-  /**
-     * @minLength 0
-     * @maxLength 100
-     */
-  className: string;
 }

@@ -14,17 +14,16 @@ import {
   buildGeneralVolunteerInterview2CalendarListRows,
   type GeneralVolunteerInterview2CalendarListRow,
 } from '@/features/program/general/lib/general-volunteer-interview2-calendar-list-rows'
-import {
-  CalendarMain,
-  CalendarSplitCardLayout,
-} from '@/shared/components/calendar'
+import { CalendarMain, CalendarSplitCardLayout } from '@/shared/components/calendar'
 import { useCalendarNavigationState } from '@/shared/components/calendar/lib/use-calendar-navigation-state'
 import '@/shared/components/calendar/styles/calendar.css'
-import { SCHEDULE_COLORS, type ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import {
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { renderGeneralVolunteerInterview2PreviewTooltipContent } from './general-volunteer-interview2-preview-tooltip'
 import { GeneralVolunteerInterview2CalendarListItem } from './general-volunteer-interview2-calendar-list-item'
-import { isGeneralVolunteerInterview2EffectiveStatusSelectableForResult } from './general-volunteer-interview2-actions'
 import {
   buildUjatVolunteerInterviewMonthCellRows,
   renderUjatVolunteerInterviewMonthEventContent,
@@ -52,7 +51,9 @@ function GeneralVolunteerInterview2CalendarRightList({
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
   onRowClick: (row: GeneralVolunteerInterview2CalendarListRow) => void
-  resolveRowColors?: (row: GeneralVolunteerInterview2CalendarListRow) => ScheduleColorPair | undefined
+  resolveRowColors?: (
+    row: GeneralVolunteerInterview2CalendarListRow
+  ) => ScheduleColorPair | undefined
 }) {
   const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
 
@@ -60,10 +61,7 @@ function GeneralVolunteerInterview2CalendarRightList({
     (key: string, checked: boolean) => {
       if (checked) {
         const row = rows.find(item => item.id === key)
-        if (
-          row &&
-          !isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(row.effectiveStatus)
-        ) {
+        if (row && !row.selectableForResult) {
           return
         }
         if (selectedSet.has(key)) return

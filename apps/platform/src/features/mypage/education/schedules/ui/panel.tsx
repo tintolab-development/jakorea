@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
-import { PFText } from '@/shared/ui'
+import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
+import { PFButton, PFText } from '@/shared/ui'
+import { resolveEducationScheduleEmptyMessage } from '../lib/scope-status'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SCHEDULE_PAGE_SIZE, type EducationScheduleItem } from '../model/types'
-import { getMockEducationSchedules } from '../lib/mock-schedules'
 import { EducationScheduleRow } from './row'
+import styles from './panel.module.css'
 
 type EducationSchedulePanelProps = {
   programId: string
@@ -19,6 +21,10 @@ type EducationSchedulePanelProps = {
   applicationId?: string | null
 }
 
+/**
+ * 교육일정 탭 — remote면 신청 GET .../schedules만 SSOT.
+ * mock 로그인 세션에서만 mock 시드. 프로그램 상세 일정은 사용하지 않는다.
+ */
 export function EducationSchedulePanel({
   programId,
   lastParticipatedSession,
@@ -30,7 +36,9 @@ export function EducationSchedulePanel({
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
 
   const allItems = useMemo(() => {
-    const items = remoteSchedules.enabled ? remoteSchedules.items : getMockEducationSchedules(programId)
+    const items: EducationScheduleItem[] = remoteSchedules.enabled
+      ? remoteSchedules.items
+      : []
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
   }, [lastParticipatedSession, programId, remoteSchedules.enabled, remoteSchedules.items])
 
@@ -47,12 +55,38 @@ export function EducationSchedulePanel({
     return <EducationSessionListSkeleton statusMessage={`${listTitle}을 불러오는 중입니다.`} />
   }
   if (remoteSchedules.isError) {
+    const errorMessage =
+      remoteSchedules.errorCode === 'DATABASE_ERROR'
+        ? DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE
+        : `${listTitle}을 불러오지 못했습니다.`
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        {listTitle}을 불러오지 못했습니다.
-      </PFText>
+      <div className={styles.status}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {errorMessage}
+        </PFText>
+        {remoteSchedules.traceId ? (
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500">
+            traceId: {remoteSchedules.traceId}
+          </PFText>
+        ) : null}
+        <PFButton
+          type="button"
+          variant="tertiary"
+          size="large"
+          disabled={remoteSchedules.isRefetching}
+          onClick={() => void remoteSchedules.refetch()}
+        >
+          다시 시도
+        </PFButton>
+      </div>
     )
   }
+
+  const emptyMessage = remoteSchedules.enabled
+    ? resolveEducationScheduleEmptyMessage(remoteSchedules.scopeStatus, listTitle)
+    : listTitle === '배정현황'
+      ? '등록된 배정 일정이 없어요.'
+      : '등록된 교육일정이 없어요.'
 
   return (
     <EducationSessionList
@@ -61,9 +95,7 @@ export function EducationSchedulePanel({
       currentPage={currentPage}
       totalPages={totalPages}
       onPageChange={setPage}
-      emptyMessage={
-        listTitle === '배정현황' ? '등록된 배정 일정이 없어요.' : '등록된 교육일정이 없어요.'
-      }
+      emptyMessage={emptyMessage}
     >
       {pageItems.map((item: EducationScheduleItem) => (
         <EducationScheduleRow key={item.id} item={item} />

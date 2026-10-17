@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { PFText } from '@/shared/ui'
 import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
@@ -6,7 +7,6 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
-import { getMockEducationSettlements } from '../lib/mock-settlements'
 import {
   countCompletedSettlementSessions,
   resolvePaymentStatementProcessLabel,
@@ -28,19 +28,35 @@ export function EducationSettlementPanel({
   applicationType,
   lastParticipatedSession,
 }: EducationSettlementPanelProps) {
+  const location = useLocation()
   const [page, setPage] = useState(1)
   const remoteSettlements = useApplicationSettlementsQuery(applicationType, applicationId, programId)
+  const settlementSearchParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  )
+  const rejectReasonSessionId = settlementSearchParams.get('sessionId')
+  const shouldOpenRejectReason = settlementSearchParams.get('modal') === 'reject-reason'
 
   const allItems = useMemo(() => {
-    const items = remoteSettlements.enabled
-      ? remoteSettlements.items
-      : getMockEducationSettlements(programId)
+    const items = remoteSettlements.enabled ? remoteSettlements.items : []
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
-  }, [lastParticipatedSession, programId, remoteSettlements.enabled, remoteSettlements.items])
+  }, [lastParticipatedSession, remoteSettlements.enabled, remoteSettlements.items])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SETTLEMENT_PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
+  const requestedSessionIndex = useMemo(
+    () =>
+      rejectReasonSessionId == null
+        ? -1
+        : allItems.findIndex(item => String(item.id) === rejectReasonSessionId),
+    [allItems, rejectReasonSessionId],
+  )
+  const requestedSessionPage =
+    requestedSessionIndex >= 0
+      ? Math.floor(requestedSessionIndex / EDUCATION_SETTLEMENT_PAGE_SIZE) + 1
+      : null
+  const currentPage = requestedSessionPage ?? Math.min(page, totalPages)
   const completedCount = countCompletedSettlementSessions(allItems)
   const processLabel = resolvePaymentStatementProcessLabel(allItems)
 
@@ -76,7 +92,16 @@ export function EducationSettlementPanel({
         emptyMessage="정산 현황이 없어요."
       >
         {pageItems.map(item => (
-          <EducationSettlementRow key={item.id} item={item} applicationId={applicationId} />
+          <EducationSettlementRow
+            key={item.id}
+            item={item}
+            applicationId={applicationId}
+            initialRejectOpen={
+              shouldOpenRejectReason &&
+              item.status === 'rejected' &&
+              rejectReasonSessionId === String(item.id)
+            }
+          />
         ))}
       </EducationSessionList>
     </div>

@@ -1,21 +1,39 @@
 import { PFText } from '@/shared/ui'
+import { InstructorAvailableSchedulesSection } from './instructor-available-schedules-section'
+import { PipeSeparatedInlineText } from './pipe-separated-inline-text'
 import styles from './content.module.css'
 
 type EducationApplicationContentProps = {
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 강사 프로그램 신청 — `강의 진행 가능일` (성범죄 등 다른 신청 정보는 제외) */
+  instructorAvailableScheduleLines?: readonly string[]
+}
+
+function resolvePreferredScheduleLines(label: string | undefined): string[] {
+  const trimmed = label?.trim() ?? ''
+  if (!trimmed) return []
+  return trimmed
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
 }
 
 export function EducationApplicationContent({
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  instructorAvailableScheduleLines,
 }: EducationApplicationContentProps) {
   const intro = selfIntroMotivation?.trim() ?? ''
-  const schedule = preferredEducationScheduleLabel?.trim() ?? ''
+  const instructorLines = instructorAvailableScheduleLines ?? []
+  const scheduleLines = instructorLines.length > 0
+    ? []
+    : resolvePreferredScheduleLines(preferredEducationScheduleLabel)
   const hasIntro = intro.length > 0
-  const hasSchedule = schedule.length > 0
+  const hasInstructorSchedule = instructorLines.length > 0
+  const hasSchedule = scheduleLines.length > 0
 
-  if (!hasIntro && !hasSchedule) {
+  if (!hasIntro && !hasSchedule && !hasInstructorSchedule) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
         신청 내용이 없습니다.
@@ -36,15 +54,32 @@ export function EducationApplicationContent({
         </section>
       ) : null}
 
+      {hasInstructorSchedule ? (
+        <InstructorAvailableSchedulesSection lines={instructorLines} />
+      ) : null}
+
       {hasSchedule ? (
-        <section className={styles.schedule}>
-          <PFText as="h2" typo="bd-md-sb" color="black">
-            진행 희망 교육 일정
-          </PFText>
-          <PFText as="p" typo="bd-md-md" color="black" className={styles.scheduleValue}>
-            {schedule}
-          </PFText>
-        </section>
+        <div className={styles.scheduleList}>
+          {scheduleLines.map((line, index) => {
+            return (
+              <section
+                key={`preferred-schedule-${index + 1}`}
+                className={styles.scheduleCard}
+                aria-label={`진행 희망 교육 일정 ${index + 1}`}
+              >
+                <PFText as="h2" typo="bd-md-sb" color="black" className={styles.scheduleCardTitle}>
+                  진행 희망 교육 일정 {index + 1}
+                </PFText>
+                <PipeSeparatedInlineText
+                  value={line}
+                  emphasizeTail
+                  className={styles.scheduleValue}
+                  partClassName={styles.schedulePart}
+                />
+              </section>
+            )
+          })}
+        </div>
       ) : null}
     </div>
   )

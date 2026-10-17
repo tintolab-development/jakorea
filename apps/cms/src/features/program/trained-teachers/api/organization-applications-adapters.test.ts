@@ -160,6 +160,32 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.classCount).toBe(1)
     expect(row.studentCount).toBe(11)
   })
+
+  it('상세 응답의 flat 전용 필드를 상세 모델로 매핑한다', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1698010,
+        schoolName: '상세 학교',
+        addressDetail: '2층 교무실',
+        requestedEducationFormat: 'HYBRID',
+        applicationReason: '상세 신청 사유',
+        otherRequests: null,
+        teacherEmail: 'teacher@example.com',
+        textbookId: 55,
+      },
+      0,
+      '186013'
+    )
+
+    expect(row.detail).toMatchObject({
+      addressDetail: '2층 교무실',
+      educationType: '온/오프라인',
+      applicationReason: '상세 신청 사유',
+      teacherEmail: 'teacher@example.com',
+      textbookId: '55',
+    })
+    expect(row.detail?.otherRequests).toBeUndefined()
+  })
   it('maps progress completeness additive fields (0 is not missing)', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
       {

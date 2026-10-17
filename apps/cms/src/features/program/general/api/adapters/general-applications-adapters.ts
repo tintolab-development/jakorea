@@ -9,6 +9,11 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  readRuntimeBoolean,
+  readRuntimeNumber,
+  readRuntimeString,
+} from '@/shared/lib/openapi-runtime-field'
 import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
@@ -22,7 +27,9 @@ import type {
 } from '@/features/program/general/model/participating-schools'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { Session } from '@/shared/api/generated/dashboard/schemas/session'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import type { OrganizationApplicationSessionResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationSessionResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type {
   IndividualApplicationListItemEnriched,
@@ -226,7 +233,11 @@ function preferredSessionsHaveCalendarDate(sessions: ParticipatingSchoolSession[
   return sessions.some(session => resolveSessionCalendarDateKey(session) != null)
 }
 
-function resolveOrganizationApplicationAssignmentSessions(
+/**
+ * 기관 신청 목록·상세 「진행 희망 교육 일정」.
+ * 상세 DTO `sessions`(OSA·배정 hybrid)는 사용하지 않는다.
+ */
+export function resolveOrganizationApplicationHopeSessions(
   dto: OrganizationApplicationListItemResponse,
   preferred: PreferredEducationSchedule[],
   requestedSchedules?: RequestedScheduleResponse[]
@@ -249,6 +260,147 @@ function resolveOrganizationApplicationAssignmentSessions(
   return fromPreferred
 }
 
+/** @deprecated 이름만 유지 — 희망 일정은 `resolveOrganizationApplicationHopeSessions` 사용 */
+export const resolveOrganizationApplicationAssignmentSessions =
+  resolveOrganizationApplicationHopeSessions
+
+const CONFIRMED_ORGANIZATION_LIST_SESSION_STATUSES = new Set(['CONFIRMED', 'TEMP_ASSIGNED'])
+
+/** 목록 API sessions[] — codegen Session + BE projection (assignmentStatus, sessionNo) */
+export type OrganizationApplicationListSession = Session & {
+  assignmentStatus?: string | null
+  sessionNo?: number | null
+}
+
+function isConfirmedOrganizationListSessionStatus(status: string | undefined | null): boolean {
+  const normalized = (status ?? '').trim().toUpperCase()
+  if (!normalized || normalized === 'CANCELLED') return false
+  if (CONFIRMED_ORGANIZATION_LIST_SESSION_STATUSES.has(normalized)) return true
+  return false
+}
+
+export function resolveOrganizationListSessionAssignmentStatus(
+  session: OrganizationApplicationListSession
+): string | undefined {
+  const fromCodegenStatus = session.status?.trim()
+  if (fromCodegenStatus) return fromCodegenStatus
+  const fromAssignment = session.assignmentStatus?.trim()
+  return fromAssignment || undefined
+}
+
+function resolveOrganizationListSessionRound(
+  session: OrganizationApplicationListSession,
+  index: number
+): number {
+  if (typeof session.sessionNo === 'number' && Number.isFinite(session.sessionNo)) {
+    return session.sessionNo
+  }
+  if (typeof session.roundNumber === 'number' && Number.isFinite(session.roundNumber)) {
+    return session.roundNumber
+  }
+  return index + 1
+}
+
+/** 기관 신청 목록 `sessions[]` → 강사 신청 캘린더용 배정 확정 세션 */
+export function mapOrganizationApplicationListSessionsToConfirmedSessions(
+  sessions: OrganizationApplicationListSession[] | undefined | null
+): ParticipatingSchoolSession[] {
+  const result: ParticipatingSchoolSession[] = []
+
+  for (const [index, session] of (sessions ?? []).entries()) {
+    const assignmentStatus = resolveOrganizationListSessionAssignmentStatus(session)
+    if (!isConfirmedOrganizationListSessionStatus(assignmentStatus)) continue
+    const scheduleId = session.scheduleId
+    if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) continue
+    const startRaw = session.startAt?.trim()
+    if (!startRaw) continue
+    const start = new Date(startRaw)
+    if (Number.isNaN(start.getTime())) continue
+
+    const dateParts = formatPreferredScheduleDate(start)
+    const round = resolveOrganizationListSessionRound(session, index)
+    const timeLabel = formatKoreanInterviewTime(start)
+
+    result.push({
+      round,
+      ...dateParts,
+      duration: '-',
+      format: '-',
+      classNum: `${round}차시`,
+      timeRange: timeLabel,
+      status: 'pending',
+      resolvedScheduleId: Math.trunc(scheduleId),
+    })
+  }
+
+  return result
+}
+
+/** 강사 신청 캘린더 — hope sessions 미사용, 목록 배정 확정 sessions만 */
+export function readOrganizationApplicationConfirmedSessionsForInstructorCalendar(
+  row: ApplicantSchoolRow
+): ParticipatingSchoolSession[] {
+  return row.confirmedListAssignmentSessions ?? []
+}
+
+/** 신청 row·상세 UI용 희망 세션(일반 기관은 dto.sessions·stale row.sessions fallback 금지) */
+export function readOrganizationApplicationHopeSessionsForDisplay(
+  row: ApplicantSchoolRow,
+  programType?: string | null
+): ParticipatingSchoolSession[] {
+  const preferred = row.preferredEducationSchedules ?? []
+  const dto: OrganizationApplicationListItemResponse = {
+    programType: programType?.trim() || 'GENERAL_ORGANIZATION',
+    availableActions: [],
+    sessions: [],
+    preferredEducationSchedules: [],
+  }
+  const fromHope = resolveOrganizationApplicationHopeSessions(dto, preferred)
+  if (fromHope.length > 0) return fromHope
+  if (isCompanySchoolOrganizationApplication(dto)) {
+    return row.sessions ?? []
+  }
+  return fromHope
+}
+
+/** 기관 상세 DTO의 `sessions` — OSA·배정 hybrid. 희망 UI에는 사용하지 않는다. */
+export function mapOrganizationApplicationDetailOperationalSessions(
+  sessions: OrganizationApplicationSessionResponse[] | undefined
+): ParticipatingSchoolSession[] {
+  return (sessions ?? []).map((session, index) => {
+    const start = session.startAt ? new Date(session.startAt) : null
+    const end = session.endAt ? new Date(session.endAt) : null
+    const validStart = start != null && !Number.isNaN(start.getTime())
+    const validEnd = end != null && !Number.isNaN(end.getTime())
+    const dateParts = validStart
+      ? formatPreferredScheduleDate(start)
+      : { date: '-', dayOfWeek: '-' }
+    const timeRange =
+      validStart && validEnd
+        ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+        : '-'
+    const duration =
+      validStart && validEnd && end.getTime() > start.getTime()
+        ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
+        : '-'
+    const round = session.sessionNo ?? index + 1
+    const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
+    return {
+      round,
+      ...dateParts,
+      duration,
+      format: session.scheduleName?.trim() || '-',
+      classNum: `${round}교시`,
+      timeRange,
+      deliveryScheduleStatus: session.assignmentStatus?.trim() || undefined,
+      resolvedScheduleId,
+      scheduleUnresolved:
+        session.scheduleUnresolved ??
+        (resolvedScheduleId == null && session.requestedScheduleId != null),
+    }
+  })
+}
+
 export function applyRequestedSchedulesToApplicantSchoolRow(
   row: ApplicantSchoolRow,
   requestedSchedules: RequestedScheduleResponse[] | undefined,
@@ -257,8 +409,11 @@ export function applyRequestedSchedulesToApplicantSchoolRow(
   const preferred = row.preferredEducationSchedules ?? []
   const dto: OrganizationApplicationListItemResponse = {
     programType: options?.companySchool ? 'ONE_COMPANY_ONE_SCHOOL' : 'GENERAL_ORGANIZATION',
+    availableActions: [],
+    sessions: [],
+    preferredEducationSchedules: [],
   }
-  const sessions = resolveOrganizationApplicationAssignmentSessions(
+  const sessions = resolveOrganizationApplicationHopeSessions(
     dto,
     preferred,
     requestedSchedules
@@ -277,10 +432,13 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 ): ApplicantSchoolRow {
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
-  const sessions = resolveOrganizationApplicationAssignmentSessions(
+  const sessions = resolveOrganizationApplicationHopeSessions(
     dto,
     preferred,
     options?.requestedSchedules
+  )
+  const confirmedListAssignmentSessions = mapOrganizationApplicationListSessionsToConfirmedSessions(
+    dto.sessions
   )
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
@@ -305,6 +463,8 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     availableActions: dto.availableActions ?? [],
     programId,
     sessions,
+    confirmedListAssignmentSessions:
+      confirmedListAssignmentSessions.length > 0 ? confirmedListAssignmentSessions : undefined,
     preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
     desiredEducationPeriod,
     detail: {
@@ -313,7 +473,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 }
 
-/** 상세 DTO → 신청 기관 detail(사유·안내). 빈 값은 기존 row를 지우지 않는다. */
+/** 상세 DTO → 신청 기관 detail(사유·안내). 생략/null/빈 값은 값 없음으로 유지한다. */
 export function readOrganizationApplicationDetailExtendFields(
   dto: Pick<
     OrganizationApplicationDetailResponse,
@@ -328,6 +488,7 @@ export function readOrganizationApplicationDetailExtendFields(
     | 'parkingInfo'
     | 'textbookId'
     | 'textbookName'
+    | 'teacherTel'
     | 'teacherPhone'
     | 'teacherEmail'
   >
@@ -345,6 +506,9 @@ export function readOrganizationApplicationDetailExtendFields(
   const parkingInfo = dto.parkingInfo?.trim() || undefined
   const textbookId = toId(dto.textbookId) || undefined
   const textbookName = dto.textbookName?.trim() || undefined
+  const teacherTel = Object.prototype.hasOwnProperty.call(dto, 'teacherTel')
+    ? dto.teacherTel?.trim() ?? ''
+    : undefined
   const teacherPhone = dto.teacherPhone?.trim() || undefined
   const teacherEmail = dto.teacherEmail?.trim() || undefined
 
@@ -359,6 +523,9 @@ export function readOrganizationApplicationDetailExtendFields(
     ...(parkingInfo ? { parkingInfo, otherSpecialNotes: parkingInfo } : {}),
     ...(textbookId ? { textbookId } : {}),
     ...(textbookName ? { textbookName } : {}),
+    // 상세 DTO가 teacherTel을 생략해도 상세 응답이 정본임을 표시한다.
+    // 그래야 teacherPhone(휴대폰)을 Tel로 잘못 재사용하지 않는다.
+    teacherTel,
     ...(teacherPhone ? { teacherPhone } : {}),
     ...(teacherEmail ? { teacherEmail } : {}),
   }
@@ -366,54 +533,49 @@ export function readOrganizationApplicationDetailExtendFields(
 
 export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   dto: OrganizationApplicationDetailResponse,
-  base: ApplicantSchoolRow
+  base: ApplicantSchoolRow,
+  options?: {
+    requestedSchedules?: RequestedScheduleResponse[]
+  }
 ): ApplicantSchoolRow {
   const teacherPhone = dto.teacherPhone?.trim()
   const teacherEmail = dto.teacherEmail?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
-  const assignmentSessions = resolveOrganizationApplicationAssignmentSessions(
-    dto as OrganizationApplicationListItemResponse,
-    preferred.length > 0 ? preferred : (base.preferredEducationSchedules ?? []),
-    undefined
+  const listItemShape = dto as OrganizationApplicationListItemResponse
+  const sessions = resolveOrganizationApplicationHopeSessions(
+    listItemShape,
+    preferred,
+    options?.requestedSchedules
   )
-  const sessions =
-    assignmentSessions.length > 0
-      ? assignmentSessions
-      : base.sessions
   return {
     ...base,
-    id: toId(dto.id) || base.id,
-    organizationId: dto.organizationId ?? base.organizationId,
-    teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
-    schoolName: dto.organizationName?.trim() || base.schoolName,
-    region: dto.organizationAddress?.trim() || base.region,
-    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || base.educationGrade,
-    classCount: dto.requestedClassCount ?? base.classCount,
-    studentCount: dto.requestedStudentCount ?? base.studentCount,
-    teacherName: dto.teacherName?.trim() || base.teacherName,
-    contact: teacherPhone || base.contact,
-    appliedAt: dto.submittedAt ?? base.appliedAt,
+    id: toId(dto.id) || '',
+    organizationId: dto.organizationId ?? undefined,
+    teacherMemberId: dto.teacherMemberId ?? undefined,
+    schoolName: dto.organizationName?.trim() || '-',
+    region: dto.organizationAddress?.trim() || '-',
+    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || '-',
+    classCount: dto.requestedClassCount ?? 0,
+    studentCount: dto.requestedStudentCount ?? 0,
+    teacherName: dto.teacherName?.trim() || '-',
+    contact: teacherPhone,
+    appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
-    participationRejectionReason: dto.rejectReason?.trim() || base.participationRejectionReason,
-    approvalNotificationSentAt:
-      formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
-      base.approvalNotificationSentAt,
-    availableActions: dto.availableActions ?? base.availableActions,
+    participationRejectionReason: dto.rejectReason?.trim() || undefined,
+    approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
+      readResultNotificationSentAt(dto)
+    ),
+    availableActions: dto.availableActions ?? [],
     sessions,
-    ...(preferred.length > 0 ? { preferredEducationSchedules: preferred } : {}),
-    ...(requestedScheduleMemo
-      ? { desiredEducationPeriod: requestedScheduleMemo }
-      : base.desiredEducationPeriod
-        ? { desiredEducationPeriod: base.desiredEducationPeriod }
-        : {}),
+    preferredEducationSchedules: preferred,
+    desiredEducationPeriod: requestedScheduleMemo,
     detail: {
-      ...base.detail,
       ...detailFields,
       ...readOrganizationApplicationEconomyDisplayFields(dto),
-      ...(teacherPhone ? { teacherPhone } : {}),
-      ...(teacherEmail ? { teacherEmail } : {}),
+      teacherPhone,
+      teacherEmail,
       teacherInfo: undefined,
     },
   }
@@ -484,48 +646,6 @@ export function readOrganizationApplicationBasicInfoFields(
   return { addressDetail, educationFormat, applicationReason, otherRequests }
 }
 
-/**
- * TT 등 — 목록 SoT(학급·일정 블록)는 유지하고, 상세에만 있는 PII·부가 필드만 채운다.
- * 빈 문자열로 목록 값을 덮지 않는다.
- */
-export function softMergeOrganizationApplicationDetailOntoRow(
-  dto: OrganizationApplicationDetailResponse,
-  base: ApplicantSchoolRow
-): ApplicantSchoolRow {
-  const teacherPhone = dto.teacherPhone?.trim()
-  const teacherEmail = dto.teacherEmail?.trim()
-  const teacherName = dto.teacherName?.trim()
-  /** 상세 학년은 requestedGrade만. 목록 educationGrade(프로그램 대상 학년)를 다시 넣지 않는다. */
-  const requestedGrade = formatApplicantGradeLabel(dto.requestedGrade)
-  const rejectReason = dto.rejectReason?.trim()
-  const detailFields = readOrganizationApplicationDetailExtendFields(dto)
-  const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
-
-  return {
-    ...base,
-    educationGrade: requestedGrade,
-    teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
-    teacherName: teacherName || base.teacherName,
-    contact: teacherPhone || base.contact,
-    participationRejectionReason: rejectReason || base.participationRejectionReason,
-    approvalNotificationSentAt:
-      formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
-      base.approvalNotificationSentAt,
-    availableActions: dto.availableActions ?? base.availableActions,
-    ...(requestedScheduleMemo && !base.desiredEducationPeriod?.trim()
-      ? { desiredEducationPeriod: requestedScheduleMemo }
-      : {}),
-    detail: {
-      ...base.detail,
-      ...detailFields,
-      ...readOrganizationApplicationEconomyDisplayFields(dto),
-      ...(teacherPhone ? { teacherPhone } : {}),
-      ...(teacherEmail ? { teacherEmail } : {}),
-      teacherInfo: undefined,
-    },
-  }
-}
-
 function formatJaEvaluationGradeLabel(raw?: string | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
@@ -564,24 +684,40 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     contact: dto.contact?.trim() || '',
     email: dto.email?.trim() || '',
     address: dto.homeAddress?.trim() || '',
-    appliedAt: dto.submittedAt,
+    appliedAt: readRuntimeString(dto, 'submittedAt'),
     schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
     preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
-      formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) || undefined,
-    rejectionReason: dto.rejectReason?.trim() || undefined,
-    distanceKm: dto.distanceKm,
-    longDistanceYn: dto.longDistance,
+      formatInstructorFeeGradeLabel(readRuntimeString(dto, 'instructorFeeGradeSnapshot')) ||
+      undefined,
+    rejectionReason: readRuntimeString(dto, 'rejectReason'),
+    distanceKm: readRuntimeNumber(dto, 'distanceKm'),
+    longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
     availableActions: dto.availableActions,
   }
+}
+
+function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  if (trimmed === 'PER_HOUR') return '1시간 당'
+  if (trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
+  if (trimmed === 'FIXED') return '해당 없음'
+  return trimmed
 }
 
 function mapInstructorFeeBasisType(
   raw?: string | null
 ): ApplicantInstructorLectureFeeBasisType | undefined {
-  if (raw === 'program' || raw === 'special_lecture' || raw === 'other_labor') return raw
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const lower = trimmed.toLowerCase()
+  if (lower === 'program' || trimmed === 'PROGRAM') return 'program'
+  if (lower === 'special_lecture') return 'special_lecture'
+  if (lower === 'other_labor') return 'other_labor'
+  if (trimmed === 'RECRUITMENT') return 'special_lecture'
   return undefined
 }
 
@@ -674,7 +810,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
       base.instructorFeeGradeLabel,
     lectureFeeBasisType:
       mapInstructorFeeBasisType(dto.feePolicy?.basisType) ?? base.lectureFeeBasisType,
-    lectureFeeMeasure: dto.feePolicy?.measure?.trim() || base.lectureFeeMeasure,
+    lectureFeeMeasure:
+      mapInstructorFeeMeasureFromApi(dto.feePolicy?.measure) ?? base.lectureFeeMeasure,
     lectureFeeAmount:
       dto.feePolicy?.amount != null ? String(dto.feePolicy.amount) : base.lectureFeeAmount,
     lectureFeeBasisDisplay:
@@ -683,7 +820,9 @@ export function mapInstructorApplicationDetailToApplicantRow(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
               'special_lecture',
-            dto.feePolicy.measure ?? base.lectureFeeMeasure ?? '',
+            mapInstructorFeeMeasureFromApi(dto.feePolicy.measure) ??
+              base.lectureFeeMeasure ??
+              '',
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
               : (base.lectureFeeAmount ?? '')
@@ -708,8 +847,12 @@ export function mapInstructorApplicationDetailToApplicantRow(
     birthDate: dto.birthDate?.trim() || base.birthDate,
     gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
-    distanceKm: dto.distanceKm !== undefined ? dto.distanceKm : base.distanceKm,
-    longDistanceYn: dto.longDistance !== undefined ? dto.longDistance : base.longDistanceYn,
+    distanceKm:
+      dto.distanceKm !== undefined && dto.distanceKm !== null ? dto.distanceKm : base.distanceKm,
+    longDistanceYn:
+      dto.longDistance !== undefined && dto.longDistance !== null
+        ? dto.longDistance
+        : base.longDistanceYn,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
@@ -722,7 +865,9 @@ function mapInstructorResumeFromDetail(
   dto: InstructorApplicationDetailResponse,
   base: ApplicantInstructorRow
 ): Partial<ApplicantInstructorRow> {
-  const profile = normalizeInstructorCmsProfileFromApi(dto.instructorCmsProfile ?? undefined)
+  const profile = normalizeInstructorCmsProfileFromApi(
+    (dto.instructorCmsProfile ?? undefined) as Parameters<typeof normalizeInstructorCmsProfileFromApi>[0]
+  )
   if (!profile) return {}
   const resume = instructorCmsProfileToApplicantInstructorRowPartial(profile)
   const pickList = <T>(next: T[] | undefined, prev: T[] | undefined) =>
@@ -839,7 +984,8 @@ function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
 }
 
 /**
- * 운영 일정(startAt 있음)을 시작 시각 순으로 두고, `line:N`(startAt 없음)은 응답 순서를 유지한다.
+ * startAt이 있으면 시작 시각 순으로 정렬하고, 없으면 응답 순서를 유지한다.
+ * line:N도 materialized program_schedule이면 startAt·scheduleId가 함께 온다.
  */
 function orderPreferredEducationSchedules(
   schedules: PreferredEducationSchedule[]
@@ -874,7 +1020,7 @@ export function mapPreferredEducationSchedulesToSessions(
     const timeRange =
       validStart && validEnd
         ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
-        : '-'
+        : scheduleLabel || '-'
     const duration =
       validStart && validEnd && end.getTime() > start.getTime()
         ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
@@ -892,6 +1038,9 @@ export function mapPreferredEducationSchedulesToSessions(
       format: '-',
       classNum: `${round}지망`,
       timeRange,
+      // 희망 일정은 아직 진행 상태가 확정되지 않은 일정이다.
+      // 상태가 없다는 이유로 미진행(UNSCHEDULED)으로 표시하지 않는다.
+      status: 'pending',
       ...(label ? { scheduleLabel: label } : {}),
       resolvedScheduleId: hasResolvedSchedule ? scheduleId : null,
       ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),
@@ -1023,7 +1172,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
   const teamDetail = resolveIndividualApplicationTeamDetail({
     team: dto.team,
-    formAnswers: dto.application?.formAnswers,
+    formAnswers: (dto.application as { formAnswers?: Record<string, unknown> | null } | undefined)
+      ?.formAnswers,
   })
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
@@ -1051,7 +1201,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
     detail: {
       gender: toGenderLabelOrRaw(profile?.gender),
       birthDate: profile?.birthDate ?? undefined,
-      age: profile?.age,
+      age: profile?.age ?? undefined,
       schoolEnrollmentStatus: toSchoolEnrollmentStatusLabelOrRaw(profile?.schoolEnrollmentStatus),
       affiliationSchool: profile?.affiliationSchool ?? undefined,
       affiliationGrade: profile?.affiliationGrade ?? undefined,
@@ -1070,8 +1220,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
     },
     textbookId: toId(dto.textbook?.id) || undefined,
     textbookName: dto.textbook?.name ?? undefined,
-    textbookKits: dto.textbook?.kits,
-    textbookQuantity: dto.textbook?.quantity,
+    textbookKits: dto.textbook?.kits ?? undefined,
+    textbookQuantity: dto.textbook?.quantity ?? undefined,
     textbookStatus: dto.textbook?.status as GeneralIndividualApplicantRow['textbookStatus'],
     managerAEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerA),
     managerBEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerB),
@@ -1209,7 +1359,7 @@ export function mapApiVolunteerInterviewStatusToAssignmentStatus(
 
 export function mapApiFinalResultToSecondInterviewStatus(
   status?: string | null,
-  reserveRank?: number
+  reserveRank?: number | null
 ): GeneralSecondInterviewScreeningStatus | undefined {
   const normalized = status?.trim().toUpperCase() ?? ''
   if (!normalized) return undefined
@@ -1275,7 +1425,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
   })
   return {
     id: toId(dto.id),
-    memberId: dto.memberId,
+    memberId: dto.memberId ?? undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     no: index + 1,
     name: dto.memberName?.trim() || '이름 없음',
@@ -1313,6 +1463,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    assignedInterviewEndAt: enriched.assignedInterviewEndAt?.trim() || undefined,
     ...interviewSlots,
     ...assigned,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
@@ -1335,6 +1486,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
   const canEditEvaluation = dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
   return {
     ...base,
+    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || base.assignedInterviewEndAt,
     ...readGeneralVolunteerProjection(dto.application, base),
     id: toId(dto.id) || base.id,
     memberId: dto.memberId ?? base.memberId,
@@ -1443,7 +1595,7 @@ function readOrganizationTextbookStatus(
   const extra = dto as ParticipantListItemResponse & { textbookDeliveryStatus?: string | null }
   const delivery = extra.textbookDeliveryStatus?.trim()
   if (delivery) return mapTextbookDeliveryStatusToBadge(delivery)
-  return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus)
+  return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus ?? undefined)
 }
 
 export function mapParticipantToParticipatingSchoolRow(
@@ -1465,7 +1617,7 @@ export function mapParticipantToParticipatingSchoolRow(
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
-    teacherMemberId: dto.teacherMemberId,
+    teacherMemberId: dto.teacherMemberId ?? undefined,
     no: index + 1,
     schoolName: dto.organizationName?.trim() || dto.memberName?.trim() || '기관명 없음',
     region,
@@ -1651,7 +1803,7 @@ export function mapParticipantToParticipatingVolunteerRow(
       enriched.volunteerKind === 'GENERAL' || enriched.volunteerKind === 'EMPLOYEE'
         ? enriched.volunteerKind
         : undefined,
-    memberId: dto.memberId,
+    memberId: dto.memberId ?? undefined,
     programId,
     no: index + 1,
     volunteerName: dto.memberName?.trim() || '이름 없음',

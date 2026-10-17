@@ -36,6 +36,8 @@ export type InstructorLectureAssignItem = {
   tagLabel: string
   scheduleId?: number
   organizationApplicationId?: number | null
+  /** 승인 API에 전달할 일정별 리드 강사 여부 */
+  scheduleLead?: boolean
 }
 
 /** 개인 프로그램 강의 배정 — 기관 ID 대체값 */
@@ -113,8 +115,10 @@ function parseSessionDateKey(dateRaw: string): string | null {
   return `${y}-${m}-${d}`
 }
 
-function normalizeTimeRange(timeRange: string): string {
-  const normalized = timeRange.replace(/\s*~\s*/g, ' ~ ').trim()
+function normalizeTimeRange(timeRange: string | null | undefined): string {
+  const normalized = (timeRange ?? '').replace(/\s*~\s*/g, ' ~ ').trim()
+  if (!normalized) return '종일'
+
   const parts = normalized.split('~').map(part => {
     const p = part.trim()
     const m = p.match(/^(\d{1,2}):(\d{2})$/)
@@ -359,9 +363,7 @@ export function toLectureAssignItem(
   const dateLabel = formatLectureAssignDateLabel(date)
   const scheduleId = slot.scheduleId ?? parseScheduleIdFromSlotKey(slot.key)
   const organizationApplicationId =
-    slot.schoolId !== INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID
-      ? Number(slot.schoolId)
-      : undefined
+    slot.schoolId !== INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID ? Number(slot.schoolId) : undefined
   return {
     slotKey: slot.key,
     dateKey: slot.dateKey,
@@ -399,8 +401,7 @@ export function mapLectureAssignItemsToApprovalAssignments(
   assignments: InstructorLectureAssignItem[]
 ): InstructorApplicationApprovalAssignmentInput[] {
   return assignments.flatMap((assignment, index) => {
-    const scheduleId =
-      assignment.scheduleId ?? parseScheduleIdFromSlotKey(assignment.slotKey)
+    const scheduleId = assignment.scheduleId ?? parseScheduleIdFromSlotKey(assignment.slotKey)
     if (scheduleId == null || scheduleId < 1) return []
     const orgFromItem = assignment.organizationApplicationId
     const orgFromSchool =
@@ -416,10 +417,8 @@ export function mapLectureAssignItemsToApprovalAssignments(
     return [
       {
         scheduleId,
-        ...(organizationApplicationId != null
-          ? { organizationApplicationId }
-          : {}),
-        scheduleLead: index === 0,
+        ...(organizationApplicationId != null ? { organizationApplicationId } : {}),
+        scheduleLead: assignment.scheduleLead ?? index === 0,
       },
     ]
   })
@@ -661,9 +660,7 @@ export function buildIndividualLectureAssignSlotsFromScheduleSlots(
         options.excludeInstructorId
       ),
       disabled: !assignable,
-      label:
-        periodLabel ||
-        formatScheduleSlotRangeLabel(scheduleId, item.startAt, item.endAt),
+      label: periodLabel || formatScheduleSlotRangeLabel(scheduleId, item.startAt, item.endAt),
     })
   })
   return slots.sort((a, b) => a.dateKey.localeCompare(b.dateKey))

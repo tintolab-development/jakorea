@@ -290,3 +290,14 @@
   align-items: flex-start;
   gap: 8px;
 }
+
+/* 제목형 작성 기간 듀얼 피커 — ant-form-item 본문이 패널 너비를 넘지 않도록 */
+.form-editor-right-panel .ant-form-item-control-input-content {
+  min-width: 0;
+}
+
+.form-editor-right-panel .paragraph-date-picker--dual-fluid,
+.form-editor-right-panel .paragraph-date-picker:has(.paragraph-date-picker__trigger--dual-fluid) {
+  width: 100%;
+  max-width: 100%;
+}

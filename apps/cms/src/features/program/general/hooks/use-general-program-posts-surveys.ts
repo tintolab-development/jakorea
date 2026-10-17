@@ -48,8 +48,12 @@ import {
   mapProgramPostReadsToDomainRows,
   mapProgramPostResponseToDomain,
 } from '@/features/program/general/api/adapters/program-post-adapters'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  getProgramFormBindingErrorMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { listGeneralProgramSurveyCacheInvalidationQueryKeys } from '@/features/program/general/lib/general-program-survey-cache-invalidation'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type {
   ProgramFile,
@@ -60,6 +64,10 @@ import type {
   ProgramPostReadRow,
 } from '@/types/domain'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
+import {
+  applySurveyDisplayTitles,
+  fetchSurveyTitlesByTemplateVersionIds,
+} from '@/features/program/shared/lib/survey-management/survey-display-titles'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type {
   SurveyPollRawResponse,
@@ -455,25 +463,28 @@ export function useGeneralProgramFormBindings(programId: string | undefined) {
   }
 }
 
-export function useGeneralProgramSurveys(programId: string | undefined) {
+export function useGeneralProgramSurveys(
+  programId: string | undefined,
+  enabled = true
+) {
   const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
   const surveysQuery = useQuery({
     queryKey: generalProgramQueryKeys.surveys(programId ?? ''),
     queryFn: () => fetchGeneralProgramSurveys(programId!),
-    enabled: remoteEnabled && Boolean(programId),
+    enabled: enabled && remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
   })
   const bindingsQuery = useQuery({
     queryKey: generalProgramQueryKeys.formBindings(programId ?? ''),
     queryFn: () => fetchGeneralProgramFormBindings(programId!),
-    enabled: remoteEnabled && Boolean(programId),
+    enabled: enabled && remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
   })
 
-  const registeredSurveys = useMemo((): RegisteredSurvey[] | null => {
-    if (!remoteEnabled) return null
+  const registeredSurveysBase = useMemo((): RegisteredSurvey[] | null => {
+    if (!enabled || !remoteEnabled) return null
     return mergeSurveysWithBindings(surveysQuery.data ?? [], bindingsQuery.data ?? []).filter(
       survey => {
         // 만족도·강의평가 템플릿은 전용 탭에서 처리 — poll 목록에서 제외
@@ -487,29 +498,63 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
         return hit.kind === 'poll'
       }
     )
-  }, [bindingsQuery.data, remoteEnabled, surveysQuery.data])
+  }, [bindingsQuery.data, enabled, remoteEnabled, surveysQuery.data])
+
+  const surveyTitleVersionIdsKey = useMemo(() => {
+    if (registeredSurveysBase == null) return ''
+    const ids = registeredSurveysBase.map(s => s.id).filter(id => /^\d+$/.test(id))
+    return [...new Set(ids)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(',')
+  }, [registeredSurveysBase])
+
+  const surveyDisplayTitlesQuery = useQuery({
+    queryKey: generalProgramQueryKeys.surveyDisplayTitles(
+      programId ?? '',
+      surveyTitleVersionIdsKey
+    ),
+    queryFn: () =>
+      fetchSurveyTitlesByTemplateVersionIds(
+        surveyTitleVersionIdsKey.split(',').filter(id => id !== '')
+      ),
+    enabled:
+      enabled &&
+      remoteEnabled &&
+      Boolean(programId) &&
+      surveyTitleVersionIdsKey !== '' &&
+      registeredSurveysBase != null &&
+      registeredSurveysBase.length > 0,
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+
+  const registeredSurveys = useMemo((): RegisteredSurvey[] | null => {
+    if (registeredSurveysBase == null) return null
+    const titles = surveyDisplayTitlesQuery.data
+    if (titles == null || titles.size === 0) return registeredSurveysBase
+    return applySurveyDisplayTitles(registeredSurveysBase, titles)
+  }, [registeredSurveysBase, surveyDisplayTitlesQuery.data])
 
   const classifiedBindings = useMemo((): ClassifiedFormBinding[] | null => {
-    if (!remoteEnabled) return null
+    if (!enabled || !remoteEnabled) return null
     return classifyProgramFormBindings(bindingsQuery.data ?? [])
-  }, [bindingsQuery.data, remoteEnabled])
+  }, [bindingsQuery.data, enabled, remoteEnabled])
 
   return {
     registeredSurveys,
     classifiedBindings,
     rawSurveys: surveysQuery.data ?? null,
-    loading: remoteEnabled
+    loading: enabled && remoteEnabled
       ? surveysQuery.isFetching ||
         surveysQuery.isLoading ||
         bindingsQuery.isFetching ||
-        bindingsQuery.isLoading
+        bindingsQuery.isLoading ||
+        surveyDisplayTitlesQuery.isFetching
       : false,
     /** 최초 로드만 — 백그라운드 재조회 중에는 false (결과 뷰 언마운트 방지) */
-    initialLoading: remoteEnabled
+    initialLoading: enabled && remoteEnabled
       ? (surveysQuery.isFetching && surveysQuery.data === undefined) ||
         (bindingsQuery.isFetching && bindingsQuery.data === undefined)
       : false,
-    isRemoteDataSource: remoteEnabled && !surveysQuery.isError,
+    isRemoteDataSource: enabled && remoteEnabled && !surveysQuery.isError,
   }
 }
 
@@ -609,16 +654,11 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
 
   const invalidateSurveyCaches = useCallback(async () => {
     if (!programId) return
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.surveys(programId) }),
-      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.formBindings(programId) }),
-      queryClient.invalidateQueries({
-        queryKey: [...generalProgramQueryKeys.all, 'survey-responses', programId],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...generalProgramQueryKeys.all, 'survey-summary', programId],
-      }),
-    ])
+    await Promise.all(
+      listGeneralProgramSurveyCacheInvalidationQueryKeys(programId).map(queryKey =>
+        queryClient.invalidateQueries({ queryKey })
+      )
+    )
   }, [programId, queryClient])
 
   const createMutation = useMutation({
@@ -656,9 +696,13 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
       } catch (error) {
         return {
           ok: false as const,
-          message: getGeneralProgramApiErrorMessage(
+          message: getProgramFormBindingErrorMessage(
             error,
-            '설문 등록에 실패했습니다. 다시 시도해 주세요.'
+            '설문 등록에 실패했습니다. 다시 시도해 주세요.',
+            {
+              formType: payload.formType,
+              targetScope: payload.targetScope,
+            }
           ),
         }
       }

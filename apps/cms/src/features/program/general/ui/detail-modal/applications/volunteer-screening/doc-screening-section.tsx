@@ -1,8 +1,9 @@
 import { useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH,
-  FilterTableToolbarButton
+import {
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
@@ -18,6 +19,7 @@ import { useGeneralVolunteerDocScreening } from './use-doc-screening'
 import { isDocumentScreeningPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -216,12 +218,12 @@ export function GeneralVolunteerDocScreeningSection({
           onSearch={handleSearch}
           title={`봉사자 신청 목록 (${count.toLocaleString()})`}
           actions={
-            <div className="general-volunteer-screening__actions">
+            <div className="general-volunteer-screening__actions program-application-list-toolbar">
               <FilterTableToolbarButton
                 type="button"
                 variant="delete"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                className="cms-button--application-list-bulk"
+                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                 onClick={handleBulkReject}
               >
                 선택 반려
@@ -229,8 +231,8 @@ export function GeneralVolunteerDocScreeningSection({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                className="cms-button--application-list-bulk"
+                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                 onClick={handleBulkApprove}
               >
                 선택 승인
@@ -257,7 +259,7 @@ export function GeneralVolunteerDocScreeningSection({
               scroll={{ x: GENERAL_DOC_SCREENING_TABLE_SCROLL_X }}
               rowSelection={{
                 fixed: true,
-                columnWidth: 68,
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
                 getCheckboxProps: record => ({

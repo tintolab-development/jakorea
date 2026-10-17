@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { asOpenApiFixture } from '@/shared/test/openapi-fixture-cast'
+import type { GeminiRecruitmentItem } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentItem'
+import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentDetailResponse'
 import {
   buildGeminiRecruitmentPersistSnapshot,
   mapGeminiOrganizationApplicationToRow,
@@ -25,7 +28,7 @@ import {
 describe('gemini visiting-training adapters', () => {
   it('maps recruitment list item', () => {
     const row = mapGeminiRecruitmentItemToRow(
-      {
+      asOpenApiFixture<GeminiRecruitmentItem>({
         programId: 12,
         programType: 'GEMINI_TRAINING',
         nameKo: '찾아가는 연수',
@@ -36,7 +39,7 @@ describe('gemini visiting-training adapters', () => {
         trainingRequestStartDate: '2026-04-01',
         trainingRequestEndDate: '2026-04-30',
         draftStatus: 'DRAFT',
-      },
+      }),
       0
     )
     expect(row.id).toBe('12')
@@ -408,13 +411,15 @@ describe('gemini visiting-training adapters', () => {
   })
 
   it('GET educationStructure null이면 PATCH에 educationStructure를 넣지 않는다', () => {
-    const detail = mapGeminiRecruitmentDetailToDetail({
-      programId: 1,
-      nameKo: '공고',
-      educationStructure: null,
-      educationForm: 'hybrid',
-      draftStatus: 'PUBLISHED',
-    })
+    const detail = mapGeminiRecruitmentDetailToDetail(
+      asOpenApiFixture<GeminiRecruitmentDetailResponse>({
+        programId: 1,
+        nameKo: '공고',
+        educationStructure: null,
+        educationForm: 'hybrid',
+        draftStatus: 'PUBLISHED',
+      })
+    )
     expect(detail.educationStructure).toBeNull()
     expect(detail.educationForm).toBe('offline')
 
@@ -448,12 +453,14 @@ describe('gemini visiting-training adapters', () => {
   })
 
   it('GET educationStructure CURRICULUM이면 PATCH에 CURRICULUM을 왕복한다', () => {
-    const detail = mapGeminiRecruitmentDetailToDetail({
-      programId: 2,
-      nameKo: '공고',
-      educationStructure: 'CURRICULUM',
-      draftStatus: 'PUBLISHED',
-    })
+    const detail = mapGeminiRecruitmentDetailToDetail(
+      asOpenApiFixture<GeminiRecruitmentDetailResponse>({
+        programId: 2,
+        nameKo: '공고',
+        educationStructure: 'CURRICULUM',
+        draftStatus: 'PUBLISHED',
+      })
+    )
     expect(detail.educationStructure).toBe('CURRICULUM')
 
     const update = mapGeminiRecruitmentDetailToUpdateRequest({

@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import {
   toFlatDecisionNotifyTiming,
+  toOrganizationApproveNotifyTiming,
   toInterviewAssignNotifyFields,
   toNestedDecisionNotification,
   toScreeningNotifyFields,
@@ -24,6 +25,19 @@ describe('toFlatDecisionNotifyTiming', () => {
 
   it('시각이 없으면 생략한다', () => {
     expect(toFlatDecisionNotifyTiming('manual')).toBeUndefined()
+  })
+})
+
+describe('toOrganizationApproveNotifyTiming', () => {
+  it('즉시 승인에는 IMMEDIATE를 명시한다', () => {
+    expect(toOrganizationApproveNotifyTiming('immediate')).toEqual({ timing: 'IMMEDIATE' })
+  })
+
+  it('예약 승인에는 SCHEDULED와 scheduledAt을 보낸다', () => {
+    expect(toOrganizationApproveNotifyTiming('manual', scheduled)).toEqual({
+      timing: 'SCHEDULED',
+      scheduledAt: scheduled.toISOString(),
+    })
   })
 })
 

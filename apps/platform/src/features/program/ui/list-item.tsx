@@ -15,6 +15,7 @@ type ProgramListItemRowProps = {
 export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListItemRowProps) {
   const tabs =
     activeTab && activeTab !== 'all' ? [activeTab] : program.categories
+  const categoryLine = tabs.map(tab => PROGRAM_TAB_LABEL[tab]).join(' • ')
   const isClosed = program.recruitmentStatus === 'closed'
 
   return (
@@ -23,23 +24,22 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
       muted={isClosed}
       interactive
       onClick={onClick}
-      asideClassName={styles.asideSpread}
+      className={styles.card}
+      thumbnailWrapClassName={styles.thumbnailWrap}
+      contentClassName={styles.cardContent}
+      asideClassName={styles.asideDesktop}
       content={
-        <>
-          <div className={styles.info}>
+        <div className={styles.contentColumn}>
+          <div className={styles.topBlock}>
             {tabs.length > 0 ? (
-              <div className={styles.categories}>
-                {tabs.map(tab => (
-                  <PFText
-                    key={tab}
-                    as="span"
-                    typo="bd-lg-sb"
-                    color={isClosed ? 'neutral-cool-500' : 'black'}
-                  >
-                    {PROGRAM_TAB_LABEL[tab]}
-                  </PFText>
-                ))}
-              </div>
+              <PFText
+                as="span"
+                typo="bd-lg-sb"
+                color={isClosed ? 'neutral-cool-500' : 'black'}
+                className={styles.categoryLine}
+              >
+                {categoryLine}
+              </PFText>
             ) : null}
             <PFText
               as="h2"
@@ -50,19 +50,31 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
               {program.title}
             </PFText>
             <p className={styles.operatingPeriod}>
-              <PFText as="span" typo="bd-md-md" color={isClosed ? 'neutral-cool-500' : 'primary-500'}>
+              <PFText
+                as="span"
+                typo="bd-md-md"
+                color={isClosed ? 'neutral-cool-500' : 'primary-500'}
+                className={styles.operatingPeriodText}
+              >
                 {program.operatingPeriodLabel}
               </PFText>
             </p>
           </div>
 
-          <ProgramStatusBadges
-            recruitmentStatus={program.recruitmentStatus}
-            educationTargetLabel={program.educationTargetLabel}
-            educationForm={program.educationForm}
-            educationFormLabel={program.educationFormLabel}
-          />
-        </>
+          <div className={styles.bottomBlock}>
+            <ProgramStatusBadges
+              recruitmentStatus={program.recruitmentStatus}
+              educationTargetLabel={program.educationTargetLabel}
+              educationForm={program.educationForm}
+              educationFormLabel={program.educationFormLabel}
+            />
+            <p className={styles.recruitmentPeriod}>
+              <PFText as="span" typo="bd-sm-md" color="neutral-cool-600" className={styles.recruitmentPeriodText}>
+                {`모집기간 : ${program.recruitmentPeriodLabel}`}
+              </PFText>
+            </p>
+          </div>
+        </div>
       }
       aside={
         <>

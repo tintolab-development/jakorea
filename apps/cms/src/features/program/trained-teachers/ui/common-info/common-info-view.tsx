@@ -894,7 +894,7 @@ function MultiRoundSessionBlock({
                       inputSize="medium"
                       withAllOption={false}
                       placeholder="진행 차시"
-                      width={120}
+                      width={144}
                       options={GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS}
                       value={session.title || undefined}
                       onChange={v => onChange?.({ title: String(v ?? '') })}
@@ -1638,8 +1638,10 @@ function TrainedTeachersScheduleSettingsSection({
             programId={programId}
             scheduleLines={lines}
             educationScheduleMode={scheduleMode}
-            operationStart={operationStart}
-            operationEnd={operationEnd}
+            operationStart={isFormEdit ? form.watch('startDate') : operationStart}
+            operationEnd={isFormEdit ? form.watch('endDate') : operationEnd}
+            persistedOperationStart={operationStart}
+            persistedOperationEnd={operationEnd}
             onApply={nextLines => {
               form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
             }}

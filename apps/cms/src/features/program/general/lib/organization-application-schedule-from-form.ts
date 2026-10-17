@@ -8,7 +8,7 @@ const INSTITUTION_SCHEDULE_ANSWER_KEYS = [
 ] as const
 
 const OPAQUE_SCHEDULE_TOKEN_RE =
-  /^(schedule:\d+(?::organization-application:\d+)?(?::education-period:\d+)?|line:\d+)$/i
+  /^(schedule:\d+(?::organization-application:\d+)?(?::education-period:\d+)?|line:\d+(?::education-round:\d+)?)$/i
 
 function isJsonContainer(raw: string): boolean {
   const trimmed = raw.trim()

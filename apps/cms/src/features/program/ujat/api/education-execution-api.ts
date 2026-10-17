@@ -471,7 +471,9 @@ export async function fetchUjatAttendancesByScheduleIds(
   programId: string,
   scheduleIds: readonly number[]
 ): Promise<Record<string, UjatAttendanceItemDto[]>> {
-  const grouped = await fetchAttendancesByScheduleIdsRemote(programId, scheduleIds)
+  const grouped = await fetchAttendancesByScheduleIdsRemote(programId, scheduleIds, {
+    includeEmptyScheduleKeys: true,
+  })
   return grouped as Record<string, UjatAttendanceItemDto[]>
 }
 

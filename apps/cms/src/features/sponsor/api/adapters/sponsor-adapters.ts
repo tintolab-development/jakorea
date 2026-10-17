@@ -7,6 +7,7 @@ import type {
   SponsorRegisterPayload,
   SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
+import { mapDtoLogoFiles } from '@/features/sponsor/lib/sponsor-logo-patch'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type {
   SponsorContactRequest,
@@ -270,11 +271,10 @@ export function mergeYearlyBusinessRows(
   return rows
 }
 
-function mapSponsorLogos(dto: Pick<SponsorDetailResponse, 'logoFileId'>): SponsorLogoFile[] {
-  const id = dto.logoFileId?.trim()
-  if (!id) return []
-  // 숫자 fileObjectId는 상세 조회 시 enrichSponsorLogoFiles로 originalFileName을 채운다.
-  return [{ id, fileName: id.includes('.') ? id : '' }]
+function mapSponsorLogos(
+  dto: Pick<SponsorDetailResponse, 'logoFileId' | 'logoFiles'>
+): SponsorLogoFile[] {
+  return mapDtoLogoFiles(dto)
 }
 
 export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorManagementDetailView {

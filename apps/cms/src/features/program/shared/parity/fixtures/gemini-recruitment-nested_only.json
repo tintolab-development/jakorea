@@ -1,0 +1,17 @@
+{
+  "fixtureId": "gemini-recruitment-nested_only",
+  "variant": "gemini_recruitment",
+  "label": "nested_only",
+  "program": {
+    "id": "parity-gemini-rec-001",
+    "title": "Parity Gemini recruitment",
+    "type": "offline",
+    "format": "workshop",
+    "category": "school",
+    "sponsorId": "1",
+    "status": "pending",
+    "lifecycleStatus": "recruiting_students",
+    "registrationOverlay": {},
+    "description": "gemini-recruitment-desc"
+  }
+}

@@ -7,29 +7,18 @@
  */
 
 /**
- * 신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule) 선택이면 scheduleId/round/startAt/endAt, 공통정보 교육 진행 예정일(line:N) 선택이면 label만 채운다.
+ * 신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 정확히 하나의 PROGRAM_DEFINED 교육 슬롯과 일치할 때만 그 program_schedule id를 scheduleId로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 고유 매칭이 불가능하면 scheduleId=null과 unresolvedReason을 반환한다.
  */
 export interface PreferredEducationScheduleResponse {
-  /**
-     * program_schedule id. line:N 선택이면 null.
-     * @nullable
-     */
+  /** 정확히 매칭된 PROGRAM_DEFINED program_schedule id. 고유 매칭이 불가능하면 null. */
   scheduleId?: number | null;
-  /** @nullable */
   round?: number | null;
-  /**
-     * line:N 선택이면 null.
-     * @nullable
-     */
+  /** 선택 일정의 시작 시각. */
   startAt?: string | null;
-  /**
-     * line:N 선택이면 null.
-     * @nullable
-     */
+  /** 선택 일정의 종료 시각. */
   endAt?: string | null;
-  /**
-     * 공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null.
-     * @nullable
-     */
+  /** 공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null. */
   label?: string | null;
+  /** scheduleId가 null인 이유. 고유 매칭이면 null, 모호하면 AMBIGUOUS_SCHEDULE_MATCH, 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. */
+  unresolvedReason?: string | null;
 }

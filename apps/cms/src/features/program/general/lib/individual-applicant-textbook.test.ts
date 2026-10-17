@@ -43,24 +43,8 @@ describe('buildIndividualApplicantTextbookOptions', () => {
     })
   })
 
-  it('program materials에 없는 교재는 제외한다', () => {
-    const options = buildIndividualApplicantTextbookOptions(
-      program,
-      '3학년',
-      catalog,
-      new Set(['999'])
-    )
-    expect(options).toHaveLength(1)
-    expect(options[0].value).toBe(TEXTBOOK_NOT_USED_OPTION_VALUE)
-  })
-
-  it('program materials에 포함된 교재만 노출한다', () => {
-    const options = buildIndividualApplicantTextbookOptions(
-      program,
-      '3학년',
-      catalog,
-      new Set(['101'])
-    )
+  it('program materials 후보와 무관하게 사업분야·신청학년 matches를 노출한다', () => {
+    const options = buildIndividualApplicantTextbookOptions(program, '3학년', catalog)
     expect(options.map(o => o.value)).toEqual([TEXTBOOK_NOT_USED_OPTION_VALUE, '101'])
   })
 })
@@ -70,6 +54,8 @@ describe('resolveIndividualApplicantTextbookDisplay', () => {
     const row = {
       textbookId: '101',
       textbookName: '성공하는 경제생활',
+      textbookKits: 2,
+      textbookQuantity: 48,
       educationGrade: '3학년',
       detail: { teamMemberCount: 1 },
       textbookStatus: 'preparing',
@@ -77,7 +63,7 @@ describe('resolveIndividualApplicantTextbookDisplay', () => {
 
     expect(resolveIndividualApplicantTextbookDisplay(program, row, catalog)).toMatchObject({
       name: '성공하는 경제생활 초등학교',
-      kitsLabel: '1키트 (24권)',
+      kitsLabel: '2키트 (48권)',
       isUnspecified: false,
     })
   })
@@ -104,17 +90,19 @@ describe('resolveIndividualApplicantTextbookDisplay', () => {
     })
   })
 
-  it('등록 인원 기준 준비 수량을 자동 산출한다', () => {
+  it('서버가 반환한 교재 수량을 그대로 표시한다', () => {
     const row = {
       textbookId: '101',
       textbookName: '성공하는 경제생활',
       educationGrade: '3학년',
       detail: { teamMemberCount: 50 },
+      textbookKits: 2,
+      textbookQuantity: 48,
       textbookStatus: 'preparing',
     } as GeneralIndividualApplicantRow
 
     expect(resolveIndividualApplicantTextbookDisplay(program, row, catalog).kitsLabel).toBe(
-      '3키트 (72권)'
+      '2키트 (48권)'
     )
   })
 })

@@ -72,15 +72,16 @@ describe('createSponsor', () => {
     uploadSponsorLogoFileMock.mockReset()
   })
 
-  it('생성된 후원사 id로 로고를 업로드하고 fileObjectId를 PATCH한다', async () => {
-    const logoFile = new File(['logo'], 'sponsor.png', { type: 'image/png' })
+  it('생성된 후원사 id로 로고를 업로드하고 logoFileIds를 PATCH한다', async () => {
+    const logoA = new File(['logo'], 'sponsor-a.png', { type: 'image/png' })
+    const logoB = new File(['logo'], 'sponsor-b.png', { type: 'image/png' })
     createSponsorRemoteMock.mockResolvedValue({
       id: '10',
       name: '후원사',
       createdAt: '2026-09-17T00:00:00Z',
       updatedAt: '2026-09-17T00:00:00Z',
     })
-    uploadSponsorLogoFileMock.mockResolvedValue(301)
+    uploadSponsorLogoFileMock.mockResolvedValueOnce(301).mockResolvedValueOnce(302)
     updateSponsorRemoteMock.mockResolvedValue({
       id: '10',
       name: '후원사',
@@ -101,13 +102,14 @@ describe('createSponsor', () => {
       detailAddress: '',
       homepageUrl: '',
       securityMemo: '',
-      logoFile,
+      logoFiles: [logoA, logoB],
     })
 
-    expect(uploadSponsorLogoFileMock).toHaveBeenCalledWith(10, logoFile)
+    expect(uploadSponsorLogoFileMock).toHaveBeenNthCalledWith(1, 10, logoA)
+    expect(uploadSponsorLogoFileMock).toHaveBeenNthCalledWith(2, 10, logoB)
     expect(updateSponsorRemoteMock).toHaveBeenCalledWith(
       '10',
-      expect.objectContaining({ logoFileId: '301' })
+      expect.objectContaining({ logoFileIds: [301, 302] })
     )
     expect(created.logoFileId).toBe('301')
   })

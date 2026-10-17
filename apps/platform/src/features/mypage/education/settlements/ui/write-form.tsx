@@ -8,7 +8,6 @@ import {
   parseSettlementAmount,
 } from '../lib/format-write-draft'
 import {
-  SETTLEMENT_BANK_OPTIONS,
   SETTLEMENT_TRANSIT_OPTIONS,
   SETTLEMENT_TRIP_TYPE_OPTIONS,
 } from '../lib/settlement-options'
@@ -405,13 +404,12 @@ export function EducationSettlementWriteForm({
                 <PFFormInlineRow>
                   <PFFormInlineSegment>
                     <PFFormControlCluster>
-                      <PFSelect
+                      <PFTextInput
                         variant="formPage"
                         size="large"
                         width={200}
-                        placeholder="은행 선택"
-                        options={SETTLEMENT_BANK_OPTIONS}
-                        value={bank || undefined}
+                        placeholder="은행명"
+                        value={bank}
                         onValueChange={setBank}
                       />
                       <PFTextInput

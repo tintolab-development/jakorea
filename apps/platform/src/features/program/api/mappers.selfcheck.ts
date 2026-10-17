@@ -5,6 +5,7 @@
  * 홈 카드 클릭은 CMS 숫자 id → GET /api/portal/programs/{id}.
  */
 import assert from 'node:assert/strict'
+import type { PortalProgramDetail } from './types.ts'
 import {
   mapPortalProgramDetail,
   mapPortalProgramListItem,
@@ -85,6 +86,7 @@ const multiPrefersArray = mapPortalProgramDetail({
 assert.ok(multiPrefersArray)
 assert.equal(multiPrefersArray.educationTargetLabel, '중학교, 고등학교')
 assert.equal(multiPrefersArray.educationTargetKey, 'middle')
+assert.deepEqual(multiPrefersArray.educationTargetKeys, ['middle', 'high'])
 
 assert.equal(mapped.sponsor, '현대 자동차')
 assert.equal(mapped.detailCase, 'general')
@@ -280,12 +282,34 @@ assert.equal(generalCurriculum.sessions[0]?.assignmentPeriod, undefined)
 assert.equal(generalCurriculum.sessions[1]?.title, '')
 assert.equal(generalCurriculum.eventSchedules.length, 0)
 assert.deepEqual(generalCurriculum.educationScheduleLines, [
-  '26년 10월 13일(화) 10:00 ~ 12:00',
-  '26년 10월 20일(화) 13:30 ~ 16:00',
+  '26년 10월 13일(화) 10:00 ~ 12:00 | 2차시',
+  '26년 10월 20일(화) 13:30 ~ 16:00 | 2차시',
 ])
 assert.deepEqual(
   generalCurriculum.educationSchedules.map(item => item.value),
   generalCurriculum.educationScheduleLines
+)
+assert.deepEqual(
+  generalCurriculum.educationSchedules.map(item => item.label),
+  ['교육 일정 1', '교육 일정 2']
+)
+
+const periodEducationSchedule = mapPortalProgramDetail({
+  programId: 186099,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '기간 일정',
+  educationStructure: 'curriculum',
+  educationScheduleMode: 'period',
+  educationScheduleLines: ['26년 11월 19일(목) 0:00 ~ 26년 11월 30일(월) 23:59'],
+  curriculumSessions: [],
+  scheduleDetails: [],
+})
+assert.ok(periodEducationSchedule)
+assert.equal(periodEducationSchedule.educationSchedules.length, 1)
+assert.equal(periodEducationSchedule.educationSchedules[0]?.label, '교육 일정')
+assert.equal(
+  periodEducationSchedule.educationSchedules[0]?.value,
+  '26년 11월 19일(목) ~ 26년 11월 30일(월)'
 )
 assert.equal(generalCurriculum.educationForm, 'online')
 assert.equal(generalCurriculum.educationFormLabel, '온라인')
@@ -400,6 +424,25 @@ assert.equal(
 )
 assert.equal(organization.sessions[0]?.sessionLabel, '사전 교육')
 
+const uppercaseMultiRound = mapPortalProgramDetail({
+  programId: 186012,
+  programType: 'GENERAL_ORGANIZATION',
+  title: '대문자 복수 회차',
+  educationStructure: 'schedule',
+  sessionRound: 'MULTI',
+  scheduleDetails: [
+    {
+      scheduleLabel: '세부 일정 01',
+      scheduleDateLabel: '2026.10.01',
+      progressTimeSummary: '10:00 ~ 12:00',
+    },
+  ],
+  educationScheduleLines: ['노출되면 안 되는 일정'],
+} as unknown as PortalProgramDetail)
+assert.ok(uppercaseMultiRound)
+assert.equal(uppercaseMultiRound.sessionRound, 'multi')
+assert.equal(uppercaseMultiRound.educationSchedules.length, 0)
+
 const trainedTeacherProgress = mapPortalProgramDetail({
   programId: 186018,
   programType: 'TRAINED_TEACHER',
@@ -492,8 +535,8 @@ assert.equal(
   '고등학교 1~2학년, 성인 일반'
 )
 assert.deepEqual(trainedTeacherProgress.educationScheduleLines, [
-  '26년 10월 13일(화) 10:00 ~ 12:00',
-  '26년 10월 20일(화) 13:30 ~ 16:00',
+  '26년 10월 13일(화) 10:00 ~ 12:00 | 1차시',
+  '26년 10월 20일(화) 13:30 ~ 16:00 | 1차시',
 ])
 assert.equal(
   trainedTeacherProgress.extraSections.find(section => section.title === '기타사항')?.body,
@@ -1240,5 +1283,61 @@ assert.equal(emptyInterviewOptions.volunteerInterviewSchedule?.options.length, 0
 assert.equal(emptyInterviewOptions.volunteerInterviewSchedule?.availableTimeSlots, '10:00 ~ 10:30')
 
 assert.equal(volunteerInterviewOff.volunteerInterviewSchedule, undefined)
+
+const volunteerRecruitmentAudience = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    educationTarget: 'adult',
+    recruitmentTarget: '고등학생, 대학(원)생',
+    recruitmentTargets: ['high', 'university'],
+    recruitmentTargetDetail: '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+    recruitments: [
+      {
+        recruitmentId: 186602,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { recruitmentIds: [186602], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerRecruitmentAudience)
+assert.equal(volunteerRecruitmentAudience.detailCase, 'volunteer')
+assert.equal(volunteerRecruitmentAudience.educationTargetGroupLabel, '고등학생, 대학(원)생')
+assert.equal(
+  volunteerRecruitmentAudience.educationTargetDetailLabel,
+  '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+)
+assert.equal(
+  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '모집 대상')?.value,
+  '고등학생, 대학(원)생',
+)
+assert.equal(
+  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '교육 대상'),
+  undefined,
+)
+
+const volunteerIgnoresParticipantEducationTarget = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    educationTarget: 'adult',
+    recruitmentTarget: '고등학생, 대학(원)생',
+    recruitmentTargets: ['high', 'university'],
+    recruitmentTargetDetail: '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+    recruitments: [{ recruitmentType: 'VOLUNTEER', applicationTypes: ['VOLUNTEER'] }],
+  },
+  { applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerIgnoresParticipantEducationTarget)
+assert.deepEqual(volunteerIgnoresParticipantEducationTarget.educationTargetKeys, ['high', 'university'])
+assert.equal(volunteerIgnoresParticipantEducationTarget.educationTargetLabel, '고등학교, 대학(원)생')
+assert.equal(
+  volunteerIgnoresParticipantEducationTarget.basicInfoFields.find(field => field.label === '교육 대상'),
+  undefined,
+)
 
 console.log('program portal mappers.selfcheck: ok')

@@ -1,4 +1,5 @@
-import { useCallback } from 'react'
+import { memo, useCallback, useState } from 'react'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import {
   normalizeProgramPaymentItemSelection,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
@@ -22,25 +23,69 @@ const WAGE_GRADE_ROWS = [
   { label: '3급 강사비', max: 300_000, maxLabel: '300,000' },
 ] as const
 
-export function ProgramRegistrationWageInfoParagraph() {
+const WageGradeFeeField = memo(function WageGradeFeeField({
+  overlayKey,
+  validationKey,
+  row,
+}: {
+  overlayKey: string
+  validationKey: string
+  row: (typeof WAGE_GRADE_ROWS)[number]
+}) {
+  const [value, setValue] = useProgramRegistrationOverlayKv<number | null>(overlayKey, null)
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label={row.label}
+        validationKey={validationKey}
+        fullRow
+        edit={
+          <div className="detail-info-form-inputs-wrapper">
+            <span className="detail-info-form--text">1시간 당</span>
+            <CmsNumericInput
+              mode="currency"
+              min={0}
+              max={row.max}
+              allowNegative={false}
+              inputSize="medium"
+              placeholder="직접 입력"
+              width={120}
+              value={value == null ? '' : String(value)}
+              onValueChange={raw => {
+                const trimmed = raw.trim()
+                if (!trimmed) {
+                  setValue(null)
+                  return
+                }
+                const n = Number(trimmed.replace(/,/g, ''))
+                setValue(Number.isFinite(n) ? n : null)
+              }}
+            />
+            <span className="detail-info-form--text">원 (최대 {row.maxLabel}원)</span>
+          </div>
+        }
+        view="-"
+      />
+    </DetailInfoForm.Row>
+  )
+})
+
+const WagePaymentItemsField = memo(function WagePaymentItemsField() {
+  const { onSelectOpenChange } = useRegistrationCatalogReady()
+  const [catalogEnabled, setCatalogEnabled] = useState(false)
+  const enableCatalog = useCallback(
+    (open: boolean) => {
+      onSelectOpenChange(open)
+      if (open) setCatalogEnabled(true)
+    },
+    [onSelectOpenChange]
+  )
+
   const [paymentItemValues, setPaymentItemValues] = useProgramRegistrationOverlayKv<string[]>(
     'generalRegistration.wageInfo.paymentItemValues',
     []
   )
-  const [grade1Fee, setGrade1Fee] = useProgramRegistrationOverlayKv<number | null>(
-    'generalRegistration.wageInfo.grade1Fee',
-    null
-  )
-  const [grade2Fee, setGrade2Fee] = useProgramRegistrationOverlayKv<number | null>(
-    'generalRegistration.wageInfo.grade2Fee',
-    null
-  )
-  const [grade3Fee, setGrade3Fee] = useProgramRegistrationOverlayKv<number | null>(
-    'generalRegistration.wageInfo.grade3Fee',
-    null
-  )
-
-  const paymentCatalog = useProgramWagePaymentItemOptionsState()
+  const paymentCatalog = useProgramWagePaymentItemOptionsState(catalogEnabled)
   const paymentItemOptions = paymentCatalog.options
   const applyPaymentItemIds = useCallback(
     (ids: string[]) => {
@@ -57,75 +102,57 @@ export function ProgramRegistrationWageInfoParagraph() {
   )
   useNormalizeProgramPaymentItemValues(paymentItemValues, applyPaymentItemIds, paymentCatalog.ready)
   const deductionLabel = resolveProgramWageDeductionLabel(paymentItemValues)
-  const gradeFees = [
-    { row: WAGE_GRADE_ROWS[0], value: grade1Fee, setValue: setGrade1Fee },
-    { row: WAGE_GRADE_ROWS[1], value: grade2Fee, setValue: setGrade2Fee },
-    { row: WAGE_GRADE_ROWS[2], value: grade3Fee, setValue: setGrade3Fee },
-  ] as const
 
   return (
+    <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Field
+        label="지급 항목"
+        validationKey="wage.paymentItemValues"
+        edit={
+          <div className="detail-info-form-inputs-wrapper-no-gap">
+            <CmsSelect
+              mode="multiple"
+              withAllOption={false}
+              value={paymentItemValues}
+              onChange={next => {
+                applyPaymentItemIds(
+                  normalizeProgramPaymentItemSelection(next as string[], paymentItemValues)
+                )
+              }}
+              options={paymentItemOptions}
+              disabled={!paymentCatalog.ready}
+              placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
+              onOpenChange={enableCatalog}
+              style={{ width: '100%', minWidth: 0 }}
+            />
+          </div>
+        }
+        view="-"
+      />
+      <DetailInfoForm.Field label="공제 항목" view={deductionLabel} />
+    </DetailInfoForm.Row>
+  )
+})
+
+export function ProgramRegistrationWageInfoParagraph() {
+  return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">
-      {gradeFees.map(({ row, value, setValue }, index) => (
-        <DetailInfoForm.Row key={row.label} type="single">
-          <DetailInfoForm.Field
-            label={row.label}
-            validationKey={`wage.grade${index + 1}Fee`}
-            fullRow
-            edit={
-              <div className="detail-info-form-inputs-wrapper">
-                <span className="detail-info-form--text">1시간 당</span>
-                <CmsNumericInput
-                  mode="currency"
-                  min={0}
-                  max={row.max}
-                  allowNegative={false}
-                  inputSize="medium"
-                  placeholder="직접 입력"
-                  width={120}
-                  value={value == null ? '' : String(value)}
-                  onValueChange={raw => {
-                    const trimmed = raw.trim()
-                    if (!trimmed) {
-                      setValue(null)
-                      return
-                    }
-                    const n = Number(trimmed.replace(/,/g, ''))
-                    setValue(Number.isFinite(n) ? n : null)
-                  }}
-                />
-                <span className="detail-info-form--text">원 (최대 {row.maxLabel}원)</span>
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-      ))}
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="지급 항목"
-          validationKey="wage.paymentItemValues"
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsSelect
-                mode="multiple"
-                withAllOption={false}
-                value={paymentItemValues}
-                onChange={next => {
-                  applyPaymentItemIds(
-                    normalizeProgramPaymentItemSelection(next as string[], paymentItemValues)
-                  )
-                }}
-                options={paymentItemOptions}
-                disabled={!paymentCatalog.ready}
-                placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
-                style={{ width: '100%', minWidth: 0 }}
-              />
-            </div>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field label="공제 항목" view={deductionLabel} />
-      </DetailInfoForm.Row>
+      <WageGradeFeeField
+        overlayKey="generalRegistration.wageInfo.grade1Fee"
+        validationKey="wage.grade1Fee"
+        row={WAGE_GRADE_ROWS[0]}
+      />
+      <WageGradeFeeField
+        overlayKey="generalRegistration.wageInfo.grade2Fee"
+        validationKey="wage.grade2Fee"
+        row={WAGE_GRADE_ROWS[1]}
+      />
+      <WageGradeFeeField
+        overlayKey="generalRegistration.wageInfo.grade3Fee"
+        validationKey="wage.grade3Fee"
+        row={WAGE_GRADE_ROWS[2]}
+      />
+      <WagePaymentItemsField />
     </DetailInfoForm>
   )
 }

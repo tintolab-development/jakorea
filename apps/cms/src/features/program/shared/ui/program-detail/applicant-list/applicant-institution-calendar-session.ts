@@ -190,6 +190,48 @@ export function formatInstitutionCalendarSessionTimeDisplay(
   return '-'
 }
 
+/** 호버·팝오버 — 동일 날 복수 세션 시간을 `10:20 ~ 11:20, 14:20 ~ 16:20` 형태로 */
+export function formatInstitutionCalendarSessionTimesCommaList(
+  sessions: ParticipatingSchoolSession[],
+  fallbackPeriod?: string
+): string {
+  if (sessions.length === 0) {
+    return formatInstitutionCalendarSessionTimeDisplay(undefined, fallbackPeriod)
+  }
+
+  const labels = sessions
+    .map(session => {
+      const timeOnly = parseSessionTimeDisplay(session.timeRange)
+      if (timeOnly) return timeOnly
+      const label = session.scheduleLabel?.trim()
+      if (label) return label
+      const roundLabel = tryResolveInstitutionSessionRound(session)
+      const timeDisplay = parseSessionTimeDisplay(session.timeRange)
+      if (roundLabel && timeDisplay) return `${roundLabel} (${timeDisplay})`
+      if (roundLabel) return roundLabel
+      return formatInstitutionCalendarSessionTimeDisplay(session)
+    })
+    .filter((label): label is string => Boolean(label && label !== '-'))
+
+  if (labels.length === 0) return '-'
+  return labels.join(', ')
+}
+
+export function formatInstitutionCalendarHoverMetaLine(
+  institution: { region?: string; educationGrade?: string },
+  sessions: ParticipatingSchoolSession[],
+  fallbackPeriod?: string
+): string {
+  const region = getInstitutionRegionShort(institution.region)
+  const grade = institution.educationGrade?.trim() || '-'
+  const times = formatInstitutionCalendarSessionTimesCommaList(sessions, fallbackPeriod)
+  const parts = [region, grade]
+  if (times && times !== '-') {
+    parts.push(times)
+  }
+  return parts.join(' | ')
+}
+
 export function formatInstitutionCalendarSessionsTimeDisplay(
   sessions: ParticipatingSchoolSession[],
   fallbackPeriod?: string

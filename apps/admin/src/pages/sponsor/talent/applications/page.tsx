@@ -2,7 +2,8 @@
  * 재능기부 신청 관리 목록
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -192,6 +193,8 @@ function statusLabel(status: ApplicationStatus): string {
 
 export function TalentDonationApplicationsPage() {
   const { showAlert } = useCmsAlert()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const {
     pendingFilters,
@@ -300,7 +303,44 @@ export function TalentDonationApplicationsPage() {
   const closeDetail = useCallback(() => {
     setDetailOpen(false)
     setDetailRow(null)
-  }, [])
+    const params = new URLSearchParams(location.search)
+    params.delete('applicationId')
+    navigate(
+      { search: params.toString() ? `?${params.toString()}` : '' },
+      { replace: true },
+    )
+  }, [location.search, navigate])
+
+  useEffect(() => {
+    const applicationId = new URLSearchParams(location.search).get('applicationId')?.trim()
+    if (!applicationId || detailOpen || listQuery.isLoading || listQuery.isFetching) return
+
+    const row = rows.find(item => item.id === applicationId)
+    if (row) {
+      let cancelled = false
+      queueMicrotask(() => {
+        if (!cancelled) openDetail(row)
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    let cancelled = false
+    void getTalentDonationApplicationService(applicationId, DEFAULT_CONFIRM_ACTOR)
+      .then(item => {
+        if (cancelled || !item) return
+        setDetailRow(item)
+        setDetailOpen(true)
+      })
+      .catch(() => {
+        /* 목록에 없는 상세 ID는 기존 목록 화면을 유지 */
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [detailOpen, listQuery.isFetching, listQuery.isLoading, location.search, openDetail, rows])
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
