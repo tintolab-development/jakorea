@@ -73,7 +73,7 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
     ])
   })
 
-  it('ambiguous program_progress mapping yields no fallback options', () => {
+  it('falls back to API schedules when program_progress mapping is ambiguous', () => {
     const program = baseProgram({
       generalProgramSessionRound: 'single',
       generalProgramEducationStructure: 'schedule',
@@ -89,7 +89,27 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
       { id: 186896, sessionNo: 4, startAt: '2026-10-30T13:30:00+09:00', endAt: '2026-10-30T15:30:00+09:00' },
       { id: 186897, sessionNo: 5, startAt: '2026-10-30T09:30:00+09:00', endAt: '2026-10-30T11:30:00+09:00' },
     ])
-    expect(options).toEqual([])
+    expect(options).toHaveLength(3)
+    expect(options.map(o => o.value)).toEqual(['186892', '186896', '186897'])
+  })
+
+  it('falls back to all ACTIVE education schedules for single-round multi-slot API rows', () => {
+    const program = baseProgram({
+      generalProgramAudience: 'organization',
+      generalProgramSessionRound: 'single',
+      generalProgramEducationStructure: 'schedule',
+      generalCommonInfo: {
+        educationScheduleLines: ['26년 11월 13일(금) 10:00 ~ 12:00'],
+      },
+    })
+    const apiSchedules = [
+      { id: 186903, sessionNo: 1, scheduleRole: 'EDUCATION', scheduleStatus: 'ACTIVE', startAt: '2026-11-12T15:00:00Z', endAt: '2026-12-24T15:00:00Z', allDay: true },
+      { id: 186904, sessionNo: 2, scheduleRole: 'EDUCATION', scheduleStatus: 'ACTIVE', startAt: '2026-11-01T15:00:00Z', endAt: '2026-11-02T15:00:00Z', allDay: true },
+      { id: 186909, sessionNo: 7, scheduleRole: 'EDUCATION', scheduleStatus: 'ACTIVE', startAt: '2026-11-02T00:30:00Z', endAt: '2026-11-02T02:30:00Z', allDay: false },
+    ]
+    const options = buildSurveyPollScheduleSelectOptionsForProgram(program, apiSchedules)
+    expect(options).toHaveLength(3)
+    expect(options.map(o => o.value)).toEqual(['186903', '186904', '186909'])
   })
 
   it('zips education schedule lines for schedule multi event rows only', () => {

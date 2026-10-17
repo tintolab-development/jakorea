@@ -161,20 +161,18 @@ function mapProgramScheduleAndSlotToSession(
     validStart && validEnd && end.getTime() > start.getTime()
       ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
       : '-'
-  const grade = slot.grade?.trim()
-  const className = (slot.className ?? slot.classLabel ?? '').trim()
-  const classLabel = [grade, className].filter(Boolean).join(' ')
   const round =
     typeof schedule.sessionNo === 'number' && Number.isFinite(schedule.sessionNo)
       ? schedule.sessionNo
       : order + 1
+  const scheduleLabel = schedule.scheduleName?.trim() || `${round}회차`
   const assignmentId = slot.assignmentId
   return {
     round,
     ...dateParts,
     duration,
-    format: classLabel || schedule.scheduleName?.trim() || '-',
-    classNum: classLabel ? `${classLabel}` : `${round}회차`,
+    format: scheduleLabel,
+    classNum: `${round}회차`,
     timeRange,
     status: 'pending',
     deliveryScheduleStatus: schedule.scheduleStatus?.trim() || undefined,
@@ -190,7 +188,7 @@ function mapProgramScheduleAndSlotToSession(
 
 /**
  * OSA 슬롯 + 프로그램 schedules 메타 → 참여 상세 「교육 진행 일정」.
- * 학급별 다른 scheduleId 배정은 OSA row 수만큼 노출 (dedupe 하지 않음).
+ * scheduleId당 OSA row 수만큼 노출 (dedupe 하지 않음). GENERAL는 schedule-only.
  */
 export function mapOrganizationScheduleAssignmentSlotsToAssignedSessions(
   slots: ReadonlyArray<SlotResponse>,
@@ -219,7 +217,7 @@ export function mapOrganizationScheduleAssignmentSlotsToAssignedSessions(
         date: '-',
         dayOfWeek: '-',
         duration: '-',
-        format: [slot.grade, slot.className ?? slot.classLabel].filter(Boolean).join(' ') || '-',
+        format: '-',
         classNum: `${index + 1}회차`,
         timeRange: '-',
         status: 'pending',

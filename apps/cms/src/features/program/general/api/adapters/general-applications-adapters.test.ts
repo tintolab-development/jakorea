@@ -25,6 +25,7 @@ import {
   mapTextbookDeliveryStatusToBadge,
   mapTextbookStatusKeyToDeliveryStatus,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
+  mapOrganizationApplicationListSessionsToConfirmedSessions,
   mapOrganizationApplicationToApplicantSchoolRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
@@ -1557,5 +1558,72 @@ describe('general-program-service-detail-json', () => {
     expect(parsed.generalProgramEducationStructure).toBe('curriculum')
     expect(parsed.generalProgramSessionRound).toBe('single')
     expect(parsed.generalProgramAudience).toBe('organization')
+  })
+})
+
+describe('mapOrganizationApplicationListSessionsToConfirmedSessions', () => {
+  it('maps CONFIRMED list sessions with scheduleId and startAt', () => {
+    const sessions = mapOrganizationApplicationListSessionsToConfirmedSessions([
+      {
+        scheduleId: 42,
+        roundNumber: 2,
+        startAt: '2026-01-07T09:20:00+09:00',
+        status: 'CONFIRMED',
+      },
+      {
+        scheduleId: 43,
+        startAt: '2026-01-08T10:00:00+09:00',
+        status: 'CANCELLED',
+      },
+    ])
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]?.resolvedScheduleId).toBe(42)
+    expect(sessions[0]?.round).toBe(2)
+    expect(sessions[0]?.date).toMatch(/2026\.01\.07/)
+  })
+
+  it('sets confirmedListAssignmentSessions on organization list rows', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1,
+        organizationName: '동탄초등학교',
+        regionSido: '경기도',
+        regionSigungu: '화성시',
+        sessions: [
+          {
+            scheduleId: 10,
+            roundNumber: 1,
+            startAt: '2026-01-07T09:00:00+09:00',
+            status: 'TEMP_ASSIGNED',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      'prog-1'
+    )
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(10)
+  })
+
+  it('maps list sessions with assignmentStatus (no status field) to confirmed sessions', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 2,
+        organizationName: '부명초등학교',
+        sessions: [
+          {
+            scheduleId: 186907,
+            sessionNo: 5,
+            startAt: '2026-11-12T15:00:00Z',
+            assignmentStatus: 'TEMP_ASSIGNED',
+          },
+        ],
+      } as unknown as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      'prog-1'
+    )
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(186907)
+    expect(row.confirmedListAssignmentSessions?.[0]?.round).toBe(5)
   })
 })

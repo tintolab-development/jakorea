@@ -310,9 +310,15 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
     '신청자가 희망하지 않은 교육 일정입니다. 희망 일정을 다시 확인해 주세요.',
   GENERAL_ORGANIZATION_ASSIGNMENT_SCHEDULE_INVALID:
     '유효하지 않거나 취소된 교육 일정입니다. 목록을 새로고침한 후 다시 선택해 주세요.',
-  GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_DUPLICATED: '동일한 일정·학년·학급이 중복되었습니다.',
+  GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_DUPLICATED: '동일한 교육 일정이 중복되었습니다.',
+  GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_INVALID:
+    '유효한 교육 일정 ID(scheduleId)를 선택해 주세요.',
+  PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT:
+    '교육 일정이 아닌 유형입니다. 교육 회차 일정을 선택해 주세요.',
   GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE:
     '이미 시작되었거나 출석 이력이 있는 일정은 변경할 수 없습니다.',
+  GENERAL_ORGANIZATION_APPLICATION_NOT_APPROVED:
+    '승인된 기관 신청에만 교육 일정을 배정할 수 있습니다.',
 }
 
 export function formatOrganizationApplicationApproveErrorMessage(error: unknown): string | null {

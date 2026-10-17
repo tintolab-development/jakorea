@@ -53,6 +53,7 @@ import {
   getProgramFormBindingErrorMessage,
 } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { listGeneralProgramSurveyCacheInvalidationQueryKeys } from '@/features/program/general/lib/general-program-survey-cache-invalidation'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type {
   ProgramFile,
@@ -653,19 +654,11 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
 
   const invalidateSurveyCaches = useCallback(async () => {
     if (!programId) return
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.surveys(programId) }),
-      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.formBindings(programId) }),
-      queryClient.invalidateQueries({
-        queryKey: [...generalProgramQueryKeys.all, 'survey-responses', programId],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...generalProgramQueryKeys.all, 'survey-summary', programId],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...generalProgramQueryKeys.all, 'survey-display-titles', programId],
-      }),
-    ])
+    await Promise.all(
+      listGeneralProgramSurveyCacheInvalidationQueryKeys(programId).map(queryKey =>
+        queryClient.invalidateQueries({ queryKey })
+      )
+    )
   }, [programId, queryClient])
 
   const createMutation = useMutation({

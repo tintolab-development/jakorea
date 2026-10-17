@@ -27,6 +27,7 @@ import type {
 } from '@/features/program/general/model/participating-schools'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { Session } from '@/shared/api/generated/dashboard/schemas/session'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 import type { OrganizationApplicationSessionResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationSessionResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
@@ -263,6 +264,85 @@ export function resolveOrganizationApplicationHopeSessions(
 export const resolveOrganizationApplicationAssignmentSessions =
   resolveOrganizationApplicationHopeSessions
 
+const CONFIRMED_ORGANIZATION_LIST_SESSION_STATUSES = new Set(['CONFIRMED', 'TEMP_ASSIGNED'])
+
+/** 목록 API sessions[] — codegen Session + BE projection (assignmentStatus, sessionNo) */
+export type OrganizationApplicationListSession = Session & {
+  assignmentStatus?: string | null
+  sessionNo?: number | null
+}
+
+function isConfirmedOrganizationListSessionStatus(status: string | undefined | null): boolean {
+  const normalized = (status ?? '').trim().toUpperCase()
+  if (!normalized || normalized === 'CANCELLED') return false
+  if (CONFIRMED_ORGANIZATION_LIST_SESSION_STATUSES.has(normalized)) return true
+  return false
+}
+
+export function resolveOrganizationListSessionAssignmentStatus(
+  session: OrganizationApplicationListSession
+): string | undefined {
+  const fromCodegenStatus = session.status?.trim()
+  if (fromCodegenStatus) return fromCodegenStatus
+  const fromAssignment = session.assignmentStatus?.trim()
+  return fromAssignment || undefined
+}
+
+function resolveOrganizationListSessionRound(
+  session: OrganizationApplicationListSession,
+  index: number
+): number {
+  if (typeof session.sessionNo === 'number' && Number.isFinite(session.sessionNo)) {
+    return session.sessionNo
+  }
+  if (typeof session.roundNumber === 'number' && Number.isFinite(session.roundNumber)) {
+    return session.roundNumber
+  }
+  return index + 1
+}
+
+/** 기관 신청 목록 `sessions[]` → 강사 신청 캘린더용 배정 확정 세션 */
+export function mapOrganizationApplicationListSessionsToConfirmedSessions(
+  sessions: OrganizationApplicationListSession[] | undefined | null
+): ParticipatingSchoolSession[] {
+  const result: ParticipatingSchoolSession[] = []
+
+  for (const [index, session] of (sessions ?? []).entries()) {
+    const assignmentStatus = resolveOrganizationListSessionAssignmentStatus(session)
+    if (!isConfirmedOrganizationListSessionStatus(assignmentStatus)) continue
+    const scheduleId = session.scheduleId
+    if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) continue
+    const startRaw = session.startAt?.trim()
+    if (!startRaw) continue
+    const start = new Date(startRaw)
+    if (Number.isNaN(start.getTime())) continue
+
+    const dateParts = formatPreferredScheduleDate(start)
+    const round = resolveOrganizationListSessionRound(session, index)
+    const timeLabel = formatKoreanInterviewTime(start)
+
+    result.push({
+      round,
+      ...dateParts,
+      duration: '-',
+      format: '-',
+      classNum: `${round}차시`,
+      timeRange: timeLabel,
+      status: 'pending',
+      resolvedScheduleId: Math.trunc(scheduleId),
+    })
+  }
+
+  return result
+}
+
+/** 강사 신청 캘린더 — hope sessions 미사용, 목록 배정 확정 sessions만 */
+export function readOrganizationApplicationConfirmedSessionsForInstructorCalendar(
+  row: ApplicantSchoolRow
+): ParticipatingSchoolSession[] {
+  return row.confirmedListAssignmentSessions ?? []
+}
+
 /** 신청 row·상세 UI용 희망 세션(일반 기관은 dto.sessions·stale row.sessions fallback 금지) */
 export function readOrganizationApplicationHopeSessionsForDisplay(
   row: ApplicantSchoolRow,
@@ -357,6 +437,9 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     preferred,
     options?.requestedSchedules
   )
+  const confirmedListAssignmentSessions = mapOrganizationApplicationListSessionsToConfirmedSessions(
+    dto.sessions
+  )
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
 
@@ -380,6 +463,8 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     availableActions: dto.availableActions ?? [],
     programId,
     sessions,
+    confirmedListAssignmentSessions:
+      confirmedListAssignmentSessions.length > 0 ? confirmedListAssignmentSessions : undefined,
     preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
     desiredEducationPeriod,
     detail: {

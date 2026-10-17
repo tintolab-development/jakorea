@@ -184,6 +184,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
+import { OrganizationScheduleAssignmentSection } from './organization-schedule-assignment-section'
 import { ParticipatingInstitutionScheduleChangeModal } from './participating-institution-schedule-change-modal'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
@@ -603,7 +604,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     enabled:
       isGeneralOrgProgram &&
       organizationApplicationIdForDetail.length > 0 &&
-      (organizationScheduleAssignmentsQuery.data?.length ?? 0) > 0,
+      shouldUseOrganizationApplicationRemoteApi(),
     staleTime: 60_000,
     retry: false,
   })
@@ -2219,6 +2220,19 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               useCompanySchoolScheduleFormat={isCompanySchool}
               onScheduleChangeClick={() => setScheduleChangeModalOpen(true)}
             />
+            {isGeneralOrgProgram && shouldUseOrganizationApplicationRemoteApi() ? (
+              <OrganizationScheduleAssignmentSection
+                programId={programId}
+                organizationApplicationId={organizationApplicationIdForDetail}
+                canEdit={row.approvalStatus === 'approved' && !isActivityWithdrawn}
+                slots={organizationScheduleAssignmentsQuery.data}
+                slotsLoading={organizationScheduleAssignmentsQuery.isLoading}
+                slotsError={organizationScheduleAssignmentsQuery.isError}
+                programSchedules={programSchedulesForOsaQuery.data}
+                schedulesLoading={programSchedulesForOsaQuery.isLoading}
+                schedulesError={programSchedulesForOsaQuery.isError}
+              />
+            ) : null}
           </div>
         )}
 

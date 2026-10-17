@@ -17,8 +17,13 @@ function student(
   }
 }
 
-function slot(partial: SlotResponse): SlotResponse {
-  return partial
+type LegacySlotFixture = SlotResponse & {
+  grade?: string
+  className?: string
+}
+
+function slot(partial: LegacySlotFixture): SlotResponse {
+  return partial as SlotResponse
 }
 
 describe('evaluateOrganizationAttendanceScopeReadiness', () => {
@@ -135,6 +140,28 @@ describe('evaluateOrganizationAttendanceScopeReadiness', () => {
       ],
     })
     expect(result.ready).toBe(false)
+  })
+
+  it('allows all roster students when OSA slot is schedule-only (no grade/class)', () => {
+    const result = evaluateOrganizationAttendanceScopeReadiness({
+      ...baseInput,
+      rosterStudents: [
+        student({ id: 's1', gradeClass: '1반', participantId: 10 }),
+        student({ id: 's2', gradeClass: '2반', participantId: 11 }),
+      ],
+      assignmentSlots: [
+        slot({
+          scheduleId: 186674,
+          organizationApplicationId: 1691243,
+          programId: 186092,
+          grade: '미지정',
+          className: '미지정',
+          active: true,
+          assignmentStatus: 'TEMP_ASSIGNED',
+        }),
+      ],
+    })
+    expect(result.ready).toBe(true)
   })
 
   it('treats trim and case as equal for grade and class', () => {

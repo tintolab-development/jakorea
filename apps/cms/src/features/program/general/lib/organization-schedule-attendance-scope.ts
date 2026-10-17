@@ -9,12 +9,25 @@ export const GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED =
 export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_TITLE = '출석 저장 안내'
 
 export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_MESSAGE =
-  '교육 일정과 학급 배정이 완료된 후 출석을 저장할 수 있습니다.'
+  '교육 일정 배정이 완료된 후 출석을 저장할 수 있습니다.'
 
 export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_HINT =
-  '기관의 회차·학급 배정을 먼저 완료해 주세요.'
+  '기관의 교육 일정 배정을 먼저 완료해 주세요.'
 
 const ALLOWED_ASSIGNMENT_STATUSES = new Set(['TEMP_ASSIGNED', 'CONFIRMED'])
+
+/** 레거시 OSA row — OpenAPI `SlotResponse`에 grade/class가 없을 수 있음 */
+type LegacyOrganizationAssignmentSlotFields = {
+  grade?: string | null
+  className?: string | null
+  classLabel?: string | null
+}
+
+type OrganizationAssignmentSlot = SlotResponse & LegacyOrganizationAssignmentSlotFields
+
+function asOrganizationAssignmentSlot(slot: SlotResponse): OrganizationAssignmentSlot {
+  return slot as OrganizationAssignmentSlot
+}
 
 export type OrganizationAttendanceScopeMissingStep = 'SCHEDULE_ASSIGNMENT'
 
@@ -48,8 +61,21 @@ function resolveSlotActiveYn(slot: SlotResponse): boolean {
   return raw === true
 }
 
-function resolveSlotClassName(slot: SlotResponse): string {
+function resolveSlotClassName(slot: OrganizationAssignmentSlot): string {
   return (slot.className ?? slot.classLabel ?? '').trim()
+}
+
+function isPlaceholderAssignmentLabel(value: string): boolean {
+  const normalized = value.trim()
+  return !normalized || normalized === '미지정'
+}
+
+/** GENERAL schedule-only OSA — grade/class 없음 또는 미지정 placeholder */
+function isScheduleOnlyOrganizationAssignmentSlot(slot: SlotResponse): boolean {
+  const legacy = asOrganizationAssignmentSlot(slot)
+  const grade = (legacy.grade ?? '').trim()
+  const className = resolveSlotClassName(legacy)
+  return isPlaceholderAssignmentLabel(grade) && isPlaceholderAssignmentLabel(className)
 }
 
 function isSlotEligibleForAttendanceRecord(
@@ -83,8 +109,12 @@ function studentMatchesAssignmentSlot(
   studentClassName: string,
   slot: SlotResponse
 ): boolean {
-  const slotGrade = (slot.grade ?? '').trim()
-  const slotClassName = resolveSlotClassName(slot)
+  if (isScheduleOnlyOrganizationAssignmentSlot(slot)) {
+    return true
+  }
+  const legacy = asOrganizationAssignmentSlot(slot)
+  const slotGrade = (legacy.grade ?? '').trim()
+  const slotClassName = resolveSlotClassName(legacy)
   if (!slotGrade || !studentClassName.trim() || !slotClassName) return false
 
   return (

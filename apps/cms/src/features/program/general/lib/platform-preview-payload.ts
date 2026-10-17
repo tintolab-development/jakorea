@@ -33,6 +33,12 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import { resolveRecruitmentOtherMatters } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  formatInstructorTargetsLabel,
+  formatVolunteerTargetsLabel,
+  resolveProgramInstructorTargets,
+  resolveProgramVolunteerTargets,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 
 export type ProgramPreviewAudience = GeneralRecruitTabKey
 
@@ -224,16 +230,40 @@ export function buildProgramPortalPreviewDetail(
           ),
     remarks: info.notesNotApplicable ? undefined : firstTrimmed(info.remarks, program.remarks),
     applicationMethod: firstTrimmed(info.applicationMethod, program.applicationMethod) ?? null,
-    educationTargets: targetLevels.length > 0 ? targetLevels : undefined,
+    educationTargets: audience === 'institutions' && targetLevels.length > 0 ? targetLevels : undefined,
     educationTargetDetail:
       audience === 'institutions'
         ? firstTrimmed(info.educationTargetDetail, program.educationTargetDetail)
         : undefined,
+    recruitmentTarget:
+      audience === 'volunteers'
+        ? firstTrimmed(
+            info.recruitmentTarget,
+            (() => {
+              const label = formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program))
+              return label === '-' ? undefined : label
+            })()
+          )
+        : audience === 'instructors'
+          ? firstTrimmed(
+              info.recruitmentTarget,
+              (() => {
+                const label = formatInstructorTargetsLabel(resolveProgramInstructorTargets(program))
+                return label === '-' ? undefined : label
+              })()
+            )
+          : undefined,
+    recruitmentTargets:
+      audience === 'volunteers'
+        ? resolveProgramVolunteerTargets(program)
+        : audience === 'instructors'
+          ? resolveProgramInstructorTargets(program)
+          : undefined,
     recruitmentTargetDetail: firstTrimmed(
       info.recruitmentTargetDetail,
       audience === 'instructors' ? program.instructorTargetDetail : undefined,
       audience === 'volunteers' ? program.volunteerTargetDetail : undefined,
-      program.recruitmentTargetDetail
+      audience === 'institutions' ? program.recruitmentTargetDetail : undefined
     ),
     sponsorNames: toPortalSponsorNames(sponsorName ?? common?.sponsorDisplayName),
     recruitments: [buildRecruitment(program, audience, info)],

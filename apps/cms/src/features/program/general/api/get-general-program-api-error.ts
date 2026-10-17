@@ -3,6 +3,7 @@
  */
 
 import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
 import {
   isProgramRecruitmentEditPeriodCode,
   programEditWindowErrorMessage,
@@ -136,6 +137,9 @@ const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
 }
 
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
+  const organizationAssignmentMessage = formatOrganizationApplicationApproveErrorMessage(error)
+  if (organizationAssignmentMessage) return organizationAssignmentMessage
+
   const code = extractApiErrorCode(error)
   if (code === 'PROGRAM_EDUCATION_SLOT_KEY_MISMATCH') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

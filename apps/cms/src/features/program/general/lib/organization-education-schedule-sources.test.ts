@@ -141,8 +141,6 @@ describe('organization-education-schedule-sources', () => {
         assignmentId: 1,
         assignmentStatus: 'CONFIRMED',
         active: true,
-        grade: '3',
-        className: '1',
       },
       {
         scheduleId: 186904,
