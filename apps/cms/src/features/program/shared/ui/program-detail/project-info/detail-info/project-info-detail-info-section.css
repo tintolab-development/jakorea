@@ -1,13 +1,6 @@
 @import '../project-info-form-shared.css';
 
-.project-info-detail-info-section__frame .detail-info-form__body {
-  border: 0;
-  border-radius: 0;
-  overflow: visible;
-  background: transparent;
-}
-
-/* 수정 모드 하단 description ↔ 테이블 블록 16px
+/* 수정 모드 하단 description ↔ 필드 블록 16px
  * (패키지 dist 미반영 시에도 CMS에서 보장; lead height:40px 해제) */
 .project-info-detail-info-section__frame > .detail-info-form__header:has(
   .detail-info-form__description--below
