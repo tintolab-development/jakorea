@@ -38,6 +38,9 @@ export type InstructorRoleRequestProfile = {
     freeWrite3?: string
     freeWrite4?: string
   }
+  /** 조회 전용 — 포탈/Cms 프로필 */
+  defaultFeeGrade?: string
+  defaultJaGrade?: string
 }
 
 export type InstructorRoleRequestEducationSchoolRow = {

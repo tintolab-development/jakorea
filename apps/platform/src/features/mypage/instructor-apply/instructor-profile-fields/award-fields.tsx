@@ -7,15 +7,23 @@ import {
   PFDateInput,
   PFFormField,
   PFFormFieldRow,
-  PFFormFieldTable,
   PFFormInlineSeparatedFields,
   PFTextInput,
 } from '@/shared/ui'
 import styles from '../instructor-apply-form.module.css'
 import { ListRowActions } from './list-row-actions'
+import {
+  InstructorProfileFieldTable,
+  resolveInstructorProfileFieldLayout,
+} from './profile-field-table'
 import type { InstructorProfileFieldsProps } from './types'
 
-export function InstructorAwardProfileFields({ values, onValuesChange }: InstructorProfileFieldsProps) {
+export function InstructorAwardProfileFields({
+  values,
+  onValuesChange,
+  surface = 'apply',
+}: InstructorProfileFieldsProps) {
+  const fieldLayout = resolveInstructorProfileFieldLayout(surface)
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
     next: InstructorSharedProfileFormValues[K],
@@ -24,9 +32,9 @@ export function InstructorAwardProfileFields({ values, onValuesChange }: Instruc
   }
 
   return (
-    <PFFormFieldTable>
+    <InstructorProfileFieldTable surface={surface}>
       <PFFormFieldRow type="single">
-        <PFFormField label="수상 및 수료 내역">
+        <PFFormField label="수상 및 수료 내역" layout={fieldLayout}>
           <div className={styles.fieldStack}>
             {values.awardRows.map((row, index) => (
               <div key={`award-${index}`} className={styles.fieldStackRow}>
@@ -89,6 +97,6 @@ export function InstructorAwardProfileFields({ values, onValuesChange }: Instruc
           </div>
         </PFFormField>
       </PFFormFieldRow>
-    </PFFormFieldTable>
+    </InstructorProfileFieldTable>
   )
 }

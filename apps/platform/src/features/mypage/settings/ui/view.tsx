@@ -10,14 +10,18 @@ import {
   setDevAuthLoggedIn,
 } from '@/shared/lib'
 import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
+import pfInfoReviewStyles from '@/shared/ui/pf-info-review/pf-info-review.module.css'
 import { EMPTY_SETTINGS_VALUE, SETTINGS_WITHDRAW_GUIDE, VOLUNTEER_1365_URL } from '../lib/constants'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
-import type { SettingsGuardianView, SettingsInfoRow } from '../lib/map-view'
+import type { SettingsGuardianView, SettingsInfoRow, SettingsProfileInput } from '../lib/map-view'
 import type { InstructorSettingsSectionId } from '../lib/format-instructor-settings-display'
+import { SettingsInstructorBasicEditForm } from './instructor-profile/basic-edit-form'
 import { SettingsInstructorProfileSectionsView } from './instructor-profile/instructor-profile-sections-view'
 import { SettingsChangePasswordModal } from './change-password-modal'
 import { SettingsWithdrawGuideModal } from './withdraw-guide-modal'
 import styles from './view.module.css'
+
+export type InstructorSettingsEditTarget = 'basic' | InstructorSettingsSectionId
 
 export type SettingsViewProps = {
   basicRows: SettingsInfoRow[]
@@ -25,14 +29,20 @@ export type SettingsViewProps = {
   onEditBasic?: () => void
   instructorProfileValues?: InstructorSharedProfileFormValues | null
   onEditInstructorSection?: (section: InstructorSettingsSectionId) => void
+  /** 강사 — 인라인 수정 중인 영역 (null이면 전부 조회) */
+  instructorEditingTarget?: InstructorSettingsEditTarget | null
+  settingsProfile?: SettingsProfileInput
+  onCancelInstructorEdit?: () => void
+  onInstructorBasicSaved?: (next: InstructorSharedProfileFormValues) => void
+  onInstructorSectionSaved?: (next: InstructorSharedProfileFormValues) => void
 }
 
-function EditButton({ onClick }: { onClick?: () => void }) {
+function EditButton({ onClick, disabled }: { onClick?: () => void; disabled?: boolean }) {
   return (
     <PFButton
       size="small"
       variant="primary"
-      disabled={!onClick}
+      disabled={!onClick || disabled}
       className={styles.editButton}
       onClick={onClick}
     >
@@ -67,8 +77,55 @@ function VolunteerIdValue({ value }: { value: string }) {
 function toReviewRows(rows: SettingsInfoRow[]) {
   return rows.map(row => ({
     label: row.label,
-    value: row.action === '1365-shortcut' ? <VolunteerIdValue value={row.value} /> : row.value,
+    value:
+      row.action === '1365-shortcut'
+        ? <VolunteerIdValue value={row.value} />
+        : row.multiline
+          ? (
+              <PFText typo="bd-md-sb" color="black" className={styles.basicInfoValueMultiline}>
+                {row.value}
+              </PFText>
+            )
+          : row.value,
+    dividerBefore: row.dividerBefore,
   }))
+}
+
+type ReviewRow = ReturnType<typeof toReviewRows>[number]
+
+function SettingsBasicInfoReview({ rows }: { rows: ReviewRow[] }) {
+  const hasDivider = rows.some(row => row.dividerBefore)
+  if (!hasDivider) {
+    return <PFInfoReview rows={rows} />
+  }
+
+  return (
+    <div className={pfInfoReviewStyles.list}>
+      {rows.map((row, index) => (
+        <div
+          key={row.label}
+          className={[
+            pfInfoReviewStyles.row,
+            index === 0 ? pfInfoReviewStyles.rowFirst : undefined,
+            row.dividerBefore ? styles.basicInfoRowDivider : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <PFText typo="bd-md-md" color="neutral-cool-500" className={pfInfoReviewStyles.label}>
+            {row.label}
+          </PFText>
+          {typeof row.value === 'string' || typeof row.value === 'number' ? (
+            <PFText typo="bd-md-sb" color="black" className={pfInfoReviewStyles.value}>
+              {row.value}
+            </PFText>
+          ) : (
+            <div className={pfInfoReviewStyles.value}>{row.value}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export function SettingsView({
@@ -77,7 +134,18 @@ export function SettingsView({
   onEditBasic,
   instructorProfileValues,
   onEditInstructorSection,
+  instructorEditingTarget = null,
+  settingsProfile,
+  onCancelInstructorEdit,
+  onInstructorBasicSaved,
+  onInstructorSectionSaved,
 }: SettingsViewProps) {
+  const instructorEditLocked = instructorEditingTarget != null
+  const isEditingBasic = instructorEditingTarget === 'basic'
+  const editingInstructorSection =
+    instructorEditingTarget != null && instructorEditingTarget !== 'basic'
+      ? instructorEditingTarget
+      : null
   const navigate = useNavigate()
   const withdrawMutation = usePortalWithdrawalMutation()
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
@@ -137,9 +205,24 @@ export function SettingsView({
           <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
             기본 정보
           </PFText>
-          <EditButton onClick={onEditBasic} />
+          {isEditingBasic ? null : (
+            <EditButton
+              onClick={onEditBasic}
+              disabled={instructorEditLocked && !isEditingBasic}
+            />
+          )}
         </div>
-        <PFInfoReview rows={toReviewRows(basicRows)} />
+        {isEditingBasic && settingsProfile && instructorProfileValues && onCancelInstructorEdit && onInstructorBasicSaved ? (
+          <SettingsInstructorBasicEditForm
+            embedded
+            profile={settingsProfile}
+            initialValues={instructorProfileValues}
+            onCancel={onCancelInstructorEdit}
+            onSaved={onInstructorBasicSaved}
+          />
+        ) : (
+          <SettingsBasicInfoReview rows={toReviewRows(basicRows)} />
+        )}
       </section>
 
       {guardian ? (
@@ -164,6 +247,10 @@ export function SettingsView({
         <SettingsInstructorProfileSectionsView
           values={instructorProfileValues}
           onEditSection={onEditInstructorSection}
+          editingSection={editingInstructorSection}
+          editLocked={instructorEditLocked}
+          onCancelSectionEdit={onCancelInstructorEdit}
+          onSectionSaved={onInstructorSectionSaved}
         />
       ) : null}
 

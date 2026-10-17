@@ -20,7 +20,6 @@ import {
   PFDateInput,
   PFFormField,
   PFFormFieldRow,
-  PFFormFieldTable,
   PFFormInlineSeparatedFields,
   PFFormPeriodPair,
   PFFormPeriodTilde,
@@ -30,6 +29,10 @@ import {
 import { EducationSchoolNameField } from '../education-school-name-field'
 import styles from '../instructor-apply-form.module.css'
 import { ListRowActions } from './list-row-actions'
+import {
+  InstructorProfileFieldTable,
+  resolveInstructorProfileFieldLayout,
+} from './profile-field-table'
 import type { InstructorProfileFieldsProps } from './types'
 
 function toSelectOptions(
@@ -38,7 +41,12 @@ function toSelectOptions(
   return options.map(option => ({ value: option.value, label: option.label }))
 }
 
-export function InstructorEducationProfileFields({ values, onValuesChange }: InstructorProfileFieldsProps) {
+export function InstructorEducationProfileFields({
+  values,
+  onValuesChange,
+  surface = 'apply',
+}: InstructorProfileFieldsProps) {
+  const fieldLayout = resolveInstructorProfileFieldLayout(surface)
   const availableEducationKeys = useMemo(
     () => resolveAvailableEducationDetailKeys(values.eduSchoolType),
     [values.eduSchoolType],
@@ -83,9 +91,9 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
   }
 
   return (
-          <PFFormFieldTable>
+          <InstructorProfileFieldTable surface={surface}>
             <PFFormFieldRow type="single">
-              <PFFormField label="최종 학력">
+              <PFFormField layout={fieldLayout} label="최종 학력">
                 <PFFormInlineSeparatedFields>
                   <PFSelect
                     variant="formPage"
@@ -110,7 +118,7 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
             </PFFormFieldRow>
             {availableEducationKeys.length > 0 ? (
               <PFFormFieldRow type="single">
-                <PFFormField label="학력 상세">
+                <PFFormField layout={fieldLayout} label="학력 상세">
                   <div className={styles.radioGroup}>
                     {EDUCATION_DETAIL_OPTIONS.filter(option =>
                       availableEducationKeys.includes(option.value)
@@ -136,7 +144,7 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
 
             {values.educationDetailKeys.includes('high') ? (
               <PFFormFieldRow type="single">
-                <PFFormField label="고등학교">
+                <PFFormField layout={fieldLayout} label="고등학교">
                   <PFFormInlineSeparatedFields>
                     <PFFormPeriodPair>
                       <PFDateInput
@@ -184,7 +192,7 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
 
             {values.educationDetailKeys.includes('college23') ? (
               <PFFormFieldRow type="single">
-                <PFFormField label="대학교 2, 3년제">
+                <PFFormField layout={fieldLayout} label="대학교 2, 3년제">
                   <div className={styles.fieldStack}>
                     {values.college23Rows.map((row, index) => (
                       <div key={`college23-${index}`} className={styles.fieldStackRow}>
@@ -265,7 +273,7 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
 
             {values.educationDetailKeys.includes('college4') ? (
               <PFFormFieldRow type="single">
-                <PFFormField label="대학교 4년제">
+                <PFFormField layout={fieldLayout} label="대학교 4년제">
                   <div className={styles.fieldStack}>
                     {values.college4Rows.map((row, index) => (
                       <div key={`college4-${index}`} className={styles.fieldStackRow}>
@@ -346,7 +354,7 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
 
             {values.educationDetailKeys.includes('graduate') ? (
               <PFFormFieldRow type="single">
-                <PFFormField label="대학원">
+                <PFFormField layout={fieldLayout} label="대학원">
                   <div className={styles.fieldStack}>
                     {values.graduateRows.map((row, index) => (
                       <div key={`graduate-${index}`} className={styles.fieldStackRow}>
@@ -438,6 +446,6 @@ export function InstructorEducationProfileFields({ values, onValuesChange }: Ins
                 </PFFormField>
               </PFFormFieldRow>
             ) : null}
-          </PFFormFieldTable>
+          </InstructorProfileFieldTable>
   )
 }

@@ -278,7 +278,9 @@ export function mapInstructorFormValuesToPortalEditableProfile(
   return editable
 }
 
-function mapSettlement(values: InstructorSharedProfileFormValues): InstructorRoleRequestSettlement {
+export function mapInstructorFormValuesToPortalSettlement(
+  values: InstructorSharedProfileFormValues,
+): InstructorRoleRequestSettlement {
   const bankName = values.bankName.trim()
   const accountNumber = values.accountNumber.trim()
   const accountHolder = values.accountHolder.trim()
@@ -333,7 +335,7 @@ export function mapInstructorApplyFormToCreateRequest(
     phone: formatKoreanPhoneNumber(values.contact.trim()),
     email: values.email.trim(),
     profile: mapInstructorFormValuesToCmsProfile(values),
-    settlement: mapSettlement(values),
+    settlement: mapInstructorFormValuesToPortalSettlement(values),
     termsAgreements: mapTermsAgreements(values),
   }
 }

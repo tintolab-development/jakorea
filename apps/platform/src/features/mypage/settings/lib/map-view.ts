@@ -24,12 +24,24 @@ export type SettingsProfileInput = {
   external1365Id?: string
   instructor?: boolean
   instructorProfile?: InstructorPortalProfileResponse
+  socialAccounts?: string[]
+  listMetrics?: PortalProfileListMetrics
+}
+
+export type PortalProfileListMetrics = {
+  settlementStatusLabel?: string
+  jaEvaluationGrade?: string
+  instructorFeeGradeLabel?: string
 }
 
 export type SettingsInfoRow = {
   label: string
   value: string
   action?: '1365-shortcut'
+  /** 소셜 계정 행 아래 구분선 (강사 기본 정보) */
+  dividerBefore?: boolean
+  /** 한 줄 소개 등 여러 줄 표시 */
+  multiline?: boolean
 }
 
 export type SettingsGuardianView = {

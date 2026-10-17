@@ -23,6 +23,7 @@ import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFFormSection, PFText } from '@/shared/ui'
 import type { InstructorSettingsSectionId } from '../../lib/format-instructor-settings-display'
 import { INSTRUCTOR_SETTINGS_ESSAY_SECTIONS } from '../../lib/format-instructor-settings-display'
+import inlineFieldStyles from '@/features/mypage/instructor-apply/instructor-profile-fields/settings-inline-fields.module.css'
 import styles from '../edit-form.module.css'
 
 const REQUIRED_INCOMPLETE = '필수 항목을 모두 작성해주세요'
@@ -82,6 +83,8 @@ export type SettingsInstructorSectionEditFormProps = {
   fullValues: InstructorSharedProfileFormValues
   onCancel: () => void
   onSaved: (nextFull: InstructorSharedProfileFormValues) => void
+  /** 회원정보 설정 목록 화면 내 해당 섹션만 교체 */
+  embedded?: boolean
 }
 
 export function SettingsInstructorSectionEditForm({
@@ -89,6 +92,7 @@ export function SettingsInstructorSectionEditForm({
   fullValues,
   onCancel,
   onSaved,
+  embedded = false,
 }: SettingsInstructorSectionEditFormProps) {
   const [values, setValues] = useState(fullValues)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
@@ -120,6 +124,8 @@ export function SettingsInstructorSectionEditForm({
   }, [mutation, onSaved, section, values])
 
   const sectionTitle = resolveSectionTitle(section)
+  const fieldSurface = embedded ? 'settings' : 'apply'
+  const embeddedSectionClass = embedded ? inlineFieldStyles.embeddedSection : undefined
 
   const fields = (() => {
     switch (section) {
@@ -127,41 +133,84 @@ export function SettingsInstructorSectionEditForm({
         return (
           <PFFormSection
             id="settings-instructor-education"
-            title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.education}
+            className={embeddedSectionClass}
+            title={embedded ? undefined : INSTRUCTOR_FORM_SECTION_BASE_TITLES.education}
             description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.education}
-            required
+            required={!embedded}
           >
-            <InstructorEducationProfileFields values={values} onValuesChange={setValues} />
+            <InstructorEducationProfileFields
+              surface={fieldSurface}
+              values={values}
+              onValuesChange={setValues}
+            />
           </PFFormSection>
         )
       case 'career':
         return (
-          <PFFormSection id="settings-instructor-career" title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.career} required>
-            <InstructorCareerProfileFields values={values} onValuesChange={setValues} />
+          <PFFormSection
+            id="settings-instructor-career"
+            className={embeddedSectionClass}
+            title={embedded ? undefined : INSTRUCTOR_FORM_SECTION_BASE_TITLES.career}
+            required={!embedded}
+          >
+            <InstructorCareerProfileFields
+              surface={fieldSurface}
+              values={values}
+              onValuesChange={setValues}
+            />
           </PFFormSection>
         )
       case 'ja':
         return (
-          <PFFormSection id="settings-instructor-ja" title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.ja}>
-            <InstructorJaProfileFields values={values} onValuesChange={setValues} />
+          <PFFormSection
+            id="settings-instructor-ja"
+            className={embeddedSectionClass}
+            title={embedded ? undefined : INSTRUCTOR_FORM_SECTION_BASE_TITLES.ja}
+          >
+            <InstructorJaProfileFields
+              surface={fieldSurface}
+              values={values}
+              onValuesChange={setValues}
+            />
           </PFFormSection>
         )
       case 'license':
         return (
-          <PFFormSection id="settings-instructor-license" title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.license}>
-            <InstructorLicenseProfileFields values={values} onValuesChange={setValues} />
+          <PFFormSection
+            id="settings-instructor-license"
+            className={embeddedSectionClass}
+            title={embedded ? undefined : INSTRUCTOR_FORM_SECTION_BASE_TITLES.license}
+          >
+            <InstructorLicenseProfileFields
+              surface={fieldSurface}
+              values={values}
+              onValuesChange={setValues}
+            />
           </PFFormSection>
         )
       case 'award':
         return (
-          <PFFormSection id="settings-instructor-award" title="수상 및 수료 내역">
-            <InstructorAwardProfileFields values={values} onValuesChange={setValues} />
+          <PFFormSection
+            id="settings-instructor-award"
+            className={embeddedSectionClass}
+            title={embedded ? undefined : '수상 및 수료 내역'}
+          >
+            <InstructorAwardProfileFields
+              surface={fieldSurface}
+              values={values}
+              onValuesChange={setValues}
+            />
           </PFFormSection>
         )
       default:
         return (
-          <PFFormSection id={`settings-instructor-${section}`} title={sectionTitle.replace(' 수정', '')}>
+          <PFFormSection
+            id={`settings-instructor-${section}`}
+            className={embeddedSectionClass}
+            title={embedded ? undefined : sectionTitle.replace(' 수정', '')}
+          >
             <InstructorFreeWriteProfileFields
+              surface={fieldSurface}
               values={values}
               onValuesChange={setValues}
               onlyField={section as InstructorFreeWriteFieldName}
@@ -172,10 +221,12 @@ export function SettingsInstructorSectionEditForm({
   })()
 
   return (
-    <div className={styles.form}>
-      <PFText as="p" typo="bd-md-rg" color="black" className={styles.lead}>
-        {sectionTitle}
-      </PFText>
+    <div className={embedded ? styles.inlineEdit : styles.page}>
+      {embedded ? null : (
+        <PFText as="p" typo="bd-md-rg" color="black">
+          {sectionTitle}
+        </PFText>
+      )}
       {fields}
       {formError ? (
         <PFText as="p" typo="bd-sm-rg" color="error" role="alert">

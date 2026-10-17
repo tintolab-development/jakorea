@@ -7,7 +7,6 @@ import {
   PFDateInput,
   PFFormField,
   PFFormFieldRow,
-  PFFormFieldTable,
   PFFormInlineSeparatedFields,
   PFFormPeriodPair,
   PFFormPeriodTilde,
@@ -15,9 +14,18 @@ import {
 } from '@/shared/ui'
 import styles from '../instructor-apply-form.module.css'
 import { ListRowActions } from './list-row-actions'
+import {
+  InstructorProfileFieldTable,
+  resolveInstructorProfileFieldLayout,
+} from './profile-field-table'
 import type { InstructorProfileFieldsProps } from './types'
 
-export function InstructorJaProfileFields({ values, onValuesChange }: InstructorProfileFieldsProps) {
+export function InstructorJaProfileFields({
+  values,
+  onValuesChange,
+  surface = 'apply',
+}: InstructorProfileFieldsProps) {
+  const fieldLayout = resolveInstructorProfileFieldLayout(surface)
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
     next: InstructorSharedProfileFormValues[K],
@@ -26,9 +34,9 @@ export function InstructorJaProfileFields({ values, onValuesChange }: Instructor
   }
 
   return (
-    <PFFormFieldTable>
+    <InstructorProfileFieldTable surface={surface}>
       <PFFormFieldRow type="single">
-        <PFFormField label="활동 이력">
+        <PFFormField label="활동 이력" layout={fieldLayout}>
           <div className={styles.fieldStack}>
             {values.jaKoreaRows.map((row, index) => (
               <div key={`ja-${index}`} className={styles.fieldStackRow}>
@@ -102,6 +110,6 @@ export function InstructorJaProfileFields({ values, onValuesChange }: Instructor
           </div>
         </PFFormField>
       </PFFormFieldRow>
-    </PFFormFieldTable>
+    </InstructorProfileFieldTable>
   )
 }

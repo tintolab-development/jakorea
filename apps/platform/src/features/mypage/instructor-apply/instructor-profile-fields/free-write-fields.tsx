@@ -1,8 +1,9 @@
 import { INSTRUCTOR_FORM_PLACEHOLDERS as PH } from '@jakorea/domain/instructor/form-copy'
 import { INSTRUCTOR_FREE_WRITE_ITEMS } from '@jakorea/domain/instructor/free-write'
 import type { InstructorFreeWriteFieldName } from '@jakorea/domain/instructor/free-write'
-import { PFFormField, PFFormFieldRow, PFFormFieldTable } from '@/shared/ui'
+import { PFFormField, PFFormFieldRow } from '@/shared/ui'
 import styles from '../instructor-apply-form.module.css'
+import { InstructorProfileFieldTable } from './profile-field-table'
 import type { InstructorProfileFieldsProps } from './types'
 
 export type InstructorFreeWriteProfileFieldsProps = InstructorProfileFieldsProps & {
@@ -14,6 +15,7 @@ export function InstructorFreeWriteProfileFields({
   values,
   onValuesChange,
   onlyField,
+  surface = 'apply',
 }: InstructorFreeWriteProfileFieldsProps) {
   const items = onlyField
     ? INSTRUCTOR_FREE_WRITE_ITEMS.filter(item => item.name === onlyField)
@@ -23,12 +25,14 @@ export function InstructorFreeWriteProfileFields({
     onValuesChange(prev => ({ ...prev, [key]: next }))
   }
 
+  const hideFieldLabel = surface === 'settings' && onlyField != null
+
   return (
     <>
       {items.map(item => (
-        <PFFormFieldTable key={item.name}>
+        <InstructorProfileFieldTable key={item.name} surface={surface}>
           <PFFormFieldRow type="single">
-            <PFFormField label={item.label} layout="vertical">
+            {hideFieldLabel ? (
               <textarea
                 className={styles.textarea}
                 placeholder={PH.freeWrite}
@@ -36,9 +40,19 @@ export function InstructorFreeWriteProfileFields({
                 maxLength={1000}
                 onChange={event => patch(item.name, event.target.value)}
               />
-            </PFFormField>
+            ) : (
+              <PFFormField label={item.label} layout="vertical">
+                <textarea
+                  className={styles.textarea}
+                  placeholder={PH.freeWrite}
+                  value={values[item.name]}
+                  maxLength={1000}
+                  onChange={event => patch(item.name, event.target.value)}
+                />
+              </PFFormField>
+            )}
           </PFFormFieldRow>
-        </PFFormFieldTable>
+        </InstructorProfileFieldTable>
       ))}
     </>
   )
