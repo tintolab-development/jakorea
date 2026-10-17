@@ -36,6 +36,15 @@ export function toFlatDecisionNotifyTiming(
   return { timing: 'SCHEDULED', scheduledAt }
 }
 
+/** 기관 신청 승인은 BE 계약상 timing을 항상 명시한다. */
+export function toOrganizationApproveNotifyTiming(
+  notifyTiming?: PermissionModalNotifyTiming | string | null,
+  manualNotifyAt?: Dayjs | null
+): { timing: 'IMMEDIATE' | 'SCHEDULED'; scheduledAt?: string } {
+  const scheduled = toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
+  return scheduled ?? { timing: 'IMMEDIATE' }
+}
+
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
 export function toNestedDecisionNotification(
   notifyTiming?: PermissionModalNotifyTiming | string | null,

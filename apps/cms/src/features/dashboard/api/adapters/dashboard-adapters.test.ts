@@ -210,7 +210,7 @@ describe('filterRecruitmentListForWidget', () => {
 
   it('programType 위젯은 해당 유형만 남긴다', () => {
     const filtered = filterRecruitmentListForWidget('program-schedule-general-widget', dto)
-    expect(filtered.items?.map(i => i.programId)).toEqual([1])
+    expect(filtered.items?.map((i: { programId?: number }) => i.programId)).toEqual([1])
   })
 
   it('programType 없는 위젯은 전체를 유지한다', () => {

@@ -3,6 +3,7 @@
  */
 
 import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
 import {
   isProgramRecruitmentEditPeriodCode,
   programEditWindowErrorMessage,
@@ -78,6 +79,54 @@ export function getParticipationConsentRequiredMessage(error: unknown): string |
   return getGeneralProgramApiErrorMessage(error, PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]!)
 }
 
+/** POST/PATCH program form-bindings — 슬롯 409 (BE V29+) */
+export type ProgramFormBindingErrorContext = {
+  formType?: string
+  targetScope?: string
+}
+
+const FORM_BINDING_ACTIVE_SLOT_CONFLICT_SURVEY_SCHEDULE_MESSAGE =
+  '선택한 교육 일정에 동일한 설문 양식 버전이 이미 연결되어 있습니다. 다른 템플릿을 선택하거나 기존 설문을 확인해 주세요.'
+
+const FORM_BINDING_ACTIVE_SLOT_CONFLICT_LECTURE_EVAL_PROGRAM_MESSAGE =
+  '이 프로그램에 등록된 강의평가가 이미 있습니다. 기존 강의평가를 확인하거나 삭제한 뒤 다시 등록해 주세요.'
+
+const FORM_BINDING_ACTIVE_SLOT_CONFLICT_DEFAULT_MESSAGE =
+  '같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다. 기존 바인딩을 확인하거나 다른 대상을 선택해 주세요.'
+
+const PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE =
+  '교육 일정의 논리 슬롯 식별자(educationSlotKey)는 변경할 수 없습니다. 일정 시간만 수정하거나 새 일정을 추가해 주세요.'
+
+const PROGRAM_SCHEDULE_NOT_ACTIVE_MESSAGE =
+  '비활성·취소된 교육 일정에는 새로 배정할 수 없습니다. 프로그램 일정 목록을 확인해 주세요.'
+
+const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE =
+  '사전교육·폐회 등 교육 슬롯이 아닌 일정에는 배정할 수 없습니다. EDUCATION·SESSION 일정을 선택해 주세요.'
+
+export function getProgramFormBindingErrorMessage(
+  error: unknown,
+  fallback: string,
+  context?: ProgramFormBindingErrorContext
+): string {
+  const code = extractApiErrorCode(error)
+  if (code === 'PROGRAM_FORM_BINDING_ACTIVE_SLOT_CONFLICT') {
+    const isLectureEvalProgram =
+      context?.formType === 'LECTURE_EVALUATION' && context?.targetScope === 'PROGRAM'
+    if (isLectureEvalProgram) {
+      return FORM_BINDING_ACTIVE_SLOT_CONFLICT_LECTURE_EVAL_PROGRAM_MESSAGE
+    }
+    const isSurveySchedulePoll =
+      context?.formType === 'SURVEY' && context?.targetScope === 'SCHEDULE'
+    if (isSurveySchedulePoll) {
+      return FORM_BINDING_ACTIVE_SLOT_CONFLICT_SURVEY_SCHEDULE_MESSAGE
+    }
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return FORM_BINDING_ACTIVE_SLOT_CONFLICT_DEFAULT_MESSAGE
+  }
+  return getGeneralProgramApiErrorMessage(error, fallback)
+}
+
 const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
@@ -88,7 +137,25 @@ const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
 }
 
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
+  const organizationAssignmentMessage = formatOrganizationApplicationApproveErrorMessage(error)
+  if (organizationAssignmentMessage) return organizationAssignmentMessage
+
   const code = extractApiErrorCode(error)
+  if (code === 'PROGRAM_EDUCATION_SLOT_KEY_MISMATCH') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE
+  }
+  if (code === 'PROGRAM_SCHEDULE_NOT_ACTIVE') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return PROGRAM_SCHEDULE_NOT_ACTIVE_MESSAGE
+  }
+  if (code === 'PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
+  }
   if (isProgramRecruitmentEditPeriodCode(code)) {
     const recruitmentMessage = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (recruitmentMessage && recruitmentMessage !== code) return recruitmentMessage

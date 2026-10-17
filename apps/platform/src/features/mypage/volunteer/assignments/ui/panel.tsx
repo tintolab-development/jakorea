@@ -1,12 +1,7 @@
-import { useMemo } from 'react'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
 import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import { PFText } from '@/shared/ui'
 import { useVolunteerAssignmentsQuery } from '../api/use-assignments-query'
-import {
-  getMockVolunteerIndividualAssignment,
-  getMockVolunteerInstitutionAssignment,
-} from '../lib/mock-assignments'
 import { VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP } from '../lib/format-distance'
 import type {
   VolunteerIndividualAssignment,
@@ -19,6 +14,15 @@ import {
   VolunteerScheduleLines,
 } from './assignment-table'
 import styles from './panel.module.css'
+
+const EMPTY_VOLUNTEER_INDIVIDUAL_ASSIGNMENT: VolunteerIndividualAssignment = {
+  assigned: [],
+  waiting: [],
+}
+const EMPTY_VOLUNTEER_INSTITUTION_ASSIGNMENT: VolunteerInstitutionAssignment = {
+  assigned: [],
+  waiting: [],
+}
 
 function DistanceCell({ value }: { value: string }) {
   if (value === '-') {
@@ -226,15 +230,6 @@ export function VolunteerAssignmentPanel({
     lastParticipatedSession,
   })
 
-  const mockIndividual = useMemo(
-    () => getMockVolunteerIndividualAssignment(lastParticipatedSession),
-    [lastParticipatedSession],
-  )
-  const mockInstitution = useMemo(
-    () => getMockVolunteerInstitutionAssignment(lastParticipatedSession),
-    [lastParticipatedSession],
-  )
-
   if (remoteQuery.enabled) {
     if (remoteQuery.isLoading) {
       return <VolunteerAssignmentPanelSkeleton />
@@ -260,9 +255,9 @@ export function VolunteerAssignmentPanel({
   return (
     <div className={styles.shell}>
       {programAudience === 'individual' ? (
-        <IndividualTables data={mockIndividual} />
+        <IndividualTables data={EMPTY_VOLUNTEER_INDIVIDUAL_ASSIGNMENT} />
       ) : (
-        <InstitutionTables data={mockInstitution} />
+        <InstitutionTables data={EMPTY_VOLUNTEER_INSTITUTION_ASSIGNMENT} />
       )}
     </div>
   )

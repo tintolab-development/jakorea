@@ -22,9 +22,13 @@ import {
   fetchGeneralParticipatingInstitutionsPage,
   updateGeneralParticipatingInstitutionTextbookDelivery,
 } from '@/features/program/general/api/admin-program-progress-service'
-import { mapTextbookStatusKeyToDeliveryStatus } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  mapTextbookDeliveryStatusToBadge,
+  mapTextbookStatusKeyToDeliveryStatus,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   useIsCompanySchoolProgramsSurface,
   useIsTrainedTeachersProgramsSurface,
@@ -39,7 +43,12 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
-import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  extractApiErrorCode,
+  extractApiErrorMessage,
+  getApiErrorCode,
+  getApiErrorHttpStatus,
+} from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import axios from 'axios'
 
@@ -63,8 +72,7 @@ export function useProgressSchoolList({
   const { showAlert } = useCmsAlert()
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   void useIsCompanySchoolProgramsSurface()
-  const remoteEnabled =
-    enabled && useProgramProgressRemoteEnabledForSurface(programId)
+  const remoteEnabled = enabled && useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
     enabled &&
     isTrainedTeachersSurface &&
@@ -192,27 +200,54 @@ export function useProgressSchoolList({
         )
         return
       }
-      const previous = schoolList.find(row => row.id === recordId)?.textbookStatus
-      setSchoolList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
-      )
+      const record = schoolList.find(row => row.id === recordId)
       void (async () => {
         try {
-          await updateGeneralParticipatingInstitutionTextbookDelivery(
+          const response = await updateGeneralParticipatingInstitutionTextbookDelivery(
             programId,
             recordId,
             mapTextbookStatusKeyToDeliveryStatus(status)
           )
+          const serverStatus = response.textbookDeliveryStatus
+          if (serverStatus) {
+            const resolvedStatus = mapTextbookDeliveryStatusToBadge(serverStatus)
+            setSchoolList(prev =>
+              prev.map(row =>
+                row.id === recordId ? { ...row, textbookStatus: resolvedStatus } : row
+              )
+            )
+          }
           await queryClient.invalidateQueries({
             queryKey: generalProgramProgressQueryKeys.institutions(programId),
           })
+          if (record?.organizationApplicationId) {
+            await queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationDetail(
+                record.organizationApplicationId
+              ),
+            })
+          }
         } catch (error) {
-          if (previous) {
-            setSchoolList(prev =>
-              prev.map(row =>
-                row.id === recordId ? { ...row, textbookStatus: previous } : row
-              )
-            )
+          const isConcurrentStateChange =
+            getApiErrorHttpStatus(error) === 409 &&
+            getApiErrorCode(error) === 'TEXTBOOK_DELIVERY_CONCURRENT_STATE_CHANGE'
+          if (isConcurrentStateChange) {
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.institutions(programId),
+            })
+            if (record?.organizationApplicationId) {
+              await queryClient.invalidateQueries({
+                queryKey: generalApplicationsQueryKeys.organizationDetail(
+                  record.organizationApplicationId
+                ),
+              })
+            }
+            showAlert({
+              title: '교재 배송 변경 실패',
+              content:
+                '교재 배송 상태가 다른 요청으로 변경되었습니다. 새로고침 후 다시 시도해 주세요.',
+            })
+            return
           }
           showAlert({
             title: '교재 배송 변경 실패',
@@ -343,16 +378,13 @@ export function useProgressSchoolList({
   }, [selectedSchoolRowKeys])
 
   /** 잔여 모달 승인 취소. 진행 현황 SSOT는 활동 포기. 로컬 성공 위장 금지. */
-  const handleSchoolApprovalCancel = useCallback(
-    (_schoolId: string) => {
-      void _schoolId
-      notifyProgramApiUnavailable(
-        'general-participating-institution-cancel-approval',
-        '일반 프로그램 · 참여 기관 진행 현황 승인 취소'
-      )
-    },
-    []
-  )
+  const handleSchoolApprovalCancel = useCallback((_schoolId: string) => {
+    void _schoolId
+    notifyProgramApiUnavailable(
+      'general-participating-institution-cancel-approval',
+      '일반 프로그램 · 참여 기관 진행 현황 승인 취소'
+    )
+  }, [])
 
   /** 학교별 배정 강사 요약 (대표강사명 외 N명, 저장 패치 우선) */
   const getInstructorDisplayForSchool = useCallback(

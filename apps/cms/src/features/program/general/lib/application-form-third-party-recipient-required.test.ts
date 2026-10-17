@@ -161,6 +161,16 @@ describe('application form third-party recipient required', () => {
     ).toBe(true)
   })
 
+  it('UJAT 고정 신청 양식도 등록 완료 시 제공받는 곳을 검사한다', () => {
+    const program = {
+      id: 'ujat-registration-validation',
+      ujatProgressStatus: 'EDUCATION_SCHEDULED',
+    } as Program
+    expect(describeIncompleteApplicationFormThirdPartyRecipient({ program })).toBe(
+      'application.application-ujat-school.thirdPartyRecipient'
+    )
+  })
+
   it('모든 신청 폼 시드의 「제공받는 곳」 기본값이 정책 표와 같다', () => {
     const seeds: Array<[string, ReturnType<typeof createProgramParticipantApplicationDraft>]> = [
       [PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent, createProgramParticipantApplicationDraft()],

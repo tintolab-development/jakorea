@@ -36,9 +36,11 @@ import {
   type VolunteerWaitingAssignmentStatus,
 } from '@/features/program/general/lib/participating-volunteer-institution-assignment'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
+import { participatingScheduleTableColumnLayout } from '@/features/program/general/lib/participating-institutions-table'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
 import './instructor-assignment-status-text.css'
+import './participating-institutions-section.css'
 import './participating-volunteer-assignment-section.css'
 
 function renderVolunteerScheduleLines(lines: string[]) {
@@ -48,17 +50,17 @@ function renderVolunteerScheduleLines(lines: string[]) {
   const displayLines = lines.slice(0, showCount)
   const restCount = total - showCount
   return (
-    <div className="participating-volunteer-assignment-section__schedule-cell">
+    <div className="participating-institutions-section__sessions-cell">
       {displayLines.map((line, index) => (
         <div
           key={`${line}-${index}`}
-          className="participating-volunteer-assignment-section__schedule-line"
+          className="participating-institutions-section__session-line"
         >
           {renderProgramDetailPipeSeparated(line)}
         </div>
       ))}
       {restCount > 0 ? (
-        <div className="participating-volunteer-assignment-section__schedule-more">
+        <div className="participating-institutions-section__session-more">
           외 {restCount}개의 봉사 일정
         </div>
       ) : null}
@@ -68,8 +70,8 @@ function renderVolunteerScheduleLines(lines: string[]) {
 
 function renderHopeScheduleLine(line: string) {
   return (
-    <div className="participating-volunteer-assignment-section__schedule-cell">
-      <div className="participating-volunteer-assignment-section__schedule-line">
+    <div className="participating-institutions-section__sessions-cell">
+      <div className="participating-institutions-section__session-line">
         {renderProgramDetailPipeSeparated(line)}
       </div>
     </div>
@@ -167,7 +169,7 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '담당 봉사 진행 일정',
         key: 'volunteerScheduleLines',
         width: 415,
-        align: 'center',
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => renderVolunteerScheduleLines(record.volunteerScheduleLines),
       },
     ],
@@ -211,7 +213,7 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '봉사 진행 희망 일정',
         key: 'hopeScheduleLine',
         width: 356,
-        align: 'center',
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => renderHopeScheduleLine(record.hopeScheduleLine),
       },
       {

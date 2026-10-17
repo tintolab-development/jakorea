@@ -35,6 +35,7 @@ import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s
 import type { Application } from '@/types/domain'
 import {
   formatApplicantGradeLabel,
+  formatPreviousYearParticipationLabel,
   formatRequestedEducationFormat,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
@@ -275,37 +276,67 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
   detail: SchoolDetailForModal,
   dto: OrganizationApplicationDetailResponse
 ): SchoolDetailForModal {
-  const teacherPhone = dto.teacherPhone?.trim()
-  const teacherEmail = dto.teacherEmail?.trim()
-  const addressDetail = dto.organizationAddressDetail?.trim()
+  const stringField = (key: keyof OrganizationApplicationDetailResponse) => {
+    const value = dto[key]
+    if (typeof value !== 'string') return undefined
+    const trimmed = value.trim()
+    return trimmed || undefined
+  }
+  const numberField = (key: keyof OrganizationApplicationDetailResponse) => {
+    const value = dto[key]
+    return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+  }
+  const teacherPhone = stringField('teacherPhone')
+  const teacherEmail = stringField('teacherEmail')
+  const addressDetail = stringField('organizationAddressDetail')
   const educationFormat = formatRequestedEducationFormat(dto.requestedEducationFormat)
+  const requestedGrade = stringField('requestedGrade')
+  const organizationName = stringField('organizationName')
+  const organizationAddress = stringField('organizationAddress')
+  const teacherName = stringField('teacherName')
+  const applicationReason = stringField('applicationReason')
+  const otherRequests = stringField('otherRequests')
+  const computerInRoom = stringField('computerInRoom')
+  const waitingRoomLocation = stringField('waitingRoomLocation')
+  const mealNotice = stringField('mealNotice')
+  const parkingInfo = stringField('parkingInfo')
+  const textbookName = stringField('textbookName')
+  const textbookGrade = stringField('textbookGrade')
+  const economyFields = {
+    previousYearParticipation: formatPreviousYearParticipationLabel(
+      dto.previousYearParticipation
+    ),
+    affiliatedFinancialCompany: stringField('affiliatedFinancialCompany'),
+  }
   return {
     ...detail,
-    schoolName: dto.organizationName?.trim() || detail.schoolName,
-    region: dto.organizationAddress?.trim() || detail.region,
-    addressDetail: addressDetail || detail.addressDetail,
-    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || detail.educationGrade,
-    educationFormat: educationFormat || detail.educationFormat,
-    classCount: dto.requestedClassCount ?? detail.classCount,
-    studentCount: dto.requestedStudentCount ?? detail.studentCount,
-    teacherName: dto.teacherName?.trim() || detail.teacherName,
-    teacherPhone: teacherPhone || detail.teacherPhone,
-    teacherMobile: teacherPhone || detail.teacherMobile,
-    teacherEmail: teacherEmail || detail.teacherEmail,
-    applicationReason: dto.applicationReason?.trim() || detail.applicationReason,
-    otherRequests: dto.otherRequests?.trim() || detail.otherRequests,
-    computerInRoom: dto.computerInRoom?.trim() || detail.computerInRoom,
-    waitingRoomLocation: dto.waitingRoomLocation?.trim() || detail.waitingRoomLocation,
-    mealProvided: dto.mealProvided ?? detail.mealProvided,
-    mealNotice: dto.mealNotice?.trim() || detail.mealNotice,
-    parkingInfo: dto.parkingInfo?.trim() || detail.parkingInfo,
-    textbookId: dto.textbookId != null ? String(dto.textbookId) : detail.textbookId,
-    textbookName: dto.textbookName?.trim() || detail.textbookName,
-    textbookGrade: dto.textbookGrade?.trim() || detail.textbookGrade,
-    textbookKits: dto.textbookKits ?? detail.textbookKits,
-    textbookQuantity: dto.textbookQuantity ?? detail.textbookQuantity,
-    waitingRoomAvailable: dto.waitingRoomAvailable ?? detail.waitingRoomAvailable,
-    participationAppliedAt: dto.submittedAt ?? detail.participationAppliedAt,
+    schoolName: organizationName ?? '-',
+    region: organizationAddress ?? '-',
+    addressDetail,
+    educationGrade: formatApplicantGradeLabel(requestedGrade) || '-',
+    educationFormat: educationFormat || undefined,
+    classCount: numberField('requestedClassCount') ?? 0,
+    studentCount: numberField('requestedStudentCount') ?? 0,
+    teacherName,
+    teacherPhone,
+    teacherMobile: teacherPhone,
+    teacherEmail,
+    applicationReason,
+    otherRequests,
+    computerInRoom,
+    waitingRoomLocation,
+    mealProvided: dto.mealProvided ?? undefined,
+    mealNotice,
+    parkingInfo,
+    textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
+    textbookName,
+    textbookGrade,
+    textbookKits: dto.textbookKits ?? undefined,
+    textbookQuantity: dto.textbookQuantity ?? undefined,
+    waitingRoomAvailable: dto.waitingRoomAvailable ?? undefined,
+    participationAppliedAt: dto.submittedAt ?? undefined,
+    gradeBlocks: dto.gradeBlocks ?? undefined,
+    ...economyFields,
   }
 }
 

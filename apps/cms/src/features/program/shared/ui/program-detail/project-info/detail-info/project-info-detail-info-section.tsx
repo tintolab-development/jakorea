@@ -14,7 +14,8 @@ import { FileSelectField } from '@/shared/ui/file-select-field'
 import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
+import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
   parseFileObjectId,
   programInlineImageOwner,
@@ -222,7 +223,90 @@ function DetailInfoRichTextFieldEditor({
   )
 }
 
-function RichTextFieldRow({
+const DETAIL_INFO_FIELD_LABEL_WIDTH = 200 as const
+
+function ProgramDetailTextAreaField({
+  label,
+  showRequiredStar,
+  isFormEdit,
+  form,
+  name,
+  rows = 1,
+  placeholder,
+  readContent,
+  control = 'textarea',
+}: {
+  label: string
+  showRequiredStar: boolean
+  isFormEdit: boolean
+  form: UseFormReturn<ProgramDetailEditFormValues> | undefined
+  name: FieldPath<ProgramDetailEditFormValues>
+  rows?: number
+  placeholder: string
+  readContent: ReactNode
+  control?: 'textarea' | 'input'
+}) {
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label={label}
+        required={showRequiredStar}
+        labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
+        fullRow
+        view={
+          <div className="text-area-field-row__content-block">{readContent}</div>
+        }
+        edit={
+          isFormEdit && form
+            ? (
+                <Controller
+                  name={name}
+                  control={form.control}
+                  render={({ field, fieldState }) => {
+                    const value =
+                      typeof field.value === 'string' ? field.value : String(field.value ?? '')
+                    return (
+                      <>
+                        {control === 'input' ? (
+                          <CmsInput
+                            {...field}
+                            value={value}
+                            inputSize="medium"
+                            width="100%"
+                            placeholder={placeholder}
+                            className="text-area-field-row__field"
+                            status={fieldState.error ? 'error' : undefined}
+                          />
+                        ) : (
+                          <CmsTextArea
+                            {...field}
+                            value={value}
+                            inputSize="medium"
+                            width="100%"
+                            rows={rows}
+                            placeholder={placeholder}
+                            className="text-area-field-row__field"
+                            status={fieldState.error ? 'error' : undefined}
+                          />
+                        )}
+                        {fieldState.error?.message ? (
+                          <span className="text-area-field-row__field-error">
+                            {fieldState.error.message}
+                          </span>
+                        ) : null}
+                      </>
+                    )
+                  }}
+                />
+              )
+            : undefined
+        }
+      />
+    </DetailInfoForm.Row>
+  )
+}
+
+function RichTextDetailField({
   label,
   showRequiredStar,
   isFormEdit,
@@ -242,33 +326,38 @@ function RichTextFieldRow({
   readContent: ReactNode
 }) {
   return (
-    <tr>
-      <th>
-        {label}
-        {showRequiredStar ? <span className="text-area-field-row__required">*</span> : null}
-      </th>
-      <td>
-        {isFormEdit && form ? (
-          <Controller
-            name={name}
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <DetailInfoRichTextFieldEditor
-                field={field}
-                program={program}
-                placeholder={placeholder}
-                error={fieldState.error}
-              />
-            )}
-          />
-        ) : (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label={label}
+        required={showRequiredStar}
+        labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
+        fullRow
+        view={
           <RichTextReadContent
             content={readContent}
             className="text-area-field-row__content-block"
           />
-        )}
-      </td>
-    </tr>
+        }
+        edit={
+          isFormEdit && form
+            ? (
+                <Controller
+                  name={name}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <DetailInfoRichTextFieldEditor
+                      field={field}
+                      program={program}
+                      placeholder={placeholder}
+                      error={fieldState.error}
+                    />
+                  )}
+                />
+              )
+            : undefined
+        }
+      />
+    </DetailInfoForm.Row>
   )
 }
 
@@ -473,23 +562,9 @@ function useDetailInfoEditorBlock(
   }
 }
 
-function DetailInfoTableFrame({ children }: { children: ReactNode }) {
-  return (
-    <div className="program-detail-info-tab__table-wrapper">
-      <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-        <colgroup>
-          <col style={{ width: '200px' }} />
-          <col />
-        </colgroup>
-        <tbody>{children}</tbody>
-      </table>
-    </div>
-  )
-}
-
-function ThumbnailImageRow({
+function ThumbnailImageField({
   program,
-  isEditMode,
+  isEditMode: _isEditMode,
   isFormEdit,
   form,
   uploadingThumbnail,
@@ -517,23 +592,19 @@ function ThumbnailImageRow({
   showRequiredStar: boolean
 }) {
   const { showAlert } = useCmsAlert()
-  return (
-    <tr>
-      <th>
-        썸네일 이미지
-        {showRequiredStar ? <span className="program-detail-info-tab__required">*</span> : null}
-      </th>
-      <td className="program-detail-info-tab__cell--thumbnail">
-        <ThumbnailUploadField
-          previewUrl={displayThumbnailUrl}
-          previewAlt={program.title}
-          fileName={thumbnailFilename}
-          guideLines={guideLines}
-          disabled={!isEditMode}
-          uploading={uploadingThumbnail}
-          onSelectFile={
-            isFormEdit
-              ? async file => {
+
+  const renderThumbnail = (disabled: boolean) => (
+    <div className="program-detail-info-tab__cell--thumbnail">
+      <ThumbnailUploadField
+        previewUrl={displayThumbnailUrl}
+        previewAlt={program.title}
+        fileName={thumbnailFilename}
+        guideLines={guideLines}
+        disabled={disabled}
+        uploading={uploadingThumbnail}
+        onSelectFile={
+          !disabled && isFormEdit
+            ? async file => {
                   if (!form) return
                   setThumbnailPreviewBlobUrl(prev => {
                     if (prev) URL.revokeObjectURL(prev)
@@ -574,11 +645,11 @@ function ThumbnailImageRow({
                     setUploadingThumbnail(false)
                   }
                 }
-              : undefined
-          }
-          onRemove={
-            isFormEdit
-              ? () => {
+            : undefined
+        }
+        onRemove={
+          !disabled && isFormEdit
+            ? () => {
                   setThumbnailPreviewBlobUrl(prev => {
                     if (prev) URL.revokeObjectURL(prev)
                     return null
@@ -600,11 +671,23 @@ function ThumbnailImageRow({
                     })
                   }
                 }
-              : undefined
-          }
-        />
-      </td>
-    </tr>
+            : undefined
+        }
+      />
+    </div>
+  )
+
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label="썸네일 이미지"
+        required={showRequiredStar}
+        labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
+        fullRow
+        view={renderThumbnail(true)}
+        edit={renderThumbnail(false)}
+      />
+    </DetailInfoForm.Row>
   )
 }
 
@@ -624,7 +707,7 @@ function AdditionalContentFieldError({
   )
 }
 
-function AdditionalContentRow({
+function AdditionalContentField({
   program,
   isEditMode,
   isFormEdit,
@@ -647,49 +730,52 @@ function AdditionalContentRow({
   const additionalEmpty =
     emptyReadDisplay === 'dash' ? isAdditionalContentEmpty(program) : false
 
+  const readView = additionalEmpty
+    ? '-'
+    : (
+        <div className="program-detail-info-tab__additional-content">
+          <RichTextViewer
+            content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
+            contentFormat="html"
+            maxHeight="none"
+            className="program-detail-info-tab__editor-content"
+          />
+        </div>
+      )
+
+  const editView = (
+    <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
+      {editorOpen && editor ? (
+        <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
+          <RichTextEditor
+            editor={editor}
+            className="program-detail-info-tab__rich-text-editor"
+            minHeight="100px"
+            fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
+          />
+          {form ? <AdditionalContentFieldError control={form.control} /> : null}
+        </div>
+      ) : (
+        <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
+      )}
+    </div>
+  )
+
   return (
-    <tr>
-      <th>
-        추가 내용
-        {showRequiredOnTh && isFormEdit ? (
-          <span className="program-detail-info-tab__required">*</span>
-        ) : null}
-      </th>
-      <td>
-        {isEditMode ? (
-          <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
-            {editorOpen && editor ? (
-              <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
-                <RichTextEditor
-                  editor={editor}
-                  className="program-detail-info-tab__rich-text-editor"
-                  minHeight="100px"
-                  fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
-                />
-                {form ? <AdditionalContentFieldError control={form.control} /> : null}
-              </div>
-            ) : (
-              <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
-            )}
-          </div>
-        ) : additionalEmpty ? (
-          '-'
-        ) : (
-          <div className="program-detail-info-tab__additional-content">
-            <RichTextViewer
-              content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
-              contentFormat="html"
-              maxHeight="none"
-              className="program-detail-info-tab__editor-content"
-            />
-          </div>
-        )}
-      </td>
-    </tr>
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label="추가 내용"
+        required={showRequiredOnTh && isFormEdit}
+        labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
+        fullRow
+        view={readView}
+        edit={isEditMode ? editView : undefined}
+      />
+    </DetailInfoForm.Row>
   )
 }
 
-function AttachmentRowStandard({
+function AttachmentDetailField({
   program,
   isEditMode,
   isFormEdit,
@@ -717,26 +803,20 @@ function AttachmentRowStandard({
   const showEmptyDash =
     !isEditMode && emptyReadDisplay === 'dash' && displayFileNames.length === 0
 
-  return (
-    <tr>
-      <th>첨부 파일</th>
-      <td>
-        {showEmptyDash ? (
-          '-'
-        ) : (
-          <>
-          <FileSelectField
-            accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-            multiple
-            disabled={!isEditMode || uploading}
-            uploading={uploading}
-            className={isEditMode ? 'file-select-field--edit' : ''}
-            fileNames={displayFileNames}
-            guideLines={guideLines}
-            currentTotalBytes={currentTotalBytes}
-            onFilesChange={
-              isFormEdit
-                ? async files => {
+  const attachmentField = (
+    <>
+      <FileSelectField
+        accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+        multiple
+        disabled={!isEditMode || uploading}
+        uploading={uploading}
+        className={isEditMode ? 'file-select-field--edit' : ''}
+        fileNames={displayFileNames}
+        guideLines={guideLines}
+        currentTotalBytes={currentTotalBytes}
+        onFilesChange={
+          isFormEdit
+            ? async files => {
                     const owner = programMediaAttachmentOwner(program)
                     if (owner == null) return
                     setUploading(true)
@@ -812,18 +892,27 @@ function AttachmentRowStandard({
                       }
                     })()
                   }
-                : undefined
-            }
-          />
-          {attachmentError != null ? (
-            <p className="text-area-field-row__field-error" role="alert">
-              {attachmentError}
-            </p>
-          ) : null}
-          </>
-        )}
-      </td>
-    </tr>
+            : undefined
+        }
+      />
+      {attachmentError != null ? (
+        <p className="text-area-field-row__field-error" role="alert">
+          {attachmentError}
+        </p>
+      ) : null}
+    </>
+  )
+
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label="첨부 파일"
+        labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
+        fullRow
+        view={showEmptyDash ? '-' : attachmentField}
+        edit={attachmentField}
+      />
+    </DetailInfoForm.Row>
   )
 }
 
@@ -907,101 +996,99 @@ export function DetailInfoSection({
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >
-        <DetailInfoTableFrame>
-          {showThumbnail && (
-            <ThumbnailImageRow
-              program={program}
-              isEditMode={isEditMode}
-              isFormEdit={isFormEdit}
-              form={f}
-              uploadingThumbnail={uploadingThumbnail}
-              setUploadingThumbnail={setUploadingThumbnail}
-              setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
-              setLinkedThumbnail={setLinkedThumbnail}
-              displayThumbnailUrl={displayThumbnailUrl}
-              thumbnailFilename={thumbnailFilename}
-              guideLines={THUMBNAIL_GUIDE_LINES}
-              showRequiredStar={false}
-            />
+        {showThumbnail ? (
+          <ThumbnailImageField
+            program={program}
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            form={f}
+            uploadingThumbnail={uploadingThumbnail}
+            setUploadingThumbnail={setUploadingThumbnail}
+            setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            setLinkedThumbnail={setLinkedThumbnail}
+            displayThumbnailUrl={displayThumbnailUrl}
+            thumbnailFilename={thumbnailFilename}
+            guideLines={THUMBNAIL_GUIDE_LINES}
+            showRequiredStar={false}
+          />
+        ) : null}
+        <ProgramDetailTextAreaField
+          label="프로그램 설명"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          name="description"
+          placeholder="프로그램 설명"
+          control={textFieldControl}
+          readContent={resolveTextReadContent(
+            program.description,
+            emptyReadDisplay,
+            DEFAULT_PROGRAM_DESCRIPTION
           )}
-          <TextAreaFieldRow
-            label="프로그램 설명"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            name="description"
-            placeholder="프로그램 설명"
-            control={textFieldControl}
-            readContent={resolveTextReadContent(
-              program.description,
-              emptyReadDisplay,
-              DEFAULT_PROGRAM_DESCRIPTION
-            )}
-          />
-          <RichTextFieldRow
-            label="모집 안내"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="recruitmentGuide"
-            placeholder="모집 안내"
-            readContent={resolveTextReadContent(
-              program.recruitmentGuide,
-              emptyReadDisplay,
-              DEFAULT_RECRUITMENT_GUIDE
-            )}
-          />
-          {showRecruitmentMethod ? (
-            <RichTextFieldRow
-              label={recruitmentMethodLabel}
-              showRequiredStar={false}
-              isFormEdit={isFormEdit}
-              form={f}
-              program={program}
-              name="applicationMethod"
-              placeholder={recruitmentMethodLabel}
-              readContent={program.applicationMethod ?? '-'}
-            />
-          ) : null}
-          <RichTextFieldRow
-            label="학습 지원 내용"
+        />
+        <RichTextDetailField
+          label="모집 안내"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="recruitmentGuide"
+          placeholder="모집 안내"
+          readContent={resolveTextReadContent(
+            program.recruitmentGuide,
+            emptyReadDisplay,
+            DEFAULT_RECRUITMENT_GUIDE
+          )}
+        />
+        {showRecruitmentMethod ? (
+          <RichTextDetailField
+            label={recruitmentMethodLabel}
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
             program={program}
-            name="learningSupportContent"
-            placeholder="학습 지원 내용"
-            readContent={resolveTextReadContent(
-              program.learningSupportContent,
-              emptyReadDisplay,
-              DEFAULT_LEARNING_SUPPORT
-            )}
+            name="applicationMethod"
+            placeholder={recruitmentMethodLabel}
+            readContent={program.applicationMethod ?? '-'}
           />
-          <AdditionalContentRow
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            editorOpen={editorOpen}
-            editor={editor}
-            editorMinHeight={editorMinHeight}
-            showRequiredOnTh={false}
-            emptyReadDisplay={emptyReadDisplay}
-            form={f}
-          />
-          <AttachmentRowStandard
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            form={f}
-            displayFileNames={displayFileNames}
-            guideLines={ATTACHMENT_GUIDE_LINES}
-            emptyReadDisplay={emptyReadDisplay}
-            onNamesChange={setLinkedAttachmentNames}
-            currentTotalBytes={linkedAttachmentTotalBytes}
-            onTotalBytesChange={setLinkedAttachmentTotalBytes}
-          />
-        </DetailInfoTableFrame>
+        ) : null}
+        <RichTextDetailField
+          label="학습 지원 내용"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="learningSupportContent"
+          placeholder="학습 지원 내용"
+          readContent={resolveTextReadContent(
+            program.learningSupportContent,
+            emptyReadDisplay,
+            DEFAULT_LEARNING_SUPPORT
+          )}
+        />
+        <AdditionalContentField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          editorOpen={editorOpen}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
+          showRequiredOnTh={false}
+          emptyReadDisplay={emptyReadDisplay}
+          form={f}
+        />
+        <AttachmentDetailField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          form={f}
+          displayFileNames={displayFileNames}
+          guideLines={ATTACHMENT_GUIDE_LINES}
+          emptyReadDisplay={emptyReadDisplay}
+          onNamesChange={setLinkedAttachmentNames}
+          currentTotalBytes={linkedAttachmentTotalBytes}
+          onTotalBytesChange={setLinkedAttachmentTotalBytes}
+        />
       </DetailInfoForm>
     </>
   )
@@ -1065,95 +1152,93 @@ export function InstructorDetailInfoSection({
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >
-        <DetailInfoTableFrame>
-          <ThumbnailImageRow
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            form={f}
-            uploadingThumbnail={uploadingThumbnail}
-            setUploadingThumbnail={setUploadingThumbnail}
-            setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
-            setLinkedThumbnail={setLinkedThumbnail}
-            displayThumbnailUrl={displayThumbnailUrl}
-            thumbnailFilename={thumbnailFilename}
-            guideLines={THUMBNAIL_GUIDE_LINES}
-            showRequiredStar={false}
-          />
-          <TextAreaFieldRow
-            label="프로그램 설명"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            name="description"
-            placeholder="프로그램 설명"
-            readContent={resolveTextReadContent(
-              program.description,
-              emptyReadDisplay,
-              DEFAULT_PROGRAM_DESCRIPTION
-            )}
-          />
-          <RichTextFieldRow
-            label="모집 안내"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="recruitmentGuide"
-            placeholder="모집 안내"
-            readContent={resolveTextReadContent(
-              program.recruitmentGuide,
-              emptyReadDisplay,
-              DEFAULT_RECRUITMENT_GUIDE
-            )}
-          />
-          <RichTextFieldRow
-            label="지원 방법"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="applicationMethod"
-            placeholder="지원 방법"
-            readContent={applicationMethod}
-          />
-          <AdditionalContentRow
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            editorOpen={editorOpen}
-            editor={editor}
-            editorMinHeight={editorMinHeight}
-            showRequiredOnTh={false}
-            emptyReadDisplay={emptyReadDisplay}
-            form={f}
-          />
-          <RichTextFieldRow
-            label="기타사항"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="otherNotes"
-            placeholder="기타사항"
-            readContent={otherNotes}
-          />
-          <AttachmentRowStandard
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            form={f}
-            displayFileNames={displayFileNames}
-            guideLines={[
-              '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-              '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-            ]}
-            emptyReadDisplay={emptyReadDisplay}
-            onNamesChange={setLinkedAttachmentNames}
-            currentTotalBytes={linkedAttachmentTotalBytes}
-            onTotalBytesChange={setLinkedAttachmentTotalBytes}
-          />
-        </DetailInfoTableFrame>
+        <ThumbnailImageField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          form={f}
+          uploadingThumbnail={uploadingThumbnail}
+          setUploadingThumbnail={setUploadingThumbnail}
+          setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+          setLinkedThumbnail={setLinkedThumbnail}
+          displayThumbnailUrl={displayThumbnailUrl}
+          thumbnailFilename={thumbnailFilename}
+          guideLines={THUMBNAIL_GUIDE_LINES}
+          showRequiredStar={false}
+        />
+        <ProgramDetailTextAreaField
+          label="프로그램 설명"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          name="description"
+          placeholder="프로그램 설명"
+          readContent={resolveTextReadContent(
+            program.description,
+            emptyReadDisplay,
+            DEFAULT_PROGRAM_DESCRIPTION
+          )}
+        />
+        <RichTextDetailField
+          label="모집 안내"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="recruitmentGuide"
+          placeholder="모집 안내"
+          readContent={resolveTextReadContent(
+            program.recruitmentGuide,
+            emptyReadDisplay,
+            DEFAULT_RECRUITMENT_GUIDE
+          )}
+        />
+        <RichTextDetailField
+          label="지원 방법"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="applicationMethod"
+          placeholder="지원 방법"
+          readContent={applicationMethod}
+        />
+        <AdditionalContentField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          editorOpen={editorOpen}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
+          showRequiredOnTh={false}
+          emptyReadDisplay={emptyReadDisplay}
+          form={f}
+        />
+        <RichTextDetailField
+          label="기타사항"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="otherNotes"
+          placeholder="기타사항"
+          readContent={otherNotes}
+        />
+        <AttachmentDetailField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          form={f}
+          displayFileNames={displayFileNames}
+          guideLines={[
+            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+          ]}
+          emptyReadDisplay={emptyReadDisplay}
+          onNamesChange={setLinkedAttachmentNames}
+          currentTotalBytes={linkedAttachmentTotalBytes}
+          onTotalBytesChange={setLinkedAttachmentTotalBytes}
+        />
       </DetailInfoForm>
     </>
   )
@@ -1180,8 +1265,6 @@ export function VolunteerDetailInfoSection({
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
 }: VolunteerDetailInfoSectionProps) {
-  const [uploadingAttachments, setUploadingAttachments] = useState(false)
-  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const {
     editorOpen,
     editor,
@@ -1227,193 +1310,90 @@ export function VolunteerDetailInfoSection({
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >
-        <DetailInfoTableFrame>
-          <ThumbnailImageRow
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            form={f}
-            uploadingThumbnail={uploadingThumbnail}
-            setUploadingThumbnail={setUploadingThumbnail}
-            setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
-            setLinkedThumbnail={setLinkedThumbnail}
-            displayThumbnailUrl={displayThumbnailUrl}
-            thumbnailFilename={thumbnailFilename}
-            guideLines={THUMBNAIL_GUIDE_LINES}
-            showRequiredStar={false}
-          />
-          <TextAreaFieldRow
-            label="프로그램 설명"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            name="description"
-            placeholder="프로그램 설명"
-            readContent={resolveTextReadContent(
-              program.description,
-              emptyReadDisplay,
-              DEFAULT_PROGRAM_DESCRIPTION
-            )}
-          />
-          <RichTextFieldRow
-            label="모집 안내"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="recruitmentGuide"
-            placeholder="모집 안내"
-            readContent={resolveTextReadContent(
-              program.recruitmentGuide,
-              emptyReadDisplay,
-              DEFAULT_RECRUITMENT_GUIDE
-            )}
-          />
-          <RichTextFieldRow
-            label="지원 방법"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="applicationMethod"
-            placeholder="지원 방법"
-            readContent={applicationMethod}
-          />
-          <AdditionalContentRow
-            program={program}
-            isEditMode={isEditMode}
-            isFormEdit={isFormEdit}
-            editorOpen={editorOpen}
-            editor={editor}
-            editorMinHeight={editorMinHeight}
-            showRequiredOnTh={false}
-            emptyReadDisplay={emptyReadDisplay}
-            form={f}
-          />
-          <RichTextFieldRow
-            label="기타사항"
-            showRequiredStar={false}
-            isFormEdit={isFormEdit}
-            form={f}
-            program={program}
-            name="otherNotes"
-            placeholder="기타사항"
-            readContent={otherNotes}
-          />
-          <tr>
-            <th>첨부 파일</th>
-            <td>
-              {isEditMode ? (
-                <>
-                <FileSelectField
-                  accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                  multiple
-                  disabled={uploadingAttachments}
-                  uploading={uploadingAttachments}
-                  className="file-select-field--edit"
-                  fileNames={displayFileNames}
-                  guideLines={ATTACHMENT_GUIDE_LINES}
-                  currentTotalBytes={linkedAttachmentTotalBytes}
-                  onFilesChange={
-                    isFormEdit
-                      ? async files => {
-                          const owner = programMediaAttachmentOwner(program)
-                          if (owner == null) return
-                          setUploadingAttachments(true)
-                          try {
-                            const uploadedIds: number[] = []
-                            for (const file of files) {
-                              const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                              uploadedIds.push(uploaded.fileObjectId)
-                            }
-                            if (uploadedIds.length === 0) return
-                            const existing = await fetchProgramMediaAttachments(program).catch(
-                              () => []
-                            )
-                            const existingIds = existing
-                              .map(item => item.fileObjectId)
-                              .filter((id): id is number => typeof id === 'number' && id > 0)
-                            const linked = await putProgramMediaAttachments(program, [
-                              ...existingIds,
-                              ...uploadedIds,
-                            ])
-                            const names = linked
-                              .map(item => item.originalFileName?.trim() || '')
-                              .filter(Boolean)
-                            f!.setValue('attachmentFileNames', names)
-                            setLinkedAttachmentNames(names)
-                            setLinkedAttachmentTotalBytes(
-                              linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
-                            )
-                            setAttachmentError(null)
-                          } catch (error) {
-                            setAttachmentError(
-                              extractApiErrorMessage(axiosErrorData(error), {
-                                fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                              })
-                            )
-                          } finally {
-                            setUploadingAttachments(false)
-                          }
-                        }
-                      : undefined
-                  }
-                  onRemoveFile={
-                    isFormEdit
-                      ? index => {
-                          if (!hasProgramMediaTarget(program)) {
-                            const list = f!.getValues('attachmentFileNames') ?? []
-                            const next = list.filter((_, i) => i !== index)
-                            f!.setValue('attachmentFileNames', next)
-                            setLinkedAttachmentNames(next)
-                            return
-                          }
-                          void (async () => {
-                            const existing = await fetchProgramMediaAttachments(program).catch(
-                              () => []
-                            )
-                            const remainingIds = existing
-                              .map(item => item.fileObjectId)
-                              .filter((id): id is number => typeof id === 'number' && id > 0)
-                              .filter((_, i) => i !== index)
-                            try {
-                            const linked = await putProgramMediaAttachments(program, remainingIds)
-                            const names = linked
-                              .map(item => item.originalFileName?.trim() || '')
-                              .filter(Boolean)
-                            f!.setValue('attachmentFileNames', names)
-                            setLinkedAttachmentNames(names)
-                            setLinkedAttachmentTotalBytes(
-                              linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
-                            )
-                            setAttachmentError(null)
-                            } catch (error) {
-                              setAttachmentError(
-                                extractApiErrorMessage(axiosErrorData(error), {
-                                  fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                                })
-                              )
-                              return
-                            }
-                          })()
-                        }
-                      : undefined
-                  }
-                />
-                {attachmentError != null ? (
-                  <p className="text-area-field-row__field-error" role="alert">
-                    {attachmentError}
-                  </p>
-                ) : null}
-                </>
-              ) : (
-                <div className="program-detail-info-tab__content-block">
-                  {displayFileNames.length > 0 ? displayFileNames.join(', ') : '-'}
-                </div>
-              )}
-            </td>
-          </tr>
-        </DetailInfoTableFrame>
+        <ThumbnailImageField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          form={f}
+          uploadingThumbnail={uploadingThumbnail}
+          setUploadingThumbnail={setUploadingThumbnail}
+          setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+          setLinkedThumbnail={setLinkedThumbnail}
+          displayThumbnailUrl={displayThumbnailUrl}
+          thumbnailFilename={thumbnailFilename}
+          guideLines={THUMBNAIL_GUIDE_LINES}
+          showRequiredStar={false}
+        />
+        <ProgramDetailTextAreaField
+          label="프로그램 설명"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          name="description"
+          placeholder="프로그램 설명"
+          readContent={resolveTextReadContent(
+            program.description,
+            emptyReadDisplay,
+            DEFAULT_PROGRAM_DESCRIPTION
+          )}
+        />
+        <RichTextDetailField
+          label="모집 안내"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="recruitmentGuide"
+          placeholder="모집 안내"
+          readContent={resolveTextReadContent(
+            program.recruitmentGuide,
+            emptyReadDisplay,
+            DEFAULT_RECRUITMENT_GUIDE
+          )}
+        />
+        <RichTextDetailField
+          label="지원 방법"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="applicationMethod"
+          placeholder="지원 방법"
+          readContent={applicationMethod}
+        />
+        <AdditionalContentField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          editorOpen={editorOpen}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
+          showRequiredOnTh={false}
+          emptyReadDisplay={emptyReadDisplay}
+          form={f}
+        />
+        <RichTextDetailField
+          label="기타사항"
+          showRequiredStar={false}
+          isFormEdit={isFormEdit}
+          form={f}
+          program={program}
+          name="otherNotes"
+          placeholder="기타사항"
+          readContent={otherNotes}
+        />
+        <AttachmentDetailField
+          program={program}
+          isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
+          form={f}
+          displayFileNames={displayFileNames}
+          guideLines={ATTACHMENT_GUIDE_LINES}
+          emptyReadDisplay={emptyReadDisplay}
+          onNamesChange={setLinkedAttachmentNames}
+          currentTotalBytes={linkedAttachmentTotalBytes}
+          onTotalBytesChange={setLinkedAttachmentTotalBytes}
+        />
       </DetailInfoForm>
     </>
   )

@@ -86,13 +86,14 @@ export async function hydrateParticipatingIndividualLectureAttendanceSessions(in
     scheduleIdList
   )
 
-  return withIds.map(row => {
-    const items = attendancesByScheduleId[String(row.scheduleId)] ?? []
+  return withIds.flatMap(row => {
+    const items = attendancesByScheduleId[String(row.scheduleId)]
+    if (!Array.isArray(items) || items.length === 0) return []
     const mine = items.find(item => Number(item.participantId) === participantId)
-    return {
+    return [{
       roundNumber: row.roundNumber,
       scheduleId: row.scheduleId,
       status: mapParticipantAttendanceStatusToLectureCertificate(mine?.status) ?? 'not_held',
-    }
+    }]
   })
 }

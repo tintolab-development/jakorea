@@ -20,11 +20,16 @@ import {
 } from '@/shared/ui'
 import {
   extractApiErrorMessage,
+  getApiErrorCode,
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
+import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   institutionFilterFields,
@@ -100,7 +105,11 @@ import {
   toFlatDecisionNotifyTiming,
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
-import type { OrganizationDecisionNotifyRequest } from '@/features/program/general/api/applications-api-client'
+import type {
+  OrganizationApplicationApprovePayload,
+  OrganizationDecisionNotifyRequest,
+} from '@/features/program/general/api/applications-api-client'
+import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 import {
@@ -243,9 +252,7 @@ export function useApplicantsDetail({
   const trainedTeacherApplicationsRemote = useTrainedTeacherOrganizationApplicationsRemoteSync({
     programId,
     enabled:
-      isTrainedTeachersSurface &&
-      menu === 'institutions' &&
-      usesProgramInstitutionApplications,
+      isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications,
     listFilters: appliedFilters,
     setInstitutionList,
   })
@@ -266,7 +273,9 @@ export function useApplicantsDetail({
       showAlert({
         title: '처리 실패',
         content:
+          formatOrganizationApplicationApproveErrorMessage(error) ??
           formatApplicationEligibilityConflictMessage(error) ??
+          formatApplicationStatusConflictMessage(error) ??
           '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
       })
     },
@@ -284,6 +293,9 @@ export function useApplicantsDetail({
       showAlert({
         title: '처리 실패',
         content:
+          (getApiErrorCode(error) === 'INSTRUCTOR_ASSIGNMENT_CONFLICT'
+            ? '해당 일정에 이미 같은 강사가 배정되어 있거나, 일정 배정 상태가 변경되었습니다. 최신 배정 정보를 다시 조회한 후 시도해 주세요.'
+            : null) ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatInstructorOrganizationApprovalErrorMessage(error) ??
           extractApiErrorMessage(responseData, {
@@ -317,7 +329,8 @@ export function useApplicantsDetail({
       ids: string[],
       decision: 'approve' | 'reject',
       reason?: string,
-      notify?: OrganizationDecisionNotifyRequest
+      notify?: OrganizationDecisionNotifyRequest,
+      approvePayload?: OrganizationApplicationApprovePayload
     ): Promise<'ok' | 'error' | 'skipped'> => {
       if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
       try {
@@ -348,8 +361,10 @@ export function useApplicantsDetail({
         } else {
           for (const id of ids) {
             if (decision === 'approve') {
-              if (generalRemote && notify) {
-                await generalRemote.approveOrganization(id, notify)
+              const body: OrganizationApplicationApprovePayload | undefined =
+                approvePayload ?? (notify ? { ...notify } : notify)
+              if (generalRemote && body) {
+                await generalRemote.approveOrganization(id, body)
               } else {
                 await institutionApplicationsRemote.approveOrganization(id)
               }
@@ -366,6 +381,32 @@ export function useApplicantsDetail({
           }
         }
         await institutionApplicationsRemote.invalidateApplications()
+        if (decision === 'approve') {
+          if (programId) {
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramQueryKeys.formBindings(programId),
+            })
+            await invalidateProgramAdminSchedulesQuery(queryClient, programId)
+          }
+          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.all,
+            })
+            for (const id of ids) {
+              await queryClient.invalidateQueries({
+                queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+              })
+            }
+          }
+          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
+            await queryClient.invalidateQueries({
+              queryKey: [
+                ...generalProgramProgressQueryKeys.all,
+                'organization-schedule-assignments',
+              ],
+            })
+          }
+        }
         return 'ok'
       } catch (error) {
         notifyRemoteDecisionFailure(error)
@@ -377,6 +418,8 @@ export function useApplicantsDetail({
       institutionApplicationsRemote,
       isTrainedTeachersSurface,
       notifyRemoteDecisionFailure,
+      programId,
+      queryClient,
       showAlert,
     ]
   )
@@ -389,7 +432,7 @@ export function useApplicantsDetail({
       approvalPayload?: import('@/features/program/general/api/applications-api-client').InstructorApplicationApprovalRequest,
       notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest,
       bulkNotify?: OrganizationDecisionNotifyRequest
-    ): Promise<'ok' | 'error' | 'skipped'> => {
+    ): Promise<'ok' | 'error' | 'skipped' | 'invalid_fee_policy'> => {
       if (!applicationsRemote.instructorRemoteEnabled) return 'skipped'
       try {
         const numericIds = ids.map(id => Number(id))
@@ -437,13 +480,27 @@ export function useApplicantsDetail({
           }
         }
         await applicationsRemote.invalidateApplications()
+        if (programId) {
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
+          })
+        }
         return 'ok'
       } catch (error) {
+        if (getApiErrorCode(error) === 'INVALID_FEE_POLICY') {
+          return 'invalid_fee_policy'
+        }
+        if (programId && getApiErrorCode(error) === 'INSTRUCTOR_ASSIGNMENT_CONFLICT') {
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
+          })
+          await applicationsRemote.invalidateApplications()
+        }
         notifyRemoteInstructorDecisionFailure(error)
         return 'error'
       }
     },
-    [applicationsRemote, notifyRemoteInstructorDecisionFailure, showAlert]
+    [applicationsRemote, notifyRemoteInstructorDecisionFailure, programId, queryClient, showAlert]
   )
 
   const applyRemoteIndividualDecision = useCallback(
@@ -457,14 +514,12 @@ export function useApplicantsDetail({
       try {
         // 면접 ON 1차 서류 탭: document-result (PASS_DOCUMENT / FAIL)
         if (individualScreeningStage === 'doc1') {
+          const notifyFields = toScreeningResultNotifyFields(screeningNotify)
           const payload = {
-            result: decision === 'approve' ? 'PASS' : 'FAIL',
+            result: (decision === 'approve' ? 'PASS' : 'FAIL') as 'PASS' | 'FAIL',
             reason: decision === 'reject' ? reason?.trim() || '반려' : reason,
-            ...(screeningNotify?.notifyTiming
-              ? { notifyTiming: screeningNotify.notifyTiming }
-              : {}),
-            ...(screeningNotify?.scheduledAt ? { scheduledAt: screeningNotify.scheduledAt } : {}),
-          } as const
+            ...notifyFields,
+          }
           if (ids.length > 1) {
             const result = await applicationsRemote.submitIndividualDocumentResultBulk(ids, payload)
             if ((result.failureCount ?? 0) > 0) {
@@ -795,6 +850,9 @@ export function useApplicantsDetail({
       void queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.instructorList(programId),
       })
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.organizationList(programId),
+      })
     }
   }, [
     instructorColumnPreset,
@@ -814,8 +872,10 @@ export function useApplicantsDetail({
   )
 
   useEffect(() => {
+    const hydrateForInstructorCalendar =
+      menu === 'instructors' && instructorColumnPreset === 'general-detail'
     if (
-      menu !== 'institutions' ||
+      (menu !== 'institutions' && !hydrateForInstructorCalendar) ||
       !usesProgramInstitutionApplications ||
       viewMode !== 'calendar' ||
       !programId ||
@@ -861,6 +921,7 @@ export function useApplicantsDetail({
     institutionColumnPreset,
     institutionScheduleHydrationSignature,
     institutionList.length,
+    instructorColumnPreset,
     menu,
     programId,
     queryClient,
@@ -1067,6 +1128,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'invalid_fee_policy') return 'error'
         return remote
       }
       const notifyOptions = toInstructorNotifyOptions(payload, payload.reason)
@@ -1099,6 +1161,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'invalid_fee_policy') return 'error'
         return remote
       }
       const notifyOptions = toInstructorNotifyOptions(payload)
@@ -1558,8 +1621,7 @@ export function useApplicantsDetail({
     }
     if (
       menu === 'institutions' &&
-      (institutionColumnPreset === 'general-detail' ||
-        institutionColumnPreset === 'company-school')
+      (institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school')
     ) {
       // 1사1교·교육받은 교사 overview도 일반 기관 신청과 동일 필터 키(organizationName·소재지·학년…)
       return filterGeneralOrganizationApplications(institutionList, appliedFilters)

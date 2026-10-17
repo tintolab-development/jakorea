@@ -20,19 +20,8 @@ import type {
 } from '../model/types'
 import { getNoticeAttachments } from '../model/types'
 import { formatEducationNoticePublishedAt } from '../lib/format'
-import {
-  addNoticeComment,
-  deleteNoticeComment,
-  getNoticeComments,
-  updateNoticeComment,
-} from '../lib/mock-comments'
-import {
-  getNoticeReactions,
-  getNoticeReactionUsers,
-  toggleNoticeReaction,
-} from '../lib/mock-reactions'
-import { MOCK_MYPAGE_USER_NAME } from '../../../lib/constants'
 import { useMypageMember } from '../../../hooks/use-mypage-member'
+import { MOCK_MYPAGE_USER_NAME } from '../../../lib/constants'
 import {
   useApplicationNoticeCommentMutations,
   useApplicationNoticeDetailQuery,
@@ -53,7 +42,14 @@ import jaSendGrayUrl from '@/shared/assets/icons/ja-send-gray.svg'
 import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
-import { PFAlertModal, PFCarouselButton, PFModal, PFOptionList, PFText } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFCarouselButton,
+  PFLoadingSpinner,
+  PFModal,
+  PFOptionList,
+  PFText,
+} from '@/shared/ui'
 import { EducationNoticeCommentDeleteConfirm } from './comment-delete-confirm'
 import { EducationNoticeCommentList } from './comment-list'
 import { EducationNoticeDeleteConfirm } from './delete-confirm'
@@ -67,6 +63,7 @@ type EducationInProgressNoticeDetailModalProps = {
   notices: EducationInProgressNotice[]
   files: EducationInProgressFile[]
   noticeId: string | null
+  commentId?: string | null
   onClose: () => void
   onNoticeChange: (noticeId: string) => void
   onDelete: (noticeId: string) => void
@@ -120,11 +117,12 @@ export function EducationInProgressNoticeDetailModal({
   notices,
   files,
   noticeId,
+  commentId,
   onClose,
   onNoticeChange,
   onDelete,
-  onReactionCountChange,
-  onCommentCountChange,
+  onReactionCountChange: _onReactionCountChange,
+  onCommentCountChange: _onCommentCountChange,
   applicationType,
   applicationId,
 }: EducationInProgressNoticeDetailModalProps) {
@@ -136,8 +134,6 @@ export function EducationInProgressNoticeDetailModal({
   const [isAttachmentListOpen, setIsAttachmentListOpen] = useState(false)
   const [isCommentListOpen, setIsCommentListOpen] = useState(false)
   const [reactionPanel, setReactionPanel] = useState<'list' | 'picker' | null>(null)
-  const [reactionTick, setReactionTick] = useState(0)
-  const [commentTick, setCommentTick] = useState(0)
   const [listPopoverStyle, setListPopoverStyle] = useState<CSSProperties | null>(null)
   const [pickerPopoverStyle, setPickerPopoverStyle] = useState<CSSProperties | null>(null)
   const reactionListRef = useRef<HTMLDivElement>(null)
@@ -190,18 +186,6 @@ export function EducationInProgressNoticeDetailModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isContentImagesLoading, setIsContentImagesLoading] = useState(false)
 
-  const mockReactions = useMemo(
-    () => (notice && !isRemote ? getNoticeReactions(notice.id) : []),
-    [isRemote, notice, reactionTick]
-  )
-  const mockReactionUsers = useMemo(
-    () => (notice && !isRemote ? getNoticeReactionUsers(notice.id) : []),
-    [isRemote, notice, reactionTick]
-  )
-  const mockComments = useMemo(
-    () => (notice && !isRemote ? getNoticeComments(notice.id) : []),
-    [isRemote, notice, commentTick]
-  )
   const remoteComments = useMemo(
     () =>
       (remoteDetail.detail?.comments ?? []).map(row =>
@@ -222,15 +206,15 @@ export function EducationInProgressNoticeDetailModal({
     }))
   }, [memberDisplayName, noticeId, remoteReactions.myReactionTypes, remoteReactions.users])
 
-  const reactions = isRemote ? remoteReactions.summary : mockReactions
-  const reactionUsers = isRemote ? remoteReactionUsers : mockReactionUsers
-  const comments = isRemote ? remoteComments : mockComments
+  const reactions = isRemote ? remoteReactions.summary : []
+  const reactionUsers = isRemote ? remoteReactionUsers : []
+  const comments = useMemo(() => (isRemote ? remoteComments : []), [isRemote, remoteComments])
   const reactionCount = isRemote ? remoteReactions.total : (notice?.reactionCount ?? 0)
   const commentCount =
     isRemote && remoteDetail.detail ? remoteComments.length : (notice?.commentCount ?? 0)
   const myReactionType = isRemote
     ? remoteReactions.myReactionTypes[0]
-    : mockReactionUsers.find(row => row.authorName === MOCK_MYPAGE_USER_NAME)?.emojiType
+    : undefined
   const selectedEmojiIndex =
     myReactionType != null ? getPlatformReactionEmojiIndex(myReactionType) : null
 
@@ -246,6 +230,20 @@ export function EducationInProgressNoticeDetailModal({
       setIsDeleteConfirmOpen(false)
     }
   }, [open, noticeId])
+
+  useEffect(() => {
+    if (!open || !commentId || comments.length === 0) return
+    if (!comments.some(item => item.id === commentId)) return
+    setIsCommentListOpen(true)
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`notice-comment-${commentId}`)?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      })
+      document.getElementById(`notice-comment-${commentId}`)?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [commentId, comments, open])
 
   useEffect(() => {
     if (!reactionPanel) return
@@ -461,24 +459,6 @@ export function EducationInProgressNoticeDetailModal({
       return
     }
 
-    if (emojiType) {
-      const { reactionCount: nextReactionCount } = toggleNoticeReaction(
-        notice.id,
-        emojiType,
-        MOCK_MYPAGE_USER_NAME
-      )
-      setReactionTick(tick => tick + 1)
-      onReactionCountChange?.(notice.id, nextReactionCount)
-    }
-    if (content) {
-      const { commentCount: nextCommentCount } = addNoticeComment(
-        notice.id,
-        MOCK_MYPAGE_USER_NAME,
-        content
-      )
-      setCommentTick(tick => tick + 1)
-      onCommentCountChange?.(notice.id, nextCommentCount)
-    }
     finish()
   }
 
@@ -490,8 +470,6 @@ export function EducationInProgressNoticeDetailModal({
       )
       return
     }
-    updateNoticeComment(commentId, content)
-    setCommentTick(tick => tick + 1)
   }
 
   const handleCommentDeleteConfirm = () => {
@@ -504,11 +482,7 @@ export function EducationInProgressNoticeDetailModal({
       setCommentToDeleteId(null)
       return
     }
-    const result = deleteNoticeComment(commentToDeleteId)
     setCommentToDeleteId(null)
-    if (!result) return
-    setCommentTick(tick => tick + 1)
-    onCommentCountChange?.(result.noticeId, result.commentCount)
   }
 
   const canSubmitComment =
@@ -551,7 +525,7 @@ export function EducationInProgressNoticeDetailModal({
                   <PFText
                     as="p"
                     typo="bd-md-sb"
-                    color="black"
+                    color={notice.authorIsStaff ? 'primary-500' : 'black'}
                     id="education-notice-detail-author"
                     className={styles.author}
                   >
@@ -732,12 +706,8 @@ export function EducationInProgressNoticeDetailModal({
               {isRemote ? (
                 <>
                   {isContentImagesLoading ? (
-                    // TODO(ui): 임시 스피너 — 디자인 확정 시 공통 컴포넌트로 교체
                     <div className={styles.contentLoading} role="status">
-                      <span className={styles.spinner} aria-hidden="true" />
-                      <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                        이미지를 불러오는 중입니다
-                      </PFText>
+                      <PFLoadingSpinner label="이미지를 불러오는 중" />
                     </div>
                   ) : null}
                   <RichTextViewer

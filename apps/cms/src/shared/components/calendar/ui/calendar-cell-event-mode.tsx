@@ -38,7 +38,8 @@ function renderMonthEventStrips(
   return (
     <>
       {rows.slice(0, 2).map(row => {
-        const isEventSelected = selectedKeys.includes(row.sourceEvent.id)
+        const isEventSelected =
+          selectedKeys.includes(row.id) || selectedKeys.includes(row.sourceEvent.id)
         const colors =
           config.resolveEventColors?.(row.sourceEvent) ??
           resolveItemColor(row.sourceEvent, colorMap, SCHEDULE_COLORS[0])
@@ -46,10 +47,7 @@ function renderMonthEventStrips(
           <div key={String(row.id)}>
             <div
               className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-              style={{
-                backgroundColor: colors.bg,
-                border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-              }}
+              style={{ backgroundColor: colors.bg }}
               onClick={e => e.stopPropagation()}
             >
               {renderContent({
@@ -186,15 +184,10 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
               <div key={String(event.id)}>
                 <div
                   className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-                  style={{
-                    backgroundColor: colors.bg,
-                    border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                  }}
+                  style={{ backgroundColor: colors.bg }}
                   onClick={e => e.stopPropagation()}
                 >
-                  <span className="calendar-event-title" style={{ color: colors.text }}>
-                    {displayTitle}
-                  </span>
+                  <span className="calendar-event-title">{displayTitle}</span>
                 </div>
               </div>
             )
@@ -245,15 +238,10 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
             <div key={String(event.id)}>
               <div
                 className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-                style={{
-                  backgroundColor: colors.bg,
-                  border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                }}
+                style={{ backgroundColor: colors.bg }}
                 onClick={e => e.stopPropagation()}
               >
-                <span className="calendar-event-title" style={{ color: colors.text }}>
-                  {displayTitle}
-                </span>
+                <span className="calendar-event-title">{displayTitle}</span>
               </div>
             </div>
           )

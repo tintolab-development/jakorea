@@ -17,7 +17,7 @@ import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
 import styles from './pf-select.module.css'
 
-export type PFSelectSize = 'medium' | 'large' | 'xlarge'
+export type PFSelectSize = 'medium' | 'large' | 'xlarge' | 'mobile'
 export type PFSelectVariant = 'default' | 'formPage'
 export type PFSelectMessageStatus = 'neutral' | 'success' | 'error'
 
@@ -55,6 +55,7 @@ const sizeTypographyClassMap: Record<PFSelectSize, string> = {
   medium: 'typo-bd-sm-md',
   large: 'typo-bd-md-md',
   xlarge: 'typo-bd-md-md',
+  mobile: 'typo-bd-md-md',
 }
 
 const LISTBOX_GAP_PX = 8

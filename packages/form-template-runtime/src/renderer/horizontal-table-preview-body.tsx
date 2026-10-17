@@ -193,7 +193,7 @@ function IdTypeWithInputFill({
   const selectedId =
     paragraph.selectedOptionId != null && options.some(o => o.id === paragraph.selectedOptionId)
       ? paragraph.selectedOptionId
-      : (options[0]?.id ?? null)
+      : null
 
   const placeholder =
     selectedId != null

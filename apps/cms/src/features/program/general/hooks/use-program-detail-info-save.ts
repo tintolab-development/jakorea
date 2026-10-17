@@ -26,9 +26,12 @@ import {
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import {
+  extractApiErrorCode,
   extractApiErrorField,
   extractApiErrorMessage,
 } from '@/shared/lib/extract-api-error-message'
+import { resolveProgramDetailSaveApiFormField } from '@/features/program/shared/lib/program-detail-save-api-error'
+import { applyAudienceProgramOperationToRecruitmentWindows } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import {
   applyRecruitmentDetailInfoFields,
   type ProgramDetailRecruitmentAudience,
@@ -50,7 +53,7 @@ export interface UseProgramDetailInfoSaveOptions {
   /** resetToProgram 시 사용. 없으면 `programToDetailEditValues` */
   mapToValues?: (program: Program) => ProgramDetailEditFormValues
   /** draft = 화면용 병합본, patch = remote PATCH에 실을 변경 키만 */
-  onSaveEdit?: (draft: Program, patch: Partial<Program>) => Promise<void>
+  onSaveEdit?: (draft: Program, patch: Partial<Program>, baseline: Program) => Promise<void>
   /** 지정 시 해당 스키마로만 검증 — 모집 정보 탭 부분 저장용 */
   validateSchema?: z.ZodType<unknown>
   /** true면 remote PATCH 에서 모집·회차 필드 제외 (1사1교·교육받은 교사 공통정보 탭) */
@@ -104,7 +107,9 @@ export function useProgramDetailInfoSave({
           return false
         }
         const values = form.getValues()
-        const patch = detailEditValuesToProgramPatch(values, program)
+        const patch = detailEditValuesToProgramPatch(values, program, {
+          recruitmentAudience,
+        })
         const html = getAdditionalContentHtmlRef.current?.()
         const extraDefined = extraCommonInfo
           ? Object.fromEntries(
@@ -121,6 +126,14 @@ export function useProgramDetailInfoSave({
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
         }
         if (recruitmentAudience) {
+          remotePatch = {
+            ...remotePatch,
+            ...applyAudienceProgramOperationToRecruitmentWindows(
+              program,
+              values,
+              recruitmentAudience
+            ),
+          }
           const writesRowFields = isGeneralRecruitmentRowProgram(program)
           const notesField =
             recruitmentNotesField ??
@@ -265,7 +278,7 @@ export function useProgramDetailInfoSave({
             ...remotePatch.generalCommonInfo,
           },
         }
-        await onSaveEdit(draftToSave, remotePatch)
+        await onSaveEdit(draftToSave, remotePatch, program)
         showUpdateCompletedAlert()
         return true
       } catch (error) {
@@ -273,8 +286,12 @@ export function useProgramDetailInfoSave({
           error && typeof error === 'object' && 'response' in error
             ? (error as { response?: { data?: unknown } }).response?.data
             : undefined
-        const field = extractApiErrorField(data)
         const message = extractApiErrorMessage(data, { fallback: '' })
+        const field = resolveProgramDetailSaveApiFormField({
+          apiField: extractApiErrorField(data),
+          message,
+          errorCode: extractApiErrorCode(data),
+        })
         if (field && message) {
           form.setError(field as FieldPath<ProgramDetailEditFormValues>, {
             type: 'server',

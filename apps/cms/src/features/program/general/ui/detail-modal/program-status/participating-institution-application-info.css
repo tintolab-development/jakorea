@@ -33,20 +33,17 @@
 }
 
 .participating-institution-application-info__table-wrap--overview
-  tbody
-  > tr:has(.status-dropdown-cell__status-trigger) {
-  height: 54px;
+  .detail-info-form__row:has(.status-dropdown-cell__status-trigger) {
   min-height: 54px;
-  max-height: 54px;
 }
 
 .participating-institution-application-info__table-wrap--overview
-  tbody
-  > tr:has(.status-dropdown-cell__status-trigger)
-  .applicant-institution-basic-info__cell {
+  .detail-info-form__row:has(.status-dropdown-cell__status-trigger)
+  .detail-info-form__field-content {
   padding-top: 0;
   padding-bottom: 0;
-  vertical-align: middle;
+  display: flex;
+  align-items: center;
   overflow: clip;
 }
 

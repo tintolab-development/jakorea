@@ -6,9 +6,9 @@ import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevMemberProfile } from '@/shared/lib/dev-member-profile'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import {
-  MOCK_MYPAGE_AFFILIATION,
-  MOCK_MYPAGE_EMPLOYMENT_LABEL,
-} from '../home/lib/mock-stats'
+  DEV_MYPAGE_AFFILIATION,
+  DEV_MYPAGE_EMPLOYMENT_LABEL,
+} from '../home/lib/dev-mypage-display'
 import { MOCK_SETTINGS_PROFILE, MOCK_TEACHER_SETTINGS_PROFILE } from '../settings/lib/constants'
 import { MOCK_MYPAGE_USER_NAME } from '../lib/constants'
 import {
@@ -62,8 +62,8 @@ export function useMypageMember(): MypageMemberView {
         profile === 'school_teacher' || profile === 'instructor_dual'
           ? MOCK_TEACHER_SETTINGS_PROFILE.birthDate
           : MOCK_SETTINGS_PROFILE.birthDate,
-      affiliationLabel: showAffiliationEmployment ? MOCK_MYPAGE_AFFILIATION : undefined,
-      employmentStatusLabel: showAffiliationEmployment ? MOCK_MYPAGE_EMPLOYMENT_LABEL : undefined,
+      affiliationLabel: showAffiliationEmployment ? DEV_MYPAGE_AFFILIATION : undefined,
+      employmentStatusLabel: showAffiliationEmployment ? DEV_MYPAGE_EMPLOYMENT_LABEL : undefined,
     }
   }
 

@@ -23,6 +23,7 @@ export {
 } from './find-password'
 export {
   SignUpPage,
+  SignUpPortraitConsentPage,
   SignUpCompletePage,
   SignUpSocialConnectPage,
   SignUpSocialConnectCompletePage,
@@ -32,10 +33,6 @@ export {
 export {
   SignUpIdentityCallbackPage,
   SignUpGuardianIdentityCallbackPage,
-  SignUpIdentityMockNicePage,
-  SignUpGuardianIdentityMockNicePage,
-  FindPasswordIdentityMockNicePage,
-  FindEmailIdentityMockNicePage,
 } from './sign-up/identity-pages'
 export { RequiredPage } from './required'
 export { SocialErrorPage, SocialLoginCompletePage } from './social'

@@ -516,6 +516,9 @@ function renderBody(
           applicantRecruitInstitutionDefaults={
             paragraphBodyOptions?.applicantRecruitInstitutionDefaults
           }
+          applicantRecruitInstitutionTemplateAuthoringMode={
+            paragraphBodyOptions?.applicantRecruitInstitutionTemplateAuthoringMode
+          }
           economyRecruitFormInstitution={paragraphBodyOptions?.economyRecruitFormInstitution}
           trainedTeachersRecruitFormInstitution={
             paragraphBodyOptions?.trainedTeachersRecruitFormInstitution

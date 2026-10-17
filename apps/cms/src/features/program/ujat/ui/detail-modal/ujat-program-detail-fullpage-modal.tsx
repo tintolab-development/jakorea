@@ -89,6 +89,13 @@ import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/uj
 import { hydrateUjatRecruitTemplatesForProgram } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
+import {
+  replaceUjatRegionCapacitiesRemote,
+  type UjatRegionCapacityUpsert,
+} from '@/features/program/ujat/api/region-capacities-client'
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import { resolveUjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import {
   patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
@@ -235,7 +242,15 @@ import {
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
-import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
+import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
+import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
+import {
+  resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
+  shouldShowSurveyPollScheduleSelectField,
+} from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
+import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
+import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
 import { resolveSurveyShareClipboardUrl } from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
@@ -278,6 +293,29 @@ const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
+
+function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUpsert[] {
+  const overlay = readUjatRegistrationOverlayFromProgram(program)
+  const regions = listUjatEducationRegionsActive()
+  const halves = [
+    ['FIRST_HALF', 'h1'],
+    ['SECOND_HALF', 'h2'],
+  ] as const
+
+  return halves.flatMap(([semesterType, half]) => {
+    const values = resolveUjatRegionCapacitySemesterValues(half, overlay)
+    return regions.map(region => ({
+      semesterType,
+      educationRegionCode: region.key,
+      maxClassCount: Number.parseInt(values[region.label]?.classCount ?? '', 10) || 0,
+      maxVolunteerCount: Number.parseInt(values[region.label]?.volunteerCount ?? '', 10) || 0,
+    }))
+  })
+}
+
+function ujatRegionCapacitySnapshot(program: Program): string {
+  return JSON.stringify(buildUjatRegionCapacityUpserts(program))
+}
 
 function buildUjatSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
@@ -600,11 +638,13 @@ export function UjatProgramDetailFullPageModal({
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? undefined
+  const surveysTabActive =
+    open && (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info') === 'survey'
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
     isRemoteDataSource: surveysRemote,
-  } = useGeneralProgramSurveys(programId)
+  } = useGeneralProgramSurveys(programId, surveysTabActive)
   const { createBinding, deleteBinding, invalidateSurveyCaches } =
     useGeneralProgramSurveyFormBindingMutations(programId)
 
@@ -669,8 +709,10 @@ export function UjatProgramDetailFullPageModal({
     const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
     if (overlayHydrateStampRef.current !== stamp) {
       overlayHydrateStampRef.current = stamp
+      // programId가 바뀌면 이전 프로그램의 전역 overlay를 먼저 제거한다.
+      // 새 상세 응답에 값이 없어도 이전 프로그램 값이 남지 않아야 한다.
+      resetUjatProgramRegistrationOverlay()
       if (Object.keys(overlay).length > 0) {
-        resetUjatProgramRegistrationOverlay()
         patchUjatProgramRegistrationOverlay(overlay)
       }
     }
@@ -686,6 +728,9 @@ export function UjatProgramDetailFullPageModal({
   const [institutionListVersion, setInstitutionListVersion] = useState(0)
   const [surveyCreateModalOpen, setSurveyCreateModalOpen] = useState(false)
   const [selectedSurveyTemplateId, setSelectedSurveyTemplateId] = useState<string | null>(null)
+  const [selectedSurveyScheduleValue, setSelectedSurveyScheduleValue] = useState<string | null>(
+    null
+  )
   const [submittingSurveyTemplate, setSubmittingSurveyTemplate] = useState(false)
   const [surveyDeleteModalOpen, setSurveyDeleteModalOpen] = useState(false)
   const [surveyDeleteConfirmWord, setSurveyDeleteConfirmWord] = useState('')
@@ -864,6 +909,25 @@ export function UjatProgramDetailFullPageModal({
   }, [classifiedBindings, surveysRemote])
 
   const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
+  const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
+    displayProgram,
+    surveyCreateModalOpen
+  )
+  const showSurveyPollScheduleSelectField = useMemo(
+    () => shouldShowSurveyPollScheduleSelectField(displayProgram),
+    [displayProgram]
+  )
+  useEffect(() => {
+    if (!surveyCreateModalOpen || !showSurveyPollScheduleSelectField) return
+    const options = surveyScheduleOptionsQuery.options ?? []
+    if (options.length === 1 && options[0]?.value) {
+      setSelectedSurveyScheduleValue(String(options[0].value))
+    }
+  }, [
+    surveyCreateModalOpen,
+    showSurveyPollScheduleSelectField,
+    surveyScheduleOptionsQuery.options,
+  ])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
@@ -1197,6 +1261,18 @@ export function UjatProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+                if (
+                  shouldUseRemoteApi() &&
+                  displayProgram &&
+                  ujatRegionCapacitySnapshot(displayProgram) !==
+                    ujatRegionCapacitySnapshot(draftWithOverlay)
+                ) {
+                  // 지역 정원 PUT 성공 후 공통정보 PATCH/상세 GET을 수행한다.
+                  await replaceUjatRegionCapacitiesRemote(
+                    draftWithOverlay.id,
+                    buildUjatRegionCapacityUpserts(draftWithOverlay)
+                  )
+                }
                 if (onUpdateProgram) {
                   await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
                 } else {
@@ -1309,6 +1385,7 @@ export function UjatProgramDetailFullPageModal({
     isEditMode: isEditModeRecruitParticipant,
     schema: programDetailInstitutionsEditSchema,
     mapToValues: mapInstitutionRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -1372,11 +1449,13 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH1,
     mapToValues: mapVolunteerH1RecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const volunteersH2Form = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH2,
     mapToValues: mapVolunteerH2RecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const volunteersForm =
     activeRecruitTab === 'recruit_volunteer_h2' ? volunteersH2Form : volunteersH1Form
@@ -1642,6 +1721,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenSurveyCreateModal = useCallback(() => {
     setSelectedSurveyTemplateId(null)
+    setSelectedSurveyScheduleValue(null)
     setSubmittingSurveyTemplate(false)
     setSurveyCreateModalOpen(true)
   }, [])
@@ -1653,6 +1733,15 @@ export function UjatProgramDetailFullPageModal({
 
   const handleSubmitSurveyTemplate = useCallback(async () => {
     if (selectedSurveyTemplateId == null || selectedSurveyTemplateId === '') return
+    if (showSurveyPollScheduleSelectField) {
+      if (
+        selectedSurveyScheduleValue == null ||
+        selectedSurveyScheduleValue === '' ||
+        !surveyScheduleOptionsQuery.hasSessionSchedules
+      ) {
+        return
+      }
+    }
     setSubmittingSurveyTemplate(true)
     try {
       const next = findWritingTemplateRowByDefinitionId(selectedSurveyTemplateId)
@@ -1666,6 +1755,32 @@ export function UjatProgramDetailFullPageModal({
           })
           return
         }
+        let targetScopePayload: Pick<ProgramFormBindingRequest, 'targetScope' | 'targetScopeId'>
+        if (showSurveyPollScheduleSelectField) {
+          try {
+            targetScopePayload = resolveSurveyPollBindingTarget(selectedSurveyScheduleValue!)
+          } catch {
+            void showAlert({
+              title: '등록 실패',
+              content: '설문 대상 일정을 다시 선택해 주세요.',
+            })
+            return
+          }
+        } else {
+          const surveyTarget =
+            displayProgram == null
+              ? null
+              : await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(displayProgram)
+          if (surveyTarget == null) {
+            void showAlert({
+              title: '등록 실패',
+              content:
+                '설문조사는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
+            })
+            return
+          }
+          targetScopePayload = surveyTarget
+        }
         const payload: ProgramFormBindingRequest = {
           formType: 'SURVEY',
           templateId: resolved.templateId,
@@ -1674,11 +1789,27 @@ export function UjatProgramDetailFullPageModal({
           submissionEndAt: resolved.submissionEndAt,
           active: true,
           required: false,
+          ...targetScopePayload,
         }
         const result = await createBinding(payload)
         if (!result.ok) {
           await invalidateSurveyCaches()
           void showAlert({ title: '등록 실패', content: result.message })
+          return
+        }
+        if (displayProgram != null && result.binding != null) {
+          const editLoad = await loadProgramSurveyFormEditAfterBinding(
+            String(displayProgram.id),
+            result.binding,
+            selectedSurveyTemplateId
+          )
+          setSurveyCreateModalOpen(false)
+          setSelectedSurveyScheduleValue(null)
+          if (editLoad.ok) {
+            setProgramFormEdit(editLoad.edit)
+          } else {
+            void showAlert({ title: '양식 편집', content: editLoad.message })
+          }
           return
         }
         setSurveyCreateModalOpen(false)
@@ -1705,10 +1836,14 @@ export function UjatProgramDetailFullPageModal({
     }
   }, [
     createBinding,
+    displayProgram,
     invalidateSurveyCaches,
     registeredSurveys.length,
+    selectedSurveyScheduleValue,
     selectedSurveyTemplateId,
     showAlert,
+    showSurveyPollScheduleSelectField,
+    surveyScheduleOptionsQuery.hasSessionSchedules,
     surveysRemote,
   ])
 
@@ -2125,16 +2260,9 @@ export function UjatProgramDetailFullPageModal({
           })
           return
         }
-        const lectureTarget =
-          programId == null ? null : await resolveLectureEvalBindingTarget(String(programId))
-        if (lectureTarget == null) {
-          void showAlert({
-            title: '등록 실패',
-            content:
-              '강의평가는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
-          })
-          return
-        }
+        const lectureTarget = await resolveLectureEvalBindingTargetForCreate(
+          programId == null ? '' : String(programId)
+        )
         const payload: ProgramFormBindingRequest = {
           formType: 'LECTURE_EVALUATION',
           templateId: resolved.templateId,
@@ -2143,7 +2271,9 @@ export function UjatProgramDetailFullPageModal({
           submissionEndAt: resolved.submissionEndAt,
           targetRole: 'ADMIN',
           targetScope: lectureTarget.targetScope,
-          targetScopeId: lectureTarget.targetScopeId,
+          ...(lectureTarget.targetScopeId != null
+            ? { targetScopeId: lectureTarget.targetScopeId }
+            : {}),
           active: true,
           required: false,
         }
@@ -2885,55 +3015,24 @@ export function UjatProgramDetailFullPageModal({
       ) : (
         <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
       )}
-      <ContentModal
+      <SurveyPollRegisterModal
         open={surveyCreateModalOpen}
-        onCancel={handleCloseSurveyCreateModal}
-        title="신규 설문조사 등록"
-        width={600}
         className="ujat-survey-create-modal"
-        description={
-          '새로운 설문조사를 진행하시겠습니까?\n설문조사 신규 등록을 위해 사용할 템플릿 유형을 선택해 주세요.'
-        }
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              width={120}
-              type="button"
-              onClick={handleCloseSurveyCreateModal}
-              disabled={submittingSurveyTemplate}
-            >
-              취소
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="medium"
-              width={120}
-              type="button"
-              onClick={() => {
-                void handleSubmitSurveyTemplate()
-              }}
-              disabled={selectedSurveyTemplateId == null || selectedSurveyTemplateId === ''}
-              loading={submittingSurveyTemplate}
-            >
-              신규 등록
-            </CmsButton>
-          </>
-        }
-      >
-        <div className="ujat-survey-create-modal__field">
-          <p className="ujat-survey-create-modal__label">템플릿 유형</p>
-          <CmsSelect
-            width="100%"
-            withAllOption={false}
-            placeholder="사용할 설문 양식을 선택해 주세요"
-            options={surveyTemplateOptions}
-            value={selectedSurveyTemplateId ?? undefined}
-            onChange={value => setSelectedSurveyTemplateId(value ?? null)}
-          />
-        </div>
-      </ContentModal>
+        submitting={submittingSurveyTemplate}
+        templateOptions={surveyTemplateOptions}
+        templateValue={selectedSurveyTemplateId}
+        onTemplateChange={setSelectedSurveyTemplateId}
+        scheduleOptions={surveyScheduleOptionsQuery.options}
+        scheduleValue={selectedSurveyScheduleValue}
+        onScheduleChange={setSelectedSurveyScheduleValue}
+        schedulesLoading={surveyScheduleOptionsQuery.isLoading}
+        hasSessionSchedules={surveyScheduleOptionsQuery.hasSessionSchedules}
+        showScheduleField={showSurveyPollScheduleSelectField}
+        onCancel={handleCloseSurveyCreateModal}
+        onSubmit={() => {
+          void handleSubmitSurveyTemplate()
+        }}
+      />
       <ContentModal
         open={surveyDeleteModalOpen}
         onCancel={handleCloseSurveyDeleteModal}

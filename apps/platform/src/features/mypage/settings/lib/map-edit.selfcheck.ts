@@ -8,6 +8,7 @@ import {
   mapProfileToSettingsEditForm,
   mapProfileToTeacherSettingsEditForm,
   nullifyEmptyProfileUpdateFields,
+  sanitizeSettingsEditSchoolFields,
   toSettingsGender,
   toSettingsGradeOption,
   toSettingsSchoolStatus,
@@ -71,6 +72,31 @@ assert.equal(nulled.external1365Id, null)
 assert.equal(nulled.grade, null)
 assert.equal(nulled.schoolName, '재희 고등학교')
 assert.equal(nulled.schoolOrganizationId, null)
+
+const sanitizedNone = sanitizeSettingsEditSchoolFields({
+  schoolStatus: 'none' as const,
+  schoolName: '심원초등학교',
+  affiliationName: '',
+  grade: '5학년',
+  schoolOrganizationId: 190108,
+  schoolAddress: '경기도 부천시 옥산로 66',
+  schoolNeisCode: '7581089',
+  schoolEducationOfficeCode: 'J10',
+  schoolSource: 'neis' as const,
+  address: '서울',
+  addressDetail: '1',
+  postalCode: '04049',
+  regionSido: '서울특별시',
+  regionSigungu: '마포구',
+  volunteerId: '123414',
+})
+assert.equal(sanitizedNone.schoolName, '')
+assert.equal(sanitizedNone.grade, '')
+assert.equal(sanitizedNone.schoolOrganizationId, null)
+assert.equal(sanitizedNone.schoolNeisCode, '')
+assert.equal(sanitizedNone.schoolSource, undefined)
+assert.equal(sanitizedNone.affiliationName, '')
+assert.equal(sanitizedNone.volunteerId, '123414')
 
 assert.equal(toTeacherEmploymentStatus('EMPLOYED'), 'ACTIVE')
 assert.equal(toTeacherEmploymentStatus('ON_LEAVE'), 'ON_LEAVE')

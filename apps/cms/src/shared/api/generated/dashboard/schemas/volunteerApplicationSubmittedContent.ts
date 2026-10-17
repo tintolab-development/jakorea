@@ -5,6 +5,8 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { VolunteerApplicationAttachment } from './volunteerApplicationAttachment';
+import type { VolunteerApplicationGeneralProjection } from './volunteerApplicationGeneralProjection';
 import type { VolunteerApplicationSubmittedContentFormAnswers } from './volunteerApplicationSubmittedContentFormAnswers';
 import type { VolunteerApplicationUjatProjection } from './volunteerApplicationUjatProjection';
 
@@ -18,4 +20,7 @@ export interface VolunteerApplicationSubmittedContent {
   /** @minimum 0 */
   scheduleChangeCancelCount?: number;
   ujat?: VolunteerApplicationUjatProjection | null;
+  /** 제출 응답에 연결된 문항별 첨부. 첨부가 없거나 제출 응답이 없으면 [] (null 아님). */
+  attachments?: VolunteerApplicationAttachment[];
+  general?: VolunteerApplicationGeneralProjection | null;
 }

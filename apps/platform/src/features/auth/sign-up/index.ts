@@ -27,6 +27,7 @@ export {
   SIGN_UP_TOTAL_STEPS,
   schoolGradeOptions,
 } from './lib/constants'
+export type { SignUpCompleteLocationState } from './lib/constants'
 export {
   buildConfirmationRows,
   calculateInternationalAge,

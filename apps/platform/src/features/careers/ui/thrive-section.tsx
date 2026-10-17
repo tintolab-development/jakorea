@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import addIconUrl from '../image/icon/add.svg'
 import closeIconUrl from '../image/icon/close.svg'
-import { THRIVE_DECORATION_URL, THRIVE_TITLE } from '../lib/mock-data'
+import { THRIVE_DECORATION_URL, THRIVE_TITLE } from '../lib/careers-fallback-content'
 import type { ThriveValue, ThriveValueId } from '../model/types'
 import { PFText } from '@/shared/ui'
 import styles from './thrive-section.module.css'

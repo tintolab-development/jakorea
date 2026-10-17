@@ -1,12 +1,20 @@
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '../paragraph-ids/program-application-form-institution-draft.js'
+import {
+  resolveFixedScheduleLinesToChoiceItems,
+  type CurriculumMultiDateFixedScheduleMetaInput,
+} from './curriculum-multi-date-fixed-schedule.js'
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
+import {
+  expandEducationScheduleChoiceSlots,
+  type ApplicationScheduleVisibilityInput,
+} from './schedule-paragraph-visibility.js'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
 const OPAQUE_SCHEDULE_OPTION_TOKEN_RE =
-  /^(schedule:\d+(?::organization-application:\d+)?(?::education-period:\d+)?|line:\d+)$/i
+  /^(schedule:\d+(?::organization-application:\d+)?(?::education-period:\d+)?|line:\d+(?::education-round:\d+)?)$/i
 
 function isOpaqueScheduleOptionToken(value: string): boolean {
   const trimmed = value.trim()
@@ -77,17 +85,6 @@ function readInstitutionFixedScheduleRawItems(
   )
 }
 
-function choiceItemsFromEducationScheduleLines(
-  lines: readonly string[]
-): Array<{ id: string; label: string }> {
-  const items: Array<{ id: string; label: string }> = []
-  lines.forEach((line, index) => {
-    const label = line.trim()
-    if (!label) return
-    items.push({ id: `line:${index}`, label })
-  })
-  return items
-}
 
 export function institutionFixedScheduleOptionToken(item: Record<string, unknown>): string {
   for (const key of ['option_value', 'value'] as const) {
@@ -134,9 +131,10 @@ function institutionFixedScheduleOptionAliases(item: Record<string, unknown>): s
   return [...aliases]
 }
 
-export type ReadInstitutionFixedScheduleChoiceOptions = {
-  educationScheduleLines?: readonly string[]
-}
+export type ReadInstitutionFixedScheduleChoiceOptions = ApplicationScheduleVisibilityInput &
+  CurriculumMultiDateFixedScheduleMetaInput & {
+    educationScheduleLines?: readonly string[]
+  }
 
 export function readInstitutionFixedScheduleChoiceItems(
   runtime: unknown,
@@ -156,12 +154,30 @@ export function readInstitutionFixedScheduleChoiceItems(
     }
   }
 
-  const lineFallback = choiceItemsFromEducationScheduleLines(options?.educationScheduleLines ?? [])
-  if (items.length === 0) {
-    return lineFallback.length > 0 ? lineFallback : null
+  const lines = options?.educationScheduleLines ?? []
+  const visibility: ApplicationScheduleVisibilityInput = {
+    educationStructure: options?.educationStructure,
+    sessionRound: options?.sessionRound,
+    educationScheduleMode: options?.educationScheduleMode,
+    educationScheduleLines: lines,
   }
-  if (lineFallback.length > items.length) {
-    return lineFallback
+  const expandedFallback = resolveFixedScheduleLinesToChoiceItems(
+    visibility,
+    lines,
+    options ?? {}
+  )
+
+  if (items.length === 0) {
+    return expandedFallback.length > 0 ? expandedFallback : null
+  }
+  if (expandedFallback.length > items.length) {
+    return expandedFallback
+  }
+  if (expandedFallback.length === items.length && expandedFallback.length > 0) {
+    return expandedFallback.map(fallback => ({
+      id: fallback.id,
+      label: fallback.label,
+    }))
   }
   return items
 }

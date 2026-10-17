@@ -16,10 +16,12 @@ import {
   SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
 } from '@/features/sponsor/api/program-histories-filter-params'
 import { mapSponsorListPage } from '@/features/sponsor/api/map-sponsor-list-page'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import {
   SPONSOR_OPTIONS_LIST_SIZE,
   sponsorsParamsFromSearchParams,
 } from '@/features/sponsor/api/sponsor-filter-params'
+import type { SponsorResponse } from '@/shared/api/generated/data-management/schemas'
 import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import {
   addSponsorContactRemote,
@@ -51,7 +53,11 @@ import type {
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
-import { uploadSponsorLogoFile } from '@/features/sponsor/api/sponsor-logo-upload'
+import {
+  buildLogoFileIdsForPatch,
+  sponsorLogosChanged,
+  uploadSponsorLogoFiles,
+} from '@/features/sponsor/lib/sponsor-logo-patch'
 import { enrichSponsorLogoFiles } from '@/features/sponsor/lib/sponsor-logo-files'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -85,12 +91,20 @@ export async function getSponsorList(
   return listPage.items
 }
 
+async function withEnrichedLogosIfNeeded(
+  detail: SponsorManagementDetailView
+): Promise<SponsorManagementDetailView> {
+  const needsEnrich = detail.logos.some(logo => !logo.fileName.trim())
+  if (!needsEnrich) return detail
+  const logos = await enrichSponsorLogoFiles(detail.logos)
+  return logos === detail.logos ? detail : { ...detail, logos }
+}
+
 export async function getSponsorDetail(id: string): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
   const dto = await fetchSponsorRemote(id)
   const detail = mapSponsorDetailResponse(dto)
-  const logos = await enrichSponsorLogoFiles(detail.logos)
-  return logos === detail.logos ? detail : { ...detail, logos }
+  return withEnrichedLogosIfNeeded(detail)
 }
 
 /** 연도별 후원금 — 상세 GET과 분리. 상세 탭 패널에서만 호출한다. */
@@ -106,13 +120,13 @@ export async function createSponsor(payload: SponsorRegisterPayload): Promise<Sp
   assertSponsorsRemoteReady()
   const dto = await createSponsorRemote(toSponsorRequestFromRegister(payload))
   const row = mapSponsorResponse(dto)
-  if (payload.logoFile && row.id) {
+  if (payload.logoFiles.length > 0 && row.id) {
     const sponsorId = Number(row.id)
     if (Number.isFinite(sponsorId) && sponsorId >= 1) {
-      const logoFileId = await uploadSponsorLogoFile(sponsorId, payload.logoFile)
+      const logoFileIds = await uploadSponsorLogoFiles(sponsorId, payload.logoFiles)
       const updated = await updateSponsorRemote(row.id, {
         ...toSponsorRequestFromRegister(payload),
-        logoFileId: String(logoFileId),
+        logoFileIds,
       })
       return mapSponsorResponse(updated)
     }
@@ -126,52 +140,24 @@ export async function updateSponsorBasicInfo(
   existing: SponsorManagementDetailView
 ): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
-  let logoFileId: string | undefined
-  const pendingLogo = basicInfo.pendingLogoFiles.at(-1)
-  if (pendingLogo) {
-    const numericSponsorId = Number(sponsorId)
-    if (Number.isFinite(numericSponsorId) && numericSponsorId >= 1) {
-      logoFileId = String(await uploadSponsorLogoFile(numericSponsorId, pendingLogo))
-    }
+  const logosChanged = sponsorLogosChanged(existing.logos, basicInfo)
+  const numericSponsorId = Number(sponsorId)
+  let uploadedLogoIds: number[] = []
+  if (
+    basicInfo.pendingLogoFiles.length > 0 &&
+    Number.isFinite(numericSponsorId) &&
+    numericSponsorId >= 1
+  ) {
+    uploadedLogoIds = await uploadSponsorLogoFiles(numericSponsorId, basicInfo.pendingLogoFiles)
   }
   const writeBody = toSponsorRequestFromBasicInfo(basicInfo, existing)
-  if (logoFileId) {
-    writeBody.logoFileId = logoFileId
+  if (logosChanged) {
+    writeBody.logoFileIds = buildLogoFileIdsForPatch(basicInfo.logos, uploadedLogoIds)
   }
   await updateSponsorRemote(sponsorId, writeBody)
-  // PATCH 후 상세 재GET 생략 — 로컬 편집값 + 기존 embed를 병합
-  const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
-    .filter(Boolean)
-    .join(' ')
-  const nextLogos =
-    logoFileId != null
-      ? [
-          {
-            id: logoFileId,
-            fileName: pendingLogo?.name.trim() || existing.logos[0]?.fileName || '',
-          },
-        ]
-      : existing.logos
-  const logos =
-    nextLogos.length > 0 ? await enrichSponsorLogoFiles(nextLogos) : nextLogos
-  return {
-    ...existing,
-    id: existing.id || sponsorId,
-    name: basicInfo.nameDisplayKo.trim() || existing.name,
-    nameEn: basicInfo.nameDisplayEn.trim() || existing.nameEn,
-    nameDisplayKo: basicInfo.nameDisplayKo.trim() || existing.nameDisplayKo,
-    nameDisplayEn: basicInfo.nameDisplayEn.trim() || existing.nameDisplayEn,
-    businessNumber: basicInfo.businessNumber.trim() || existing.businessNumber,
-    executives: basicInfo.executives.trim() || existing.executives,
-    address: address || existing.address,
-    organizationKind: basicInfo.organizationKind,
-    sponsorshipStatus: basicInfo.sponsorshipStatus,
-    sponsorshipStartDate:
-      basicInfo.sponsorshipStartDate != null
-        ? basicInfo.sponsorshipStartDate
-        : existing.sponsorshipStartDate,
-    logos,
-  }
+  const dto = await fetchSponsorRemote(sponsorId)
+  const detail = mapSponsorDetailResponse(dto)
+  return withEnrichedLogosIfNeeded(detail)
 }
 
 export async function updateSponsorStatus(
@@ -301,12 +287,31 @@ export async function getSponsorProgramHistories(
   }
 }
 
-/** 후원사 셀렉트·이름 조회용 목록 (구분 필터 없음, size=100) */
+/** 후원사 셀렉트 드롭다운 — 페이지 단위 (기본 size 20) */
+export async function getSponsorSelectOptionsPage(
+  keyword = '',
+  page = 0,
+  size = SPONSOR_OPTIONS_LIST_SIZE
+): Promise<DataManagementListPage<SponsorManagementRow>> {
+  assertSponsorsRemoteReady()
+  const params = new URLSearchParams()
+  const trimmed = keyword.trim()
+  if (trimmed) params.set('sp_name', trimmed)
+  const payload = await fetchSponsorsRemote(
+    sponsorsParamsFromSearchParams(params, page, size)
+  )
+  return mapSponsorListPage(payload)
+}
+
+/** 후원사 셀렉트·이름 조회용 목록 (구분 필터 없음, size=20 페이지 순회) */
 export async function getSponsorOptionsList(): Promise<SponsorManagementRow[]> {
   assertSponsorsRemoteReady()
-  const payload = await fetchSponsorsRemote({
-    page: 0,
-    size: SPONSOR_OPTIONS_LIST_SIZE,
+  const items = await fetchAllApiPages<SponsorResponse>(async (page, size) => {
+    const payload = (await fetchSponsorsRemote({ page, size })) as {
+      items?: SponsorResponse[]
+      totalPages?: number
+    }
+    return { items: payload.items ?? [], totalPages: payload.totalPages }
   })
-  return mapSponsorListPage(payload).items
+  return items.map(item => mapSponsorResponse(item))
 }

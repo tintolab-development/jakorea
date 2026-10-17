@@ -21,6 +21,7 @@ import {
   RecruitPostingFormModal,
   type RecruitPostingFormValues,
 } from '@/features/recruit-posting/ui/posting-form-modal'
+import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-display'
 import { downloadFile } from '@/shared/lib/file-download'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -54,7 +55,7 @@ function formatRecruitPeriod(start: string, end: string): string {
   const s = dayjs(start)
   const e = dayjs(end)
   if (!s.isValid() || !e.isValid()) return '-'
-  return `${s.format('YYYY년 MM월 DD일(ddd)')} ~ ${e.format('YYYY년 MM월 DD일(ddd)')}`
+  return `${formatKoreanYearMonthDayWithWeekday(s)} ~ ${formatKoreanYearMonthDayWithWeekday(e)}`
 }
 
 function resolveBodyFormat(content: string): 'markdown' | 'html' {

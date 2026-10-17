@@ -1,0 +1,100 @@
+.block {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  padding-bottom: var(--spacing-16);
+  border-bottom: 2px solid var(--color-primary-500);
+}
+
+.headerNoStroke {
+  padding-bottom: var(--spacing-12);
+  border-bottom: none;
+}
+
+.titleRow {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.headerEdit {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.title {
+  margin: 0;
+}
+
+.teaser {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listRow {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(120px, 140px) 1fr;
+  gap: var(--spacing-12);
+  padding: var(--spacing-16) var(--spacing-12);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.listRow:last-child {
+  border-bottom: none;
+}
+
+.period {
+  margin: 0;
+}
+
+.content {
+  margin: 0;
+  min-width: 0;
+}
+
+.contentLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.essayBox {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  padding: var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-gray-50);
+  white-space: pre-wrap;
+}
+
+.emptyLine {
+  margin: 0;
+}

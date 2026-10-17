@@ -13,7 +13,7 @@ import {
   PFButton,
   PFText,
 } from '@/shared/ui'
-import illustSquareUrl from '@/shared/assets/illustration/illust-square.svg'
+import illustSearchUrl from '@/shared/assets/illustration/illust-search.png'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
@@ -35,7 +35,7 @@ function resolveErrorCopy(reason: string | null): { title: string; description: 
     }
   }
   return {
-    title: '연결된 소셜 계정이 없어요',
+    title: '연결된 소셜 계정이 없어요.',
     description: '이 소셜 계정과 연결된 JA Korea 계정을 찾을 수 없어요.',
   }
 }
@@ -78,7 +78,7 @@ export function SocialErrorPage() {
   return (
     <section>
       <div className={styles.intro}>
-        <img className={styles.illustration} src={illustSquareUrl} alt="" aria-hidden="true" />
+        <img className={styles.illustration} src={illustSearchUrl} alt="" aria-hidden="true" />
         <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
           {copy.title}
         </PFText>

@@ -1,6 +1,6 @@
 /**
  * 홈 공개 API 실패·빈 응답 시 쓰는 기본 화면 SSOT.
- * 카피·에셋은 `lib/mock.ts` + 레이아웃 상수와 동일하다.
+ * 카피·에셋은 `lib/home-fallback-content.ts` + 레이아웃 상수와 동일하다.
  */
 
 import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
@@ -18,7 +18,7 @@ import {
   HOME_HERO_SLIDES,
   HOME_PARTNER_LOGO_ROWS,
   HOME_YOUTUBE_URL,
-} from './mock'
+} from './home-fallback-content'
 import {
   FALLBACK_DONATION_TITLE,
   FALLBACK_EDUCATION_TITLE,

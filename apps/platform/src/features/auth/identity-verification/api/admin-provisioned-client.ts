@@ -1,6 +1,6 @@
 import { createIdentityVerificationClient } from '@jakorea/identity-verification'
 import { axiosClient } from '@/shared/api/axios-instance'
-import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { isIdentityVerificationRemoteEnabled } from '@/shared/config/identity-verification-remote-capabilities'
 import { identityVerificationPaths } from '@/shared/config/identity-verification-paths'
 
 /**
@@ -20,7 +20,8 @@ export const adminProvisionedIdentityVerificationClient = createIdentityVerifica
     mockPath: '/auth/sign-up/identity/mock',
   },
   flow: 'MEMBER_SIGNUP',
-  isRemoteEnabled: isRemoteApiConfigured,
+  isRemoteEnabled: isIdentityVerificationRemoteEnabled,
+  remoteOnly: true,
   /** signup 콜백이 pending challenge를 읽을 수 있도록 동일 prefix */
   storagePrefix: 'platform_signup_identity',
   omitExpectedProfileOnStart: true,

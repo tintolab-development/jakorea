@@ -43,6 +43,7 @@ vi.stubGlobal('localStorage', {
 
 import {
   createDefaultSurveyDraft,
+  DEFAULT_SURVEY_PARAGRAPH_IDS,
   normalizeWritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -78,7 +79,16 @@ describe('survey-writing-draft remote SSOT', () => {
 
   it('saves via remote and does not write localStorage', async () => {
     persistWritingFormTemplateDraftMock.mockResolvedValue(undefined)
-    const draft = normalizeWritingFormDraft(createDefaultSurveyDraft())
+    const draft = normalizeWritingFormDraft({
+      ...createDefaultSurveyDraft(),
+      paragraphs: createDefaultSurveyDraft().paragraphs.map(p =>
+        p.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title &&
+        p.kind === 'description' &&
+        p.variant === 'survey_title_with_period'
+          ? { ...p, surveyTitle: '만족도 조사' }
+          : p
+      ),
+    })
 
     const result = await saveSurveyWritingTemplate(TEMPLATE_ID, draft)
     expect(result).toEqual({ ok: true })

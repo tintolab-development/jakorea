@@ -11,8 +11,6 @@ import type {
 } from '../model/types'
 import { getAdjacentCareerPostings, type AdjacentCareerPostings } from '../lib/adjacent'
 import { createFallbackCareersGuideView } from '../lib/fallback-guide'
-import { getMockCareerPostingDetail } from '../lib/mock-detail'
-import { getMockCareerJobs } from '../lib/mock-data'
 import type { CareersTalentApplySchemaValues } from '../lib/validate-talent-apply-form'
 import {
   createPublicCareerTalentApplication,
@@ -128,12 +126,10 @@ export function usePublicCareerPostings(): {
     enabled: remote,
   })
 
-  const fallback = useMemo(() => getMockCareerJobs(), [])
-
   const jobs = useMemo(() => {
-    if (!remote || query.isError || !query.data) return fallback
+    if (!remote || query.isError || !query.data) return []
     return mapPublicCareerPostings(query.data)
-  }, [fallback, query.data, query.isError, remote])
+  }, [query.data, query.isError, remote])
 
   return {
     jobs,
@@ -189,11 +185,10 @@ export function useCareerPostingDetail(id: string | null): CareerPostingDetailQu
     }
 
     if (!remote) {
-      const data = getMockCareerPostingDetail(id)
       return {
-        data,
-        status: data ? ('ready' as const) : ('not-found' as const),
-        adjacent: getAdjacentCareerPostings(getMockCareerJobs(), id),
+        data: null,
+        status: 'not-found' as const,
+        adjacent: emptyAdjacent,
         isRemoteEnabled: remote,
         refetch,
       }

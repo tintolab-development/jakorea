@@ -18,7 +18,10 @@ import { createProgramApplicationFormInstitutionDraft } from '@jakorea/form-sche
 import { createProgramApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { createProgramApplicationFormTrainedTeachersDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { createProgramApplicationFormVolunteerDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
-import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import {
+  clearWritingFormFillPreviewAnswers,
+  type WritingFormDraft,
+} from '@jakorea/form-schema/writing-form'
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
 import {
   resolveProgramApplyFormCase,
@@ -89,7 +92,7 @@ export function getMockApplyFormCase(
  * 케이스 해석 후 CMS templateCode와 동일한 시드 draft를 반환한다.
  * 일반 개인·기관은 등록된 교육 진행 일정 유형에 따라 scheduleChoice를 숨기거나 선택지를 맞춘다.
  */
-export function getMockApplyFormDraft(
+export function buildApplyFormSeedDraft(
   program: Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
     Partial<
       Pick<
@@ -104,7 +107,7 @@ export function getMockApplyFormDraft(
     >
 ): WritingFormDraft {
   const applyCase = resolveProgramApplyFormCase(program)
-  const draft = createSeedDraftForApplyCase(applyCase)
+  const draft = clearWritingFormFillPreviewAnswers(createSeedDraftForApplyCase(applyCase))
   if (
     applyCase !== 'individual-general' &&
     applyCase !== 'individual-team' &&
@@ -122,5 +125,6 @@ export function getMockApplyFormDraft(
     educationScheduleMode: program.educationScheduleMode ?? 'date',
     educationScheduleLines: program.educationScheduleLines ?? [],
     maxPreferredScheduleCount: program.maxPreferredScheduleCount ?? 1,
+    maxScheduleCount: program.maxPreferredScheduleCount ?? 1,
   })
 }

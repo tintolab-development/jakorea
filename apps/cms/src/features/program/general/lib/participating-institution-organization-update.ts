@@ -19,11 +19,7 @@ export function resolveParticipatingInstitutionApplicationId(params: {
   detailId?: string | null
   rowId?: string | null
 }): string | null {
-  const candidates = [
-    params.organizationApplicationId,
-    params.detailId,
-    params.rowId,
-  ]
+  const candidates = [params.organizationApplicationId, params.detailId, params.rowId]
   for (const value of candidates) {
     const trimmed = value?.trim()
     if (trimmed) return trimmed
@@ -40,6 +36,8 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
   textbookGrade?: string
   /** 저장 전 교육 형태. 같으면 PATCH에서 뺀다. */
   baselineEducationFormat?: string | null
+  /** 교재를 실제로 변경한 경우에만 textbookId/수량 필드를 전송한다. */
+  includeTextbookFields?: boolean
   /**
    * 프로그램 교육형태가 참여자 선택일 때만 true.
    * false면 값이 달라도 requestedEducationFormat을 넣지 않는다.
@@ -72,9 +70,7 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
       ? textbookIdNum
       : undefined
   const requestedEducationFormat = toRequestedEducationFormatApiValue(draft.educationFormat)
-  const baselineEducationFormat = toRequestedEducationFormatApiValue(
-    params.baselineEducationFormat
-  )
+  const baselineEducationFormat = toRequestedEducationFormatApiValue(params.baselineEducationFormat)
   const body: Record<string, unknown> = {
     requestedGrade: gradeTrimmed
       ? formatInstitutionApplicationGradeDisplay(gradeTrimmed)
@@ -88,10 +84,8 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
       ? { requestedEducationFormat }
       : {}),
     teacherMemberId,
-    teacherPhone:
-      draft.teacherMobile.trim() || draft.teacherPhone.trim() || undefined,
+    teacherPhone: draft.teacherMobile.trim() || draft.teacherPhone.trim() || undefined,
     teacherEmail: draft.teacherEmail.trim() || undefined,
-    textbookId,
     applicationReason: draft.applicationReason.trim() || undefined,
     otherRequests: draft.otherRequests.trim() || undefined,
     computerInRoom: draft.computerInRoom.trim() || undefined,
@@ -104,14 +98,11 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
     parkingInfo: draft.parkingInfo.trim() || undefined,
   }
 
-  if (!isTextbookNotUsed) {
-    if (params.textbookGrade?.trim()) body.textbookGrade = params.textbookGrade.trim()
-    if (params.textbookKits != null) body.textbookKits = params.textbookKits
-    if (params.textbookQuantity != null) body.textbookQuantity = params.textbookQuantity
-  } else {
-    body.textbookGrade = undefined
-    body.textbookKits = 0
-    body.textbookQuantity = 0
+  if (params.includeTextbookFields !== false) {
+    body.textbookId = textbookId
+    if (!isTextbookNotUsed) {
+      if (params.textbookGrade?.trim()) body.textbookGrade = params.textbookGrade.trim()
+    }
   }
 
   return body as OrganizationApplicationUpdateRequestWithNullTextbook

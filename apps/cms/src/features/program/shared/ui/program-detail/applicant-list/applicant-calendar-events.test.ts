@@ -199,8 +199,32 @@ describe('mapApplicantDataToCalendarEvents', () => {
     expect(events[0]?.startDate).toBe('2026-10-28T09:00:00')
   })
 
-  it('maps instructor calendar events with instructor names as titles', () => {
-    const row: ApplicantInstructorRow = {
+  it('maps instructor calendar from confirmed institution sessions and scheduleId match', () => {
+    const institution: ApplicantSchoolRow = {
+      id: 'org-1',
+      no: 1,
+      schoolName: '동탄초등학교',
+      region: '경기도 화성시',
+      educationGrade: '5학년',
+      classCount: 1,
+      studentCount: 30,
+      teacherName: '김교사',
+      approvalStatus: 'approved',
+      confirmedListAssignmentSessions: [
+        {
+          round: 2,
+          date: '2026.01.07',
+          dayOfWeek: '수',
+          duration: '-',
+          format: '-',
+          classNum: '2차시',
+          timeRange: '09:20 ~ 11:20',
+          status: 'pending',
+          resolvedScheduleId: 101,
+        },
+      ],
+    }
+    const instructor: ApplicantInstructorRow = {
       id: 'inst-1',
       no: 1,
       instructorName: '홍강사',
@@ -211,27 +235,31 @@ describe('mapApplicantDataToCalendarEvents', () => {
       email: '-',
       address: '서울특별시',
       approvalStatus: 'pending',
-      schoolName: '학교 / 기관 / 봉사 / 복수 회차 [기관]',
+      schoolName: '동탄초등학교',
       preferredSchools: [
         {
-          schoolId: '1',
-          schoolName: '학교 / 기관 / 봉사 / 복수 회차 [기관]',
-          rank: 1,
+          schoolId: '101',
+          schoolName: '동탄초등학교',
+          rank: 2,
           assignable: true,
-          dateRange: '2026.10.01(목) ~ 2026.10.01(목)',
         },
       ],
     }
-    const events = mapApplicantDataToCalendarEvents([row], 'instructors')
+    const events = mapApplicantDataToCalendarEvents([instructor], 'instructors', {
+      institutionRows: [institution],
+    })
     expect(events).toHaveLength(1)
-    expect(events[0]?.title).toBe('홍강사')
-    const item = events[0]?.originalItem as { calendarBucketSchoolName?: string; schoolName?: string }
-    expect(item.calendarBucketSchoolName).toBe('학교 / 기관 / 봉사 / 복수 회차 [기관]')
-    expect(item.schoolName).toBe('학교 / 기관 / 봉사 / 복수 회차 [기관]')
+    expect(events[0]?.title).toBe('동탄초등학교 | 경기도 화성시')
+    const item = events[0]?.originalItem as {
+      calendarInstitutionInstructors?: ApplicantInstructorRow[]
+      calendarInstitutionSummary?: { applicantCount: number }
+    }
+    expect(item.calendarInstitutionInstructors).toHaveLength(1)
+    expect(item.calendarInstitutionSummary?.applicantCount).toBe(1)
   })
 
-  it('plots instructor calendar when organizationName is missing but dateRange exists', () => {
-    const row: ApplicantInstructorRow = {
+  it('returns no instructor calendar events without institution rows', () => {
+    const instructor: ApplicantInstructorRow = {
       id: 'inst-2',
       no: 2,
       instructorName: '김강사',
@@ -243,19 +271,28 @@ describe('mapApplicantDataToCalendarEvents', () => {
       address: '서울',
       approvalStatus: 'pending',
       schoolName: '',
-      preferredSchools: [
-        {
-          schoolId: '1',
-          schoolName: '',
-          rank: 1,
-          assignable: true,
-          dateRange: '2026.10.02(금) ~ 2026.10.02(금)',
-        },
-      ],
+      preferredSchools: [],
     }
-    const events = mapApplicantDataToCalendarEvents([row], 'instructors')
-    expect(events).toHaveLength(1)
-    expect(events[0]?.title).toBe('김강사')
+    expect(mapApplicantDataToCalendarEvents([instructor], 'instructors')).toHaveLength(0)
+  })
+
+  it('ignores non-confirmed list sessions when mapping organization rows', () => {
+    const institution: ApplicantSchoolRow = {
+      id: 'org-2',
+      no: 1,
+      schoolName: '귀인초등학교',
+      region: '경기도 화성시',
+      educationGrade: '4학년',
+      classCount: 1,
+      studentCount: 28,
+      teacherName: '이교사',
+      approvalStatus: 'approved',
+      confirmedListAssignmentSessions: [],
+    }
+    const events = mapApplicantDataToCalendarEvents([], 'instructors', {
+      institutionRows: [institution],
+    })
+    expect(events).toHaveLength(0)
   })
 
   it('formats multiple instructor names for one calendar bucket', () => {

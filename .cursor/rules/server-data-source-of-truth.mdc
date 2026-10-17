@@ -1,0 +1,37 @@
+---
+description: 백엔드 원본 응답을 우선 사용하고 임의 fallback으로 데이터를 보완하지 않는다
+alwaysApply: true
+---
+
+# 서버 원본 데이터 정합성
+
+화면에 표시되는 업무 데이터는 백엔드 API 응답을 canonical source로 사용한다.
+
+## 필수 원칙
+
+- API 응답에 값이 있으면 해당 값을 그대로 사용하고 다른 데이터로 덮어쓰지 않는다.
+- API 응답이 `null`, 빈 문자열, 빈 배열 또는 필드 누락이면 임의의 기본값·목록 캐시·프로그램 공통값으로 보완하지 않는다.
+- 표시용 업무 데이터가 없으면 화면에는 `-`를 표시한다. 다른 API·기존 row·mock 데이터로 대체하지 않는다.
+- 응답이 없거나 필요한 필드가 누락된 경우 fallback을 추가하지 말고 API 계약, 조회 조건, 백엔드 read model 및 저장 데이터를 확인한다.
+- 목록 응답과 상세 응답이 함께 사용되면 상세 API 응답을 우선한다. 상세 응답의 명시적 `null`도 canonical 값으로 처리한다.
+- 로딩 중 placeholder와 서버 응답 완료 후 최종값을 구분한다. 오래된 캐시를 최신 응답처럼 표시하지 않는다.
+
+## 금지 예시
+
+```ts
+// 금지: 신청 상세 API 값이 없을 때 프로그램 공통값으로 대체
+const format = detail.requestedEducationFormat ?? program.educationFormat
+
+// 금지: 상세 응답의 누락/null을 목록 캐시 값으로 복원
+const value = detail.field ?? listRow.field
+```
+
+## 올바른 처리
+
+```ts
+const format = detail.requestedEducationFormat
+const displayFormat = format?.trim() || '-'
+// displayFormat이 '-'이면 API·백엔드 원인을 확인한다. 다른 데이터로 대체하지 않는다.
+```
+
+화면 요구사항과 서버 응답이 다르면 프론트 fallback으로 숨기지 말고, 필요한 API 필드와 저장·조회 경로를 명시해 백엔드 수정 또는 계약 보완을 요청한다.

@@ -4,6 +4,11 @@ import {
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  buildHopeEducationSessionsFromPreferred,
+  buildOrganizationApplicationScheduleScopeKey,
+  readPreferredEducationSchedulesForScope,
+} from '@/features/program/general/lib/organization-education-schedule-sources'
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   fetchProgramAssignmentSubmissionsRemote,
@@ -110,25 +115,32 @@ export async function fetchGeneralParticipatingInstitutions(
   return (await fetchGeneralParticipatingInstitutionsPage(programId)).rows
 }
 
-const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 100
+const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 20
 const ORG_APPLICATIONS_ENRICH_PAGE_LIMIT = 40
 
 async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
   programId: string
 ): Promise<Map<string, PreferredEducationSchedule[]>> {
+  const normalizedProgramId = programId.trim()
   const index = new Map<string, PreferredEducationSchedule[]>()
   let page = 0
   for (;;) {
-    const response = await fetchOrganizationApplicationsRemote(programId, {
+    const response = await fetchOrganizationApplicationsRemote(normalizedProgramId, {
       page,
       size: ORG_APPLICATIONS_ENRICH_PAGE_SIZE,
     })
     const items = response.items ?? []
     for (const item of items) {
       if (item.id == null) continue
+      const itemProgramId =
+        item.programId != null ? String(item.programId).trim() : normalizedProgramId
+      if (itemProgramId !== normalizedProgramId) continue
       const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
       if (preferred.length > 0) {
-        index.set(String(item.id), preferred)
+        index.set(
+          buildOrganizationApplicationScheduleScopeKey(normalizedProgramId, String(item.id)),
+          preferred
+        )
       }
     }
     const totalPages = response.totalPages ?? 0
@@ -140,16 +152,33 @@ async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
 }
 
 function attachPreferredEducationSchedulesToParticipatingSchools(
+  programId: string,
   rows: ParticipatingSchoolRow[],
-  preferredByApplicationId: Map<string, PreferredEducationSchedule[]>
+  preferredByScopeKey: Map<string, PreferredEducationSchedule[]>
 ): ParticipatingSchoolRow[] {
-  if (preferredByApplicationId.size === 0) return rows
+  if (preferredByScopeKey.size === 0) return rows
+  const normalizedProgramId = programId.trim()
   return rows.map(row => {
-    const applicationId = row.organizationApplicationId
+    const applicationId = row.organizationApplicationId?.trim()
     if (!applicationId) return row
-    const preferred = preferredByApplicationId.get(applicationId)
+    if (row.programId != null && String(row.programId).trim() !== normalizedProgramId) {
+      return row
+    }
+    const preferred = readPreferredEducationSchedulesForScope(preferredByScopeKey, {
+      programId: normalizedProgramId,
+      organizationApplicationId: applicationId,
+    })
     if (!preferred?.length) return row
-    return { ...row, preferredEducationSchedules: preferred }
+    const hopeEducationSessions = buildHopeEducationSessionsFromPreferred(preferred)
+    return {
+      ...row,
+      preferredEducationSchedules: preferred,
+      hopeEducationSessions,
+      lectureRound:
+        hopeEducationSessions.length > 0
+          ? String(hopeEducationSessions.length)
+          : row.lectureRound,
+    }
   })
 }
 
@@ -166,6 +195,7 @@ export async function fetchGeneralParticipatingInstitutionsPage(
   const preferredByApplicationId =
     await fetchOrganizationPreferredEducationSchedulesByApplicationId(programId)
   const rows = attachPreferredEducationSchedulesToParticipatingSchools(
+    programId,
     (page.items ?? []).map((item, index) =>
       mapParticipantToParticipatingSchoolRow(
         item,
@@ -482,17 +512,17 @@ export async function saveGeneralVolunteerAssignedOrganizations(
 export async function giveUpGeneralParticipatingInstitution(
   programId: string,
   participantId: string,
-  reason: string,
-  options?: { stopScheduleId?: number }
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 ): Promise<void> {
   assertProgramProgressRemoteReady()
-  const trimmed = reason.trim()
+  const trimmed = payload.reason.trim()
   if (!trimmed) {
     throw new Error('활동 포기 사유가 필요합니다.')
   }
   await giveUpProgramParticipantRemote(programId, participantId, {
     reason: trimmed,
-    ...(options?.stopScheduleId != null ? { stopScheduleId: options.stopScheduleId } : {}),
+    ...(payload.stopScheduleId != null ? { stopScheduleId: payload.stopScheduleId } : {}),
+    ...(payload.faultParty ? { faultParty: payload.faultParty } : {}),
   })
 }
 

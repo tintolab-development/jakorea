@@ -8,7 +8,6 @@ import {
   listMockTextbookCatalogForIndividualApplicant,
   serializeIndividualTextbookCatalogKey,
 } from '@/features/textbook/api/textbook-program-catalog'
-import { fetchProgramMaterialTextbookIds } from '@/features/program/general/api/program-materials-api-client'
 import { buildIndividualApplicantTextbookOptions } from '@/features/program/general/lib/individual-applicant-textbook'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -16,8 +15,9 @@ import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import type { Program } from '@/types/domain'
 
 /**
- * 개인 참여자 승인 후 교재 셀렉 — matches(사업분야+학년) ∩ program materials.
+ * 개인 참여자 승인 후 교재 셀렉 — matches(사업분야+학년).
  * 사업분야·신청 학년이 둘 다 있을 때만 remote matches를 호출한다.
+ * 프로그램 교재 배정 목록은 신청 교재의 허용 목록으로 사용하지 않는다.
  */
 export function useIndividualApplicantTextbookOptions(
   program: Program | null | undefined,
@@ -28,8 +28,6 @@ export function useIndividualApplicantTextbookOptions(
   const canFetchMatches = Boolean(program && businessArea && grade)
   const catalogKey = program ? serializeIndividualTextbookCatalogKey(program, grade) : ''
   const remoteEnabled = shouldUseTextbooksRemoteApi() && canFetchMatches
-  const materialsEnabled = remoteEnabled && Boolean(program?.id)
-
   const mockCatalog = useMemo(
     () =>
       program && canFetchMatches
@@ -46,49 +44,26 @@ export function useIndividualApplicantTextbookOptions(
     retry: false,
   })
 
-  const materialsQuery = useQuery({
-    queryKey: [...dataManagementQueryKeys.textbooks.all(), 'program-materials', program?.id ?? ''],
-    queryFn: () => fetchProgramMaterialTextbookIds(String(program!.id)),
-    enabled: materialsEnabled,
-    staleTime: 60_000,
-    retry: false,
-  })
-
-  const catalog: TextbookRow[] | undefined = !remoteEnabled
-    ? mockCatalog
-    : matchesQuery.data !== undefined
-      ? matchesQuery.data
-      : matchesQuery.isPending || matchesQuery.isLoading
-        ? undefined
-        : []
-
-  const materialIds =
-    !materialsEnabled
-      ? null
-      : materialsQuery.data !== undefined
-        ? materialsQuery.data
-        : materialsQuery.isPending || materialsQuery.isLoading
-          ? undefined
-          : new Set<string>()
+  const catalog: TextbookRow[] | undefined = useMemo(
+    () =>
+      !remoteEnabled
+        ? mockCatalog
+        : matchesQuery.data !== undefined
+          ? matchesQuery.data
+          : matchesQuery.isPending || matchesQuery.isLoading
+            ? undefined
+            : [],
+    [matchesQuery.data, matchesQuery.isLoading, matchesQuery.isPending, mockCatalog, remoteEnabled]
+  )
 
   const options = useMemo(
-    () =>
-      buildIndividualApplicantTextbookOptions(
-        program,
-        grade,
-        catalog,
-        materialIds === undefined ? null : materialIds
-      ),
-    [catalog, grade, materialIds, program]
+    () => buildIndividualApplicantTextbookOptions(program, grade, catalog),
+    [catalog, grade, program]
   )
 
   return {
     options,
     catalog,
-    materialIds: materialIds === undefined ? null : materialIds,
-    isLoading:
-      remoteEnabled &&
-      ((matchesQuery.isPending || matchesQuery.isLoading) ||
-        (materialsEnabled && (materialsQuery.isPending || materialsQuery.isLoading))),
+    isLoading: remoteEnabled && (matchesQuery.isPending || matchesQuery.isLoading),
   }
 }

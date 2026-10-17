@@ -7,7 +7,6 @@ export type SurveyEmptyStateProps = {
   description: string
   secondaryDescription?: string
   registerButtonLabel: string
-  registerButtonWidth?: number | string
   embedded?: boolean
   onRegisterClick: () => void
 }
@@ -17,7 +16,6 @@ export function SurveyEmptyState({
   description,
   secondaryDescription,
   registerButtonLabel,
-  registerButtonWidth = 180,
   embedded = false,
   onRegisterClick,
 }: SurveyEmptyStateProps) {
@@ -45,12 +43,7 @@ export function SurveyEmptyState({
             ))}
           </p>
         </div>
-        <CmsButton
-          className="survey-management-empty__register-button"
-          size="large"
-          width={registerButtonWidth}
-          onClick={onRegisterClick}
-        >
+        <CmsButton size="large" onClick={onRegisterClick}>
           {registerButtonLabel}
         </CmsButton>
       </div>

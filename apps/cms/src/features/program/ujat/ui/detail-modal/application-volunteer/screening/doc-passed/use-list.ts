@@ -30,6 +30,7 @@ import {
   guardUjatVolunteerWithdrawActivity,
 } from '../applicant/guard-actions'
 import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
 
 export type UjatInterviewAssignPickFlow = {
   type: 'pick'
@@ -185,17 +186,21 @@ export function useUjatVolunteerDocPassed({
     [updateRow]
   )
 
-  const handleAssignInterview = useCallback((row: UjatVolunteerApplicantRow) => {
-    if (!guardUjatVolunteerAssignInterview(row)) return
-    if (!shouldUseUjatApplicationsRemoteApi()) {
-      showAlert({
-        title: '면접 배정',
-        content: 'UJAT 신청 API가 활성화되지 않았습니다. applications 모듈·원격 JWT를 확인해 주세요.',
-      })
-      return
-    }
-    setAssignFlow({ type: 'pick', target: row })
-  }, [showAlert])
+  const handleAssignInterview = useCallback(
+    (row: UjatVolunteerApplicantRow) => {
+      if (!guardUjatVolunteerAssignInterview(row)) return
+      if (!shouldUseUjatApplicationsRemoteApi()) {
+        showAlert({
+          title: '면접 배정',
+          content:
+            'UJAT 신청 API가 활성화되지 않았습니다. applications 모듈·원격 JWT를 확인해 주세요.',
+        })
+        return
+      }
+      setAssignFlow({ type: 'pick', target: row })
+    },
+    [showAlert]
+  )
 
   const closeAssignModal = useCallback(() => {
     setAssignFlow(current => (current?.type === 'pick' ? null : current))
@@ -227,9 +232,11 @@ export function useUjatVolunteerDocPassed({
         await invalidateVolunteerLists()
       } catch (error) {
         console.debug('ujat interview assign remote failed', error)
+        const scheduleError = getNotificationScheduleError(error)
         showAlert({
           title: '면접 배정 실패',
-          content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          content:
+            scheduleError?.message ?? '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
         })
         return
       }
@@ -277,9 +284,7 @@ export function useUjatVolunteerDocPassed({
       try {
         await giveUpUjatVolunteerApplicationRemote(
           applicationId,
-          _payload.stopScheduleLabel
-            ? `활동 포기 (${_payload.stopScheduleLabel})`
-            : '활동 포기'
+          _payload.stopScheduleLabel ? `활동 포기 (${_payload.stopScheduleLabel})` : '활동 포기'
         )
         await invalidateVolunteerLists()
       } catch {

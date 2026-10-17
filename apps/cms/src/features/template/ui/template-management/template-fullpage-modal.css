@@ -238,12 +238,24 @@
 }
 
 /* draft 로딩: 2열 대신 본문 전체에서 스피너 가로·세로 중앙 */
-.full-page-modal__contents:has(.form-draft-loading) {
+.full-page-modal__contents:has(.form-draft-loading),
+.full-page-modal--body-loading .full-page-modal__contents {
   flex: 1 1 auto;
   align-self: stretch;
   width: 100%;
   max-width: none;
   min-height: 0;
+}
+
+.full-page-modal--body-loading .full-page-modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.full-page-modal--body-loading .full-page-modal__contents .registration-fullpage-entry-loading {
+  min-height: 100%;
 }
 
 .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__left {

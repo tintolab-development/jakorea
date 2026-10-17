@@ -234,7 +234,7 @@ export async function fetchSettlementCalendarDateRemote(date: string) {
 export async function fetchAllSettlementsRemote(
   params: Omit<ListSettlementsParams, 'page' | 'size'> = {}
 ): Promise<PageResponseSettlementListItemResponse['items']> {
-  const pageSize = 50
+  const pageSize = 20
   let page = 0
   const items: NonNullable<PageResponseSettlementListItemResponse['items']> = []
 
@@ -253,7 +253,7 @@ export async function fetchAllSettlementsRemote(
 export async function fetchAllPaymentStatementsRemote(): Promise<
   NonNullable<PageResponsePaymentStatementListItemResponse['items']>
 > {
-  const pageSize = 50
+  const pageSize = 20
   let page = 0
   const items: NonNullable<PageResponsePaymentStatementListItemResponse['items']> = []
 
@@ -273,7 +273,7 @@ export async function fetchAllAccountPaymentsRemote(
   params: Omit<ListAccountPaymentsParams, 'page' | 'size'> = {}
 ): Promise<NonNullable<PageResponseAccountPaymentListItemResponse['items']>> {
   /** 시드 ≥32 · 테이블 전량 로드 UX — 왕복 축소 (잘림 방지를 위해 페이지 루프 유지) */
-  const pageSize = 100
+  const pageSize = 20
   let page = 0
   const items: NonNullable<PageResponseAccountPaymentListItemResponse['items']> = []
 

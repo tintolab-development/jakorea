@@ -109,7 +109,7 @@
   color: inherit;
 }
 
-/* 값이 있으면 X 상시 노출 — Ant 기본(hover 시에만, absolute)을 flex 형제로 */
+/* X는 flex 형제 — hover / focus 시에만 노출 (`cms-field__clear` 규칙과 동일) */
 .cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-clear {
   position: static;
   display: inline-flex;
@@ -118,13 +118,24 @@
   flex-shrink: 0;
   inset: auto;
   transform: none;
-  opacity: 1;
+  opacity: 0;
+  pointer-events: none;
   margin: 0;
   background: transparent;
   line-height: 0;
+  transition: opacity 0.15s ease;
+}
+
+.cms-datepicker .cms-field__box:hover .ant-picker.cms-datepicker__picker .ant-picker-clear,
+.cms-datepicker .cms-field__box:focus-within .ant-picker.cms-datepicker__picker .ant-picker-clear,
+.cms-datepicker.cms-field__box:hover .ant-picker.cms-datepicker__picker .ant-picker-clear,
+.cms-datepicker.cms-field__box:focus-within .ant-picker.cms-datepicker__picker .ant-picker-clear {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-clear .cms-field__clear {
+  opacity: 1;
   pointer-events: none;
 }
 

@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 30px;
+
   width: 100%;
   padding: 0;
 }
@@ -27,6 +27,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 30px;
+  margin-top: 20px;
   width: 100%;
 }
 
@@ -40,28 +41,8 @@
   margin-bottom: 10px;
 }
 
-/* 필드 td(값) 영역 텍스트 */
-.profile-edit-modal__section .detail-info-form__field-content {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
 .profile-edit-modal__field-action-btn {
   margin-left: 16px !important;
-}
-
-.profile-edit-modal__value-with-action-text {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  white-space: nowrap;
-  overflow: hidden;
 }
 
 /* 소셜 3개(카카오·구글·네이버) + 액션 버튼이 한 줄에 들어가도록 디바이더 갭 축소 */
@@ -299,6 +280,7 @@
   justify-content: space-between;
   width: 100%;
   gap: 16px;
+  margin-top: 30px;
 }
 
 .profile-edit-modal__footer-actions {

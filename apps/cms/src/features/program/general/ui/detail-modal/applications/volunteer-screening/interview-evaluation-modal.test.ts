@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveInterviewEvaluationSlotEditable } from './interview-evaluation-modal'
+import { resolveInterviewEvaluationSlotEditable } from './interview-evaluation-section'
 
 const empty = {
   managerAScore: null,

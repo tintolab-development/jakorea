@@ -4,7 +4,7 @@ import {
   IntroductionScroll,
   usePublicOrganization,
 } from '@/features/introduction'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function IntroductionPage() {
@@ -13,9 +13,7 @@ export function IntroductionPage() {
   if (isPending) {
     return (
       <div className={styles.page}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-          기관소개 정보를 불러오는 중입니다.
-        </PFText>
+        <PFLoadingSpinner centered label="기관소개 정보를 불러오는 중" />
       </div>
     )
   }

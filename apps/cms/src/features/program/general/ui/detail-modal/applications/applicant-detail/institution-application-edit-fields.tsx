@@ -90,6 +90,10 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
     mealInfo?: string
     otherSpecialNotes?: string
     parkingInfo?: string
+    teacherTel?: string
+    teacherPhone?: string
+    teacherMobile?: string
+    teacherEmail?: string
     teacherInfo?: string
   },
   institution?: {
@@ -138,13 +142,24 @@ function normalizeInstitutionApplicationGradeForApplicantEdit(grade?: string): s
 }
 
 function parseInstitutionTeacherInfoFromApplicantDetail(
-  detail?: { teacherInfo?: string },
+  detail?: {
+    teacherInfo?: string
+    teacherTel?: string
+    teacherPhone?: string
+    teacherMobile?: string
+    teacherEmail?: string
+  },
   institution?: { teacherName?: string; contact?: string }
 ): Pick<
   InstitutionApplicationDetailEditFields,
   'teacherName' | 'teacherPhone' | 'teacherMobile' | 'teacherEmail'
 > {
   const raw = detail?.teacherInfo?.trim()
+  const hasStructuredTeacherFields =
+    detail != null &&
+    ['teacherTel', 'teacherPhone', 'teacherMobile', 'teacherEmail'].some(field =>
+      Object.prototype.hasOwnProperty.call(detail, field)
+    )
   if (raw) {
     const parsed: {
       name?: string
@@ -177,17 +192,23 @@ function parseInstitutionTeacherInfoFromApplicantDetail(
 
     return {
       teacherName: parsed.name ?? institution?.teacherName ?? '',
-      teacherPhone: parsed.tel ?? institution?.contact ?? '',
-      teacherMobile: parsed.mobile ?? '',
-      teacherEmail: parsed.email ?? '',
+      teacherPhone:
+        detail?.teacherTel ??
+        parsed.tel ??
+        (hasStructuredTeacherFields ? '' : institution?.contact) ??
+        '',
+      teacherMobile:
+        detail?.teacherPhone ?? detail?.teacherMobile ?? parsed.mobile ?? '',
+      teacherEmail: detail?.teacherEmail ?? parsed.email ?? '',
     }
   }
 
   return {
     teacherName: institution?.teacherName ?? '',
-    teacherPhone: institution?.contact ?? '',
-    teacherMobile: '',
-    teacherEmail: '',
+    teacherPhone:
+      detail?.teacherTel ?? (hasStructuredTeacherFields ? '' : institution?.contact) ?? '',
+    teacherMobile: detail?.teacherPhone ?? detail?.teacherMobile ?? '',
+    teacherEmail: detail?.teacherEmail ?? '',
   }
 }
 

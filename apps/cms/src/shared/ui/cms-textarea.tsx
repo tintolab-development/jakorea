@@ -66,7 +66,8 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>((props, ref
   const widthStyle: CSSProperties | undefined =
     width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
 
-  const { rows, ...textareaRest } = rest
+  // CMS 전역: 글자 수(0/2000) UI 미표시 — maxLength 검증은 유지 (Platform은 별도 컴포넌트)
+  const { rows, showCount: _showCount, ...textareaRest } = rest
   const isRows1 = rows === 1
   const rows1SingleLine = isRows1 && !expandableFromSingleRow
 

@@ -18,6 +18,7 @@ import {
   dumpE2eTestLogs,
   installApiCallCapture,
 } from '../helpers/attach-e2e-test-logs'
+import { installE2eApiProxy } from '../helpers/e2e-api-proxy'
 
 type ApiErrorCapture = {
   getErrors: () => Promise<CapturedApiError[]>
@@ -31,6 +32,7 @@ export const test = base.extend<{
   // auto: true → 스펙에서 참조하지 않아도 모든 테스트에 적용
   _backendErrorCapture: [
     async ({ page }, use, testInfo) => {
+      await installE2eApiProxy(page)
       const capture = installApiErrorCapture(page)
       await use(capture)
 
@@ -50,6 +52,7 @@ export const test = base.extend<{
   ],
   _testProgressCapture: [
     async ({ page }, use, testInfo) => {
+      await installE2eApiProxy(page)
       const startedAtIso = new Date().toISOString()
       const capture = installApiCallCapture(page)
       await use()

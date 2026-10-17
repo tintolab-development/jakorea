@@ -54,12 +54,16 @@ export type ParagraphDatePickerPopoverProps = {
   onEndHourChange: (v: string) => void
   onEndMinuteChange: (v: string) => void
   invalidTimeRange: boolean
+  /** 기간 OFF·ON 고정(같은 날) — 종료일 날짜 인풋은 항상 노출, true면 비활성 */
+  rangeEndDateDisabled?: boolean
   showPeriodToggle: boolean
   showTimeToggle?: boolean
-  /** 기간 토글 ON 고정. 조작 불가하므로 팝오버에서는 숨김. 기본 false. */
+  /** 기간 토글 ON 고정. 조작 불가(비활성 ON)로 표시. 기본 false. */
   periodToggleDisabled?: boolean
   /** 시간 토글 ON 고정. 조작 불가하므로 팝오버에서는 숨김. 기본 false. */
   timeToggleDisabled?: boolean
+  /** 시간 선택 UI 노출 + 비활성 (기관 일정형 단일 기간) */
+  timeInputsDisabled?: boolean
   periodOn: boolean
   onPeriodOnChange: (next: boolean) => void
   onTimeOnChange: (next: boolean) => void
@@ -101,10 +105,12 @@ export function ParagraphDatePickerPopover({
   onEndHourChange,
   onEndMinuteChange,
   invalidTimeRange,
+  rangeEndDateDisabled = false,
   showPeriodToggle,
   showTimeToggle = true,
   periodToggleDisabled = false,
   timeToggleDisabled = false,
+  timeInputsDisabled = false,
   periodOn,
   onPeriodOnChange,
   onTimeOnChange,
@@ -119,10 +125,9 @@ export function ParagraphDatePickerPopover({
     dismissExcludeRef,
     repositionDeps: [isRangeCalendarMode, sameDayTimeRange, timeOn],
   })
-  const showInteractivePeriodToggle =
-    showPeriodToggle && !disabled && !periodToggleDisabled
-  const showInteractiveTimeToggle =
-    showTimeToggle && !disabled && !timeToggleDisabled
+  const showRangeDateFields = isRangeCalendarMode || rangeEndDateDisabled
+  const showPeriodToggleControl = showPeriodToggle && !periodToggleDisabled && !disabled
+  const showTimeToggleControl = showTimeToggle && !disabled
 
   if (!open) return null
 
@@ -163,7 +168,7 @@ export function ParagraphDatePickerPopover({
             </div>
           </div>
           <div className="date-time-picker-popover__side">
-            {isRangeCalendarMode ? (
+            {showRangeDateFields ? (
               <div className="date-time-picker-popover__fields">
                 <div
                   className="date-time-picker-popover__field"
@@ -191,7 +196,7 @@ export function ParagraphDatePickerPopover({
                         rangeFocus === 'start' && 'date-time-picker-popover__input--active'
                       )}
                       width="100%"
-                      inputSize="large"
+                      inputSize="medium"
                       readOnly
                       allowClear={false}
                       tabIndex={-1}
@@ -205,7 +210,7 @@ export function ParagraphDatePickerPopover({
                         onHourChange={onStartHourChange}
                         onMinuteChange={onStartMinuteChange}
                         getPopupContainer={() => popoverRef.current ?? document.body}
-                        disabled={disabled}
+                        disabled={disabled || timeInputsDisabled}
                         hourActive={rangeFocus === 'start'}
                         rowPhase="start"
                       />
@@ -213,16 +218,22 @@ export function ParagraphDatePickerPopover({
                   </div>
                 </div>
                 <div
-                  className="date-time-picker-popover__field"
-                  onClick={() => onRangeFocusChange('end')}
+                  className={cn(
+                    'date-time-picker-popover__field',
+                    rangeEndDateDisabled && 'date-time-picker-popover__field--end-date-locked'
+                  )}
+                  onClick={() => {
+                    if (!rangeEndDateDisabled) onRangeFocusChange('end')
+                  }}
                   onKeyDown={e => {
+                    if (rangeEndDateDisabled) return
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
                       onRangeFocusChange('end')
                     }
                   }}
-                  role="button"
-                  tabIndex={0}
+                  role={rangeEndDateDisabled ? undefined : 'button'}
+                  tabIndex={rangeEndDateDisabled ? undefined : 0}
                 >
                   <span className="date-time-picker-popover__field-label">종료일</span>
                   <div
@@ -235,28 +246,42 @@ export function ParagraphDatePickerPopover({
                     <CmsInput
                       className={cn(
                         'date-time-picker-popover__input',
-                        rangeFocus === 'end' && 'date-time-picker-popover__input--active'
+                        'date-time-picker-popover__input--end-date',
+                        !rangeEndDateDisabled &&
+                          rangeFocus === 'end' &&
+                          'date-time-picker-popover__input--active'
                       )}
                       width="100%"
-                      inputSize="large"
+                      inputSize="medium"
                       readOnly
+                      disabled={disabled || rangeEndDateDisabled}
                       allowClear={false}
                       tabIndex={-1}
-                      value={formatAppDatepickerDisplay(rangeEnd)}
+                      value={formatAppDatepickerDisplay(
+                        rangeEndDateDisabled ? rangeStart : rangeEnd
+                      )}
                       aria-label="종료일"
                     />
                     {timeOn ? (
-                      <DateTimePickerTimeInlineSelects
-                        hour={endHour}
-                        minute={endMinute}
-                        onHourChange={onEndHourChange}
-                        onMinuteChange={onEndMinuteChange}
-                        getPopupContainer={() => popoverRef.current ?? document.body}
-                        disabled={disabled}
-                        hourActive={rangeFocus === 'end'}
-                        invalid={invalidTimeRange}
-                        rowPhase="end"
-                      />
+                      <div
+                        className="date-time-picker-popover__end-time-wrap"
+                        onClick={e => {
+                          e.stopPropagation()
+                          onRangeFocusChange('end')
+                        }}
+                      >
+                        <DateTimePickerTimeInlineSelects
+                          hour={endHour}
+                          minute={endMinute}
+                          onHourChange={onEndHourChange}
+                          onMinuteChange={onEndMinuteChange}
+                          getPopupContainer={() => popoverRef.current ?? document.body}
+                          disabled={disabled || timeInputsDisabled}
+                          hourActive={rangeFocus === 'end'}
+                          invalid={invalidTimeRange}
+                          rowPhase="end"
+                        />
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -266,7 +291,7 @@ export function ParagraphDatePickerPopover({
                 <CmsInput
                   className="date-time-picker-popover__input date-time-picker-popover__input--active"
                   width="100%"
-                  inputSize="large"
+                  inputSize="medium"
                   readOnly
                   allowClear={false}
                   tabIndex={-1}
@@ -313,7 +338,7 @@ export function ParagraphDatePickerPopover({
                 <CmsInput
                   className="date-time-picker-popover__input date-time-picker-popover__input--active"
                   width="100%"
-                  inputSize="large"
+                  inputSize="medium"
                   readOnly
                   allowClear={false}
                   tabIndex={-1}
@@ -335,7 +360,7 @@ export function ParagraphDatePickerPopover({
               <CmsInput
                 className="date-time-picker-popover__input date-time-picker-popover__input--active"
                 width="100%"
-                inputSize="large"
+                inputSize="medium"
                 readOnly
                 allowClear={false}
                 tabIndex={-1}
@@ -349,13 +374,15 @@ export function ParagraphDatePickerPopover({
               </div>
             ) : null}
             <div className="date-time-picker-popover__footer">
-              {showInteractivePeriodToggle || showInteractiveTimeToggle ? (
+              {showPeriodToggleControl || showTimeToggleControl ? (
                 <div className="date-time-picker-popover__toggles">
-                  {showInteractivePeriodToggle ? (
+                  {showPeriodToggleControl ? (
                     <CmsToggle
                       label="기간"
                       checked={periodOn}
+                      disabled={periodToggleDisabled}
                       onChange={next => {
+                        if (periodToggleDisabled) return
                         onPeriodOnChange(next)
                         if (next) {
                           const nextEnd = findNextEnabledDate(draft.add(1, 'day'), disabledDate)
@@ -364,11 +391,13 @@ export function ParagraphDatePickerPopover({
                       }}
                     />
                   ) : null}
-                  {showInteractiveTimeToggle ? (
+                  {showTimeToggleControl ? (
                     <CmsToggle
                       label="시간"
                       checked={timeOn}
+                      disabled={timeToggleDisabled}
                       onChange={next => {
+                        if (timeToggleDisabled) return
                         onTimeOnChange(next)
                         if (next) {
                           onTimeToggleOn?.({

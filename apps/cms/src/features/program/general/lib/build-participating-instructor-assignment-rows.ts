@@ -24,6 +24,7 @@ import type {
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
+import { hasAssignableOrganizationInstructorSchedule } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
@@ -142,6 +143,14 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
   return rows.sort((a, b) => a.no - b.no)
 }
 
+function resolveWaitingAssignmentStatus(
+  sessions: ParticipatingSchoolSession[]
+): InstructorWaitingSchoolRow['assignmentStatus'] {
+  return hasAssignableOrganizationInstructorSchedule(sessions)
+    ? 'waiting'
+    : 'no_assignable_schedule'
+}
+
 function buildScheduleGroups(school: ParticipatingSchoolRow) {
   const groups = new Map<string, ParticipatingSchoolSession[]>()
   for (const session of getParticipatingSchoolAssignmentSessions(school)) {
@@ -192,6 +201,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
       const groups = buildScheduleGroups(school)
       for (const group of groups) {
         rowNo += 1
+        const assignmentStatus = resolveWaitingAssignmentStatus(group.sessions)
         rows.push({
           id: `${school.id}__${group.scheduleKey}`,
           schoolId: school.id,
@@ -203,7 +213,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
           region: school.region,
           distanceFromHome: '-',
           educationScheduleLines: [group.line],
-          assignmentStatus: 'waiting',
+          assignmentStatus,
           assignedInstructorCountLabel: '-',
           organizationApplicationId: orgAppId,
           instructorApplicationId: input.instructor.instructorApplicationId,
@@ -216,18 +226,19 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
       continue
     }
 
+    const assignmentSessions = getParticipatingSchoolAssignmentSessions(school)
     rowNo += 1
     rows.push({
       id: school.id,
       no: rowNo,
       schoolId: school.id,
-      sessions: getParticipatingSchoolAssignmentSessions(school),
+      sessions: assignmentSessions,
       schoolName: school.schoolName,
       desiredGrade: school.educationGrade,
       region: school.region,
       distanceFromHome: '-',
       educationScheduleLines: scheduleLinesForSchool(school),
-      assignmentStatus: 'waiting',
+      assignmentStatus: resolveWaitingAssignmentStatus(assignmentSessions),
       assignedInstructorCountLabel: '-',
       organizationApplicationId: orgAppId,
       instructorApplicationId: input.instructor.instructorApplicationId,
@@ -302,7 +313,12 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
     lectureLocation: row.schoolName,
     distanceFromHome: row.distanceFromHome,
     scheduleLabel: row.educationScheduleLines[0] ?? '-',
-    assignmentStatus: row.assignmentStatus === 'cancelled' ? 'unavailable' : 'waiting',
+    assignmentStatus:
+      row.assignmentStatus === 'no_assignable_schedule'
+        ? 'no_assignable_schedule'
+        : row.assignmentStatus === 'cancelled'
+          ? 'unavailable'
+          : 'waiting',
     assignedInstructorCountLabel: row.assignedInstructorCountLabel,
     organizationApplicationId: row.organizationApplicationId,
     instructorApplicationId: row.instructorApplicationId,

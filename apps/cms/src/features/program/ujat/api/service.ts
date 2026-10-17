@@ -25,6 +25,10 @@ import {
   type RegistrationPersistSnapshot,
   type RegistrationSnapshot,
 } from './service-detail'
+import {
+  buildUjatRegionCapacityOverlay,
+  fetchUjatRegionCapacitiesRemote,
+} from './region-capacities-client'
 
 export type CreateInput = RegistrationSnapshot & {
   idempotencyKey: string
@@ -78,13 +82,34 @@ export async function list(params: ListParams = {}): Promise<Program[]> {
 export async function detail(programId: string): Promise<Program | null> {
   assertRemoteReady()
   const mapped = fromDetail(await fetchAdminProgramByIdRemote(programId))
+  // 지역별 정원은 프로그램 상세 JSON이 아닌 실행 도메인의 별도 테이블에 저장된다.
+  // 상세 조회에서도 같은 값을 overlay에 주입해야 정보 탭이 0/빈 값으로 남지 않는다.
+  let mappedWithRegionCapacities = mapped
+  try {
+    const capacities = await fetchUjatRegionCapacitiesRemote(programId)
+    if (capacities.length > 0) {
+      mappedWithRegionCapacities = {
+        ...mapped,
+        ujatRegistrationOverlay: {
+          ...(mapped.ujatRegistrationOverlay ?? {}),
+          ...buildUjatRegionCapacityOverlay(capacities),
+        },
+      }
+    }
+  } catch {
+    // 지역 정원 권한/구버전 백엔드로 상세 전체가 막히지 않도록 기존 상세 응답을 유지한다.
+  }
   const { withFetchedProgramSponsorAssignments } = await import(
     '@/features/program/shared/lib/merge-program-sponsor-assignments'
   )
   const { fetchAdminProgramSponsorsRemote } = await import(
     '@/features/program/general/api/programs-api-client'
   )
-  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
+  return withFetchedProgramSponsorAssignments(
+    mappedWithRegionCapacities,
+    programId,
+    fetchAdminProgramSponsorsRemote
+  )
 }
 
 export async function create(input: CreateInput): Promise<Program> {

@@ -14,7 +14,7 @@ export { isEducationEntrepreneurshipPath } from './lib/routes'
 export {
   EDUCATION_ENTREPRENEURSHIP_PROGRAMS,
   getEducationEntrepreneurshipPrograms,
-} from './lib/mock-data'
+} from './lib/page-content'
 export { ProgramSection } from './ui/program-section'
 export { ProgramGallery } from './ui/program-gallery'
 export { PartnerBadge } from './ui/partner-badge'

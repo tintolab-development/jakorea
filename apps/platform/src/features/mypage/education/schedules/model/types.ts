@@ -48,15 +48,25 @@ export type EducationScheduleAssignment = {
 
 export type EducationScheduleItem = {
   id: string
+  /** 운영 일정 행 id. API가 `null`이면 일정 미등록(출석·결석 UI 비활성) */
+  scheduleId?: number | null
   /** 회차 번호(1-based) — 활동 포기 시 `lastParticipatedSession` 필터 */
   sessionNumber: number
-  /** 교육 진행일 (ISO date or datetime) */
+  /** 교육 진행일 (ISO date or datetime). 없으면 빈 문자열 — 날짜 폴백은 Row */
   heldAt: string
   /** 커리큘럼형 회차명 / 일정형 일정명 */
   title: string
   attendanceStatus: EducationScheduleAttendanceStatus | null
   /** 사유 불참 시 사유 */
   absenceReason?: string
+  /** 커리큘럼 차시/회차 라벨 (`1차시` / `1회차`) */
+  sessionLabel?: string
+  /** 일정형 블록 라벨 (`세부 일정 01` / `행사 일정 01`) */
+  scheduleLabel?: string
+  /** 교육내용 */
+  content?: string
+  /** 진행 시간 표시. 없으면 Row가 heldAt 포맷 */
+  progressTimeLabel?: string
   assignment?: EducationScheduleAssignment
 }
 

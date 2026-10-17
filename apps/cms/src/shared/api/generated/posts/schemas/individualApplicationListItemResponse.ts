@@ -25,7 +25,7 @@ export interface IndividualApplicationListItemResponse {
   memberName?: string;
   /** 신청 시점 소속명 우선의 목록 표시값 */
   affiliationName?: string;
-  /** 신청 시점 학년 또는 교육 단계 */
+  /** 재학(ENROLLED) 신청자의 신청 시점 학년. TEACHER_SCHOOL·NOT_ENROLLED·강사 등 학년 없는 유형은 null */
   applicationGrade?: string;
   /** 상세 번지를 제외한 목록용 주소 요약 */
   homeAddressSummary?: string;

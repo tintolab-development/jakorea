@@ -4,16 +4,12 @@ import type { ParticipatingSchoolRow } from '@/features/program/general/model/pa
 import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import type { Program } from '@/types/domain'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
-import {
-  calculateParticipatingTextbookKitQuantity,
-  resolveTextbookFieldsFromSelection,
-} from '@/features/program/general/lib/participating-institution-textbook'
+import { resolveTextbookGradeLabel } from '@/features/program/general/lib/participating-institution-textbook'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { InstitutionApplicationDetailEditFields } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { buildInstitutionApplicationEditFieldsFromParticipatingDetail } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 
-export interface ParticipatingInstitutionEditDraft
-  extends InstitutionApplicationDetailEditFields {
+export interface ParticipatingInstitutionEditDraft extends InstitutionApplicationDetailEditFields {
   adminComment: string
   textbookId: string
   textbookName: string
@@ -107,7 +103,6 @@ export function detailToParticipatingInstitutionEditDraft(
 
 export interface ParticipatingInstitutionEditPatchContext {
   program: Program
-  studentCount: number
   requiresTextbook: boolean
   allowTextbookSelectionWithoutCombinedClass?: boolean
   catalog?: TextbookRow[]
@@ -126,11 +121,6 @@ export function participatingInstitutionEditDraftToDetailPatch(
 
   const adminTrimmed = parsed.data.adminComment.trim()
   const isApplied = parsed.data.combinedClassApplication === '신청'
-  const kitQuantity = calculateParticipatingTextbookKitQuantity(
-    context.program,
-    context.studentCount
-  )
-
   const textbookIdRaw = parsed.data.textbookId?.trim() ?? ''
   const textbookNameRaw = parsed.data.textbookName?.trim() ?? ''
   const isTextbookNotUsed =
@@ -152,20 +142,13 @@ export function participatingInstitutionEditDraftToDetailPatch(
         textbookId: undefined,
         textbookName: '해당 없음',
         textbookGrade: undefined,
-        textbookKits: 0,
-        textbookQuantity: 0,
       }
     } else {
-      textbookFields = resolveTextbookFieldsFromSelection(
-        context.program,
-        selectedTextbook,
-        context.studentCount
-      )
-    }
-  } else if (context.requiresTextbook) {
-    textbookFields = {
-      textbookKits: kitQuantity.textbookKits,
-      textbookQuantity: kitQuantity.textbookQuantity,
+      textbookFields = {
+        textbookId: selectedTextbook.id,
+        textbookName: selectedTextbook.textbookName,
+        textbookGrade: resolveTextbookGradeLabel(selectedTextbook),
+      }
     }
   }
 
@@ -182,9 +165,7 @@ export function participatingInstitutionEditDraftToDetailPatch(
       ? parsed.data.waitingRoomLocation.trim() || undefined
       : undefined,
     mealProvided: parsed.data.mealProvided,
-    mealNotice: parsed.data.mealProvided
-      ? parsed.data.mealNotice.trim() || undefined
-      : undefined,
+    mealNotice: parsed.data.mealProvided ? parsed.data.mealNotice.trim() || undefined : undefined,
     parkingInfo: parsed.data.parkingInfo.trim() || undefined,
     teacherName: parsed.data.teacherName.trim() || undefined,
     teacherPhone: parsed.data.teacherPhone.trim() || undefined,
@@ -229,10 +210,7 @@ export function parseParticipatingInstitutionEditDraft(
 }
 
 export function formatParticipatingCombinedClassDisplay(
-  detail: Pick<
-    SchoolDetailForModal,
-    'combinedClassApplication' | 'combinedClassPartnerGrades'
-  >
+  detail: Pick<SchoolDetailForModal, 'combinedClassApplication' | 'combinedClassPartnerGrades'>
 ): string {
   const status = toCombinedClassApplicationStatus(detail.combinedClassApplication)
   if (status === '미신청') {

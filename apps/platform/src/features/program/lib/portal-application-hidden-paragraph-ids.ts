@@ -9,6 +9,7 @@ import {
   readEducationScheduleLinesForApplicationForm,
   shouldShowApplicationScheduleParagraphResolved,
 } from '@jakorea/form-schema/program-application'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
@@ -22,7 +23,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function readPreEducationNoticeRequired(runtime: unknown): boolean | null {
+/** CMS 모집 「사전 안내 사항 작성 여부」 — runtime `preEducationNoticeRequired` */
+export function readPreEducationNoticeRequiredFromRuntime(runtime: unknown): boolean | null {
   if (!isRecord(runtime)) return null
   const raw = runtime.preEducationNoticeRequired ?? runtime.advanceGuidanceRequired
   if (typeof raw === 'boolean') return raw
@@ -45,6 +47,8 @@ export type ResolvePortalApplicationHiddenParagraphIdsInput = {
   volunteerInterviewEnabled?: boolean
   /** 봉사 진행 가능 일정 — 면접과 독립 (optionCount 0이면 false) */
   volunteerActivityScheduleEnabled?: boolean
+  /** 강사 강의 진행 가능 일정 — OSA 0건이면 false */
+  instructorAvailableScheduleEnabled?: boolean
   volunteerJaExperienceParagraph?: WritingFormParagraph
 }
 
@@ -94,7 +98,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
   }
 
   if (applyCase === 'institution-general') {
-    const preEducation = readPreEducationNoticeRequired(runtimeContext) ?? true
+    const preEducation = readPreEducationNoticeRequiredFromRuntime(runtimeContext) ?? true
     const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
       ...scheduleVisibility,
       preEducationNoticeRequired: preEducation,
@@ -113,6 +117,10 @@ export function resolvePortalApplicationHiddenParagraphIds(
     })
   ) {
     hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+  }
+
+  if (applyCase === 'instructor' && input.instructorAvailableScheduleEnabled === false) {
+    hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
   }
 
   if (applyCase === 'individual-volunteer') {

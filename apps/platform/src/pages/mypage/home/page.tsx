@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getMypageLnbItems,
-  getMockMypageProgramStats,
-  getMockMypageScheduleEvents,
   MYPAGE_PATH,
   MypageHomeContentSkeleton,
   MypageLayoutBootSkeleton,
@@ -32,10 +30,8 @@ export function MypageHomePage() {
   const isAuthReady = useMypagePageAuthReady(MYPAGE_PATH)
   const dashboard = usePortalDashboardQuery(member.isRemoteSession)
   const calendar = usePortalCalendarQuery(calendarMonth, member.isRemoteSession)
-  const programStats = member.isRemoteSession
-    ? (dashboard.stats ?? EMPTY_PROGRAM_STATS)
-    : getMockMypageProgramStats()
-  const scheduleEvents = member.isRemoteSession ? calendar.events : getMockMypageScheduleEvents()
+  const programStats = member.isRemoteSession ? (dashboard.stats ?? EMPTY_PROGRAM_STATS) : EMPTY_PROGRAM_STATS
+  const scheduleEvents = member.isRemoteSession ? calendar.events : []
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
     navigateMypageLnb(navigate, key)

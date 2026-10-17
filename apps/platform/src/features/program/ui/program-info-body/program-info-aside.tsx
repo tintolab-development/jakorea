@@ -1,4 +1,5 @@
 import type { ProgramAttachment } from '../../model/types'
+import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { PFCircleIconButton, PFFileDownload, PFText } from '@/shared/ui'
@@ -15,6 +16,8 @@ type ProgramInfoAsideProps = {
   showApplyCta?: boolean
   showCancelCta?: boolean
   onApply?: () => void
+  /** application-options 조회 중 — 중복 클릭 방지 */
+  applyChecking?: boolean
   onCancel?: () => void
   showTopFab?: boolean
 }
@@ -29,6 +32,7 @@ export function ProgramInfoAside({
   showApplyCta = false,
   showCancelCta = false,
   onApply,
+  applyChecking = false,
   onCancel,
   showTopFab = true,
 }: ProgramInfoAsideProps) {
@@ -47,14 +51,24 @@ export function ProgramInfoAside({
           hasBannerImage ? styles.bannerHasImage : styles.bannerNoImage,
         ].join(' ')}
       >
-        {hasBannerImage ? <img className={styles.bannerImage} src={bannerUrl} alt="" /> : null}
+        {hasBannerImage ? (
+          <img className={styles.bannerImage} src={bannerUrl} alt="" />
+        ) : (
+          <img
+            className={styles.bannerPlaceholderLogo}
+            src={jaLogoGrayCompactUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       {showApplyCta ? (
         <button
           type="button"
           className={styles.applyButton}
-          disabled={!canApply}
+          disabled={!canApply || applyChecking}
+          aria-busy={applyChecking}
           onClick={onApply}
         >
           <span className={styles.applyCopy}>

@@ -16,7 +16,7 @@ export function useDetailedProgramOptionsQuery(enabled = true) {
 export function useDetailedProgramSelectOptions(enabled = true) {
   const query = useDetailedProgramOptionsQuery(enabled)
   const options = (query.data ?? []).map(row => ({
-    value: row.id,
+    value: String(row.id),
     label: row.name,
   }))
   return { ...query, options }

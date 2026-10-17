@@ -55,3 +55,13 @@ export function saveSchemaConsentWriteState(
     /* quota / private mode */
   }
 }
+
+/** 양식 작성 화면 재진입 시 이전 session draft(서명·입력 포함) 제거 */
+export function clearSchemaConsentWriteState(key: InstructorApplyConsentKey): void {
+  if (!canUseSessionStorage()) return
+  try {
+    window.sessionStorage.removeItem(`${DRAFT_STORAGE_PREFIX}${key}`)
+  } catch {
+    /* ignore */
+  }
+}

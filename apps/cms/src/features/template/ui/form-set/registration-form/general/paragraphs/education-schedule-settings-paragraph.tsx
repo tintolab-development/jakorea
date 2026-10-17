@@ -1,15 +1,16 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
-  buildEducationScheduleLinesFromDateAndGroupTimes,
   educationScheduleLinesEqual,
-  flattenGroupTimeSlotsByDetail,
-  formatEducationScheduleLineFromRange,
+  educationScheduleLinesFromSelectionRangeApply,
+  mergeUniqueEducationScheduleLines,
+  normalizeEducationSchedulePeriodLineDateOnly,
   rebuildEducationScheduleLinesFromGroupTimes,
   type EducationScheduleGroupTimeSlot,
 } from '@/features/template/lib/format-education-schedule-line'
+import { resolveEducationScheduleGroupTimeSlots } from '@/features/program/general/lib/education-schedule-lines-display'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
   EducationSchedulePreviewLines,
@@ -28,6 +29,11 @@ import {
   updateProgramRegistrationOverlayKey,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  getEducationScheduleSelectionDatePickerProps,
+  shouldDisableEducationSchedulePeriodTimeInput,
+  shouldLockEducationScheduleDateMode,
+} from '@/features/program/general/lib/schedule-detail-form'
 import './program-registration-paragraph.css'
 
 const EMPTY_SCHEDULE_LINES: string[] = []
@@ -38,12 +44,13 @@ type EducationScheduleSettingsProps = {
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
   /** Overlay key prefix (e.g., 'generalRegistration.educationScheduleSettings') */
   overlayKeyPrefix?: string
-  /** 일반 개인·일정형·단일 회차 — 날짜 선택 시 진행 시간 자동 반영, 기간/시간 토글 숨김 */
+  /** 일반 일정형·단일 — 날짜 선택 시 진행 시간 자동 반영(기관·개인). 기간 라디오 잠금은 SSOT `shouldLockEducationScheduleDateMode` */
   autoFillFromScheduleGroupTimes?: boolean
-  /** 일반 개인·단일 회차 — 기간 지정 라디오·캘린더 기간 토글 비활성 */
+  /** @deprecated 잠금은 `shouldLockEducationScheduleDateMode` — 호환용으로만 전달 */
   disablePeriodMode?: boolean
-  /** 일반 커리큘럼형 — 날짜 지정 시 시간 ON 고정, 기간 지정 시 기간 ON 고정 */
-  lockCalendarTogglesToScheduleMode?: boolean
+  programType?: 'curriculum' | 'schedule'
+  sessionRound?: 'single' | 'multi'
+  participantOrganization?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
@@ -52,10 +59,25 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   overlayKeyPrefix = 'generalRegistration.educationScheduleSettings',
   autoFillFromScheduleGroupTimes = false,
   disablePeriodMode = false,
-  lockCalendarTogglesToScheduleMode = false,
+  programType = 'curriculum',
+  sessionRound = 'single',
+  participantOrganization = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
-  const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
+  const lockDateMode = shouldLockEducationScheduleDateMode({
+    participantOrganization,
+    educationStructure: programType,
+    sessionRound,
+  })
+  const disableSchedulePeriodTime = shouldDisableEducationSchedulePeriodTimeInput({
+    educationScheduleMode: scheduleMode,
+  })
+  const scheduleSelectionPickerProps = getEducationScheduleSelectionDatePickerProps({
+    educationStructure: programType,
+    participantOrganization,
+    sessionRound,
+    scheduleMode,
+  })
   const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
     `${overlayKeyPrefix}.singleDateIso`,
     null
@@ -88,25 +110,31 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
 
   const scheduleLinesKey = `${overlayKeyPrefix}.scheduleLines`
 
-  const appendLineIfNew = useCallback(
-    (line: string) => {
-      const trimmed = line.trim()
-      if (!trimmed) return
-      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
-        const current = prev ?? []
-        return current.includes(trimmed) ? current : [...current, trimmed]
-      })
-    },
-    [scheduleLinesKey]
-  )
-
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      appendLineIfNew(formatEducationScheduleLineFromRange(range))
+      const slots = resolveEducationScheduleGroupTimeSlots({
+        overlay: { [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: groupTimesByDetail },
+      })
+      const newLines = educationScheduleLinesFromSelectionRangeApply({
+        range,
+        autoFillFromScheduleGroupTimes,
+        educationScheduleMode: scheduleMode,
+        groupTimeSlots: slots,
+        dateOnlyPeriodRange: disableSchedulePeriodTime,
+      })
+      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
+        mergeUniqueEducationScheduleLines(prev ?? [], newLines)
+      )
       setSingleDate(null)
       setPeriodDate(null)
     },
-    [appendLineIfNew]
+    [
+      autoFillFromScheduleGroupTimes,
+      disableSchedulePeriodTime,
+      groupTimesByDetail,
+      scheduleLinesKey,
+      scheduleMode,
+    ]
   )
 
   const handleDateApply = useCallback(
@@ -115,17 +143,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
         setSingleDate(null)
         return
       }
-      if (autoFillFromScheduleGroupTimes) {
-        const slots = flattenGroupTimeSlotsByDetail(groupTimesByDetail)
-        for (const line of buildEducationScheduleLinesFromDateAndGroupTimes(next, slots)) {
-          appendLineIfNew(line)
-        }
-        setSingleDate(null)
-        return
-      }
-      setSingleDate(next)
+      handleScheduleRangeApply([next.startOf('day'), next.startOf('day')])
     },
-    [appendLineIfNew, autoFillFromScheduleGroupTimes, groupTimesByDetail]
+    [handleScheduleRangeApply]
   )
 
   const removeLine = useCallback(
@@ -155,20 +175,41 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   }, [lockDateMode, onEducationScheduleModeChange, overlayKeyPrefix, scheduleMode])
 
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
-  const groupTimeSlotsKey = JSON.stringify(flattenGroupTimeSlotsByDetail(groupTimesByDetail))
+  const groupTimeSlotsKey = JSON.stringify(
+    resolveEducationScheduleGroupTimeSlots({
+      overlay: { [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: groupTimesByDetail },
+    })
+  )
+  const previewScheduleLines = useMemo(
+    () =>
+      scheduleMode === 'period'
+        ? scheduleLines.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+        : scheduleLines,
+    [scheduleLines, scheduleMode]
+  )
+
+  useEffect(() => {
+    if (scheduleMode !== 'period') return
+    const next = scheduleLines.map(normalizeEducationSchedulePeriodLineDateOnly).filter(Boolean)
+    if (educationScheduleLinesEqual(scheduleLines, next)) return
+    updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
+      educationScheduleLinesEqual(prev ?? [], next) ? prev ?? [] : next
+    )
+  }, [scheduleLines, scheduleLinesKey, scheduleMode])
 
   useEffect(() => {
     if (!autoFillDatePicker) return
-    const slots = flattenGroupTimeSlotsByDetail(groupTimesByDetail)
+    const slots = resolveEducationScheduleGroupTimeSlots({
+      overlay: { [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: groupTimesByDetail },
+    })
+    if (slots.length === 0) return
     updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
       const current = prev ?? []
       if (current.length === 0) return current
       const next = rebuildEducationScheduleLinesFromGroupTimes(current, slots)
       return educationScheduleLinesEqual(current, next) ? current : next
     })
-  }, [autoFillDatePicker, groupTimeSlotsKey, scheduleLinesKey])
-
-  const lockTimeOnDateMode = lockCalendarTogglesToScheduleMode || !autoFillDatePicker
+  }, [autoFillDatePicker, groupTimeSlotsKey, groupTimesByDetail, scheduleLinesKey])
 
   return (
     <DetailInfoForm
@@ -187,7 +228,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 value={lockDateMode ? 'date' : scheduleMode}
                 onChange={e => {
                   const next = e.target.value as ProgramRegistrationEducationScheduleMode
-                  if (lockDateMode && next === 'period') return
+                  if ((lockDateMode || disablePeriodMode) && next === 'period') return
                   applyEducationScheduleModeLineSwap({
                     overlayKeyPrefix,
                     currentMode: scheduleMode,
@@ -197,7 +238,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 }}
               >
                 <CmsRadio value="date">날짜 지정</CmsRadio>
-                <CmsRadio value="period" disabled={lockDateMode}>
+                <CmsRadio value="period" disabled={lockDateMode || disablePeriodMode}>
                   기간 지정
                 </CmsRadio>
               </CmsRadioGroup>
@@ -212,37 +253,19 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
             'educationScheduleSettings.periodDateIso',
           ]}
           edit={
-            scheduleMode === 'date' ? (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode={autoFillDatePicker ? 'date' : 'schedule'}
-                customizable={false}
-                showPeriodToggle={false}
-                showTimeToggle={!autoFillDatePicker}
-                lockTimeToggleOn={lockTimeOnDateMode && !autoFillDatePicker}
-                suppressAutoTodayWhenEmpty
-                value={singleDate}
-                onChange={handleDateApply}
-                onRangeChange={autoFillDatePicker ? undefined : handleScheduleRangeApply}
-                width={240}
-                disabledDate={disableOutsideOperation}
-              />
-            ) : (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode="period"
-                customizable={false}
-                showTimeToggle={false}
-                showPeriodToggle={false}
-                lockPeriodToggleOn={lockCalendarTogglesToScheduleMode}
-                suppressAutoTodayWhenEmpty
-                value={periodDate}
-                onChange={setPeriodDate}
-                onRangeChange={handleScheduleRangeApply}
-                width={360}
-                disabledDate={disableOutsideOperation}
-              />
-            )
+            <ParagraphDatePicker
+              mode="single"
+              customizable={false}
+              showPeriodToggle={false}
+              showTimeToggle={false}
+              {...scheduleSelectionPickerProps}
+              suppressAutoTodayWhenEmpty
+              value={scheduleMode === 'date' ? singleDate : periodDate}
+              onChange={scheduleMode === 'date' ? handleDateApply : setPeriodDate}
+              onRangeChange={handleScheduleRangeApply}
+              width={scheduleMode === 'date' ? 240 : 360}
+              disabledDate={disableOutsideOperation}
+            />
           }
           view="-"
         />
@@ -254,7 +277,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
           readOnlyDisplay
           view={
             <div className="program-registration-paragraph__schedule-lines">
-              <EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />
+              <EducationSchedulePreviewLines lines={previewScheduleLines} onRemove={removeLine} />
             </div>
           }
         />

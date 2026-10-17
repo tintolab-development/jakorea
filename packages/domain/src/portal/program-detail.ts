@@ -211,6 +211,12 @@ export type PortalProgramDetail = {
   /** 복수 교육 대상 (BE 확장 시). 없으면 `educationTarget` 단수·콤마 구분 fallback */
   educationTargets?: string[]
   educationTargetDetail?: string
+  /**
+   * 강사·봉사자 모집 포커스 한글 요약. PARTICIPANT 포커스에서는 null/생략.
+   */
+  recruitmentTarget?: string
+  /** 강사·봉사자 모집 대상 코드 (`high`, `university` …). PARTICIPANT 포커스에서는 생략. */
+  recruitmentTargets?: string[]
   recruitmentTargetDetail?: string
   /** GENERAL_*·UJAT 행 대표 이미지. 없으면 null이며 프로그램 썸네일로 채우지 않는다. */
   thumbnailFileObjectId?: number | null

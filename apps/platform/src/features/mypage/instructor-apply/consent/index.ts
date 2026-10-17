@@ -1,5 +1,6 @@
 export { InstructorApplyConsentWriteForm } from './write-form'
 export {
+  getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   getInstructorApplyConsentPath,
   isInstructorApplyConsentKey,

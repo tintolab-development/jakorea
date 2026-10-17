@@ -18,4 +18,6 @@ export interface ProgramScheduleRequest {
   addressDetail?: string;
   maxParticipantCount?: number;
   completionRequired?: boolean;
+  educationSlotKey?: string;
+  scheduleRole?: string;
 }

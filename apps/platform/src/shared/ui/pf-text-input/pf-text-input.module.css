@@ -43,7 +43,6 @@
   box-sizing: border-box;
   padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-16);
   background: var(--color-neutral-white);
 }
 
@@ -64,15 +63,19 @@
 }
 
 .medium {
-  height: 40px;
+  composes: medium from '../pf-control-field-size/pf-control-field-size.module.css';
 }
 
 .large {
-  height: 44px;
+  composes: large from '../pf-control-field-size/pf-control-field-size.module.css';
 }
 
 .xlarge {
-  height: 54px;
+  composes: xlarge from '../pf-control-field-size/pf-control-field-size.module.css';
+}
+
+.mobile {
+  composes: mobile from '../pf-control-field-size/pf-control-field-size.module.css';
 }
 
 .icon {
@@ -129,6 +132,16 @@
   opacity: 1;
 }
 
+.plainInput {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
 .formPageInput:disabled {
   overflow: hidden;
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
@@ -166,6 +179,13 @@
   font-weight: 500;
   line-height: 140%;
   letter-spacing: 0;
+}
+
+.messageEnd {
+  align-self: stretch;
+  padding-left: 0;
+  padding-right: var(--spacing-8);
+  text-align: right;
 }
 
 .messageNeutral {

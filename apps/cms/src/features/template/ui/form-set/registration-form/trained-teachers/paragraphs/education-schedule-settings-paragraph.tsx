@@ -175,7 +175,9 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 presetMode="schedule"
                 customizable={false}
                 showPeriodToggle={false}
+                showTimeToggle={false}
                 lockTimeToggleOn
+                lockPeriodToggleOn
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={setSingleDate}

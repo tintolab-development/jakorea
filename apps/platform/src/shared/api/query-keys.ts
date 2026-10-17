@@ -89,8 +89,7 @@ export const platformQueryKeys = {
       keyword: string
       portalTab: string
       recruitmentStatus: string
-      recruitmentTarget: string
-      educationTarget: string
+      educationTargets: string
       educationMethod: string
       operatingFrom: string
       operatingTo: string
@@ -104,8 +103,7 @@ export const platformQueryKeys = {
         params.keyword,
         params.portalTab,
         params.recruitmentStatus,
-        params.recruitmentTarget,
-        params.educationTarget,
+        params.educationTargets,
         params.educationMethod,
         params.operatingFrom,
         params.operatingTo,
@@ -127,6 +125,8 @@ export const platformQueryKeys = {
         scope?.recruitmentId ?? '',
         scope?.applicationType ?? '',
       ] as const,
+    /** 프로그램 상세 전체 scope — 모집별 상세 캐시까지 함께 무효화할 때 사용 */
+    detailPrefix: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
     /** 신청 옵션 — GET /api/portal/programs/{programId}/application-options (Class D, 회원) */
     applicationOptions: (programId: string) =>
       [...platformQueryKeys.program.all(), 'application-options', programId] as const,
@@ -218,7 +218,7 @@ export const platformQueryKeys = {
           params.page,
           params.size,
         ] as const,
-      /** 인접글용 preview (`size=100`, page 0, q 없음) */
+      /** 인접글용 preview (`size=20`, page 0, q 없음) */
       preview: () => [...platformQueryKeys.jaKorea.notices.all(), 'preview'] as const,
       /** 공개 상세 — GET /api/public/ja-korea/notices/{id} (Class D) */
       detail: (id: string) => [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,
@@ -266,6 +266,9 @@ export const platformQueryKeys = {
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */
     instructorRoleRequestCurrent: () =>
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
+    /** 내 강사 권한 신청 제출 스냅샷 — GET .../instructor-role-requests/current/detail */
+    instructorRoleRequestCurrentDetail: () =>
+      [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current', 'detail'] as const,
     /** 마이페이지 홈 요약 — GET /api/portal/me/dashboard (Class E, member scoped) */
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
     /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
@@ -300,6 +303,30 @@ export const platformQueryKeys = {
         'ORGANIZATION',
         applicationId,
       ] as const,
+    /** 기관 신청 — 학생 명단·초상권 (Class D) */
+    organizationApplications: {
+      studentRoster: (applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.all(),
+          'organization-applications',
+          applicationId,
+          'student-roster',
+        ] as const,
+      studentDocumentsPolicy: (applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.all(),
+          'organization-applications',
+          applicationId,
+          'student-documents-policy',
+        ] as const,
+      portraitConsent: (applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.all(),
+          'organization-applications',
+          applicationId,
+          'portrait-consent',
+        ] as const,
+    },
     programApplications: {
       all: () => [...platformQueryKeys.mypage.all(), 'program-applications'] as const,
       /**

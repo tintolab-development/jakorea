@@ -7,6 +7,7 @@ import { downloadBlob } from '@/shared/utils/file-download'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload/upload'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
 function unwrapApiBody<T>(payload: unknown): T {
   if (payload != null && typeof payload === 'object') {
@@ -68,20 +69,26 @@ export async function listFileAttachments(
   if (owner.ownerId == null) {
     throw new Error('파일 목록 조회에 필요한 소유 대상이 없습니다.')
   }
-  const dto = unwrapApiBody<FilePageResponseFileAttachmentResponse>(
-    await customInstance<FilePageResponseFileAttachmentResponse>({
-      url: '/api/admin/files/attachments',
-      method: 'GET',
-      params: {
-        ownerDomain: owner.ownerDomain,
-        ownerType: owner.ownerType,
-        ownerId: owner.ownerId,
-        page: 0,
-        size: 100,
-      },
-    })
-  )
-  return attachmentItems(dto)
+  const items = await fetchAllApiPages(async (page, size) => {
+    const dto = unwrapApiBody<FilePageResponseFileAttachmentResponse>(
+      await customInstance<FilePageResponseFileAttachmentResponse>({
+        url: '/api/admin/files/attachments',
+        method: 'GET',
+        params: {
+          ownerDomain: owner.ownerDomain,
+          ownerType: owner.ownerType,
+          ownerId: owner.ownerId,
+          page,
+          size,
+        },
+      })
+    )
+    return {
+      items: attachmentItems(dto),
+      totalPages: (dto as { totalPages?: number }).totalPages,
+    }
+  })
+  return items
 }
 
 export async function deleteFileObject(fileObjectId: number): Promise<void> {

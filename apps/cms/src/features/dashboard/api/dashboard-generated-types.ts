@@ -1,0 +1,28 @@
+/**
+ * Dashboard subset Orval 스키마 — barrel(`schemas/index`)에 없고 개별 파일만 남은 타입 re-export.
+ * BE OpenAPI 200 응답 스키마 누락 시 Orval이 index에 포함하지 않을 수 있음. generated 파일은 수정하지 않음.
+ */
+export type { DashboardHomeResponse } from '@/shared/api/generated/dashboard/schemas/dashboardHomeResponse'
+export type { DashboardKpiProgressListResponse } from '@/shared/api/generated/dashboard/schemas/dashboardKpiProgressListResponse'
+export type { DashboardKpiProgressResponse } from '@/shared/api/generated/dashboard/schemas/dashboardKpiProgressResponse'
+export type { DashboardProgramInquiryListResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquiryListResponse'
+export type { DashboardProgramScheduleListResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleListResponse'
+export type { DashboardRecruitmentListResponse } from '@/shared/api/generated/dashboard/schemas/dashboardRecruitmentListResponse'
+export type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+export type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
+export type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
+export type { DashboardPreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesResponse'
+export type { DashboardPreferencesSaveRequest } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesSaveRequest'
+export type { DashboardShortcutBadgeReadRequest } from '@/shared/api/generated/dashboard/schemas/dashboardShortcutBadgeReadRequest'
+export type { DashboardShortcutBadgeReadResponse } from '@/shared/api/generated/dashboard/schemas/dashboardShortcutBadgeReadResponse'
+export type { DashboardShortcutBadgesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardShortcutBadgesResponse'
+export type { DashboardShortcutListResponse } from '@/shared/api/generated/dashboard/schemas/dashboardShortcutListResponse'
+export type { DashboardKpiProgressParams } from '@/shared/api/generated/dashboard/schemas/dashboardKpiProgressParams'
+export type { DashboardProgramInquiriesParams } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquiriesParams'
+export type { DashboardProgramSchedulesParams } from '@/shared/api/generated/dashboard/schemas/dashboardProgramSchedulesParams'
+export type { DashboardRecruitmentsParams } from '@/shared/api/generated/dashboard/schemas/dashboardRecruitmentsParams'
+export type { NotificationReadAllResponse } from '@/shared/api/generated/dashboard/schemas/notificationReadAllResponse'
+export type { NotificationUnreadCountResponse } from '@/shared/api/generated/dashboard/schemas/notificationUnreadCountResponse'
+export type { Notifications1Params } from '@/shared/api/generated/dashboard/schemas/notifications1Params'
+export type { PageResponse } from '@/shared/api/generated/dashboard/schemas/pageResponse'
+export type { NotificationPageResponse } from '@/shared/api/generated/dashboard/schemas/notificationPageResponse'

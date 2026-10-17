@@ -1,10 +1,11 @@
 import type { ProgramListItem, ProgramsListParams } from '../model/types'
 import { DEFAULT_PROGRAMS_LIST_PARAMS } from './constants'
+import { programMatchesEducationTargetFilter } from './education-target-filter'
 import {
   programIncludesOperatingDate,
   programOverlapsOperatingDateRange,
   programOverlapsOperatingYear,
-} from './mock-programs'
+} from './program-operating-period'
 
 /** Platform: 모집 예정 우선, 모집 중, 모집 완료 후순위 */
 const STATUS_RANK: Record<string, number> = {
@@ -46,6 +47,7 @@ export function filterAndSortPrograms(
     ProgramsListParams,
     | 'category'
     | 'q'
+    | 'programType'
     | 'recruitmentTarget'
     | 'recruitmentStatus'
     | 'operatingPeriod'
@@ -70,16 +72,25 @@ export function filterAndSortPrograms(
     items = items.filter(program => program.title.toLowerCase().includes(query))
   }
 
+  if (params.programType !== DEFAULT_PROGRAMS_LIST_PARAMS.programType) {
+    const programType = params.programType.trim().toUpperCase()
+    items = items.filter(program => program.programType?.trim().toUpperCase() === programType)
+  }
+
   if (params.operatingPeriod !== DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod) {
     items = items.filter(program => matchesOperatingPeriod(program, params.operatingPeriod))
   }
 
   if (params.recruitmentTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget) {
-    items = items.filter(program => program.educationTargetKey === params.recruitmentTarget)
+    items = items.filter(program =>
+      programMatchesEducationTargetFilter(program, params.recruitmentTarget),
+    )
   }
 
   if (params.educationTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.educationTarget) {
-    items = items.filter(program => program.educationTargetKey === params.educationTarget)
+    items = items.filter(program =>
+      programMatchesEducationTargetFilter(program, params.educationTarget),
+    )
   }
 
   if (params.recruitmentStatus !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus) {

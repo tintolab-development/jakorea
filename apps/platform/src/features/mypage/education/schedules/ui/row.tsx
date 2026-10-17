@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { EducationScheduleItem } from '../model/types'
-import { formatEducationSessionDate } from '../../shared'
 import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
@@ -8,6 +7,7 @@ import {
   resolveEducationScheduleProgressStatus,
   shouldShowEducationAssignment,
 } from '../lib/schedule-rules'
+import { resolveEducationScheduleDateLabel } from '../lib/format'
 import checkOnSmallUrl from '@/shared/assets/icons/check-mint-small.svg'
 import {
   EducationSessionCard,
@@ -24,10 +24,16 @@ type EducationScheduleRowProps = {
 export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
   const [comingSoonOpen, setComingSoonOpen] = useState(false)
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
-  const heldLabel = formatEducationSessionDate(item.heldAt)
+  const heldLabel = resolveEducationScheduleDateLabel(item)
   const showAssignment = shouldShowEducationAssignment(item)
-  const showAbsenceSubmit = canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
-  const attendance = item.attendanceStatus
+  const hasOperationalSchedule = item.scheduleId !== null
+  const showAbsenceSubmit =
+    hasOperationalSchedule && canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
+  const attendance = hasOperationalSchedule ? item.attendanceStatus : null
+  const rowLabel = item.sessionLabel?.trim() || item.scheduleLabel?.trim()
+  const subtitle =
+    rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title
+  const absenceReason = hasOperationalSchedule ? item.absenceReason?.trim() : undefined
 
   return (
     <>
@@ -41,7 +47,7 @@ export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
           date={heldLabel}
           subtitle={
             <PFText as="span" typo="bd-lg-sb" color="primary-500">
-              {item.title}
+              {subtitle}
             </PFText>
           }
           aside={
@@ -68,17 +74,27 @@ export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
                   label={EDUCATION_SCHEDULE_ATTENDANCE_LABEL[attendance]}
                   iconSrc={attendance === 'present' ? checkOnSmallUrl : undefined}
                   extra={
-                    attendance === 'excused' && item.absenceReason ? (
+                    absenceReason ? (
                       <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                        {item.absenceReason}
+                        {absenceReason}
                       </PFText>
                     ) : null
                   }
                 />
+              ) : absenceReason ? (
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
+                  {absenceReason}
+                </PFText>
               ) : null}
             </>
           }
         />
+
+        {item.content ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            {item.content}
+          </PFText>
+        ) : null}
 
         {showAssignment && item.assignment ? (
           <EducationScheduleAssignmentBlock assignment={item.assignment} />

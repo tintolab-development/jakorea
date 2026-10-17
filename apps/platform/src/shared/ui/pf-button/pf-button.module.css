@@ -1,11 +1,10 @@
 .button {
   display: inline-flex;
-  min-width: 89px;
+  min-width: 50px;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-4);
   padding: 6px var(--spacing-24);
-  border-radius: var(--radius-16);
   cursor: pointer;
   transition:
     border-color 160ms ease,
@@ -29,11 +28,13 @@
 
 .small {
   height: 30px;
+  padding: 6px 20px;
   border-radius: var(--radius-8);
 }
 
 .medium {
   height: 38px;
+  border-radius: var(--radius-12);
 }
 
 /* Platform 양식 페이지 내부 전용 — 동의서 작성 등 */
@@ -47,17 +48,19 @@
   justify-content: center;
   align-items: center;
   gap: 4px;
-  border-radius: var(--radius-8, 8px);
+  border-radius: var(--radius-12);
 }
 
 .large {
   height: 42px;
+  border-radius: var(--radius-12);
 }
 
 .xlarge {
   min-width: 160px;
   height: 53px;
   padding: 13px var(--spacing-28);
+  border-radius: var(--radius-16);
 }
 
 .primary {
@@ -124,6 +127,34 @@
 .text:disabled {
   border: 1px solid transparent;
   background: transparent;
+  color: var(--color-neutral-warm-400);
+}
+
+.certificate {
+  display: flex;
+  box-sizing: border-box;
+  width: 240px;
+  min-width: 240px;
+  height: 64px;
+  padding: var(--spacing-16) var(--spacing-20);
+  justify-content: space-between;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--radius-12);
+  border: 1px solid rgb(61 61 61 / 10%);
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.certificate:hover:not(:disabled) {
+  background: var(--color-primary-400);
+}
+
+.certificate:disabled {
+  border: 1px solid rgb(61 61 61 / 10%);
+  background:
+    linear-gradient(0deg, var(--color-neutral-warm-200) 0%, var(--color-neutral-warm-200) 100%),
+    var(--color-neutral-white);
   color: var(--color-neutral-warm-400);
 }
 

@@ -35,7 +35,6 @@ import type {
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { syncInstitutionApplicationPreferredEducationFormFromOverlay } from '@/features/program/general/lib/institution-application-program-bridge'
-import { syncInstitutionApplicationBridgeForRegistrationWizard } from '@/features/program/general/lib/registration-institution-bridge-sync'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import {
   resolveProgramRegistrationCurriculumEditDescription,
@@ -72,8 +71,10 @@ import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/fo
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  patchGeneralRegistrationSponsorSelectionOverlay,
   getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
   readGeneralRegistrationOverlayScheduleLines,
@@ -85,7 +86,6 @@ import {
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
   setProgramRegistrationOverlayScope,
-  subscribeProgramRegistrationOverlay,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
@@ -105,6 +105,8 @@ import {
   hasIncompleteEconomyRegistrationFromStore,
 } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
+import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/general/lib/registration-dev-autofill-cases'
+import { syncInstitutionApplicationBridgeForRegistrationWizard } from '@/features/program/general/lib/registration-institution-bridge-sync'
 import {
   normalizeOverlayPaymentItemsBeforeSubmit,
   PAYMENT_ITEM_RESELECT_ALERT,
@@ -138,6 +140,12 @@ function getDefaultEducationScheduleMode(
 const GENERAL_BASIC_INFO_LOCK_NOTICE =
   PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
 
+const GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.registrationDescription
+
+const GENERAL_EDUCATION_SCHEDULE_DETAIL_EDIT_NOTICE =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
+
 function withRegistrationBasicInfoDescriptionForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant
@@ -158,6 +166,28 @@ function withRegistrationBasicInfoDescriptionForVariant(
   return changed ? { ...draft, paragraphs } : draft
 }
 
+function withRegistrationEducationScheduleSettingsDescriptionForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  if (variant !== 'general') return draft
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationScheduleSettings) return paragraph
+    const current = paragraph.paragraphDescription.trim()
+    if (current === GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION) return paragraph
+    if (current === '' || current === GENERAL_EDUCATION_SCHEDULE_DETAIL_EDIT_NOTICE) {
+      changed = true
+      return {
+        ...paragraph,
+        paragraphDescription: GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION,
+      }
+    }
+    return paragraph
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 function filterProgramRegistrationDraftForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant
@@ -171,7 +201,8 @@ function filterProgramRegistrationDraftForVariant(
             paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
           ),
         }
-  return withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
+  const withBasicInfo = withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
+  return withRegistrationEducationScheduleSettingsDescriptionForVariant(withBasicInfo, variant)
 }
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
@@ -329,38 +360,6 @@ export function useProgramRegistrationEditor(
     closeWritingUserPreview,
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
-
-  const recruitTemplateCodeForBridge =
-    programRegistrationFormVariant === 'economy'
-      ? 'recruitment-economy'
-      : programRegistrationFormVariant === 'trainedTeachers'
-        ? 'recruitment-trained-teachers'
-        : 'recruitment-participant-school'
-
-  useEffect(() => {
-    if (!active) return
-
-    const syncInstitutionApplicationBridge = () => {
-      syncInstitutionApplicationBridgeForRegistrationWizard({
-        registrationFormVariant: programRegistrationFormVariant,
-        programType,
-        sessionRound: sessionRoundType,
-        educationScheduleMode,
-        recruitTemplateCode: recruitTemplateCodeForBridge,
-      })
-    }
-
-    syncInstitutionApplicationBridge()
-
-    return subscribeProgramRegistrationOverlay(syncInstitutionApplicationBridge)
-  }, [
-    active,
-    programRegistrationFormVariant,
-    programType,
-    sessionRoundType,
-    educationScheduleMode,
-    recruitTemplateCodeForBridge,
-  ])
 
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
     setParticipant(
@@ -960,8 +959,12 @@ export function useProgramRegistrationEditor(
 
   const onSponsorContactIdChange = useCallback((next: string) => {
     setSponsorContactId(next)
+    const contactSelectValue = next.trim()
     patchProgramRegistrationOverlay({
-      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: next,
+      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: contactSelectValue,
+      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]: contactSelectValue
+        ? [contactSelectValue]
+        : [],
     })
   }, [])
 
@@ -1298,57 +1301,99 @@ export function useProgramRegistrationEditor(
   )
 
   /** 개발용 — 공통정보 overlay·controlled 필드 샘플 채움 (`import.meta.env.DEV`에서만 UI 노출) */
-  const applyDevAutofill = useCallback(async () => {
-    const patch = await applyDevProgramRegistrationAutofill(programRegistrationFormVariant, {
-      curriculumSessionCount,
-      curriculumChartSessionCount,
-      scheduleCurriculumDetailCount,
-      scheduleCurriculumGroupCount,
-      participantOrganization: participant.organization,
-      programType,
-      sessionRoundType,
-      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
-      participant,
-    })
-    setProgramTitleKo(patch.programTitleKo)
-    if (patch.sponsorId) setSponsorId(patch.sponsorId)
-    if (patch.sponsorContactId) setSponsorContactId(patch.sponsorContactId)
-
-    const typeSettings = patch.typeSettings
-    if (typeSettings == null) return
-    const nextProgramType =
-      programRegistrationFormVariant === 'economy' ? 'curriculum' : typeSettings.programType
-    setProgramType(nextProgramType)
-    setSessionRoundType(typeSettings.sessionRoundType)
-    setEducationScheduleMode(typeSettings.educationScheduleMode)
-    setEducationFormScheduleDetail(typeSettings.educationFormScheduleDetail)
-    setParticipationScheduleDetail(typeSettings.participationScheduleDetail)
-    setIpsScheduleDetail(typeSettings.ipsScheduleDetail)
-    if (programRegistrationFormVariant === 'general' && nextProgramType === 'schedule') {
-      updateProgramRegistrationOverlayKey(
-        'generalRegistration.basicInfo.detailedProgramId',
-        () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+  const applyDevAutofill = useCallback(
+    async (caseId?: GeneralRegistrationDevAutofillCaseId) => {
+      const patch = await applyDevProgramRegistrationAutofill(
+        programRegistrationFormVariant,
+        {
+          curriculumSessionCount,
+          curriculumChartSessionCount,
+          scheduleCurriculumDetailCount,
+          scheduleCurriculumGroupCount,
+          participantOrganization: participant.organization,
+          programType,
+          sessionRoundType,
+          teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+          participant,
+        },
+        programRegistrationFormVariant === 'general' && caseId != null ? { caseId } : undefined
       )
-    }
-    setDraft(prev =>
-      patchEducationCurriculumParagraph(prev, {
-        paragraphTitle:
-          nextProgramType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
-        paragraphDescription:
-          nextProgramType === 'schedule'
-            ? resolveProgramRegistrationScheduleCurriculumEditDescription({
-                sessionRoundType: typeSettings.sessionRoundType,
-                participantOrganization: participant.organization,
-                educationFormScheduleDetail: typeSettings.educationFormScheduleDetail,
-                participationScheduleDetail: typeSettings.participationScheduleDetail,
-                ipsScheduleDetail: typeSettings.ipsScheduleDetail,
-              })
-            : programRegistrationFormVariant === 'general'
-              ? resolveProgramRegistrationCurriculumEditDescription(typeSettings.sessionRoundType)
-              : '차시 별 정보를 입력해 주세요',
-      })
-    )
-  }, [
+      setProgramTitleKo(patch.programTitleKo)
+      if (patch.sponsorId) setSponsorId(patch.sponsorId)
+      if (patch.sponsorContactId) setSponsorContactId(patch.sponsorContactId)
+      if (programRegistrationFormVariant === 'general' && (patch.sponsorId || patch.sponsorContactId)) {
+        patchGeneralRegistrationSponsorSelectionOverlay({
+          sponsorId: patch.sponsorId,
+          contactSelectValue: patch.sponsorContactId,
+        })
+      }
+
+      const nextParticipant = patch.participantFlags ?? participant
+      if (patch.participantFlags != null) {
+        setParticipant({ ...patch.participantFlags })
+      }
+      const nextLayout = patch.layout
+      if (nextLayout != null && programRegistrationFormVariant === 'general') {
+        setCurriculumSessionCount(nextLayout.curriculumSessionCount)
+        setCurriculumChartSessionCount(nextLayout.curriculumChartSessionCount)
+        setScheduleCurriculumDetailCount(nextLayout.scheduleCurriculumDetailCount)
+        setScheduleCurriculumGroupCount(nextLayout.scheduleCurriculumGroupCount)
+      }
+
+      const typeSettings = patch.typeSettings
+      if (typeSettings == null) return
+      const nextProgramType =
+        programRegistrationFormVariant === 'economy' ? 'curriculum' : typeSettings.programType
+      setProgramType(nextProgramType)
+      setSessionRoundType(typeSettings.sessionRoundType)
+      setEducationScheduleMode(typeSettings.educationScheduleMode)
+      setEducationFormScheduleDetail(typeSettings.educationFormScheduleDetail)
+      const nextParticipationScheduleDetail = shouldResetParticipationScheduleDetailForAudience(
+        nextParticipant
+      )
+        ? 'common'
+        : typeSettings.participationScheduleDetail
+      setParticipationScheduleDetail(nextParticipationScheduleDetail)
+      setIpsScheduleDetail(typeSettings.ipsScheduleDetail)
+      if (programRegistrationFormVariant === 'general' && nextProgramType === 'schedule') {
+        updateProgramRegistrationOverlayKey(
+          'generalRegistration.basicInfo.detailedProgramId',
+          () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        )
+      }
+      const participantOrganization =
+        nextLayout?.participantOrganization ?? nextParticipant.organization
+      setDraft(prev =>
+        patchEducationCurriculumParagraph(prev, {
+          paragraphTitle:
+            nextProgramType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
+          paragraphDescription:
+            nextProgramType === 'schedule'
+              ? resolveProgramRegistrationScheduleCurriculumEditDescription({
+                  sessionRoundType: typeSettings.sessionRoundType,
+                  participantOrganization,
+                  educationFormScheduleDetail: typeSettings.educationFormScheduleDetail,
+                  participationScheduleDetail: nextParticipationScheduleDetail,
+                  ipsScheduleDetail: typeSettings.ipsScheduleDetail,
+                })
+              : programRegistrationFormVariant === 'general'
+                ? resolveProgramRegistrationCurriculumEditDescription(typeSettings.sessionRoundType)
+                : '차시 별 정보를 입력해 주세요',
+        })
+      )
+      if (programRegistrationFormVariant === 'general') {
+        syncInstitutionApplicationBridgeForRegistrationWizard({
+          registrationFormVariant: 'general',
+          programType: nextProgramType,
+          sessionRound: typeSettings.sessionRoundType,
+          educationScheduleMode: typeSettings.educationScheduleMode,
+          recruitTemplateCode: 'recruitment-participant-school',
+          curriculumSessionCount,
+          curriculumChartSessionCount,
+        })
+      }
+    },
+    [
     curriculumChartSessionCount,
     curriculumSessionCount,
     participant,
@@ -1762,6 +1807,8 @@ export function useProgramRegistrationEditor(
     programType,
     sessionRoundType,
     educationScheduleMode,
+    curriculumSessionCount,
+    curriculumChartSessionCount,
     hasIncompleteRequiredFields,
     listIncompleteRequiredFieldKeys,
     getIncompleteRequiredFieldsReason,

@@ -60,7 +60,10 @@ import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-inf
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { giveUpTrainedTeacherOrganizationApplication } from '@/features/program/trained-teachers/api/organization-applications-service'
+import {
+  getTrainedTeacherOrganizationApplication,
+  giveUpTrainedTeacherOrganizationApplication,
+} from '@/features/program/trained-teachers/api/organization-applications-service'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
   buildTrainedTeacherActivityWithdrawScheduleOptions,
@@ -69,10 +72,6 @@ import {
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import axios from 'axios'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
-import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { mapOrganizationApplicationDetailToParticipatingEditFields } from '@/features/program/general/lib/organization-application-detail-edit-fields'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -98,6 +97,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   detail,
   row,
   navigationCapabilities,
+  navigationCapabilitiesLoading = false,
   participatingSchoolList = [],
   activeTab: activeTabFromUrl,
   onTabChange,
@@ -113,9 +113,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     useState<TrainedTeachersInstitutionDetailTabKey>('application')
   const visibleDetailTabs = useMemo(
     () =>
-      getTrainedTeachersInstitutionDetailTabKeys(
-        navigationCapabilities?.educationJournalEnabled
-      ),
+      getTrainedTeachersInstitutionDetailTabKeys(navigationCapabilities?.educationJournalEnabled),
     [navigationCapabilities?.educationJournalEnabled]
   )
   const normalizedActiveTab = normalizeTrainedTeachersInstitutionDetailTab(
@@ -149,22 +147,37 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
 
   const applicationDetailId = Number.isFinite(Number(row.id)) ? row.id : ''
   const canFetchApplicationDetail =
-    applicationDetailId !== '' &&
-    (shouldUseGeneralApplicationsRemoteApi() || shouldUseTrainedTeacherProgramsRemoteApi())
+    ttRemoteEnabled && activeTab === 'application' && applicationDetailId !== ''
   const applicationDetailQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.organizationDetail(applicationDetailId),
-    queryFn: () => fetchOrganizationApplicationDetailRemote(applicationDetailId),
+    queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationDetailId),
+    queryFn: () => getTrainedTeacherOrganizationApplication(programId, applicationDetailId),
     enabled: canFetchApplicationDetail,
     staleTime: 30_000,
     retry: false,
   })
-  const applicationBasicInfo = useMemo(
-    () =>
-      applicationDetailQuery.data
-        ? mapOrganizationApplicationDetailToParticipatingEditFields(applicationDetailQuery.data)
-        : null,
-    [applicationDetailQuery.data]
-  )
+  const applicationBasicInfo = useMemo(() => {
+    const remote = applicationDetailQuery.data
+    if (!remote) return null
+    return {
+      schoolName: remote.schoolName,
+      region: remote.region,
+      educationGrade: remote.educationGrade,
+      classCount: remote.classCount,
+      studentCount: remote.studentCount,
+      teacherName: remote.teacherName,
+      teacherPhone: remote.contact,
+      teacherMobile: remote.contact,
+      teacherEmail: remote.detail?.teacherEmail,
+      addressDetail: remote.detail?.addressDetail,
+      educationFormat: remote.detail?.educationType,
+      textbookId: remote.detail?.textbookId,
+      lectureRound: remote.lectureRound,
+      textbookName: remote.textbookName,
+      applicationReason: remote.detail?.applicationReason,
+      otherRequests: remote.detail?.otherRequests,
+      preferredScheduleBlocks: remote.preferredScheduleBlocks ?? [],
+    }
+  }, [applicationDetailQuery.data])
 
   useEffect(() => {
     if (!activityWithdrawModalOpen || !ttRemoteEnabled) return
@@ -177,10 +190,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       setActivityWithdrawModalOpen(false)
       return
     }
-    if (
-      programSchedulesQuery.isSuccess &&
-      (programSchedulesQuery.data?.length ?? 0) === 0
-    ) {
+    if (programSchedulesQuery.isSuccess && (programSchedulesQuery.data?.length ?? 0) === 0) {
       void showAlert({
         title: '안내',
         content: '활동 포기에 사용할 프로그램 일정이 없습니다.',
@@ -270,13 +280,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       return
     }
     enterApplicationInfoEdit()
-  }, [
-    canEditApplicationInfo,
-    enterApplicationInfoEdit,
-    program,
-    programProgressStatus,
-    showAlert,
-  ])
+  }, [canEditApplicationInfo, enterApplicationInfoEdit, program, programProgressStatus, showAlert])
 
   const resolvePersonalInfoAccessItem = useCallback(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
@@ -417,6 +421,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
           })
           await queryClient.invalidateQueries({
+            queryKey: trainedTeacherQueryKeys.organizationApplication(programId, detail.id),
+          })
+          await queryClient.invalidateQueries({
             queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
           })
           onSaveBasicInfo?.({
@@ -470,9 +477,12 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
 
   const teacherDisplaySegments = [
     mergedDetail.teacherName && `담당 교사 : ${mergedDetail.teacherName}`,
-    mergedDetail.teacherPhone && `Tel : ${displayServerPiiAsIs(mergedDetail.teacherPhone, mergedDetail.teacherPhone)}`,
-    mergedDetail.teacherMobile && `M : ${displayServerPiiAsIs(mergedDetail.teacherMobile, mergedDetail.teacherMobile)}`,
-    mergedDetail.teacherEmail && `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
+    mergedDetail.teacherPhone &&
+      `Tel : ${displayServerPiiAsIs(mergedDetail.teacherPhone, mergedDetail.teacherPhone)}`,
+    mergedDetail.teacherMobile &&
+      `M : ${displayServerPiiAsIs(mergedDetail.teacherMobile, mergedDetail.teacherMobile)}`,
+    mergedDetail.teacherEmail &&
+      `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
 
   const textbookStatusCell =
@@ -500,7 +510,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
   const kitsAndQty =
-    hasSelectedTextbook && textbookDisplay.textbookKits > 0
+    hasSelectedTextbook && textbookDisplay.textbookKits != null && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
       : '-'
 
@@ -541,8 +551,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       </div>
     )
 
-  const isApplicationDetailEditing =
-    isApplicationInfoEditing && applicationInfoDraft != null
+  const isApplicationDetailEditing = isApplicationInfoEditing && applicationInfoDraft != null
 
   const classCountOptions = useMemo(
     () => buildInstitutionClassCountOptions(resolveProgramParticipantMaxClassCount(program)),
@@ -560,6 +569,46 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
     )
   )
+
+  if (navigationCapabilitiesLoading) {
+    return (
+      <div className="school-detail-fullpage-view" role="status">
+        교육일지 설정을 확인하는 중입니다.
+      </div>
+    )
+  }
+
+  if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTab === 'application') {
+    return (
+      <div className="school-detail-fullpage-view">
+        <CmsTextTabs
+          className="school-detail-fullpage-view__tabs-row"
+          activeKey={activeTab}
+          onChange={key => setActiveTab(key as TrainedTeachersInstitutionDetailTabKey)}
+          items={visibleDetailTabs.map(key => ({
+            key,
+            label: TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS[key],
+          }))}
+        />
+        <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
+            <div className="school-detail-fullpage-view__detail-error">
+              교육받은 교사 기관 신청 상세 정보를 불러오지 못했습니다.
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                onClick={() => {
+                  void applicationDetailQuery.refetch()
+                }}
+              >
+                다시 시도
+              </CmsButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="school-detail-fullpage-view">
@@ -629,14 +678,12 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               adminComment={mergedDetail.adminComment}
               isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
-              programProgressCell={
-                <ProgramEnrollmentStatusText status={programProgressStatus} />
-              }
+              programProgressCell={<ProgramEnrollmentStatusText status={programProgressStatus} />}
               textbookCell={textbookCell}
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
-              preferredScheduleBlocks={row.preferredScheduleBlocks}
+              preferredScheduleBlocks={mergedDetail.preferredScheduleBlocks}
               schoolName={mergedDetail.schoolName}
               educationGrade={
                 isApplicationDetailEditing ? (
@@ -657,7 +704,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                     error={applicationInfoValidationErrors?.addressDetail}
                   />
                 ) : (
-                  mergedDetail.addressDetail ?? '-'
+                  (mergedDetail.addressDetail ?? '-')
                 )
               }
               classAndCount={classAndCountDisplay}
@@ -669,7 +716,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                     error={applicationInfoValidationErrors?.educationFormat}
                   />
                 ) : (
-                  mergedDetail.educationFormat ?? '-'
+                  (mergedDetail.educationFormat ?? '-')
                 )
               }
               teacherInfo={
@@ -697,7 +744,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                     error={applicationInfoValidationErrors?.applicationReason}
                   />
                 ) : (
-                  mergedDetail.applicationReason ?? '-'
+                  (mergedDetail.applicationReason ?? '-')
                 )
               }
               otherRequests={
@@ -709,7 +756,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                     error={applicationInfoValidationErrors?.otherRequests}
                   />
                 ) : (
-                  mergedDetail.otherRequests ?? '-'
+                  (mergedDetail.otherRequests ?? '-')
                 )
               }
             />

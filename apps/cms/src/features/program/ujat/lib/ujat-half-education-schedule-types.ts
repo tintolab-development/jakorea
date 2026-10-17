@@ -13,9 +13,9 @@ export type UjatHalfMultiScheduleBundle = {
 export type UjatHalfEventRangeSeal = { start: string | null; end: string | null }
 
 export const EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE: UjatHalfMultiScheduleBundle = {
-  rowIds: [0],
-  regionByRow: { '0': [] },
-  dateByRow: { '0': null },
+  rowIds: [0, 1],
+  regionByRow: { '0': [], '1': [] },
+  dateByRow: { '0': null, '1': null },
 }
 
 export const EMPTY_UJAT_HALF_EVENT_RANGE_SEAL: UjatHalfEventRangeSeal = {

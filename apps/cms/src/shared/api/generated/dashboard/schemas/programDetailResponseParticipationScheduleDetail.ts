@@ -8,7 +8,6 @@
 
 /**
  * 참여 방식 일정 공통/일정 별 상이. GENERAL_ORGANIZATION이면 항상 null.
- * @nullable
  */
 export type ProgramDetailResponseParticipationScheduleDetail = typeof ProgramDetailResponseParticipationScheduleDetail[keyof typeof ProgramDetailResponseParticipationScheduleDetail] | null;
 

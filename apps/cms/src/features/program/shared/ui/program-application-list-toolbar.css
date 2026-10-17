@@ -1,0 +1,58 @@
+/**
+ * 프로그램 상세 — 신청 목록·진행 현황 테이블 툴바 (모든 프로그램 유형 공통)
+ * - 일괄 삭제·승인·반려·합격·불합격: 120×40 (`cms-button--application-list-bulk`)
+ * - 그 외 툴바 버튼: h40 (FilterTableToolbarButton 기본)
+ */
+
+/* 액션 그룹 — FilterTableLayout의 우측 툴바 슬롯 안에서도 버튼을 한 그룹으로 정렬 */
+.program-application-list-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--filter-table-toolbar-actions-gap, 8px);
+  min-width: 0;
+}
+
+/* h40 — 툴바 내 모든 CmsButton */
+.program-application-list-toolbar .cms-button.ant-btn,
+.applicant-details .filter-table-layout__toolbar-actions .cms-button.ant-btn,
+.general-volunteer-screening .filter-table-layout__toolbar-actions .cms-button.ant-btn,
+.general-volunteer-doc-passed .filter-table-layout__toolbar-actions .cms-button.ant-btn,
+.general-volunteer-interview2 .filter-table-layout__toolbar-actions .cms-button.ant-btn,
+.general-volunteer-interview2__actions .cms-button.ant-btn,
+.program-applicants-tab__table-actions .cms-button.ant-btn,
+.ujat-institution-application-list__actions .cms-button.ant-btn,
+.ujat-volunteer-doc-screening__actions .cms-button.ant-btn,
+.participating-institutions-section .filter-table-layout__toolbar-actions .cms-button.ant-btn,
+.program-progress-tab__table-actions .cms-button.ant-btn,
+.program-progress-tab__table-header > .cms-button.ant-btn,
+.school-detail-student-list-section__toolbar-actions .cms-button.ant-btn,
+.ujat-education-progress-volunteers__actions .cms-button.ant-btn,
+.ujat-education-progress-institutions__actions .cms-button.ant-btn,
+.ujat-education-progress-attendance .filter-table-layout__toolbar-actions .cms-button.ant-btn {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
+
+/* 120×40 — 신청 목록 일괄 액션·진행 현황 선택 삭제 등 */
+.program-application-list-toolbar .cms-button.cms-button--application-list-bulk.ant-btn,
+.applicant-details .filter-table-layout__toolbar-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.general-volunteer-screening .filter-table-layout__toolbar-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.general-volunteer-doc-passed .filter-table-layout__toolbar-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.general-volunteer-interview2 .filter-table-layout__toolbar-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.general-volunteer-interview2__actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.program-applicants-tab__table-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.ujat-volunteer-doc-screening__actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.participating-institutions-section .filter-table-layout__toolbar-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.program-progress-tab__table-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.program-progress-tab__table-header > .cms-button.cms-button--application-list-bulk.ant-btn,
+.school-detail-student-list-section__toolbar-actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.ujat-education-progress-volunteers__actions .cms-button.cms-button--application-list-bulk.ant-btn,
+.ujat-education-progress-institutions__actions .cms-button.cms-button--application-list-bulk.ant-btn {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  padding: 6px 12px !important;
+  box-sizing: border-box;
+}

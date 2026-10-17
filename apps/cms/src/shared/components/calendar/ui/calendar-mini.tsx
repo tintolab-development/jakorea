@@ -66,20 +66,35 @@ function renderCalendarMiniCell(
           : isEnd
             ? 'calendar-mini-cell--range-end'
             : 'calendar-mini-cell--range-middle'
+      const isDisabled = !isCurrentMonth || (disabledDate?.(date) ?? false)
+      const activateDate = () => {
+        if (!isCurrentMonth) return
+        if (isDisabled) return
+        onSelectDate(date)
+      }
       return (
-        <div
+        <button
+          type="button"
+          aria-disabled={isDisabled}
+          tabIndex={isDisabled ? -1 : 0}
           className={[
             'calendar-mini-cell',
             !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
             hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
+            isDisabled ? 'calendar-mini-cell--disabled' : '',
             weekendClass,
             rangeClass,
           ]
             .filter(Boolean)
             .join(' ')}
+          onClick={event => {
+            event.preventDefault()
+            event.stopPropagation()
+            activateDate()
+          }}
         >
           <span className="calendar-mini-date">{date.date()}</span>
-        </div>
+        </button>
       )
     }
   }

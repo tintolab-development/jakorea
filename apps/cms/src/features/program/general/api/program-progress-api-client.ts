@@ -122,13 +122,14 @@ export async function fetchProgramAttendancesBulkRemote(
 
 export async function fetchAttendancesByScheduleIdsRemote(
   programId: string,
-  scheduleIds: BulkAttendanceScheduleIdsInput
+  scheduleIds: BulkAttendanceScheduleIdsInput,
+  options: { includeEmptyScheduleKeys?: boolean } = {}
 ): Promise<Record<string, AttendanceItemResponse[]>> {
   const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
   if (normalized.kind === 'empty') {
     return {}
   }
-  const inFlightKey = attendancesByScheduleIdsInFlightKey(programId, normalized)
+  const inFlightKey = `${attendancesByScheduleIdsInFlightKey(programId, normalized)}:${options.includeEmptyScheduleKeys ? 'include-empty' : 'assigned-only'}`
   const existing = inFlightAttendancesByScheduleIds.get(inFlightKey)
   if (existing) {
     return existing
@@ -136,10 +137,15 @@ export async function fetchAttendancesByScheduleIdsRemote(
   const promise = (async () => {
     const items = await fetchProgramAttendancesBulkRemote(programId, scheduleIds)
     const grouped = groupAttendancesByScheduleId(items)
-    if (normalized.kind === 'filtered') {
+    // The general institution attendance flow treats the attendance response
+    // as the source of truth for schedules that are actually assigned. Do not
+    // synthesize empty buckets there: an empty/missing bucket must not be
+    // rendered as a session (or as "lecture not held"). UJAT keeps its legacy
+    // all-schedule view by explicitly opting into empty buckets.
+    if (options.includeEmptyScheduleKeys && normalized.kind === 'filtered') {
       return ensureAttendancesByScheduleIdKeys(grouped, normalized.scheduleIds)
     }
-    return grouped
+    return groupAttendancesByScheduleId(items)
   })()
   inFlightAttendancesByScheduleIds.set(inFlightKey, promise)
   try {
@@ -351,11 +357,8 @@ export async function putParticipantAssignedOrganizationsRemote(
   )
 }
 
-export type ProgramParticipantGiveUpRequest = {
-  reason: string
-  /** BE 보완 — §G-8 활동 포기 중단일 (resolvedScheduleId) */
-  stopScheduleId?: number
-}
+export type ProgramParticipantGiveUpRequest =
+  import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 
 /**
  * POST /api/admin/programs/{programId}/participants/{participantId}/give-up
@@ -570,7 +573,7 @@ export type GeneralAssignmentSubmissionListResponse = {
   totalPages?: number
 }
 
-const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 200
+const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 20
 
 /** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
 export async function fetchProgramAssignmentSubmissionsRemote(

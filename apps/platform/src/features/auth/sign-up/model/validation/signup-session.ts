@@ -3,9 +3,15 @@ export function hasRequiredVerificationSessions(input: {
   isUnderAgeSignup: boolean
   identityVerificationSessionId?: number | null
   guardianVerificationSessionId?: number | null
+  signupIntentId?: string | null
+  guardianBridgeFinalConsentCompleted?: boolean
 }): boolean {
   if (input.isUnderAgeSignup) {
-    return input.guardianVerificationSessionId != null
+    return (
+      input.guardianVerificationSessionId != null &&
+      Boolean(input.signupIntentId?.trim()) &&
+      input.guardianBridgeFinalConsentCompleted === true
+    )
   }
   return input.identityVerificationSessionId != null
 }

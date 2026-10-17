@@ -1,4 +1,5 @@
 import type {
+  InstructorRoleRequestDetail,
   InstructorRoleRequestSummary,
   InstructorRoleWorkflowResponse,
 } from './types'
@@ -57,5 +58,55 @@ export function parseInstructorRoleRequestSummary(
     rejectedReason: optionalString(root.rejectedReason),
     canRequest: optionalBoolean(root.canRequest),
     canReapply: optionalBoolean(root.canReapply),
+  }
+}
+
+function optionalObject(value: unknown): Record<string, unknown> | undefined {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>
+  }
+  return undefined
+}
+
+function optionalTermsAgreements(value: unknown) {
+  if (!Array.isArray(value)) return undefined
+  return value
+    .filter((row): row is Record<string, unknown> => row != null && typeof row === 'object')
+    .map(row => ({
+      termsType: optionalString(row.termsType) ?? '',
+      version: optionalString(row.version) ?? '',
+      required: optionalBoolean(row.required) ?? false,
+      agreed: optionalBoolean(row.agreed) ?? false,
+      ...(optionalString(row.agreedAt) ? { agreedAt: optionalString(row.agreedAt) } : {}),
+    }))
+}
+
+export function parseInstructorRoleRequestDetail(payload: unknown): InstructorRoleRequestDetail {
+  const root = unwrapData(payload)
+  if (!root) {
+    throw new Error('강사 신청 상세를 해석할 수 없습니다.')
+  }
+
+  const profile = optionalObject(root.profile)
+  const settlement = optionalObject(root.settlement)
+
+  return {
+    requestId: optionalNumber(root.requestId),
+    memberId: optionalNumber(root.memberId),
+    status: optionalString(root.status),
+    requestedActivityType: optionalString(root.requestedActivityType),
+    requestedAt: optionalString(root.requestedAt),
+    decidedAt: optionalString(root.decidedAt),
+    rejectedReason: optionalString(root.rejectedReason),
+    name: optionalString(root.name),
+    gender: optionalString(root.gender),
+    birthDate: optionalString(root.birthDate),
+    phone: optionalString(root.phone),
+    email: optionalString(root.email),
+    ...(profile ? { profile: profile as InstructorRoleRequestDetail['profile'] } : {}),
+    ...(settlement ? { settlement: settlement as InstructorRoleRequestDetail['settlement'] } : {}),
+    ...(optionalTermsAgreements(root.termsAgreements)
+      ? { termsAgreements: optionalTermsAgreements(root.termsAgreements) }
+      : {}),
   }
 }

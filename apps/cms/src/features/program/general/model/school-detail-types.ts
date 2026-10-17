@@ -3,6 +3,7 @@
  * 명세: docs/design/school-detail-modal-spec.md
  */
 
+import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
@@ -92,6 +93,8 @@ export interface SchoolDetailForModal {
   availableActions?: string[]
   /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
   participationAppliedAt?: string
+  /** 기관 신청 상세 `gradeBlocks` — 등록 학년·학급 SSOT */
+  gradeBlocks?: GradeBlock[] | null
   instructors: SchoolDetailInstructorRow[]
 }
 

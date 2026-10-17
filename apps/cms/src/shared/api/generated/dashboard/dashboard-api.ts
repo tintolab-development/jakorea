@@ -47,6 +47,7 @@ import type {
   List13Params,
   ListAssignmentsParams,
   NotificationCasePage,
+  NotificationPageResponse,
   NotificationUnreadCountResponse,
   Notifications1Params,
   OrganizationActivityGiveUpRequest,
@@ -58,7 +59,6 @@ import type {
   OrganizationProgressRemovalRequest,
   OrganizationScheduleListResponse,
   OrganizationScheduleResponse,
-  PageResponse,
   PageResponseIndividualApplicationListItemResponse,
   PageResponseInstructorApplicationListItemResponse,
   PageResponseOrganizationApplicationListItemResponse,
@@ -67,6 +67,7 @@ import type {
   PreferenceUpdateRequest,
   ScheduleChangeRequest,
   TemporaryScheduleSaveRequest,
+  TrainedTeacherOrganizationApplicationDetailResponse,
   TrainedTeacherOrganizationApplicationResponse,
   Update,
   VolunteerApplicationDetailResponse,
@@ -2231,8 +2232,8 @@ const organizationApplications = (
 const organizationApplication = (
     programId: number,
     applicationId: number,
- options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
-      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationDetailResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationDetailResponse>(
       {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}`, method: 'GET'
     },
       options);
@@ -2456,8 +2457,8 @@ const individualApplications = (
  */
 const notifications1 = (
     params?: Notifications1Params,
- options?: SecondParameter<typeof customInstance<PageResponse>>,) => {
-      return customInstance<PageResponse>(
+ options?: SecondParameter<typeof customInstance<NotificationPageResponse>>,) => {
+      return customInstance<NotificationPageResponse>(
       {url: `/api/admin/notifications`, method: 'GET',
         params
     },

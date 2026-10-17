@@ -33,7 +33,12 @@ export function EducationInProgressNoticeCard({
 
       <div className={styles.footer}>
         <div className={styles.authorBlock}>
-          <PFText as="p" typo="bd-md-sb" color="black" className={styles.author}>
+          <PFText
+            as="p"
+            typo="bd-md-sb"
+            color={notice.authorIsStaff ? 'primary-500' : 'black'}
+            className={styles.author}
+          >
             {notice.authorName}
           </PFText>
           <div className={styles.dateRow}>

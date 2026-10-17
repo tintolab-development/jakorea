@@ -40,12 +40,19 @@ export type SignupTermsCatalogResponse = {
   terms?: SignupTermsDocument[]
 }
 
+export type SignupFilledDocumentRequest = {
+  templateCode?: string
+  /** WritingFormDraft — JSON object (이중 인코딩 없음) */
+  schemaJson?: Record<string, unknown>
+}
+
 export type TermsAgreementRequest = {
   termsType: string
   version: string
   required?: boolean
   agreed?: boolean
   termsSnapshotJson?: string
+  filledDocument?: SignupFilledDocumentRequest
 }
 
 /** CMS 미등록 학교(NEIS 등) 선택값 — OpenAPI PortalSchoolSelectionRequest */
@@ -74,6 +81,8 @@ export type MemberSignupRequest = {
   identityVerified?: boolean
   identityVerificationSessionId?: number
   guardianVerificationSessionId?: number
+  /** 만 14세 미만 Guardian Bridge — Intent UUID */
+  signupIntentId?: string
   schoolEnrollmentStatus?: string
   schoolOrganizationId?: number
   schoolName?: string

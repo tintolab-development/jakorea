@@ -1,0 +1,74 @@
+.content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-28);
+}
+
+.textBlock {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-8);
+  text-align: center;
+}
+
+.title {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.description {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  white-space: normal;
+}
+
+.consentListWrap {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-12);
+}
+
+.consentList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  margin: 0;
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+  list-style: disc;
+  box-sizing: border-box;
+}
+
+.consentListItem {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--spacing-8);
+}
+
+.actions > * {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: max-content;
+  padding-inline: var(--spacing-8);
+  white-space: nowrap;
+}

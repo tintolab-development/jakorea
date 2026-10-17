@@ -1,5 +1,13 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce, readDownloadUrlFromJsonBlob } from '@/shared/lib/download-attachment'
+import {
+  dedupePortalFormListItems,
+  isPortalSatisfactionFormType,
+  isPortalSurveyFormType,
+  PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
+  PORTAL_SURVEY_FORM_TYPE_QUERIES,
+} from '../lib/portal-form-list'
+import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type { ProgramApplicationType } from './types'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
@@ -14,6 +22,10 @@ function unwrapEnvelope<T>(payload: unknown): T {
   return payload as T
 }
 
+/**
+ * Portal `GET …/notices` item — BE `MemberPortalNoticeListItem` (+ 작성자 필드).
+ * Platform은 CMS Orval 미사용 · OpenAPI 갱신 시 필드 동기화.
+ */
 export type PortalNoticeListItem = {
   postId?: number
   title?: string
@@ -24,6 +36,11 @@ export type PortalNoticeListItem = {
   readCount?: number
   reactionCount?: number
   createdAt?: string
+  updatedAt?: string
+  createdByActorType?: string
+  createdByActorId?: number
+  createdByDisplayName?: string | null
+  mine?: boolean
 }
 
 export type PortalNoticeListResponse = {
@@ -58,9 +75,14 @@ export type PortalNoticeDetail = {
   content?: string
   unread?: boolean
   createdAt?: string
+  updatedAt?: string
   commentCount?: number
   readCount?: number
   reactionCount?: number
+  createdByActorType?: string
+  createdByActorId?: number
+  createdByDisplayName?: string | null
+  mine?: boolean
   attachments?: PortalNoticeAttachment[]
   comments?: PortalNoticeComment[]
 }
@@ -91,35 +113,139 @@ type PortalFileDownloadResolve = {
   downloadUrl?: string
 }
 
+export type PortalEducationStructure = 'CURRICULUM' | 'SCHEDULE'
+export type PortalSessionRound = 'SINGLE' | 'MULTI'
+export type PortalScheduleBlockKind = 'PRE_EDUCATION' | 'SUB' | 'EVENT'
+export type PortalAssignmentStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'FEEDBACK'
+  | 'REVISION_SUBMITTED'
+export type PortalAssignmentSubmissionKind = 'FILE' | 'URL'
+
+export type PortalEducationScheduleAssignmentSubmission = {
+  id?: number | string
+  kind?: PortalAssignmentSubmissionKind | string
+  fileName?: string
+  url?: string
+}
+
+export type PortalEducationScheduleAssignment = {
+  enabled?: boolean
+  submitStartAt?: string | null
+  submitEndAt?: string | null
+  periodLabel?: string
+  status?: PortalAssignmentStatus | string
+  formResponseId?: number
+  submissions?: PortalEducationScheduleAssignmentSubmission[]
+}
+
+export type PortalEducationScheduleGroupTime = {
+  startTime?: string
+  endTime?: string
+}
+
 export type PortalEducationSchedule = {
-  scheduleId?: number
+  scheduleId?: number | null
   sessionNo?: number
   title?: string
-  startAt?: string
-  endAt?: string
+  startAt?: string | null
+  endAt?: string | null
   locationName?: string
+  attendanceStatus?: string | null
+  absenceReason?: string
+  sessionLabel?: string
+  unitName?: string
+  content?: string
+  scheduleLabel?: string
+  scheduleName?: string
+  blockKind?: PortalScheduleBlockKind | string
+  progressTimeLabel?: string
+  groupTimes?: PortalEducationScheduleGroupTime[]
+  assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
-  attendanceStatus?: string
   surveyCount?: number
+  absenceReasonStatus?: string
+  availableActions?: string[]
+}
+
+export type PortalEducationScheduleScopeStatus =
+  | 'ASSIGNMENT_SCOPED'
+  | 'RECORDED_ONLY'
+  | 'NO_SCOPE_EVIDENCE'
+  | 'PROGRAM_SCHEDULE'
+
+export type PortalEducationSchedulesResult = {
+  items: PortalEducationSchedule[]
+  scopeStatus?: PortalEducationScheduleScopeStatus | null
+  educationStructure?: PortalEducationStructure | null
+  sessionRound?: PortalSessionRound | null
+  applicationId?: number
+  applicationType?: string
 }
 
 export type PortalEducationScheduleList = {
+  applicationId?: number
+  applicationType?: string
+  educationStructure?: PortalEducationStructure | string | null
+  sessionRound?: PortalSessionRound | string | null
   items?: PortalEducationSchedule[]
+  scopeStatus?: PortalEducationScheduleScopeStatus | string | null
 }
+
+function normalizePortalEducationScheduleScopeStatus(
+  value: string | null | undefined,
+): PortalEducationScheduleScopeStatus | null {
+  const normalized = value?.trim().toUpperCase()
+  switch (normalized) {
+    case 'ASSIGNMENT_SCOPED':
+    case 'RECORDED_ONLY':
+    case 'NO_SCOPE_EVIDENCE':
+    case 'PROGRAM_SCHEDULE':
+      return normalized
+    default:
+      return null
+  }
+}
+
+function normalizePortalEducationStructure(
+  value: string | null | undefined,
+): PortalEducationStructure | null {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'CURRICULUM' || normalized === 'SCHEDULE') return normalized
+  return null
+}
+
+function normalizePortalSessionRound(
+  value: string | null | undefined,
+): PortalSessionRound | null {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'SINGLE' || normalized === 'MULTI') return normalized
+  return null
+}
+
+/** Portal `.../forms` item.status */
+export type PortalFormResponseStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'COMPLETED'
+  | 'DONE'
 
 export type PortalFormListItem = {
   bindingId?: number
+  programFormBindingId?: number
   id?: number
   formBindingId?: number
   title?: string
   formType?: string
-  status?: string
+  status?: PortalFormResponseStatus | string
   submissionStartAt?: string
   submissionEndAt?: string
   required?: boolean
   templateVersionId?: number
   form?: Record<string, unknown> | null
   formResponseId?: number
+  latestFormResponseId?: number | null
   answers?: Record<string, unknown> | null
   draftAnswers?: Record<string, unknown> | null
 }
@@ -162,13 +288,24 @@ export async function fetchApplicationNotices(
   applicationId: string,
   signal?: AbortSignal,
 ): Promise<PortalNoticeListResponse> {
-  const { data } = await axiosClient.get<unknown>(`${applicationPath(applicationType, applicationId)}/notices`, {
-    signal,
-    params: { page: 0, size: 100 },
+  const items = await fetchAllApiPages(async (page, size) => {
+    const { data } = await axiosClient.get<unknown>(
+      `${applicationPath(applicationType, applicationId)}/notices`,
+      {
+        signal,
+        params: { page, size },
+      }
+    )
+    const unwrapped = unwrapEnvelope<PortalNoticeListResponse | PortalNoticeListItem[]>(data)
+    if (Array.isArray(unwrapped)) {
+      return { items: unwrapped, totalPages: 1 }
+    }
+    return {
+      items: unwrapped.items ?? [],
+      totalPages: (unwrapped as { totalPages?: number }).totalPages,
+    }
   })
-  const unwrapped = unwrapEnvelope<PortalNoticeListResponse | PortalNoticeListItem[]>(data)
-  if (Array.isArray(unwrapped)) return { items: unwrapped }
-  return { items: unwrapped.items ?? [] }
+  return { items }
 }
 
 export async function fetchApplicationNoticeDetail(
@@ -186,6 +323,60 @@ export async function fetchApplicationNoticeDetail(
 
 function noticePath(applicationType: ProgramApplicationType, applicationId: string, postId: string) {
   return `${applicationPath(applicationType, applicationId)}/notices/${postId}`
+}
+
+export type PortalCreateApplicationNoticeRequest = {
+  title?: string
+  content: string
+  visibilityType: string
+  organizationApplicationId?: number
+}
+
+export type PortalCreateApplicationNoticeResponse = {
+  postId?: number
+}
+
+export async function createApplicationNotice(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  body: PortalCreateApplicationNoticeRequest,
+): Promise<PortalCreateApplicationNoticeResponse> {
+  const payload: PortalCreateApplicationNoticeRequest = {
+    content: body.content,
+    visibilityType: body.visibilityType,
+    title: body.title?.trim() ?? '',
+  }
+  if (body.organizationApplicationId != null) {
+    payload.organizationApplicationId = body.organizationApplicationId
+  }
+  const { data } = await axiosClient.post<unknown>(
+    `${applicationPath(applicationType, applicationId)}/notices`,
+    payload,
+  )
+  // 성공 시 래퍼 없이 { postId } — envelope 있으면 unwrap만 적용
+  return unwrapEnvelope<PortalCreateApplicationNoticeResponse>(data)
+}
+
+export async function putApplicationNoticeAttachments(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  fileObjectIds: number[],
+): Promise<void> {
+  await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/attachments`, {
+    fileObjectIds,
+  })
+}
+
+export async function putApplicationNoticeInlineImages(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  fileObjectIds: number[],
+): Promise<void> {
+  await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/inline-images`, {
+    fileObjectIds,
+  })
 }
 
 export async function createApplicationNoticeComment(
@@ -274,22 +465,26 @@ export async function fetchApplicationNoticeAttachments(
   signal?: AbortSignal,
 ): Promise<PortalNoticeAttachmentListItem[]> {
   const trimmedKeyword = keyword?.trim()
-  const { data } = await axiosClient.get<unknown>(
-    `${applicationPath(applicationType, applicationId)}/notices/attachments`,
-    {
-      signal,
-      params: {
-        page: 0,
-        size: 100,
-        ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
-      },
-    },
-  )
-  const unwrapped = unwrapEnvelope<
-    { items?: PortalNoticeAttachmentListItem[] } | PortalNoticeAttachmentListItem[]
-  >(data)
-  if (Array.isArray(unwrapped)) return unwrapped
-  return unwrapped?.items ?? []
+  return fetchAllApiPages(async (page, size) => {
+    const { data } = await axiosClient.get<unknown>(
+      `${applicationPath(applicationType, applicationId)}/notices/attachments`,
+      {
+        signal,
+        params: {
+          page,
+          size,
+          ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
+        },
+      }
+    )
+    const unwrapped = unwrapEnvelope<
+      { items?: PortalNoticeAttachmentListItem[]; totalPages?: number } | PortalNoticeAttachmentListItem[]
+    >(data)
+    if (Array.isArray(unwrapped)) {
+      return { items: unwrapped, totalPages: 1 }
+    }
+    return { items: unwrapped?.items ?? [], totalPages: unwrapped?.totalPages }
+  })
 }
 
 /**
@@ -327,29 +522,72 @@ export async function fetchApplicationSchedules(
   applicationType: ProgramApplicationType,
   applicationId: string,
   signal?: AbortSignal,
-): Promise<PortalEducationSchedule[]> {
+): Promise<PortalEducationSchedulesResult> {
   const { data } = await axiosClient.get<unknown>(
     `${applicationPath(applicationType, applicationId)}/schedules`,
     { signal },
   )
   const unwrapped = unwrapEnvelope<PortalEducationScheduleList | PortalEducationSchedule[]>(data)
-  if (Array.isArray(unwrapped)) return unwrapped
-  return unwrapped.items ?? []
+  if (Array.isArray(unwrapped)) {
+    return { items: unwrapped }
+  }
+  return {
+    items: unwrapped.items ?? [],
+    scopeStatus: normalizePortalEducationScheduleScopeStatus(unwrapped.scopeStatus),
+    educationStructure: normalizePortalEducationStructure(unwrapped.educationStructure),
+    sessionRound: normalizePortalSessionRound(unwrapped.sessionRound),
+    applicationId: unwrapped.applicationId,
+    applicationType: unwrapped.applicationType,
+  }
 }
 
-export async function fetchApplicationForms(
+async function fetchApplicationFormsOnce(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  formType: string,
+  formType?: string,
   signal?: AbortSignal,
 ): Promise<PortalFormListItem[]> {
   const { data } = await axiosClient.get<unknown>(`${applicationPath(applicationType, applicationId)}/forms`, {
     signal,
-    params: { formType },
+    params: formType ? { formType } : undefined,
   })
   const unwrapped = unwrapEnvelope<PortalFormListResponse | PortalFormListItem[]>(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
+}
+
+/**
+ * 교육현황 설문·만족도 목록 SSOT (`formType=SURVEY` | `SATISFACTION`).
+ * Admin `/programs/{id}/surveys` 는 사용하지 않는다. `items: []` 는 정상 empty(오류 아님).
+ */
+export async function fetchApplicationForms(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  formType: 'SURVEY' | 'SATISFACTION',
+  signal?: AbortSignal,
+): Promise<PortalFormListItem[]> {
+  const queries =
+    formType === 'SURVEY' ? PORTAL_SURVEY_FORM_TYPE_QUERIES : PORTAL_SATISFACTION_FORM_TYPE_QUERIES
+
+  let merged: PortalFormListItem[] = []
+  for (const queryFormType of queries) {
+    const batch = await fetchApplicationFormsOnce(
+      applicationType,
+      applicationId,
+      queryFormType,
+      signal,
+    )
+    merged = dedupePortalFormListItems([...merged, ...batch])
+    if (merged.length > 0) return merged
+  }
+
+  const all = await fetchApplicationFormsOnce(applicationType, applicationId, undefined, signal)
+  const filtered = all.filter(item =>
+    formType === 'SURVEY'
+      ? isPortalSurveyFormType(item.formType)
+      : isPortalSatisfactionFormType(item.formType),
+  )
+  return dedupePortalFormListItems(filtered)
 }
 
 export type PortalSurveyFormDocument = {

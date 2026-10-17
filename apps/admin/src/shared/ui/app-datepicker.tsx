@@ -18,6 +18,10 @@ import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import type { DatePickerProps } from 'antd'
 import type { Dayjs } from 'dayjs'
+import {
+  applySplitDateRangeEndChange,
+  applySplitDateRangeStartChange,
+} from '@/shared/lib/split-date-range-on-change'
 import './app-datepicker.css'
 
 /** DatePicker ref 공개 형태(선언 파일에 rc-picker 경로가 새지 않도록 명시) */
@@ -173,19 +177,13 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
   }))
 
   const handleStartChange = (d: Dayjs | null) => {
-    if (d && end && d.isAfter(end)) {
-      onChange?.([d, d], ['', ''])
-    } else {
-      onChange?.([d, end], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeStartChange(end, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const handleEndChange = (d: Dayjs | null) => {
-    if (d && start && d.isBefore(start)) {
-      onChange?.([d, start], ['', ''])
-    } else {
-      onChange?.([start, d], ['', ''])
-    }
+    const [nextStart, nextEnd] = applySplitDateRangeEndChange(start, d)
+    onChange?.([nextStart, nextEnd], ['', ''])
   }
 
   const wrapperCn = [

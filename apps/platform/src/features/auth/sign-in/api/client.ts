@@ -7,16 +7,17 @@ import {
   parsePhoneIdentityChangeResponse,
   parsePortalProfileResponse,
 } from './parse-portal-member'
-import type {
-  HomepageMeResponse,
-  MemberLoginRequest,
-  PasswordChangeRequest,
-  PhoneIdentityChangeResponse,
-  PhoneIdentityConfirmRequest,
-  PortalProfileResponse,
-  PortalWithdrawalRequest,
-  PortalWithdrawalResponse,
-  UpdatePortalProfileRequest,
+import {
+  PORTAL_WITHDRAWAL_CONFIRMATION_TEXT,
+  type HomepageMeResponse,
+  type MemberLoginRequest,
+  type PasswordChangeRequest,
+  type PhoneIdentityChangeResponse,
+  type PhoneIdentityConfirmRequest,
+  type PortalProfileResponse,
+  type PortalWithdrawalRequest,
+  type PortalWithdrawalResponse,
+  type UpdatePortalProfileRequest,
 } from './types'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
@@ -85,7 +86,12 @@ export async function postPortalPasswordChange(body: PasswordChangeRequest): Pro
 export async function postPortalWithdrawal(
   body: PortalWithdrawalRequest,
 ): Promise<PortalWithdrawalResponse> {
-  const { data } = await axiosClient.post<unknown>(portalMePaths.withdrawals(), body)
+  const { data } = await axiosClient.post<unknown>(portalMePaths.withdrawals(), {
+    currentPassword: body.currentPassword,
+    reason: body.reason,
+    confirmationText:
+      body.confirmationText?.trim() || PORTAL_WITHDRAWAL_CONFIRMATION_TEXT,
+  })
   if (!data || typeof data !== 'object') {
     return {}
   }

@@ -15,4 +15,14 @@ export interface MemberPortalNoticeListItem {
   attachmentCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  /**
+     * 조회 수(program_post.read_count_cache). 값이 없으면 0입니다.
+     * @minimum 0
+     */
+  readCount?: number;
+  /**
+     * 반응 총합(모든 reactionType 합계). 반응이 없으면 0입니다.
+     * @minimum 0
+     */
+  reactionCount?: number;
 }

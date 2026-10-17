@@ -4,6 +4,7 @@ import {
   formatConsentAgreedAt,
   formatConsentDate,
 } from './map-consents.ts'
+import { filterBasicConsentItemsByAudience } from './consent-visibility.ts'
 
 assert.equal(formatConsentAgreedAt('2026-07-03T09:23:45'), '2026.07.03 09:23')
 assert.equal(formatConsentAgreedAt('2026-07-03'), '2026.07.03')
@@ -65,5 +66,22 @@ assert.deepEqual(
   ['serviceTerms', 'teacherInfo', 'guardianLegal', 'childPrivacy'],
 )
 assert.equal(minorTeacher.basicItems.find(item => item.id === 'childPrivacy')?.withdrawable, true)
+
+const adultWithWrongTeacherRows = buildConsentItemsFromSummaries([
+  { consentType: 'SERVICE_TERMS', required: true, agreed: true },
+  { consentType: 'TEACHER_INFO_COLLECTION', required: true, agreed: true },
+  { consentType: 'GUARDIAN_CONSENT', required: true, agreed: true },
+  { consentType: 'CHILD_PRIVACY_COLLECTION', agreed: true },
+])
+const adultFiltered = filterBasicConsentItemsByAudience(adultWithWrongTeacherRows.basicItems, {
+  isTeacher: false,
+  isMinor: false,
+})
+assert.deepEqual(adultFiltered.map(item => item.id), ['serviceTerms'])
+
+const hiddenByApplicable = buildConsentItemsFromSummaries([
+  { consentType: 'TEACHER_INFO_COLLECTION', applicable: false, agreed: false },
+])
+assert.equal(hiddenByApplicable.basicItems.length, 0)
 
 console.log('map-consents.selfcheck: ok')

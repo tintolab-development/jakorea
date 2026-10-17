@@ -60,13 +60,19 @@ export function useGeneralProgramApplicationsRemoteSync({
   const individualRemoteEnabled = surfaceRemoteEnabled
   const remoteEnabled = surfaceRemoteEnabled
 
+  const organizationApplicationsForInstructorCalendar =
+    menu === 'instructors' && instructorColumnPreset === 'general-detail'
+
   const organizationQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),
     queryFn: ({ pageParam }) =>
       fetchGeneralOrganizationApplicationsPage(programId!, { queryClient }, { page: pageParam }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled: remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,
+    enabled:
+      remoteEnabled &&
+      usesProgramInstitutionApplications &&
+      (menu === 'institutions' || organizationApplicationsForInstructorCalendar),
     staleTime: 30_000,
     retry: false,
   })

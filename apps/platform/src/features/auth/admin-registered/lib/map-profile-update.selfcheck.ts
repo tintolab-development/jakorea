@@ -50,6 +50,24 @@ assert.equal(enrolledNeisOnly.schoolSelection?.externalSchoolCode, 'B100000658')
 assert.equal(enrolledNeisOnly.schoolSelection?.educationOfficeCode, 'B10')
 assert.equal(enrolledNeisOnly.schoolSelection?.name, '서울중학교')
 
+const enrolledNeisClearsSnapshotPk = mapAdminRegisteredEditToPortalProfileUpdate({
+  schoolStatus: 'enrolled',
+  schoolName: '서울중학교',
+  grade: '2학년',
+  address: '서울',
+  addressDetail: '1',
+  volunteerId: '',
+  schoolOrganizationId: null,
+  schoolAddress: '서울특별시 강남구',
+  schoolNeisCode: 'B100000658',
+  portalProfile: {
+    schoolOrganizationId: 190108,
+    schoolName: '경기초등학교',
+  },
+})
+assert.equal(enrolledNeisClearsSnapshotPk.schoolOrganizationId, undefined)
+assert.equal(enrolledNeisClearsSnapshotPk.schoolSelection?.externalSchoolCode, 'B100000658')
+
 const teacherNeisNumericCode = mapAdminRegisteredEditToPortalProfileUpdate({
   schoolStatus: 'enrolled',
   schoolName: '심원초등학교',
@@ -92,5 +110,36 @@ const withAffiliation = mapAdminRegisteredEditToPortalProfileUpdate({
 assert.equal(withAffiliation.affiliationName, '지역아동센터')
 assert.equal(withAffiliation.schoolName, '')
 assert.equal(withAffiliation.grade, '')
+
+/** 재학 중 → 해당 없음 + 소속 기관명 미입력: 잔여 NEIS 메타가 있어도 ENROLLED/schoolSelection 금지 */
+const noneWithLeftoverNeis = mapAdminRegisteredEditToPortalProfileUpdate({
+  schoolStatus: 'none',
+  schoolName: '심원초등학교',
+  grade: '5학년',
+  affiliationName: '',
+  address: '서울특별시 마포구 독막로 65-1 (상수동)',
+  addressDetail: '32206',
+  postalCode: '04049',
+  regionSido: '서울특별시',
+  regionSigungu: '마포구',
+  volunteerId: '123414',
+  schoolOrganizationId: null,
+  schoolAddress: '경기도 부천시 옥산로 66',
+  schoolNeisCode: '7581089',
+  schoolEducationOfficeCode: 'J10',
+  schoolSource: 'neis',
+  portalProfile: {
+    schoolOrganizationId: 190108,
+    schoolName: '심원초등학교',
+    schoolEnrollmentStatus: 'ENROLLED',
+  },
+})
+assert.equal(noneWithLeftoverNeis.schoolEnrollmentStatus, 'NOT_ENROLLED')
+assert.equal(noneWithLeftoverNeis.schoolOrganizationId, null)
+assert.equal(noneWithLeftoverNeis.schoolName, '')
+assert.equal(noneWithLeftoverNeis.grade, '')
+assert.equal(noneWithLeftoverNeis.affiliationName, '')
+assert.equal(noneWithLeftoverNeis.schoolSelection, undefined)
+assert.equal(noneWithLeftoverNeis.external1365Id, '123414')
 
 console.log('map-profile-update.selfcheck: ok')

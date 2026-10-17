@@ -4,12 +4,14 @@ import { BirthStep } from './steps/birth'
 import { ConfirmationStep } from './steps/confirmation'
 import { EmailStep } from './steps/email'
 import { GuardianAgreementStep } from './steps/guardian-agreement'
-import { GuardianConfirmStep } from './steps/guardian-confirm'
+import { GuardianFinalConsentStep } from './steps/guardian-final-consent-step'
 import { GuardianConsentStep } from './steps/guardian-consent'
 import { GuardianIdentityStep } from './steps/guardian-identity'
+import { GuardianProfileStep } from './steps/guardian-profile-step'
 import { IdentityStep } from './steps/identity'
 import { MemberTypeStep } from './steps/member-type'
 import { PasswordStep } from './steps/password'
+import { MinorProfileStep } from './steps/minor-profile-step'
 import { ProfileStep } from './steps/profile'
 import { TeacherProfileStep } from './steps/teacher-profile'
 
@@ -26,6 +28,10 @@ const Step3: SignUpStepComponent = ({ signUp }) => {
       return <GuardianAgreementStep signUp={signUp} />
     }
 
+    if (!signUp.guardian.isProfileCompleted) {
+      return <GuardianProfileStep signUp={signUp} />
+    }
+
     return <GuardianIdentityStep signUp={signUp} />
   }
 
@@ -38,7 +44,7 @@ const Step3: SignUpStepComponent = ({ signUp }) => {
 
 const Step4: SignUpStepComponent = ({ signUp }) =>
   signUp.guardian.isUnderAgeSignup ? (
-    <GuardianConfirmStep signUp={signUp} />
+    <GuardianFinalConsentStep signUp={signUp} />
   ) : (
     <EmailStep signUp={signUp} />
   )
@@ -64,7 +70,7 @@ const Step6: SignUpStepComponent = ({ signUp }) => {
 
 const Step7: SignUpStepComponent = ({ signUp }) =>
   signUp.guardian.isUnderAgeSignup ? (
-    <ProfileStep signUp={signUp} />
+    <MinorProfileStep signUp={signUp} />
   ) : (
     <ConfirmationStep signUp={signUp} />
   )

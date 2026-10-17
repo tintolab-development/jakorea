@@ -18,6 +18,7 @@ import { useGeneralProgramNavigation } from '@/features/program/general/hooks/us
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { useProgramStore } from '@/features/program/general/model/program-store'
+import { refreshAdminSessionFromMe } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import {
   GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL,
@@ -30,8 +31,9 @@ import {
   getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
-  hasGeneralVolunteerApplications,
   resolveGeneralProgramForDetail,
+  shouldShowGeneralVolunteerApplicationsLnb,
+  type GeneralVolunteerApplicationsLnbVisibility,
   type GeneralProgressMenuItem,
   type GeneralSurveyMenuItem,
 } from '@/features/program/general/lib/detail-meta'
@@ -204,11 +206,12 @@ const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
 
 function parseSchoolTabFromSearch(
   searchParams: URLSearchParams,
-  program?: Program | null
+  program?: Program | null,
+  educationJournalEnabled?: boolean
 ): ParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
   if (t && isParticipatingInstitutionDetailTabKeyForProgram(t, program)) {
-    return normalizeParticipatingInstitutionDetailTab(t, program)
+    return normalizeParticipatingInstitutionDetailTab(t, program, educationJournalEnabled)
   }
   return 'application'
 }
@@ -275,7 +278,8 @@ function isVolunteerTabValid(tab: string, interview: boolean): boolean {
 function normalizeGeneralDetailParams(
   programId: string,
   searchParams: URLSearchParams,
-  program: Program
+  program: Program,
+  volunteerLnbVisibility?: GeneralVolunteerApplicationsLnbVisibility
 ): URLSearchParams | null {
   const volunteerInterview = getGeneralVolunteerInterviewEnabled(program)
   const participantInterview = getGeneralParticipantInterviewEnabled(program)
@@ -283,7 +287,7 @@ function normalizeGeneralDetailParams(
   const progressMenuItems = getGeneralProgressMenuItems(program)
   const progressTabKeys = progressMenuItems.map(item => item.tab)
   const showInstructor = hasGeneralInstructorApplications(program)
-  const showVolunteer = hasGeneralVolunteerApplications(program)
+  const showVolunteer = shouldShowGeneralVolunteerApplicationsLnb(program, volunteerLnbVisibility)
   const showParticipant = hasGeneralParticipantApplications(program)
 
   const next = new URLSearchParams(searchParams)
@@ -483,6 +487,11 @@ export function GeneralProgramDetailFullPageModal({
   const programId =
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
+  useEffect(() => {
+    if (!open || !programId) return
+    void refreshAdminSessionFromMe()
+  }, [open, programId])
+
   const { updateProgram, setSelectedProgram } = useProgramStore()
   const remoteEnabled = useGeneralProgramsRemoteEnabled(
     open && Boolean(programId),
@@ -499,8 +508,13 @@ export function GeneralProgramDetailFullPageModal({
     initialProgram: program,
     enabled: open,
   })
-  const { disabledLnbKeys, capabilities: navigationCapabilities } =
-    useGeneralProgramNavigation(open ? programId : undefined, open)
+  const {
+    disabledLnbKeys,
+    capabilities: navigationCapabilities,
+    loading: navigationLoading,
+    navigation,
+    isRemoteDataSource: isNavigationRemote,
+  } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
   const displayProgram = useMemo(() => {
@@ -536,13 +550,18 @@ export function GeneralProgramDetailFullPageModal({
   )
 
   const persistGeneralProgramDraft = useCallback(
-    async (draft: Program, patch?: Partial<Program>) => {
+    async (
+      draft: Program,
+      patch?: Partial<Program>,
+      baseline?: Program | null
+    ) => {
       if (remoteEnabled) {
         await updateGeneralProgramMutation.mutateAsync({
           programId: draft.id,
           program: draft,
           // 공통·모집 정보 저장: 변경 키만 PATCH (rounds·마스킹 담당자 등 전체 덤프 방지)
           patch,
+          baseline: baseline ?? displayProgram ?? draft,
         })
         clearGeneralProgramDetailSession(draft.id)
         setSelectedProgram(draft)
@@ -564,7 +583,7 @@ export function GeneralProgramDetailFullPageModal({
         // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
       }
     },
-    [remoteEnabled, setSelectedProgram, updateGeneralProgramMutation, updateProgram]
+    [displayProgram, remoteEnabled, setSelectedProgram, updateGeneralProgramMutation, updateProgram]
   )
 
   const volunteerInterviewEnabled = displayProgram
@@ -589,9 +608,21 @@ export function GeneralProgramDetailFullPageModal({
     ? hasGeneralInstructorApplications(displayProgram) &&
       !disabledLnbKeys.has('instructor_applications')
     : false
+  const volunteerLnbVisibility = useMemo((): GeneralVolunteerApplicationsLnbVisibility | undefined => {
+    if (!isNavigationRemote) return undefined
+    return {
+      allowedApplicationTargets: navigation?.allowedApplicationTargets,
+      volunteerLnbDisabled: disabledLnbKeys.has('volunteer_applications'),
+      honorNavigationTargets: true,
+    }
+  }, [
+    disabledLnbKeys,
+    isNavigationRemote,
+    navigation?.allowedApplicationTargets,
+  ])
+
   const showVolunteerApplications = displayProgram
-    ? hasGeneralVolunteerApplications(displayProgram) &&
-      !disabledLnbKeys.has('volunteer_applications')
+    ? shouldShowGeneralVolunteerApplicationsLnb(displayProgram, volunteerLnbVisibility)
     : false
   const showParticipantApplications = displayProgram
     ? hasGeneralParticipantApplications(displayProgram) &&
@@ -622,8 +653,18 @@ export function GeneralProgramDetailFullPageModal({
       getGeneralVolunteerInterviewEnabled(displayProgram) ? '1' : '0',
       surveyKeys.join(','),
       progressMenuItems.map(item => item.tab).join(','),
+      (navigation?.allowedApplicationTargets ?? []).join(','),
+      disabledLnbKeys.has('volunteer_applications') ? 'vol-off' : 'vol-on',
+      isNavigationRemote ? 'nav-remote' : 'nav-local',
     ].join('|')
-  }, [displayProgram, surveyKeys, progressMenuItems])
+  }, [
+    displayProgram,
+    surveyKeys,
+    progressMenuItems,
+    navigation?.allowedApplicationTargets,
+    disabledLnbKeys,
+    isNavigationRemote,
+  ])
 
   const urlDetailRoute = useMemo(() => {
     if (!open) {
@@ -656,7 +697,11 @@ export function GeneralProgramDetailFullPageModal({
   const editTab = open ? searchParams.get(EDIT_PARAM) : null
   const schoolIdFromUrl = open ? searchParams.get(SCHOOL_ID_PARAM) : null
   const activeSchoolTab = schoolIdFromUrl
-    ? parseSchoolTabFromSearch(searchParams, displayProgram)
+    ? parseSchoolTabFromSearch(
+        searchParams,
+        displayProgram,
+        navigationCapabilities.educationJournalEnabled
+      )
     : 'application'
   const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
   const activeInstructorTab = useMemo(() => {
@@ -741,8 +786,8 @@ export function GeneralProgramDetailFullPageModal({
       form: infoForm,
       program: displayProgram ?? null,
       onSaveEdit: displayProgram
-        ? async (draft, patch) => {
-            await persistGeneralProgramDraft(draft, patch)
+        ? async (draft, patch, baseline) => {
+            await persistGeneralProgramDraft(draft, patch, baseline)
           }
         : undefined,
     })
@@ -944,6 +989,7 @@ export function GeneralProgramDetailFullPageModal({
     isEditMode: isEditModeInstitutions,
     schema: programDetailInstitutionsEditSchema,
     mapToValues: mapParticipantRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -972,6 +1018,7 @@ export function GeneralProgramDetailFullPageModal({
     program: recruitmentEditProgram,
     isEditMode: isEditModeInstructors,
     mapToValues: mapInstructorRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: instructorsTriggerSave,
@@ -1001,6 +1048,7 @@ export function GeneralProgramDetailFullPageModal({
     program: recruitmentEditProgram,
     isEditMode: isEditModeVolunteers,
     mapToValues: mapVolunteerRecruitmentEditValues,
+    holdValuesWhileEditing: true,
   })
   const {
     triggerSave: volunteersTriggerSave,
@@ -1191,7 +1239,8 @@ export function GeneralProgramDetailFullPageModal({
         const normalized = normalizeGeneralDetailParams(
           programId,
           prev,
-          displayProgramRef.current!
+          displayProgramRef.current!,
+          volunteerLnbVisibility
         )
         if (!normalized) return prev
         if (normalized.toString() === prev.toString()) return prev
@@ -1199,7 +1248,7 @@ export function GeneralProgramDetailFullPageModal({
       },
       { replace: true }
     )
-  }, [open, programId, programNavigationMetaKey, setSearchParams])
+  }, [open, programId, programNavigationMetaKey, setSearchParams, volunteerLnbVisibility])
 
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true
@@ -1480,7 +1529,11 @@ export function GeneralProgramDetailFullPageModal({
           const next = new URLSearchParams(prev)
           next.set(
             SCHOOL_TAB_PARAM,
-            normalizeParticipatingInstitutionDetailTab(tab, displayProgramRef.current)
+            normalizeParticipatingInstitutionDetailTab(
+              tab,
+              displayProgramRef.current,
+              navigationCapabilities.educationJournalEnabled
+            )
           )
           preserveGeneralProgramDetailProgramId(prev, next)
           return next
@@ -1488,7 +1541,7 @@ export function GeneralProgramDetailFullPageModal({
         { replace: true }
       )
     },
-    [setSearchParams]
+    [navigationCapabilities.educationJournalEnabled, setSearchParams]
   )
 
   const setInstructorTab = useCallback(
@@ -1670,7 +1723,11 @@ export function GeneralProgramDetailFullPageModal({
       prev => {
         if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(SCHOOL_TAB_PARAM)
-        const normalized = parseSchoolTabFromSearch(prev, displayProgram)
+        const normalized = parseSchoolTabFromSearch(
+          prev,
+          displayProgram,
+          navigationCapabilities.educationJournalEnabled
+        )
         if (raw === normalized) return prev
         const next = new URLSearchParams(prev)
         next.set(SCHOOL_TAB_PARAM, normalized)
@@ -1678,7 +1735,13 @@ export function GeneralProgramDetailFullPageModal({
       },
       { replace: true }
     )
-  }, [open, schoolIdFromUrl, displayProgram, setSearchParams])
+  }, [
+    open,
+    schoolIdFromUrl,
+    displayProgram,
+    setSearchParams,
+    navigationCapabilities.educationJournalEnabled,
+  ])
 
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return
@@ -2070,6 +2133,7 @@ export function GeneralProgramDetailFullPageModal({
                     programId={displayProgram.id}
                     program={displayProgram}
                     navigationCapabilities={navigationCapabilities}
+                    navigationCapabilitiesLoading={navigationLoading}
                     schoolIdFromUrl={schoolIdFromUrl}
                     schoolTabFromUrl={activeSchoolTab}
                     onSchoolTabChange={setSchoolTab}

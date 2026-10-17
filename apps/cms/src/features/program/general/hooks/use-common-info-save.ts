@@ -33,7 +33,7 @@ export interface UseGeneralProgramCommonInfoSaveOptions {
   form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   program: Program | null
   /** draft = 화면용 병합본, patch = remote PATCH에 실을 변경 키만 */
-  onSaveEdit?: (draft: Program, patch: Partial<Program>) => Promise<void>
+  onSaveEdit?: (draft: Program, patch: Partial<Program>, baseline: Program) => Promise<void>
 }
 
 export function useGeneralProgramCommonInfoSave({
@@ -91,18 +91,22 @@ export function useGeneralProgramCommonInfoSave({
           educationStructure: extras.programType,
           sessionRound: extras.sessionRoundType,
         },
-        program,
+        draftToSave,
         sponsorContext,
         detailedProgramCatalog,
         paymentItemOptions
       )
-      await onSaveEdit(draftToSave, {
-        ...patch,
-        registrationOverlay: syncedOverlay,
-        generalProgramEducationStructure: extras.programType,
-        generalProgramSessionRound: extras.sessionRoundType,
-        ...(persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : {}),
-      })
+      await onSaveEdit(
+        draftToSave,
+        {
+          ...patch,
+          registrationOverlay: syncedOverlay,
+          generalProgramEducationStructure: extras.programType,
+          generalProgramSessionRound: extras.sessionRoundType,
+          ...(persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : {}),
+        },
+        program
+      )
       showUpdateCompletedAlert()
       return { ok: true }
     } catch (error) {

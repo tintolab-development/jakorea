@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   buildEducationScheduleLinesFromDateAndGroupTimes,
+  educationScheduleLinesFromSelectionRangeApply,
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
   flattenGroupTimeSlotsByDetail,
   isEducationScheduleLineBeforeSeoulToday,
   isEducationScheduleLineUpcoming,
   parseEducationScheduleLineToRange,
+  mergeUniqueEducationScheduleLines,
   rebuildEducationScheduleLinesFromGroupTimes,
   shiftEducationScheduleLineToDate,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -47,6 +49,41 @@ describe('buildEducationScheduleLinesFromDateAndGroupTimes', () => {
   })
 })
 
+describe('educationScheduleLinesFromSelectionRangeApply', () => {
+  it('기간 지정 — 그룹 시간·range 시각과 무관하게 예정일은 날짜만', () => {
+    const start = dayjs('2026-11-01T09:00:00')
+    const end = dayjs('2026-11-05T18:00:00')
+    expect(
+      educationScheduleLinesFromSelectionRangeApply({
+        range: [start, end],
+        autoFillFromScheduleGroupTimes: true,
+        educationScheduleMode: 'period',
+        groupTimeSlots: [{ startTime: '09:00', endTime: '12:00' }],
+        dateOnlyPeriodRange: false,
+      })
+    ).toEqual(['26년 11월 1일(일) ~ 26년 11월 5일(목)'])
+  })
+
+  it('개인 일정형 단일·날짜 지정 — range apply도 그룹 시간으로 예정일을 만든다', () => {
+    const day = dayjs('2026-11-10')
+    expect(
+      educationScheduleLinesFromSelectionRangeApply({
+        range: [day, day],
+        autoFillFromScheduleGroupTimes: true,
+        educationScheduleMode: 'date',
+        groupTimeSlots: [
+          { startTime: '13:30', endTime: '15:30' },
+          { startTime: '09:30', endTime: '11:30' },
+        ],
+        dateOnlyPeriodRange: false,
+      })
+    ).toEqual([
+      '26년 11월 10일(화) 13:30 ~ 15:30',
+      '26년 11월 10일(화) 9:30 ~ 11:30',
+    ])
+  })
+})
+
 describe('rebuildEducationScheduleLinesFromGroupTimes', () => {
   it('날짜만 있는 줄에 그룹 시간을 나중에 입힌다', () => {
     expect(
@@ -72,6 +109,20 @@ describe('rebuildEducationScheduleLinesFromGroupTimes', () => {
         [{ startTime: '10:00', endTime: '11:00' }]
       )
     ).toEqual(['26년 4월 20일(월) 10:00 ~ 11:00'])
+  })
+})
+
+describe('mergeUniqueEducationScheduleLines', () => {
+  it('중복 줄은 넣지 않고 순서를 유지한다', () => {
+    expect(
+      mergeUniqueEducationScheduleLines(
+        ['26년 4월 20일(월) 9:00 ~ 12:00'],
+        ['26년 4월 20일(월) 9:00 ~ 12:00', '26년 4월 20일(월) 13:00 ~ 15:00']
+      )
+    ).toEqual([
+      '26년 4월 20일(월) 9:00 ~ 12:00',
+      '26년 4월 20일(월) 13:00 ~ 15:00',
+    ])
   })
 })
 

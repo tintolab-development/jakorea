@@ -39,17 +39,19 @@
 
 ### 2.2 강사 신청 캘린더
 
-- **목록** `GET /api/admin/programs/{programId}/instructor-applications`
-- 희망 기관·기간: `preferredOrganizations[]`
-  - `organizationName` — 캘린더 **기관 라벨** (프로그램명 `programName` 아님)
-  - `startAt` / `endAt` 또는 `dateRangeLabel` — 캘린더 **날짜 bucket**
-- FE 매핑: `mapInstructorPreferredOrganizationsToPreferredSchools` → row.`preferredSchools`
+- **강사 목록** `GET /api/admin/programs/{programId}/instructor-applications`
+  - `preferredOrganizations[]` — 일·기관 bucket에 **매칭** (`scheduleId` ↔ `schoolId`, 또는 `organizationName` + 기간)
+  - FE 매핑: `mapInstructorPreferredOrganizationsToPreferredSchools` → row.`preferredSchools`
+- **기관 목록** `GET /api/admin/programs/{programId}/organization-applications` (강사 LNB 캘린더 진입 시 **동시 로드**)
+  - `sessions[]` — **배정 확정** (`CONFIRMED` / `TEMP_ASSIGNED`) + `scheduleId` + `startAt` 만 캘린더 셀 SSOT
+  - FE 매핑: `mapOrganizationApplicationListSessionsToConfirmedSessions` → row.`confirmedListAssignmentSessions`
 
 **강사 캘린더 UI 규칙 (FE):**
 
-- 월간 셀·필터 라벨: **강사명** (`instructorName`), 프로그램명 사용 금지
-- 일·기관 bucket 우측 카드·툴팁: **기관명** (`organizationName` → bucket `schoolName`)
-- `organizationName`이 null/빈값이면 표시 fallback: **`기관 미지정`** (하이픈 `-` 단독 표시는 피함)
+- 월간 셀: **`{기관명} | {지역}`** (`formatInstitutionRegionForTableDisplay`)
+- 셀 호버: **학교명** + `{지역} | {차시·시간} | 신청 : N명` (일정은 기관 confirmed session, N은 매칭된 강사 신청 수)
+- 우측 카드: 강사별 행(기존) — bucket당 `calendarInstitutionInstructors`
+- `organizationName`이 null/빈값이면 표시 fallback: **`기관 미지정`**
 
 ---
 
@@ -106,9 +108,10 @@
 
 ### 5.3 강사 (`186092`)
 
-- [ ] 월간 셀 라벨 = **강사명** (복수 시 `홍길동 외 N명`)
-- [ ] 툴팁·우측 카드 **기관명** = `preferredOrganizations.organizationName` (없으면 `기관 미지정`)
-- [ ] 동일 날·동일 기관 bucket에 복수 강사 시 카드 N줄
+- [ ] Network: `organization-applications` + `instructor-applications` 동시 로드 (강사 캘린더)
+- [ ] 월간 셀 = **기관명 | 지역** (배정 확정 `sessions[]` 있는 일정만)
+- [ ] 툴팁 = 학교명 + 지역 | 일정 | 신청 N명
+- [ ] 동일 날·동일 기관·세션 bucket에 복수 강사 시 우측 카드 N줄
 
 ### 5.4 자동 테스트
 

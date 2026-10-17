@@ -519,7 +519,12 @@ export function pickLectureEvalSurveyFromRemote(input: {
   classified: ClassifiedFormBinding[]
   surveys: ProgramSurveyResponse[]
 }): RegisteredSurvey | null {
-  const fromBinding = input.classified.find(item => item.kind === 'lecture_evaluation')
+  const lectureBindings = input.classified.filter(item => item.kind === 'lecture_evaluation')
+  const programScope = lectureBindings.find(
+    item => (item.binding.targetScope ?? '').trim().toUpperCase() === 'PROGRAM'
+  )
+  if (programScope) return programScope.survey
+  const fromBinding = lectureBindings[0]
   if (fromBinding) return fromBinding.survey
   const dto = input.surveys.find(isLectureEvalSurveyListRow)
   if (dto == null) return null

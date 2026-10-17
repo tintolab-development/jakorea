@@ -16,6 +16,6 @@ export interface AccountPaymentDetailResponse {
   payment?: AccountPaymentListItemResponse;
   /** 정산 상세와 동일 계약(SettlementFrontendResponse). Gemini 등 정산 없는 건은 null. */
   settlement?: SettlementFrontendResponse;
-  /** 계좌 지급 상세 팝업 전용 원문 계좌정보. 권한 확인 및 개인정보 감사로그 기록 후 제공됩니다. */
+  /** 상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다. */
   sensitiveAccount?: AccountPaymentSensitiveDetailResponse;
 }

@@ -14,7 +14,7 @@ type TermsViewModalProps = {
   /** 가입 화면에서만 전달. 없으면 본문 확인용으로 라디오를 숨긴다. */
   agreed?: boolean
   onAgreedChange?: (agreed: boolean) => void
-  /** 기본은 윤곽선 닫기. 푸터 처리방침은 확인 버튼을 쓴다. */
+  /** 기본은 윤곽선 닫기 */
   actionLabel?: string
   actionVariant?: 'outline' | 'primary'
 }

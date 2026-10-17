@@ -140,7 +140,12 @@ export function EducationNoticeCommentList({
         const isMenuOpen = openMenuId === comment.id
 
         return (
-          <article key={comment.id} className={styles.item}>
+          <article
+            key={comment.id}
+            id={`notice-comment-${comment.id}`}
+            tabIndex={-1}
+            className={styles.item}
+          >
             <div className={styles.top}>
               <div className={styles.meta}>
                 <PFText as="span" typo="bd-sm-sb" color="black" className={styles.author}>

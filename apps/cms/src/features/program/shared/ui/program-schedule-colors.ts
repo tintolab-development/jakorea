@@ -4,39 +4,34 @@
 
 import type { Program } from '@/types/domain'
 
+const CALENDAR_CHIP_TEXT = 'var(--Netural-black, #3D3D3D)'
+const CALENDAR_CHIP_BORDER = 'var(--Border-alpha-06, rgba(61, 61, 61, 0.06))'
+
 export const SCHEDULE_COLORS = [
-  { name: 'red', text: '#C32F4A', border: 'rgba(195,47,74,0.10)', bg: 'rgba(195,47,74,0.06)' },
-  { name: 'purple', text: '#7B61C8', border: 'rgba(123,97,200,0.10)', bg: 'rgba(123,97,200,0.06)' },
-  { name: 'sky', text: '#0284C7', border: 'rgba(2,132,199,0.10)', bg: 'rgba(2,132,199,0.06)' },
-  { name: 'green', text: '#4F8A64', border: 'rgba(79,138,100,0.10)', bg: 'rgba(79,138,100,0.06)' },
-
-  { name: 'orange', text: '#C26A2D', border: 'rgba(194,106,45,0.10)', bg: 'rgba(194,106,45,0.06)' },
-  { name: 'indigo', text: '#4F46E5', border: 'rgba(79,70,229,0.10)', bg: 'rgba(79,70,229,0.06)' },
-  { name: 'mint', text: '#2FA4A9', border: 'rgba(47,164,169,0.10)', bg: 'rgba(47,164,169,0.06)' },
-  { name: 'yellow', text: '#B58A2A', border: 'rgba(181,138,42,0.10)', bg: 'rgba(181,138,42,0.06)' },
-
-  { name: 'rose', text: '#E11D48', border: 'rgba(225,29,72,0.10)', bg: 'rgba(225,29,72,0.06)' },
-  { name: 'blue', text: '#3A7CA5', border: 'rgba(58,124,165,0.10)', bg: 'rgba(58,124,165,0.06)' },
-  { name: 'emerald', text: '#059669', border: 'rgba(5,150,105,0.10)', bg: 'rgba(5,150,105,0.06)' },
-  { name: 'amber', text: '#D97706', border: 'rgba(217,119,6,0.10)', bg: 'rgba(217,119,6,0.06)' },
-
-  { name: 'pink', text: '#D63384', border: 'rgba(214,51,132,0.10)', bg: 'rgba(214,51,132,0.06)' },
-  { name: 'cyan', text: '#0891B2', border: 'rgba(8,145,178,0.10)', bg: 'rgba(8,145,178,0.06)' },
-  { name: 'lime', text: '#65A30D', border: 'rgba(101,163,13,0.10)', bg: 'rgba(101,163,13,0.06)' },
-  { name: 'brown', text: '#8B5E3C', border: 'rgba(139,94,60,0.10)', bg: 'rgba(139,94,60,0.06)' },
-
+  { name: 'green', text: CALENDAR_CHIP_TEXT, border: CALENDAR_CHIP_BORDER, bg: 'var(--Tag-green, #E1F7D9)' },
+  { name: 'pink', text: CALENDAR_CHIP_TEXT, border: CALENDAR_CHIP_BORDER, bg: 'var(--Tag-red, #FFEBEB)' },
+  { name: 'sky', text: CALENDAR_CHIP_TEXT, border: CALENDAR_CHIP_BORDER, bg: 'var(--Tag-sky, #D0EFFF)' },
   {
-    name: 'fuchsia',
-    text: '#C026D3',
-    border: 'rgba(192,38,211,0.10)',
-    bg: 'rgba(192,38,211,0.06)',
+    name: 'purple',
+    text: CALENDAR_CHIP_TEXT,
+    border: CALENDAR_CHIP_BORDER,
+    bg: 'var(--Tag-purple, #EBDFF9)',
   },
-  { name: 'teal', text: '#0D9488', border: 'rgba(13,148,136,0.10)', bg: 'rgba(13,148,136,0.06)' },
-  { name: 'violet', text: '#6D28D9', border: 'rgba(109,40,217,0.10)', bg: 'rgba(109,40,217,0.06)' },
-  { name: 'gray', text: '#6B7280', border: 'rgba(107,114,128,0.10)', bg: 'rgba(107,114,128,0.06)' },
-] as const
+  {
+    name: 'yellow',
+    text: CALENDAR_CHIP_TEXT,
+    border: CALENDAR_CHIP_BORDER,
+    bg: 'var(--Tag-yellow, #FFF2D2)',
+  },
+] as const satisfies readonly ScheduleColorPair[]
 
-export type ScheduleColorPair = (typeof SCHEDULE_COLORS)[number]
+/** 프로그램 일정 팔레트 + 정산·주간 그리드 등 도메인별 `resolveEventColors` 오버라이드 */
+export type ScheduleColorPair = {
+  readonly name: string
+  readonly text: string
+  readonly border: string
+  readonly bg: string
+}
 
 export function hashProgramId(programId: string): number {
   let h = 0

@@ -184,6 +184,6 @@
 |---------------|------|
 | 대부분 FileSelect / Paragraph | **총 15MB** |
 | `/admin/posts/notices` | 문구상 **20MB** |
-| `/programs/:id/apply` (학생명단) | **5MB**/파일 |
+| `/programs/:id/apply` (학생명단) · Platform 교육현황 학생 명단 | **20MB**/파일 · **XLSX·CSV** (`.xls` 미지원) · 최대 **500명** |
 | `/programs/:id/apply` (강사 서류) | **10MB**/파일 |
 | `/settlements/my*` | 문구에 용량 없음 |

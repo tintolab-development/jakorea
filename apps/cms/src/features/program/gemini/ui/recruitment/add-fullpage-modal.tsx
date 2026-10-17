@@ -11,6 +11,7 @@ import {
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { invalidateGeminiRecruitmentListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
@@ -30,8 +31,6 @@ const ADD_MODAL_TITLE = '찾아가는 연수 모집 공고 추가'
 
 const DRAFT_SAVE_FAILURE_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
-
-const REGISTER_SUCCESS_MESSAGE = '등록되었습니다.'
 
 export function GeminiRecruitmentAddFullpageModal({
   open,
@@ -58,6 +57,7 @@ export function GeminiRecruitmentAddFullpageModal({
   const [overwriteTitle, setOverwriteTitle] = useState('')
   const [overwriteSaving, setOverwriteSaving] = useState(false)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
+  const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
 
   useEffect(() => {
     if (open) return
@@ -65,6 +65,7 @@ export function GeminiRecruitmentAddFullpageModal({
     setOverwriteTitle('')
     setOverwriteSaving(false)
     setDraftSaveSuccessOpen(false)
+    setCompleteSuccessOpen(false)
   }, [open])
 
   const runDraftSave = useCallback(() => {
@@ -111,11 +112,7 @@ export function GeminiRecruitmentAddFullpageModal({
       await geminiRecruitmentService.register(snapshot)
       removeGeminiRecruitmentAddDraft()
       invalidateGeminiRecruitmentListCaches(queryClient)
-      showAlert({
-        title: '등록 완료',
-        content: REGISTER_SUCCESS_MESSAGE,
-      })
-      onClose()
+      setCompleteSuccessOpen(true)
     } catch {
       showAlert({
         title: '안내',
@@ -124,7 +121,12 @@ export function GeminiRecruitmentAddFullpageModal({
     } finally {
       endOverlay()
     }
-  }, [form, onClose, queryClient, showAlert])
+  }, [form, queryClient, showAlert])
+
+  const handleCompleteSuccessConfirm = useCallback(() => {
+    setCompleteSuccessOpen(false)
+    onClose()
+  }, [onClose])
 
   const handleRequestClose = useCallback(() => {
     if (form.isDirty) {
@@ -181,6 +183,10 @@ export function GeminiRecruitmentAddFullpageModal({
       <RegistrationDraftSaveSuccessModal
         open={draftSaveSuccessOpen}
         onConfirm={() => setDraftSaveSuccessOpen(false)}
+      />
+      <RegistrationCompleteSuccessModal
+        open={completeSuccessOpen}
+        onConfirm={handleCompleteSuccessConfirm}
       />
       <GeminiRecruitmentAddCloseConfirmModal
         open={closeConfirmOpen}

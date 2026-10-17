@@ -1,10 +1,6 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import { PFCategoryBadge, PFStateBadge } from '@/shared/ui'
-import {
-  EDUCATION_FORM_ICON_MAP,
-  RECRUITMENT_STATUS_TONE_MAP,
-  educationTargetBadgeIconUrl,
-} from '../lib/badge-config'
+import { RECRUITMENT_STATUS_TONE_MAP } from '../lib/badge-config'
 import type { EducationForm } from '../model/types'
 import styles from './program-status-badges.module.css'
 
@@ -34,7 +30,7 @@ function shouldShowRoleBadge(roleLabel: string | undefined): boolean {
 export function ProgramStatusBadges({
   recruitmentStatus,
   educationTargetLabel,
-  educationForm,
+  educationForm: _educationForm,
   educationFormLabel,
   recruitmentRoleLabel,
   className,
@@ -42,48 +38,32 @@ export function ProgramStatusBadges({
   const rootClassName = [styles.root, className].filter(Boolean).join(' ')
   const showRole = shouldShowRoleBadge(recruitmentRoleLabel)
 
+  const badgeTypographyClass = 'typo-caption-sb'
+  const badgeClassName = [styles.badge, badgeTypographyClass].join(' ')
+  const stateBadgeClassName = [styles.badge, styles.stateBadge, badgeTypographyClass].filter(Boolean).join(' ')
+
   return (
     <div className={rootClassName}>
-      <PFStateBadge size="small" tone={RECRUITMENT_STATUS_TONE_MAP[recruitmentStatus]}>
+      <PFStateBadge
+        size="small"
+        tone={RECRUITMENT_STATUS_TONE_MAP[recruitmentStatus]}
+        className={stateBadgeClassName}
+      >
         {platformRecruitmentStatusLabel(recruitmentStatus)}
       </PFStateBadge>
 
       {showRole ? (
-        <PFCategoryBadge size="small" variant="primary">
+        <PFCategoryBadge size="small" variant="primary" className={badgeClassName}>
           {recruitmentRoleLabel}
         </PFCategoryBadge>
       ) : null}
 
-      <PFCategoryBadge
-        size="large"
-        iconVariant="secondary"
-        icon={
-          <img
-            src={educationTargetBadgeIconUrl}
-            alt=""
-            width={16}
-            height={14}
-            aria-hidden="true"
-          />
-        }
-      >
+      <PFCategoryBadge size="small" variant="secondary" className={badgeClassName}>
         {educationTargetLabel}
       </PFCategoryBadge>
 
       {educationFormLabel.trim() ? (
-        <PFCategoryBadge
-          size="large"
-          iconVariant="secondary"
-          icon={
-            <img
-              src={EDUCATION_FORM_ICON_MAP[educationForm]}
-              alt=""
-              width={14}
-              height={14}
-              aria-hidden="true"
-            />
-          }
-        >
+        <PFCategoryBadge size="small" variant="secondary" className={badgeClassName}>
           {educationFormLabel}
         </PFCategoryBadge>
       ) : null}

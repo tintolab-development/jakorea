@@ -5,8 +5,13 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.lists(), statusFilter ?? 'all', tableFiltersKey] as const,
   /** 상단 4카드 위젯 건수 — list 무효화와 함께 갱신 */
   overviewStages: () => [...generalProgramQueryKeys.all, 'overview-stages'] as const,
-  detail: (programId: string) =>
-    [...generalProgramQueryKeys.all, 'detail', programId] as const,
+  detail: (programId: string) => [...generalProgramQueryKeys.all, 'detail', programId] as const,
+  materials: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'materials', programId] as const,
+  materialCandidates: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'material-candidates', programId] as const,
+  sponsorAssignments: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'sponsor-assignments', programId] as const,
   navigation: (programId: string) =>
     [...generalProgramQueryKeys.all, 'navigation', programId] as const,
   posts: (programId: string) => [...generalProgramQueryKeys.all, 'posts', programId] as const,
@@ -28,15 +33,18 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.managersRoot(programId), filtersKey] as const,
   managerCandidates: () => [...generalProgramQueryKeys.all, 'manager-candidates'] as const,
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
+  surveyDisplayTitles: (programId: string, versionIdsKey: string) =>
+    [...generalProgramQueryKeys.all, 'survey-display-titles', programId, versionIdsKey] as const,
   formBindings: (programId: string) =>
     [...generalProgramQueryKeys.all, 'form-bindings', programId] as const,
+  schedules: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'schedules', programId] as const,
+  /** 프로그램 공통 교육 예정 슬롯 — GET education-slots (schedules 캐시와 분리) */
+  educationSlots: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'education-slots', programId] as const,
   surveyResponses: (programId: string, templateVersionId: string) =>
     [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
-  surveyResponseDetail: (
-    programId: string,
-    templateVersionId: string,
-    formResponseId: string
-  ) =>
+  surveyResponseDetail: (programId: string, templateVersionId: string, formResponseId: string) =>
     [
       ...generalProgramQueryKeys.all,
       'survey-response-detail',

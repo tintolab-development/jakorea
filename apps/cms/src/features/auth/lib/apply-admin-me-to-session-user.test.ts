@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyAdminMeToSessionUser } from './apply-admin-me-to-session-user'
+import { applyAdminMeToSessionUser, normalizeAdminDate } from './apply-admin-me-to-session-user'
 import type { User } from '@/types/user'
 
 const current: Omit<User, 'password'> = {
@@ -15,6 +15,44 @@ const current: Omit<User, 'password'> = {
 }
 
 describe('applyAdminMeToSessionUser', () => {
+  it('관리자 날짜는 유효한 ISO-8601 원본을 그대로 유지한다', () => {
+    expect(normalizeAdminDate('2026-10-16T08:00:00Z')).toBe('2026-10-16T08:00:00Z')
+    expect(normalizeAdminDate('2026-10-16T08:00:00.123Z')).toBe('2026-10-16T08:00:00.123Z')
+  })
+
+  it('null·빈 값·잘못된 값·숫자 timestamp는 null로 처리한다', () => {
+    expect(normalizeAdminDate(null)).toBeNull()
+    expect(normalizeAdminDate('')).toBeNull()
+    expect(normalizeAdminDate('not-a-date')).toBeNull()
+    expect(normalizeAdminDate('2026-02-30T08:00:00Z')).toBeNull()
+    expect(normalizeAdminDate(1792137600000 as unknown as string)).toBeNull()
+  })
+
+  it('GET /api/admin/me의 null·빈 createdAt·updatedAt는 기존 세션 날짜로 fallback하지 않는다', () => {
+    const emptyDates = applyAdminMeToSessionUser(current, {
+      createdAt: '',
+      updatedAt: '',
+    })
+    const nullDates = applyAdminMeToSessionUser(current, {
+      createdAt: null,
+      updatedAt: null,
+    } as unknown as import('@/shared/api/generated/members/schemas/adminMeResponse').AdminMeResponse)
+
+    expect(emptyDates.createdAt).toBeNull()
+    expect(emptyDates.updatedAt).toBeNull()
+    expect(nullDates.createdAt).toBeNull()
+    expect(nullDates.updatedAt).toBeNull()
+  })
+
+  it('GET /api/admin/me에 createdAt·updatedAt가 없으면 기존 세션 날짜를 유지한다', () => {
+    const next = applyAdminMeToSessionUser(current, {
+      uuid: 'admin-uuid',
+      email: 'pm@jakorea.org',
+    })
+    expect(next.createdAt).toBe(current.createdAt)
+    expect(next.updatedAt).toBe(current.updatedAt)
+  })
+
   it('GET /api/admin/me roleCode를 세션에 반영하고 MASTER로 올리지 않는다', () => {
     const next = applyAdminMeToSessionUser(current, {
       uuid: 'admin-uuid',

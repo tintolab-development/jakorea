@@ -12,7 +12,7 @@ export interface ReplaceRequest {
      * @minItems 0
      * @maxItems 500
      */
-  slots: SlotRequest[];
+  slots?: SlotRequest[];
   /**
      * @minLength 0
      * @maxLength 500

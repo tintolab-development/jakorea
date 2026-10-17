@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -73,8 +74,6 @@ function participantTypeLabel(
 
 const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
-const BLOCK_GAP_STYLE = { marginTop: 16 } as const
-
 function UjatOverlayTextField({
   label,
   validationKey,
@@ -129,19 +128,19 @@ export function UjatBasicInfoParagraph({
     UJAT_DETAILED_PROGRAM_UJAT_LABEL
   )
 
-  const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<string | null>(
-    'ujat.basicInfo.operationAnchorIso',
-    null
-  )
+  const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<
+    string | null
+  >('ujat.basicInfo.operationAnchorIso', null)
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
   const setOperationAnchorDate = (next: Dayjs | null) => {
     setOperationAnchorIso(next == null ? null : next.toISOString())
   }
 
-  const [operationRangeSeal, setOperationRangeSeal] = useUjatProgramRegistrationOverlayKv<OperationRangeSeal>(
-    'ujat.basicInfo.operationRangeSeal',
-    null
-  )
+  const [operationRangeSeal, setOperationRangeSeal] =
+    useUjatProgramRegistrationOverlayKv<OperationRangeSeal>(
+      'ujat.basicInfo.operationRangeSeal',
+      null
+    )
   const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
     if (operationRangeSeal == null) return null
     return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
@@ -221,30 +220,30 @@ export function UjatBasicInfoParagraph({
     'ujat.basicInfo.educationCourse',
     ''
   )
-  const [partnerInvolvement, setPartnerInvolvement] = useUjatProgramRegistrationOverlayKv<'yes' | 'no'>(
-    'ujat.basicInfo.partnerInvolvement',
-    'no'
-  )
+  const [partnerInvolvement, setPartnerInvolvement] = useUjatProgramRegistrationOverlayKv<
+    'yes' | 'no'
+  >('ujat.basicInfo.partnerInvolvement', 'no')
 
-  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
+    overlayBasicInfoPrefix: 'ujat.basicInfo',
+  })
+  const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
+  const sponsorApiOptions = sponsorCatalogQuery.options
+  const sponsorOptionsLoading =
+    catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const contactsQuery = useSponsorContactsQuery(
     sponsorId === UJAT_SPONSOR_ALL_VALUE ? null : sponsorId,
     sponsorId !== UJAT_SPONSOR_ALL_VALUE && Boolean(sponsorId)
   )
 
   const sponsorOptions = useMemo(
-    () => [
-      { value: UJAT_SPONSOR_ALL_VALUE, label: '전체' },
-      ...sponsorApiOptions,
-    ],
+    () => [{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }, ...sponsorApiOptions],
     [sponsorApiOptions]
   )
 
   const managerOptions = useMemo(() => {
     if (sponsorId === UJAT_SPONSOR_ALL_VALUE) {
-      return withSponsorContactUnselectedOption([
-        { value: UJAT_SPONSOR_ALL_VALUE, label: '전체' },
-      ])
+      return withSponsorContactUnselectedOption([{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }])
     }
     if (!sponsorId) return []
     const contacts = (contactsQuery.data ?? []).map(c => ({
@@ -257,10 +256,7 @@ export function UjatBasicInfoParagraph({
   const selectedSponsorContactIds = useMemo(() => {
     const stored = [
       ...new Set(
-        [
-          ...(Array.isArray(sponsorContactIds) ? sponsorContactIds : []),
-          sponsorContactId,
-        ]
+        [...(Array.isArray(sponsorContactIds) ? sponsorContactIds : []), sponsorContactId]
           .map(id => String(id ?? '').trim())
           .filter(Boolean)
       ),
@@ -285,7 +281,8 @@ export function UjatBasicInfoParagraph({
   const applySponsorContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedSponsorContactIds)
     setSponsorContactIds(unique)
-    const primary = unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
+    const primary =
+      unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
     setSponsorContactId(primary)
     const labels = unique
       .filter(id => id !== UJAT_SPONSOR_ALL_VALUE && !isSponsorContactUnselected(id))
@@ -310,14 +307,17 @@ export function UjatBasicInfoParagraph({
     }
   }, [selectedSponsorContactIds, sponsorContactId, sponsorContactIds, sponsorManagerName])
 
-  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(catalogReady)
 
   // 일반 일정형과 동일 — 잠금 시 「해당없음」만 유효. 잠금 해제(커리큘럼형)에서는 UJAT 고정 옵션+카탈로그.
   const detailedProgramOptions = useMemo(
     () =>
       lockDetailedProgramToNone
         ? withDetailedProgramNoneOption(remoteDetailedProgramOptions)
-        : [DETAILED_PROGRAM_UJAT_OPTION, ...withDetailedProgramNoneOption(remoteDetailedProgramOptions)],
+        : [
+            DETAILED_PROGRAM_UJAT_OPTION,
+            ...withDetailedProgramNoneOption(remoteDetailedProgramOptions),
+          ],
     [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
 
@@ -326,12 +326,7 @@ export function UjatBasicInfoParagraph({
     if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return
     setDetailedProgramId(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
     setDetailedProgramName('해당없음')
-  }, [
-    detailedProgramId,
-    lockDetailedProgramToNone,
-    setDetailedProgramId,
-    setDetailedProgramName,
-  ])
+  }, [detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId, setDetailedProgramName])
 
   // id만 저장하고 name을 갱신하지 않으면 실제 반영되는 세부 프로그램명이 어긋날 수 있다 —
   // id 변경 시 라벨도 항상 함께 저장한다.
@@ -363,7 +358,7 @@ export function UjatBasicInfoParagraph({
     <>
       {/* ── 대표 프로그램명 ~ 세부 프로그램명 ── */}
       <DetailInfoForm
-        title="UJAT 기본 정보 — 프로그램명"
+        title="UJAT 기본 정보"
         hideHeader
         mode="edit"
         className="program-registration-paragraph"
@@ -405,6 +400,7 @@ export function UjatBasicInfoParagraph({
                   options={detailedProgramOptions}
                   value={detailedProgramSelectValue}
                   onChange={v => setDetailedProgramSelection(String(v ?? ''))}
+                  onOpenChange={onSelectOpenChange}
                   disabled={lockDetailedProgramToNone}
                 />
               </div>
@@ -412,16 +408,7 @@ export function UjatBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      {/* ── 사업 운영 기간 ~ 설문 진행 항목 ── */}
-      <DetailInfoForm
-        title="UJAT 기본 정보 — 운영 및 설문"
-        hideHeader
-        mode="edit"
-        className="program-registration-paragraph"
-        style={BLOCK_GAP_STYLE}
-      >
+        {/* ── 사업 운영 기간 ~ 설문 진행 항목 ── */}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="사업 운영 기간"
@@ -463,32 +450,16 @@ export function UjatBasicInfoParagraph({
             validationKey="basicInfo.audience"
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={individualChecked}
-                  disabled
-                >
+                <CmsCheckbox checkboxSize="large" checked={individualChecked} disabled>
                   {participantTypeLabel('individual')}
                 </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={organizationChecked}
-                  disabled
-                >
+                <CmsCheckbox checkboxSize="large" checked={organizationChecked} disabled>
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={teacherChecked}
-                  disabled
-                >
+                <CmsCheckbox checkboxSize="large" checked={teacherChecked} disabled>
                   {participantTypeLabel('teacher_instructor')}
                 </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={volunteerChecked}
-                  disabled
-                >
+                <CmsCheckbox checkboxSize="large" checked={volunteerChecked} disabled>
                   {participantTypeLabel('volunteer')}
                 </CmsCheckbox>
               </div>
@@ -527,6 +498,8 @@ export function UjatBasicInfoParagraph({
                   width={240}
                   options={sponsorOptions}
                   value={sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
                   onChange={v => {
                     const next = String(v ?? '')
                     setSponsorId(next)
@@ -555,6 +528,8 @@ export function UjatBasicInfoParagraph({
                   options={managerOptions}
                   value={selectedSponsorContactIds}
                   disabled={!sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)
@@ -586,16 +561,7 @@ export function UjatBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      {/* ── 교육 과정 ~ IPS 유형 ── */}
-      <DetailInfoForm
-        title="UJAT 기본 정보 — 교육 과정 및 IPS"
-        hideHeader
-        mode="edit"
-        className="program-registration-paragraph"
-        style={BLOCK_GAP_STYLE}
-      >
+        {/* ── 교육 과정 ~ IPS 유형 ── */}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"

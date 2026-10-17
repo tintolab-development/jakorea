@@ -2,7 +2,11 @@ import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
-import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import {
+  SPONSOR_SELECT_SEARCH_DEBOUNCE_MS,
+  useSponsorSelectOptionsInfinite,
+} from '@/features/sponsor/hooks/use-sponsor-select-options-infinite'
+import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   encodeSponsorManagerContactRef,
@@ -26,6 +30,7 @@ import {
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
   normalizeTrainedTeachersAllSelectValue,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import { mergeSponsorRegistrationSelectOptions } from '@/features/program/general/lib/registration-sponsor-select-option-merge'
 import {
   isSponsorContactUnselected,
   normalizeSponsorContactUnselectedSelection,
@@ -189,7 +194,15 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     trainedTeachersDefaults,
   ])
 
-  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
+    overlayBasicInfoPrefix: trainedTeachersDefaults
+      ? 'trainedTeachersRegistration.basicInfo'
+      : 'generalRegistration.basicInfo',
+  })
+  const sponsorCatalogQuery = useSponsorSelectOptionsInfinite(catalogReady)
+  const sponsorApiOptions = sponsorCatalogQuery.options
+  const sponsorOptionsLoading =
+    catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const isAllSponsor = trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
 
   // 후원사는 있는데 담당자가 비면 수정 진입·후원사 변경 모두 미선택을 고른다.
@@ -201,25 +214,38 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   }, [isAllSponsor, managerContactIds.length, setManagerContactIds, sponsorIds.length])
 
   const multiSponsorContext = useGeneralProgramSponsorEditContext(
-    allowMultipleSponsors ? sponsorIds : []
+    allowMultipleSponsors ? sponsorIds : [],
+    catalogReady
   )
   const singleContactsQuery = useSponsorContactsQuery(
     !allowMultipleSponsors && !isAllSponsor ? sponsorId || null : null,
     !allowMultipleSponsors && !isAllSponsor && Boolean(sponsorId)
   )
 
-  const sponsorOptions = sponsorApiOptions
+  const sponsorOptions = useMemo(
+    () =>
+      mergeSponsorRegistrationSelectOptions({
+        sponsorIds,
+        apiOptions: sponsorApiOptions,
+        sponsors: multiSponsorContext.sponsors,
+      }),
+    [multiSponsorContext.sponsors, sponsorApiOptions, sponsorIds]
+  )
 
   const managerContactsReady = allowMultipleSponsors
     ? sponsorIds.length === 0 ||
-      (sponsorIds.every(id => multiSponsorContext.sponsors.some(row => row.id === id)) &&
-        sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[id] != null))
+      (sponsorIds.every(id =>
+        multiSponsorContext.sponsors.some(row => String(row.id) === String(id))
+      ) &&
+        sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[String(id)] != null))
     : isAllSponsor || singleContactsQuery.isSuccess || singleContactsQuery.isError
 
   const selectedSponsors = useMemo(() => {
     if (!allowMultipleSponsors) return [] as SponsorManagementRow[]
     return sponsorIds
-      .map(id => multiSponsorContext.sponsors.find(row => row.id === id))
+      .map(id =>
+        multiSponsorContext.sponsors.find(row => String(row.id) === String(id))
+      )
       .filter((row): row is SponsorManagementRow => row != null)
   }, [allowMultipleSponsors, multiSponsorContext.sponsors, sponsorIds])
 
@@ -230,10 +256,10 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     if (allowMultipleSponsors) {
       const options: Array<{ value: string; label: string }> = []
       for (const sponsor of selectedSponsors) {
-        const contacts = multiSponsorContext.contactsBySponsorId[sponsor.id] ?? []
+        const contacts = multiSponsorContext.contactsBySponsorId[String(sponsor.id)] ?? []
         for (const contact of contacts) {
           options.push({
-            value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
+            value: encodeSponsorManagerContactRef(String(sponsor.id), String(contact.id)),
             label: formatSponsorManagerSelectLabel({
               sponsorName: sponsor.name,
               contactName: contact.name,
@@ -247,7 +273,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     }
     if (!sponsorId) return []
     return (singleContactsQuery.data ?? []).map(c => ({
-      value: c.id,
+      value: String(c.id),
       label: c.name,
     }))
   }, [
@@ -262,12 +288,16 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const managerSelectOptions = useMemo(() => {
     const sponsorChosen =
       isAllSponsor || (allowMultipleSponsors ? sponsorIds.length > 0 : Boolean(sponsorId))
-    // 후원사만 고르면 미선택 노출. contacts 전부 로드될 때까지 기다리면 옵션이 빠져 보인다.
-    if (!sponsorChosen) return managerOptions
+    const needsUnselectedOption =
+      sponsorChosen ||
+      managerContactIds.some(id => isSponsorContactUnselected(id))
+    // 후원사만 고르면 미선택 노출. autofill sentinel은 후원사 로드 전에도 라벨 매칭.
+    if (!needsUnselectedOption) return managerOptions
     return withSponsorContactUnselectedOption(managerOptions)
   }, [
     allowMultipleSponsors,
     isAllSponsor,
+    managerContactIds,
     managerOptions,
     sponsorId,
     sponsorIds.length,
@@ -371,13 +401,24 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 inputSize="medium"
                 placeholder="후원사를 선택하세요"
                 width={240}
-                showSearch
-                optionFilterProp="label"
                 options={sponsorOptions}
                 value={sponsorIds}
+                loading={sponsorOptionsLoading}
+                filterLocally={false}
+                searchDebounceMs={SPONSOR_SELECT_SEARCH_DEBOUNCE_MS}
+                onSearchChange={sponsorCatalogQuery.setSearchDraft}
+                hasMore={catalogReady ? (sponsorCatalogQuery.hasNextPage ?? false) : false}
+                loadingMore={sponsorCatalogQuery.isFetchingNextPage}
+                onLoadMore={() => {
+                  void sponsorCatalogQuery.fetchNextPage()
+                }}
                 onChange={v => {
                   const next = Array.isArray(v) ? v.map(String) : []
                   setSponsorIds(next)
+                }}
+                onOpenChange={open => {
+                  onSelectOpenChange(open)
+                  if (!open) sponsorCatalogQuery.setSearchDraft('')
                 }}
               />
             ) : (
@@ -388,6 +429,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 width={240}
                 options={sponsorOptions}
                 value={sponsorId}
+                onOpenChange={onSelectOpenChange}
                 onChange={v => {
                   const next = String(v ?? '')
                   setSponsorId(next)
@@ -418,6 +460,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               optionFilterProp="label"
               options={managerSelectOptions}
               value={managerContactIds}
+              loading={
+                catalogReady &&
+                allowMultipleSponsors &&
+                sponsorIds.length > 0 &&
+                !managerContactsReady
+              }
               disabled={
                 allowMultipleSponsors
                   ? sponsorIds.length === 0
@@ -427,6 +475,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 const next = Array.isArray(v) ? v.map(String) : []
                 setManagerContactIds(next)
               }}
+              onOpenChange={onSelectOpenChange}
             />
           </div>
         }

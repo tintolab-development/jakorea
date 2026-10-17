@@ -1,5 +1,4 @@
-import { PFText } from '@/shared/ui'
-import styles from './apply-form-radio.module.css'
+import { Radio } from 'antd'
 
 export type ApplyFormRadioOption = {
   value: string
@@ -13,7 +12,7 @@ type ApplyFormRadioGroupProps = {
   onChange: (next: string) => void
 }
 
-/** 신청 양식 라디오 — 교육받은 교사 기본정보와 동일 마크업 */
+/** 신청 양식 슬롯 라디오 — `MultipleChoiceFill`(form-template-runtime)과 동일 마크업 */
 export function ApplyFormRadioGroup({
   name,
   value,
@@ -21,25 +20,19 @@ export function ApplyFormRadioGroup({
   onChange,
 }: ApplyFormRadioGroupProps) {
   return (
-    <div className={styles.radioGroup} role="radiogroup" aria-label={name}>
+    <Radio.Group
+      className="form-template-fill-multiple-choice__radios app-radio-group app-radio-group--large"
+      size="large"
+      name={name}
+      value={value || undefined}
+      aria-label={name}
+      onChange={event => onChange(String(event.target.value))}
+    >
       {options.map(option => (
-        <label key={option.value} className={styles.radioOption}>
-          <input
-            type="radio"
-            name={name}
-            value={option.value}
-            checked={value === option.value}
-            onChange={() => onChange(option.value)}
-          />
-          <PFText
-            as="span"
-            typo="bd-md-rg"
-            color={value === option.value ? 'primary-500' : 'black'}
-          >
-            {option.label}
-          </PFText>
-        </label>
+        <Radio key={option.value} value={option.value}>
+          {option.label}
+        </Radio>
       ))}
-    </div>
+    </Radio.Group>
   )
 }

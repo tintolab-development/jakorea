@@ -43,8 +43,6 @@ export type IndividualApplicationListItemEnriched = Omit<
 /** POST /api/admin/interview-assignments — volunteer ↔ individual 상호 배타 */
 export type InterviewAssignmentCreateRequestEnriched = InterviewAssignmentCreateRequest & {
   individualApplicationId?: number
-  notifyTiming?: 'IMMEDIATE' | 'ON_ANNOUNCEMENT' | 'MANUAL' | string
-  scheduledAt?: string
 }
 
 export type InterviewAssignmentResponseEnriched = InterviewAssignmentResponse & {

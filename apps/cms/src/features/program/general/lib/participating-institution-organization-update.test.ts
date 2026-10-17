@@ -65,8 +65,7 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
       teacherPhone: '010-0000-0000',
       teacherEmail: 't@school.kr',
       textbookId: 55,
-      textbookKits: 2,
-      textbookQuantity: 48,
+      textbookGrade: '3학년',
     })
   })
 
@@ -77,6 +76,18 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
       baselineEducationFormat: '오프라인',
     })
     expect(body.requestedEducationFormat).toBeUndefined()
+  })
+
+  it('교재를 건드리지 않은 기관 정보 수정에서는 교재 필드를 생략한다', () => {
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: baseDraft,
+      teacherOptions: [],
+      includeTextbookFields: false,
+    })
+
+    expect(body).not.toHaveProperty('textbookId')
+    expect(body).not.toHaveProperty('textbookKits')
+    expect(body).not.toHaveProperty('textbookQuantity')
   })
 
   it('참여자 선택이 아니면 교육 형태가 바뀌어도 requestedEducationFormat을 보내지 않는다', () => {
@@ -122,7 +133,8 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
       teacherOptions: [],
     })
     expect(body.textbookId).toBeNull()
-    expect(body.textbookKits).toBe(0)
+    expect(body).not.toHaveProperty('textbookKits')
+    expect(body).not.toHaveProperty('textbookQuantity')
   })
 })
 

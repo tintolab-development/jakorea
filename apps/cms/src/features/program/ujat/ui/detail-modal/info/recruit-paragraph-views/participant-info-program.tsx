@@ -15,6 +15,7 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { formatUjatDotDateWithWeekday } from '@/features/program/ujat/lib/ujat-date-display'
 import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
@@ -32,7 +33,6 @@ import {
   UjatRecruitFormPeriodDatePicker,
   UjatRecruitParticipantNotesField,
 } from '../recruit-lib/ujat-recruit-form-fields'
-import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
@@ -94,11 +94,11 @@ export function UjatRecruitParticipantInfoProgramView({
         }
       : undefined
   )
-  const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
+  const resultDate = program.resultAnnouncementDate
   const resultMethod = program.resultAnnouncementMethod?.trim()
   const resultLine = resultDate ? (
     <UjatInlineDividedSegments
-      segments={[dayjs(resultDate).format('YYYY.MM.DD(ddd)'), resultMethod || '-']}
+      segments={[formatUjatDotDateWithWeekday(resultDate), resultMethod || '-']}
     />
   ) : (
     '-'
@@ -115,6 +115,12 @@ export function UjatRecruitParticipantInfoProgramView({
       ?.label ?? '게시'
 
   const formMode = isEdit && form ? 'edit' : 'view'
+  const recruitmentContactName =
+    program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName?.trim() ||
+    program.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
+    program.contactName?.trim() ||
+    sponsorName?.trim() ||
+    ''
 
   return (
     <div className="ujat-recruit-participant-info-program">
@@ -124,8 +130,7 @@ export function UjatRecruitParticipantInfoProgramView({
           highlightParagraphId={highlightParagraphId}
         />
       ) : null}
-      <div className="ujat-recruit-participant-info-program__forms">
-      <DetailInfoForm title="참여 기관 모집 정보(설정)" hideHeader mode={formMode}>
+      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode={formMode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
@@ -148,9 +153,6 @@ export function UjatRecruitParticipantInfoProgramView({
             }
           />
         </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode={formMode}>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="공고용 프로그램명"
@@ -221,7 +223,7 @@ export function UjatRecruitParticipantInfoProgramView({
                   <CmsSelect
                     mode="multiple"
                     inputSize="medium"
-                    width="100%"
+                    width={240}
                     withAllOption={false}
                     value={field.value ?? []}
                     options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
@@ -307,7 +309,7 @@ export function UjatRecruitParticipantInfoProgramView({
           fullRow
           view={
             <ProgramDetailContactReadRow
-              contactName={sponsorName}
+              contactName={recruitmentContactName}
               contactPhone={program.contactPhone}
               contactEmail={program.contactEmail}
               padEmptySegments
@@ -388,7 +390,6 @@ export function UjatRecruitParticipantInfoProgramView({
         />
       </DetailInfoForm.Row>
       </DetailInfoForm>
-      </div>
     </div>
   )
 }

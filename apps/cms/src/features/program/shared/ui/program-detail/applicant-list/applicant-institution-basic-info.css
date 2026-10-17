@@ -16,6 +16,14 @@
   gap: 0;
 }
 
+/**
+ * DetailInfoForm 2블록(상단 title + 하단 hideHeader) — applicant-instructor-basic-info gap: 16px
+ * __section의 gap:0 이 번들 순서에 따라 이기지 않도록 명시
+ */
+.applicant-institution-basic-info__section.applicant-instructor-basic-info {
+  gap: 16px;
+}
+
 /** 기본 정보 — 프로그램 승인 현황 테이블과 나머지 필드 테이블 분리 */
 .applicant-institution-basic-info__basic-info-fields {
   display: flex;

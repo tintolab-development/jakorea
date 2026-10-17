@@ -1,9 +1,5 @@
 import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft'
-import {
-  SETTLEMENT_BANK_OPTIONS,
-  SETTLEMENT_TRANSIT_OPTIONS,
-  SETTLEMENT_TRIP_TYPE_OPTIONS,
-} from './settlement-options'
+import { SETTLEMENT_TRANSIT_OPTIONS, SETTLEMENT_TRIP_TYPE_OPTIONS } from './settlement-options'
 
 export function digitsOnly(value: string): string {
   return value.replace(/\D/g, '')
@@ -26,10 +22,6 @@ export function formatSettlementAmountDisplay(value: string): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
-export function resolveSettlementBankLabel(bank: string): string {
-  return SETTLEMENT_BANK_OPTIONS.find(option => option.value === bank)?.label ?? bank
-}
-
 export function resolveSettlementTransitLabel(transit: string): string {
   return SETTLEMENT_TRANSIT_OPTIONS.find(option => option.value === transit)?.label ?? transit
 }
@@ -40,7 +32,7 @@ export function resolveSettlementTripTypeLabel(tripType: SettlementWriteDraft['t
 
 export function formatSettlementAccountInfo(draft: SettlementWriteDraft): string {
   const { bank, accountNumber, accountHolder } = draft.basic
-  return `${resolveSettlementBankLabel(bank)} ${accountNumber} (${accountHolder})`
+  return `${bank.trim()} ${accountNumber} (${accountHolder})`
 }
 
 export function formatSettlementHomeAddress(draft: SettlementWriteDraft): string {

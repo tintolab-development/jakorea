@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { EducationApplicationContent } from './content'
 import { PFModal } from '@/shared/ui'
 import styles from './application-info-modal.module.css'
@@ -6,6 +7,8 @@ type EducationApplicationInfoModalProps = {
   open: boolean
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 교사·기관 등 — 신청 내용 탭과 동일 본문(기관 정보·안내사항·신청 일정) */
+  applicationBody?: ReactNode
   onClose: () => void
 }
 
@@ -13,6 +16,7 @@ export function EducationApplicationInfoModal({
   open,
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  applicationBody,
   onClose,
 }: EducationApplicationInfoModalProps) {
   return (
@@ -20,15 +24,17 @@ export function EducationApplicationInfoModal({
       open={open}
       onClose={onClose}
       title="신청 정보"
-      size="md"
+      size="lg"
       className={styles.modal}
       mobilePlacement="full"
     >
       <div className={styles.body}>
-        <EducationApplicationContent
-          selfIntroMotivation={selfIntroMotivation}
-          preferredEducationScheduleLabel={preferredEducationScheduleLabel}
-        />
+        {applicationBody ?? (
+          <EducationApplicationContent
+            selfIntroMotivation={selfIntroMotivation}
+            preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+          />
+        )}
       </div>
     </PFModal>
   )

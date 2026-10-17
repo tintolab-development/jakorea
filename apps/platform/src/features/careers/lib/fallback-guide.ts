@@ -2,7 +2,7 @@ import {
   CAREERS_HERO,
   FEATURED_STORIES,
   THRIVE_VALUES,
-} from '../lib/mock-data'
+} from '../lib/careers-fallback-content'
 import type { CareersGuideView } from '../model/guide-view'
 
 export function createFallbackCareersGuideView(): CareersGuideView {

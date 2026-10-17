@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import type {
   AgreementKey,
@@ -16,25 +16,44 @@ import {
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
   SIGN_UP_UNDER_AGE_TOTAL_STEPS,
-  MOCK_VERIFIED_NAME,
-  MOCK_VERIFIED_PHONE,
 } from '../lib/constants'
+import { signupGenderFromVerifiedIdentity } from '../lib/helpers/verified-identity-gender'
+import { isPortraitConsentDraftReadyForSubmit } from '../lib/map-portrait-consent-filled-document'
+import { signupBirthDateFromVerified } from '../lib/helpers/verified-birth-date'
+import {
+  clearSignupMemberVerifiedIdentity,
+  readSignupMemberVerifiedIdentity,
+  writeSignupMemberVerifiedIdentity,
+} from '../lib/signup-verified-identity-storage'
+import {
+  readSignupWizardFields,
+  writeSignupWizardFields,
+} from '../lib/signup-wizard-field-storage'
+import {
+  signupIdentityVerificationClient,
+  useSignupIdentityVerification,
+  type IdentityChallengeCompleteResult,
+} from '@/features/auth/identity-verification'
 import { toApiSignupPhone } from '../lib/helpers/to-api-phone'
-import { buildConfirmationRows, formatBirthDateInput } from '../lib/utils'
+import {
+  buildConfirmationRows,
+  buildUnderAgeConfirmationRows,
+  formatBirthDateInput,
+} from '../lib/utils'
 import {
   createInitialAgreementState,
   getAgreementDerived,
   getAgreementItems,
   setAgreementState,
   toggleAgreementState,
-  toggleAllAgreementState,
+  toggleAllRequiredAgreementState,
 } from '../lib/agreement/agreement.logic'
 import {
   createInitialGuardianAgreementState,
   getGuardianAgreementDerived,
   guardianAgreementItems,
   setGuardianAgreementState,
-  toggleAllGuardianAgreementState,
+  toggleAllRequiredGuardianAgreementState,
   toggleGuardianAgreementState,
 } from '../lib/agreement/guardian-agreement.logic'
 import { validateEmailDuplicateCheck } from '../lib/email/email.logic'
@@ -46,11 +65,17 @@ import {
   startAdminRegisteredFlowFromSignUp,
 } from '@/features/auth/admin-registered'
 import { getPasswordDerived } from '../lib/password/password.logic'
-import { isProfileStepValid } from '../lib/profile/profile.logic'
+import { isMinorMemberNameValid, isProfileStepValid } from '../lib/profile/profile.logic'
 import { isTeacherProfileValid } from '../lib/profile/teacher-profile.logic'
 import { isGuardianProfileValid } from '../lib/guardian/guardian-profile.logic'
-import { isBirthStepValid, validateBirthStep } from '../lib/identity/identity.logic'
+import {
+  isBirthStepValid,
+  resolveIsUnderAgeSignup,
+  resolveIsUnderAgeSignupFromSearchParams,
+  validateBirthStep,
+} from '../lib/identity/identity.logic'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { resolvePortalSchoolOrganizationId } from '../lib/resolve-portal-school-organization-id'
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import type { SelectedAddress } from '../ui/address-search-modal'
 import type { SelectedSchool } from '../ui/school-search-modal'
@@ -61,6 +86,19 @@ import {
   useSignupTermsQuery,
 } from '../api'
 import {
+  pollGuardianSignupStatus,
+  postGuardianChallenge,
+  postGuardianConsent,
+  postSignupIntent,
+} from '../api/guardian-signup-bridge/client'
+import { resolveGuardianConsentVersion } from '../lib/guardian/resolve-guardian-consent-version'
+import { toSignupIntentGender } from '../lib/guardian/to-signup-intent-gender'
+import {
+  clearGuardianSignupBridgeState,
+  readGuardianSignupBridgeState,
+  writeGuardianSignupBridgeState,
+} from '../lib/guardian-signup-bridge-storage'
+import {
   mapSignUpToGeneralRequest,
   mapSignUpToTeacherRequest,
   toApiBirthDate,
@@ -70,14 +108,36 @@ import {
   hasRequiredVerificationSessions,
   SIGNUP_IDENTITY_REQUIRED_MESSAGE,
 } from '../model/validation'
+import {
+  resolveMinorMemberBirthDateForSignup,
+  resolveSignupMemberBirthDate,
+  validateUnderAgeSignupBeforeSubmit,
+} from '../model/validation/signup-underage-submit'
+import {
+  clearMinorMemberBirthDate,
+  readMinorMemberBirthDate,
+  writeMinorMemberBirthDate,
+} from '../lib/signup-minor-birth-storage'
 import { getSignupApiErrorMessage } from '../lib/helpers'
 import {
   buildSignUpSearch,
+  isFreshSignUpWizardEntry,
   isSignUpWizardLocationState,
+  isUnderAgeSignUpWizardPhase,
   parseSignUpPhase,
   parseSignUpStep,
   type SignUpWizardPhase,
 } from '../lib/wizard-location'
+import {
+  buildPortraitConsentPath,
+  clearPortraitConsentSession,
+  consumePortraitConsentBridge,
+  ensureSignupWizardInstanceId,
+  dismissPortraitConsentRestore,
+  readPortraitConsentDraftForSubmit,
+  savePortraitConsentBridge,
+  type PortraitConsentBridgeSource,
+} from '../lib/portrait-consent-bridge'
 
 export type UseSignUpReturn = ReturnType<typeof useSignUp>
 
@@ -89,37 +149,91 @@ export function useSignUp() {
   const isUnderAgeSignupRef = useRef(false)
   const skipUrlSyncRef = useRef(false)
   const wizardPathname = location.pathname
+  const freshEntryHandledKeyRef = useRef<string | null>(null)
+  const pendingWizardFormResetRef = useRef(false)
+
+  const isFreshSignupEntry = isFreshSignUpWizardEntry(
+    searchParams,
+    location.state,
+    SIGN_UP_UNDER_AGE_TOTAL_STEPS,
+  )
+
+  if (isFreshSignupEntry && freshEntryHandledKeyRef.current !== location.key) {
+    clearPortraitConsentSession()
+    ensureSignupWizardInstanceId()
+    freshEntryHandledKeyRef.current = location.key
+    pendingWizardFormResetRef.current = true
+  }
+
+  const initialWizardBirthDate = readSignupWizardFields()?.birthDate ?? ''
+  const initialUnderAgeSignup = resolveIsUnderAgeSignupFromSearchParams(
+    searchParams,
+    initialWizardBirthDate,
+  )
 
   const [currentStep, setCurrentStep] = useState(() =>
     parseSignUpStep(searchParams, SIGN_UP_UNDER_AGE_TOTAL_STEPS)
   )
-  const [selectedType, setSelectedType] = useState<MemberType | null>(null)
-  const [birthDate, setBirthDate] = useState('')
-  const [gender, setGender] = useState<GenderType | null>(null)
+  const [selectedType, setSelectedType] = useState<MemberType | null>(
+    () => readSignupWizardFields()?.selectedType ?? null
+  )
+  const [birthDate, setBirthDate] = useState(() => readSignupWizardFields()?.birthDate ?? '')
+  const [gender, setGender] = useState<GenderType | null>(
+    () => readSignupWizardFields()?.gender ?? null
+  )
   const [stepTwoMessage, setStepTwoMessage] = useState('')
   const [requiresGuardianConsent, setRequiresGuardianConsent] = useState(
     () => parseSignUpPhase(searchParams) === 'guardian-consent'
   )
-  const [isUnderAgeSignup, setIsUnderAgeSignup] = useState(false)
-  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(
-    () => parseSignUpPhase(searchParams) === 'guardian-identity'
+  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(() => {
+    const phase = parseSignUpPhase(searchParams)
+    return (
+      phase === 'guardian-profile' ||
+      phase === 'guardian-identity' ||
+      phase === 'guardian-final-consent'
+    )
+  })
+  const [isGuardianProfileCompleted, setIsGuardianProfileCompleted] = useState(
+    () => parseSignUpPhase(searchParams) === 'guardian-identity',
   )
   const [isGuardianIdentityVerified, setIsGuardianIdentityVerified] = useState(false)
+  const [isGuardianFinalConsentCompleted, setIsGuardianFinalConsentCompleted] = useState(false)
+  const [signupIntentId, setSignupIntentId] = useState<string | null>(
+    () => readGuardianSignupBridgeState()?.signupIntentId ?? null,
+  )
+  const [guardianProfileSubmitting, setGuardianProfileSubmitting] = useState(false)
+  const [guardianProfileSubmitError, setGuardianProfileSubmitError] = useState('')
+  const [guardianFinalConsentSubmitting, setGuardianFinalConsentSubmitting] = useState(false)
+  const [guardianFinalConsentSubmitError, setGuardianFinalConsentSubmitError] = useState('')
+  const [guardianIdentityErrorMessage, setGuardianIdentityErrorMessage] = useState('')
+  const [guardianVerifiedName, setGuardianVerifiedName] = useState('')
+  const [guardianVerifiedPhone, setGuardianVerifiedPhone] = useState('')
   const [guardianAgreements, setGuardianAgreements] = useState<GuardianAgreementState>(
     createInitialGuardianAgreementState
   )
   const [guardianRelationship, setGuardianRelationship] = useState('')
-  const [isIdentityVerified, setIsIdentityVerified] = useState(
-    () => parseSignUpPhase(searchParams) === 'agreement'
-  )
+  const initialMemberVerifiedIdentity = initialUnderAgeSignup
+    ? null
+    : readSignupMemberVerifiedIdentity()
+  const [isIdentityVerified, setIsIdentityVerified] = useState(() => {
+    if (initialUnderAgeSignup) return false
+    return (
+      parseSignUpPhase(searchParams) === 'agreement' || initialMemberVerifiedIdentity != null
+    )
+  })
   const [identityVerificationSessionId, setIdentityVerificationSessionId] = useState<number | null>(
-    null
+    () => initialMemberVerifiedIdentity?.sessionId ?? null
   )
   const [guardianVerificationSessionId, setGuardianVerificationSessionId] = useState<number | null>(
-    null
+    () => readGuardianSignupBridgeState()?.guardianSessionId ?? null,
   )
-  const [verifiedName, setVerifiedName] = useState(MOCK_VERIFIED_NAME)
-  const [verifiedPhone, setVerifiedPhone] = useState(MOCK_VERIFIED_PHONE)
+  const [verifiedName, setVerifiedName] = useState(
+    () => initialMemberVerifiedIdentity?.verifiedName ?? ''
+  )
+  const [verifiedPhone, setVerifiedPhone] = useState(
+    () => initialMemberVerifiedIdentity?.verifiedPhone ?? ''
+  )
+  const [memberProfileName, setMemberProfileName] = useState('')
   const [agreements, setAgreements] = useState<AgreementState>(createInitialAgreementState)
   const [email, setEmail] = useState('')
   const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'success' | 'error'>('idle')
@@ -148,9 +262,20 @@ export function useSignUp() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
 
+  const wizardPhase = parseSignUpPhase(searchParams)
+  const isUnderAgeSignup = resolveIsUnderAgeSignup(wizardPhase, birthDate)
+
   isUnderAgeSignupRef.current = isUnderAgeSignup
 
   const totalSteps = isUnderAgeSignup ? SIGN_UP_UNDER_AGE_TOTAL_STEPS : SIGN_UP_TOTAL_STEPS
+
+  const signupMemberBirthDate = resolveSignupMemberBirthDate({
+    isUnderAgeSignup,
+    birthDate,
+  })
+
+  const signupMemberName = isUnderAgeSignup ? memberProfileName : verifiedName
+  const signupMemberPhone = isUnderAgeSignup ? '' : verifiedPhone
 
   const pushWizard = (step: number, phase?: SignUpWizardPhase | null) => {
     skipUrlSyncRef.current = true
@@ -181,9 +306,15 @@ export function useSignUp() {
       if (isUnderAgeSignupRef.current) {
         if (phase === 'guardian-identity') {
           setIsGuardianAgreementCompleted(true)
+          setIsGuardianProfileCompleted(true)
+          setIsGuardianIdentityVerified(false)
+        } else if (phase === 'guardian-profile') {
+          setIsGuardianAgreementCompleted(true)
+          setIsGuardianProfileCompleted(false)
           setIsGuardianIdentityVerified(false)
         } else {
           setIsGuardianAgreementCompleted(false)
+          setIsGuardianProfileCompleted(false)
           setIsGuardianIdentityVerified(false)
         }
       } else if (phase === 'agreement') {
@@ -196,7 +327,11 @@ export function useSignUp() {
     if (step >= 4) {
       if (isUnderAgeSignupRef.current) {
         setIsGuardianAgreementCompleted(true)
+        setIsGuardianProfileCompleted(true)
         setIsGuardianIdentityVerified(true)
+        if (phase === 'guardian-final-consent') {
+          setIsGuardianFinalConsentCompleted(false)
+        }
       } else {
         setIsIdentityVerified(true)
       }
@@ -208,6 +343,171 @@ export function useSignUp() {
       setSearchParams(buildSignUpSearch(1), { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!pendingWizardFormResetRef.current) return
+    pendingWizardFormResetRef.current = false
+    dismissPortraitConsentRestore()
+
+    setCurrentStep(1)
+    setSelectedType(null)
+    setBirthDate('')
+    setGender(null)
+    setStepTwoMessage('')
+    setRequiresGuardianConsent(false)
+    setIsGuardianAgreementCompleted(false)
+    setIsGuardianProfileCompleted(false)
+    setIsGuardianIdentityVerified(false)
+    setIsGuardianFinalConsentCompleted(false)
+    setSignupIntentId(null)
+    setGuardianProfileSubmitError('')
+    setGuardianFinalConsentSubmitError('')
+    setGuardianIdentityErrorMessage('')
+    clearGuardianSignupBridgeState()
+    setGuardianVerifiedName('')
+    setGuardianVerifiedPhone('')
+    setMemberProfileName('')
+    setGuardianAgreements(createInitialGuardianAgreementState())
+    setGuardianRelationship('')
+    setIsIdentityVerified(false)
+    setIdentityVerificationSessionId(null)
+    setGuardianVerificationSessionId(null)
+    setVerifiedName('')
+    setVerifiedPhone('')
+    setAgreements(createInitialAgreementState())
+    setEmail('')
+    setEmailCheckStatus('idle')
+    setEmailMessage('')
+    setIsEmailChecking(false)
+    setPassword('')
+    setPasswordConfirm('')
+    setSchoolStatus('none')
+    setSchoolName('')
+    setSchoolAddress('')
+    setSchoolNeisCode(null)
+    setSchoolEducationOfficeCode(null)
+    setSchoolSource(null)
+    setSchoolOrganizationId(null)
+    setGrade('')
+    setAffiliationName('')
+    setEmploymentStatus('employed')
+    setAddress('')
+    setAddressDetail('')
+    setPostalCode('')
+    setRegionSido('')
+    setRegionSigungu('')
+    setVolunteerId('')
+    setIsAddressModalOpen(false)
+    setIsSchoolSearchModalOpen(false)
+    setIsSubmitting(false)
+    setSubmitMessage('')
+  }, [location.key])
+
+  useEffect(() => {
+    if (!isUnderAgeSignup) return
+    if (!isIdentityVerified && identityVerificationSessionId == null) return
+    setIsIdentityVerified(false)
+    setIdentityVerificationSessionId(null)
+    setVerifiedName('')
+    setVerifiedPhone('')
+    clearSignupMemberVerifiedIdentity()
+  }, [identityVerificationSessionId, isIdentityVerified, isUnderAgeSignup])
+
+  useEffect(() => {
+    const minorBirth = isUnderAgeSignup
+      ? resolveMinorMemberBirthDateForSignup(birthDate)
+      : null
+    const birthForStorage = minorBirth ?? birthDate
+    writeSignupWizardFields({
+      birthDate: birthForStorage,
+      gender,
+      selectedType,
+      ...(minorBirth ? { minorMemberBirthDate: minorBirth, under14Flow: true } : {}),
+    })
+  }, [birthDate, gender, selectedType, isUnderAgeSignup])
+
+  useEffect(() => {
+    if (!isUnderAgeSignup) return
+    const minorBirth = resolveMinorMemberBirthDateForSignup(birthDate)
+    if (!minorBirth) return
+    if (!readMinorMemberBirthDate()) {
+      writeMinorMemberBirthDate(minorBirth)
+    }
+    if (birthDate.trim() !== minorBirth.trim()) {
+      setBirthDate(minorBirth)
+    }
+  }, [birthDate, isUnderAgeSignup])
+
+  useEffect(() => {
+    if (isUnderAgeSignup) {
+      writeSignupWizardFields({ under14Flow: true })
+    }
+  }, [isUnderAgeSignup])
+
+  useEffect(() => {
+    const bridge = consumePortraitConsentBridge()
+    if (bridge == null) return
+
+    if (bridge.agreements != null) {
+      setAgreements({
+        ...bridge.agreements,
+        portrait: bridge.portraitCompleted === true ? true : bridge.agreements.portrait,
+      })
+    }
+    if (bridge.guardianAgreements != null) {
+      setGuardianAgreements({
+        ...bridge.guardianAgreements,
+        portrait: bridge.portraitCompleted === true ? true : bridge.guardianAgreements.portrait,
+      })
+    }
+
+    const snapshot = readSignupMemberVerifiedIdentity()
+    const bridgePhase = parseSignUpPhase(new URLSearchParams(bridge.returnSearch.replace(/^\?/, '')))
+    const restoreMemberIdentity =
+      bridge.source !== 'guardian' && !isUnderAgeSignUpWizardPhase(bridgePhase)
+
+    if (bridge.source === 'guardian') {
+      if (bridge.verifiedName?.trim()) {
+        setGuardianVerifiedName(bridge.verifiedName.trim())
+      }
+    } else if (bridge.verifiedName?.trim()) {
+      setVerifiedName(bridge.verifiedName.trim())
+    } else if (restoreMemberIdentity && snapshot?.verifiedName) {
+      setVerifiedName(snapshot.verifiedName)
+    }
+
+    if (restoreMemberIdentity && snapshot?.verifiedPhone) {
+      setVerifiedPhone(snapshot.verifiedPhone)
+    }
+    if (restoreMemberIdentity && snapshot?.sessionId) {
+      setIdentityVerificationSessionId(snapshot.sessionId)
+      setIsIdentityVerified(true)
+    }
+    if (restoreMemberIdentity && snapshot?.verifiedGender) {
+      const fromVerification = signupGenderFromVerifiedIdentity(snapshot.verifiedGender)
+      if (fromVerification) {
+        setGender(fromVerification)
+      }
+    }
+
+    const wizardFields = readSignupWizardFields()
+    const minorBirth =
+      readMinorMemberBirthDate()?.trim() ||
+      wizardFields?.minorMemberBirthDate?.trim() ||
+      null
+    if (minorBirth) {
+      writeMinorMemberBirthDate(minorBirth)
+      setBirthDate(minorBirth)
+    } else if (wizardFields?.birthDate.trim()) {
+      setBirthDate(wizardFields.birthDate)
+    }
+    if (wizardFields?.gender) {
+      setGender(wizardFields.gender)
+    }
+    if (wizardFields?.selectedType) {
+      setSelectedType(wizardFields.selectedType)
+    }
+  }, [])
 
   useEffect(() => {
     if (skipUrlSyncRef.current) {
@@ -222,7 +522,7 @@ export function useSignUp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync intentionally driven by searchParams
   }, [searchParams])
 
-  const birthDateIso = toApiBirthDate(birthDate) ?? null
+  const birthDateIso = toApiBirthDate(signupMemberBirthDate) ?? null
   const apiMemberType = selectedType ? toApiMemberType(selectedType) : null
 
   const termsQuery = useSignupTermsQuery({
@@ -239,8 +539,13 @@ export function useSignUp() {
   const isStepSixValid =
     selectedType === 'teacher'
       ? isTeacherProfileValid(schoolName, employmentStatus)
-      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade)
-  const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
+      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade) &&
+        (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
+  const isGuardianProfileValidState = isGuardianProfileValid({
+    name: guardianVerifiedName,
+    phone: guardianVerifiedPhone,
+    relationship: guardianRelationship,
+  })
 
   const handleSignIn = () => {
     navigate(SIGN_IN_PATH)
@@ -256,7 +561,6 @@ export function useSignUp() {
     const result = validateBirthStep(birthDate)
 
     if (result.status === 'invalid-format') {
-      setIsUnderAgeSignup(false)
       setRequiresGuardianConsent(false)
       setStepTwoMessage(result.message)
       return
@@ -269,15 +573,23 @@ export function useSignUp() {
       }
 
       setStepTwoMessage('')
-      setIsUnderAgeSignup(true)
       setRequiresGuardianConsent(true)
+      setSchoolStatus('enrolled')
+      signupIdentityVerificationClient.state.clearPendingChallenge()
+      writeMinorMemberBirthDate(birthDate)
+      writeSignupWizardFields({
+        under14Flow: true,
+        minorMemberBirthDate: birthDate,
+        birthDate,
+      })
       pushWizard(2, 'guardian-consent')
       return
     }
 
     setStepTwoMessage('')
-    setIsUnderAgeSignup(false)
     setRequiresGuardianConsent(false)
+    clearMinorMemberBirthDate()
+    writeSignupWizardFields({ under14Flow: false })
     pushWizard(3, 'identity')
   }
 
@@ -285,7 +597,6 @@ export function useSignUp() {
     setSelectedType('general')
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
-    setIsUnderAgeSignup(false)
   }
 
   const applyPreviousStepProgrammatically = () => {
@@ -299,6 +610,15 @@ export function useSignUp() {
       if (isGuardianIdentityVerified) {
         setIsGuardianIdentityVerified(false)
         replaceWizard(3, 'guardian-identity')
+        return
+      }
+
+      if (isGuardianProfileCompleted) {
+        setIsGuardianProfileCompleted(false)
+        setGuardianVerificationSessionId(null)
+        setSignupIntentId(null)
+        clearGuardianSignupBridgeState()
+        replaceWizard(3, 'guardian-profile')
         return
       }
 
@@ -355,7 +675,36 @@ export function useSignUp() {
     pushWizard(step)
   }
 
+  const openPortraitConsentForm = (
+    source: PortraitConsentBridgeSource,
+    nextAgreements: AgreementState,
+    nextGuardianAgreements: GuardianAgreementState
+  ) => {
+    const returnSearch =
+      source === 'guardian'
+        ? `?${buildSignUpSearch(3, 'guardian-agreement')}`
+        : `?${buildSignUpSearch(3, 'agreement')}`
+
+    savePortraitConsentBridge({
+      source,
+      returnSearch,
+      agreements: nextAgreements,
+      guardianAgreements: nextGuardianAgreements,
+      verifiedName: isUnderAgeSignup ? memberProfileName : verifiedName,
+      portraitCompleted: false,
+    })
+    navigate(buildPortraitConsentPath(returnSearch))
+  }
+
   const toggleAgreement = (key: AgreementKey) => {
+    if (key === 'portrait') {
+      if (agreements.portrait) {
+        setAgreements(prev => setAgreementState(prev, 'portrait', false))
+        return
+      }
+      openPortraitConsentForm('adult', agreements, guardianAgreements)
+      return
+    }
     setAgreements(prev => toggleAgreementState(prev, key))
   }
 
@@ -363,11 +712,23 @@ export function useSignUp() {
     setAgreements(prev => setAgreementState(prev, key, agreed))
   }
 
+  const openPortraitConsentView = (source: PortraitConsentBridgeSource) => {
+    openPortraitConsentForm(source, agreements, guardianAgreements)
+  }
+
   const toggleAllAgreements = () => {
-    setAgreements(prev => toggleAllAgreementState(prev, visibleAgreementItems))
+    setAgreements(prev => toggleAllRequiredAgreementState(prev, visibleAgreementItems))
   }
 
   const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
+    if (key === 'portrait') {
+      if (guardianAgreements.portrait) {
+        setGuardianAgreements(prev => setGuardianAgreementState(prev, 'portrait', false))
+        return
+      }
+      openPortraitConsentForm('guardian', agreements, guardianAgreements)
+      return
+    }
     setGuardianAgreements(prev => toggleGuardianAgreementState(prev, key))
   }
 
@@ -376,47 +737,269 @@ export function useSignUp() {
   }
 
   const toggleAllGuardianAgreements = () => {
-    setGuardianAgreements(prev => toggleAllGuardianAgreementState(prev))
+    setGuardianAgreements(prev => toggleAllRequiredGuardianAgreementState(prev))
   }
 
   const handleGuardianAgreementContinue = () => {
     if (guardianAgreementDerived.isRequiredAgreed) {
+      dismissPortraitConsentRestore()
       setIsGuardianAgreementCompleted(true)
+      pushWizard(3, 'guardian-profile')
+    }
+  }
+
+  const applyVerifiedIdentityFields = (result: {
+    verifiedName?: string
+    verifiedPhone?: string
+    verifiedBirthDate?: string
+    verifiedGender?: string
+    syncGender?: boolean
+  }) => {
+    const skipMemberDemographics =
+      isUnderAgeSignupRef.current || readMinorMemberBirthDate() != null
+
+    if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
+    if (result.verifiedPhone?.trim()) {
+      setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
+    }
+    if (!skipMemberDemographics) {
+      const fromVerifiedBirth = signupBirthDateFromVerified(result.verifiedBirthDate)
+      if (fromVerifiedBirth) {
+        setBirthDate(fromVerifiedBirth)
+      }
+      if (result.syncGender) {
+        const fromVerification = signupGenderFromVerifiedIdentity(result.verifiedGender)
+        if (fromVerification) setGender(fromVerification)
+      }
+    }
+  }
+
+  const persistMemberVerifiedIdentity = (result: IdentityChallengeCompleteResult) => {
+    const verifiedNameValue = result.verifiedName?.trim() ?? ''
+    const verifiedPhoneValue =
+      toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone?.trim() ?? ''
+    if (!result.sessionId || !verifiedNameValue || !verifiedPhoneValue) {
+      return
+    }
+    writeSignupMemberVerifiedIdentity({
+      sessionId: result.sessionId,
+      verifiedName: verifiedNameValue,
+      verifiedPhone: verifiedPhoneValue,
+      verifiedGender: result.verifiedGender,
+    })
+  }
+
+  const handleIdentitySuccess = useCallback(
+    (result: IdentityChallengeCompleteResult) => {
+      if (isUnderAgeSignupRef.current || readMinorMemberBirthDate() != null) {
+        return
+      }
+      setIdentityVerificationSessionId(result.sessionId)
+      applyVerifiedIdentityFields({ ...result, syncGender: true })
+      persistMemberVerifiedIdentity(result)
+      setIsIdentityVerified(true)
+      pushWizard(3, 'agreement')
+    },
+    // pushWizard is stable enough for signup wizard navigation
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- wizard navigation closure
+    []
+  )
+
+  const {
+    verify: verifyMemberIdentity,
+    isVerifying: isMemberIdentityVerifying,
+    errorMessage: memberIdentityErrorMessage,
+  } = useSignupIdentityVerification({
+    birthDate,
+    gender,
+    onSuccess: handleIdentitySuccess,
+  })
+
+  const handleGuardianIdentitySuccess = async (_result: { identitySessionId: number }) => {
+    setGuardianIdentityErrorMessage('')
+    const bridge = readGuardianSignupBridgeState()
+    if (!bridge) {
+      setGuardianIdentityErrorMessage('보호자 인증 정보가 없습니다. 이전 단계부터 다시 진행해 주세요.')
+      return
+    }
+
+    try {
+      const status = await pollGuardianSignupStatus({
+        guardianSessionId: bridge.guardianSessionId,
+        statusToken: bridge.guardianStatusToken,
+      })
+
+      if (status?.identityVerified !== true) {
+        setGuardianIdentityErrorMessage('본인인증이 완료되지 않았습니다. 다시 시도해 주세요.')
+        return
+      }
+
+      setIsGuardianIdentityVerified(true)
+      const minorBirth = readMinorMemberBirthDate()
+      if (minorBirth) {
+        setBirthDate(minorBirth)
+      }
+
+      const normalizedStatus = status.status?.trim().toUpperCase()
+      if (normalizedStatus === 'CONSENTED') {
+        setIsGuardianFinalConsentCompleted(true)
+        pushWizard(5)
+        return
+      }
+
+      pushWizard(4, 'guardian-final-consent')
+    } catch (error) {
+      setGuardianIdentityErrorMessage(
+        getSignupApiErrorMessage(error, '보호자 인증 상태를 확인하지 못했습니다. 다시 시도해 주세요.'),
+      )
+    }
+  }
+
+  const handleGuardianProfileSubmit = async () => {
+    if (!isGuardianProfileValidState || guardianProfileSubmitting) return
+
+    if (!remoteApi) {
+      setGuardianProfileSubmitError('보호자 인증 API 연동 후 진행할 수 있습니다.')
+      return
+    }
+
+    setGuardianProfileSubmitError('')
+    setGuardianProfileSubmitting(true)
+
+    try {
+      const apiBirth = toApiBirthDate(signupMemberBirthDate)
+      const intentGender = toSignupIntentGender(gender)
+      if (!apiBirth || !intentGender) {
+        setGuardianProfileSubmitError('가입자 생년월일과 성별을 step 2에서 다시 확인해 주세요.')
+        return
+      }
+
+      const termsVersion = resolveGuardianConsentVersion(termsQuery.data ?? null)
+      if (!termsVersion) {
+        setGuardianProfileSubmitError('약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+
+      const guardianName = guardianVerifiedName.trim()
+      const guardianPhone =
+        toApiSignupPhone(guardianVerifiedPhone) ??
+        guardianVerifiedPhone.replace(/\D/g, '')
+      const guardianRelation = guardianRelationship.trim()
+
+      const intent = await postSignupIntent({
+        memberType: 'GENERAL',
+        birthDate: apiBirth,
+        gender: intentGender,
+      })
+      const intentId = intent.intentId?.trim()
+      if (!intentId) {
+        setGuardianProfileSubmitError('가입 준비 정보를 발급하지 못했습니다.')
+        return
+      }
+
+      const challenge = await postGuardianChallenge({
+        provider: 'NICE',
+        guardianName,
+        guardianPhone,
+        guardianRelation,
+        signupIntentId: intentId,
+      })
+
+      const guardianSessionId = challenge.sessionId
+      const statusToken = challenge.statusToken?.trim()
+      if (guardianSessionId == null || !statusToken) {
+        setGuardianProfileSubmitError('보호자 인증 세션을 생성하지 못했습니다.')
+        return
+      }
+
+      writeGuardianSignupBridgeState({
+        signupIntentId: intentId,
+        intentExpiresAt: intent.expiresAt,
+        guardianSessionId,
+        guardianStatusToken: statusToken,
+        guardianExpiresAt: challenge.expiresAt,
+        guardianConsentVersion: termsVersion,
+        guardianRelation,
+      })
+
+      setSignupIntentId(intentId)
+      setGuardianVerificationSessionId(guardianSessionId)
+
+      await postGuardianConsent({
+        guardianSessionId,
+        statusToken,
+        body: {
+          agreed: true,
+          termsVersion,
+          guardianRelation,
+        },
+        idempotencyKey: `guardian-first-${intentId}`,
+      })
+
+      setIsGuardianProfileCompleted(true)
       pushWizard(3, 'guardian-identity')
+    } catch (error) {
+      setGuardianProfileSubmitError(
+        getSignupApiErrorMessage(error, '보호자 정보 확인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+      )
+    } finally {
+      setGuardianProfileSubmitting(false)
     }
   }
 
-  const handleIdentitySuccess = (result: {
-    sessionId: number
-    verifiedName?: string
-    verifiedPhone?: string
-  }) => {
-    setIdentityVerificationSessionId(result.sessionId)
-    if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
-    if (result.verifiedPhone?.trim()) {
-      setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
+  const handleGuardianFinalConsentSubmit = async () => {
+    if (guardianFinalConsentSubmitting) return
+    if (!isGuardianIdentityVerified) {
+      setGuardianFinalConsentSubmitError('보호자 본인인증을 먼저 완료해 주세요.')
+      replaceWizard(3, 'guardian-identity')
+      return
     }
-    setIsIdentityVerified(true)
-    pushWizard(3, 'agreement')
-  }
 
-  const handleGuardianIdentitySuccess = (result: {
-    sessionId: number
-    verifiedName?: string
-    verifiedPhone?: string
-  }) => {
-    setGuardianVerificationSessionId(result.sessionId)
-    if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
-    if (result.verifiedPhone?.trim()) {
-      setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
+    const bridge = readGuardianSignupBridgeState()
+    if (!bridge) {
+      setGuardianFinalConsentSubmitError('보호자 인증 정보가 없습니다. 처음부터 다시 진행해 주세요.')
+      return
     }
-    setIsGuardianIdentityVerified(true)
-    pushWizard(4)
-  }
 
-  const handleGuardianProfileContinue = () => {
-    if (isGuardianProfileValidState) {
+    const termsVersion =
+      bridge.guardianConsentVersion ??
+      resolveGuardianConsentVersion(termsQuery.data ?? null)
+    const guardianRelation =
+      bridge.guardianRelation?.trim() || guardianRelationship.trim()
+
+    if (!termsVersion || !guardianRelation) {
+      setGuardianFinalConsentSubmitError('동의 약관 정보를 확인할 수 없습니다.')
+      return
+    }
+
+    setGuardianFinalConsentSubmitError('')
+    setGuardianFinalConsentSubmitting(true)
+
+    try {
+      const response = await postGuardianConsent({
+        guardianSessionId: bridge.guardianSessionId,
+        statusToken: bridge.guardianStatusToken,
+        body: {
+          agreed: true,
+          termsVersion,
+          guardianRelation,
+        },
+        idempotencyKey: `guardian-final-${bridge.signupIntentId}`,
+      })
+
+      if (response.status?.trim().toUpperCase() !== 'CONSENTED') {
+        setGuardianFinalConsentSubmitError('보호자 동의가 완료되지 않았습니다. 다시 시도해 주세요.')
+        return
+      }
+
+      setIsGuardianFinalConsentCompleted(true)
       pushWizard(5)
+    } catch (error) {
+      setGuardianFinalConsentSubmitError(
+        getSignupApiErrorMessage(error, '보호자 동의 확인에 실패했습니다. 다시 시도해 주세요.'),
+      )
+    } finally {
+      setGuardianFinalConsentSubmitting(false)
     }
   }
 
@@ -484,6 +1067,7 @@ export function useSignUp() {
 
   const handleAgreementContinue = () => {
     if (agreementDerived.isRequiredAgreed) {
+      dismissPortraitConsentRestore()
       pushWizard(4)
     }
   }
@@ -524,6 +1108,17 @@ export function useSignUp() {
     setSchoolEducationOfficeCode(school.educationOfficeCode?.trim() || null)
     setSchoolSource(school.source ?? (school.neisCode ? 'neis' : null))
     setSchoolOrganizationId(school.organizationId ?? null)
+
+    if (remoteApi && school.organizationId == null && school.name.trim()) {
+      void resolvePortalSchoolOrganizationId({
+        schoolName: school.name,
+        address: school.address,
+      }).then(organizationId => {
+        if (organizationId != null) {
+          setSchoolOrganizationId(organizationId)
+        }
+      })
+    }
   }
 
   const handleAddressSelect = (selection: SelectedAddress) => {
@@ -543,18 +1138,27 @@ export function useSignUp() {
 
   const handleBirthDateChange = (value: string) => {
     setBirthDate(formatBirthDateInput(value))
+    clearMinorMemberBirthDate()
+    writeSignupWizardFields({ under14Flow: false })
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
-    setIsUnderAgeSignup(false)
     setIsGuardianAgreementCompleted(false)
+    setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
+    setIsGuardianFinalConsentCompleted(false)
+    setSignupIntentId(null)
+    clearGuardianSignupBridgeState()
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
+    setGuardianVerifiedName('')
+    setGuardianVerifiedPhone('')
+    setMemberProfileName('')
     setIsIdentityVerified(false)
     setIdentityVerificationSessionId(null)
     setGuardianVerificationSessionId(null)
-    setVerifiedName(MOCK_VERIFIED_NAME)
-    setVerifiedPhone(MOCK_VERIFIED_PHONE)
+    setVerifiedName('')
+    setVerifiedPhone('')
+    clearSignupMemberVerifiedIdentity()
     if (parseSignUpPhase(searchParams)) {
       replaceWizard(2)
     }
@@ -563,12 +1167,19 @@ export function useSignUp() {
   const handleStartGuardianConsent = () => {
     setRequiresGuardianConsent(false)
     setIsGuardianAgreementCompleted(false)
+    setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
+    setIsGuardianFinalConsentCompleted(false)
+    setSignupIntentId(null)
+    clearGuardianSignupBridgeState()
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
     setGuardianVerificationSessionId(null)
-    setVerifiedName(MOCK_VERIFIED_NAME)
-    setVerifiedPhone(MOCK_VERIFIED_PHONE)
+    setGuardianVerifiedName('')
+    setGuardianVerifiedPhone('')
+    setVerifiedName('')
+    setVerifiedPhone('')
+    clearSignupMemberVerifiedIdentity()
     pushWizard(3, 'guardian-agreement')
   }
 
@@ -576,7 +1187,11 @@ export function useSignUp() {
     setSubmitMessage('')
 
     if (!remoteApi) {
-      navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
+      clearPortraitConsentSession()
+      navigate(SIGN_UP_COMPLETE_PATH, {
+        replace: true,
+        state: selectedType ? { memberType: selectedType } : undefined,
+      })
       return
     }
 
@@ -590,6 +1205,8 @@ export function useSignUp() {
         isUnderAgeSignup,
         identityVerificationSessionId,
         guardianVerificationSessionId,
+        signupIntentId,
+        guardianBridgeFinalConsentCompleted: isGuardianFinalConsentCompleted,
       })
     ) {
       setSubmitMessage(SIGNUP_IDENTITY_REQUIRED_MESSAGE)
@@ -601,19 +1218,60 @@ export function useSignUp() {
       return
     }
 
+    const portraitAgreed = isUnderAgeSignup
+      ? guardianAgreements.portrait
+      : agreements.portrait
+    const portraitConsentDraft = portraitAgreed ? readPortraitConsentDraftForSubmit() : null
+    if (portraitAgreed) {
+      if (portraitConsentDraft == null || !isPortraitConsentDraftReadyForSubmit(portraitConsentDraft)) {
+        setSubmitMessage('초상권 동의서 작성을 완료해 주세요.')
+        return
+      }
+    }
+
+    if (isUnderAgeSignup) {
+      const underAgeValidation = validateUnderAgeSignupBeforeSubmit({
+        birthDate: signupMemberBirthDate,
+        guardianAgreements,
+        agreements,
+        termsCatalog: termsQuery.data ?? null,
+      })
+      if (underAgeValidation) {
+        setSubmitMessage(underAgeValidation)
+        return
+      }
+    }
+
+    let teacherSchoolOrganizationId = schoolOrganizationId
+    if (
+      selectedType === 'teacher' &&
+      remoteApi &&
+      teacherSchoolOrganizationId == null &&
+      schoolName.trim()
+    ) {
+      teacherSchoolOrganizationId = await resolvePortalSchoolOrganizationId({
+        schoolName,
+        address: schoolAddress,
+      })
+      if (teacherSchoolOrganizationId != null) {
+        setSchoolOrganizationId(teacherSchoolOrganizationId)
+      }
+    }
+
     const mapInput = {
       selectedType,
       email,
       password,
-      birthDate,
+      birthDate: signupMemberBirthDate,
       gender,
       isUnderAgeSignup,
       isIdentityVerified,
       identityVerificationSessionId,
       guardianVerificationSessionId,
+      signupIntentId,
       schoolStatus,
       schoolName,
-      schoolOrganizationId,
+      schoolOrganizationId: teacherSchoolOrganizationId,
       schoolNeisCode,
       schoolEducationOfficeCode,
       schoolAddress,
@@ -627,11 +1285,12 @@ export function useSignUp() {
       regionSido,
       regionSigungu,
       volunteerId,
-      name: verifiedName,
-      phone: verifiedPhone,
+      name: signupMemberName,
+      phone: signupMemberPhone,
       agreements,
       guardianAgreements,
       termsCatalog: termsQuery.data ?? null,
+      portraitConsentDraft,
     }
 
     setIsSubmitting(true)
@@ -648,7 +1307,11 @@ export function useSignUp() {
         await postGeneralSignup(mapSignUpToGeneralRequest(mapInput))
       }
 
-      navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
+      clearPortraitConsentSession()
+      navigate(SIGN_UP_COMPLETE_PATH, {
+        replace: true,
+        state: { memberType: selectedType },
+      })
     } catch (error) {
       setSubmitMessage(
         getSignupApiErrorMessage(
@@ -661,22 +1324,39 @@ export function useSignUp() {
     }
   }
 
-  const confirmationRows = buildConfirmationRows({
-    selectedType,
-    birthDate,
-    gender,
-    schoolStatus,
-    address,
-    addressDetail,
-    email,
-    volunteerId,
-    name: verifiedName,
-    phone: verifiedPhone,
-    schoolName,
-    schoolAddress,
-    affiliationName,
-    employmentStatus,
-  })
+  const confirmationRows = isUnderAgeSignup
+    ? buildUnderAgeConfirmationRows({
+        birthDate: signupMemberBirthDate,
+        gender,
+        schoolStatus,
+        address,
+        addressDetail,
+        email,
+        volunteerId,
+        memberName: signupMemberName,
+        schoolName,
+        grade,
+        affiliationName,
+        guardianName: guardianVerifiedName,
+        guardianPhone: guardianVerifiedPhone,
+        guardianRelationship,
+      })
+    : buildConfirmationRows({
+        selectedType,
+        birthDate,
+        gender,
+        schoolStatus,
+        address,
+        addressDetail,
+        email,
+        volunteerId,
+        name: signupMemberName,
+        phone: signupMemberPhone,
+        schoolName,
+        schoolAddress,
+        affiliationName,
+        employmentStatus,
+      })
 
   return {
     step: {
@@ -706,6 +1386,8 @@ export function useSignUp() {
     guardian: {
       isUnderAgeSignup,
       isAgreementCompleted: isGuardianAgreementCompleted,
+      isProfileCompleted: isGuardianProfileCompleted,
+      isFinalConsentCompleted: isGuardianFinalConsentCompleted,
       agreement: {
         items: guardianAgreementItems,
         state: guardianAgreements,
@@ -714,20 +1396,31 @@ export function useSignUp() {
         toggle: toggleGuardianAgreement,
         set: setGuardianAgreement,
         toggleAll: toggleAllGuardianAgreements,
+        openPortraitConsent: () => openPortraitConsentView('guardian'),
         continue: handleGuardianAgreementContinue,
       },
       identity: {
         isVerified: isGuardianIdentityVerified,
         sessionId: guardianVerificationSessionId,
         complete: handleGuardianIdentitySuccess,
+        errorMessage: guardianIdentityErrorMessage,
       },
       profile: {
-        name: verifiedName,
-        phone: verifiedPhone,
+        name: guardianVerifiedName,
+        setName: setGuardianVerifiedName,
+        phone: guardianVerifiedPhone,
+        setPhone: setGuardianVerifiedPhone,
         relationship: guardianRelationship,
         setRelationship: setGuardianRelationship,
         isValid: isGuardianProfileValidState,
-        continue: handleGuardianProfileContinue,
+        isSubmitting: guardianProfileSubmitting,
+        submitError: guardianProfileSubmitError,
+        submit: handleGuardianProfileSubmit,
+      },
+      finalConsent: {
+        isSubmitting: guardianFinalConsentSubmitting,
+        submitError: guardianFinalConsentSubmitError,
+        submit: handleGuardianFinalConsentSubmit,
       },
     },
     identity: {
@@ -736,6 +1429,9 @@ export function useSignUp() {
       verifiedPhone,
       sessionId: identityVerificationSessionId,
       complete: handleIdentitySuccess,
+      verify: verifyMemberIdentity,
+      isVerifying: isMemberIdentityVerifying,
+      errorMessage: memberIdentityErrorMessage,
       tryAdminRegisteredRedirect: () => {
         if (isMockAdminRegisteredIdentityMatch(birthDate)) {
           if (!gender) {
@@ -749,10 +1445,12 @@ export function useSignUp() {
         return false
       },
       resetVerified: () => {
+        if (isUnderAgeSignup) return
         setIsIdentityVerified(false)
         setIdentityVerificationSessionId(null)
-        setVerifiedName(MOCK_VERIFIED_NAME)
-        setVerifiedPhone(MOCK_VERIFIED_PHONE)
+        setVerifiedName('')
+        setVerifiedPhone('')
+        clearSignupMemberVerifiedIdentity()
         replaceWizard(3, 'identity')
       },
     },
@@ -764,6 +1462,7 @@ export function useSignUp() {
       toggle: toggleAgreement,
       set: setAgreement,
       toggleAll: toggleAllAgreements,
+      openPortraitConsent: () => openPortraitConsentView('adult'),
       continue: handleAgreementContinue,
       termsLoading: termsQuery.isFetching,
       termsError: termsQuery.isError,
@@ -794,7 +1493,7 @@ export function useSignUp() {
       schoolName,
       setSchoolName: handleSchoolNameChange,
       schoolOrganizationId,
-      /** remote API일 때 학교는 검색 선택만 허용 */
+      /** remote API일 때 학교는 검색 모달로 선택 */
       requiresSchoolSearch: remoteApi,
       selectSchool: handleSchoolSelect,
       grade,
@@ -819,6 +1518,8 @@ export function useSignUp() {
       isSchoolSearchModalOpen,
       openSchoolSearchModal: () => setIsSchoolSearchModalOpen(true),
       closeSchoolSearchModal: () => setIsSchoolSearchModalOpen(false),
+      memberName: memberProfileName,
+      setMemberName: setMemberProfileName,
       isValid: isStepSixValid,
       continue: handleProfileContinue,
     },

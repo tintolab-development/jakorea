@@ -54,7 +54,9 @@ export function StepHeader({ title, description }: StepHeaderProps) {
           className={authPageCopyClass('description', styles.description)}
           style={hasLineBreak(description) ? lineBreakStyle : undefined}
         >
-          {renderWithLineBreaks(description)}
+          {typeof description === 'string' && hasLineBreak(description)
+            ? description
+            : renderWithLineBreaks(description)}
         </PFText>
       ) : null}
     </>

@@ -217,7 +217,7 @@ export function listFilledVolunteerInterviewExceptionBlockIds(
     .map(block => block.blockId)
 }
 
-const VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY = 'recruit.volunteer.interviewRangeSeal'
+export const VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY = 'recruit.volunteer.interviewRangeSeal'
 
 /** 봉사자 모집 「2차 면접 기간」→ 진행 불가일 달력 범위 overlay */
 export function syncVolunteerInterviewRangeSealOverlay(
@@ -330,14 +330,20 @@ export function hydrateMissingVolunteerInterviewOverlay(args: {
   source: Record<string, unknown> | undefined
   store: VolunteerInterviewOverlayStore
   namespace?: string
+  /**
+   * 네임스페이스의 형제 키처럼 prefix에 포함되지 않지만 같은 화면이
+   * 직접 읽는 canonical overlay 키. 이미 live 값이 있으면 덮어쓰지 않는다.
+   */
+  additionalKeys?: readonly string[]
 }): void {
   if (args.source == null) return
   const prefix = `${getInterviewOverlayKeyPrefix(args.store, args.namespace)}.`
+  const additionalKeys = new Set(args.additionalKeys ?? [])
   const live =
     args.store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
   const patch: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(args.source)) {
-    if (!key.startsWith(prefix)) continue
+    if (!key.startsWith(prefix) && !additionalKeys.has(key)) continue
     if (live[key] !== undefined) continue
     patch[key] = value
   }

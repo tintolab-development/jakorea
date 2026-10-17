@@ -318,7 +318,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     applicationEndDate: optionalDate(persist.applicationPeriodEnd),
     ...(educationStructure != null ? { educationStructure } : {}),
     educationForm: persist.educationForm,
-    targetLevels,
+    targetLevels: targetLevels as ProgramUpdateRequest['targetLevels'],
     ...(targetLevel ? { targetLevel } : {}),
     totalParticipants: persist.minStudentCount ?? undefined,
     draftStatus: mapAnnouncementPublishedToDraftStatus(persist.announcementPublished),
@@ -401,8 +401,8 @@ export function mapGeminiRecruitmentDetailToDetail(
         trainingRequestStartDate: dto.trainingRequestStartDate ?? undefined,
         trainingRequestEndDate: dto.trainingRequestEndDate ?? undefined,
         draftStatus: dto.draftStatus,
-        organizationApplicationCount: dto.organizationApplicationCount,
-        approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount,
+        organizationApplicationCount: dto.organizationApplicationCount ?? undefined,
+        approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount ?? undefined,
       },
       0
     )

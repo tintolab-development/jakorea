@@ -71,6 +71,31 @@ export function flattenGroupTimeSlotsByDetail(
  * 날짜 지정 + 진행 시간 슬롯 → 교육 진행 예정일 줄.
  * 시작·종료가 있는 슬롯만 한 줄씩. 전부 비면 날짜만 한 줄.
  */
+/**
+ * 「교육 진행 일정 선택」 [설정] — 개인·일정형·단일은 진행 시간 슬롯으로 예정일 줄 생성.
+ * `disableTimeInputs` 팝오버는 onRangeChange만 호출하므로 range apply 경로에서도 동일 처리.
+ */
+export function educationScheduleLinesFromSelectionRangeApply(input: {
+  range: [Dayjs, Dayjs]
+  autoFillFromScheduleGroupTimes: boolean
+  educationScheduleMode: 'date' | 'period'
+  groupTimeSlots: Array<EducationScheduleGroupTimeSlot | null | undefined>
+  dateOnlyPeriodRange: boolean
+}): string[] {
+  if (input.educationScheduleMode === 'period') {
+    const normalized = normalizeEducationSchedulePeriodRangeDateOnly(input.range)
+    return [formatEducationScheduleLineFromRange(normalized)]
+  }
+  if (input.autoFillFromScheduleGroupTimes) {
+    const day = input.range[0].startOf('day')
+    return buildEducationScheduleLinesFromDateAndGroupTimes(day, input.groupTimeSlots)
+  }
+  const normalized = input.dateOnlyPeriodRange
+    ? normalizeEducationSchedulePeriodRangeDateOnly(input.range)
+    : input.range
+  return [formatEducationScheduleLineFromRange(normalized)]
+}
+
 export function buildEducationScheduleLinesFromDateAndGroupTimes(
   date: Dayjs,
   slots: Array<EducationScheduleGroupTimeSlot | null | undefined>
@@ -134,6 +159,23 @@ export function parseEducationScheduleLineToRange(line: string | undefined): [Da
   }
 
   return [start, applyScheduleClock(endDate, endToken)]
+}
+
+/** 기관 일정형 단일 기간 — 저장·조회 시 시각 제거 */
+export function normalizeEducationSchedulePeriodRangeDateOnly(
+  range: [Dayjs, Dayjs]
+): [Dayjs, Dayjs] {
+  const sDay = range[0].isBefore(range[1], 'day') ? range[0] : range[1]
+  const eDay = range[0].isBefore(range[1], 'day') ? range[1] : range[0]
+  return [sDay.startOf('day'), eDay.startOf('day')]
+}
+
+export function normalizeEducationSchedulePeriodLineDateOnly(line: string): string {
+  const trimmed = line.trim()
+  if (!trimmed) return ''
+  const range = parseEducationScheduleLineToRange(trimmed)
+  if (!range) return trimmed
+  return formatEducationScheduleLineFromRange(normalizeEducationSchedulePeriodRangeDateOnly(range))
 }
 
 export function educationScheduleRangeHasClock(range: [Dayjs, Dayjs]): boolean {
@@ -220,6 +262,32 @@ export function rebuildEducationScheduleLinesFromGroupTimes(
 export function educationScheduleLinesEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   return a.every((line, index) => line === b[index])
+}
+
+export function isCompleteEducationScheduleGroupTimeSlot(
+  slot: EducationScheduleGroupTimeSlot | null | undefined
+): boolean {
+  if (!slot) return false
+  const ref = dayjs().startOf('day')
+  return (
+    parseEducationScheduleClock(slot.startTime, ref) != null &&
+    parseEducationScheduleClock(slot.endTime, ref) != null
+  )
+}
+
+/** 예정일 목록에 새 줄을 중복 없이 합친다 (overlay·폼 단일 갱신용). */
+export function mergeUniqueEducationScheduleLines(
+  current: readonly string[],
+  incoming: readonly string[]
+): string[] {
+  const next = [...current]
+  for (const line of incoming) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    if (next.includes(trimmed)) continue
+    next.push(trimmed)
+  }
+  return next
 }
 
 export function seoulCalendarDateKey(now: Date = new Date()): string {

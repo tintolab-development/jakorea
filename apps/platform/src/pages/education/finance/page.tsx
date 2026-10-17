@@ -6,7 +6,7 @@ import {
   type FinanceProgramId,
 } from '@/features/education-finance'
 import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
-import { PFButton, PFTabs, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationFinancePage() {
@@ -53,9 +53,7 @@ export function EducationFinancePage() {
         </header>
 
         {isPending ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-            프로그램 소개를 불러오는 중입니다.
-          </PFText>
+          <PFLoadingSpinner centered label="프로그램 소개를 불러오는 중" />
         ) : isError ? (
           <div className={styles.status}>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

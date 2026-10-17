@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import styles from './pf-button.module.css'
 
 type PFButtonSize = 'small' | 'medium' | 'large' | 'xlarge' | 'formPage'
-type PFButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'text'
+type PFButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'text' | 'certificate'
 
 type PFButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: PFButtonSize
@@ -32,10 +32,13 @@ export function PFButton({
   type = 'button',
   ...props
 }: PFButtonProps) {
+  const isCertificate = variant === 'certificate'
+
   const buttonClassName = [
     styles.button,
-    styles[size],
+    !isCertificate ? styles[size] : undefined,
     styles[variant],
+    isCertificate ? 'typo-bd-md-sb' : undefined,
     selected && variant === 'tertiary' ? styles.tertiarySelected : undefined,
     selected && variant === 'text' ? styles.textSelected : undefined,
     sizeTypographyClassMap[size],

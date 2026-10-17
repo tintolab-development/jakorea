@@ -1,7 +1,7 @@
 /* 후원사 상세 풀페이지 내 테이블 강제 고정 */
 .sponsor-detail-fullpage-modal .cms-data-table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
 }
 
 .sponsor-detail-fullpage-modal .cms-data-table col.ant-table-selection-col + col {
@@ -12,9 +12,9 @@
 
 .sponsor-detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.ant-table-selection-column,
 .sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
+  max-width: var(--table-selection-column-width, 80px) !important;
   padding: 12px 4px 12px 8px !important;
   box-sizing: border-box !important;
 }

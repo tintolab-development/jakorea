@@ -36,7 +36,7 @@
         "paragraphTitle": "이용기관 명칭",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
-        "bodyPlaceholder": "텍스트를 작성해 주세요",
+        "bodyPlaceholder": "예시 이용기관명",
         "bodyText": "",
         "answerRequired": false
       },
@@ -158,7 +158,7 @@
         "requiredMark": true,
         "paragraphTitle": "대상자 본인",
         "paragraphDescription": "",
-        "participatesInTitleNumbering": false,
+        "participatesInTitleNumbering": true,
         "answerRequired": true,
         "showItemTitle": true,
         "itemInputRows": 1,

@@ -211,6 +211,8 @@ export function useUjatInstitutionApplicationList(
     const capacityCheck = checkUjatRegionClassCapacityExceeded({
       regionKey,
       rowsAfterAssign,
+      // 목록에서 조회한 typed capacity를 우선 사용해 stale overlay가 경고 기준을 덮지 않게 한다.
+      serverMaxClassCount: maxClassesPerDay,
     })
 
     const completeContent = getUjatInstitutionTempAssignCompleteContent(count)
@@ -227,7 +229,7 @@ export function useUjatInstitutionApplicationList(
       title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
       content,
     })
-  }, [allRows, regionKey, selectedRowKeys, showNoSelectionAlert, showAlert])
+  }, [allRows, maxClassesPerDay, regionKey, selectedRowKeys, showNoSelectionAlert, showAlert])
 
   const closeApplicationRejectModal = useCallback(() => {
     setPendingApplicationRejectModal(false)

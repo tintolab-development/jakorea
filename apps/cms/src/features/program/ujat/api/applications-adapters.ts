@@ -115,6 +115,39 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
   }
 }
 
+/**
+ * 목록 캐시에 없는 deep link도 상세 GET만으로 표시할 수 있도록
+ * 기관 신청 상세 DTO를 UJAT 목록 행 형태로 투영한다.
+ * 상세 DTO를 목록 응답으로 대체하는 것이 아니라, 화면 식별자·상태 표시용 projection이다.
+ */
+export function mapOrganizationApplicationDetailToUjatInstitutionRow(
+  dto: OrganizationApplicationDetailDto,
+  index = 0
+): UjatInstitutionApplicationRow {
+  return mapOrganizationApplicationToUjatInstitutionRow(
+    {
+      id: dto.id,
+      programId: dto.programId,
+      organizationName: dto.organizationName,
+      teacherName: dto.teacherName,
+      applicationStatus: dto.applicationStatus,
+      requestedClassCount: dto.requestedClassCount,
+      availableActions: dto.availableActions ?? [],
+      grade: dto.requestedGrade ?? dto.grade,
+      regionSido: dto.regionSido,
+      regionSigungu: dto.regionSigungu,
+      educationRegionCode: dto.educationRegionCode,
+      temporaryAssignmentStatus: dto.temporaryAssignmentStatus,
+      scheduleConfirmStatus: dto.scheduleConfirmStatus,
+      assignedInstructorCount: dto.assignedInstructorCount,
+      operatingStudentCount: dto.operatingStudentCount,
+      sessions: [],
+      preferredEducationSchedules: [],
+    },
+    index
+  )
+}
+
 export function enrichUjatInstitutionDetailFromRemote(
   row: UjatInstitutionApplicationRow,
   dto: OrganizationApplicationDetailDto
@@ -131,18 +164,28 @@ export function enrichUjatInstitutionDetailFromRemote(
   const remoteGradeBlocks = mapRemoteGradeBlocks(dto.gradeBlocks, studentCount)
   const remoteClassTimeRows = mapRemoteClassTimeRows(dto.classTimeRows)
 
+  const hasField = (key: keyof OrganizationApplicationDetailDto): boolean =>
+    Object.prototype.hasOwnProperty.call(dto, key)
+  const stringField = (key: keyof OrganizationApplicationDetailDto, fallback: string): string => {
+    if (!hasField(key)) return fallback
+    const value = dto[key]
+    return typeof value === 'string' ? value.trim() : ''
+  }
+
   return {
     ...base,
-    address: dto.organizationAddress?.trim() || base.address,
-    addressDetail: dto.organizationAddressDetail?.trim() || base.addressDetail,
-    otherRequests: dto.managerComment?.trim() || base.otherRequests,
+    address: stringField('organizationAddress', base.address),
+    addressDetail: stringField('organizationAddressDetail', base.addressDetail),
+    otherRequests: stringField('managerComment', base.otherRequests),
     teacherContact: {
-      teacherName: dto.teacherName?.trim() || row.teacherName || base.teacherContact.teacherName,
-      tel: dto.teacherTel?.trim() || base.teacherContact.tel,
-      mobile: dto.teacherPhone?.trim() || base.teacherContact.mobile,
-      email: dto.teacherEmail?.trim() || base.teacherContact.email,
+      teacherName: stringField('teacherName', row.teacherName || base.teacherContact.teacherName),
+      tel: stringField('teacherTel', base.teacherContact.tel),
+      mobile: stringField('teacherPhone', base.teacherContact.mobile),
+      email: stringField('teacherEmail', base.teacherContact.email),
     },
-    preferredEducationDates: dto.preferredEducationDates ?? base.preferredEducationDates,
+    preferredEducationDates: hasField('preferredEducationDates')
+      ? dto.preferredEducationDates ?? []
+      : base.preferredEducationDates,
     classTimeRows: remoteClassTimeRows ?? base.classTimeRows,
     gradeBlocks:
       remoteGradeBlocks ??
@@ -301,7 +344,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     documentStatus: dto.documentStatus,
     interviewStatus: dto.interviewStatus,
     finalResultStatus: dto.finalResultStatus,
-    reserveRank: dto.reserveRank,
+    reserveRank: dto.reserveRank ?? undefined,
     giveUpYn: dto.giveUpYn,
   })
 

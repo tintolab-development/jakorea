@@ -577,6 +577,30 @@ describe('봉사자 서류·면접 nested 저장', () => {
     )
     expect(nested.interviewStartDate).toBe(new Date('2026-11-10T00:00:00+09:00').toISOString())
   })
+
+  it('폼에서 지운 서류·면접 값은 nested existing으로 복원하지 않는다', () => {
+    const existing = {
+      documentPassAnnouncementDate: '2026-09-01T00:00:00+09:00',
+      documentPassAnnouncementMethod: '공용 예전',
+      interviewStartDate: '2026-09-10T00:00:00+09:00',
+      interviewEndDate: '2026-09-12T00:00:00+09:00',
+      interviewMethod: '대면',
+    }
+    const values = {
+      ...programToDetailEditValues(program),
+      documentPassAnnouncementDate: undefined,
+      documentPassAnnouncementMethod: undefined,
+      interviewStartDate: undefined,
+      interviewEndDate: undefined,
+      interviewMethod: undefined,
+    }
+    const nested = volunteerDocumentInterviewNestedPatch(values, existing)
+    expect(nested.documentPassAnnouncementDate).toBeUndefined()
+    expect(nested.documentPassAnnouncementMethod).toBeUndefined()
+    expect(nested.interviewStartDate).toBeUndefined()
+    expect(nested.interviewEndDate).toBeUndefined()
+    expect(nested.interviewMethod).toBeUndefined()
+  })
 })
 
 describe('최종 합격자 발표 수정 저장 (강사·봉사자 공용 컬럼)', () => {
@@ -616,6 +640,57 @@ describe('최종 합격자 발표 수정 저장 (강사·봉사자 공용 컬럼
       '2026. 10. 01 (목) | 강사 등록값'
     )
   })
+})
+
+it('참여자 모집 상한 숫자를 비우면 existing 값으로 복원하지 않는다', () => {
+  const withLimits = {
+    ...program,
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      participantRecruitmentInfo: {
+        maxAssignableInstructors: 3,
+        maxClassCount: 2,
+        maxScheduleCount: 4,
+        maxSessionsPerDay: 5,
+      },
+    },
+  } as Program
+  const values = {
+    ...programToDetailEditValues(withLimits),
+    participantRecruitmentMaxInstructors: undefined,
+    participantRecruitmentMaxClassCount: undefined,
+    participantRecruitmentMaxScheduleCount: undefined,
+    participantRecruitmentMaxSessionsPerDay: undefined,
+  }
+  const patch = detailEditValuesToProgramPatch(values, withLimits, {
+    recruitmentAudience: 'participant',
+  })
+  const info = patch.generalCommonInfo?.participantRecruitmentInfo
+  expect(info?.maxAssignableInstructors).toBeUndefined()
+  expect(info?.maxClassCount).toBeUndefined()
+  expect(info?.maxScheduleCount).toBeUndefined()
+  expect(info?.maxSessionsPerDay).toBeUndefined()
+})
+
+it('강사 모집 저장 시 모집 인원·면접 일정을 비우면 existing으로 복원하지 않는다', () => {
+  const withInstructor = {
+    ...program,
+    instructorCapacity: 12,
+    interviewStartDate: '2026-09-10T00:00:00.000Z',
+    interviewEndDate: '2026-09-12T00:00:00.000Z',
+  } as Program
+  const values = {
+    ...programToDetailEditValues(withInstructor),
+    instructorCapacity: undefined,
+    interviewStartDate: undefined,
+    interviewEndDate: undefined,
+  }
+  const patch = detailEditValuesToProgramPatch(values, withInstructor, {
+    recruitmentAudience: 'instructor',
+  })
+  expect(patch.instructorCapacity).toBeUndefined()
+  expect(patch.interviewStartDate).toBeUndefined()
+  expect(patch.interviewEndDate).toBeUndefined()
 })
 
 describe('trained teachers recruitment edit round-trip', () => {
@@ -671,8 +746,8 @@ describe('trained teachers recruitment edit round-trip', () => {
       participantRecruitmentMaxSessionsPerDay: 4,
       applicationStartDate: '2026-10-01T00:00:00.000Z',
       applicationEndDate: '2026-10-31T00:00:00.000Z',
-      startDate: '2026-11-01T00:00:00.000Z',
-      endDate: '2026-12-15T00:00:00.000Z',
+      participantProgramOperationStartDate: '2026-11-01T00:00:00.000Z',
+      participantProgramOperationEndDate: '2026-12-15T00:00:00.000Z',
       targetLevels: ['middle' as const],
       educationTargetDetail: '중학교 2학년',
       resultAnnouncementDate: '2026-11-02T00:00:00.000Z',
@@ -683,7 +758,9 @@ describe('trained teachers recruitment edit round-trip', () => {
       remarks: '수정된 비고',
     }
 
-    const patch = detailEditValuesToProgramPatch(values, ttProgram)
+    const patch = detailEditValuesToProgramPatch(values, ttProgram, {
+      recruitmentAudience: 'participant',
+    })
     const draft = {
       ...ttProgram,
       ...patch,

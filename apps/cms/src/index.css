@@ -6,6 +6,7 @@
 @import './features/program/shared/ui/program-attendance-detail.css';
 @import './shared/ui/button-loading-only.css';
 @import './shared/ui/page-content-loading.css';
+@import './shared/ui/hide-input-character-count.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {
@@ -243,7 +244,7 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 .detail-info-form--text-bold {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%; /* 24px */
@@ -252,7 +253,7 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 .detail-info-form--text {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 24px */

@@ -1,12 +1,16 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import {
+  fetchGeneralProgramCoreRemoteById,
+  fetchGeneralProgramSponsorAssignmentsRemote,
+} from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { mergeProgramSponsorAssignments } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import type { Program } from '@/types/domain'
 
 export interface UseGeneralProgramDetailOptions {
@@ -18,7 +22,7 @@ export interface UseGeneralProgramDetailOptions {
 export function generalProgramDetailQueryOptions(programId: string) {
   return queryOptions({
     queryKey: generalProgramQueryKeys.detail(programId),
-    queryFn: () => fetchGeneralProgramRemoteById(programId),
+    queryFn: () => fetchGeneralProgramCoreRemoteById(programId),
     staleTime: 30_000,
     retry: false,
   })
@@ -27,7 +31,7 @@ export function generalProgramDetailQueryOptions(programId: string) {
 /**
  * 일반 프로그램 상세.
  * - remote ON + 숫자 API id: GET /programs/{id}
- * - FE 시드(`general-prog-*`) 또는 remote OFF: resolveGeneralProgramForDetail mock
+ * - remote OFF: 등록 임시저장(`general-local-*`)만 resolveGeneralProgramForDetail
  */
 export function useGeneralProgramDetail(
   programId: string | undefined,
@@ -45,14 +49,41 @@ export function useGeneralProgramDetail(
     enabled: remoteEnabled,
   })
 
+  const sponsorAssignmentsQuery = useQuery({
+    queryKey: generalProgramQueryKeys.sponsorAssignments(programId ?? ''),
+    queryFn: () => fetchGeneralProgramSponsorAssignmentsRemote(programId!),
+    enabled: remoteEnabled && Boolean(programId),
+    staleTime: 30_000,
+    retry: false,
+  })
+
   const resolvedMock = useMemo(() => {
     if (remoteEnabled || !programId || !enabled) return null
     return resolveGeneralProgramForDetail(programId) ?? null
   }, [remoteEnabled, programId, enabled])
 
-  const program = remoteEnabled
-    ? (remoteQuery.data ?? (remoteQuery.isFetching ? initialProgram : null))
-    : resolvedMock
+  const remoteProgram = useMemo(() => {
+    if (remoteQuery.data == null) {
+      return remoteQuery.isFetching ? initialProgram : null
+    }
+    // 재검증 중인 오래된 sponsor 캐시가 저장 직후의 핵심 상세를 덮지 않게 한다.
+    if (
+      sponsorAssignmentsQuery.data == null ||
+      sponsorAssignmentsQuery.isFetching ||
+      sponsorAssignmentsQuery.isError
+    ) {
+      return remoteQuery.data
+    }
+    return mergeProgramSponsorAssignments(remoteQuery.data, sponsorAssignmentsQuery.data)
+  }, [
+    initialProgram,
+    remoteQuery.data,
+    remoteQuery.isFetching,
+    sponsorAssignmentsQuery.data,
+    sponsorAssignmentsQuery.isError,
+    sponsorAssignmentsQuery.isFetching,
+  ])
+  const program = remoteEnabled ? remoteProgram : resolvedMock
   const loading = remoteEnabled ? remoteQuery.isFetching : false
   const canWrite = canPerformWriteAction(user)
   const sponsorName = useSponsorNameById(program?.sponsorId, Boolean(program?.sponsorId))

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { MemberPortalApplicationListItemDisplayStatus } from './memberPortalApplicationListItemDisplayStatus';
+import type { MemberPortalApplicationListItemRecruitTerm } from './memberPortalApplicationListItemRecruitTerm';
 import type { MemberPortalProgramApplicationSupplement } from './memberPortalProgramApplicationSupplement';
 
 export interface MemberPortalApplicationListItem {
@@ -18,6 +19,11 @@ export interface MemberPortalApplicationListItem {
   programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
+  /**
+     * UJAT 봉사자 모집 상·하반기 canonical 값. 그 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: MemberPortalApplicationListItemRecruitTerm;
   applicationStatus?: string;
   submittedAt?: string;
   updatedAt?: string;
@@ -28,6 +34,16 @@ export interface MemberPortalApplicationListItem {
   displayStatus?: MemberPortalApplicationListItemDisplayStatus;
   educationStartAt?: string;
   educationEndAt?: string;
+  /**
+     * 모집 시작 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.
+     * @nullable
+     */
+  recruitmentStartAt?: string | null;
+  /**
+     * 모집 종료 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.
+     * @nullable
+     */
+  recruitmentEndAt?: string | null;
   nextScheduleAt?: string;
   /**
      * 필드 설명: Date-based progress over visible eligible schedules, not a completion/certificate decision. Null when a managed GENERAL_INDIVIDUAL participant has no confirmed complete education scope. Explicitly empty confirmed scope is 0, not 100.

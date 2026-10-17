@@ -21,9 +21,6 @@ export interface MemberPortalProgramSummary {
   inquiryEmail?: string;
   inquiryPhone?: string;
   posterFileObjectId?: number;
-  /**
-     * 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다.
-     * @nullable
-     */
+  /** 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다. */
   interviewEnabled?: boolean | null;
 }

@@ -36,7 +36,10 @@ import {
   getParticipatingVolunteerActivityWithdrawScheduleOptions,
   mergeParticipatingVolunteerDetailRow,
 } from '@/features/program/general/lib/participating-volunteer-detail'
-import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import {
+  ActivityWithdrawScheduleModal,
+  type ActivityWithdrawScheduleModalPayload,
+} from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { ParticipatingVolunteerApplicationInfo } from './participating-volunteer-application-info'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
 import { ParticipatingVolunteerAssignmentSection } from './participating-volunteer-assignment-section'
@@ -247,31 +250,27 @@ export function ParticipatingVolunteerFullpageView({
   }, [activityWithdrawScheduleOptions.length, mergedVolunteer.activityWithdrawn, showAlert])
 
   const handleConfirmActivityWithdraw = useCallback(
-    async (payload: { stopSessionKey: string }) => {
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
       const stopSession = (mergedVolunteer.sessions ?? []).find(
         session => String(session.round) === payload.stopSessionKey
       )
-      const stopScheduleLabel = stopSession
-        ? activityWithdrawScheduleOptions.find(option => option.value === payload.stopSessionKey)
-            ?.label
-        : undefined
-      const reason =
-        [mergedVolunteer.volunteerName, stopScheduleLabel].filter(Boolean).join(' · ') ||
-        stopScheduleLabel ||
-        '활동 포기'
       const stopScheduleIdNum =
         stopSession?.resolvedScheduleId != null ? Number(stopSession.resolvedScheduleId) : Number.NaN
 
       if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
         try {
-          await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, reason, {
+          await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, {
+            reason: payload.reason,
+            faultParty: payload.faultParty,
             stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
           })
           await queryClient.invalidateQueries({
             queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
           })
-          const patch = applyParticipatingVolunteerActivityWithdraw(mergedVolunteer, payload)
+          const patch = applyParticipatingVolunteerActivityWithdraw(mergedVolunteer, {
+            stopSessionKey: payload.stopSessionKey,
+          })
           if (Object.keys(patch).length > 0) {
             setVolunteerPatches(prev => ({ ...prev, ...patch }))
           }
@@ -466,9 +465,8 @@ export function ParticipatingVolunteerFullpageView({
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
         onCancel={() => setActivityWithdrawModalOpen(false)}
-        onConfirm={payload =>
-          handleConfirmActivityWithdraw({ stopSessionKey: payload.stopSessionKey })
-        }
+        onConfirm={handleConfirmActivityWithdraw}
+        confirming={activityWithdrawSubmitting}
       />
       <ParticipatingVolunteerActivityCertificatePreviewModal
         open={activityCertPreviewOpen}

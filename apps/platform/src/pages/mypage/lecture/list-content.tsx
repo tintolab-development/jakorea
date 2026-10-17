@@ -1,19 +1,15 @@
-import { useMemo, useSyncExternalStore } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   EDUCATION_APPLICATION_PAGE_SIZE,
   EducationApplicationListItemRow,
   filterLectureStatusApplications,
-  getMockEducationApplications,
-  getMockEducationApplicationsVersion,
   listEducationApplications,
   lectureApplicationDetailPath,
-  subscribeMockEducationApplications,
   useMyProgramApplications,
   type EducationApplicationListParams,
   EducationApplicationListSkeleton,
 } from '@/features/mypage'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFText } from '@/shared/ui'
 import styles from '../education/page.module.css'
 
@@ -29,12 +25,6 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
     page: params.page,
     pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
   })
-  const applicationsVersion = useSyncExternalStore(
-    subscribeMockEducationApplications,
-    getMockEducationApplicationsVersion,
-    getMockEducationApplicationsVersion,
-  )
-  const mockEnabled = useShouldUsePlatformMockData()
 
   const { items, totalPages, currentPage, totalElements } = useMemo(() => {
     if (remoteApplications.isRemoteEnabled && remoteApplications.isServerPaged) {
@@ -48,15 +38,13 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
 
     const sourceItems = remoteApplications.isRemoteEnabled
       ? remoteApplications.items
-      : filterLectureStatusApplications(getMockEducationApplications())
+      : filterLectureStatusApplications([])
     return listEducationApplications(sourceItems, {
       tab: params.tab,
       page: params.page,
       pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
     })
   }, [
-    applicationsVersion,
-    mockEnabled,
     params.page,
     params.tab,
     remoteApplications.currentPage,
@@ -77,7 +65,7 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
         <div className={styles.list}>
           {items.map(item => (
             <EducationApplicationListItemRow
-              key={`${item.applicationType ?? 'mock'}:${item.id}`}
+              key={`${item.applicationType ?? 'application'}:${item.id}`}
               item={item}
               onClick={() =>
                 navigate(lectureApplicationDetailPath(item.id, item.applicationType), {

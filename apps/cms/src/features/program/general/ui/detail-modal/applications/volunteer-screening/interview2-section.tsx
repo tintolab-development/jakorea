@@ -1,11 +1,15 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH,
-  FilterTableToolbarButton
+import {
+  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import type { Program } from '@/types/domain'
-import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import type {
+  GeneralVolunteerApplicantRow,
+  GeneralVolunteerInterviewEvaluationPayload,
+} from '@/features/program/general/model/volunteer-applicant'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   buildGeneralVolunteerInterview2CalendarFilterRows,
@@ -21,7 +25,6 @@ import {
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
 } from './use-detail'
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
-import { GeneralVolunteerInterviewEvaluationModal } from './interview-evaluation-modal'
 import { GeneralVolunteerInterview2BulkFailCompleteModal } from './general-volunteer-interview2-bulk-fail-complete-modal'
 import { GeneralVolunteerInterview2BulkFailModal } from './general-volunteer-interview2-bulk-fail-modal'
 import { GeneralVolunteerInterview2BulkPassModal } from './general-volunteer-interview2-bulk-pass-modal'
@@ -29,14 +32,15 @@ import { GeneralVolunteerInterview2FailCompleteModal } from './general-volunteer
 import { GeneralVolunteerInterview2FailModal } from './general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer-interview2-pass-complete-modal'
 import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
+import { GeneralVolunteerInterview2CancelPassModal } from './general-volunteer-interview2-cancel-pass-modal'
+import { GeneralVolunteerInterview2CancelFailModal } from './general-volunteer-interview2-cancel-fail-modal'
 import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
 import { useGeneralInterviewEvaluationAccess } from '@/features/program/general/hooks/use-interview-evaluation-access'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
-import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { ApplicationGiveUpReasonModal } from '@/features/program/shared/ui/application-give-up-reason-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { isGeneralVolunteerInterview2SelectableForResult } from './general-volunteer-interview2-actions'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -101,9 +105,14 @@ export function GeneralVolunteerInterview2Section({
     withdrawTarget,
     requestInterview2Pass,
     requestInterview2Fail,
-    openEvaluationModal,
-    closeEvaluationModal,
-    evaluationTarget,
+    cancelPassVolunteer,
+    cancelFailVolunteer,
+    openCancelPassModal,
+    closeCancelPassModal,
+    openCancelFailModal,
+    closeCancelFailModal,
+    handleCancelPassConfirm,
+    handleCancelFailConfirm,
     saveInterviewEvaluation,
     filterRowsSource,
     applicationsLoading,
@@ -118,11 +127,6 @@ export function GeneralVolunteerInterview2Section({
     fetchNextPage,
     resetKey: `${programId}:${subjectKind}:${viewMode}`,
   })
-
-  const activityWithdrawScheduleOptions = useMemo(
-    () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
-    [program]
-  )
 
   const filterRows = useMemo(
     () =>
@@ -174,31 +178,31 @@ export function GeneralVolunteerInterview2Section({
     requestInterview2Pass(selectedApplicant)
   }, [requestInterview2Pass, selectedApplicant])
 
-  const handleDetailOpenEvaluation = useCallback(() => {
+  const handleDetailCancelInterviewPass = useCallback(() => {
     if (!selectedApplicant) return
-    openEvaluationModal(selectedApplicant)
-  }, [openEvaluationModal, selectedApplicant])
+    openCancelPassModal(selectedApplicant)
+  }, [openCancelPassModal, selectedApplicant])
+
+  const handleDetailCancelInterviewFail = useCallback(() => {
+    if (!selectedApplicant) return
+    openCancelFailModal(selectedApplicant)
+  }, [openCancelFailModal, selectedApplicant])
+
+  const handleDetailSaveInterviewEvaluation = useCallback(
+    async (payload: GeneralVolunteerInterviewEvaluationPayload) => {
+      if (!selectedApplicant) return false
+      return saveInterviewEvaluation(selectedApplicant, payload)
+    },
+    [saveInterviewEvaluation, selectedApplicant]
+  )
 
   const withdrawConfirmModal = (
-    <ActivityWithdrawScheduleModal
+    <ApplicationGiveUpReasonModal
       open={withdrawTarget != null}
-      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
       onConfirm={confirmWithdrawActivity}
     />
   )
-
-  const evaluationModal =
-    evaluationTarget != null ? (
-      <GeneralVolunteerInterviewEvaluationModal
-        open
-        applicant={evaluationTarget}
-        canFillBothSlots={evaluationAccess.canFillBothSlots}
-        currentAdminId={evaluationAccess.currentAdminId}
-        onCancel={closeEvaluationModal}
-        onConfirm={saveInterviewEvaluation}
-      />
-    ) : null
 
   const bulkPassModal = (
     <GeneralVolunteerInterview2BulkPassModal
@@ -231,6 +235,18 @@ export function GeneralVolunteerInterview2Section({
         volunteerName={failModalVolunteer?.name ?? ''}
         onCancel={closeFailModal}
         onConfirm={handleFailModalConfirm}
+      />
+      <GeneralVolunteerInterview2CancelPassModal
+        open={cancelPassVolunteer != null}
+        volunteer={cancelPassVolunteer}
+        onCancel={closeCancelPassModal}
+        onConfirm={handleCancelPassConfirm}
+      />
+      <GeneralVolunteerInterview2CancelFailModal
+        open={cancelFailVolunteer != null}
+        volunteer={cancelFailVolunteer}
+        onCancel={closeCancelFailModal}
+        onConfirm={handleCancelFailConfirm}
       />
     </>
   )
@@ -286,7 +302,6 @@ export function GeneralVolunteerInterview2Section({
           />
           {passFailModals}
           {withdrawConfirmModal}
-          {evaluationModal}
           {bulkPassModal}
           {bulkFailModal}
           {completeModals}
@@ -302,11 +317,14 @@ export function GeneralVolunteerInterview2Section({
           onWithdrawActivity={handleDetailWithdrawActivity}
           onInterviewFail={handleDetailInterviewFail}
           onInterviewPass={handleDetailInterviewPass}
-          onOpenInterviewEvaluation={handleDetailOpenEvaluation}
+          onCancelInterviewPass={handleDetailCancelInterviewPass}
+          onCancelInterviewFail={handleDetailCancelInterviewFail}
+          canFillBothEvaluationSlots={evaluationAccess.canFillBothSlots}
+          currentAdminId={evaluationAccess.currentAdminId}
+          onSaveInterviewEvaluation={handleDetailSaveInterviewEvaluation}
         />
         {passFailModals}
         {withdrawConfirmModal}
-        {evaluationModal}
         {bulkPassModal}
         {bulkFailModal}
         {completeModals}
@@ -333,7 +351,6 @@ export function GeneralVolunteerInterview2Section({
     >
       {passFailModals}
       {withdrawConfirmModal}
-      {evaluationModal}
       {bulkPassModal}
       {bulkFailModal}
       {completeModals}
@@ -356,8 +373,8 @@ export function GeneralVolunteerInterview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              className="cms-button--application-list-bulk"
+              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
               onClick={handleBulkFail}
             >
               선택 불합격
@@ -365,8 +382,8 @@ export function GeneralVolunteerInterview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              className="cms-button--application-list-bulk"
+              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
               onClick={handleBulkPass}
             >
               선택 합격

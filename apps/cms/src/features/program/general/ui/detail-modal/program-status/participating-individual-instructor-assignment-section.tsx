@@ -30,7 +30,10 @@ import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
 } from '@/features/program/general/model/school-detail-types'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '@/features/program/general/lib/participating-institutions-table'
 import {
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_SCHEDULE_EXCEL_COLUMNS,
@@ -47,22 +50,26 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import {
-  fetchGeneralInstructorAssignmentBoard,
-  findScheduleIdForLectureDate,
-} from '@/features/program/general/api/instructor-assignment-board-service'
+import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
+import './participating-institutions-section.css'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return renderProgramDetailPipeSeparated(label)
+  return (
+    <div className="participating-institutions-section__sessions-cell">
+      <div className="participating-institutions-section__session-line">
+        {renderProgramDetailPipeSeparated(label)}
+      </div>
+    </div>
+  )
 }
 
 export interface ParticipatingIndividualInstructorAssignmentSectionProps {
@@ -218,11 +225,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           key: 'scheduleLabel',
           width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
           minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          className: 'participating-institutions-section__th-sessions',
-          onHeaderCell: () => ({
-            className: 'participating-institutions-section__th-sessions',
-          }),
-          onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+          ...participatingScheduleTableColumnLayout(),
           render: (label: string) => renderScheduleCell(label),
         },
       ],
@@ -252,11 +255,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           key: 'scheduleLabel',
           width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
           minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          className: 'participating-institutions-section__th-sessions',
-          onHeaderCell: () => ({
-            className: 'participating-institutions-section__th-sessions',
-          }),
-          onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+          ...participatingScheduleTableColumnLayout(),
           render: (label: string) => renderScheduleCell(label),
         },
         {
@@ -361,9 +360,15 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         return false
       }
       try {
-        const board = await fetchGeneralInstructorAssignmentBoard(program.id)
         let leadAssigned = assignedSchedules.some(row => row.role === 'lead')
         for (const waitingRow of selectedRows) {
+          if (waitingRow.assignmentStatus !== 'waiting') {
+            showAlert({
+              title: '안내',
+              content: `${waitingRow.lectureLocation} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
+            })
+            return false
+          }
           const orgAppId = Number(waitingRow.organizationApplicationId)
           if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
             showAlert({
@@ -372,36 +377,27 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             })
             return false
           }
-          if (waitingRow.scheduleUnresolved) {
+          const session =
+            waitingRow.sessions?.find(
+              item => resolveAssignableSchedulePayloadFromSession(item) != null
+            ) ?? null
+          const schedulePayload =
+            resolveAssignableSchedulePayloadFromSession(session) ??
+            (typeof waitingRow.resolvedScheduleId === 'number' && waitingRow.resolvedScheduleId > 0
+              ? { scheduleId: waitingRow.resolvedScheduleId }
+              : waitingRow.requestedScheduleId != null && waitingRow.requestedScheduleId > 0
+                ? { requestedScheduleId: waitingRow.requestedScheduleId }
+                : null)
+          if (!schedulePayload) {
             showAlert({
               title: '안내',
-              content: `${waitingRow.lectureLocation} — 희망일에 대응하는 program schedule이 없습니다.`,
-            })
-            return false
-          }
-          let scheduleId: number | undefined =
-            typeof waitingRow.resolvedScheduleId === 'number' &&
-            waitingRow.resolvedScheduleId > 0
-              ? waitingRow.resolvedScheduleId
-              : undefined
-          const requestedScheduleId = waitingRow.requestedScheduleId
-          if (scheduleId == null && requestedScheduleId == null) {
-            scheduleId =
-              findScheduleIdForLectureDate(board.schedules, waitingRow.scheduleLabel) ??
-              undefined
-          }
-          if (scheduleId == null && requestedScheduleId == null) {
-            showAlert({
-              title: '안내',
-              content:
-                '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+              content: `${waitingRow.lectureLocation} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
             })
             return false
           }
           await createInstructorAssignmentRemote(program.id, {
             instructorMemberId: memberId,
-            ...(scheduleId != null ? { scheduleId } : {}),
-            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            ...schedulePayload,
             organizationApplicationId: orgAppId,
             instructorApplicationId: waitingRow.instructorApplicationId
               ? Number(waitingRow.instructorApplicationId)
@@ -415,8 +411,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         await assignment.invalidate()
         return true
       } catch (error) {
+        const scopeMessage = formatInstructorOrganizationScheduleScopeMessage(error)
+        if (scopeMessage) {
+          await assignment.invalidate()
+          showAlert({ title: '배정 실패', content: scopeMessage })
+          return false
+        }
         const message =
-          formatInstructorOrganizationScheduleScopeMessage(error) ??
           getParticipationConsentRequiredMessage(error) ??
           (error instanceof Error && error.message.trim()
             ? error.message

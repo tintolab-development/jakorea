@@ -24,8 +24,8 @@ import type {
   NotificationReadAllResponse,
   NotificationUnreadCountResponse,
   Notifications1Params,
-  PageResponse,
-} from '@/shared/api/generated/dashboard/schemas'
+  NotificationPageResponse,
+} from '@/features/dashboard/api/dashboard-generated-types'
 
 const dashboardRemoteApi = getJAKoreaCMSBackendAPIDashboardSubset()
 
@@ -84,7 +84,7 @@ export async function fetchDashboardPreferencesRemote(): Promise<DashboardPrefer
 
 export async function saveDashboardPreferencesRemote(
   body: DashboardPreferencesSaveRequest
-): Promise<DashboardPreferencesResponse> {
+): Promise<unknown> {
   return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences1(body))
 }
 
@@ -114,19 +114,29 @@ export async function readDashboardShortcutBadgeRemote(
   shortcutId: string,
   body?: DashboardShortcutBadgeReadRequest
 ): Promise<DashboardShortcutBadgeReadResponse> {
-  return unwrapBody(await dashboardRemoteApi.readDashboardShortcutBadge(shortcutId, body ?? {}))
+  return unwrapBody(
+    await dashboardRemoteApi.readDashboardShortcutBadge(shortcutId, body ?? {})
+  )
 }
 
 /** Swagger: GET /api/admin/notifications */
 export async function fetchAdminNotificationsRemote(
   params?: Notifications1Params
-): Promise<PageResponse> {
+): Promise<NotificationPageResponse> {
   return unwrapBody(await dashboardRemoteApi.notifications1(params))
 }
 
+function parseNotificationRecipientId(recipientId: string | number): number {
+  const id = typeof recipientId === 'number' ? recipientId : Number(recipientId)
+  if (!Number.isFinite(id)) {
+    throw new Error('알림 recipientId가 올바르지 않습니다.')
+  }
+  return id
+}
+
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/read */
-export async function markAdminNotificationReadRemote(recipientId: string): Promise<void> {
-  await dashboardRemoteApi.markRead2(Number(recipientId))
+export async function markAdminNotificationReadRemote(recipientId: string | number): Promise<void> {
+  await dashboardRemoteApi.markRead2(parseNotificationRecipientId(recipientId))
 }
 
 /** Swagger: PATCH /api/admin/notifications/read-all */
@@ -135,8 +145,8 @@ export async function markAllAdminNotificationsReadRemote(): Promise<Notificatio
 }
 
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/hidden */
-export async function hideAdminNotificationRemote(recipientId: string): Promise<void> {
-  await dashboardRemoteApi.hide1(Number(recipientId))
+export async function hideAdminNotificationRemote(recipientId: string | number): Promise<void> {
+  await dashboardRemoteApi.hide1(parseNotificationRecipientId(recipientId))
 }
 
 /** 위젯 programIds 필터 → 대시보드 목록 query (flat). OpenAPI `params` 맵 래핑은 제거됨. */

@@ -14,8 +14,11 @@ import {
   shouldShowApplicationMaxScheduleFields,
   shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationPreferredScheduleParagraph,
+  shouldShowApplicationPreferredScheduleSessionSelect,
   shouldShowApplicationScheduleParagraph,
+  shouldShowApplicationSchedulePeriodDateOnlyPreferred,
 } from '@jakorea/form-schema/program-application'
+import { resolveInstitutionApplicationScheduleMetaFromProgram } from '@/features/program/general/lib/institution-application-schedule-meta'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import type {
@@ -38,6 +41,12 @@ export type InstitutionApplicationProgramBridge = {
   educationScheduleMode?: InstitutionApplicationEducationScheduleMode
   /** 날짜 지정 등 — 신청 폼 고정 일정 선택지 (프로그램 등록 교육 진행 예정일) */
   educationScheduleLines?: readonly string[]
+  /** 커리큘럼 복수 회차 — 신청 고정 일정 matrix 회차 수 */
+  educationRoundCount?: number
+  /** 커리큘럼 복수 회차 — 1회차 진행 차시 수(설명·matrix) */
+  sessionsPerRound?: number
+  /** 커리큘럼 단일 회차 — 교육 진행(커리큘럼) 차시 개수(기간 지망 설명) */
+  curriculumChartSessionCount?: number
   /** 기간 지정 — 신청 폼 희망 교육일 선택 가능 범위 */
   educationScheduleRange?: { start: string; end: string }
   /**
@@ -172,6 +181,7 @@ export function resolveInstitutionApplicationProgramBridge(
   const info = commonInfo?.participantRecruitmentInfo
   const educationScheduleMode = commonInfo?.educationScheduleMode ?? 'date'
   const educationScheduleLines = commonInfo?.educationScheduleLines
+  const scheduleMeta = resolveInstitutionApplicationScheduleMetaFromProgram(program)
   return {
     preEducationNoticeRequired: info?.preEducationNoticeRequired ?? true,
     maxAssignableInstructors: info?.maxAssignableInstructors,
@@ -182,6 +192,9 @@ export function resolveInstitutionApplicationProgramBridge(
     sessionRound: program?.generalProgramSessionRound,
     educationScheduleMode,
     educationScheduleLines,
+    educationRoundCount: scheduleMeta.educationRoundCount,
+    sessionsPerRound: scheduleMeta.sessionsPerRound,
+    curriculumChartSessionCount: scheduleMeta.curriculumChartSessionCount,
     educationScheduleRange: resolveEducationScheduleRangeForBridge(
       program,
       commonInfo?.educationScheduleRange,
@@ -274,6 +287,33 @@ export function isInstitutionApplicationBridgeTemplateAuthoring(
   return bridge.educationStructure == null && bridge.sessionRound == null
 }
 
+/** 모집 양식 — SSOT 일정 유형만으로 최대 일정·1일 차시 필드 노출 판단 */
+export type InstitutionApplicationRecruitLimitVisibilityInput = Pick<
+  InstitutionApplicationProgramBridge,
+  'educationStructure' | 'sessionRound' | 'educationScheduleMode'
+>
+
+export function buildInstitutionApplicationRecruitLimitVisibilityBridge(
+  input: InstitutionApplicationRecruitLimitVisibilityInput
+): InstitutionApplicationProgramBridge {
+  return {
+    preEducationNoticeRequired: true,
+    educationStructure: input.educationStructure,
+    sessionRound: input.sessionRound,
+    educationScheduleMode: input.educationScheduleMode,
+  }
+}
+
+/**
+ * 모집 한도 필드 노출은 `educationScheduleMode` SSOT만 사용한다.
+ * `educationScheduleRange`는 신청 캘린더·사업 기간 폴백용이며 기간 지정 유형으로 간주하지 않는다.
+ */
+export function resolveInstitutionApplicationRecruitLimitsVisibilityBridge(
+  bridge: InstitutionApplicationProgramBridge
+): InstitutionApplicationProgramBridge {
+  return bridge
+}
+
 /** 희망 일정 신청 — 최대 일정 수 필드(및 일정 UI) 노출 */
 export function shouldShowInstitutionApplicationMaxScheduleFields(
   bridge: InstitutionApplicationProgramBridge
@@ -286,6 +326,18 @@ export function shouldShowInstitutionApplicationMaxSessionsPerDayField(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
   return shouldShowApplicationMaxSessionsPerDayField(bridge)
+}
+
+export function shouldShowInstitutionApplicationPreferredScheduleSessionSelect(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return shouldShowApplicationPreferredScheduleSessionSelect(bridge)
+}
+
+export function shouldShowInstitutionApplicationSchedulePeriodDateOnlyPreferred(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return shouldShowApplicationSchedulePeriodDateOnlyPreferred(bridge)
 }
 
 export function shouldShowInstitutionApplicationPreferredScheduleParagraph(

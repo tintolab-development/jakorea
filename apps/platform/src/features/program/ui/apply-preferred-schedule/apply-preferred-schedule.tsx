@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
+import { DetailInfoForm } from '@/features/form-template'
 import {
+  PFButton,
   PFDateInput,
   PFItemDeleteButton,
   PFSelect,
   PFText,
   PFTextInput,
+  PFTimeInput,
   type PFSelectOption,
 } from '@/shared/ui'
+import { resolvePreferredScheduleBlockTitle } from '@jakorea/form-schema/program-application'
 import styles from './apply-preferred-schedule.module.css'
 
 export type ApplyPreferredScheduleBlock = {
@@ -22,21 +26,6 @@ function createEmptyBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
 }
 
-/** Platform DS에 전용 시간 모달은 없고, CMS ParagraphTimePicker에 대응해 PFSelect(HH:mm) 드롭다운을 쓴다. */
-function buildPreferredScheduleTimeOptions(): PFSelectOption[] {
-  const options: PFSelectOption[] = []
-  for (let hour = 7; hour <= 22; hour += 1) {
-    for (let minute = 0; minute < 60; minute += 5) {
-      if (hour === 22 && minute > 0) break
-      const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
-      options.push({ value, label: value })
-    }
-  }
-  return options
-}
-
-const PREFERRED_SCHEDULE_TIME_OPTIONS = buildPreferredScheduleTimeOptions()
-
 function normalizeHHmm(raw: string): string {
   const trimmed = raw.trim()
   const match = trimmed.match(/^(\d{1,2}):(\d{2})$/)
@@ -48,25 +37,173 @@ function normalizeHHmm(raw: string): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
-function timeSelectOptionsFor(value: string): PFSelectOption[] {
-  const normalized = normalizeHHmm(value)
-  if (!normalized) return PREFERRED_SCHEDULE_TIME_OPTIONS
-  if (PREFERRED_SCHEDULE_TIME_OPTIONS.some(option => option.value === normalized)) {
-    return PREFERRED_SCHEDULE_TIME_OPTIONS
-  }
-  return [{ value: normalized, label: normalized }, ...PREFERRED_SCHEDULE_TIME_OPTIONS]
+type ApplyPreferredScheduleAddButtonProps = {
+  onClick: () => void
+  disabled?: boolean
+}
+
+/** 단락 카드 제목 우측 — CMS `InstitutionPreferredScheduleCardTitleTrailing` 대응 */
+export function ApplyPreferredScheduleAddButton({
+  onClick,
+  disabled = false,
+}: ApplyPreferredScheduleAddButtonProps) {
+  return (
+    <PFButton
+      type="button"
+      variant="secondary"
+      size="medium"
+      className={styles.headerAddButton}
+      disabled={disabled}
+      onClick={(event: MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation()
+        onClick()
+      }}
+    >
+      <span className={styles.addButtonLabel}>
+        <span className={styles.addButtonIcon} aria-hidden />
+        희망 교육 일정 추가
+      </span>
+    </PFButton>
+  )
+}
+
+type PreferenceScheduleFieldsProps = {
+  block: ApplyPreferredScheduleBlock
+  onPatch: (patch: Partial<ApplyPreferredScheduleBlock>) => void
+  minDate: string | null
+  maxDate: string | null
+  enabledDates: ReadonlySet<string> | null
+  showSessionSelect: boolean
+  sessionOptions: PFSelectOption[]
+  dateOnlyPreferred: boolean
+}
+
+/** CMS `PreferenceScheduleFields` — DetailInfoForm 격자(희망 교육일 | 희망 교육 시간) */
+function PreferenceScheduleFields({
+  block,
+  onPatch,
+  minDate,
+  maxDate,
+  enabledDates,
+  showSessionSelect,
+  sessionOptions,
+  dateOnlyPreferred,
+}: PreferenceScheduleFieldsProps) {
+  const startTime = normalizeHHmm(block.startTime)
+  const endTime = normalizeHHmm(block.endTime)
+  const timeLabel = showSessionSelect ? '희망 교육 시간' : '1차시 희망 교육 시간'
+
+  const dateField = (
+    <DetailInfoForm.Field
+      label="희망 교육일"
+      view="-"
+      edit={
+        <PFDateInput
+          variant="formPage"
+          size="large"
+          picker="date"
+          width={220}
+          className={styles.datePicker}
+          placeholder="희망 교육 날짜를 선택하세요"
+          value={block.date}
+          minDate={minDate}
+          maxDate={maxDate}
+          enabledDates={enabledDates}
+          onValueChange={next => onPatch({ date: next })}
+        />
+      }
+    />
+  )
+
+  const timeInputsDisabled = dateOnlyPreferred
+
+  return (
+    <DetailInfoForm.Row type="double">
+      {dateField}
+      <DetailInfoForm.Field
+        label={timeLabel}
+        view="-"
+        edit={
+          <div className={`detail-info-form-inputs-wrapper-no-gap ${styles.timeInputs}`}>
+            {showSessionSelect && !dateOnlyPreferred ? (
+              <>
+                <PFSelect
+                  variant="formPage"
+                  size="large"
+                  width={140}
+                  className={styles.sessionSelect}
+                  placeholder="희망 차시"
+                  options={sessionOptions}
+                  value={block.classPeriod || undefined}
+                  onValueChange={next => onPatch({ classPeriod: next ?? '' })}
+                  aria-label="희망 차시"
+                  disabled={timeInputsDisabled}
+                />
+                <DetailInfoForm.InputsSeparator />
+              </>
+            ) : (
+              <>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={120}
+                  inputMode="numeric"
+                  placeholder="수업 진행 교시"
+                  value={block.classPeriod}
+                  onValueChange={next =>
+                    onPatch({ classPeriod: next.replace(/[^\d]/g, '') })
+                  }
+                  disabled={timeInputsDisabled}
+                />
+                <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                  교시
+                </PFText>
+                <DetailInfoForm.InputsSeparator />
+              </>
+            )}
+            <PFTimeInput
+              placeholder={showSessionSelect ? '수업 시작' : '시작 시간'}
+              value={startTime}
+              onValueChange={next => onPatch({ startTime: next })}
+              aria-label="시작 시간"
+              disabled={timeInputsDisabled}
+              className={styles.timePicker}
+            />
+            <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.tilde}>
+              ~
+            </PFText>
+            <PFTimeInput
+              placeholder={showSessionSelect ? '수업 종료' : '종료 시간'}
+              value={endTime}
+              onValueChange={next => onPatch({ endTime: next })}
+              aria-label="종료 시간"
+              disabled={timeInputsDisabled}
+              className={styles.timePicker}
+            />
+          </div>
+        }
+      />
+    </DetailInfoForm.Row>
+  )
 }
 
 type ApplyPreferredScheduleProps = {
   maxBlocks: number
   value?: ApplyPreferredScheduleBlock[]
   onChange?: (blocks: ApplyPreferredScheduleBlock[]) => void
+  /** false면 하단 추가 버튼 숨김 (제목 trailing만 쓸 때) */
+  showFooterAddButton?: boolean
   /** 희망 교육일 선택 최소 `YYYY-MM-DD`. null이면 제한 없음 */
   minDate?: string | null
   /** 희망 교육일 선택 최대 `YYYY-MM-DD`. null이면 제한 없음 */
   maxDate?: string | null
   /** 지정 시 이 날짜만 선택 가능 (교육 예정일 구간 합집합) */
   enabledDates?: ReadonlySet<string> | null
+  /** 기관 복수+기간 — 모집 1일 최대 차시 희망 차시 셀렉 (CMS institution preferred) */
+  showSessionSelect?: boolean
+  sessionOptions?: PFSelectOption[]
+  /** 일정형 단일 기간 — 희망 교육일만 */
+  dateOnlyPreferred?: boolean
 }
 
 export function ApplyPreferredSchedule({
@@ -76,6 +213,10 @@ export function ApplyPreferredSchedule({
   minDate = null,
   maxDate = null,
   enabledDates = null,
+  showSessionSelect = false,
+  sessionOptions = [],
+  dateOnlyPreferred = false,
+  showFooterAddButton = false,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
   const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
@@ -109,77 +250,35 @@ export function ApplyPreferredSchedule({
   return (
     <div className={styles.root}>
       {displayBlocks.map((block, index) => {
-        const startTime = normalizeHHmm(block.startTime)
-        const endTime = normalizeHHmm(block.endTime)
+        const rankTitle = resolvePreferredScheduleBlockTitle(index, displayBlocks.length, cap)
         return (
-          <div key={index} className={styles.block}>
+          <div key={index} className={styles.blockRow}>
             <div className={styles.blockBody}>
-              <PFText as="p" typo="bd-md-md" color="black" className={styles.title}>
-                ■ {index + 1}지망
-              </PFText>
-              <div className={styles.field}>
-                <PFText as="p" typo="bd-sm-md" color="neutral-cool-700" className={styles.fieldLabel}>
-                  희망 교육일
+              {rankTitle ? (
+                <PFText as="p" typo="bd-md-sb" color="black" className={styles.blockTitle}>
+                  {rankTitle}
                 </PFText>
-                <PFDateInput
-                  variant="formPage"
-                  size="large"
-                  picker="date"
-                  placeholder="희망 교육 날짜를 선택하세요"
-                  value={block.date}
+              ) : null}
+              <DetailInfoForm
+                title={rankTitle || '희망 교육 일정'}
+                hideHeader
+                mode="edit"
+                className={styles.scheduleForm}
+              >
+                <PreferenceScheduleFields
+                  block={block}
+                  onPatch={patch => patchBlock(index, patch)}
                   minDate={minDate}
                   maxDate={maxDate}
                   enabledDates={enabledDates}
-                  onValueChange={next => patchBlock(index, { date: next })}
+                  showSessionSelect={showSessionSelect}
+                  sessionOptions={sessionOptions}
+                  dateOnlyPreferred={dateOnlyPreferred}
                 />
-              </div>
-              <div className={styles.field}>
-                <PFText as="p" typo="bd-sm-md" color="neutral-cool-700" className={styles.fieldLabel}>
-                  1차시 희망 교육 시간
-                </PFText>
-                <div className={styles.timeRow}>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    width={120}
-                    inputMode="numeric"
-                    placeholder="수업 진행 교시"
-                    value={block.classPeriod}
-                    onValueChange={next =>
-                      patchBlock(index, { classPeriod: next.replace(/[^\d]/g, '') })
-                    }
-                  />
-                  <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
-                    교시
-                  </PFText>
-                  <PFSelect
-                    variant="formPage"
-                    size="large"
-                    width={140}
-                    placeholder="시작 시간"
-                    options={timeSelectOptionsFor(startTime)}
-                    value={startTime}
-                    onValueChange={next => patchBlock(index, { startTime: next })}
-                    aria-label="시작 시간"
-                  />
-                  <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.timeUnit}>
-                    ~
-                  </PFText>
-                  <PFSelect
-                    variant="formPage"
-                    size="large"
-                    width={140}
-                    placeholder="종료 시간"
-                    options={timeSelectOptionsFor(endTime)}
-                    value={endTime}
-                    onValueChange={next => patchBlock(index, { endTime: next })}
-                    aria-label="종료 시간"
-                  />
-                </div>
-              </div>
+              </DetailInfoForm>
             </div>
             {index > 0 ? (
-              <div className={styles.delete}>
+              <div className={styles.deleteCell}>
                 <PFItemDeleteButton
                   aria-label={`${index + 1}지망 삭제`}
                   onClick={() => removeBlock(index)}
@@ -189,13 +288,12 @@ export function ApplyPreferredSchedule({
           </div>
         )
       })}
-      {displayBlocks.length >= cap ? null : (
-        <button type="button" className={styles.add} onClick={addBlock}>
-          <PFText as="span" typo="bd-md-md" color="primary-500">
-            + 희망 일정 추가 (최대 {cap}개)
-          </PFText>
-        </button>
-      )}
+      {showFooterAddButton ? (
+        <ApplyPreferredScheduleAddButton
+          onClick={addBlock}
+          disabled={displayBlocks.length >= cap}
+        />
+      ) : null}
     </div>
   )
 }

@@ -48,10 +48,7 @@ export interface ProgramResponse {
   schoolId?: string;
   district?: string;
   ips?: string;
-  /**
-     * 교육 대상 첫 값. targetLevels[0]과 같다. 없으면 null.
-     * @nullable
-     */
+  /** 교육 대상 첫 값. targetLevels[0]과 같다. 없으면 null. */
   targetLevel?: ProgramResponseTargetLevel;
   /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
   targetLevels?: string[];
@@ -89,15 +86,9 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  /**
-     * 참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null.
-     * @nullable
-     */
+  /** 참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null. */
   remarks?: string | null;
-  /**
-     * 참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null.
-     * @nullable
-     */
+  /** 참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null. */
   applicationMethod?: string | null;
   recruitmentTargetDetail?: string;
   educationTargetDetail?: string;

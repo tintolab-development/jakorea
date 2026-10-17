@@ -71,5 +71,5 @@ export async function giveUpUjatVolunteerApplicationRemote(
   reason: string
 ): Promise<void> {
   assertUjatVolunteerMutationsRemoteReady()
-  await giveUpGeneralVolunteerApplication(applicationId, reason)
+  await giveUpGeneralVolunteerApplication(applicationId, { reason: reason.trim() })
 }

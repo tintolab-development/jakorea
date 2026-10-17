@@ -27,11 +27,8 @@ export type SponsorRegisterPayload = {
   detailAddress: string
   homepageUrl: string
   securityMemo: string
-  /**
-   * 로고 로컬 파일. `SponsorRequest`에 `logoFileId`가 없어 전송하지 않음.
-   * BE가 업로드·id를 받으면 create 경로에 연결한다.
-   */
-  logoFile: File | null
+  /** 등록 시 업로드 후 PATCH `logoFileIds`로 연결 */
+  logoFiles: File[]
 }
 
 export type SponsorManagementTableContext = Record<string, never>

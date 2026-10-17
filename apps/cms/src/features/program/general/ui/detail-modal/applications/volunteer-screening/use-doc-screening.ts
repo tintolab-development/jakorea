@@ -471,7 +471,10 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     handleBulkReject,
     handleBulkApprove,
     excelExport,
-    count: tableData.length,
+    count:
+      volunteerRemote.remoteEnabled && volunteerRemote.listTotalElements != null
+        ? volunteerRemote.listTotalElements
+        : tableData.length,
     bulkApproveOpen,
     bulkRejectOpen,
     closeBulkApproveModal,

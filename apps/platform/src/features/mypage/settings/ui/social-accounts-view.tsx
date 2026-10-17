@@ -50,16 +50,16 @@ function StatusDot({ connected }: { connected: boolean }) {
   return (
     <svg
       className={styles.statusDot}
-      width="8"
-      height="8"
-      viewBox="0 0 8 8"
+      width="2"
+      height="2"
+      viewBox="0 0 2 2"
       fill="none"
       aria-hidden="true"
     >
       <circle
-        cx="4"
-        cy="4"
-        r="4"
+        cx="1"
+        cy="1"
+        r="1"
         fill={connected ? 'var(--color-primary-500)' : 'var(--color-neutral-cool-500)'}
       />
     </svg>
@@ -80,13 +80,17 @@ export type SettingsSocialAccountsViewProps = {
   linkErrorReason?: string | null
 }
 
-export function SettingsSocialAccountsView({ linkErrorReason = null }: SettingsSocialAccountsViewProps) {
-  const [connectedMap, setConnectedMap] = useState<Record<SocialProvider, boolean>>(emptyConnectedMap)
+export function SettingsSocialAccountsView({
+  linkErrorReason = null,
+}: SettingsSocialAccountsViewProps) {
+  const [connectedMap, setConnectedMap] =
+    useState<Record<SocialProvider, boolean>>(emptyConnectedMap)
   const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const remote = isPortalSocialAuthLinkRemoteEnabled() && Boolean(getAccessToken())
   const returnError = socialErrorMessage(linkErrorReason)
+  const displayError = returnError ?? listError ?? actionError
 
   useEffect(() => {
     if (!remote) return
@@ -159,17 +163,16 @@ export function SettingsSocialAccountsView({ linkErrorReason = null }: SettingsS
     startLink(provider)
   }
 
-  const message = actionError ?? returnError ?? listError
-
   return (
     <section className={styles.section}>
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.description}>
-        연결한 계정으로 이메일 없이 로그인할 수 있어요. 연결은 선택 사항이에요.
+      <PFText as="p" typo="bd-md-rg" color="primary-800" className={styles.description}>
+        소셜 계정을 연결하면 이메일과 비밀번호 없이 로그인할 수 있어요. 연결은 선택 사항이며,
+        마이페이지에서 언제든 연결할 수 있어요.
       </PFText>
 
-      {message ? (
-        <PFText as="p" typo="bd-sm-md" color="error" className={styles.error}>
-          {message}
+      {displayError ? (
+        <PFText typo="bd-sm-rg" color="error" className={styles.error} role="alert">
+          {displayError}
         </PFText>
       ) : null}
 

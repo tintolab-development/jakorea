@@ -24,10 +24,17 @@ import {
   CmsInput,
   CmsRadioGroup,
   FileSelectField,
+  useCmsAlert,
 } from '@/shared/ui'
 import { FileDownloadRowIcon } from '@/shared/ui/icons/FileDownloadRowIcon'
 import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
 import { sponsorLogoFallbackFileName } from '@/features/sponsor/lib/sponsor-logo-files'
+import {
+  mergeSponsorLogoFiles,
+  SPONSOR_LOGO_ACCEPT,
+  SPONSOR_LOGO_GUIDE_LINES,
+  validateSponsorLogoTotalCount,
+} from '@/features/sponsor/lib/sponsor-logo-file-policy'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatKoreanBusinessNumber } from '@jakorea/domain/shared/korean-business-number'
@@ -55,11 +62,6 @@ export type BasicInfoEditState = {
   logos: SponsorLogoFile[]
   pendingLogoFiles: File[]
 }
-
-const LOGO_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
 
 function displayText(value: string | undefined): string {
   const trimmed = value?.trim() ?? ''
@@ -123,6 +125,7 @@ export function SponsorBasicInfoSection({
   canWrite = false,
 }: SponsorBasicInfoSectionProps) {
   const [isSponsorshipStatusDropdownOpen, setIsSponsorshipStatusDropdownOpen] = useState(false)
+  const { showAlert } = useCmsAlert()
 
   const sponsorshipStartDisplay = value.sponsorshipStartDate
     ? dayjs(value.sponsorshipStartDate).format('YYYY.MM.DD')
@@ -324,17 +327,32 @@ export function SponsorBasicInfoSection({
             <div className="sponsor-detail-basic-info__logo-edit">
               <FileSelectField
                 multiple
-                accept=".jpg,.jpeg,.png"
+                accept={SPONSOR_LOGO_ACCEPT}
+                maxTotalBytes={0}
                 fileNames={[
                   ...value.logos.map(file => file.fileName),
                   ...value.pendingLogoFiles.map(file => file.name),
                 ]}
-                currentTotalBytes={value.pendingLogoFiles.reduce((sum, file) => sum + file.size, 0)}
+                currentTotalBytes={0}
                 onFilesChange={files =>
-                  onChange(prev => ({
-                    ...prev,
-                    pendingLogoFiles: [...prev.pendingLogoFiles, ...files],
-                  }))
+                  onChange(prev => {
+                    const nextPending = mergeSponsorLogoFiles(prev.pendingLogoFiles, files)
+                    const validation = validateSponsorLogoTotalCount(
+                      prev.logos.length,
+                      nextPending
+                    )
+                    if (validation) {
+                      showAlert({ title: '안내', content: validation })
+                      return prev
+                    }
+                    if (
+                      nextPending.length === prev.pendingLogoFiles.length &&
+                      files.length > 0
+                    ) {
+                      return prev
+                    }
+                    return { ...prev, pendingLogoFiles: nextPending }
+                  })
                 }
                 onRemoveFile={index =>
                   onChange(prev => {
@@ -348,7 +366,7 @@ export function SponsorBasicInfoSection({
                     }
                   })
                 }
-                guideLines={LOGO_GUIDE_LINES}
+                guideLines={[...SPONSOR_LOGO_GUIDE_LINES]}
               />
             </div>
           }

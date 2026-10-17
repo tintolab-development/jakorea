@@ -4,7 +4,7 @@ import {
   isOpaqueScheduleOptionToken,
   resolveApplicationContentFromAnswers,
   resolvePreferredEducationScheduleDisplayLabel,
-} from './application-content-from-answers'
+} from './application-content-from-answers.ts'
 
 const participant = resolveApplicationContentFromAnswers({
   'program-participant-application-seed-self-intro': '자기소개입니다.',
@@ -77,9 +77,9 @@ assert.ok(resolved?.includes('특별 JOB담'))
 
 const lineResolved = resolvePreferredEducationScheduleDisplayLabel({
   preferredScheduleOptionValues: ['line:1'],
-  educationScheduleLines: ['첫째 날', '2026년 04월 20일(월) 9:30 ~ 12:20'],
+  educationScheduleLines: ['첫째 날 | 2차시', '2026년 04월 20일(월) 9:30 ~ 12:20 | 2차시'],
 })
-assert.equal(lineResolved, '2026년 04월 20일(월) 9:30 ~ 12:20')
+assert.equal(lineResolved, '2026년 04월 20일(월) 9:30 ~ 12:20 | 2차시')
 
 const fromSelectedLabels = resolveApplicationContentFromAnswers({
   'program-instructor-application-seed-available-schedule': {

@@ -1,3 +1,4 @@
+import { isSurveyParagraphDuplicateDeleteLocked } from '@/features/template/lib/survey-paragraph-editor-locks'
 import type {
   AgreementExplanationTextParagraph,
   IdTypeWithInputParagraph,
@@ -214,6 +215,8 @@ export function removeSurveyParagraph(
   paragraphId: string
 ): WritingFormParagraph[] | null {
   if (paragraphs.length <= 1) return null
+  const target = paragraphs.find(p => p.id === paragraphId)
+  if (target != null && isSurveyParagraphDuplicateDeleteLocked(target)) return null
   if (!paragraphs.some(p => p.id === paragraphId)) return null
   return paragraphs.filter(p => p.id !== paragraphId)
 }
@@ -227,6 +230,7 @@ export function duplicateSurveyParagraph(
   const idx = paragraphs.findIndex(p => p.id === paragraphId)
   if (idx < 0) return null
   const source = paragraphs[idx]!
+  if (isSurveyParagraphDuplicateDeleteLocked(source)) return null
   const clone = cloneWritingFormParagraphWithNewParagraphId(source, newParagraphId)
   const next = [...paragraphs]
   next.splice(idx + 1, 0, clone)

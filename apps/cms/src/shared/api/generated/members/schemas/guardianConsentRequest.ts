@@ -12,6 +12,7 @@ export interface GuardianConsentRequest {
   guardianPhone?: string;
   guardianRelation?: string;
   guardianVerificationSessionId?: number;
+  signupIntentId?: string;
   niceCiHash?: string;
   niceDiHash?: string;
   verificationProvider?: string;

@@ -20,12 +20,9 @@ import {
   SignInPage,
   SignUpCompletePage,
   SignUpPage,
+  SignUpPortraitConsentPage,
   SignUpIdentityCallbackPage,
   SignUpGuardianIdentityCallbackPage,
-  SignUpIdentityMockNicePage,
-  SignUpGuardianIdentityMockNicePage,
-  FindPasswordIdentityMockNicePage,
-  FindEmailIdentityMockNicePage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
   SignUpSocialConnectCallbackPage,
@@ -43,11 +40,13 @@ import {
   MypageEducationDetailPage,
   MypageEducationSettlementConfirmPage,
   MypageEducationSettlementWritePage,
+  MypageEducationInstitutionGuidanceWritePage,
   MypageVolunteerPage,
   MypageVolunteerDetailPage,
   MypageLecturePage,
   MypageLectureDetailPage,
   MypageSettingsPage,
+  MypageSettingsConsentPage,
 } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
@@ -210,30 +209,17 @@ export const router = createBrowserRouter([
     element: <AppLayoutRoute layout="full" />,
     children: [
       { path: '/auth/sign-up/identity/callback', element: <SignUpIdentityCallbackPage /> },
-      { path: '/auth/sign-up/identity/mock', element: <SignUpIdentityMockNicePage /> },
       {
         path: '/auth/sign-up/guardian-identity/callback',
         element: <SignUpGuardianIdentityCallbackPage />,
-      },
-      {
-        path: '/auth/sign-up/guardian-identity/mock',
-        element: <SignUpGuardianIdentityMockNicePage />,
       },
       {
         path: '/auth/find-password/identity/callback',
         element: <FindPasswordIdentityCallbackPage />,
       },
       {
-        path: '/auth/find-password/identity/mock',
-        element: <FindPasswordIdentityMockNicePage />,
-      },
-      {
         path: '/auth/find-email/identity/callback',
         element: <FindEmailIdentityCallbackPage />,
-      },
-      {
-        path: '/auth/find-email/identity/mock',
-        element: <FindEmailIdentityMockNicePage />,
       },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/education/:applicationType/:applicationId', element: <MypageEducationDetailPage /> },
@@ -248,8 +234,24 @@ export const router = createBrowserRouter([
         element: <MypageInstructorApplyConsentPage />,
       },
       {
+        path: '/mypage/settings/consents/:consentKey',
+        element: <MypageSettingsConsentPage />,
+      },
+      {
+        path: '/auth/sign-up/portrait-consent',
+        element: <SignUpPortraitConsentPage />,
+      },
+      {
         path: '/mypage/education/:applicationId/settlement/write',
         element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/education/:applicationType/:applicationId/guidance/write',
+        element: <MypageEducationInstitutionGuidanceWritePage />,
+      },
+      {
+        path: '/mypage/education/:applicationId/guidance/write',
+        element: <MypageEducationInstitutionGuidanceWritePage />,
       },
       {
         path: '/mypage/education/:applicationId/settlement/confirm',

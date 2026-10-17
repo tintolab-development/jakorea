@@ -6,6 +6,8 @@ import {
   applyDateToEducationScheduleLine,
   buildSameDateScheduleChangePairs,
   educationOperationRangeSealKeyFromSchedulePrefix,
+  findEducationScheduleChangePeriodIssues,
+  findEducationScheduleLinesOutsideOperationRange,
   formatEducationScheduleLineForChangeModal,
   isOutsideEducationOperationRange,
   padEducationScheduleChangeLabel,
@@ -68,6 +70,35 @@ describe('education-schedule-change', () => {
     expect(isOutsideEducationOperationRange(dayjs('2026-09-30'), start, end)).toBe(true)
     expect(isOutsideEducationOperationRange(dayjs('2026-10-12'), start, end)).toBe(false)
     expect(isOutsideEducationOperationRange(dayjs('2027-01-01'), start, end)).toBe(true)
+  })
+
+  it('운영기간 밖에 남은 기존 일정의 이동을 사전에 찾는다', () => {
+    expect(
+      findEducationScheduleChangePeriodIssues(
+        ['26년 11월 24일(화) 22:56 ~ 23:56'],
+        ['26년 10월 22일(목) 22:56 ~ 23:56'],
+        '2026-10-14',
+        '2026-11-19'
+      )
+    ).toEqual([
+      {
+        index: 0,
+        fromDate: '2026-11-24',
+        toDate: '2026-10-22',
+        sourceOutsideOperationRange: true,
+        targetOutsideOperationRange: false,
+      },
+    ])
+  })
+
+  it('저장할 교육 일정이 사업 운영기간 밖이면 인덱스를 반환한다', () => {
+    expect(
+      findEducationScheduleLinesOutsideOperationRange(
+        ['26년 10월 28일(수) 10:00 ~ 12:00', '26년 11월 24일(화) 22:56 ~ 23:56'],
+        '2026-10-14',
+        '2026-11-19'
+      )
+    ).toEqual([1])
   })
 
   it('바뀐 일정 줄의 시작 달력일을 same-date 요청 쌍으로 만든다', () => {

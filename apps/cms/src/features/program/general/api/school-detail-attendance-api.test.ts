@@ -79,6 +79,42 @@ describe('school-detail-attendance-api', () => {
     expect(groups[0]?.students[0]?.participantId).toBe(55)
   })
 
+  it('excludes unassigned and empty attendance schedules', () => {
+    const groups = buildSchoolDetailAttendanceSessionGroups({
+      schoolId: 'school-1',
+      program: { id: 'p1' } as Program,
+      sessions: [
+        {
+          round: 1,
+          date: '2026.01.09',
+          dayOfWeek: '금',
+          duration: '2시간',
+          format: '대면',
+          classNum: '1',
+          timeRange: '9:20~10:10',
+          resolvedScheduleId: 101,
+        },
+        {
+          round: 2,
+          date: '2026.01.10',
+          dayOfWeek: '토',
+          duration: '2시간',
+          format: '대면',
+          classNum: '1',
+          timeRange: '9:20~10:10',
+          resolvedScheduleId: 102,
+        },
+      ],
+      rosterStudents: [],
+      attendancesByScheduleId: {
+        '101': [{ participantId: 55, status: 'PRESENT' }],
+        '102': [],
+      },
+    })
+
+    expect(groups.map(group => group.scheduleId)).toEqual([101])
+  })
+
   it('fetches roster and attendances for resolved schedules', async () => {
     fetchOrganizationStudentRosterRemoteMock.mockResolvedValue({
       rows: [{ rosterId: 1, studentName: 'A', participantId: 9 }],

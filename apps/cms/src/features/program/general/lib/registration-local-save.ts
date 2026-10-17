@@ -43,8 +43,18 @@ import {
   bindGeneralRecruitDetailMediaToRows,
   bindRecruitDetailMediaAfterProgramCreate,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+
+export function resolveTrainedTeacherEducationJournalEnabled(
+  raw: unknown,
+  fallback?: boolean
+): boolean {
+  if (raw === 'yes' || raw === true) return true
+  if (raw === 'no' || raw === false) return false
+  return fallback ?? false
+}
 
 function persistRegistrationAndRecruitOverlay(
   program: Program,
@@ -442,12 +452,10 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     getProgramRegistrationOverlayRecord()[
       'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled'
     ]
-  const educationJournalEnabled =
-    journalRaw === 'yes' || journalRaw === true
-      ? true
-      : journalRaw === 'no' || journalRaw === false
-        ? false
-        : (withRecruit.generalCommonInfo?.educationJournalEnabled ?? false)
+  const educationJournalEnabled = resolveTrainedTeacherEducationJournalEnabled(
+    journalRaw,
+    withRecruit.generalCommonInfo?.educationJournalEnabled
+  )
   const teacherTrainingEnabled =
     args.editorExtras?.teacherTrainingEnabled ??
     withRecruit.generalCommonInfo?.teacherTrainingEnabled ??

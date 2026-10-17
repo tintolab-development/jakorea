@@ -4,10 +4,7 @@ import {
   IDENTITY_MODULE_IDLE_TITLE,
 } from '@jakorea/domain/shared/identity-module-copy'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import {
-  useGuardianIdentityVerification,
-  type IdentityChallengeCompleteResult,
-} from '@/features/auth/identity-verification'
+import { useGuardianBridgeVerification } from '@/features/auth/identity-verification'
 import { PFButton, PFText } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
@@ -22,23 +19,25 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
   const completeRef = useRef(guardian.identity.complete)
   completeRef.current = guardian.identity.complete
 
-  const handleSuccess = useCallback((result: IdentityChallengeCompleteResult) => {
-    completeRef.current({
-      sessionId: result.sessionId,
-      verifiedName: result.verifiedName,
-      verifiedPhone: result.verifiedPhone,
-    })
+  const handleSuccess = useCallback((result: { identitySessionId: number }) => {
+    void completeRef.current(result)
   }, [])
 
-  const { verify, isVerifying, errorMessage } = useGuardianIdentityVerification({
+  const { verify, isVerifying, errorMessage } = useGuardianBridgeVerification({
     onSuccess: handleSuccess,
   })
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="보호자 본인인증을 진행해 주세요"
-        description="안전하게 가입하기 위해 휴대폰 본인인증이 필요해요. 동의 확인과 법정대리인 확인을 위해 사용돼요."
+        title="보호자 본인인증을 진행해 주세요."
+        description={
+          <>
+            안전하게 가입하기 위해 휴대폰 본인인증이 필요해요.
+            <br />
+            인증 결과는 동의 확인과 법정대리인 확인을 위해 사용돼요.
+          </>
+        }
         actions={
           <PFButton
             size="xlarge"
@@ -59,9 +58,9 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
               <br />
               {IDENTITY_MODULE_IDLE_DESCRIPTION}
             </PFText>
-            {errorMessage ? (
+            {(errorMessage || guardian.identity.errorMessage) ? (
               <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
-                {errorMessage}
+                {errorMessage ?? guardian.identity.errorMessage}
               </PFText>
             ) : null}
           </div>

@@ -8,12 +8,11 @@
 import type { SlotResponse } from './slotResponse';
 
 /**
- * GENERAL_ORGANIZATION 신청기관의 현재 일정/학급 임시배정. 전체 저장은 revision 단위로 교체됩니다.
+ * GENERAL_ORGANIZATION 신청기관의 현재 교육 일정 임시배정. 전체 저장은 revision 단위로 교체됩니다. 일정에는 학년·학급을 연결하지 않습니다.
  */
 export interface AssignmentResponse {
   programId?: number;
   organizationApplicationId?: number;
   revision?: number;
-  totalClassCount?: number;
   slots?: SlotResponse[];
 }

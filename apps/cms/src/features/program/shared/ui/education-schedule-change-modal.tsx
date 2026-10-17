@@ -5,7 +5,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import type { DateValue } from '@/types'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { educationScheduleRangeHasClock } from '@/features/template/lib/format-education-schedule-line'
 import {
   applyChangedRangesToEducationScheduleLines,
   EDUCATION_SCHEDULE_CHANGE_MODAL_DESCRIPTION,
@@ -119,15 +118,12 @@ export function EducationScheduleChangeModal({
                     presetMode={isPeriodMode ? 'period' : 'schedule'}
                     customizable={false}
                     showPeriodToggle={false}
-                    showTimeToggle={!isPeriodMode}
-                    lockTimeToggleOn={!isPeriodMode}
+                    showTimeToggle={false}
                     lockPeriodToggleOn={isPeriodMode}
                     suppressAutoTodayWhenEmpty
                     value={selectedRange?.[0] ?? null}
                     appliedSurfaceRange={selectedRange}
-                    appliedSurfaceWithTime={
-                      selectedRange != null && educationScheduleRangeHasClock(selectedRange)
-                    }
+                    appliedSurfaceWithTime={false}
                     initialPopoverRange={originalRange}
                     placeholder="변경 일정을 선택해 주세요"
                     width={isPeriodMode ? 360 : 240}

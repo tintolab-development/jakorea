@@ -10,7 +10,6 @@ import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import type { TemplateFullpageModalFooterAction } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import {
   UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeUjatProgramRegistrationStepKey,
@@ -274,6 +273,21 @@ function UjatProgramRegistrationFullpageModalInner({
           onClick: () => flow.goToPhase('program'),
         },
         {
+          label: '신청 정보 작성하기',
+          variant: 'primary',
+          showArrow: true,
+          onClick: () => flow.goToPhase('application'),
+        },
+      ]
+    }
+    if (flow.phase === 'application') {
+      return [
+        {
+          label: '모집 정보 돌아가기',
+          variant: 'secondary',
+          onClick: () => flow.goToPhase('recruitment'),
+        },
+        {
           label: '프로그램 등록 완료',
           variant: 'primary',
           showArrow: false,
@@ -298,6 +312,7 @@ function UjatProgramRegistrationFullpageModalInner({
     <>
       <TemplateFullpageModal
         open={open}
+        bodyLoading={flow.isDraftLoading}
         onClose={handleClose}
         title={UJAT_REGISTRATION_MODAL_TITLE}
         titleReadOnly
@@ -321,7 +336,7 @@ function UjatProgramRegistrationFullpageModalInner({
             <RegistrationStepTemplateChrome
               templateName={flow.stepTemplateName}
               isDefault={flow.isDefaultStepTemplate}
-              category="application"
+              category={flow.phase === 'application' ? 'application_form' : 'application'}
               pickerOpen={templatePickerOpen}
               onOpenPicker={() => setTemplatePickerOpen(true)}
               onClosePicker={() => setTemplatePickerOpen(false)}
@@ -333,25 +348,24 @@ function UjatProgramRegistrationFullpageModalInner({
         }
         headerActionsLeading={
           <RegistrationDevAutofillButton
-            onClick={() => {
-              void applyDevProgramRegistrationAutofill('ujat')
+            onClick={async () => {
+              await applyDevProgramRegistrationAutofill('ujat')
             }}
           />
         }
-        footerActions={flow.isDraftLoading ? undefined : footerActions}
+        footerActions={footerActions}
         leftContent={
-          flow.isDraftLoading ? (
-            <FormDraftLoading />
-          ) : (
-            <HideParagraphSelectionChromeContext.Provider
-              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
-              value
-            >
-              {flow.panels.leftContent}
-            </HideParagraphSelectionChromeContext.Provider>
-          )
+          <HideParagraphSelectionChromeContext.Provider
+            // 상·하반기는 같은 모집 템플릿을 사용하지만 서로 다른 RHF/overlay
+            // 범위를 가진다. 단계 키까지 포함해야 탭 왕복 시 이전 반기의 Form
+            // 인스턴스를 재사용하지 않고 현재 반기 값으로 재수화한다.
+            key={`${flow.activeStep}::${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+            value
+          >
+            {flow.panels.leftContent}
+          </HideParagraphSelectionChromeContext.Provider>
         }
-        rightNavigation={null} // 공통·모집만 있어 커스텀 필드 우측 패널 미노출
+        rightNavigation={flow.phase === 'application' ? flow.panels.rightNavigation : null}
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}

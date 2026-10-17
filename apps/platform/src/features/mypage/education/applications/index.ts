@@ -20,16 +20,28 @@ export {
   EDUCATION_TEACHER_DELIVERY_STATUS_LABEL,
   hasTeacherAssignmentAsideContent,
 } from './model/types'
+export { EDUCATION_APPLICATION_TAB_ITEMS } from './lib/application-tab-items'
 export {
-  EDUCATION_APPLICATION_TAB_ITEMS,
-  MOCK_EDUCATION_APPLICATIONS,
-  cancelMockEducationApplication,
-  getMockEducationApplicationById,
-  getMockEducationApplications,
-  getMockEducationApplicationsVersion,
-  subscribeMockEducationApplications,
-  updateMockTeacherApplicationGuidance,
-} from './lib/mock-applications'
+  educationInstitutionGuidanceWritePath,
+  educationInstitutionGuidanceApplicationTabPath,
+} from './lib/guidance-path'
+export {
+  shouldShowTeacherInstitutionGuidanceWrite,
+  shouldShowTeacherInstitutionGuidanceWriteForProfile,
+  shouldShowTeacherInstitutionGuidanceEditOnApplicationTab,
+  shouldShowTeacherInstitutionGuidanceEditLink,
+  hasTeacherApplicationGuidanceContent,
+  hasInstitutionGuidanceDraftContent,
+  resolveTeacherInstitutionGuidanceCtaLabel,
+} from './lib/teacher-institution-guidance'
+export { resolveTeacherPreferredSchedules } from './lib/teacher-preferred-schedules'
+export {
+  mapInstitutionGuidanceFromApplicationAnswers,
+  buildInstitutionGuidanceAnswerPatch,
+  teacherGuidanceContentFromFormState,
+  teacherInstitutionGuidanceFormStateFromTeacherContent,
+  type TeacherInstitutionGuidanceFormState,
+} from './lib/institution-guidance-from-answers'
 export {
   filterEducationStatusApplications,
   filterLectureStatusApplications,
@@ -68,6 +80,7 @@ export {
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
+  EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
 } from './lib/detail-tabs'
@@ -104,8 +117,25 @@ export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  useProbeEducationApplicationType,
   useMyProgramApplications,
 } from './api/hooks'
+export {
+  isOrganizationStudentDocumentsQueryEnabled,
+  useDownloadPortraitConsentTemplateMutation,
+  useDownloadStudentRosterTemplateMutation,
+  useImportOrganizationStudentRosterMutation,
+  useOrganizationPortraitConsentQuery,
+  useOrganizationStudentDocumentPolicyQuery,
+  useOrganizationStudentRosterQuery,
+  useSubmitOrganizationPortraitConsentMutation,
+} from './api/student-documents-hooks'
+export { usePatchOrganizationGuidanceAnswersMutation } from './api/institution-guidance-hooks'
+export {
+  patchOrganizationGuidanceAnswers,
+  savePortalTeacherInstitutionGuidance,
+} from './api/institution-guidance-client'
+export type { OrganizationStudentDocumentsScope } from './api/student-documents-hooks'
 export type { MypageApplicationScope, MyProgramApplicationsListOptions } from './api/hooks'
 export type { ProgramApplicationType, ProgramApplicationStatusGroup } from './api/types'
 export { resolveStatusGroupForTab, resolveStatusGroupsForTab } from './api/status-group'

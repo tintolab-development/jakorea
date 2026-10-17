@@ -37,6 +37,16 @@ function toCustomPeriodIso(
  * 양식 제목 단락 「작성 기간」(직접 지정 날짜만) → binding 기간.
  * 「바로 시작」·「마감 없음」·활동일 상대 프리셋은 절대 시각이 없어 보내지 않는다.
  */
+/** 양식 제목형 단락 `surveyTitle` — 설문조사 탭·목록 표시명 */
+export function readSurveyTitleFromSchema(
+  schemaJson: string | Record<string, unknown> | null | undefined
+): string | undefined {
+  const draft = schemaJsonToWritingFormDraft(schemaJson)
+  const titleParagraph = draft?.paragraphs.find(isTitleWithPeriodParagraph)
+  const trimmed = titleParagraph?.surveyTitle?.trim()
+  return trimmed !== '' ? trimmed : undefined
+}
+
 export function readSurveySubmissionPeriodFromSchema(
   schemaJson: string | Record<string, unknown> | null | undefined
 ): SurveySubmissionPeriod {

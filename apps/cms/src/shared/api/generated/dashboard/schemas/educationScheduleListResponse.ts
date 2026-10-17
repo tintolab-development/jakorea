@@ -6,10 +6,16 @@
  * OpenAPI spec version: v9
  */
 import type { EducationScheduleItem } from './educationScheduleItem';
+import type { EducationScheduleListResponseEducationStructure } from './educationScheduleListResponseEducationStructure';
+import type { EducationScheduleListResponseSessionRound } from './educationScheduleListResponseSessionRound';
 
 export interface EducationScheduleListResponse {
   applicationId?: number;
   applicationType?: string;
+  /** 교육 진행 구조. CURRICULUM | SCHEDULE. 프로그램 상세의 lowercase wire와 달리 이 API는 UPPERCASE입니다. */
+  educationStructure?: EducationScheduleListResponseEducationStructure;
+  /** 회차 유형. SINGLE | MULTI. 이 API는 UPPERCASE입니다. */
+  sessionRound?: EducationScheduleListResponseSessionRound;
   items?: EducationScheduleItem[];
   /** 교육일정 범위 상태입니다. ASSIGNMENT_SCOPED는 확정된 일정 집합, RECORDED_ONLY는 과거 증빙만 존재, NO_SCOPE_EVIDENCE는 미확정, PROGRAM_SCHEDULE은 배정 권한이 아닌 프로그램 미리보기를 의미합니다. */
   scopeStatus?: string;

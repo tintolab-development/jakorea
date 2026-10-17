@@ -16,7 +16,7 @@ export function buildAssignedOrganizationNamesByMemberId(
 
   for (const assignment of assignments) {
     if (assignment.instructorMemberId == null) continue
-    if (!isActiveAssignment(assignment.assignmentStatus)) continue
+    if (!isActiveAssignment(assignment.assignmentStatus ?? undefined)) continue
     const orgName = assignment.organizationName?.trim()
     if (!orgName) continue
     const key = String(assignment.instructorMemberId)
