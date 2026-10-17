@@ -1,10 +1,13 @@
 import { PFText } from '@/shared/ui'
 import { splitPipeSeparatedParts } from './teacher-application-content/split-pipe-parts'
+import { InstructorAvailableSchedulesSection } from './instructor-available-schedules-section'
 import styles from './content.module.css'
 
 type EducationApplicationContentProps = {
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 강사 프로그램 신청 — `강의 진행 가능일` (성범죄 등 다른 신청 정보는 제외) */
+  instructorAvailableScheduleLines?: readonly string[]
 }
 
 function resolvePreferredScheduleLines(label: string | undefined): string[] {
@@ -19,13 +22,18 @@ function resolvePreferredScheduleLines(label: string | undefined): string[] {
 export function EducationApplicationContent({
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  instructorAvailableScheduleLines,
 }: EducationApplicationContentProps) {
   const intro = selfIntroMotivation?.trim() ?? ''
-  const scheduleLines = resolvePreferredScheduleLines(preferredEducationScheduleLabel)
+  const instructorLines = instructorAvailableScheduleLines ?? []
+  const scheduleLines = instructorLines.length > 0
+    ? []
+    : resolvePreferredScheduleLines(preferredEducationScheduleLabel)
   const hasIntro = intro.length > 0
+  const hasInstructorSchedule = instructorLines.length > 0
   const hasSchedule = scheduleLines.length > 0
 
-  if (!hasIntro && !hasSchedule) {
+  if (!hasIntro && !hasSchedule && !hasInstructorSchedule) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
         신청 내용이 없습니다.
@@ -44,6 +52,10 @@ export function EducationApplicationContent({
             {intro}
           </PFText>
         </section>
+      ) : null}
+
+      {hasInstructorSchedule ? (
+        <InstructorAvailableSchedulesSection lines={instructorLines} />
       ) : null}
 
       {hasSchedule ? (

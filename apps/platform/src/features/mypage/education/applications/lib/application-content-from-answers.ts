@@ -283,6 +283,15 @@ export function collectPreferredScheduleOptionValues(
   const seen = new Set<string>()
   for (const key of PREFERRED_SCHEDULE_ANSWER_KEYS) {
     if (key === 'preferredScheduleBlocks' || !(key in answers)) continue
+    const row = asRecord(answers[key])
+    if (row && Array.isArray(row.selectedSlotIds)) {
+      for (const id of row.selectedSlotIds) {
+        const token = readTrimmedString(id)
+        if (!token || !isOpaqueScheduleOptionToken(token) || seen.has(token)) continue
+        seen.add(token)
+        out.push(token)
+      }
+    }
     for (const value of flattenAnswerStrings(answers[key])) {
       if (!isOpaqueScheduleOptionToken(value) || seen.has(value)) continue
       seen.add(value)
