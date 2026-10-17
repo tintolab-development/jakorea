@@ -414,7 +414,11 @@ export async function checkRadioIfVisible(page: Page, label: string | RegExp) {
   const radio = page.getByRole('radio', { name: label }).first()
   if ((await radio.count()) === 0) return
   if (!(await radio.isVisible().catch(() => false))) return
-  await radio.check({ force: true })
+  if (await radio.isChecked().catch(() => false)) return
+  await radio.click({ force: true })
+  if (!(await radio.isChecked().catch(() => false))) {
+    await page.getByText(label, { exact: true }).first().click({ force: true })
+  }
   await expect(page.getByRole('radio', { name: label }).first()).toBeChecked({ timeout: 5_000 })
 }
 

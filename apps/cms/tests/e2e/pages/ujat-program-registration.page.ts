@@ -1,8 +1,7 @@
 /**
  * UJAT 프로그램 신규 등록 POM
  *
- * 플로우: 공통 → 모집(참여자·상/하반기 봉사) → 등록 완료
- * 신청 양식은 고정 시드라 위저드에서 작성하지 않는다.
+ * 플로우: 공통 → 모집(참여자·상/하반기 봉사) → 신청(기관·봉사자) → 등록 완료
  */
 
 import { type Page, expect } from '@playwright/test'
@@ -94,6 +93,21 @@ export class UjatProgramRegistrationPage {
       await expect(this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).not.toHaveValue('', {
         timeout: 15_000,
       })
+      // 자동입력 이벤트가 끝났어도 초기 Form editor hydration이 한 프레임
+      // 늦게 끝날 수 있다. 실제 화면에 필수 기간·교육 과정이 반영된 뒤
+      // 다음 단계로 진행해야 gate가 정상적으로 같은 overlay를 읽는다.
+      await expect(
+        this.page.getByRole('button', { name: '사업 운영 기간을 선택하세요', exact: true })
+      ).toHaveCount(0, { timeout: 15_000 })
+      // 자동입력 샘플은 호출마다 교육 과정이 달라질 수 있다. 특정 라벨을
+      // 고정하지 않고 실제 교육 과정 Select가 선택값을 가진 시점만 기다린다.
+      await expect(
+        this.page
+          .locator('.detail-info-form__field')
+          .filter({ hasText: '교육 과정' })
+          .locator('.ant-select-selection-item')
+          .first()
+      ).toBeVisible({ timeout: 15_000 })
       await this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first().fill(this.programTitle)
     }
     await this.page
@@ -235,10 +249,11 @@ export class UjatProgramRegistrationPage {
   }
 
   async goToRecruitment() {
-    await this.page.getByRole('button', { name: '모집 정보 작성하기' }).scrollIntoViewIfNeeded()
-    await this.page.getByRole('button', { name: '모집 정보 작성하기' }).click()
+    const nextButton = this.page.getByRole('button', { name: '모집 정보 작성하기' })
+    await expect(nextButton).toBeVisible({ timeout: 30_000 })
+    await nextButton.click()
     await expect(this.page).toHaveURL(/ujatStep=recruit-/)
-    await expect(this.page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
+    await expect(this.page.getByRole('button', { name: '신청 정보 작성하기' })).toBeVisible({
       timeout: 30_000,
     })
   }
@@ -288,6 +303,52 @@ export class UjatProgramRegistrationPage {
     await clickRegistrationTabIfVisible(this.page, '하반기 봉사자 모집 정보')
     await this.fillRecruitSharedFields()
     await clickRegistrationTabIfVisible(this.page, '참여자 모집 정보')
+  }
+
+  async goToApplication() {
+    const nextButton = this.page.getByRole('button', { name: '신청 정보 작성하기' })
+    await expect(nextButton).toBeVisible({ timeout: 30_000 })
+    await nextButton.click()
+    await expect(this.page).toHaveURL(/ujatStep=application-ujat-/)
+    await expect(this.page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(this.page.getByText('참여 기관 신청 정보', { exact: true })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(this.page.getByText('봉사자 신청 정보', { exact: true })).toBeVisible({
+      timeout: 30_000,
+    })
+  }
+
+  /** 신청 — 참여 기관·봉사자 탭 왕복과 overlay/draft 보존을 확인한다. */
+  async fillApplicationInfo() {
+    await checkRadioIfVisible(this.page, '서울')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요',
+      '서울시 중구 JA Korea UJAT 신청 기관 상세 주소'
+    )
+    await fillAllByPlaceholder(this.page, '담당 교사의 내선 번호(직통 번호)', '02-1234-0001')
+    await fillAllByPlaceholder(this.page, '담당 교사의 휴대폰 번호', '010-1234-0001')
+    await fillAllByPlaceholder(this.page, '담당 교사의 이메일', CONTACT_EMAIL)
+    await fillVisibleFreeTextFields(this.page, 'E2E UJAT 기관 신청')
+
+    await clickRegistrationTabIfVisible(this.page, '봉사자 신청 정보')
+    // UJAT 신청 Form은 등록 화면 진입 시 수료자 봉사자를 기본값으로 사용한다.
+    // 지원 형태별 단락 visibility는 전용 단위 테스트에서 검증하고, E2E에서는
+    // 기본값을 임의로 바꾸어 controlled radio 상태를 깨지 않도록 한다.
+    await checkRadioIfVisible(this.page, '있음')
+    await fillByPlaceholderIfVisible(this.page, '학교명을 입력해 보세요', 'JA Korea 대학교')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '복수전공이나 부전공이 있을 경우, 함께 기재해 주세요',
+      '경제학'
+    )
+    await fillByPlaceholderIfVisible(this.page, '1365 ID', 'UJAT-E2E-1365')
+    await fillVisibleFreeTextFields(this.page, 'E2E UJAT 봉사자 신청')
+
+    await clickRegistrationTabIfVisible(this.page, '참여 기관 신청 정보')
   }
 
   private async fillRecruitSharedFields() {
@@ -436,6 +497,34 @@ export class UjatProgramRegistrationPage {
       detail.mainTitle,
       `상세 GET 대표명이 고유 테스트명과 일치해야 합니다 (actual: ${detail.mainTitle})`
     ).toBe(this.programTitle)
+
+    const bindings = await this.page.evaluate(async id => {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}/form-bindings`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      const body = (await response.json().catch(() => null)) as unknown
+      const rows = Array.isArray(body)
+        ? body
+        : Array.isArray((body as { data?: unknown[] } | null)?.data)
+          ? (body as { data: unknown[] }).data
+          : Array.isArray((body as { items?: unknown[] } | null)?.items)
+            ? (body as { items: unknown[] }).items
+            : []
+      return {
+        status: response.status,
+        applicationTemplates: rows
+          .filter(row => (row as { formType?: string } | null)?.formType === 'APPLICATION')
+          .map(row => String((row as { templateName?: string } | null)?.templateName ?? '')),
+      }
+    }, programId)
+    expect(bindings.status, '신청 Form binding GET이 성공해야 합니다').toBe(200)
+    expect(bindings.applicationTemplates).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/application-ujat-school$/),
+        expect.stringMatching(/application-ujat-volunteer$/),
+      ])
+    )
 
     return { programId, programTitle: this.programTitle }
   }
