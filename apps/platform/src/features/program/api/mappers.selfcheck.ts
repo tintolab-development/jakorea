@@ -1284,4 +1284,60 @@ assert.equal(emptyInterviewOptions.volunteerInterviewSchedule?.availableTimeSlot
 
 assert.equal(volunteerInterviewOff.volunteerInterviewSchedule, undefined)
 
+const volunteerRecruitmentAudience = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    educationTarget: 'adult',
+    recruitmentTarget: '고등학생, 대학(원)생',
+    recruitmentTargets: ['high', 'university'],
+    recruitmentTargetDetail: '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+    recruitments: [
+      {
+        recruitmentId: 186602,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { recruitmentIds: [186602], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerRecruitmentAudience)
+assert.equal(volunteerRecruitmentAudience.detailCase, 'volunteer')
+assert.equal(volunteerRecruitmentAudience.educationTargetGroupLabel, '고등학생, 대학(원)생')
+assert.equal(
+  volunteerRecruitmentAudience.educationTargetDetailLabel,
+  '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+)
+assert.equal(
+  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '모집 대상')?.value,
+  '고등학생, 대학(원)생',
+)
+assert.equal(
+  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '교육 대상'),
+  undefined,
+)
+
+const volunteerIgnoresParticipantEducationTarget = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    educationTarget: 'adult',
+    recruitmentTarget: '고등학생, 대학(원)생',
+    recruitmentTargets: ['high', 'university'],
+    recruitmentTargetDetail: '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+    recruitments: [{ recruitmentType: 'VOLUNTEER', applicationTypes: ['VOLUNTEER'] }],
+  },
+  { applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerIgnoresParticipantEducationTarget)
+assert.deepEqual(volunteerIgnoresParticipantEducationTarget.educationTargetKeys, ['high', 'university'])
+assert.equal(volunteerIgnoresParticipantEducationTarget.educationTargetLabel, '고등학교, 대학(원)생')
+assert.equal(
+  volunteerIgnoresParticipantEducationTarget.basicInfoFields.find(field => field.label === '교육 대상'),
+  undefined,
+)
+
 console.log('program portal mappers.selfcheck: ok')

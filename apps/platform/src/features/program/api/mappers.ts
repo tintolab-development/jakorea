@@ -821,24 +821,122 @@ function mapVolunteerInterviewSchedule(
   }
 }
 
+function compactBasicInfoFields(fields: ProgramBasicInfoField[]): ProgramBasicInfoField[] {
+  return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
+}
+
+function isRoleRecruitmentDetailCase(detailCase: ProgramDetailCase): boolean {
+  return (
+    detailCase === 'volunteer' ||
+    detailCase === 'ujat-volunteer' ||
+    detailCase === 'instructor'
+  )
+}
+
+/** 교육받은 교사(TRAINED_TEACHER)는 detailCase `instructor`이지만 교육 대상 스칼라를 쓴다. */
+function usesPortalRoleRecruitmentTargetScalars(
+  programType: string | undefined,
+  detailCase: ProgramDetailCase
+): boolean {
+  if (!isRoleRecruitmentDetailCase(detailCase)) return false
+  if ((programType ?? '').trim().toUpperCase() === 'TRAINED_TEACHER') return false
+  return true
+}
+
+/** 기본정보 그리드 레이아웃 — TRAINED_TEACHER는 강사 모집 카드가 아닌 교육 대상형. */
+function portalBasicInfoLayoutCase(
+  programType: string | undefined,
+  detailCase: ProgramDetailCase
+): ProgramDetailCase {
+  if ((programType ?? '').trim().toUpperCase() === 'TRAINED_TEACHER') return 'general'
+  return detailCase
+}
+
+/** VOLUNTEER/INSTRUCTOR 포커스 — `recruitmentTarget` 우선, 없으면 `recruitmentTargets` 코드 조합. */
+function resolvePortalRecruitmentTargetGroupLabel(remote: PortalProgramDetail): string {
+  const explicit = readString(remote.recruitmentTarget)
+  if (explicit) return explicit
+  const fromCodes = mapEducationTargets({ educationTargets: remote.recruitmentTargets })
+  if (fromCodes.keys.length > 0) return fromCodes.educationTargetGroupLabel
+  return ''
+}
+
+function resolvePortalRecruitmentTargetDetailLabel(remote: PortalProgramDetail): string {
+  const detail = readString(remote.recruitmentTargetDetail)
+  if (detail && !EDUCATION_TARGET_CODE.has(detail.toLowerCase())) return detail
+  return ''
+}
+
 function buildPortalBasicInfoFields(args: {
+  detailCase: ProgramDetailCase
   usesEducationProgressFields: boolean
   businessFieldLabel: string
   educationFormLabel: string
   educationTargetGroupLabel: string
   educationTargetDetailLabel: string
+  recruitmentTargetGroupLabel: string
+  recruitmentTargetDetailLabel: string
   educationVenueLabel: string
 }): ProgramBasicInfoField[] {
-  const fields: ProgramBasicInfoField[] = [{ label: '사업 분야', value: args.businessFieldLabel }]
-  if (!args.usesEducationProgressFields || args.educationFormLabel) {
-    fields.push({ label: '교육 형태', value: args.educationFormLabel })
+  switch (args.detailCase) {
+    case 'instructor':
+      return compactBasicInfoFields([
+        { label: '사업 분야', value: args.businessFieldLabel },
+        {
+          label: '모집 대상',
+          value: args.recruitmentTargetGroupLabel || args.recruitmentTargetDetailLabel,
+        },
+        { label: '모집 지역', value: args.educationVenueLabel },
+      ])
+    case 'volunteer':
+      return compactBasicInfoFields([
+        { label: '사업 분야', value: args.businessFieldLabel },
+        { label: '모집 대상', value: args.recruitmentTargetGroupLabel },
+        { label: '모집 대상 상세', value: args.recruitmentTargetDetailLabel },
+        ...(!args.usesEducationProgressFields || args.educationFormLabel
+          ? [{ label: '교육 형태', value: args.educationFormLabel }]
+          : []),
+        { label: '교육 장소', value: args.educationVenueLabel },
+      ])
+    case 'ujat-volunteer':
+      return compactBasicInfoFields([
+        { label: '사업 분야', value: args.businessFieldLabel },
+        {
+          label: '모집 대상',
+          value: args.recruitmentTargetGroupLabel || '대학(원)생',
+        },
+        { label: '교육 지역', value: args.educationVenueLabel },
+      ])
+    case 'ujat-participant':
+      return compactBasicInfoFields([
+        { label: '사업 분야', value: args.businessFieldLabel },
+        {
+          label: '대상',
+          value: args.educationTargetDetailLabel || '초등학교',
+        },
+        { label: '교육 지역', value: args.educationVenueLabel },
+        { label: '교육 형태', value: args.educationFormLabel },
+      ])
+    case 'gemini':
+      return compactBasicInfoFields([
+        { label: '교육 형태', value: args.educationFormLabel },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
+        { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+        { label: '교육 장소', value: args.educationVenueLabel },
+      ])
+    default: {
+      const fields: ProgramBasicInfoField[] = [{ label: '사업 분야', value: args.businessFieldLabel }]
+      if (!args.usesEducationProgressFields || args.educationFormLabel) {
+        fields.push({ label: '교육 형태', value: args.educationFormLabel })
+      }
+      fields.push(
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
+        { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+        { label: '교육 장소', value: args.educationVenueLabel }
+      )
+      return compactBasicInfoFields(fields)
+    }
   }
-  fields.push(
-    { label: '교육 대상', value: args.educationTargetGroupLabel },
-    { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
-    { label: '교육 장소', value: args.educationVenueLabel }
-  )
-  return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
 /**
@@ -890,9 +988,14 @@ export function mapPortalProgramDetail(
         : mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
-  const targets = mapEducationTargets(remote)
-  const roleLabel = ROLE_LABEL[detailCase]
   const programType = readString(remote.programType)?.toUpperCase()
+  const roleRecruitmentDetail = usesPortalRoleRecruitmentTargetScalars(programType, detailCase)
+  const targets = roleRecruitmentDetail
+    ? mapEducationTargets({ educationTargets: remote.recruitmentTargets })
+    : mapEducationTargets(remote)
+  const recruitmentTargetGroupLabel = resolvePortalRecruitmentTargetGroupLabel(remote)
+  const recruitmentTargetDetailLabel = resolvePortalRecruitmentTargetDetailLabel(remote)
+  const roleLabel = ROLE_LABEL[detailCase]
   const isTrainedTeacher = programType === 'TRAINED_TEACHER'
   const recruitmentOperation = recruitmentOperatingDates(
     recruitmentResolved ? recruitmentRows : remote.recruitments,
@@ -931,10 +1034,12 @@ export function mapPortalProgramDetail(
     venueFromSchedules(remote.schedules) ||
     (perScheduleEducationForm ? '' : educationFormLabel)
   const businessFieldLabel = readString(remote.businessField) || '-'
-  const educationTargetDetailLabel = mapEducationTargetDetailLabel(
-    remote,
-    targets.educationTargetLabel
-  )
+  const educationTargetGroupLabel = roleRecruitmentDetail
+    ? recruitmentTargetGroupLabel
+    : targets.educationTargetGroupLabel
+  const educationTargetDetailLabel = roleRecruitmentDetail
+    ? recruitmentTargetDetailLabel
+    : mapEducationTargetDetailLabel(remote, targets.educationTargetLabel)
   const independentRow =
     recruitmentResolved && selected?.rows.length === 1 && isIndependentRecruitmentProgram(programType)
       ? selected.rows[0]
@@ -1032,7 +1137,7 @@ export function mapPortalProgramDetail(
       : visibleCopy(readString(remote.description) ?? readString(remote.summary) ?? ''),
     isRecruiting: recruitmentStatus === RECRUITMENT_STATUS.recruiting,
     businessFieldLabel,
-    educationTargetGroupLabel: targets.educationTargetGroupLabel,
+    educationTargetGroupLabel,
     educationTargetDetailLabel,
     educationVenueLabel,
     detailCase,
@@ -1054,6 +1159,7 @@ export function mapPortalProgramDetail(
           }
         : {}),
     basicInfoFields: buildPortalBasicInfoFields({
+      detailCase: portalBasicInfoLayoutCase(programType, detailCase),
       usesEducationProgressFields,
       businessFieldLabel,
       educationFormLabel: perScheduleEducationForm
@@ -1061,8 +1167,10 @@ export function mapPortalProgramDetail(
         : usesEducationProgressFields
           ? (apiEducationFormLabel ?? '')
           : educationFormLabel,
-      educationTargetGroupLabel: targets.educationTargetGroupLabel,
+      educationTargetGroupLabel,
       educationTargetDetailLabel,
+      recruitmentTargetGroupLabel,
+      recruitmentTargetDetailLabel,
       educationVenueLabel,
     }),
     educationStructure: usesEducationProgressFields
