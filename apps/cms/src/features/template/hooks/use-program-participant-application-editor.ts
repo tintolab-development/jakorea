@@ -201,11 +201,15 @@ import {
   patchGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
-  replaceUjatApplicationInstitutionOverlay,
+  UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
   resetUjatApplicationInstitutionOverlay,
+  updateUjatApplicationInstitutionOverlayKey,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import type {
+  UjatApplicationClassTimePeriods,
+  UjatApplicationGradeDetail,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import {
-  replaceUjatApplicationVolunteerOverlay,
   resetUjatApplicationVolunteerOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
@@ -536,13 +540,25 @@ function restoreParticipantOverlayForVariant(
     return
   }
   if (variant === 'ujat-application-institution') {
-    if (overlay) replaceUjatApplicationInstitutionOverlay(overlay)
-    else if (resetIfMissing) resetUjatApplicationInstitutionOverlay()
+    if (overlay) {
+      const next = replace
+        ? overlay
+        : { ...(collectOperationalOverlayForCatalogId(overlayId) ?? {}), ...overlay }
+      applyOperationalOverlayForCatalogId(overlayId, next)
+    } else if (resetIfMissing) {
+      resetOperationalOverlayForCatalogId(overlayId)
+    }
     return
   }
   if (variant === 'ujat-application-volunteer') {
-    if (overlay) replaceUjatApplicationVolunteerOverlay(overlay)
-    else if (resetIfMissing) resetUjatApplicationVolunteerOverlay()
+    if (overlay) {
+      const next = replace
+        ? overlay
+        : { ...(collectOperationalOverlayForCatalogId(overlayId) ?? {}), ...overlay }
+      applyOperationalOverlayForCatalogId(overlayId, next)
+    } else if (resetIfMissing) {
+      resetOperationalOverlayForCatalogId(overlayId)
+    }
   }
 }
 
@@ -1167,24 +1183,26 @@ export function useProgramParticipantApplicationEditor(
           return
         }
         if (preferSessionCache) return
+        const autofilled = clearOverlaysOnHydrate
+          ? undefined
+          : peekRegistrationWizardSessionDrafts().find(
+              entry =>
+                entry.templateCode === templateId &&
+                !hasIncompleteApplicationFormThirdPartyRecipient(entry.draft)
+            )
+        const useAutofill =
+          autofilled != null &&
+          saved?.draft != null &&
+          hasIncompleteApplicationFormThirdPartyRecipient(saved.draft)
+        const autofillSnapshot = useAutofill ? autofilled : undefined
+
         if (saved?.draft || saved?.overlay) {
-          const autofilled = clearOverlaysOnHydrate
-            ? undefined
-            : peekRegistrationWizardSessionDrafts().find(
-                entry =>
-                  entry.templateCode === templateId &&
-                  !hasIncompleteApplicationFormThirdPartyRecipient(entry.draft)
-              )
-          const useAutofill =
-            autofilled != null &&
-            saved.draft != null &&
-            hasIncompleteApplicationFormThirdPartyRecipient(saved.draft)
-          if (useAutofill && autofilled != null) {
-            applyDraftNow(autofilled.draft)
+          if (autofillSnapshot != null) {
+            applyDraftNow(autofillSnapshot.draft)
           } else if (saved.draft != null && saved.draft.paragraphs.length > 0) {
             applyDraftNow(saved.draft)
           }
-          restoreParticipantOverlayForVariant(variant, saved.overlay, {
+          restoreParticipantOverlayForVariant(variant, autofillSnapshot?.overlay ?? saved.overlay, {
             resetIfMissing: replaceHydratedOverlay,
             replace: replaceHydratedOverlay,
             persistTemplateId: templateId,
@@ -1192,13 +1210,33 @@ export function useProgramParticipantApplicationEditor(
           finishWizardDetailHydrate()
           applyParticipantApplicationEditorState({
             variant,
-            editorState: saved.editorState,
+            editorState: autofillSnapshot?.editorState ?? saved.editorState,
             setVolunteerExceptionScheduleCount,
             setUjatVolunteerApplicationType,
             setUjatGradeApplicationBlockIds,
             setUjatApplicationGradeByBlockId,
             setUjatGradeClassTimeBlockIds,
           })
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
+          return
+        }
+        if (autofilled != null) {
+          applyDraftNow(autofilled.draft)
+          restoreParticipantOverlayForVariant(variant, autofilled.overlay, {
+            resetIfMissing: replaceHydratedOverlay,
+            replace: replaceHydratedOverlay,
+            persistTemplateId: templateId,
+          })
+          applyParticipantApplicationEditorState({
+            variant,
+            editorState: autofilled.editorState,
+            setVolunteerExceptionScheduleCount,
+            setUjatVolunteerApplicationType,
+            setUjatGradeApplicationBlockIds,
+            setUjatApplicationGradeByBlockId,
+            setUjatGradeClassTimeBlockIds,
+          })
+          finishWizardDetailHydrate()
           storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
         }
@@ -1295,8 +1333,23 @@ export function useProgramParticipantApplicationEditor(
   useEffect(() => {
     if (!active || !usesRegistrationWizardDraft) return
     const templateId = resolvePersistTemplateId()
-    return subscribeRegistrationWizardApplicationDraft((code, next) => {
+    return subscribeRegistrationWizardApplicationDraft((code, next, editorState, overlay) => {
       if (code !== templateId) return
+      if (overlay != null) {
+        restoreParticipantOverlayForVariant(variant, overlay, {
+          replace: true,
+          persistTemplateId: templateId,
+        })
+      }
+      applyParticipantApplicationEditorState({
+        variant,
+        editorState,
+        setVolunteerExceptionScheduleCount,
+        setUjatVolunteerApplicationType,
+        setUjatGradeApplicationBlockIds,
+        setUjatApplicationGradeByBlockId,
+        setUjatGradeClassTimeBlockIds,
+      })
       setDraft(prev =>
         prev.paragraphs.length === 0 ? next : applyDevAutofillThirdPartyRecipient(prev)
       )
@@ -1480,19 +1533,26 @@ export function useProgramParticipantApplicationEditor(
 
   const onRemoveUjatGradeApplicationBlockAtIndex = useCallback((index: number) => {
     if (index < 1) return
+    const removedId = ujatGradeApplicationBlockIds[index]
+    if (removedId == null) return
     setUjatGradeApplicationBlockIds(prev => {
       if (prev.length <= 1 || index < 0 || index >= prev.length) return prev
-      const removedId = prev[index]
-      if (removedId != null) {
-        setUjatApplicationGradeByBlockId(g => {
-          const next = { ...g }
-          delete next[removedId]
-          return next
-        })
-      }
       return prev.filter((_, i) => i !== index)
     })
-  }, [])
+    setUjatApplicationGradeByBlockId(g => {
+      const next = { ...g }
+      delete next[removedId]
+      return next
+    })
+    updateUjatApplicationInstitutionOverlayKey<Record<string, UjatApplicationGradeDetail>>(
+      UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.gradeDetailByBlock,
+      previous => {
+        const next = { ...(previous ?? {}) }
+        delete next[removedId]
+        return next
+      }
+    )
+  }, [ujatGradeApplicationBlockIds])
 
   const onAddUjatGradeClassTimeBlock = useCallback(() => {
     setUjatGradeClassTimeBlockIds(ids => [...ids, crypto.randomUUID()])
@@ -1504,7 +1564,27 @@ export function useProgramParticipantApplicationEditor(
       if (prev.length <= 1 || index < 0 || index >= prev.length) return prev
       return prev.filter((_, i) => i !== index)
     })
-  }, [])
+    const removedId = ujatGradeClassTimeBlockIds[index]
+    if (removedId != null) {
+      updateUjatApplicationInstitutionOverlayKey<
+        Record<string, Record<string, boolean>>
+      >(UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.classTimeCheckedByBlock, previous => {
+        const next = { ...(previous ?? {}) }
+        delete next[removedId]
+        return next
+      })
+      updateUjatApplicationInstitutionOverlayKey<
+        Record<
+          string,
+          UjatApplicationClassTimePeriods
+        >
+      >(UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.classTimePeriodsByBlock, previous => {
+        const next = { ...(previous ?? {}) }
+        delete next[removedId]
+        return next
+      })
+    }
+  }, [ujatGradeClassTimeBlockIds])
 
   const applicationGradeValuesForClassTime = useMemo(() => {
     const vals = Object.values(ujatApplicationGradeByBlockId).filter(

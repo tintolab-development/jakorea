@@ -12,20 +12,51 @@ export const UJAT_PROGRAM_REGISTRATION_STEP_KEYS = [
   'recruit-participant',
   'recruit-volunteer-h1',
   'recruit-volunteer-h2',
+  'application-ujat-school',
+  'application-ujat-volunteer',
 ] as const
 
 export type UjatProgramRegistrationStepKey = (typeof UJAT_PROGRAM_REGISTRATION_STEP_KEYS)[number]
 
 export const UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY = 'ujatStep' as const
 
-export type UjatProgramRegistrationPhaseKey = 'program' | 'recruitment'
+export type UjatProgramRegistrationPhaseKey = 'program' | 'recruitment' | 'application'
+
+export type UjatProgramRegistrationPhaseValidationTarget = 'program' | 'recruitment' | null
+
+/** 단계 버튼·탭·URL 복원 등 모든 진입 경로의 필수값 gate 범위를 결정한다. */
+export function getUjatProgramRegistrationPhaseValidationTarget(
+  fromPhase: UjatProgramRegistrationPhaseKey,
+  toPhase: UjatProgramRegistrationPhaseKey
+): UjatProgramRegistrationPhaseValidationTarget {
+  if (fromPhase === 'program' && toPhase !== 'program') return 'program'
+  if (fromPhase === 'recruitment' && toPhase === 'application') return 'recruitment'
+  return null
+}
 
 export const UJAT_PROGRAM_REGISTRATION_PHASE_HINT: Record<UjatProgramRegistrationPhaseKey, string> = {
   program: '* 프로그램 공통 정보를 작성해 주세요',
   recruitment: '',
+  application: '',
 }
 
-/** 고정 신청 양식 — 등록 위저드에서는 작성하지 않고 시드만 바인딩한다. */
+export const UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS = [
+  'application-ujat-school',
+  'application-ujat-volunteer',
+] as const
+
+export type UjatProgramRegistrationApplicationTabKey =
+  (typeof UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS)[number]
+
+export const UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS: Record<
+  UjatProgramRegistrationApplicationTabKey,
+  string
+> = {
+  'application-ujat-school': '참여 기관 신청 정보',
+  'application-ujat-volunteer': '봉사자 신청 정보',
+}
+
+/** UJAT 등록 위저드에서 고정 노출하는 신청 양식. */
 export const UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS = [
   'application-ujat-school',
   'application-ujat-volunteer',
@@ -35,6 +66,9 @@ const LEGACY_APPLICATION_STEP_KEYS = ['application-school', 'application-volunte
 
 export const UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP: UjatProgramRegistrationStepKey =
   'recruit-participant'
+
+export const UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP: UjatProgramRegistrationStepKey =
+  'application-ujat-school'
 
 export type UjatProgramRegistrationStepDefinition = {
   key: UjatProgramRegistrationStepKey
@@ -68,6 +102,18 @@ export const UJAT_PROGRAM_REGISTRATION_STEPS: readonly UjatProgramRegistrationSt
     templateId: 'recruitment-ujat-volunteer',
     editorVariant: 'ujat-recruit-volunteer',
   },
+  {
+    key: 'application-ujat-school',
+    phase: 'application',
+    templateId: 'application-ujat-school',
+    editorVariant: 'ujat-application-institution',
+  },
+  {
+    key: 'application-ujat-volunteer',
+    phase: 'application',
+    templateId: 'application-ujat-volunteer',
+    editorVariant: 'ujat-application-volunteer',
+  },
 ] as const
 
 const RECRUIT_TAB_TO_STEP: Record<UjatRecruitTabKey, UjatProgramRegistrationStepKey> = {
@@ -98,7 +144,9 @@ export function normalizeUjatProgramRegistrationStepKey(
     value != null &&
     (LEGACY_APPLICATION_STEP_KEYS as readonly string[]).includes(value)
   ) {
-    return UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP
+    return value === 'application-school'
+      ? 'application-ujat-school'
+      : 'application-ujat-volunteer'
   }
   if (isUjatProgramRegistrationStepKey(value)) return value
   return 'program'
@@ -124,6 +172,20 @@ export function registrationStepFromRecruitTab(
   tab: UjatRecruitTabKey
 ): UjatProgramRegistrationStepKey {
   return RECRUIT_TAB_TO_STEP[tab]
+}
+
+export function applicationTabKeyFromRegistrationStep(
+  key: UjatProgramRegistrationStepKey
+): UjatProgramRegistrationApplicationTabKey | null {
+  return (UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS as readonly string[]).includes(key)
+    ? (key as UjatProgramRegistrationApplicationTabKey)
+    : null
+}
+
+export function registrationStepFromApplicationTab(
+  tab: UjatProgramRegistrationApplicationTabKey
+): UjatProgramRegistrationStepKey {
+  return tab
 }
 
 export function volunteerHalfFromRegistrationStep(

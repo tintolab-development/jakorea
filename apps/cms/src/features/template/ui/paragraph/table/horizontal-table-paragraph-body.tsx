@@ -767,7 +767,8 @@ export function HorizontalTableParagraphBody({
       ujatProgramApplicationFormInstitution,
       ujatProgramApplicationGradeInfo,
       ujatProgramApplicationGradeClassTime,
-      paragraphInteractionMode
+      paragraphInteractionMode,
+      programLinkedInstitutionApplicationForm === true
     )
   if (ujatProgramApplicationFormInstitutionBody != null)
     return ujatProgramApplicationFormInstitutionBody

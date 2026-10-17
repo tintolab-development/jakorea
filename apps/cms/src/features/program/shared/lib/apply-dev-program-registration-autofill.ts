@@ -4,7 +4,12 @@ import {
   selectEconomyRegistrationAutofillPhrases,
   type EconomyAutofillPhraseSelection,
 } from '@/features/program/1c-1s/lib/dev-autofill-phrases'
-import { seedDevAutofillApplicationThirdPartyRecipients } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
+import {
+  fillBlankApplicationFormThirdPartyRecipients,
+  seedDevAutofillApplicationThirdPartyRecipients,
+} from '@/features/program/general/lib/fill-application-form-third-party-recipient'
+import { createSeedDraftForOperationalCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { publishRegistrationWizardApplicationDraft } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import {
   mergeGeneralDevAutofillParticipant,
   resolveGeneralRegistrationDevAutofillPreset,
@@ -106,6 +111,15 @@ import {
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import { replaceGeneralApplicationOverlayForScope } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
+  UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
+  replaceUjatApplicationInstitutionOverlayForScope,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import {
+  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
+  replaceUjatApplicationVolunteerOverlayForScope,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 const VENUE_KINDS = ['inside', 'outside', 'other'] as const
 const EDUCATION_DELIVERIES = ['online', 'offline', 'hybrid'] as const satisfies readonly UjatEducationDelivery[]
@@ -1642,6 +1656,109 @@ export type ApplyDevProgramRegistrationAutofillOptions = {
   caseId?: GeneralRegistrationDevAutofillCaseId
 }
 
+const UJAT_APPLICATION_INSTITUTION_TEMPLATE_CODE = 'application-ujat-school'
+const UJAT_APPLICATION_VOLUNTEER_TEMPLATE_CODE = 'application-ujat-volunteer'
+
+/**
+ * UJAT 개발용 자동입력의 신청 단계 seed.
+ *
+ * UJAT 신청 Form은 일반 신청 Form과 달리 학년/수업시간 블록과 봉사자 지원
+ * 형태가 editorState에 있고, 나머지 입력은 templateCode별 overlay bucket에
+ * 있다. 따라서 현재 탭의 store만 patch하지 않고 두 신청 탭의 scope를 모두
+ * 채워 두어, 모집 → 신청 → 모집 왕복 후에도 처음 진입한 것처럼 표시한다.
+ */
+function seedUjatApplicationAutofill(): void {
+  const region = listUjatEducationRegionsActive()[0]?.label ?? '서울'
+  const gradeBlockId = 'ujat-dev-grade-1'
+  const classTimeBlockId = 'ujat-dev-class-time-1'
+  const classTimeStart = dayjs().startOf('day').hour(9).minute(0).toISOString()
+  const classTimeEnd = dayjs().startOf('day').hour(9).minute(50).toISOString()
+
+  const institutionOverlay = {
+    [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.applicationRegion]: region,
+    [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.gradeDetailByBlock]: {
+      [gradeBlockId]: {
+        classCountInput: '2',
+        classNoByIndex: { 0: '1', 1: '2' },
+        studentCountByIndex: { 0: '25', 1: '24' },
+      },
+    },
+    [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.classTimeCheckedByBlock]: {
+      [classTimeBlockId]: { '1': true },
+    },
+    [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.classTimePeriodsByBlock]: {
+      [classTimeBlockId]: {
+        period1: { start: classTimeStart, end: classTimeEnd },
+        period2: { start: null, end: null },
+        period3: { start: null, end: null },
+        period4: { start: null, end: null },
+      },
+    },
+  }
+  const institutionGeneralOverlay = {
+    'application.ujat.inst.basicInfo.detailAddress': '서울시 강남구 테헤란로 123',
+    'application.ujat.inst.basicInfo.teacherTel': '02-1234-5678',
+    'application.ujat.inst.basicInfo.teacherMobile': '010-1234-5678',
+    'application.ujat.inst.basicInfo.teacherEmail': 'dev@jakorea.org',
+    'application.ujat.inst.basicInfo.otherRequestsNotApplicable': false,
+    'application.ujat.inst.basicInfo.otherRequests': '교구재 배송 전 담당자에게 연락해 주세요.',
+  }
+  replaceUjatApplicationInstitutionOverlayForScope(
+    UJAT_APPLICATION_INSTITUTION_TEMPLATE_CODE,
+    institutionOverlay
+  )
+  replaceGeneralApplicationOverlayForScope(
+    UJAT_APPLICATION_INSTITUTION_TEMPLATE_CODE,
+    institutionGeneralOverlay
+  )
+
+  const volunteerOverlay = {
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: region,
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.universityName]: '한국대학교',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.grade]: '4',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.major]: '경영학과',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.applicationRoute]: 'instagram',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.applicationRouteOther]: '',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.id1365]: 'dev1365',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm]: '1',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear]: '2025',
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: [],
+    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'yes',
+  }
+  replaceUjatApplicationVolunteerOverlayForScope(
+    UJAT_APPLICATION_VOLUNTEER_TEMPLATE_CODE,
+    volunteerOverlay
+  )
+
+  const institutionDraft = createSeedDraftForOperationalCatalogId(
+    UJAT_APPLICATION_INSTITUTION_TEMPLATE_CODE
+  )
+  if (institutionDraft != null) {
+    publishRegistrationWizardApplicationDraft({
+      templateCode: UJAT_APPLICATION_INSTITUTION_TEMPLATE_CODE,
+      draft: fillBlankApplicationFormThirdPartyRecipients(institutionDraft, 'JA코리아'),
+      editorState: {
+        ujatGradeApplicationBlockIds: [gradeBlockId],
+        ujatApplicationGradeByBlockId: { [gradeBlockId]: '1' },
+        ujatGradeClassTimeBlockIds: [classTimeBlockId],
+      },
+      overlay: { ...institutionOverlay, ...institutionGeneralOverlay },
+    })
+  }
+
+  const volunteerDraft = createSeedDraftForOperationalCatalogId(
+    UJAT_APPLICATION_VOLUNTEER_TEMPLATE_CODE
+  )
+  if (volunteerDraft != null) {
+    publishRegistrationWizardApplicationDraft({
+      templateCode: UJAT_APPLICATION_VOLUNTEER_TEMPLATE_CODE,
+      draft: fillBlankApplicationFormThirdPartyRecipients(volunteerDraft, 'JA코리아'),
+      editorState: { ujatVolunteerApplicationType: 'ujat-graduate' },
+      overlay: volunteerOverlay,
+    })
+  }
+}
+
 /**
  * 프로그램 등록 공통정보 — 개발용 자동입력.
  * 셀렉트는 화면과 같은 옵션에서 고르고, 텍스트·일정은 호출마다 달라진다.
@@ -1764,6 +1881,7 @@ export async function applyDevProgramRegistrationAutofill(
         }, {} as Record<string, unknown>),
       },
     })
+    seedUjatApplicationAutofill()
     return {
       programTitleKo: sample.titleKo,
       sponsorId: resolved.sponsorId,

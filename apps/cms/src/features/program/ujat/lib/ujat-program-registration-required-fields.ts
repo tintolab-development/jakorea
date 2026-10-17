@@ -47,8 +47,16 @@ import {
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { getUjatRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
-import { getUjatRecruitVolunteerOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import {
+  getUjatRecruitInstitutionOverlayRecord,
+  peekUjatRecruitInstitutionOverlayRecord,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import {
+  getUjatRecruitVolunteerOverlayRecord,
+  peekUjatRecruitVolunteerOverlayRecord,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
 
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
@@ -263,20 +271,32 @@ export function hasIncompleteUjatProgramRegistrationRequiredFields(
   return describeIncompleteUjatProgramRegistrationRequiredFields(overlay) != null
 }
 
-export function getMergedUjatRecruitInstitutionOverlay(): Record<string, unknown> {
+export function getMergedUjatRecruitInstitutionOverlay(
+  templateCode?: string
+): Record<string, unknown> {
   const programOverlay = getUjatProgramRegistrationOverlayRecord()
   return {
     ...pickUjatRecruitInstitutionOverlay(programOverlay),
-    ...getUjatRecruitInstitutionOverlayRecord(),
+    ...(templateCode == null
+      ? getUjatRecruitInstitutionOverlayRecord()
+      : peekUjatRecruitInstitutionOverlayRecord(templateCode)),
   }
 }
 
-export function getMergedUjatRecruitVolunteerOverlay(): Record<string, unknown> {
+export function getMergedUjatRecruitVolunteerOverlay(
+  templateCode?: string
+): Record<string, unknown> {
   const programOverlay = getUjatProgramRegistrationOverlayRecord()
+  const generalRecruit =
+    templateCode == null
+      ? undefined
+      : peekGeneralRecruitOverlayRecord(templateCode)
   return {
     ...pickUjatRecruitVolunteerOverlay(programOverlay),
-    ...getUjatRecruitVolunteerOverlayRecord(),
-    ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
+    ...(templateCode == null
+      ? getUjatRecruitVolunteerOverlayRecord()
+      : peekUjatRecruitVolunteerOverlayRecord(templateCode)),
+    ...pickUjatVolunteerRecruitGeneralStoreSidecar(generalRecruit),
   }
 }
 
@@ -403,10 +423,21 @@ function listIncompleteUjatVolunteerRecruit(overlay: Record<string, unknown>): s
 }
 
 /** UJAT 모집 단계 — 미입력 필수 필드 진단 키 */
-export function listIncompleteUjatProgramRecruitmentRequiredFields(): string[] {
+type UjatRecruitmentValidationTemplateCodes = {
+  institutionTemplateCode: string
+  volunteerTemplateCode: string
+}
+
+export function listIncompleteUjatProgramRecruitmentRequiredFields(
+  templateCodes?: UjatRecruitmentValidationTemplateCodes
+): string[] {
   return [
-    ...listIncompleteUjatInstitutionRecruit(getMergedUjatRecruitInstitutionOverlay()),
-    ...listIncompleteUjatVolunteerRecruit(getMergedUjatRecruitVolunteerOverlay()),
+    ...listIncompleteUjatInstitutionRecruit(
+      getMergedUjatRecruitInstitutionOverlay(templateCodes?.institutionTemplateCode)
+    ),
+    ...listIncompleteUjatVolunteerRecruit(
+      getMergedUjatRecruitVolunteerOverlay(templateCodes?.volunteerTemplateCode)
+    ),
   ]
 }
 
@@ -418,18 +449,32 @@ export function hasIncompleteUjatProgramRecruitmentRequiredFields(): boolean {
   return describeIncompleteUjatProgramRecruitmentRequiredFields() != null
 }
 
+function selectedUjatRecruitmentValidationTemplateCodes(): UjatRecruitmentValidationTemplateCodes {
+  return {
+    institutionTemplateCode: getSelectedOperationalTemplateCode(
+      'UJAT',
+      'recruit-participant',
+      'recruitment-ujat-school'
+    ),
+    volunteerTemplateCode: getSelectedOperationalTemplateCode(
+      'UJAT',
+      'recruit-volunteer',
+      'recruitment-ujat-volunteer'
+    ),
+  }
+}
+
 /** 등록 위저드 complete gate — 공통 + 모집만. 신청(template) overlay는 검사하지 않는다. */
 export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(): boolean {
-  return (
-    hasIncompleteUjatProgramRegistrationRequiredFields() ||
-    hasIncompleteUjatProgramRecruitmentRequiredFields()
-  )
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields().length > 0
 }
 
 export function listIncompleteUjatProgramRegistrationWizardRequiredFields(): string[] {
   return [
     ...listIncompleteUjatProgramRegistrationRequiredFields(),
-    ...listIncompleteUjatProgramRecruitmentRequiredFields(),
+    ...listIncompleteUjatProgramRecruitmentRequiredFields(
+      selectedUjatRecruitmentValidationTemplateCodes()
+    ),
   ]
 }
 

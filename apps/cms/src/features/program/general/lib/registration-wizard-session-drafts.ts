@@ -11,12 +11,18 @@ type RegistrationWizardSessionDraft = {
   templateCode: string
   draft: WritingFormDraft
   editorState?: Record<string, unknown>
+  overlay?: Record<string, unknown>
 }
 
 const sessionDrafts = new Map<string, RegistrationWizardSessionDraft>()
 
 const applicationDraftListeners = new Set<
-  (templateCode: string, draft: WritingFormDraft) => void
+  (
+    templateCode: string,
+    draft: WritingFormDraft,
+    editorState?: Record<string, unknown>,
+    overlay?: Record<string, unknown>
+  ) => void
 >()
 
 export function rememberRegistrationWizardSessionDraft(
@@ -28,6 +34,7 @@ export function rememberRegistrationWizardSessionDraft(
     templateCode: entry.templateCode,
     draft: entry.draft,
     editorState: entry.editorState,
+    overlay: entry.overlay,
   })
 }
 
@@ -39,12 +46,17 @@ export function publishRegistrationWizardApplicationDraft(
   const stored = sessionDrafts.get(entry.templateCode)
   if (stored == null) return
   for (const listener of applicationDraftListeners) {
-    listener(stored.templateCode, stored.draft)
+    listener(stored.templateCode, stored.draft, stored.editorState, stored.overlay)
   }
 }
 
 export function subscribeRegistrationWizardApplicationDraft(
-  listener: (templateCode: string, draft: WritingFormDraft) => void
+  listener: (
+    templateCode: string,
+    draft: WritingFormDraft,
+    editorState?: Record<string, unknown>,
+    overlay?: Record<string, unknown>
+  ) => void
 ): () => void {
   applicationDraftListeners.add(listener)
   return () => {
@@ -59,10 +71,14 @@ export function clearRegistrationWizardSessionDrafts(): void {
 export function peekRegistrationWizardSessionDrafts(): ReadonlyArray<{
   templateCode: string
   draft: WritingFormDraft
+  editorState?: Record<string, unknown>
+  overlay?: Record<string, unknown>
 }> {
   return [...sessionDrafts.values()].map(entry => ({
     templateCode: entry.templateCode,
     draft: entry.draft,
+    ...(entry.editorState != null ? { editorState: entry.editorState } : {}),
+    ...(entry.overlay != null ? { overlay: entry.overlay } : {}),
   }))
 }
 
@@ -77,7 +93,7 @@ export function flushApplicationOperationalOverrides(args: {
   }
 
   return [...sessionDrafts.values()].map(entry => {
-    const overlay = args.overlayForTemplateCode?.(entry.templateCode)
+    const overlay = args.overlayForTemplateCode?.(entry.templateCode) ?? entry.overlay
     const hasOverlay = overlay != null && Object.keys(overlay).length > 0
     return {
       templateCode: entry.templateCode,

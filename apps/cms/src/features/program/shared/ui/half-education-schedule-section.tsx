@@ -1,7 +1,7 @@
 /**
  * 상·하반기 교육 일정 블록 — 등록 양식·프로그램 상세 공통
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
@@ -27,6 +27,8 @@ import { CmsCircleAddButton } from '@/shared/ui/cms-circle-add-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { fetchAllMembersPagesRemote } from '@/features/user/api/fetch-all-members-pages-remote'
+import { instructorListRolesExactAnyOf } from '@/features/user/api/map-roles-exact-any-of'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './half-education-schedule-section.css'
 
@@ -43,10 +45,6 @@ function ScheduleTextView({ text }: { text: string }) {
 function HalfEducationScheduleSubheading({ children }: { children: string }) {
   return <div className="half-education-schedule__subheading">{children}</div>
 }
-function getUjatTextbookInstructorOptions(): Array<{ value: string; label: string }> {
-  return []
-}
-
 function getRowRegionOptions(
   rowId: number,
   regionByRow: Record<number, string[]>,
@@ -241,7 +239,9 @@ function ScheduleEducationRadioRow({
 
 function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  const instructorOptions = useMemo(() => getUjatTextbookInstructorOptions(), [])
+  const [instructorOptions, setInstructorOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([])
   const [mode, setMode] = useUjatProgramRegistrationOverlayKv<UjatTextbookEducationMode>(
     keys.preTextbookMode,
     'ja'
@@ -251,12 +251,39 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
     undefined
   )
 
+  useEffect(() => {
+    if (mode !== 'instructor_outsource') return
+    let cancelled = false
+    void fetchAllMembersPagesRemote({
+      rolesExactAnyOf: instructorListRolesExactAnyOf(),
+    })
+      .then(users => {
+        if (cancelled) return
+        setInstructorOptions(
+          users
+            .map(user => ({ value: String(user.id), label: user.name.trim() }))
+            .filter(option => option.value && option.label)
+        )
+      })
+      .catch(() => {
+        // 회원 API가 비활성화된 로컬/템플릿 환경에서는 빈 선택지로 유지한다.
+        if (!cancelled) setInstructorOptions([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [mode])
+
   return (
     <div className="detail-info-form-inputs-wrapper half-education-schedule__textbook-row">
       <CmsRadioGroup
         size="large"
         value={mode}
-        onChange={e => setMode(e.target.value as UjatTextbookEducationMode)}
+        onChange={e => {
+          const next = e.target.value as UjatTextbookEducationMode
+          setMode(next)
+          if (next === 'ja') setInstructorId(undefined)
+        }}
       >
         <CmsRadio value="ja">JA 진행</CmsRadio>
         <CmsRadio value="instructor_outsource">강사 섭외</CmsRadio>

@@ -5,6 +5,7 @@ import { formatDate } from '@/features/program/shared/lib/program-detail-info-co
 import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
 import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
@@ -90,7 +91,21 @@ export function UjatBasicInfoReadonlyView({
           <DetailInfoForm.Field label="사업 분야" view={display.businessField} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="후원사" view={display.sponsorName} />
+          <DetailInfoForm.Field
+            label="후원사"
+            view={
+              display.sponsorName && display.sponsorName !== '-' ? (
+                <ProgramDetailSponsorLink
+                  name={display.sponsorName}
+                  sponsorId={program?.sponsorId}
+                  sponsorName={display.sponsorName}
+                  className="ujat-program-detail-common-info-view__sponsor-link"
+                />
+              ) : (
+                display.sponsorName || '-'
+              )
+            }
+          />
           <DetailInfoForm.Field
             label="후원사 담당자"
             view={<SponsorManagerLineInlineView text={display.sponsorManager} />}
