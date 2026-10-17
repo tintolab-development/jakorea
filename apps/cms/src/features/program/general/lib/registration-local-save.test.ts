@@ -13,7 +13,10 @@ import {
   setGeneralRecruitOverlayScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { resetAllOperationalOverlayStoresForTests } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
-import { buildGeneralProgramListRowFromRegistrationSnapshot } from './registration-local-save'
+import {
+  buildGeneralProgramListRowFromRegistrationSnapshot,
+  resolveTrainedTeacherEducationJournalEnabled,
+} from './registration-local-save'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
 const organizationOnlyParticipant: ProgramRegistrationParticipantState = {
@@ -188,5 +191,24 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 모집 overlay 
     expect(program.description).toBe(
       '디지털 리터러시 교실은 학교에서 경제·금융 기초를 익히는 참여형 교육입니다.'
     )
+  })
+})
+
+describe('교육받은 교사 교육일지 등록 기본값', () => {
+  it('설정이 없으면 없음으로 정규화한다', () => {
+    expect(resolveTrainedTeacherEducationJournalEnabled(undefined)).toBe(false)
+    expect(resolveTrainedTeacherEducationJournalEnabled(null)).toBe(false)
+  })
+
+  it('명시적인 있음/없음 설정을 우선한다', () => {
+    expect(resolveTrainedTeacherEducationJournalEnabled('yes')).toBe(true)
+    expect(resolveTrainedTeacherEducationJournalEnabled(true)).toBe(true)
+    expect(resolveTrainedTeacherEducationJournalEnabled('no')).toBe(false)
+    expect(resolveTrainedTeacherEducationJournalEnabled(false)).toBe(false)
+  })
+
+  it('설정이 없을 때만 기존 snapshot fallback을 사용한다', () => {
+    expect(resolveTrainedTeacherEducationJournalEnabled(undefined, true)).toBe(true)
+    expect(resolveTrainedTeacherEducationJournalEnabled('no', true)).toBe(false)
   })
 })

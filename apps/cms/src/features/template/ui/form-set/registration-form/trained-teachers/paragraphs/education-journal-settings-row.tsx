@@ -12,7 +12,7 @@ export const TRAINED_TEACHERS_EDUCATION_JOURNAL_OVERLAY_KEY =
 export function TrainedTeachersEducationJournalSettingsRow() {
   const [educationJournalEnabled, setEducationJournalEnabled] = useProgramRegistrationOverlayKv<
     'yes' | 'no'
-  >(TRAINED_TEACHERS_EDUCATION_JOURNAL_OVERLAY_KEY, 'yes')
+  >(TRAINED_TEACHERS_EDUCATION_JOURNAL_OVERLAY_KEY, 'no')
 
   return (
     <DetailInfoForm
