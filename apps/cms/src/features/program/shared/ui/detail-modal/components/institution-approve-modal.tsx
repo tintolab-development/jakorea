@@ -11,6 +11,7 @@ import type { PreferredEducationSchedule } from '@/features/program/general/api/
 import {
   ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE,
+  getUnresolvedPreferredScheduleMessage,
   organizationApproveScheduleOptionLabel,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
   resolveOrganizationApproveSelectedScheduleId,
@@ -185,8 +186,7 @@ export function InstitutionApproveModal({
           </div>
           {hasUnconfirmableOnly ? (
             <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
-              희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청
-              상세의 scheduleId 반영 후 다시 시도해 주세요.
+              {getUnresolvedPreferredScheduleMessage(scheduleValidation.unresolvedReason)}
             </p>
           ) : null}
           {hasProgramScheduleMismatch ? (

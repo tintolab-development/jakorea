@@ -66194,16 +66194,6 @@
           "scheduleId": {
             "type": "integer",
             "format": "int64"
-          },
-          "grade": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0
-          },
-          "className": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0
           }
         },
         "required": [
@@ -75965,10 +75955,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -77477,9 +77467,17 @@
             "type": "string",
             "maxLength": 1000,
             "minLength": 0
+          },
+          "faultParty": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         },
         "required": [
+          "faultParty",
           "reason",
           "stopScheduleId"
         ]
@@ -80936,7 +80934,7 @@
       },
       "PreferredEducationScheduleResponse": {
         "type": "object",
-        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule)과 공통정보 교육 진행 예정일(line:N) 모두 materialized program_schedule의 scheduleId/round/startAt/endAt을 반환하며, line:N 선택은 원래 표시 문자열을 label에 함께 반환한다.",
+        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 정확히 하나의 PROGRAM_DEFINED 교육 슬롯과 일치할 때만 그 program_schedule id를 scheduleId로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 고유 매칭이 불가능하면 scheduleId=null과 unresolvedReason을 반환한다.",
         "properties": {
           "scheduleId": {
             "type": [
@@ -80944,7 +80942,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "해당 프로그램의 materialized program_schedule id. 일정이 아직 materialize되지 않은 레거시 데이터만 null일 수 있다."
+            "description": "정확히 매칭된 PROGRAM_DEFINED program_schedule id. 고유 매칭이 불가능하면 null."
           },
           "round": {
             "type": [
@@ -80975,6 +80973,13 @@
               "null"
             ],
             "description": "공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null."
+          },
+          "unresolvedReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "scheduleId가 null인 이유. 고유 매칭이면 null, 모호하면 AMBIGUOUS_SCHEDULE_MATCH, 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH."
           }
         }
       },
@@ -81018,11 +81023,11 @@
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 기존 slots 호환 입력을 지원합니다.",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.",
         "properties": {
           "slots": {
             "type": "array",
-            "description": "기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보내도 됩니다.",
+            "description": "기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보냅니다.",
             "items": {
               "$ref": "#/components/schemas/SlotRequest"
             },
@@ -81032,9 +81037,8 @@
           "selectedScheduleId": {
             "type": "integer",
             "format": "int64",
-            "minimum": 1,
-            "nullable": true,
-            "description": "선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다."
+            "description": "선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다.",
+            "example": 188901
           },
           "timing": {
             "type": "string",
@@ -109257,6 +109261,101 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "className": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
           }
         }
       }

@@ -4,6 +4,7 @@ import {
   resolveOrganizationApproveScheduleIdsFromSelection,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
   resolveOrganizationApproveSelectedScheduleId,
+  getUnresolvedPreferredScheduleMessage,
   validateOrganizationApproveScheduleOptions,
 } from './organization-application-approve-slots'
 
@@ -33,6 +34,14 @@ describe('organization-application-approve-slots', () => {
     expect(resolveOrganizationApproveSelectedScheduleId(preferred, options[0]?.scheduleId)).toBe(
       undefined
     )
+  })
+
+  it('explains why an unresolved preferred schedule cannot be confirmed', () => {
+    const result = resolveOrganizationApproveScheduleOptionsFromPreferred([
+      { label: '교육 희망일', scheduleId: null, unresolvedReason: 'AMBIGUOUS_SCHEDULE_MATCH' },
+    ])
+    expect(result.unresolvedReason).toBe('AMBIGUOUS_SCHEDULE_MATCH')
+    expect(getUnresolvedPreferredScheduleMessage(result.unresolvedReason)).toContain('여러 개')
   })
 
   it('allows one preferred schedule when requestedClassCount would differ (FE does not couple)', () => {

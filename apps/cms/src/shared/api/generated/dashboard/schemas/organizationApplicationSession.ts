@@ -6,14 +6,20 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.
+ */
 export interface OrganizationApplicationSession {
   scheduleId?: number;
   sessionNo?: number | null;
   scheduleName?: string | null;
   startAt?: string | null;
   endAt?: string | null;
+  /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */
   grade?: string | null;
+  /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */
   className?: string | null;
+  /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */
   classLabel?: string | null;
   assignmentStatus?: string | null;
 }
