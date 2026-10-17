@@ -61,7 +61,10 @@ import {
 import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
 import { buildParticipatingVolunteerCalendarEvents } from '../../../lib/build-participating-volunteer-calendar-events'
 import { getSchoolNamesForDateFromVolunteerEvents } from '../../../lib/participating-calendar-date-schools'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '../../../lib/participating-institutions-table'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '../../../lib/participating-institutions-table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -493,11 +496,7 @@ export function ParticipatingVolunteersSection({
         key: 'sessions',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => {
           const sessions = record.sessions ?? []
           const total = sessions.length

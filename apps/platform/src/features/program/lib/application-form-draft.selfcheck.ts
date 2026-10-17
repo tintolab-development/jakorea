@@ -607,10 +607,7 @@ const singleChoiceForm = {
 }
 const singleChoiceDraft = writingFormDraftFromApplicationForm(singleChoiceForm)
 assert.ok(singleChoiceDraft)
-assert.equal(
-  buildApplicationAnswersFromDraft(singleChoiceDraft)[experienceKey],
-  'program-volunteer-application-ja-experience-no',
-)
+assert.equal(buildApplicationAnswersFromDraft(singleChoiceDraft)[experienceKey] ?? null, null)
 const restoredSingle = writingFormDraftFromApplicationForm(singleChoiceForm, {
   [experienceKey]: 'program-volunteer-application-ja-experience-yes',
 })
@@ -770,8 +767,8 @@ assert.equal(
   false,
 )
 assert.deepEqual(
-  institutionSidecarAnswers['program-application-institution-seed-schedule'],
-  ['line:0', 'line:1'],
+  institutionSidecarAnswers['program-application-institution-seed-schedule'] ?? [],
+  [],
 )
 const emptySidecarDraft = writingFormDraftFromApplicationForm(institutionSidecarForm)
 assert.ok(emptySidecarDraft)

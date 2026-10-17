@@ -5,6 +5,11 @@ import {
   type EmployeeVolunteerSessionRow,
 } from '@/features/program/general/lib/employee-volunteer-session-rows'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { inferScheduleDetailBlockKind } from '@/features/program/general/lib/schedule-detail-form'
+import { isSurveyPollScheduleMultiEventProgram } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
+import {
+  resolveInstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import { normalizeEducationScheduleLineForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
@@ -61,14 +66,35 @@ function buildScheduleByIdMap(
   return map
 }
 
+function resolveEventScheduleRoundNumbers(program: Program): ReadonlySet<number> {
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const rounds = new Set<number>()
+  let roundIndex = 0
+  for (const detail of commonInfo.scheduleDetails ?? []) {
+    if (detail.scheduleLabel?.includes('사전 교육')) continue
+    roundIndex += 1
+    if (inferScheduleDetailBlockKind(detail.scheduleLabel ?? '') === 'event') {
+      rounds.add(roundIndex)
+    }
+  }
+  return rounds
+}
+
 function collectMappableSessionRows(
   sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>,
-  rowToScheduleId: Map<EmployeeVolunteerSessionRow['id'], number>
+  rowToScheduleId: Map<EmployeeVolunteerSessionRow['id'], number>,
+  allowedRounds?: ReadonlySet<number>
 ): MappableSessionRow[] {
   const mappable: MappableSessionRow[] = []
   const usedScheduleIds = new Set<number>()
 
   for (const row of sessionRows) {
+    if (
+      allowedRounds != null &&
+      (row.round == null || !allowedRounds.has(row.round))
+    ) {
+      continue
+    }
     const scheduleId = rowToScheduleId.get(row.id)
     if (scheduleId == null || usedScheduleIds.has(scheduleId)) continue
     usedScheduleIds.add(scheduleId)
@@ -162,10 +188,18 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
   program: Program,
   apiSchedules: ReadonlyArray<ProgramScheduleResponse>
 ): SurveyPollScheduleSelectOption[] {
+  const bridge = resolveInstitutionApplicationProgramBridge(program)
   const dashboard = mapAdminSchedulesToDashboard(apiSchedules)
   const sessionRows = resolveEmployeeVolunteerSessionRows(program)
   const rowToScheduleId = buildEmployeeVolunteerSessionRowScheduleMap(sessionRows, dashboard)
-  const mappableRows = collectMappableSessionRows(sessionRows, rowToScheduleId)
+  const eventRoundsOnly = isSurveyPollScheduleMultiEventProgram(bridge)
+    ? resolveEventScheduleRoundNumbers(program)
+    : undefined
+  const mappableRows = collectMappableSessionRows(
+    sessionRows,
+    rowToScheduleId,
+    eventRoundsOnly
+  )
   const mappableCount = mappableRows.length
 
   const lines = resolveGeneralProgramCommonInfo(program).educationScheduleLines ?? []
@@ -192,7 +226,7 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
     return buildSurveyPollScheduleSelectOptions(apiSchedules)
   }
 
-  return [{ label: '전체', value: SURVEY_POLL_TARGET_ALL_VALUE }, ...sessionOptions]
+  return sessionOptions
 }
 
 /** API 일정만으로 옵션 구성 — 프로그램 매핑 실패 시 폴백 */
@@ -210,5 +244,5 @@ export function buildSurveyPollScheduleSelectOptions(
       label: formatSurveyPollScheduleOptionLabel(schedule, index),
     })
   }
-  return [{ label: '전체', value: SURVEY_POLL_TARGET_ALL_VALUE }, ...sessionOptions]
+  return sessionOptions
 }

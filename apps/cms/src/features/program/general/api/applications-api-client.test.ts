@@ -423,7 +423,7 @@ describe('approveOrganizationApplicationRemote', () => {
     })
   })
 
-  it('GENERAL 승인은 slots와 알림 timing을 함께 보낸다', async () => {
+  it('GENERAL 승인은 selectedScheduleId와 알림 timing을 함께 보낸다', async () => {
     vi.mocked(customInstance).mockResolvedValue({
       applicationId: 101,
       applicationStatus: 'APPROVED',
@@ -431,7 +431,7 @@ describe('approveOrganizationApplicationRemote', () => {
 
     await approveOrganizationApplicationRemote('101', {
       timing: 'IMMEDIATE',
-      slots: [{ scheduleId: 88001, grade: '3학년', className: '1반' }],
+      selectedScheduleId: 88001,
     })
 
     expect(customInstance).toHaveBeenCalledWith({
@@ -439,8 +439,23 @@ describe('approveOrganizationApplicationRemote', () => {
       method: 'POST',
       data: {
         timing: 'IMMEDIATE',
-        slots: [{ scheduleId: 88001, grade: '3학년', className: '1반' }],
+        selectedScheduleId: 88001,
       },
+    })
+  })
+
+  it('GENERAL 승인만 timing으로 보낼 수 있다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 101,
+      applicationStatus: 'APPROVED',
+    })
+
+    await approveOrganizationApplicationRemote('101', { timing: 'IMMEDIATE' })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/101/approve',
+      method: 'POST',
+      data: { timing: 'IMMEDIATE' },
     })
   })
 

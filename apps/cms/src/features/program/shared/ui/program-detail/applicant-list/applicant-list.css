@@ -22,10 +22,7 @@
 }
 
 /* 셀 횡 사이즈: 트리거 136px — 좌우 패딩 0 + 가운데 정렬(status-dropdown-cell 공통 스펙) */
-.applicant-details
-  .ant-table-thead
-  > tr
-  > th.status-dropdown-cell__cell-status,
+.applicant-details .ant-table-thead > tr > th.status-dropdown-cell__cell-status,
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
@@ -101,7 +98,9 @@
  * `.applicant-details` 루트에 두면 UJAT·FilterTableLayout 공통(260px)과 충돌해 필터 겹침 발생.
  * 신규 화면은 table-filter-group-layout.mdc 규칙 따를 것.
  */
-.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner > .ant-col {
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  > .ant-col {
   flex: 0 0 auto !important;
   width: auto;
   min-width: 0;
@@ -112,8 +111,13 @@
   .table-filter-group__fields-inner
   .ant-col
   .ant-select,
-.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner .ant-col .cms-select,
-.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner .labeled-search-input__input,
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .cms-select,
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  .labeled-search-input__input,
 .filter-table-layout.applicant-details__filter-table-layout
   .table-filter-group__fields-inner
   .labeled-search-input
@@ -141,11 +145,14 @@
     margin-bottom: 8px;
   }
 
-  .filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner.ant-row {
+  .filter-table-layout.applicant-details__filter-table-layout
+    .table-filter-group__fields-inner.ant-row {
     flex-wrap: wrap !important;
   }
 
-  .filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner > .ant-col {
+  .filter-table-layout.applicant-details__filter-table-layout
+    .table-filter-group__fields-inner
+    > .ant-col {
     flex: 0 0 auto !important;
     width: auto;
     min-width: 0;
@@ -245,7 +252,10 @@
 }
 
 .applicant-details__table .ant-table-thead > tr > th.applicant-details__th-sessions--general-detail,
-.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions--general-detail {
+.applicant-details__table
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--general-detail {
   width: 480px !important;
   min-width: 480px !important;
   max-width: none !important;
@@ -273,6 +283,15 @@
   > td.applicant-details__td-sessions--center
   .applicant-details__sessions-cell {
   align-items: center;
+  text-align: center;
+}
+
+.applicant-details__table
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--center
+  .applicant-details__session-line {
+  justify-content: center;
 }
 
 .applicant-details__sessions-cell {
@@ -295,7 +314,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);

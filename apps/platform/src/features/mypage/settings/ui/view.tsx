@@ -11,7 +11,10 @@ import {
 } from '@/shared/lib'
 import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE, SETTINGS_WITHDRAW_GUIDE, VOLUNTEER_1365_URL } from '../lib/constants'
+import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import type { SettingsGuardianView, SettingsInfoRow } from '../lib/map-view'
+import type { InstructorSettingsSectionId } from '../lib/format-instructor-settings-display'
+import { SettingsInstructorProfileSectionsView } from './instructor-profile/instructor-profile-sections-view'
 import { SettingsChangePasswordModal } from './change-password-modal'
 import { SettingsWithdrawGuideModal } from './withdraw-guide-modal'
 import styles from './view.module.css'
@@ -20,6 +23,8 @@ export type SettingsViewProps = {
   basicRows: SettingsInfoRow[]
   guardian: SettingsGuardianView | null
   onEditBasic?: () => void
+  instructorProfileValues?: InstructorSharedProfileFormValues | null
+  onEditInstructorSection?: (section: InstructorSettingsSectionId) => void
 }
 
 function EditButton({ onClick }: { onClick?: () => void }) {
@@ -66,7 +71,13 @@ function toReviewRows(rows: SettingsInfoRow[]) {
   }))
 }
 
-export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewProps) {
+export function SettingsView({
+  basicRows,
+  guardian,
+  onEditBasic,
+  instructorProfileValues,
+  onEditInstructorSection,
+}: SettingsViewProps) {
   const navigate = useNavigate()
   const withdrawMutation = usePortalWithdrawalMutation()
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
@@ -147,6 +158,13 @@ export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewP
             ]}
           />
         </section>
+      ) : null}
+
+      {instructorProfileValues && onEditInstructorSection ? (
+        <SettingsInstructorProfileSectionsView
+          values={instructorProfileValues}
+          onEditSection={onEditInstructorSection}
+        />
       ) : null}
 
       <div className={styles.actions}>

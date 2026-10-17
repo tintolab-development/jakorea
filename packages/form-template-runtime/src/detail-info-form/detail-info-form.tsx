@@ -134,7 +134,7 @@ function DetailInfoFormRow({ type = 'single', className, children }: DetailInfoF
 }
 
 export type DetailInfoFormFieldProps = {
-  label: string
+  label: ReactNode
   required?: boolean
   labelWidth?: 180 | 200 | 220 | 240
   fullRow?: boolean

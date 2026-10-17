@@ -23,7 +23,7 @@ export function useProgramSurveyScheduleOptions(
     return buildSurveyPollScheduleSelectOptionsForProgram(program, query.data ?? [])
   }, [program, query.data])
 
-  const hasSessionSchedules = options.length > 1
+  const hasSessionSchedules = options.length > 0
 
   return {
     options,

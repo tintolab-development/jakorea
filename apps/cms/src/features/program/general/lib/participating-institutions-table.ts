@@ -1,6 +1,22 @@
 /** 교육 진행 일정 열 고정 폭 */
 export const PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH = 360
 
+/** 진행 희망·담당 일정 열 — 헤더·셀 중앙 정렬 (참여 기관/강사/봉사자 목록 공통) */
+export const PARTICIPATING_SCHEDULE_TABLE_TH_CENTER_CLASS =
+  'participating-institutions-section__th-sessions participating-institutions-section__th-sessions--center'
+
+export const PARTICIPATING_SCHEDULE_TABLE_TD_CENTER_CLASS =
+  'participating-institutions-section__td-sessions participating-institutions-section__td-sessions--center'
+
+export function participatingScheduleTableColumnLayout() {
+  return {
+    align: 'center' as const,
+    className: PARTICIPATING_SCHEDULE_TABLE_TH_CENTER_CLASS,
+    onHeaderCell: () => ({ className: PARTICIPATING_SCHEDULE_TABLE_TH_CENTER_CLASS }),
+    onCell: () => ({ className: PARTICIPATING_SCHEDULE_TABLE_TD_CENTER_CLASS }),
+  }
+}
+
 /** 교재 배송 현황 테이블 열 최소 폭 */
 export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH = 140
 

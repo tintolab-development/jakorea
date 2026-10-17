@@ -48,6 +48,48 @@ function padScheduleTimePart(part: string): string {
   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
 }
 
+export function ParticipatingProgressScheduleValue({
+  session,
+}: {
+  session: ParticipatingSchoolSession
+}) {
+  const scheduleLabel = session.scheduleLabel?.trim()
+  const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
+  if (scheduleLabel) {
+    return (
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider([
+          scheduleLabel,
+          <span
+            key="status"
+            className={`participating-institution-application-info__session-status ${statusClass}`}
+          >
+            {statusLabel}
+          </span>,
+        ])}
+      </ProgramDetailTdSegmentWrap>
+    )
+  }
+
+  const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
+  const [startRaw, endRaw] = session.timeRange.split('~')
+  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider([
+        `${datePart} ${timePart}`,
+        periodPart,
+        <span
+          key="status"
+          className={`participating-institution-application-info__session-status ${statusClass}`}
+        >
+          {statusLabel}
+        </span>,
+      ])}
+    </ProgramDetailTdSegmentWrap>
+  )
+}
+
 export interface ParticipatingProgressScheduleRowProps {
   rowLabel: string
   session: ParticipatingSchoolSession
@@ -57,49 +99,13 @@ export function ParticipatingProgressScheduleRow({
   rowLabel,
   session,
 }: ParticipatingProgressScheduleRowProps) {
-  const scheduleLabel = session.scheduleLabel?.trim()
-  const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
-  if (scheduleLabel) {
-    return (
-      <tr>
-        <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-          {rowLabel}
-        </td>
-        <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-          <ProgramDetailTdSegmentWrap>
-            {withProgramDetailTdDivider([
-              scheduleLabel,
-              <span key="status" className={`participating-institution-application-info__session-status ${statusClass}`}>
-                {statusLabel}
-              </span>,
-            ])}
-          </ProgramDetailTdSegmentWrap>
-        </td>
-      </tr>
-    )
-  }
-
-  const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
-  const [startRaw, endRaw] = session.timeRange.split('~')
-  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
         {rowLabel}
       </td>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        <ProgramDetailTdSegmentWrap>
-          {withProgramDetailTdDivider([
-            `${datePart} ${timePart}`,
-            periodPart,
-            <span
-              key="status"
-              className={`participating-institution-application-info__session-status ${statusClass}`}
-            >
-              {statusLabel}
-            </span>,
-          ])}
-        </ProgramDetailTdSegmentWrap>
+        <ParticipatingProgressScheduleValue session={session} />
       </td>
     </tr>
   )

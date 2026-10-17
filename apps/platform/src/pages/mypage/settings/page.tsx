@@ -1,8 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
+import type { PortalProfileResponse } from '@/features/auth/sign-in/api/types'
 import {
   getSettingsLnbItems,
+  isInstructorMypageProfile,
   isSchoolTeacherMypageProfile,
   mapPortalProfileToSettingsView,
   MYPAGE_PATH,
@@ -16,6 +19,12 @@ import {
   type MypageLnbItemKey,
   type SettingsProfileInput,
 } from '@/features/mypage'
+import { mapInstructorFormValuesToCmsProfile } from '@/features/mypage/instructor-apply/api/map-create-request'
+import type { InstructorSettingsSectionId } from '@/features/mypage/settings/lib/format-instructor-settings-display'
+import { INSTRUCTOR_SETTINGS_ESSAY_SECTIONS } from '@/features/mypage/settings/lib/format-instructor-settings-display'
+import { buildInstructorSettingsFormValues } from '@/features/mypage/settings/lib/map-instructor-settings-form'
+import { SettingsInstructorSectionEditForm } from '@/features/mypage/settings/ui/instructor-profile/section-edit-form'
+import { INSTRUCTOR_FORM_SECTION_BASE_TITLES } from '@jakorea/domain/instructor/form-layout'
 import { ProgramBackButton } from '@/features/program'
 import { useMediaQuery } from '@/shared/hooks'
 import {
@@ -30,7 +39,34 @@ import { MypageLayout } from '@/widgets/mypage-layout'
 import styles from './page.module.css'
 
 type SettingsTab = 'profile' | 'social' | 'consents'
-type SettingsMode = 'view' | 'edit-basic'
+type SettingsInstructorEditMode = `edit-instructor-${InstructorSettingsSectionId}`
+type SettingsMode = 'view' | 'edit-basic' | SettingsInstructorEditMode
+
+const INSTRUCTOR_EDIT_PREFIX = 'edit-instructor-'
+
+function parseInstructorSectionFromMode(mode: SettingsMode): InstructorSettingsSectionId | null {
+  if (!mode.startsWith(INSTRUCTOR_EDIT_PREFIX)) return null
+  return mode.slice(INSTRUCTOR_EDIT_PREFIX.length) as InstructorSettingsSectionId
+}
+
+function resolveInstructorEditPageTitle(section: InstructorSettingsSectionId): string {
+  const essay = INSTRUCTOR_SETTINGS_ESSAY_SECTIONS.find(item => item.id === section)
+  if (essay) return `${essay.title} 수정`
+  switch (section) {
+    case 'education':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.education} 수정`
+    case 'career':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.career} 수정`
+    case 'ja':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.ja} 수정`
+    case 'license':
+      return `${INSTRUCTOR_FORM_SECTION_BASE_TITLES.license} 수정`
+    case 'award':
+      return '수상 및 수료 내역 수정'
+    default:
+      return '프로필 수정'
+  }
+}
 
 function readSettingsTab(params: URLSearchParams): SettingsTab {
   const tab = params.get('tab')
@@ -39,6 +75,8 @@ function readSettingsTab(params: URLSearchParams): SettingsTab {
 }
 
 function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
+  const instructorSection = parseInstructorSectionFromMode(mode)
+  if (instructorSection) return resolveInstructorEditPageTitle(instructorSection)
   if (mode === 'edit-basic') return '회원정보 수정'
   if (tab === 'social') return '소셜 계정 연동 관리'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
@@ -46,7 +84,13 @@ function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
 }
 
 function resolveLnbKey(tab: SettingsTab, mode: SettingsMode) {
-  if (mode === 'edit-basic' || tab === 'profile') return 'settingsProfile' as const
+  if (
+    tab === 'profile' ||
+    mode === 'edit-basic' ||
+    mode.startsWith(INSTRUCTOR_EDIT_PREFIX)
+  ) {
+    return 'settingsProfile' as const
+  }
   if (tab === 'social') return 'settingsSocial' as const
   return 'settingsConsents' as const
 }
@@ -64,6 +108,28 @@ export function MypageSettingsPage() {
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const effectiveProfile = localProfile ?? profile
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
+  const isInstructor = isInstructorMypageProfile(member.profile)
+  const instructorSection = parseInstructorSectionFromMode(mode)
+  const [instructorFormValues, setInstructorFormValues] =
+    useState<InstructorSharedProfileFormValues | null>(null)
+
+  useEffect(() => {
+    if (!isInstructor) {
+      setInstructorFormValues(null)
+      return
+    }
+    setInstructorFormValues(
+      buildInstructorSettingsFormValues(effectiveProfile as PortalProfileResponse),
+    )
+  }, [effectiveProfile, isInstructor])
+
+  const instructorProfileForView = useMemo(() => {
+    if (!isInstructor) return null
+    return (
+      instructorFormValues ??
+      buildInstructorSettingsFormValues(effectiveProfile as PortalProfileResponse)
+    )
+  }, [effectiveProfile, instructorFormValues, isInstructor])
   const view = mapPortalProfileToSettingsView(effectiveProfile, guardian, {
     variant: isTeacher ? 'teacher' : 'individual',
   })
@@ -163,6 +229,28 @@ export function MypageSettingsPage() {
     )
   }
 
+  if (instructorSection && instructorProfileForView) {
+    return wrap(
+      <SettingsInstructorSectionEditForm
+        section={instructorSection}
+        fullValues={instructorProfileForView}
+        onCancel={() => setMode('view')}
+        onSaved={next => {
+          setInstructorFormValues(next)
+          if (!isRemoteSession) {
+            setLocalProfile(prev => ({
+              ...(prev ?? effectiveProfile),
+              instructorProfile: {
+                profile: mapInstructorFormValuesToCmsProfile(next),
+              },
+            }))
+          }
+          setMode('view')
+        }}
+      />,
+    )
+  }
+
   if (mode === 'edit-basic') {
     return wrap(
       <SettingsEditForm
@@ -192,6 +280,12 @@ export function MypageSettingsPage() {
       basicRows={view.basicRows}
       guardian={view.guardian}
       onEditBasic={() => setMode('edit-basic')}
+      instructorProfileValues={instructorProfileForView}
+      onEditInstructorSection={
+        isInstructor
+          ? section => setMode(`edit-instructor-${section}` as SettingsInstructorEditMode)
+          : undefined
+      }
     />
   )
 }

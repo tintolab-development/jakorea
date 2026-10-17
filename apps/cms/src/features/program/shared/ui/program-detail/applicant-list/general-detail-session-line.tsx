@@ -8,6 +8,7 @@ import {
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
+  enrichGeneralDetailScheduleLineLabel,
   getSessionLineParts,
   type ApplicantSessionLineInput,
 } from './applicants-detail-session-format'
@@ -25,7 +26,7 @@ export function GeneralDetailSessionLine({
   if (scheduleLabel) {
     return (
       <div className="general-detail-session-line">
-        <span>{scheduleLabel}</span>
+        <span>{enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge)}</span>
       </div>
     )
   }
@@ -36,7 +37,7 @@ export function GeneralDetailSessionLine({
   if (!periodPart) {
     return (
       <div className="general-detail-session-line">
-        <span>{schedulePart}</span>
+        <span>{enrichGeneralDetailScheduleLineLabel(schedulePart, bridge)}</span>
       </div>
     )
   }

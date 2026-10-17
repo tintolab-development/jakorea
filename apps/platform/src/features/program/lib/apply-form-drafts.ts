@@ -18,7 +18,10 @@ import { createProgramApplicationFormInstitutionDraft } from '@jakorea/form-sche
 import { createProgramApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { createProgramApplicationFormTrainedTeachersDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { createProgramApplicationFormVolunteerDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
-import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import {
+  clearWritingFormFillPreviewAnswers,
+  type WritingFormDraft,
+} from '@jakorea/form-schema/writing-form'
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
 import {
   resolveProgramApplyFormCase,
@@ -104,7 +107,7 @@ export function buildApplyFormSeedDraft(
     >
 ): WritingFormDraft {
   const applyCase = resolveProgramApplyFormCase(program)
-  const draft = createSeedDraftForApplyCase(applyCase)
+  const draft = clearWritingFormFillPreviewAnswers(createSeedDraftForApplyCase(applyCase))
   if (
     applyCase !== 'individual-general' &&
     applyCase !== 'individual-team' &&

@@ -129,13 +129,13 @@ function buildSubmitAnswers(input: {
 }
 
 assert.equal(shouldShowSexOffenseInquiry({ ...emptyInstitutionSexOffense(), submissionRequest: 'no_submit' }), false)
-assert.equal(shouldShowSexOffenseInquiry(emptyInstitutionSexOffense()), true)
+assert.equal(shouldShowSexOffenseInquiry(emptyInstitutionSexOffense()), false)
 
 const noSubmitAnswers = buildSubmitAnswers({ submissionRequest: 'no_submit' })
 assert.equal(INQUIRY in noSubmitAnswers, false)
 assert.deepEqual(noSubmitAnswers[SUBMISSION], { submissionRequest: 'no_submit' })
 assert.equal(GUIDANCE in noSubmitAnswers, false)
-assert.deepEqual(noSubmitAnswers[SCHEDULE], ['line:0'])
+assert.deepEqual(noSubmitAnswers[SCHEDULE] ?? [], [])
 
 const leftoverStripped = omitSexOffenseInquiryAnswersIfNotRequested({
   [SUBMISSION]: { submissionRequest: 'no_submit' },

@@ -86,6 +86,7 @@ const multiPrefersArray = mapPortalProgramDetail({
 assert.ok(multiPrefersArray)
 assert.equal(multiPrefersArray.educationTargetLabel, '중학교, 고등학교')
 assert.equal(multiPrefersArray.educationTargetKey, 'middle')
+assert.deepEqual(multiPrefersArray.educationTargetKeys, ['middle', 'high'])
 
 assert.equal(mapped.sponsor, '현대 자동차')
 assert.equal(mapped.detailCase, 'general')

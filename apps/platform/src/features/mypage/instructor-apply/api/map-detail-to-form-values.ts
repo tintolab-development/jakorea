@@ -94,7 +94,7 @@ function fromApiEmploymentStatus(
   return ''
 }
 
-function mapProfileToFormPartial(
+export function mapInstructorCmsProfileToFormPartial(
   profile: InstructorRoleRequestProfile | undefined,
 ): Partial<InstructorSharedProfileFormValues> {
   if (!profile) return {}
@@ -238,7 +238,7 @@ export function mapInstructorRoleRequestDetailToSubmittedSnapshot(
 
   const values: InstructorSharedProfileFormValues = {
     ...INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
-    ...mapProfileToFormPartial(detail.profile),
+    ...mapInstructorCmsProfileToFormPartial(detail.profile),
     ...mapSettlementToForm(detail.settlement),
     ...consentPartial,
     name: detail.name?.trim() ?? '',

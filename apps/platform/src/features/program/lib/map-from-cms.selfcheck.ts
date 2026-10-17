@@ -310,6 +310,7 @@ function makeStubDetail(id: string, title: string): ProgramDetail {
     recruitmentPeriodLabel: '-',
     recruitmentStatus: 'recruiting',
     educationTargetKey: 'high',
+    educationTargetKeys: ['high'],
     educationTargetLabel: '고등학생',
     educationForm: 'online',
     educationFormLabel: '온라인',

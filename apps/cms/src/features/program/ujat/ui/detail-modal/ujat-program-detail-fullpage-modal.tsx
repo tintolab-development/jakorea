@@ -244,7 +244,10 @@ import {
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
-import { shouldShowSurveyPollScheduleSelectField } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
+import {
+  resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
+  shouldShowSurveyPollScheduleSelectField,
+} from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -914,6 +917,17 @@ export function UjatProgramDetailFullPageModal({
     () => shouldShowSurveyPollScheduleSelectField(displayProgram),
     [displayProgram]
   )
+  useEffect(() => {
+    if (!surveyCreateModalOpen || !showSurveyPollScheduleSelectField) return
+    const options = surveyScheduleOptionsQuery.options ?? []
+    if (options.length === 1 && options[0]?.value) {
+      setSelectedSurveyScheduleValue(String(options[0].value))
+    }
+  }, [
+    surveyCreateModalOpen,
+    showSurveyPollScheduleSelectField,
+    surveyScheduleOptionsQuery.options,
+  ])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
@@ -1756,7 +1770,7 @@ export function UjatProgramDetailFullPageModal({
           const surveyTarget =
             displayProgram == null
               ? null
-              : await resolveLectureEvalBindingTarget(String(displayProgram.id))
+              : await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(displayProgram)
           if (surveyTarget == null) {
             void showAlert({
               title: '등록 실패',

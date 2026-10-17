@@ -39,6 +39,7 @@ import {
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE,
+  participatingScheduleTableColumnLayout,
 } from '../../../lib/participating-institutions-table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
@@ -362,11 +363,7 @@ export function ParticipatingInstitutionsSection({
         key: 'sessions',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
           const sessionLines =
             isCompanySchool || isTrainedTeachersSurface
