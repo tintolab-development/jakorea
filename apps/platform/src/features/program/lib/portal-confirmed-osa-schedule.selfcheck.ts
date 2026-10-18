@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { resolvePortalApplicationHiddenParagraphIds } from './portal-application-hidden-paragraph-ids.ts'
@@ -83,5 +84,56 @@ const trainedScheduleHidden = resolvePortalApplicationHiddenParagraphIds({
   paragraphs: [{ id: trainedScheduleId } as never],
 })
 assert.equal(trainedScheduleHidden.has(trainedScheduleId), true)
+
+for (const scheduleOptions of [
+  [],
+  [{ id: 'schedule:1', label: '행사 1' }],
+  [
+    { id: 'schedule:1', label: '행사 1' },
+    { id: 'schedule:2', label: '행사 2' },
+  ],
+]) {
+  const trainedScheduleHiddenWithRuntimeOptions = resolvePortalApplicationHiddenParagraphIds({
+    applyCase: 'trained-teachers',
+    program: {
+      educationStructure: 'schedule',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+      ],
+    } as never,
+    runtimeContext: {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions,
+    },
+    paragraphs: [{ id: trainedScheduleId } as never],
+  })
+  assert.equal(trainedScheduleHiddenWithRuntimeOptions.has(trainedScheduleId), true)
+}
+
+const institutionScheduleId = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+const institutionScheduleHidden = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: {
+    educationStructure: 'schedule',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 4월 20일(월) 09:30 ~ 12:20',
+      '26년 4월 20일(월) 13:00 ~ 15:50',
+    ],
+  } as never,
+  runtimeContext: {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'schedule:1', label: '행사 1' },
+      { id: 'schedule:2', label: '행사 2' },
+    ],
+  },
+  paragraphs: [{ id: institutionScheduleId } as never],
+})
+assert.equal(institutionScheduleHidden.has(institutionScheduleId), true)
 
 console.log('portal-confirmed-osa-schedule.selfcheck: ok')

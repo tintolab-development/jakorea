@@ -59,6 +59,30 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     ['TCH-05', 'schedule', 'single', 'date', ['26년 4월 20일(월) 09:30 ~ 12:20'], true],
     ['TCH-06', 'schedule', 'single', 'period', [], false],
     ['TCH-07', 'schedule', 'multi', 'date', [], true],
+    [
+      'TCH-01-2slots',
+      'curriculum',
+      'single',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
+      false,
+    ],
+    [
+      'TCH-01-same-day-2slots',
+      'curriculum',
+      'single',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20 | 26년 4월 20일(월) 13:00 ~ 15:50'],
+      false,
+    ],
+    [
+      'TCH-05-2slots',
+      'schedule',
+      'single',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
+      false,
+    ],
   ] as const)(
     '%s 신청 폼의 진행 희망 교육 일정 전용 단락을 유형·회차별로 판정한다',
     (

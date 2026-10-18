@@ -114,13 +114,19 @@ export function countEducationScheduleChoiceSlots(
 export function shouldShowApplicationScheduleParagraph(
   input: ApplicationScheduleVisibilityInput
 ): boolean {
-  if (input.educationStructure === 'schedule' && input.sessionRound === 'multi') {
+  if (isApplicationScheduleParagraphForcedHidden(input)) {
     return false
   }
   if (input.educationScheduleMode !== 'period') {
     return countEducationScheduleChoiceSlots(input.educationScheduleLines) > 1
   }
   return true
+}
+
+export function isApplicationScheduleParagraphForcedHidden(
+  input: ApplicationScheduleVisibilityInput
+): boolean {
+  return input.educationStructure === 'schedule' && input.sessionRound === 'multi'
 }
 
 /** 희망 일정 신청 — 최대 일정 수 필드(및 지망 UI) 노출 */
