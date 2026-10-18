@@ -375,6 +375,7 @@ function GeneralProgramRegistrationFullpageModalInner({
       <TemplateFullpageModal
         open={open}
         bodyLoading={flow.isDraftLoading}
+        scrollResetKey={flow.activeStep}
         onClose={handleClose}
         title={
           registrationFormVariant === 'economy'
