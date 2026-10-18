@@ -1017,7 +1017,12 @@ export function useProgramRegistrationEditor(
         {
           hiddenParagraphIds:
             programRegistrationFormVariant === 'trainedTeachers'
-              ? new Set<string>([PROGRAM_REGISTRATION_IDS.businessKpi])
+              ? new Set<string>([
+                  PROGRAM_REGISTRATION_IDS.businessKpi,
+                  ...(programType === 'schedule' && sessionRoundType === 'multi'
+                    ? [PROGRAM_REGISTRATION_IDS.educationScheduleSettings]
+                    : []),
+                ])
               : programRegistrationFormVariant === 'general' &&
                   programType === 'schedule' &&
                   sessionRoundType === 'multi'
@@ -1392,15 +1397,22 @@ export function useProgramRegistrationEditor(
                 : '차시 별 정보를 입력해 주세요',
         })
       )
-      if (programRegistrationFormVariant === 'general') {
+      if (
+        programRegistrationFormVariant === 'general' ||
+        programRegistrationFormVariant === 'trainedTeachers'
+      ) {
         syncInstitutionApplicationBridgeForRegistrationWizard({
-          registrationFormVariant: 'general',
+          registrationFormVariant: programRegistrationFormVariant,
           programType: nextProgramType,
           sessionRound: typeSettings.sessionRoundType,
           educationScheduleMode: typeSettings.educationScheduleMode,
-          recruitTemplateCode: 'recruitment-participant-school',
-          curriculumSessionCount,
-          curriculumChartSessionCount,
+          recruitTemplateCode:
+            programRegistrationFormVariant === 'trainedTeachers'
+              ? 'recruitment-trained-teachers'
+              : 'recruitment-participant-school',
+          curriculumSessionCount: nextLayout?.curriculumSessionCount ?? curriculumSessionCount,
+          curriculumChartSessionCount:
+            nextLayout?.curriculumChartSessionCount ?? curriculumChartSessionCount,
         })
       }
     },
