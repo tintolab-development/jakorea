@@ -23,6 +23,7 @@ export type OrganizationApproveScheduleOption = {
 export type OrganizationApproveScheduleValidation = {
   options: OrganizationApproveScheduleOption[]
   invalidReason: string | null
+  unresolvedReason: string | null
   duplicateScheduleIds: number[]
 }
 
@@ -43,6 +44,29 @@ export const ORGANIZATION_APPROVE_UNRESOLVED_REASON_MESSAGES: Record<
     '현재 프로그램 공통 교육 일정과 연결되지 않은 희망 일정입니다. 승인 후 교육 일정을 별도로 배정해 주세요.',
   AMBIGUOUS_SCHEDULE_MATCH:
     '동일한 시간의 공통 교육 일정이 여러 건이어서 자동 연결할 수 없습니다. 일정 확정 없이 승인하거나 관리자에게 일정 정리를 요청해 주세요.',
+}
+
+export function getUnresolvedPreferredScheduleMessage(reason: string | null | undefined): string {
+  switch (reason?.trim()) {
+    case 'AMBIGUOUS_SCHEDULE_MATCH':
+      return '희망 교육 일정과 일치하는 운영 일정이 여러 개여서 자동 확정할 수 없습니다. 승인 후 별도 배정해 주세요.'
+    case 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH':
+      return '희망 교육 일정과 일치하는 운영 일정이 없어 자동 확정할 수 없습니다. 승인 후 별도 배정해 주세요.'
+    default:
+      return ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE
+  }
+}
+
+function firstUnresolvedPreferredScheduleReason(
+  preferred: PreferredEducationSchedule[] | undefined
+): string | null {
+  for (const schedule of preferred ?? []) {
+    if (parseOrganizationPreferredScheduleId(schedule.scheduleId) != null) continue
+    if (typeof schedule.unresolvedReason !== 'string') continue
+    const reason = schedule.unresolvedReason.trim()
+    if (reason) return reason
+  }
+  return null
 }
 
 function parseIsoDateTime(value: unknown): number | null {
@@ -106,6 +130,7 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
     return {
       options: [],
       invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+      unresolvedReason: null,
       duplicateScheduleIds: [],
     }
   }
@@ -151,11 +176,13 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
     })
   }
 
+  const unresolvedReason = firstUnresolvedPreferredScheduleReason(list)
   return options.length > 0
-    ? { options, invalidReason: null, duplicateScheduleIds: [] }
+    ? { options, invalidReason: null, unresolvedReason, duplicateScheduleIds: [] }
     : {
         options: [],
-        invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        invalidReason: getUnresolvedPreferredScheduleMessage(unresolvedReason),
+        unresolvedReason,
         duplicateScheduleIds: [],
       }
 }
@@ -236,6 +263,7 @@ export function validateOrganizationApproveScheduleOptions(
     return {
       options: [],
       invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+      unresolvedReason: null,
       duplicateScheduleIds: [],
     }
   }
@@ -275,6 +303,7 @@ export function validateOrganizationApproveScheduleOptions(
       return {
         options: [],
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        unresolvedReason: null,
         duplicateScheduleIds: [],
       }
     }
@@ -287,6 +316,7 @@ export function validateOrganizationApproveScheduleOptions(
       return {
         options: [],
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        unresolvedReason: null,
         duplicateScheduleIds: [...duplicateScheduleIds],
       }
     }
@@ -302,6 +332,7 @@ export function validateOrganizationApproveScheduleOptions(
       return {
         options: [],
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        unresolvedReason: null,
         duplicateScheduleIds: [],
       }
     }
@@ -314,10 +345,11 @@ export function validateOrganizationApproveScheduleOptions(
   }
 
   return options.length > 0
-    ? { options, invalidReason: null, duplicateScheduleIds: [] }
+    ? { options, invalidReason: null, unresolvedReason: null, duplicateScheduleIds: [] }
     : {
         options: [],
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        unresolvedReason: null,
         duplicateScheduleIds: [],
       }
 }

@@ -811,6 +811,8 @@ export * from './organizationApplicationListItemResponseRecruitHalf';
 export * from './organizationApplicationListItemResponseScheduleConfirmStatus';
 export * from './organizationApplicationNotificationResendRequest';
 export * from './organizationApplicationRejectRequest';
+export * from './organizationApplicationSession';
+export * from './organizationApplicationSessionResponse';
 export * from './organizationApplicationUpdateRequest';
 export * from './organizationGuidanceAnswersPatchRequest';
 export * from './organizationGuidanceAnswersPatchRequestAnswers';

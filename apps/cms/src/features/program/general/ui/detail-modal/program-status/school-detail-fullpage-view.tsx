@@ -371,6 +371,7 @@ export interface SchoolDetailFullpageViewProps {
   detail: SchoolDetailForModal
   row: ParticipatingSchoolRow
   navigationCapabilities?: GeneralProgramNavigationCapabilities
+  navigationCapabilitiesLoading?: boolean
   /** 합반 대상 lookup — 동일 프로그램 참여 기관 전체 목록 */
   participatingSchoolList?: ParticipatingSchoolRow[]
   /** URL 쿼리 파라미터와 연동 시 활성 탭 (제공 시 controlled) */

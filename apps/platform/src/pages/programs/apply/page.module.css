@@ -147,6 +147,12 @@
   color: var(--color-error, #d92d20);
 }
 
+.form :global([data-application-error='true']) {
+  border-radius: var(--radius-12);
+  outline: 2px solid var(--color-error, #d92d20);
+  outline-offset: 3px;
+}
+
 .submitErrorFollowUp {
   display: flex;
   justify-content: center;

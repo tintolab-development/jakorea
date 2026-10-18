@@ -106,17 +106,20 @@ function readPositiveInt(value: unknown): number | undefined {
 
 /** form-bindings `runtimeContext` — 모집 상한·일일 차시 */
 export function readApplicationScheduleRecruitmentLimitsFromRuntime(runtime: unknown): {
+  maxClassCount?: number
   maxScheduleCount?: number
   maxSessionsPerDay?: number
 } {
   if (!isRecord(runtime)) return {}
   const fromRoot = {
+    maxClassCount: readPositiveInt(runtime.maxClassCount),
     maxScheduleCount: readPositiveInt(runtime.maxScheduleCount),
     maxSessionsPerDay: readPositiveInt(runtime.maxSessionsPerDay),
   }
   const info = runtime.participantRecruitmentInfo
   if (!isRecord(info)) return fromRoot
   return {
+    maxClassCount: fromRoot.maxClassCount ?? readPositiveInt(info.maxClassCount),
     maxScheduleCount:
       fromRoot.maxScheduleCount ?? readPositiveInt(info.maxScheduleCount),
     maxSessionsPerDay:

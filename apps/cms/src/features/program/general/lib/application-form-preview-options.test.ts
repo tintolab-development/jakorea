@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import {
   resolveInstitutionFixedScheduleDescription,
   shouldUseInstitutionFixedScheduleCardCopy,
@@ -43,6 +44,76 @@ const emptyVm = {
 }
 
 describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
+  it.each([
+    ['TCH-01', 'curriculum', 'single', 'date', ['26년 4월 20일(월) 09:30 ~ 12:20'], true],
+    ['TCH-02', 'curriculum', 'single', 'period', [], false],
+    [
+      'TCH-03',
+      'curriculum',
+      'multi',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
+      false,
+    ],
+    ['TCH-04', 'curriculum', 'multi', 'period', [], false],
+    ['TCH-05', 'schedule', 'single', 'date', ['26년 4월 20일(월) 09:30 ~ 12:20'], true],
+    ['TCH-06', 'schedule', 'single', 'period', [], false],
+    ['TCH-07', 'schedule', 'multi', 'date', [], true],
+    [
+      'TCH-01-2slots',
+      'curriculum',
+      'single',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
+      false,
+    ],
+    [
+      'TCH-01-same-day-2slots',
+      'curriculum',
+      'single',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20 | 26년 4월 20일(월) 13:00 ~ 15:50'],
+      false,
+    ],
+    [
+      'TCH-05-2slots',
+      'schedule',
+      'single',
+      'date',
+      ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
+      false,
+    ],
+  ] as const)(
+    '%s 신청 폼의 진행 희망 교육 일정 전용 단락을 유형·회차별로 판정한다',
+    (
+      _caseId,
+      educationStructure,
+      sessionRound,
+      educationScheduleMode,
+      educationScheduleLines,
+      hidden
+    ) => {
+      const resolved = resolveGeneralApplicationFormHiddenParagraphIds(
+        'trained-teachers-application-institution',
+        {
+          paragraphs: [],
+          institutionBridge: {
+            preEducationNoticeRequired: true,
+            educationStructure,
+            sessionRound,
+            educationScheduleMode,
+            educationScheduleLines,
+          },
+        }
+      )
+
+      expect(
+        resolved?.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) ?? false
+      ).toBe(hidden)
+      expect(resolved?.has('program-application-institution-seed-schedule') ?? false).toBe(false)
+    }
+  )
+
   it('프로그램 상세 연동 미리보기는 공통정보 일정을 쓰고 schema 객관식 snapshot을 쓰지 않는다', () => {
     const program = {
       id: 'detail-preview-schedule',

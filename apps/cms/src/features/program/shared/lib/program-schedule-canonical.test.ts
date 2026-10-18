@@ -54,6 +54,31 @@ describe('program-schedule-canonical', () => {
     )
   })
 
+  it('filters multi-day all-day period windows from new assignment candidates', () => {
+    const rows = [
+      {
+        id: 10,
+        sessionNo: null,
+        scheduleRole: 'EDUCATION',
+        scheduleStatus: 'ACTIVE',
+        allDay: true,
+        startAt: '2026-11-04T15:00:00Z',
+        endAt: '2026-11-13T15:00:00Z',
+      },
+      {
+        id: 11,
+        sessionNo: 1,
+        scheduleRole: 'EDUCATION',
+        scheduleStatus: 'ACTIVE',
+        allDay: true,
+        startAt: '2026-11-04T15:00:00Z',
+        endAt: '2026-11-05T15:00:00Z',
+      },
+    ]
+    expect(filterProgramSchedulesForNewEducationAssignment(rows).map(r => r.id)).toEqual([11])
+    expect(isProgramScheduleCandidateForNewEducationAssignment(rows[0])).toBe(false)
+  })
+
   it('uses educationSlotKey as list row key with id fallback', () => {
     expect(
       resolveProgramScheduleListRowKey({

@@ -47,6 +47,7 @@ export function toPortalProgramListQuery(
 ): PortalProgramListQuery {
   const category = params.category
   const portalTab = category === 'all' ? undefined : PORTAL_TAB[category]
+  const programType = omitAll(params.programType)?.toUpperCase()
   const recruitmentStatus = omitAll(params.recruitmentStatus)
   const educationForm = omitAll(params.educationForm)
   const operating = operatingRange(params.operatingPeriod)
@@ -61,6 +62,7 @@ export function toPortalProgramListQuery(
   return {
     keyword: omitAll(params.q),
     portalTab,
+    programType,
     recruitmentStatus: recruitmentStatus
       ? PORTAL_RECRUITMENT_STATUS[recruitmentStatus as keyof typeof PORTAL_RECRUITMENT_STATUS] ??
         recruitmentStatus.toUpperCase()

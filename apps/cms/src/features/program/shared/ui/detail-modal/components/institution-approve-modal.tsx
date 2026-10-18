@@ -11,6 +11,7 @@ import type { PreferredEducationSchedule } from '@/features/program/general/api/
 import {
   ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE,
+  getUnresolvedPreferredScheduleMessage,
   organizationApproveScheduleOptionLabel,
   organizationApproveUnconfirmableScheduleNotice,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
@@ -194,9 +195,11 @@ export function InstitutionApproveModal({
           {hasUnconfirmableOnly ? (
             <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
               {unconfirmableNotice ??
-                (hasLoadedEmptyEducationSlots
-                  ? '공통 교육 일정 정보를 불러올 수 없습니다. 백엔드 배포 또는 데이터 migration 상태를 확인해 주세요.'
-                  : '희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청 상세의 scheduleId 반영 후 다시 시도해 주세요.')}
+                (scheduleValidation.unresolvedReason
+                  ? getUnresolvedPreferredScheduleMessage(scheduleValidation.unresolvedReason)
+                  : hasLoadedEmptyEducationSlots
+                    ? '공통 교육 일정 정보를 불러올 수 없습니다. 백엔드 배포 또는 데이터 migration 상태를 확인해 주세요.'
+                    : '희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청 상세의 scheduleId 반영 후 다시 시도해 주세요.')}
             </p>
           ) : null}
           {hasProgramScheduleMismatch ? (

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, EmptyState, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -13,26 +13,26 @@ import {
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
-  useBulkDownloadTrainedTeacherEducationJournals,
+  useCreateTrainedTeacherEducationJournalZipJob,
   useDownloadTrainedTeacherEducationJournal,
+  useTrainedTeacherEducationJournalZipJob,
   useTrainedTeacherEducationJournals,
 } from '@/features/program/trained-teachers/api/education-journals-hooks'
+import {
+  educationJournalZipJobStatusLabel,
+  isEducationJournalZipJobCompleted,
+  isEducationJournalZipJobFailed,
+} from '@/features/program/trained-teachers/api/education-journals-job'
+import { downloadTrainedTeacherEducationJournalZipJob } from '@/features/program/trained-teachers/api/education-journals-service'
 import { TrainedTeachersEducationJournalViewModal } from './education-journal-view-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './education-journal-section.css'
 
 const VIEW_CELL_CLASSNAME = 'trained-teachers-education-journal-section__view-cell'
-const BULK_DOWNLOAD_GAP_MS = 400
 
 type JournalTableRow = TrainedTeachersEducationJournalEntry & { no: number }
 
 export type TrainedTeachersEducationJournalSectionVariant = 'default' | 'progress'
-
-function wait(ms: number): Promise<void> {
-  return new Promise(resolve => {
-    window.setTimeout(resolve, ms)
-  })
-}
 
 function renderJournalViewButton(enabled: boolean, onView: () => void) {
   return (
@@ -81,7 +81,9 @@ export function TrainedTeachersEducationJournalSection({
   const isProgressVariant = variant === 'progress'
   const { showAlert } = useCmsAlert()
   const [viewerEntry, setViewerEntry] = useState<TrainedTeachersEducationJournalEntry | null>(null)
-  const [isBulkDownloading, setIsBulkDownloading] = useState(false)
+  const [bulkJobId, setBulkJobId] = useState<number | null>(null)
+  const downloadedJobIdRef = useRef<number | null>(null)
+  const handledFailureJobIdRef = useRef<number | null>(null)
 
   const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi() && Boolean(programId)
   const journalsQuery = useTrainedTeacherEducationJournals(
@@ -91,10 +93,36 @@ export function TrainedTeachersEducationJournalSection({
   )
 
   const downloadMutation = useDownloadTrainedTeacherEducationJournal(programId)
-  const bulkDownloadMutation = useBulkDownloadTrainedTeacherEducationJournals(
+  const createZipJobMutation = useCreateTrainedTeacherEducationJournalZipJob(
     programId,
     institutionId
   )
+  const zipJobQuery = useTrainedTeacherEducationJournalZipJob(programId, institutionId, bulkJobId)
+
+  useEffect(() => {
+    const job = zipJobQuery.data
+    if (!job || bulkJobId == null) return
+    if (isEducationJournalZipJobFailed(job)) {
+      if (handledFailureJobIdRef.current === bulkJobId) return
+      handledFailureJobIdRef.current = bulkJobId
+      showAlert({
+        title: '일괄 다운로드 실패',
+        content: job.failureReason || '교육일지 ZIP 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      })
+      setBulkJobId(null)
+      return
+    }
+    if (!isEducationJournalZipJobCompleted(job) || downloadedJobIdRef.current === bulkJobId) return
+    downloadedJobIdRef.current = bulkJobId
+    void downloadTrainedTeacherEducationJournalZipJob(job, institutionId)
+      .catch(() => {
+        showAlert({
+          title: '다운로드 실패',
+          content: '교육일지 ZIP 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      })
+      .finally(() => setBulkJobId(null))
+  }, [bulkJobId, institutionId, showAlert, zipJobQuery.data])
 
   const entries = useMemo(() => journalsQuery.data ?? [], [journalsQuery.data])
   const isLoading = journalsQuery.isFetching
@@ -127,44 +155,32 @@ export function TrainedTeachersEducationJournalSection({
     }
 
     if (remoteEnabled && programId) {
-      setIsBulkDownloading(true)
+      if (createZipJobMutation.isPending || bulkJobId != null) return
       try {
-        await bulkDownloadMutation.mutateAsync(entries)
+        const job = await createZipJobMutation.mutateAsync(entries)
+        if (job.jobId == null || job.jobId <= 0) {
+          throw new Error('교육일지 ZIP 작업 ID를 받지 못했습니다.')
+        }
+        downloadedJobIdRef.current = null
+        handledFailureJobIdRef.current = null
+        setBulkJobId(job.jobId)
       } catch {
         showAlert({
           title: '일괄 다운로드 실패',
           content: '교육일지 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
-      } finally {
-        setIsBulkDownloading(false)
       }
       return
     }
 
-    if (!isProgressVariant) {
-      showAlert({
-        title: '교육일지 일괄 다운로드',
-        content: `제출된 교육일지 ${entries.length}건을 다운로드합니다. (mock)\n\n${entries.map(e => e.fileName).join('\n')}`,
-      })
-      return
-    }
-
-    setIsBulkDownloading(true)
-    try {
-      for (let index = 0; index < entries.length; index += 1) {
-        const entry = entries[index]
-        void downloadFile(entry.fileName, entry.fileUrl)
-        if (index < entries.length - 1) {
-          await wait(BULK_DOWNLOAD_GAP_MS)
-        }
-      }
-    } finally {
-      setIsBulkDownloading(false)
-    }
+    showAlert({
+      title: '교육일지 일괄 다운로드',
+      content: `제출된 교육일지 ${entries.length}건을 다운로드합니다. (mock)\n\n${entries.map(e => e.fileName).join('\n')}`,
+    })
   }, [
-    bulkDownloadMutation,
+    bulkJobId,
+    createZipJobMutation,
     entries,
-    isProgressVariant,
     programId,
     remoteEnabled,
     showAlert,
@@ -283,13 +299,16 @@ export function TrainedTeachersEducationJournalSection({
           <CmsButton
             variant="secondary"
             size="large"
-            width={200}
+            width="max-content"
             icon={<ButtonDownloadIcon />}
-            loading={isBulkDownloading || bulkDownloadMutation.isPending}
-            disabled={isBulkDownloading || bulkDownloadMutation.isPending}
+            className="trained-teachers-education-journal-section__bulk-download-button"
+            loading={createZipJobMutation.isPending || bulkJobId != null}
+            disabled={createZipJobMutation.isPending || bulkJobId != null}
             onClick={() => void handleBulkDownload()}
           >
-            교육일지 일괄 다운로드
+            {bulkJobId != null && zipJobQuery.data
+              ? `ZIP ${educationJournalZipJobStatusLabel(zipJobQuery.data)}`
+              : '교육일지 일괄 다운로드'}
           </CmsButton>
           <ExcelButton loading={isExporting} onClick={exportExcel} />
         </div>

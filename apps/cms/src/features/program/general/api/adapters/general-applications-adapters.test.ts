@@ -446,6 +446,34 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[1]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
   })
 
+  it('maps materialized line:N preferred schedules with scheduleId and startAt', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691207,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '서울공항초',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: [
+          {
+            scheduleId: 902,
+            round: 1,
+            startAt: '2026-11-02T04:30:00Z',
+            endAt: '2026-11-02T07:00:00Z',
+            label: '26년 11월 2일(월) 13:30 ~ 16:00',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186084'
+    )
+
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(902)
+    expect(row.sessions?.[0]?.scheduleUnresolved).toBeUndefined()
+    expect(row.sessions?.[0]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
+    expect(row.sessions?.[0]?.timeRange).toContain('~')
+  })
+
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
     const active = mapParticipantToParticipatingSchoolRow(
       {

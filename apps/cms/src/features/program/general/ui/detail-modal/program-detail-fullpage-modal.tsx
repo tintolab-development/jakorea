@@ -244,11 +244,12 @@ function isCompanySchoolDetailProgram(program: Program | null): boolean {
 
 function parseSchoolTabFromSearch(
   searchParams: URLSearchParams,
-  program?: Program | null
+  program?: Program | null,
+  educationJournalEnabled?: boolean
 ): ParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
   if (t && isParticipatingInstitutionDetailTabKeyForProgram(t, program)) {
-    return normalizeParticipatingInstitutionDetailTab(t, program)
+    return normalizeParticipatingInstitutionDetailTab(t, program, educationJournalEnabled)
   }
   return 'application'
 }
@@ -381,7 +382,11 @@ export function ProgramDetailFullPageModal({
       isTrainedTeachersDetailProgram(displayProgram),
     [displayProgram, programVariant]
   )
-  const { disabledLnbKeys, capabilities: navigationCapabilities } = useGeneralProgramNavigation(
+  const {
+    disabledLnbKeys,
+    capabilities: navigationCapabilities,
+    loading: navigationLoading,
+  } = useGeneralProgramNavigation(
     open && (isCompanySchoolDetail || isTrainedTeachersDetail) ? programId : undefined,
     open && (isCompanySchoolDetail || isTrainedTeachersDetail)
   )
@@ -455,8 +460,20 @@ export function ProgramDetailFullPageModal({
   const instructorIdFromUrl = searchParams.get(INSTRUCTOR_ID_PARAM)
   const volunteerIdFromUrl = searchParams.get(VOLUNTEER_ID_PARAM)
   const activeSchoolTab = useMemo(
-    () => (schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams, displayProgram) : 'application'),
-    [schoolIdFromUrl, searchParams, displayProgram]
+    () =>
+      schoolIdFromUrl
+        ? parseSchoolTabFromSearch(
+            searchParams,
+            displayProgram,
+            navigationCapabilities.educationJournalEnabled
+          )
+        : 'application',
+    [
+      schoolIdFromUrl,
+      searchParams,
+      displayProgram,
+      navigationCapabilities.educationJournalEnabled,
+    ]
   )
   const activeInstructorTab = instructorIdFromUrl
     ? parseInstructorTabFromSearch(searchParams)
@@ -623,7 +640,11 @@ export function ProgramDetailFullPageModal({
       prev => {
         if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(SCHOOL_TAB_PARAM)
-        const normalized = parseSchoolTabFromSearch(prev, displayProgram)
+        const normalized = parseSchoolTabFromSearch(
+          prev,
+          displayProgram,
+          navigationCapabilities.educationJournalEnabled
+        )
         if (raw === normalized) return prev
         const next = new URLSearchParams(prev)
         next.set(SCHOOL_TAB_PARAM, normalized)
@@ -632,7 +653,14 @@ export function ProgramDetailFullPageModal({
       },
       { replace: true }
     )
-  }, [open, schoolIdFromUrl, searchParams, setSearchParams, displayProgram])
+  }, [
+    open,
+    schoolIdFromUrl,
+    searchParams,
+    setSearchParams,
+    displayProgram,
+    navigationCapabilities.educationJournalEnabled,
+  ])
 
   useEffect(() => {
     if (!open || isClosingRef.current || !instructorIdFromUrl) return
@@ -1134,7 +1162,14 @@ export function ProgramDetailFullPageModal({
 
   const setSchoolTab = (tab: ParticipatingInstitutionDetailTabKey) => {
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, normalizeParticipatingInstitutionDetailTab(tab, displayProgram))
+    next.set(
+      SCHOOL_TAB_PARAM,
+      normalizeParticipatingInstitutionDetailTab(
+        tab,
+        displayProgram,
+        navigationCapabilities.educationJournalEnabled
+      )
+    )
     setSearchParams(next, { replace: true })
   }
 
@@ -2098,6 +2133,7 @@ export function ProgramDetailFullPageModal({
                   programId={displayProgram?.id}
                   program={displayProgram}
                   navigationCapabilities={navigationCapabilities}
+                  navigationCapabilitiesLoading={navigationLoading}
                   schoolIdFromUrl={schoolIdFromUrl}
                   schoolTabFromUrl={activeSchoolTab}
                   onSchoolTabChange={setSchoolTab}

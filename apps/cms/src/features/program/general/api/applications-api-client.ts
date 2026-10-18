@@ -15,6 +15,8 @@ import type { OrganizationApplicationDetailResponse } from '@/shared/api/generat
 import type { OrganizationApplicationNotificationResendRequest as OrganizationApplicationNotificationResendRequestDto } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequest'
 import type { OrganizationApplicationNotificationResendRequestTiming } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequestTiming'
 import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
+import type { OrganizationApplicationApproveRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationApproveRequest'
+import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
@@ -139,18 +141,11 @@ export type OrganizationDecisionNotifyRequest = {
   scheduledAt?: string
 }
 
-/** OpenAPI `SlotRequest` — 레거시 호환. 신규 GENERAL 승인은 `selectedScheduleId` 사용 */
-export type OrganizationApplicationApproveSlotRequest = {
-  scheduleId: number
-  grade?: string
-  className?: string
-}
+/** OpenAPI `SlotRequest` — 레거시 slots 호환 입력 */
+export type OrganizationApplicationApproveSlotRequest = SlotRequest
 
-/** OpenAPI `OrganizationApplicationApproveRequest` + BE handoff `selectedScheduleId` */
-export type OrganizationApplicationApprovePayload = OrganizationDecisionNotifyRequest & {
-  slots?: OrganizationApplicationApproveSlotRequest[]
-  selectedScheduleId?: number
-}
+/** OpenAPI `OrganizationApplicationApproveRequest`와 동일한 승인 payload */
+export type OrganizationApplicationApprovePayload = OrganizationApplicationApproveRequest
 
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
 export type ApplicationDecisionCancelRequestWithNotification = Omit<

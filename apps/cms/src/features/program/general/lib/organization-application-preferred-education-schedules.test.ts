@@ -16,14 +16,14 @@ describe('organization-application-preferred-education-schedules', () => {
     expect(entry?.scheduleId).toBe(188901)
   })
 
-  it('maps resolvedScheduleId when scheduleId is null', () => {
+  it('does not turn a derived schedule ID into an approval schedule ID', () => {
     const entry = normalizePreferredEducationScheduleEntry({
       scheduleId: null,
       resolvedScheduleId: 188900,
       label: '26년 10월 30일(금) 09:30 ~ 11:30',
       round: 1,
     })
-    expect(entry?.scheduleId).toBe(188900)
+    expect(entry?.scheduleId).toBeNull()
   })
 
   it('reads preferredEducationSchedules from detail dto', () => {
@@ -35,13 +35,14 @@ describe('organization-application-preferred-education-schedules', () => {
         },
         {
           scheduleId: null,
-          resolvedScheduleId: 102,
+          unresolvedReason: 'AMBIGUOUS_SCHEDULE_MATCH',
           label: 'B',
         },
       ],
     })
     expect(preferred).toHaveLength(2)
     expect(preferred[0]?.scheduleId).toBe(101)
-    expect(preferred[1]?.scheduleId).toBe(102)
+    expect(preferred[1]?.scheduleId).toBeNull()
+    expect(preferred[1]?.unresolvedReason).toBe('AMBIGUOUS_SCHEDULE_MATCH')
   })
 })

@@ -149,6 +149,8 @@ export interface BasicInfoSectionProps {
    * 1사1교·일반 기본정보 IPS 행은 유지.
    */
   hideIpsTypeField?: boolean
+  /** 교육받은 교사 — 등록일/수정일은 날짜만 표시하고 등록자/수정자 정보는 숨김 */
+  auditDateOnly?: boolean
   /** 교육받은 교사 — 참여자 유형을 고정 라벨로 표시 (수정 UI 없음) */
   fixedParticipantTypeLabel?: string
   /** 교육받은 교사 — 대표 프로그램명(영문) Input 편집 */
@@ -303,6 +305,7 @@ export function BasicInfoSection({
   form,
   forceCompanySchoolLayout = false,
   hideIpsTypeField = false,
+  auditDateOnly = false,
   fixedParticipantTypeLabel,
   enableTitleEnEdit = false,
   useDetailedProgramSelect = false,
@@ -527,21 +530,29 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="최초 등록일"
               view={
-                <>
-                  {formatDate(program.createdAt)}
-                  <DetailInfoForm.InputsSeparator />
-                  {createdByName ?? '-'}
-                </>
+                auditDateOnly ? (
+                  formatDate(program.createdAt)
+                ) : (
+                  <>
+                    {formatDate(program.createdAt)}
+                    <DetailInfoForm.InputsSeparator />
+                    {createdByName ?? '-'}
+                  </>
+                )
               }
             />
             <DetailInfoForm.Field
               label="마지막 수정일"
               view={
-                <>
-                  {formatDate(program.updatedAt)}
-                  <DetailInfoForm.InputsSeparator />
-                  {updatedByName ?? '-'}
-                </>
+                auditDateOnly ? (
+                  formatDate(program.updatedAt)
+                ) : (
+                  <>
+                    {formatDate(program.updatedAt)}
+                    <DetailInfoForm.InputsSeparator />
+                    {updatedByName ?? '-'}
+                  </>
+                )
               }
             />
           </DetailInfoForm.Row>
@@ -1173,21 +1184,29 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="최초 등록일"
           view={
-            <>
-              {formatDate(program.createdAt)}
-              <DetailInfoForm.InputsSeparator />
-              {createdByName ?? '-'}
-            </>
+            auditDateOnly ? (
+              formatDate(program.createdAt)
+            ) : (
+              <>
+                {formatDate(program.createdAt)}
+                <DetailInfoForm.InputsSeparator />
+                {createdByName ?? '-'}
+              </>
+            )
           }
         />
         <DetailInfoForm.Field
           label="마지막 수정일"
           view={
-            <>
-              {formatDate(program.updatedAt)}
-              <DetailInfoForm.InputsSeparator />
-              {updatedByName ?? '-'}
-            </>
+            auditDateOnly ? (
+              formatDate(program.updatedAt)
+            ) : (
+              <>
+                {formatDate(program.updatedAt)}
+                <DetailInfoForm.InputsSeparator />
+                {updatedByName ?? '-'}
+              </>
+            )
           }
         />
       </DetailInfoForm.Row>

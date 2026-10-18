@@ -22,9 +22,12 @@ export function getTrainedTeachersInstitutionDetailTabKeys(
 }
 
 export function normalizeTrainedTeachersInstitutionDetailTab(
-  tab: string | null | undefined
+  tab: string | null | undefined,
+  educationJournalEnabled?: boolean
 ): TrainedTeachersInstitutionDetailTabKey {
-  if (tab === 'journal') return 'journal'
+  if (tab === 'journal') {
+    return educationJournalEnabled === false ? 'application' : 'journal'
+  }
   return 'application'
 }
 

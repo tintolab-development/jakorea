@@ -13,7 +13,7 @@ import {
   useUjatApplicationInstitutionOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 
-function getDisabledGradesForBlock(
+export function getDisabledGradesForBlock(
   blockKey: string,
   checkedByBlockKey: Readonly<Record<string, Record<string, boolean>>>
 ): Set<string> {

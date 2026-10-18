@@ -28,13 +28,29 @@ describe('applyAdminMeToSessionUser', () => {
     expect(normalizeAdminDate(1792137600000 as unknown as string)).toBeNull()
   })
 
-  it('GET /api/admin/me의 null 날짜는 기존 세션 날짜로 fallback하지 않는다', () => {
-    const next = applyAdminMeToSessionUser(current, {
+  it('GET /api/admin/me의 null·빈 createdAt·updatedAt는 기존 세션 날짜로 fallback하지 않는다', () => {
+    const emptyDates = applyAdminMeToSessionUser(current, {
+      createdAt: '',
+      updatedAt: '',
+    })
+    const nullDates = applyAdminMeToSessionUser(current, {
       createdAt: null,
       updatedAt: null,
     } as unknown as import('@/shared/api/generated/members/schemas/adminMeResponse').AdminMeResponse)
-    expect(next.createdAt).toBeNull()
-    expect(next.updatedAt).toBeNull()
+
+    expect(emptyDates.createdAt).toBeNull()
+    expect(emptyDates.updatedAt).toBeNull()
+    expect(nullDates.createdAt).toBeNull()
+    expect(nullDates.updatedAt).toBeNull()
+  })
+
+  it('GET /api/admin/me에 createdAt·updatedAt가 없으면 기존 세션 날짜를 유지한다', () => {
+    const next = applyAdminMeToSessionUser(current, {
+      uuid: 'admin-uuid',
+      email: 'pm@jakorea.org',
+    })
+    expect(next.createdAt).toBe(current.createdAt)
+    expect(next.updatedAt).toBe(current.updatedAt)
   })
 
   it('GET /api/admin/me roleCode를 세션에 반영하고 MASTER로 올리지 않는다', () => {

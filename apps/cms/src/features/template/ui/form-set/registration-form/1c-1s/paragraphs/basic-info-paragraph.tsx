@@ -263,6 +263,23 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     return []
   }, [managerContactId, managerContactIds, sponsorId])
 
+  const selectedManagerContactPhone = useMemo(() => {
+    if (
+      selectedManagerContactIds.length === 0 ||
+      selectedManagerContactIds.some(
+        id => id === ALL_VALUE || isSponsorContactUnselected(id)
+      )
+    ) {
+      return ''
+    }
+
+    const phones = selectedManagerContactIds
+      .map(id => contactsQuery.data?.find(contact => String(contact.id) === id)?.phone?.trim())
+      .filter((phone): phone is string => Boolean(phone))
+
+    return [...new Set(phones)].join(', ')
+  }, [contactsQuery.data, selectedManagerContactIds])
+
   const applyManagerContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedManagerContactIds)
     setManagerContactIds(unique)
@@ -495,6 +512,16 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                     const next = Array.isArray(v) ? v.map(String) : []
                     applyManagerContactIds(next)
                   }}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="medium"
+                  width={220}
+                  placeholder="담당자 연락처"
+                  value={selectedManagerContactPhone}
+                  readOnly
+                  allowClear={false}
+                  aria-label="선택된 후원사 담당자 연락처"
                 />
               </div>
             }

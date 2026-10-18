@@ -278,6 +278,23 @@ export function UjatBasicInfoParagraph({
     return []
   }, [sponsorContactId, sponsorContactIds, sponsorId, sponsorManagerName])
 
+  const selectedSponsorContactPhone = useMemo(() => {
+    if (
+      selectedSponsorContactIds.length === 0 ||
+      selectedSponsorContactIds.some(
+        id => id === UJAT_SPONSOR_ALL_VALUE || isSponsorContactUnselected(id)
+      )
+    ) {
+      return ''
+    }
+
+    const phones = selectedSponsorContactIds
+      .map(id => contactsQuery.data?.find(contact => String(contact.id) === id)?.phone?.trim())
+      .filter((phone): phone is string => Boolean(phone))
+
+    return [...new Set(phones)].join(', ')
+  }, [contactsQuery.data, selectedSponsorContactIds])
+
   const applySponsorContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedSponsorContactIds)
     setSponsorContactIds(unique)
@@ -534,6 +551,16 @@ export function UjatBasicInfoParagraph({
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)
                   }}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="medium"
+                  width={220}
+                  placeholder="담당자 연락처"
+                  value={selectedSponsorContactPhone}
+                  readOnly
+                  allowClear={false}
+                  aria-label="선택된 후원사 담당자 연락처"
                 />
               </div>
             }

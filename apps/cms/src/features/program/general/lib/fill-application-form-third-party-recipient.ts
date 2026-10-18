@@ -103,6 +103,13 @@ export function seedDevAutofillApplicationThirdPartyRecipients(
     id: registrationPendingSnapshotId(variant),
     generalParticipantTypes: participantTypesForDevAutofill(variant, layout),
   } as Program
+  seedDevAutofillApplicationThirdPartyRecipientsForProgram(program)
+}
+
+/** UJAT처럼 등록 유형별 pending id 규칙이 다른 플로우의 신청 양식 시드. */
+export function seedDevAutofillApplicationThirdPartyRecipientsForProgram(
+  program: Program
+): void {
   for (const spec of listVisibleOperationalFormSpecs(program)) {
     if (spec.formType !== 'APPLICATION') continue
     const seed = createSeedDraftForOperationalCatalogId(spec.templateCode)

@@ -144,14 +144,26 @@ function bridgePartialEqualsCurrent(
  * overlay가 비면 기존 브리지 값을 유지한다 (프로그램 스텝 overlay reset 대비).
  */
 export function syncInstitutionApplicationPreferredEducationFormFromOverlay(
-  overlay: Record<string, unknown> | null | undefined
+  overlay: Record<string, unknown> | null | undefined,
+  options?: {
+    sessionRound?: GeneralProgramSessionRoundKind
+    educationFormScheduleDetail?: 'common' | 'perSchedule'
+  }
 ): void {
+  if (options?.sessionRound === 'multi' && options.educationFormScheduleDetail === 'perSchedule') {
+    patchInstitutionApplicationProgramBridge({ showPreferredEducationForm: false })
+    return
+  }
   if (overlay == null || Object.keys(overlay).length === 0) return
-  // 남은 복수회차 online 키 때문에 false로 덮지 않는다. 참여자 선택일 때만 켠다.
-  if (!isParticipantSelectionEducationFormInOverlay(overlay)) return
-  patchInstitutionApplicationProgramBridge({
-    showPreferredEducationForm: true,
-  })
+  const participantSelection = isParticipantSelectionEducationFormInOverlay(overlay)
+  if (participantSelection) {
+    patchInstitutionApplicationProgramBridge({ showPreferredEducationForm: true })
+    return
+  }
+  // 옵션이 전달된 동기화 경로에서는 고정 교육 형태로 전환한 뒤 이전 true를 남기지 않는다.
+  if (options != null) {
+    patchInstitutionApplicationProgramBridge({ showPreferredEducationForm: false })
+  }
 }
 
 export function patchInstitutionApplicationProgramBridge(

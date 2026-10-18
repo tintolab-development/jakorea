@@ -79,6 +79,13 @@ export type PortalPreferredScheduleBlock = {
   session?: string
   sessionTimes?: PortalPreferredScheduleSessionTime[]
   times?: PortalPreferredScheduleSessionTime[]
+  /** 실제 program_schedule.id. 매칭되지 않은 희망 일정은 null일 수 있다. */
+  scheduleId?: number | null
+  startAt?: string | null
+  endAt?: string | null
+  round?: number | null
+  label?: string | null
+  scheduleStatus?: 'MATCHED' | 'INACTIVE_OR_DELETED' | 'UNMATCHED' | string | null
 }
 
 export type PortalSaveApplicationRequest = {

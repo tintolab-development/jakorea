@@ -60,6 +60,28 @@ describe('buildSurveyPollScheduleSelectOptions', () => {
     ])
     expect(options.map(option => option.value)).toEqual(['1'])
   })
+
+  it('drops period windows that are not selectable class dates', () => {
+    const options = buildSurveyPollScheduleSelectOptions([
+      {
+        id: 10,
+        scheduleRole: 'EDUCATION',
+        scheduleStatus: 'ACTIVE',
+        allDay: true,
+        startAt: '2026-11-04T15:00:00Z',
+        endAt: '2026-11-13T15:00:00Z',
+      },
+      {
+        id: 11,
+        sessionNo: 1,
+        scheduleRole: 'EDUCATION',
+        scheduleStatus: 'ACTIVE',
+        startAt: '2026-11-09T01:00:00Z',
+        endAt: '2026-11-09T03:00:00Z',
+      },
+    ])
+    expect(options.map(option => option.value)).toEqual(['11'])
+  })
 })
 
 describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {

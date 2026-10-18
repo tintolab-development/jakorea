@@ -12,6 +12,7 @@ import {
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
+import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import type { WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { ProgramApplyFormCase } from './apply-form-case.ts'
@@ -109,6 +110,17 @@ export function resolvePortalApplicationHiddenParagraphIds(
         input.showSexOffenseConsentInquiryParagraph ?? true,
     })
     institutionHidden?.forEach(id => hidden.add(id))
+  }
+
+  if (
+    applyCase === 'trained-teachers' &&
+    !shouldShowApplicationScheduleParagraphResolved({
+      ...scheduleVisibility,
+      runtimeContext,
+      scheduleParagraphRaw,
+    })
+  ) {
+    hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
   }
 
   if (

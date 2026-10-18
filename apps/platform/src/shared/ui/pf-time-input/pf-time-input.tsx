@@ -19,7 +19,7 @@ import selectStyles from '../pf-select/pf-select.module.css'
 import styles from './pf-time-input.module.css'
 
 const POPOVER_GAP_PX = 8
-const POPOVER_Z_INDEX = 1100
+const POPOVER_Z_INDEX = 1300
 
 function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
   if (width == null) return undefined
@@ -125,7 +125,16 @@ function maxScrollTop(list: HTMLDivElement): number {
 }
 
 function scrollTopForIndex(index: number): number {
-  return index * COLUMN_ITEM_HEIGHT_PX
+  // 선택 항목을 뷰포트 중앙에 놓는다. 목록에는 상·하단 60px 여백이
+  // 있으므로 단순히 index * itemHeight를 사용하면 중앙 계산과 어긋난다.
+  const viewportHeight = COLUMN_EDGE_PAD_PX * 2 + COLUMN_ITEM_HEIGHT_PX * 4
+  return Math.max(
+    0,
+    COLUMN_EDGE_PAD_PX +
+      index * COLUMN_ITEM_HEIGHT_PX +
+      COLUMN_ITEM_HEIGHT_PX / 2 -
+      viewportHeight / 2
+  )
 }
 
 function indexFromList(list: HTMLDivElement, optionCount: number): number {
@@ -147,8 +156,10 @@ function TimeScrollColumn({
   const listRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
   const scrollRafRef = useRef<number | null>(null)
+  const scrollEndTimerRef = useRef<number | null>(null)
   const isScrollingRef = useRef(false)
   const suppressScrollSyncRef = useRef(false)
+  const suppressScrollTimerRef = useRef<number | null>(null)
   const visualValueRef = useRef(selectedValue)
   const syncedSelectedRef = useRef<string | null>(null)
 
@@ -189,8 +200,14 @@ function TimeScrollColumn({
     (nextValue: string) => {
       visualValueRef.current = nextValue
       suppressScrollSyncRef.current = true
+      if (suppressScrollTimerRef.current != null) {
+        window.clearTimeout(suppressScrollTimerRef.current)
+      }
       scrollToValue(nextValue, 'auto')
-      suppressScrollSyncRef.current = false
+      suppressScrollTimerRef.current = window.setTimeout(() => {
+        suppressScrollTimerRef.current = null
+        suppressScrollSyncRef.current = false
+      }, 120)
       options.forEach((option, index) => {
         const el = itemRefs.current[index]
         if (!el) return
@@ -206,6 +223,10 @@ function TimeScrollColumn({
   const selectOption = useCallback(
     (nextValue: string) => {
       if (disabled) return
+      if (scrollEndTimerRef.current != null) {
+        window.clearTimeout(scrollEndTimerRef.current)
+        scrollEndTimerRef.current = null
+      }
       isScrollingRef.current = false
       syncedSelectedRef.current = nextValue
       syncScrollToSelected(nextValue)
@@ -235,18 +256,47 @@ function TimeScrollColumn({
       const next = readCenteredValue()
       if (next != null) applyActiveVisual(next)
     })
+
+    if (scrollEndTimerRef.current != null) {
+      window.clearTimeout(scrollEndTimerRef.current)
+    }
+    scrollEndTimerRef.current = window.setTimeout(() => {
+      scrollEndTimerRef.current = null
+      handleScrollEnd()
+    }, 120)
   }
 
   const handleScrollEnd = () => {
+    if (suppressScrollSyncRef.current) return
+    if (scrollEndTimerRef.current != null) {
+      window.clearTimeout(scrollEndTimerRef.current)
+      scrollEndTimerRef.current = null
+    }
     isScrollingRef.current = false
+    const next = readCenteredValue()
+    if (next == null || next === selectedValue || disabled) return
+    syncedSelectedRef.current = next
+    onCommit(next)
   }
 
   useEffect(
     () => () => {
       if (scrollRafRef.current != null) cancelAnimationFrame(scrollRafRef.current)
+      if (scrollEndTimerRef.current != null) window.clearTimeout(scrollEndTimerRef.current)
+      if (suppressScrollTimerRef.current != null) {
+        window.clearTimeout(suppressScrollTimerRef.current)
+      }
     },
     []
   )
+
+  const releaseProgrammaticScroll = () => {
+    suppressScrollSyncRef.current = false
+    if (suppressScrollTimerRef.current != null) {
+      window.clearTimeout(suppressScrollTimerRef.current)
+      suppressScrollTimerRef.current = null
+    }
+  }
 
   return (
     <div className={styles.column}>
@@ -259,6 +309,8 @@ function TimeScrollColumn({
           tabIndex={disabled ? -1 : 0}
           onScroll={handleScroll}
           onScrollEnd={handleScrollEnd}
+          onWheel={releaseProgrammaticScroll}
+          onTouchStart={releaseProgrammaticScroll}
         >
           {options.map((option, index) => (
             <div
@@ -272,11 +324,11 @@ function TimeScrollColumn({
                 option.value === selectedValue ? styles.columnItemActive : styles.columnItem
               }
               onPointerDown={event => {
+                releaseProgrammaticScroll()
                 event.stopPropagation()
               }}
-              onPointerUp={event => {
+              onClick={event => {
                 event.stopPropagation()
-                if (event.pointerType === 'mouse' && event.button !== 0) return
                 selectOption(option.value)
               }}
             >

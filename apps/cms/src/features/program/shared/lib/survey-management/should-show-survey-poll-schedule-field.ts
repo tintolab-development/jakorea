@@ -35,4 +35,3 @@ export function shouldShowSurveyPollScheduleSelectField(
   if (isSurveyPollScheduleMultiEventProgram(bridge)) return true
   return countEducationScheduleChoiceSlots(bridge.educationScheduleLines) > 1
 }
-

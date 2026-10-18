@@ -95,6 +95,7 @@ export interface ParticipatingInstitutionsSectionProps {
   /** 프로그램 정보. 교재 배송 현황 필터는 program에 교재 필드(textbookName 등)가 있을 때만 노출 */
   program?: Program | null
   navigationCapabilities?: GeneralProgramNavigationCapabilities
+  navigationCapabilitiesLoading?: boolean
   /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
   schoolIdFromUrl?: string | null
   /** URL의 학교 상세 탭(application | students | instructors | posts | journal). 쿼리 파라미터 연동용 */
@@ -115,6 +116,7 @@ export function ParticipatingInstitutionsSection({
   programId,
   program,
   navigationCapabilities,
+  navigationCapabilitiesLoading,
   schoolIdFromUrl,
   schoolTabFromUrl,
   onSchoolTabChange,
@@ -558,6 +560,7 @@ export function ParticipatingInstitutionsSection({
           detail={mergedDetail}
           row={selectedRowFromUrl}
           navigationCapabilities={navigationCapabilities}
+          navigationCapabilitiesLoading={navigationCapabilitiesLoading}
           participatingSchoolList={schoolList}
           activeTab={schoolTabFromUrl ?? undefined}
           onTabChange={onSchoolTabChange}

@@ -143,6 +143,33 @@ assert.equal(
   true
 )
 
+for (const scheduleOptions of [
+  [],
+  [{ id: 'schedule:1', label: '행사 1' }],
+  [
+    { id: 'schedule:1', label: '행사 1' },
+    { id: 'schedule:2', label: '행사 2' },
+  ],
+]) {
+  assert.equal(
+    shouldShowApplicationScheduleParagraphResolved({
+      educationStructure: 'schedule',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+      ],
+      runtimeContext: {
+        scheduleInputMode: 'fixed_schedule_options',
+        scheduleOptions,
+      },
+      scheduleParagraphRaw: scheduleParagraph,
+    }),
+    false
+  )
+}
+
 assert.equal(
   countUniqueEducationScheduleCalendarDays([
     '26년 4월 20일(월) 09:30 ~ 12:20',

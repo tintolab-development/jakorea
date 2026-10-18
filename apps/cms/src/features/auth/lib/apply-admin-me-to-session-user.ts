@@ -63,8 +63,10 @@ export function applyAdminMeToSessionUser(
     name: me.name?.trim() || current.name,
     phone: me.phone?.trim() || current.phone,
     lastLoginAt: me.lastLoginAt ?? current.lastLoginAt,
-    createdAt: normalizeAdminDate(me.createdAt),
-    updatedAt: normalizeAdminDate(me.updatedAt),
+    createdAt:
+      me.createdAt !== undefined ? normalizeAdminDate(me.createdAt) : current.createdAt,
+    updatedAt:
+      me.updatedAt !== undefined ? normalizeAdminDate(me.updatedAt) : current.updatedAt,
     permissionCodes: me.permissionCodes,
     ...(termsAgreements ? { termsAgreements } : {}),
     ...(gender ? { gender } : {}),

@@ -17,11 +17,28 @@ import {
   resetUjatRecruitVolunteerOverlayStoreForTests,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
+  peekUjatApplicationInstitutionOverlayRecord,
+  resetUjatApplicationInstitutionOverlayStoreForTests,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import {
+  peekUjatApplicationVolunteerOverlayRecord,
+  resetUjatApplicationVolunteerOverlayStoreForTests,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import {
+  clearRegistrationWizardSessionDrafts,
+  peekRegistrationWizardSessionDrafts,
+} from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { peekGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
   peekGeneralRecruitOverlayRecord,
   resetGeneralRecruitOverlayStoreForTests,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS as IK } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VK } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
+import {
+  hasIncompleteUjatProgramRegistrationWizardRequiredFields,
+  listIncompleteUjatProgramRegistrationWizardRequiredFields,
+} from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 
 vi.mock('@/features/sponsor/api/admin-sponsors-service', () => ({
   shouldUseSponsorsRemoteApi: () => false,
@@ -34,6 +51,9 @@ afterEach(() => {
   resetUjatRecruitInstitutionOverlayStoreForTests()
   resetUjatRecruitVolunteerOverlayStoreForTests()
   resetGeneralRecruitOverlayStoreForTests()
+  resetUjatApplicationInstitutionOverlayStoreForTests()
+  resetUjatApplicationVolunteerOverlayStoreForTests()
+  clearRegistrationWizardSessionDrafts()
 })
 
 describe('UJAT DEV 자동입력 — 단계별 필드', () => {
@@ -55,6 +75,8 @@ describe('UJAT DEV 자동입력 — 단계별 필드', () => {
     expect(overlay['ujat.wage.paymentItemValues']).toBeTruthy()
     expect(overlay['ujat.basicInfo.participant.individual']).toBe(false)
     expect(overlay['ujat.basicInfo.participant.teacher']).toBe(false)
+    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toEqual([])
+    expect(hasIncompleteUjatProgramRegistrationWizardRequiredFields()).toBe(false)
   })
 
   it('기관·상반기·하반기 모집의 지원 방법·추가 내용·첨부 상태를 각 scope에 채운다', async () => {
@@ -90,5 +112,46 @@ describe('UJAT DEV 자동입력 — 단계별 필드', () => {
       expect(detail['recruitVolunteer.h1.detailInfo.additionalContentHtml']).toBeTruthy()
       expect(detail['recruitVolunteer.h2.detailInfo.additionalContentHtml']).toBeTruthy()
     }
+  })
+
+  it('기관·봉사자 신청 정보와 editorState를 두 신청 scope에 미리 채운다', async () => {
+    await applyDevProgramRegistrationAutofill('ujat')
+
+    const institution = peekUjatApplicationInstitutionOverlayRecord('application-ujat-school')
+    expect(institution['ujatApplication.applicationRegion']).toBeTruthy()
+    expect(institution['ujatApplication.gradeDetailByBlock']).toMatchObject({
+      'ujat-dev-grade-1': { classCountInput: '2' },
+    })
+    expect(institution['ujatApplication.classTimeCheckedByBlock']).toMatchObject({
+      'ujat-dev-class-time-1': { '1': true },
+    })
+
+    const basicInfo = peekGeneralApplicationOverlayRecord('application-ujat-school')
+    expect(basicInfo['application.ujat.inst.basicInfo.detailAddress']).toBeTruthy()
+
+    const volunteer = peekUjatApplicationVolunteerOverlayRecord('application-ujat-volunteer')
+    expect(volunteer['ujatVolunteerApplication.preferredRegion']).toBeTruthy()
+    expect(volunteer['ujatVolunteerApplication.universityName']).toBe('한국대학교')
+    expect(volunteer['ujatVolunteerApplication.hasExperience']).toBe('yes')
+
+    const session = peekRegistrationWizardSessionDrafts()
+    expect(session.find(item => item.templateCode === 'application-ujat-school')?.editorState).toEqual(
+      expect.objectContaining({
+        ujatGradeApplicationBlockIds: ['ujat-dev-grade-1'],
+        ujatApplicationGradeByBlockId: { 'ujat-dev-grade-1': '1' },
+        ujatGradeClassTimeBlockIds: ['ujat-dev-class-time-1'],
+      })
+    )
+    expect(session.find(item => item.templateCode === 'application-ujat-volunteer')?.editorState).toEqual(
+      { ujatVolunteerApplicationType: 'ujat-graduate' }
+    )
+    expect(
+      session.find(item => item.templateCode === 'application-ujat-school')?.overlay
+    ).toEqual(
+      expect.objectContaining({
+        'ujatApplication.applicationRegion': expect.any(String),
+        'application.ujat.inst.basicInfo.detailAddress': expect.any(String),
+      })
+    )
   })
 })

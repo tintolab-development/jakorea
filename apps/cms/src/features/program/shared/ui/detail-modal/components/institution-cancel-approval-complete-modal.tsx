@@ -13,23 +13,28 @@ export type InstitutionCancelApprovalCompleteModalProps = {
   open: boolean
   schoolName: string
   cancellationReason: string
+  notificationResult: 'not-created' | 'created' | 'unknown'
   onClose: () => void
   zIndex?: number
 }
 
 export function buildInstitutionCancelApprovalCompleteDescription(
   schoolName: string,
-  cancellationReason: string
+  cancellationReason: string,
+  notificationResult: InstitutionCancelApprovalCompleteModalProps['notificationResult']
 ): string {
   const trimmedName = schoolName.trim() || '기관'
   const trimmedReason = cancellationReason.trim() || '-'
-  return `${formatModalBracketedSubjectName(trimmedName)}의 프로그램 참여 ${formatModalBoldPhrase('승인 취소')} 되었습니다.\n(사유 : ${trimmedReason})`
+  const notificationMessage =
+    notificationResult === 'not-created' ? '\n취소 안내 알림은 발송·예약되지 않았습니다.' : ''
+  return `${formatModalBracketedSubjectName(trimmedName)}의 프로그램 참여 ${formatModalBoldPhrase('승인 취소')} 되었습니다.\n(사유 : ${trimmedReason})${notificationMessage}`
 }
 
 export function InstitutionCancelApprovalCompleteModal({
   open,
   schoolName,
   cancellationReason,
+  notificationResult,
   onClose,
   zIndex = INSTITUTION_CANCEL_APPROVAL_COMPLETE_MODAL_Z,
 }: InstitutionCancelApprovalCompleteModalProps) {
@@ -43,7 +48,8 @@ export function InstitutionCancelApprovalCompleteModal({
       className="institution-cancel-approval-complete-modal"
       description={buildInstitutionCancelApprovalCompleteDescription(
         schoolName,
-        cancellationReason
+        cancellationReason,
+        notificationResult
       )}
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>

@@ -70,7 +70,8 @@ import {
   parseTrainedTeacherStopScheduleId,
 } from '@/features/program/trained-teachers/lib/organization-activity-withdraw-schedules'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
-import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import { ApplicationGiveUpRequestFaultParty as FaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
 import axios from 'axios'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import {
@@ -97,6 +98,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   detail,
   row,
   navigationCapabilities,
+  navigationCapabilitiesLoading = false,
   participatingSchoolList = [],
   activeTab: activeTabFromUrl,
   onTabChange,
@@ -401,10 +403,21 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         return
       }
 
-      const reason =
-        [mergedDetail.schoolName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
-        payload.stopScheduleLabel ||
-        '활동 포기'
+      const reason = payload.reason.trim()
+      if (!reason) {
+        void showAlert({
+          title: '안내',
+          content: '활동 포기 사유를 입력해 주세요.',
+        })
+        return
+      }
+      if (payload.faultParty !== FaultParty.USER && payload.faultParty !== FaultParty.ADMIN) {
+        void showAlert({
+          title: '안내',
+          content: '귀책 유형을 선택해 주세요.',
+        })
+        return
+      }
 
       if (ttRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
@@ -412,12 +425,19 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           await giveUpTrainedTeacherOrganizationApplication(programId, detail.id, {
             stopScheduleId,
             reason,
+            faultParty: payload.faultParty,
           })
           await queryClient.invalidateQueries({
             queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId),
           })
           await queryClient.invalidateQueries({
             queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: trainedTeacherQueryKeys.lists(),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: trainedTeacherQueryKeys.overviewStages(),
           })
           await queryClient.invalidateQueries({
             queryKey: trainedTeacherQueryKeys.organizationApplication(programId, detail.id),
@@ -439,11 +459,28 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         } catch (error) {
           const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
           const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+          if (
+            httpStatus === 409 ||
+            getApiErrorCode(error) === 'TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP'
+          ) {
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, detail.id),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
+            })
+          }
           void showAlert({
             title: '활동 포기 실패',
             content: extractApiErrorMessage(responseData, {
               httpStatus,
-              fallback: '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+              fallback:
+                httpStatus === 409
+                  ? '이미 활동 포기 처리된 기관입니다. 최신 상태를 다시 조회했습니다.'
+                  : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.',
             }),
           })
         } finally {
@@ -568,6 +605,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
     )
   )
+
+  if (navigationCapabilitiesLoading) {
+    return (
+      <div className="school-detail-fullpage-view" role="status">
+        교육일지 설정을 확인하는 중입니다.
+      </div>
+    )
+  }
 
   if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTab === 'application') {
     return (
@@ -772,6 +817,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
         confirming={activityWithdrawSubmitting}
+        faultPartyRequired
+        reasonMinLength={1}
+        reasonMaxLength={1000}
         onCancel={() => {
           if (activityWithdrawSubmitting) return
           setActivityWithdrawModalOpen(false)
