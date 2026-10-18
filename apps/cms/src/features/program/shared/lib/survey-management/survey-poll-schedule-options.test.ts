@@ -5,8 +5,6 @@ import {
   formatSurveyPollScheduleOptionLabel,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
-import { PROGRAM_SCHEDULE_ORIGIN_APPLICATION_MATERIALIZED } from '@/features/program/shared/lib/program-schedule-origin'
-import { filterProgramSchedulesForPlannedEducationDisplay } from '@/features/program/general/lib/program-planned-education-slots'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
   return {
@@ -54,25 +52,18 @@ describe('buildSurveyPollScheduleSelectOptions', () => {
     expect(options[0]?.label).toBe('26년 3월 1일(일) 10:00 ~ 12:00')
   })
 
-  it('excludes APPLICATION_MATERIALIZED when using planned schedule list', () => {
-    const planned = filterProgramSchedulesForPlannedEducationDisplay([
+  it('keeps only education/session ACTIVE candidates passed from education-slots', () => {
+    const options = buildSurveyPollScheduleSelectOptions([
       { id: 1, sessionNo: 1, scheduleRole: 'EDUCATION', scheduleStatus: 'ACTIVE' },
-      {
-        id: 2,
-        sessionNo: 2,
-        scheduleRole: 'EDUCATION',
-        scheduleStatus: 'ACTIVE',
-        scheduleOrigin: PROGRAM_SCHEDULE_ORIGIN_APPLICATION_MATERIALIZED,
-      },
+      { id: 2, sessionNo: 2, scheduleRole: 'PRE_EDUCATION', scheduleStatus: 'ACTIVE' },
+      { id: 3, sessionNo: 3, scheduleRole: 'EDUCATION', scheduleStatus: 'INACTIVE' },
     ])
-    const options = buildSurveyPollScheduleSelectOptions(planned)
-    expect(options).toHaveLength(1)
-    expect(options[0]?.value).toBe('1')
+    expect(options.map(option => option.value)).toEqual(['1'])
   })
 })
 
 describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
-  it('uses education schedule lines for single-round program progress', () => {
+  it('uses education-slots directly instead of common-info line mapping', () => {
     const program = baseProgram({
       generalProgramSessionRound: 'single',
       generalProgramEducationStructure: 'schedule',
@@ -86,12 +77,12 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
     expect(options).toEqual([
       {
         value: '100',
-        label: '26년 9월 16일(수) 9:22 ~ 10:22',
+        label: '프로그램 진행',
       },
     ])
   })
 
-  it('falls back to API schedules when program_progress mapping is ambiguous', () => {
+  it('does not collapse multi-slot education-slots into program_progress mapping', () => {
     const program = baseProgram({
       generalProgramSessionRound: 'single',
       generalProgramEducationStructure: 'schedule',
@@ -111,7 +102,7 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
     expect(options.map(o => o.value)).toEqual(['186892', '186896', '186897'])
   })
 
-  it('falls back to all ACTIVE education schedules for single-round multi-slot API rows', () => {
+  it('uses all ACTIVE education-slots for single-round multi-slot API rows', () => {
     const program = baseProgram({
       generalProgramAudience: 'organization',
       generalProgramSessionRound: 'single',
@@ -153,10 +144,11 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
       { id: 30, sessionNo: 3, scheduleName: '해외대회' },
     ])
     expect(options.map(o => o.label)).toEqual([
-      '26년 4월 3일(금) 9:30 ~ 12:20',
-      '26년 4월 10일(금) 13:00 ~ 15:50',
+      '오리엔테이션',
+      '국내대회',
+      '해외대회',
     ])
-    expect(options.map(o => o.value)).toEqual(['20', '30'])
+    expect(options.map(o => o.value)).toEqual(['10', '20', '30'])
   })
 })
 

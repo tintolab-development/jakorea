@@ -12,6 +12,7 @@ import {
   ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE,
   organizationApproveScheduleOptionLabel,
+  organizationApproveUnconfirmableScheduleNotice,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
   resolveOrganizationApproveSelectedScheduleId,
   UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
@@ -70,7 +71,7 @@ export function InstitutionApproveModal({
     () =>
       resolveOrganizationApproveScheduleOptionsFromPreferred(
         scheduleConfig?.preferredEducationSchedules,
-        programSchedulesQuery.data
+        programSchedulesQuery.data ?? []
       ),
     [scheduleConfig?.preferredEducationSchedules, programSchedulesQuery.data]
   )
@@ -86,15 +87,22 @@ export function InstitutionApproveModal({
   const hasPreferredSchedules = scheduleOptions.length > 0 && !scheduleValidation.invalidReason
   const hasUnconfirmableOnly =
     hasPreferredSchedules && scheduleOptions.every(option => option.confirmableScheduleId == null)
+  const hasLoadedEmptyEducationSlots =
+    programSchedulesQuery.data != null && programSchedulesQuery.data.length === 0
   const hasProgramScheduleMismatch =
     hasPreferredSchedules &&
     scheduleOptions.some(
       option =>
         option.scheduleId > 0 &&
         option.confirmableScheduleId == null &&
+        option.unresolvedReason == null &&
         programSchedulesQuery.data != null &&
         programSchedulesQuery.data.length > 0
     )
+  const unconfirmableNotice = useMemo(
+    () => organizationApproveUnconfirmableScheduleNotice(scheduleOptions),
+    [scheduleOptions]
+  )
 
   useEffect(() => {
     if (!open || !scheduleValidation.invalidReason || !import.meta.env.DEV) return
@@ -185,8 +193,10 @@ export function InstitutionApproveModal({
           </div>
           {hasUnconfirmableOnly ? (
             <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
-              희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청
-              상세의 scheduleId 반영 후 다시 시도해 주세요.
+              {unconfirmableNotice ??
+                (hasLoadedEmptyEducationSlots
+                  ? '공통 교육 일정 정보를 불러올 수 없습니다. 백엔드 배포 또는 데이터 migration 상태를 확인해 주세요.'
+                  : '희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청 상세의 scheduleId 반영 후 다시 시도해 주세요.')}
             </p>
           ) : null}
           {hasProgramScheduleMismatch ? (
