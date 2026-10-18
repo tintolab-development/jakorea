@@ -14556,10 +14556,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -16068,9 +16068,17 @@
             "type": "string",
             "maxLength": 1000,
             "minLength": 0
+          },
+          "faultParty": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         },
         "required": [
+          "faultParty",
           "reason",
           "stopScheduleId"
         ]
@@ -19527,7 +19535,7 @@
       },
       "PreferredEducationScheduleResponse": {
         "type": "object",
-        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule)과 공통정보 교육 진행 예정일(line:N) 모두 materialized program_schedule의 scheduleId/round/startAt/endAt을 반환하며, line:N 선택은 원래 표시 문자열을 label에 함께 반환한다.",
+        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 정확히 하나의 PROGRAM_DEFINED 교육 슬롯과 일치할 때만 그 program_schedule id를 scheduleId로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 고유 매칭이 불가능하면 scheduleId=null과 unresolvedReason을 반환한다.",
         "properties": {
           "scheduleId": {
             "type": [
@@ -19535,7 +19543,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "해당 프로그램의 materialized program_schedule id. 일정이 아직 materialize되지 않은 레거시 데이터만 null일 수 있다."
+            "description": "정확히 매칭된 PROGRAM_DEFINED program_schedule id. 고유 매칭이 불가능하면 null."
           },
           "round": {
             "type": [
@@ -19566,6 +19574,13 @@
               "null"
             ],
             "description": "공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null."
+          },
+          "unresolvedReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "scheduleId가 null인 이유. 고유 매칭이면 null, 모호하면 AMBIGUOUS_SCHEDULE_MATCH, 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH."
           }
         }
       },
@@ -30728,6 +30743,10 @@
           "programType": {
             "type": "string"
           },
+          "educationJournalEnabled": {
+            "type": "boolean",
+            "description": "교육받은 교사 프로그램의 교육일지 기능 설정. 비대상 프로그램·detail row 없음·OFF는 false."
+          },
           "portalCategories": {
             "type": "array",
             "items": {
@@ -31047,7 +31066,7 @@
           },
           "educationScheduleLines": {
             "type": "array",
-            "description": "교육 진행 예정일 표시 문자열(공통정보 그대로, 순서 유지). 없으면 []. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스.",
+            "description": "교육 진행 예정일 표시 문자열(typed detail 원문 그대로, 순서 유지). 없으면 []. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다.",
             "items": {
               "type": "string"
             }
@@ -31505,7 +31524,7 @@
           "form": {
             "type": "object",
             "additionalProperties": {},
-            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다."
+            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate가 포함됩니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 CMS typed detail의 실제 교육 가능 기간만 사용하고, 일정이 없으면 빈 배열과 null 날짜를 반환합니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
           },
           "draftApplicationId": {
             "type": "integer",

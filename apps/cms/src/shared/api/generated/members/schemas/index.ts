@@ -815,6 +815,7 @@ export * from './notificationTestSendRequestTemplateParameters';
 export * from './notificationTestSendResponse';
 export * from './notificationUnreadCountResponse';
 export * from './organizationActivityGiveUpRequest';
+export * from './organizationActivityGiveUpRequestFaultParty';
 export * from './organizationApplicationApproveRequest';
 export * from './organizationApplicationDetailResponse';
 export * from './organizationApplicationDetailResponsePreviousYearParticipation';

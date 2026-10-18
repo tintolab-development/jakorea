@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationActivityGiveUpRequestFaultParty } from './organizationActivityGiveUpRequestFaultParty';
 
 export interface OrganizationActivityGiveUpRequest {
   /** @minimum 1 */
@@ -14,4 +15,5 @@ export interface OrganizationActivityGiveUpRequest {
      * @maxLength 1000
      */
   reason: string;
+  faultParty: OrganizationActivityGiveUpRequestFaultParty;
 }
