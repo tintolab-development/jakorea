@@ -15,6 +15,8 @@ import styles from './apply-preferred-schedule.module.css'
 
 export type ApplyPreferredScheduleBlock = {
   date: string
+  scheduleOptionId?: string
+  session?: string
   classPeriod: string
   /** `HH:mm` */
   startTime: string
@@ -76,6 +78,15 @@ type PreferenceScheduleFieldsProps = {
   showSessionSelect: boolean
   sessionOptions: PFSelectOption[]
   dateOnlyPreferred: boolean
+  fixedScheduleOptions: readonly {
+    value: string
+    label: string
+    date: string
+    classPeriod: string
+    startTime: string
+    endTime: string
+    session?: string
+  }[]
 }
 
 /** CMS `PreferenceScheduleFields` — DetailInfoForm 격자(희망 교육일 | 희망 교육 시간) */
@@ -88,12 +99,40 @@ function PreferenceScheduleFields({
   showSessionSelect,
   sessionOptions,
   dateOnlyPreferred,
+  fixedScheduleOptions,
 }: PreferenceScheduleFieldsProps) {
   const startTime = normalizeHHmm(block.startTime)
   const endTime = normalizeHHmm(block.endTime)
   const timeLabel = showSessionSelect ? '희망 교육 시간' : '1차시 희망 교육 시간'
 
-  const dateField = (
+  const dateField = fixedScheduleOptions.length > 0 ? (
+    <DetailInfoForm.Field
+      label="희망 교육 일정"
+      view="-"
+      edit={
+        <PFSelect
+          variant="formPage"
+          size="large"
+          width={420}
+          placeholder="희망 교육 일정을 선택하세요"
+          options={fixedScheduleOptions.map(option => ({ value: option.value, label: option.label }))}
+          value={block.scheduleOptionId}
+          onValueChange={next => {
+            const selected = fixedScheduleOptions.find(option => option.value === next)
+            if (!selected) return
+            onPatch({
+              scheduleOptionId: selected.value,
+              session: selected.session,
+              date: selected.date,
+              classPeriod: selected.classPeriod,
+              startTime: selected.startTime,
+              endTime: selected.endTime,
+            })
+          }}
+        />
+      }
+    />
+  ) : (
     <DetailInfoForm.Field
       label="희망 교육일"
       view="-"
@@ -114,6 +153,10 @@ function PreferenceScheduleFields({
       }
     />
   )
+
+  if (fixedScheduleOptions.length > 0) {
+    return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
+  }
 
   const timeInputsDisabled = dateOnlyPreferred
 
@@ -204,6 +247,16 @@ type ApplyPreferredScheduleProps = {
   sessionOptions?: PFSelectOption[]
   /** 일정형 단일 기간 — 희망 교육일만 */
   dateOnlyPreferred?: boolean
+  /** 날짜 지정형 교육받은 교사 — 서버 등록 일정 선택지 */
+  fixedScheduleOptions?: readonly {
+    value: string
+    label: string
+    date: string
+    classPeriod: string
+    startTime: string
+    endTime: string
+    session?: string
+  }[]
 }
 
 export function ApplyPreferredSchedule({
@@ -216,6 +269,7 @@ export function ApplyPreferredSchedule({
   showSessionSelect = false,
   sessionOptions = [],
   dateOnlyPreferred = false,
+  fixedScheduleOptions = [],
   showFooterAddButton = false,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
@@ -274,6 +328,7 @@ export function ApplyPreferredSchedule({
                   showSessionSelect={showSessionSelect}
                   sessionOptions={sessionOptions}
                   dateOnlyPreferred={dateOnlyPreferred}
+                  fixedScheduleOptions={fixedScheduleOptions}
                 />
               </DetailInfoForm>
             </div>

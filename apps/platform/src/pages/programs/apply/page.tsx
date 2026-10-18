@@ -93,9 +93,12 @@ import {
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
   buildEnabledDatesFromAllowedSchedulePeriods,
+  buildEnabledDatesFromEducationScheduleLines,
+  buildTrainedTeachersFixedScheduleOptions,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  readApplicationScheduleRecruitmentLimitsFromRuntime,
   normalizeInstitutionFixedScheduleAnswerTokens,
   buildApplyPreferredSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
@@ -103,6 +106,7 @@ import {
   resolveApplyPreferredScheduleInitialBlockCount,
   resolveApplyPreferredScheduleMaxBlocks,
   shouldShowApplyPreferredSchedule,
+  shouldShowApplyScheduleParagraph,
   shouldShowApplyPreferredScheduleSessionSelect,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldUseInstitutionAllowedSchedulePeriodDates,
@@ -493,8 +497,17 @@ export function ProgramApplyPage() {
     (institutionScheduleInputMode === 'date_time_requests' ||
       (institutionScheduleInputMode == null && shouldShowApplyPreferredSchedule(program)))
   const showEconomyPreferredSchedule = applyCase === 'institution-economy'
+  const showTrainedTeachersPreferredSchedule =
+    showTrainedTeachersApply &&
+    program != null &&
+    shouldShowApplyScheduleParagraph({
+      educationStructure: program.educationStructure,
+      sessionRound: program.sessionRound,
+      educationScheduleMode: program.educationScheduleMode,
+      educationScheduleLines: educationScheduleLinesForApply,
+    })
   const showPreferredScheduleInput =
-    showTrainedTeachersApply || showGeneralPreferredSchedule || showEconomyPreferredSchedule
+    showTrainedTeachersPreferredSchedule || showGeneralPreferredSchedule || showEconomyPreferredSchedule
   const applicationFormRuntimeContext = useMemo(
     () => coerceApplicationFormDocument(remoteForm)?.runtimeContext,
     [remoteForm],
@@ -524,6 +537,22 @@ export function ProgramApplyPage() {
   const preferredScheduleMapOptions = useMemo(
     () => (institutionDateOnlyPreferred ? { dateOnly: true } : undefined),
     [institutionDateOnlyPreferred],
+  )
+  const trainedTeachersEnabledDates = useMemo(() => {
+    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
+      return null
+    }
+    return buildEnabledDatesFromEducationScheduleLines(educationScheduleLinesForApply)
+  }, [educationScheduleLinesForApply, program?.educationScheduleMode, showTrainedTeachersPreferredSchedule])
+  const trainedTeachersFixedScheduleOptions = useMemo(() => {
+    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
+      return []
+    }
+    return buildTrainedTeachersFixedScheduleOptions(educationScheduleLinesForApply)
+  }, [educationScheduleLinesForApply, program?.educationScheduleMode, showTrainedTeachersPreferredSchedule])
+  const applicationRecruitmentLimits = useMemo(
+    () => readApplicationScheduleRecruitmentLimitsFromRuntime(applicationFormRuntimeContext),
+    [applicationFormRuntimeContext],
   )
   const usesOsaAvailableSchedule = usesConfirmedOsaAvailableSchedule({
     program,
@@ -924,6 +953,7 @@ export function ProgramApplyPage() {
             schoolNameLocked={profileSchoolLocked}
             answerKeyPlaceholders
             showPreferredEducationForm={showPreferredEducationForm}
+            maxClassCount={applicationRecruitmentLimits.maxClassCount}
             showEducationPlace={shouldShowEducationPlaceOnBasicInfo(paragraph.id)}
             profile={{
               schoolName: profileSchool,
@@ -1059,7 +1089,7 @@ export function ProgramApplyPage() {
       const isPreferredScheduleSlot =
         isApplicationPreferredScheduleParagraphId(paragraph.id) ||
         (showGeneralPreferredSchedule && isApplyScheduleChoiceParagraphId(paragraph.id)) ||
-        (showTrainedTeachersApply &&
+        (showTrainedTeachersPreferredSchedule &&
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
 
       if (isPreferredScheduleSlot && showPreferredScheduleInput) {
@@ -1082,7 +1112,14 @@ export function ProgramApplyPage() {
                 : null
             }
             enabledDates={
-              useInstitutionScheduleBounds ? institutionScheduleEnabledDates : null
+              useInstitutionScheduleBounds
+                ? institutionScheduleEnabledDates
+                : showTrainedTeachersApply
+                  ? trainedTeachersEnabledDates
+                  : null
+            }
+            fixedScheduleOptions={
+              showTrainedTeachersApply ? trainedTeachersFixedScheduleOptions : undefined
             }
             showSessionSelect={
               showGeneralPreferredSchedule && institutionPreferredSessionSelect.show
@@ -1270,12 +1307,16 @@ export function ProgramApplyPage() {
       ujatVolunteerPreviousTerm,
       applyCase,
       showTrainedTeachersApply,
+      showTrainedTeachersPreferredSchedule,
       showGeneralPreferredSchedule,
       showPreferredScheduleInput,
       showPreferredEducationForm,
       institutionScheduleDateBounds.minScheduleDate,
       institutionScheduleDateBounds.maxScheduleDate,
       institutionScheduleEnabledDates,
+      trainedTeachersEnabledDates,
+      trainedTeachersFixedScheduleOptions,
+      applicationRecruitmentLimits,
       applicationFormDocument,
       profileSchoolLocked,
       profileSchool,
@@ -1293,7 +1334,7 @@ export function ProgramApplyPage() {
       const isPreferredScheduleSlot =
         isApplicationPreferredScheduleParagraphId(paragraph.id) ||
         (showGeneralPreferredSchedule && isApplyScheduleChoiceParagraphId(paragraph.id)) ||
-        (showTrainedTeachersApply &&
+        (showTrainedTeachersPreferredSchedule &&
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
 
       if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
@@ -1470,6 +1511,10 @@ export function ProgramApplyPage() {
         ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
         : undefined
       if (showPreferredScheduleInput) {
+        if (preferredBlocks.length > preferredScheduleMaxBlocks) {
+          setSubmitAlert({ description: '모집 가능한 희망 일정 수를 초과했습니다. 초과한 일정을 삭제해 주세요.' })
+          return
+        }
         const preferredError = findIncompletePreferredScheduleMessage(
           preferredBlocks,
           preferredScheduleMapOptions,
@@ -1525,6 +1570,16 @@ export function ProgramApplyPage() {
         const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
         if (basicError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+        const requestedClassCount = Number.parseInt(basicInfo.classCount, 10)
+        const maxClassCount = applicationRecruitmentLimits.maxClassCount
+        if (
+          Number.isFinite(requestedClassCount) &&
+          maxClassCount != null &&
+          requestedClassCount > maxClassCount
+        ) {
+          setSubmitAlert({ description: '신청 가능 최대 학급 수를 초과했습니다. 학급 수를 조정해 주세요.' })
           return
         }
         if (!basicAnswer) {

@@ -36,6 +36,7 @@ export function toPortalPreferredScheduleBlocks(
         date,
         sessionCount: 1,
         sessionTimes: [],
+        ...(block.session ? { session: block.session } : {}),
       })
       rank += 1
       continue
@@ -49,6 +50,7 @@ export function toPortalPreferredScheduleBlocks(
       preferenceRank: rank,
       date,
       sessionCount: 1,
+      ...(block.session ? { session: block.session } : {}),
       sessionTimes: [
         {
           sessionIndex: 1,
@@ -131,6 +133,7 @@ export function preferredScheduleBlocksFromDraftAnswers(
         : null
     blocks.push({
       date,
+      session: typeof row.session === 'string' ? row.session : undefined,
       classPeriod: typeof first?.classPeriod === 'string' ? first.classPeriod : '',
       startTime: normalizeScheduleTime(
         typeof first?.startTime === 'string'

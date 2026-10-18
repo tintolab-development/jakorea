@@ -7,6 +7,8 @@ import {
   APPLICATION_SCHEDULE_CHOICE_PARAGRAPH_IDS,
   applicationScheduleVisibilityFromRuntimeContext,
   countUniqueEducationScheduleCalendarDays,
+  expandEducationScheduleChoiceSlots,
+  extractEducationScheduleCalendarDates,
   institutionFixedScheduleOptionToken,
   isApplicationScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
@@ -178,6 +180,56 @@ export function buildEnabledDatesFromAllowedSchedulePeriods(
   return set
 }
 
+/** 날짜 지정형 교육받은 교사 신청 — 등록된 교육일만 선택 가능하게 한다. */
+export function buildEnabledDatesFromEducationScheduleLines(
+  lines: readonly string[] | undefined
+): ReadonlySet<string> {
+  return extractEducationScheduleCalendarDates(lines)
+}
+
+export type TrainedTeachersFixedScheduleOption = {
+  value: string
+  label: string
+  date: string
+  classPeriod: string
+  startTime: string
+  endTime: string
+  session?: string
+}
+
+const FIXED_SCHEDULE_DATE_RE = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/
+const FIXED_SCHEDULE_TIME_RE = /(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/
+
+/** 교육받은 교사 날짜 지정형 — 원본 일정 line의 날짜·시간·회차를 선택지로 유지한다. */
+export function buildTrainedTeachersFixedScheduleOptions(
+  lines: readonly string[] | undefined
+): TrainedTeachersFixedScheduleOption[] {
+  const options: TrainedTeachersFixedScheduleOption[] = []
+  for (const [index, raw] of expandEducationScheduleChoiceSlots(lines).entries()) {
+    const label = raw.trim()
+    const dateMatch = label.match(FIXED_SCHEDULE_DATE_RE)
+    const timeMatch = label.match(FIXED_SCHEDULE_TIME_RE)
+    if (!dateMatch || !timeMatch) continue
+    const yearRaw = Number(dateMatch[1])
+    const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw
+    const month = Number(dateMatch[2])
+    const day = Number(dateMatch[3])
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) continue
+    options.push({
+      value: `line:${index}`,
+      label,
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      classPeriod: '',
+      startTime: timeMatch[1],
+      endTime: timeMatch[2],
+      ...(label.match(/(\d+)회차/)?.[1]
+        ? { session: `${label.match(/(\d+)회차/)?.[1]}회차` }
+        : {}),
+    })
+  }
+  return options
+}
+
 export function readInstitutionApplyScheduleDateBounds(
   runtime: unknown,
   paragraph?: unknown
@@ -195,6 +247,7 @@ export function readInstitutionApplyScheduleDateBounds(
 export {
   isInstitutionApplyScheduleChoiceParagraphId,
   institutionFixedScheduleOptionToken,
+  readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
   type ReadInstitutionFixedScheduleChoiceOptions,
 }

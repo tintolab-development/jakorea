@@ -19,9 +19,36 @@ export type ApplicationScheduleVisibilityInput = {
 }
 
 const SCHEDULE_DATE_PART_RE = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/
+const SCHEDULE_DATE_PART_GLOBAL_RE = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/g
 
 function pad2(value: number): string {
   return String(value).padStart(2, '0')
+}
+
+/**
+ * 날짜 지정형 신청 캘린더가 허용할 실제 교육일을 추출한다.
+ * 시간대가 다른 동일 날짜 슬롯은 Set에서 날짜만 합쳐지지만, 원본 line은
+ * 그대로 유지되므로 일정 라벨·시간 정보가 유실되지 않는다.
+ */
+export function extractEducationScheduleCalendarDates(
+  lines: readonly string[] | undefined
+): ReadonlySet<string> {
+  const dates = new Set<string>()
+  if (!lines?.length) return dates
+  for (const line of lines) {
+    SCHEDULE_DATE_PART_GLOBAL_RE.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = SCHEDULE_DATE_PART_GLOBAL_RE.exec(line)) !== null) {
+      const yearRaw = Number(match[1])
+      const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw
+      const month = Number(match[2])
+      const day = Number(match[3])
+      if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) continue
+      if (month < 1 || month > 12 || day < 1 || day > 31) continue
+      dates.add(`${year}-${pad2(month)}-${pad2(day)}`)
+    }
+  }
+  return dates
 }
 
 /**

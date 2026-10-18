@@ -10,6 +10,8 @@ import {
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
   buildEnabledDatesFromAllowedSchedulePeriods,
+  buildEnabledDatesFromEducationScheduleLines,
+  buildTrainedTeachersFixedScheduleOptions,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
@@ -260,6 +262,31 @@ assert.equal(
   'fixed_schedule_options',
 )
 assert.equal(readApplyScheduleInputMode({}), null)
+
+assert.deepEqual(
+  [...buildEnabledDatesFromEducationScheduleLines([
+    '26년 4월 20일(월) 09:30 ~ 12:20 | 26년 4월 20일(월) 13:00 ~ 15:50',
+    '2026년 4월 27일(월) 09:30 ~ 12:20 | 2회차',
+  ])],
+  ['2026-04-20', '2026-04-27'],
+)
+assert.deepEqual(
+  buildTrainedTeachersFixedScheduleOptions([
+    '26년 4월 20일(월) 09:30 ~ 12:20 | 26년 4월 20일(월) 13:00 ~ 15:50',
+    '2026년 4월 27일(월) 09:30 ~ 12:20 | 2회차',
+  ]).map(option => ({
+    value: option.value,
+    date: option.date,
+    startTime: option.startTime,
+    endTime: option.endTime,
+    session: option.session,
+  })),
+  [
+    { value: 'line:0', date: '2026-04-20', startTime: '09:30', endTime: '12:20', session: undefined },
+    { value: 'line:1', date: '2026-04-20', startTime: '13:00', endTime: '15:50', session: undefined },
+    { value: 'line:2', date: '2026-04-27', startTime: '09:30', endTime: '12:20', session: '2회차' },
+  ],
+)
 
 const boundsFromRuntime = readInstitutionApplyScheduleDateBounds({
   minScheduleDate: '2026-10-20',
