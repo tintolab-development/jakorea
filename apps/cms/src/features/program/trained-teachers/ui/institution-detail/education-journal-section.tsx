@@ -299,8 +299,9 @@ export function TrainedTeachersEducationJournalSection({
           <CmsButton
             variant="secondary"
             size="large"
-            width={200}
+            width="max-content"
             icon={<ButtonDownloadIcon />}
+            className="trained-teachers-education-journal-section__bulk-download-button"
             loading={createZipJobMutation.isPending || bulkJobId != null}
             disabled={createZipJobMutation.isPending || bulkJobId != null}
             onClick={() => void handleBulkDownload()}
