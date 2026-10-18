@@ -149,6 +149,7 @@ export function createInstitutionsSchema({
                   form={form}
                   startName="applicationStartDate"
                   endName="applicationEndDate"
+                  dateOnly
                 />
               ) : undefined,
           },

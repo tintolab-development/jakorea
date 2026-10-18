@@ -140,6 +140,7 @@ export function createVolunteersSchema({
                   form={form}
                   startName="volunteerApplicationStartDate"
                   endName="volunteerApplicationEndDate"
+                  dateOnly
                 />
               ) : undefined,
           },
