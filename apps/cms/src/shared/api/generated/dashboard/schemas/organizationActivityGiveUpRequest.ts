@@ -11,7 +11,7 @@ export interface OrganizationActivityGiveUpRequest {
   /** @minimum 1 */
   stopScheduleId: number;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 1000
      */
   reason: string;

@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import type { OrganizationActivityGiveUpRequest } from '@/shared/api/generated/dashboard/schemas/organizationActivityGiveUpRequest'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 import type { TrainedTeacherOrganizationApplicationsListQuery } from './organization-applications-list-query'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
@@ -17,7 +18,8 @@ export async function fetchTrainedTeacherOrganizationApplicationsRemote(
   if (query.status?.trim()) params.status = query.status.trim()
 
   const body = await unwrapApiBody<
-    TrainedTeacherOrganizationApplicationResponse[] | { content?: TrainedTeacherOrganizationApplicationResponse[] }
+    | TrainedTeacherOrganizationApplicationResponse[]
+    | { content?: TrainedTeacherOrganizationApplicationResponse[] }
   >(
     await customInstance({
       url: listUrl(programId),
@@ -94,10 +96,7 @@ export async function resendTrainedTeacherOrganizationApplicationNotificationRem
   )
 }
 
-export type TrainedTeacherOrganizationActivityGiveUpPayload = {
-  stopScheduleId: number
-  reason: string
-}
+export type TrainedTeacherOrganizationActivityGiveUpPayload = OrganizationActivityGiveUpRequest
 
 export type TrainedTeacherOrganizationProgressRemovalPayload = {
   reason: string

@@ -105,6 +105,7 @@ import { hydrateOrganizationApplicationSchedules } from '@/features/program/gene
 import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { resolveInstitutionCancelApprovalNotificationResult } from '@/features/program/general/lib/institution-cancel-approval'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
@@ -381,6 +382,7 @@ export function ApplicantList({
   const [institutionCancelApprovalComplete, setInstitutionCancelApprovalComplete] = useState<{
     schoolName: string
     cancellationReason: string
+    notificationResult: 'not-created' | 'created' | 'unknown'
   } | null>(null)
   const [institutionCancelRejectTarget, setInstitutionCancelRejectTarget] = useState<{
     id: string
@@ -435,7 +437,9 @@ export function ApplicantList({
   /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
   const showCalendarEntityFilter =
     menu !== 'institutions' &&
-    (menu !== 'individual-applications' || !program || getGeneralParticipantInterviewEnabled(program))
+    (menu !== 'individual-applications' ||
+      !program ||
+      getGeneralParticipantInterviewEnabled(program))
 
   /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
   const isIndividualDoc1Screening =
@@ -1307,11 +1311,14 @@ export function ApplicantList({
           )?.notification
           setInstitutionCancelApprovalTarget(null)
           void (async () => {
-            const remote = await applyRemoteInstitutionCancelApproval(id, reason, notification)
-            if (remote === 'error' || remote === 'unavailable') return
+            const result = await applyRemoteInstitutionCancelApproval(id, reason, notification)
+            if (result.status !== 'ok') return
             setInstitutionCancelApprovalComplete({
               schoolName: name,
               cancellationReason: reason,
+              notificationResult: resolveInstitutionCancelApprovalNotificationResult(
+                result.response
+              ),
             })
           })()
         }}
@@ -1320,6 +1327,7 @@ export function ApplicantList({
         open={institutionCancelApprovalComplete != null}
         schoolName={institutionCancelApprovalComplete?.schoolName ?? ''}
         cancellationReason={institutionCancelApprovalComplete?.cancellationReason ?? ''}
+        notificationResult={institutionCancelApprovalComplete?.notificationResult ?? 'unknown'}
         onClose={() => setInstitutionCancelApprovalComplete(null)}
       />
       <InstitutionCancelRejectModal
