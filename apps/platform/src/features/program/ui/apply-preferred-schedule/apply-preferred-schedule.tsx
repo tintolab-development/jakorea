@@ -78,6 +78,7 @@ type PreferenceScheduleFieldsProps = {
   showSessionSelect: boolean
   sessionOptions: PFSelectOption[]
   dateOnlyPreferred: boolean
+  disabled: boolean
   fixedScheduleOptions: readonly {
     value: string
     label: string
@@ -99,6 +100,7 @@ function PreferenceScheduleFields({
   showSessionSelect,
   sessionOptions,
   dateOnlyPreferred,
+  disabled,
   fixedScheduleOptions,
 }: PreferenceScheduleFieldsProps) {
   const startTime = normalizeHHmm(block.startTime)
@@ -117,6 +119,7 @@ function PreferenceScheduleFields({
           placeholder="희망 교육 일정을 선택하세요"
           options={fixedScheduleOptions.map(option => ({ value: option.value, label: option.label }))}
           value={block.scheduleOptionId}
+          disabled={disabled}
           onValueChange={next => {
             const selected = fixedScheduleOptions.find(option => option.value === next)
             if (!selected) return
@@ -145,6 +148,7 @@ function PreferenceScheduleFields({
           className={styles.datePicker}
           placeholder="희망 교육 날짜를 선택하세요"
           value={block.date}
+          disabled={disabled}
           minDate={minDate}
           maxDate={maxDate}
           enabledDates={enabledDates}
@@ -158,7 +162,9 @@ function PreferenceScheduleFields({
     return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
   }
 
-  const timeInputsDisabled = dateOnlyPreferred
+  if (dateOnlyPreferred) {
+    return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
+  }
 
   return (
     <DetailInfoForm.Row type="double">
@@ -178,9 +184,9 @@ function PreferenceScheduleFields({
                   placeholder="희망 차시"
                   options={sessionOptions}
                   value={block.classPeriod || undefined}
+                  disabled={disabled}
                   onValueChange={next => onPatch({ classPeriod: next ?? '' })}
                   aria-label="희망 차시"
-                  disabled={timeInputsDisabled}
                 />
                 <DetailInfoForm.InputsSeparator />
               </>
@@ -193,10 +199,10 @@ function PreferenceScheduleFields({
                   inputMode="numeric"
                   placeholder="수업 진행 교시"
                   value={block.classPeriod}
+                  disabled={disabled}
                   onValueChange={next =>
                     onPatch({ classPeriod: next.replace(/[^\d]/g, '') })
                   }
-                  disabled={timeInputsDisabled}
                 />
                 <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
                   교시
@@ -209,7 +215,7 @@ function PreferenceScheduleFields({
               value={startTime}
               onValueChange={next => onPatch({ startTime: next })}
               aria-label="시작 시간"
-              disabled={timeInputsDisabled}
+              disabled={disabled}
               className={styles.timePicker}
             />
             <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.tilde}>
@@ -220,7 +226,7 @@ function PreferenceScheduleFields({
               value={endTime}
               onValueChange={next => onPatch({ endTime: next })}
               aria-label="종료 시간"
-              disabled={timeInputsDisabled}
+              disabled={disabled}
               className={styles.timePicker}
             />
           </div>
@@ -257,6 +263,8 @@ type ApplyPreferredScheduleProps = {
     endTime: string
     session?: string
   }[]
+  /** runtime 일정 계약이 없을 때 일정 입력을 fail-closed 한다. */
+  disabled?: boolean
 }
 
 export function ApplyPreferredSchedule({
@@ -271,6 +279,7 @@ export function ApplyPreferredSchedule({
   dateOnlyPreferred = false,
   fixedScheduleOptions = [],
   showFooterAddButton = false,
+  disabled = false,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
   const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
@@ -328,6 +337,7 @@ export function ApplyPreferredSchedule({
                   showSessionSelect={showSessionSelect}
                   sessionOptions={sessionOptions}
                   dateOnlyPreferred={dateOnlyPreferred}
+                  disabled={disabled}
                   fixedScheduleOptions={fixedScheduleOptions}
                 />
               </DetailInfoForm>
