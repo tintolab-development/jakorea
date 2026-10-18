@@ -1,5 +1,6 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import type { EducationForm, ProgramDetailCase } from '@/features/program'
+import type { PortalPreferredScheduleBlock } from '@/features/program/api/application-types'
 import type { ProgramApplicationType } from '../api/types'
 
 export type EducationApplicationTab = 'all' | 'applied' | 'in_progress' | 'completed'
@@ -111,8 +112,10 @@ export type EducationApplicationListItem = {
    * 표시 시 프로그램 일정·교육 진행 예정일로 해석한다.
    */
   preferredScheduleOptionValues?: string[]
-  /** Portal 신청 상세 `preferredScheduleBlocks` — answers 일정 키 없을 때 fallback */
-  preferredScheduleBlocks?: readonly unknown[]
+  /** Portal 신청 상세 `preferredScheduleBlocks` — 서버가 매칭한 일정 원본 */
+  preferredScheduleBlocks?: readonly PortalPreferredScheduleBlock[]
+  /** 상세 API nested program의 canonical 화면 설정값 */
+  programConfig?: EducationApplicationProgramConfig
   /** Portal 신청 상세 `answers` — 상세 재조회·신청 정보 팝업용 */
   applicationAnswers?: Record<string, unknown>
   /** Portal 신청 상세 `formResponseId` — 안내사항 PATCH 전제 */
@@ -165,6 +168,20 @@ export type EducationTeacherPreferredSchedule = {
   id: string
   label: string
   value: string
+  scheduleId?: number | null
+  startAt?: string | null
+  endAt?: string | null
+  round?: number | null
+  scheduleStatus?: string | null
+  statusLabel?: string
+}
+
+export type EducationApplicationProgramConfig = {
+  programType?: string
+  educationFormLabel?: string | null
+  educationJournalEnabled?: boolean | null
+  surveyConfigured?: boolean | null
+  satisfactionConfigured?: boolean | null
 }
 
 export type EducationTeacherApplicationContent = {

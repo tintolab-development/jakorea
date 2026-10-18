@@ -5,7 +5,7 @@ import styles from './teacher-application-content.module.css'
 
 type InstitutionInfoTableProps = {
   institution: EducationTeacherApplicationInstitution
-  /** 프로그램 `educationForm === 'participant_choice'`일 때만 희망 교육 형태·교육 장소 노출 */
+  /** 참여자 선택 또는 교육받은 교사 프로그램에서 희망 교육 형태·교육 장소 노출 */
   showPreferredEducationForm?: boolean
 }
 

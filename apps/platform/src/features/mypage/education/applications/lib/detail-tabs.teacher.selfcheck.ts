@@ -11,6 +11,7 @@ import { hasTeacherAssignmentAsideContent } from '../model/types.ts'
 
 const options = {
   detailCase: 'general' as const,
+  programType: 'GENERAL_ORGANIZATION',
   surveyConfigured: true,
   satisfactionConfigured: true,
 }
@@ -42,19 +43,47 @@ assert.deepEqual(
   ['notice', 'schedule', 'students', 'survey', 'satisfaction'],
 )
 
+const trainedTeacher = buildTeacherInProgressDetailTabItems({
+  ...options,
+  programType: 'TRAINED_TEACHER',
+})
+assert.deepEqual(
+  trainedTeacher.map(item => item.key),
+  ['notice', 'schedule', 'students', 'survey'],
+)
+
 const teacherWithJournal = buildTeacherInProgressDetailTabItems({
   ...options,
   educationJournalEnabled: true,
 })
 assert.deepEqual(
   teacherWithJournal.map(item => item.key),
-  ['notice', 'schedule', 'educationJournal', 'students', 'survey', 'satisfaction'],
+  ['educationJournal', 'schedule', 'students', 'survey', 'satisfaction'],
+)
+
+const trainedTeacherWithJournal = buildTeacherInProgressDetailTabItems({
+  ...options,
+  programType: 'TRAINED_TEACHER',
+  educationJournalEnabled: true,
+})
+assert.deepEqual(
+  trainedTeacherWithJournal.map(item => item.key),
+  ['educationJournal', 'schedule', 'students', 'survey'],
 )
 
 const teacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems(options)
 assert.deepEqual(
   teacherWithdrawn.map(item => item.key),
   ['schedule', 'students', 'survey', 'satisfaction'],
+)
+
+const trainedTeacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems({
+  ...options,
+  programType: 'TRAINED_TEACHER',
+})
+assert.deepEqual(
+  trainedTeacherWithdrawn.map(item => item.key),
+  ['schedule', 'students', 'survey'],
 )
 
 const generalWithdrawn = buildWithdrawnDuringDetailTabItems(options)
@@ -86,6 +115,7 @@ assert.equal(
 
 const teacherNoSurvey = buildTeacherInProgressDetailTabItems({
   ...options,
+  programType: 'TRAINED_TEACHER',
   surveyConfigured: false,
   satisfactionConfigured: false,
 })
@@ -120,7 +150,7 @@ const teacherInstructorProgramCase = buildTeacherInProgressDetailTabItems({
 })
 assert.equal(
   teacherInstructorProgramCase.find(item => item.key === 'schedule')?.label,
-  '교육일정',
+  '교육 일정',
 )
 
 console.log('detail-tabs.teacher.selfcheck: ok')
