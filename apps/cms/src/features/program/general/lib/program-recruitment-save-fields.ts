@@ -1,5 +1,9 @@
 import { z } from 'zod'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import {
+  shouldShowApplicationMaxScheduleFields,
+  shouldShowApplicationMaxSessionsPerDayField,
+} from '@jakorea/form-schema/program-application'
 import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { TargetLevel } from '@/types/domain'
 
@@ -65,6 +69,9 @@ export const programParticipantRecruitmentSaveSchema = z.object({
   participantRecruitmentMaxClassCount: optionalNonNegNumber,
   participantRecruitmentMaxScheduleCount: optionalNonNegNumber,
   participantRecruitmentMaxSessionsPerDay: optionalNonNegNumber,
+  educationStructure: z.enum(['curriculum', 'schedule']).optional(),
+  sessionRound: z.enum(['single', 'multi']).optional(),
+  educationScheduleMode: z.enum(['date', 'period']).optional(),
   participantProgramOperationStartDate: optionalString,
   participantProgramOperationEndDate: optionalString,
   targetLevels: targetLevelsSaveSchema,
@@ -102,8 +109,8 @@ const requiredNonNeg = (message: string) =>
   )
 
 /** 교육받은 교사 모집 정보 수정 — 화면에 열린 필수 필드만 */
-export const programTrainedTeachersRecruitmentSaveSchema =
-  programParticipantRecruitmentSaveSchema.extend({
+export const programTrainedTeachersRecruitmentSaveSchema = programParticipantRecruitmentSaveSchema
+  .extend({
     participantRecruitmentAnnouncementPublished: requiredEnumMessage(
       ['published', 'unpublished'],
       '공고 게시 여부를 선택해주세요'
@@ -113,12 +120,6 @@ export const programTrainedTeachersRecruitmentSaveSchema =
       '학생 명단 제출 여부를 선택해주세요'
     ),
     participantRecruitmentMaxClassCount: requiredNonNeg('신청 가능 최대 학급 수를 입력해주세요'),
-    participantRecruitmentMaxScheduleCount: requiredNonNeg(
-      '신청 가능 최대 일정 수를 입력해주세요'
-    ),
-    participantRecruitmentMaxSessionsPerDay: requiredNonNeg(
-      '신청 가능 1일 최대 차시를 입력해주세요'
-    ),
     participantProgramOperationStartDate: requiredText(
       '프로그램 운영 시작일을 선택해주세요'
     ),
@@ -145,6 +146,41 @@ export const programTrainedTeachersRecruitmentSaveSchema =
     ),
     contactEmail: requiredText('문의처 이메일을 입력해주세요'),
     remarks: requiredText('비고를 입력해주세요'),
+  })
+  .superRefine((values, ctx) => {
+    // zod의 extend 추론이 공통 스키마의 보조 분기 필드를 좁히지 못하는 버전과도 호환한다.
+    const scheduleValues = values as typeof values & {
+      educationStructure?: 'curriculum' | 'schedule'
+      sessionRound?: 'single' | 'multi'
+      educationScheduleMode?: 'date' | 'period'
+      participantRecruitmentMaxScheduleCount?: number
+      participantRecruitmentMaxSessionsPerDay?: number
+    }
+    const visibility = {
+      educationStructure: scheduleValues.educationStructure,
+      sessionRound: scheduleValues.sessionRound,
+      educationScheduleMode: scheduleValues.educationScheduleMode,
+    }
+    if (
+      shouldShowApplicationMaxScheduleFields(visibility) &&
+      scheduleValues.participantRecruitmentMaxScheduleCount == null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['participantRecruitmentMaxScheduleCount'],
+        message: '신청 가능 최대 일정 수를 입력해주세요',
+      })
+    }
+    if (
+      shouldShowApplicationMaxSessionsPerDayField(visibility) &&
+      scheduleValues.participantRecruitmentMaxSessionsPerDay == null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['participantRecruitmentMaxSessionsPerDay'],
+        message: '신청 가능 1일 최대 차시를 입력해주세요',
+      })
+    }
   })
 
 export const programInstructorRecruitmentSaveSchema = z.object({

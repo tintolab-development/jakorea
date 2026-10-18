@@ -78,13 +78,11 @@ export function ApplicantRecruitParticipantInfoParagraph({
     isTemplateAuthoringMode && recruitLimitVisibility == null
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
-    (isTrainedTeachers ||
-      templateAuthoringLimitsPreview ||
+    (templateAuthoringLimitsPreview ||
       shouldShowInstitutionApplicationMaxScheduleFields(recruitLimitsVisibilityBridge))
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
-    (isTrainedTeachers ||
-      templateAuthoringLimitsPreview ||
+    (templateAuthoringLimitsPreview ||
       shouldShowInstitutionApplicationMaxSessionsPerDayField(recruitLimitsVisibilityBridge))
 
   const limitDefaults = defaults

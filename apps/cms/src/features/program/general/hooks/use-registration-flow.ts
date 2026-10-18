@@ -469,7 +469,8 @@ export function useGeneralProgramRegistrationFlow(
             }
           : undefined,
       applicantRecruitInstitutionRecruitLimitVisibility:
-        registrationFormVariant === 'general' && !isCompanySchoolRegistration
+        (registrationFormVariant === 'general' || isTrainedTeachersRegistration) &&
+        !isCompanySchoolRegistration
           ? {
               educationStructure: registrationVm.programType,
               sessionRound: registrationVm.sessionRoundType,
