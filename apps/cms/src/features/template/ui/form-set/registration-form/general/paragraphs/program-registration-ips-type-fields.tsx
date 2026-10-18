@@ -90,7 +90,9 @@ export function ProgramRegistrationIpsTypeFields({
         inputSize="medium"
         withAllOption={false}
         placeholder={firstSelectPlaceholder}
-        width={120}
+        // 선택값(Inspire / Prepare / Succeed)이 X·화살표 영역에 밀려 축약되지 않도록
+        // 기본 유형 선택 필드는 다른 공통 유형 셀렉트와 동일한 폭을 사용한다.
+        width={160}
         options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
         value={category || undefined}
         disabled={primaryDisabled}

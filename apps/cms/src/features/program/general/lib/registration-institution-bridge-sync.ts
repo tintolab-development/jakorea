@@ -137,14 +137,15 @@ export function syncInstitutionApplicationBridgeForRegistrationWizard(
   args: SyncInstitutionApplicationBridgeForRegistrationWizardArgs
 ): void {
   const overlay = getProgramRegistrationOverlayRecord()
-  syncInstitutionApplicationPreferredEducationFormFromOverlay(overlay)
-
   const recruitLimits = readRecruitLimitsFromOverlay(args.recruitTemplateCode)
   const preEducationFromRecruit = readPreEducationNoticeRequiredFromRecruitOverlay(
     args.recruitTemplateCode
   )
 
   if (args.registrationFormVariant === 'general') {
+    syncInstitutionApplicationPreferredEducationFormFromOverlay(overlay, {
+      sessionRound: args.sessionRound === 'multi' ? 'multi' : 'single',
+    })
     const hideScheduleSettings =
       args.programType === 'schedule' && args.sessionRound === 'multi'
     const lines = hideScheduleSettings ? [] : readGeneralRegistrationOverlayScheduleLines()
@@ -173,6 +174,13 @@ export function syncInstitutionApplicationBridgeForRegistrationWizard(
   }
 
   if (args.registrationFormVariant === 'trainedTeachers') {
+    const trainedEducationFormScheduleDetail =
+      overlay['trainedTeachersRegistration.typeSettings.educationFormScheduleDetail']
+    syncInstitutionApplicationPreferredEducationFormFromOverlay(overlay, {
+      sessionRound: args.sessionRound === 'multi' ? 'multi' : 'single',
+      educationFormScheduleDetail:
+        trainedEducationFormScheduleDetail === 'perSchedule' ? 'perSchedule' : 'common',
+    })
     const lines = readTrainedTeachersScheduleLinesFromOverlay()
     const mode = args.educationScheduleMode as InstitutionApplicationEducationScheduleMode
     patchInstitutionApplicationProgramBridge({
@@ -239,7 +247,11 @@ export function registrationWizardBridgeOverlayKeys(
     ]
   }
   if (variant === 'trainedTeachers') {
-    return [TRAINED_TEACHERS_SCHEDULE_LINES_KEY]
+    return [
+      TRAINED_TEACHERS_SCHEDULE_LINES_KEY,
+      ...PROGRAM_REGISTRATION_EDUCATION_FORM_BRIDGE_OVERLAY_KEYS,
+      'trainedTeachersRegistration.typeSettings.educationFormScheduleDetail',
+    ]
   }
   if (variant === 'economy') {
     return [ECONOMY_DATE_RANGE_SEAL_KEY]

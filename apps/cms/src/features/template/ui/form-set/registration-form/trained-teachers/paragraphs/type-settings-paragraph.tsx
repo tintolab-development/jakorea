@@ -116,6 +116,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   /** 일반과 동일 — 교육 형태 「참여자 선택」일 때만 신청 폼 「희망 교육 형태」 노출 */
   useEffect(() => {
     if (sessionRoundType === 'multi' && educationFormScheduleDetail === 'perSchedule') {
+      patchInstitutionApplicationProgramBridge({ showPreferredEducationForm: false })
       return
     }
     const form = sessionRoundType === 'multi' ? multiCommonEducationForm : educationForm

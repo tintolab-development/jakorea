@@ -32,9 +32,7 @@ export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
 
 const store = createScopedOverlayStore()
 
-export function setProgramRegistrationOverlayScope(
-  templateCode: string | undefined | null
-): void {
+export function setProgramRegistrationOverlayScope(templateCode: string | undefined | null): void {
   store.setScope(templateCode)
 }
 
@@ -76,7 +74,10 @@ export function readGeneralRegistrationOverlaySponsorId(): string {
 export function readGeneralRegistrationOverlaySponsorIds(): string[] {
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]
   if (Array.isArray(raw)) {
-    return raw.map(String).map(id => id.trim()).filter(Boolean)
+    return raw
+      .map(String)
+      .map(id => id.trim())
+      .filter(Boolean)
   }
   const primary = readGeneralRegistrationOverlaySponsorId()
   return primary ? [primary] : []
@@ -90,7 +91,14 @@ export function readGeneralRegistrationOverlaySponsorContactId(): string {
 export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
   if (Array.isArray(raw)) {
-    return [...new Set(raw.map(String).map(id => id.trim()).filter(Boolean))]
+    return [
+      ...new Set(
+        raw
+          .map(String)
+          .map(id => id.trim())
+          .filter(Boolean)
+      ),
+    ]
   }
   const primary = readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
   return primary ? [primary] : []
@@ -320,6 +328,18 @@ export function replaceProgramRegistrationOverlayPrefix(
   replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues })
 }
 
+/** 개발용 자동입력처럼 여러 관련 namespace를 한 번에 교체할 때 사용한다. */
+export function replaceProgramRegistrationOverlayPrefixes(
+  prefixes: readonly string[],
+  nextValues: Record<string, unknown>
+): void {
+  const shouldReplace = (key: string) => prefixes.some(prefix => key.startsWith(prefix))
+  const kept = Object.fromEntries(
+    Object.entries(overlayState()).filter(([key]) => !shouldReplace(key))
+  )
+  replaceProgramRegistrationOverlay({ ...kept, ...nextValues })
+}
+
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
   return readOperationalOverlayKvValue('program-registration', overlayState(), key, defaultValue)
 }
@@ -363,10 +383,7 @@ export function useProgramRegistrationOverlayKv<T>(
   defaultValue: T
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const getSnapshot = useCallback(
-    () => readOverlayKeyValue(key, defaultRef.current),
-    [key]
-  )
+  const getSnapshot = useCallback(() => readOverlayKeyValue(key, defaultRef.current), [key])
 
   const value = useSyncExternalStore(
     listener => subscribeProgramRegistrationOverlayKey(key, listener),

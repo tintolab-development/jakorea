@@ -462,10 +462,10 @@ export function useGeneralProgramRegistrationFlow(
           }
         : isTrainedTeachersRegistration
           ? {
-              studentListRequired: 'need',
-              maxClassCount: 4,
-              maxScheduleCount: 3,
-              maxSessionsPerDay: 8,
+              studentListRequired: 'none',
+              maxClassCount: 2,
+              maxScheduleCount: 2,
+              maxSessionsPerDay: 5,
             }
           : undefined,
       applicantRecruitInstitutionRecruitLimitVisibility:

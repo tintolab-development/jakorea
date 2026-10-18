@@ -16,6 +16,10 @@ import {
   type GeneralRegistrationDevAutofillCaseId,
   type GeneralRegistrationDevAutofillOverlayBehavior,
 } from '@/features/program/general/lib/registration-dev-autofill-cases'
+import {
+  resolveTrainedTeachersRegistrationDevAutofillPreset,
+  type TrainedTeachersRegistrationDevAutofillCaseId,
+} from '@/features/program/trained-teachers/lib/registration-dev-autofill-cases'
 import type { GeneralProgramRegistrationParticipantFlags } from '@/features/program/general/model/registration-flow'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
@@ -56,6 +60,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
   patchGeneralRegistrationSponsorSelectionOverlay,
   patchProgramRegistrationOverlay,
+  replaceProgramRegistrationOverlayPrefixes,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS,
@@ -122,7 +127,11 @@ import {
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 const VENUE_KINDS = ['inside', 'outside', 'other'] as const
-const EDUCATION_DELIVERIES = ['online', 'offline', 'hybrid'] as const satisfies readonly UjatEducationDelivery[]
+const EDUCATION_DELIVERIES = [
+  'online',
+  'offline',
+  'hybrid',
+] as const satisfies readonly UjatEducationDelivery[]
 
 const PROGRAM_SAMPLES = [
   {
@@ -261,10 +270,9 @@ function clampDayjs(date: Dayjs, lo: Dayjs, hi: Dayjs): Dayjs {
 }
 
 /** 사업 기간을 상·하반기로 나눈다. 두 구간 모두 bounds 안. */
-export function ujatAutofillHalfRanges(range: RangeIso): Record<
-  UjatHalfSemesterKey,
-  { start: Dayjs; end: Dayjs }
-> {
+export function ujatAutofillHalfRanges(
+  range: RangeIso
+): Record<UjatHalfSemesterKey, { start: Dayjs; end: Dayjs }> {
   const start = dayjs(range.start).startOf('day')
   const end = dayjs(range.end).startOf('day')
   const lo = start.isAfter(end, 'day') ? end : start
@@ -300,10 +308,9 @@ export function alignUjatAutofillDatePlan(
   const recruitLead = pickInt(3, 14)
   const recruitStart = lo.subtract(recruitLead, 'day')
   const recruitEnd = lo.subtract(1, 'day')
-  const recruit =
-    recruitEnd.isBefore(recruitStart, 'day')
-      ? { start: dayIso(recruitStart), end: dayIso(recruitStart) }
-      : { start: dayIso(recruitStart), end: dayIso(recruitEnd) }
+  const recruit = recruitEnd.isBefore(recruitStart, 'day')
+    ? { start: dayIso(recruitStart), end: dayIso(recruitStart) }
+    : { start: dayIso(recruitStart), end: dayIso(recruitEnd) }
 
   const rStart = dayjs(recruit.start)
   const rEnd = dayjs(recruit.end)
@@ -346,12 +353,12 @@ function buildRegistrationDatePlan(year = dayjs().year()): {
   const recruitEnd = recruitStart.add(pickInt(3, 14), 'day')
 
   const recruitDays = Math.max(0, recruitEnd.diff(recruitStart, 'day'))
-  const interviewStart = recruitStart.add(
-    recruitDays <= 1 ? 0 : pickInt(0, recruitDays - 1),
+  const interviewStart = recruitStart.add(recruitDays <= 1 ? 0 : pickInt(0, recruitDays - 1), 'day')
+  const interviewRemain = Math.max(0, recruitEnd.diff(interviewStart, 'day'))
+  const interviewEnd = interviewStart.add(
+    interviewRemain === 0 ? 0 : pickInt(0, interviewRemain),
     'day'
   )
-  const interviewRemain = Math.max(0, recruitEnd.diff(interviewStart, 'day'))
-  const interviewEnd = interviewStart.add(interviewRemain === 0 ? 0 : pickInt(0, interviewRemain), 'day')
 
   return {
     business: { start: dayIso(bizStart), end: dayIso(bizEnd) },
@@ -475,9 +482,7 @@ function patchRecruitDatePlan(
   const volunteerTargets = pickSome(VOLUNTEER_TARGET_OPTIONS, pickInt(1, 2))
   const educationTargetDetail =
     economy?.targetLevelDetail ??
-    educationTargets
-      .map(option => EDUCATION_TARGET_DETAIL[option.value] ?? option.label)
-      .join(', ')
+    educationTargets.map(option => EDUCATION_TARGET_DETAIL[option.value] ?? option.label).join(', ')
   const economyRecruit = economy?.recruit
   const interviewClockStart = dayjs().startOf('day').hour(10).minute(0).second(0).millisecond(0)
   const interviewClockEnd = interviewClockStart.hour(12)
@@ -564,42 +569,39 @@ function patchRecruitDatePlan(
     'recruit.volunteer.interview.exclusionState': createDefaultUnavailableDatesExclusionState(),
     'recruit.volunteer.interview.exceptionDate': interviewSeal.start,
     'recruit.volunteer.interview.interviewTime': interviewClockStart.toISOString(),
-    ...recruitDetailPatch('recruit.detailInfo', [
-      'programDescription',
-      'recruitmentGuide',
-      'applicationMethod',
-      'learningSupportContent',
-    ], titleKo, economyRecruit),
-    ...recruitDetailPatch('economyRecruit.detailInfo', [
-      'programDescription',
-      'recruitmentGuide',
-      'applicationMethod',
-      'learningSupportContent',
-    ], titleKo, economyRecruit),
-    ...recruitDetailPatch('trainedTeachersRecruit.detailInfo', [
-      'programDescription',
-      'recruitmentGuide',
-      'applicationMethod',
-      'learningSupportContent',
-    ], titleKo),
-    ...recruitDetailPatch('ujatRecruit.detailInfo', [
-      'programDescription',
-      'recruitmentGuide',
-      'applicationMethod',
-      'learningSupportContent',
-    ], titleKo),
-    ...recruitDetailPatch('recruitInstructor.detailInfo', [
-      'programDescription',
-      'recruitmentGuide',
-      'applicationMethod',
-      'otherNotes',
-    ], titleKo, economyRecruit),
-    ...recruitDetailPatch('recruitVolunteer.detailInfo', [
-      'programDescription',
-      'recruitmentGuide',
-      'applicationMethod',
-      'otherNotes',
-    ], titleKo),
+    ...recruitDetailPatch(
+      'recruit.detailInfo',
+      ['programDescription', 'recruitmentGuide', 'applicationMethod', 'learningSupportContent'],
+      titleKo,
+      economyRecruit
+    ),
+    ...recruitDetailPatch(
+      'economyRecruit.detailInfo',
+      ['programDescription', 'recruitmentGuide', 'applicationMethod', 'learningSupportContent'],
+      titleKo,
+      economyRecruit
+    ),
+    ...recruitDetailPatch(
+      'trainedTeachersRecruit.detailInfo',
+      ['programDescription', 'recruitmentGuide', 'applicationMethod', 'learningSupportContent'],
+      titleKo
+    ),
+    ...recruitDetailPatch(
+      'ujatRecruit.detailInfo',
+      ['programDescription', 'recruitmentGuide', 'applicationMethod', 'learningSupportContent'],
+      titleKo
+    ),
+    ...recruitDetailPatch(
+      'recruitInstructor.detailInfo',
+      ['programDescription', 'recruitmentGuide', 'applicationMethod', 'otherNotes'],
+      titleKo,
+      economyRecruit
+    ),
+    ...recruitDetailPatch(
+      'recruitVolunteer.detailInfo',
+      ['programDescription', 'recruitmentGuide', 'applicationMethod', 'otherNotes'],
+      titleKo
+    ),
     ...(economyRecruit
       ? {
           'recruit.notes': economyRecruit.notes,
@@ -644,11 +646,11 @@ function buildUjatRecruitInfoOverlay(
     [institutionKeys.notes]: pick(RECRUIT_NOTES),
     [institutionKeys.description]: `${titleKo}는 학교 현장에서 경제·금융 기초를 익히는 참여형 교육입니다.`,
     [institutionKeys.recruitmentGuide]: '신청서 제출 후 담당자 확인을 거쳐 참여 학교를 확정합니다.',
-    [institutionKeys.applicationMethod]: '온라인 신청서 작성 후 제출해 주세요. 추가 서류는 담당자가 안내합니다.',
+    [institutionKeys.applicationMethod]:
+      '온라인 신청서 작성 후 제출해 주세요. 추가 서류는 담당자가 안내합니다.',
     [institutionKeys.learningSupportContent]:
       '교재와 활동지를 제공하고, 수업 전 강사 사전 연수를 진행합니다.',
-    [institutionKeys.additionalContentHtml]:
-      `<p>${titleKo} 참여를 희망하는 학교는 모집 기간 안에 신청해 주세요.</p>`,
+    [institutionKeys.additionalContentHtml]: `<p>${titleKo} 참여를 희망하는 학교는 모집 기간 안에 신청해 주세요.</p>`,
     [institutionKeys.attachmentFileNames]: [],
     ...buildUjatVolunteerHalfRecruitOverlay('h1', titleKo, {
       programSeal,
@@ -684,7 +686,11 @@ function buildUjatVolunteerHalfRecruitOverlay(
   return {
     [ujatVolunteerHalfOverlayKey(half, 'announcementPublished')]: true,
     ...(half === 'h2'
-      ? { [ujatVolunteerHalfOverlayKey(half, 'noticeExposure')]: pick(UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES) }
+      ? {
+          [ujatVolunteerHalfOverlayKey(half, 'noticeExposure')]: pick(
+            UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES
+          ),
+        }
       : {}),
     [ujatVolunteerHalfOverlayKey(half, 'publicTitle')]: `${titleKo} ${halfLabel} 봉사자 모집`,
     [ujatVolunteerHalfOverlayKey(half, 'programRange')]: args.programSeal,
@@ -711,9 +717,12 @@ function buildUjatVolunteerHalfRecruitOverlay(
     },
     [ujatVolunteerHalfOverlayKey(half, 'notes')]: pick(RECRUIT_NOTES),
     [ujatVolunteerHalfOverlayKey(half, 'otherNotes')]: pick(RECRUIT_NOTES),
-    [ujatVolunteerHalfOverlayKey(half, 'description')]: `${titleKo} ${halfLabel} 봉사단과 함께 학교 교육을 진행합니다.`,
-    [ujatVolunteerHalfOverlayKey(half, 'recruitmentGuide')]: `${halfLabel} 서류 심사 후 면접을 진행합니다.`,
-    [ujatVolunteerHalfOverlayKey(half, 'applicationMethod')]: `${halfLabel} 온라인 신청서 작성 후 제출해 주세요.`,
+    [ujatVolunteerHalfOverlayKey(half, 'description')]:
+      `${titleKo} ${halfLabel} 봉사단과 함께 학교 교육을 진행합니다.`,
+    [ujatVolunteerHalfOverlayKey(half, 'recruitmentGuide')]:
+      `${halfLabel} 서류 심사 후 면접을 진행합니다.`,
+    [ujatVolunteerHalfOverlayKey(half, 'applicationMethod')]:
+      `${halfLabel} 온라인 신청서 작성 후 제출해 주세요.`,
     [ujatVolunteerHalfOverlayKey(half, 'additionalContentHtml')]:
       `<p>${titleKo} ${halfLabel} 모집 관련 안내입니다.</p>`,
     [ujatVolunteerHalfOverlayKey(half, 'attachmentFileNames')]: [],
@@ -752,9 +761,7 @@ function buildDevAutofillSample(): DevAutofillSample {
     scheduleLines,
     periodRange: {
       start: dates.business.start,
-      end: periodEnd.isAfter(dayjs(dates.business.end))
-        ? dates.business.end
-        : dayIso(periodEnd),
+      end: periodEnd.isAfter(dayjs(dates.business.end)) ? dates.business.end : dayIso(periodEnd),
     },
     recruitDates: dates,
     venueKind,
@@ -788,6 +795,49 @@ function buildDevAutofillSample(): DevAutofillSample {
       lecture_evaluation: Math.random() > 0.45,
     },
     eventNames: [units[0]?.name ?? '1차 교육', units[1]?.name ?? '2차 교육'],
+  }
+}
+
+/**
+ * 교육받은 교사 등록용 개발 샘플.
+ *
+ * 일반 프로그램의 청소년·학급 수업 샘플을 재사용하면 교육받은 교사 폼에
+ * 없는 KPI·강사비가 overlay에 섞이고, 교사 연수 프로그램이라는 화면의
+ * 목적도 드러나지 않는다. 이 샘플은 학교/교사 주도 교육에 맞는 값만
+ * 고정하고, 날짜·운영 기간은 기존 개발용 계획을 재사용한다.
+ */
+function buildTrainedTeachersDevAutofillSample(): DevAutofillSample {
+  const sample = buildDevAutofillSample()
+  return {
+    ...sample,
+    titleKo: '2026 JA Korea 중등 교사 디지털 금융교육 연수',
+    titleEn: '2026 JA Korea Digital Finance Training for Middle School Teachers',
+    publicTitle: '2026 JA Korea 중등 교사 디지털 금융교육 연수 참가자 모집',
+    venueKind: 'inside',
+    venueDetail: '학교 시청각실',
+    businessField: 'economy_finance',
+    educationCourse: 'digital_computer',
+    ipOwned: 'ja',
+    courseDeliveredBy: 'ja',
+    partnerInvolvement: 'no',
+    ipsCategory: 'prepare',
+    ipsDetail: 'none',
+    units: [
+      {
+        name: '교사 금융교육 역량 이해',
+        content: '학교 수업에 적용할 금융교육의 목표와 교사의 역할을 이해합니다.',
+      },
+      {
+        name: '디지털 금융수업 설계 실습',
+        content: '디지털 자료를 활용해 학생 참여형 금융수업을 설계하고 공유합니다.',
+      },
+    ],
+    survey: {
+      survey: true,
+      satisfaction: true,
+      lecture_evaluation: true,
+    },
+    eventNames: ['교사 금융교육 연수', '수업 적용 사례 나눔'],
   }
 }
 
@@ -882,7 +932,8 @@ async function resolveDetailedProgram(
   try {
     const rows = await getDetailedProgramOptionsList()
     for (const row of rows) {
-      if (isDetailedProgramMasterId(row.id)) pool.push({ value: String(row.id), label: row.name ?? '' })
+      if (isDetailedProgramMasterId(row.id))
+        pool.push({ value: String(row.id), label: row.name ?? '' })
     }
   } catch {
     /* remote 미연동·실패 시 빈 후보 */
@@ -1006,6 +1057,17 @@ function randomIps(): { category: DevAutofillSample['ipsCategory']; detail: stri
 function buildTypeSettings(
   variant: ProgramRegistrationFormVariant | 'ujat'
 ): Omit<ProgramRegistrationDevAutofillTypeSettings, 'educationScheduleMode'> {
+  if (variant === 'trainedTeachers') {
+    return {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      educationFormScheduleDetail: 'common',
+      participationScheduleDetail: 'common',
+      ipsScheduleDetail: 'common',
+      educationForm: 'offline',
+      participation: 'individual',
+    }
+  }
   return {
     programType: variant === 'economy' ? 'curriculum' : pick(['curriculum', 'schedule']),
     sessionRoundType: variant === 'economy' ? 'single' : pick(['single', 'multi']),
@@ -1065,7 +1127,8 @@ function canVaryEducationSchedulePeriod(input: {
 
 function finalizeTypeSettings(
   variant: ProgramRegistrationFormVariant | 'ujat',
-  layout: ProgramRegistrationDevAutofillLayout
+  layout: ProgramRegistrationDevAutofillLayout,
+  preferredEducationScheduleMode?: 'date' | 'period'
 ): ProgramRegistrationDevAutofillTypeSettings {
   const drafted = buildTypeSettings(variant)
   const keepVisibleRows =
@@ -1074,7 +1137,7 @@ function finalizeTypeSettings(
       ((layout.sessionRoundType === 'multi' && layout.curriculumSessionCount > 1) ||
         (layout.sessionRoundType !== 'multi' && layout.curriculumChartSessionCount > 1)))
   const programType =
-    variant === 'economy' || keepVisibleRows
+    variant === 'economy' || variant === 'trainedTeachers' || keepVisibleRows
       ? variant === 'economy'
         ? 'curriculum'
         : layout.programType
@@ -1082,20 +1145,22 @@ function finalizeTypeSettings(
   const sessionRoundType =
     variant === 'economy'
       ? 'single'
-      : keepVisibleRows
+      : variant === 'trainedTeachers' || keepVisibleRows
         ? layout.sessionRoundType
         : drafted.sessionRoundType
   const educationScheduleMode =
     variant === 'economy'
       ? 'period'
-      : canVaryEducationSchedulePeriod({
-            variant,
-            programType,
-            sessionRoundType,
-            participantOrganization: layout.participantOrganization,
-          })
-        ? pick(['date', 'period'] as const)
-        : 'date'
+      : variant === 'trainedTeachers'
+        ? (preferredEducationScheduleMode ?? 'date')
+        : canVaryEducationSchedulePeriod({
+              variant,
+              programType,
+              sessionRoundType,
+              participantOrganization: layout.participantOrganization,
+            })
+          ? pick(['date', 'period'] as const)
+          : 'date'
   return {
     ...drafted,
     programType,
@@ -1189,8 +1254,9 @@ function buildGeneralLikeOverlay(
     'generalRegistration.educationCurriculum.participationBySession':
       participationByIndex(sessionSpan),
     'generalRegistration.educationCurriculum.ipsBySession': indexRecord(sessionSpan, () => ipsAt()),
-    'generalRegistration.educationCurriculum.progressSessionByRound': indexRecord(roundCount, index =>
-      String(((index - 1) % 16) + 1)
+    'generalRegistration.educationCurriculum.progressSessionByRound': indexRecord(
+      roundCount,
+      index => String(((index - 1) % 16) + 1)
     ),
     'generalRegistration.educationCurriculum.roundContentByRound': indexRecord(roundCount, index =>
       unitText(sample, index, 'content')
@@ -1405,7 +1471,10 @@ function buildUnavailableSelection(
     return true
   })
   const count = Math.min(pickInt(0, 3), candidates.length)
-  const dates = [...candidates].sort(() => Math.random() - 0.5).slice(0, count).sort()
+  const dates = [...candidates]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count)
+    .sort()
   return { exclusion, dates }
 }
 
@@ -1530,6 +1599,7 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
   layout: ProgramRegistrationDevAutofillLayout
   typeSettings: ProgramRegistrationDevAutofillTypeSettings
   educationScheduleLines: readonly string[]
+  educationJournalEnabled: 'yes' | 'no'
   resolved: {
     sponsorId: string
     contactId: string
@@ -1547,12 +1617,10 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
   // 교육 연수 필드에만 시간 포함 일정을 사용한다.
   const teacherTrainingScheduleLine =
     input.layout.teacherTrainingEnabled === true ? scheduleLineAt(1) : educationScheduleLine
-  const participant = input.layout.participant ?? {
-    ...TRAINED_TEACHERS_AUTOFILL_PARTICIPANT,
-    organization: input.layout.participantOrganization,
-    individual: !input.layout.participantOrganization,
-  }
-  const overlay = {
+  const participant = TRAINED_TEACHERS_AUTOFILL_PARTICIPANT
+  const directScheduleEvents =
+    input.typeSettings.programType === 'schedule' && input.typeSettings.sessionRoundType === 'multi'
+  const overlay: Record<string, unknown> = {
     ...buildGeneralLikeOverlay(
       input.sample,
       basicPrefix,
@@ -1568,15 +1636,36 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
     ),
     [`${basicPrefix}.sponsorId`]: input.resolved.sponsorId,
     [`${basicPrefix}.managerContactId`]: input.resolved.contactId,
-    [`${basicPrefix}.managerContactIds`]: input.resolved.contactId ? [input.resolved.contactId] : [],
-    'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
-    'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
-      teacherTrainingScheduleLine,
-    'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm':
-      input.typeSettings.educationForm,
-    'generalRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
-    'generalRegistration.educationCurriculum.preEducationScheduleLine':
-      teacherTrainingScheduleLine,
+    [`${basicPrefix}.managerContactIds`]: input.resolved.contactId
+      ? [input.resolved.contactId]
+      : [],
+    'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled':
+      input.educationJournalEnabled,
+    'generalRegistration.educationCurriculum.educationJournalEnabled':
+      input.educationJournalEnabled,
+    ...(input.layout.teacherTrainingEnabled === true
+      ? {
+          'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
+          'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
+            teacherTrainingScheduleLine,
+          'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm':
+            input.typeSettings.educationForm,
+          'generalRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
+          'generalRegistration.educationCurriculum.preEducationScheduleLine':
+            teacherTrainingScheduleLine,
+        }
+      : {}),
+  }
+  for (const key of Object.keys(overlay)) {
+    if (
+      key.startsWith('generalRegistration.kpi.') ||
+      key.startsWith('generalRegistration.wageInfo.')
+    ) {
+      delete overlay[key]
+    }
+  }
+  if (directScheduleEvents) {
+    delete overlay['trainedTeachersRegistration.educationScheduleSettings.scheduleLines']
   }
   const requiredContext: TrainedTeachersRegistrationRequiredFieldContext = {
     participant,
@@ -1618,6 +1707,7 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
 export function previewTrainedTeachersRegistrationDevAutofill(input: {
   layout: ProgramRegistrationDevAutofillLayout
   typeSettings: ProgramRegistrationDevAutofillTypeSettings
+  educationJournalEnabled?: 'yes' | 'no'
   resolved: {
     sponsorId: string
     contactId: string
@@ -1627,7 +1717,7 @@ export function previewTrainedTeachersRegistrationDevAutofill(input: {
     paymentItemLabels: string
   }
 }): { overlay: Record<string, unknown>; programTitleKo: string } {
-  const sample = buildDevAutofillSample()
+  const sample = buildTrainedTeachersDevAutofillSample()
   const educationScheduleLines = buildEducationSchedulePreviewLines(
     input.typeSettings.educationScheduleMode
   )
@@ -1638,8 +1728,57 @@ export function previewTrainedTeachersRegistrationDevAutofill(input: {
       layout: input.layout,
       typeSettings: input.typeSettings,
       educationScheduleLines,
+      educationJournalEnabled: input.educationJournalEnabled ?? 'yes',
       resolved: input.resolved,
     }),
+  }
+}
+
+export function previewTrainedTeachersRegistrationDevAutofillForCase(
+  caseId: TrainedTeachersRegistrationDevAutofillCaseId,
+  resolved: {
+    sponsorId: string
+    contactId: string
+    detailedProgramId: string
+    detailedProgramName: string
+    paymentItemValues: string[]
+    paymentItemLabels: string
+  },
+  options?: {
+    teacherTrainingEnabled?: boolean
+    educationJournalEnabled?: 'yes' | 'no'
+  }
+): {
+  caseId: TrainedTeachersRegistrationDevAutofillCaseId
+  layout: ProgramRegistrationDevAutofillLayout
+  typeSettings: ProgramRegistrationDevAutofillTypeSettings
+  participantFlags: GeneralProgramRegistrationParticipantFlags
+  overlay: Record<string, unknown>
+  programTitleKo: string
+} {
+  const preset = resolveTrainedTeachersRegistrationDevAutofillPreset(caseId)
+  const layout = {
+    ...preset.layout,
+    teacherTrainingEnabled: options?.teacherTrainingEnabled ?? preset.layout.teacherTrainingEnabled,
+  }
+  const preview = previewTrainedTeachersRegistrationDevAutofill({
+    layout,
+    typeSettings: preset.typeSettings,
+    educationJournalEnabled: options?.educationJournalEnabled ?? preset.educationJournalEnabled,
+    resolved,
+  })
+  const overlay = {
+    ...preview.overlay,
+    'trainedTeachersRegistration.basicInfo.programTitleKo': preset.programTitleKo,
+    'trainedTeachersRegistration.basicInfo.publicProgramTitle': preset.publicProgramTitle,
+  }
+  return {
+    caseId,
+    layout,
+    typeSettings: preset.typeSettings,
+    participantFlags: { ...preset.participantFlags },
+    overlay,
+    programTitleKo: preset.programTitleKo,
   }
 }
 
@@ -1654,6 +1793,10 @@ export type ProgramRegistrationDevAutofillEditorPatch = {
 
 export type ApplyDevProgramRegistrationAutofillOptions = {
   caseId?: GeneralRegistrationDevAutofillCaseId
+  trainedTeachersCaseId?: TrainedTeachersRegistrationDevAutofillCaseId
+  trainedTeachersTeacherTrainingEnabled?: boolean
+  trainedTeachersEducationJournalEnabled?: 'yes' | 'no'
+  trainedTeachersEducationScheduleMode?: 'date' | 'period'
 }
 
 const UJAT_APPLICATION_INSTITUTION_TEMPLATE_CODE = 'application-ujat-school'
@@ -1774,6 +1917,10 @@ export async function applyDevProgramRegistrationAutofill(
     variant === 'general' && options?.caseId != null
       ? resolveGeneralRegistrationDevAutofillPreset(options.caseId)
       : null
+  const trainedTeachersCasePreset =
+    variant === 'trainedTeachers' && options?.trainedTeachersCaseId != null
+      ? resolveTrainedTeachersRegistrationDevAutofillPreset(options.trainedTeachersCaseId)
+      : null
   const effectiveLayout =
     generalCasePreset != null
       ? {
@@ -1783,17 +1930,32 @@ export async function applyDevProgramRegistrationAutofill(
             layout.participant
           ),
         }
-      : layout
+      : trainedTeachersCasePreset != null
+        ? {
+            ...trainedTeachersCasePreset.layout,
+            teacherTrainingEnabled:
+              options?.trainedTeachersTeacherTrainingEnabled ??
+              trainedTeachersCasePreset.layout.teacherTrainingEnabled,
+            participant: { ...trainedTeachersCasePreset.participantFlags },
+          }
+        : layout
   const overlayBehavior = generalCasePreset?.overlayBehavior
 
-  const sample = buildDevAutofillSample()
+  const sample =
+    variant === 'trainedTeachers'
+      ? buildTrainedTeachersDevAutofillSample()
+      : buildDevAutofillSample()
   if (generalCasePreset != null) {
     sample.titleKo = generalCasePreset.programTitleKo
     sample.publicTitle = generalCasePreset.publicProgramTitle
     sample.ipsCategory = DEV_AUTOFILL_FIXED_IPS.category
     sample.ipsDetail = DEV_AUTOFILL_FIXED_IPS.detail
+  } else if (trainedTeachersCasePreset != null) {
+    sample.titleKo = trainedTeachersCasePreset.programTitleKo
+    sample.publicTitle = trainedTeachersCasePreset.publicProgramTitle
   }
-  const economyPhrases = variant === 'economy' ? selectEconomyRegistrationAutofillPhrases() : undefined
+  const economyPhrases =
+    variant === 'economy' ? selectEconomyRegistrationAutofillPhrases() : undefined
   if (economyPhrases) {
     const dates = buildEconomyAutofillDatePlan()
     sample.titleKo = economyPhrases.program.titleKo
@@ -1816,9 +1978,15 @@ export async function applyDevProgramRegistrationAutofill(
     economy: economyPhrases,
   })
   const typeSettings =
-    generalCasePreset?.typeSettings ?? finalizeTypeSettings(variant, effectiveLayout)
+    generalCasePreset?.typeSettings ??
+    trainedTeachersCasePreset?.typeSettings ??
+    finalizeTypeSettings(variant, effectiveLayout, options?.trainedTeachersEducationScheduleMode)
+  const educationJournalEnabled =
+    options?.trainedTeachersEducationJournalEnabled ??
+    trainedTeachersCasePreset?.educationJournalEnabled ??
+    'yes'
   const scheduleLineCount =
-    generalCasePreset != null
+    generalCasePreset != null || trainedTeachersCasePreset != null
       ? typeSettings.sessionRoundType === 'multi'
         ? 2
         : 1
@@ -1848,37 +2016,40 @@ export async function applyDevProgramRegistrationAutofill(
       ujatInstitution: pickUjatRecruitInstitutionOverlay(ujatOverlay),
       ujatVolunteer: pickUjatRecruitVolunteerOverlay(ujatOverlay),
       general: {
-        ...recruitDetailPatch('ujatRecruit.detailInfo', [
-          'programDescription',
-          'recruitmentGuide',
-          'applicationMethod',
-          'learningSupportContent',
-        ], sample.titleKo),
-        ...(['h1', 'h2'] as const).reduce((acc, half) => {
-          const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
-          const detailPrefix = ujatVolunteerRecruitDetailInfoPrefix(half)
-          return {
-            ...acc,
-            [ujatVolunteerRecruitInterviewRangeSealKey(half)]: { ...sample.recruitDates.interview },
-            [`${interviewNs}.timeUnit`]: '30',
-            [`${interviewNs}.interviewTimeRange`]: [
-              interviewClockStart.toISOString(),
-              interviewClockEnd.toISOString(),
-            ],
-            [`${interviewNs}.interviewTime`]: interviewClockStart.toISOString(),
-            [`${interviewNs}.selectedSlotKeys`]: [
-              `${interviewClockStart.valueOf()}-${firstSlotEnd.valueOf()}`,
-            ],
-            [`${interviewNs}.exclusionState`]: interviewUnavailable.exclusion,
-            [`${interviewNs}.appliedUnavailableDates`]: interviewUnavailable.dates,
-            ...recruitDetailPatch(detailPrefix, [
-              'programDescription',
-              'recruitmentGuide',
-              'applicationMethod',
-              'otherNotes',
-            ], `${sample.titleKo} ${half === 'h1' ? '상반기' : '하반기'}`),
-          }
-        }, {} as Record<string, unknown>),
+        ...recruitDetailPatch(
+          'ujatRecruit.detailInfo',
+          ['programDescription', 'recruitmentGuide', 'applicationMethod', 'learningSupportContent'],
+          sample.titleKo
+        ),
+        ...(['h1', 'h2'] as const).reduce(
+          (acc, half) => {
+            const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
+            const detailPrefix = ujatVolunteerRecruitDetailInfoPrefix(half)
+            return {
+              ...acc,
+              [ujatVolunteerRecruitInterviewRangeSealKey(half)]: {
+                ...sample.recruitDates.interview,
+              },
+              [`${interviewNs}.timeUnit`]: '30',
+              [`${interviewNs}.interviewTimeRange`]: [
+                interviewClockStart.toISOString(),
+                interviewClockEnd.toISOString(),
+              ],
+              [`${interviewNs}.interviewTime`]: interviewClockStart.toISOString(),
+              [`${interviewNs}.selectedSlotKeys`]: [
+                `${interviewClockStart.valueOf()}-${firstSlotEnd.valueOf()}`,
+              ],
+              [`${interviewNs}.exclusionState`]: interviewUnavailable.exclusion,
+              [`${interviewNs}.appliedUnavailableDates`]: interviewUnavailable.dates,
+              ...recruitDetailPatch(
+                detailPrefix,
+                ['programDescription', 'recruitmentGuide', 'applicationMethod', 'otherNotes'],
+                `${sample.titleKo} ${half === 'h1' ? '상반기' : '하반기'}`
+              ),
+            }
+          },
+          {} as Record<string, unknown>
+        ),
       },
     })
     seedUjatApplicationAutofill()
@@ -1895,7 +2066,10 @@ export async function applyDevProgramRegistrationAutofill(
     const [sponsorContact, detailedProgram, paymentItems] = await Promise.all([
       resolveSponsorAndContact(true),
       // 1사1교는 항상 커리큘럼형 → 「해당없음」 불가, 카탈로그의 대표 프로그램 우선
-      resolveDetailedProgram({ includeNone: false, preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }),
+      resolveDetailedProgram({
+        includeNone: false,
+        preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL,
+      }),
       pickPaymentItemSelection(),
     ])
     const contactSelectId = toSponsorContactSelectValue(
@@ -1936,7 +2110,9 @@ export async function applyDevProgramRegistrationAutofill(
         ? { includeNone: false, preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }
         : { includeNone: typeSettings.programType === 'schedule' }
     ),
-    pickPaymentItemSelection(),
+    variant === 'trainedTeachers'
+      ? Promise.resolve({ ids: [], labels: '' })
+      : pickPaymentItemSelection(),
   ])
   const sponsorId = String(sponsorContact.sponsorId || '').trim()
   const resolved = {
@@ -1949,20 +2125,37 @@ export async function applyDevProgramRegistrationAutofill(
   }
 
   if (variant === 'trainedTeachers') {
-    patchProgramRegistrationOverlay(
-      composeTrainedTeachersRegistrationDevAutofillOverlay({
-        sample,
-        layout,
-        typeSettings,
-        educationScheduleLines,
-        resolved,
-      })
+    const trainedTeachersOverlay = composeTrainedTeachersRegistrationDevAutofillOverlay({
+      sample,
+      layout: effectiveLayout,
+      typeSettings,
+      educationScheduleLines,
+      educationJournalEnabled,
+      resolved,
+    })
+    replaceProgramRegistrationOverlayPrefixes(
+      [
+        'trainedTeachersRegistration.basicInfo',
+        'trainedTeachersRegistration.typeSettings',
+        'trainedTeachersRegistration.educationCurriculum',
+        'trainedTeachersRegistration.educationScheduleSettings',
+        'generalRegistration.basicInfo',
+        'generalRegistration.typeSettings',
+        'generalRegistration.educationCurriculum',
+        'generalRegistration.educationScheduleSettings',
+        'generalRegistration.educationScheduleCurriculum',
+        'generalRegistration.kpi',
+        'generalRegistration.wageInfo',
+      ],
+      trainedTeachersOverlay
     )
     return {
       programTitleKo: sample.titleKo,
       sponsorId: resolved.sponsorId,
       sponsorContactId: resolved.contactId,
+      participantFlags: { ...TRAINED_TEACHERS_AUTOFILL_PARTICIPANT },
       typeSettings,
+      layout: effectiveLayout,
     }
   }
 
