@@ -7,6 +7,6 @@
  */
 
 /**
- * 제출 양식 답변 맵. 키는 문단 id. 없으면 빈 객체 {}.
+ * 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. 없으면 빈 객체 {}.
  */
 export type MemberPortalApplicationDetailAnswers = {[key: string]: unknown};

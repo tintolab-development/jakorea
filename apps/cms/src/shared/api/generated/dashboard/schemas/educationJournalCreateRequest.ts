@@ -8,7 +8,8 @@
 
 export interface EducationJournalCreateRequest {
   organizationApplicationId?: number;
-  fileObjectId?: number;
+  /** 교육일지 제출 파일 ID. EDUCATION_JOURNAL 목적의 CLEAN·AVAILABLE 파일이어야 합니다. */
+  fileObjectId: number;
   journalTitle?: string;
   journalMemo?: string;
 }

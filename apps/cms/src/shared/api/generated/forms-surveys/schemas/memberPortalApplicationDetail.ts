@@ -40,7 +40,7 @@ export interface MemberPortalApplicationDetail {
   formBindingId?: number;
   templateVersionId?: number;
   formResponseStatus?: string;
-  /** 제출 양식 답변 맵. 키는 문단 id. 없으면 빈 객체 {}. */
+  /** 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. 없으면 빈 객체 {}. */
   answers?: MemberPortalApplicationDetailAnswers;
   /** 희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 answers 투영. 없으면 []. */
   preferredScheduleBlocks?: PreferredScheduleBlock[];
