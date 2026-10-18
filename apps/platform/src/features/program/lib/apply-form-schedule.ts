@@ -17,6 +17,7 @@ import {
   readApplicationScheduleInputMode,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
   shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationPreferredScheduleSessionSelect,
   shouldShowApplicationPreferredScheduleParagraph,
@@ -24,6 +25,7 @@ import {
   shouldShowApplicationSchedulePeriodDateOnlyPreferred,
   syncApplicationScheduleChoiceParagraphsInDraft,
   type ReadInstitutionFixedScheduleChoiceOptions,
+  type RuntimeFixedScheduleChoiceItem,
 } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
@@ -164,6 +166,21 @@ export function shouldUseInstitutionAllowedSchedulePeriodDates(
   return periods != null && periods.length > 0
 }
 
+/**
+ * 기간 지정형 기관 신청은 서버가 허용 기간을 내려준 경우에만 날짜를 연다.
+ * 런타임 계약이 없을 때 null을 반환하면 날짜 선택기가 전체 범위를 허용하므로,
+ * 해당 모드에서는 빈 Set으로 fail closed 한다.
+ */
+export function resolveInstitutionAllowedScheduleEnabledDates(
+  periods: ApplySchedulePeriodBounds[] | null,
+  restrictWhenUnavailable = false,
+): ReadonlySet<string> | null {
+  if (!shouldUseInstitutionAllowedSchedulePeriodDates(periods)) {
+    return restrictWhenUnavailable ? new Set<string>() : null
+  }
+  return buildEnabledDatesFromAllowedSchedulePeriods(periods!)
+}
+
 export function buildEnabledDatesFromAllowedSchedulePeriods(
   periods: readonly ApplySchedulePeriodBounds[]
 ): ReadonlySet<string> {
@@ -249,7 +266,9 @@ export {
   institutionFixedScheduleOptionToken,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
   type ReadInstitutionFixedScheduleChoiceOptions,
+  type RuntimeFixedScheduleChoiceItem,
 }
 
 const INSTITUTION_SCHEDULE_PREVIEW_SLOT_RE = /^institution-schedule-slot-(\d+)$/i

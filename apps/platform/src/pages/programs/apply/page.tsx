@@ -92,12 +92,14 @@ import {
   isApplyScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
-  buildEnabledDatesFromAllowedSchedulePeriods,
   buildEnabledDatesFromEducationScheduleLines,
   buildTrainedTeachersFixedScheduleOptions,
+  mergeApplyScheduleVisibilityFields,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
+  resolveInstitutionAllowedScheduleEnabledDates,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   normalizeInstitutionFixedScheduleAnswerTokens,
   buildApplyPreferredSessionSelectOptions,
@@ -109,10 +111,10 @@ import {
   shouldShowApplyScheduleParagraph,
   shouldShowApplyPreferredScheduleSessionSelect,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
-  shouldUseInstitutionAllowedSchedulePeriodDates,
 } from '@/features/program/lib/apply-form-schedule'
 import {
   preferredScheduleBlocksFromDraftAnswers,
+  toFixedScheduleOptionAnswerValue,
   toPortalPreferredScheduleBlocks,
   toPreferredScheduleAnswerValue,
   findIncompletePreferredScheduleMessage,
@@ -438,6 +440,14 @@ export function ProgramApplyPage() {
       ) ?? program?.educationScheduleLines ?? [],
     [applicationFormDocument, program?.educationScheduleLines],
   )
+  const applicationScheduleVisibility = useMemo(
+    () =>
+      mergeApplyScheduleVisibilityFields(
+        applicationFormDocument?.runtimeContext,
+        program ?? undefined,
+      ),
+    [applicationFormDocument?.runtimeContext, program],
+  )
   const applyScheduleChoiceMeta = useMemo(
     () => (program ? readApplyScheduleMetaFromProgram(program) : undefined),
     [program],
@@ -456,9 +466,46 @@ export function ProgramApplyPage() {
       ) ?? null
     )
   }, [applicationFormDocument])
+  const trainedTeachersScheduleParagraph = useMemo(() => {
+    const paragraphs = applicationFormDocument?.paragraphs
+    if (!Array.isArray(paragraphs)) return null
+    return (
+      paragraphs.find(
+        paragraph =>
+          paragraph != null &&
+          typeof paragraph === 'object' &&
+          String((paragraph as { id?: unknown }).id ?? '') ===
+            PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
+      ) ?? null
+    )
+  }, [applicationFormDocument])
   const institutionScheduleInputMode = useMemo(
     () =>
       readApplyScheduleInputMode(
+        applicationFormDocument?.runtimeContext,
+        institutionScheduleParagraph,
+      ),
+    [applicationFormDocument, institutionScheduleParagraph],
+  )
+  const trainedTeachersScheduleInputMode = useMemo(
+    () =>
+      readApplyScheduleInputMode(
+        applicationFormDocument?.runtimeContext,
+        trainedTeachersScheduleParagraph,
+      ),
+    [applicationFormDocument, trainedTeachersScheduleParagraph],
+  )
+  const trainedTeachersRuntimeFixedScheduleChoices = useMemo(
+    () =>
+      readRuntimeFixedScheduleChoiceItems(
+        applicationFormDocument?.runtimeContext,
+        trainedTeachersScheduleParagraph,
+      ),
+    [applicationFormDocument, trainedTeachersScheduleParagraph],
+  )
+  const institutionRuntimeFixedScheduleChoices = useMemo(
+    () =>
+      readRuntimeFixedScheduleChoiceItems(
         applicationFormDocument?.runtimeContext,
         institutionScheduleParagraph,
       ),
@@ -480,12 +527,14 @@ export function ProgramApplyPage() {
       ),
     [applicationFormDocument, institutionScheduleParagraph],
   )
+  const institutionScheduleRequiresRuntimePeriods =
+    applyCase === 'institution-general' && institutionScheduleInputMode === 'date_time_requests'
   const institutionScheduleEnabledDates = useMemo(() => {
-    if (!shouldUseInstitutionAllowedSchedulePeriodDates(institutionAllowedSchedulePeriods)) {
-      return null
-    }
-    return buildEnabledDatesFromAllowedSchedulePeriods(institutionAllowedSchedulePeriods!)
-  }, [institutionAllowedSchedulePeriods])
+    return resolveInstitutionAllowedScheduleEnabledDates(
+      institutionAllowedSchedulePeriods,
+      institutionScheduleRequiresRuntimePeriods,
+    )
+  }, [institutionAllowedSchedulePeriods, institutionScheduleRequiresRuntimePeriods])
   /**
    * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
    * 일반 기관 + 기간 지정(또는 render `date_time_requests`)일 때만 1·2지망을 덮어쓴다.
@@ -500,12 +549,14 @@ export function ProgramApplyPage() {
   const showTrainedTeachersPreferredSchedule =
     showTrainedTeachersApply &&
     program != null &&
-    shouldShowApplyScheduleParagraph({
-      educationStructure: program.educationStructure,
-      sessionRound: program.sessionRound,
-      educationScheduleMode: program.educationScheduleMode,
-      educationScheduleLines: educationScheduleLinesForApply,
-    })
+    (trainedTeachersScheduleInputMode === 'fixed_schedule_options'
+      ? (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 0
+      : shouldShowApplyScheduleParagraph({
+          educationStructure: program.educationStructure,
+          sessionRound: program.sessionRound,
+          educationScheduleMode: program.educationScheduleMode,
+          educationScheduleLines: educationScheduleLinesForApply,
+        }))
   const showPreferredScheduleInput =
     showTrainedTeachersPreferredSchedule || showGeneralPreferredSchedule || showEconomyPreferredSchedule
   const applicationFormRuntimeContext = useMemo(
@@ -539,17 +590,47 @@ export function ProgramApplyPage() {
     [institutionDateOnlyPreferred],
   )
   const trainedTeachersEnabledDates = useMemo(() => {
-    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
+    if (
+      !showTrainedTeachersPreferredSchedule ||
+      program?.educationScheduleMode === 'period' ||
+      trainedTeachersScheduleInputMode === 'fixed_schedule_options'
+    ) {
       return null
     }
     return buildEnabledDatesFromEducationScheduleLines(educationScheduleLinesForApply)
-  }, [educationScheduleLinesForApply, program?.educationScheduleMode, showTrainedTeachersPreferredSchedule])
+  }, [
+    educationScheduleLinesForApply,
+    program?.educationScheduleMode,
+    showTrainedTeachersPreferredSchedule,
+    trainedTeachersScheduleInputMode,
+  ])
   const trainedTeachersFixedScheduleOptions = useMemo(() => {
-    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
+    if (
+      !showTrainedTeachersPreferredSchedule ||
+      program?.educationScheduleMode === 'period'
+    ) {
       return []
     }
-    return buildTrainedTeachersFixedScheduleOptions(educationScheduleLinesForApply)
-  }, [educationScheduleLinesForApply, program?.educationScheduleMode, showTrainedTeachersPreferredSchedule])
+    if (trainedTeachersScheduleInputMode === 'fixed_schedule_options') {
+      if (trainedTeachersRuntimeFixedScheduleChoices == null) return []
+      return trainedTeachersRuntimeFixedScheduleChoices.map(choice => ({
+        value: choice.id,
+        label: choice.label,
+        date: '',
+        classPeriod: '',
+        startTime: '',
+        endTime: '',
+      }))
+    }
+    const fallbackOptions = buildTrainedTeachersFixedScheduleOptions(educationScheduleLinesForApply)
+    return fallbackOptions
+  }, [
+    educationScheduleLinesForApply,
+    program?.educationScheduleMode,
+    showTrainedTeachersPreferredSchedule,
+    trainedTeachersRuntimeFixedScheduleChoices,
+    trainedTeachersScheduleInputMode,
+  ])
   const applicationRecruitmentLimits = useMemo(
     () => readApplicationScheduleRecruitmentLimitsFromRuntime(applicationFormRuntimeContext),
     [applicationFormRuntimeContext],
@@ -640,6 +721,16 @@ export function ProgramApplyPage() {
     () => collectRuntimeHiddenAnswerKeys(remoteForm),
     [remoteForm],
   )
+  const trainedTeachersScheduleRuntimeHidden = useMemo(() => {
+    const answerKey = trainedTeachersScheduleParagraph
+      ? resolveApplicationAnswerKey(trainedTeachersScheduleParagraph)
+      : ''
+    return (
+      trainedTeachersScheduleParagraph != null &&
+      (runtimeHiddenAnswerKeys.has(trainedTeachersScheduleParagraph.id) ||
+        (answerKey.length > 0 && runtimeHiddenAnswerKeys.has(answerKey)))
+    )
+  }, [runtimeHiddenAnswerKeys, trainedTeachersScheduleParagraph])
   const runtimeConditionalQuestions = useMemo(
     () => collectRuntimeConditionalQuestions(remoteForm),
     [remoteForm],
@@ -1147,8 +1238,18 @@ export function ProgramApplyPage() {
         paragraph.allowMultiple
       ) {
         const selectedIds = paragraph.selectedPreviewMultipleIds ?? []
+        const runtimeFixedChoiceItems =
+          isApplyScheduleChoiceParagraphId(paragraph.id) &&
+          institutionScheduleInputMode === 'fixed_schedule_options'
+            ? institutionRuntimeFixedScheduleChoices?.map(item => ({
+                id: item.id,
+                label: item.label,
+              })) ?? []
+            : null
         const choiceItems =
-          isApplyScheduleChoiceParagraphId(paragraph.id)
+          runtimeFixedChoiceItems != null
+            ? runtimeFixedChoiceItems
+            : isApplyScheduleChoiceParagraphId(paragraph.id)
             ? paragraph.items.length > 0
               ? paragraph.items
               : (readInstitutionFixedScheduleChoiceItems(
@@ -1318,6 +1419,8 @@ export function ProgramApplyPage() {
       trainedTeachersFixedScheduleOptions,
       applicationRecruitmentLimits,
       applicationFormDocument,
+      institutionRuntimeFixedScheduleChoices,
+      institutionScheduleInputMode,
       profileSchoolLocked,
       profileSchool,
       profileRegionLabel,
@@ -1397,6 +1500,17 @@ export function ProgramApplyPage() {
             : undefined,
       }),
     )
+    const showTrainedTeachersRuntimeScheduleSelection =
+      applyCase === 'trained-teachers' &&
+      applicationScheduleVisibility.educationStructure === 'curriculum' &&
+      applicationScheduleVisibility.sessionRound === 'single' &&
+      applicationScheduleVisibility.educationScheduleMode === 'date' &&
+      trainedTeachersScheduleInputMode === 'fixed_schedule_options' &&
+      (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 1 &&
+      !trainedTeachersScheduleRuntimeHidden
+    if (showTrainedTeachersRuntimeScheduleSelection) {
+      hidden.delete(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+    }
     if (usesOsaAvailableSchedule) {
       if (applyCase === 'instructor' && instructorScheduleSlots.length === 0) {
         hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
@@ -1437,6 +1551,7 @@ export function ProgramApplyPage() {
     return hidden
   }, [
     applyCase,
+    applicationScheduleVisibility,
     applicationFormDocument,
     displayDraft,
     instructorScheduleSlots.length,
@@ -1445,6 +1560,9 @@ export function ProgramApplyPage() {
     runtimeConditionalQuestions,
     runtimeHiddenAnswerKeys,
     sexOffense,
+    trainedTeachersRuntimeFixedScheduleChoices,
+    trainedTeachersScheduleInputMode,
+    trainedTeachersScheduleRuntimeHidden,
     ujatVolunteerBasicInfo.applicationType,
     usesOsaAvailableSchedule,
     volunteerActivitySlots.length,
@@ -1507,7 +1625,76 @@ export function ProgramApplyPage() {
       bundle.option.formBindingId != null &&
       bundle.option.applicationType
     ) {
-      const preferredScheduleBlocks = showPreferredScheduleInput
+      const trainedTeachersScheduleParagraphForSubmit = findDraftParagraph(
+        displayDraft,
+        id => id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
+      )
+      const trainedTeachersScheduleAnswerKey = trainedTeachersScheduleParagraphForSubmit
+        ? resolveApplicationAnswerKey(trainedTeachersScheduleParagraphForSubmit)
+        : ''
+      const trainedTeachersScheduleRuntimeHidden =
+        trainedTeachersScheduleParagraphForSubmit != null &&
+        (runtimeHiddenAnswerKeys.has(trainedTeachersScheduleParagraphForSubmit.id) ||
+          (trainedTeachersScheduleAnswerKey.length > 0 &&
+            runtimeHiddenAnswerKeys.has(trainedTeachersScheduleAnswerKey)))
+      const isTrainedTeachersFixedScheduleTarget =
+        applyCase === 'trained-teachers' &&
+        program?.programType?.trim().toUpperCase() === 'TRAINED_TEACHER' &&
+        bundle.option.applicationType.trim().toUpperCase() === 'ORGANIZATION' &&
+        applicationScheduleVisibility.educationStructure === 'curriculum' &&
+        applicationScheduleVisibility.sessionRound === 'single' &&
+        applicationScheduleVisibility.educationScheduleMode === 'date' &&
+        trainedTeachersScheduleInputMode === 'fixed_schedule_options'
+
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        trainedTeachersScheduleParagraphForSubmit == null
+      ) {
+        setSubmitAlert({ description: '신청 일정 문항을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' })
+        return
+      }
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        trainedTeachersRuntimeFixedScheduleChoices == null
+      ) {
+        setSubmitAlert({ description: '신청 가능한 교육 일정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' })
+        return
+      }
+      const trainedTeachersFixedScheduleValues =
+        trainedTeachersRuntimeFixedScheduleChoices?.map(choice => choice.id) ?? []
+      const trainedTeachersSingleFixedScheduleValue =
+        isTrainedTeachersFixedScheduleTarget &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        hiddenParagraphIds.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) &&
+        trainedTeachersFixedScheduleValues.length === 1
+          ? trainedTeachersFixedScheduleValues[0]
+          : undefined
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        hiddenParagraphIds.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        trainedTeachersSingleFixedScheduleValue == null
+      ) {
+        setSubmitAlert({ description: '신청 가능한 교육 일정을 선택할 수 없습니다. 잠시 후 다시 시도해 주세요.' })
+        return
+      }
+      const trainedTeachersFixedScheduleAnswer =
+        isTrainedTeachersFixedScheduleTarget &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        trainedTeachersScheduleAnswerKey
+          ? trainedTeachersSingleFixedScheduleValue != null
+            ? [trainedTeachersSingleFixedScheduleValue]
+            : toFixedScheduleOptionAnswerValue(preferredBlocks)
+          : null
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        !trainedTeachersFixedScheduleAnswer
+      ) {
+        setSubmitAlert({ description: '신청 가능한 교육 일정을 선택해 주세요.' })
+        return
+      }
+      const preferredScheduleBlocks = showPreferredScheduleInput && !isTrainedTeachersFixedScheduleTarget
         ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
         : undefined
       if (showPreferredScheduleInput) {
@@ -1515,19 +1702,27 @@ export function ProgramApplyPage() {
           setSubmitAlert({ description: '모집 가능한 희망 일정 수를 초과했습니다. 초과한 일정을 삭제해 주세요.' })
           return
         }
-        const preferredError = findIncompletePreferredScheduleMessage(
-          preferredBlocks,
-          preferredScheduleMapOptions,
-        )
-        if (preferredError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
-          return
+        if (!isTrainedTeachersFixedScheduleTarget) {
+          const preferredError = findIncompletePreferredScheduleMessage(
+            preferredBlocks,
+            preferredScheduleMapOptions,
+          )
+          if (preferredError) {
+            setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+            return
+          }
         }
       }
-      const preferredAnswer = showPreferredScheduleInput
-        ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
-        : null
-      if (showPreferredScheduleInput && !preferredAnswer) {
+      const preferredAnswer = isTrainedTeachersFixedScheduleTarget
+        ? trainedTeachersFixedScheduleAnswer
+        : showPreferredScheduleInput
+          ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
+          : null
+      if (
+        showPreferredScheduleInput &&
+        !preferredAnswer &&
+        !isTrainedTeachersFixedScheduleTarget
+      ) {
         setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
         return
       }
@@ -1738,12 +1933,16 @@ export function ProgramApplyPage() {
       const fixedInstitutionScheduleChoices =
         applyCase === 'institution-general' &&
         institutionScheduleInputMode === 'fixed_schedule_options'
-          ? readInstitutionFixedScheduleChoiceItems(
-              applicationFormDocument?.runtimeContext,
-              institutionScheduleParagraph,
-              { educationScheduleLines: educationScheduleLinesForApply },
-            )
+          ? institutionRuntimeFixedScheduleChoices
           : null
+      if (
+        applyCase === 'institution-general' &&
+        institutionScheduleInputMode === 'fixed_schedule_options' &&
+        institutionRuntimeFixedScheduleChoices == null
+      ) {
+        setSubmitAlert({ description: '신청 가능한 교육 일정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' })
+        return
+      }
       const singleFixedInstitutionSchedule =
         fixedInstitutionScheduleChoices?.length === 1 &&
         institutionScheduleParagraph != null &&
@@ -1797,6 +1996,9 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(institutionScheduleParagraph)] = [
           singleFixedInstitutionSchedule.id,
         ]
+      }
+      if (trainedTeachersFixedScheduleAnswer && trainedTeachersScheduleAnswerKey) {
+        overrides[trainedTeachersScheduleAnswerKey] = trainedTeachersFixedScheduleAnswer
       }
       if (teamInfoVisible) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
@@ -1891,6 +2093,14 @@ export function ProgramApplyPage() {
           isApplyScheduleChoiceParagraphId(paragraph.id) &&
           hiddenParagraphIds.has(paragraph.id) &&
           singleFixedInstitutionSchedule == null
+        ) {
+          omitParagraphIds.add(paragraph.id)
+          omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
+        }
+        if (
+          paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule &&
+          hiddenParagraphIds.has(paragraph.id) &&
+          trainedTeachersSingleFixedScheduleValue == null
         ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))

@@ -78,6 +78,21 @@ export function toPreferredScheduleAnswerValue(
   return mapped.length > 0 ? mapped : null
 }
 
+/** 고정 일정 선택형은 일정 객체가 아니라 Runtime option value 배열을 제출한다. */
+export function toFixedScheduleOptionAnswerValue(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'scheduleOptionId'>[],
+): string[] | null {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const block of blocks) {
+    const value = block.scheduleOptionId?.trim()
+    if (!value || seen.has(value)) continue
+    seen.add(value)
+    out.push(value)
+  }
+  return out.length > 0 ? out : null
+}
+
 /** 화면 검증 — 날짜만 있고 교시·시간이 비면 제출 차단 */
 export function findIncompletePreferredScheduleMessage(
   blocks: readonly ApplyPreferredScheduleBlock[],

@@ -15,6 +15,8 @@ import {
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
+  resolveInstitutionAllowedScheduleEnabledDates,
   normalizeInstitutionFixedScheduleAnswerTokens,
   remapInstitutionSchedulePreviewSlotIds,
   shouldUseInstitutionAllowedSchedulePeriodDates,
@@ -26,6 +28,7 @@ import {
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import { toFixedScheduleOptionAnswerValue } from './preferred-schedule-blocks.ts'
 
 function testUniqueCalendarDays() {
   assert.equal(
@@ -322,6 +325,44 @@ assert.ok(fixedItems)
 assert.equal(fixedItems![0]?.id, 'line:1')
 assert.equal(fixedItems![1]?.id, 'schedule:42')
 
+const runtimeFixedItems = readRuntimeFixedScheduleChoiceItems(
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [{ id: '187123', value: 'schedule:187123', label: '교육 일정' }],
+  },
+  { items: [] },
+)
+assert.deepEqual(runtimeFixedItems, [{ id: 'schedule:187123', label: '교육 일정' }])
+assert.equal(
+  readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
+    { items: [] },
+  ),
+  null,
+)
+assert.equal(
+  readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+    { items: [] },
+  ),
+  null,
+)
+assert.equal(
+  readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options' },
+    { items: [{ id: 'line:0', label: 'stale seed' }] },
+  ),
+  null,
+)
+assert.deepEqual(
+  toFixedScheduleOptionAnswerValue([
+    { scheduleOptionId: 'schedule:187123' },
+    { scheduleOptionId: 'schedule:187123' },
+    { scheduleOptionId: 'schedule:187124' },
+  ]),
+  ['schedule:187123', 'schedule:187124'],
+)
+
 const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
   ['line:1'],
   {
@@ -382,6 +423,11 @@ assert.ok(periods)
 assert.equal(periods!.length, 2)
 assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates(periods), true)
 assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates([]), false)
+
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates(null, false), null)
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates(null, true)?.size, 0)
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates([], true)?.size, 0)
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates(periods, true)?.has('2026-10-28'), true)
 
 const enabled = buildEnabledDatesFromAllowedSchedulePeriods(periods!)
 assert.equal(enabled.has('2026-10-28'), true)
