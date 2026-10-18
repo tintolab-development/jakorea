@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'platform_signup_guardian_bridge_v1'
 
+export const GUARDIAN_IDENTITY_COMPLETION_PREFIX = 'platform_guardian_identity'
+
 export type GuardianSignupBridgePersistedState = {
   signupIntentId: string
   intentExpiresAt?: string

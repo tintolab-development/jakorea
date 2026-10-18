@@ -3,10 +3,14 @@ import {
   NiceAuthPopupBlockedError,
   openNiceAuthPopupWindow,
   navigateNiceAuthPopup,
+  subscribeIdentityCompletion,
+  takeIdentityCompletion,
   watchNiceAuthPopupClosed,
+  type IdentityMessage,
 } from '@jakorea/identity-verification'
 import { postGuardianNiceStart } from '@/features/auth/sign-up/api/guardian-signup-bridge/client'
 import {
+  GUARDIAN_IDENTITY_COMPLETION_PREFIX,
   getGuardianBridgePendingIdentitySession,
   readGuardianSignupBridgeState,
   setGuardianBridgePendingIdentitySession,
@@ -21,6 +25,8 @@ type UseGuardianBridgeVerificationOptions = {
   onSuccess: (result: GuardianBridgeVerifySuccess) => void
 }
 
+const POPUP_CLOSE_COMPLETION_GRACE_MS = 250
+
 function createChallengeNonce(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -34,6 +40,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
   const popupRef = useRef<Window | null>(null)
   const stopWatchPopupRef = useRef<(() => void) | null>(null)
   const completingRef = useRef(false)
+  const lastSessionIdRef = useRef<number | null>(null)
   const onSuccessRef = useRef(options.onSuccess)
   onSuccessRef.current = options.onSuccess
 
@@ -43,14 +50,12 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
     popupRef.current = null
   }, [])
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
-      const data = event.data
-      if (!data || typeof data !== 'object' || typeof data.type !== 'string') return
+  const applyMessage = useCallback(
+    (data: IdentityMessage) => {
+      if (completingRef.current) return
 
       const pending = getGuardianBridgePendingIdentitySession()
-      if (!pending) return
+      const expectedSessionId = pending?.identitySessionId ?? lastSessionIdRef.current
 
       if (data.type === 'IDENTITY_CANCELLED') {
         cleanupPopupWatch()
@@ -60,7 +65,6 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
       }
 
       if (data.type === 'IDENTITY_FAILED') {
-        if (completingRef.current) return
         cleanupPopupWatch()
         completingRef.current = false
         setIsVerifying(false)
@@ -72,22 +76,48 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
         return
       }
 
-      if (data.type === 'IDENTITY_VERIFIED') {
-        const sessionId = typeof data.sessionId === 'number' ? data.sessionId : Number(data.sessionId)
-        if (!sessionId || sessionId !== pending.identitySessionId) return
-        if (completingRef.current) return
-        completingRef.current = true
-        cleanupPopupWatch()
-        setIsVerifying(false)
-        setErrorMessage(null)
-        onSuccessRef.current({ identitySessionId: sessionId })
-        completingRef.current = false
-      }
+      if (data.type !== 'IDENTITY_VERIFIED') return
+
+      const sessionId = typeof data.sessionId === 'number' ? data.sessionId : Number(data.sessionId)
+      if (!sessionId || Number.isNaN(sessionId)) return
+      if (expectedSessionId != null && expectedSessionId !== sessionId) return
+
+      completingRef.current = true
+      cleanupPopupWatch()
+      setIsVerifying(false)
+      setErrorMessage(null)
+      onSuccessRef.current({ identitySessionId: sessionId })
+      completingRef.current = false
+    },
+    [cleanupPopupWatch],
+  )
+
+  const applyMessageRef = useRef(applyMessage)
+  applyMessageRef.current = applyMessage
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      const data = event.data
+      if (!data || typeof data !== 'object' || typeof data.type !== 'string') return
+      applyMessageRef.current(data as IdentityMessage)
     }
 
     window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [cleanupPopupWatch])
+    const unsubscribe = subscribeIdentityCompletion(
+      GUARDIAN_IDENTITY_COMPLETION_PREFIX,
+      message => applyMessageRef.current(message),
+    )
+    const existing = takeIdentityCompletion(GUARDIAN_IDENTITY_COMPLETION_PREFIX)
+    if (existing) {
+      applyMessageRef.current(existing)
+    }
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      unsubscribe()
+    }
+  }, [])
 
   useEffect(() => () => cleanupPopupWatch(), [cleanupPopupWatch])
 
@@ -117,13 +147,21 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
       }
 
       const nonce = createChallengeNonce()
+      lastSessionIdRef.current = identitySessionId
       setGuardianBridgePendingIdentitySession({ identitySessionId, nonce })
 
       navigateNiceAuthPopup(popup, authUrl)
       popupRef.current = popup
       stopWatchPopupRef.current = watchNiceAuthPopupClosed(popup, () => {
-        if (completingRef.current) return
-        setIsVerifying(false)
+        window.setTimeout(() => {
+          if (completingRef.current) return
+          const completion = takeIdentityCompletion(GUARDIAN_IDENTITY_COMPLETION_PREFIX)
+          if (completion) {
+            applyMessageRef.current(completion)
+            return
+          }
+          setIsVerifying(false)
+        }, POPUP_CLOSE_COMPLETION_GRACE_MS)
       })
     } catch (error) {
       cleanupPopupWatch()
