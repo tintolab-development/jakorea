@@ -2,7 +2,7 @@ import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce } from '@/shared/lib/download-attachment'
 
 const EDUCATION_JOURNAL_FILE_PURPOSE = 'EDUCATION_JOURNAL'
-const EDUCATION_JOURNAL_DOWNLOAD_PURPOSE = '교육일지 다운로드'
+const EDUCATION_JOURNAL_DOWNLOAD_PURPOSE = '교육일지 제출 파일 확인'
 
 function unwrapEnvelope<T>(payload: unknown): T {
   if (payload && typeof payload === 'object') {
