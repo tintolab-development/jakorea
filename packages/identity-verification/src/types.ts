@@ -133,6 +133,8 @@ export interface IdentityVerificationPaths {
 export interface IdentityVerificationRoutes {
   callbackPath: string
   mockPath: string
+  /** 팝업이 닫히지 않은 같은 창 콜백에서 돌아갈 가입/인증 경로. 미지정 시 callbackPath에서 유도 */
+  resumePath?: string
 }
 
 export interface IdentityVerificationHttpClient {
