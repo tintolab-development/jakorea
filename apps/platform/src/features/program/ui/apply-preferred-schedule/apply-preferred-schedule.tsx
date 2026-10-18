@@ -117,6 +117,10 @@ function PreferenceScheduleFields({
 
   const timeInputsDisabled = dateOnlyPreferred
 
+  if (dateOnlyPreferred) {
+    return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
+  }
+
   return (
     <DetailInfoForm.Row type="double">
       {dateField}
@@ -139,6 +143,9 @@ function PreferenceScheduleFields({
                   aria-label="희망 차시"
                   disabled={timeInputsDisabled}
                 />
+                <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                  교시
+                </PFText>
                 <DetailInfoForm.InputsSeparator />
               </>
             ) : (

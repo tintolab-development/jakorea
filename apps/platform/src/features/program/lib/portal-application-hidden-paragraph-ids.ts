@@ -98,7 +98,10 @@ export function resolvePortalApplicationHiddenParagraphIds(
   }
 
   if (applyCase === 'institution-general') {
-    const preEducation = readPreEducationNoticeRequiredFromRuntime(runtimeContext) ?? true
+    const preEducation =
+      readPreEducationNoticeRequiredFromRuntime(runtimeContext) ??
+      program?.preEducationNoticeRequired ??
+      true
     const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
       ...scheduleVisibility,
       preEducationNoticeRequired: preEducation,

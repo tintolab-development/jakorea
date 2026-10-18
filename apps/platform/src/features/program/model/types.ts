@@ -187,6 +187,8 @@ export type ProgramDetail = ProgramListItem & {
    * 미설정·기관 등은 `individual`로 정규화.
    */
   participationMethod: ProgramParticipationMethod
+  /** 기관 모집 「사전 안내 사항 작성 여부」. false면 신청 양식 안내사항 단락 비노출. */
+  preEducationNoticeRequired?: boolean | null
   /** 배지·요약용 모집 역할 (강사·봉사자·기관·교육생 등) */
   recruitmentRoleLabel: string
   /**

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { resolvePortalApplicationHiddenParagraphIds } from './portal-application-hidden-paragraph-ids.ts'
 import {
   confirmOsaScheduleOptionValue,
@@ -69,5 +70,21 @@ const shownWhenEnabled = resolvePortalApplicationHiddenParagraphIds({
   instructorAvailableScheduleEnabled: true,
 })
 assert.equal(shownWhenEnabled.has(instructorId), false)
+
+const institutionGuidanceId = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+const guidanceHiddenByProgramFlag = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { preEducationNoticeRequired: false } as never,
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceHiddenByProgramFlag.has(institutionGuidanceId), true)
+
+const guidanceRuntimeOverridesProgram = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { preEducationNoticeRequired: false } as never,
+  runtimeContext: { preEducationNoticeRequired: true },
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceRuntimeOverridesProgram.has(institutionGuidanceId), false)
 
 console.log('portal-confirmed-osa-schedule.selfcheck: ok')

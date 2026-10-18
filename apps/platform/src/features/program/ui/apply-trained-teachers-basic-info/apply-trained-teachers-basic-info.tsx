@@ -278,10 +278,15 @@ export function ApplyTrainedTeachersBasicInfo({
 
       <PFFormFieldRow type="single">
         <PFFormField label="담당 교사 정보">
-          <PFFormInlineRow>
-            <PFFormInlineSegment>
-              <PFFormControlCluster>
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+          <PFFormInlineRow className={styles.teacherContactRow}>
+            <PFFormInlineSegment className={styles.teacherContactSegment}>
+              <PFFormControlCluster className={styles.teacherContactCluster}>
+                <PFText
+                  as="span"
+                  typo="bd-md-rg"
+                  color="neutral-cool-700"
+                  className={styles.teacherContactLabel}
+                >
                   담당 교사
                 </PFText>
                 <PFTextInput
@@ -295,10 +300,15 @@ export function ApplyTrainedTeachersBasicInfo({
                 />
               </PFFormControlCluster>
             </PFFormInlineSegment>
-            <PFFormInlineSeparator />
-            <PFFormInlineSegment>
-              <PFFormControlCluster>
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+            <PFFormInlineSeparator className={styles.teacherContactSeparator} />
+            <PFFormInlineSegment className={styles.teacherContactSegment}>
+              <PFFormControlCluster className={styles.teacherContactCluster}>
+                <PFText
+                  as="span"
+                  typo="bd-md-rg"
+                  color="neutral-cool-700"
+                  className={styles.teacherContactLabel}
+                >
                   Tel
                 </PFText>
                 <PFTextInput
@@ -313,10 +323,15 @@ export function ApplyTrainedTeachersBasicInfo({
                 />
               </PFFormControlCluster>
             </PFFormInlineSegment>
-            <PFFormInlineSeparator />
-            <PFFormInlineSegment>
-              <PFFormControlCluster>
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+            <PFFormInlineSeparator className={styles.teacherContactSeparator} />
+            <PFFormInlineSegment className={styles.teacherContactSegment}>
+              <PFFormControlCluster className={styles.teacherContactCluster}>
+                <PFText
+                  as="span"
+                  typo="bd-md-rg"
+                  color="neutral-cool-700"
+                  className={styles.teacherContactLabel}
+                >
                   M
                 </PFText>
                 <PFTextInput
@@ -338,10 +353,15 @@ export function ApplyTrainedTeachersBasicInfo({
                 />
               </PFFormControlCluster>
             </PFFormInlineSegment>
-            <PFFormInlineSeparator />
-            <PFFormInlineSegment>
-              <PFFormControlCluster>
-                <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+            <PFFormInlineSeparator className={styles.teacherContactSeparator} />
+            <PFFormInlineSegment className={styles.teacherContactSegment}>
+              <PFFormControlCluster className={styles.teacherContactCluster}>
+                <PFText
+                  as="span"
+                  typo="bd-md-rg"
+                  color="neutral-cool-700"
+                  className={styles.teacherContactLabel}
+                >
                   E-mail
                 </PFText>
                 <PFTextInput
