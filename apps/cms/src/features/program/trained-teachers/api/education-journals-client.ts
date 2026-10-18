@@ -6,6 +6,8 @@ import type { EducationJournalBulkDownloadRequest } from '@/shared/api/generated
 import type { EducationJournalBulkDownloadResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalBulkDownloadResponse'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
 import type { EducationJournalDownloadResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalDownloadResponse'
+import type { EducationJournalGeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalGeneratedFileJobResponse'
+import type { GeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/generatedFileJobResponse'
 import type { EducationJournalResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalResponse'
 
 function journalsUrl(programId: string): string {
@@ -69,6 +71,43 @@ export async function bulkDownloadTrainedTeacherEducationJournalsRemote(
       headers: { 'Content-Type': 'application/json' },
     })
   )
+}
+
+/** POST .../education-journals/bulk-download/jobs — 비동기 ZIP 생성 요청 */
+export async function createTrainedTeacherEducationJournalBulkDownloadJobRemote(
+  programId: string,
+  request: EducationJournalBulkDownloadRequest
+): Promise<EducationJournalGeneratedFileJobResponse> {
+  return unwrapApiBody<EducationJournalGeneratedFileJobResponse>(
+    await customInstance({
+      url: `${journalsUrl(programId)}/bulk-download/jobs`,
+      method: 'POST',
+      data: request,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}
+
+/** GET /api/admin/generated-files/jobs/{jobId} — 생성 파일 Job 상태 조회 */
+export async function fetchAdminGeneratedFileJobRemote(
+  jobId: number
+): Promise<EducationJournalGeneratedFileJobResponse> {
+  const raw = await unwrapApiBody<GeneratedFileJobResponse & {
+    jobId?: number
+    generatedFileEndpoint?: string
+    availableActions?: string[]
+  }>(
+    await customInstance({
+      url: `/api/admin/generated-files/jobs/${encodeURIComponent(jobId)}`,
+      method: 'GET',
+    })
+  )
+  return {
+    ...raw,
+    jobId: raw.jobId ?? raw.id,
+    generatedFileEndpoint: raw.generatedFileEndpoint,
+    availableActions: raw.availableActions,
+  }
 }
 
 /** downloadEndpoint가 상대 경로일 때 Bearer로 blob 수신 */

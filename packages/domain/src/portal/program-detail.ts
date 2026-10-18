@@ -150,6 +150,8 @@ export type PortalProgramDetail = {
   programUuid?: string
   programCode?: string
   programType?: string
+  /** 교육받은 교사 교육일지 탭 노출 정책. 계약 미전달 시 미설정으로 둔다. */
+  educationJournalEnabled?: boolean | null
   portalCategories?: string[]
   title?: string
   titleEn?: string

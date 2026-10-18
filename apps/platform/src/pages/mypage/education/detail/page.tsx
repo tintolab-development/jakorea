@@ -19,6 +19,7 @@ import {
   EducationDetailHeaderLayout,
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
+  EducationJournalPanel,
   EducationSettlementPanel,
   EducationStudentsPanel,
   EducationSurveyEmptyPanel,
@@ -97,6 +98,7 @@ function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
+    value === 'educationJournal' ||
     value === 'students' ||
     value === 'survey' ||
     value === 'satisfaction' ||
@@ -233,6 +235,10 @@ export function MypageEducationDetailPage() {
             scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
+            educationJournalEnabled:
+              isTeacher &&
+              program.programType === 'TRAINED_TEACHER' &&
+              program.educationJournalEnabled === true,
             ...(isTeacher
               ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
               : {}),
@@ -638,6 +644,17 @@ export function MypageEducationDetailPage() {
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
+        />
+      )
+    }
+    if (active === 'educationJournal') {
+      if (!isTeacher || !isOrganizationEducationApplication(application, program)) {
+        return null
+      }
+      return (
+        <EducationJournalPanel
+          programId={program.id}
+          organizationApplicationId={application.id}
         />
       )
     }

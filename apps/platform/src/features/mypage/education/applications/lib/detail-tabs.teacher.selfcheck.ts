@@ -42,6 +42,15 @@ assert.deepEqual(
   ['notice', 'schedule', 'students', 'survey', 'satisfaction'],
 )
 
+const teacherWithJournal = buildTeacherInProgressDetailTabItems({
+  ...options,
+  educationJournalEnabled: true,
+})
+assert.deepEqual(
+  teacherWithJournal.map(item => item.key),
+  ['notice', 'schedule', 'educationJournal', 'students', 'survey', 'satisfaction'],
+)
+
 const teacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems(options)
 assert.deepEqual(
   teacherWithdrawn.map(item => item.key),

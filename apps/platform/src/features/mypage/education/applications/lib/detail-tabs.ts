@@ -4,6 +4,7 @@ import type { ProgramDetailCase } from '@/features/program'
 export type EducationActivitySection =
   | 'notice'
   | 'schedule'
+  | 'educationJournal'
   | 'students'
   | 'survey'
   | 'satisfaction'
@@ -64,6 +65,8 @@ type ActivityTabOptions = {
    * `GET .../student-documents/policy`의 `studentDocumentsSupported === false`이면 false.
    */
   teacherStudentDocumentTabsVisible?: boolean
+  /** 서버가 명시적으로 ON인 교육받은 교사 교육일지 탭만 노출한다. */
+  educationJournalEnabled?: boolean
 }
 
 function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
@@ -87,6 +90,15 @@ function appendTeacherStudentDocumentTabs(
 ): void {
   if (!isTeacherStudentDocumentTabsVisible(options)) return
   items.push({ key: 'students', label: '학생 명단' })
+}
+
+function appendTeacherEducationJournalTab(
+  items: EducationDetailTabItem[],
+  options: ActivityTabOptions,
+): void {
+  if (options.educationJournalEnabled === true) {
+    items.push({ key: 'educationJournal', label: '교육일지' })
+  }
 }
 
 function appendSurveySatisfactionTabs(
@@ -128,6 +140,7 @@ export function buildTeacherInProgressDetailTabItems(
     { key: 'notice', label: '안내사항' },
     { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
   ]
+  appendTeacherEducationJournalTab(items, options)
   appendTeacherStudentDocumentTabs(items, options)
   appendSurveySatisfactionTabs(items, options)
   return items

@@ -1203,6 +1203,7 @@ export function mapPortalProgramDetail(
     educationVenueLabel,
     detailCase,
     programType,
+    educationJournalEnabled: remote.educationJournalEnabled,
     registrationKind: isTrainedTeacher ? 'trainedTeachers' : undefined,
     programAudience:
       remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',

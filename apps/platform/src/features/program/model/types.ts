@@ -16,6 +16,8 @@ export type ProgramListItem = {
   id: string
   /** 원장 프로그램 유형 — 목록 유형 필터용 */
   programType?: string
+  /** 교육받은 교사 교육일지 탭 노출 정책. 서버가 명시한 true일 때만 노출한다. */
+  educationJournalEnabled?: boolean | null
   /**
    * 신청 양식 등 단일 분기에 쓰는 대표 탭.
    * 배지는 `categories` 전체를 그린다.

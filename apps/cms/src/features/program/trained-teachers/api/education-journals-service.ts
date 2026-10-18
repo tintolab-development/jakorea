@@ -8,11 +8,14 @@ import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapEducationJournalResponseToEntry } from './education-journals-adapters'
 import {
   bulkDownloadTrainedTeacherEducationJournalsRemote,
+  createTrainedTeacherEducationJournalBulkDownloadJobRemote,
   createTrainedTeacherEducationJournalRemote,
+  fetchAdminGeneratedFileJobRemote,
   fetchTrainedTeacherEducationJournalDownloadRemote,
   fetchTrainedTeacherEducationJournalFileBlob,
   fetchTrainedTeacherEducationJournalsRemote,
 } from './education-journals-client'
+import type { EducationJournalGeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalGeneratedFileJobResponse'
 import { listTrainedTeacherOrganizationApplications } from './organization-applications-service'
 import { mapPreferredScheduleBlocksToSessions } from './organization-applications-adapters'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
@@ -111,6 +114,44 @@ export async function bulkDownloadTrainedTeacherEducationJournals(
   for (const entry of entries) {
     await downloadTrainedTeacherEducationJournal(programId, entry)
   }
+}
+
+export async function createTrainedTeacherEducationJournalZipJob(
+  programId: string,
+  organizationApplicationId: string,
+  entries: TrainedTeachersEducationJournalEntry[]
+): Promise<EducationJournalGeneratedFileJobResponse> {
+  assertRemoteReady()
+  const journalIds = entries
+    .map(entry => Number.parseInt(entry.id, 10))
+    .filter(id => Number.isSafeInteger(id) && id > 0)
+  if (journalIds.length === 0) {
+    throw new Error('다운로드할 교육일지가 없습니다.')
+  }
+  return createTrainedTeacherEducationJournalBulkDownloadJobRemote(programId, {
+    organizationApplicationId: Number.parseInt(organizationApplicationId, 10) || undefined,
+    journalIds,
+  })
+}
+
+export async function getTrainedTeacherEducationJournalZipJob(
+  jobId: number
+): Promise<EducationJournalGeneratedFileJobResponse> {
+  assertRemoteReady()
+  return fetchAdminGeneratedFileJobRemote(jobId)
+}
+
+export async function downloadTrainedTeacherEducationJournalZipJob(
+  job: EducationJournalGeneratedFileJobResponse,
+  organizationApplicationId: string
+): Promise<void> {
+  assertRemoteReady()
+  const fileName = `교육일지_일괄_${organizationApplicationId}.zip`
+  if (job.fileObjectId != null && job.fileObjectId > 0) {
+    await downloadAdminFile({ fileObjectId: job.fileObjectId, fileName })
+    return
+  }
+  await downloadFromEndpoint(fileName, job.generatedFileEndpoint)
 }
 
 /** 승인된 기관 신청 → 진행 현황 참여 기관 목록 */

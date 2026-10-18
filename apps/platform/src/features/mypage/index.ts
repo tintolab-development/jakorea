@@ -107,6 +107,7 @@ export {
   EducationDetailHeader,
   EducationDetailHeaderLayout,
   EducationStudentsPanel,
+  EducationJournalPanel,
   TeacherEducationAssignmentAside,
   hasTeacherAssignmentAsideContent,
   EducationInProgressNoticePanel,
