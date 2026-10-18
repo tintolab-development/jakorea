@@ -111,6 +111,7 @@ import {
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
   resolveApplyPreferredScheduleMaxBlocks,
+  resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyPreferredScheduleSessionSelect,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
@@ -589,11 +590,15 @@ export function ProgramApplyPage() {
     }),
     [applicationScheduleVisibility, educationScheduleLinesForApply, program]
   )
+  const trainedTeachersScheduleParagraphForcedHidden =
+    trainedTeachersScheduleVisibility.educationStructure === 'schedule' &&
+    trainedTeachersScheduleVisibility.sessionRound === 'multi'
   const showTrainedTeachersPreferredSchedule =
     showTrainedTeachersApply &&
     program != null &&
     (trainedTeachersScheduleInputMode === 'fixed_schedule_options'
-      ? (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 0
+      ? !trainedTeachersScheduleParagraphForcedHidden &&
+        (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 0
       : shouldShowApplyPreferredSchedule(trainedTeachersScheduleVisibility))
   const showPreferredScheduleInput =
     showTrainedTeachersPreferredSchedule ||
@@ -629,8 +634,18 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
+    if (trainedTeachersScheduleInputMode === 'fixed_schedule_options') {
+      return resolveApplyPreferredScheduleMaxBlocksFromFixedOptions(
+        trainedTeachersRuntimeFixedScheduleChoices
+      )
+    }
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
-  }, [program, applicationFormRuntimeContext])
+  }, [
+    applicationFormRuntimeContext,
+    program,
+    trainedTeachersRuntimeFixedScheduleChoices,
+    trainedTeachersScheduleInputMode,
+  ])
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
@@ -1740,10 +1755,12 @@ export function ProgramApplyPage() {
         applyCase === 'trained-teachers' &&
         program?.programType?.trim().toUpperCase() === 'TRAINED_TEACHER' &&
         bundle.option.applicationType.trim().toUpperCase() === 'ORGANIZATION' &&
-        applicationScheduleVisibility.educationStructure === 'curriculum' &&
-        applicationScheduleVisibility.sessionRound === 'single' &&
         applicationScheduleVisibility.educationScheduleMode === 'date' &&
-        trainedTeachersScheduleInputMode === 'fixed_schedule_options'
+        trainedTeachersScheduleInputMode === 'fixed_schedule_options' &&
+        !(
+          applicationScheduleVisibility.educationStructure === 'schedule' &&
+          applicationScheduleVisibility.sessionRound === 'multi'
+        )
 
       if (
         isTrainedTeachersFixedScheduleTarget &&

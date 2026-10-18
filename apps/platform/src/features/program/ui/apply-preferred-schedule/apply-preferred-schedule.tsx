@@ -79,6 +79,7 @@ type PreferenceScheduleFieldsProps = {
   sessionOptions: PFSelectOption[]
   dateOnlyPreferred: boolean
   disabled: boolean
+  disabledOptionValues: ReadonlySet<string>
   fixedScheduleOptions: readonly {
     value: string
     label: string
@@ -101,6 +102,7 @@ function PreferenceScheduleFields({
   sessionOptions,
   dateOnlyPreferred,
   disabled,
+  disabledOptionValues,
   fixedScheduleOptions,
 }: PreferenceScheduleFieldsProps) {
   const startTime = normalizeHHmm(block.startTime)
@@ -117,7 +119,11 @@ function PreferenceScheduleFields({
           size="large"
           width={420}
           placeholder="희망 교육 일정을 선택하세요"
-          options={fixedScheduleOptions.map(option => ({ value: option.value, label: option.label }))}
+          options={fixedScheduleOptions.map(option => ({
+            value: option.value,
+            label: option.label,
+            disabled: disabledOptionValues.has(option.value),
+          }))}
           value={block.scheduleOptionId}
           disabled={disabled}
           onValueChange={next => {
@@ -338,6 +344,12 @@ export function ApplyPreferredSchedule({
                   sessionOptions={sessionOptions}
                   dateOnlyPreferred={dateOnlyPreferred}
                   disabled={disabled}
+                  disabledOptionValues={new Set(
+                    displayBlocks
+                      .filter((_, selectedIndex) => selectedIndex !== index)
+                      .map(selectedBlock => selectedBlock.scheduleOptionId?.trim())
+                      .filter((value): value is string => Boolean(value))
+                  )}
                   fixedScheduleOptions={fixedScheduleOptions}
                 />
               </DetailInfoForm>

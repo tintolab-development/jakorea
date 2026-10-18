@@ -438,12 +438,22 @@ export function resolveApplyPreferredScheduleMaxBlocks(
   const preferredUi = shouldShowApplicationPreferredScheduleParagraph(program)
   const recruitmentFallback = preferredUi ? 10 : undefined
   const fromProgramLimit =
-    program.maxPreferredScheduleCount != null && program.maxPreferredScheduleCount > 1
+    program.maxPreferredScheduleCount != null && program.maxPreferredScheduleCount >= 1
       ? program.maxPreferredScheduleCount
       : undefined
   return clampPreferredScheduleBlockCount(
     fromRuntime.maxScheduleCount ?? fromProgramLimit ?? recruitmentFallback
   )
+}
+
+/** 고정 일정형은 CMS 기간형 상한이 아니라 Runtime의 유효 선택지 수가 지망 상한이다. */
+export function resolveApplyPreferredScheduleMaxBlocksFromFixedOptions(
+  options: readonly Pick<RuntimeFixedScheduleChoiceItem, 'id'>[] | null | undefined
+): number {
+  const uniqueIds = new Set(
+    (options ?? []).map(option => option.id.trim()).filter(Boolean)
+  )
+  return clampPreferredScheduleBlockCount(uniqueIds.size > 0 ? uniqueIds.size : 1)
 }
 
 /** 모집 1일 최대 차시 — CMS `buildInstitutionSessionCountOptions`와 동일 상한 */

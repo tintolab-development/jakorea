@@ -21,6 +21,7 @@ import {
   remapInstitutionSchedulePreviewSlotIds,
   shouldUseInstitutionAllowedSchedulePeriodDates,
   resolveApplyPreferredScheduleMaxBlocks,
+  resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   hasMissingRequiredBottomConsent,
   hasPreferredScheduleDateOutsideRuntime,
   isRuntimeScheduleNotConfigured,
@@ -132,7 +133,7 @@ function testScheduleParagraphVisibility() {
       educationScheduleLines: [],
       maxPreferredScheduleCount: 1,
     }),
-    10
+    1
   )
   assert.equal(
     resolveApplyPreferredScheduleMaxBlocks(
@@ -146,6 +147,25 @@ function testScheduleParagraphVisibility() {
       { maxScheduleCount: 4 }
     ),
     4
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocksFromFixedOptions([{ id: 'schedule:187125' }]),
+    1
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocksFromFixedOptions([
+      { id: 'schedule:187125' },
+      { id: 'schedule:187126' },
+    ]),
+    2
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocksFromFixedOptions([
+      { id: 'schedule:187125' },
+      { id: 'schedule:187125' },
+      { id: 'schedule:187126' },
+    ]),
+    2
   )
 
   assert.equal(
