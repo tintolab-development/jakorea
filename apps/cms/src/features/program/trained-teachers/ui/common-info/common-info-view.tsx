@@ -2127,6 +2127,7 @@ export function TrainedTeachersCommonInfoView({
             lifecycleStatus={program.lifecycleStatus ?? undefined}
             forceCompanySchoolLayout
             hideIpsTypeField
+            auditDateOnly
             hideFormTitles
             fixedParticipantTypeLabel="학교/기관"
             enableTitleEnEdit
@@ -2144,6 +2145,7 @@ export function TrainedTeachersCommonInfoView({
           lifecycleStatus={program.lifecycleStatus ?? undefined}
           forceCompanySchoolLayout
           hideIpsTypeField
+          auditDateOnly
           fixedParticipantTypeLabel="학교/기관"
           enableTitleEnEdit
           useDetailedProgramSelect
