@@ -73,6 +73,7 @@ import {
   isUjatVolunteerBasicInfoParagraphId,
   isUjatVolunteerFreeTextItemsParagraphId,
   isUjatVolunteerPreviousTermParagraphId,
+  shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
@@ -922,6 +923,7 @@ export function ProgramApplyPage() {
             value={basicInfo}
             onChange={setBasicInfo}
             schoolNameLocked={profileSchoolLocked}
+            teacherMobileEmailLocked={shouldLockTeacherMobileEmailOnBasicInfo(paragraph.id)}
             answerKeyPlaceholders
             showPreferredEducationForm={showPreferredEducationForm}
             showEducationPlace={shouldShowEducationPlaceOnBasicInfo(paragraph.id)}

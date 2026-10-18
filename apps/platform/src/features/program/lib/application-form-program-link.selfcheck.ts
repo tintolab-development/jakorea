@@ -206,12 +206,37 @@ const individualMultiSchedule = individualMultiPatched.paragraphs.find(
   p => p.id === 'program-participant-application-seed-schedule'
 )
 assert.ok(individualMultiSchedule && individualMultiSchedule.variant === 'multiple_choice')
-assert.equal(individualMultiSchedule.items.length, 4)
+assert.equal(individualMultiSchedule.items.length, 2)
 assert.equal(
   individualMultiSchedule.paragraphDescription,
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 )
-assert.equal(individualMultiSchedule.items[0]?.label, '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차')
+assert.equal(
+  individualMultiSchedule.items[0]?.label,
+  '26년 4월 20일(월) 9:30 ~ 12:20'
+)
+
+const individualMulti차시Title = applyProgramLinkedApplicationDraftPatches(
+  createProgramParticipantApplicationDraft(),
+  {
+    applyCase: 'individual-general',
+    program: {
+      ...individualMultiProgram,
+      sessions: [
+        { sessionLabel: '1회차', title: '2차시' },
+        { sessionLabel: '2회차', title: '4차시' },
+      ],
+    } as unknown as import('../model/types.ts').ProgramDetail,
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualMulti차시Paragraph = individualMulti차시Title.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.equal(
+  individualMulti차시Paragraph?.paragraphDescription,
+  '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+)
 
 const individualScheduleSingle = applyProgramLinkedApplicationDraftPatches(
   createProgramParticipantApplicationDraft(),

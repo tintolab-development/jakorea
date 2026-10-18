@@ -131,6 +131,15 @@ function institutionFixedScheduleOptionAliases(item: Record<string, unknown>): s
   return [...aliases]
 }
 
+function isLegacyEducationRoundMatrixToken(value: string): boolean {
+  return /^line:\d+:education-round:\d+$/i.test(value.trim())
+}
+
+function isServerScheduleOptionToken(value: string): boolean {
+  const trimmed = value.trim()
+  return /^\d{4,}$/.test(trimmed) || /^schedule:\d+/i.test(trimmed)
+}
+
 export type ReadInstitutionFixedScheduleChoiceOptions = ApplicationScheduleVisibilityInput &
   CurriculumMultiDateFixedScheduleMetaInput & {
     educationScheduleLines?: readonly string[]
@@ -167,17 +176,21 @@ export function readInstitutionFixedScheduleChoiceItems(
     options ?? {}
   )
 
-  if (items.length === 0) {
-    return expandedFallback.length > 0 ? expandedFallback : null
-  }
-  if (expandedFallback.length > items.length) {
+  const hasOnlyLegacyMatrixItems =
+    items.length > 0 && items.every(item => isLegacyEducationRoundMatrixToken(item.id))
+  const hasServerScheduleItems = items.some(item => isServerScheduleOptionToken(item.id))
+
+  if (items.length === 0 && expandedFallback.length > 0) {
     return expandedFallback
   }
-  if (expandedFallback.length === items.length && expandedFallback.length > 0) {
-    return expandedFallback.map(fallback => ({
-      id: fallback.id,
-      label: fallback.label,
-    }))
+  if (hasOnlyLegacyMatrixItems && expandedFallback.length > 0) {
+    return expandedFallback
+  }
+  if (!hasServerScheduleItems && expandedFallback.length > 0) {
+    return expandedFallback
+  }
+  if (items.length === 0) {
+    return null
   }
   return items
 }

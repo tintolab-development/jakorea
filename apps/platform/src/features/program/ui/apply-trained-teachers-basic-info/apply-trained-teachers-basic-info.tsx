@@ -66,6 +66,8 @@ type ApplyTrainedTeachersBasicInfoProps = {
   onChange: (next: ApplyTrainedTeachersBasicInfoValues) => void
   /** 프로필 학교명 — 있으면 신청 기관명 잠금 */
   schoolNameLocked?: boolean
+  /** 일반 기관 신청 — M·E-mail 로그인 회원 정보 고정 */
+  teacherMobileEmailLocked?: boolean
   /** 프로그램 교육 형태가 참여자 선택일 때만 희망 교육 형태 노출 (CMS와 동일) */
   showPreferredEducationForm?: boolean
   /** 교육받은 교사·1사1교만. 일반 기관 신청 폼에는 없음 */
@@ -128,6 +130,7 @@ export function ApplyTrainedTeachersBasicInfo({
   value,
   onChange,
   schoolNameLocked = false,
+  teacherMobileEmailLocked = false,
   showPreferredEducationForm = false,
   showEducationPlace = true,
   maxClassCount = DEFAULT_MAX_CLASS_COUNT,
@@ -142,6 +145,9 @@ export function ApplyTrainedTeachersBasicInfo({
   const schoolDisplay = value.schoolName || profile?.schoolName || ''
   const regionDisplay = value.regionLabel || profile?.regionLabel || ''
   const teacherNameDisplay = value.teacherName || profile?.teacherName || ''
+  const teacherMobileDisplay =
+    value.teacherMobile || profile?.teacherMobile || ''
+  const teacherEmailDisplay = value.teacherEmail || profile?.teacherEmail || ''
 
   return (
     <PFFormFieldTable className={styles.root}>
@@ -319,8 +325,13 @@ export function ApplyTrainedTeachersBasicInfo({
                   width={240}
                   inputMode="tel"
                   autoComplete="tel"
-                  placeholder="담당 교사의 휴대폰 번호"
-                  value={formatKoreanPhoneNumber(value.teacherMobile)}
+                  placeholder={
+                    answerKeyPlaceholders && teacherMobileEmailLocked
+                      ? 'teacherMobile'
+                      : '담당 교사의 휴대폰 번호'
+                  }
+                  value={formatKoreanPhoneNumber(teacherMobileDisplay)}
+                  disabled={teacherMobileEmailLocked}
                   onValueChange={next =>
                     patch({ teacherMobile: formatKoreanPhoneNumber(next) })
                   }
@@ -337,8 +348,13 @@ export function ApplyTrainedTeachersBasicInfo({
                   variant="formPage"
                   size="large"
                   width={240}
-                  placeholder="담당 교사의 이메일"
-                  value={value.teacherEmail}
+                  placeholder={
+                    answerKeyPlaceholders && teacherMobileEmailLocked
+                      ? 'teacherEmail'
+                      : '담당 교사의 이메일'
+                  }
+                  value={teacherEmailDisplay}
+                  disabled={teacherMobileEmailLocked}
                   onValueChange={next => patch({ teacherEmail: next })}
                 />
               </PFFormControlCluster>

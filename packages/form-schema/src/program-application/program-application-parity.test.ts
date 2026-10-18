@@ -4,6 +4,7 @@ import {
   countUniqueEducationScheduleCalendarDays,
   expandEducationScheduleChoiceSlots,
   getInstitutionApplicationFormHiddenParagraphIds,
+  readCurriculumMultiDateFixedScheduleMeta,
   readInstitutionFixedScheduleChoiceItems,
   resolveFixedScheduleLinesToChoiceItems,
   shouldShowApplicationScheduleParagraph,
@@ -24,6 +25,47 @@ const runtimeOverridesStaleSeed = readInstitutionFixedScheduleChoiceItems(
   { items: [{ id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' }] }
 )
 assert.equal(runtimeOverridesStaleSeed?.length, 3)
+
+const serverScheduleOptionsWin = readInstitutionFixedScheduleChoiceItems(
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: '187131', value: '187131', label: '26년 11월 2일(월) 10:00 ~ 12:00', scheduleId: 187131 },
+      { id: '187132', value: '187132', label: '26년 11월 9일(월) 13:30 ~ 16:00', scheduleId: 187132 },
+    ],
+  },
+  { items: [] },
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 11월 2일(월) 10:00 ~ 12:00',
+      '26년 11월 9일(월) 13:30 ~ 16:00',
+    ],
+  }
+)
+assert.deepEqual(serverScheduleOptionsWin?.map(item => item.id), ['187131', '187132'])
+
+const legacyMatrixReplacedByLines = readInstitutionFixedScheduleChoiceItems(
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0:education-round:1', label: '26년 11월 2일(월) 10:00 ~ 12:00 | 1회차' },
+      { id: 'line:0:education-round:2', label: '26년 11월 2일(월) 10:00 ~ 12:00 | 2회차' },
+    ],
+  },
+  { items: [] },
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: ['26년 11월 2일(월) 10:00 ~ 12:00'],
+  }
+)
+assert.deepEqual(legacyMatrixReplacedByLines, [
+  { id: 'line:0', label: '26년 11월 2일(월) 10:00 ~ 12:00' },
+])
 
 const hiddenGuidance = getInstitutionApplicationFormHiddenParagraphIds({
   educationScheduleMode: 'date',
@@ -183,14 +225,14 @@ const multiSchedule = multiMatrixPatched.paragraphs.find(
   p => p.id === 'program-application-institution-seed-schedule'
 )
 assert.ok(multiSchedule && multiSchedule.variant === 'multiple_choice')
-assert.equal((multiSchedule as MultipleChoiceParagraph).items.length, 4)
+assert.equal((multiSchedule as MultipleChoiceParagraph).items.length, 2)
 assert.equal(
   multiSchedule.paragraphDescription,
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 )
 assert.equal(
   (multiSchedule as MultipleChoiceParagraph).items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차'
+  '26년 4월 20일(월) 9:30 ~ 12:20'
 )
 
 const scheduleSingleDateLines = [
@@ -366,10 +408,20 @@ const individualMultiParagraph = individualMultiPatched.paragraphs.find(
   p => p.id === 'program-participant-application-seed-schedule'
 )
 assert.ok(individualMultiParagraph && individualMultiParagraph.variant === 'multiple_choice')
-assert.equal((individualMultiParagraph as MultipleChoiceParagraph).items.length, 4)
+assert.equal((individualMultiParagraph as MultipleChoiceParagraph).items.length, 2)
 assert.equal(
   individualMultiParagraph.paragraphDescription,
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+)
+
+assert.equal(
+  readCurriculumMultiDateFixedScheduleMeta({
+    curriculumSessions: [
+      { sessionLabel: '1회차', title: '2차시' },
+      { sessionLabel: '2회차', title: '4차시' },
+    ],
+  }).sessionsPerRound,
+  2
 )
 
 console.log('program-application-parity.test: ok')
