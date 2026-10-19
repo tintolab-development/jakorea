@@ -166,8 +166,8 @@ export class CompanySchoolRegistrationPage {
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', 'Inspire')
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
-    await fillAllByPlaceholder(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
-    await fillAllByPlaceholder(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
+    await fillAllByPlaceholder(this.page, '단원명을 입력해 주세요', CURRICULUM_UNIT)
+    await fillAllByPlaceholder(this.page, '교육 내용을 작성해 주세요', CURRICULUM_CONTENT)
 
     await clickSectionNavIfVisible(this.page, '교육 진행 일정 설정')
     await fillParagraphDateByPlaceholder(

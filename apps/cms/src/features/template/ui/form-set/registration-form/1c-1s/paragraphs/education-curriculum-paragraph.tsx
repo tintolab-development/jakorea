@@ -27,7 +27,7 @@ function CurriculumSessionRow({ sessionIndex }: { sessionIndex: number }) {
         edit={
           <CmsInput
             inputSize="medium"
-            placeholder="단원명을 입력하세요"
+            placeholder="단원명을 입력해 주세요"
             width="100%"
             value={title}
             onChange={e => setTitle(e.target.value)}
@@ -41,7 +41,7 @@ function CurriculumSessionRow({ sessionIndex }: { sessionIndex: number }) {
         edit={
           <CmsInput
             inputSize="medium"
-            placeholder="교육 내용을 작성하세요"
+            placeholder="교육 내용을 작성해 주세요"
             width="100%"
             value={description}
             onChange={e => setDescription(e.target.value)}
