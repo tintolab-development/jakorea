@@ -595,7 +595,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     view={selectedSender?.label}
                     edit={
                       <CmsSelect
-                        inputSize="large"
+                        inputSize="small"
                         withAllOption={false}
                         value={senderProfileKey}
                         onChange={value =>

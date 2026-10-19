@@ -79,7 +79,7 @@ export const ComposeFields = memo(function ComposeFields({
               >
                 <CmsInput
                   ref={subjectInputRef}
-                  inputSize="large"
+                  inputSize="small"
                   width="100%"
                   allowClear={false}
                   maxLength={subjectMaxLength}

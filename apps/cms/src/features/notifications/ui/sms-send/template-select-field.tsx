@@ -67,7 +67,7 @@ export function TemplateSelectField({
         }}
       >
         <CmsSelect
-          inputSize="large"
+          inputSize="small"
           withAllOption={false}
           placeholder="사용할 템플릿을 선택하세요"
           value={value}

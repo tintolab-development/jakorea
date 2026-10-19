@@ -73,7 +73,7 @@ export function ProgramSelectField({
         }}
       >
         <CmsSelect
-          inputSize="large"
+          inputSize="small"
           withAllOption={false}
           placeholder="미선택"
           value={selectValue}

@@ -73,6 +73,7 @@ export function SendScheduleField({
         className={['notification-send-schedule-field', className].filter(Boolean).join(' ')}
       >
         <CmsRadio.Group
+          size="medium"
           value={sendTiming}
           onChange={event => {
             const next = event.target.value
@@ -101,7 +102,7 @@ export function SendScheduleField({
           }}
         >
           <CmsInput
-            inputSize="large"
+            inputSize="small"
             width="100%"
             allowClear={false}
             readOnly

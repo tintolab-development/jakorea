@@ -454,7 +454,7 @@ export function SendFullpageModal({
                         view={form.messageType}
                         edit={
                           <CmsInput
-                            inputSize="large"
+                            inputSize="small"
                             width="100%"
                             allowClear={false}
                             value={form.messageType}
@@ -470,7 +470,7 @@ export function SendFullpageModal({
                         view={form.senderPhone}
                         edit={
                           <CmsPhoneInput
-                            inputSize="large"
+                            inputSize="small"
                             width="100%"
                             allowClear={false}
                             placeholder="발신 번호를 입력하세요"
