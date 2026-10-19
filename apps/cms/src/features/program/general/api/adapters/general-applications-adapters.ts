@@ -37,6 +37,7 @@ import type {
 } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { mapParticipantSessionsToEducationSchedules } from '@/features/program/general/lib/map-participant-sessions-to-education-schedules'
+import { isOrganizationPreferredDateOnlyRange } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import { readGeneralVolunteerProjection } from '@/features/program/general/lib/general-volunteer-application-projection'
@@ -1014,17 +1015,19 @@ export function mapPreferredEducationSchedulesToSessions(
     const end = schedule.endAt ? new Date(schedule.endAt) : null
     const validStart = start != null && !Number.isNaN(start.getTime())
     const validEnd = end != null && !Number.isNaN(end.getTime())
+    const dateOnly = isOrganizationPreferredDateOnlyRange(schedule.startAt, schedule.endAt)
     const dateParts = validStart
       ? formatPreferredScheduleDate(start)
       : { date: '-', dayOfWeek: '-' }
-    const timeRange =
-      validStart && validEnd
+    const timeRange = dateOnly
+      ? '-'
+      : validStart && validEnd
         ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
-        : scheduleLabel || '-'
-    const duration =
-      validStart && validEnd && end.getTime() > start.getTime()
-        ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
         : '-'
+    const duration =
+      dateOnly || !(validStart && validEnd && end.getTime() > start.getTime())
+        ? '-'
+        : `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
     const scheduleId = schedule.scheduleId
     const hasResolvedSchedule =
       scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0

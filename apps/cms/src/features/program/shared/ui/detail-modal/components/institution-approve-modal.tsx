@@ -9,13 +9,9 @@ import {
 } from '@/shared/components/permission-modal'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import {
-  ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
-  ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE,
-  getUnresolvedPreferredScheduleMessage,
+  buildOrganizationApplicationApproveSchedulePayload,
   organizationApproveScheduleOptionLabel,
-  organizationApproveUnconfirmableScheduleNotice,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
-  resolveOrganizationApproveSelectedScheduleId,
   UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
 } from '@/features/program/general/lib/organization-application-approve-slots'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
@@ -68,15 +64,19 @@ export function InstitutionApproveModal({
     staleTime: 30_000,
     retry: false,
   })
+  const educationSlots = programSchedulesQuery.isSuccess
+    ? (programSchedulesQuery.data ?? [])
+    : undefined
   const scheduleValidation = useMemo(
     () =>
       resolveOrganizationApproveScheduleOptionsFromPreferred(
         scheduleConfig?.preferredEducationSchedules,
-        programSchedulesQuery.data ?? []
+        educationSlots
       ),
-    [scheduleConfig?.preferredEducationSchedules, programSchedulesQuery.data]
+    [educationSlots, scheduleConfig?.preferredEducationSchedules]
   )
   const scheduleOptions = scheduleValidation.options
+  const assignableOptions = scheduleValidation.assignableOptions
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -86,24 +86,8 @@ export function InstitutionApproveModal({
 
   const usesScheduleSection = scheduleConfig != null
   const hasPreferredSchedules = scheduleOptions.length > 0 && !scheduleValidation.invalidReason
-  const hasUnconfirmableOnly =
-    hasPreferredSchedules && scheduleOptions.every(option => option.confirmableScheduleId == null)
-  const hasLoadedEmptyEducationSlots =
-    programSchedulesQuery.data != null && programSchedulesQuery.data.length === 0
-  const hasProgramScheduleMismatch =
-    hasPreferredSchedules &&
-    scheduleOptions.some(
-      option =>
-        option.scheduleId > 0 &&
-        option.confirmableScheduleId == null &&
-        option.unresolvedReason == null &&
-        programSchedulesQuery.data != null &&
-        programSchedulesQuery.data.length > 0
-    )
-  const unconfirmableNotice = useMemo(
-    () => organizationApproveUnconfirmableScheduleNotice(scheduleOptions),
-    [scheduleOptions]
-  )
+  const slotsLoading = usesScheduleSection && programSchedulesQuery.isLoading
+  const slotsFailed = usesScheduleSection && programSchedulesQuery.isError
 
   useEffect(() => {
     if (!open || !scheduleValidation.invalidReason || !import.meta.env.DEV) return
@@ -124,92 +108,103 @@ export function InstitutionApproveModal({
   ])
 
   const selectedScheduleLabel = useMemo(
-    () => organizationApproveScheduleOptionLabel(scheduleOptions, selectedOptionId),
-    [scheduleOptions, selectedOptionId]
+    () => organizationApproveScheduleOptionLabel(assignableOptions, selectedOptionId),
+    [assignableOptions, selectedOptionId]
   )
 
-  const toggleSchedule = (optionId: number, confirmable: boolean) => {
-    if (!confirmable) return
+  const toggleSchedule = (optionId: number) => {
     setSelectedOptionId(prev => (prev === optionId ? null : optionId))
   }
 
   const handleConfirm = (payload: PermissionModalPayload) => {
-    if (!usesScheduleSection) {
+    if (!usesScheduleSection || selectedOptionId == null) {
       onConfirm(payload)
       return
     }
-    if (selectedOptionId == null) {
-      onConfirm(payload)
-      return
-    }
-    const selectedScheduleId = resolveOrganizationApproveSelectedScheduleId(
-      scheduleConfig?.preferredEducationSchedules,
-      selectedOptionId
-    )
-    if (selectedScheduleId == null) {
+    const schedulePayload = buildOrganizationApplicationApproveSchedulePayload({
+      preferred: scheduleConfig?.preferredEducationSchedules,
+      educationSlots,
+      selectedSlotId: selectedOptionId,
+    })
+    if (schedulePayload.selectedScheduleId == null) {
       showAlert({
         title: '승인 불가',
-        content: ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
+        content:
+          '선택한 일정이 현재 프로그램 공통 교육 슬롯이 아니어서 배정할 수 없습니다. 선택 없이 승인하거나 연결된 슬롯을 다시 선택해 주세요.',
       })
       return
     }
-    onConfirm({ ...payload, selectedScheduleId })
+    onConfirm({ ...payload, selectedScheduleId: schedulePayload.selectedScheduleId })
   }
 
   const scheduleSection = usesScheduleSection ? (
     <div className="institution-approve-modal__schedule-section">
-      <span className="institution-approve-modal__schedule-label">교육 일정 선택</span>
       {!hasPreferredSchedules ? (
         <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
           {scheduleValidation.invalidReason ?? UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE}
         </p>
       ) : (
         <>
-          <div className="institution-approve-modal__schedule-chips">
-            {scheduleOptions.map(option => {
-              const selected = selectedOptionId === option.scheduleId
-              const confirmable = option.confirmableScheduleId != null
-              return (
-                <ParagraphChip
-                  key={option.scheduleId}
-                  selected={selected}
-                  disabled={!confirmable}
-                  className="institution-approve-modal__schedule-chip"
-                  onClick={() => toggleSchedule(option.scheduleId, confirmable)}
-                >
-                  {option.label}
-                </ParagraphChip>
-              )
-            })}
-          </div>
-          <div className="institution-approve-modal__assigned">
-            <span className="institution-approve-modal__schedule-label">선택한 일정</span>
-            {selectedScheduleLabel ? (
-              <p className="institution-approve-modal__notice">{selectedScheduleLabel}</p>
-            ) : (
-              <p className="institution-approve-modal__notice">
-                선택하지 않으면 승인만 진행하고, 교육 일정은 승인 후 별도 배정합니다.
-              </p>
-            )}
-          </div>
-          {hasUnconfirmableOnly ? (
-            <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
-              {unconfirmableNotice ??
-                (scheduleValidation.unresolvedReason
-                  ? getUnresolvedPreferredScheduleMessage(scheduleValidation.unresolvedReason)
-                  : hasLoadedEmptyEducationSlots
-                    ? '공통 교육 일정 정보를 불러올 수 없습니다. 백엔드 배포 또는 데이터 migration 상태를 확인해 주세요.'
-                    : '희망 일정에 운영 일정 ID가 없어 여기서 확정할 수 없습니다. 승인만 진행하거나 신청 상세의 scheduleId 반영 후 다시 시도해 주세요.')}
+          <span className="institution-approve-modal__schedule-label">신청 희망 일정</span>
+          <ul className="institution-approve-modal__preferred-list">
+            {scheduleOptions.map(option => (
+              <li key={option.optionKey ?? option.scheduleId} className="institution-approve-modal__preferred-item">
+                <span>{option.label}</span>
+                {option.assignmentNote ? (
+                  <span className="institution-approve-modal__preferred-note">
+                    {' '}
+                    · {option.assignmentNote}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {slotsLoading ? (
+            <p className="institution-approve-modal__notice">공통 교육 일정을 확인하는 중입니다.</p>
+          ) : null}
+          {slotsFailed ? (
+            <p className="institution-approve-modal__notice">
+              공통 교육 일정을 불러오지 못했습니다. 승인만 진행할 수 있습니다.
             </p>
           ) : null}
-          {hasProgramScheduleMismatch ? (
-            <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
-              {ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE}
+          {assignableOptions.length > 0 ? (
+            <>
+              <span className="institution-approve-modal__schedule-label">배정할 교육 일정</span>
+              <div className="institution-approve-modal__schedule-chips">
+                {assignableOptions.map(option => {
+                  const selected = selectedOptionId === option.scheduleId
+                  return (
+                    <ParagraphChip
+                      key={option.optionKey ?? option.scheduleId}
+                      selected={selected}
+                      className="institution-approve-modal__schedule-chip"
+                      onClick={() => toggleSchedule(option.scheduleId)}
+                    >
+                      {option.label}
+                    </ParagraphChip>
+                  )
+                })}
+              </div>
+              <div className="institution-approve-modal__assigned">
+                <span className="institution-approve-modal__schedule-label">선택한 일정</span>
+                {selectedScheduleLabel ? (
+                  <p className="institution-approve-modal__notice">{selectedScheduleLabel}</p>
+                ) : (
+                  <p className="institution-approve-modal__notice">
+                    선택하지 않으면 승인만 진행하고, 교육 일정은 승인 후 별도 배정합니다.
+                  </p>
+                )}
+              </div>
+            </>
+          ) : scheduleValidation.slotsResolved ? (
+            <p className="institution-approve-modal__notice">
+              선택 가능한 공통 교육 일정이 없습니다. 승인만 진행하고, 교육 일정은 승인 후 별도
+              배정합니다.
             </p>
           ) : null}
           <p className="institution-approve-modal__notice">
-            신청자가 선택한 희망 교육 일정 중 진행할 일정을 선택합니다. 신청 학급 수와 교육 일정 수는
-            별도로 관리됩니다. 학년·반 운영 배정은 승인 후 별도 진행됩니다.
+            신청 희망 일정은 신청 기록으로 표시합니다. 배정은 프로그램 공통 교육 슬롯과 명시적으로
+            연결된 일정만 가능합니다. 신청 학급 수와 교육 일정 수는 별도로 관리됩니다.
           </p>
         </>
       )}
@@ -224,7 +219,7 @@ export function InstitutionApproveModal({
       title={usesScheduleSection ? '프로그램 신청 승인 안내' : '기관 승인 안내'}
       confirmLabel="승인"
       confirmLoading={confirmLoading}
-      confirmDisabled={false}
+      confirmDisabled={slotsLoading}
       onCancel={onCancel}
       onConfirm={handleConfirm}
       zIndex={zIndex}

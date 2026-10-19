@@ -24,6 +24,7 @@ import {
   mapMaterialAssignmentStatusToTextbookStatus,
   mapTextbookDeliveryStatusToBadge,
   mapTextbookStatusKeyToDeliveryStatus,
+  mapPreferredEducationSchedulesToSessions,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationListSessionsToConfirmedSessions,
   mapOrganizationApplicationToApplicantSchoolRow,
@@ -472,6 +473,19 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.scheduleUnresolved).toBeUndefined()
     expect(row.sessions?.[0]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
     expect(row.sessions?.[0]?.timeRange).toContain('~')
+  })
+
+  it('does not render 00:00 for a date-only preferred schedule', () => {
+    const sessions = mapPreferredEducationSchedulesToSessions([
+      {
+        label: '26년 11월 2일(월)',
+        startAt: '2026-11-02T00:00:00+09:00',
+        endAt: '2026-11-02T00:00:00+09:00',
+      },
+    ])
+    expect(sessions[0]?.timeRange).toBe('-')
+    expect(sessions[0]?.duration).toBe('-')
+    expect(sessions[0]?.scheduleLabel).toBe('26년 11월 2일(월)')
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {

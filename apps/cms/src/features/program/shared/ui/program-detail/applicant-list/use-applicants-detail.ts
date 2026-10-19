@@ -110,7 +110,10 @@ import type {
   OrganizationApplicationApprovePayload,
   OrganizationDecisionNotifyRequest,
 } from '@/features/program/general/api/applications-api-client'
-import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
+import {
+  formatOrganizationApplicationApproveErrorMessage,
+  organizationApprovalRefreshTargets,
+} from '@/features/program/general/lib/organization-application-approve-slots'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 import {
@@ -397,19 +400,22 @@ export function useApplicantsDetail({
             await queryClient.invalidateQueries({
               queryKey: generalProgramProgressQueryKeys.all,
             })
-            for (const id of ids) {
+            const refresh = programId
+              ? organizationApprovalRefreshTargets(programId, ids)
+              : null
+            for (let index = 0; index < ids.length; index += 1) {
               await queryClient.invalidateQueries({
-                queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+                queryKey:
+                  refresh?.organizationDetails[index] ??
+                  generalApplicationsQueryKeys.organizationDetail(ids[index] ?? ''),
               })
             }
-          }
-          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
-            await queryClient.invalidateQueries({
-              queryKey: [
-                ...generalProgramProgressQueryKeys.all,
-                'organization-schedule-assignments',
-              ],
-            })
+            if (refresh) {
+              for (const queryKey of refresh.organizationScheduleAssignments) {
+                await queryClient.invalidateQueries({ queryKey })
+              }
+              await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
+            }
           }
         }
         return 'ok'

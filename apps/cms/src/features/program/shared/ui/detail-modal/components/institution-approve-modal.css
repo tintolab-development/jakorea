@@ -11,6 +11,25 @@
   color: var(--cms-color-text-primary, #1a1a1a);
 }
 
+.institution-approve-modal__preferred-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.institution-approve-modal__preferred-item {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--cms-color-text-primary, #1a1a1a);
+}
+
+.institution-approve-modal__preferred-note {
+  color: var(--cms-color-text-secondary, #666);
+}
+
 .institution-approve-modal__schedule-chips {
   display: flex;
   flex-wrap: wrap;

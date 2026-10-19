@@ -1,7 +1,20 @@
 import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { parseOrganizationPreferredScheduleId } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import {
+  formatOrganizationPreferredScheduleLabel,
+  formatOrganizationScheduleRangeLabel,
+} from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { isProgramScheduleCandidateForNewEducationAssignment } from '@/features/program/shared/lib/program-schedule-canonical'
+import {
+  PROGRAM_SCHEDULE_ORIGIN_APPLICATION_MATERIALIZED,
+  PROGRAM_SCHEDULE_ORIGIN_PROGRAM_DEFINED,
+  PROGRAM_SCHEDULE_ORIGIN_UNKNOWN,
+  readProgramScheduleOrigin,
+} from '@/features/program/shared/lib/program-schedule-origin'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import {
   extractApiErrorMessage,
@@ -11,20 +24,53 @@ import {
 
 export type OrganizationApplicationApproveSlot = SlotRequest
 
+export type OrganizationApproveScheduleAssignmentBlock =
+  | 'UNMAPPED'
+  | 'AMBIGUOUS'
+  | 'NO_PROGRAM_MATCH'
+  | 'NOT_IN_PROGRAM_SLOTS'
+
 export type OrganizationApproveScheduleOption = {
-  /** UI 선택 키. 양수 = `education-slots.scheduleId`, 음수 = unresolved placeholder */
+  /** 희망 일정 행 키. 양수여도 배정 id가 아닐 수 있다. */
   scheduleId: number
+  /** 같은 희망 일정을 구분하는 안정 키 */
+  optionKey?: string
   label: string
-  /** 승인 `selectedScheduleId`로 보낼 수 있는 id. 없으면 칩 비활성 */
+  /** 승인 `selectedScheduleId`로 보낼 수 있는 education-slots id. 없으면 배정 불가 */
   confirmableScheduleId: number | null
   unresolvedReason?: PreferredEducationSchedule['unresolvedReason']
+  /** 신청 원본 희망 일정 */
+  preferredRecord?: boolean
+  /** education-slots에 명시 매핑된 배정 후보 */
+  assignable?: boolean
+  sessionNo?: number | null
+  round?: number | null
+  assignmentNote?: string | null
 }
 
 export type OrganizationApproveScheduleValidation = {
+  /** 신청 희망 일정 원본 */
   options: OrganizationApproveScheduleOption[]
+  /** 명시 매핑된 공통 교육 슬롯만 */
+  assignableOptions: OrganizationApproveScheduleOption[]
   invalidReason: string | null
   unresolvedReason: string | null
   duplicateScheduleIds: number[]
+  /** education-slots 응답을 받은 뒤인지. 로딩 중에는 불일치로 단정하지 않는다. */
+  slotsResolved: boolean
+}
+
+export type OrganizationApplicationApproveSchedulePayload = {
+  selectedScheduleId?: number
+}
+
+const EMPTY_SCHEDULE_VALIDATION: OrganizationApproveScheduleValidation = {
+  options: [],
+  assignableOptions: [],
+  invalidReason: null,
+  unresolvedReason: null,
+  duplicateScheduleIds: [],
+  slotsResolved: false,
 }
 
 const UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE =
@@ -32,9 +78,6 @@ const UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE =
 
 export const ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE =
   '선택한 희망 교육 일정에 운영 일정 ID(scheduleId)가 없어 승인할 수 없습니다. 신청 상세 API에서 preferredEducationSchedules.scheduleId를 반영해 주세요.'
-
-export const ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE =
-  '희망 교육 일정 ID가 현재 프로그램 공통 교육 일정과 일치하지 않습니다. 신청 상세·education-slots API를 확인한 뒤 다시 선택해 주세요.'
 
 export const ORGANIZATION_APPROVE_UNRESOLVED_REASON_MESSAGES: Record<
   Exclude<PreferredEducationSchedule['unresolvedReason'], null | undefined>,
@@ -53,7 +96,7 @@ export function getUnresolvedPreferredScheduleMessage(reason: string | null | un
     case 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH':
       return '희망 교육 일정과 일치하는 운영 일정이 없어 자동 확정할 수 없습니다. 승인 후 별도 배정해 주세요.'
     default:
-      return ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE
+      return UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE
   }
 }
 
@@ -71,120 +114,173 @@ function firstUnresolvedPreferredScheduleReason(
 
 function parseIsoDateTime(value: unknown): number | null {
   if (typeof value !== 'string') return null
-  // Date.parse alone accepts non-ISO formats. The API contract requires a datetime string.
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) return null
   const parsed = Date.parse(value)
   return Number.isFinite(parsed) ? parsed : null
 }
 
 function formatScheduleLabel(schedule: PreferredEducationSchedule): string {
-  const label = typeof schedule.label === 'string' ? schedule.label.trim() : ''
-  if (label) return label
-  const start = parseIsoDateTime(schedule.startAt)
-  const end = parseIsoDateTime(schedule.endAt)
-  if (start == null || end == null) return ''
-  const startDate = new Date(start)
-  const endDate = new Date(end)
-  return `${startDate.toLocaleDateString('ko-KR')} ${startDate.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })} ~ ${endDate.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })}`
+  return formatOrganizationPreferredScheduleLabel(schedule)
 }
 
-function preferredScheduleMatchesProgramSchedule(
-  schedule: PreferredEducationSchedule,
-  scheduleId: number,
-  programSchedules: ProgramScheduleResponse[]
-): boolean {
-  const programSchedule = programSchedules.find(
-    item => item.id != null && Math.trunc(item.id) === scheduleId
+function isExplicitProgramEducationSlot(schedule: ProgramScheduleResponse): boolean {
+  const origin = readProgramScheduleOrigin(schedule)?.toUpperCase() ?? null
+  if (
+    origin === PROGRAM_SCHEDULE_ORIGIN_APPLICATION_MATERIALIZED ||
+    origin === PROGRAM_SCHEDULE_ORIGIN_UNKNOWN
+  ) {
+    return false
+  }
+  if (origin != null && origin !== PROGRAM_SCHEDULE_ORIGIN_PROGRAM_DEFINED) return false
+  if (!isProgramScheduleCandidateForNewEducationAssignment(schedule)) return false
+  return typeof schedule.id === 'number' && Number.isInteger(schedule.id) && schedule.id > 0
+}
+
+function indexExplicitEducationSlots(
+  programSchedules: ProgramScheduleResponse[] | undefined
+): Map<number, ProgramScheduleResponse> | null {
+  if (programSchedules == null) return null
+  const slots = new Map<number, ProgramScheduleResponse>()
+  for (const schedule of programSchedules) {
+    if (!isExplicitProgramEducationSlot(schedule) || schedule.id == null) continue
+    slots.set(Math.trunc(schedule.id), schedule)
+  }
+  return slots
+}
+
+function assignmentNoteFor(
+  block: OrganizationApproveScheduleAssignmentBlock | null
+): string | null {
+  switch (block) {
+    case 'UNMAPPED':
+      return '공통 교육 슬롯과 연결되지 않은 신청 희망 일정입니다.'
+    case 'AMBIGUOUS':
+      return '같은 조건의 공통 교육 슬롯이 여러 건이어서 자동으로 배정하지 않습니다.'
+    case 'NO_PROGRAM_MATCH':
+      return '연결된 공통 교육 슬롯이 없습니다.'
+    case 'NOT_IN_PROGRAM_SLOTS':
+      return '프로그램 공통 교육 슬롯에 없는 일정입니다. 이번 승인에서는 배정하지 않습니다.'
+    default:
+      return null
+  }
+}
+
+function formatAssignableEducationSlotLabel(slot: ProgramScheduleResponse): string {
+  const sessionNo =
+    typeof slot.sessionNo === 'number' && Number.isFinite(slot.sessionNo) && slot.sessionNo > 0
+      ? Math.trunc(slot.sessionNo)
+      : null
+  const when = formatOrganizationScheduleRangeLabel(
+    slot.startAt ?? slot.startDate,
+    slot.endAt ?? slot.endDate
   )
-  if (programSchedule == null) return false
-  if (!isProgramScheduleCandidateForNewEducationAssignment(programSchedule)) return false
-
-  const startAt = parseIsoDateTime(schedule.startAt)
-  const endAt = parseIsoDateTime(schedule.endAt)
-  if (startAt == null || endAt == null) return true
-
-  const programStart = parseIsoDateTime(programSchedule.startAt ?? programSchedule.startDate)
-  const programEnd = parseIsoDateTime(programSchedule.endAt ?? programSchedule.endDate)
-  if (programStart == null || programEnd == null) return false
-  return programStart === startAt && programEnd === endAt
+  const session = sessionNo != null ? `${sessionNo}회차` : ''
+  return [session, when].filter(Boolean).join(' · ') || `일정 ${slot.id}`
 }
 
 /**
- * 승인 모달 선택지 — 해당 신청의 `preferredEducationSchedules`를 노출한다.
- * `programSchedules`가 있으면 id·시간(가능할 때) 교차 검증 후 불일치 id는 선택 불가 처리한다.
+ * 승인 모달 — 희망 일정은 신청 원본으로 두고, 배정은 education-slots와
+ * `preferred.scheduleId`가 명시적으로 같을 때만 허용한다.
+ * 날짜가 같다고 첫 슬롯을 고르지 않는다. scheduleId가 없다는 이유만으로 일정 자체를 오류로 보지 않는다.
  */
 export function resolveOrganizationApproveScheduleOptionsFromPreferred(
   preferred: PreferredEducationSchedule[] | undefined,
   programSchedules?: ProgramScheduleResponse[]
 ): OrganizationApproveScheduleValidation {
   const list = preferred ?? []
+  const slotsResolved = programSchedules != null
+  const slotsById = indexExplicitEducationSlots(programSchedules)
   if (list.length === 0) {
     return {
-      options: [],
+      ...EMPTY_SCHEDULE_VALIDATION,
       invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
-      unresolvedReason: null,
-      duplicateScheduleIds: [],
+      slotsResolved,
     }
   }
 
   const options: OrganizationApproveScheduleOption[] = []
-  const seenPositiveIds = new Set<number>()
+  const assignableById = new Map<number, OrganizationApproveScheduleOption>()
 
   for (let index = 0; index < list.length; index++) {
     const schedule = list[index]
-    const label =
-      (typeof schedule.label === 'string' ? schedule.label.trim() : '') ||
-      formatScheduleLabel(schedule)
+    const label = formatScheduleLabel(schedule)
+    if (!label) continue
     const scheduleId = parseOrganizationPreferredScheduleId(schedule.scheduleId)
-
     const unresolvedReason = schedule.unresolvedReason ?? null
+    const round =
+      typeof schedule.round === 'number' && Number.isInteger(schedule.round) && schedule.round > 0
+        ? schedule.round
+        : null
 
-    if (scheduleId != null) {
-      if (seenPositiveIds.has(scheduleId)) continue
-      seenPositiveIds.add(scheduleId)
-      const confirmable =
-        unresolvedReason != null
-          ? null
-          : programSchedules == null
-          ? scheduleId
-          : preferredScheduleMatchesProgramSchedule(schedule, scheduleId, programSchedules)
-            ? scheduleId
+    let confirmableScheduleId: number | null = null
+    let block: OrganizationApproveScheduleAssignmentBlock | null = null
+    let sessionNo: number | null = null
+
+    if (!slotsResolved || slotsById == null) {
+      block = null
+    } else if (unresolvedReason === 'AMBIGUOUS_SCHEDULE_MATCH') {
+      block = 'AMBIGUOUS'
+    } else if (unresolvedReason === 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH') {
+      block = 'NO_PROGRAM_MATCH'
+    } else if (scheduleId == null) {
+      block = 'UNMAPPED'
+    } else {
+      const slot = slotsById.get(scheduleId)
+      if (slot == null) {
+        block = 'NOT_IN_PROGRAM_SLOTS'
+      } else {
+        confirmableScheduleId = scheduleId
+        sessionNo =
+          typeof slot.sessionNo === 'number' && Number.isFinite(slot.sessionNo)
+            ? Math.trunc(slot.sessionNo)
             : null
-      options.push({
-        scheduleId,
-        label: label || `일정 ${scheduleId}`,
-        confirmableScheduleId: confirmable,
-        unresolvedReason,
-      })
-      continue
+        if (!assignableById.has(scheduleId)) {
+          assignableById.set(scheduleId, {
+            scheduleId,
+            optionKey: `slot:${scheduleId}`,
+            label: formatAssignableEducationSlotLabel(slot),
+            confirmableScheduleId: scheduleId,
+            assignable: true,
+            preferredRecord: false,
+            sessionNo,
+            round,
+          })
+        }
+      }
     }
 
-    if (!label) continue
     options.push({
-      scheduleId: -(index + 1),
+      scheduleId: scheduleId ?? -(index + 1),
+      optionKey: `preferred:${index}`,
       label,
-      confirmableScheduleId: null,
+      confirmableScheduleId,
       unresolvedReason,
+      preferredRecord: true,
+      assignable: confirmableScheduleId != null,
+      sessionNo,
+      round,
+      assignmentNote: slotsResolved ? assignmentNoteFor(block) : null,
     })
   }
 
   const unresolvedReason = firstUnresolvedPreferredScheduleReason(list)
-  return options.length > 0
-    ? { options, invalidReason: null, unresolvedReason, duplicateScheduleIds: [] }
-    : {
-        options: [],
-        invalidReason: getUnresolvedPreferredScheduleMessage(unresolvedReason),
-        unresolvedReason,
-        duplicateScheduleIds: [],
-      }
+  if (options.length === 0) {
+    return {
+      ...EMPTY_SCHEDULE_VALIDATION,
+      invalidReason: getUnresolvedPreferredScheduleMessage(unresolvedReason),
+      unresolvedReason,
+      slotsResolved,
+    }
+  }
+
+  return {
+    options,
+    assignableOptions: [...assignableById.values()],
+    invalidReason: null,
+    unresolvedReason,
+    duplicateScheduleIds: [],
+    slotsResolved,
+  }
 }
 
 /** 승인 API용 scheduleId — UI placeholder(음수)는 preferred 항목의 scheduleId로만 해석한다. */
@@ -209,16 +305,59 @@ export function resolveOrganizationApproveScheduleIdsFromSelection(
   return resolved
 }
 
-/** 승인 API `selectedScheduleId` — 선택한 칩 1건의 materialized id (없으면 undefined). */
+/**
+ * 승인 API 일정 필드.
+ * 선택된 education-slots id만 `selectedScheduleId`로 보낸다.
+ * 희망 일정 placeholder·프로그램에 없는 id·날짜 추론 결과는 넣지 않는다.
+ * `slots[]`는 만들지 않는다. 단건 확정은 `selectedScheduleId` 하나이고, 둘을 같이 보내면 OSA가 중복될 수 있다.
+ */
+export function buildOrganizationApplicationApproveSchedulePayload(input: {
+  preferred: PreferredEducationSchedule[] | undefined
+  educationSlots: ProgramScheduleResponse[] | undefined
+  selectedSlotId: number | null | undefined
+}): OrganizationApplicationApproveSchedulePayload {
+  if (input.selectedSlotId == null || input.educationSlots == null) return {}
+  if (!Number.isInteger(input.selectedSlotId) || input.selectedSlotId <= 0) return {}
+  const slotId = Math.trunc(input.selectedSlotId)
+  const validation = resolveOrganizationApproveScheduleOptionsFromPreferred(
+    input.preferred,
+    input.educationSlots
+  )
+  const allowed = validation.assignableOptions.some(
+    option => option.confirmableScheduleId === slotId
+  )
+  if (!allowed) return {}
+  return { selectedScheduleId: slotId }
+}
+
+/** 승인 API `selectedScheduleId` — education-slots에 명시 매핑된 id만. */
 export function resolveOrganizationApproveSelectedScheduleId(
   preferred: PreferredEducationSchedule[] | undefined,
-  selectedOptionId: number | null | undefined
+  selectedOptionId: number | null | undefined,
+  educationSlots?: ProgramScheduleResponse[]
 ): number | undefined {
-  if (selectedOptionId == null) return undefined
-  const [resolved] = resolveOrganizationApproveScheduleIdsFromSelection(preferred, [
-    selectedOptionId,
-  ])
-  return resolved
+  return buildOrganizationApplicationApproveSchedulePayload({
+    preferred,
+    educationSlots,
+    selectedSlotId: selectedOptionId,
+  }).selectedScheduleId
+}
+
+/** 승인 성공 후 이 신청의 OSA·예정 슬롯만 갱신한다. 다른 기관 키는 포함하지 않는다. */
+export function organizationApprovalRefreshTargets(
+  programId: string,
+  applicationIds: readonly string[]
+) {
+  const program = programId.trim()
+  const ids = applicationIds.map(id => id.trim()).filter(Boolean)
+  return {
+    educationSlots: generalProgramQueryKeys.educationSlots(program),
+    schedules: generalProgramQueryKeys.schedules(program),
+    organizationScheduleAssignments: ids.map(id =>
+      organizationScheduleAssignmentsQueryKey(program, id)
+    ),
+    organizationDetails: ids.map(id => generalApplicationsQueryKeys.organizationDetail(id)),
+  }
 }
 
 export function organizationApproveScheduleOptionLabel(
@@ -261,10 +400,9 @@ export function validateOrganizationApproveScheduleOptions(
   const list = preferred ?? []
   if (list.length === 0) {
     return {
-      options: [],
+      ...EMPTY_SCHEDULE_VALIDATION,
       invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
-      unresolvedReason: null,
-      duplicateScheduleIds: [],
+      slotsResolved: true,
     }
   }
 
@@ -301,10 +439,9 @@ export function validateOrganizationApproveScheduleOptions(
       startAt >= endAt
     ) {
       return {
-        options: [],
+        ...EMPTY_SCHEDULE_VALIDATION,
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
-        unresolvedReason: null,
-        duplicateScheduleIds: [],
+        slotsResolved: true,
       }
     }
 
@@ -314,10 +451,10 @@ export function validateOrganizationApproveScheduleOptions(
     if (previousRange && previousRange !== rangeKey) {
       duplicateScheduleIds.add(numericScheduleId)
       return {
-        options: [],
+        ...EMPTY_SCHEDULE_VALIDATION,
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
-        unresolvedReason: null,
         duplicateScheduleIds: [...duplicateScheduleIds],
+        slotsResolved: true,
       }
     }
     if (previousRange) continue
@@ -330,10 +467,9 @@ export function validateOrganizationApproveScheduleOptions(
       programSchedule.endAt !== endAt
     ) {
       return {
-        options: [],
+        ...EMPTY_SCHEDULE_VALIDATION,
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
-        unresolvedReason: null,
-        duplicateScheduleIds: [],
+        slotsResolved: true,
       }
     }
 
@@ -345,12 +481,18 @@ export function validateOrganizationApproveScheduleOptions(
   }
 
   return options.length > 0
-    ? { options, invalidReason: null, unresolvedReason: null, duplicateScheduleIds: [] }
-    : {
-        options: [],
-        invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+    ? {
+        options,
+        assignableOptions: options.filter(option => option.confirmableScheduleId != null),
+        invalidReason: null,
         unresolvedReason: null,
         duplicateScheduleIds: [],
+        slotsResolved: true,
+      }
+    : {
+        ...EMPTY_SCHEDULE_VALIDATION,
+        invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+        slotsResolved: true,
       }
 }
 
