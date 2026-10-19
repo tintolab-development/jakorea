@@ -250,8 +250,13 @@ export function applyParticipantRecruitmentColumnsFromResponse(
   const method = hasMethod ? trimOrUndefined(dto.applicationMethod) : program.applicationMethod
   const remarks = hasRemarks ? trimOrUndefined(dto.remarks) : program.remarks
   const currentInfo = program.generalCommonInfo?.participantRecruitmentInfo
+  const hasParticipantRow = (program.programRecruitments ?? []).some(
+    row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+  )
   const clearMethod = hasMethod && !method && Boolean(currentInfo?.applicationMethod)
-  const clearRemarks = hasRemarks && !remarks && Boolean(currentInfo?.remarks)
+  // 행 모집은 비고 SSOT가 nested다. 프로그램 remarks 컬럼이 비어 있다고 nested를 지우면 저장값이 사라진다.
+  const clearRemarks =
+    hasRemarks && !remarks && Boolean(currentInfo?.remarks) && !hasParticipantRow
   const participantRecruitmentInfo =
     clearMethod || clearRemarks
       ? {
