@@ -350,6 +350,11 @@ export function resetOperationalOverlayForCatalogId(catalogTemplateId: string): 
   if (kind === 'gemini-recruit') {
     suppressOperationalSeedDefaults('gemini-recruit', ['*'])
     resetGeminiRecruitOverlayForScope(catalogTemplateId)
+    replaceRecruitDetailInfoIntoGeneralStore(
+      undefined,
+      recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId),
+      catalogTemplateId
+    )
     return
   }
   if (kind === 'ujat-recruit-institution') {
@@ -455,7 +460,11 @@ function overlayRecordForKind(
     )
   }
   if (kind === 'gemini-recruit') {
-    return { ...peekGeminiRecruitOverlayRecord(catalogTemplateId) }
+    return mergeRecruitDetailInfoFromGeneralStore(
+      { ...peekGeminiRecruitOverlayRecord(catalogTemplateId) },
+      detailPrefix,
+      generalRecruit
+    )
   }
   if (kind === 'general-recruit') {
     return pickOverlayKeysByPrefixes(
@@ -565,6 +574,11 @@ export function applyOperationalOverlayForCatalogId(
   }
   if (kind === 'gemini-recruit') {
     replaceGeminiRecruitOverlayForScope(catalogTemplateId, overlay)
+    replaceRecruitDetailInfoIntoGeneralStore(
+      overlay,
+      recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId),
+      catalogTemplateId
+    )
     return
   }
   if (kind === 'ujat-recruit-volunteer') {

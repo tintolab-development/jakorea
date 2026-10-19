@@ -86,8 +86,6 @@ export interface AdminProgramListItemDto {
   participatingOrganizationCount?: number | null
   participatingSchoolCount?: number | null
   participatingStudentCount?: number | null
-  featuredOnHome?: boolean | null
-  homeDisplayOrder?: number | null
   createdAt?: string
   updatedAt?: string
 }

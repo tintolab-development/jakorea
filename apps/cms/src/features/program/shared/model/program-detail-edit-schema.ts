@@ -61,10 +61,6 @@ import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod
 import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
-import {
-  portalHomeFeaturedFormValues,
-  portalHomeFeaturedProgramPatch,
-} from '@/features/program/shared/lib/program-portal-home-featured'
 import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
@@ -419,8 +415,6 @@ const programDetailEditSchemaBase = z.object({
   ips: ipsFormSchema,
   programCategory: z.string().optional(),
   programChannel: z.string().optional(),
-  featuredOnHome: z.boolean().optional(),
-  homeDisplayOrder: z.string().optional(),
   surveySurvey: optionalBoolean,
   surveySatisfaction: optionalBoolean,
   surveyLectureEvaluation: optionalBoolean,
@@ -971,7 +965,6 @@ export function programToDetailEditValues(
     curriculumSession2Description: program.generalCommonInfo?.curriculumSessions?.[1]?.description,
     educationScheduleLines: program.generalCommonInfo?.educationScheduleLines,
     educationScheduleMode: program.generalCommonInfo?.educationScheduleMode ?? 'date',
-    ...portalHomeFeaturedFormValues(program),
     mainTitle: program.mainTitle ?? undefined,
     titleEn: program.titleEn ?? undefined,
     announcementTitle:
@@ -1811,12 +1804,6 @@ export function detailEditValuesToProgramPatch(
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
     otherNotes: values.otherNotes ?? existing.otherNotes,
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,
-    ...(recruitmentAudience || values.featuredOnHome === undefined
-      ? {}
-      : portalHomeFeaturedProgramPatch({
-          featuredOnHome: values.featuredOnHome,
-          homeDisplayOrder: values.homeDisplayOrder,
-        })),
     mainTitle: values.mainTitle ?? existing.mainTitle,
     titleEn: values.titleEn ?? existing.titleEn,
     detailedProgramId: values.detailedProgramId ?? existing.detailedProgramId,

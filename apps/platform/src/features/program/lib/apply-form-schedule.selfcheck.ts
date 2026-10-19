@@ -36,7 +36,9 @@ import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import {
+  capFixedScheduleSelectedIds,
   findIncompletePreferredScheduleMessage,
+  selectedFixedScheduleIdsFromDraftAnswer,
   toFixedScheduleOptionAnswerValue,
 } from './preferred-schedule-blocks.ts'
 
@@ -439,19 +441,44 @@ const runtimeFixedItems = readRuntimeFixedScheduleChoiceItems(
   { items: [] }
 )
 assert.deepEqual(runtimeFixedItems, [{ id: 'schedule:187123', label: '교육 일정' }])
-assert.equal(
+assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
     { items: [] }
   ),
-  null
+  [{ id: 'schedule:187123', label: '187123' }]
 )
-assert.equal(
+assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
     { items: [] }
   ),
-  null
+  []
+)
+assert.deepEqual(
+  readRuntimeFixedScheduleChoiceItems(
+    {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [
+        {
+          id: '201',
+          value: '201',
+          label: '2026-11-02 10:00~12:00',
+          startAt: '2026-11-02T01:00:00.000Z',
+          endAt: '2026-11-02T03:00:00.000Z',
+        },
+        {
+          id: '202',
+          value: '202',
+          label: '2026-11-09 13:30~16:00',
+          startAt: '2026-11-09T04:30:00.000Z',
+          endAt: '2026-11-09T07:00:00.000Z',
+        },
+      ],
+    },
+    { items: [{ id: 'line:0', label: 'stale seed' }] }
+  )?.map(item => item.id),
+  ['201', '202']
 )
 assert.equal(
   readRuntimeFixedScheduleChoiceItems(
@@ -468,6 +495,10 @@ assert.deepEqual(
   ]),
   ['schedule:187123', 'schedule:187124']
 )
+assert.deepEqual(capFixedScheduleSelectedIds(['201', '202'], null), ['201', '202'])
+assert.deepEqual(capFixedScheduleSelectedIds(['201', '202'], 1), ['201'])
+assert.deepEqual(selectedFixedScheduleIdsFromDraftAnswer(['201', '201', '202']), ['201', '202'])
+assert.deepEqual(selectedFixedScheduleIdsFromDraftAnswer([{ date: '2026-11-02' }]), [])
 
 const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
   ['line:1'],

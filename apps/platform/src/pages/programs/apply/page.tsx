@@ -93,7 +93,6 @@ import {
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
   buildEnabledDatesFromEducationScheduleLines,
-  buildTrainedTeachersFixedScheduleOptions,
   mergeApplyScheduleVisibilityFields,
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideRuntime,
@@ -112,14 +111,14 @@ import {
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
   resolveApplyPreferredScheduleMaxBlocks,
-  resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyPreferredScheduleSessionSelect,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
 } from '@/features/program/lib/apply-form-schedule'
 import {
+  capFixedScheduleSelectedIds,
   preferredScheduleBlocksFromDraftAnswers,
-  toFixedScheduleOptionAnswerValue,
+  selectedFixedScheduleIdsFromDraftAnswer,
   toPortalPreferredScheduleBlocks,
   toPreferredScheduleAnswerValue,
   findIncompletePreferredScheduleMessage,
@@ -394,6 +393,9 @@ export function ProgramApplyPage() {
   const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
     createEmptyPreferredBlock(),
   ])
+  const [trainedTeachersFixedSelectedIds, setTrainedTeachersFixedSelectedIds] = useState<string[]>(
+    []
+  )
   const [basicInfo, setBasicInfo] = useState<ApplyTrainedTeachersBasicInfoValues>(
     emptyTrainedTeachersBasicInfo
   )
@@ -522,8 +524,11 @@ export function ProgramApplyPage() {
   )
   const trainedTeachersScheduleInputMode = useMemo(
     () =>
-      readApplyScheduleInputMode(applicationFormDocument?.runtimeContext),
-    [applicationFormDocument]
+      readApplyScheduleInputMode(
+        applicationFormDocument?.runtimeContext,
+        trainedTeachersScheduleParagraph
+      ),
+    [applicationFormDocument, trainedTeachersScheduleParagraph]
   )
   const useTrainedTeachersOperatingPeriod =
     program?.programType?.trim().toUpperCase() === 'TRAINED_TEACHER' &&
@@ -594,13 +599,18 @@ export function ProgramApplyPage() {
   const trainedTeachersScheduleParagraphForcedHidden =
     trainedTeachersScheduleVisibility.educationStructure === 'schedule' &&
     trainedTeachersScheduleVisibility.sessionRound === 'multi'
+  const isTrainedTeachersFixedScheduleOptions =
+    showTrainedTeachersApply &&
+    program != null &&
+    trainedTeachersScheduleInputMode === 'fixed_schedule_options' &&
+    !trainedTeachersScheduleParagraphForcedHidden
   const showTrainedTeachersPreferredSchedule =
     showTrainedTeachersApply &&
     program != null &&
-    (trainedTeachersScheduleInputMode === 'fixed_schedule_options'
-      ? !trainedTeachersScheduleParagraphForcedHidden &&
-        (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 0
-      : shouldShowApplyPreferredSchedule(trainedTeachersScheduleVisibility))
+    !isTrainedTeachersFixedScheduleOptions &&
+    (trainedTeachersScheduleInputMode === 'date_time_requests' ||
+      trainedTeachersScheduleInputMode == null) &&
+    shouldShowApplyPreferredSchedule(trainedTeachersScheduleVisibility)
   const showPreferredScheduleInput =
     showTrainedTeachersPreferredSchedule ||
     showGeneralPreferredSchedule ||
@@ -635,18 +645,8 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
-    if (trainedTeachersScheduleInputMode === 'fixed_schedule_options') {
-      return resolveApplyPreferredScheduleMaxBlocksFromFixedOptions(
-        trainedTeachersRuntimeFixedScheduleChoices
-      )
-    }
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
-  }, [
-    applicationFormRuntimeContext,
-    program,
-    trainedTeachersRuntimeFixedScheduleChoices,
-    trainedTeachersScheduleInputMode,
-  ])
+  }, [applicationFormRuntimeContext, program])
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
@@ -655,11 +655,7 @@ export function ProgramApplyPage() {
     [institutionDateOnlyPreferred, trainedTeachersDateOnlyPreferred]
   )
   const trainedTeachersEnabledDates = useMemo(() => {
-    if (
-      !showTrainedTeachersPreferredSchedule ||
-      program?.educationScheduleMode === 'period' ||
-      trainedTeachersScheduleInputMode === 'fixed_schedule_options'
-    ) {
+    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
       return null
     }
     return buildEnabledDatesFromEducationScheduleLines(educationScheduleLinesForApply)
@@ -667,7 +663,6 @@ export function ProgramApplyPage() {
     educationScheduleLinesForApply,
     program?.educationScheduleMode,
     showTrainedTeachersPreferredSchedule,
-    trainedTeachersScheduleInputMode,
   ])
   const trainedTeachersScheduleDateBounds = useMemo(() => {
     if (!useTrainedTeachersOperatingPeriod) {
@@ -685,30 +680,7 @@ export function ProgramApplyPage() {
       isRuntimeScheduleNotConfigured(applicationFormRuntimeContext),
     [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod]
   )
-  const trainedTeachersFixedScheduleOptions = useMemo(() => {
-    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
-      return []
-    }
-    if (trainedTeachersScheduleInputMode === 'fixed_schedule_options') {
-      if (trainedTeachersRuntimeFixedScheduleChoices == null) return []
-      return trainedTeachersRuntimeFixedScheduleChoices.map(choice => ({
-        value: choice.id,
-        label: choice.label,
-        date: '',
-        classPeriod: '',
-        startTime: '',
-        endTime: '',
-      }))
-    }
-    const fallbackOptions = buildTrainedTeachersFixedScheduleOptions(educationScheduleLinesForApply)
-    return fallbackOptions
-  }, [
-    educationScheduleLinesForApply,
-    program?.educationScheduleMode,
-    showTrainedTeachersPreferredSchedule,
-    trainedTeachersRuntimeFixedScheduleChoices,
-    trainedTeachersScheduleInputMode,
-  ])
+  const trainedTeachersFixedScheduleChoiceItems = trainedTeachersRuntimeFixedScheduleChoices ?? []
   const applicationRecruitmentLimits = useMemo(
     () => readApplicationScheduleRecruitmentLimitsFromRuntime(applicationFormRuntimeContext),
     [applicationFormRuntimeContext]
@@ -888,6 +860,18 @@ export function ProgramApplyPage() {
                     resolveApplyPreferredScheduleInitialBlockCount(program)
                   )
                 : [createEmptyPreferredBlock()])
+          )
+          setTrainedTeachersFixedSelectedIds(
+            selectedFixedScheduleIdsFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                preferredParagraph ??
+                  findDraftParagraph(
+                    remoteDraft,
+                    id => id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+                  )
+              )
+            )
           )
           const basicParagraph = findDraftParagraph(
             programLinkedDraft,
@@ -1248,6 +1232,52 @@ export function ProgramApplyPage() {
         (showTrainedTeachersPreferredSchedule &&
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
 
+      if (
+        isTrainedTeachersFixedScheduleOptions &&
+        paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+      ) {
+        const choiceItems = trainedTeachersFixedScheduleChoiceItems
+        if (choiceItems.length === 0) {
+          return (
+            <PFText as="p" typo="bd-md-md" color="neutral-cool-600">
+              선택 가능한 교육 일정이 없습니다.
+            </PFText>
+          )
+        }
+        const maxCount = applicationRecruitmentLimits.maxScheduleCount
+        return (
+          <div className={styles.multipleChoice}>
+            {choiceItems.map(item => {
+              const checked = trainedTeachersFixedSelectedIds.includes(item.id)
+              const atCap =
+                maxCount != null &&
+                maxCount >= 1 &&
+                trainedTeachersFixedSelectedIds.length >= maxCount &&
+                !checked
+              return (
+                <PFCheckbox
+                  key={item.id}
+                  className={styles.multipleChoiceItem}
+                  size="large"
+                  checked={checked}
+                  disabled={atCap}
+                  onCheckedChange={nextChecked => {
+                    setTrainedTeachersFixedSelectedIds(prev => {
+                      const next = nextChecked
+                        ? capFixedScheduleSelectedIds([...prev, item.id], maxCount)
+                        : prev.filter(id => id !== item.id)
+                      return next
+                    })
+                  }}
+                >
+                  {item.label}
+                </PFCheckbox>
+              )
+            })}
+          </div>
+        )
+      }
+
       if (isPreferredScheduleSlot && showPreferredScheduleInput) {
         const useInstitutionScheduleBounds =
           showGeneralPreferredSchedule && isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
@@ -1280,9 +1310,6 @@ export function ProgramApplyPage() {
                   : null
             }
             disabled={trainedTeachersScheduleNotConfigured}
-            fixedScheduleOptions={
-              showTrainedTeachersApply ? trainedTeachersFixedScheduleOptions : undefined
-            }
             showSessionSelect={
               showGeneralPreferredSchedule && institutionPreferredSessionSelect.show
             }
@@ -1495,7 +1522,9 @@ export function ProgramApplyPage() {
       trainedTeachersScheduleEnabledDates,
       trainedTeachersScheduleNotConfigured,
       trainedTeachersDateOnlyPreferred,
-      trainedTeachersFixedScheduleOptions,
+      isTrainedTeachersFixedScheduleOptions,
+      trainedTeachersFixedScheduleChoiceItems,
+      trainedTeachersFixedSelectedIds,
       applicationRecruitmentLimits,
       applicationFormDocument,
       institutionRuntimeFixedScheduleChoices,
@@ -1604,15 +1633,7 @@ export function ProgramApplyPage() {
             : undefined,
       })
     )
-    const showTrainedTeachersRuntimeScheduleSelection =
-      applyCase === 'trained-teachers' &&
-      applicationScheduleVisibility.educationStructure === 'curriculum' &&
-      applicationScheduleVisibility.sessionRound === 'single' &&
-      applicationScheduleVisibility.educationScheduleMode === 'date' &&
-      trainedTeachersScheduleInputMode === 'fixed_schedule_options' &&
-      (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 1 &&
-      !trainedTeachersScheduleRuntimeHidden
-    if (showTrainedTeachersRuntimeScheduleSelection) {
+    if (isTrainedTeachersFixedScheduleOptions && !trainedTeachersScheduleRuntimeHidden) {
       hidden.delete(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
     }
     if (usesOsaAvailableSchedule) {
@@ -1667,8 +1688,7 @@ export function ProgramApplyPage() {
     runtimeConditionalQuestions,
     runtimeHiddenAnswerKeys,
     sexOffense,
-    trainedTeachersRuntimeFixedScheduleChoices,
-    trainedTeachersScheduleInputMode,
+    isTrainedTeachersFixedScheduleOptions,
     trainedTeachersScheduleRuntimeHidden,
     ujatVolunteerBasicInfo.applicationType,
     usesOsaAvailableSchedule,
@@ -1782,38 +1802,33 @@ export function ProgramApplyPage() {
         })
         return
       }
-      const trainedTeachersFixedScheduleValues =
-        trainedTeachersRuntimeFixedScheduleChoices?.map(choice => choice.id) ?? []
-      const trainedTeachersSingleFixedScheduleValue =
-        isTrainedTeachersFixedScheduleTarget &&
-        !trainedTeachersScheduleRuntimeHidden &&
-        hiddenParagraphIds.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) &&
-        trainedTeachersFixedScheduleValues.length === 1
-          ? trainedTeachersFixedScheduleValues[0]
-          : undefined
-      if (
-        isTrainedTeachersFixedScheduleTarget &&
-        hiddenParagraphIds.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) &&
-        !trainedTeachersScheduleRuntimeHidden &&
-        trainedTeachersSingleFixedScheduleValue == null
-      ) {
-        setSubmitAlert({
-          description: '신청 가능한 교육 일정을 선택할 수 없습니다. 잠시 후 다시 시도해 주세요.',
-        })
-        return
-      }
+      const allowedTrainedTeachersFixedIds = new Set(
+        trainedTeachersFixedScheduleChoiceItems.map(choice => choice.id)
+      )
       const trainedTeachersFixedScheduleAnswer =
         isTrainedTeachersFixedScheduleTarget &&
         !trainedTeachersScheduleRuntimeHidden &&
         trainedTeachersScheduleAnswerKey
-          ? trainedTeachersSingleFixedScheduleValue != null
-            ? [trainedTeachersSingleFixedScheduleValue]
-            : toFixedScheduleOptionAnswerValue(preferredBlocks)
+          ? capFixedScheduleSelectedIds(
+              trainedTeachersFixedSelectedIds.filter(id => allowedTrainedTeachersFixedIds.has(id)),
+              applicationRecruitmentLimits.maxScheduleCount
+            )
           : null
       if (
         isTrainedTeachersFixedScheduleTarget &&
         !trainedTeachersScheduleRuntimeHidden &&
-        !trainedTeachersFixedScheduleAnswer
+        trainedTeachersFixedScheduleChoiceItems.length === 0
+      ) {
+        setSubmitAlert({
+          description: '선택 가능한 교육 일정이 없습니다.',
+        })
+        return
+      }
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        (trainedTeachersFixedScheduleAnswer == null ||
+          trainedTeachersFixedScheduleAnswer.length === 0)
       ) {
         setSubmitAlert({ description: '신청 가능한 교육 일정을 선택해 주세요.' })
         return
@@ -2248,8 +2263,7 @@ export function ProgramApplyPage() {
         }
         if (
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule &&
-          hiddenParagraphIds.has(paragraph.id) &&
-          trainedTeachersSingleFixedScheduleValue == null
+          hiddenParagraphIds.has(paragraph.id)
         ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))

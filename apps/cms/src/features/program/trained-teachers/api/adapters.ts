@@ -5,7 +5,6 @@ import type { ProgramCreateRequestEducationStructure } from '@/shared/api/genera
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramUpdateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestEducationStructure'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
-import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type { ProgramResponseEducationStructure } from '@/shared/api/generated/logs/schemas/programResponseEducationStructure'
 import type {
   GeneralProgramEducationStructure,
@@ -456,11 +455,6 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     updatedAt: dto.updatedAt,
     backendProgramType: dto.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
-    featuredOnHome: dto.featuredOnHome === true,
-    homeDisplayOrder:
-      typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
-        ? dto.homeDisplayOrder
-        : null,
   })
   return applyResolvedAnnouncementTitle(mapped, {
     serviceDetailJson: dto.serviceDetailJson,
@@ -608,7 +602,6 @@ export function mapTrainedTeacherToUpdateRequest(
     merged,
     existing: program,
   })
-  applyPortalHomeFeaturedToRequest(body, merged, patch ? 'patch' : 'full', patch)
   return body
 }
 

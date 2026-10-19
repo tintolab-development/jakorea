@@ -19,6 +19,7 @@ export const RECRUIT_DETAIL_INFO_OVERLAY_PREFIX = {
   trainedTeachers: 'trainedTeachersRecruit.detailInfo',
   ujatInstitution: 'ujatRecruit.detailInfo',
   volunteer: 'recruitVolunteer.detailInfo',
+  gemini: 'geminiRecruit.detailInfo',
 } as const
 
 const UJAT_VOLUNTEER_RECRUIT_GENERAL_STORE_PREFIXES = [
@@ -91,6 +92,8 @@ export function recruitDetailInfoOverlayPrefixForCatalogId(
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
     case 'recruitment-ujat-volunteer':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer
+    case 'recruitment-gemini-visiting-training':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini
     default:
       return null
   }
@@ -111,6 +114,8 @@ export function recruitDetailInfoOverlayPrefixForEditorVariant(
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
     case 'ujat-recruit-volunteer':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer
+    case 'gemini-recruit':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini
     default:
       return null
   }

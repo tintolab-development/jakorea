@@ -740,8 +740,6 @@ const geminiTrainingListed = mapPortalProgramListItem({
   portalCategories: ['ORGANIZATION'],
   title: '제미나이 아카데미 찾아가는 연수 모집',
   recruitmentStatus: 'UPCOMING',
-  featuredOnHome: true,
-  homeDisplayOrder: 1,
 })
 assert.ok(geminiTrainingListed)
 assert.equal(geminiTrainingListed.category, 'institution')

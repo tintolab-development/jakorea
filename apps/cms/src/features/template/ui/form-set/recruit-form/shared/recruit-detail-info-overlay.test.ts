@@ -36,6 +36,9 @@ describe('recruit detail info overlay persist', () => {
     expect(recruitDetailInfoOverlayPrefixForCatalogId('recruitment-economy-copy-1')).toBe(
       'economyRecruit.detailInfo'
     )
+    expect(
+      recruitDetailInfoOverlayPrefixForCatalogId('recruitment-gemini-visiting-training-custom-2')
+    ).toBe('geminiRecruit.detailInfo')
   })
 
   it('picks only the detailInfo prefix', () => {

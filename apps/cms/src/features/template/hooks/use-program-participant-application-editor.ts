@@ -487,10 +487,17 @@ function restoreParticipantOverlayForVariant(
   const overlayId =
     options?.persistTemplateId?.trim() || getTemplateIdForParticipantApplicationVariant(variant)
   if (variant === 'gemini-recruit') {
+    const detailPrefix = recruitDetailInfoOverlayPrefixForEditorVariant(variant)
     if (overlay) {
       restoreGeminiRecruitOverlay(overlay)
+      if (replace) {
+        replaceRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix, overlayId)
+      } else {
+        restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
+      }
     } else if (resetIfMissing) {
       resetGeminiRecruitOverlay()
+      replaceRecruitDetailInfoIntoGeneralStore(undefined, detailPrefix, overlayId)
     }
     return
   }

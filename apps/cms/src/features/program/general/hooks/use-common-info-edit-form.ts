@@ -78,8 +78,6 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   scheduleCurriculumPreEducation: false,
   educationScheduleMode: 'date',
   educationScheduleLines: [],
-  featuredOnHome: false,
-  homeDisplayOrder: '',
 }
 
 export function useGeneralProgramCommonInfoEditForm({

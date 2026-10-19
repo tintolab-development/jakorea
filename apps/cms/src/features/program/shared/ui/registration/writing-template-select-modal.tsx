@@ -25,6 +25,8 @@ type WritingTemplateSelectModalProps = {
   open: boolean
   category: WritingTemplateSelectCategory
   currentTemplateName: string
+  /** 지정 시 해당 카탈로그 패밀리(복제본 포함)만 노출. 생략하면 카테고리 전체. */
+  familyBaseTemplateCode?: string
   onClose: () => void
   onUse: (row: TemplateRow) => void
 }
@@ -43,6 +45,7 @@ export function WritingTemplateSelectModal({
   open,
   category,
   currentTemplateName,
+  familyBaseTemplateCode,
   onClose,
   onUse,
 }: WritingTemplateSelectModalProps) {
@@ -66,8 +69,13 @@ export function WritingTemplateSelectModal({
 
   const rows = useMemo(() => {
     const section = sections.find(item => item.key === category)
-    return section?.rows ?? []
-  }, [category, sections])
+    const all = section?.rows ?? []
+    const family = familyBaseTemplateCode?.trim()
+    if (family == null || family === '') return all
+    return all.filter(
+      row => resolveWritingFormBaseTemplateCode(row.id, row.baseTemplateCode) === family
+    )
+  }, [category, familyBaseTemplateCode, sections])
 
   const filtered = useMemo(
     () => rows.filter(row => matchesTemplateName(row, appliedKeyword)),
