@@ -15,7 +15,9 @@ import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-ke
 import {
   giveUpUjatVolunteerApplicationRemote,
   submitUjatVolunteerFinalResultsRemote,
+  submitUjatVolunteerInterviewEvaluationRemote,
 } from '@/features/program/ujat/api/volunteer-mutations'
+import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import type {
   UjatSecondInterviewScreeningStatus,
   UjatVolunteerRecruitHalf,
@@ -381,14 +383,40 @@ export function useUjatVolunteerInterview2({
       payload: UjatVolunteerInterviewEvaluationPayload
     ): Promise<boolean> => {
       if (!guardUjatVolunteerInterview2Evaluation(row)) return false
-      setList(prev => patchUjatVolunteerInterviewEvaluation(prev, row.id, payload))
-      showAlert({
-        title: '면접 평가',
-        content: '면접 평가가 저장되었습니다.',
-      })
-      return true
+      if (payload.managerAScore == null && payload.managerBScore == null) return false
+      if (row.interviewAssignmentId == null) {
+        showAlert({
+          title: '면접 평가 실패',
+          content:
+            '면접 배정 ID가 없어 평가를 저장할 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+        })
+        return false
+      }
+      try {
+        await submitUjatVolunteerInterviewEvaluationRemote(row.interviewAssignmentId, {
+          ...(payload.managerAScore != null ? { managerAScore: payload.managerAScore } : {}),
+          ...(payload.managerBScore != null ? { managerBScore: payload.managerBScore } : {}),
+          comment: payload.interviewEvaluationRemark?.trim() || undefined,
+        })
+        setList(prev => patchUjatVolunteerInterviewEvaluation(prev, row.id, payload))
+        await invalidateVolunteerLists()
+        showAlert({
+          title: '면접 평가',
+          content: '면접 평가가 저장되었습니다.',
+        })
+        return true
+      } catch (error: unknown) {
+        showAlert({
+          title: '면접 평가 실패',
+          content: extractApiErrorMessage((error as { response?: { data?: unknown } })?.response?.data, {
+            httpStatus: getApiErrorHttpStatus(error),
+            fallback: '면접 평가 저장 중 오류가 발생했습니다. 입력값을 유지한 채 다시 시도해 주세요.',
+          }),
+        })
+        return false
+      }
     },
-    [showAlert]
+    [invalidateVolunteerLists, showAlert]
   )
 
   const columns = useUjatVolunteerInterview2Columns()
