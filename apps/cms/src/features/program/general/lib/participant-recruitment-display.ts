@@ -29,6 +29,7 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   formatCountLabel,
@@ -319,6 +320,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     maxSessionsPerDayLabel: formatCountLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: formatCountLabel(info?.maxScheduleCount, '개'),
     operationPeriodLabel: pickDisplayString(
+      audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant'),
       info?.operationPeriodLabel,
       operationFromProgram && operationFromProgram !== '-' ? operationFromProgram : undefined
     ),

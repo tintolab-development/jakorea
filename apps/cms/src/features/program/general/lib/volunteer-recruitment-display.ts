@@ -13,6 +13,7 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 
 type VolunteerRecruitmentInfoLoose = NonNullable<
@@ -124,7 +125,10 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
       info?.volunteerInterviewEnabledLabel,
       labelBool(interviewEnabled, '면접 있음', '면접 없음')
     ),
-    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
+    operationPeriodLabel: pickDisplayString(
+      audienceOperationPeriodLabelFromRecruitmentRow(program, 'volunteer'),
+      info?.operationPeriodLabel
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     volunteerTargetLabel: pickDisplayString(info?.recruitmentTarget),

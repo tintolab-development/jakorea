@@ -9,7 +9,12 @@ import {
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
-import { applyRecruitmentAdditionalContentHtml } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
+import { applyAudienceProgramOperationToRecruitmentWindows } from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import {
+  applyRecruitmentAdditionalContentHtml,
+  applyRecruitmentDetailInfoFields,
+} from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { Program } from '@/types/domain'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 
@@ -1166,6 +1171,94 @@ describe('general-program-adapters', () => {
     expect(otherOnly.remarks).toBeUndefined()
     expect(otherOnly.otherMatters).toBe('기타만')
     expect(otherOnly.applicationMethod).toBeUndefined()
+  })
+
+  it('참여기관 운영 기간 수정은 기존 모집 행에만 반영하고 사업 기간은 바꾸지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      id: '186251',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      applicationStartDate: '2026-10-01',
+      applicationEndDate: '2026-10-31',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      rounds: [],
+      programRecruitments: [
+        {
+          id: 186603,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          targetType: 'ORGANIZATION',
+          operationStartDate: '2026-11-18',
+          operationEndDate: '2026-12-25',
+          startAt: '2026-10-01',
+          endAt: '2026-10-31',
+        },
+      ],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          operationPeriodLabel: '2026-11-11 ~ 2026-12-25',
+        },
+      },
+      registrationOverlay: {
+        'recruit.programRangeSeal': { start: '2026-11-11', end: '2026-12-25' },
+        'recruit.individual.programRangeSeal': { start: '2026-11-11', end: '2026-12-25' },
+      },
+    }
+    const operationPatch = applyAudienceProgramOperationToRecruitmentWindows(
+      existing,
+      {
+        participantProgramOperationStartDate: '2026-11-30T15:00:00.000Z',
+        participantProgramOperationEndDate: '2027-01-14T15:00:00.000Z',
+      } as ProgramDetailEditFormValues,
+      'participant'
+    )
+    const patch = applyRecruitmentDetailInfoFields(
+      {
+        applicationStartDate: existing.applicationStartDate,
+        applicationEndDate: existing.applicationEndDate,
+        description: '기관 모집 설명',
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            operationPeriodLabel: '2026. 12. 01 (화) ~ 2027. 01. 15 (금)',
+          },
+        },
+        ...operationPatch,
+      },
+      existing,
+      'participant',
+      { description: '기관 모집 설명' }
+    )
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing)
+    const participantRows = request.recruitments?.filter(
+      row => row.recruitmentType === 'PARTICIPANT'
+    )
+
+    expect(participantRows).toEqual([
+      expect.objectContaining({
+        id: 186603,
+        operationStartDate: '2026-12-01',
+        operationEndDate: '2027-01-15',
+      }),
+    ])
+    expect(request.businessStartDate).toBeUndefined()
+    expect(request.businessEndDate).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
+
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: {
+        participantRecruitmentInfo?: { operationPeriodLabel?: string }
+      }
+      registration?: { overlay?: Record<string, { start?: string; end?: string } | unknown> }
+    }
+    expect(detail.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toContain(
+      '2026. 12. 01'
+    )
+    expect(detail.registration?.overlay?.['recruit.programRangeSeal']).toMatchObject({
+      start: '2026-12-01',
+      end: '2027-01-15',
+    })
   })
 
   it('지원 방법·비고를 비우면 clearFields에만 싣는다', () => {

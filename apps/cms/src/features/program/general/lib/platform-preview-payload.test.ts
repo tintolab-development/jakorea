@@ -219,4 +219,33 @@ describe('buildGeneralProgramPortalPreview', () => {
       },
     ])
   })
+
+  it('미리보기 운영 기간은 모집 행 날짜를 쓰고 표시 문자열은 쓰지 않는다', () => {
+    const detail = buildGeneralProgramPortalPreview({
+      audience: 'institutions',
+      program: makeProgram({
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        programRecruitments: [
+          {
+            id: 186603,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+            operationStartDate: '2026-11-18',
+            operationEndDate: '2026-12-25',
+          },
+        ],
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            operationPeriodLabel: '2026-11-11 ~ 2026-12-25',
+          },
+        },
+      }),
+    })
+    expect(detail.businessStartDate).toBe('2026-01-01T00:00:00')
+    expect(detail.recruitments?.[0]).toMatchObject({
+      operationStartDate: '2026-11-18',
+      operationEndDate: '2026-12-25',
+    })
+  })
 })

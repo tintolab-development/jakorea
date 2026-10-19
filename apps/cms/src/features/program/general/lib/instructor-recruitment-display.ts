@@ -12,6 +12,7 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 
 type InstructorRecruitmentInfoLoose = NonNullable<
@@ -82,7 +83,10 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
       info?.announcementPublishedLabel,
       labelBool(info?.announcementPublished, '게시', '미게시')
     ),
-    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
+    operationPeriodLabel: pickDisplayString(
+      audienceOperationPeriodLabelFromRecruitmentRow(program, 'instructor'),
+      info?.operationPeriodLabel
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     instructorTargetLabel: pickDisplayString(info?.recruitmentTarget),

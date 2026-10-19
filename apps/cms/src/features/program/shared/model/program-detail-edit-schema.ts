@@ -38,6 +38,7 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import { formatAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
+import { toOperationCalendarDate } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import dayjs from 'dayjs'
 import { z } from 'zod'
 import { toUjatVolunteerNoticeExposurePayload } from '@/features/template/lib/ujat-volunteer-notice-exposure'
@@ -1134,7 +1135,10 @@ function resolveRecruitmentOperationPeriodLabels(
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.operationPeriodLabel
 
   const labelFromForm = (start?: string, end?: string, fallback?: string) =>
-    periodLabelFromRange(start, end) ?? fallback
+    periodLabelFromRange(
+      toOperationCalendarDate(start) ?? start,
+      toOperationCalendarDate(end) ?? end
+    ) ?? fallback
 
   if (recruitmentAudience === 'participant') {
     return {

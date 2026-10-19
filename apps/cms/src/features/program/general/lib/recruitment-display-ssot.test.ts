@@ -201,6 +201,31 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     )
   })
 
+  it('참여기관 운영 기간 표시는 옛 operationPeriodLabel보다 모집 행 날짜를 쓴다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      generalParticipantTypes: ['school_institution'],
+      generalProgramAudience: 'organization',
+      programRecruitments: [
+        {
+          id: 186603,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          operationStartDate: '2026-11-18',
+          operationEndDate: '2026-12-25',
+        },
+      ],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          operationPeriodLabel: '2026-11-11 ~ 2026-12-25',
+        },
+      },
+    }
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
+    expect(display.operationPeriodLabel).toContain('2026. 11. 18')
+    expect(display.operationPeriodLabel).not.toContain('11. 11')
+  })
+
   it('교육받은 교사 — nested 라벨이 없으면 컬럼으로 조회를 복원한다', () => {
     const program: Program = {
       ...commonOnlyProgram(),
