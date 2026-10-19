@@ -20,4 +20,14 @@ export interface PortalInstructorTermsAgreement {
   agreed?: boolean | null;
   /** @nullable */
   agreedAt?: string | null;
+  /**
+     * Consent document selected when this request was submitted; null for legacy requests
+     * @nullable
+     */
+  portalConsentDocumentId?: number | null;
+  /**
+     * Consent record for the selected document; null for legacy requests
+     * @nullable
+     */
+  consentRecordId?: number | null;
 }

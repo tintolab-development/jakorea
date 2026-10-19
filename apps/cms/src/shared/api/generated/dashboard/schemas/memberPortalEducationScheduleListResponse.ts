@@ -23,7 +23,7 @@ export interface MemberPortalEducationScheduleListResponse {
      * @nullable
      */
   sessionRound?: MemberPortalEducationScheduleListResponseSessionRound;
-  /** 카드 개수·순서는 프로그램 교육 진행 정의(curriculumSessions/scheduleDetails)가 SSOT. 정의가 비면 scoped program_schedule 폴백. */
+  /** GENERAL_INDIVIDUAL 승인 참여자는 CMS가 확정한 participant education-scope의 program_schedule만 반환하며, line:N 선택은 승인 시 운영 일정으로 materialize됩니다. 미확정 신청은 정의 전용 카드가 표시될 수 있고, ASSIGNMENT_SCOPED에서는 미선택 세부 일정을 펼치지 않습니다. */
   items?: MemberPortalEducationScheduleItem[];
   /** 필드 설명: Schedule evidence scope. For GENERAL_INDIVIDUAL INDIVIDUAL/VOLUNTEER: ASSIGNMENT_SCOPED uses the CMS-confirmed scope (including an explicitly empty scope); RECORDED_ONLY is read-only historical evidence, not the complete curriculum; NO_SCOPE_EVIDENCE has no confirmed scope or recorded rows. PROGRAM_SCHEDULE preserves other program preview semantics, including UJAT. Visibility is not permission to submit attendance. */
   scopeStatus?: MemberPortalEducationScheduleListResponseScopeStatus;
