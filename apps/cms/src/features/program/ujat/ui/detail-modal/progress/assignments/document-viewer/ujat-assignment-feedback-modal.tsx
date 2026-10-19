@@ -104,7 +104,7 @@ export function UjatAssignmentFeedbackModal({
             }
             edit={
               <CmsTextArea
-                inputSize="large"
+                inputSize="small"
                 width="100%"
                 value={text}
                 onChange={e => setText(e.target.value)}

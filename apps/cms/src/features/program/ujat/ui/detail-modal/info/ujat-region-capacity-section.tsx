@@ -55,7 +55,7 @@ function RegionCapacityInputs({
     <div className="ujat-education-class-capacity__inputs">
       <CmsNumericInput
         mode="integer"
-        inputSize="medium"
+        inputSize="small"
         width={120}
         placeholder="최대 학급 수"
         value={values?.classCount ?? ''}
@@ -67,7 +67,7 @@ function RegionCapacityInputs({
       <DetailInfoForm.InputsSeparator />
       <CmsNumericInput
         mode="integer"
-        inputSize="medium"
+        inputSize="small"
         width={120}
         placeholder="최대 봉사자 수"
         value={values?.volunteerCount ?? ''}

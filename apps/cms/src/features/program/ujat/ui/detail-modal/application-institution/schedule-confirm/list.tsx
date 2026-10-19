@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import {
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
@@ -62,7 +60,6 @@ export function UjatInstitutionScheduleConfirmList({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
@@ -72,7 +69,6 @@ export function UjatInstitutionScheduleConfirmList({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >

@@ -222,12 +222,12 @@ export function UjatRecruitVolunteerInfoProgramView({
         control={form.control}
         render={({ field, fieldState }) => (
           <>
-            <CmsRadioGroup
+            <CmsRadioGroup size="medium"
               value={field.value ?? undefined}
               onChange={e => field.onChange(String(e.target.value))}
             >
               {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-                <CmsRadio key={o.value} value={o.value}>
+                <CmsRadio size="medium" key={o.value} value={o.value}>
                   {o.label}
                 </CmsRadio>
               ))}
@@ -290,7 +290,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     <CmsInput
                       {...field}
                       value={field.value ?? (isTemplateAuthoring ? '' : '')}
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                       placeholder="공고용 프로그램명"
                     />
@@ -314,7 +314,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                         {...field}
                         mode="numericText"
                         value={(field.value as string | undefined) ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         width="100%"
                         placeholder="활동 기수"
                         onValueChange={field.onChange}
@@ -373,7 +373,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     <CmsSelect
                       mode="multiple"
                       withAllOption={false}
-                      inputSize="medium"
+                      inputSize="small"
                       width={240}
                       value={normalizeRecruitmentTargetSelectValues(field.value)}
                       onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
@@ -398,7 +398,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     <CmsInput
                       {...field}
                       value={field.value ?? ''}
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                       placeholder="모집 대상 상세"
                     />
@@ -519,7 +519,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                           {...field}
                           value={field.value ?? sponsorName ?? ''}
                           placeholder="담당 문의처"
-                          inputSize="medium"
+                          inputSize="small"
                           className="program-detail-info-tab__contact-name-input"
                         />
                       )}
@@ -539,7 +539,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                           {...field}
                           value={field.value ?? ''}
                           placeholder="문의처 전화번호"
-                          inputSize="medium"
+                          inputSize="small"
                           className="program-detail-info-tab__contact-phone-input"
                         />
                       )}
@@ -559,7 +559,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                           {...field}
                           value={field.value ?? ''}
                           placeholder="문의처 이메일"
-                          inputSize="medium"
+                          inputSize="small"
                           className="program-detail-info-tab__contact-email-input"
                         />
                       )}

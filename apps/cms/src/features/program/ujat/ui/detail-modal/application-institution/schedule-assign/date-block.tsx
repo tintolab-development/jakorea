@@ -95,7 +95,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
                       edit={
                         <div className="detail-info-form-inputs-wrapper-no-gap">
                           <CmsSelect
-                            inputSize="large"
+                            inputSize="small"
                             width="100%"
                             placeholder="학교 선택"
                             options={schoolSelectOptions}
@@ -109,7 +109,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
                           />
                           <DetailInfoForm.InputsSeparator />
                           <CmsSelect
-                            inputSize="large"
+                            inputSize="small"
                             width="100%"
                             mode="multiple"
                             withAllOption={false}

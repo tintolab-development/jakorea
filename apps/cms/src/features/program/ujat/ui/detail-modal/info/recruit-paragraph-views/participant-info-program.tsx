@@ -167,7 +167,7 @@ export function UjatRecruitParticipantInfoProgramView({
                   <CmsInput
                     {...field}
                     value={field.value ?? (isTemplateAuthoring ? '' : '')}
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     placeholder="공고용 프로그램명"
                   />
@@ -222,7 +222,7 @@ export function UjatRecruitParticipantInfoProgramView({
                 render={({ field }) => (
                   <CmsSelect
                     mode="multiple"
-                    inputSize="medium"
+                    inputSize="small"
                     width={240}
                     withAllOption={false}
                     value={field.value ?? []}
@@ -248,7 +248,7 @@ export function UjatRecruitParticipantInfoProgramView({
                   <CmsInput
                     {...field}
                     value={field.value ?? ''}
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     placeholder="교육 대상 상세"
                   />
@@ -329,7 +329,7 @@ export function UjatRecruitParticipantInfoProgramView({
                         {...field}
                         value={field.value ?? sponsorName ?? ''}
                         placeholder="담당 문의처"
-                        inputSize="medium"
+                        inputSize="small"
                         className="program-detail-info-tab__contact-name-input"
                       />
                     )}
@@ -349,7 +349,7 @@ export function UjatRecruitParticipantInfoProgramView({
                         {...field}
                         value={field.value ?? ''}
                         placeholder="문의처 전화번호"
-                        inputSize="medium"
+                        inputSize="small"
                         className="program-detail-info-tab__contact-phone-input"
                       />
                     )}
@@ -369,7 +369,7 @@ export function UjatRecruitParticipantInfoProgramView({
                         {...field}
                         value={field.value ?? ''}
                         placeholder="문의처 이메일"
-                        inputSize="medium"
+                        inputSize="small"
                         className="program-detail-info-tab__contact-email-input"
                       />
                     )}

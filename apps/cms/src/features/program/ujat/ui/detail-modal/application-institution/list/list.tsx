@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
@@ -121,7 +119,6 @@ export function UjatInstitutionApplicationList({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
@@ -131,7 +128,6 @@ export function UjatInstitutionApplicationList({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >

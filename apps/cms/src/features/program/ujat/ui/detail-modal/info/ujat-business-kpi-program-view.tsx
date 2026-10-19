@@ -76,7 +76,7 @@ export function UjatBusinessKpiProgramView({
                 control={form.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                     mode="integer"
@@ -116,7 +116,7 @@ export function UjatBusinessKpiProgramView({
                   <span className="detail-info-form--text">강사</span>
                   <CmsInput
                     disabled
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder={UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE}
                     width={120}
                     value=""
@@ -131,7 +131,7 @@ export function UjatBusinessKpiProgramView({
                       control={form.control}
                       render={({ field }) => (
                         <CmsNumericInput
-                          inputSize="medium"
+                          inputSize="small"
                           placeholder="목표값 입력"
                           width={120}
                           mode="integer"
@@ -145,7 +145,7 @@ export function UjatBusinessKpiProgramView({
                   ) : (
                     <CmsInput
                       disabled
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder={UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE}
                       width={120}
                       value=""
@@ -168,7 +168,7 @@ export function UjatBusinessKpiProgramView({
                 control={form.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                     mode="integer"
@@ -192,7 +192,7 @@ export function UjatBusinessKpiProgramView({
                 control={form.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                     mode="integer"
