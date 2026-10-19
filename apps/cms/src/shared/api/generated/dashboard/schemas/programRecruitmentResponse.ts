@@ -58,4 +58,10 @@ export interface ProgramRecruitmentResponse {
   attachments?: ProgramRecruitmentAttachmentResponse[];
   /** 이 모집 행의 신청 양식 바인딩 id. 행 전용(RECRUITMENT) 바인딩이 없으면 같은 신청 유형의 프로그램 바인딩, 그것도 없으면 null. */
   applicationFormBindingId?: number | null;
+  /** 면접 여부. 저장된 값이 없으면 null. */
+  interviewEnabled?: boolean | null;
+  /** 2차 면접 시작. 저장된 값이 없으면 null. */
+  interviewStartAt?: string | null;
+  /** 2차 면접 종료. 저장된 값이 없으면 null. */
+  interviewEndAt?: string | null;
 }

@@ -5,6 +5,7 @@ import {
   resolveInstitutionCancelApprovalNotifyVariant,
   resolveInstitutionCancelApprovalReasonLabel,
 } from '@/features/program/general/lib/institution-cancel-approval'
+import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { buildInstitutionCancelApprovalCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
 
@@ -55,9 +56,11 @@ describe('institution-cancel-approval', () => {
   })
 
   it('notificationEventId null·존재·필드 부재를 구분한다', () => {
-    expect(resolveInstitutionCancelApprovalNotificationResult({ notificationEventId: null })).toBe(
-      'not-created'
-    )
+    expect(
+      resolveInstitutionCancelApprovalNotificationResult({
+        notificationEventId: null,
+      } as unknown as ApplicationDecisionResponse)
+    ).toBe('not-created')
     expect(resolveInstitutionCancelApprovalNotificationResult({ notificationEventId: 123 })).toBe(
       'created'
     )

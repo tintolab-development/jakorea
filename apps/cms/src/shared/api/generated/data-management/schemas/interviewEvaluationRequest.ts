@@ -11,7 +11,7 @@
  */
 export interface InterviewEvaluationRequest {
   /**
-     * 레거시 평가자 한 명 점수 0~5. 슬롯 점수가 없을 때만 사용. 합계를 넣지 않는다.
+     * 레거시 평가자 한 명 점수. UJAT는 1~5 정수, 그 외는 0~5. 슬롯 점수가 없을 때만 사용. 합계를 넣지 않는다. 미평가는 이 필드를 보내지 않는다.
      * @nullable
      */
   scoreTotal?: number | null;
@@ -21,12 +21,12 @@ export interface InterviewEvaluationRequest {
      */
   comment?: string | null;
   /**
-     * 담당자 A 슬롯 점수. 0 이상 5 이하. 없으면 null
+     * 담당자 A 슬롯 점수. UJAT는 1~5 정수, 그 외는 0 이상 5 이하. 미평가는 null
      * @nullable
      */
   managerAScore?: number | null;
   /**
-     * 담당자 B 슬롯 점수. 0 이상 5 이하. 없으면 null
+     * 담당자 B 슬롯 점수. UJAT는 1~5 정수, 그 외는 0 이상 5 이하. 미평가는 null
      * @nullable
      */
   managerBScore?: number | null;

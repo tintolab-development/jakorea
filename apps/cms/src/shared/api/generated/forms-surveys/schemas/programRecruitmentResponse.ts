@@ -103,4 +103,19 @@ export interface ProgramRecruitmentResponse {
      * @nullable
      */
   applicationFormBindingId?: number | null;
+  /**
+     * 면접 여부. 저장된 값이 없으면 null.
+     * @nullable
+     */
+  interviewEnabled?: boolean | null;
+  /**
+     * 2차 면접 시작. 저장된 값이 없으면 null.
+     * @nullable
+     */
+  interviewStartAt?: string | null;
+  /**
+     * 2차 면접 종료. 저장된 값이 없으면 null.
+     * @nullable
+     */
+  interviewEndAt?: string | null;
 }

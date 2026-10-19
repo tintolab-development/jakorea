@@ -7322,6 +7322,7 @@
           },
           "sessionTimes": {
             "type": "array",
+            "description": "회차별 시각. CURRICULUM+PERIOD는 필수. SCHEDULE+SINGLE+PERIOD 일반 기관 신청은 []/생략/null을 허용하고 공통정보 세부 일정에서 시각을 해석한다.",
             "items": {
               "$ref": "#/components/schemas/PreferredScheduleSessionTimeRequest"
             },
@@ -19453,10 +19454,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -19858,6 +19859,22 @@
               "DRAFT",
               "PUBLISHED"
             ]
+          },
+          "featuredOnHome": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 false."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.",
+            "minimum": 1
           }
         }
       },
@@ -20119,6 +20136,20 @@
               "null"
             ],
             "description": "면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다."
+          },
+          "interviewStartAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "2차 면접 시작. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지."
+          },
+          "interviewEndAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지."
           },
           "clearFields": {
             "type": [
@@ -26184,7 +26215,7 @@
               "number",
               "null"
             ],
-            "description": "레거시 평가자 한 명 점수 0~5. 슬롯 점수가 없을 때만 사용. 합계를 넣지 않는다.",
+            "description": "레거시 평가자 한 명 점수. UJAT는 1~5 정수, 그 외는 0~5. 슬롯 점수가 없을 때만 사용. 합계를 넣지 않는다. 미평가는 이 필드를 보내지 않는다.",
             "example": 3
           },
           "comment": {
@@ -26199,7 +26230,7 @@
               "number",
               "null"
             ],
-            "description": "담당자 A 슬롯 점수. 0 이상 5 이하. 없으면 null",
+            "description": "담당자 A 슬롯 점수. UJAT는 1~5 정수, 그 외는 0 이상 5 이하. 미평가는 null",
             "example": 5
           },
           "managerBScore": {
@@ -26207,7 +26238,7 @@
               "number",
               "null"
             ],
-            "description": "담당자 B 슬롯 점수. 0 이상 5 이하. 없으면 null",
+            "description": "담당자 B 슬롯 점수. UJAT는 1~5 정수, 그 외는 0 이상 5 이하. 미평가는 null",
             "example": 5
           }
         }
@@ -27917,6 +27948,29 @@
             ],
             "format": "int64",
             "description": "이 모집 행의 신청 양식 바인딩 id. 행 전용(RECRUITMENT) 바인딩이 없으면 같은 신청 유형의 프로그램 바인딩, 그것도 없으면 null."
+          },
+          "interviewEnabled": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "면접 여부. 저장된 값이 없으면 null."
+          },
+          "interviewStartAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "2차 면접 시작. 저장된 값이 없으면 null."
+          },
+          "interviewEndAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "2차 면접 종료. 저장된 값이 없으면 null."
           }
         }
       },
@@ -28239,6 +28293,18 @@
           },
           "settlementPolicy": {
             "$ref": "#/components/schemas/ProgramSettlementPolicyResponse"
+          },
+          "featuredOnHome": {
+            "type": "boolean",
+            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. Portal featuredOnHome 필터와 동일 컬럼."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서. 양의 정수이며 null이면 후순위."
           },
           "createdAt": {
             "type": "string",
@@ -33257,6 +33323,22 @@
               "DRAFT",
               "PUBLISHED"
             ]
+          },
+          "featuredOnHome": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서. 1 이상 정수. 생략 시 기존 값을 유지하고 clearFields에 포함하면 null로 초기화한다.",
+            "minimum": 1
           }
         }
       },
@@ -35792,7 +35874,7 @@
               "string",
               "null"
             ],
-            "description": "교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.",
+            "description": "프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다.",
             "enum": [
               "elementary",
               "middle",
@@ -35803,13 +35885,17 @@
           },
           "educationTargets": {
             "type": "array",
-            "description": "교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult.",
+            "description": "프로그램 공통 교육 대상 코드 배열. 포커스와 무관하게 같다. 없으면 생략. 강사·봉사자 recruitmentTargets를 넣지 않는다.",
             "items": {
               "type": "string"
             }
           },
           "educationTargetDetail": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램 공통 교육 대상 상세. 포커스와 무관하게 같다. 없으면 null."
           },
           "recruitmentTarget": {
             "type": [
@@ -36467,7 +36553,7 @@
           "form": {
             "type": "object",
             "additionalProperties": {},
-            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate가 포함됩니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용합니다. TRAINED_TEACHER 기간형 기관 신청은 businessStartDate/businessEndDate를 단일 허용 기간으로 반환하고, 그 외 유형은 typed detail 교육 가능 기간을 사용합니다. 유효한 일정이 없으면 빈 배열과 null 날짜를 반환합니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
+            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate, maxScheduleCount, maxSessionsPerDay가 포함됩니다. maxScheduleCount는 기간형 희망 일정 개수 상한이고 maxSessionsPerDay는 CURRICULUM+MULTI+PERIOD의 1일 최대 차시이며 적용되지 않으면 null입니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용하며 TRAINED_TEACHER 기간형 기관 신청은 CMS typed detail 교육 가능 기간을 사용합니다. typed detail 교육 기간이 없으면 빈 배열과 null 날짜를 반환하며 프로그램 사업기간으로 대체하지 않습니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
           },
           "draftApplicationId": {
             "type": "integer",
@@ -48928,15 +49014,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -52832,101 +52918,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "OrganizationApplicationSession": {
-        "type": "object",
-        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "grade": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "className": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "classLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "OrganizationApplicationSessionResponse": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "requestedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "resolvedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "scheduleUnresolved": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
           }
         }
       }

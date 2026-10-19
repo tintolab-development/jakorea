@@ -64,6 +64,10 @@ export interface ProgramRecruitmentRequest {
   otherMatters?: string | null;
   /** 면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다. */
   interviewEnabled?: boolean | null;
+  /** 2차 면접 시작. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지. */
+  interviewStartAt?: string | null;
+  /** 2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지. */
+  interviewEndAt?: string | null;
   /** null 로 비울 필드 이름. 예: ["maxCount","remarks"] */
   clearFields?: string[] | null;
 }

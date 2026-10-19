@@ -64,13 +64,17 @@ export interface ProgramDetailResponse {
   otherMatters?: string;
   remarks?: string;
   /**
-     * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
+     * 프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다.
      * @nullable
      */
   educationTarget?: ProgramDetailResponseEducationTarget;
-  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
+  /** 프로그램 공통 교육 대상 코드 배열. 포커스와 무관하게 같다. 없으면 생략. 강사·봉사자 recruitmentTargets를 넣지 않는다. */
   educationTargets?: string[];
-  educationTargetDetail?: string;
+  /**
+     * 프로그램 공통 교육 대상 상세. 포커스와 무관하게 같다. 없으면 null.
+     * @nullable
+     */
+  educationTargetDetail?: string | null;
   /**
      * 강사·봉사자 모집 공고 포커스일 때 nested recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null.
      * @nullable

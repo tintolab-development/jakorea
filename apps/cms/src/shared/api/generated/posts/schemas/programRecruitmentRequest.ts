@@ -113,6 +113,16 @@ export interface ProgramRecruitmentRequest {
      */
   interviewEnabled?: boolean | null;
   /**
+     * 2차 면접 시작. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지.
+     * @nullable
+     */
+  interviewStartAt?: string | null;
+  /**
+     * 2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지.
+     * @nullable
+     */
+  interviewEndAt?: string | null;
+  /**
      * null 로 비울 필드 이름. 예: ["maxCount","remarks"]
      * @nullable
      */

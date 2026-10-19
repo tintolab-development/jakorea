@@ -14,6 +14,7 @@ export interface PreferredScheduleBlockRequest {
   sessionCount?: number;
   session?: string;
   /**
+     * 회차별 시각. CURRICULUM+PERIOD는 필수. SCHEDULE+SINGLE+PERIOD 일반 기관 신청은 []/생략/null을 허용하고 공통정보 세부 일정에서 시각을 해석한다.
      * @minItems 0
      * @maxItems 16
      */

@@ -129,4 +129,15 @@ export interface ProgramUpdateRequest {
      * @nullable
      */
   draftStatus?: ProgramUpdateRequestDraftStatus;
+  /**
+     * CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다.
+     * @nullable
+     */
+  featuredOnHome?: boolean | null;
+  /**
+     * 홈 캐러셀 정렬 순서. 1 이상 정수. 생략 시 기존 값을 유지하고 clearFields에 포함하면 null로 초기화한다.
+     * @minimum 1
+     * @nullable
+     */
+  homeDisplayOrder?: number | null;
 }
