@@ -41,13 +41,18 @@ export function programDetailCacheFromSave(
 /**
  * 열린 상세 캐시를 저장 결과로 갈아끼운 뒤 다시 조회한다.
  * 저장 전에 나가 있던 GET이 나중에 도착해 새 값을 덮지 않게 먼저 취소한다.
+ *
+ * 공통정보·모집 행 저장은 `refetch: false`. 직후 GET이 저장 전 상세를 돌려주면
+ * 방금 저장한 공통정보·모집 화면이 다시 이전 값으로 돌아간다.
  */
 export async function syncOpenProgramDetailCache(
   queryClient: QueryClient,
   detailKey: QueryKey,
-  next: Program
+  next: Program,
+  options?: { refetch?: boolean }
 ): Promise<void> {
   await queryClient.cancelQueries({ queryKey: detailKey })
   queryClient.setQueryData(detailKey, next)
+  if (options?.refetch === false) return
   await queryClient.invalidateQueries({ queryKey: detailKey })
 }
