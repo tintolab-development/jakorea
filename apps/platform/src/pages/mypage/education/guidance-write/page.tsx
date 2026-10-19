@@ -81,6 +81,20 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     )
   }
 
+  if (program?.preEducationNoticeRequired === false) {
+    return (
+      <PFFormPage
+        aria-label="안내사항"
+        back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+        title="안내사항"
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          사전 안내 사항 작성이 해당없는 프로그램입니다.
+        </PFText>
+      </PFFormPage>
+    )
+  }
+
   if (!application || program?.programAudience !== 'organization') {
     return (
       <PFFormPage

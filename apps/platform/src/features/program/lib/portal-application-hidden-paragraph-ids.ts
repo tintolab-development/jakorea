@@ -40,6 +40,22 @@ export function readPreEducationNoticeRequiredFromRuntime(runtime: unknown): boo
   return null
 }
 
+/**
+ * 기관 신청 화면 전용.
+ * form runtime이 있으면 그 값이 정본이다. 없으면 기관 참여자 모집 상세 값.
+ * 둘 다 없으면 레거시 작성(true). 강사·봉사자 신청에는 호출하지 않는다.
+ */
+export function resolveInstitutionPreEducationNoticeRequired(
+  program: { preEducationNoticeRequired?: boolean | null } | null | undefined,
+  runtimeContext?: unknown,
+): boolean {
+  return (
+    readPreEducationNoticeRequiredFromRuntime(runtimeContext) ??
+    program?.preEducationNoticeRequired ??
+    true
+  )
+}
+
 export type ResolvePortalApplicationHiddenParagraphIdsInput = {
   applyCase: ProgramApplyFormCase | null
   program?: ProgramDetail | null
@@ -102,18 +118,19 @@ export function resolvePortalApplicationHiddenParagraphIds(
     }
   }
 
-  if (applyCase === 'institution-general') {
-    const preEducation =
-      readPreEducationNoticeRequiredFromRuntime(runtimeContext) ??
-      program?.preEducationNoticeRequired ??
-      true
-    const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
-      ...scheduleVisibility,
-      preEducationNoticeRequired: preEducation,
-      showSexOffenseConsentInquiryParagraph:
-        input.showSexOffenseConsentInquiryParagraph ?? true,
-    })
-    institutionHidden?.forEach(id => hidden.add(id))
+  if (applyCase === 'institution-general' || applyCase === 'institution-economy') {
+    const preEducation = resolveInstitutionPreEducationNoticeRequired(program, runtimeContext)
+    if (applyCase === 'institution-general') {
+      const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
+        ...scheduleVisibility,
+        preEducationNoticeRequired: preEducation,
+        showSexOffenseConsentInquiryParagraph:
+          input.showSexOffenseConsentInquiryParagraph ?? true,
+      })
+      institutionHidden?.forEach(id => hidden.add(id))
+    } else if (preEducation === false) {
+      hidden.add(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance)
+    }
   }
 
   if (applyCase === 'trained-teachers') {

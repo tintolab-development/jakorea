@@ -1033,6 +1033,75 @@ const rowScopedEmpty = mapPortalProgramDetail(
 assert.ok(rowScopedEmpty)
 assert.equal(rowScopedEmpty.title, '참여자 공고')
 assert.equal(rowScopedEmpty.preEducationNoticeRequired, false)
+
+const unfocusedOrganizationFlag = mapPortalProgramDetail({
+  programId: 168005,
+  title: '프로그램 제목',
+  programType: 'GENERAL_ORGANIZATION',
+  applicationTargetMode: 'ORGANIZATION',
+  recruitments: [
+    {
+      recruitmentId: 168251,
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      applicationTypes: ['ORGANIZATION'],
+      preEducationNoticeRequired: false,
+      advanceGuidanceRequired: false,
+    },
+    {
+      recruitmentId: 168252,
+      recruitmentType: 'INSTRUCTOR',
+      targetType: 'TEACHER',
+      applicationTypes: ['INSTRUCTOR'],
+      preEducationNoticeRequired: true,
+    },
+  ],
+})
+assert.equal(unfocusedOrganizationFlag?.preEducationNoticeRequired, false)
+
+const instructorFocusIgnoresOrgFlag = mapPortalProgramDetail(
+  {
+    programId: 168006,
+    title: '프로그램 제목',
+    programType: 'GENERAL_ORGANIZATION',
+    preEducationNoticeRequired: false,
+    recruitments: [
+      {
+        recruitmentId: 168261,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        applicationTypes: ['ORGANIZATION'],
+        preEducationNoticeRequired: false,
+      },
+      {
+        recruitmentId: 168262,
+        recruitmentType: 'INSTRUCTOR',
+        targetType: 'TEACHER',
+        applicationTypes: ['INSTRUCTOR'],
+        announcementTitle: '강사 공고',
+        preEducationNoticeRequired: true,
+      },
+    ],
+  },
+  { recruitmentIds: [168262], applicationTypes: ['INSTRUCTOR'] },
+)
+assert.equal(instructorFocusIgnoresOrgFlag?.preEducationNoticeRequired, undefined)
+
+const legacyOrganizationFlag = mapPortalProgramDetail({
+  programId: 168007,
+  title: '프로그램 제목',
+  programType: 'GENERAL_ORGANIZATION',
+  applicationTargetMode: 'ORGANIZATION',
+  recruitments: [
+    {
+      recruitmentId: 168271,
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      applicationTypes: ['ORGANIZATION'],
+    },
+  ],
+})
+assert.equal(legacyOrganizationFlag?.preEducationNoticeRequired, undefined)
 assert.equal(rowScopedEmpty.summary, '참여자 프로그램 설명')
 assert.equal(
   rowScopedEmpty.extraSections.some(section => section.title === '프로그램 설명'),

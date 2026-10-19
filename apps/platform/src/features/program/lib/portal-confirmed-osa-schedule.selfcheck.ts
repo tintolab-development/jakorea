@@ -88,6 +88,36 @@ const guidanceRuntimeOverridesProgram = resolvePortalApplicationHiddenParagraphI
 })
 assert.equal(guidanceRuntimeOverridesProgram.has(institutionGuidanceId), false)
 
+const economyGuidanceId = 'program-application-economy-seed-guidance'
+const economyGuidanceHidden = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-economy',
+  program: { preEducationNoticeRequired: false } as never,
+  paragraphs: [{ id: economyGuidanceId } as never],
+})
+assert.equal(economyGuidanceHidden.has(economyGuidanceId), true)
+
+const guidanceShownWhenFlagMissing = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: {} as never,
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceShownWhenFlagMissing.has(institutionGuidanceId), false)
+
+const guidanceHiddenByRuntime = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { preEducationNoticeRequired: true } as never,
+  runtimeContext: { preEducationNoticeRequired: false },
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceHiddenByRuntime.has(institutionGuidanceId), true)
+
+const instructorIgnoresInstitutionGuidanceFlag = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'instructor',
+  program: { preEducationNoticeRequired: false } as never,
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(instructorIgnoresInstitutionGuidanceFlag.has(institutionGuidanceId), false)
+
 const trainedScheduleId = PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
 const trainedScheduleHidden = resolvePortalApplicationHiddenParagraphIds({
   applyCase: 'trained-teachers',

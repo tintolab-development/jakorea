@@ -155,6 +155,56 @@ function readBoolean(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined
 }
 
+function readCanonicalPreEducationNoticeFlag(source: unknown): boolean | undefined {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return undefined
+  const record = source as Record<string, unknown>
+  return (
+    readBoolean(record.preEducationNoticeRequired) ??
+    readBoolean(record.advanceGuidanceRequired)
+  )
+}
+
+/** 기관 참여자 모집 행. 강사·봉사자 행은 제외한다. */
+function isOrganizationParticipantRecruitment(row: PortalRecruitment | undefined): boolean {
+  if (!row || row.recruitmentType?.trim().toUpperCase() !== 'PARTICIPANT') return false
+  const targetType = row.targetType?.trim().toUpperCase()
+  const applicationType = row.applicationType?.trim().toUpperCase()
+  const applicationTypes = (row.applicationTypes ?? []).map(type => type.trim().toUpperCase())
+  return (
+    targetType === 'ORGANIZATION' ||
+    applicationType === 'ORGANIZATION' ||
+    applicationTypes.includes('ORGANIZATION')
+  )
+}
+
+/**
+ * 기관 참여자 모집의 「사전 안내 사항 작성 여부」.
+ * 포커스가 강사·봉사자 행이면 그 행과 프로그램 최상위를 쓰지 않는다.
+ * 필드가 없으면 undefined. 기관 신청 화면에서만 레거시 기본값 true를 적용한다.
+ */
+function readPortalPreEducationNoticeRequired(
+  remote: PortalProgramDetail,
+  independentRow: PortalRecruitment | undefined,
+): boolean | undefined {
+  if (independentRow) {
+    if (!isOrganizationParticipantRecruitment(independentRow)) return undefined
+    return readCanonicalPreEducationNoticeFlag(independentRow) ?? readCanonicalPreEducationNoticeFlag(remote)
+  }
+
+  const organizationRows = (remote.recruitments ?? []).filter(isOrganizationParticipantRecruitment)
+  const rowFlags = organizationRows
+    .map(row => readCanonicalPreEducationNoticeFlag(row))
+    .filter((flag): flag is boolean => flag !== undefined)
+  if (rowFlags.length > 0 && rowFlags.every(flag => flag === rowFlags[0])) return rowFlags[0]
+  if (
+    organizationRows.length > 0 ||
+    remote.applicationTargetMode?.trim().toUpperCase() === 'ORGANIZATION'
+  ) {
+    return readCanonicalPreEducationNoticeFlag(remote)
+  }
+  return undefined
+}
+
 function toDate(value: string | undefined): Date | null {
   if (!value?.trim()) return null
   const date = new Date(value)
@@ -1160,11 +1210,7 @@ export function mapPortalProgramDetail(
   )
   const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
   const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
-  const preEducationNoticeRequired =
-    readBoolean(independentRow?.preEducationNoticeRequired) ??
-    readBoolean(independentRow?.advanceGuidanceRequired) ??
-    readBoolean(remote.preEducationNoticeRequired) ??
-    readBoolean(remote.advanceGuidanceRequired)
+  const preEducationNoticeRequired = readPortalPreEducationNoticeRequired(remote, independentRow)
   const extraSections: ProgramExtraSection[] = [
     extraSection('모집 안내', recruitmentGuide),
     { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
