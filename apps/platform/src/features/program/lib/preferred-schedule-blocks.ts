@@ -93,15 +93,42 @@ export function toPreferredScheduleAnswerValue(
 export function toFixedScheduleOptionAnswerValue(
   blocks: readonly Pick<ApplyPreferredScheduleBlock, 'scheduleOptionId'>[],
 ): string[] | null {
+  return toFixedScheduleSelectedIds(
+    blocks.map(block => block.scheduleOptionId)
+  )
+}
+
+/** Runtime `scheduleOptions[].value|id` 선택 배열. 빈 선택은 null. */
+export function toFixedScheduleSelectedIds(
+  selectedIds: readonly (string | null | undefined)[],
+): string[] | null {
   const out: string[] = []
   const seen = new Set<string>()
-  for (const block of blocks) {
-    const value = block.scheduleOptionId?.trim()
+  for (const selected of selectedIds) {
+    const value = selected?.trim()
     if (!value || seen.has(value)) continue
     seen.add(value)
     out.push(value)
   }
   return out.length > 0 ? out : null
+}
+
+export function capFixedScheduleSelectedIds(
+  selectedIds: readonly string[],
+  maxCount?: number | null,
+): string[] {
+  const unique = toFixedScheduleSelectedIds(selectedIds) ?? []
+  if (maxCount == null || maxCount < 1) return unique
+  return unique.slice(0, maxCount)
+}
+
+export function selectedFixedScheduleIdsFromDraftAnswer(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  return (
+    toFixedScheduleSelectedIds(
+      raw.map(item => (typeof item === 'string' || typeof item === 'number' ? String(item) : ''))
+    ) ?? []
+  )
 }
 
 /** 화면 검증 — 날짜만 있고 교시·시간이 비면 제출 차단 */

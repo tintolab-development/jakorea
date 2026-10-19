@@ -129,6 +129,57 @@ for (const scheduleOptions of [
   assert.equal(trainedScheduleHiddenWithRuntimeOptions.has(trainedScheduleId), true)
 }
 
+const trainedCurriculumMultiDateVisible = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'trained-teachers',
+  program: {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: ['2026-11-08 ~ 2027-02-24 종일'],
+  } as never,
+  runtimeContext: {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: '201', value: '201', label: '2026-11-02 10:00~12:00' },
+      { id: '202', value: '202', label: '2026-11-09 13:30~16:00' },
+    ],
+  },
+  paragraphs: [{ id: trainedScheduleId } as never],
+})
+assert.equal(trainedCurriculumMultiDateVisible.has(trainedScheduleId), false)
+
+const trainedCurriculumSingleOptionStillVisible = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'trained-teachers',
+  program: {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: ['2026-11-08 ~ 2027-02-24 종일'],
+  } as never,
+  runtimeContext: {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [{ id: '201', value: '201', label: '2026-11-02 10:00~12:00' }],
+  },
+  paragraphs: [{ id: trainedScheduleId } as never],
+})
+assert.equal(trainedCurriculumSingleOptionStillVisible.has(trainedScheduleId), false)
+
+const trainedCurriculumEmptyOptionsStillVisible = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'trained-teachers',
+  program: {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: ['2026-11-08 ~ 2027-02-24 종일'],
+  } as never,
+  runtimeContext: {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [],
+  },
+  paragraphs: [{ id: trainedScheduleId } as never],
+})
+assert.equal(trainedCurriculumEmptyOptionsStillVisible.has(trainedScheduleId), false)
+
 const institutionScheduleId = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
 const institutionScheduleHidden = resolvePortalApplicationHiddenParagraphIds({
   applyCase: 'institution-general',

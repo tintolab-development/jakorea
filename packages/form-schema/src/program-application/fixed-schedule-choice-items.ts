@@ -141,22 +141,27 @@ export function readRuntimeFixedScheduleChoiceItems(
     isRecord(paragraph) && Array.isArray(paragraph.scheduleOptions)
       ? paragraph.scheduleOptions
       : null
-  const rawItems = toRawScheduleOptionRecords(
-    pickLongestScheduleOptionList(fromRuntime, fromParagraphRuntime),
-  )
-  if (!rawItems || rawItems.length === 0) return null
+  const boundOptions = pickLongestScheduleOptionList(fromRuntime, fromParagraphRuntime)
+  if (boundOptions == null) {
+    if (Array.isArray(fromRuntime) || Array.isArray(fromParagraphRuntime)) return []
+    return null
+  }
+
+  const rawItems = toRawScheduleOptionRecords(boundOptions)
+  if (!rawItems) return []
 
   const items: RuntimeFixedScheduleChoiceItem[] = []
   const seen = new Set<string>()
   for (const item of rawItems) {
-    const id = ['value', 'option_value', 'id']
+    const token = institutionFixedScheduleOptionToken(item)
+    const fallbackId = ['value', 'option_value', 'id']
       .map(key => item[key])
       .find(
         value =>
           (typeof value === 'string' || typeof value === 'number') && String(value).trim(),
       )
-    const normalizedId = id == null ? '' : String(id).trim()
-    if (!normalizedId || seen.has(normalizedId)) return null
+    const normalizedId = (token || (fallbackId == null ? '' : String(fallbackId))).trim()
+    if (!normalizedId || seen.has(normalizedId)) continue
     seen.add(normalizedId)
     const label = String(
       item.label ?? item.option_label ?? item.scheduleId ?? item.startAt ?? normalizedId,

@@ -5,7 +5,9 @@
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   getVolunteerApplicationFormHiddenParagraphIds,
+  isApplicationScheduleParagraphForcedHidden,
   mergeApplicationScheduleVisibilityInput,
+  readApplicationScheduleInputMode,
   readEducationScheduleLinesForApplicationForm,
   shouldShowApplicationScheduleParagraphResolved,
 } from '@jakorea/form-schema/program-application'
@@ -60,7 +62,9 @@ export function resolvePortalApplicationHiddenParagraphIds(
   const { applyCase, program, runtimeContext, paragraphs } = input
 
   const scheduleParagraphRaw = paragraphs.find(paragraph =>
-    isApplyScheduleChoiceParagraphId(paragraph.id)
+    applyCase === 'trained-teachers'
+      ? paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+      : isApplyScheduleChoiceParagraphId(paragraph.id)
   )
   const scheduleLines = readEducationScheduleLinesForApplicationForm(
     runtimeContext,
@@ -112,15 +116,27 @@ export function resolvePortalApplicationHiddenParagraphIds(
     institutionHidden?.forEach(id => hidden.add(id))
   }
 
-  if (
-    applyCase === 'trained-teachers' &&
-    !shouldShowApplicationScheduleParagraphResolved({
-      ...scheduleVisibility,
+  if (applyCase === 'trained-teachers') {
+    const trainedScheduleParagraph = paragraphs.find(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+    )
+    const trainedScheduleMode = readApplicationScheduleInputMode(
       runtimeContext,
-      scheduleParagraphRaw,
-    })
-  ) {
-    hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+      trainedScheduleParagraph
+    )
+    if (isApplicationScheduleParagraphForcedHidden(scheduleVisibility)) {
+      hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+    } else if (trainedScheduleMode !== 'fixed_schedule_options') {
+      if (
+        !shouldShowApplicationScheduleParagraphResolved({
+          ...scheduleVisibility,
+          runtimeContext,
+          scheduleParagraphRaw: trainedScheduleParagraph,
+        })
+      ) {
+        hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+      }
+    }
   }
 
   if (
