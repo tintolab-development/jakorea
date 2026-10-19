@@ -13,8 +13,6 @@ export const SURVEY_POLL_REGISTER_MODAL_COPY = {
   templatePlaceholder: '사용할 설문 양식을 선택해 주세요',
   scheduleLabel: '설문 대상 일정',
   schedulePlaceholder: '설문을 진행할 교육 일정을 선택해 주세요',
-  scheduleEmptyHint:
-    '공통 교육 일정 정보를 불러올 수 없습니다. 백엔드 배포 또는 데이터 migration 상태를 확인해 주세요.',
 } as const
 
 export type SurveyPollRegisterModalProps = {
@@ -119,11 +117,6 @@ export function SurveyPollRegisterModal({
             value={scheduleValue ?? undefined}
             onChange={value => onScheduleChange(value ?? null)}
             disabled={!hasSessionSchedules || schedulesLoading}
-            message={
-              !hasSessionSchedules && !schedulesLoading
-                ? SURVEY_POLL_REGISTER_MODAL_COPY.scheduleEmptyHint
-                : undefined
-            }
           />
         ) : null}
       </div>

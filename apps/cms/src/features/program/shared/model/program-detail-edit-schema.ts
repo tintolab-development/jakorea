@@ -58,7 +58,10 @@ import {
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
-import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
+import {
+  resolveProgramSurveyMenuKeys,
+  syncSurveyItemsIntoRegistrationOverlay,
+} from '@/features/program/general/lib/general-survey-menu-keys'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
@@ -1037,13 +1040,14 @@ export function programToDetailEditValues(
     ips: normalizeIpsFormValue(program.ips),
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
-    surveySurvey: program.generalSurveyMenuKeys?.includes('survey') ?? false,
-    surveySatisfaction: (() => {
-      const keys = new Set<string>(program.generalSurveyMenuKeys ?? [])
-      return keys.has('satisfaction') || keys.has('student_satisfaction') || keys.has('teacher_satisfaction')
+    ...(() => {
+      const keys = resolveProgramSurveyMenuKeys(program)
+      return {
+        surveySurvey: keys.includes('survey'),
+        surveySatisfaction: keys.includes('satisfaction'),
+        surveyLectureEvaluation: keys.includes('lecture_evaluation'),
+      }
     })(),
-    surveyLectureEvaluation:
-      program.generalSurveyMenuKeys?.includes('lecture_evaluation') ?? false,
     wageType: undefined,
     wagePricingTimeUnit: undefined,
     wagePricingMeasureLabel: undefined,

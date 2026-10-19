@@ -1,0 +1,13 @@
+---
+description: 설문·강의평가 일정 바인딩 — API schedule id만, 공통정보 가짜 연결 금지
+globs: apps/cms/src/features/program/**/*survey*
+alwaysApply: false
+---
+
+# 설문·일정 바인딩 SSOT
+
+CMS 설문 대상 일정 작업 시 아래 process rule을 따른다.
+
+→ **[apps/cms/.cursor/rules/process/program-survey-schedule-binding-ssot.mdc](../apps/cms/.cursor/rules/process/program-survey-schedule-binding-ssot.mdc)**
+
+요약: `GET education-slots` **서버 scheduleId만** SCHEDULE 후보. `/schedules`·`scheduleDetails`로 가짜 옵션/바인딩 금지. 공백이면 빈 상태 유지.

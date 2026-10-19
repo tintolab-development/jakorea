@@ -167,32 +167,157 @@ export function readInstitutionAllowedSchedulePeriods(
   return raw
 }
 
-/** Portal form.runtimeContext의 일정 계약만 읽는다. 프로그램 상세 일정은 사용하지 않는다. */
-export function readRuntimeScheduleConfig(runtime: unknown): ApplyRuntimeScheduleConfig {
+/**
+ * Portal form-bindings 일정 계약만 읽는다.
+ * 프로그램 상세 `educationScheduleLines` / 사업기간 / `schedules[].startAt|endAt` 은 사용하지 않는다.
+ * 단락·runtimeContext 중 비어 있지 않은 `allowedSchedulePeriods`를 우선한다.
+ */
+export function readRuntimeScheduleConfig(
+  runtime: unknown,
+  paragraph?: unknown
+): ApplyRuntimeScheduleConfig {
   const record = isRecord(runtime) ? runtime : null
+  const paragraphRecord = isRecord(paragraph) ? paragraph : null
+  const fromParagraphPeriods =
+    paragraphRecord && 'runtimeAllowedSchedulePeriods' in paragraphRecord
+      ? readSchedulePeriodBoundsList(paragraphRecord.runtimeAllowedSchedulePeriods)
+      : undefined
+  const fromRuntimePeriods =
+    record && 'allowedSchedulePeriods' in record
+      ? readSchedulePeriodBoundsList(record.allowedSchedulePeriods)
+      : undefined
+  const allowedSchedulePeriods =
+    fromParagraphPeriods != null && fromParagraphPeriods.length > 0
+      ? fromParagraphPeriods
+      : fromRuntimePeriods != null && fromRuntimePeriods.length > 0
+        ? fromRuntimePeriods
+        : fromParagraphPeriods !== undefined
+          ? (fromParagraphPeriods ?? [])
+          : fromRuntimePeriods !== undefined
+            ? (fromRuntimePeriods ?? [])
+            : null
+  const paragraphMin = paragraphRecord
+    ? readIsoDateOrNull(paragraphRecord.runtimeMinDate)
+    : null
+  const paragraphMax = paragraphRecord
+    ? readIsoDateOrNull(paragraphRecord.runtimeMaxDate)
+    : null
   return {
-    scheduleInputMode: readApplyScheduleInputMode(runtime),
-    allowedSchedulePeriods:
-      record && 'allowedSchedulePeriods' in record
-        ? (readSchedulePeriodBoundsList(record.allowedSchedulePeriods) ?? [])
-        : null,
-    minScheduleDate: record ? readIsoDateOrNull(record.minScheduleDate) : null,
-    maxScheduleDate: record ? readIsoDateOrNull(record.maxScheduleDate) : null,
+    scheduleInputMode: readApplyScheduleInputMode(runtime, paragraph),
+    allowedSchedulePeriods,
+    minScheduleDate: paragraphMin ?? (record ? readIsoDateOrNull(record.minScheduleDate) : null),
+    maxScheduleDate: paragraphMax ?? (record ? readIsoDateOrNull(record.maxScheduleDate) : null),
   }
 }
 
-export function isRuntimeScheduleNotConfigured(runtime: unknown): boolean {
-  const config = readRuntimeScheduleConfig(runtime)
-  return (
-    config.scheduleInputMode === 'date_time_requests' &&
-    (config.allowedSchedulePeriods?.length ?? 0) === 0 &&
-    config.minScheduleDate == null &&
-    config.maxScheduleDate == null
+function hasRuntimeAllowedSchedulePeriods(
+  config: ApplyRuntimeScheduleConfig
+): config is ApplyRuntimeScheduleConfig & {
+  allowedSchedulePeriods: ApplySchedulePeriodBounds[]
+} {
+  return (config.allowedSchedulePeriods?.length ?? 0) > 0
+}
+
+export function isDateInAllowedSchedulePeriods(
+  date: string,
+  periods: readonly ApplySchedulePeriodBounds[]
+): boolean {
+  return periods.some(period => date >= period.startDate && date <= period.endDate)
+}
+
+function readRuntimeScheduleMode(runtime: unknown): 'date' | 'period' | null {
+  if (!isRecord(runtime)) return null
+  const raw = String(runtime.scheduleMode ?? runtime.educationScheduleMode ?? '')
+    .trim()
+    .toUpperCase()
+  if (raw === 'PERIOD' || raw === 'DATE_PERIOD') return 'period'
+  if (raw === 'DATE' || raw === 'FIXED_DATE') return 'date'
+  return null
+}
+
+function readRuntimeApplicationFlavor(runtime: unknown): string | null {
+  if (!isRecord(runtime)) return null
+  const raw = String(runtime.applicationFlavor ?? '').trim().toUpperCase()
+  return raw || null
+}
+
+function readRuntimeProgramType(runtime: unknown): string | null {
+  if (!isRecord(runtime)) return null
+  const raw = String(runtime.programType ?? '').trim().toUpperCase()
+  return raw || null
+}
+
+function schedulePeriodBoundsEqual(
+  a: readonly ApplySchedulePeriodBounds[] | null | undefined,
+  b: readonly ApplySchedulePeriodBounds[] | null | undefined
+): boolean {
+  if (a == null && b == null) return true
+  if (a == null || b == null) return false
+  if (a.length !== b.length) return false
+  return a.every(
+    (period, index) =>
+      period.startDate === b[index]?.startDate && period.endDate === b[index]?.endDate
   )
 }
 
-export function resolveRuntimeScheduleDateBounds(runtime: unknown): ApplyScheduleDateBounds {
+/**
+ * TRAINED_TEACHER · ORGANIZATION · PERIOD · date_time_requests
+ * — 희망 교육일 date picker 기간형 경로 활성화 조건 (허용 기간 유무와 별개).
+ */
+export function isTrainedTeachersOrganizationPeriodDateRequests(
+  runtime: unknown,
+  paragraph?: unknown
+): boolean {
+  const config = readRuntimeScheduleConfig(runtime, paragraph)
+  return (
+    readRuntimeProgramType(runtime) === 'TRAINED_TEACHER' &&
+    readRuntimeApplicationFlavor(runtime) === 'ORGANIZATION' &&
+    readRuntimeScheduleMode(runtime) === 'period' &&
+    config.scheduleInputMode === 'date_time_requests'
+  )
+}
+
+/**
+ * form.runtimeContext 와 희망 일정 단락 runtime 필드가 동일 계약인지 확인한다.
+ * 불일치면 FE는 비어 있지 않은 쪽을 우선하지만, 계약 검증·테스트는 실패로 본다.
+ */
+export function areTrainedTeachersScheduleRuntimeFieldsInSync(
+  runtime: unknown,
+  paragraph: unknown
+): boolean {
+  if (!isRecord(paragraph)) return false
   const config = readRuntimeScheduleConfig(runtime)
+  const paragraphMode = readApplyScheduleInputMode(runtime, paragraph)
+  const paragraphPeriods =
+    'runtimeAllowedSchedulePeriods' in paragraph
+      ? (readSchedulePeriodBoundsList(paragraph.runtimeAllowedSchedulePeriods) ?? [])
+      : null
+  const paragraphMin = readIsoDateOrNull(paragraph.runtimeMinDate)
+  const paragraphMax = readIsoDateOrNull(paragraph.runtimeMaxDate)
+  return (
+    config.scheduleInputMode === paragraphMode &&
+    schedulePeriodBoundsEqual(config.allowedSchedulePeriods, paragraphPeriods) &&
+    config.minScheduleDate === paragraphMin &&
+    config.maxScheduleDate === paragraphMax
+  )
+}
+
+/** `date_time_requests` 인데 허용 기간이 없으면 fail-closed. min/max만으로는 날짜를 열지 않는다. */
+export function isRuntimeScheduleNotConfigured(
+  runtime: unknown,
+  paragraph?: unknown
+): boolean {
+  const config = readRuntimeScheduleConfig(runtime, paragraph)
+  return (
+    config.scheduleInputMode === 'date_time_requests' && !hasRuntimeAllowedSchedulePeriods(config)
+  )
+}
+
+export function resolveRuntimeScheduleDateBounds(
+  runtime: unknown,
+  paragraph?: unknown
+): ApplyScheduleDateBounds {
+  const config = readRuntimeScheduleConfig(runtime, paragraph)
   return {
     minScheduleDate: config.minScheduleDate,
     maxScheduleDate: config.maxScheduleDate,
@@ -201,13 +326,14 @@ export function resolveRuntimeScheduleDateBounds(runtime: unknown): ApplySchedul
 
 export function resolveRuntimeScheduleEnabledDates(
   runtime: unknown,
-  restrictWhenUnavailable = false
+  restrictWhenUnavailable = false,
+  paragraph?: unknown
 ): ReadonlySet<string> | null {
-  const config = readRuntimeScheduleConfig(runtime)
-  if (config.allowedSchedulePeriods != null && config.allowedSchedulePeriods.length > 0) {
+  const config = readRuntimeScheduleConfig(runtime, paragraph)
+  if (hasRuntimeAllowedSchedulePeriods(config)) {
     return buildEnabledDatesFromAllowedSchedulePeriods(config.allowedSchedulePeriods)
   }
-  return restrictWhenUnavailable && isRuntimeScheduleNotConfigured(runtime)
+  return restrictWhenUnavailable && isRuntimeScheduleNotConfigured(runtime, paragraph)
     ? new Set<string>()
     : null
 }
@@ -313,21 +439,16 @@ export function readInstitutionApplyScheduleDateBounds(
 
 export function hasPreferredScheduleDateOutsideRuntime(
   blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
-  runtime: unknown
+  runtime: unknown,
+  paragraph?: unknown
 ): boolean {
-  const config = readRuntimeScheduleConfig(runtime)
+  const config = readRuntimeScheduleConfig(runtime, paragraph)
   return blocks.some(block => {
     const date = readIsoDateOrNull(block.date)
     if (!date) return false
-    if (isRuntimeScheduleNotConfigured(runtime)) return true
-    if (
-      config.allowedSchedulePeriods != null &&
-      config.allowedSchedulePeriods.length > 0 &&
-      !config.allowedSchedulePeriods.some(
-        period => date >= period.startDate && date <= period.endDate
-      )
-    ) {
-      return true
+    if (isRuntimeScheduleNotConfigured(runtime, paragraph)) return true
+    if (hasRuntimeAllowedSchedulePeriods(config)) {
+      return !isDateInAllowedSchedulePeriods(date, config.allowedSchedulePeriods)
     }
     return (
       (config.minScheduleDate != null && date < config.minScheduleDate) ||

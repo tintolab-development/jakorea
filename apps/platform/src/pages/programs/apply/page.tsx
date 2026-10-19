@@ -97,6 +97,7 @@ import {
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideRuntime,
   isRuntimeScheduleNotConfigured,
+  isTrainedTeachersOrganizationPeriodDateRequests,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
@@ -531,9 +532,15 @@ export function ProgramApplyPage() {
     [applicationFormDocument, trainedTeachersScheduleParagraph]
   )
   const useTrainedTeachersOperatingPeriod =
-    program?.programType?.trim().toUpperCase() === 'TRAINED_TEACHER' &&
-    program?.educationScheduleMode === 'period' &&
-    trainedTeachersScheduleInputMode === 'date_time_requests'
+    showTrainedTeachersApply &&
+    trainedTeachersScheduleInputMode === 'date_time_requests' &&
+    (isTrainedTeachersOrganizationPeriodDateRequests(
+      applicationFormDocument?.runtimeContext,
+      trainedTeachersScheduleParagraph
+    ) ||
+      // 구 runtime에 programType/flavor가 없을 때: 기간형 + 기관 신청만 동일 경로
+      (applicationScheduleVisibility.educationScheduleMode === 'period' &&
+        (focusedApplicationType === 'ORGANIZATION' || applyCase === 'trained-teachers')))
   const trainedTeachersRuntimeFixedScheduleChoices = useMemo(
     () =>
       readRuntimeFixedScheduleChoiceItems(
@@ -655,30 +662,55 @@ export function ProgramApplyPage() {
     [institutionDateOnlyPreferred, trainedTeachersDateOnlyPreferred]
   )
   const trainedTeachersEnabledDates = useMemo(() => {
-    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
+    if (
+      !showTrainedTeachersPreferredSchedule ||
+      applicationScheduleVisibility.educationScheduleMode === 'period'
+    ) {
       return null
     }
     return buildEnabledDatesFromEducationScheduleLines(educationScheduleLinesForApply)
   }, [
+    applicationScheduleVisibility.educationScheduleMode,
     educationScheduleLinesForApply,
-    program?.educationScheduleMode,
     showTrainedTeachersPreferredSchedule,
   ])
   const trainedTeachersScheduleDateBounds = useMemo(() => {
     if (!useTrainedTeachersOperatingPeriod) {
       return { minScheduleDate: null, maxScheduleDate: null }
     }
-    return resolveRuntimeScheduleDateBounds(applicationFormRuntimeContext)
-  }, [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod])
+    return resolveRuntimeScheduleDateBounds(
+      applicationFormRuntimeContext,
+      trainedTeachersScheduleParagraph
+    )
+  }, [
+    applicationFormRuntimeContext,
+    trainedTeachersScheduleParagraph,
+    useTrainedTeachersOperatingPeriod,
+  ])
   const trainedTeachersScheduleEnabledDates = useMemo(() => {
     if (!useTrainedTeachersOperatingPeriod) return null
-    return resolveRuntimeScheduleEnabledDates(applicationFormRuntimeContext, true)
-  }, [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod])
+    return resolveRuntimeScheduleEnabledDates(
+      applicationFormRuntimeContext,
+      true,
+      trainedTeachersScheduleParagraph
+    )
+  }, [
+    applicationFormRuntimeContext,
+    trainedTeachersScheduleParagraph,
+    useTrainedTeachersOperatingPeriod,
+  ])
   const trainedTeachersScheduleNotConfigured = useMemo(
     () =>
       useTrainedTeachersOperatingPeriod &&
-      isRuntimeScheduleNotConfigured(applicationFormRuntimeContext),
-    [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod]
+      isRuntimeScheduleNotConfigured(
+        applicationFormRuntimeContext,
+        trainedTeachersScheduleParagraph
+      ),
+    [
+      applicationFormRuntimeContext,
+      trainedTeachersScheduleParagraph,
+      useTrainedTeachersOperatingPeriod,
+    ]
   )
   const trainedTeachersFixedScheduleChoiceItems = trainedTeachersRuntimeFixedScheduleChoices ?? []
   const applicationRecruitmentLimits = useMemo(
@@ -1856,7 +1888,8 @@ export function ProgramApplyPage() {
             useTrainedTeachersOperatingPeriod &&
             hasPreferredScheduleDateOutsideRuntime(
               preferredBlocks,
-              applicationFormRuntimeContext
+              applicationFormRuntimeContext,
+              trainedTeachersScheduleParagraph
             )
           ) {
             setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)

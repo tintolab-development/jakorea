@@ -225,6 +225,8 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
       )
       const previousBusinessArea = resolveStoredBusinessArea(previous?.businessArea)
       const nextBusinessArea = resolveStoredBusinessArea(merged.businessArea)
+      // programs PATCH(A) 직후 GET이 구값이면 캐시를 통째로 바꾸지 않는다.
+      // detailKey invalidate는 A 설문을 덮어쓰므로 set만 하고 목록·navigation만 갱신한다.
       queryClient.setQueryData(
         detailKey,
         previousBusinessArea && previousBusinessArea !== nextBusinessArea
@@ -235,7 +237,6 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })
-      await queryClient.invalidateQueries({ queryKey: detailKey })
     },
   })
 }
