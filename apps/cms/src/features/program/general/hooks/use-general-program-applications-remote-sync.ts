@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveGeneralIndividualApplication,
+  approveGeneralIndividualApplicationWithEducationScope,
+  bulkApproveGeneralIndividualApplicationsWithEducationScope,
   approveGeneralInstructorApplication,
   approveGeneralOrganizationApplication,
   bulkApproveGeneralInstructorApplications,
@@ -184,6 +186,9 @@ export function useGeneralProgramApplicationsRemoteSync({
     resendInstructorNotification: resendGeneralInstructorApplicationNotification,
     resendOrganizationNotification: resendGeneralOrganizationApplicationNotification,
     approveIndividual: approveGeneralIndividualApplication,
+    approveIndividualWithEducationScope: approveGeneralIndividualApplicationWithEducationScope,
+    bulkApproveIndividualWithEducationScope:
+      bulkApproveGeneralIndividualApplicationsWithEducationScope,
     rejectIndividual: rejectGeneralIndividualApplication,
     cancelIndividualApproval: cancelGeneralIndividualApplicationApproval,
     cancelIndividualRejection: cancelGeneralIndividualApplicationRejection,

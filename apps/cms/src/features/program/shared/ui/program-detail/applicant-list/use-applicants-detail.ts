@@ -28,6 +28,13 @@ import { formatApplicationStatusConflictMessage } from '@/features/program/share
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  describeApprovedEducationScope,
+  formatIndividualApprovalScopeErrorMessage,
+  invalidateIndividualApprovalScopeQueries,
+  isEducationScopeRevisionConflict,
+} from '@/features/program/general/lib/individual-approval-education-scope'
+import type { BulkFailure } from '@/shared/api/generated/dashboard/schemas/bulkFailure'
 import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
@@ -544,15 +551,17 @@ export function useApplicantsDetail({
           } else {
             await applicationsRemote.submitIndividualDocumentResult(ids[0], payload)
           }
+        } else if (decision === 'approve') {
+          showAlert({
+            title: '승인 불가',
+            content: '개인 프로그램 승인은 교육 일정을 선택한 뒤 진행해 주세요.',
+          })
+          return 'error'
         } else {
           for (const id of ids) {
-            if (decision === 'approve') {
-              await applicationsRemote.approveIndividual(id)
-            } else {
-              await applicationsRemote.rejectIndividual(id, {
-                reason: reason?.trim() || '반려',
-              })
-            }
+            await applicationsRemote.rejectIndividual(id, {
+              reason: reason?.trim() || '반려',
+            })
           }
         }
         await applicationsRemote.invalidateIndividualApplications()
@@ -563,6 +572,112 @@ export function useApplicantsDetail({
       }
     },
     [applicationsRemote, individualScreeningStage, notifyRemoteDecisionFailure, showAlert]
+  )
+
+  const applyRemoteIndividualScopeApproval = useCallback(
+    async (input: {
+      reason: string
+      targets: Array<{
+        applicationId: string
+        confirmedScheduleIds: number[]
+        expectedScopeRevision?: number
+      }>
+    }): Promise<
+      | { status: 'skipped' }
+      | { status: 'error' }
+      | {
+          status: 'ok'
+          scheduleIds: number[]
+          serverAddedScheduleIds: number[]
+          markApprovedIds: string[]
+        }
+      | { status: 'partial'; successIds: number[]; failures: BulkFailure[] }
+    > => {
+      if (!applicationsRemote.individualRemoteEnabled || !programId) return { status: 'skipped' }
+      const applicationIds = input.targets.map(target => target.applicationId)
+      const refresh = async (participantIds?: Array<string | number | null | undefined>) => {
+        await invalidateIndividualApprovalScopeQueries(queryClient, {
+          programId,
+          applicationIds,
+          participantIds,
+        })
+      }
+      try {
+        if (input.targets.length === 1) {
+          const target = input.targets[0]
+          const response = await applicationsRemote.approveIndividualWithEducationScope(
+            target.applicationId,
+            {
+              confirmedScheduleIds: target.confirmedScheduleIds,
+              expectedScopeRevision: target.expectedScopeRevision ?? 0,
+              reason: input.reason,
+            }
+          )
+          const described = describeApprovedEducationScope({
+            requestedScheduleIds: target.confirmedScheduleIds,
+            responseScheduleIds: response.educationScope?.scheduleIds,
+          })
+          await refresh(
+            response.decision?.participantId != null ? [response.decision.participantId] : []
+          )
+          if (response.decision?.toStatus && response.decision.toStatus !== 'APPROVED') {
+            showAlert({
+              title: '승인 결과 확인',
+              content: `신청 상태가 ${response.decision.toStatus}로 변경되었습니다.`,
+            })
+            return { status: 'error' }
+          }
+          return {
+            status: 'ok',
+            scheduleIds: described.scheduleIds,
+            serverAddedScheduleIds: described.serverAddedScheduleIds,
+            markApprovedIds:
+              response.decision?.toStatus === 'APPROVED' ? [target.applicationId] : [],
+          }
+        }
+        const response = await applicationsRemote.bulkApproveIndividualWithEducationScope({
+          reason: input.reason,
+          targets: input.targets.map(target => ({
+            applicationId: Number(target.applicationId),
+            confirmedScheduleIds: target.confirmedScheduleIds,
+            expectedScopeRevision: target.expectedScopeRevision ?? 0,
+          })),
+        })
+        const successIds = response.successIds ?? []
+        const failures = response.failures ?? []
+        await refresh()
+        if ((response.failureCount ?? failures.length) > 0) {
+          const lines = failures.map(failure => {
+            const code = failure.code?.trim()
+            const message = failure.message?.trim() || '처리하지 못했습니다.'
+            const id = failure.id != null ? `${failure.id}: ` : ''
+            return `${id}${message}${code ? ` (${code})` : ''}`
+          })
+          showAlert({
+            title: '일부 승인 실패',
+            content: [`성공 ${successIds.length}건`, ...lines].join('\n'),
+          })
+          return { status: 'partial', successIds, failures }
+        }
+        return {
+          status: 'ok',
+          scheduleIds: [],
+          serverAddedScheduleIds: [],
+          markApprovedIds: successIds.map(String),
+        }
+      } catch (error) {
+        await refresh()
+        const message = formatIndividualApprovalScopeErrorMessage(error)
+        showAlert({
+          title: isEducationScopeRevisionConflict(error) ? '교육 일정 갱신' : '처리 실패',
+          content: isEducationScopeRevisionConflict(error)
+            ? `${message}\n최신 교육 일정을 다시 불러왔습니다. 선택을 확인한 뒤 다시 승인해 주세요.`
+            : message,
+        })
+        return { status: 'error' }
+      }
+    },
+    [applicationsRemote, programId, queryClient, showAlert]
   )
 
   const rawTableData = useMemo((): ApplicantListRow[] => {
@@ -1734,6 +1849,7 @@ export function useApplicantsDetail({
     confirmBulkParticipantReject,
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
+    applyRemoteIndividualScopeApproval,
     applyRemoteIndividualCancelApproval,
     applyRemoteIndividualCancelRejection,
     applyRemoteInstructorDecision,

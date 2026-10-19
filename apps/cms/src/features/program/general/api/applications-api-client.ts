@@ -5,6 +5,9 @@ import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboa
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
+import type { IndividualApprovalWithScopeBulkTarget } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget'
+import type { IndividualApprovalWithScopeRequest } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest'
+import type { Result as IndividualApprovalWithScopeResult } from '@/shared/api/generated/dashboard/schemas/result'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
 import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'
@@ -685,6 +688,45 @@ export async function approveIndividualApplicationRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/approve`,
       method: 'POST',
+    })
+  )
+}
+
+/**
+ * POST /api/admin/individual-applications/{applicationId}/approve-with-education-scope
+ * operationId: approve_2
+ * GENERAL_INDIVIDUAL 최종 승인은 이 경로만 사용한다.
+ */
+export async function approveIndividualApplicationWithEducationScopeRemote(
+  applicationId: string,
+  payload: IndividualApprovalWithScopeRequest
+): Promise<IndividualApprovalWithScopeResult> {
+  return unwrapApiBody<IndividualApprovalWithScopeResult>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/approve-with-education-scope`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * POST /api/admin/individual-applications/bulk-approve-with-education-scope
+ * operationId: approve_3
+ *
+ * 실행 중 OpenAPI의 targets.items는 계정 Target(accountType, id)을 가리킨다.
+ * 신청별 일정 필드는 기존 generated IndividualApprovalWithScopeBulkTarget
+ * (applicationId, confirmedScheduleIds, expectedScopeRevision)을 그대로 보낸다.
+ */
+export async function bulkApproveIndividualApplicationsWithEducationScopeRemote(payload: {
+  reason: string
+  targets: IndividualApprovalWithScopeBulkTarget[]
+}): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/individual-applications/bulk-approve-with-education-scope',
+      method: 'POST',
+      data: payload,
     })
   )
 }

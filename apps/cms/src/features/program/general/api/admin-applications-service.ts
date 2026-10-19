@@ -20,6 +20,8 @@ export {
 } from '@/features/program/general/api/organization-application-schedules-hydrate'
 import {
   approveIndividualApplicationRemote,
+  approveIndividualApplicationWithEducationScopeRemote,
+  bulkApproveIndividualApplicationsWithEducationScopeRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
   bulkApproveInstructorApplicationsRemote,
@@ -484,9 +486,26 @@ export async function bulkRejectGeneralInstructorApplications(
   })
 }
 
+/** 일정 없는 `/approve`. GENERAL_INDIVIDUAL 최종 승인 버튼에서는 호출하지 않는다. */
 export async function approveGeneralIndividualApplication(applicationId: string): Promise<void> {
   assertApplicationsRemoteReady()
   await approveIndividualApplicationRemote(applicationId)
+}
+
+export async function approveGeneralIndividualApplicationWithEducationScope(
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest').IndividualApprovalWithScopeRequest
+) {
+  assertApplicationsRemoteReady()
+  return approveIndividualApplicationWithEducationScopeRemote(applicationId, payload)
+}
+
+export async function bulkApproveGeneralIndividualApplicationsWithEducationScope(payload: {
+  reason: string
+  targets: import('@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget').IndividualApprovalWithScopeBulkTarget[]
+}) {
+  assertApplicationsRemoteReady()
+  return bulkApproveIndividualApplicationsWithEducationScopeRemote(payload)
 }
 
 export async function rejectGeneralIndividualApplication(
