@@ -70,6 +70,10 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { findEducationScheduleLinesOutsideOperationRange } from '@/features/program/shared/lib/education-schedule-change'
+import {
+  portalHomeFeaturedFormValues,
+  portalHomeFeaturedProgramPatch,
+} from '@/features/program/shared/lib/program-portal-home-featured'
 
 const curriculumSessionSchema = z.object({
   sessionLabel: z.string(),
@@ -188,6 +192,8 @@ export const generalProgramCommonInfoEditSchema = z
     scheduleCurriculumPreEducation: z.boolean(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
     educationScheduleLines: z.array(z.string()),
+    featuredOnHome: z.boolean(),
+    homeDisplayOrder: z.string(),
   })
   .merge(participantTypeSchema)
   .superRefine((data, ctx) => {
@@ -522,6 +528,17 @@ export const generalProgramCommonInfoEditSchema = z
           code: z.ZodIssueCode.custom,
           message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
           path: ['educationScheduleLines'],
+        })
+      }
+    }
+
+    if (data.featuredOnHome) {
+      const order = Number(data.homeDisplayOrder)
+      if (!Number.isInteger(order) || order < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '홈 노출 순서는 1 이상 정수로 입력해주세요',
+          path: ['homeDisplayOrder'],
         })
       }
     }
@@ -1636,6 +1653,7 @@ export function programToGeneralCommonInfoEditValues(
       ? 'date'
       : (commonInfo.educationScheduleMode ?? 'date'),
     educationScheduleLines: [...(commonInfo.educationScheduleLines ?? [])],
+    ...portalHomeFeaturedFormValues(program),
   }
 }
 
@@ -2035,6 +2053,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalProgramEducationStructure: values.educationStructure,
     generalProgramSessionRound: values.sessionRound,
     /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
+    ...portalHomeFeaturedProgramPatch(values),
     sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
     // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),

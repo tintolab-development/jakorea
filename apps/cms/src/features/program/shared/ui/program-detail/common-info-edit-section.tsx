@@ -7,6 +7,7 @@ import type { Program } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
+import { ProgramPortalHomeFeaturedFields } from '@/features/program/shared/ui/program-detail/portal-home-featured-fields'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './common-info-edit-section.css'
 
@@ -95,6 +96,11 @@ export function ProgramCommonInfoEditRegistrationAuditForm({ program }: { progra
           }
         />
       </DetailInfoForm.Row>
+      <ProgramPortalHomeFeaturedFields
+        isEdit={false}
+        featuredOnHome={program.featuredOnHome === true}
+        homeDisplayOrder={program.homeDisplayOrder}
+      />
     </DetailInfoForm>
   )
 }

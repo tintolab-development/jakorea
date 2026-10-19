@@ -47,6 +47,7 @@ import {
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
+import { ProgramPortalHomeFeaturedFields } from '@/features/program/shared/ui/program-detail/portal-home-featured-fields'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -556,6 +557,12 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          <ProgramPortalHomeFeaturedFields
+            isEdit={commonInfoFormEdit}
+            featuredOnHome={program.featuredOnHome === true}
+            homeDisplayOrder={program.homeDisplayOrder}
+            control={commonInfoFormEdit ? commonInfoForm.control : undefined}
+          />
         </DetailInfoForm>
 
         <DetailInfoForm title="기본 정보" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
@@ -1210,6 +1217,12 @@ export function BasicInfoSection({
           }
         />
       </DetailInfoForm.Row>
+      <ProgramPortalHomeFeaturedFields
+        isEdit={commonInfoFormEdit}
+        featuredOnHome={program.featuredOnHome === true}
+        homeDisplayOrder={program.homeDisplayOrder}
+        control={commonInfoFormEdit ? commonInfoForm.control : undefined}
+      />
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
