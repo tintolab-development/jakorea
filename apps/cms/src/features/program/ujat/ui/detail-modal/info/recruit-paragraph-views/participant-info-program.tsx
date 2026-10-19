@@ -272,6 +272,7 @@ export function UjatRecruitParticipantInfoProgramView({
                   startName="applicationStartDate"
                   endName="applicationEndDate"
                   placeholder="참여자 모집 기간을 선택하세요"
+                  dateOnly
                 />
               </div>
             ) : undefined

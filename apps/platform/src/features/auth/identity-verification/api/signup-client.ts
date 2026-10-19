@@ -13,6 +13,7 @@ export const signupIdentityVerificationClient = createIdentityVerificationClient
   routes: {
     callbackPath: '/auth/sign-up/identity/callback',
     mockPath: '/auth/sign-up/identity/mock',
+    resumePath: '/auth/sign-up',
   },
   flow: 'MEMBER_SIGNUP',
   isRemoteEnabled: isIdentityVerificationRemoteEnabled,

@@ -387,8 +387,8 @@ export function mapVolunteerApplicationToUjatApplicantRow(
       | undefined
   )
   const interviewEvals = dto.interviewEvaluations ?? []
-  const scoreA = interviewEvals.find(item => item.evaluatorOrder === 1)?.score
-  const scoreB = interviewEvals.find(item => item.evaluatorOrder === 2)?.score
+  const scoreA = interviewEvals.find(item => item.evaluatorOrder === 1)?.scoreTotal
+  const scoreB = interviewEvals.find(item => item.evaluatorOrder === 2)?.scoreTotal
 
   return {
     id: toId(dto.id),

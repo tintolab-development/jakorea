@@ -220,6 +220,7 @@ export function PFDateInput({
   const calendarIconUrl = hasValue ? calendarBlackUrl : calendarGrayUrl
 
   const fieldClassName = [
+    'pf-date-input__field',
     styles.field,
     styles[size],
     isFormPage ? styles.formPage : undefined,
@@ -231,6 +232,7 @@ export function PFDateInput({
     .join(' ')
 
   const valueClassName = [
+    'pf-date-input__value',
     styles.value,
     isFormPage ? styles.formPageValue : sizeTypographyClassMap[size],
     isFormPage
@@ -410,7 +412,7 @@ export function PFDateInput({
   return (
     <div
       ref={rootRef}
-      className={[styles.root, className].filter(Boolean).join(' ')}
+      className={['pf-date-input', styles.root, className].filter(Boolean).join(' ')}
       style={rootStyle}
     >
       {label ? (
@@ -432,7 +434,7 @@ export function PFDateInput({
           ref={triggerRef}
           id={inputId}
           type="button"
-          className={valueClassName}
+          className={['pf-date-input__trigger', valueClassName].join(' ')}
           disabled={disabled}
           aria-haspopup="dialog"
           aria-expanded={isOpen}

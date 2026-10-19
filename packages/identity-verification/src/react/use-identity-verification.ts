@@ -3,9 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { IdentityVerificationClient } from '../client'
 import { IdentityVerificationApiError } from '../errors'
 import { NiceAuthPopupBlockedError } from '../popup'
-import type { IdentityChallengeCompleteResult } from '../types'
+import type { IdentityChallengeCompleteResult, IdentityMessage } from '../types'
 
 const DEFAULT_START_FAILED_MESSAGE = '본인인증을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.'
+const POPUP_CLOSE_COMPLETION_GRACE_MS = 250
 
 /** BE ClientErrorMessageResolver가 INVALID_CREDENTIALS에 쓰는 로그인 카피 */
 function isLoginCredentialsCopy(message: string): boolean {
@@ -85,6 +86,7 @@ export function useIdentityVerification({
   const popupRef = useRef<Window | null>(null)
   const stopWatchPopupRef = useRef<(() => void) | null>(null)
   const completingRef = useRef(false)
+  const lastSessionIdRef = useRef<number | null>(null)
   const onSuccessRef = useRef(onSuccess)
   onSuccessRef.current = onSuccess
 
@@ -103,40 +105,23 @@ export function useIdentityVerification({
 
   const handleCancel = useCallback(() => {
     cleanupPopupWatch()
-    client.state.clearPendingChallenge()
     completingRef.current = false
     setStatus('idle')
-  }, [cleanupPopupWatch, client])
+  }, [cleanupPopupWatch])
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
+  const applyMessage = useCallback(
+    (data: IdentityMessage) => {
+      if (completingRef.current) {
         return
       }
 
-      if (!client.state.isIdentityMessage(event.data)) {
-        return
-      }
-
-      const pendingChallenge = client.state.getPendingChallenge()
-
-      if (event.data.type === 'IDENTITY_CANCELLED') {
-        if (!pendingChallenge) {
-          return
-        }
+      if (data.type === 'IDENTITY_CANCELLED') {
         handleCancel()
         return
       }
 
-      if (event.data.type === 'IDENTITY_FAILED') {
-        if (!pendingChallenge) {
-          return
-        }
-        if (completingRef.current) {
-          return
-        }
-
-        const failedMessage = event.data.message ?? '본인인증에 실패했습니다.'
+      if (data.type === 'IDENTITY_FAILED') {
+        const failedMessage = data.message ?? '본인인증에 실패했습니다.'
         if (isAbortLikeMessage(failedMessage)) {
           return
         }
@@ -149,42 +134,75 @@ export function useIdentityVerification({
         return
       }
 
-      if (event.data.type === 'IDENTITY_VERIFIED') {
-        const verified = event.data
-        if (
-          !pendingChallenge ||
-          pendingChallenge.sessionId !== verified.sessionId
-        ) {
-          return
-        }
-        if (completingRef.current) {
-          return
-        }
-        completingRef.current = true
-        cleanupPopupWatch()
-        client.state.clearPendingChallenge()
-        setStatus('completing')
-        setErrorMessage(null)
-
-        onSuccessRef.current({
-          sessionId: verified.sessionId,
-          sessionUuid: verified.sessionUuid,
-          profileToken: verified.profileToken,
-          verifiedName: verified.verifiedName,
-          verifiedPhone: verified.verifiedPhone,
-          verifiedBirthDate: verified.verifiedBirthDate,
-          verifiedGender: verified.verifiedGender,
-          verifiedAt: verified.verifiedAt,
-        })
-        setStatus('idle')
+      if (data.type !== 'IDENTITY_VERIFIED') {
+        return
       }
+
+      const sessionId = Number(data.sessionId)
+      if (!sessionId || Number.isNaN(sessionId)) {
+        return
+      }
+
+      const pendingChallenge = client.state.getPendingChallenge()
+      const expectedSessionId = pendingChallenge?.sessionId ?? lastSessionIdRef.current
+      if (
+        expectedSessionId != null &&
+        expectedSessionId !== 0 &&
+        expectedSessionId !== sessionId
+      ) {
+        return
+      }
+
+      completingRef.current = true
+      cleanupPopupWatch()
+      client.state.clearPendingChallenge()
+      client.state.clearCompletion()
+      setStatus('completing')
+      setErrorMessage(null)
+
+      onSuccessRef.current({
+        sessionId,
+        sessionUuid: data.sessionUuid,
+        profileToken: data.profileToken,
+        verifiedName: data.verifiedName,
+        verifiedPhone: data.verifiedPhone,
+        verifiedBirthDate: data.verifiedBirthDate,
+        verifiedGender: data.verifiedGender,
+        verifiedAt: data.verifiedAt,
+      })
+      setStatus('idle')
+    },
+    [cleanupPopupWatch, client, handleCancel]
+  )
+
+  const applyMessageRef = useRef(applyMessage)
+  applyMessageRef.current = applyMessage
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) {
+        return
+      }
+      if (!client.state.isIdentityMessage(event.data)) {
+        return
+      }
+      applyMessageRef.current(event.data)
     }
 
     window.addEventListener('message', handleMessage)
+    const unsubscribe = client.state.subscribeCompletion(message => {
+      applyMessageRef.current(message)
+    })
+    const existing = client.state.takeCompletion()
+    if (existing) {
+      applyMessageRef.current(existing)
+    }
+
     return () => {
       window.removeEventListener('message', handleMessage)
+      unsubscribe()
     }
-  }, [cleanupPopupWatch, client, handleCancel])
+  }, [client])
 
   useEffect(() => {
     return () => {
@@ -222,15 +240,23 @@ export function useIdentityVerification({
         gender: resolvedGender,
         name: resolvedName,
       })
+      lastSessionIdRef.current = challenge.sessionId
       client.popup.navigate(popup, challenge.authUrl)
       popupRef.current = popup
       setStatus('popup_open')
 
       stopWatchPopupRef.current = client.popup.watchClosed(popup, () => {
-        if (completingRef.current) {
-          return
-        }
-        handleCancel()
+        window.setTimeout(() => {
+          if (completingRef.current) {
+            return
+          }
+          const completion = client.state.takeCompletion()
+          if (completion) {
+            applyMessageRef.current(completion)
+            return
+          }
+          handleCancel()
+        }, POPUP_CLOSE_COMPLETION_GRACE_MS)
       })
     } catch (error) {
       popup?.close()

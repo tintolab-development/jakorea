@@ -64,6 +64,7 @@ describe('buildGeneralProgramPortalPreview', () => {
           participantRecruitmentInfo: {
             programDescription: '프로그램 소개',
             recruitmentGuide: '모집 안내',
+            preEducationNoticeRequired: false,
             inquiryTel: '02-000-0000',
             contactOrganizationName: 'JA Korea',
             remarks: '비고',
@@ -85,6 +86,7 @@ describe('buildGeneralProgramPortalPreview', () => {
       contactName: 'JA Korea',
       contactPhone: '02-000-0000',
       recruitmentGuide: '모집 안내',
+      preEducationNoticeRequired: false,
       remarks: '비고',
       educationTargets: ['high', 'university'],
       sponsorNames: ['한국씨티은행'],
@@ -92,6 +94,7 @@ describe('buildGeneralProgramPortalPreview', () => {
         {
           recruitmentType: 'PARTICIPANT',
           targetType: 'ORGANIZATION',
+          preEducationNoticeRequired: false,
           startAt: '2026-09-01T00:00:00',
           endAt: '2026-09-20T00:00:00',
         },

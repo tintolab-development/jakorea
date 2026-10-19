@@ -5,7 +5,6 @@ import {
 } from './application-schedule-paragraph-copy.js'
 import {
   buildCurriculumMultiDateFixedScheduleChoiceItems,
-  curriculumMultiDateFixedScheduleOptionId,
   readCurriculumMultiDateFixedScheduleMeta,
   readCurriculumPreferredScheduleDailySessionCountForCopy,
   resolveFixedScheduleLinesToChoiceItems,
@@ -43,17 +42,20 @@ describe('curriculum multi date fixed schedule matrix', () => {
     ).toBe(false)
   })
 
-  it('일정 줄 × 회차 수로 선택지를 만든다', () => {
+  it('복수 회차 커리큘럼도 일정 줄 1개당 선택지 1개만 만든다', () => {
     const items = buildCurriculumMultiDateFixedScheduleChoiceItems(
       MATRIX_VISIBILITY.educationScheduleLines,
       2
     )
-    expect(items).toHaveLength(4)
+    expect(items).toHaveLength(2)
     expect(items[0]).toEqual({
-      id: curriculumMultiDateFixedScheduleOptionId(0, 1),
-      label: '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차',
+      id: 'line:0',
+      label: '26년 4월 20일(월) 9:30 ~ 12:20',
     })
-    expect(items[3]?.label).toContain('| 2회차')
+    expect(items[1]).toEqual({
+      id: 'line:1',
+      label: '26년 4월 27일(월) 13:00 ~ 15:50',
+    })
   })
 
   it('curriculumSessions에서 회차·차시 메타를 읽는다', () => {
@@ -65,6 +67,26 @@ describe('curriculum multi date fixed schedule matrix', () => {
     })
     expect(meta.educationRoundCount).toBe(2)
     expect(meta.sessionsPerRound).toBe(2)
+  })
+
+  it('1회차 title이 N차시 형태면 sessionsPerRound는 1회차 진행 차시 수', () => {
+    const meta = readCurriculumMultiDateFixedScheduleMeta({
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: '2차시' },
+        { sessionLabel: '2회차', title: '4차시' },
+      ],
+    })
+    expect(meta.sessionsPerRound).toBe(2)
+    const text = resolveApplicationFixedScheduleParagraphDescription({
+      ...MATRIX_VISIBILITY,
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: '2차시' },
+        { sessionLabel: '2회차', title: '4차시' },
+      ],
+    })
+    expect(text).toBe(
+      '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+    )
   })
 
   it('회차별 차시 수가 다르면 설명 N차시는 1회차 기준', () => {
@@ -187,7 +209,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
     )
   })
 
-  it('resolveFixedScheduleLinesToChoiceItems — matrix만 확장', () => {
+  it('resolveFixedScheduleLinesToChoiceItems — matrix 조건이어도 라인만 노출', () => {
     const single = resolveFixedScheduleLinesToChoiceItems(
       { ...MATRIX_VISIBILITY, sessionRound: 'single' },
       MATRIX_VISIBILITY.educationScheduleLines,
@@ -199,7 +221,11 @@ describe('curriculum multi date fixed schedule matrix', () => {
       MATRIX_VISIBILITY.educationScheduleLines,
       { educationRoundCount: 2 }
     )
-    expect(matrix).toHaveLength(4)
+    expect(matrix).toHaveLength(2)
+    expect(matrix).toEqual([
+      { id: 'line:0', label: '26년 4월 20일(월) 9:30 ~ 12:20' },
+      { id: 'line:1', label: '26년 4월 27일(월) 13:00 ~ 15:50' },
+    ])
   })
 
   it('커리큘럼 단일 날짜 — 라벨 우측 차시 수', () => {

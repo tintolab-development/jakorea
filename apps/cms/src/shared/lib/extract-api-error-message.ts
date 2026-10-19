@@ -18,6 +18,13 @@ export type ApiErrorEnvelope = {
   traceId?: string
 }
 
+const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
+  UJAT_ACTIVITY_CERTIFICATE_ADMIN_ONLY: 'UJAT 활동인증서는 관리자만 발급할 수 있습니다.',
+  UJAT_ORGANIZATION_ALREADY_APPLIED: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
+  UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
+  UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
+}
+
 function asEnvelope(data: unknown): ApiErrorEnvelope | null {
   if (!data || typeof data !== 'object') return null
   return data as ApiErrorEnvelope
@@ -45,9 +52,15 @@ export function extractApiErrorMessage(
   const mapped = programEditWindowErrorMessage(code)
   if (mapped) return mapped
 
+  const ujatMapped = code ? UJAT_P0_ERROR_MESSAGES[code] : undefined
+  if (ujatMapped && (!serverMessage || serverMessage === code)) {
+    return ujatMapped
+  }
+
   if (envelope) {
     const top = envelope.message?.trim()
-    if (top) return top
+    if (top && !(ujatMapped && top === code)) return top
+    if (ujatMapped) return ujatMapped
 
     const nested = envelope.error?.message?.trim()
     if (nested) return nested

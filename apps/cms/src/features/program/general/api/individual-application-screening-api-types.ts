@@ -14,6 +14,7 @@ import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/
  */
 export type PreferredEducationSchedule = PreferredEducationScheduleResponse & {
   label?: string | null
+  unresolvedReason?: 'AMBIGUOUS_SCHEDULE_MATCH' | 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' | null
 }
 
 /** GET individual-applications list item + P1 assigned interview enrich */

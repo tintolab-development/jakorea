@@ -59,7 +59,7 @@ export interface PortalProgramDetailEducationProgressFields {
   scheduleDetails?: PortalScheduleDetailItem[];
   /** @nullable */
   educationScheduleMode?: PortalProgramDetailEducationProgressFieldsEducationScheduleMode;
-  /** 교육 진행 예정일 표시 문자열. 공통정보 그대로, 순서 유지, 없으면 []. 빈 문자열과 00:00 ~ 00:00 줄은 제외합니다. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스입니다. */
+  /** 교육 진행 예정일 표시 문자열. typed detail 원문 그대로, 순서 유지, 없으면 []. 빈 문자열과 00:00 ~ 00:00 줄은 제외합니다. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다. */
   educationScheduleLines?: string[];
   /**
      * educationScheduleMode=period일 때 {start,end}. date 모드이거나 값이 없으면 null.

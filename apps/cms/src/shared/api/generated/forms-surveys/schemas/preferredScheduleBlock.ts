@@ -13,4 +13,34 @@ export interface PreferredScheduleBlock {
   dayOfWeek?: string;
   sessionCount?: number;
   sessionTimes?: PreferredScheduleSessionTime[];
+  /**
+     * 실제 program_schedule.id. 매핑되지 않은 legacy/삭제 일정은 null.
+     * @nullable
+     */
+  scheduleId?: number | null;
+  /**
+     * 매핑된 실제 일정 시작 시각.
+     * @nullable
+     */
+  startAt?: string | null;
+  /**
+     * 매핑된 실제 일정 종료 시각.
+     * @nullable
+     */
+  endAt?: string | null;
+  /**
+     * 실제 일정의 session_no(회차).
+     * @nullable
+     */
+  round?: number | null;
+  /**
+     * 실제 일정명 또는 회차 라벨.
+     * @nullable
+     */
+  label?: string | null;
+  /**
+     * MATCHED | UNMATCHED | INACTIVE_OR_DELETED.
+     * @nullable
+     */
+  scheduleStatus?: string | null;
 }

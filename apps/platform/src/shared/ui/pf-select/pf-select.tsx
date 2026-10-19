@@ -127,8 +127,9 @@ export function PFSelect({
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
 
-  const rootClassName = [styles.root, className].filter(Boolean).join(' ')
+  const rootClassName = ['pf-select', styles.root, className].filter(Boolean).join(' ')
   const fieldClassName = [
+    'pf-select__field',
     styles.field,
     styles[size],
     isFormPage ? styles.formPage : undefined,
@@ -141,6 +142,7 @@ export function PFSelect({
     .join(' ')
 
   const valueClassName = [
+    'pf-select__value',
     styles.value,
     isFormPage ? styles.formPageValue : sizeTypographyClassMap[size],
     isFormPage
@@ -291,7 +293,7 @@ export function PFSelect({
             ref={triggerRef}
             id={selectId}
             type="button"
-            className={styles.trigger}
+            className={['pf-select__trigger', styles.trigger].join(' ')}
             disabled={disabled}
             aria-haspopup="listbox"
             aria-expanded={isOpen}

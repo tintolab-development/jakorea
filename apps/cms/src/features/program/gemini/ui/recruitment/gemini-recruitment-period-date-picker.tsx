@@ -9,10 +9,13 @@ export function GeminiRecruitmentPeriodDatePicker({
   value,
   onChange,
   placeholder,
+  dateOnly = false,
 }: {
   value: GeminiRecruitmentPeriodValue
   onChange: (next: GeminiRecruitmentPeriodValue) => void
   placeholder: string
+  /** true: 모집 기간 등 — 시간 토글/표시 없이 날짜만 */
+  dateOnly?: boolean
 }) {
   const appliedSurfaceRange = useMemo((): [Dayjs, Dayjs] | null => {
     const start = value?.[0]
@@ -25,10 +28,12 @@ export function GeminiRecruitmentPeriodDatePicker({
 
   const rangeWithTime = useMemo(
     () =>
-      appliedSurfaceRange == null
+      dateOnly
         ? false
-        : dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1]),
-    [appliedSurfaceRange]
+        : appliedSurfaceRange == null
+          ? false
+          : dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1]),
+    [appliedSurfaceRange, dateOnly]
   )
 
   return (
@@ -39,6 +44,7 @@ export function GeminiRecruitmentPeriodDatePicker({
       width="100%"
       placeholder={placeholder}
       preferPeriodModeInPopover
+      showTimeToggle={!dateOnly}
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={rangeWithTime}
       onRangeChange={range => {

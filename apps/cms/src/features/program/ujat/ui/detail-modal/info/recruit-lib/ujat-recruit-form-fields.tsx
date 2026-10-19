@@ -68,12 +68,16 @@ export function UjatRecruitFormPeriodDatePicker({
   startName,
   endName,
   placeholder,
-  clearToUndefined = false }: {
+  clearToUndefined = false,
+  dateOnly = false,
+}: {
   form: UseFormReturn<ProgramDetailEditFormValues>
   startName: FieldPath<ProgramDetailEditFormValues>
   endName: FieldPath<ProgramDetailEditFormValues>
   placeholder?: string
   clearToUndefined?: boolean
+  /** true: 모집 기간 등 — 시간 토글/표시 없이 날짜만 */
+  dateOnly?: boolean
 }) {
   const startIso = form.watch(startName) as string | undefined
   const endIso = form.watch(endName) as string | undefined
@@ -94,10 +98,12 @@ export function UjatRecruitFormPeriodDatePicker({
   }, [appliedSurfaceRange])
   const rangeWithTime = useMemo(
     () =>
-      appliedSurfaceRange == null
+      dateOnly
         ? false
-        : dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1]),
-    [appliedSurfaceRange]
+        : appliedSurfaceRange == null
+          ? false
+          : dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1]),
+    [appliedSurfaceRange, dateOnly]
   )
   const emit = (d: Dayjs | null) => toIso(d, clearToUndefined)
   return (
@@ -108,6 +114,7 @@ export function UjatRecruitFormPeriodDatePicker({
       width="100%"
       placeholder={placeholder}
       preferPeriodModeInPopover
+      showTimeToggle={!dateOnly}
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={rangeWithTime}
       onRangeChange={range => {

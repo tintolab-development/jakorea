@@ -72,6 +72,22 @@ const shownWhenEnabled = resolvePortalApplicationHiddenParagraphIds({
 })
 assert.equal(shownWhenEnabled.has(instructorId), false)
 
+const institutionGuidanceId = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+const guidanceHiddenByProgramFlag = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { preEducationNoticeRequired: false } as never,
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceHiddenByProgramFlag.has(institutionGuidanceId), true)
+
+const guidanceRuntimeOverridesProgram = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { preEducationNoticeRequired: false } as never,
+  runtimeContext: { preEducationNoticeRequired: true },
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceRuntimeOverridesProgram.has(institutionGuidanceId), false)
+
 const trainedScheduleId = PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
 const trainedScheduleHidden = resolvePortalApplicationHiddenParagraphIds({
   applyCase: 'trained-teachers',

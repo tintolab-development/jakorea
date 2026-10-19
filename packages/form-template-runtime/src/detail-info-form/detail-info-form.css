@@ -420,3 +420,68 @@
   .detail-info-form__field-label-text {
   color: var(--color-red, #c32f4a) !important;
 }
+
+@media (max-width: 767px) {
+  .form-template-host[data-surface='platformUser'] .detail-info-form__row--double {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .form-template-host[data-surface='platformUser'] .detail-info-form__row--double
+    > .detail-info-form__field {
+    width: 100%;
+    flex: 1 1 auto;
+    border-right: none;
+  }
+
+  .form-template-host[data-surface='platformUser'] .detail-info-form__row--double
+    > .detail-info-form__field:not(:last-child) {
+    border-bottom: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  }
+
+  .form-template-host[data-surface='platformUser'] .detail-info-form__field {
+    display: flex;
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-template-host[data-surface='platformUser'] .detail-info-form__field-label {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    justify-content: flex-start;
+    padding: 0 0 8px;
+    border-right: none;
+    background: transparent;
+    color: var(--color-neutral-cool-600, #667278);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    text-align: left;
+  }
+
+  .form-template-host[data-surface='platformUser'] .detail-info-form__field-content {
+    min-width: 0;
+    min-height: auto;
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-text-input__field, .pf-select__field, .pf-date-input__field, .pf-time-input__field) {
+    min-height: 52px;
+    border-radius: var(--radius-16, 16px);
+  }
+
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-text-input__input, .pf-select__value, .pf-date-input__value, .pf-time-input__value) {
+    font-size: 15px;
+    line-height: 150%;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-select__trigger, .pf-date-input__trigger, .pf-time-input__trigger) {
+    min-height: 52px;
+  }
+}

@@ -36,10 +36,18 @@ function readNullableRound(value: unknown): number | null {
   return null
 }
 
-function readUnresolvedReason(value: unknown): string | null {
+function readUnresolvedReason(
+  value: unknown
+): PreferredEducationSchedule['unresolvedReason'] {
+  if (value === 'AMBIGUOUS_SCHEDULE_MATCH' || value === 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH') {
+    return value
+  }
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
-  return trimmed || null
+  if (trimmed === 'AMBIGUOUS_SCHEDULE_MATCH' || trimmed === 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH') {
+    return trimmed
+  }
+  return null
 }
 
 /**

@@ -11,11 +11,12 @@ import type { PortalProgramDetailResponseCurriculaItem } from './portalProgramDe
 import type { PortalProgramDetailResponseEducationTarget } from './portalProgramDetailResponseEducationTarget';
 import type { PortalProgramDetailResponsePortalCategoriesItem } from './portalProgramDetailResponsePortalCategoriesItem';
 import type { PortalProgramDetailResponseRecruitmentStatus } from './portalProgramDetailResponseRecruitmentStatus';
+import type { PortalProgramDetailResponseRecruitmentTargetsItem } from './portalProgramDetailResponseRecruitmentTargetsItem';
 import type { PortalProgramDetailResponseSchedulesItem } from './portalProgramDetailResponseSchedulesItem';
 import type { PortalProgramDetailResponseVenueKind } from './portalProgramDetailResponseVenueKind';
 
 /**
- * GET /api/portal/programs/{programId} 의 data. 공통정보(일정·커리큘럼·교육 진행·스폰서 등)는 프로그램 값. GENERAL_*·UJAT 의 모집 필드(summary, description, recruitmentGuide, applicationMethod, learningSupportContent, additionalContentHtml, remarks, contact*, thumbnailFileObjectId, attachments)는 recruitmentId 로 고른 그 행 값만 쓰고 비어 있으면 null/[] 이다. recruitmentId 가 없으면 이 필드들은 null/[]. 교육 진행·교육 형태·장소·참여 필드는 PortalProgramDetailEducationProgressFields, PortalProgramDetailEducationFormFields, PortalProgramDetailVenueFields, PortalProgramDetailParticipationFields 를 따른다. recruitments[].volunteerInterviewSchedule 은 VOLUNTEER 면접 운영 행에만 채운다(그 외 null/생략).
+ * GET /api/portal/programs/{programId} 의 data. 공통정보(일정·커리큘럼·교육 진행·스폰서 등)는 프로그램 값. GENERAL_*·UJAT 의 모집 필드(summary, description, recruitmentGuide, applicationMethod, learningSupportContent, additionalContentHtml, remarks, contact*, thumbnailFileObjectId, attachments)는 recruitmentId 로 고른 그 행 값만 쓰고 비어 있으면 null/[] 이다. recruitmentId 가 없으면 이 필드들은 null/[]. educationJournalEnabled는 교육받은 교사 프로그램의 교육일지 기능 설정값이며 대상 외 프로그램, detail row 없음, OFF는 false이다. 이 값은 신청자의 화면 접근 상태나 신규 제출 가능 여부를 의미하지 않는다. 교육 진행·교육 형태·장소·참여 필드는 PortalProgramDetailEducationProgressFields, PortalProgramDetailEducationFormFields, PortalProgramDetailVenueFields, PortalProgramDetailParticipationFields 를 따른다. recruitments[].volunteerInterviewSchedule 은 VOLUNTEER 면접 운영 행에만 채운다(그 외 null/생략).
  */
 export interface PortalProgramDetailResponse {
   programId?: number;
@@ -23,6 +24,8 @@ export interface PortalProgramDetailResponse {
   /** @nullable */
   programCode?: string | null;
   programType?: string;
+  /** 교육받은 교사 프로그램 교육일지 기능 설정. detail row 없음 또는 education_journal_enabled_yn=false/null이면 false이며, 교육 필수 제출 여부와 다르다. 비대상 프로그램도 false. */
+  educationJournalEnabled: boolean;
   portalCategories?: PortalProgramDetailResponsePortalCategoriesItem[];
   /** recruitmentId 조회이고 GENERAL_*·UJAT 이면 그 행 announcementTitle, 없으면 프로그램 공개 제목. */
   title?: string;
@@ -107,9 +110,22 @@ export interface PortalProgramDetailResponse {
   educationTarget?: PortalProgramDetailResponseEducationTarget;
   /** 없으면 생략. */
   educationTargets?: string[];
-  /** @nullable */
+  /**
+     * 참여자(교육) 대상 상세. 강사·봉사자 모집 포커스(recruitmentId 또는 applicationType=INSTRUCTOR|VOLUNTEER)에서는 null.
+     * @nullable
+     */
   educationTargetDetail?: string | null;
-  /** @nullable */
+  /**
+     * 강사·봉사자 모집 포커스일 때 generalCommonInfo.*RecruitmentInfo.recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null.
+     * @nullable
+     */
+  recruitmentTarget?: string | null;
+  /** 강사·봉사자 모집 포커스일 때 overlay 코드 배열(recruit.volunteer.volunteerTargets, recruit.instructor.recruitTargets 등). 없으면 생략. */
+  recruitmentTargets?: PortalProgramDetailResponseRecruitmentTargetsItem[];
+  /**
+     * 모집 대상 상세. 포커스 모집 역할 nested recruitmentTargetDetail만. 강사·봉사자 포커스에 참여자 participantRecruitmentInfo 값을 넣지 않는다.
+     * @nullable
+     */
   recruitmentTargetDetail?: string | null;
   /** @nullable */
   targetGradeFrom?: string | null;

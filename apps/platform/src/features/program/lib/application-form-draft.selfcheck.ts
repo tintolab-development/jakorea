@@ -9,6 +9,7 @@ import {
   resolvePortalApplicationFormRuntimeContext,
   collectRuntimeConditionalQuestions,
   collectRuntimeHiddenAnswerKeys,
+  mergeApplicationBindingRuntimeParagraphs,
   omitRuntimeHiddenAnswers,
   prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
@@ -819,5 +820,41 @@ assert.equal(
   'program-application-institution-seed-sex-offense-consent-submission' in emptySidecarAnswers,
   false,
 )
+
+const volunteerPersonalKey = 'program-volunteer-application-seed-personal-info'
+const volunteerBindingForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: volunteerPersonalKey,
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      showBottomConsent: true,
+      bottomConsent: 'agree',
+      tableFlavor: 'field',
+      columnHeaders: ['a', 'b', 'c'],
+      dataRows: [['', '', '']],
+      fieldDataRows: [],
+    },
+  ],
+}
+const volunteerClearedDraft = writingFormDraftFromApplicationForm(volunteerBindingForm)
+assert.ok(volunteerClearedDraft)
+const volunteerPersonalBeforeMerge = volunteerClearedDraft!.paragraphs.find(
+  paragraph => paragraph.id === volunteerPersonalKey,
+)
+assert.ok(volunteerPersonalBeforeMerge && 'bottomConsent' in volunteerPersonalBeforeMerge)
+assert.equal(volunteerPersonalBeforeMerge.bottomConsent, undefined)
+
+const volunteerAfterBindingMerge = mergeApplicationBindingRuntimeParagraphs(
+  volunteerClearedDraft!,
+  volunteerBindingForm,
+)
+const volunteerPersonalAfterMerge = volunteerAfterBindingMerge.paragraphs.find(
+  paragraph => paragraph.id === volunteerPersonalKey,
+)
+assert.ok(volunteerPersonalAfterMerge && 'bottomConsent' in volunteerPersonalAfterMerge)
+assert.equal(volunteerPersonalAfterMerge.bottomConsent, undefined)
 
 console.log('application-form-draft.selfcheck: ok')

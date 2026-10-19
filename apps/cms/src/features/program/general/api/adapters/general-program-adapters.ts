@@ -11,7 +11,8 @@ import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/sche
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
-import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
+import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramUpdateRequestRoundsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestRoundsItem'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
@@ -334,6 +335,11 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
         }
       : {}),
     backendProgramType: dto.programType,
+    featuredOnHome: dto.featuredOnHome === true,
+    homeDisplayOrder:
+      typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
+        ? dto.homeDisplayOrder
+        : null,
   })
 }
 
@@ -501,6 +507,11 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
       : {}),
     backendProgramType: dto.programType,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
+    featuredOnHome: dto.featuredOnHome === true,
+    homeDisplayOrder:
+      typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
+        ? dto.homeDisplayOrder
+        : null,
   })
 
   return hydrateGeneralRecruitmentInfoFromRows(
@@ -846,6 +857,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     merged: program,
     existing: program,
   })
+  applyPortalHomeFeaturedToRequest(body, program, 'full')
   return body
 }
 
@@ -1145,6 +1157,7 @@ function mapProgramPatchFieldsToRequest(
     existing,
     patch,
   })
+  applyPortalHomeFeaturedToRequest(body, merged, 'patch', patch)
 
   return body
 }

@@ -1023,6 +1023,7 @@ const rowScopedEmpty = mapPortalProgramDetail(
         applicationTypes: ['ORGANIZATION'],
         announcementTitle: '참여자 공고',
         programDescription: '참여자 프로그램 설명',
+        preEducationNoticeRequired: false,
         recruitmentGuide: '참여자 모집 안내',
         remarks: '참여자 비고',
         attachments: [],
@@ -1033,6 +1034,7 @@ const rowScopedEmpty = mapPortalProgramDetail(
 )
 assert.ok(rowScopedEmpty)
 assert.equal(rowScopedEmpty.title, '참여자 공고')
+assert.equal(rowScopedEmpty.preEducationNoticeRequired, false)
 assert.equal(rowScopedEmpty.summary, '참여자 프로그램 설명')
 assert.equal(
   rowScopedEmpty.extraSections.some(section => section.title === '프로그램 설명'),

@@ -2,7 +2,8 @@ import type { AdminProgramListItemDto } from '@/features/program/general/api/pro
 import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
-import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
+import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type {
   Program,
   ProgramCategory,
@@ -324,6 +325,11 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     updatedAt: dto.updatedAt,
     backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
+    featuredOnHome: dto.featuredOnHome === true,
+    homeDisplayOrder:
+      typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
+        ? dto.homeDisplayOrder
+        : null,
   })
   return applyResolvedAnnouncementTitle(
     applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
@@ -544,6 +550,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     merged: program,
     existing: program,
   })
+  applyPortalHomeFeaturedToRequest(body, program, 'full')
   return body
 }
 
@@ -698,6 +705,7 @@ function mapCompanySchoolPatchFieldsToRequest(
     existing,
     patch,
   })
+  applyPortalHomeFeaturedToRequest(body, merged, 'patch', patch)
 
   return body
 }

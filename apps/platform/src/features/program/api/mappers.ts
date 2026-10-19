@@ -151,6 +151,10 @@ function readString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
+function readBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
+}
+
 function toDate(value: string | undefined): Date | null {
   if (!value?.trim()) return null
   const date = new Date(value)
@@ -1156,6 +1160,11 @@ export function mapPortalProgramDetail(
   )
   const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
   const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
+  const preEducationNoticeRequired =
+    readBoolean(independentRow?.preEducationNoticeRequired) ??
+    readBoolean(independentRow?.advanceGuidanceRequired) ??
+    readBoolean(remote.preEducationNoticeRequired) ??
+    readBoolean(remote.advanceGuidanceRequired)
   const extraSections: ProgramExtraSection[] = [
     extraSection('모집 안내', recruitmentGuide),
     { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
@@ -1210,6 +1219,7 @@ export function mapPortalProgramDetail(
     programAudience:
       remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
     participationMethod: mapParticipationMethod(remote),
+    ...(preEducationNoticeRequired !== undefined ? { preEducationNoticeRequired } : {}),
     recruitmentRoleLabel: roleLabel,
     ...(selected?.ambiguous
       ? { recruitmentSelectionAmbiguous: true }
