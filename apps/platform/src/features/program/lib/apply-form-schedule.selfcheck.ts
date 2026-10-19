@@ -23,8 +23,11 @@ import {
   resolveApplyPreferredScheduleMaxBlocks,
   resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   hasMissingRequiredBottomConsent,
+  areTrainedTeachersScheduleRuntimeFieldsInSync,
   hasPreferredScheduleDateOutsideRuntime,
+  isDateInAllowedSchedulePeriods,
   isRuntimeScheduleNotConfigured,
+  isTrainedTeachersOrganizationPeriodDateRequests,
   readRuntimeScheduleConfig,
   resolveRuntimeScheduleDateBounds,
   resolveRuntimeScheduleEnabledDates,
@@ -40,6 +43,7 @@ import {
   findIncompletePreferredScheduleMessage,
   selectedFixedScheduleIdsFromDraftAnswer,
   toFixedScheduleOptionAnswerValue,
+  toPortalPreferredScheduleBlocks,
 } from './preferred-schedule-blocks.ts'
 
 function testUniqueCalendarDays() {
@@ -283,6 +287,221 @@ function testTrainedTeacherPeriodDateBounds() {
   assert.equal(isRuntimeScheduleNotConfigured(unconfiguredRuntime), true)
   assert.equal(resolveRuntimeScheduleEnabledDates(unconfiguredRuntime, true)?.size, 0)
   assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-10' }], unconfiguredRuntime), true)
+
+  const emptyPeriodsWithBounds = {
+    scheduleInputMode: 'date_time_requests',
+    allowedSchedulePeriods: [],
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  }
+  assert.equal(isRuntimeScheduleNotConfigured(emptyPeriodsWithBounds), true)
+  assert.equal(resolveRuntimeScheduleEnabledDates(emptyPeriodsWithBounds, true)?.size, 0)
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-05' }], emptyPeriodsWithBounds),
+    true
+  )
+
+  const trainedTeacherPeriodRuntime = {
+    programType: 'TRAINED_TEACHER',
+    applicationFlavor: 'ORGANIZATION',
+    educationStructure: 'SCHEDULE',
+    sessionRound: 'SINGLE',
+    scheduleMode: 'PERIOD',
+    scheduleInputMode: 'date_time_requests',
+    scheduleOptions: [],
+    allowedSchedulePeriods: [{ startDate: '2026-11-05', endDate: '2026-11-11' }],
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+    maxScheduleCount: 3,
+    maxSessionsPerDay: null,
+  }
+  const trainedTeacherPeriodParagraph = {
+    id: 'program-application-trained-teachers-seed-preferred-schedule',
+    runtimeInputMode: 'date_time_requests',
+    runtimeAllowedSchedulePeriods: [{ startDate: '2026-11-05', endDate: '2026-11-11' }],
+    runtimeMinDate: '2026-11-05',
+    runtimeMaxDate: '2026-11-11',
+  }
+  assert.equal(
+    isTrainedTeachersOrganizationPeriodDateRequests(trainedTeacherPeriodRuntime),
+    true
+  )
+  assert.equal(
+    areTrainedTeachersScheduleRuntimeFieldsInSync(
+      trainedTeacherPeriodRuntime,
+      trainedTeacherPeriodParagraph
+    ),
+    true
+  )
+  assert.equal(isRuntimeScheduleNotConfigured(trainedTeacherPeriodRuntime), false)
+  assert.equal(
+    isRuntimeScheduleNotConfigured(trainedTeacherPeriodRuntime, trainedTeacherPeriodParagraph),
+    false
+  )
+  const trainedTeacherEnabledDates = resolveRuntimeScheduleEnabledDates(
+    trainedTeacherPeriodRuntime,
+    true,
+    trainedTeacherPeriodParagraph
+  )
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-05'), true)
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-11'), true)
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-04'), false)
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-12'), false)
+
+  const discontinuousPeriods = [
+    { startDate: '2026-11-05', endDate: '2026-11-07' },
+    { startDate: '2026-11-10', endDate: '2026-11-11' },
+  ]
+  const discontinuousRuntime = {
+    ...trainedTeacherPeriodRuntime,
+    allowedSchedulePeriods: discontinuousPeriods,
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  }
+  const discontinuousEnabled = resolveRuntimeScheduleEnabledDates(discontinuousRuntime, true)
+  assert.equal(discontinuousEnabled?.has('2026-11-05'), true)
+  assert.equal(discontinuousEnabled?.has('2026-11-07'), true)
+  assert.equal(discontinuousEnabled?.has('2026-11-08'), false)
+  assert.equal(discontinuousEnabled?.has('2026-11-09'), false)
+  assert.equal(discontinuousEnabled?.has('2026-11-10'), true)
+  assert.equal(discontinuousEnabled?.has('2026-11-11'), true)
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-08', discontinuousPeriods),
+    false
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-08' }], discontinuousRuntime),
+    true
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-06' }], discontinuousRuntime),
+    false
+  )
+
+  const mismatchedParagraph = {
+    ...trainedTeacherPeriodParagraph,
+    runtimeAllowedSchedulePeriods: [{ startDate: '2026-11-01', endDate: '2026-11-02' }],
+  }
+  assert.equal(
+    areTrainedTeachersScheduleRuntimeFieldsInSync(
+      trainedTeacherPeriodRuntime,
+      mismatchedParagraph
+    ),
+    false
+  )
+
+  const emptyPeriodsFailClosed = {
+    programType: 'TRAINED_TEACHER',
+    applicationFlavor: 'ORGANIZATION',
+    scheduleMode: 'PERIOD',
+    scheduleInputMode: 'date_time_requests',
+    scheduleOptions: [],
+    allowedSchedulePeriods: [],
+    minScheduleDate: null,
+    maxScheduleDate: null,
+  }
+  assert.equal(
+    isTrainedTeachersOrganizationPeriodDateRequests(emptyPeriodsFailClosed),
+    true
+  )
+  assert.equal(isRuntimeScheduleNotConfigured(emptyPeriodsFailClosed), true)
+  assert.equal(resolveRuntimeScheduleEnabledDates(emptyPeriodsFailClosed, true)?.size, 0)
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-05', trainedTeacherPeriodRuntime.allowedSchedulePeriods),
+    true
+  )
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-11', trainedTeacherPeriodRuntime.allowedSchedulePeriods),
+    true
+  )
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-04', trainedTeacherPeriodRuntime.allowedSchedulePeriods),
+    false
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime(
+      [{ date: '2026-11-05' }],
+      trainedTeacherPeriodRuntime,
+      trainedTeacherPeriodParagraph
+    ),
+    false
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime(
+      [{ date: '2026-11-12' }],
+      trainedTeacherPeriodRuntime,
+      trainedTeacherPeriodParagraph
+    ),
+    true
+  )
+  assert.deepEqual(resolveRuntimeScheduleDateBounds(trainedTeacherPeriodRuntime), {
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  })
+  assert.equal(
+    readRuntimeScheduleConfig(trainedTeacherPeriodRuntime).scheduleInputMode,
+    'date_time_requests'
+  )
+  assert.deepEqual(trainedTeacherPeriodRuntime.scheduleOptions, [])
+
+  const paragraphOnlyPeriods = {
+    scheduleInputMode: 'date_time_requests',
+  }
+  assert.equal(isRuntimeScheduleNotConfigured(paragraphOnlyPeriods), true)
+  assert.equal(
+    isRuntimeScheduleNotConfigured(paragraphOnlyPeriods, trainedTeacherPeriodParagraph),
+    false
+  )
+  assert.equal(
+    resolveRuntimeScheduleEnabledDates(paragraphOnlyPeriods, true, trainedTeacherPeriodParagraph)?.has(
+      '2026-11-05'
+    ),
+    true
+  )
+
+  const runtimeFilledParagraphEmpty = {
+    scheduleInputMode: 'date_time_requests',
+    allowedSchedulePeriods: [{ startDate: '2026-11-05', endDate: '2026-11-11' }],
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  }
+  const emptyParagraph = {
+    runtimeInputMode: 'date_time_requests',
+    runtimeAllowedSchedulePeriods: [],
+    runtimeMinDate: null,
+    runtimeMaxDate: null,
+  }
+  assert.equal(
+    isRuntimeScheduleNotConfigured(runtimeFilledParagraphEmpty, emptyParagraph),
+    false
+  )
+  assert.equal(
+    resolveRuntimeScheduleEnabledDates(
+      runtimeFilledParagraphEmpty,
+      true,
+      emptyParagraph
+    )?.has('2026-11-05'),
+    true
+  )
+
+  const dateModeRuntime = {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleMode: 'DATE',
+    scheduleOptions: [],
+    allowedSchedulePeriods: [],
+    minScheduleDate: null,
+    maxScheduleDate: null,
+  }
+  assert.equal(isRuntimeScheduleNotConfigured(dateModeRuntime), false)
+  assert.equal(resolveRuntimeScheduleEnabledDates(dateModeRuntime, true)?.size ?? 0, 0)
+
+  assert.deepEqual(
+    toPortalPreferredScheduleBlocks(
+      [{ date: '2026-11-05', classPeriod: '', startTime: '', endTime: '' }],
+      { dateOnly: true }
+    ).map(({ date, sessionTimes }) => ({ date, sessionTimes })),
+    [{ date: '2026-11-05', sessionTimes: [] }]
+  )
 
   const consentDraft = {
     schemaVersion: 1,

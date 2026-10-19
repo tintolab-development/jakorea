@@ -24,6 +24,22 @@ assert.equal(entry?.status, 'submitted')
 assert.equal(isPortalSurveyFormType('SURVEY'), true)
 assert.equal(isPortalSurveyFormType('SATISFACTION'), false)
 
+const scheduleBinding = mapPortalFormListItemToSurveyEntry({
+  bindingId: 188865,
+  title: '행사 설문',
+  formType: 'SURVEY',
+  targetScope: 'SCHEDULE',
+  targetScopeId: 187156,
+  status: 'NOT_SUBMITTED',
+  required: true,
+})
+assert.equal(scheduleBinding?.id, '188865')
+assert.equal(scheduleBinding?.targetScope, 'SCHEDULE')
+assert.equal(scheduleBinding?.targetScopeId, 187156)
+assert.equal(scheduleBinding?.required, true)
+
+assert.equal(mapPortalFormListItemToSurveyEntry({ title: 'id 없음' }), null)
+
 const items = dedupePortalFormListItems([
   { bindingId: 1, title: 'A' },
   { programFormBindingId: 1, title: 'B' },

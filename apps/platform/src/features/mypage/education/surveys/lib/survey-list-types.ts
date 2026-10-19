@@ -9,6 +9,9 @@ export type EducationSurveyListEntry = {
   endAt?: string
   createdAt?: string
   templateVersionId?: number
+  targetScope?: string
+  targetScopeId?: number
+  required?: boolean
   form?: Record<string, unknown> | null
   formResponseId?: number
   answers?: Record<string, unknown> | null

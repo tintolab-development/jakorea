@@ -2,8 +2,6 @@ import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce, readDownloadUrlFromJsonBlob } from '@/shared/lib/download-attachment'
 import {
   dedupePortalFormListItems,
-  isPortalSatisfactionFormType,
-  isPortalSurveyFormType,
   PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
   PORTAL_SURVEY_FORM_TYPE_QUERIES,
 } from '../lib/portal-form-list'
@@ -238,6 +236,8 @@ export type PortalFormListItem = {
   formBindingId?: number
   title?: string
   formType?: string
+  targetScope?: string
+  targetScopeId?: number | null
   status?: PortalFormResponseStatus | string
   submissionStartAt?: string
   submissionEndAt?: string
@@ -558,7 +558,8 @@ async function fetchApplicationFormsOnce(
 
 /**
  * 교육현황 설문·만족도 목록 SSOT (`formType=SURVEY` | `SATISFACTION`).
- * Admin `/programs/{id}/surveys` 는 사용하지 않는다. `items: []` 는 정상 empty(오류 아님).
+ * Admin `/programs/{id}/surveys` 는 사용하지 않는다.
+ * `items: []` 는 정상 empty(오류 아님). formType 조회가 비면 전체 forms로 다시 채우지 않는다.
  */
 export async function fetchApplicationForms(
   applicationType: ProgramApplicationType,
@@ -581,13 +582,7 @@ export async function fetchApplicationForms(
     if (merged.length > 0) return merged
   }
 
-  const all = await fetchApplicationFormsOnce(applicationType, applicationId, undefined, signal)
-  const filtered = all.filter(item =>
-    formType === 'SURVEY'
-      ? isPortalSurveyFormType(item.formType)
-      : isPortalSatisfactionFormType(item.formType),
-  )
-  return dedupePortalFormListItems(filtered)
+  return merged
 }
 
 export type PortalSurveyFormDocument = {
