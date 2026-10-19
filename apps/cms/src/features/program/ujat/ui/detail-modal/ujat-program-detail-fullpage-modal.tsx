@@ -98,6 +98,7 @@ import {
   persistRecruitmentTabSave,
 } from '@/features/program/shared/lib/persist-recruitment-row-save'
 import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { persistRecruitmentOverlaySnapshot } from '@/features/program/ujat/api/service'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import {
   replaceUjatRegionCapacitiesRemote,
@@ -1435,13 +1436,15 @@ export function UjatProgramDetailFullPageModal({
                   if (!next) throw new Error('UJAT 프로그램 상세를 다시 불러오지 못했습니다.')
                   return next
                 },
+                beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
               })
               if (result.mode === 'row') {
                 const scope = shouldUseRemoteApi() ? 'remote' : 'local'
                 await syncOpenProgramDetailCache(
                   queryClient,
                   ujatProgramQueryKeys.detail(scope, result.program.id),
-                  result.program
+                  result.program,
+                  { refetch: false }
                 )
                 invalidateUjatProgramListCaches(queryClient)
               } else if (onUpdateProgram) {
@@ -1564,13 +1567,15 @@ export function UjatProgramDetailFullPageModal({
                   if (!next) throw new Error('UJAT 프로그램 상세를 다시 불러오지 못했습니다.')
                   return next
                 },
+                beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
               })
               if (result.mode === 'row') {
                 const scope = shouldUseRemoteApi() ? 'remote' : 'local'
                 await syncOpenProgramDetailCache(
                   queryClient,
                   ujatProgramQueryKeys.detail(scope, result.program.id),
-                  result.program
+                  result.program,
+                  { refetch: false }
                 )
                 invalidateUjatProgramListCaches(queryClient)
               } else if (onUpdateProgram) {
