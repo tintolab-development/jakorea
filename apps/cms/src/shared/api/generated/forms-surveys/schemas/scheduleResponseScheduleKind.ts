@@ -8,7 +8,6 @@
 
 /**
  * 일정 종류. PRE_EDUCATION, EDUCATION, CLOSING, SESSION. 없으면 null입니다.
- * @nullable
  */
 export type ScheduleResponseScheduleKind = typeof ScheduleResponseScheduleKind[keyof typeof ScheduleResponseScheduleKind] | null;
 

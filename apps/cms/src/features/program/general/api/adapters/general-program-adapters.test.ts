@@ -16,7 +16,7 @@ import {
 } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { Program } from '@/types/domain'
-import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 
 const sampleProgram: Program = {
   id: 'prog-1',
@@ -392,6 +392,43 @@ describe('general-program-adapters', () => {
       }),
     ])
     expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1' }])
+  })
+
+  it('maps featuredOnHome and homeDisplayOrder on create and omits them on unrelated PATCH', () => {
+    const create = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      featuredOnHome: true,
+      homeDisplayOrder: 2,
+    })
+    expect(create.featuredOnHome).toBe(true)
+    expect(create.homeDisplayOrder).toBe(2)
+
+    const patch = mapGeneralProgramToUpdateRequest(
+      { ...sampleProgram, featuredOnHome: true, homeDisplayOrder: 2 },
+      { title: '제목만' },
+      sampleProgram
+    )
+    expect(patch.featuredOnHome).toBeUndefined()
+    expect(patch.homeDisplayOrder).toBeUndefined()
+
+    const featuredPatch = mapGeneralProgramToUpdateRequest(
+      { ...sampleProgram, featuredOnHome: false, homeDisplayOrder: null },
+      { featuredOnHome: false, homeDisplayOrder: null },
+      sampleProgram
+    )
+    expect(featuredPatch.featuredOnHome).toBe(false)
+    expect(featuredPatch.homeDisplayOrder).toBeNull()
+  })
+
+  it('hydrates featuredOnHome from admin GET', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186095',
+      title: '1사 1교 프로그램 [ 1번 ]',
+      featuredOnHome: true,
+      homeDisplayOrder: 1,
+    })
+    expect(program.featuredOnHome).toBe(true)
+    expect(program.homeDisplayOrder).toBe(1)
   })
 
   it('maps multi sponsor manager contact refs into create sponsors[]', () => {

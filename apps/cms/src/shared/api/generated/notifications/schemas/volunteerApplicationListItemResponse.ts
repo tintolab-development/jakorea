@@ -18,10 +18,7 @@ export interface VolunteerApplicationListItemResponse {
   programName?: string;
   programType?: string;
   recruitmentId?: number;
-  /**
-     * 상·하반기. program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null
-     * @nullable
-     */
+  /** 상·하반기. program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null */
   recruitHalf?: VolunteerApplicationListItemResponseRecruitHalf;
   memberId?: number;
   /** 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
@@ -40,25 +37,13 @@ export interface VolunteerApplicationListItemResponse {
   giveUpYn?: boolean;
   applicationFormResponseId?: number;
   essaySubmitted?: boolean;
-  /**
-     * 일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null
-     * @nullable
-     */
+  /** 일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
   essayIntro?: string | null;
-  /**
-     * 일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null
-     * @nullable
-     */
+  /** 일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
   essayEducationExperience?: string | null;
-  /**
-     * 일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null
-     * @nullable
-     */
+  /** 일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
   essayNecessity?: string | null;
-  /**
-     * 일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null
-     * @nullable
-     */
+  /** 일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
   essayJaExperience?: string | null;
   /** 현재 반려 사유. 반려 상태가 아니면 null */
   rejectReason?: string;
@@ -85,39 +70,18 @@ export interface VolunteerApplicationListItemResponse {
   canEditManagerAEvaluation?: boolean;
   canEditManagerBEvaluation?: boolean;
   availableActions?: string[];
-  /**
-     * UJAT 학년 라벨. 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예. 없거나 UJAT이 아니면 null. 추측하지 않음
-     * @nullable
-     */
+  /** UJAT 학년 라벨. 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예. 없거나 UJAT이 아니면 null. 추측하지 않음 */
   grade?: string | null;
-  /**
-     * UJAT 희망 교육 지역 라벨. 지역 마스터에 없으면 null
-     * @nullable
-     */
+  /** UJAT 희망 교육 지역 라벨. 지역 마스터에 없으면 null */
   preferredRegion?: string | null;
-  /**
-     * UJAT 희망 교육 지역 코드. 없으면 null
-     * @nullable
-     */
+  /** UJAT 희망 교육 지역 코드. 없으면 null */
   preferredRegionCode?: string | null;
-  /**
-     * UJAT 교육 진행 경험. 미응답·판별 불가면 null. false로 채우지 않음
-     * @nullable
-     */
+  /** UJAT 교육 진행 경험. 미응답·판별 불가면 null. false로 채우지 않음 */
   hasEducationExperience?: boolean | null;
-  /**
-     * UJAT 봉사자 생년월일. 없으면 null. 다른 프로그램 목록은 null
-     * @nullable
-     */
+  /** UJAT 봉사자 생년월일. 없으면 null. 다른 프로그램 목록은 null */
   birthDate?: string | null;
-  /**
-     * UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id
-     * @nullable
-     */
+  /** UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id */
   id1365?: string | null;
-  /**
-     * 발대식 참석. 저장값이 없으면 null. false로 채우지 않음
-     * @nullable
-     */
+  /** 발대식 참석. 저장값이 없으면 null. false로 채우지 않음 */
   openingCeremonyAttended?: boolean | null;
 }

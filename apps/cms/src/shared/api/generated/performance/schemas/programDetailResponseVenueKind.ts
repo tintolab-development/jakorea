@@ -8,7 +8,6 @@
 
 /**
  * 교육 장소 구분. inside=기관 안, outside=기관 밖, other=기타. 없으면 null.
- * @nullable
  */
 export type ProgramDetailResponseVenueKind = typeof ProgramDetailResponseVenueKind[keyof typeof ProgramDetailResponseVenueKind] | null;
 

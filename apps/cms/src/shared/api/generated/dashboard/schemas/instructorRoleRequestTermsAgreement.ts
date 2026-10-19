@@ -13,4 +13,14 @@ export interface InstructorRoleRequestTermsAgreement {
   agreed?: boolean;
   /** @nullable */
   agreedAt?: string | null;
+  /**
+     * Consent document selected when this request was submitted; null for legacy requests
+     * @nullable
+     */
+  portalConsentDocumentId?: number | null;
+  /**
+     * Consent record for the selected document; use to reveal the application-time CMS form
+     * @nullable
+     */
+  consentRecordId?: number | null;
 }

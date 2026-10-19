@@ -8,7 +8,7 @@ import {
 import customInstance from '@/shared/api/orval-mutator'
 import { axiosClient } from '@/shared/instance/axios-instance'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
-import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 
 export type AdminProgramsListQuery = {
   keyword?: string
@@ -86,6 +86,8 @@ export interface AdminProgramListItemDto {
   participatingOrganizationCount?: number | null
   participatingSchoolCount?: number | null
   participatingStudentCount?: number | null
+  featuredOnHome?: boolean | null
+  homeDisplayOrder?: number | null
   createdAt?: string
   updatedAt?: string
 }

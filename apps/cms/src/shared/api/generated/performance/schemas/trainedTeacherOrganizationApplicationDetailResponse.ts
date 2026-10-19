@@ -52,34 +52,16 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   activityWithdrawn?: boolean;
   giveUpAt?: string;
   giveUpStopScheduleId?: number;
-  /**
-     * 신청 당시 저장된 기관 상세주소. 없으면 null.
-     * @nullable
-     */
+  /** 신청 당시 저장된 기관 상세주소. 없으면 null. */
   addressDetail?: string | null;
-  /**
-     * 신청 당시 저장된 교육 형태. 없으면 null.
-     * @nullable
-     */
+  /** 신청 당시 저장된 교육 형태. 없으면 null. */
   requestedEducationFormat?: string | null;
-  /**
-     * 신청 당시 저장된 신청 사유. 없으면 null.
-     * @nullable
-     */
+  /** 신청 당시 저장된 신청 사유. 없으면 null. */
   applicationReason?: string | null;
-  /**
-     * 신청 당시 저장된 기타 요청사항. 없으면 null.
-     * @nullable
-     */
+  /** 신청 당시 저장된 기타 요청사항. 없으면 null. */
   otherRequests?: string | null;
-  /**
-     * 담당 교사 이메일. 일반 상세 조회에서는 개인정보 정책에 따라 마스킹될 수 있음.
-     * @nullable
-     */
+  /** 담당 교사 이메일. 일반 상세 조회에서는 개인정보 정책에 따라 마스킹될 수 있음. */
   teacherEmail?: string | null;
-  /**
-     * 신청 당시 지정된 교재 id. 없으면 null.
-     * @nullable
-     */
+  /** 신청 당시 지정된 교재 id. 없으면 null. */
   textbookId?: number | null;
 }

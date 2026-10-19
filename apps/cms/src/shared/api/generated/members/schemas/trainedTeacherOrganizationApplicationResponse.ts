@@ -26,10 +26,7 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
-     * @nullable
-     */
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -47,10 +44,7 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   requestedClassCount?: number;
   journalSubmitted?: boolean;
   educationTarget?: string;
-  /**
-     * 신청 학년 우선. requested_grade가 있으면 그 원문(예: 2, 학년 접미사 없음). 비어 있으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null.
-     * @nullable
-     */
+  /** 신청 학년 우선. requested_grade가 있으면 그 원문(예: 2, 학년 접미사 없음). 비어 있으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null. */
   educationGrade?: string | null;
   lectureRound?: string;
   totalEducationRoundCount?: number;
@@ -58,19 +52,10 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   progressLabel?: string;
   textbookName?: string;
   educationCompletionCount?: number;
-  /**
-     * 활동 포기 시각이 있으면 true. applicationStatus는 APPROVED를 유지합니다.
-     * @nullable
-     */
+  /** 활동 포기 시각이 있으면 true. applicationStatus는 APPROVED를 유지합니다. */
   activityWithdrawn?: boolean | null;
-  /**
-     * 활동 포기 시각. 포기하지 않았으면 null.
-     * @nullable
-     */
+  /** 활동 포기 시각. 포기하지 않았으면 null. */
   giveUpAt?: string | null;
-  /**
-     * 활동 포기 기준 일정 id. 포기하지 않았으면 null.
-     * @nullable
-     */
+  /** 활동 포기 기준 일정 id. 포기하지 않았으면 null. */
   giveUpStopScheduleId?: number | null;
 }

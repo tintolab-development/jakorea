@@ -11,50 +11,23 @@
  */
 export interface ActivityScheduleSlot {
   scheduleId?: number;
-  /**
-     * 기관형 선택값의 organization-application id. 개인형이면 null
-     * @nullable
-     */
+  /** 기관형 선택값의 organization-application id. 개인형이면 null */
   organizationApplicationId?: number | null;
-  /**
-     * PERIOD 교육 구간 index. 없으면 null
-     * @nullable
-     */
+  /** PERIOD 교육 구간 index. 없으면 null */
   educationPeriodIndex?: number | null;
-  /**
-     * 제출 답변 원문 옵션 값
-     * @nullable
-     */
+  /** 제출 답변 원문 옵션 값 */
   sourceAnswerValue?: string | null;
-  /**
-     * program_schedule.schedule_name. 일정이 삭제되면 null
-     * @nullable
-     */
+  /** program_schedule.schedule_name. 일정이 삭제되면 null */
   scheduleName?: string | null;
-  /**
-     * program_schedule.session_no. 없으면 null
-     * @nullable
-     */
+  /** program_schedule.session_no. 없으면 null */
   sessionNo?: number | null;
-  /**
-     * 기관명. organizationApplicationId가 없거나 조회 실패면 null
-     * @nullable
-     */
+  /** 기관명. organizationApplicationId가 없거나 조회 실패면 null */
   organizationName?: string | null;
-  /**
-     * 표시용 시작 시각. PERIOD 구간 또는 program_schedule.start_at
-     * @nullable
-     */
+  /** 표시용 시작 시각. PERIOD 구간 또는 program_schedule.start_at */
   startAt?: string | null;
-  /**
-     * 표시용 종료 시각
-     * @nullable
-     */
+  /** 표시용 종료 시각 */
   endAt?: string | null;
-  /**
-     * 교육 진행 예정일 구간 라벨(PERIOD). 없으면 null
-     * @nullable
-     */
+  /** 교육 진행 예정일 구간 라벨(PERIOD). 없으면 null */
   label?: string | null;
   /** 현재 프로그램·기관·일정 관계가 유효하면 true. 과거 증빙은 false일 수 있음 */
   relationshipValid?: boolean;

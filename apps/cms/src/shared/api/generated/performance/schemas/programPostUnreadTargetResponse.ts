@@ -10,9 +10,6 @@ export interface ProgramPostUnreadTargetResponse {
   memberId?: number;
   targetRole?: string;
   visibilityType?: string;
-  /**
-     * 미읽음 대상 회원 이름. 탈퇴·삭제·미존재 회원이거나 이름이 비어 있으면 null입니다.
-     * @nullable
-     */
+  /** 미읽음 대상 회원 이름. 탈퇴·삭제·미존재 회원이거나 이름이 비어 있으면 null입니다. */
   displayName?: string | null;
 }

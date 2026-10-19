@@ -15,19 +15,10 @@ export interface ErrorDetail {
   code?: string;
   /** 사용자/프론트에 노출 가능한 안전한 오류 메시지 */
   message?: string;
-  /**
-     * 필드 단위 검증 오류인 경우 대상 필드
-     * @nullable
-     */
+  /** 필드 단위 검증 오류인 경우 대상 필드 */
   field?: string | null;
-  /**
-     * 서버 로그 추적용 ID
-     * @nullable
-     */
+  /** 서버 로그 추적용 ID */
   traceId?: string | null;
-  /**
-     * 전이 충돌 등 부가 컨텍스트. 없으면 null입니다.
-     * @nullable
-     */
+  /** 전이 충돌 등 부가 컨텍스트. 없으면 null입니다. */
   details?: ErrorDetailDetails;
 }

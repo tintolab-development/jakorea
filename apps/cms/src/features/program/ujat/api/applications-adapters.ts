@@ -387,8 +387,14 @@ export function mapVolunteerApplicationToUjatApplicantRow(
       | undefined
   )
   const interviewEvals = dto.interviewEvaluations ?? []
-  const scoreA = interviewEvals.find(item => item.evaluatorOrder === 1)?.score
-  const scoreB = interviewEvals.find(item => item.evaluatorOrder === 2)?.score
+  const slotScore = (
+    item: { score?: number | null; scoreTotal?: number | null } | undefined
+  ): number | null => {
+    const raw = item?.score ?? item?.scoreTotal
+    return typeof raw === 'number' ? raw : null
+  }
+  const scoreA = slotScore(interviewEvals.find(item => item.evaluatorOrder === 1))
+  const scoreB = slotScore(interviewEvals.find(item => item.evaluatorOrder === 2))
 
   return {
     id: toId(dto.id),
@@ -415,7 +421,10 @@ export function mapVolunteerApplicationToUjatApplicantRow(
         ? 'assigned'
         : projection.interviewAssignmentStatus,
     programId: toId(dto.programId) || programId,
-    half: fromUjatRecruitHalfApi(undefined, half),
+    half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
+    ...(dto.interviewAssignmentId != null
+      ? { interviewAssignmentId: dto.interviewAssignmentId }
+      : {}),
     englishName: '',
     ...(dto.memberId != null ? { memberId: String(dto.memberId) } : {}),
     id1365: dto.id1365?.trim() || '',
@@ -428,16 +437,10 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     interviewAvailability,
     secondInterviewScreeningStatus: projection.secondInterviewScreeningStatus,
     scheduleChangeCancelCount: 0,
-    managerAScore: typeof scoreA === 'number' ? scoreA : null,
-    managerBScore: typeof scoreB === 'number' ? scoreB : null,
+    managerAScore: scoreA,
+    managerBScore: scoreB,
     totalScore:
-      typeof scoreA === 'number' && typeof scoreB === 'number'
-        ? scoreA + scoreB
-        : typeof scoreA === 'number'
-          ? scoreA
-          : typeof scoreB === 'number'
-            ? scoreB
-            : null,
+      scoreA != null && scoreB != null ? scoreA + scoreB : scoreA != null ? scoreA : scoreB,
     ...assigned,
   }
 }

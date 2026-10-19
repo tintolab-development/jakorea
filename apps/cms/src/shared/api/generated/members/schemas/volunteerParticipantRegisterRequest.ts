@@ -21,10 +21,7 @@ export interface VolunteerParticipantRegisterRequest {
   personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent;
   /** @minLength 1 */
   thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent;
-  /**
-     * 회원에 1365 ID가 없을 때만
-     * @nullable
-     */
+  /** 회원에 1365 ID가 없을 때만 */
   id1365?: string | null;
   /** @minLength 1 */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;

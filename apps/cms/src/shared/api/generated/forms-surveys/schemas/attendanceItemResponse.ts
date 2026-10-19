@@ -12,10 +12,7 @@ export interface AttendanceItemResponse {
   programId?: number;
   scheduleId?: number;
   participantId?: number;
-  /**
-     * 출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null.
-     * @nullable
-     */
+  /** 출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null. */
   status?: AttendanceItemResponseStatus;
   absenceReason?: string;
   checkedByAdminId?: number;

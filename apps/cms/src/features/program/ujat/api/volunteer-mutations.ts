@@ -8,10 +8,12 @@ import {
   submitGeneralVolunteerDocumentResultBulk,
   submitGeneralVolunteerFinalResult,
   submitGeneralVolunteerFinalResultBulk,
+  submitGeneralInterviewAssignmentEvaluation,
   updateGeneralVolunteerDocumentEvaluation,
   mapSecondInterviewStatusToFinalResultPayload,
   giveUpGeneralVolunteerApplication,
 } from '@/features/program/general/api/admin-applications-service'
+import type { InterviewAssignmentEvaluationPayload } from '@/features/program/general/api/applications-api-client'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -72,4 +74,12 @@ export async function giveUpUjatVolunteerApplicationRemote(
 ): Promise<void> {
   assertUjatVolunteerMutationsRemoteReady()
   await giveUpGeneralVolunteerApplication(applicationId, { reason: reason.trim() })
+}
+
+export async function submitUjatVolunteerInterviewEvaluationRemote(
+  assignmentId: number | string,
+  payload: InterviewAssignmentEvaluationPayload
+): Promise<void> {
+  assertUjatVolunteerMutationsRemoteReady()
+  await submitGeneralInterviewAssignmentEvaluation(assignmentId, payload)
 }

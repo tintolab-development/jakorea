@@ -26,7 +26,7 @@
 
 | Platform | query |
 |----------|-------|
-| 홈 카드 | `featuredOnHome=true` `size=8` `page=0`. `sort` 생략 → `homeDisplayOrder` 오름차순. 목록 행에 `featuredOnHome`·`homeDisplayOrder` 포함 |
+| 홈 카드 | `featuredOnHome=true` `size=8` `page=0`. `sort` 생략. **모집 상태 필터 없음** (`recruitmentStatus` 미전송). 목록 행에 `featuredOnHome`·`homeDisplayOrder` 포함 |
 | 탭 청소년·기관·강사 | `portalTab=YOUTH_YOUNG\|ORGANIZATION\|INSTRUCTOR` |
 | Gemini 찾아가는 연수 | Portal `programType` SSOT = **`GEMINI_TRAINING`** (`GEMINI` alias 없음). 기관 모집만이면 `portalCategories=["ORGANIZATION"]` — 강사 탭 미노출이 정상 |
 | 검색 | `keyword` |
@@ -49,6 +49,22 @@
 | `UPCOMING` 또는 `SCHEDULED` | 모집 예정 |
 | `CLOSED` | 모집 완료 |
 
+## 홈 노출 (`featuredOnHome`) — BE 검증 (2026-10-19)
+
+Platform 홈 캐러셀은 **API 필터가 아니라 데이터**로 건수가 결정된다. 로컬 예: `featuredOnHome=true` → `totalElements=1`, 일반 목록 `57`, `recruitmentStatus=OPEN` → `40`, `featuredOnHome=true&recruitmentStatus=OPEN` → `1` (AND).
+
+| 항목 | SSOT |
+|------|------|
+| 저장 위치 | `program.featured_on_home`, `program.home_display_order` (**프로그램 단위**, 모집 행 컬럼 아님) |
+| 목록 행 | 다중 모집 행은 동일 프로그램 플래그를 상속해 `recruitmentId`별 행으로 반환 |
+| 홈 필터 | `featuredOnHome=true`만. `OPEN` / `UPCOMING` / `CLOSED` 모두 홈 대상 가능 |
+| 정렬 (`sort` 생략) | `homeDisplayOrder ASC NULLS LAST` → `programId ASC` → `recruitmentId ASC` → `applicationType ASC` |
+| 페이징 | 서버 `size` 최대 8. `totalElements`는 제한 전 전체 매칭 **모집 행** 수 |
+| 제외 | 삭제·비공개 프로그램, 비공개·`INACTIVE` 모집 행. 별도 캐시 없음 (요청 시 DB 조회) |
+| JABACK | `HomepageProgramQueryService`, `HomepageProgramController` (`GET /api/portal/programs`) |
+
+**CMS 저장 (2026-10-19 BE):** `PATCH /api/admin/programs/{programId}` · `POST` create에 `featuredOnHome`, `homeDisplayOrder`. 생략=기존 유지, `featuredOnHome=false`면 순서 null, `clearFields`에 `homeDisplayOrder` 가능. 상세 GET `GET /api/admin/programs/{programId}`. CMS 공통정보에서 프로그램 단위로 저장한다.
+
 ## Fallback
 
 | 상태 | 홈 카드 | 목록 | 상세 |
@@ -65,6 +81,6 @@
 BE 핸드오프: `docs/frontend/portal-platform-programs-home-list-frontend-handoff-2026-09-20.md` (JABACK).  
 BE 요청 원문: [portal-platform-programs-backend-cursor-prompt-2026-09-20.md](../../../cms/docs/api/portal-platform-programs-backend-cursor-prompt-2026-09-20.md)
 
-**Last updated:** 2026-09-30
+**Last updated:** 2026-10-19
 
 Gemini Portal 노출 handoff: [gemini-portal-platform-visibility-backend-prompt-2026-09-30.md](./gemini-portal-platform-visibility-backend-prompt-2026-09-30.md) · BE FE handoff `JABACK/docs/frontend/gemini-portal-platform-visibility-frontend-handoff-2026-09-30.md`

@@ -15,10 +15,7 @@ export interface GeminiOrganizationApplicationItem {
   programId?: number;
   recruitmentId?: number;
   organizationId?: number;
-  /**
-     * 신청 기관명. CMS 컬럼 「신청 기관명」.
-     * @nullable
-     */
+  /** 신청 기관명. CMS 컬럼 「신청 기관명」. */
   organizationName?: string | null;
   applicationStatus?: string;
   requestedStudentCount?: number;
@@ -26,35 +23,17 @@ export interface GeminiOrganizationApplicationItem {
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
-  /**
-     * 기관 소재지 시/도. organization.region_sido. CMS 「기관 소재지」 앞.
-     * @nullable
-     */
+  /** 기관 소재지 시/도. organization.region_sido. CMS 「기관 소재지」 앞. */
   regionSido?: string | null;
-  /**
-     * 기관 소재지 시군구. organization.region_sigungu. CMS 「기관 소재지」 뒤.
-     * @nullable
-     */
+  /** 기관 소재지 시군구. organization.region_sigungu. CMS 「기관 소재지」 뒤. */
   regionSigungu?: string | null;
-  /**
-     * 담당 교사명. teacher_member 이름. CMS 「담당 교사명」.
-     * @nullable
-     */
+  /** 담당 교사명. teacher_member 이름. CMS 「담당 교사명」. */
   teacherName?: string | null;
-  /**
-     * 희망 교육 일정 구조화 블록. preferred_schedule_blocks_jsonb SSOT. 없으면 null.
-     * @nullable
-     */
+  /** 희망 교육 일정 구조화 블록. preferred_schedule_blocks_jsonb SSOT. 없으면 null. */
   preferredScheduleBlocks?: PreferredScheduleBlock[] | null;
-  /**
-     * 희망 교육 일정 표시 문자열. blocks를 CMS 셀 포맷으로 투영. 줄바꿈·콜론·파이프 포함. 없으면 null.
-     * @nullable
-     */
+  /** 희망 교육 일정 표시 문자열. blocks를 CMS 셀 포맷으로 투영. 줄바꿈·콜론·파이프 포함. 없으면 null. */
   preferredLectureScheduleText?: string | null;
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
-     * @nullable
-     */
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
   /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. */
   availableActions?: string[];

@@ -20,9 +20,12 @@ const ROW_COPY_KEYS = [
   'endAt',
   'operationStartDate',
   'operationEndDate',
+  'interviewEnabled',
+  'interviewStartAt',
+  'interviewEndAt',
 ] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
 
-/** 생성된 요청 타입에 아직 없는 행 필드. 면접 여부는 넣지 않는다. */
+/** 생성된 요청 타입에 아직 없는 행 필드. */
 type RecruitmentRowRequest = ProgramRecruitmentRequest & {
   otherMatters?: string | null
 }
@@ -108,9 +111,17 @@ export function buildRecruitmentRowCopyRequests(
     const changed: Partial<RecruitmentRowRequest> = {}
     for (const key of ROW_COPY_KEYS) {
       if (!(key in row)) continue
+      if (key === 'interviewEnabled') {
+        const value = row.interviewEnabled ?? null
+        const prevValue = prev?.interviewEnabled ?? null
+        if (value !== prevValue) changed.interviewEnabled = value
+        continue
+      }
       const value = row[key] ?? ''
       const prevValue = prev?.[key] ?? ''
-      if (value !== prevValue) changed[key] = value
+      if (value !== prevValue) {
+        ;(changed as Record<string, string | boolean | null>)[key] = value
+      }
     }
     if (Object.keys(changed).length === 0) continue
     out.push({

@@ -17,10 +17,7 @@ export interface AccountPaymentListItemResponse {
   paymentStatus?: string;
   /** 내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다. */
   paymentFailureYn?: boolean;
-  /**
-     * 내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다.
-     * @nullable
-     */
+  /** 내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다. */
   paymentFailureReason?: string | null;
   /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
@@ -28,45 +25,24 @@ export interface AccountPaymentListItemResponse {
   maskedAccountNo?: string;
   accountHolder?: string;
   netPaymentAmount?: number;
-  /**
-     * 이체 예정일. 목록 필터와 캘린더 배치 기준입니다.
-     * @nullable
-     */
+  /** 이체 예정일. 목록 필터와 캘린더 배치 기준입니다. */
   scheduledPaymentDate?: string | null;
   paidAt?: string;
   sourceType?: string;
   sourceId?: number;
   programId?: number;
   memberId?: number;
-  /**
-     * 프로그램명 (우선)
-     * @nullable
-     */
+  /** 프로그램명 (우선) */
   programNameKo?: string | null;
-  /**
-     * 호환 필드. programNameKo와 동일 값입니다.
-     * @nullable
-     */
+  /** 호환 필드. programNameKo와 동일 값입니다. */
   programName?: string | null;
-  /**
-     * 참여 기관. 개인 프로그램은 null
-     * @nullable
-     */
+  /** 참여 기관. 개인 프로그램은 null */
   institutionName?: string | null;
-  /**
-     * 차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다.
-     * @nullable
-     */
+  /** 차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다. */
   sessionOrdinal?: number | null;
-  /**
-     * 차시 표시. 예: 2 ~ 3차시. 개인은 null
-     * @nullable
-     */
+  /** 차시 표시. 예: 2 ~ 3차시. 개인은 null */
   sessionLabel?: string | null;
-  /**
-     * 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다.
-     * @nullable
-     */
+  /** 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다. */
   lectureDate?: string | null;
   availableActions?: string[];
 }

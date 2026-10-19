@@ -70,6 +70,8 @@ export interface UjatVolunteerApplicantRow {
   evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  /** 목록 DTO `interviewAssignmentId`. 평가 POST에 사용 */
+  interviewAssignmentId?: number
   secondInterviewScreeningStatus?: UjatSecondInterviewScreeningStatus
   totalScore?: number | null
   managerAScore?: number | null

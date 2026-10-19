@@ -17,6 +17,7 @@ import { UjatEducationScheduleSettingsProgramView } from './ujat-education-sched
 import { UjatRegionCapacityProgramView } from './ujat-region-capacity-program-view'
 import { UjatBasicInfoReadonlyView } from './ujat-basic-info-readonly-view'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { ProgramPortalHomeFeaturedFields } from '@/features/program/shared/ui/program-detail/portal-home-featured-fields'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
@@ -31,9 +32,22 @@ export interface UjatProgramDetailCommonInfoViewProps {
   infoForm?: UseFormReturn<ProgramDetailEditFormValues>
 }
 
-function UjatBasicInfoRegistrationAuditRow({ program }: { program: Program }) {
+function UjatBasicInfoRegistrationAuditRow({
+  program,
+  isEditMode,
+  infoForm,
+}: {
+  program: Program
+  isEditMode: boolean
+  infoForm?: UseFormReturn<ProgramDetailEditFormValues>
+}) {
   return (
-    <DetailInfoForm title="기본 정보" hideHeader mode="view" className="program-registration-paragraph">
+    <DetailInfoForm
+      title="기본 정보"
+      hideHeader
+      mode={isEditMode && infoForm ? 'edit' : 'view'}
+      className="program-registration-paragraph"
+    >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최초 등록일"
@@ -52,6 +66,12 @@ function UjatBasicInfoRegistrationAuditRow({ program }: { program: Program }) {
           }
         />
       </DetailInfoForm.Row>
+      <ProgramPortalHomeFeaturedFields
+        isEdit={Boolean(isEditMode && infoForm)}
+        featuredOnHome={program.featuredOnHome === true}
+        homeDisplayOrder={program.homeDisplayOrder}
+        control={isEditMode ? infoForm?.control : undefined}
+      />
     </DetailInfoForm>
   )
 }
@@ -88,7 +108,11 @@ export function UjatProgramDetailCommonInfoView({
               required
               highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[0]}
             />
-            <UjatBasicInfoRegistrationAuditRow program={program} />
+            <UjatBasicInfoRegistrationAuditRow
+              program={program}
+              isEditMode={isEditMode}
+              infoForm={infoForm}
+            />
             <div className="ujat-program-detail-common-info-view__basic-info-edit-blocks">
               {/*
                 UJAT create는 educationStructure 기본 SCHEDULE.

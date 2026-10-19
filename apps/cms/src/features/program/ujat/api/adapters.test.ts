@@ -798,6 +798,31 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     expect(volunteer?.id).toBeUndefined()
     expect(volunteer?.recruitTerm).toBe('FIRST_HALF')
   })
+
+  it('봉사자 행에 면접 필수와 상반기 면접 기간을 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      interviewStartDate: '2026-04-01T00:00:00+09:00',
+      interviewEndDate: '2026-04-15T00:00:00+09:00',
+      programRecruitments: [
+        {
+          id: 3,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          interviewStartAt: '2026-04-01T00:00:00+09:00',
+          interviewEndAt: '2026-04-15T00:00:00+09:00',
+        },
+      ],
+    })
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(volunteer).toMatchObject({
+      interviewEnabled: true,
+      interviewStartAt: '2026-04-01T00:00:00+09:00',
+      interviewEndAt: '2026-04-15T00:00:00+09:00',
+    })
+    expect(rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled).toBeUndefined()
+  })
 })
 
 describe('buildUjatNewVolunteerHalfRowRequests', () => {

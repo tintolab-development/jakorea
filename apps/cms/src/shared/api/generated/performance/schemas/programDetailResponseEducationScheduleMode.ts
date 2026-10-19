@@ -8,7 +8,6 @@
 
 /**
  * 교육 진행 예정일 지정 방식.
- * @nullable
  */
 export type ProgramDetailResponseEducationScheduleMode = typeof ProgramDetailResponseEducationScheduleMode[keyof typeof ProgramDetailResponseEducationScheduleMode] | null;
 

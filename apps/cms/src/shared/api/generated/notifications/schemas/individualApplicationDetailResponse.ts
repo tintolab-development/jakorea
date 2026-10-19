@@ -21,10 +21,7 @@ export interface IndividualApplicationDetailResponse {
   recruitmentId?: number;
   memberId?: number;
   applicationStatus?: string;
-  /**
-     * Admin CMS 전용 최신 관리자 코멘트
-     * @nullable
-     */
+  /** Admin CMS 전용 최신 관리자 코멘트 */
   managerComment?: string | null;
   updatedAt?: string;
   availableActions?: string[];

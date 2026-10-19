@@ -14,10 +14,7 @@ export interface NotificationCatalogVariableItem {
   key?: string;
   /** 본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입. */
   token?: string;
-  /**
-     * 보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null
-     * @nullable
-     */
+  /** 보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null */
   description?: string | null;
   /** true이면 programId 없이 enabled=false. */
   requiresProgram?: boolean;

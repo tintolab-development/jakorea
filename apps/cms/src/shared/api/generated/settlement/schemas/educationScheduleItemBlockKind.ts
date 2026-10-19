@@ -8,7 +8,6 @@
 
 /**
  * 일정형만. PRE_EDUCATION | SUB | EVENT.
- * @nullable
  */
 export type EducationScheduleItemBlockKind = typeof EducationScheduleItemBlockKind[keyof typeof EducationScheduleItemBlockKind] | null;
 

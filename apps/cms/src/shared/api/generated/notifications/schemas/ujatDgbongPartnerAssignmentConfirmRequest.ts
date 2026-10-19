@@ -12,20 +12,11 @@
 export interface UjatDgbongPartnerAssignmentConfirmRequest {
   /** 주 참가자 ID */
   primaryParticipantId?: number;
-  /**
-     * 상대 참가자 ID. 2인 배정이 불가능한 경우 null을 허용합니다.
-     * @nullable
-     */
+  /** 상대 참가자 ID. 2인 배정이 불가능한 경우 null을 허용합니다. */
   secondaryParticipantId?: number | null;
-  /**
-     * 출석 관리자 참가자 ID. 해당 교육일에 이미 출결 담당자가 있으면 null 허용
-     * @nullable
-     */
+  /** 출석 관리자 참가자 ID. 해당 교육일에 이미 출결 담당자가 있으면 null 허용 */
   attendanceManagerParticipantId?: number | null;
-  /**
-     * 확정된 UJAT 교육 학급 슬롯 ID
-     * @nullable
-     */
+  /** 확정된 UJAT 교육 학급 슬롯 ID */
   educationSlotId?: number | null;
   /** 조직 신청 ID. educationSlotId가 있으면 서버 canonical 값으로 검증/보정 */
   organizationApplicationId?: number;

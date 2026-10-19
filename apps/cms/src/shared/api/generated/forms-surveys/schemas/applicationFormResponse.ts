@@ -19,10 +19,7 @@ export interface ApplicationFormResponse {
   form?: ApplicationFormResponseForm;
   draftApplicationId?: number;
   draftFormResponseId?: number;
-  /**
-     * 임시저장 답. 키 규칙은 SaveApplicationRequest.answers와 같습니다. 임시저장이 없으면 빈 객체입니다.
-     * @nullable
-     */
+  /** 임시저장 답. 키 규칙은 SaveApplicationRequest.answers와 같습니다. 임시저장이 없으면 빈 객체입니다. */
   draftAnswers?: ApplicationFormResponseDraftAnswers;
   /** 임시저장 응답에 연결된 문항별 첨부. 임시저장이 없거나 첨부가 없으면 []입니다(null 아님). 다시 저장·제출할 때 이 fileObjectId들을 fileObjectIdsByQuestion으로 다시 보내야 유지됩니다. */
   draftAttachments?: DraftAttachment[];

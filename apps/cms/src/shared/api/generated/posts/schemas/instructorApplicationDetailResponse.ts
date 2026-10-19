@@ -47,27 +47,15 @@ export interface InstructorApplicationDetailResponse {
   availableActions?: string[];
   privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
-  /**
-     * 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 목록과 같은 값. 없으면 null
-     * @nullable
-     */
+  /** 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 목록과 같은 값. 없으면 null */
   affiliationOrganizationId?: number | null;
-  /**
-     * 교사 프로필 재직 상태. ACTIVE | ON_LEAVE | TRANSFERRED | INACTIVE | RESIGNED | WITHDRAWN. 교사 프로필이 없으면 null
-     * @nullable
-     */
+  /** 교사 프로필 재직 상태. ACTIVE | ON_LEAVE | TRANSFERRED | INACTIVE | RESIGNED | WITHDRAWN. 교사 프로필이 없으면 null */
   employmentStatus?: string | null;
-  /**
-     * 재직(ACTIVE)이면 true. 교사 프로필이 없으면 null
-     * @nullable
-     */
+  /** 재직(ACTIVE)이면 true. 교사 프로필이 없으면 null */
   affiliationIsCurrentlyEmployed?: boolean | null;
   /** 저장된 강사비. basis/measure/amount가 모두 없으면 null */
   feePolicy?: FeePolicy | null;
-  /**
-     * 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null
-     * @nullable
-     */
+  /** 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null */
   businessIncomeEarnerStatus?: string | null;
   /** 교사 겸직 스냅샷. 교사 프로필이 없으면 null */
   instructorMemberProfile?: InstructorMemberProfile | null;

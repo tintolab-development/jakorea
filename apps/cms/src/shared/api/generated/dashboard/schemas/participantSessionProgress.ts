@@ -9,31 +9,31 @@ import type { ParticipantSessionProgressAttendanceStatus } from './participantSe
 import type { ParticipantSessionProgressScheduleStatus } from './participantSessionProgressScheduleStatus';
 
 /**
- * 참여 일정. 기관 참여자는 배정·출석이 붙은 프로그램 일정과 신청 희망 일정(GET organization-applications/{id}/requested-schedules 와 같은 program_application_requested_schedule)을 함께 반환한다. 희망 시각이 있으면 startAt/endAt은 Asia/Seoul 기준 ISO-8601이고 scheduleName은 신청 표기(dateText)다. 프로그램 일정과 시각이 맞지 않으면 scheduleId·resolvedScheduleId는 null, scheduleUnresolved는 true. 신청 답이 없는 고정 1일 프로그램은 일정을 만들지 않아 상위 sessions는 []. null 필드는 값이 없을 때 null.
+ * 참여 일정. 기관 참여자는 해당 기관에 실제 배정된 프로그램 일정만 반환한다. 신청 희망 일정은 실제 배정 일정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 기관에 배정되지 않은 프로그램 일정과 미확정 희망 일정은 출석 상세·회차 집계에서 제외한다. null은 반환하지 않는다.
  */
 export interface ParticipantSessionProgress {
   /**
-     * 시각이 일치하는 program_schedule id. 희망 일정만 있으면 null.
+     * 실제 반환 대상 program_schedule id. 값이 없으면 null.
      * @nullable
      */
   scheduleId?: number | null;
   /**
-     * 프로그램 일정 회차. 희망 일정은 preference_order.
+     * 프로그램 일정 회차. 확정된 희망 일정은 preference_order.
      * @nullable
      */
   sessionNo?: number | null;
   /**
-     * 일정명. 희망 일정은 dateText, 없으면 YYYY-MM-DD.
+     * 일정명. 실제 배정 일정 기준으로 반환한다.
      * @nullable
      */
   scheduleName?: string | null;
   /**
-     * 시작 시각. 희망 일정은 신청일+시작시각(Asia/Seoul).
+     * 실제 배정된 프로그램 일정의 시작 시각.
      * @nullable
      */
   startAt?: string | null;
   /**
-     * 종료 시각. 희망 일정은 신청일+종료시각(Asia/Seoul). 시각이 없으면 null.
+     * 실제 배정된 프로그램 일정의 종료 시각. 시각이 없으면 null.
      * @nullable
      */
   endAt?: string | null;
@@ -58,12 +58,12 @@ export interface ParticipantSessionProgress {
      */
   requestedScheduleId?: number | null;
   /**
-     * 출석/배정 mutation에 사용하는 실제 program schedule id. 희망 시각과 맞는 일정이 없으면 null.
+     * 출석/배정 mutation에 사용하는 실제 program schedule id. 값이 없으면 null.
      * @nullable
      */
   resolvedScheduleId?: number | null;
   /**
-     * 희망 일정은 있으나 같은 시각의 프로그램 일정이 없으면 true. 배정된 프로그램 일정이면 false.
+     * 미확정 희망 일정이면 true. 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다.
      * @nullable
      */
   scheduleUnresolved?: boolean | null;

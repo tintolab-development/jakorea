@@ -8,7 +8,6 @@
 
 /**
  * UJAT 일정 확인 상태. 저장값이 없으면 null. institution_checking으로 기본값을 넣지 않음
- * @nullable
  */
 export type OrganizationApplicationListItemResponseScheduleConfirmStatus = typeof OrganizationApplicationListItemResponseScheduleConfirmStatus[keyof typeof OrganizationApplicationListItemResponseScheduleConfirmStatus] | null;
 

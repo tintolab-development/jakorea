@@ -14,25 +14,13 @@ import type { VolunteerInterviewScheduleResponseSource } from './volunteerInterv
 export interface VolunteerInterviewScheduleResponse {
   /** 선택지 출처. SLOT=program_interview_slot, SCHEDULE_INFO=CMS 설정, EMPTY=미래 선택지 없음 */
   source?: VolunteerInterviewScheduleResponseSource;
-  /**
-     * 가능 기간 시작(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null.
-     * @nullable
-     */
+  /** 가능 기간 시작(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null. */
   periodStartDate?: string | null;
-  /**
-     * 가능 기간 종료(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null.
-     * @nullable
-     */
+  /** 가능 기간 종료(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null. */
   periodEndDate?: string | null;
-  /**
-     * CMS availableTimeSlots 원문. 예: "10:00 ~ 10:30". 슬롯만 있으면 null.
-     * @nullable
-     */
+  /** CMS availableTimeSlots 원문. 예: "10:00 ~ 10:30". 슬롯만 있으면 null. */
   availableTimeSlots?: string | null;
-  /**
-     * CMS recurringUnavailable 원문. 예: "공휴일". 없으면 null.
-     * @nullable
-     */
+  /** CMS recurringUnavailable 원문. 예: "공휴일". 없으면 null. */
   recurringUnavailable?: string | null;
   /** 오늘 이후 선택 가능 일정. 없으면 []. null 금지. */
   options?: VolunteerInterviewScheduleOptionResponse[];

@@ -8,7 +8,6 @@
 
 /**
  * 교육 진행 구조. CURRICULUM | SCHEDULE. 프로그램 상세의 lowercase wire와 달리 이 API는 UPPERCASE입니다.
- * @nullable
  */
 export type EducationScheduleListResponseEducationStructure = typeof EducationScheduleListResponseEducationStructure[keyof typeof EducationScheduleListResponseEducationStructure] | null;
 

@@ -8,7 +8,6 @@
 
 /**
  * 개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null.
- * @nullable
  */
 export type ProgramDetailResponseParticipationMethod = typeof ProgramDetailResponseParticipationMethod[keyof typeof ProgramDetailResponseParticipationMethod] | null;
 

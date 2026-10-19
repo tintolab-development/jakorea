@@ -8,7 +8,6 @@
 
 /**
  * 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice.
- * @nullable
  */
 export type ProgramListItemResponseEducationForm = typeof ProgramListItemResponseEducationForm[keyof typeof ProgramListItemResponseEducationForm] | null;
 

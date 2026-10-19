@@ -26,15 +26,9 @@ export interface OrganizationApplicationDetailResponse {
   requestedEducationFormat?: string;
   textbookId?: number;
   textbookName?: string;
-  /**
-     * 지정 교재의 교육대상. 교재가 없으면 null.
-     * @nullable
-     */
+  /** 지정 교재의 교육대상. 교재가 없으면 null. */
   textbookEducationTarget?: string | null;
-  /**
-     * 교재명과 교육대상을 붙인 표시값. 교재가 없으면 null. 미지정 화면 문구는 해당 없음.
-     * @nullable
-     */
+  /** 교재명과 교육대상을 붙인 표시값. 교재가 없으면 null. 미지정 화면 문구는 해당 없음. */
   textbookDisplayLabel?: string | null;
   teacherMemberId?: number;
   teacherName?: string;
@@ -50,10 +44,7 @@ export interface OrganizationApplicationDetailResponse {
   approvedAt?: string;
   rejectedAt?: string;
   cancelledAt?: string;
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
-     * @nullable
-     */
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
   rejectReason?: string;
   latestFormResponseId?: number;
@@ -65,27 +56,15 @@ export interface OrganizationApplicationDetailResponse {
   regionSigungu?: string;
   applicationReason?: string;
   otherRequests?: string;
-  /**
-     * 강의 공간 내 컴퓨터 여부 스냅샷. Portal guidance(computer-in-room 등)에서 프로젝션. 없으면 null. form_response만 있고 컬럼이 비면 hydrate fallback 대상.
-     * @nullable
-     */
+  /** 강의 공간 내 컴퓨터 여부 스냅샷. Portal guidance(computer-in-room 등)에서 프로젝션. 없으면 null. form_response만 있고 컬럼이 비면 hydrate fallback 대상. */
   computerInRoom?: string | null;
   waitingRoomAvailable?: boolean;
-  /**
-     * 대기 장소 안내 스냅샷. Portal guidance(waiting-place 등)에서 프로젝션. 없으면 null.
-     * @nullable
-     */
+  /** 대기 장소 안내 스냅샷. Portal guidance(waiting-place 등)에서 프로젝션. 없으면 null. */
   waitingRoomLocation?: string | null;
   mealProvided?: boolean;
-  /**
-     * 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null.
-     * @nullable
-     */
+  /** 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null. */
   mealNotice?: string | null;
-  /**
-     * 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락).
-     * @nullable
-     */
+  /** 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락). */
   parkingInfo?: string | null;
   textbookGrade?: string;
   textbookKits?: number;
@@ -95,59 +74,26 @@ export interface OrganizationApplicationDetailResponse {
   sessions?: SessionResponse[];
   /** 승인 기관 희망 교육 일정(B). OSA sessions와 별개. 없으면 []. */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
-  /**
-     * 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.
-     * @nullable
-     */
+  /** 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null. */
   previousYearParticipation?: OrganizationApplicationDetailResponsePreviousYearParticipation;
-  /**
-     * 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null.
-     * @nullable
-     */
+  /** 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null. */
   affiliatedFinancialCompany?: string | null;
-  /**
-     * 교사 일반 전화. 휴대전화(teacherPhone)와 별도. 저장된 값이 없으면 null
-     * @nullable
-     */
+  /** 교사 일반 전화. 휴대전화(teacherPhone)와 별도. 저장된 값이 없으면 null */
   teacherTel?: string | null;
-  /**
-     * 희망 교육일 YYYY-MM-DD. 저장된 희망일이 없으면 null. 빈 배열은 쓰지 않음
-     * @nullable
-     */
+  /** 희망 교육일 YYYY-MM-DD. 저장된 희망일이 없으면 null. 빈 배열은 쓰지 않음 */
   preferredEducationDates?: string[] | null;
-  /**
-     * CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 독립된 학생 명단의 grade/className, UJAT은 교육 학급 카탈로그를 사용합니다. 교육 일정 배정의 scheduleId와 학급을 연결하지 않습니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다.
-     * @nullable
-     */
+  /** CMS 학생 명단 학급 Select SSOT. GENERAL_ORGANIZATION은 독립된 학생 명단의 grade/className, UJAT은 교육 학급 카탈로그를 사용합니다. 교육 일정 배정의 scheduleId와 학급을 연결하지 않습니다. classes가 []이면 실제 등록 반 번호가 없어 FE는 requestedClassCount/classCount로 반 목록을 만들지 않습니다. */
   gradeBlocks?: GradeBlock[] | null;
-  /**
-     * 학년 구간별 수업 시간표. 저장된 4교시가 없으면 null
-     * @nullable
-     */
+  /** 학년 구간별 수업 시간표. 저장된 4교시가 없으면 null */
   classTimeRows?: ClassTimeRow[] | null;
-  /**
-     * UJAT 임시배정 워크플로 상태. 비대상 프로그램이면 null.
-     * @nullable
-     */
+  /** UJAT 임시배정 워크플로 상태. 비대상 프로그램이면 null. */
   temporaryAssignmentStatus?: string | null;
-  /**
-     * UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 비대상 프로그램이면 null.
-     * @nullable
-     */
+  /** UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 비대상 프로그램이면 null. */
   educationRegionCode?: string | null;
-  /**
-     * UJAT 일정 확인 상태. 정의된 wire enum 또는 null.
-     * @nullable
-     */
+  /** UJAT 일정 확인 상태. 정의된 wire enum 또는 null. */
   scheduleConfirmStatus?: OrganizationApplicationDetailResponseScheduleConfirmStatus;
-  /**
-     * UJAT 신청에 배정된 강사 수. 0명은 null.
-     * @nullable
-     */
+  /** UJAT 신청에 배정된 강사 수. 0명은 null. */
   assignedInstructorCount?: number | null;
-  /**
-     * UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null.
-     * @nullable
-     */
+  /** UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null. */
   operatingStudentCount?: number | null;
 }

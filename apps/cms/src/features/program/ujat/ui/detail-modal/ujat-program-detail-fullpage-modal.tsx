@@ -1474,6 +1474,18 @@ export function UjatProgramDetailFullPageModal({
         ? async (draft, patch) => {
             try {
               const values = volunteersForm.getValues()
+              if (!values.interviewStartDate?.trim() || !values.interviewEndDate?.trim()) {
+                volunteersForm.setError('interviewStartDate', {
+                  type: 'required',
+                  message: '면접 기간을 입력해 주세요.',
+                })
+                void showAlert({
+                  title: '면접 기간 안내',
+                  content:
+                    'UJAT 봉사자 모집은 면접이 필수입니다. 유효한 2차 면접 기간을 입력한 뒤 저장해 주세요.',
+                })
+                return
+              }
               const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
                 draft: buildUjatProgramDraftWithSessionOverlay(draft, {
                   includeRecruitSession: true,
@@ -1542,6 +1554,22 @@ export function UjatProgramDetailFullPageModal({
                   content: extractApiErrorMessage(
                     (error as { response?: { data?: unknown } }).response?.data,
                     { fallback: '봉사자 모집 상·하반기 구분을 확인해 주세요.' }
+                  ),
+                })
+              }
+              if (getApiErrorCode(error) === 'UJAT_VOLUNTEER_INTERVIEW_REQUIRED') {
+                volunteersForm.setError('interviewStartDate', {
+                  type: 'server',
+                  message: '면접 기간을 입력해 주세요.',
+                })
+                void showAlert({
+                  title: '면접 기간 안내',
+                  content: extractApiErrorMessage(
+                    (error as { response?: { data?: unknown } }).response?.data,
+                    {
+                      fallback:
+                        'UJAT 봉사자 모집은 면접이 필수입니다. 유효한 2차 면접 기간을 입력한 뒤 저장해 주세요.',
+                    }
                   ),
                 })
               }

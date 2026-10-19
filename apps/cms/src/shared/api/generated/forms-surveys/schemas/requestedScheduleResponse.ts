@@ -8,17 +8,11 @@
 import type { RequestedSessionTimeResponse } from './requestedSessionTimeResponse';
 
 export interface RequestedScheduleResponse {
-  /**
-     * 희망 일정 행 id. 일반 기관 날짜 지정형(공통정보 줄 선택)은 저장 행이 없어 null.
-     * @nullable
-     */
+  /** 희망 일정 행 id. 일반 기관 날짜 지정형(공통정보 줄 선택)은 저장 행이 없어 null. */
   id?: number | null;
   preferenceOrder?: number;
   requestedDate?: string;
-  /**
-     * 시작 교시(1~12). 일반 기관 날짜 지정형은 교시 개념이 없어 null.
-     * @nullable
-     */
+  /** 시작 교시(1~12). 일반 기관 날짜 지정형은 교시 개념이 없어 null. */
   startPeriod?: number | null;
   sessionCount?: number;
   combinedClassYn?: boolean;
@@ -28,19 +22,10 @@ export interface RequestedScheduleResponse {
   createdByActorId?: number;
   createdAt?: string;
   updatedAt?: string;
-  /**
-     * PERIOD 교육 예정일 구간 라벨. 없으면 null.
-     * @nullable
-     */
+  /** PERIOD 교육 예정일 구간 라벨. 없으면 null. */
   label?: string | null;
-  /**
-     * PERIOD 구간 시작일. 없으면 null.
-     * @nullable
-     */
+  /** PERIOD 구간 시작일. 없으면 null. */
   periodStartDate?: string | null;
-  /**
-     * PERIOD 구간 종료일. 없으면 null.
-     * @nullable
-     */
+  /** PERIOD 구간 종료일. 없으면 null. */
   periodEndDate?: string | null;
 }

@@ -21,9 +21,6 @@ export interface PaymentItemResponse {
   maxLimitWon?: number;
   description?: string;
   detailJson?: string;
-  /**
-     * 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION
-     * @nullable
-     */
+  /** 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION */
   eligiblePayeeTypes?: string[] | null;
 }

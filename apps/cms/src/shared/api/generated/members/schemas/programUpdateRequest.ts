@@ -88,25 +88,13 @@ export interface ProgramUpdateRequest {
   settlementRuleId?: string;
   /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
   applicationPathId?: string;
-  /**
-     * 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님.
-     * @nullable
-     */
+  /** 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님. */
   applicationMethod?: string | null;
-  /**
-     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
-     * @nullable
-     */
+  /** 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. */
   educationForm?: ProgramUpdateRequestEducationForm;
-  /**
-     * 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개.
-     * @nullable
-     */
+  /** 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개. */
   trainingRequestStartDate?: string | null;
-  /**
-     * 연수 요청 가능기간 종료.
-     * @nullable
-     */
+  /** 연수 요청 가능기간 종료. */
   trainingRequestEndDate?: string | null;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
@@ -124,20 +112,13 @@ export interface ProgramUpdateRequest {
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
-  /**
-     * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
-     * @nullable
-     */
+  /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
   draftStatus?: ProgramUpdateRequestDraftStatus;
-  /**
-     * CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다.
-     * @nullable
-     */
+  /** CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다. */
   featuredOnHome?: boolean | null;
   /**
      * 홈 캐러셀 정렬 순서. 1 이상 정수. 생략 시 기존 값을 유지하고 clearFields에 포함하면 null로 초기화한다.
      * @minimum 1
-     * @nullable
      */
   homeDisplayOrder?: number | null;
 }

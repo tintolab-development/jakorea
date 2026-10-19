@@ -13,19 +13,12 @@ import type { EducationScheduleAssignmentSubmission } from './educationScheduleA
  */
 export interface EducationScheduleAssignment {
   enabled?: boolean;
-  /** @nullable */
   submitStartAt?: string | null;
-  /** @nullable */
   submitEndAt?: string | null;
-  /** @nullable */
   periodLabel?: string | null;
   /** NOT_SUBMITTED | SUBMITTED | FEEDBACK | REVISION_SUBMITTED */
   status?: EducationScheduleAssignmentStatus;
-  /**
-     * FEEDBACK 상태일 때 피드백 GET 키.
-     * @nullable
-     */
+  /** FEEDBACK 상태일 때 피드백 GET 키. */
   formResponseId?: number | null;
-  /** @nullable */
   submissions?: EducationScheduleAssignmentSubmission[] | null;
 }

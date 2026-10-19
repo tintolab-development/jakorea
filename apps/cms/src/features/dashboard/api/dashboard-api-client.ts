@@ -53,13 +53,17 @@ export async function fetchDashboardNotificationCountRemote(): Promise<Notificat
 export async function fetchDashboardRecruitmentsRemote(
   params: DashboardRecruitmentsParams | Record<string, string>
 ): Promise<DashboardRecruitmentListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardRecruitments(params as DashboardRecruitmentsParams))
+  return unwrapBody(
+    await dashboardRemoteApi.dashboardRecruitments(params as DashboardRecruitmentsParams)
+  )
 }
 
 export async function fetchDashboardKpiProgressRemote(
   params: DashboardKpiProgressParams | Record<string, string>
 ): Promise<DashboardKpiProgressListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardKpiProgress(params as DashboardKpiProgressParams))
+  return unwrapBody(
+    await dashboardRemoteApi.dashboardKpiProgress(params as DashboardKpiProgressParams)
+  )
 }
 
 export async function fetchDashboardProgramInquiriesRemote(
