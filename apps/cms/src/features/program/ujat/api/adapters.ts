@@ -42,6 +42,7 @@ import {
 import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib/program-create-service-detail-json'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
   isProgramOperationStartLocked,
@@ -750,8 +751,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     }
   )
   const withInterview = hydrateUjatVolunteerInterviewFromRecruitmentRows(mapped)
+  const withRows = hydrateRecruitmentWindowsOntoProgram(withInterview)
   return {
-    ...withInterview,
+    ...withRows,
     generalParticipantTypes: generalParticipantTypesFromUjatFlags(
       resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
     ),
