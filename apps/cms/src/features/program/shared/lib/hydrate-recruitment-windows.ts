@@ -109,3 +109,8 @@ export function pickAudienceRecruitmentWindow(
 ): ProgramRecruitmentWindow | undefined {
   return pickRecruitmentCopyRow(program, audience)
 }
+
+/** GET에 recruitments[]가 있으면 nested 라벨은 표시에 쓰지 않는다. */
+export function hasRecruitmentWindows(program: Program): boolean {
+  return (program.programRecruitments?.length ?? 0) > 0
+}

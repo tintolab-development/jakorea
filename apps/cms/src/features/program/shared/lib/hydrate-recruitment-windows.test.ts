@@ -88,6 +88,21 @@ describe('hydrateRecruitmentWindowsOntoProgram', () => {
 })
 
 describe('모집 탭 표시·폼 시드 — 행 SSOT', () => {
+  it('volunteer nested 라벨이 기관 기간이어도 행 startAt/endAt만 보여 준다', () => {
+    const program = programWithRows()
+    program.generalCommonInfo = {
+      ...program.generalCommonInfo,
+      volunteerRecruitmentInfo: {
+        ...program.generalCommonInfo?.volunteerRecruitmentInfo,
+        recruitmentPeriodLabel: '2026. 10. 17 (토) ~ 2026. 11. 22 (일)',
+      },
+    }
+    const display = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
+    expect(display.recruitmentPeriodLabel).not.toContain('10. 17')
+    expect(display.recruitmentPeriodLabel).not.toContain('11. 22')
+    expect(display.contactOrganizationName).toBe('봉사 담당')
+  })
+
   it('봉사자 모집기간·문의처·면접은 행 값을 보여 준다', () => {
     const program = programWithRows()
     const display = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
@@ -111,6 +126,23 @@ describe('모집 탭 표시·폼 시드 — 행 SSOT', () => {
     expect(String(values.volunteerApplicationStartDate)).toContain('2026-10-13')
     expect(String(values.volunteerApplicationEndDate)).toContain('2026-10-31')
     expect(String(values.interviewStartDate)).toContain('2026-11-01')
+    expect(values.volunteerContactPhone).toBe('010-3333-4444')
+  })
+
+  it('overlay recruitRangeSeal이 있어도 행 기간을 덮지 않는다', () => {
+    const program = programWithRows()
+    program.registrationOverlay = {
+      'recruit.volunteer.recruitRangeSeal': {
+        start: '2026-10-01T15:00:00.000Z',
+        end: '2026-10-20T14:59:59.999Z',
+      },
+      'recruit.volunteer.inquiryTel': '010-0000-0000',
+    }
+    const display = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
+    expect(display.recruitmentPeriodLabel).not.toContain('10. 02')
+    expect(display.contactPhone).toBe('010-3333-4444')
+    const values = programToRecruitmentTabEditValues(program, 'volunteer')
+    expect(String(values.volunteerApplicationStartDate)).toContain('2026-10-13')
     expect(values.volunteerContactPhone).toBe('010-3333-4444')
   })
 })

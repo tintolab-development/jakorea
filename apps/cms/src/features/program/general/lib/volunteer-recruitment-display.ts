@@ -15,6 +15,7 @@ import {
 } from '@/features/program/general/lib/detail-value-helpers'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 import {
+  hasRecruitmentWindows,
   operationPeriodLabelFromWindow,
   pickAudienceRecruitmentWindow,
   recruitmentPeriodLabelFromWindow,
@@ -99,12 +100,17 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   const common = program.generalCommonInfo
   const info = common?.volunteerRecruitmentInfo as VolunteerRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'volunteer')
+  const useRow = hasRecruitmentWindows(program)
   const lifecycle = resolveVolunteerRecruitmentLifecycle(program)
 
-  const interviewEnabled =
-    info?.volunteerInterviewEnabled ??
-    info?.generalVolunteerInterviewEnabled ??
-    program.generalVolunteerInterviewEnabled
+  const interviewEnabled = useRow
+    ? (row?.interviewEnabled ??
+      info?.volunteerInterviewEnabled ??
+      info?.generalVolunteerInterviewEnabled ??
+      program.generalVolunteerInterviewEnabled)
+    : (info?.volunteerInterviewEnabled ??
+      info?.generalVolunteerInterviewEnabled ??
+      program.generalVolunteerInterviewEnabled)
 
   const finalAnnouncement = resolveAnnouncement({
     labels: [info?.finalAnnouncementLabel, info?.resultAnnouncementLabel],
@@ -132,7 +138,7 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     ),
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),
-      info?.operationPeriodLabel
+      useRow ? undefined : info?.operationPeriodLabel
     ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
@@ -140,33 +146,36 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     volunteerTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
     recruitmentPeriodLabel: pickDisplayString(
       recruitmentPeriodLabelFromWindow(row),
-      info?.recruitmentPeriodLabel
+      useRow ? undefined : info?.recruitmentPeriodLabel
     ),
     documentPassAnnouncementDate:
       info?.documentPassAnnouncementDate ?? program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod:
       documentPassAnnouncementMethod === '-' ? undefined : documentPassAnnouncementMethod,
-    interviewStartDate:
-      row?.interviewStartAt ?? info?.interviewStartDate ?? program.interviewStartDate,
-    interviewEndDate: row?.interviewEndAt ?? info?.interviewEndDate ?? program.interviewEndDate,
+    interviewStartDate: useRow
+      ? row?.interviewStartAt ?? undefined
+      : (info?.interviewStartDate ?? program.interviewStartDate),
+    interviewEndDate: useRow
+      ? row?.interviewEndAt ?? undefined
+      : (info?.interviewEndDate ?? program.interviewEndDate),
     interviewMethod: interviewMethod === '-' ? undefined : interviewMethod,
     finalPassAnnouncementDate: finalAnnouncement.date,
     finalPassAnnouncementMethod: finalAnnouncement.method,
     contactOrganizationName: pickDisplayString(
       row?.contactName,
-      info?.contactOrganizationName
+      useRow ? undefined : info?.contactOrganizationName
     ),
     contactPhone: pickDisplayString(
       row?.contactPhone,
-      info?.inquiryTel,
-      info?.tel,
-      info?.contactPhone
+      useRow ? undefined : info?.inquiryTel,
+      useRow ? undefined : info?.tel,
+      useRow ? undefined : info?.contactPhone
     ),
     contactEmail: pickDisplayString(
       row?.contactEmail,
-      info?.inquiryEmail,
-      info?.email,
-      info?.contactEmail
+      useRow ? undefined : info?.inquiryEmail,
+      useRow ? undefined : info?.email,
+      useRow ? undefined : info?.contactEmail
     ),
     notes: info?.notesNotApplicable
       ? '-'

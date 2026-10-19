@@ -31,6 +31,7 @@ import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
+  hasRecruitmentWindows,
   operationPeriodLabelFromWindow,
   pickAudienceRecruitmentWindow,
   recruitmentPeriodLabelFromWindow,
@@ -203,6 +204,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const common = program.generalCommonInfo
   const info = common?.participantRecruitmentInfo as ParticipantRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'participant')
+  const useRow = hasRecruitmentWindows(program)
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
@@ -300,8 +302,8 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       )
 
   const contactOrganizationName = formatRecruitmentInquiryContactName(
-    row?.contactName ?? info?.contactOrganizationName,
-    info?.contactName
+    row?.contactName ?? (useRow ? undefined : info?.contactOrganizationName),
+    useRow ? undefined : info?.contactName
   )
 
   const operationFromProgram = isTrainedTeachers
@@ -326,8 +328,10 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     maxScheduleCountLabel: formatCountLabel(info?.maxScheduleCount, '개'),
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),
-      info?.operationPeriodLabel,
-      operationFromProgram && operationFromProgram !== '-' ? operationFromProgram : undefined
+      useRow ? undefined : info?.operationPeriodLabel,
+      !useRow && operationFromProgram && operationFromProgram !== '-'
+        ? operationFromProgram
+        : undefined
     ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
@@ -335,8 +339,8 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     targetDetailLabel,
     recruitmentPeriodLabel: pickDisplayString(
       recruitmentPeriodLabelFromWindow(row),
-      info?.recruitmentPeriodLabel,
-      recruitmentFromProgram && recruitmentFromProgram !== '-'
+      useRow ? undefined : info?.recruitmentPeriodLabel,
+      !useRow && recruitmentFromProgram && recruitmentFromProgram !== '-'
         ? recruitmentFromProgram
         : undefined
     ),
@@ -352,18 +356,18 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     contactPhone: formatRecruitmentInquiryPhone(
       pickDisplayString(
         row?.contactPhone,
-        info?.inquiryTel,
-        info?.tel,
-        info?.contactPhone,
-        isTrainedTeachers ? program.contactPhone : undefined
+        useRow ? undefined : info?.inquiryTel,
+        useRow ? undefined : info?.tel,
+        useRow ? undefined : info?.contactPhone,
+        !useRow && isTrainedTeachers ? program.contactPhone : undefined
       )
     ),
     contactEmail: pickDisplayString(
       row?.contactEmail,
-      info?.inquiryEmail,
-      info?.email,
-      info?.contactEmail,
-      isTrainedTeachers ? program.contactEmail : undefined
+      useRow ? undefined : info?.inquiryEmail,
+      useRow ? undefined : info?.email,
+      useRow ? undefined : info?.contactEmail,
+      !useRow && isTrainedTeachers ? program.contactEmail : undefined
     ),
     notes,
   }

@@ -14,6 +14,7 @@ import {
 } from '@/features/program/general/lib/detail-value-helpers'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 import {
+  hasRecruitmentWindows,
   operationPeriodLabelFromWindow,
   pickAudienceRecruitmentWindow,
   recruitmentPeriodLabelFromWindow,
@@ -73,6 +74,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   const common = program.generalCommonInfo
   const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'instructor')
+  const useRow = hasRecruitmentWindows(program)
   const lifecycle = resolveInstructorRecruitmentLifecycle(program)
 
   const finalAnnouncement = resolveAnnouncement({
@@ -90,7 +92,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     ),
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),
-      info?.operationPeriodLabel
+      useRow ? undefined : info?.operationPeriodLabel
     ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
@@ -98,22 +100,25 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     instructorTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
     recruitmentPeriodLabel: pickDisplayString(
       recruitmentPeriodLabelFromWindow(row),
-      info?.recruitmentPeriodLabel
+      useRow ? undefined : info?.recruitmentPeriodLabel
     ),
     finalPassAnnouncementDate: finalAnnouncement.date,
     finalPassAnnouncementMethod: finalAnnouncement.method,
-    contactOrganizationName: pickDisplayString(row?.contactName, info?.contactOrganizationName),
+    contactOrganizationName: pickDisplayString(
+      row?.contactName,
+      useRow ? undefined : info?.contactOrganizationName
+    ),
     contactPhone: pickDisplayString(
       row?.contactPhone,
-      info?.inquiryTel,
-      info?.tel,
-      info?.contactPhone
+      useRow ? undefined : info?.inquiryTel,
+      useRow ? undefined : info?.tel,
+      useRow ? undefined : info?.contactPhone
     ),
     contactEmail: pickDisplayString(
       row?.contactEmail,
-      info?.inquiryEmail,
-      info?.email,
-      info?.contactEmail
+      useRow ? undefined : info?.inquiryEmail,
+      useRow ? undefined : info?.email,
+      useRow ? undefined : info?.contactEmail
     ),
     notes: pickDisplayString(resolveRecruitmentRemarks(program, 'instructor')),
   }
