@@ -67,7 +67,7 @@ export function MemberAdminCommentModal({
             fullRow
             view={value}
             edit={
-              <CmsTextArea
+              <CmsTextArea inputSize="small"
                 value={value}
                 onChange={event => onChange(event.target.value)}
                 placeholder="코멘트를 작성해 주세요"

@@ -27,9 +27,7 @@ import {
   useMemberInstructorSettlementsQuery,
 } from '@/features/user/api/instructor-member-settlements-remote'
 import { mapSettlementsToInstructorMemberRows } from '@/features/user/api/map-settlement-to-instructor-member-row'
-import {
-  isMemberInstructorSettlementsRemoteEnabled,
-} from '@/features/user/api/member-remote-capabilities'
+import { isMemberInstructorSettlementsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
   bulkDownloadPaymentStatementsRemote,
   downloadPaymentStatementRemote,
@@ -50,7 +48,11 @@ import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
-import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  ButtonCalendarIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from '@/shared/ui/icons/ButtonIcons'
 
 const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
   label: option.label,
@@ -126,10 +128,7 @@ export function InstructorPaymentTab({
   } = useMemberInstructorSettlementsQuery(instructorMemberId, true, { manualFetch })
 
   const needsStatementJoin = useMemo(
-    () =>
-      remoteSettlementItems.some(
-        item => item.settlementId != null && item.statementId == null
-      ),
+    () => remoteSettlementItems.some(item => item.settlementId != null && item.statementId == null),
     [remoteSettlementItems]
   )
 
@@ -137,11 +136,9 @@ export function InstructorPaymentTab({
     data: statementIdBySettlementId = new Map<number, number>(),
     isPending: statementsPending,
     isFetching: statementsFetching,
-  } = useInstructorSettlementStatementJoinQuery(
-    instructorMemberId,
-    needsStatementJoin,
-    { manualFetch }
-  )
+  } = useInstructorSettlementStatementJoinQuery(instructorMemberId, needsStatementJoin, {
+    manualFetch,
+  })
 
   const settlementsQueryLoading =
     manualFetch &&
@@ -152,12 +149,7 @@ export function InstructorPaymentTab({
   const baseRows = useMemo(() => {
     if (!settlementsRemote || instructorMemberId == null) return []
     return mapSettlementsToInstructorMemberRows(remoteSettlementItems, statementIdBySettlementId)
-  }, [
-    settlementsRemote,
-    instructorMemberId,
-    remoteSettlementItems,
-    statementIdBySettlementId,
-  ])
+  }, [settlementsRemote, instructorMemberId, remoteSettlementItems, statementIdBySettlementId])
 
   const monthRows = useMemo(
     () => filterRowsByMonth(baseRows, currentMonth),
@@ -353,7 +345,11 @@ export function InstructorPaymentTab({
         .filter(Boolean)
         .join(' ')}
     >
-      <Spin spinning={settlementsLoading || settlementsQueryLoading || bulkDownloadLoading || excelExporting}>
+      <Spin
+        spinning={
+          settlementsLoading || settlementsQueryLoading || bulkDownloadLoading || excelExporting
+        }
+      >
         <TableFilterGroup
           fields={FILTER_FIELDS}
           filters={pendingFilters}
@@ -380,8 +376,20 @@ export function InstructorPaymentTab({
               {currentMonth.format('YYYY. MM')}
             </span>
             <div className="calendar-nav">
-              <Button type="text" size="small" icon={<LeftOutlined />} className="calendar-nav-btn" onClick={() => setCurrentMonth(prev => prev.subtract(1, 'month'))} />
-              <Button type="text" size="small" icon={<RightOutlined />} className="calendar-nav-btn" onClick={() => setCurrentMonth(prev => prev.add(1, 'month'))} />
+              <Button
+                type="text"
+                size="small"
+                icon={<LeftOutlined />}
+                className="calendar-nav-btn"
+                onClick={() => setCurrentMonth(prev => prev.subtract(1, 'month'))}
+              />
+              <Button
+                type="text"
+                size="small"
+                icon={<RightOutlined />}
+                className="calendar-nav-btn"
+                onClick={() => setCurrentMonth(prev => prev.add(1, 'month'))}
+              />
             </div>
           </div>
           <div className="instructor-payment-tab__toolbar-actions">
@@ -390,7 +398,6 @@ export function InstructorPaymentTab({
                 variant="secondary"
                 size="large"
                 width="auto"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => {
                   const today = dayjs()
@@ -406,7 +413,6 @@ export function InstructorPaymentTab({
                 variant="secondary"
                 size="large"
                 width="auto"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >
@@ -417,7 +423,6 @@ export function InstructorPaymentTab({
               variant="primary"
               size="large"
               width="auto"
-              style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               loading={bulkDownloadLoading}
               onClick={() => void handleBulkDownload()}

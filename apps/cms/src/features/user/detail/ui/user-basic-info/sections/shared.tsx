@@ -63,7 +63,7 @@ export function AddressSearchDetailInputs({
         value={searchValue}
         onChange={onSearchChange}
         placeholder="건물명, 도로명 또는 지번"
-        inputSize="medium"
+        inputSize="small"
         width={searchWidth}
         onSelect={onAddressSelect}
       />
@@ -72,7 +72,7 @@ export function AddressSearchDetailInputs({
         placeholder="상세 주소"
         value={detailValue}
         onChange={e => onDetailChange(e.target.value)}
-        inputSize="medium"
+        inputSize="small"
         width={detailWidth}
         aria-label={detailAriaLabel}
       />
@@ -135,7 +135,7 @@ export function ContactInfoFieldsRow({
           <CmsPhoneInput
             value={phoneValue}
             onChange={e => onPhoneChange(e.target.value)}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             placeholder={phonePlaceholder}
           />
@@ -149,7 +149,7 @@ export function ContactInfoFieldsRow({
           <CmsInput
             value={emailValue}
             onChange={e => onEmailChange(e.target.value)}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             placeholder={emailPlaceholder}
           />

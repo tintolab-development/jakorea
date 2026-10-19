@@ -285,7 +285,7 @@ export function InstructorDetailEditForm({
             }}
             options={INSTRUCTOR_FEE_GRADE_OPTIONS}
             placeholder="선택"
-            inputSize="medium"
+            inputSize="small"
             width={240}
           />
         }

@@ -412,7 +412,7 @@ function resolveConsentFieldEdit(
     return (
       <CmsRadioGroup
         options={CONSENT_RADIO_OPTIONS}
-        size="large"
+        size="medium"
         value={fallbackAgreed ? 'agree' : 'disagree'}
         disabled
       />
@@ -441,7 +441,7 @@ function resolveConsentFieldEdit(
   return (
     <CmsRadioGroup
       options={CONSENT_RADIO_OPTIONS}
-      size="large"
+      size="medium"
       value={agreed ? 'agree' : 'disagree'}
       onChange={e => {
         const next = e.target.value === 'agree'

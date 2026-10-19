@@ -173,7 +173,7 @@ export function SponsorBasicInfoSection({
                     onChange(prev => ({ ...prev, nameDisplayKo: event.target.value }))
                   }
                   placeholder="후원사명(한글)"
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                 />
               ) : (
@@ -208,7 +208,7 @@ export function SponsorBasicInfoSection({
                     onChange(prev => ({ ...prev, nameDisplayEn: event.target.value }))
                   }
                   placeholder="후원사명(영문)"
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                 />
               ) : (
@@ -222,7 +222,7 @@ export function SponsorBasicInfoSection({
                     onChange(prev => ({ ...prev, businessNumber: event.target.value }))
                   }
                   placeholder="000-00-00000"
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                 />
               ) : (
@@ -242,7 +242,7 @@ export function SponsorBasicInfoSection({
           required
           view={<span>{sponsorshipStartDisplay}</span>}
           edit={
-            <CmsDatePicker
+            <CmsDatePicker inputSize="small"
               value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
               onChange={date =>
                 onChange(prev => ({
@@ -273,7 +273,7 @@ export function SponsorBasicInfoSection({
               value={value.executives}
               onChange={event => onChange(prev => ({ ...prev, executives: event.target.value }))}
               placeholder="대표이사명을 입력하세요"
-              inputSize="medium"
+              inputSize="small"
               width="100%"
             />
           }
@@ -289,7 +289,7 @@ export function SponsorBasicInfoSection({
                 value={value.district}
                 onChange={next => onChange(prev => ({ ...prev, district: next }))}
                 onSelect={() => onChange(prev => ({ ...prev, detailAddress: '' }))}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
               <DetailInfoForm.InputsSeparator />
@@ -299,7 +299,7 @@ export function SponsorBasicInfoSection({
                   onChange(prev => ({ ...prev, detailAddress: event.target.value }))
                 }
                 placeholder="상세 주소를 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             </Space.Compact>
@@ -315,7 +315,7 @@ export function SponsorBasicInfoSection({
               value={value.homepageUrl}
               onChange={event => onChange(prev => ({ ...prev, homepageUrl: event.target.value }))}
               placeholder="홈페이지 주소를 입력하세요"
-              inputSize="medium"
+              inputSize="small"
               width="100%"
             />
           }
@@ -382,7 +382,7 @@ export function SponsorBasicInfoSection({
               value={value.securityMemo}
               onChange={event => onChange(prev => ({ ...prev, securityMemo: event.target.value }))}
               placeholder="비고를 입력하세요"
-              inputSize="medium"
+              inputSize="small"
               width="100%"
             />
           }
