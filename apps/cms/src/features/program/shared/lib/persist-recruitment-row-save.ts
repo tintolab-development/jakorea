@@ -7,6 +7,7 @@ import {
 } from '@/features/program/shared/lib/recruitment-row-copy'
 import { resolveRecruitmentApplicationType } from '@/features/program/shared/lib/recruitment-row-request'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
+import type { ProgramRecruitmentResponse } from '@/shared/api/generated/dashboard/schemas/programRecruitmentResponse'
 import { ProgramRecruitmentRequestApplicationType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestApplicationType'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
@@ -215,6 +216,242 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   return body
 }
 
+const AUDIENCE_ROW_KEYS = [
+  'startAt',
+  'endAt',
+  'operationStartDate',
+  'operationEndDate',
+  'contactName',
+  'contactPhone',
+  'contactEmail',
+  'remarks',
+  'otherMatters',
+  'announcementTitle',
+  'summary',
+  'programDescription',
+  'recruitmentGuide',
+  'applicationMethod',
+  'learningSupportContent',
+  'additionalContentHtml',
+  'interviewEnabled',
+  'interviewStartAt',
+  'interviewEndAt',
+] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
+
+function nestedInfoKey(
+  audience: RecruitmentCopyAudience
+): 'participantRecruitmentInfo' | 'instructorRecruitmentInfo' | 'volunteerRecruitmentInfo' {
+  if (audience === 'instructor') return 'instructorRecruitmentInfo'
+  if (audience === 'volunteer') return 'volunteerRecruitmentInfo'
+  return 'participantRecruitmentInfo'
+}
+
+function overlayDefinedRowFields(
+  row: ProgramRecruitmentWindow,
+  source: Partial<ProgramRecruitmentWindow> | ProgramRecruitmentResponse | undefined,
+  keys: ReadonlyArray<keyof ProgramRecruitmentWindow>
+): ProgramRecruitmentWindow {
+  if (!source) return row
+  const next: ProgramRecruitmentWindow = { ...row }
+  for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) continue
+    const value = source[key as keyof typeof source]
+    if (value === undefined) continue
+    ;(next as Record<string, unknown>)[key] = value
+  }
+  return next
+}
+
+function responseRowFields(
+  response: ProgramRecruitmentResponse | undefined
+): Partial<ProgramRecruitmentWindow> | undefined {
+  if (!response) return undefined
+  const next: Partial<ProgramRecruitmentWindow> = {}
+  for (const key of AUDIENCE_ROW_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(response, key)) continue
+    const value = response[key as keyof ProgramRecruitmentResponse]
+    if (value === undefined || value === null) continue
+    ;(next as Record<string, unknown>)[key] = value
+  }
+  return next
+}
+
+function audienceColumnOntoRow(
+  row: ProgramRecruitmentWindow,
+  patch: Partial<Program>,
+  audience: RecruitmentCopyAudience
+): ProgramRecruitmentWindow {
+  const next = { ...row }
+  if (audience === 'volunteer') {
+    const start = optionalDateToApiString(patch.volunteerApplicationStartDate)
+    const end = optionalDateToApiString(patch.volunteerApplicationEndDate)
+    const interviewStart = optionalDateToApiString(patch.interviewStartDate)
+    const interviewEnd = optionalDateToApiString(patch.interviewEndDate)
+    if (start) next.startAt = start
+    if (end) next.endAt = end
+    if (interviewStart) next.interviewStartAt = interviewStart
+    if (interviewEnd) next.interviewEndAt = interviewEnd
+    if (patch.generalVolunteerInterviewEnabled != null) {
+      next.interviewEnabled = patch.generalVolunteerInterviewEnabled
+    }
+    return next
+  }
+  if (audience === 'instructor') {
+    const start = optionalDateToApiString(patch.instructorApplicationStartDate)
+    const end = optionalDateToApiString(patch.instructorApplicationEndDate)
+    if (start) next.startAt = start
+    if (end) next.endAt = end
+    return next
+  }
+  const start = optionalDateToApiString(patch.applicationStartDate)
+  const end = optionalDateToApiString(patch.applicationEndDate)
+  if (start) next.startAt = start
+  if (end) next.endAt = end
+  return next
+}
+
+function mergeSavedAudienceRow(
+  fetched: Program,
+  patch: Partial<Program>,
+  audience: RecruitmentCopyAudience,
+  volunteerHalf: 'h1' | 'h2' | undefined,
+  response: ProgramRecruitmentResponse | undefined
+): ProgramRecruitmentWindow[] | undefined {
+  const patchProgram: Program = {
+    ...fetched,
+    programRecruitments: patch.programRecruitments ?? fetched.programRecruitments,
+  }
+  const patchRow = patch.programRecruitments
+    ? pickRecruitmentCopyRow(patchProgram, audience, volunteerHalf)
+    : undefined
+  const fetchedRow = pickRecruitmentCopyRow(fetched, audience, volunteerHalf)
+  const base = fetchedRow ?? patchRow
+  const rows = fetched.programRecruitments ?? patch.programRecruitments
+  if (!base || !rows?.length) return rows
+  const saved = overlayDefinedRowFields(
+    audienceColumnOntoRow(overlayDefinedRowFields(base, patchRow, AUDIENCE_ROW_KEYS), patch, audience),
+    responseRowFields(response),
+    AUDIENCE_ROW_KEYS
+  )
+  const rowId = response?.id ?? base.id
+  const found = rows.some(row => row.id != null && row.id === rowId)
+  if (!found) return [...rows, { ...saved, ...(rowId != null ? { id: rowId } : {}) }]
+  return rows.map(row => (row.id != null && row.id === rowId ? { ...saved, id: rowId } : row))
+}
+
+function audienceScalarPatch(
+  patch: Partial<Program>,
+  audience: RecruitmentCopyAudience
+): Partial<Program> {
+  if (audience === 'volunteer') {
+    return {
+      ...(patch.volunteerApplicationStartDate !== undefined
+        ? { volunteerApplicationStartDate: patch.volunteerApplicationStartDate }
+        : {}),
+      ...(patch.volunteerApplicationEndDate !== undefined
+        ? { volunteerApplicationEndDate: patch.volunteerApplicationEndDate }
+        : {}),
+      ...(patch.generalVolunteerInterviewEnabled !== undefined
+        ? { generalVolunteerInterviewEnabled: patch.generalVolunteerInterviewEnabled }
+        : {}),
+      ...(patch.volunteerTargets !== undefined ? { volunteerTargets: patch.volunteerTargets } : {}),
+      ...(patch.volunteerTarget !== undefined ? { volunteerTarget: patch.volunteerTarget } : {}),
+      ...(patch.volunteerTargetDetail !== undefined
+        ? { volunteerTargetDetail: patch.volunteerTargetDetail }
+        : {}),
+    }
+  }
+  if (audience === 'instructor') {
+    return {
+      ...(patch.instructorApplicationStartDate !== undefined
+        ? { instructorApplicationStartDate: patch.instructorApplicationStartDate }
+        : {}),
+      ...(patch.instructorApplicationEndDate !== undefined
+        ? { instructorApplicationEndDate: patch.instructorApplicationEndDate }
+        : {}),
+      ...(patch.instructorTargets !== undefined
+        ? { instructorTargets: patch.instructorTargets }
+        : {}),
+      ...(patch.instructorTarget !== undefined ? { instructorTarget: patch.instructorTarget } : {}),
+      ...(patch.instructorTargetDetail !== undefined
+        ? { instructorTargetDetail: patch.instructorTargetDetail }
+        : {}),
+      ...(patch.finalPassAnnouncementDate !== undefined
+        ? { finalPassAnnouncementDate: patch.finalPassAnnouncementDate }
+        : {}),
+      ...(patch.finalPassAnnouncementMethod !== undefined
+        ? { finalPassAnnouncementMethod: patch.finalPassAnnouncementMethod }
+        : {}),
+    }
+  }
+  return {
+    ...(patch.applicationStartDate !== undefined
+      ? { applicationStartDate: patch.applicationStartDate }
+      : {}),
+    ...(patch.applicationEndDate !== undefined
+      ? { applicationEndDate: patch.applicationEndDate }
+      : {}),
+    ...(patch.resultAnnouncementDate !== undefined
+      ? { resultAnnouncementDate: patch.resultAnnouncementDate }
+      : {}),
+    ...(patch.resultAnnouncementMethod !== undefined
+      ? { resultAnnouncementMethod: patch.resultAnnouncementMethod }
+      : {}),
+    ...(patch.generalParticipantInterviewEnabled !== undefined
+      ? { generalParticipantInterviewEnabled: patch.generalParticipantInterviewEnabled }
+      : {}),
+  }
+}
+
+/**
+ * 행 PATCH 응답·폼 nested는 저장 정본이다.
+ * 직후 프로그램 GET이 옛 `volunteerRecruitmentInfo`를 주면 CMS만 수정 전 값을 보여 준다.
+ */
+export function applySavedRecruitmentOntoProgram(args: {
+  fetched: Program
+  draft: Program
+  patch: Partial<Program>
+  audience: RecruitmentCopyAudience
+  volunteerHalf?: 'h1' | 'h2'
+  row?: ProgramRecruitmentResponse
+}): Program {
+  const { fetched, draft, patch, audience, volunteerHalf, row } = args
+  const infoKey = nestedInfoKey(audience)
+  const fetchedCommon = fetched.generalCommonInfo
+  const patchCommon = patch.generalCommonInfo
+  const patchInfo = patchCommon?.[infoKey]
+  const generalCommonInfo = {
+    ...fetchedCommon,
+    ...(patchInfo
+      ? {
+          [infoKey]: {
+            ...(fetchedCommon?.[infoKey] ?? {}),
+            ...patchInfo,
+          },
+        }
+      : {}),
+    ...(audience === 'volunteer' &&
+    patchCommon &&
+    Object.prototype.hasOwnProperty.call(patchCommon, 'volunteerInterviewScheduleInfo')
+      ? { volunteerInterviewScheduleInfo: patchCommon.volunteerInterviewScheduleInfo }
+      : {}),
+  } as Program['generalCommonInfo']
+
+  return {
+    ...fetched,
+    ...audienceScalarPatch(patch, audience),
+    ...(Object.prototype.hasOwnProperty.call(patch, 'registrationOverlay')
+      ? { registrationOverlay: patch.registrationOverlay }
+      : {}),
+    ujatRegistrationOverlay:
+      patch.ujatRegistrationOverlay ??
+      draft.ujatRegistrationOverlay ??
+      fetched.ujatRegistrationOverlay,
+    programRecruitments: mergeSavedAudienceRow(fetched, patch, audience, volunteerHalf, row),
+    generalCommonInfo,
+  }
+}
+
 export async function persistRecruitmentTabSave(args: {
   baseline: Program
   draft: Program
@@ -222,6 +459,8 @@ export async function persistRecruitmentTabSave(args: {
   audience: RecruitmentCopyAudience
   volunteerHalf?: 'h1' | 'h2'
   refetchProgram: (programId: string) => Promise<Program>
+  /** 행 PATCH 이후·재조회 전. nested·overlay를 프로그램에 남긴다. 실패해도 행 저장은 유지한다. */
+  beforeRefetch?: () => Promise<void>
 }): Promise<{ mode: 'row'; program: Program } | { mode: 'fallback'; patch: Partial<Program> }> {
   const patch = omitRecruitmentTabScheduleFields(args.patch)
   if (!canSaveRecruitmentAsRowPatch(args.baseline)) {
@@ -232,7 +471,22 @@ export async function persistRecruitmentTabSave(args: {
   if (programNumericId == null || body?.id == null) {
     return { mode: 'fallback', patch }
   }
-  await patchProgramRecruitment(programNumericId, body.id, body)
-  const program = await args.refetchProgram(String(args.draft.id ?? args.baseline.id))
-  return { mode: 'row', program }
+  const row = await patchProgramRecruitment(programNumericId, body.id, body)
+  try {
+    await args.beforeRefetch?.()
+  } catch (error) {
+    console.error('[program] recruitment nested snapshot save failed', error)
+  }
+  const fetched = await args.refetchProgram(String(args.draft.id ?? args.baseline.id))
+  return {
+    mode: 'row',
+    program: applySavedRecruitmentOntoProgram({
+      fetched,
+      draft: args.draft,
+      patch,
+      audience: args.audience,
+      volunteerHalf: args.volunteerHalf,
+      row,
+    }),
+  }
 }

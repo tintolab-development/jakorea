@@ -19,6 +19,7 @@ import { useGeneralProgramNavigation } from '@/features/program/general/hooks/us
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import { persistGeneralRecruitmentNestedSnapshot } from '@/features/program/general/lib/persist-recruitment-nested-snapshot'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
   omitRecruitmentTabScheduleFields,
@@ -617,6 +618,7 @@ export function GeneralProgramDetailFullPageModal({
             patch,
             audience,
             refetchProgram: fetchGeneralProgramRemoteById,
+            beforeRefetch: () => persistGeneralRecruitmentNestedSnapshot(draft),
           })
           if (result.mode === 'row') {
             clearGeneralProgramDetailSession(draft.id)
@@ -625,7 +627,8 @@ export function GeneralProgramDetailFullPageModal({
             await syncOpenProgramDetailCache(
               queryClient,
               generalProgramQueryKeys.detail(draft.id),
-              result.program
+              result.program,
+              { refetch: false }
             )
             invalidateGeneralProgramListCaches(queryClient)
             return

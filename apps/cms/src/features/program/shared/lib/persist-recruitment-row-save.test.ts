@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 import {
+  applySavedRecruitmentOntoProgram,
   buildProgramRecruitmentRowSaveRequest,
   canSaveRecruitmentAsRowPatch,
   omitRecruitmentTabScheduleFields,
@@ -139,7 +140,7 @@ describe('persist-recruitment-row-save', () => {
     ).toBe(false)
   })
 
-  it('행 id가 있으면 단건 PATCH 후 재조회한다', async () => {
+  it('행 id가 있으면 단건 PATCH 후 재조회하고, 재조회가 빼먹은 기간은 저장값으로 맞춘다', async () => {
     const program = orgProgram()
     const refetched = { ...program, title: 'refetched' }
     const result = await persistRecruitmentTabSave({
@@ -152,6 +153,137 @@ describe('persist-recruitment-row-save', () => {
       audience: 'volunteer',
       refetchProgram: async () => refetched,
     })
-    expect(result).toEqual({ mode: 'row', program: refetched })
+    expect(result.mode).toBe('row')
+    if (result.mode !== 'row') return
+    expect(result.program.title).toBe('refetched')
+    expect(result.program.volunteerApplicationEndDate).toBe('2026-10-31T14:59:59.999Z')
+    expect(
+      result.program.programRecruitments?.find(row => row.recruitmentType === 'VOLUNTEER')?.endAt
+    ).toBe('2026-10-31T14:59:59.999Z')
+  })
+
+  it('재조회 nested가 옛값이면 저장한 봉사자 모집 정보를 화면에 남긴다', () => {
+    const program = orgProgram()
+    const fetched = {
+      ...program,
+      generalCommonInfo: {
+        volunteerRecruitmentInfo: {
+          recruitmentTarget: '대학생',
+          remarks: '수정 전 비고',
+          contactOrganizationName: '옛 문의처',
+        },
+      },
+    }
+    const next = applySavedRecruitmentOntoProgram({
+      fetched,
+      draft: program,
+      patch: {
+        volunteerApplicationStartDate: '2026-11-01T00:00:00.000Z',
+        volunteerTargets: ['university'],
+        volunteerTarget: '대학(원)생',
+        generalCommonInfo: {
+          volunteerRecruitmentInfo: {
+            recruitmentTarget: '대학(원)생',
+            remarks: '수정된 비고',
+            contactOrganizationName: '새 문의처',
+          },
+        },
+        programRecruitments: program.programRecruitments?.map(row =>
+          row.recruitmentType === 'VOLUNTEER' ? { ...row, contactName: '새 문의처' } : row
+        ),
+      },
+      audience: 'volunteer',
+      row: {
+        id: 186605,
+        contactName: '새 문의처',
+        startAt: '2026-11-01T00:00:00.000Z',
+      },
+    })
+    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTarget).toBe('대학(원)생')
+    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.remarks).toBe('수정된 비고')
+    expect(next.volunteerTarget).toBe('대학(원)생')
+    const volunteer = next.programRecruitments?.find(row => row.id === 186605)
+    expect(volunteer?.contactName).toBe('새 문의처')
+    expect(volunteer?.startAt).toBe('2026-11-01T00:00:00.000Z')
+    expect(
+      next.programRecruitments?.find(row => row.recruitmentType === 'INSTRUCTOR')?.startAt
+    ).toBe('2026-10-16T15:00:00.000Z')
+  })
+
+  it('재조회 nested가 옛값이면 저장한 참여자·참여 기관 모집 정보를 화면에 남긴다', () => {
+    const program = orgProgram()
+    const next = applySavedRecruitmentOntoProgram({
+      fetched: {
+        ...program,
+        resultAnnouncementDate: '2026-09-01T00:00:00.000Z',
+        resultAnnouncementMethod: '기존 게시',
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            recruitmentTarget: '중학생',
+            remarks: '수정 전 비고',
+          },
+        },
+      },
+      draft: program,
+      patch: {
+        applicationEndDate: '2026-11-30T14:59:59.999Z',
+        resultAnnouncementDate: '2026-12-01T00:00:00.000Z',
+        resultAnnouncementMethod: '홈페이지',
+        generalParticipantInterviewEnabled: false,
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            recruitmentTarget: '고등학생',
+            remarks: '수정된 비고',
+            finalAnnouncementLabel: '2026. 12. 01. | 홈페이지',
+          },
+        },
+      },
+      audience: 'participant',
+    })
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget).toBe('고등학생')
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('수정된 비고')
+    expect(next.resultAnnouncementDate).toBe('2026-12-01T00:00:00.000Z')
+    expect(next.resultAnnouncementMethod).toBe('홈페이지')
+    expect(next.generalParticipantInterviewEnabled).toBe(false)
+    expect(next.programRecruitments?.find(row => row.recruitmentType === 'PARTICIPANT')?.endAt).toBe(
+      '2026-11-30T14:59:59.999Z'
+    )
+  })
+
+  it('재조회 nested가 옛값이면 저장한 강사 모집 정보를 화면에 남긴다', () => {
+    const program = orgProgram()
+    const next = applySavedRecruitmentOntoProgram({
+      fetched: {
+        ...program,
+        finalPassAnnouncementDate: '2026-09-01T00:00:00.000Z',
+        generalCommonInfo: {
+          instructorRecruitmentInfo: {
+            recruitmentTarget: '기존 강사',
+            remarks: '수정 전 비고',
+          },
+        },
+      },
+      draft: program,
+      patch: {
+        instructorApplicationEndDate: '2026-11-30T14:59:59.999Z',
+        finalPassAnnouncementDate: '2026-12-02T00:00:00.000Z',
+        finalPassAnnouncementMethod: '문자',
+        generalCommonInfo: {
+          instructorRecruitmentInfo: {
+            recruitmentTarget: '현직 강사',
+            remarks: '수정된 비고',
+            finalAnnouncementLabel: '2026. 12. 02. | 문자',
+          },
+        },
+      },
+      audience: 'instructor',
+    })
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTarget).toBe('현직 강사')
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe('수정된 비고')
+    expect(next.finalPassAnnouncementDate).toBe('2026-12-02T00:00:00.000Z')
+    expect(next.finalPassAnnouncementMethod).toBe('문자')
+    expect(next.programRecruitments?.find(row => row.recruitmentType === 'INSTRUCTOR')?.endAt).toBe(
+      '2026-11-30T14:59:59.999Z'
+    )
   })
 })
