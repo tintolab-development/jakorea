@@ -12,30 +12,15 @@
 export interface AssignedItem {
   /** 행 안정 키 */
   id?: string;
-  /**
-     * 개인: 봉사 지역
-     * @nullable
-     */
+  /** 개인: 봉사 지역 */
   locationName?: string | null;
-  /**
-     * 기관: 소재지(지역). 개인은 locationName과 동일 축약일 수 있음
-     * @nullable
-     */
+  /** 기관: 소재지(지역). 개인은 locationName과 동일 축약일 수 있음 */
   region?: string | null;
-  /**
-     * 기관명
-     * @nullable
-     */
+  /** 기관명 */
   schoolName?: string | null;
-  /**
-     * 담당학년
-     * @nullable
-     */
+  /** 담당학년 */
   educationGrade?: string | null;
-  /**
-     * 자택↔장소 편도 km. 없으면 null → FE '-'
-     * @nullable
-     */
+  /** 자택↔장소 편도 km. 없으면 null → FE '-' */
   distanceKm?: number | null;
   /** 표시용 일정 라벨 목록. 없으면 빈 배열 */
   scheduleLines?: string[];

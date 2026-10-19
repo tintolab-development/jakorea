@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeOpenApiSchemaNode } from './lib/normalize-openapi-schema-for-orval.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -47,6 +48,8 @@ for (const operations of Object.values(subset.paths ?? {})) {
     }
   }
 }
+
+normalizeOpenApiSchemaNode(subset)
 
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
 const pathCount = Object.keys(filteredPaths).length

@@ -8,7 +8,6 @@
 
 /**
  * UJAT 학기. FIRST_HALF 또는 SECOND_HALF. 그 외는 null입니다.
- * @nullable
  */
 export type ScheduleResponseTerm = typeof ScheduleResponseTerm[keyof typeof ScheduleResponseTerm] | null;
 

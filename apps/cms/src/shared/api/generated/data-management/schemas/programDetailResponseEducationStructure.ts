@@ -8,7 +8,6 @@
 
 /**
  * 공통정보 교육 진행 구조. 프로그램 유형별 generalCommonInfo 저장값을 투영하며 값이 없으면 null.
- * @nullable
  */
 export type ProgramDetailResponseEducationStructure = typeof ProgramDetailResponseEducationStructure[keyof typeof ProgramDetailResponseEducationStructure] | null;
 

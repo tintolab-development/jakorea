@@ -11,9 +11,7 @@ import type { ClassRoom } from './classRoom';
  * 학년 한 묶음. classes[].classNo가 실제 등록 반의 SSOT입니다. classes가 비어 있으면 classCount는 신청 메타일 뿐 반 번호 목록이 아닙니다.
  */
 export interface GradeBlock {
-  /** @nullable */
   gradeLabel?: string | null;
-  /** @nullable */
   classCount?: number | null;
   classes?: ClassRoom[];
 }

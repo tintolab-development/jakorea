@@ -18,10 +18,7 @@ export interface ApplicationListItemResponse {
   programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
-  /**
-     * UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null.
-     * @nullable
-     */
+  /** UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null. */
   recruitTerm?: ApplicationListItemResponseRecruitTerm;
   applicationStatus?: string;
   submittedAt?: string;
@@ -41,14 +38,8 @@ export interface ApplicationListItemResponse {
   certificateAvailable?: boolean;
   availableActions?: string[];
   supplement?: ProgramApplicationSupplement;
-  /**
-     * 모집 시작 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.
-     * @nullable
-     */
+  /** 모집 시작 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다. */
   recruitmentStartAt?: string | null;
-  /**
-     * 모집 종료 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.
-     * @nullable
-     */
+  /** 모집 종료 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다. */
   recruitmentEndAt?: string | null;
 }

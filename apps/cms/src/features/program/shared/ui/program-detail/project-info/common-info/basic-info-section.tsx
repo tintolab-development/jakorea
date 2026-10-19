@@ -494,7 +494,7 @@ export function BasicInfoSection({
     ? (COURSE_DELIVERED_LABEL[program.courseDeliveredBy] ?? program.courseDeliveredBy)
     : '-'
 
-  const commonInfoFormEdit = isFormEdit && form
+  const commonInfoFormEdit = Boolean(isFormEdit && form)
   const commonInfoForm =
     form ??
     ({

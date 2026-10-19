@@ -8,7 +8,6 @@
 
 /**
  * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
- * @nullable
  */
 export type ProgramUpdateRequestEducationForm = typeof ProgramUpdateRequestEducationForm[keyof typeof ProgramUpdateRequestEducationForm] | null;
 

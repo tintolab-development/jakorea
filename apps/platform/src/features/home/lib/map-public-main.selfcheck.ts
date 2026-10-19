@@ -116,7 +116,6 @@ const merged = mergePublicMainWithFallback(
           programType: 'GENERAL_INDIVIDUAL',
           periodStatus: 'RECRUITING',
           nameKo: '청소년 금융 캠프',
-          educationTargetName: '고등학생',
         },
         {
           id: 13,

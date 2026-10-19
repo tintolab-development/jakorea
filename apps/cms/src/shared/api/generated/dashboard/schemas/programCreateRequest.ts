@@ -116,8 +116,8 @@ export interface ProgramCreateRequest {
   /** CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 false. */
   featuredOnHome?: boolean | null;
   /**
-   * 홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.
-   * @minimum 1
-   */
+     * 홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.
+     * @minimum 1
+     */
   homeDisplayOrder?: number | null;
 }

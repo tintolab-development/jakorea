@@ -8,7 +8,6 @@
 
 /**
  * 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.
- * @nullable
  */
 export type OrganizationApplicationDetailResponsePreviousYearParticipation = typeof OrganizationApplicationDetailResponsePreviousYearParticipation[keyof typeof OrganizationApplicationDetailResponsePreviousYearParticipation] | null;
 

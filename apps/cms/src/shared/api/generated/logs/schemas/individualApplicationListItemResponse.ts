@@ -32,10 +32,7 @@ export interface IndividualApplicationListItemResponse {
   /** 해당 신청 건에서 선택한 교육 일정. 미선택 시 빈 배열 */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   applicationStatus?: string;
-  /**
-     * Admin CMS 전용 최신 관리자 코멘트
-     * @nullable
-     */
+  /** Admin CMS 전용 최신 관리자 코멘트 */
   managerComment?: string | null;
   documentStatus?: string;
   managerAEvaluation?: string;

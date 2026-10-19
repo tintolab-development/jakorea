@@ -14,7 +14,6 @@ export interface CreateNoticeRequest {
      * 제목. 생략·공백이면 빈 문자열로 저장됩니다.
      * @minLength 0
      * @maxLength 255
-     * @nullable
      */
   title?: string | null;
   /** @minLength 1 */
@@ -25,9 +24,6 @@ export interface CreateNoticeRequest {
      * @maxLength 120
      */
   visibilityType: string;
-  /**
-     * 기관 신청 단위 게시글일 때 기관 신청 ID. ORGANIZATION 신청과 동일 ID만 허용합니다.
-     * @nullable
-     */
+  /** 기관 신청 단위 게시글일 때 기관 신청 ID. ORGANIZATION 신청과 동일 ID만 허용합니다. */
   organizationApplicationId?: number | null;
 }

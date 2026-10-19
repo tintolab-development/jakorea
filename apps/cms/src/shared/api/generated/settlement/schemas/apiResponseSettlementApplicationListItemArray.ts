@@ -12,7 +12,6 @@ export interface ApiResponseSettlementApplicationListItemArray {
   success?: boolean;
   /** 본인 정산 신청 목록. 없으면 []. */
   data?: SettlementApplicationListItemResponse[];
-  /** @nullable */
   message?: string | null;
   /** @nullable */
   error?: null;

@@ -13,40 +13,19 @@ import type { WaitingItemAssignmentStatus } from './waitingItemAssignmentStatus'
 export interface WaitingItem {
   /** 행 안정 키 */
   id?: string;
-  /**
-     * 일정 ID
-     * @nullable
-     */
+  /** 일정 ID */
   scheduleId?: number | null;
-  /**
-     * 개인: 기관 소재지/봉사 지역
-     * @nullable
-     */
+  /** 개인: 기관 소재지/봉사 지역 */
   locationName?: string | null;
-  /**
-     * 기관: 소재지
-     * @nullable
-     */
+  /** 기관: 소재지 */
   region?: string | null;
-  /**
-     * 기관명
-     * @nullable
-     */
+  /** 기관명 */
   schoolName?: string | null;
-  /**
-     * 희망 학년
-     * @nullable
-     */
+  /** 희망 학년 */
   desiredGrade?: string | null;
-  /**
-     * 자택↔장소 편도 km. 없으면 null
-     * @nullable
-     */
+  /** 자택↔장소 편도 km. 없으면 null */
   distanceKm?: number | null;
-  /**
-     * 표시용 일정 1줄
-     * @nullable
-     */
+  /** 표시용 일정 1줄 */
   scheduleLine?: string | null;
   /** WAITING | CANCELLED */
   assignmentStatus?: WaitingItemAssignmentStatus;

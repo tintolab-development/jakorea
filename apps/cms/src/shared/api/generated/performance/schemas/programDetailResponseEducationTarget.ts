@@ -8,7 +8,6 @@
 
 /**
  * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
- * @nullable
  */
 export type ProgramDetailResponseEducationTarget = typeof ProgramDetailResponseEducationTarget[keyof typeof ProgramDetailResponseEducationTarget] | null;
 

@@ -8,7 +8,6 @@
 
 /**
  * 공통정보 교육 형태 코드. operationMethod와 별개. 없으면 null.
- * @nullable
  */
 export type ProgramDetailResponseEducationForm = typeof ProgramDetailResponseEducationForm[keyof typeof ProgramDetailResponseEducationForm] | null;
 

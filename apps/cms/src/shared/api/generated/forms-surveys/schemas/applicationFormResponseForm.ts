@@ -7,6 +7,6 @@
  */
 
 /**
- * 런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate가 포함됩니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용합니다. TRAINED_TEACHER 기간형 기관 신청은 businessStartDate/businessEndDate를 단일 허용 기간으로 반환하고, 그 외 유형은 typed detail 교육 가능 기간을 사용합니다. 유효한 일정이 없으면 빈 배열과 null 날짜를 반환합니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다.
+ * 런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate, maxScheduleCount, maxSessionsPerDay가 포함됩니다. maxScheduleCount는 기간형 희망 일정 개수 상한이고 maxSessionsPerDay는 CURRICULUM+MULTI+PERIOD의 1일 최대 차시이며 적용되지 않으면 null입니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용하며 TRAINED_TEACHER 기간형 기관 신청은 CMS typed detail 교육 가능 기간을 사용합니다. typed detail 교육 기간이 없으면 빈 배열과 null 날짜를 반환하며 프로그램 사업기간으로 대체하지 않습니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다.
  */
 export type ApplicationFormResponseForm = {[key: string]: unknown};

@@ -27,10 +27,7 @@ export interface MemberPortalApplicationDetail {
   programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
-  /**
-     * UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null.
-     * @nullable
-     */
+  /** UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null. */
   recruitTerm?: MemberPortalApplicationDetailRecruitTerm;
   applicationStatus?: string;
   submittedAt?: string;
@@ -44,22 +41,13 @@ export interface MemberPortalApplicationDetail {
   answers?: MemberPortalApplicationDetailAnswers;
   /** 희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 answers 투영. 없으면 []. */
   preferredScheduleBlocks?: PreferredScheduleBlock[];
-  /**
-     * 관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null.
-     * @nullable
-     */
+  /** 관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null. */
   assignedInterviewStartAt?: string | null;
-  /**
-     * 관리자 배정 면접 종료 시각(ISO-8601). 미배정이면 null. 배너 표시는 start만 사용.
-     * @nullable
-     */
+  /** 관리자 배정 면접 종료 시각(ISO-8601). 미배정이면 null. 배너 표시는 start만 사용. */
   assignedInterviewEndAt?: string | null;
   /** 면접 프로그램·배정 여부. program.interviewEnabled==true 이거나 배정 슬롯이 있으면 true. */
   hasInterview?: boolean;
-  /**
-     * 서류 합격 배너용 서버 포맷 면접 시각. Asia/Seoul `YYYY년 MM월 DD일(요일), HH시`. 미배정이면 null.
-     * @nullable
-     */
+  /** 서류 합격 배너용 서버 포맷 면접 시각. Asia/Seoul `YYYY년 MM월 DD일(요일), HH시`. 미배정이면 null. */
   interviewAtLabel?: string | null;
   cancellable?: boolean;
   program?: MemberPortalProgramSummary;

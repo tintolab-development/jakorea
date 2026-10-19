@@ -8,7 +8,6 @@
 
 /**
  * UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null.
- * @nullable
  */
 export type ProgramListItemResponseRecruitTerm = typeof ProgramListItemResponseRecruitTerm[keyof typeof ProgramListItemResponseRecruitTerm] | null;
 

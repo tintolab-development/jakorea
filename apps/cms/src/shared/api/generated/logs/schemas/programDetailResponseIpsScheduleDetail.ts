@@ -8,7 +8,6 @@
 
 /**
  * IPS 일정 공통/일정 별 상이.
- * @nullable
  */
 export type ProgramDetailResponseIpsScheduleDetail = typeof ProgramDetailResponseIpsScheduleDetail[keyof typeof ProgramDetailResponseIpsScheduleDetail] | null;
 

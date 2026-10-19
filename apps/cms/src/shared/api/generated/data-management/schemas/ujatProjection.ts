@@ -10,74 +10,33 @@
  * UJAT 봉사자 신청 상세에서 반복 사용되는 안정적인 named projection. 값이 없거나 지원 형태 때문에 숨긴 단락의 값은 null입니다. 마스킹 상세에서는 applicationRouteOther가 마스킹됩니다. 자유 작성(essay*)은 마스킹·해제 상세 모두 원문(마스킹하지 않음)입니다.
  */
 export interface UjatProjection {
-  /**
-     * previous-term activityTerm (기수)
-     * @nullable
-     */
+  /** previous-term activityTerm (기수) */
   previousActivityTerm?: string | null;
-  /**
-     * preferred-region 선택값의 지역명. 지역 마스터에 없으면 저장된 값
-     * @nullable
-     */
+  /** preferred-region 선택값의 지역명. 지역 마스터에 없으면 저장된 값 */
   preferredActivityRegion?: string | null;
-  /**
-     * education-experience 저장 표시값(기존 필드, 형식 유지)
-     * @nullable
-     */
+  /** education-experience 저장 표시값(기존 필드, 형식 유지) */
   educationExperience?: string | null;
-  /**
-     * education-experience …-yes → true, …-no → false
-     * @nullable
-     */
+  /** education-experience …-yes → true, …-no → false */
   educationExperienceYn?: boolean | null;
-  /** @nullable */
   previousActivityYear?: string | null;
-  /** @nullable */
   universityName?: string | null;
-  /**
-     * 1~4, leave, deferred
-     * @nullable
-     */
+  /** 1~4, leave, deferred */
   grade?: string | null;
-  /** @nullable */
   gradeLabel?: string | null;
-  /** @nullable */
   major?: string | null;
-  /**
-     * instagram, school-everytime, linkareer, allcon, campuspick, other
-     * @nullable
-     */
+  /** instagram, school-everytime, linkareer, allcon, campuspick, other */
   applicationRoute?: string | null;
-  /** @nullable */
   applicationRouteLabel?: string | null;
-  /**
-     * applicationRoute=other 일 때만 값
-     * @nullable
-     */
+  /** applicationRoute=other 일 때만 값 */
   applicationRouteOther?: string | null;
-  /**
-     * new | ujat-graduate
-     * @nullable
-     */
+  /** new | ujat-graduate */
   applicationType?: string | null;
-  /**
-     * 원문(마스킹하지 않음)
-     * @nullable
-     */
+  /** 원문(마스킹하지 않음) */
   essayIntro?: string | null;
-  /**
-     * 원문(마스킹하지 않음)
-     * @nullable
-     */
+  /** 원문(마스킹하지 않음) */
   essayEducationExperience?: string | null;
-  /**
-     * 원문(마스킹하지 않음)
-     * @nullable
-     */
+  /** 원문(마스킹하지 않음) */
   essayNecessity?: string | null;
-  /**
-     * 원문(마스킹하지 않음)
-     * @nullable
-     */
+  /** 원문(마스킹하지 않음) */
   essayJaExperience?: string | null;
 }

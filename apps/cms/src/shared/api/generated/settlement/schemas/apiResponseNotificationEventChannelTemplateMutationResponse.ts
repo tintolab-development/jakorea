@@ -14,19 +14,10 @@ import type { NotificationEventChannelTemplateMutationResponse } from './notific
 export interface ApiResponseNotificationEventChannelTemplateMutationResponse {
   /** 요청 처리 성공 여부 */
   success?: boolean;
-  /**
-     * 성공 응답 데이터. 오류 응답에서는 null입니다.
-     * @nullable
-     */
-  data?: NotificationEventChannelTemplateMutationResponse;
-  /**
-     * 오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.
-     * @nullable
-     */
+  /** 성공 응답 데이터. 오류 응답에서는 null입니다. */
+  data?: NotificationEventChannelTemplateMutationResponse | null;
+  /** 오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다. */
   message?: string | null;
-  /**
-     * 구조화된 오류 정보. 성공 응답에서는 null입니다.
-     * @nullable
-     */
-  error?: ErrorDetail;
+  /** 구조화된 오류 정보. 성공 응답에서는 null입니다. */
+  error?: ErrorDetail | null;
 }

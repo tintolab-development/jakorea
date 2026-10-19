@@ -11,59 +11,26 @@ import type { SessionProgressScheduleStatus } from './sessionProgressScheduleSta
  * 참여 일정. 기관 참여자는 해당 기관에 실제 배정된 프로그램 일정만 반환한다. 신청 희망 일정은 실제 배정 일정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 기관에 배정되지 않은 프로그램 일정과 미확정 희망 일정은 출석 상세·회차 집계에서 제외한다. null은 반환하지 않는다.
  */
 export interface SessionProgress {
-  /**
-     * 실제 반환 대상 program_schedule id. 값이 없으면 null
-     * @nullable
-     */
+  /** 실제 반환 대상 program_schedule id. 값이 없으면 null */
   scheduleId?: number | null;
-  /**
-     * program_application_requested_schedule id. 배정 일정만 있으면 null
-     * @nullable
-     */
+  /** program_application_requested_schedule id. 배정 일정만 있으면 null */
   requestedScheduleId?: number | null;
-  /**
-     * 출석/배정 mutation에 쓰는 실제 program_schedule id. 값이 없으면 null
-     * @nullable
-     */
+  /** 출석/배정 mutation에 쓰는 실제 program_schedule id. 값이 없으면 null */
   resolvedScheduleId?: number | null;
-  /**
-     * 미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다
-     * @nullable
-     */
+  /** 미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다 */
   scheduleUnresolved?: boolean | null;
-  /**
-     * 프로그램 일정 회차. 확정된 희망 일정은 preference_order
-     * @nullable
-     */
+  /** 프로그램 일정 회차. 확정된 희망 일정은 preference_order */
   sessionNo?: number | null;
-  /**
-     * 일정명. 실제 배정 일정 기준으로 반환한다
-     * @nullable
-     */
+  /** 일정명. 실제 배정 일정 기준으로 반환한다 */
   scheduleName?: string | null;
-  /**
-     * 실제 배정된 프로그램 일정의 시작 시각. 시각이 없으면 null
-     * @nullable
-     */
+  /** 실제 배정된 프로그램 일정의 시작 시각. 시각이 없으면 null */
   startAt?: string | null;
-  /**
-     * 실제 배정된 프로그램 일정의 종료 시각. 시각이 없으면 null
-     * @nullable
-     */
+  /** 실제 배정된 프로그램 일정의 종료 시각. 시각이 없으면 null */
   endAt?: string | null;
-  /**
-     * 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.
-     * @nullable
-     */
+  /** 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개. */
   scheduleStatus?: SessionProgressScheduleStatus;
-  /**
-     * PRESENT|LATE|ABSENT|EXCUSED. 없으면 null
-     * @nullable
-     */
+  /** PRESENT|LATE|ABSENT|EXCUSED. 없으면 null */
   attendanceStatus?: string | null;
-  /**
-     * 배정 상태. 없으면 null이며 화면은 대기 처리
-     * @nullable
-     */
+  /** 배정 상태. 없으면 null이며 화면은 대기 처리 */
   assignmentStatus?: string | null;
 }

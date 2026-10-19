@@ -8,7 +8,6 @@
 
 /**
  * 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개.
- * @nullable
  */
 export type ProgramDetailResponseRecruitmentStatus = typeof ProgramDetailResponseRecruitmentStatus[keyof typeof ProgramDetailResponseRecruitmentStatus] | null;
 

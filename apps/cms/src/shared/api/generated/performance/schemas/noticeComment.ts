@@ -11,10 +11,7 @@ export interface NoticeComment {
   content?: string;
   authorType?: string;
   authorId?: number;
-  /**
-     * 작성자 표시명. 본인 댓글은 실명, 다른 회원 댓글은 마스킹 이름(예: 김*수)입니다. 관리자 댓글과 탈퇴·삭제·미존재 회원은 null입니다.
-     * @nullable
-     */
+  /** 작성자 표시명. 본인 댓글은 실명, 다른 회원 댓글은 마스킹 이름(예: 김*수)입니다. 관리자 댓글과 탈퇴·삭제·미존재 회원은 null입니다. */
   authorDisplayName?: string | null;
   mine?: boolean;
   createdAt?: string;

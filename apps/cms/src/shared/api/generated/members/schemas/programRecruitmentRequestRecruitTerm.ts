@@ -8,7 +8,6 @@
 
 /**
  * UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null.
- * @nullable
  */
 export type ProgramRecruitmentRequestRecruitTerm = typeof ProgramRecruitmentRequestRecruitTerm[keyof typeof ProgramRecruitmentRequestRecruitTerm] | null;
 
