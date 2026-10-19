@@ -8,6 +8,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import { shouldUseCompanySchoolApplicationsRemoteApi } from '@/features/program/1c-1s/api/capabilities'
@@ -186,7 +187,11 @@ export function ApplicantInstitutionInstructorAssignTab({
         title: '희망 일정',
         key: 'hope',
         render: (_: unknown, record: CompanySchoolWaitingInstructorRow) => {
-          const parts = [record.hopeDate, record.hopeTime, record.hopeSession].filter(Boolean)
+          const parts = [
+            record.hopeDate ? formatCmsScheduleDisplayLabel(record.hopeDate) : '',
+            record.hopeTime,
+            record.hopeSession,
+          ].filter(Boolean)
           if (parts.length === 0) return '-'
           return (
             <span>

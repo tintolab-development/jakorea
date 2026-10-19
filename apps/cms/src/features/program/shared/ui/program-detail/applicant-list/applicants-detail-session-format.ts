@@ -14,6 +14,7 @@ import { appendCurriculumSingleDateFixedScheduleSessionSuffix } from '@jakorea/f
 import type { SessionLinePreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 
 /** 신청 폼 고정 일정 선택지와 동일 — 커리큘럼·단일·날짜 `예정일 | N차시` */
 export function enrichGeneralDetailScheduleLineLabel(
@@ -69,10 +70,14 @@ export function formatGeneralDetailSessionLine(
   bridge?: InstitutionApplicationProgramBridge | null
 ): string {
   const scheduleLabel = s.scheduleLabel?.trim()
-  if (scheduleLabel) return enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge)
+  if (scheduleLabel) {
+    return formatCmsScheduleDisplayLabel(enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge))
+  }
   const { datePart, durationPart, periodPart } = getSessionLineParts(s, 'general-detail', bridge)
   if (!periodPart) {
-    return enrichGeneralDetailScheduleLineLabel(`${datePart} ${durationPart}`, bridge)
+    return formatCmsScheduleDisplayLabel(
+      enrichGeneralDetailScheduleLineLabel(`${datePart} ${durationPart}`, bridge)
+    )
   }
-  return `${datePart} ${durationPart} | ${periodPart}`
+  return formatCmsScheduleDisplayLabel(`${datePart} ${durationPart} | ${periodPart}`)
 }

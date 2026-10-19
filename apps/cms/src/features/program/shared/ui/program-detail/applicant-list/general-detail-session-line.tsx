@@ -7,6 +7,7 @@ import {
   ProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   enrichGeneralDetailScheduleLineLabel,
   getSessionLineParts,
@@ -26,18 +27,22 @@ export function GeneralDetailSessionLine({
   if (scheduleLabel) {
     return (
       <div className="general-detail-session-line">
-        <span>{enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge)}</span>
+        <span>
+          {formatCmsScheduleDisplayLabel(enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge))}
+        </span>
       </div>
     )
   }
 
   const { datePart, durationPart, periodPart } = getSessionLineParts(session, 'general-detail', bridge)
-  const schedulePart = `${datePart} ${durationPart}`
+  const schedulePart = formatCmsScheduleDisplayLabel(`${datePart} ${durationPart}`)
 
   if (!periodPart) {
     return (
       <div className="general-detail-session-line">
-        <span>{enrichGeneralDetailScheduleLineLabel(schedulePart, bridge)}</span>
+        <span>
+          {formatCmsScheduleDisplayLabel(enrichGeneralDetailScheduleLineLabel(schedulePart, bridge))}
+        </span>
       </div>
     )
   }

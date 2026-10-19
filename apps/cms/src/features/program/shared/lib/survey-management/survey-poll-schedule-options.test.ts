@@ -49,7 +49,7 @@ describe('buildSurveyPollScheduleSelectOptions', () => {
         endAt: '2026-03-01T12:00:00+09:00',
       },
     ])
-    expect(options[0]?.label).toBe('26년 3월 1일(일) 10:00 ~ 12:00')
+    expect(options[0]?.label).toBe('2026. 03. 01(일) 10:00 ~ 12:00')
   })
 
   it('keeps only education/session ACTIVE candidates passed from education-slots', () => {
@@ -185,7 +185,7 @@ describe('formatSurveyPollScheduleOptionLabel', () => {
       },
       0
     )
-    expect(label).toBe('26년 3월 1일(일) 10:00 ~ 12:00')
+    expect(label).toBe('2026. 03. 01(일) 10:00 ~ 12:00')
     expect(label).not.toContain('본 교육')
   })
 })

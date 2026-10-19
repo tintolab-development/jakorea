@@ -90,7 +90,7 @@ export function createVolunteersSchema({
                   render={({ field }) => (
                     <CmsSelect
                       mode="multiple"
-                      inputSize="medium"
+                      inputSize="small"
                       width={240}
                       withAllOption={false}
                       value={field.value ?? []}
@@ -117,7 +117,7 @@ export function createVolunteersSchema({
                       {...field}
                       value={field.value ?? ''}
                       placeholder="모집 대상 상세"
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                       className="program-detail-info-tab__district-input"
                     />
@@ -160,7 +160,7 @@ export function createVolunteersSchema({
                     name="documentPassAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker
+                      <CmsDatePicker inputSize="small"
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
@@ -173,7 +173,7 @@ export function createVolunteersSchema({
                     name="documentPassAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput
+                      <CmsInput inputSize="small"
                         {...field}
                         value={field.value ?? ''}
                         placeholder="홈페이지 공지 및 합격자 개별 안내"
@@ -206,7 +206,7 @@ export function createVolunteersSchema({
                     name="interviewStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker
+                      <CmsDatePicker inputSize="small"
                         width={'30%'}
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
@@ -219,7 +219,7 @@ export function createVolunteersSchema({
                     name="interviewEndDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker
+                      <CmsDatePicker inputSize="small"
                         width={'30%'}
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
@@ -232,7 +232,7 @@ export function createVolunteersSchema({
                     name="interviewMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsSelect
+                      <CmsSelect inputSize="small"
                         width={'25%'}
                         value={field.value ?? undefined}
                         options={INTERVIEW_METHOD_OPTIONS}
@@ -260,7 +260,7 @@ export function createVolunteersSchema({
                     name="finalPassAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker
+                      <CmsDatePicker inputSize="small"
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
@@ -272,7 +272,7 @@ export function createVolunteersSchema({
                     name="finalPassAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput
+                      <CmsInput inputSize="small"
                         {...field}
                         value={field.value ?? ''}
                         placeholder="홈페이지 공지 및 합격자 개별 안내"
@@ -304,7 +304,7 @@ export function createVolunteersSchema({
                 <div className="detail-info-form-inputs-wrapper">
                   <div className="detail-info-form-inputs-wrapper">
                     <span>문의처</span>
-                    <CmsInput
+                    <CmsInput inputSize="small"
                       placeholder="문의처"
                       value={sponsorName ?? ''}
                       readOnly
@@ -318,7 +318,7 @@ export function createVolunteersSchema({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsPhoneInput {...field} value={field.value ?? ''} placeholder="02-6347-6113" />
+                        <CmsPhoneInput inputSize="small" {...field} value={field.value ?? ''} placeholder="02-6347-6113" />
                       )}
                     />
                   </div>
@@ -329,7 +329,7 @@ export function createVolunteersSchema({
                       name="contactEmail"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsInput inputSize="small"
                           {...field}
                           value={field.value ?? ''}
                           placeholder="ujat@jakorea.org"
@@ -355,7 +355,7 @@ export function createVolunteersSchema({
                   name="oneLineIntroduction"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput
+                    <CmsInput inputSize="small"
                       width={'100%'}
                       {...field}
                       value={field.value ?? ''}

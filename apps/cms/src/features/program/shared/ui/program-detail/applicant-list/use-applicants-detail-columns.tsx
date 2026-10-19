@@ -20,6 +20,7 @@ import {
   getInstitutionApplicationSessionsTableSlice,
   shouldShowInstitutionApplicationSessionsColumn,
 } from '@/features/program/general/lib/institution-application-session-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 
@@ -58,7 +59,7 @@ function formatCompanySchoolPreferredSchedule(sessions: ApplicantSchoolRow['sess
   )
   const dateLabel = [first.date, first.dayOfWeek ? `(${first.dayOfWeek})` : ''].join('')
   const timeLabel = startTime && endTime ? `${startTime} ~ ${endTime}` : (first.timeRange ?? '-')
-  return `${dateLabel} ${timeLabel} | ${totalSessions}차시`
+  return formatCmsScheduleDisplayLabel(`${dateLabel} ${timeLabel} | ${totalSessions}차시`)
 }
 
 export function useInstitutionApplicantColumns(params: {

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { normalizeEducationScheduleLineForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { filterProgramSchedulesForNewEducationAssignment } from '@/features/program/shared/lib/program-schedule-canonical'
@@ -47,8 +48,8 @@ function formatAdminScheduleAsCommonInfoEducationLine(
   const end = dayjs(endRaw)
   if (!start.isValid()) return ''
   const endPoint = end.isValid() ? end : start
-  return normalizeEducationScheduleLineForView(
-    formatEducationScheduleLineFromRange([start, endPoint])
+  return formatCmsScheduleDisplayLabel(
+    normalizeEducationScheduleLineForView(formatEducationScheduleLineFromRange([start, endPoint]))
   )
 }
 
