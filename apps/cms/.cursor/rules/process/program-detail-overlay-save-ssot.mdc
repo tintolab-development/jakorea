@@ -1,14 +1,14 @@
 ---
-description: 프로그램 상세 수정 — RHF/폼 PATCH vs in-memory overlay 저장 SSOT (stale overlay 재발 방지)
-globs: apps/cms/src/features/program/**/hooks/*save*.ts,apps/cms/src/features/program/**/hooks/use-program-detail-info-save.ts,apps/cms/src/features/program/**/lib/*overlay*sync*.ts,apps/cms/src/features/program/**/lib/detail-operational-save-merge.ts,apps/cms/src/features/program/**/ui/detail-modal/**,apps/cms/src/features/template/hooks/use-program-participant-application-editor.ts
+description: 프로그램 상세 — overlay vs 폼·GET 행 SSOT (저장·표시·시드에서 stale overlay 재발 방지)
+globs: apps/cms/src/features/program/**/hooks/*save*.ts,apps/cms/src/features/program/**/hooks/use-program-detail-info-save.ts,apps/cms/src/features/program/**/lib/*overlay*sync*.ts,apps/cms/src/features/program/**/lib/detail-operational-save-merge.ts,apps/cms/src/features/program/**/lib/*recruitment*display*.ts,apps/cms/src/features/program/**/lib/*recruitment-edit-seed*.ts,apps/cms/src/features/program/**/lib/hydrate-recruitment-windows.ts,apps/cms/src/features/program/**/lib/general-program-detail-session.ts,apps/cms/src/features/program/**/ui/detail-modal/**,apps/cms/src/features/template/hooks/use-program-participant-application-editor.ts
 alwaysApply: false
 ---
 
-# 프로그램 상세 수정 — overlay vs 폼 SSOT
+# 프로그램 상세 수정 — overlay vs 폼·행 SSOT
 
-**Scope:** CMS 프로그램 **상세** 공통정보·모집·신청 저장·`registrationOverlay` / operational overlay store.
+**Scope:** CMS 프로그램 **상세** 공통정보·모집·신청의 **저장·조회 표시·편집 시드**와 `registrationOverlay` / operational overlay store.
 
-등록 **위저드**는 별도 플로우다. 상세 모달에서 RHF가 있으면 아래를 **반드시** 따른다.
+등록 **위저드**(아직 `recruitments[]`가 없는 create)는 별도 플로우다. 상세 모달에서 RHF가 있으면 아래를 **반드시** 따른다.
 
 ## 정본 (SSOT)
 
@@ -21,12 +21,27 @@ alwaysApply: false
 
 **금지:** `read*OverlayForSave()`만으로 PATCH·`programTo*EditValues(withOverlay)`를 만들어 저장하는 패턴.
 
+## GET `recruitments[]` 행 (상세 조회·표시·시드)
+
+GET에 `programRecruitments` / `recruitments[]`가 있으면 **그 행이 정본**이다. overlay·세션·nested `*RecruitmentInfo` 라벨로 덮지 않는다.
+
+| 필드 | 행 SSOT |
+|------|---------|
+| 모집기간 | `startAt` / `endAt` |
+| 운영기간 | `operationStartDate` / `operationEndDate` |
+| 문의처 | `contactName` / `contactPhone` / `contactEmail` |
+| 면접 기간 | `interviewStartAt` / `interviewEndAt` (`interviewEnabled` 포함) |
+
+`preferOverlay: false`여도 overlay/라벨이 **빈 컬럼을 채우면** 행이 가려진다. 행이 있으면 이 필드들은 overlay merge·세션 spread·`serviceDetailJson` `recruitmentPeriodLabel` fallback을 **쓰지 않는다**.
+
+표시·edit seed는 `hydrateRecruitmentWindowsOntoProgram` / 행 picker 이후 값을 쓴다. `resolveGeneralRecruitDisplayProgram`(기본 `preferOverlay: true`) 결과를 모집기간·문의처·면접 표시 정본으로 쓰지 않는다.
+
 ## Overlay store 역할
 
-1. 폼에 **없는** 키만 보강 (면접 일정 KV, 양식 paragraph overlay, 등록 단락 등).
+1. 폼에 **없는** 키만 보강 (면접 **슬롯 KV**, 양식 paragraph overlay, 등록 단락 등). **행 SSOT 필드 보강 금지.**
 2. 저장 직전: **폼→overlay patch** → `resync*FromProgram(draft)`로 `registrationOverlay` 재생성.
 3. 편집 진입: `setOperationalOverlayScope(catalogTemplateCode)` + program의 overlay **slice 시드**  
-   - 모집: `seedOperationalRecruitOverlaysFromProgram(program)`  
+   - 모집: `seedOperationalRecruitOverlaysFromProgram(program)` — 시드가 행 기간을 덮으면 안 됨  
    - 신청: `seedOperationalOverlayFromProgramCatalog(program, templateCode)`
 
 ## 모집 persist — 필수 API
@@ -37,12 +52,14 @@ alwaysApply: false
   - 봉사 면접: `mergeOverlayOnlyVolunteerInterviewSchedule` (전체 nested에 `preferOverlay` spread 금지)
 - resync: **모든** `recruitmentAudience`에서 `resyncGeneralRecruitOverlayFromProgram(draft, merged)`.
 
-### 절대 금지 (모집 저장·persist)
+### 절대 금지 (모집 저장·persist·표시·시드)
 
 - `getGeneralRecruitOverlayRecord()` — **활성 스코프** 전체를 `registrationOverlay`에 merge (다른 탭·신청 스코프 stale 유입).  
-  - UI·KV 구독·면접 섹션 표시는 허용.  
+  - UI·KV 구독·면접 **슬롯** 섹션 표시는 허용.  
   - persist는 catalog별 **`peekGeneralRecruitOverlayRecord(templateCode)`** / `collectOperationalOverlayForCatalogId`만.
 - `applyGeneralRecruitOverlayToProgram(..., { preferOverlay: true })` 결과를 **폼 PATCH nested/컬럼 위에** spread.
+- GET `recruitments[]`가 있을 때 overlay `recruitRangeSeal` / in-memory overlay / 상세 세션 / nested `recruitmentPeriodLabel`로 **모집기간·운영기간·문의처·면접 시각**을 덮는 것 (`preferOverlay: false` 포함).
+- 표시·시드에서 overlay를 먼저 머지한 뒤 행 hydrate를 **안 하거나**, hydrate 결과를 overlay로 다시 덮는 것.
 
 주석 SSOT: `apps/cms/src/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync.ts` — `getGeneralRecruitOverlayRecord`는 UI·활성 스코프 전용.
 
@@ -65,10 +82,11 @@ alwaysApply: false
 - `use-program-detail-info-save.volunteer.test.ts`
 - `common-info-save-roundtrip.test.ts` / `1c-1s/.../common-info-save-roundtrip.test.ts`
 
-시나리오: **폼 값 변경 + 다른 catalog/active-scope에 stale overlay** → 저장 후 overlay·nested가 **폼**을 따르는지.
+시나리오: **폼 값 변경 + 다른 catalog/active-scope에 stale overlay** → 저장 후 overlay·nested가 **폼**을 따르는지.  
+시나리오: **GET 행 startAt/endAt ≠ overlay recruitRangeSeal ≠ nested recruitmentPeriodLabel** → 표시·edit seed가 **행**을 따른다.
 
 ## ESLint
 
 `apps/cms/src/features/program/**/hooks/use-*save*.ts`에서 `getGeneralRecruitOverlayRecord` import·호출은 **error** (루트 `eslint.config.js`).
 
-**Last updated:** 2026-10-10
+**Last updated:** 2026-10-19

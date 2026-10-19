@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
@@ -17,6 +18,16 @@ import { useGeneralProgramDetail } from '@/features/program/general/hooks/use-ge
 import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
+import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  omitRecruitmentTabScheduleFields,
+  persistRecruitmentTabSave,
+} from '@/features/program/shared/lib/persist-recruitment-row-save'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { invalidateGeneralProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
+import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { refreshAdminSessionFromMe } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
@@ -39,7 +50,10 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
-import { prepareRecruitOperationalEditFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
+import {
+  prepareRecruitOperationalEditFromProgram,
+  seedOperationalRecruitOverlaysFromProgram,
+} from '@/features/program/general/lib/detail-operational-save-merge'
 import { logGeneralProgramCommonInfoEditCurrentPayload } from '@/features/program/general/lib/common-info-edit-payload-log'
 import {
   defaultParticipantApplicationTab,
@@ -497,6 +511,7 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, programId])
 
   const { updateProgram, setSelectedProgram } = useProgramStore()
+  const queryClient = useQueryClient()
   const remoteEnabled = useGeneralProgramsRemoteEnabled(
     open && Boolean(programId),
     programId
@@ -525,14 +540,16 @@ export function GeneralProgramDetailFullPageModal({
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
     // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
     if (remoteEnabled) {
-      return detailProgram ? applyGeneralProgramDetailSession(detailProgram) : null
+      return detailProgram
+        ? hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(detailProgram))
+        : null
     }
     const base =
       detailProgram ??
       program ??
       (programId ? (resolveGeneralProgramForDetail(programId) ?? null) : null)
     if (base == null) return null
-    return applyGeneralProgramDetailSession(base)
+    return hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(base))
   }, [detailProgram, program, programId, remoteEnabled])
 
   const recruitmentEditProgram = useMemo(
@@ -588,6 +605,41 @@ export function GeneralProgramDetailFullPageModal({
       }
     },
     [displayProgram, remoteEnabled, setSelectedProgram, updateGeneralProgramMutation, updateProgram]
+  )
+
+  const persistRecruitmentTab = useCallback(
+    (audience: ProgramDetailRecruitmentAudience) =>
+      async (draft: Program, patch: Partial<Program>, baseline: Program) => {
+        if (remoteEnabled) {
+          const result = await persistRecruitmentTabSave({
+            baseline: baseline ?? displayProgram ?? draft,
+            draft,
+            patch,
+            audience,
+            refetchProgram: fetchGeneralProgramRemoteById,
+          })
+          if (result.mode === 'row') {
+            clearGeneralProgramDetailSession(draft.id)
+            seedOperationalRecruitOverlaysFromProgram(result.program)
+            setSelectedProgram(result.program)
+            await syncOpenProgramDetailCache(
+              queryClient,
+              generalProgramQueryKeys.detail(draft.id),
+              result.program
+            )
+            invalidateGeneralProgramListCaches(queryClient)
+            return
+          }
+          await persistGeneralProgramDraft(draft, result.patch, baseline)
+          return
+        }
+        await persistGeneralProgramDraft(
+          draft,
+          omitRecruitmentTabScheduleFields(patch),
+          baseline
+        )
+      },
+    [displayProgram, persistGeneralProgramDraft, queryClient, remoteEnabled, setSelectedProgram]
   )
 
   const volunteerInterviewEnabled = displayProgram
@@ -991,7 +1043,9 @@ export function GeneralProgramDetailFullPageModal({
     !!displayProgram &&
     canEditParticipantRecruitment
 
-  const persistRecruitmentProgramDraft = persistGeneralProgramDraft
+  const persistParticipantRecruitmentDraft = persistRecruitmentTab('participant')
+  const persistInstructorRecruitmentDraft = persistRecruitmentTab('instructor')
+  const persistVolunteerRecruitmentDraft = persistRecruitmentTab('volunteer')
 
   const institutionsForm = useProgramDetailEditForm({
     program: recruitmentEditProgram,
@@ -1009,7 +1063,7 @@ export function GeneralProgramDetailFullPageModal({
     form: institutionsForm,
     program: recruitmentEditProgram,
     mapToValues: mapParticipantRecruitmentEditValues,
-    onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
+    onSaveEdit: recruitmentEditProgram ? persistParticipantRecruitmentDraft : undefined,
     validateSchema: programParticipantRecruitmentSaveSchema,
     recruitmentAudience: 'participant',
   })
@@ -1038,7 +1092,7 @@ export function GeneralProgramDetailFullPageModal({
     form: instructorsForm,
     program: recruitmentEditProgram,
     mapToValues: mapInstructorRecruitmentEditValues,
-    onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
+    onSaveEdit: recruitmentEditProgram ? persistInstructorRecruitmentDraft : undefined,
     validateSchema: programInstructorRecruitmentSaveSchema,
     recruitmentAudience: 'instructor',
     recruitmentNotesField: 'instructorRecruitmentRemarks',
@@ -1068,7 +1122,7 @@ export function GeneralProgramDetailFullPageModal({
     form: volunteersForm,
     program: recruitmentEditProgram,
     mapToValues: mapVolunteerRecruitmentEditValues,
-    onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
+    onSaveEdit: recruitmentEditProgram ? persistVolunteerRecruitmentDraft : undefined,
     validateSchema: programVolunteerRecruitmentSaveSchema,
     recruitmentAudience: 'volunteer',
   })

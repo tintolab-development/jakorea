@@ -31,6 +31,7 @@ import {
   resolveRecruitmentOtherMatters,
   resolveRecruitmentRemarks,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import {
   parseDisplayPeriodLabelToIsoRange,
   seedAudienceProgramOperationFormFields,
@@ -90,10 +91,15 @@ function enrichParticipantRecruitmentScalars(program: Program): Program {
     }
   }
 
+  const participantRow = pickRecruitmentCopyRow(next, 'participant')
   next = {
     ...next,
-    applicationStartDate: coalesceIso(next.applicationStartDate, info.recruitmentPeriodLabel),
-    applicationEndDate: coalesceIsoEnd(next.applicationEndDate, info.recruitmentPeriodLabel),
+    applicationStartDate: participantRow?.startAt
+      ? String(participantRow.startAt)
+      : coalesceIso(next.applicationStartDate, info.recruitmentPeriodLabel),
+    applicationEndDate: participantRow?.endAt
+      ? String(participantRow.endAt)
+      : coalesceIsoEnd(next.applicationEndDate, info.recruitmentPeriodLabel),
   }
 
   const finalParts = parseAnnouncementLabel(
@@ -125,16 +131,15 @@ function enrichInstructorRecruitmentScalars(program: Program): Program {
     next = { ...next, instructorTargetDetail: info.recruitmentTargetDetail.trim() }
   }
 
+  const instructorRow = pickRecruitmentCopyRow(next, 'instructor')
   next = {
     ...next,
-    instructorApplicationStartDate: coalesceIso(
-      next.instructorApplicationStartDate,
-      info.recruitmentPeriodLabel
-    ),
-    instructorApplicationEndDate: coalesceIsoEnd(
-      next.instructorApplicationEndDate,
-      info.recruitmentPeriodLabel
-    ),
+    instructorApplicationStartDate: instructorRow?.startAt
+      ? String(instructorRow.startAt)
+      : coalesceIso(next.instructorApplicationStartDate, info.recruitmentPeriodLabel),
+    instructorApplicationEndDate: instructorRow?.endAt
+      ? String(instructorRow.endAt)
+      : coalesceIsoEnd(next.instructorApplicationEndDate, info.recruitmentPeriodLabel),
   }
 
   const finalParts = parseAnnouncementLabel(
@@ -168,34 +173,36 @@ function enrichVolunteerRecruitmentScalars(program: Program): Program {
     next = { ...next, volunteerTargetDetail: info.recruitmentTargetDetail.trim() }
   }
 
+  const volunteerRow = pickRecruitmentCopyRow(next, 'volunteer')
   next = {
     ...next,
-    volunteerApplicationStartDate: coalesceIso(
-      next.volunteerApplicationStartDate,
-      info.recruitmentPeriodLabel
-    ),
-    volunteerApplicationEndDate: coalesceIsoEnd(
-      next.volunteerApplicationEndDate,
-      info.recruitmentPeriodLabel
-    ),
+    volunteerApplicationStartDate: volunteerRow?.startAt
+      ? String(volunteerRow.startAt)
+      : coalesceIso(next.volunteerApplicationStartDate, info.recruitmentPeriodLabel),
+    volunteerApplicationEndDate: volunteerRow?.endAt
+      ? String(volunteerRow.endAt)
+      : coalesceIsoEnd(next.volunteerApplicationEndDate, info.recruitmentPeriodLabel),
   }
 
   return next
 }
 
-/** 모집 탭 edit·저장 baseline — 저장된 overlay + in-memory overlay + nested 조회값 → program 컬럼 */
+/** 모집 탭 edit·저장 baseline — GET 행이 기간·문의처·면접 정본. overlay는 행이 없는 키만. */
 export function resolveGeneralProgramForRecruitmentEdit(program: Program): Program {
+  const fromRows = hydrateRecruitmentWindowsOntoProgram(program)
   const withPersistedOverlay = applyGeneralRecruitOverlayToProgram(
-    program,
+    fromRows,
     program.registrationOverlay ?? {},
     { preferOverlay: false }
   )
   const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
     preferOverlay: false,
   })
-  return hydrateGeneralRecruitmentInfoFromRows(
-    enrichVolunteerRecruitmentScalars(
-      enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
+  return hydrateRecruitmentWindowsOntoProgram(
+    hydrateGeneralRecruitmentInfoFromRows(
+      enrichVolunteerRecruitmentScalars(
+        enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
+      )
     )
   )
 }
@@ -307,6 +314,41 @@ function generalRecruitmentRowFormSeed(
   audience: GeneralRecruitDetailAudience
 ): Partial<ProgramDetailEditFormValues> {
   if (!row) return {}
+  const dates =
+    audience === 'instructor'
+      ? {
+          ...(row.startAt ? { instructorApplicationStartDate: String(row.startAt) } : {}),
+          ...(row.endAt ? { instructorApplicationEndDate: String(row.endAt) } : {}),
+          ...(row.operationStartDate
+            ? { instructorProgramOperationStartDate: String(row.operationStartDate) }
+            : {}),
+          ...(row.operationEndDate
+            ? { instructorProgramOperationEndDate: String(row.operationEndDate) }
+            : {}),
+        }
+      : audience === 'volunteer'
+        ? {
+            ...(row.startAt ? { volunteerApplicationStartDate: String(row.startAt) } : {}),
+            ...(row.endAt ? { volunteerApplicationEndDate: String(row.endAt) } : {}),
+            ...(row.operationStartDate
+              ? { volunteerProgramOperationStartDate: String(row.operationStartDate) }
+              : {}),
+            ...(row.operationEndDate
+              ? { volunteerProgramOperationEndDate: String(row.operationEndDate) }
+              : {}),
+            ...(row.interviewStartAt ? { interviewStartDate: String(row.interviewStartAt) } : {}),
+            ...(row.interviewEndAt ? { interviewEndDate: String(row.interviewEndAt) } : {}),
+          }
+        : {
+            ...(row.startAt ? { applicationStartDate: String(row.startAt) } : {}),
+            ...(row.endAt ? { applicationEndDate: String(row.endAt) } : {}),
+            ...(row.operationStartDate
+              ? { participantProgramOperationStartDate: String(row.operationStartDate) }
+              : {}),
+            ...(row.operationEndDate
+              ? { participantProgramOperationEndDate: String(row.operationEndDate) }
+              : {}),
+          }
   const contact =
     audience === 'instructor'
       ? {
@@ -331,5 +373,5 @@ function generalRecruitmentRowFormSeed(
             ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
             ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
           }
-  return contact
+  return { ...dates, ...contact }
 }

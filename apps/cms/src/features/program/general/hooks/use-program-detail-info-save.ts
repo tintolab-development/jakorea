@@ -32,6 +32,7 @@ import {
 } from '@/shared/lib/extract-api-error-message'
 import { resolveProgramDetailSaveApiFormField } from '@/features/program/shared/lib/program-detail-save-api-error'
 import { applyAudienceProgramOperationToRecruitmentWindows } from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import { omitRecruitmentTabScheduleFields } from '@/features/program/shared/lib/persist-recruitment-row-save'
 import {
   applyRecruitmentDetailInfoFields,
   type ProgramDetailRecruitmentAudience,
@@ -266,6 +267,9 @@ export function useProgramDetailInfoSave({
               mergedRegistrationOverlay
             ),
           }
+        }
+        if (recruitmentAudience) {
+          remotePatch = omitRecruitmentTabScheduleFields(remotePatch)
         }
         if (commonInfoPatchOnly) {
           remotePatch = narrowProgramDetailPatchForCommonInfoSave(remotePatch)
