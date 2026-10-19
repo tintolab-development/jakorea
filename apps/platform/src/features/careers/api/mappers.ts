@@ -6,7 +6,8 @@
  * interview title은 한 줄. titleLines·publishedAtLabel은 storyKey가 같을 때만 fallback.
  * year로 월·일을 만들지 않는다.
  *
- * 공고: publishedOn은 YYYY-MM-DD. 라벨은 `2026년 05월 08일`. CLOSED는 공개 목록에 없다.
+ * 공고: publishedOn(YYYY-MM-DD)을 우선하고, 없으면 publishedAt(date-time)으로 날짜를 만든다.
+ * 라벨은 `2026년 05월 08일`. CLOSED는 공개 목록에 없다.
  */
 import type { CareersGuideView } from '../model/guide-view'
 import type {
@@ -302,7 +303,10 @@ export function mapPublicCareerPostingDetail(
 
   const publishedOn =
     typeof item.publishedOn === 'string' ? item.publishedOn.trim() : ''
-  const publishedAtLabel = formatCareerPublishedAtLabel(publishedOn)
+  const publishedAt =
+    typeof item.publishedAt === 'string' ? item.publishedAt.trim() : ''
+  const publishSource = publishedOn || publishedAt
+  const publishedAtLabel = formatCareerPublishedAtLabel(publishSource)
   if (!publishedAtLabel) return null
 
   const viewCount =
@@ -314,7 +318,7 @@ export function mapPublicCareerPostingDetail(
     status,
     statusLabel: STATUS_LABEL[status],
     publishedAtLabel,
-    publishedAtDetailLabel: formatCareerPublishedAtDetailLabel(publishedOn),
+    publishedAtDetailLabel: formatCareerPublishedAtDetailLabel(publishedAt || publishedOn),
     recruitPeriodLabel: formatCareerRecruitPeriodLabel(item.recruitStart, item.recruitEnd),
     content: typeof item.body === 'string' ? item.body : '',
     contentFormat: 'html',

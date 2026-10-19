@@ -327,6 +327,14 @@ assert.equal(detail?.viewCount, 1232)
 assert.equal(detail?.content, '<p>본문</p>')
 assert.equal(detail?.attachments.length, 1)
 assert.equal(detail?.attachments[0]?.name, '모집요강.pdf')
+
+const detailFromPublishedAt = mapPublicCareerPostingDetail({
+  ...detailSample,
+  publishedOn: undefined,
+  publishedAt: '2026-05-08T15:00:00',
+})
+assert.equal(detailFromPublishedAt?.publishedAtLabel, '2026년 05월 08일')
+assert.equal(detailFromPublishedAt?.publishedAtDetailLabel, '2026년 05월 08일 오후 3:00')
 assert.equal(detail?.attachments[0]?.fileUrl, 'https://example.test/file.pdf')
 assert.equal(
   mapPublicCareerPostingDetail({

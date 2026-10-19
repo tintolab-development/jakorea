@@ -51,10 +51,13 @@ export type PublicCareerPostingAsset = {
   assetId?: number
   originalName?: string
   contentType?: string
+  sizeBytes?: number
   /** 다운로드 URL. 도메인 fileUrl */
   publicUrl?: string
   purpose?: string
   status?: string
+  confirmedAt?: string
+  version?: number
 }
 
 export type PublicCareerPostingDetail = {
@@ -63,8 +66,10 @@ export type PublicCareerPostingDetail = {
   /** 200은 RECRUITING | RESULT 만. CLOSED는 404 */
   status?: PublicCareerPostingStatus
   title?: string
-  /** YYYY-MM-DD. 시각 키 publishedAt 은 오지 않는다. */
+  /** YYYY-MM-DD */
   publishedOn?: string
+  /** date-time. publishedOn이 없을 때만 표시 날짜 fallback */
+  publishedAt?: string | null
   /** YYYY-MM-DD. 둘 다 있을 때만 모집 기간 */
   recruitStart?: string | null
   /** YYYY-MM-DD */
