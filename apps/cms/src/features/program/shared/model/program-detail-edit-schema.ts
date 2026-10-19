@@ -1360,7 +1360,7 @@ export function detailEditValuesToProgramPatch(
     recruitmentGuide: values.recruitmentGuide,
     learningSupportContent: values.learningSupportContent,
     attachmentFileNames: values.attachmentFileNames,
-    rounds: values.rounds as ProgramRound[],
+    ...(recruitmentAudience ? {} : { rounds: values.rounds as ProgramRound[] }),
     resultAnnouncementDate,
     resultAnnouncementMethod,
     studentListRequired,

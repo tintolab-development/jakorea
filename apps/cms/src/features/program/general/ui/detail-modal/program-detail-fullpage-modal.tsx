@@ -106,6 +106,9 @@ import {
   resolveGeneralProgramForRecruitmentEdit,
 } from '@/features/program/general/lib/general-program-recruitment-edit-seed'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { persistRecruitmentTabSave } from '@/features/program/shared/lib/persist-recruitment-row-save'
+import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/trained-teachers/api/hooks'
 import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teachers/ui/common-info/common-info-view'
@@ -369,6 +372,22 @@ export function ProgramDetailFullPageModal({
       return
     }
     await updateProgram(draft.id, patch)
+  }
+  const persistRecruitmentAudiencePatch = async (
+    audience: ProgramDetailRecruitmentAudience,
+    draft: Program,
+    patch: Partial<Program>
+  ) => {
+    const baseline = displayProgram ?? draft
+    const result = await persistRecruitmentTabSave({
+      baseline,
+      draft,
+      patch,
+      audience,
+      refetchProgram: fetchGeneralProgramRemoteById,
+    })
+    if (result.mode === 'row') return
+    await persistProgramPatch(draft, result.patch)
   }
   const isCompanySchoolDetail = useMemo(
     () =>
@@ -1555,7 +1574,7 @@ export function ProgramDetailFullPageModal({
       displayProgram
         ? async (draft, patch) => {
             try {
-              await persistProgramPatch(draft, patch)
+              await persistRecruitmentAudiencePatch('participant', draft, patch)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               throw error
@@ -1589,7 +1608,7 @@ export function ProgramDetailFullPageModal({
       displayProgram
         ? async (draft, patch) => {
             try {
-              await persistProgramPatch(draft, patch)
+              await persistRecruitmentAudiencePatch('instructor', draft, patch)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               throw error
@@ -1713,7 +1732,7 @@ export function ProgramDetailFullPageModal({
       displayProgram
         ? async (draft, patch) => {
             try {
-              await persistProgramPatch(draft, patch)
+              await persistRecruitmentAudiencePatch('volunteer', draft, patch)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               throw error
