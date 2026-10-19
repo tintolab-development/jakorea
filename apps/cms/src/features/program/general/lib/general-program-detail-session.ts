@@ -1,5 +1,6 @@
 import type { Program } from '@/types/domain'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 
 const sessionByProgramId = new Map<string, Program>()
 
@@ -22,13 +23,15 @@ export function applyGeneralProgramDetailSession(program: Program): Program {
   if (session == null) return program
 
   const baseCommon = resolveGeneralProgramCommonInfo(program)
-  return {
+  const merged: Program = {
     ...program,
     ...session,
+    programRecruitments: program.programRecruitments ?? session.programRecruitments,
     generalCommonInfo: {
       ...baseCommon,
       ...program.generalCommonInfo,
       ...session.generalCommonInfo,
     },
   }
+  return hydrateRecruitmentWindowsOntoProgram(merged)
 }

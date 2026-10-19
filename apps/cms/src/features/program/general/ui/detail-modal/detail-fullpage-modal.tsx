@@ -24,6 +24,7 @@ import {
   omitRecruitmentTabScheduleFields,
   persistRecruitmentTabSave,
 } from '@/features/program/shared/lib/persist-recruitment-row-save'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { invalidateGeneralProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
@@ -49,7 +50,10 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
-import { prepareRecruitOperationalEditFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
+import {
+  prepareRecruitOperationalEditFromProgram,
+  seedOperationalRecruitOverlaysFromProgram,
+} from '@/features/program/general/lib/detail-operational-save-merge'
 import { logGeneralProgramCommonInfoEditCurrentPayload } from '@/features/program/general/lib/common-info-edit-payload-log'
 import {
   defaultParticipantApplicationTab,
@@ -532,14 +536,16 @@ export function GeneralProgramDetailFullPageModal({
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
     // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
     if (remoteEnabled) {
-      return detailProgram ? applyGeneralProgramDetailSession(detailProgram) : null
+      return detailProgram
+        ? hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(detailProgram))
+        : null
     }
     const base =
       detailProgram ??
       program ??
       (programId ? (resolveGeneralProgramForDetail(programId) ?? null) : null)
     if (base == null) return null
-    return applyGeneralProgramDetailSession(base)
+    return hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(base))
   }, [detailProgram, program, programId, remoteEnabled])
 
   const recruitmentEditProgram = useMemo(
@@ -610,6 +616,7 @@ export function GeneralProgramDetailFullPageModal({
           })
           if (result.mode === 'row') {
             clearGeneralProgramDetailSession(draft.id)
+            seedOperationalRecruitOverlaysFromProgram(result.program)
             setSelectedProgram(result.program)
             await syncOpenProgramDetailCache(
               queryClient,
