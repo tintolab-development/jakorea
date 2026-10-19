@@ -1,0 +1,52 @@
+---
+description: 설문·강의평가 일정 바인딩 — API schedule id만 사용, 공통정보로 가짜 후보/바인딩 금지
+globs: apps/cms/src/features/program/**/*survey*
+alwaysApply: false
+---
+
+# 설문·일정 바인딩 — API SSOT (가짜 연결 금지)
+
+**Scope:** CMS 프로그램 설문조사·강의평가 등록, 「설문 대상 일정」 옵션·`targetScope` / `targetScopeId` 결정.
+
+관련 코드: `survey-poll-schedule-options.ts`, `use-program-survey-schedule-options.ts`, `resolve-survey-poll-binding-target.ts`, `resolve-survey-poll-hidden-schedule-binding.ts`.
+
+## 원칙
+
+1. **SCHEDULE 바인딩 value / `targetScopeId`는 서버가 준 일정 id만** 쓴다.
+   - SSOT: **`GET .../education-slots` only** (`scheduleId` 양의 정수).
+   - 후보: `PROGRAM_DEFINED` + `EDUCATION|SESSION` + `ACTIVE`. 기간 창·`APPLICATION_MATERIALIZED`·`UNKNOWN` 제외.
+2. **`GET .../schedules` 를 설문 후보 fallback으로 쓰지 않는다** (운영기간/기간 창 오연결 방지).
+3. API 후보가 비면 **빈 옵션·등록 불가**로 둔다. 백엔드 슬롯 미반영은 FE가 메우지 않는다.
+4. 공통정보 `scheduleDetails`는 **라벨만**. `scheduleDateLabel` ↔ API `startAt/endAt`으로 매칭하고 **배열 index로 이름을 붙이지 않는다**.
+
+## 금지
+
+- `scheduleDetails`만으로 `{ value: 'PROGRAM:0' | 가짜키, label: 행사명 }` 옵션 생성
+- education-slots가 `[]`인데 공통정보 행사명으로 설문을 「연결된 것처럼」 보이게 하기
+- `PROGRAM:${index}` 등 **합성 selection → PROGRAM/SCHEDULE 위장 바인딩**
+- 다일 all-day **기간 창** schedule row를 수업일·설문 SCHEDULE 후보로 쓰기
+- API 공백을 숨기려고 migration/배포 안내 문구로 UX만 때우거나, 반대로 없는 일정을 채워 넣기
+
+## 허용
+
+| 허용 | 예 |
+|------|-----|
+| education-slots의 **양수 scheduleId** | `value: String(scheduleId)` → `targetScope: SCHEDULE` |
+| UI에 명시된 「전체」 등 **계약된** `PROGRAM` 선택값 | `SURVEY_POLL_TARGET_ALL_VALUE === 'PROGRAM'` |
+| API id가 있는 옵션에 scheduleDetails **name** (날짜·시간 매칭) | 라벨 UX |
+| 기간형에서 일정 필드 숨김 → `targetScope: PROGRAM` | `should-show-survey-poll-schedule-field` / hidden binding |
+| 단위 테스트 fixture | 인라인 stub |
+
+## 빈 후보일 때
+
+- 드롭다운 비활성·등록 불가 유지.
+- 원인은 BE `education-slots` 미생성 등으로 보고, FE fallback으로 가리지 않는다.
+- Platform 미노출도 잘못된 SCHEDULE 강제 연결로 해결하지 않는다.
+
+## 관련
+
+- [server-data-source-of-truth.mdc](../../../../.cursor/rules/server-data-source-of-truth.mdc)
+- [program-no-fe-mock.mdc](./program-no-fe-mock.mdc)
+- [program-type-isolation.mdc](./program-type-isolation.mdc)
+
+**Last updated:** 2026-10-19 (education-slots only · no /schedules fallback)

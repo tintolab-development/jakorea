@@ -74,9 +74,19 @@ describe('program-schedule-canonical', () => {
         startAt: '2026-11-04T15:00:00Z',
         endAt: '2026-11-05T15:00:00Z',
       },
+      {
+        id: 12,
+        sessionNo: 1,
+        scheduleRole: null,
+        scheduleStatus: 'ACTIVE',
+        allDay: true,
+        startAt: '2026-11-06T15:00:00Z',
+        endAt: '2026-12-27T15:00:00Z',
+      },
     ]
     expect(filterProgramSchedulesForNewEducationAssignment(rows).map(r => r.id)).toEqual([11])
     expect(isProgramScheduleCandidateForNewEducationAssignment(rows[0])).toBe(false)
+    expect(isProgramScheduleCandidateForNewEducationAssignment(rows[2])).toBe(false)
   })
 
   it('uses educationSlotKey as list row key with id fallback', () => {
