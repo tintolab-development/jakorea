@@ -83,7 +83,7 @@ export function GeneralVolunteerInterviewAssignModal({
   }, [open, onCancel, useLocalInterviewSchedule, useRemoteSchedule])
 
   const schedule = useMemo(() => {
-    /** 가능일·불가일 SSOT = 프로그램 면접 일정. remote slots / 신청일은 슬롯만 보강 */
+    /** 배정 가능 시간 SSOT = interview-slots. 신청 가능 일정과 겹치는 슬롯만 남긴다. */
     const scheduleProgram = useLocalInterviewSchedule && localProgramDetail ? localProgramDetail : program
     const fromProgram = parseGeneralInterviewScheduleFromProgram(
       scheduleProgram,

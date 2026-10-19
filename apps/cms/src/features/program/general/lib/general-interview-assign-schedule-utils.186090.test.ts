@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import type { GeneralInterviewSlotListItem } from '@/features/program/general/api/admin-applications-service'
 import {
   mergeApplicantAvailabilityIntoSchedule,
   mergeRemoteSlotsIntoProgramSchedule,
@@ -108,5 +109,120 @@ describe('186090 interview assign schedule SSOT', () => {
     const oct21 = getSlotsForDate(restricted, '2026-10-21')
     expect(oct12.map(slot => slot.timeRange)).toEqual(['10:00 ~ 10:30'])
     expect(oct21.map(slot => slot.timeRange)).toEqual(['13:00 ~ 13:30'])
+  })
+})
+
+/** programId=186251 interview-slots. 주말·지정 불가일에도 서버 슬롯이 있다. */
+const slots186251: GeneralInterviewSlotListItem[] = [
+  {
+    interviewSlotId: 1695171,
+    slotDate: '2026-11-01',
+    startAt: '2026-11-01T13:40:00Z',
+    endAt: '2026-11-01T14:10:00Z',
+    maxAssignCount: 5,
+    assignedCount: 0,
+    exceptionSlot: false,
+  },
+  {
+    interviewSlotId: 1695172,
+    slotDate: '2026-11-01',
+    startAt: '2026-11-01T14:10:00Z',
+    endAt: '2026-11-01T14:40:00Z',
+    maxAssignCount: 5,
+    assignedCount: 0,
+    exceptionSlot: false,
+  },
+  {
+    interviewSlotId: 1695173,
+    slotDate: '2026-11-02',
+    startAt: '2026-11-02T13:40:00Z',
+    endAt: '2026-11-02T14:10:00Z',
+    maxAssignCount: 5,
+    assignedCount: 0,
+    exceptionSlot: false,
+  },
+  {
+    interviewSlotId: 1695146,
+    slotDate: '2026-11-20',
+    startAt: '2026-11-20T13:40:00Z',
+    endAt: '2026-11-20T14:10:00Z',
+    maxAssignCount: 5,
+    assignedCount: 0,
+    exceptionSlot: false,
+  },
+  {
+    interviewSlotId: 1695148,
+    slotDate: '2026-11-21',
+    startAt: '2026-11-21T02:40:00Z',
+    endAt: '2026-11-21T03:40:00Z',
+    maxAssignCount: 5,
+    assignedCount: 0,
+    exceptionSlot: false,
+  },
+]
+
+const programBlockingWeekendAndNov20 = {
+  id: '186251',
+  generalCommonInfo: {
+    volunteerRecruitmentInfo: {
+      interviewStartDate: '2026-11-01',
+      interviewEndDate: '2026-11-21',
+    },
+    volunteerInterviewScheduleInfo: {
+      recurringUnavailable: '토요일, 일요일, 공휴일',
+      specificUnavailableDates: '2026. 11. 20 (금)',
+      specificUnavailableDateIsos: ['2026-11-20'],
+      periodStartDate: '2026-11-01',
+      periodEndDate: '2026-11-21',
+      availableTimeSlots: '10:00 ~ 10:30',
+    },
+  },
+} as unknown as Program
+
+describe('186251 remote interview slots', () => {
+  it('keeps server slot dates that the program text marks unavailable', () => {
+    const fromProgram = parseGeneralInterviewScheduleFromProgram(programBlockingWeekendAndNov20)
+    expect(fromProgram.clickableDateKeys.has('2026-11-01')).toBe(false)
+    expect(fromProgram.clickableDateKeys.has('2026-11-20')).toBe(false)
+    expect(fromProgram.clickableDateKeys.has('2026-11-21')).toBe(false)
+
+    const merged = mergeRemoteSlotsIntoProgramSchedule(
+      fromProgram,
+      parseGeneralInterviewScheduleFromRemoteSlots(slots186251)
+    )
+
+    expect([...merged.clickableDateKeys].sort()).toEqual([
+      '2026-11-01',
+      '2026-11-02',
+      '2026-11-20',
+      '2026-11-21',
+    ])
+    expect(merged.slotsByDateKey.get('2026-11-01')?.map(slot => slot.timeRange)).toEqual([
+      '22:40 ~ 23:10',
+      '23:10 ~ 23:40',
+    ])
+    expect(merged.slotsByDateKey.get('2026-11-21')?.map(slot => slot.timeRange)).toEqual([
+      '11:40 ~ 12:40',
+    ])
+    expect(getSlotsForDate(merged, '2026-11-01').map(slot => slot.displayTimeRange)).toEqual([
+      '22:40 - 23:10',
+      '23:10 - 23:40',
+    ])
+  })
+
+  it('keeps only the applicant times that exist on the server slots', () => {
+    const fromProgram = parseGeneralInterviewScheduleFromProgram(programBlockingWeekendAndNov20)
+    const merged = mergeApplicantAvailabilityIntoSchedule(
+      mergeRemoteSlotsIntoProgramSchedule(
+        fromProgram,
+        parseGeneralInterviewScheduleFromRemoteSlots(slots186251)
+      ),
+      [{ dateLabel: '26. 11. 01(일)', slots: ['22:40 ~ 23:10', '10:00 ~ 10:30'] }]
+    )
+
+    expect([...merged.clickableDateKeys]).toEqual(['2026-11-01'])
+    expect(getSlotsForDate(merged, '2026-11-01').map(slot => slot.timeRange)).toEqual([
+      '22:40 ~ 23:10',
+    ])
   })
 })

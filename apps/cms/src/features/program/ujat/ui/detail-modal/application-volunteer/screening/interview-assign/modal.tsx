@@ -74,7 +74,8 @@ export function UjatVolunteerInterviewAssignModal({
   onCancel,
   onConfirm,
 }: UjatVolunteerInterviewAssignModalProps) {
-  const programDetail = useProgramDetail(open ? programId : undefined)
+  // 스케줄을 주입한 호출(일반 프로그램)은 UJAT 상세·지역 정원을 조회하지 않는다.
+  const programDetail = useProgramDetail(open && scheduleOverride == null ? programId : undefined)
   const publicHolidayDateKeys = useKoreanPublicHolidayDateKeys({
     from: programDetail.data?.interviewStartDate,
     to: programDetail.data?.interviewEndDate,
