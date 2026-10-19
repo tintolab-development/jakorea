@@ -1,3 +1,4 @@
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
@@ -47,7 +48,7 @@ export function GeminiInstitutionPreferredLectureScheduleCell({ value }: { value
             {line.preference} :
           </span>
           <ProgramDetailTdSegmentWrap>
-            {withProgramDetailTdDivider([line.date, line.time])}
+            {withProgramDetailTdDivider([formatCmsScheduleDisplayLabel(line.date), line.time])}
           </ProgramDetailTdSegmentWrap>
         </div>
       ))}
