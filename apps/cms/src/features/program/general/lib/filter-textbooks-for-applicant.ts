@@ -7,6 +7,8 @@ import {
   toEducationStageKey,
 } from '@/features/textbook/lib/textbook-education-stages'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import { normalizeEducationTargetLabel } from '@/features/textbook/lib/textbook-education-stages'
 import type { Program, TargetLevel } from '@/types/domain'
 
 const TARGET_LEVEL_TO_EDUCATION_TARGET: Partial<Record<TargetLevel, TextbookEducationTarget>> = {
@@ -16,11 +18,25 @@ const TARGET_LEVEL_TO_EDUCATION_TARGET: Partial<Record<TargetLevel, TextbookEduc
   university: '대학교',
 }
 
+/** 교재 교육 대상. 성인은 교재 구분에 없다. `중학생`·`middle`·`중학교`는 중학교 */
+export function normalizeToTextbookEducationTarget(
+  raw: string | null | undefined
+): TextbookEducationTarget | null {
+  const fromStage = normalizeEducationTargetLabel(raw ?? '')
+  if (fromStage) return fromStage
+  const level = normalizeTargetLevelValue(raw)
+  if (!level) return null
+  return TARGET_LEVEL_TO_EDUCATION_TARGET[level] ?? null
+}
+
 export function resolveProgramEducationTarget(program: Program): TextbookEducationTarget | null {
   return resolveProgramEducationTargets(program)[0] ?? null
 }
 
-/** 프로그램 교육 대상(복수 targetLevels 포함) → 교재 educationTarget 목록 */
+/**
+ * 프로그램 교육 대상(복수) → 교재 educationTarget.
+ * 성인처럼 교재 대상이 없는 값은 건너뛰고, 나머지 대상은 모두 남긴다.
+ */
 export function resolveProgramEducationTargets(program: Program): TextbookEducationTarget[] {
   const levels =
     program.targetLevels?.length
@@ -31,12 +47,22 @@ export function resolveProgramEducationTargets(program: Program): TextbookEducat
   const targets: TextbookEducationTarget[] = []
   const seen = new Set<TextbookEducationTarget>()
   for (const level of levels) {
-    const target = TARGET_LEVEL_TO_EDUCATION_TARGET[level]
+    const target = normalizeToTextbookEducationTarget(String(level))
     if (!target || seen.has(target)) continue
     seen.add(target)
     targets.push(target)
   }
   return targets
+}
+
+/** 프로그램 교육 대상이 여럿이면 그중 하나라도 교재 대상과 같으면 해당 */
+export function textbookMatchesProgramEducationTargets(
+  educationTarget: string | null | undefined,
+  allowed: readonly TextbookEducationTarget[]
+): boolean {
+  if (allowed.length === 0) return true
+  const normalized = normalizeToTextbookEducationTarget(educationTarget)
+  return normalized != null && allowed.includes(normalized)
 }
 
 function normalizeApplicantEducationGrade(educationGrade: string): string {
@@ -107,10 +133,7 @@ export function filterTextbooksForApplicant(
   const filtered = source.filter(row => {
     if (!catalog && row.useStatus !== 'USED') return false
     if (program.businessArea && row.businessArea !== program.businessArea) return false
-    if (
-      educationTargets.length > 0 &&
-      !educationTargets.includes(row.educationTarget as TextbookEducationTarget)
-    ) {
+    if (!textbookMatchesProgramEducationTargets(row.educationTarget, educationTargets)) {
       return false
     }
     return textbookGradeIncludesApplicantGrade(row, grade)
