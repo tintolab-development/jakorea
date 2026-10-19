@@ -1142,6 +1142,7 @@ export function mapIndividualApplicationToApplicantRow(
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || programId,
+    preferredEducationSchedules: dto.preferredEducationSchedules ?? [],
     sessions: mapPreferredEducationSchedulesToSessions(dto.preferredEducationSchedules),
     managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
@@ -1198,6 +1199,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
+    preferredEducationSchedules:
+      dto.application?.preferredEducationSchedules ?? base.preferredEducationSchedules,
     sessions: mapPreferredEducationSchedulesToSessions(
       dto.application?.preferredEducationSchedules
     ),

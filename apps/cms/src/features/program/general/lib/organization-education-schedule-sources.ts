@@ -241,6 +241,25 @@ export function mapOrganizationScheduleAssignmentSlotsToAssignedSessions(
   })
 }
 
+/**
+ * 참여 기관 상세 「교육 진행 일정」.
+ * 일반 기관은 OSA 배정이 있으면 배정을, 없으면 목록과 같은 희망 일정을 쓴다.
+ */
+export function resolveParticipatingInstitutionApplicationScheduleSessions(input: {
+  isCompanySchool: boolean
+  isGeneralOrganization: boolean
+  assignedSessions: ParticipatingSchoolSession[]
+  hopeSessions: ParticipatingSchoolSession[]
+  participantSessions: ParticipatingSchoolSession[]
+}): ParticipatingSchoolSession[] {
+  if (input.isCompanySchool) return input.participantSessions
+  if (input.isGeneralOrganization) {
+    if (input.assignedSessions.length > 0) return input.assignedSessions
+    return input.hopeSessions
+  }
+  return input.participantSessions
+}
+
 /** 참여 기관 목록 「진행 희망 교육 일정」 — 해당 신청의 희망만 (row 단위) */
 export function resolveParticipatingSchoolHopeSessions(
   row: Pick<

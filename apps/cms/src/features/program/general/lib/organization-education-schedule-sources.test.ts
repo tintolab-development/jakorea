@@ -6,11 +6,55 @@ import {
   filterOrganizationScheduleAssignmentSlotsForDisplay,
   mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
   readPreferredEducationSchedulesForScope,
+  resolveParticipatingInstitutionApplicationScheduleSessions,
   resolveParticipatingSchoolHopeSessions,
 } from './organization-education-schedule-sources'
 import type { SlotResponse } from '@/shared/api/generated/dashboard/schemas/slotResponse'
 
 describe('organization-education-schedule-sources', () => {
+  it('detail schedule falls back to list hope sessions when OSA assignment is empty', () => {
+    const hope = [
+      {
+        round: 1,
+        date: '2026.11.02',
+        dayOfWeek: '월',
+        duration: '-',
+        format: '-',
+        classNum: '1지망',
+        timeRange: '09:30 ~ 11:30',
+      },
+    ]
+    const assigned = [
+      {
+        round: 1,
+        date: '2026.11.13',
+        dayOfWeek: '목',
+        duration: '-',
+        format: '-',
+        classNum: '1회차',
+        timeRange: '10:00 ~ 12:00',
+      },
+    ]
+    expect(
+      resolveParticipatingInstitutionApplicationScheduleSessions({
+        isCompanySchool: false,
+        isGeneralOrganization: true,
+        assignedSessions: [],
+        hopeSessions: hope,
+        participantSessions: assigned,
+      })
+    ).toBe(hope)
+    expect(
+      resolveParticipatingInstitutionApplicationScheduleSessions({
+        isCompanySchool: false,
+        isGeneralOrganization: true,
+        assignedSessions: assigned,
+        hopeSessions: hope,
+        participantSessions: [],
+      })
+    ).toBe(assigned)
+  })
+
   it('resolveParticipatingSchoolHopeSessions prefers hopeEducationSessions over sessions', () => {
     const row: ParticipatingSchoolRow = {
       id: '1',

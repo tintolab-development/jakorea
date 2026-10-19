@@ -16,6 +16,7 @@ import {
   readProgramScheduleOrigin,
 } from '@/features/program/shared/lib/program-schedule-origin'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
+import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import {
   extractApiErrorMessage,
   getApiErrorCode,
@@ -23,6 +24,11 @@ import {
 } from '@/shared/lib/extract-api-error-message'
 
 export type OrganizationApplicationApproveSlot = SlotRequest
+
+export type OrganizationApproveEducationScheduleMode = 'date' | 'period'
+
+/** 날짜 지정은 공통 슬롯 id 확정. 기간 지정은 승인만 하고 OSA에서 배정한다. */
+export type OrganizationApproveAssignmentPolicy = 'program_defined_slot' | 'approve_then_osa'
 
 export type OrganizationApproveScheduleAssignmentBlock =
   | 'UNMAPPED'
@@ -49,32 +55,83 @@ export type OrganizationApproveScheduleOption = {
 }
 
 export type OrganizationApproveScheduleValidation = {
-  /** 신청 희망 일정 원본 */
+  /** 신청 희망 일정 원본. 공통 슬롯으로 대체하지 않는다. */
   options: OrganizationApproveScheduleOption[]
-  /** 명시 매핑된 공통 교육 슬롯만 */
+  /** 명시 매핑된 공통 교육 슬롯만. 승인 payload 후보 */
   assignableOptions: OrganizationApproveScheduleOption[]
+  /** 프로그램 공통 교육 예정 일정. 표시 전용이며 희망 일정·승인 id가 아니다. */
+  commonSlotOptions: OrganizationApproveScheduleOption[]
   invalidReason: string | null
   unresolvedReason: string | null
   duplicateScheduleIds: number[]
   /** education-slots 응답을 받은 뒤인지. 로딩 중에는 불일치로 단정하지 않는다. */
   slotsResolved: boolean
+  /** 기간 지정은 공통 예정 슬롯과 비교하지 않고 승인 후 배정한다. */
+  assignmentPolicy: OrganizationApproveAssignmentPolicy
 }
 
 export type OrganizationApplicationApproveSchedulePayload = {
   selectedScheduleId?: number
+  /** 여러 일정 배정. `selectedScheduleId`와 함께 보내지 않는다. */
+  slots?: Array<{ scheduleId: number }>
+}
+
+export const ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT =
+  '교육은 여러 개의 일정에 배정할 수 있습니다.'
+
+export const ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT =
+  '교육은 한 개의 일정에만 배정할 수 있습니다.'
+
+export type OrganizationEducationScheduleAssignmentLimitInput = {
+  sessionRound?: 'single' | 'multi' | null
+  educationScheduleMode?: OrganizationApproveEducationScheduleMode | null
+  /** 모집 「신청 가능 최대 일정 수」. 기간 지정에서만 배정 개수에 쓴다. */
+  maxScheduleCount?: number | null
+}
+
+/**
+ * 복수 회차는 회차마다 일정이 나뉜다.
+ * 기간 지정은 신청 가능 최대 일정 수가 2 이상일 때 여러 일정에 배정한다.
+ * 단일 회차 날짜 지정은 선택한 일정 중 1타임만 배정한다.
+ */
+export function allowsMultipleOrganizationEducationScheduleAssignment(
+  input: OrganizationEducationScheduleAssignmentLimitInput
+): boolean {
+  if (input.sessionRound === 'multi') return true
+  if (input.educationScheduleMode === 'period') {
+    const max = input.maxScheduleCount
+    return typeof max === 'number' && Number.isFinite(max) && max > 1
+  }
+  return false
+}
+
+export function organizationEducationScheduleAssignmentHint(
+  input: OrganizationEducationScheduleAssignmentLimitInput
+): string {
+  return allowsMultipleOrganizationEducationScheduleAssignment(input)
+    ? ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT
+    : ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
 }
 
 const EMPTY_SCHEDULE_VALIDATION: OrganizationApproveScheduleValidation = {
   options: [],
   assignableOptions: [],
+  commonSlotOptions: [],
   invalidReason: null,
   unresolvedReason: null,
   duplicateScheduleIds: [],
   slotsResolved: false,
+  assignmentPolicy: 'program_defined_slot',
 }
 
 const UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE =
   '희망 교육 일정이 없거나 표시할 수 없습니다. 신청 상세의 preferredEducationSchedules를 확인해 주세요.'
+
+export const ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE = '교육 일정을 지정해주세요.'
+
+export const ABSENT_PREFERRED_SCHEDULE_MESSAGE = `신청 희망 교육 일정이 없습니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`
+
+export const PERIOD_ORGANIZATION_APPROVE_DEFERRED_ASSIGNMENT_MESSAGE = `기간 지정 희망일은 프로그램 공통 예정 슬롯과 매칭하지 않습니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`
 
 export const ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE =
   '선택한 희망 교육 일정에 운영 일정 ID(scheduleId)가 없어 승인할 수 없습니다. 신청 상세 API에서 preferredEducationSchedules.scheduleId를 반영해 주세요.'
@@ -83,18 +140,17 @@ export const ORGANIZATION_APPROVE_UNRESOLVED_REASON_MESSAGES: Record<
   Exclude<PreferredEducationSchedule['unresolvedReason'], null | undefined>,
   string
 > = {
-  NO_PROGRAM_DEFINED_SCHEDULE_MATCH:
-    '현재 프로그램 공통 교육 일정과 연결되지 않은 희망 일정입니다. 승인 후 교육 일정을 별도로 배정해 주세요.',
+  NO_PROGRAM_DEFINED_SCHEDULE_MATCH: `현재 프로그램 공통 교육 일정과 연결되지 않은 희망 일정입니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`,
   AMBIGUOUS_SCHEDULE_MATCH:
-    '동일한 시간의 공통 교육 일정이 여러 건이어서 자동 연결할 수 없습니다. 일정 확정 없이 승인하거나 관리자에게 일정 정리를 요청해 주세요.',
+    '동일한 시간의 공통 교육 일정이 여러 건이어서 자동 연결할 수 없습니다. 관리자에게 일정 정리를 요청해 주세요.',
 }
 
 export function getUnresolvedPreferredScheduleMessage(reason: string | null | undefined): string {
   switch (reason?.trim()) {
     case 'AMBIGUOUS_SCHEDULE_MATCH':
-      return '희망 교육 일정과 일치하는 운영 일정이 여러 개여서 자동 확정할 수 없습니다. 승인 후 별도 배정해 주세요.'
+      return `희망 교육 일정과 일치하는 운영 일정이 여러 개여서 자동 확정할 수 없습니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`
     case 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH':
-      return '희망 교육 일정과 일치하는 운영 일정이 없어 자동 확정할 수 없습니다. 승인 후 별도 배정해 주세요.'
+      return `희망 교육 일정과 일치하는 운영 일정이 없어 자동 확정할 수 없습니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`
     default:
       return UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE
   }
@@ -178,23 +234,175 @@ function formatAssignableEducationSlotLabel(slot: ProgramScheduleResponse): stri
   return [session, when].filter(Boolean).join(' · ') || `일정 ${slot.id}`
 }
 
+function readPositiveInteger(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value
+  return null
+}
+
+function readClockToken(value: string | null | undefined): string | null {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})/)
+  if (!match) return null
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null
+  if (hour === 0 && minute === 0) return null
+  return `${hour}:${String(minute).padStart(2, '0')}`
+}
+
 /**
- * 승인 모달 — 희망 일정은 신청 원본으로 두고, 배정은 education-slots와
- * `preferred.scheduleId`가 명시적으로 같을 때만 허용한다.
- * 날짜가 같다고 첫 슬롯을 고르지 않는다. scheduleId가 없다는 이유만으로 일정 자체를 오류로 보지 않는다.
+ * requested-schedules 행 → 희망 일정 표시.
+ * 행 id는 희망 행 식별자이므로 scheduleId로 쓰지 않는다.
+ * `resolvedScheduleId`가 양수일 때만 배정 후보 id로 남긴다.
+ */
+function requestedScheduleToPreferred(
+  row: RequestedScheduleResponse
+): PreferredEducationSchedule | null {
+  const scheduleId = parseOrganizationPreferredScheduleId(row.resolvedScheduleId)
+  const explicitLabel = row.label?.trim() || ''
+  const requestedDate = row.requestedDate?.trim() || ''
+  const periodStart = row.periodStartDate?.trim() || ''
+  const periodEnd = row.periodEndDate?.trim() || ''
+  const firstTime = row.sessionTimes?.[0]
+  const startClock = readClockToken(firstTime?.startTime)
+  const endClock = readClockToken(firstTime?.endTime)
+  const dateLabel = periodStart
+    ? periodEnd && periodEnd !== periodStart
+      ? `${periodStart} ~ ${periodEnd}`
+      : periodStart
+    : requestedDate
+  const timeLabel = startClock && endClock ? `${startClock} ~ ${endClock}` : ''
+  const rank =
+    typeof row.preferenceOrder === 'number' && row.preferenceOrder > 0
+      ? `${Math.trunc(row.preferenceOrder)}지망`
+      : ''
+  const body = explicitLabel || [dateLabel, timeLabel].filter(Boolean).join(' ')
+  const label = [rank, body].filter(Boolean).join(' · ')
+  if (scheduleId == null && !label) return null
+  const round = readPositiveInteger(row.preferenceOrder)
+  const startAt = periodStart || requestedDate || undefined
+  const endAt = periodEnd || periodStart || requestedDate || undefined
+  return {
+    ...(scheduleId != null ? { scheduleId } : { scheduleId: null }),
+    ...(round != null ? { round } : {}),
+    ...(startAt ? { startAt } : {}),
+    ...(endAt ? { endAt } : {}),
+    ...(label ? { label } : {}),
+  }
+}
+
+/**
+ * 희망 일정 정본.
+ * 신청 상세 preferredEducationSchedules가 있으면 그것만 쓴다.
+ * 비어 있을 때만 requested-schedules를 표시용으로 읽는다.
+ * 공통 education-slots로 희망 일정을 만들지 않는다.
+ */
+export function selectOrganizationApprovePreferredSchedules(
+  preferred: PreferredEducationSchedule[] | undefined,
+  requestedSchedules?: readonly RequestedScheduleResponse[] | null
+): PreferredEducationSchedule[] {
+  if ((preferred?.length ?? 0) > 0) return preferred ?? []
+  if (!requestedSchedules?.length) return []
+  const sorted = [...requestedSchedules].sort(
+    (left, right) => (left.preferenceOrder ?? 99) - (right.preferenceOrder ?? 99)
+  )
+  return sorted
+    .map(requestedScheduleToPreferred)
+    .filter((entry): entry is PreferredEducationSchedule => entry != null)
+}
+
+function listCommonEducationSlotOptions(
+  programSchedules: ProgramScheduleResponse[] | undefined
+): OrganizationApproveScheduleOption[] {
+  const slots = indexExplicitEducationSlots(programSchedules)
+  if (slots == null) return []
+  return [...slots.entries()]
+    .sort((left, right) => left[0] - right[0])
+    .map(([, slot]) => {
+      const scheduleId = Math.trunc(slot.id as number)
+      const sessionNo =
+        typeof slot.sessionNo === 'number' && Number.isFinite(slot.sessionNo)
+          ? Math.trunc(slot.sessionNo)
+          : null
+      return {
+        scheduleId,
+        optionKey: `common:${scheduleId}`,
+        label: formatAssignableEducationSlotLabel(slot),
+        confirmableScheduleId: null,
+        preferredRecord: false,
+        assignable: false,
+        sessionNo,
+      }
+    })
+}
+
+/**
+ * 일정형·복수 회차 — 교육 진행(일정형) 행사가 education-slots로 내려온 일정.
+ * 희망 일정과 섞지 않고, 시작 시각 다음 scheduleId 순으로 전부 배정한다.
+ */
+export function resolveOrganizationScheduleMultiAutoAssign(
+  educationSlots: ProgramScheduleResponse[] | undefined
+): {
+  items: Array<{ scheduleId: number; label: string }>
+  payload: OrganizationApplicationApproveSchedulePayload
+} {
+  const indexed = indexExplicitEducationSlots(educationSlots)
+  if (indexed == null || indexed.size === 0) return { items: [], payload: {} }
+  const ordered = [...indexed.values()].sort((left, right) => {
+    const leftStart = parseIsoDateTime(left.startAt) ?? Number.POSITIVE_INFINITY
+    const rightStart = parseIsoDateTime(right.startAt) ?? Number.POSITIVE_INFINITY
+    if (leftStart !== rightStart) return leftStart - rightStart
+    return Math.trunc(left.id as number) - Math.trunc(right.id as number)
+  })
+  const items = ordered.map(slot => {
+    const scheduleId = Math.trunc(slot.id as number)
+    const when = formatOrganizationScheduleRangeLabel(
+      slot.startAt ?? slot.startDate,
+      slot.endAt ?? slot.endDate
+    )
+    return { scheduleId, label: when || `일정 ${scheduleId}` }
+  })
+  if (items.length === 1) return { items, payload: { selectedScheduleId: items[0]?.scheduleId } }
+  return { items, payload: { slots: items.map(item => ({ scheduleId: item.scheduleId })) } }
+}
+
+function preferredOptionLabel(
+  schedule: PreferredEducationSchedule,
+  scheduleId: number | null
+): string {
+  const label = formatScheduleLabel(schedule)
+  if (label) return label
+  if (scheduleId != null) return `일정 ${scheduleId}`
+  if (schedule.unresolvedReason) return '희망 교육 일정'
+  return ''
+}
+
+/**
+ * 승인 모달 — 희망 일정은 신청 원본으로 두고, 날짜 지정만 education-slots와
+ * `preferred.scheduleId`가 명시적으로 같을 때 배정한다.
+ * 기간 지정 희망일은 공통 예정 슬롯과 비교하지 않는다. 날짜가 같다고 첫 슬롯을 고르지 않는다.
+ * scheduleId가 없다는 이유만으로 일정 자체를 오류로 보지 않는다.
  */
 export function resolveOrganizationApproveScheduleOptionsFromPreferred(
   preferred: PreferredEducationSchedule[] | undefined,
-  programSchedules?: ProgramScheduleResponse[]
+  programSchedules?: ProgramScheduleResponse[],
+  educationScheduleMode: OrganizationApproveEducationScheduleMode = 'date',
+  requestedSchedules?: readonly RequestedScheduleResponse[] | null
 ): OrganizationApproveScheduleValidation {
-  const list = preferred ?? []
+  const list = selectOrganizationApprovePreferredSchedules(preferred, requestedSchedules)
+  const periodMode = educationScheduleMode === 'period'
+  const assignmentPolicy: OrganizationApproveAssignmentPolicy = periodMode
+    ? 'approve_then_osa'
+    : 'program_defined_slot'
   const slotsResolved = programSchedules != null
-  const slotsById = indexExplicitEducationSlots(programSchedules)
+  const slotsById = periodMode ? null : indexExplicitEducationSlots(programSchedules)
+  const commonSlotOptions = listCommonEducationSlotOptions(programSchedules)
   if (list.length === 0) {
     return {
       ...EMPTY_SCHEDULE_VALIDATION,
-      invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
+      commonSlotOptions,
+      invalidReason: ABSENT_PREFERRED_SCHEDULE_MESSAGE,
       slotsResolved,
+      assignmentPolicy,
     }
   }
 
@@ -203,9 +411,9 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
 
   for (let index = 0; index < list.length; index++) {
     const schedule = list[index]
-    const label = formatScheduleLabel(schedule)
-    if (!label) continue
     const scheduleId = parseOrganizationPreferredScheduleId(schedule.scheduleId)
+    const label = preferredOptionLabel(schedule, scheduleId)
+    if (!label) continue
     const unresolvedReason = schedule.unresolvedReason ?? null
     const round =
       typeof schedule.round === 'number' && Number.isInteger(schedule.round) && schedule.round > 0
@@ -216,7 +424,7 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
     let block: OrganizationApproveScheduleAssignmentBlock | null = null
     let sessionNo: number | null = null
 
-    if (!slotsResolved || slotsById == null) {
+    if (periodMode || !slotsResolved || slotsById == null) {
       block = null
     } else if (unresolvedReason === 'AMBIGUOUS_SCHEDULE_MATCH') {
       block = 'AMBIGUOUS'
@@ -259,27 +467,31 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
       assignable: confirmableScheduleId != null,
       sessionNo,
       round,
-      assignmentNote: slotsResolved ? assignmentNoteFor(block) : null,
+      assignmentNote: periodMode || !slotsResolved ? null : assignmentNoteFor(block),
     })
   }
 
-  const unresolvedReason = firstUnresolvedPreferredScheduleReason(list)
+  const unresolvedReason = periodMode ? null : firstUnresolvedPreferredScheduleReason(list)
   if (options.length === 0) {
     return {
       ...EMPTY_SCHEDULE_VALIDATION,
+      commonSlotOptions,
       invalidReason: getUnresolvedPreferredScheduleMessage(unresolvedReason),
       unresolvedReason,
       slotsResolved,
+      assignmentPolicy,
     }
   }
 
   return {
     options,
     assignableOptions: [...assignableById.values()],
+    commonSlotOptions,
     invalidReason: null,
     unresolvedReason,
     duplicateScheduleIds: [],
     slotsResolved,
+    assignmentPolicy,
   }
 }
 
@@ -307,27 +519,55 @@ export function resolveOrganizationApproveScheduleIdsFromSelection(
 
 /**
  * 승인 API 일정 필드.
- * 선택된 education-slots id만 `selectedScheduleId`로 보낸다.
- * 희망 일정 placeholder·프로그램에 없는 id·날짜 추론 결과는 넣지 않는다.
- * `slots[]`는 만들지 않는다. 단건 확정은 `selectedScheduleId` 하나이고, 둘을 같이 보내면 OSA가 중복될 수 있다.
+ * 공통 교육 슬롯에 명시 매핑된 id만 보낸다.
+ * 한 건은 `selectedScheduleId`, 여러 건은 `slots`만 보낸다. 둘을 같이 보내면 OSA가 중복될 수 있다.
  */
+function uniquePositiveScheduleIds(ids: readonly number[]): number[] {
+  const unique: number[] = []
+  const seen = new Set<number>()
+  for (const raw of ids) {
+    if (!Number.isInteger(raw) || raw <= 0) continue
+    const id = Math.trunc(raw)
+    if (seen.has(id)) continue
+    seen.add(id)
+    unique.push(id)
+  }
+  return unique
+}
+
 export function buildOrganizationApplicationApproveSchedulePayload(input: {
   preferred: PreferredEducationSchedule[] | undefined
   educationSlots: ProgramScheduleResponse[] | undefined
-  selectedSlotId: number | null | undefined
+  selectedSlotId?: number | null
+  /** 여러 장 선택. 있으면 `selectedSlotId`보다 우선한다. */
+  selectedSlotIds?: readonly number[] | null
+  educationScheduleMode?: OrganizationApproveEducationScheduleMode
 }): OrganizationApplicationApproveSchedulePayload {
-  if (input.selectedSlotId == null || input.educationSlots == null) return {}
-  if (!Number.isInteger(input.selectedSlotId) || input.selectedSlotId <= 0) return {}
-  const slotId = Math.trunc(input.selectedSlotId)
+  if (input.educationScheduleMode === 'period') return {}
+  const requested =
+    input.selectedSlotIds != null
+      ? uniquePositiveScheduleIds(input.selectedSlotIds)
+      : input.selectedSlotId == null
+        ? []
+        : uniquePositiveScheduleIds([input.selectedSlotId])
+  if (requested.length === 0 || input.educationSlots == null) return {}
   const validation = resolveOrganizationApproveScheduleOptionsFromPreferred(
     input.preferred,
-    input.educationSlots
+    input.educationSlots,
+    input.educationScheduleMode ?? 'date'
   )
-  const allowed = validation.assignableOptions.some(
-    option => option.confirmableScheduleId === slotId
+  const allowedFromPreferred = requested.filter(slotId =>
+    validation.assignableOptions.some(option => option.confirmableScheduleId === slotId)
   )
-  if (!allowed) return {}
-  return { selectedScheduleId: slotId }
+  const hopeIsEmpty = validation.options.length === 0
+  const allowed = hopeIsEmpty
+    ? requested.filter(slotId =>
+        validation.commonSlotOptions.some(option => option.scheduleId === slotId)
+      )
+    : allowedFromPreferred
+  if (allowed.length === 0) return {}
+  if (allowed.length === 1) return { selectedScheduleId: allowed[0] }
+  return { slots: allowed.map(scheduleId => ({ scheduleId })) }
 }
 
 /** 승인 API `selectedScheduleId` — education-slots에 명시 매핑된 id만. */
@@ -484,15 +724,18 @@ export function validateOrganizationApproveScheduleOptions(
     ? {
         options,
         assignableOptions: options.filter(option => option.confirmableScheduleId != null),
+        commonSlotOptions: [],
         invalidReason: null,
         unresolvedReason: null,
         duplicateScheduleIds: [],
         slotsResolved: true,
+        assignmentPolicy: 'program_defined_slot',
       }
     : {
         ...EMPTY_SCHEDULE_VALIDATION,
         invalidReason: UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE,
         slotsResolved: true,
+        assignmentPolicy: 'program_defined_slot',
       }
 }
 
@@ -517,14 +760,14 @@ export function hasUnresolvedOrganizationApprovePreferredSchedules(
 }
 
 const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
-  ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED: ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
+  ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED:
+    ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED:
     '신청자가 희망하지 않은 교육 일정입니다. 희망 일정을 다시 확인해 주세요.',
   GENERAL_ORGANIZATION_ASSIGNMENT_SCHEDULE_INVALID:
     '유효하지 않거나 취소된 교육 일정입니다. 목록을 새로고침한 후 다시 선택해 주세요.',
   GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_DUPLICATED: '동일한 교육 일정이 중복되었습니다.',
-  GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_INVALID:
-    '유효한 교육 일정 ID(scheduleId)를 선택해 주세요.',
+  GENERAL_ORGANIZATION_ASSIGNMENT_SLOT_INVALID: '유효한 교육 일정 ID(scheduleId)를 선택해 주세요.',
   PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT:
     '교육 일정이 아닌 유형입니다. 교육 회차 일정을 선택해 주세요.',
   GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE:
