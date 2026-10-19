@@ -19,6 +19,7 @@ export type PublicSocialResponse = {
   displayOrder?: number
 }
 
+/** GET /api/public/main education.programs — Admin `ProgramSummary` */
 export type PublicProgramSummary = {
   id?: number
   uuid?: string
@@ -33,10 +34,6 @@ export type PublicProgramSummary = {
   businessEndDate?: string
   createdAt?: string
   updatedAt?: string
-  /** OpenAPI 미기재. 런타임에 오면 홈 카드 썸네일로 쓴다. */
-  thumbnailUrl?: string
-  imageUrl?: string
-  educationTargetName?: string
 }
 
 export type PublicEducationResponse = {
