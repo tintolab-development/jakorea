@@ -61,6 +61,7 @@ import {
   hydrateGeneralRecruitmentInfoFromRows,
   type RecruitmentCopyAudience,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
@@ -514,13 +515,15 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
         : null,
   })
 
-  return hydrateGeneralRecruitmentInfoFromRows(
-    applyResolvedAnnouncementTitle(
-      applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-      {
-        serviceDetailJson: dto.serviceDetailJson,
-        overlay: serviceDetail.registrationOverlay,
-      }
+  return hydrateRecruitmentWindowsOntoProgram(
+    hydrateGeneralRecruitmentInfoFromRows(
+      applyResolvedAnnouncementTitle(
+        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+        {
+          serviceDetailJson: dto.serviceDetailJson,
+          overlay: serviceDetail.registrationOverlay,
+        }
+      )
     )
   )
 }

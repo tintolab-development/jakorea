@@ -31,6 +31,11 @@ import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
+  operationPeriodLabelFromWindow,
+  pickAudienceRecruitmentWindow,
+  recruitmentPeriodLabelFromWindow,
+} from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import {
   formatCountLabel,
   labelBool,
   labelEnum,
@@ -197,6 +202,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
 ): GeneralProgramParticipantRecruitmentDisplay {
   const common = program.generalCommonInfo
   const info = common?.participantRecruitmentInfo as ParticipantRecruitmentInfoLoose | undefined
+  const row = pickAudienceRecruitmentWindow(program, 'participant')
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
@@ -294,7 +300,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       )
 
   const contactOrganizationName = formatRecruitmentInquiryContactName(
-    info?.contactOrganizationName,
+    row?.contactName ?? info?.contactOrganizationName,
     info?.contactName
   )
 
@@ -319,6 +325,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     maxSessionsPerDayLabel: formatCountLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: formatCountLabel(info?.maxScheduleCount, '개'),
     operationPeriodLabel: pickDisplayString(
+      operationPeriodLabelFromWindow(row),
       info?.operationPeriodLabel,
       operationFromProgram && operationFromProgram !== '-' ? operationFromProgram : undefined
     ),
@@ -327,6 +334,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     targetLabel,
     targetDetailLabel,
     recruitmentPeriodLabel: pickDisplayString(
+      recruitmentPeriodLabelFromWindow(row),
       info?.recruitmentPeriodLabel,
       recruitmentFromProgram && recruitmentFromProgram !== '-'
         ? recruitmentFromProgram
@@ -343,6 +351,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     contactOrganizationName,
     contactPhone: formatRecruitmentInquiryPhone(
       pickDisplayString(
+        row?.contactPhone,
         info?.inquiryTel,
         info?.tel,
         info?.contactPhone,
@@ -350,6 +359,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       )
     ),
     contactEmail: pickDisplayString(
+      row?.contactEmail,
       info?.inquiryEmail,
       info?.email,
       info?.contactEmail,

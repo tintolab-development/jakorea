@@ -31,6 +31,7 @@ import {
   resolveRecruitmentOtherMatters,
   resolveRecruitmentRemarks,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import {
   parseDisplayPeriodLabelToIsoRange,
   seedAudienceProgramOperationFormFields,
@@ -193,9 +194,11 @@ export function resolveGeneralProgramForRecruitmentEdit(program: Program): Progr
   const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
     preferOverlay: false,
   })
-  return hydrateGeneralRecruitmentInfoFromRows(
-    enrichVolunteerRecruitmentScalars(
-      enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
+  return hydrateRecruitmentWindowsOntoProgram(
+    hydrateGeneralRecruitmentInfoFromRows(
+      enrichVolunteerRecruitmentScalars(
+        enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
+      )
     )
   )
 }
@@ -307,6 +310,41 @@ function generalRecruitmentRowFormSeed(
   audience: GeneralRecruitDetailAudience
 ): Partial<ProgramDetailEditFormValues> {
   if (!row) return {}
+  const dates =
+    audience === 'instructor'
+      ? {
+          ...(row.startAt ? { instructorApplicationStartDate: String(row.startAt) } : {}),
+          ...(row.endAt ? { instructorApplicationEndDate: String(row.endAt) } : {}),
+          ...(row.operationStartDate
+            ? { instructorProgramOperationStartDate: String(row.operationStartDate) }
+            : {}),
+          ...(row.operationEndDate
+            ? { instructorProgramOperationEndDate: String(row.operationEndDate) }
+            : {}),
+        }
+      : audience === 'volunteer'
+        ? {
+            ...(row.startAt ? { volunteerApplicationStartDate: String(row.startAt) } : {}),
+            ...(row.endAt ? { volunteerApplicationEndDate: String(row.endAt) } : {}),
+            ...(row.operationStartDate
+              ? { volunteerProgramOperationStartDate: String(row.operationStartDate) }
+              : {}),
+            ...(row.operationEndDate
+              ? { volunteerProgramOperationEndDate: String(row.operationEndDate) }
+              : {}),
+            ...(row.interviewStartAt ? { interviewStartDate: String(row.interviewStartAt) } : {}),
+            ...(row.interviewEndAt ? { interviewEndDate: String(row.interviewEndAt) } : {}),
+          }
+        : {
+            ...(row.startAt ? { applicationStartDate: String(row.startAt) } : {}),
+            ...(row.endAt ? { applicationEndDate: String(row.endAt) } : {}),
+            ...(row.operationStartDate
+              ? { participantProgramOperationStartDate: String(row.operationStartDate) }
+              : {}),
+            ...(row.operationEndDate
+              ? { participantProgramOperationEndDate: String(row.operationEndDate) }
+              : {}),
+          }
   const contact =
     audience === 'instructor'
       ? {
@@ -331,5 +369,5 @@ function generalRecruitmentRowFormSeed(
             ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
             ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
           }
-  return contact
+  return { ...dates, ...contact }
 }
