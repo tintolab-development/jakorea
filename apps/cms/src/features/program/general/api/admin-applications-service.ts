@@ -356,9 +356,9 @@ export async function rejectGeneralOrganizationApplication(
 export async function cancelGeneralOrganizationApplicationApproval(
   applicationId: string,
   payload: ApplicationDecisionCancelRequestWithNotification
-): Promise<void> {
+): Promise<ApplicationDecisionResponse> {
   assertApplicationsRemoteReady()
-  await cancelOrganizationApplicationApprovalRemote(applicationId, payload)
+  return cancelOrganizationApplicationApprovalRemote(applicationId, payload)
 }
 
 export async function cancelGeneralOrganizationApplicationRejection(

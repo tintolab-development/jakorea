@@ -46,7 +46,7 @@ export function buildTeacherApplicationContentFromPortal(
   input: BuildTeacherApplicationContentInput,
   program?: Pick<
     ProgramDetail,
-    'educationScheduleLines' | 'eventSchedules' | 'programAudience' | 'programType' | 'registrationKind'
+    'educationScheduleLines' | 'eventSchedules' | 'programAudience' | 'programType' | 'registrationKind' | 'educationFormLabel'
   >,
 ): EducationTeacherApplicationContent | undefined {
   const programForAudience =
@@ -78,11 +78,21 @@ export function buildTeacherApplicationContentFromPortal(
     preferredScheduleOptionValues: input.preferredScheduleOptionValues,
     preferredEducationScheduleLabel: input.preferredEducationScheduleLabel,
     preferredScheduleBlocks: input.preferredScheduleBlocks,
+    preserveLegacyLineTokens: (programGroup ?? '').toUpperCase() === 'TRAINED_TEACHER',
     program,
   })
 
+  const preferredEducationForm =
+    institutionFromAnswers?.preferredEducationForm ??
+    ((programGroup ?? '').toUpperCase() === 'TRAINED_TEACHER'
+      ? program?.educationFormLabel?.trim()
+      : undefined)
+
   return {
-    institution: institutionFromAnswers ?? input.existing?.institution ?? EMPTY_INSTITUTION,
+    institution: {
+      ...(institutionFromAnswers ?? input.existing?.institution ?? EMPTY_INSTITUTION),
+      ...(preferredEducationForm ? { preferredEducationForm } : {}),
+    },
     guidance: guidanceForm
       ? teacherGuidanceContentFromFormState(guidanceForm)
       : (input.existing?.guidance ?? EMPTY_GUIDANCE),

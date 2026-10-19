@@ -28,6 +28,16 @@ export const trainedTeacherQueryKeys = {
       programId,
       organizationApplicationId,
     ] as const,
+  educationJournalZipJob: (
+    programId: string,
+    organizationApplicationId: string,
+    jobId: number
+  ) =>
+    [
+      ...trainedTeacherQueryKeys.educationJournals(programId, organizationApplicationId),
+      'zip-job',
+      jobId,
+    ] as const,
   educationCompletionsRoot: () =>
     [...trainedTeacherQueryKeys.all, 'education-completions'] as const,
   educationCompletions: (programId: string, organizationApplicationId = '') =>

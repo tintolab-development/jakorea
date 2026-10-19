@@ -1,6 +1,7 @@
 import { readInstitutionFixedScheduleChoiceItems } from './fixed-schedule-choice-items.js'
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
 import {
+  isApplicationScheduleParagraphForcedHidden,
   shouldShowApplicationScheduleParagraph,
   type ApplicationScheduleVisibilityInput,
 } from './schedule-paragraph-visibility.js'
@@ -125,6 +126,7 @@ export function shouldShowApplicationScheduleParagraphResolved(
     educationScheduleMode: input.educationScheduleMode,
     educationScheduleLines: input.educationScheduleLines,
   }
+  if (isApplicationScheduleParagraphForcedHidden(base)) return false
   if (shouldShowApplicationScheduleParagraph(base)) return true
 
   const mode = readApplicationScheduleInputMode(

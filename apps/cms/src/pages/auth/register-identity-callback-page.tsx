@@ -30,18 +30,27 @@ export function RegisterIdentityCallbackPage() {
     markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
-      const outcome = await processIdentityCallback(
-        cmsIdentityVerificationClient,
-        new URLSearchParams(window.location.search)
-      )
+      try {
+        const outcome = await processIdentityCallback(
+          cmsIdentityVerificationClient,
+          new URLSearchParams(window.location.search)
+        )
 
-      if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
-        return
-      }
+        if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
+          return
+        }
 
-      if (outcome.kind === 'failed') {
-        setNoOpener(outcome.noOpener)
-        setErrorMessage(outcome.message)
+        if (outcome.kind === 'failed') {
+          setNoOpener(outcome.noOpener)
+          setErrorMessage(outcome.message)
+        }
+      } catch (error) {
+        setNoOpener(false)
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : '본인인증 정보를 확인할 수 없습니다. 다시 시도해 주세요.'
+        )
       }
     }
 

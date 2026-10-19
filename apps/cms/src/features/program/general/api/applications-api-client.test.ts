@@ -23,6 +23,7 @@ import {
   unmaskVolunteerApplicationPrivacyRemote,
   cancelVolunteerApplicationApprovalRemote,
   cancelVolunteerApplicationRejectionRemote,
+  cancelOrganizationApplicationApprovalRemote,
   updateIndividualApplication,
   updateIndividualDocumentEvaluationRemote,
   updateInstructorApplication,
@@ -374,6 +375,38 @@ describe('cancelVolunteerApplicationRejectionRemote', () => {
       url: '/api/admin/volunteer-applications/1690800/cancel-rejection',
       method: 'POST',
       data: { reason: '반려 취소' },
+    })
+  })
+})
+
+describe('cancelOrganizationApplicationApprovalRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('승인 취소 성공 응답의 notificationEventId null을 보존한다', async () => {
+    const response = {
+      applicationId: 1690800,
+      fromStatus: 'APPROVED',
+      toStatus: 'APPROVAL_CANCELLED',
+      notificationEventId: null,
+    }
+    vi.mocked(customInstance).mockResolvedValue(response)
+
+    await expect(
+      cancelOrganizationApplicationApprovalRemote('1690800', {
+        reason: '일정 변경으로 승인 취소',
+        notification: { timing: 'IMMEDIATE' },
+      })
+    ).resolves.toEqual(response)
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/1690800/cancel-approval',
+      method: 'POST',
+      data: {
+        reason: '일정 변경으로 승인 취소',
+        notification: { timing: 'IMMEDIATE' },
+      },
     })
   })
 })

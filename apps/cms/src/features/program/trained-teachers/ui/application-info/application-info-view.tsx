@@ -83,6 +83,7 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
         showEditorChrome={false}
         structureLockedParagraphIds={vm.structureLockedParagraphIds}
         paragraphBodyOptions={{
+          ...vm.leftPanelParagraphBodyOptions,
           structureLockedParagraphIds: vm.structureLockedParagraphIds,
           structureLockedAuthoringChoicePreview: false,
           programApplicationFormTrainedTeachersInstitution: true,

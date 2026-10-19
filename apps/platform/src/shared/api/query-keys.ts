@@ -357,6 +357,13 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      educationJournals: (programId: string, organizationApplicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'education-journals',
+          programId,
+          organizationApplicationId,
+        ] as const,
       /** 안내 목록 — GET .../notices (Class C) */
       notices: (applicationType: string, applicationId: string) =>
         [

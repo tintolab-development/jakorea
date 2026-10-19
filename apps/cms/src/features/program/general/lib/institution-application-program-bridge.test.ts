@@ -244,6 +244,24 @@ describe('institution recruit limits field visibility', () => {
     ).toBe(false)
   })
 
+  it('교육받은 교사 7개 유형도 일반 기관 모집 조건을 그대로 따른다', () => {
+    const cases = [
+      ['TCH-01', 'curriculum', 'single', 'date', false, false],
+      ['TCH-02', 'curriculum', 'single', 'period', true, false],
+      ['TCH-03', 'curriculum', 'multi', 'date', false, false],
+      ['TCH-04', 'curriculum', 'multi', 'period', true, true],
+      ['TCH-05', 'schedule', 'single', 'date', false, false],
+      ['TCH-06', 'schedule', 'single', 'period', true, false],
+      ['TCH-07', 'schedule', 'multi', 'date', false, false],
+    ] as const
+
+    for (const [, educationStructure, sessionRound, educationScheduleMode, showMax, showDaily] of cases) {
+      const input = bridge({ educationStructure, sessionRound, educationScheduleMode })
+      expect(shouldShowInstitutionApplicationMaxScheduleFields(input)).toBe(showMax)
+      expect(shouldShowInstitutionApplicationMaxSessionsPerDayField(input)).toBe(showDaily)
+    }
+  })
+
   it('커리큘럼 기간 지망 — 단일·복수 모두 희망 차시 셀렉, 일정형 단일은 제외', () => {
     expect(
       shouldShowInstitutionApplicationPreferredScheduleSessionSelect(

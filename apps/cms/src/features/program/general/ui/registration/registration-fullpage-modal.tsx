@@ -47,6 +47,8 @@ import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/r
 import { RegistrationGeneralDevAutofillToolbar } from '@/features/program/general/ui/registration/registration-general-dev-autofill-toolbar'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/general/lib/registration-dev-autofill-cases'
+import { TrainedTeachersDevAutofillToolbar } from '@/features/program/trained-teachers/ui/registration/trained-teachers-dev-autofill-toolbar'
+import type { TrainedTeachersRegistrationDevAutofillCaseId } from '@/features/program/trained-teachers/lib/registration-dev-autofill-cases'
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
@@ -65,8 +67,7 @@ function registrationWizardHighlightVariant(
 
 const DRAFT_SAVE_FAILURE_QUOTA_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
-const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE =
-  '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE = '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
 
 function draftSaveFailureMessage(error: unknown): string {
   return isLocalStorageQuotaExceededError(error)
@@ -81,7 +82,9 @@ export type GeneralProgramRegistrationFullpageModalProps = {
   registrationFormVariant?: ProgramRegistrationFormVariant
 }
 
-export function GeneralProgramRegistrationFullpageModal(props: GeneralProgramRegistrationFullpageModalProps) {
+export function GeneralProgramRegistrationFullpageModal(
+  props: GeneralProgramRegistrationFullpageModalProps
+) {
   return (
     <RegistrationWizardValidationHighlightProvider
       variant={registrationWizardHighlightVariant(props.registrationFormVariant ?? 'general')}
@@ -122,7 +125,10 @@ function GeneralProgramRegistrationFullpageModalInner({
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
-  const [devAutofillCaseId, setDevAutofillCaseId] = useState<GeneralRegistrationDevAutofillCaseId>(1)
+  const [devAutofillCaseId, setDevAutofillCaseId] =
+    useState<GeneralRegistrationDevAutofillCaseId>(1)
+  const [trainedTeachersDevAutofillCaseId, setTrainedTeachersDevAutofillCaseId] =
+    useState<TrainedTeachersRegistrationDevAutofillCaseId>(1)
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
@@ -132,10 +138,9 @@ function GeneralProgramRegistrationFullpageModalInner({
   const skipDraftRestore = shouldSkipRegistrationDraftRestore(
     searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
   )
-  const shouldRemoveSavedDraftAfterCompletion =
-    shouldRemoveRegistrationDraftAfterCompletion(
-      searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-    )
+  const shouldRemoveSavedDraftAfterCompletion = shouldRemoveRegistrationDraftAfterCompletion(
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+  )
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -218,9 +223,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
       setRecruitmentPreviewProgram(flow.registrationVm.buildCurrentProgramSnapshot())
-      setRecruitmentPreviewAudience(
-        recruitmentPreviewAudienceFromRegistrationStep(flow.activeStep)
-      )
+      setRecruitmentPreviewAudience(recruitmentPreviewAudienceFromRegistrationStep(flow.activeStep))
       setRecruitmentPreviewOpen(true)
       return
     }
@@ -372,6 +375,7 @@ function GeneralProgramRegistrationFullpageModalInner({
       <TemplateFullpageModal
         open={open}
         bodyLoading={flow.isDraftLoading}
+        scrollResetKey={flow.activeStep}
         onClose={handleClose}
         title={
           registrationFormVariant === 'economy'
@@ -418,6 +422,12 @@ function GeneralProgramRegistrationFullpageModalInner({
             <RegistrationGeneralDevAutofillToolbar
               caseId={devAutofillCaseId}
               onCaseIdChange={setDevAutofillCaseId}
+              onAutofill={caseId => flow.registrationVm.applyDevAutofill(caseId)}
+            />
+          ) : registrationFormVariant === 'trainedTeachers' ? (
+            <TrainedTeachersDevAutofillToolbar
+              caseId={trainedTeachersDevAutofillCaseId}
+              onCaseIdChange={setTrainedTeachersDevAutofillCaseId}
               onAutofill={caseId => flow.registrationVm.applyDevAutofill(caseId)}
             />
           ) : (

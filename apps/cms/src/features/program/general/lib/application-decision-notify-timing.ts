@@ -8,8 +8,8 @@ export type FlatDecisionNotifyTiming = {
 
 export type NestedDecisionNotification = {
   notification: {
-    timing: 'SCHEDULED'
-    scheduledAt: string
+    timing: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT'
+    scheduledAt?: string
   }
 }
 
@@ -45,14 +45,20 @@ export function toOrganizationApproveNotifyTiming(
   return scheduled ?? { timing: 'IMMEDIATE' }
 }
 
-/** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
+/** 기관·봉사자 취소 — 중첩 notification. CUSTOM은 SCHEDULED로 변환한다. */
 export function toNestedDecisionNotification(
   notifyTiming?: PermissionModalNotifyTiming | string | null,
   manualNotifyAt?: Dayjs | null
 ): NestedDecisionNotification | undefined {
   const flat = toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
-  if (!flat) return undefined
-  return { notification: { timing: flat.timing, scheduledAt: flat.scheduledAt } }
+  if (flat) return { notification: flat }
+  if (notifyTiming === 'on_announcement') {
+    return { notification: { timing: 'ON_ANNOUNCEMENT' } }
+  }
+  if (notifyTiming === 'immediate') {
+    return { notification: { timing: 'IMMEDIATE' } }
+  }
+  return undefined
 }
 
 /** 서류/최종 — IMMEDIATE | ON_ANNOUNCEMENT | MANUAL. MANUAL일 때만 scheduledAt. */

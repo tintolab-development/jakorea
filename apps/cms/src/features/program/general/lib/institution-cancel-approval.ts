@@ -1,4 +1,5 @@
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import {
   patchApplicantSchoolForCancelApproval,
   type ApplicantSchoolApprovalNotifyOptions,
@@ -9,6 +10,17 @@ import {
 } from '@/features/program/general/lib/modal-message-subject'
 
 export type InstitutionCancelApprovalNotifyVariant = 'alreadySent' | 'pendingNotification'
+
+export type InstitutionCancelApprovalNotificationResult = 'not-created' | 'created' | 'unknown'
+
+export function resolveInstitutionCancelApprovalNotificationResult(
+  response: ApplicationDecisionResponse
+): InstitutionCancelApprovalNotificationResult {
+  if (!Object.prototype.hasOwnProperty.call(response, 'notificationEventId')) {
+    return 'unknown'
+  }
+  return response.notificationEventId == null ? 'not-created' : 'created'
+}
 
 export function resolveInstitutionCancelApprovalNotifyVariant(
   row: ApplicantSchoolRow
@@ -33,14 +45,13 @@ export function buildInstitutionCancelApprovalMessage(
 ): string {
   const trimmedName = schoolName.trim() || '기관'
   const intro = `${formatModalBracketedSubjectName(trimmedName)}의 프로그램 참여 승인을 취소하시겠습니까?`
-  const rejectProcess = formatModalBoldPhrase('반려 처리')
   const notifyCancel = formatModalBoldPhrase('발송 취소')
 
   if (variant === 'alreadySent') {
-    return `${intro}\n취소 시 입력하신 취소 사유가 담당 교사에게 전달되며, 알림이 발송됩니다.\n또한, 해당 기관은 자동으로 ${rejectProcess}됩니다.`
+    return `${intro}\n취소 시 입력하신 취소 사유가 저장됩니다.\n기존 승인 알림은 자동으로 ${notifyCancel}됩니다.\n취소 안내 알림은 정책에 따라 발송·예약되지 않을 수 있습니다.`
   }
 
-  return `${intro}\n취소 시 입력하신 취소 사유가 담당 교사에게 반려 사유로 전달되며, 알림이 발송됩니다.\n기존의 승인 알림은 자동으로 ${notifyCancel}됩니다.`
+  return `${intro}\n취소 시 입력하신 취소 사유가 저장됩니다.\n기존 승인 알림은 자동으로 ${notifyCancel}됩니다.\n취소 안내 알림은 정책에 따라 발송·예약되지 않을 수 있습니다.`
 }
 
 export function resolveInstitutionCancelApprovalReasonLabel(

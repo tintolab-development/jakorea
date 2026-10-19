@@ -2,6 +2,11 @@
   margin-bottom: 16px;
 }
 
+.trained-teachers-education-journal-section__bulk-download-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .trained-teachers-education-journal-section__view-cell-inner {
   display: flex;
   justify-content: center;

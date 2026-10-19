@@ -1,6 +1,6 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
@@ -65,6 +65,8 @@ interface TemplateFullpageModalProps {
    * true이면 footer CTA도 숨긴다.
    */
   bodyLoading?: boolean
+  /** 등록 단계 전환 시 본문 스크롤을 상단으로 초기화할 키. 미전달 시 기존 동작 유지. */
+  scrollResetKey?: string | number
 }
 
 export type TemplateFullpageModalFooterAction = {
@@ -120,7 +122,9 @@ export function TemplateFullpageModal({
   headerActionsLeading,
   zIndex,
   bodyLoading = false,
+  scrollResetKey,
 }: TemplateFullpageModalProps) {
+  const bodyRef = useRef<HTMLDivElement>(null)
   const resolvedFooterActions = bodyLoading
     ? undefined
     : footerActions ?? (footerAction != null ? [footerAction] : undefined)
@@ -143,6 +147,13 @@ export function TemplateFullpageModal({
   useEffect(() => {
     setTitleValue(editableTitle ?? '')
   }, [editableTitle])
+
+  useLayoutEffect(() => {
+    if (!open || scrollResetKey == null || bodyRef.current == null) return
+
+    bodyRef.current.scrollTop = 0
+    bodyRef.current.scrollLeft = 0
+  }, [open, scrollResetKey])
 
   const headerActions =
     templateTabType === 'writing' ? (
@@ -272,7 +283,7 @@ export function TemplateFullpageModal({
 
         {subHeader ? <div className="full-page-modal__sub-header">{subHeader}</div> : null}
 
-        <div className="full-page-modal__body">
+        <div ref={bodyRef} className="full-page-modal__body">
           <div className="full-page-modal__body-header">
             {bodyHeaderLeading != null ? (
               <div className="full-page-modal__body-header-leading">{bodyHeaderLeading}</div>
@@ -373,4 +384,3 @@ export {
   type ParagraphCardProps,
 } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
-

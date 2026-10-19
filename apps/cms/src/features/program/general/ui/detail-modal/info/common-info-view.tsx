@@ -80,7 +80,9 @@ import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
-import { isGeneralIndividualParticipantTarget } from '@/features/program/general/lib/survey-audience'
+import {
+  isGeneralIndividualParticipantTarget,
+} from '@/features/program/general/lib/survey-audience'
 import {
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
@@ -530,7 +532,7 @@ function BasicInfoSection({
   const isIndividualTarget = isFormEdit
     ? isGeneralIndividualParticipantTarget(program, participantIndividual, participantOrganization)
     : isGeneralIndividualParticipantTarget(program)
-  const surveyEditFields = getGeneralSurveyEditFieldsForAudience(isIndividualTarget)
+  const surveyEditFields = getGeneralSurveyEditFieldsForAudience(isIndividualTarget, program)
 
   const handleParticipantIndividualChange = useCallback(
     (checked: boolean) => {

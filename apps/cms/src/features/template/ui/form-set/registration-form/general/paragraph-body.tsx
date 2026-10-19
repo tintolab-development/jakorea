@@ -227,6 +227,7 @@ export function renderProgramRegistrationParagraphBody(
               preEducationBlockLabel="교육 연수"
               preEducationDisplayMode="replaceFirst"
               hideAssignmentSettings
+              directScheduleEventDateOnly
             />
           </>
         ) : (
@@ -295,12 +296,14 @@ export function renderProgramRegistrationParagraphBody(
           />
         )
       }
-      /** 교육받은 교사 — 시안처럼 일정 설정 단락을 항상 노출. 일반 일정형+복수는 위에서 숨김 */
+      /** 교육받은 교사 — 일정형+복수는 행사별 일정 블록에서 직접 입력 */
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
-        <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
-          educationScheduleMode={options.educationScheduleMode}
-          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-        />
+        options.programType === 'schedule' && options.sessionRoundType === 'multi' ? null : (
+          <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
+            educationScheduleMode={options.educationScheduleMode}
+            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+          />
+        )
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}

@@ -1,0 +1,159 @@
+.panel {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-24);
+}
+
+.stepCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.title {
+  margin: 0;
+}
+
+.step {
+  margin-right: var(--spacing-8);
+  color: var(--color-primary-500);
+}
+
+.description {
+  margin: 0;
+  line-height: 160%;
+}
+
+.submitRow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.submitButton {
+  white-space: nowrap;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.selectedFile {
+  margin: calc(var(--spacing-8) * -1) 0 0;
+}
+
+.table {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-neutral-cool-200);
+  border-radius: var(--radius-24);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr) 180px;
+  min-height: 56px;
+  align-items: center;
+  border-top: 1px solid var(--color-neutral-cool-100);
+  color: var(--color-neutral-black);
+  font-size: 14px;
+  line-height: 150%;
+  text-align: center;
+}
+
+.tableRow:first-child {
+  border-top: 0;
+}
+
+.tableHeader {
+  min-height: 48px;
+  background: var(--color-neutral-cool-100);
+  color: var(--color-neutral-cool-700);
+  font-weight: 600;
+}
+
+.number,
+.date {
+  padding-inline: var(--spacing-12);
+}
+
+.fileCell {
+  min-width: 0;
+  padding-inline: var(--spacing-16);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileButton {
+  max-width: 100%;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fileButton:hover,
+.fileButton:focus-visible {
+  color: var(--color-primary-500);
+  text-decoration: underline;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-8);
+}
+
+.error {
+  margin-top: calc(var(--spacing-8) * -1);
+}
+
+@media (--bp-below-pc) {
+  .header {
+    flex-direction: column;
+  }
+
+  .submitRow {
+    width: 100%;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
+
+  .tableRow {
+    grid-template-columns: 48px minmax(0, 1fr) 112px;
+    font-size: 13px;
+  }
+
+  .fileCell {
+    padding-inline: var(--spacing-8);
+  }
+}

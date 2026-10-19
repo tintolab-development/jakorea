@@ -19,6 +19,7 @@ import {
   EducationDetailHeaderLayout,
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
+  EducationJournalPanel,
   EducationSettlementPanel,
   EducationStudentsPanel,
   EducationSurveyEmptyPanel,
@@ -64,6 +65,7 @@ import {
 import { buildTeacherApplicationContentFromPortal } from '@/features/mypage/education/applications/lib/teacher-application-content-from-portal'
 import {
   isOrganizationEducationApplication,
+  isTrainedTeachersEducationProgram,
   resolveOrganizationApplicationTypeForContent,
   resolveTeacherApplicationProgramGroup,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
@@ -97,6 +99,7 @@ function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
+    value === 'educationJournal' ||
     value === 'students' ||
     value === 'survey' ||
     value === 'satisfaction' ||
@@ -175,7 +178,23 @@ export function MypageEducationDetailPage() {
     application?.programId ?? null,
     { fresh: true },
   )
-  const program = remoteProgramQuery.program
+  const remoteProgram = remoteProgramQuery.program
+  const program = useMemo(() => {
+    if (!remoteProgram) return undefined
+    const applicationProgram = application?.programConfig
+    if (!applicationProgram) return remoteProgram
+    return {
+      ...remoteProgram,
+      programType: applicationProgram.programType ?? remoteProgram.programType,
+      educationFormLabel:
+        applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
+      educationJournalEnabled:
+        applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
+      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+      satisfactionConfigured:
+        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+    }
+  }, [application?.programConfig, remoteProgram])
   const isApplicationLoading =
     (isRemoteApiConfigured() && isProbingApplicationType) ||
     (remoteDetailEnabled && remoteApplicationQuery.isLoading)
@@ -230,9 +249,14 @@ export function MypageEducationDetailPage() {
       program
         ? {
             detailCase: program.detailCase,
+            programType: program.programType,
             scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
+            educationJournalEnabled:
+              isTeacher &&
+              program.programType === 'TRAINED_TEACHER' &&
+              program.educationJournalEnabled === true,
             ...(isTeacher
               ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
               : {}),
@@ -337,7 +361,10 @@ export function MypageEducationDetailPage() {
         content={teacherApplicationContent}
         showGuidanceWriteLink={showTeacherGuidanceEditLink}
         institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
-        showPreferredEducationForm={program.educationForm === 'participant_choice'}
+        showPreferredEducationForm={
+          program.educationForm === 'participant_choice' ||
+          isTrainedTeachersEducationProgram(program)
+        }
       />
     )
   }, [
@@ -585,7 +612,10 @@ export function MypageEducationDetailPage() {
           content={teacherApplicationContent}
           showGuidanceWriteLink={showTeacherGuidanceEditLink}
           institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
-          showPreferredEducationForm={program.educationForm === 'participant_choice'}
+          showPreferredEducationForm={
+            program.educationForm === 'participant_choice' ||
+            isTrainedTeachersEducationProgram(program)
+          }
         />
       ) : (
         <EducationApplicationContent
@@ -641,6 +671,18 @@ export function MypageEducationDetailPage() {
         />
       )
     }
+    if (active === 'educationJournal') {
+      if (!isTeacher || !isOrganizationEducationApplication(application, program)) {
+        return null
+      }
+      return (
+        <EducationJournalPanel
+          programId={program.id}
+          organizationApplicationId={application.id}
+          enabled={program.educationJournalEnabled === true}
+        />
+      )
+    }
     if (active === 'survey') {
       const surveyAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
@@ -664,6 +706,9 @@ export function MypageEducationDetailPage() {
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
+      if (program.programType?.toUpperCase() === 'TRAINED_TEACHER') {
+        return null
+      }
       const satisfactionAvailability = getEducationSurveyTabAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,

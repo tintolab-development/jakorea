@@ -313,6 +313,7 @@ function UjatProgramRegistrationFullpageModalInner({
       <TemplateFullpageModal
         open={open}
         bodyLoading={flow.isDraftLoading}
+        scrollResetKey={flow.activeStep}
         onClose={handleClose}
         title={UJAT_REGISTRATION_MODAL_TITLE}
         titleReadOnly

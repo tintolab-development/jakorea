@@ -3,10 +3,10 @@ import {
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   TEACHER_EDUCATION_DISPLAY_STATUS_LABEL,
-} from './display-status'
+} from './display-status.ts'
 
-assert.equal(getEducationDisplayStatusLabel('waiting_result', { audience: 'teacher' }), '승인대기')
-assert.equal(getEducationDisplayStatusLabel('document_passed', { audience: 'teacher' }), '승인대기')
+assert.equal(getEducationDisplayStatusLabel('waiting_result', { audience: 'teacher' }), '승인 대기')
+assert.equal(getEducationDisplayStatusLabel('document_passed', { audience: 'teacher' }), '승인 대기')
 assert.equal(getEducationDisplayStatusLabel('in_progress', { audience: 'teacher' }), '진행중')
 assert.equal(getEducationDisplayStatusLabel('waiting_result'), '결과 대기')
 

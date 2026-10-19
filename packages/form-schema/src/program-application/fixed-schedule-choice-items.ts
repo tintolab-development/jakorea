@@ -5,7 +5,6 @@ import {
 } from './curriculum-multi-date-fixed-schedule.js'
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
 import {
-  expandEducationScheduleChoiceSlots,
   type ApplicationScheduleVisibilityInput,
 } from './schedule-paragraph-visibility.js'
 
@@ -114,6 +113,57 @@ export function institutionFixedScheduleOptionToken(item: Record<string, unknown
     }
   }
   return String(item.id ?? '').trim()
+}
+
+export type RuntimeFixedScheduleChoiceItem = {
+  id: string
+  label: string
+}
+
+/**
+ * 제출용 고정 일정 선택지.
+ *
+ * 표시용 fallback(line:N, schedule:<id>)은 양식 렌더링을 위해서만 허용하고,
+ * 제출 시에는 Runtime이 실제로 반환한 value/option_value/id만 사용한다.
+ */
+export function readRuntimeFixedScheduleChoiceItems(
+  runtime: unknown,
+  paragraph: unknown,
+): ReadonlyArray<RuntimeFixedScheduleChoiceItem> | null {
+  if (readApplicationScheduleInputMode(runtime, paragraph) !== 'fixed_schedule_options') {
+    return null
+  }
+  // 고정 일정형의 제출 원본은 템플릿 seed(items)가 아니라 runtime 선택지만 사용한다.
+  // runtime 선택지가 없을 때 paragraph.items로 되돌아가면 오래된 line:N이 다시 노출될 수 있다.
+  const fromRuntime =
+    isRecord(runtime) && Array.isArray(runtime.scheduleOptions) ? runtime.scheduleOptions : null
+  const fromParagraphRuntime =
+    isRecord(paragraph) && Array.isArray(paragraph.scheduleOptions)
+      ? paragraph.scheduleOptions
+      : null
+  const rawItems = toRawScheduleOptionRecords(
+    pickLongestScheduleOptionList(fromRuntime, fromParagraphRuntime),
+  )
+  if (!rawItems || rawItems.length === 0) return null
+
+  const items: RuntimeFixedScheduleChoiceItem[] = []
+  const seen = new Set<string>()
+  for (const item of rawItems) {
+    const id = ['value', 'option_value', 'id']
+      .map(key => item[key])
+      .find(
+        value =>
+          (typeof value === 'string' || typeof value === 'number') && String(value).trim(),
+      )
+    const normalizedId = id == null ? '' : String(id).trim()
+    if (!normalizedId || seen.has(normalizedId)) return null
+    seen.add(normalizedId)
+    const label = String(
+      item.label ?? item.option_label ?? item.scheduleId ?? item.startAt ?? normalizedId,
+    ).trim()
+    items.push({ id: normalizedId, label: label || normalizedId })
+  }
+  return items
 }
 
 function institutionFixedScheduleOptionAliases(item: Record<string, unknown>): string[] {

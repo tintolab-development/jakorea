@@ -48,6 +48,24 @@ function resolveMemberPortalUploadContentType(file: File): string {
   if (ext === 'xls') return typed || 'application/vnd.ms-excel'
   if (ext === 'csv') return typed || 'text/csv'
   if (ext === 'pdf') return typed || 'application/pdf'
+  if (ext === 'doc') return typed || 'application/msword'
+  if (ext === 'docx') {
+    return (
+      typed ||
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+  }
+  if (ext === 'hwp') return typed || 'application/x-hwp'
+  if (ext === 'hwpx') return typed || 'application/vnd.hancom.hwpx'
+  if (ext === 'ppt') return typed || 'application/vnd.ms-powerpoint'
+  if (ext === 'pptx') {
+    return (
+      typed ||
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    )
+  }
+  if (ext === 'txt') return typed || 'text/plain'
+  if (ext === 'zip') return typed || 'application/zip'
   if (ext === 'png') return typed || 'image/png'
   if (ext === 'jpg' || ext === 'jpeg') return typed || 'image/jpeg'
   if (ext === 'webp') return typed || 'image/webp'

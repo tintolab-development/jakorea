@@ -64,4 +64,36 @@ describe('programTrainedTeachersRecruitmentSaveSchema', () => {
     const result = programTrainedTeachersRecruitmentSaveSchema.safeParse(complete)
     expect(result.success).toBe(true)
   })
+
+  it('날짜 지정형은 최대 일정·1일 최대 차시를 저장 필수값으로 요구하지 않는다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      participantRecruitmentMaxScheduleCount: undefined,
+      participantRecruitmentMaxSessionsPerDay: undefined,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('기간형은 표시되는 최대 일정·1일 최대 차시를 저장 필수값으로 요구한다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'period',
+      participantRecruitmentMaxScheduleCount: undefined,
+      participantRecruitmentMaxSessionsPerDay: undefined,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.path.join('.'))).toEqual(
+        expect.arrayContaining([
+          'participantRecruitmentMaxScheduleCount',
+          'participantRecruitmentMaxSessionsPerDay',
+        ])
+      )
+    }
+  })
 })

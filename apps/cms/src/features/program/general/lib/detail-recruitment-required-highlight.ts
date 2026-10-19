@@ -40,8 +40,8 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
   const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
   const prefix = isIndividual ? 'recruit.individual' : 'recruit.institution'
   const showLimits = display.showInstitutionApplicationLimits
-  const showMaxSchedule = display.showMaxScheduleCountField || isTrainedTeachers
-  const showMaxSessions = display.showMaxSessionsPerDayField || isTrainedTeachers
+  const showMaxSchedule = display.showMaxScheduleCountField
+  const showMaxSessions = display.showMaxSessionsPerDayField
 
   push(keys, blankText(values.participantRecruitmentAnnouncementPublished), `${prefix}.announcementPublished`)
   if (isTrainedTeachers || isGeneralOrg) {

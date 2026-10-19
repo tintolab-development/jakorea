@@ -7,6 +7,7 @@ export type EducationProgressScheduleDatePickerProps = {
   participantOrganization: boolean
   programType: 'curriculum' | 'schedule'
   sessionRound: 'single' | 'multi'
+  directEventDateOnly?: boolean
   value: Dayjs | null
   onChange: (next: Dayjs | null) => void
   onRangeChange: (range: [Dayjs, Dayjs]) => void
@@ -25,6 +26,7 @@ export function EducationProgressScheduleDatePicker({
   participantOrganization,
   programType,
   sessionRound,
+  directEventDateOnly = false,
   value,
   onChange,
   onRangeChange,
@@ -36,12 +38,14 @@ export function EducationProgressScheduleDatePicker({
   readOnly,
   disabledDate,
 }: EducationProgressScheduleDatePickerProps) {
-  const lockPeriodToggleOn = shouldLockProgressSchedulePeriodToggle({
-    participantIndividual,
-    participantOrganization,
-    programType,
-    sessionRound,
-  })
+  const lockPeriodToggleOn =
+    directEventDateOnly ||
+    shouldLockProgressSchedulePeriodToggle({
+      participantIndividual,
+      participantOrganization,
+      programType,
+      sessionRound,
+    })
   return (
     <ParagraphDatePicker
       mode="single"
@@ -49,7 +53,7 @@ export function EducationProgressScheduleDatePicker({
       customizable={false}
       lockTimeToggleOn
       showTimeToggle={false}
-      showPeriodToggle
+      showPeriodToggle={!directEventDateOnly}
       lockPeriodToggleOn={lockPeriodToggleOn}
       suppressAutoTodayWhenEmpty
       value={value}

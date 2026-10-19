@@ -14,47 +14,49 @@ function extractErrorCode(data: unknown): string | undefined {
   return undefined
 }
 
-function extractErrorMessage(data: unknown): string | undefined {
+function extractNestedErrorMessage(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
-  const body = data as { message?: unknown; error?: { message?: unknown } }
-  if (typeof body.message === 'string' && body.message.trim()) {
-    return body.message.trim()
-  }
+  const body = data as { error?: { message?: unknown } }
   if (typeof body.error?.message === 'string' && body.error.message.trim()) {
     return body.error.message.trim()
   }
   return undefined
 }
 
+function extractTopLevelErrorMessage(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const body = data as { message?: unknown }
+  if (typeof body.message === 'string' && body.message.trim()) {
+    return body.message.trim()
+  }
+  return undefined
+}
+
+function isGenericApplicationErrorMessage(message: string): boolean {
+  return (
+    message === '입력값 또는 요청 조건을 확인해 주세요.' ||
+    message === PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE
+  )
+}
+
 export const DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE =
   '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
-
-function normalizeLegacyEnglishApplicationMessage(message: string): string {
-  if (
-    message.includes('before the program period') ||
-    message.includes('after the program period')
-  ) {
-    return '희망 교육일이 프로그램 운영 기간을 벗어났습니다.'
-  }
-  if (message.includes('stale or unavailable schedule')) {
-    return '선택할 수 없는 교육 일정입니다. 일정을 다시 확인해 주세요.'
-  }
-  if (message.includes('outside the education schedule periods')) {
-    return '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.'
-  }
-  return message
-}
 
 export function getApiErrorMessageFromBody(
   data: unknown,
   fallback = DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE,
 ): string {
-  const message = extractErrorMessage(data)
-  if (message) return normalizeLegacyEnglishApplicationMessage(message)
   const code = extractErrorCode(data)
-  if (code && BLOCKED_REASON_MESSAGES[code]) {
-    return BLOCKED_REASON_MESSAGES[code]
+  const mappedMessage = code ? BLOCKED_REASON_MESSAGES[code] : undefined
+  const nestedMessage = extractNestedErrorMessage(data)
+  if (nestedMessage && !(mappedMessage && isGenericApplicationErrorMessage(nestedMessage))) {
+    return nestedMessage
   }
+  if (mappedMessage) {
+    return mappedMessage
+  }
+  const topLevelMessage = extractTopLevelErrorMessage(data)
+  if (topLevelMessage) return topLevelMessage
   return fallback
 }
 
@@ -79,18 +81,29 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   /** application-options.blockedReason — APPLICATION_ALREADY_SUBMITTED와 동일 안내 */
   ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
-    '희망 교육일이 프로그램 교육 가능 기간을 벗어났습니다.',
+    '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
   OUTSIDE_EDUCATION_SCHEDULE_PERIODS:
     '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SCHEDULE_COUNT:
-    '선택 가능한 희망 교육 일정 수를 초과했습니다.',
+    '희망 교육 일정 지망 수가 모집 상한을 초과했습니다.',
   ORGANIZATION_REQUESTED_SCHEDULE_REQUIRED:
     '진행 희망 교육 일정을 한 개 이상 선택해 주세요.',
   /** 토큰은 인정됐으나 운영 일정으로 materialize 실패 (BE ProgramFormRuntimeSubmissionValidator) */
   INVALID_SCHEDULE_OPTION_TOKEN:
     '선택한 교육 일정을 더 이상 사용할 수 없습니다. 일정을 다시 선택해 주세요.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
-    '하루 최대 수업 시수를 초과했습니다.',
+    '하루 희망 차시 수가 모집 상한을 초과했습니다.',
+  FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
+  FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
+  FORM_OPTION_NOT_ALLOWED: '선택한 값은 사용할 수 없습니다.',
+  FORM_ANSWER_NOT_ALLOWED: '현재 제출할 수 없는 양식 항목입니다.',
+  RUNTIME_FORM_FIELD_NOT_ALLOWED: '현재 제출할 수 없는 양식 항목입니다.',
+  RUNTIME_SCHEDULE_SHAPE_INVALID: '희망 교육 일정 형식을 확인해 주세요.',
+  RUNTIME_SCHEDULE_STALE: '선택한 교육 일정이 변경되었습니다. 일정을 다시 선택해 주세요.',
+  SCHEDULE_NOT_CONFIGURED:
+    '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.',
+  TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED:
+    '교육받은 교사 프로그램은 학교·기관 신청만 가능합니다.',
   VALIDATION_FAILED: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE,
   OPERATION_NOT_ALLOWED: '제출할 수 없는 답변이 포함되어 있습니다.',
   RECRUITMENT_FORM_BINDING_MISMATCH: '선택한 모집의 신청서가 아닙니다. 모집을 다시 선택해 주세요.',
