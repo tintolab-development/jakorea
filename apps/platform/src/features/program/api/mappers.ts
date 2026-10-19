@@ -783,12 +783,18 @@ function mapPortalScheduleDetails(
 const EDUCATION_TARGET_CODE = new Set(['elementary', 'middle', 'high', 'university', 'adult'])
 
 /** 교육 대상 상세 문장. `high` 같은 대상 코드는 설명으로 쓰지 않는다. */
-function mapEducationTargetDetailLabel(remote: PortalProgramDetail, fallbackLabel: string): string {
+function mapEducationTargetDetailLabel(
+  remote: PortalProgramDetail,
+  fallbackLabel: string,
+  useRecruitmentDetailFallback: boolean,
+): string {
   const detail = readString(remote.educationTargetDetail)
   if (detail && !EDUCATION_TARGET_CODE.has(detail.toLowerCase())) return detail
-  const recruitmentDetail = readString(remote.recruitmentTargetDetail)
-  if (recruitmentDetail && !EDUCATION_TARGET_CODE.has(recruitmentDetail.toLowerCase())) {
-    return recruitmentDetail
+  if (useRecruitmentDetailFallback) {
+    const recruitmentDetail = readString(remote.recruitmentTargetDetail)
+    if (recruitmentDetail && !EDUCATION_TARGET_CODE.has(recruitmentDetail.toLowerCase())) {
+      return recruitmentDetail
+    }
   }
   return fallbackLabel
 }
@@ -865,24 +871,6 @@ function compactBasicInfoFields(fields: ProgramBasicInfoField[]): ProgramBasicIn
   return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
-function isRoleRecruitmentDetailCase(detailCase: ProgramDetailCase): boolean {
-  return (
-    detailCase === 'volunteer' ||
-    detailCase === 'ujat-volunteer' ||
-    detailCase === 'instructor'
-  )
-}
-
-/** 교육받은 교사(TRAINED_TEACHER)는 detailCase `instructor`이지만 교육 대상 스칼라를 쓴다. */
-function usesPortalRoleRecruitmentTargetScalars(
-  programType: string | undefined,
-  detailCase: ProgramDetailCase
-): boolean {
-  if (!isRoleRecruitmentDetailCase(detailCase)) return false
-  if ((programType ?? '').trim().toUpperCase() === 'TRAINED_TEACHER') return false
-  return true
-}
-
 /** 기본정보 그리드 레이아웃 — TRAINED_TEACHER는 강사 모집 카드가 아닌 교육 대상형. */
 function portalBasicInfoLayoutCase(
   programType: string | undefined,
@@ -907,6 +895,16 @@ function resolvePortalRecruitmentTargetDetailLabel(remote: PortalProgramDetail):
   return ''
 }
 
+function educationTargetBasicInfoFields(args: {
+  educationTargetGroupLabel: string
+  educationTargetDetailLabel: string
+}): ProgramBasicInfoField[] {
+  return [
+    { label: '교육 대상', value: args.educationTargetGroupLabel },
+    { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+  ]
+}
+
 function buildPortalBasicInfoFields(args: {
   detailCase: ProgramDetailCase
   usesEducationProgressFields: boolean
@@ -926,6 +924,7 @@ function buildPortalBasicInfoFields(args: {
           label: '모집 대상',
           value: args.recruitmentTargetGroupLabel || args.recruitmentTargetDetailLabel,
         },
+        ...educationTargetBasicInfoFields(args),
         { label: '모집 지역', value: args.educationVenueLabel },
       ])
     case 'volunteer':
@@ -933,6 +932,7 @@ function buildPortalBasicInfoFields(args: {
         { label: '사업 분야', value: args.businessFieldLabel },
         { label: '모집 대상', value: args.recruitmentTargetGroupLabel },
         { label: '모집 대상 상세', value: args.recruitmentTargetDetailLabel },
+        ...educationTargetBasicInfoFields(args),
         ...(!args.usesEducationProgressFields || args.educationFormLabel
           ? [{ label: '교육 형태', value: args.educationFormLabel }]
           : []),
@@ -945,6 +945,7 @@ function buildPortalBasicInfoFields(args: {
           label: '모집 대상',
           value: args.recruitmentTargetGroupLabel || '대학(원)생',
         },
+        ...educationTargetBasicInfoFields(args),
         { label: '교육 지역', value: args.educationVenueLabel },
       ])
     case 'ujat-participant':
@@ -970,8 +971,7 @@ function buildPortalBasicInfoFields(args: {
         fields.push({ label: '교육 형태', value: args.educationFormLabel })
       }
       fields.push(
-        { label: '교육 대상', value: args.educationTargetGroupLabel },
-        { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+        ...educationTargetBasicInfoFields(args),
         { label: '교육 장소', value: args.educationVenueLabel }
       )
       return compactBasicInfoFields(fields)
@@ -1029,10 +1029,8 @@ export function mapPortalProgramDetail(
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const programType = readString(remote.programType)?.toUpperCase()
-  const roleRecruitmentDetail = usesPortalRoleRecruitmentTargetScalars(programType, detailCase)
-  const targets = roleRecruitmentDetail
-    ? mapEducationTargets({ educationTargets: remote.recruitmentTargets })
-    : mapEducationTargets(remote)
+  const targets = mapEducationTargets(remote)
+  const hasEducationTargetCodes = targets.keys.length > 0
   const recruitmentTargetGroupLabel = resolvePortalRecruitmentTargetGroupLabel(remote)
   const recruitmentTargetDetailLabel = resolvePortalRecruitmentTargetDetailLabel(remote)
   const roleLabel = ROLE_LABEL[detailCase]
@@ -1074,12 +1072,14 @@ export function mapPortalProgramDetail(
     venueFromSchedules(remote.schedules) ||
     (perScheduleEducationForm ? '' : educationFormLabel)
   const businessFieldLabel = readString(remote.businessField) || '-'
-  const educationTargetGroupLabel = roleRecruitmentDetail
-    ? recruitmentTargetGroupLabel
-    : targets.educationTargetGroupLabel
-  const educationTargetDetailLabel = roleRecruitmentDetail
-    ? recruitmentTargetDetailLabel
-    : mapEducationTargetDetailLabel(remote, targets.educationTargetLabel)
+  const educationTargetGroupLabel = hasEducationTargetCodes ? targets.educationTargetGroupLabel : ''
+  const educationTargetDetailLabel = mapEducationTargetDetailLabel(
+    remote,
+    hasEducationTargetCodes ? targets.educationTargetLabel : '',
+    detailCase !== 'instructor' &&
+      detailCase !== 'volunteer' &&
+      detailCase !== 'ujat-volunteer',
+  )
   const independentRow =
     recruitmentResolved && selected?.rows.length === 1 && isIndependentRecruitmentProgram(programType)
       ? selected.rows[0]

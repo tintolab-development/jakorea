@@ -12,6 +12,7 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 import {
   hasRecruitmentWindows,
@@ -92,6 +93,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     ),
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),
+      audienceOperationPeriodLabelFromRecruitmentRow(program, 'instructor'),
       useRow ? undefined : info?.operationPeriodLabel
     ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',

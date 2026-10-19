@@ -10,7 +10,18 @@ import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard
 import { ProgramRecruitmentRequestApplicationType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestApplicationType'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
+import type { DateValue } from '@/types'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
+
+function optionalDateToApiString(value: DateValue | null | undefined): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed || undefined
+  }
+  if (value instanceof Date) return value.toISOString()
+  return String(value)
+}
 
 /** 모집 탭 PATCH에서 일정 교체로 해석되는 키를 뺀다. 빈 `rounds: []`도 보내지 않는다. */
 export function omitRecruitmentTabScheduleFields(patch: Partial<Program>): Partial<Program> {
@@ -61,28 +72,28 @@ function windowStartForAudience(
   audience: RecruitmentCopyAudience,
   patch: Partial<Program>,
   row: ProgramRecruitmentWindow
-): string | null | undefined {
+): string | undefined {
   if (audience === 'instructor') {
-    return patch.instructorApplicationStartDate ?? row.startAt
+    return optionalDateToApiString(patch.instructorApplicationStartDate) ?? row.startAt ?? undefined
   }
   if (audience === 'volunteer') {
-    return patch.volunteerApplicationStartDate ?? row.startAt
+    return optionalDateToApiString(patch.volunteerApplicationStartDate) ?? row.startAt ?? undefined
   }
-  return patch.applicationStartDate ?? row.startAt
+  return optionalDateToApiString(patch.applicationStartDate) ?? row.startAt ?? undefined
 }
 
 function windowEndForAudience(
   audience: RecruitmentCopyAudience,
   patch: Partial<Program>,
   row: ProgramRecruitmentWindow
-): string | null | undefined {
+): string | undefined {
   if (audience === 'instructor') {
-    return patch.instructorApplicationEndDate ?? row.endAt
+    return optionalDateToApiString(patch.instructorApplicationEndDate) ?? row.endAt ?? undefined
   }
   if (audience === 'volunteer') {
-    return patch.volunteerApplicationEndDate ?? row.endAt
+    return optionalDateToApiString(patch.volunteerApplicationEndDate) ?? row.endAt ?? undefined
   }
-  return patch.applicationEndDate ?? row.endAt
+  return optionalDateToApiString(patch.applicationEndDate) ?? row.endAt ?? undefined
 }
 
 function maxCountFromPatch(
@@ -153,12 +164,16 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   const startAt = windowStartForAudience(audience, patch, row)
   const endAt = windowEndForAudience(audience, patch, row)
   const interviewStartAt =
-    audience === 'volunteer' ? (patch.interviewStartDate ?? row.interviewStartAt) : row.interviewStartAt
+    audience === 'volunteer'
+      ? (optionalDateToApiString(patch.interviewStartDate) ?? row.interviewStartAt ?? undefined)
+      : (row.interviewStartAt ?? undefined)
   const interviewEndAt =
-    audience === 'volunteer' ? (patch.interviewEndDate ?? row.interviewEndAt) : row.interviewEndAt
+    audience === 'volunteer'
+      ? (optionalDateToApiString(patch.interviewEndDate) ?? row.interviewEndAt ?? undefined)
+      : (row.interviewEndAt ?? undefined)
   const interviewEnabled =
     audience === 'volunteer'
-      ? (patch.volunteerInterviewEnabled ?? row.interviewEnabled)
+      ? (patch.generalVolunteerInterviewEnabled ?? row.interviewEnabled)
       : row.interviewEnabled
 
   const body: ProgramRecruitmentRequest = {

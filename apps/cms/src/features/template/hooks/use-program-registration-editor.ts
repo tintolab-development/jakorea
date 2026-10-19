@@ -84,8 +84,10 @@ import {
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
+import { normalizeRegistrationOverlayForApply } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   describeIncompleteGeneralProgramRegistrationRequiredFields,
+  hasCurriculumMultiDateScheduleCountMismatch,
   listIncompleteGeneralProgramRegistrationRequiredFields,
 } from '@/features/program/general/lib/registration-required-fields'
 import {
@@ -1799,6 +1801,81 @@ export function useProgramRegistrationEditor(
     trainedTeachersTeacherTrainingEnabled,
   ])
 
+  const hasCurriculumMultiDateScheduleCountMismatchOnDraft = useCallback(() => {
+    if (
+      programRegistrationFormVariant !== 'general' &&
+      programRegistrationFormVariant !== 'trainedTeachers'
+    ) {
+      return false
+    }
+    const overlay = getProgramRegistrationOverlayRecord()
+    const resolvedSponsorId =
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
+    const resolvedContactId =
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
+    if (programRegistrationFormVariant === 'trainedTeachers') {
+      return hasCurriculumMultiDateScheduleCountMismatch(
+        normalizeRegistrationOverlayForApply(overlay, 'trainedTeachers'),
+        {
+          participant,
+          programType,
+          sessionRoundType,
+          educationFormScheduleDetail,
+          participationScheduleDetail,
+          ipsScheduleDetail,
+          curriculumSessionCount,
+          curriculumChartSessionCount,
+          scheduleCurriculumDetailCount,
+          scheduleCurriculumGroupCount,
+          scheduleCurriculumPreEducation: trainedTeachersTeacherTrainingEnabled,
+          educationScheduleMode,
+          sponsorId: resolvedSponsorId,
+          sponsorContactId: resolvedContactId,
+          programTitleKo: resolveProgramTitleKo(),
+          omitKpiAndWage: true,
+          allowEmptySponsor: true,
+          preEducationDisplayMode: programType === 'schedule' ? 'replaceFirst' : 'prepend',
+        }
+      )
+    }
+    return hasCurriculumMultiDateScheduleCountMismatch(overlay, {
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolveProgramTitleKo(),
+    })
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    sponsorContactId,
+    sponsorId,
+    trainedTeachersTeacherTrainingEnabled,
+  ])
+
   return {
     draft,
     programRegistrationFormVariant,
@@ -1837,6 +1914,7 @@ export function useProgramRegistrationEditor(
     curriculumChartSessionCount,
     hasIncompleteRequiredFields,
     listIncompleteRequiredFieldKeys,
+    hasCurriculumMultiDateScheduleCountMismatch: hasCurriculumMultiDateScheduleCountMismatchOnDraft,
     getIncompleteRequiredFieldsReason,
     resolveProgramTitleKo,
   }

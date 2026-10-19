@@ -1307,26 +1307,29 @@ const volunteerRecruitmentAudience = mapPortalProgramDetail(
 )
 assert.ok(volunteerRecruitmentAudience)
 assert.equal(volunteerRecruitmentAudience.detailCase, 'volunteer')
-assert.equal(volunteerRecruitmentAudience.educationTargetGroupLabel, '고등학생, 대학(원)생')
-assert.equal(
-  volunteerRecruitmentAudience.educationTargetDetailLabel,
-  '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
-)
+assert.equal(volunteerRecruitmentAudience.educationTargetGroupLabel, '성인')
+assert.equal(volunteerRecruitmentAudience.educationTargetDetailLabel, '성인')
 assert.equal(
   volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '모집 대상')?.value,
   '고등학생, 대학(원)생',
 )
 assert.equal(
-  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '교육 대상'),
-  undefined,
+  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '모집 대상 상세')?.value,
+  '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+)
+assert.equal(
+  volunteerRecruitmentAudience.basicInfoFields.find(field => field.label === '교육 대상')?.value,
+  '성인',
 )
 
-const volunteerIgnoresParticipantEducationTarget = mapPortalProgramDetail(
+const volunteerKeepsProgramEducationTarget = mapPortalProgramDetail(
   {
     programId: 186250,
     programType: 'GENERAL_ORGANIZATION',
     title: '기관/일정/단일/날짜',
     educationTarget: 'adult',
+    educationTargets: ['adult'],
+    educationTargetDetail: '성인 일반',
     recruitmentTarget: '고등학생, 대학(원)생',
     recruitmentTargets: ['high', 'university'],
     recruitmentTargetDetail: '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
@@ -1334,12 +1337,78 @@ const volunteerIgnoresParticipantEducationTarget = mapPortalProgramDetail(
   },
   { applicationTypes: ['VOLUNTEER'] },
 )
-assert.ok(volunteerIgnoresParticipantEducationTarget)
-assert.deepEqual(volunteerIgnoresParticipantEducationTarget.educationTargetKeys, ['high', 'university'])
-assert.equal(volunteerIgnoresParticipantEducationTarget.educationTargetLabel, '고등학교, 대학(원)생')
+assert.ok(volunteerKeepsProgramEducationTarget)
+assert.deepEqual(volunteerKeepsProgramEducationTarget.educationTargetKeys, ['adult'])
+assert.equal(volunteerKeepsProgramEducationTarget.educationTargetLabel, '성인')
+assert.equal(volunteerKeepsProgramEducationTarget.educationTargetGroupLabel, '성인')
+assert.equal(volunteerKeepsProgramEducationTarget.educationTargetDetailLabel, '성인 일반')
 assert.equal(
-  volunteerIgnoresParticipantEducationTarget.basicInfoFields.find(field => field.label === '교육 대상'),
+  volunteerKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '모집 대상')?.value,
+  '고등학생, 대학(원)생',
+)
+assert.equal(
+  volunteerKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상')?.value,
+  '성인',
+)
+assert.equal(
+  volunteerKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상 상세')
+    ?.value,
+  '성인 일반',
+)
+
+const volunteerMissingEducationTarget = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    recruitmentTarget: '고등학생, 대학(원)생',
+    recruitmentTargets: ['high', 'university'],
+    recruitmentTargetDetail: '고등학교 1~2학년, 경제·교육 관련 학과 재학생',
+    recruitments: [{ recruitmentType: 'VOLUNTEER', applicationTypes: ['VOLUNTEER'] }],
+  },
+  { applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerMissingEducationTarget)
+assert.deepEqual(volunteerMissingEducationTarget.educationTargetKeys, [])
+assert.equal(
+  volunteerMissingEducationTarget.basicInfoFields.find(field => field.label === '모집 대상')?.value,
+  '고등학생, 대학(원)생',
+)
+assert.equal(
+  volunteerMissingEducationTarget.basicInfoFields.find(field => field.label === '교육 대상'),
   undefined,
+)
+
+const instructorKeepsProgramEducationTarget = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    educationTargets: ['elementary'],
+    educationTargetDetail: '초등학생 4~6학년',
+    recruitmentTarget: '강사',
+    recruitmentTargets: ['adult'],
+    recruitments: [{ recruitmentType: 'INSTRUCTOR', applicationTypes: ['INSTRUCTOR'] }],
+  },
+  { applicationTypes: ['INSTRUCTOR'] },
+)
+assert.ok(instructorKeepsProgramEducationTarget)
+assert.equal(instructorKeepsProgramEducationTarget.detailCase, 'instructor')
+assert.deepEqual(instructorKeepsProgramEducationTarget.educationTargetKeys, ['elementary'])
+assert.equal(
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '모집 대상')
+    ?.value,
+  '강사',
+)
+assert.equal(
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상')
+    ?.value,
+  '초등학교',
+)
+assert.equal(
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상 상세')
+    ?.value,
+  '초등학생 4~6학년',
 )
 
 console.log('program portal mappers.selfcheck: ok')

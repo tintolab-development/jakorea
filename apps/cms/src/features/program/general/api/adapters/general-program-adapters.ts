@@ -996,7 +996,10 @@ function mapProgramPatchFieldsToRequest(
     includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment
       ? (mapGeneralProgramRecruitmentsToRequest({
           ...merged,
-          programRecruitments: existing.programRecruitments,
+          // 운영 기간은 폼이 갱신한 행을 쓴다. 행이 없으면 기존 id·날짜를 유지한다.
+          programRecruitments: has('programRecruitments')
+            ? merged.programRecruitments
+            : existing.programRecruitments,
         })?.filter(row => {
           const type = recruitmentTypeOf(row.recruitmentType)
           if (type === 'PARTICIPANT') return includeParticipantRecruitment

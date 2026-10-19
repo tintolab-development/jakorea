@@ -123,7 +123,7 @@ describe('persist-recruitment-row-save', () => {
   it('모집 탭 fallback patch에서 rounds를 제거한다', () => {
     const next = omitRecruitmentTabScheduleFields({
       volunteerApplicationEndDate: '2026-10-31',
-      rounds: [{ roundNumber: 1, startDate: '2026-11-02' }],
+      rounds: [{ roundNumber: 1, startDate: '2026-11-02' } as Program['rounds'][number]],
     })
     expect(next.rounds).toBeUndefined()
     expect(next.volunteerApplicationEndDate).toBe('2026-10-31')

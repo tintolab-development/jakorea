@@ -97,6 +97,9 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
     '선택한 교육 일정을 더 이상 사용할 수 없습니다. 일정을 다시 선택해 주세요.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
     '하루 희망 차시 수가 모집 상한을 초과했습니다.',
+  /** CURRICULUM + PERIOD — 빈 sessionTimes. SCHEDULE+SINGLE+PERIOD date-only 는 해당 없음 */
+  PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED:
+    '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
   FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
   FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
   FORM_OPTION_NOT_ALLOWED: '선택한 값은 사용할 수 없습니다.',
