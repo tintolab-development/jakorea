@@ -8,7 +8,6 @@
 
 /**
  * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
- * @nullable
  */
 export type ProgramCreateRequestDraftStatus = typeof ProgramCreateRequestDraftStatus[keyof typeof ProgramCreateRequestDraftStatus] | null;
 

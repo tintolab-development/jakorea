@@ -12,10 +12,7 @@ export interface RecruitmentResponse {
   recruitmentId?: number;
   recruitmentType?: string;
   targetType?: string;
-  /**
-     * UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.
-     * @nullable
-     */
+  /** UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null. */
   recruitTerm?: RecruitmentResponseRecruitTerm;
   status?: string;
   startAt?: string;
@@ -27,75 +24,33 @@ export interface RecruitmentResponse {
   selectionMethod?: string;
   applicationTypes?: string[];
   open?: boolean;
-  /**
-     * false면 서류·면접 행을 만들지 않습니다. 저장값이 없으면 null입니다.
-     * @nullable
-     */
+  /** false면 서류·면접 행을 만들지 않습니다. 저장값이 없으면 null입니다. */
   interviewEnabled?: boolean | null;
-  /**
-     * 1차 서류 합격자 발표 시각. interviewEnabled가 true일 때만 의미가 있습니다. 없으면 null입니다.
-     * @nullable
-     */
+  /** 1차 서류 합격자 발표 시각. interviewEnabled가 true일 때만 의미가 있습니다. 없으면 null입니다. */
   documentPassAnnouncementAt?: string | null;
-  /**
-     * 2차 면접 기간 시작. 없으면 null입니다.
-     * @nullable
-     */
+  /** 2차 면접 기간 시작. 없으면 null입니다. */
   interviewStartAt?: string | null;
-  /**
-     * 2차 면접 기간 끝. 없으면 null입니다.
-     * @nullable
-     */
+  /** 2차 면접 기간 끝. 없으면 null입니다. */
   interviewEndAt?: string | null;
-  /**
-     * 최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다.
-     * @nullable
-     */
+  /** 최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다. */
   finalPassAnnouncementAt?: string | null;
-  /**
-     * 이 모집 행의 프로그램 설명. 비어 있으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 프로그램 설명. 비어 있으면 null. */
   programDescription?: string | null;
-  /**
-     * 이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집 문구로 채우지 않는다.
-     * @nullable
-     */
+  /** 이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집 문구로 채우지 않는다. */
   recruitmentGuide?: string | null;
-  /**
-     * 이 모집 행의 신청 방법. 비어 있으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 신청 방법. 비어 있으면 null. */
   applicationMethod?: string | null;
-  /**
-     * 이 모집 행의 학습 지원. 비어 있으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 학습 지원. 비어 있으면 null. */
   learningSupportContent?: string | null;
-  /**
-     * 이 모집 행의 추가 내용 HTML. 비어 있으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 추가 내용 HTML. 비어 있으면 null. */
   additionalContentHtml?: string | null;
-  /**
-     * 이 모집 행의 비고. 비어 있으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 비고. 비어 있으면 null. */
   remarks?: string | null;
-  /**
-     * 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null.
-     * @nullable
-     */
+  /** 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. */
   otherMatters?: string | null;
-  /**
-     * 이 모집 행의 제목. 없으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 제목. 없으면 null. */
   announcementTitle?: string | null;
-  /**
-     * 이 모집 행의 요약. 없으면 null.
-     * @nullable
-     */
+  /** 이 모집 행의 요약. 없으면 null. */
   summary?: string | null;
   /** 봉사자(VOLUNTEER) 모집이고 면접이 켜진 경우 「면접 진행 가능 일정」. 신청폼 면접 선택지와 같은 규칙(슬롯 우선, 없으면 CMS volunteerInterviewScheduleInfo 펼침). 그 외 모집 유형·면접 미운영은 null(필드 생략). options는 없으면 []. */
   volunteerInterviewSchedule?: VolunteerInterviewScheduleResponse | null;

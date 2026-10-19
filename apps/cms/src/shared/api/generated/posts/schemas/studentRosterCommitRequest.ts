@@ -12,7 +12,6 @@ export interface StudentRosterCommitRequest {
   /**
      * 조회한 최신 학생명단 revisionNo. 값이 있으면 불일치 시 409 STUDENT_ROSTER_REVISION_CONFLICT를 반환합니다. 최초 저장은 0입니다. 구형 클라이언트의 생략은 하위 호환을 위해 허용되지만 충돌 보호를 적용하지 않습니다.
      * @minimum 0
-     * @nullable
      */
   expectedRevisionNo?: number | null;
   /**

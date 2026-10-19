@@ -20,60 +20,31 @@ export interface GeminiApprovedTrainingDetailResponse {
   recruitmentId?: number;
   recruitmentTitle?: string;
   recruitmentDescription?: string;
-  /** @nullable */
   progressStatus?: GeminiApprovedTrainingDetailResponseProgressStatus;
   applicationStatus?: string;
   institutionName?: string;
   institutionSido?: string;
   institutionSigungu?: string;
-  /**
-     * 도로명 등 본문 주소
-     * @nullable
-     */
+  /** 도로명 등 본문 주소 */
   institutionAddress?: string | null;
-  /** @nullable */
   institutionAddressDetail?: string | null;
-  /**
-     * 이 기관의 Gemini 찾아가는 연수 신청 누적
-     * @nullable
-     */
+  /** 이 기관의 Gemini 찾아가는 연수 신청 누적 */
   institutionApplicationCount?: number | null;
-  /**
-     * 그 중 연수 완료(강사 매칭+연수일 경과) 건수
-     * @nullable
-     */
+  /** 그 중 연수 완료(강사 매칭+연수일 경과) 건수 */
   institutionCompletedTrainingCount?: number | null;
-  /**
-     * 기관(조직) 등록일. 신청 submittedAt과 다를 수 있다
-     * @nullable
-     */
+  /** 기관(조직) 등록일. 신청 submittedAt과 다를 수 있다 */
   institutionJoinedAt?: string | null;
   scheduleId?: number;
   scheduleName?: string;
-  /**
-     * 강사 식별자가 있고 취소되지 않은 기관 일정 배정이 있을 때만 채운다. 희망일 1지망으로 대체하지 않는다. 그 외에는 null
-     * @nullable
-     */
+  /** 강사 식별자가 있고 취소되지 않은 기관 일정 배정이 있을 때만 채운다. 희망일 1지망으로 대체하지 않는다. 그 외에는 null */
   trainingDate?: string | null;
-  /**
-     * trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null
-     * @nullable
-     */
+  /** trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null */
   trainingStartTime?: string | null;
-  /**
-     * trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null
-     * @nullable
-     */
+  /** trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null */
   trainingEndTime?: string | null;
-  /**
-     * 확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 그 외에는 null
-     * @nullable
-     */
+  /** 확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 그 외에는 null */
   trainingTimeText?: string | null;
-  /**
-     * 희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리
-     * @nullable
-     */
+  /** 희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리 */
   lastPreferredDate?: string | null;
   studentCount?: number;
   classCount?: number;
@@ -92,61 +63,30 @@ export interface GeminiApprovedTrainingDetailResponse {
      * @deprecated
      */
   managerName?: string;
-  /**
-     * 기관 신청 담당 교사 회원 id
-     * @nullable
-     */
+  /** 기관 신청 담당 교사 회원 id */
   teacherMemberId?: number | null;
-  /** @nullable */
   teacherName?: string | null;
-  /**
-     * MALE|FEMALE|OTHER 또는 한글 표시 원문
-     * @nullable
-     */
+  /** MALE|FEMALE|OTHER 또는 한글 표시 원문 */
   teacherGender?: string | null;
-  /** @nullable */
   teacherBirthDate?: string | null;
-  /** @nullable */
   teacherPhone?: string | null;
-  /** @nullable */
   teacherEmail?: string | null;
-  /** @nullable */
   teacherSchoolName?: string | null;
-  /** @nullable */
   teacherEmploymentStatus?: GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus;
-  /**
-     * 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 직급 키가 없어 항상 null
-     * @nullable
-     */
+  /** 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 직급 키가 없어 항상 null */
   teacherPosition?: string | null;
-  /**
-     * 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 과목 키가 없어 항상 null
-     * @nullable
-     */
+  /** 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 과목 키가 없어 항상 null */
   teacherSubject?: string | null;
-  /** @nullable */
   teacherHomeAddress?: string | null;
-  /**
-     * 이 기관 신청의 program_organization_schedule_assignment_revision 행 수. 일정 교체 이력이 없으면 0. null이 아니다
-     * @nullable
-     */
+  /** 이 기관 신청의 program_organization_schedule_assignment_revision 행 수. 일정 교체 이력이 없으면 0. null이 아니다 */
   teacherScheduleChangeCount?: number | null;
-  /** @nullable */
   teacherLectureExperience?: string | null;
-  /** @nullable */
   teacherAccountBank?: string | null;
-  /**
-     * 상세 GET은 앞 3자리·뒤 4자리만 남긴 마스킹(123-****-7890). 계좌가 없거나 복호화에 실패하면 null. 원문은 POST .../privacy/unmask 응답에만 있다
-     * @nullable
-     */
+  /** 상세 GET은 앞 3자리·뒤 4자리만 남긴 마스킹(123-****-7890). 계좌가 없거나 복호화에 실패하면 null. 원문은 POST .../privacy/unmask 응답에만 있다 */
   teacherAccountNumber?: string | null;
-  /** @nullable */
   teacherAccountHolder?: string | null;
-  /** @nullable */
   teacherInstructorFeeGrade?: string | null;
-  /** @nullable */
   teacherBusinessIncomeLabel?: string | null;
-  /** @nullable */
   teacherOneLineIntro?: string | null;
   officialDocumentRequired?: boolean;
   submittedAt?: string;

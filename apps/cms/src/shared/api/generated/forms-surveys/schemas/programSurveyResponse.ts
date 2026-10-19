@@ -21,9 +21,6 @@ export interface ProgramSurveyResponse {
   lastSubmittedAt?: string;
   submittedCount?: number;
   draftCount?: number;
-  /**
-     * 대상별 예상 응답 인원. submittedCount와 별개다. 설문조사 탭에서 대상이 없으면 null이며, 그때 프로그램 총원을 쓴다. 0은 그 대상 인원이 0명일 때만.
-     * @nullable
-     */
+  /** 대상별 예상 응답 인원. submittedCount와 별개다. 설문조사 탭에서 대상이 없으면 null이며, 그때 프로그램 총원을 쓴다. 0은 그 대상 인원이 0명일 때만. */
   expectedRespondentCount?: number | null;
 }

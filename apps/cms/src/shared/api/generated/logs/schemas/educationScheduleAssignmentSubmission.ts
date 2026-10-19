@@ -11,6 +11,5 @@ export interface EducationScheduleAssignmentSubmission {
   id?: unknown;
   kind?: EducationScheduleAssignmentSubmissionKind;
   fileName?: string;
-  /** @nullable */
   url?: string | null;
 }

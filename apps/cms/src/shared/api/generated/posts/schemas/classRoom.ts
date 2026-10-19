@@ -7,14 +7,8 @@
  */
 
 export interface ClassRoom {
-  /**
-     * 실제 등록 학급 번호 또는 반 이름. 학생 명단 StudentRosterRowRequest.className과 분리된 반 값(보통 N반).
-     * @nullable
-     */
+  /** 실제 등록 학급 번호 또는 반 이름. 학생 명단 StudentRosterRowRequest.className과 분리된 반 값(보통 N반). */
   classNo?: string | null;
-  /**
-     * 그 학급의 학생 수. 없으면 null. 총원을 나누어 만들지 않음
-     * @nullable
-     */
+  /** 그 학급의 학생 수. 없으면 null. 총원을 나누어 만들지 않음 */
   studentCount?: number | null;
 }

@@ -9,15 +9,9 @@
 export interface Textbook {
   id?: number;
   name?: string;
-  /**
-     * 교재 교육대상. 없으면 null.
-     * @nullable
-     */
+  /** 교재 교육대상. 없으면 null. */
   educationTarget?: string | null;
-  /**
-     * 교재명과 교육대상을 붙인 표시값. 교육대상이 없으면 교재명만. 교재가 없으면 객체 자체가 null.
-     * @nullable
-     */
+  /** 교재명과 교육대상을 붙인 표시값. 교육대상이 없으면 교재명만. 교재가 없으면 객체 자체가 null. */
   displayLabel?: string | null;
   kits?: number;
   quantity?: number;

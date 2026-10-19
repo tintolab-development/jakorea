@@ -8,7 +8,6 @@
 
 /**
  * 이 행의 신청 양식 하나.
- * @nullable
  */
 export type ProgramListItemResponseApplicationType = typeof ProgramListItemResponseApplicationType[keyof typeof ProgramListItemResponseApplicationType] | null;
 

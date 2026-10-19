@@ -8,7 +8,6 @@
 
 /**
  * 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.
- * @nullable
  */
 export type SessionProgressScheduleStatus = typeof SessionProgressScheduleStatus[keyof typeof SessionProgressScheduleStatus] | null;
 

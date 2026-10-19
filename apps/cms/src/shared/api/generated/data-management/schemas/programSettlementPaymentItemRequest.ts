@@ -9,9 +9,6 @@
 export interface ProgramSettlementPaymentItemRequest {
   itemType?: string;
   useYn?: boolean;
-  /**
-     * Individual program only. Omitted preserves the stored setting on update; explicit null clears it to unconfigured; true/false are stored distinctly. Existing clients may omit this field.
-     * @nullable
-     */
+  /** Individual program only. Omitted preserves the stored setting on update; explicit null clears it to unconfigured; true/false are stored distinctly. Existing clients may omit this field. */
   evidenceRequired?: boolean | null;
 }

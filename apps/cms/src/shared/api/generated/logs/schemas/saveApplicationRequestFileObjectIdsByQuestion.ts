@@ -8,6 +8,5 @@
 
 /**
  * 문항별 첨부 fileObjectId. 키는 answers와 같은 질문 키입니다. 본인이 올린 CLEAN·사용 가능 파일만 허용합니다. 봉사자 신청은 program-volunteer-application-seed-previous-ja-program(일반), ujat-program-application-volunteer-seed-previous-term(UJAT) 문항에만 첨부할 수 있고 filePurpose=VOLUNTEER_APPLICATION_EVIDENCE(JPG·PNG·PDF, 파일당 15MB) 파일만 받습니다. 숨겨진 문항(일반: JA 경험 「없음」, UJAT: 지원 형태 「신규」)에 첨부하면 400입니다. 생략하거나 {}이면 첨부 없음입니다. 임시저장마다 새 응답을 만들기 때문에 제출 요청에도 첨부를 다시 보내야 합니다.
- * @nullable
  */
 export type SaveApplicationRequestFileObjectIdsByQuestion = {[key: string]: number[]} | null;

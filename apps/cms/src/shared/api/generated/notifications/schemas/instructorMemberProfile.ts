@@ -11,8 +11,6 @@
  */
 export interface InstructorMemberProfile {
   teacherAffiliated?: boolean;
-  /** @nullable */
   employmentStatus?: string | null;
-  /** @nullable */
   currentlyEmployed?: boolean | null;
 }

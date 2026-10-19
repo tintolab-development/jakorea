@@ -7,8 +7,6 @@
  */
 
 export interface PreviousJaProgram {
-  /** @nullable */
   applicationYear?: string | null;
-  /** @nullable */
   programName?: string | null;
 }

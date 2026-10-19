@@ -752,22 +752,20 @@
             "example": false
           },
           "data": {
-            "type": "null",
             "$ref": "#/components/schemas/EmployeeVolunteerCountSetResponse",
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
           },
           "error": {
-            "type": "null",
             "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
           }
         }
       },
@@ -900,30 +898,24 @@
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "field": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "description": "필드 단위 검증 오류인 경우 대상 필드",
-            "example": "email"
+            "example": "email",
+            "nullable": true
           },
           "traceId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "description": "서버 로그 추적용 ID",
-            "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f"
+            "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f",
+            "nullable": true
           },
           "details": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": "object",
             "additionalProperties": {
               "type": "string"
             },
-            "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다."
+            "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다.",
+            "nullable": true
           }
         }
       },
@@ -1091,11 +1083,9 @@
             "minLength": 1
           },
           "id1365": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "회원에 1365 ID가 없을 때만"
+            "type": "string",
+            "description": "회원에 1365 ID가 없을 때만",
+            "nullable": true
           },
           "jaProgramExperienceConsentRequest": {
             "type": "string",

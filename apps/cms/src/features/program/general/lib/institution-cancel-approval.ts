@@ -1,5 +1,4 @@
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import {
   patchApplicantSchoolForCancelApproval,
   type ApplicantSchoolApprovalNotifyOptions,
@@ -13,9 +12,9 @@ export type InstitutionCancelApprovalNotifyVariant = 'alreadySent' | 'pendingNot
 
 export type InstitutionCancelApprovalNotificationResult = 'not-created' | 'created' | 'unknown'
 
-export function resolveInstitutionCancelApprovalNotificationResult(
-  response: ApplicationDecisionResponse
-): InstitutionCancelApprovalNotificationResult {
+export function resolveInstitutionCancelApprovalNotificationResult(response: {
+  notificationEventId?: number | null
+}): InstitutionCancelApprovalNotificationResult {
   if (!Object.prototype.hasOwnProperty.call(response, 'notificationEventId')) {
     return 'unknown'
   }

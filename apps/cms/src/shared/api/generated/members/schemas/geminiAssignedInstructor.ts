@@ -12,17 +12,10 @@
 export interface GeminiAssignedInstructor {
   memberId?: number;
   name?: string;
-  /** @nullable */
   homeAddress?: string | null;
-  /** @nullable */
   experienceYears?: number | null;
-  /**
-     * JA 평가 등급. 예: A등급
-     * @nullable
-     */
+  /** JA 평가 등급. 예: A등급 */
   grade?: string | null;
-  /** @nullable */
   phone?: string | null;
-  /** @nullable */
   email?: string | null;
 }

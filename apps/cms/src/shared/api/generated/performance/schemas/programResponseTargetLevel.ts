@@ -8,7 +8,6 @@
 
 /**
  * 교육 대상 첫 값. targetLevels[0]과 같다. 없으면 null.
- * @nullable
  */
 export type ProgramResponseTargetLevel = typeof ProgramResponseTargetLevel[keyof typeof ProgramResponseTargetLevel] | null;
 

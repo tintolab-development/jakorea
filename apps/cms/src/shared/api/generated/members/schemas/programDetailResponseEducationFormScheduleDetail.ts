@@ -8,7 +8,6 @@
 
 /**
  * 교육 형태 일정 공통/일정 별 상이.
- * @nullable
  */
 export type ProgramDetailResponseEducationFormScheduleDetail = typeof ProgramDetailResponseEducationFormScheduleDetail[keyof typeof ProgramDetailResponseEducationFormScheduleDetail] | null;
 

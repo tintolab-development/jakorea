@@ -11,9 +11,6 @@ export interface FormTemplateVersionCopyRequest {
   versionLabel?: string;
   /** 프로그램 등록 중 copy 소유 draft. 지정 시 해당 관리자 draft에 귀속 */
   ownerProgramDraftId?: number;
-  /**
-     * 이미 생성된 프로그램 전용 copy. 지정 시 새 템플릿을 template_scope=PROGRAM, owner_program_id=이 값으로 저장하고 양식 관리 목록에서 제외한다. 해당 프로그램 수정 권한이 없으면 403. ownerProgramDraftId와 함께 보내면 400 FORM_TEMPLATE_COPY_OWNER_CONFLICT.
-     * @nullable
-     */
+  /** 이미 생성된 프로그램 전용 copy. 지정 시 새 템플릿을 template_scope=PROGRAM, owner_program_id=이 값으로 저장하고 양식 관리 목록에서 제외한다. 해당 프로그램 수정 권한이 없으면 403. ownerProgramDraftId와 함께 보내면 400 FORM_TEMPLATE_COPY_OWNER_CONFLICT. */
   ownerProgramId?: number | null;
 }

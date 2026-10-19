@@ -85,25 +85,13 @@ export interface ProgramCreateRequest {
   settlementRuleId?: string;
   /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
   applicationPathId?: string;
-  /**
-     * 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님.
-     * @nullable
-     */
+  /** 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님. */
   applicationMethod?: string | null;
-  /**
-     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
-     * @nullable
-     */
+  /** 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. */
   educationForm?: ProgramCreateRequestEducationForm;
-  /**
-     * 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개.
-     * @nullable
-     */
+  /** 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개. */
   trainingRequestStartDate?: string | null;
-  /**
-     * 연수 요청 가능기간 종료.
-     * @nullable
-     */
+  /** 연수 요청 가능기간 종료. */
   trainingRequestEndDate?: string | null;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
@@ -123,9 +111,13 @@ export interface ProgramCreateRequest {
   programDraftId?: number;
   /** 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다. */
   formBindings?: ProgramFormBindingRequest[];
-  /**
-     * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
-     * @nullable
-     */
+  /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
   draftStatus?: ProgramCreateRequestDraftStatus;
+  /** CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 false. */
+  featuredOnHome?: boolean | null;
+  /**
+     * 홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.
+     * @minimum 1
+     */
+  homeDisplayOrder?: number | null;
 }

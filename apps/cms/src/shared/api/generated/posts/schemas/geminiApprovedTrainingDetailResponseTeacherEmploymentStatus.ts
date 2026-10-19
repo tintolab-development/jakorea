@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * @nullable
- */
 export type GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus = typeof GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus[keyof typeof GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus] | null;
 
 

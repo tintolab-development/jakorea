@@ -16,13 +16,8 @@ export interface VolunteerInterviewScheduleOptionResponse {
   label?: string;
   /** SLOT 또는 SCHEDULE_INFO */
   source?: VolunteerInterviewScheduleOptionResponseSource;
-  /**
-     * YYYY-MM-DD(KST). 없으면 null.
-     * @nullable
-     */
+  /** YYYY-MM-DD(KST). 없으면 null. */
   slotDate?: string | null;
-  /** @nullable */
   startAt?: string | null;
-  /** @nullable */
   endAt?: string | null;
 }

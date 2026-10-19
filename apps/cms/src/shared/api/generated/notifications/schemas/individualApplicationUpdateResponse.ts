@@ -17,7 +17,6 @@ export interface IndividualApplicationUpdateResponse {
   applicationStatus?: string;
   textbook?: Textbook;
   team?: Team;
-  /** @nullable */
   managerComment?: string | null;
   updatedAt?: string;
   availableActions?: string[];

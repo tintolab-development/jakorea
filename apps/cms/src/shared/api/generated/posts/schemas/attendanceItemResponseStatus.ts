@@ -8,7 +8,6 @@
 
 /**
  * 출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null.
- * @nullable
  */
 export type AttendanceItemResponseStatus = typeof AttendanceItemResponseStatus[keyof typeof AttendanceItemResponseStatus] | null;
 

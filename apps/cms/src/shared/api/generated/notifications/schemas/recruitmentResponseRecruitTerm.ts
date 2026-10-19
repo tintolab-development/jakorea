@@ -8,7 +8,6 @@
 
 /**
  * UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.
- * @nullable
  */
 export type RecruitmentResponseRecruitTerm = typeof RecruitmentResponseRecruitTerm[keyof typeof RecruitmentResponseRecruitTerm] | null;
 

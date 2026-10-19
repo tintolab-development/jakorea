@@ -8,7 +8,6 @@
 
 /**
  * 수업 회차 유형. 프로그램 유형별 공통정보 저장값이 없으면 null.
- * @nullable
  */
 export type ProgramDetailResponseSessionRound = typeof ProgramDetailResponseSessionRound[keyof typeof ProgramDetailResponseSessionRound] | null;
 

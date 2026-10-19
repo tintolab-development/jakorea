@@ -19,34 +19,17 @@ export interface GeminiInstructorApplicationItem {
   applicationStatus?: string;
   instructorTypeSnapshot?: string;
   instructorFeeGradeSnapshot?: string;
-  /**
-     * JA 평가 등급 표시. 예: A등급
-     * @nullable
-     */
+  /** JA 평가 등급 표시. 예: A등급 */
   grade?: string | null;
-  /** @nullable */
   homeSido?: string | null;
-  /** @nullable */
   homeSigungu?: string | null;
-  /**
-     * JA 강의 경력(년)
-     * @nullable
-     */
+  /** JA 강의 경력(년) */
   experienceYears?: number | null;
-  /**
-     * 목록 마스킹 전화. 예: 010-****-0000
-     * @nullable
-     */
+  /** 목록 마스킹 전화. 예: 010-****-0000 */
   phone?: string | null;
-  /**
-     * 목록 마스킹 이메일
-     * @nullable
-     */
+  /** 목록 마스킹 이메일 */
   email?: string | null;
-  /**
-     * 해당 월 확정 배정 수
-     * @nullable
-     */
+  /** 해당 월 확정 배정 수 */
   monthlyAssignmentCount?: number | null;
   distanceKm?: number;
   longDistance?: boolean;

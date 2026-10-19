@@ -21,17 +21,11 @@ export interface MemberPortalProgramSummary {
   inquiryEmail?: string;
   inquiryPhone?: string;
   posterFileObjectId?: number;
-  /**
-     * 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다.
-     * @nullable
-     */
+  /** 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다. */
   interviewEnabled?: boolean | null;
   /** 프로그램 canonical type. 신청 상세의 programType과 동일합니다. */
   programType?: string;
-  /**
-     * 프로그램 설정의 교육 형태 라벨. 신청 답변의 educationFormat이 없을 때 표시 기준으로 사용할 수 있습니다.
-     * @nullable
-     */
+  /** 프로그램 설정의 교육 형태 라벨. 신청 답변의 educationFormat이 없을 때 표시 기준으로 사용할 수 있습니다. */
   educationFormLabel?: string | null;
   /** TRAINED_TEACHER의 교육일지 설정값. 대상 외 프로그램이나 detail row 없음, OFF는 false입니다. */
   educationJournalEnabled?: boolean;

@@ -8,7 +8,6 @@
 
 /**
  * UJAT 일정 확인 상태. 정의된 wire enum 또는 null.
- * @nullable
  */
 export type OrganizationApplicationDetailResponseScheduleConfirmStatus = typeof OrganizationApplicationDetailResponseScheduleConfirmStatus[keyof typeof OrganizationApplicationDetailResponseScheduleConfirmStatus] | null;
 

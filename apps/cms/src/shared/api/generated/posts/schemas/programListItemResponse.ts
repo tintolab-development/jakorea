@@ -39,53 +39,26 @@ export interface ProgramListItemResponse {
   canApply?: boolean;
   /** 썸네일 file_object id. 없으면 null. placeholder 금지 */
   thumbnailFileObjectId?: number;
-  /**
-     * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
-     * @nullable
-     */
+  /** 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다. */
   educationTarget?: ProgramListItemResponseEducationTarget;
   /** 교육 대상 코드 배열. 없으면 필드를 생략한다. 목록 필터 educationTarget은 이 배열의 포함 여부로 매칭한다. */
   educationTargets?: string[];
   targetGradeFrom?: string;
   targetGradeTo?: string;
-  /**
-     * 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice.
-     * @nullable
-     */
+  /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. */
   educationForm?: ProgramListItemResponseEducationForm;
-  /**
-     * Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼.
-     * @nullable
-     */
+  /** Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼. */
   featuredOnHome?: boolean | null;
-  /**
-     * 홈 캐러셀 정렬 순서(오름차순). 미노출이면 null.
-     * @nullable
-     */
+  /** 홈 캐러셀 정렬 순서(오름차순). 미노출이면 null. */
   homeDisplayOrder?: number | null;
-  /**
-     * 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null.
-     * @nullable
-     */
+  /** 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. */
   recruitmentId?: number | null;
-  /**
-     * 이 행의 모집 유형.
-     * @nullable
-     */
+  /** 이 행의 모집 유형. */
   recruitmentType?: ProgramListItemResponseRecruitmentType;
-  /**
-     * 이 행의 모집 대상. 저장된 target_type.
-     * @nullable
-     */
+  /** 이 행의 모집 대상. 저장된 target_type. */
   targetType?: string | null;
-  /**
-     * 이 행의 신청 양식 하나.
-     * @nullable
-     */
+  /** 이 행의 신청 양식 하나. */
   applicationType?: ProgramListItemResponseApplicationType;
-  /**
-     * UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null.
-     * @nullable
-     */
+  /** UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null. */
   recruitTerm?: ProgramListItemResponseRecruitTerm;
 }
