@@ -113,7 +113,7 @@ export function LectureFeeCalculationDetailForm({
           edit={
             <CmsInput
               disabled
-              inputSize="medium"
+              inputSize="small"
               value={v.lectureFeeType}
               width={LECTURE_FEE_INPUT_WIDTH_PX}
               aria-label="강의비 유형 (발급 시 자동 입력)"
@@ -142,7 +142,7 @@ export function LectureFeeCalculationDetailForm({
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__session">
               <CmsInput
                 disabled
-                inputSize="medium"
+                inputSize="small"
                 placeholder="진행 차시"
                 value={v.sessionCount}
                 width={LECTURE_FEE_SESSION_INPUT_WIDTH_PX}
@@ -151,7 +151,7 @@ export function LectureFeeCalculationDetailForm({
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 disabled
-                inputSize="medium"
+                inputSize="small"
                 placeholder="시간"
                 value={v.sessionHours}
                 width={LECTURE_FEE_SESSION_INPUT_WIDTH_PX}
@@ -168,11 +168,11 @@ export function LectureFeeCalculationDetailForm({
             label="지급 항목 여부"
             view={joinText(['교통비', '숙박비'])}
             edit={
-              <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--large lecture-fee-calculation-detail-form__payment-items">
-                <CmsCheckbox checkboxSize="large" checked disabled>
+              <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium lecture-fee-calculation-detail-form__payment-items">
+                <CmsCheckbox checkboxSize="medium" checked disabled>
                   교통비
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked disabled>
+                <CmsCheckbox checkboxSize="medium" checked disabled>
                   숙박비
                 </CmsCheckbox>
               </div>
@@ -185,7 +185,7 @@ export function LectureFeeCalculationDetailForm({
               <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__student-count">
                 <CmsInput
                   disabled
-                  inputSize="medium"
+                  inputSize="small"
                   value={v.totalStudents}
                   width={LECTURE_FEE_INPUT_WIDTH_PX}
                   aria-label="총 학생 수"
@@ -206,7 +206,7 @@ export function LectureFeeCalculationDetailForm({
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__total-fee">
               <CmsInput
                 disabled
-                inputSize="medium"
+                inputSize="small"
                 value={v.totalLectureFee}
                 width={LECTURE_FEE_INPUT_WIDTH_PX}
                 aria-label="총 강의비"

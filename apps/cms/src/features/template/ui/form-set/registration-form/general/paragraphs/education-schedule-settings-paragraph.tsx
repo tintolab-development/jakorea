@@ -224,7 +224,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
           edit={
             <div className="program-registration-paragraph__schedule-inline">
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={lockDateMode ? 'date' : scheduleMode}
                 onChange={e => {
                   const next = e.target.value as ProgramRegistrationEducationScheduleMode
@@ -237,8 +237,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                   onEducationScheduleModeChange(next)
                 }}
               >
-                <CmsRadio value="date">날짜 지정</CmsRadio>
-                <CmsRadio value="period" disabled={lockDateMode || disablePeriodMode}>
+                <CmsRadio size="medium" value="date">날짜 지정</CmsRadio>
+                <CmsRadio size="medium" value="period" disabled={lockDateMode || disablePeriodMode}>
                   기간 지정
                 </CmsRadio>
               </CmsRadioGroup>
@@ -253,7 +253,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
             'educationScheduleSettings.periodDateIso',
           ]}
           edit={
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               customizable={false}
               showPeriodToggle={false}

@@ -207,13 +207,13 @@ export function RecruitFormVolunteerInfoParagraph() {
             validationKey="recruit.volunteer.interviewRequired"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={interviewRequired}
                 onChange={e => setInterviewRequired(String(e.target.value))}
                 className={RECRUITMENT_RADIO_CLASS}
               >
                 {INTERVIEW_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value} size="large">
+                  <CmsRadio key={o.value} value={o.value} size="medium">
                     {o.label}
                   </CmsRadio>
                 ))}
@@ -231,7 +231,7 @@ export function RecruitFormVolunteerInfoParagraph() {
             validationKey="recruit.volunteer.programRangeSeal"
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={programAnchor}
@@ -266,7 +266,7 @@ export function RecruitFormVolunteerInfoParagraph() {
             edit={
               <CmsSelect
                 mode="multiple"
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 withAllOption={false}
                 placeholder="모집 대상을 선택하세요"
@@ -282,7 +282,7 @@ export function RecruitFormVolunteerInfoParagraph() {
             validationKey="recruit.volunteer.volunteerTargetDetail"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 placeholder="상세 모집 대상을 입력하세요"
                 value={volunteerTargetDetail}

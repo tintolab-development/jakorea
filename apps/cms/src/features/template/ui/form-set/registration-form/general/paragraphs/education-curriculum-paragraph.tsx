@@ -63,7 +63,7 @@ function CurriculumOverlayTextInput({
   )
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       placeholder={placeholder}
       width="100%"
       style={style}
@@ -87,7 +87,7 @@ function PreEducationScheduleNameInput() {
   )
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       value={name}
       placeholder="행사 일정명을 작성하세요"
       width="100%"
@@ -213,7 +213,7 @@ function ProgramRegistrationMultiRoundClassRow({
         edit={
           <div className="detail-info-form-inputs-wrapper">
             <CmsSelect
-              inputSize="medium"
+              inputSize="small"
               withAllOption={false}
               placeholder="진행 차시"
               width={144}
@@ -479,12 +479,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
       fullRow={options?.fullRow}
       edit={
         <CmsRadioGroup
-          size="large"
+          size="medium"
           value={educationFormForSession(PRE_EDUCATION_SESSION_INDEX)}
           onChange={onEducationFormRadioChange(PRE_EDUCATION_SESSION_INDEX)}
         >
           {perScheduleEducationFormOptions.map(opt => (
-            <CmsRadio key={opt.value} value={opt.value}>
+            <CmsRadio size="medium" key={opt.value} value={opt.value}>
               {opt.label}
             </CmsRadio>
           ))}
@@ -646,12 +646,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
         label="교육 형태"
         edit={
           <CmsRadioGroup
-            size="large"
+            size="medium"
             value={educationFormForSession(roundIndex)}
             onChange={onEducationFormRadioChange(roundIndex)}
           >
             {perScheduleEducationFormOptions.map(opt => (
-              <CmsRadio key={opt.value} value={opt.value}>
+              <CmsRadio size="medium" key={opt.value} value={opt.value}>
                 {opt.label}
               </CmsRadio>
             ))}
@@ -698,12 +698,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
       fullRow={options?.fullRow}
       edit={
         <CmsRadioGroup
-          size="large"
+          size="medium"
           value={participationForSession(roundIndex)}
           onChange={onParticipationRadioChange(roundIndex)}
         >
-          <CmsRadio value="individual">개인</CmsRadio>
-          <CmsRadio value="team">팀</CmsRadio>
+          <CmsRadio size="medium" value="individual">개인</CmsRadio>
+          <CmsRadio size="medium" value="team">팀</CmsRadio>
         </CmsRadioGroup>
       }
       view="-"
@@ -745,12 +745,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                 label="참여 방식"
                 edit={
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={participationForSession(roundIndex)}
                     onChange={onParticipationRadioChange(roundIndex)}
                   >
-                    <CmsRadio value="individual">개인</CmsRadio>
-                    <CmsRadio value="team">팀</CmsRadio>
+                    <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                    <CmsRadio size="medium" value="team">팀</CmsRadio>
                   </CmsRadioGroup>
                 }
                 view="-"
@@ -768,12 +768,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
             label="참여 방식"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={participationForSession(roundIndex)}
                 onChange={onParticipationRadioChange(roundIndex)}
               >
-                <CmsRadio value="individual">개인</CmsRadio>
-                <CmsRadio value="team">팀</CmsRadio>
+                <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                <CmsRadio size="medium" value="team">팀</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -838,12 +838,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                             fullRow={options.fullRow}
                             edit={
                               <CmsRadioGroup
-                                size="large"
+                                size="medium"
                                 value={educationFormForSession(roundIndex)}
                                 onChange={onEducationFormRadioChange(roundIndex)}
                               >
                                 {perScheduleEducationFormOptions.map(opt => (
-                                  <CmsRadio key={opt.value} value={opt.value}>
+                                  <CmsRadio size="medium" key={opt.value} value={opt.value}>
                                     {opt.label}
                                   </CmsRadio>
                                 ))}

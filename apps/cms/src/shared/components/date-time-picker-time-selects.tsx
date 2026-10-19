@@ -1,4 +1,5 @@
 import { CmsSelect } from '@/shared/ui/cms-select'
+import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import type { Dayjs } from 'dayjs'
 
 function cn(...parts: Array<string | false | null | undefined>): string {
@@ -73,6 +74,7 @@ export interface DateTimePickerTimeInlineSelectsProps {
   date?: Dayjs
   /** 예약 가능한 최소 일시 */
   minDateTime?: Dayjs
+  inputSize?: CmsControlSize
 }
 
 /** 날짜·시간 팝오버 공용 시·분 셀렉트 (24시간) */
@@ -89,6 +91,7 @@ export function DateTimePickerTimeInlineSelects({
   minuteStep,
   date,
   minDateTime,
+  inputSize = 'medium',
 }: DateTimePickerTimeInlineSelectsProps) {
   const allMinuteOptions = minuteOptionsForStep(minuteStep)
   const sameMinimumDate =
@@ -104,7 +107,7 @@ export function DateTimePickerTimeInlineSelects({
       ? allMinuteOptions
       : allMinuteOptions.filter(option => Number(option.value) >= minimumMinute)
   const selectCommon = {
-    inputSize: 'medium' as const,
+    inputSize,
     withAllOption: false,
     getPopupContainer,
     popupMatchSelectWidth: true,

@@ -49,7 +49,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
   /** 로그인 자동 반영 필드 — 템플릿 편집에서도 힌트 문구 대신 disabled 인풋 노출 */
   const autoFilledInstitutionName = (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionName}
       disabled
@@ -59,7 +59,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
 
   const autoFilledInstitutionAddress = (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionAddress}
       disabled
@@ -71,7 +71,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
     <div className="detail-info-form-inputs-wrapper-no-gap">
       <span className="mr-6">담당 교사</span>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width={120}
         value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
         disabled
@@ -80,7 +80,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">Tel</span>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder="담당 교사의 내선 번호(직통 번호)"
         value={teacherTel}
@@ -89,7 +89,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">M</span>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder="담당 교사의 휴대폰 번호"
         value={teacherMobile}
@@ -98,7 +98,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">E-mail</span>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder="담당 교사의 이메일"
         value={teacherEmail}
@@ -128,7 +128,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
           label="상세 주소"
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               placeholder="교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요"
               width="100%"
               value={detailAddress}
@@ -149,7 +149,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-              <CmsCheckbox
+              <CmsCheckbox checkboxSize="medium"
                 checked={otherRequestsNotApplicable}
                 onChange={e => setOtherRequestsNotApplicable(e.target.checked)}
               >
@@ -157,7 +157,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
               </CmsCheckbox>
               <DetailInfoForm.InputsSeparator />
               <CmsTextArea
-                inputSize="medium"
+                inputSize="small"
                 rows={1}
                 placeholder="기타 요청사항을 입력해 주세요."
                 width="100%"

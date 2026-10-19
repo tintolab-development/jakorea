@@ -344,7 +344,7 @@ export function TemplateCustomFieldsForm({
                     key={rowLabel}
                     className="template-custom-fields-form__participant-check-row"
                   >
-                    <CmsCheckbox
+                    <CmsCheckbox checkboxSize="medium"
                       className="template-custom-fields-form__participant-checkbox"
                       checked={participantVisibilityResolved[index]}
                       onChange={e => {

@@ -957,6 +957,7 @@ function ParagraphDatePickerSingleInner({
         sameDayTimeRange={sameDayTimeRange}
         timeOn={effectiveTimeOn}
         timeInputsDisabled={disableTimeInputs}
+        inputSize={inputSize}
         calendarMonth={calendarMonth}
         onCalendarMonthChange={setCalendarMonth}
         draft={draft}

@@ -66,7 +66,7 @@ const InstitutionApplicationTeacherContactFields = memo(
       <div className="detail-info-form-inputs-wrapper-no-gap">
         <span className="mr-6">담당 교사</span>
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           width={120}
           value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
           disabled
@@ -75,7 +75,7 @@ const InstitutionApplicationTeacherContactFields = memo(
         <DetailInfoForm.InputsSeparator />
         <span className="mr-6">Tel</span>
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           width={240}
           placeholder="담당 교사의 내선 번호(직통 번호)"
           value={teacherTel}
@@ -84,7 +84,7 @@ const InstitutionApplicationTeacherContactFields = memo(
         <DetailInfoForm.InputsSeparator />
         <span className="mr-6">M</span>
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           width={240}
           placeholder="담당 교사의 휴대폰 번호"
           value={teacherMobile}
@@ -93,7 +93,7 @@ const InstitutionApplicationTeacherContactFields = memo(
         <DetailInfoForm.InputsSeparator />
         <span className="mr-6">E-mail</span>
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           width={240}
           placeholder="담당 교사의 이메일"
           value={teacherEmail}
@@ -114,7 +114,7 @@ const InstitutionApplicationGradeField = memo(function InstitutionApplicationGra
       label="신청 학년"
       edit={
         <CmsSelect
-          inputSize="medium"
+          inputSize="small"
           width="100%"
           withAllOption={false}
           placeholder="학년 선택"
@@ -138,13 +138,13 @@ const InstitutionApplicationEducationFormField = memo(function InstitutionApplic
       label="희망 교육 형태"
       edit={
         <CmsRadioGroup
-          size="large"
+          size="medium"
           value={educationForm}
           onChange={e => setEducationForm(e.target.value)}
           style={inlineChoiceStyle}
         >
           {EDUCATION_FORM_OPTIONS.map(o => (
-            <CmsRadio key={o.value} value={o.value}>
+            <CmsRadio size="medium" key={o.value} value={o.value}>
               {o.label}
             </CmsRadio>
           ))}
@@ -199,7 +199,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
   /** 로그인 자동 반영 필드 — 템플릿 편집에서도 힌트 문구 대신 disabled 인풋 노출 */
   const autoFilledInstitutionName = (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionName}
       disabled
@@ -209,7 +209,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
 
   const autoFilledInstitutionAddress = (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionAddress}
       disabled
@@ -224,7 +224,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
       edit={
         <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
           <CmsSelect
-            inputSize="medium"
+            inputSize="small"
             withAllOption={false}
             placeholder="신청 학급"
             width={120}
@@ -234,7 +234,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           />
           <span>개 학급</span>
           <DetailInfoForm.InputsSeparator />
-          <CmsNumericInput inputSize="medium" mode="integer" placeholder="총 학생 수" width={120} />
+          <CmsNumericInput inputSize="small" mode="integer" placeholder="총 학생 수" width={120} />
           <span>명</span>
         </div>
       }
@@ -262,7 +262,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
         <DetailInfoForm.Field
           label="상세 주소"
           edit={
-            <CmsInput inputSize="medium" placeholder={DETAIL_ADDRESS_PLACEHOLDER} width="100%" />
+            <CmsInput inputSize="small" placeholder={DETAIL_ADDRESS_PLACEHOLDER} width="100%" />
           }
           view="-"
         />
@@ -291,7 +291,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           label="신청 사유"
           fullRow
           edit={
-            <CmsInput inputSize="medium" placeholder="신청 사유를 입력해 주세요." width="100%" />
+            <CmsInput inputSize="small" placeholder="신청 사유를 입력해 주세요." width="100%" />
           }
           view="-"
         />
@@ -303,7 +303,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           fullRow
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               placeholder="기타 요청사항을 입력해 주세요."
               width="100%"
             />

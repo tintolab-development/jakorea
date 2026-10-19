@@ -75,9 +75,9 @@ function ScheduleDetailRadioRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
-            <CmsRadioGroup size="large" value={value} onChange={handleChange}>
-              <CmsRadio value="common">일정 공통</CmsRadio>
-              <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+            <CmsRadioGroup size="medium" value={value} onChange={handleChange}>
+              <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+              <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
             </CmsRadioGroup>
             {value === 'common' && commonDetailEdit != null ? (
               <>
@@ -122,13 +122,13 @@ export function EducationFormTypeSettingsRadioRow({
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={mode}
               onChange={e => onModeChange(e.target.value as EducationFormTypeSettingsMode)}
             >
-              <CmsRadio value="common">일정 공통</CmsRadio>
-              <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
-              <CmsRadio value="participant_selection">참여자 선택</CmsRadio>
+              <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+              <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
+              <CmsRadio size="medium" value="participant_selection">참여자 선택</CmsRadio>
             </CmsRadioGroup>
             {mode === 'common' && commonDetailEdit != null ? (
               <>
@@ -281,12 +281,12 @@ export function ProgramRegistrationTypeSettingsParagraph({
             label="교육 진행 구조"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={programType}
                 onChange={e => onProgramTypeChange(e.target.value as ProgramRegistrationType)}
               >
-                <CmsRadio value="curriculum">커리큘럼형</CmsRadio>
-                <CmsRadio value="schedule">일정형</CmsRadio>
+                <CmsRadio size="medium" value="curriculum">커리큘럼형</CmsRadio>
+                <CmsRadio size="medium" value="schedule">일정형</CmsRadio>
               </CmsRadioGroup>
             }
             view={programType === 'curriculum' ? '커리큘럼형' : '일정형'}
@@ -295,12 +295,12 @@ export function ProgramRegistrationTypeSettingsParagraph({
             label="수업 회차 유형"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={sessionRoundType}
                 onChange={handleSessionRoundChange}
               >
-                <CmsRadio value="single">단일 회차</CmsRadio>
-                <CmsRadio value="multi">복수 회차</CmsRadio>
+                <CmsRadio size="medium" value="single">단일 회차</CmsRadio>
+                <CmsRadio size="medium" value="multi">복수 회차</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -336,7 +336,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 perScheduleHint={perScheduleHint}
                 commonDetailEdit={
                   <CmsSelect
-                    inputSize="medium"
+                    inputSize="small"
                     withAllOption={false}
                     placeholder="교육 형태"
                     width={160}
@@ -355,7 +355,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 perScheduleHint={perScheduleHint}
                 commonDetailEdit={
                   <CmsSelect
-                    inputSize="medium"
+                    inputSize="small"
                     withAllOption={false}
                     placeholder="교육 형태"
                     width={160}
@@ -375,7 +375,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 perScheduleHint={perScheduleHint}
                 commonDetailEdit={
                   <CmsSelect
-                    inputSize="medium"
+                    inputSize="small"
                     withAllOption={false}
                     placeholder="참여 방식"
                     width={160}
@@ -405,13 +405,13 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 fullRow={!showParticipationMethod}
                 edit={
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={singleEducationForm}
                     onChange={e => setSingleEducationForm(String(e.target.value))}
                   >
                     {getProgramRegistrationEducationFormOptions(participantOrganization).map(
                       opt => (
-                        <CmsRadio key={opt.value} value={opt.value}>
+                        <CmsRadio size="medium" key={opt.value} value={opt.value}>
                           {opt.label}
                         </CmsRadio>
                       )
@@ -425,12 +425,12 @@ export function ProgramRegistrationTypeSettingsParagraph({
                   label="참여 방식"
                   edit={
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={singleParticipation}
                       onChange={e => setSingleParticipation(String(e.target.value))}
                     >
-                      <CmsRadio value="individual">개인</CmsRadio>
-                      <CmsRadio value="team">팀</CmsRadio>
+                      <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                      <CmsRadio size="medium" value="team">팀</CmsRadio>
                     </CmsRadioGroup>
                   }
                   view="-"

@@ -87,7 +87,7 @@ export function ProgramRegistrationIpsTypeFields({
   return (
     <div className={wrapperClassName}>
       <CmsSelect
-        inputSize="medium"
+        inputSize="small"
         withAllOption={false}
         placeholder={firstSelectPlaceholder}
         // 선택값(Inspire / Prepare / Succeed)이 X·화살표 영역에 밀려 축약되지 않도록
@@ -99,7 +99,7 @@ export function ProgramRegistrationIpsTypeFields({
         onChange={handleCategoryChange}
       />
       <CmsSelect
-        inputSize="medium"
+        inputSize="small"
         withAllOption={false}
         placeholder={secondaryPlaceholder}
         width={isInlineLayout ? '100%' : 360}

@@ -27,7 +27,7 @@ export const GeneralApplicationOverlayTextField = memo(function GeneralApplicati
       validationKey={validationKey}
       edit={
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           width="100%"
           placeholder={placeholder}
           value={value}

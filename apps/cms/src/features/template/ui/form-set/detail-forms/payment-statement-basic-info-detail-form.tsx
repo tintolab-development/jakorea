@@ -121,7 +121,7 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <CmsInput
               disabled={allAutofillLocked}
-              inputSize="large"
+              inputSize="small"
               placeholder="한글 성명"
               value={v.nameKo}
               onChange={e => patch({ nameKo: e.target.value })}
@@ -136,7 +136,7 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <CmsInput
               disabled={allAutofillLocked}
-              inputSize="large"
+              inputSize="small"
               placeholder="영문 성명"
               value={v.nameEn}
               onChange={e => patch({ nameEn: e.target.value })}
@@ -160,7 +160,7 @@ export function PaymentStatementBasicInfoDetailForm({
               <CmsNumericInput
                 mode="numericText"
                 disabled={allAutofillLocked}
-                inputSize="large"
+                inputSize="small"
                 placeholder="주민등록 앞 6자리"
                 value={v.residentFront}
                 onValueChange={value => patch({ residentFront: value })}
@@ -172,7 +172,7 @@ export function PaymentStatementBasicInfoDetailForm({
               <CmsNumericInput
                 mode="numericText"
                 disabled={allAutofillLocked}
-                inputSize="large"
+                inputSize="small"
                 placeholder="주민등록 뒤 7자리"
                 value={v.residentBack}
                 onValueChange={value => patch({ residentBack: value })}
@@ -190,7 +190,7 @@ export function PaymentStatementBasicInfoDetailForm({
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
               <CmsInput
                 disabled={allAutofillLocked || v.noAffiliation}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="소속 기관명"
                 value={v.affiliation}
                 onChange={e => patch({ affiliation: e.target.value })}
@@ -208,7 +208,7 @@ export function PaymentStatementBasicInfoDetailForm({
                     ...(e.target.checked ? { affiliation: '' } : {}),
                   })
                 }
-                checkboxSize="large"
+                checkboxSize="medium"
               >
                 소속 없음
               </CmsCheckbox>
@@ -229,7 +229,7 @@ export function PaymentStatementBasicInfoDetailForm({
                   value={v.addressRoad}
                   onChange={next => patch({ addressRoad: next })}
                   placeholder="건물명, 도로명 또는 지번"
-                  inputSize="large"
+                  inputSize="small"
                   width="auto"
                   disabled={allAutofillLocked}
                   className="payment-statement-basic-info-detail-form__address-search"
@@ -238,7 +238,7 @@ export function PaymentStatementBasicInfoDetailForm({
               ) : (
                 <CmsInput
                   disabled={allAutofillLocked}
-                  inputSize="large"
+                  inputSize="small"
                   placeholder="건물명, 도로명 또는 지번"
                   value={v.addressRoad}
                   onChange={e => patch({ addressRoad: e.target.value })}
@@ -249,7 +249,7 @@ export function PaymentStatementBasicInfoDetailForm({
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 disabled={allAutofillLocked}
-                inputSize="large"
+                inputSize="small"
                 placeholder="상세 주소"
                 value={v.addressDetail}
                 onChange={e => patch({ addressDetail: e.target.value })}
@@ -270,7 +270,7 @@ export function PaymentStatementBasicInfoDetailForm({
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__account">
               <CmsInput
                 disabled={allAutofillLocked}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="은행명"
                 width={200}
                 value={v.bankName}
@@ -280,7 +280,7 @@ export function PaymentStatementBasicInfoDetailForm({
               <CmsNumericInput
                 mode="numericText"
                 disabled={allAutofillLocked}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="계좌번호(숫자만)"
                 value={v.accountNumber}
                 onValueChange={value => patch({ accountNumber: value })}
@@ -290,7 +290,7 @@ export function PaymentStatementBasicInfoDetailForm({
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 disabled={allAutofillLocked}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="예금주명"
                 value={v.accountHolder}
                 onChange={e => patch({ accountHolder: e.target.value })}
@@ -310,7 +310,7 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <CmsInput
               disabled
-              inputSize="large"
+              inputSize="small"
               placeholder="강사비 지급"
               value={v.paymentPurpose}
               width="100%"

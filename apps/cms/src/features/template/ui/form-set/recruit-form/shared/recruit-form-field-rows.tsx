@@ -111,7 +111,7 @@ export function RecruitNotesRow({
             </CmsCheckbox>
             <DetailInfoForm.InputsSeparator />
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               style={{ flex: '1 1 0', minWidth: 0 }}
               placeholder="비고란을 작성하세요"
@@ -147,7 +147,7 @@ function InquiryContactColumn({
         {label}
       </span>
       <InputComponent
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder={placeholder}
         value={value}

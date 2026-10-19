@@ -47,7 +47,7 @@ function InquiryContactColumn({
         {label}
       </span>
       <InputComponent
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder={placeholder}
         value={value}
@@ -181,7 +181,7 @@ export function RecruitFormInstructorInfoParagraph() {
           validationKey="recruit.instructor.programRangeSeal"
           edit={
             <div className={MAX_SUFFIX_CLASS}>
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="period"
                 value={programAnchor}
@@ -216,7 +216,7 @@ export function RecruitFormInstructorInfoParagraph() {
           edit={
             <CmsSelect
               mode="multiple"
-              inputSize="medium"
+              inputSize="small"
               width={240}
               withAllOption={false}
               placeholder="모집 대상을 선택하세요"
@@ -232,7 +232,7 @@ export function RecruitFormInstructorInfoParagraph() {
           validationKey="recruit.instructor.recruitTargetDetail"
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="상세 모집 대상을 입력하세요"
               value={recruitTargetDetail}
@@ -249,7 +249,7 @@ export function RecruitFormInstructorInfoParagraph() {
           validationKey="recruit.instructor.recruitRangeSeal"
           edit={
             <div className={MAX_SUFFIX_CLASS}>
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="period"
                 value={recruitAnchor}
@@ -277,7 +277,7 @@ export function RecruitFormInstructorInfoParagraph() {
           ]}
           edit={
             <div className={MAX_SUFFIX_CLASS}>
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="date"
                 value={finalAnnounceDate}
@@ -287,7 +287,7 @@ export function RecruitFormInstructorInfoParagraph() {
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 style={{ flex: '1 1 0', minWidth: 0 }}
                 placeholder="발표 방법 안내"
@@ -358,7 +358,7 @@ export function RecruitFormInstructorInfoParagraph() {
               </CmsCheckbox>
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 style={{ flex: '1 1 0', minWidth: 0 }}
                 placeholder="비고란을 작성하세요"

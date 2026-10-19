@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { TimePicker } from 'antd'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -79,6 +78,7 @@ import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-ite
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { CmsTimePicker } from '@/shared/ui/cms-time-picker'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
@@ -295,10 +295,12 @@ function FieldTableBodyCell({
 
   if (field.kind === 'dateTime' && field.dateTimeMode === 'time') {
     return (
-      <TimePicker
+      <CmsTimePicker
         key={`ht-dt-${field.dateTimeMode}-c${_colIdx}-r${_rowIdx}`}
-        rootClassName="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
-        className="form-editor-horizontal-table__field-time"
+        className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
+        pickerClassName="form-editor-horizontal-table__field-time"
+        inputSize="small"
+        width="100%"
         needConfirm={false}
         styles={horizontalTablePickerPopupStyles}
         getPopupContainer={horizontalTableFieldPopupContainer}
@@ -354,14 +356,14 @@ function FieldTableBodyCell({
   if (field.kind === 'single') {
     return (
       <CmsRadio.Group
-        size="large"
+        size="medium"
         className="form-editor-horizontal-table__field-radios"
         value={cell.kind === 'single' ? cell.value : undefined}
         onChange={(e: RadioChangeEvent) => onFieldChange({ kind: 'single', value: e.target.value })}
         onFocus={onSelectBodyRow}
       >
         {field.options.map((o, i) => (
-          <CmsRadio key={i} size="large" value={o}>
+          <CmsRadio key={i} size="medium" value={o}>
             {o}
           </CmsRadio>
         ))}
@@ -381,7 +383,7 @@ function FieldTableBodyCell({
         {field.options.map((o, i) => (
           <CmsCheckbox
             key={i}
-            checkboxSize="large"
+            checkboxSize="medium"
             className="form-editor-horizontal-table__field-check-label"
             checked={checked.includes(o)}
             onChange={e => {
@@ -1287,7 +1289,7 @@ export function HorizontalTableParagraphBody({
           {p.showBottomConsent ? (
             <CmsRadioGroup
               className="form-editor-table-bottom-consent"
-              size="large"
+              size="medium"
               value={resolveTableBottomConsentRadioValue(
                 consentFillMode ? paragraph.bottomConsent : p.bottomConsent,
                 {
@@ -1307,8 +1309,8 @@ export function HorizontalTableParagraphBody({
                   : undefined
               }
             >
-              <CmsRadio value="agree">동의</CmsRadio>
-              <CmsRadio value="disagree">동의하지 않음</CmsRadio>
+              <CmsRadio size="medium" value="agree">동의</CmsRadio>
+              <CmsRadio size="medium" value="disagree">동의하지 않음</CmsRadio>
             </CmsRadioGroup>
           ) : null}
         </div>

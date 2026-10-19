@@ -70,7 +70,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="period"
                 customizable={false}

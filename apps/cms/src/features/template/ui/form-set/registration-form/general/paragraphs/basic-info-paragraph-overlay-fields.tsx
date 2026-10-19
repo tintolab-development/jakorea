@@ -55,7 +55,7 @@ function EducationVenueDetailInput({ overlayKey }: { overlayKey: string }) {
   )
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       placeholder="교육이 진행될 상세 장소를 입력해 주세요"
       width="100%"
       style={{ flex: '1 1 0', minWidth: 0 }}
@@ -108,7 +108,7 @@ export const ProgramRegistrationBasicInfoOperationRangeField = memo(
         validationKey="basicInfo.operationRangeSeal"
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               presetMode="period"
               value={operationAnchorDate}
@@ -167,7 +167,7 @@ export const ProgramRegistrationBasicInfoParticipantTypesField = memo(
                 onOrganizationChange={onOrganizationChange}
               />
               <CmsCheckbox
-                checkboxSize="large"
+                checkboxSize="medium"
                 checked={participant.teacherInstructor === true}
                 disabled={lockParticipantTypes}
                 onChange={e => onTeacherInstructorChange(e.target.checked)}
@@ -175,7 +175,7 @@ export const ProgramRegistrationBasicInfoParticipantTypesField = memo(
                 {participantTypeLabel('teacher_instructor')}
               </CmsCheckbox>
               <CmsCheckbox
-                checkboxSize="large"
+                checkboxSize="medium"
                 checked={participant.volunteer === true}
                 disabled={lockParticipantTypes}
                 onChange={e => onVolunteerChange(e.target.checked)}
@@ -226,15 +226,15 @@ export const ProgramRegistrationBasicInfoEducationVenueFields = memo(
         edit={
           <div className="detail-info-form-inputs-wrapper">
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={educationVenueKind}
               onChange={e =>
                 setEducationVenueKind(e.target.value as 'inside' | 'outside' | 'other')
               }
             >
-              <CmsRadio value="inside">기관 안</CmsRadio>
-              <CmsRadio value="outside">기관 밖</CmsRadio>
-              <CmsRadio value="other">기타(직접입력)</CmsRadio>
+              <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
+              <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
+              <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
             </CmsRadioGroup>
             <DetailInfoForm.InputsSeparator />
             <EducationVenueDetailInput overlayKey={educationVenueDetailKey} />
@@ -275,7 +275,7 @@ export const ProgramRegistrationBasicInfoSurveyItemsField = memo(
             {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
               <CmsCheckbox
                 key={id}
-                checkboxSize="large"
+                checkboxSize="medium"
                 checked={surveyItems[id]}
                 onChange={toggleSurveyItem(id)}
               >
@@ -310,7 +310,7 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
-              inputSize="medium"
+              inputSize="small"
               placeholder="전체"
               withAllOption={trainedTeachersDefaults}
               width={240}
@@ -381,12 +381,12 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
         edit={
           <div className="detail-info-form-inputs-wrapper">
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={partnerInvolvement}
               onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
             >
-              <CmsRadio value="yes">Yes</CmsRadio>
-              <CmsRadio value="no">No</CmsRadio>
+              <CmsRadio size="medium" value="yes">Yes</CmsRadio>
+              <CmsRadio size="medium" value="no">No</CmsRadio>
             </CmsRadioGroup>
           </div>
         }

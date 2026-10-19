@@ -666,7 +666,7 @@ export function VerticalTableParagraphBody({
             >
               <CmsRadioGroup
                 className="form-editor-horizontal-table__field-radios"
-                size="large"
+                size="medium"
                 value={cell.trim() !== '' ? cell : undefined}
                 onChange={(e: RadioChangeEvent) => {
                   setCell(rowIdx, stageIdx, e.target.value)
@@ -676,7 +676,7 @@ export function VerticalTableParagraphBody({
                 }}
               >
                 {choiceOpts.map((o, i) => (
-                  <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
+                  <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="medium" value={o}>
                     {o}
                   </CmsRadio>
                 ))}
@@ -697,7 +697,7 @@ export function VerticalTableParagraphBody({
                   return (
                     <CmsCheckbox
                       key={`${rowIdx}-${stageIdx}-${i}`}
-                      checkboxSize="large"
+                      checkboxSize="medium"
                       className="form-editor-horizontal-table__field-check-label"
                       checked={checked}
                       disabled={!rowBodyEditMode}
@@ -843,7 +843,7 @@ export function VerticalTableParagraphBody({
         {p.showBottomConsent ? (
           <CmsRadioGroup
             className="form-editor-table-bottom-consent"
-            size="large"
+            size="medium"
             value={resolveTableBottomConsentRadioValue(
               consentFillMode ? paragraph.bottomConsent : p.bottomConsent,
               {

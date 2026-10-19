@@ -115,12 +115,12 @@ function TrainedTeachersTeacherTrainingBlock() {
               label="교육 형태"
               edit={
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={educationForm}
                   onChange={e => setEducationForm(String(e.target.value))}
                 >
                   {educationFormOptions.map(option => (
-                    <CmsRadio key={option.value} value={option.value}>
+                    <CmsRadio size="medium" key={option.value} value={option.value}>
                       {option.label}
                     </CmsRadio>
                   ))}
@@ -166,7 +166,7 @@ function TrainedTeachersUnitInput({
   )
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       placeholder={placeholder}
       width="100%"
       style={style}

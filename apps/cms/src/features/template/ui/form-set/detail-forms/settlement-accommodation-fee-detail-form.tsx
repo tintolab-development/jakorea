@@ -73,7 +73,7 @@ export function SettlementAccommodationFeeDetailForm({
             <div className="detail-info-form-inputs-wrapper-no-gap settlement-accommodation-fee-detail-form__suffix-row">
               <CmsInput
                 disabled={disabled}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="직접 입력"
                 value={v.accommodationFee}
                 width={INPUT_W}

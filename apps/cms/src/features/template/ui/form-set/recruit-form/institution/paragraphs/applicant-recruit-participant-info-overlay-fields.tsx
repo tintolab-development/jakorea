@@ -47,7 +47,7 @@ function NumberWithSuffixRow({
   return (
     <div className={MAX_SUFFIX_CLASS}>
       <CmsNumericInput
-        inputSize="medium"
+        inputSize="small"
         mode="integer"
         min={0}
         placeholder={placeholder}
@@ -69,13 +69,13 @@ function NeedOrNotRadioGroup({
 }) {
   return (
     <CmsRadioGroup
-      size="large"
+      size="medium"
       value={value}
       onChange={e => onChange(String(e.target.value))}
       className={RECRUITMENT_RADIO_CLASS}
     >
       {NEED_OR_NOT_OPTIONS.map(option => (
-        <CmsRadio key={option.value} value={option.value} size="large">
+        <CmsRadio key={option.value} value={option.value} size="medium">
           {option.label}
         </CmsRadio>
       ))}
@@ -357,7 +357,7 @@ export const ApplicantRecruitProgramPeriodField = memo(function ApplicantRecruit
       validationKey="recruit.institution.programRangeSeal"
       edit={
         <div className={MAX_SUFFIX_CLASS}>
-          <ParagraphDatePicker
+          <ParagraphDatePicker inputSize="small"
             mode="single"
             presetMode="period"
             value={programAnchor}
@@ -410,7 +410,7 @@ export const ApplicantRecruitRecruitPeriodField = memo(function ApplicantRecruit
       validationKey="recruit.institution.recruitRangeSeal"
       edit={
         <div className={MAX_SUFFIX_CLASS}>
-          <ParagraphDatePicker
+          <ParagraphDatePicker inputSize="small"
             mode="single"
             presetMode="period"
             value={recruitAnchor}
@@ -455,7 +455,7 @@ export const ApplicantRecruitFinalAnnounceField = memo(function ApplicantRecruit
       ]}
       edit={
         <div className={MAX_SUFFIX_CLASS}>
-          <ParagraphDatePicker
+          <ParagraphDatePicker inputSize="small"
             mode="single"
             presetMode="date"
             value={finalAnnounceDate}
@@ -465,7 +465,7 @@ export const ApplicantRecruitFinalAnnounceField = memo(function ApplicantRecruit
           />
           <DetailInfoForm.InputsSeparator />
           <CmsInput
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             style={{ flex: '1 1 0', minWidth: 0 }}
             placeholder="발표 방법 안내"
@@ -492,7 +492,7 @@ export const ApplicantRecruitTargetLevelsField = memo(function ApplicantRecruitT
         <CmsSelect
           mode="multiple"
           withAllOption={false}
-          inputSize="medium"
+          inputSize="small"
           placeholder="교육 대상을 선택하세요"
           width="100%"
           options={[...TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS]}
@@ -517,7 +517,7 @@ export const ApplicantRecruitTargetLevelDetailField = memo(
         validationKey="recruit.institution.targetLevelDetail"
         edit={
           <CmsInput
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             placeholder="상세 교육 대상을 입력하세요"
             value={targetLevelDetail}

@@ -116,7 +116,7 @@ function RecruitDetailInfoTextFieldRow({
   const control =
     textFieldControl === 'input' ? (
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width="100%"
         placeholder={field.placeholder}
         value={value}
@@ -124,7 +124,7 @@ function RecruitDetailInfoTextFieldRow({
       />
     ) : (
       <CmsTextArea
-        inputSize="medium"
+        inputSize="small"
         width="100%"
         placeholder={field.placeholder}
         rows={1}

@@ -49,17 +49,17 @@ export function TrainedTeachersRegistrationBasicInfoParagraph({
       hideEducationPlace
       trainedTeachersDefaults
       participantTypesEdit={
-        <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--large">
-          <CmsCheckbox checkboxSize="large" checked={false} disabled>
+        <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium">
+          <CmsCheckbox checkboxSize="medium" checked={false} disabled>
             {participantTypeLabel('individual')}
           </CmsCheckbox>
-          <CmsCheckbox checkboxSize="large" checked disabled>
+          <CmsCheckbox checkboxSize="medium" checked disabled>
             {participantTypeLabel('school_institution')}
           </CmsCheckbox>
-          <CmsCheckbox checkboxSize="large" checked={false} disabled>
+          <CmsCheckbox checkboxSize="medium" checked={false} disabled>
             {participantTypeLabel('teacher_instructor')}
           </CmsCheckbox>
-          <CmsCheckbox checkboxSize="large" checked={false} disabled>
+          <CmsCheckbox checkboxSize="medium" checked={false} disabled>
             {participantTypeLabel('volunteer')}
           </CmsCheckbox>
         </div>

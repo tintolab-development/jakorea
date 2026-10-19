@@ -96,7 +96,7 @@ function GradeApplicationBlock({
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 withAllOption={false}
                 placeholder="신청 학년"
@@ -106,7 +106,7 @@ function GradeApplicationBlock({
               />
               <DetailInfoForm.InputsSeparator />
               <CmsNumericInput
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 placeholder="총 학급 수"
                 mode="integer"
@@ -135,7 +135,7 @@ function GradeApplicationBlock({
                   <Fragment key={i}>
                     {i > 0 ? <DetailInfoForm.InputsSeparator /> : null}
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       width={80}
                       placeholder="학급"
                       value={classNoByIndex[i] ?? ''}
@@ -150,7 +150,7 @@ function GradeApplicationBlock({
                     />
                     <span>반</span>
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       width={80}
                       placeholder="학생 수"
                       value={studentCountByIndex[i] ?? ''}

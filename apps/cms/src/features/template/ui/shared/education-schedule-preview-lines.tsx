@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './education-schedule-preview-lines.css'
 
@@ -41,16 +42,17 @@ export function EducationSchedulePreviewLines({
   return (
     <div className="education-schedule-preview-lines">
       {lines.map((line, index) => {
+        const displayLine = formatCmsScheduleDisplayLabel(line)
         return (
           <Fragment key={`${line}-${index}`}>
             {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
             <span className="education-schedule-preview-lines__item">
-              <span className="detail-info-form--text nowrap">{line}</span>
+              <span className="detail-info-form--text nowrap">{displayLine}</span>
               {editable ? (
                 <button
                   type="button"
                   className="education-schedule-preview-lines__remove"
-                  aria-label={`${line} 제거`}
+                  aria-label={`${displayLine} 제거`}
                   onClick={() => onRemove(index)}
                 >
                   <EducationSchedulePreviewRemoveIcon />

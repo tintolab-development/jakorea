@@ -80,7 +80,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
       fullRow={!showOnlineCredentials}
       edit={
         <CmsRadioGroup
-          size="large"
+          size="medium"
           value={displaySiteSubmission}
           onChange={event => {
             if (choiceDisplayOnly) return
@@ -89,7 +89,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
           style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
         >
           {INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS.map(option => (
-            <CmsRadio key={option.value} value={option.value}>
+            <CmsRadio size="medium" key={option.value} value={option.value}>
               {option.label}
             </CmsRadio>
           ))}
@@ -114,7 +114,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
                 >
                   <span style={nowrapSpanStyle}>ID</span>
                   <CmsInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="기관 아이디"
                     width={120}
                     value={displayInstitutionId}
@@ -127,7 +127,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
                   <DetailInfoForm.InputsSeparator />
                   <span style={nowrapSpanStyle}>검증번호</span>
                   <CmsInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="검증번호"
                     width={120}
                     value={displayVerificationNumber}
