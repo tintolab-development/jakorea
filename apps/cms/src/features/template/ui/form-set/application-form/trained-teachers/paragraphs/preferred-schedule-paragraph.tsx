@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { extractEducationScheduleCalendarDates } from '@jakorea/form-schema/program-application'
 import {
   buildInstitutionSessionCountOptions,
   clampInstitutionScheduleBlockCount,
@@ -246,6 +247,10 @@ export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
     )
   }
 
+  if (bridge.educationStructure === 'schedule' && bridge.sessionRound === 'multi') {
+    return null
+  }
+
   return (
     <TrainedTeachersPreferredScheduleFields
       bridge={bridge}
@@ -267,14 +272,25 @@ function TrainedTeachersPreferredScheduleFields({
     [bridge.maxSessionsPerDay]
   )
 
+  const fixedEducationDates = useMemo(
+    () =>
+      extractEducationScheduleCalendarDates(
+        bridge.educationScheduleMode === 'period' ? undefined : bridge.educationScheduleLines
+      ),
+    [bridge.educationScheduleLines, bridge.educationScheduleMode]
+  )
+
   const disabledDate = useMemo(() => {
+    if (bridge.educationScheduleMode !== 'period' && fixedEducationDates.size > 0) {
+      return (date: Dayjs) => !fixedEducationDates.has(date.format('YYYY-MM-DD'))
+    }
     const range = bridge.educationScheduleRange
     if (!range) return undefined
     const start = dayjs(range.start).startOf('day')
     const end = dayjs(range.end).endOf('day')
     if (!start.isValid() || !end.isValid()) return undefined
     return (date: Dayjs) => date.isBefore(start, 'day') || date.isAfter(end, 'day')
-  }, [bridge.educationScheduleRange])
+  }, [bridge.educationScheduleMode, bridge.educationScheduleRange, fixedEducationDates])
 
   const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
     'application.trainedTeachers.preferredSchedules',
@@ -290,8 +306,11 @@ function TrainedTeachersPreferredScheduleFields({
     }
   }, [blocks.length])
 
-  const visibleBlockCount = Math.min(Math.max(blocks.length, 1), Math.max(maxBlocks, blocks.length))
-  const displayBlocks = blocks.slice(0, visibleBlockCount)
+  // 제한값 감소 시 기존 입력을 조용히 삭제하지 않는다. 초과 상태를 보여주고
+  // 사용자가 직접 정리한 뒤 저장하도록 한다.
+  const exceedsMaxBlocks = blocks.length > maxBlocks
+  const exceedsMaxSessions = blocks.some(block => (block.times?.length ?? 0) > sessionOptions.length)
+  const displayBlocks = blocks.length > 0 ? blocks : [createEmptyBlockState()]
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
     updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
@@ -349,6 +368,11 @@ function TrainedTeachersPreferredScheduleFields({
       className="program-registration-paragraph"
       style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
     >
+      {exceedsMaxBlocks || exceedsMaxSessions ? (
+        <span style={{ color: '#d4380d' }} role="alert">
+          모집 제한값이 변경되어 기존 입력이 현재 제한을 초과했습니다. 초과한 일정·차시를 직접 정리한 후 저장해 주세요.
+        </span>
+      ) : null}
       {displayBlocks.map((block, index) => (
         <ScheduleBlock
           key={index}

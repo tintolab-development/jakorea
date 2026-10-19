@@ -15,4 +15,14 @@ describe('validateApplicationGiveUpReason', () => {
   it('rejects longer than 500 characters', () => {
     expect(validateApplicationGiveUpReason('a'.repeat(501))).toMatch(/500자/)
   })
+
+  it('TT 활동 포기는 1 through 1000 characters를 허용한다', () => {
+    expect(validateApplicationGiveUpReason('a', { minLength: 1, maxLength: 1000 })).toBeNull()
+    expect(
+      validateApplicationGiveUpReason('a'.repeat(1000), { minLength: 1, maxLength: 1000 })
+    ).toBeNull()
+    expect(
+      validateApplicationGiveUpReason('a'.repeat(1001), { minLength: 1, maxLength: 1000 })
+    ).toMatch(/1000자/)
+  })
 })

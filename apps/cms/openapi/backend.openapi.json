@@ -73287,7 +73287,8 @@
           },
           "notificationEventId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "availableActions": {
             "type": "array",
@@ -77466,7 +77467,7 @@
           "reason": {
             "type": "string",
             "maxLength": 1000,
-            "minLength": 0
+            "minLength": 1
           },
           "faultParty": {
             "type": "string",

@@ -10,13 +10,24 @@ import {
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
   buildEnabledDatesFromAllowedSchedulePeriods,
+  buildEnabledDatesFromEducationScheduleLines,
+  buildTrainedTeachersFixedScheduleOptions,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
+  resolveInstitutionAllowedScheduleEnabledDates,
   normalizeInstitutionFixedScheduleAnswerTokens,
   remapInstitutionSchedulePreviewSlotIds,
   shouldUseInstitutionAllowedSchedulePeriodDates,
   resolveApplyPreferredScheduleMaxBlocks,
+  resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
+  hasMissingRequiredBottomConsent,
+  hasPreferredScheduleDateOutsideRuntime,
+  isRuntimeScheduleNotConfigured,
+  readRuntimeScheduleConfig,
+  resolveRuntimeScheduleDateBounds,
+  resolveRuntimeScheduleEnabledDates,
   shouldShowApplyPreferredSchedule,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldShowApplyScheduleParagraph,
@@ -24,6 +35,10 @@ import {
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import {
+  findIncompletePreferredScheduleMessage,
+  toFixedScheduleOptionAnswerValue,
+} from './preferred-schedule-blocks.ts'
 
 function testUniqueCalendarDays() {
   assert.equal(
@@ -53,10 +68,7 @@ function testScheduleParagraphVisibility() {
       educationStructure: 'schedule',
       sessionRound: 'multi',
       educationScheduleMode: 'date',
-      educationScheduleLines: [
-        '26년 4월 20일(월) 9:30 ~ 12:20',
-        '26년 4월 27일(월) 13:00 ~ 15:50',
-      ],
+      educationScheduleLines: ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
     }),
     false
   )
@@ -88,10 +100,7 @@ function testScheduleParagraphVisibility() {
       educationStructure: 'curriculum',
       sessionRound: 'single',
       educationScheduleMode: 'date',
-      educationScheduleLines: [
-        '26년 4월 20일(월) 9:30 ~ 12:20',
-        '26년 4월 27일(월) 13:00 ~ 15:50',
-      ],
+      educationScheduleLines: ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
     }),
     true
   )
@@ -124,7 +133,7 @@ function testScheduleParagraphVisibility() {
       educationScheduleLines: [],
       maxPreferredScheduleCount: 1,
     }),
-    10
+    1
   )
   assert.equal(
     resolveApplyPreferredScheduleMaxBlocks(
@@ -139,16 +148,32 @@ function testScheduleParagraphVisibility() {
     ),
     4
   )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocksFromFixedOptions([{ id: 'schedule:187125' }]),
+    1
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocksFromFixedOptions([
+      { id: 'schedule:187125' },
+      { id: 'schedule:187126' },
+    ]),
+    2
+  )
+  assert.equal(
+    resolveApplyPreferredScheduleMaxBlocksFromFixedOptions([
+      { id: 'schedule:187125' },
+      { id: 'schedule:187125' },
+      { id: 'schedule:187126' },
+    ]),
+    2
+  )
 
   assert.equal(
     shouldShowApplyPreferredSchedule({
       educationStructure: 'curriculum',
       sessionRound: 'single',
       educationScheduleMode: 'date',
-      educationScheduleLines: [
-        '26년 4월 20일(월) 9:30 ~ 12:20',
-        '26년 4월 27일(월) 13:00 ~ 15:50',
-      ],
+      educationScheduleLines: ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
     }),
     false
   )
@@ -174,10 +199,7 @@ function testScheduleParagraphVisibility() {
     educationStructure: 'schedule' as const,
     sessionRound: 'single' as const,
     educationScheduleMode: 'date' as const,
-    educationScheduleLines: [
-      '26년 4월 20일(월) 9:30 ~ 12:20',
-      '26년 4월 27일(월) 13:00 ~ 15:50',
-    ],
+    educationScheduleLines: ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
   }
   assert.equal(shouldShowApplyScheduleParagraph(scheduleSingleDateTwoDays), true)
   assert.equal(shouldShowApplyPreferredSchedule(scheduleSingleDateTwoDays), false)
@@ -212,14 +234,91 @@ function testScheduleParagraphVisibility() {
     educationStructure: 'schedule' as const,
     sessionRound: 'single' as const,
     educationScheduleMode: 'date' as const,
-    educationScheduleLines: [
-      '26년 4월 20일(월) 9:30 ~ 12:20',
-      '26년 4월 27일(월) 13:00 ~ 15:50',
-    ],
+    educationScheduleLines: ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
   }
   assert.equal(shouldShowApplyScheduleParagraph(individualScheduleTwoDays), true)
   assert.equal(shouldShowApplyPreferredSchedule(individualScheduleTwoDays), false)
 }
+
+function testTrainedTeacherPeriodDateBounds() {
+  const runtime = {
+    scheduleInputMode: 'date_time_requests',
+    allowedSchedulePeriods: [
+      { startDate: '2026-11-08', endDate: '2026-11-12' },
+      { startDate: '2026-11-25', endDate: '2026-11-30' },
+    ],
+    minScheduleDate: '2026-11-08',
+    maxScheduleDate: '2026-12-05',
+  }
+  assert.deepEqual(readRuntimeScheduleConfig(runtime), {
+    scheduleInputMode: 'date_time_requests',
+    allowedSchedulePeriods: [
+      { startDate: '2026-11-08', endDate: '2026-11-12' },
+      { startDate: '2026-11-25', endDate: '2026-11-30' },
+    ],
+    minScheduleDate: '2026-11-08',
+    maxScheduleDate: '2026-12-05',
+  })
+  assert.deepEqual(resolveRuntimeScheduleDateBounds(runtime), {
+    minScheduleDate: '2026-11-08',
+    maxScheduleDate: '2026-12-05'
+  })
+  const enabledDates = resolveRuntimeScheduleEnabledDates(runtime, true)
+  assert.equal(enabledDates?.has('2026-11-08'), true)
+  assert.equal(enabledDates?.has('2026-11-17'), false)
+  assert.equal(enabledDates?.has('2026-11-25'), true)
+  assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-10' }], runtime), false)
+  assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-17' }], runtime), true)
+  assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-26' }], runtime), false)
+  assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-08-12' }], runtime), true)
+  assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-12-06' }], runtime), true)
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-08' }, { date: '2026-11-30' }], runtime),
+    false,
+  )
+
+  const unconfiguredRuntime = { scheduleInputMode: 'date_time_requests' }
+  assert.equal(isRuntimeScheduleNotConfigured(unconfiguredRuntime), true)
+  assert.equal(resolveRuntimeScheduleEnabledDates(unconfiguredRuntime, true)?.size, 0)
+  assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-10' }], unconfiguredRuntime), true)
+
+  const consentDraft = {
+    schemaVersion: 1,
+    formSettings: {},
+    paragraphs: [
+      {
+        id: 'program-application-trained-teachers-seed-personal-info',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        showBottomConsent: true,
+        bottomConsent: null,
+      },
+      {
+        id: 'program-application-trained-teachers-seed-third-party',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        showBottomConsent: true,
+        bottomConsent: 'agree',
+      },
+    ],
+  } as never
+  assert.equal(hasMissingRequiredBottomConsent(consentDraft), true)
+
+  assert.equal(
+    findIncompletePreferredScheduleMessage([
+      { date: '2026-11-10', classPeriod: '1', startTime: '14:00', endTime: '03:03' },
+    ]),
+    '교육 종료 시간은 시작 시간 이후로 입력해 주세요.'
+  )
+  assert.equal(
+    findIncompletePreferredScheduleMessage([
+      { date: '2026-11-10', classPeriod: '1', startTime: '03:00', endTime: '00:05' },
+    ]),
+    '교육 종료 시간은 시작 시간 이후로 입력해 주세요.'
+  )
+}
+
+testTrainedTeacherPeriodDateBounds()
 
 testUniqueCalendarDays()
 testScheduleParagraphVisibility()
@@ -233,33 +332,70 @@ assert.ok(runtimeScheduleMulti)
 assert.equal(
   shouldShowApplyScheduleParagraph({
     ...runtimeScheduleMulti,
-    educationScheduleLines: [
-      '26년 4월 20일(일) 9:30 ~ 12:20',
-      '26년 4월 27일(월) 13:00 ~ 15:50',
-    ],
+    educationScheduleLines: ['26년 4월 20일(일) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
   }),
   false
 )
 
 assert.equal(
   isInstitutionApplyScheduleChoiceParagraphId(
-    PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+    PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
   ),
-  true,
+  true
 )
 assert.equal(
-  isInstitutionApplyScheduleChoiceParagraphId(
-    PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
-  ),
-  false,
+  isInstitutionApplyScheduleChoiceParagraphId(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice),
+  false
 )
 
-assert.equal(readApplyScheduleInputMode({ scheduleInputMode: 'date_time_requests' }), 'date_time_requests')
+assert.equal(
+  readApplyScheduleInputMode({ scheduleInputMode: 'date_time_requests' }),
+  'date_time_requests'
+)
 assert.equal(
   readApplyScheduleInputMode({ scheduleInputMode: 'fixed_schedule_options' }),
-  'fixed_schedule_options',
+  'fixed_schedule_options'
 )
 assert.equal(readApplyScheduleInputMode({}), null)
+
+assert.deepEqual(
+  [
+    ...buildEnabledDatesFromEducationScheduleLines([
+      '26년 4월 20일(월) 09:30 ~ 12:20 | 26년 4월 20일(월) 13:00 ~ 15:50',
+      '2026년 4월 27일(월) 09:30 ~ 12:20 | 2회차',
+    ]),
+  ],
+  ['2026-04-20', '2026-04-27']
+)
+assert.deepEqual(
+  buildTrainedTeachersFixedScheduleOptions([
+    '26년 4월 20일(월) 09:30 ~ 12:20 | 26년 4월 20일(월) 13:00 ~ 15:50',
+    '2026년 4월 27일(월) 09:30 ~ 12:20 | 2회차',
+  ]).map(option => ({
+    value: option.value,
+    date: option.date,
+    startTime: option.startTime,
+    endTime: option.endTime,
+    session: option.session,
+  })),
+  [
+    {
+      value: 'line:0',
+      date: '2026-04-20',
+      startTime: '09:30',
+      endTime: '12:20',
+      session: undefined,
+    },
+    {
+      value: 'line:1',
+      date: '2026-04-20',
+      startTime: '13:00',
+      endTime: '15:50',
+      session: undefined,
+    },
+    { value: 'line:2', date: '2026-04-27', startTime: '09:30', endTime: '12:20', session: '2회차' },
+  ]
+)
 
 const boundsFromRuntime = readInstitutionApplyScheduleDateBounds({
   minScheduleDate: '2026-10-20',
@@ -270,7 +406,7 @@ assert.equal(boundsFromRuntime.maxScheduleDate, '2026-10-31')
 
 const boundsPreferParagraph = readInstitutionApplyScheduleDateBounds(
   { minScheduleDate: '2026-10-01', maxScheduleDate: '2026-11-30' },
-  { runtimeMinDate: '2026-10-20', runtimeMaxDate: '2026-10-31' },
+  { runtimeMinDate: '2026-10-20', runtimeMaxDate: '2026-10-31' }
 )
 assert.equal(boundsPreferParagraph.minScheduleDate, '2026-10-20')
 assert.equal(boundsPreferParagraph.maxScheduleDate, '2026-10-31')
@@ -289,11 +425,49 @@ const fixedItems = readInstitutionFixedScheduleChoiceItems(
       { scheduleId: 42, label: '운영 일정' },
     ],
   },
-  { items: [] },
+  { items: [] }
 )
 assert.ok(fixedItems)
 assert.equal(fixedItems![0]?.id, 'line:1')
 assert.equal(fixedItems![1]?.id, 'schedule:42')
+
+const runtimeFixedItems = readRuntimeFixedScheduleChoiceItems(
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [{ id: '187123', value: 'schedule:187123', label: '교육 일정' }],
+  },
+  { items: [] }
+)
+assert.deepEqual(runtimeFixedItems, [{ id: 'schedule:187123', label: '교육 일정' }])
+assert.equal(
+  readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
+    { items: [] }
+  ),
+  null
+)
+assert.equal(
+  readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+    { items: [] }
+  ),
+  null
+)
+assert.equal(
+  readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options' },
+    { items: [{ id: 'line:0', label: 'stale seed' }] }
+  ),
+  null
+)
+assert.deepEqual(
+  toFixedScheduleOptionAnswerValue([
+    { scheduleOptionId: 'schedule:187123' },
+    { scheduleOptionId: 'schedule:187123' },
+    { scheduleOptionId: 'schedule:187124' },
+  ]),
+  ['schedule:187123', 'schedule:187124']
+)
 
 const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
   ['line:1'],
@@ -303,7 +477,7 @@ const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
       { id: 'line:2', option_value: 'schedule:186626', label: '운영' },
     ],
   },
-  { items: [] },
+  { items: [] }
 )
 assert.deepEqual(normalized, ['schedule:99'])
 
@@ -322,7 +496,7 @@ const runtimeOverridesStaleSeed = readInstitutionFixedScheduleChoiceItems(
       { id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' },
     ],
   },
-  { items: [{ id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' }] },
+  { items: [{ id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' }] }
 )
 assert.equal(runtimeOverridesStaleSeed?.length, 3)
 
@@ -335,7 +509,7 @@ const educationLinesFallback = readInstitutionFixedScheduleChoiceItems(
       '26년 11월 2일(월) 13:30 ~ 16:00',
       '26년 11월 9일(월) 9:30 ~ 11:30',
     ],
-  },
+  }
 )
 assert.equal(educationLinesFallback?.length, 3)
 assert.equal(educationLinesFallback![0]?.id, 'line:0')
@@ -349,12 +523,17 @@ const periods = readInstitutionAllowedSchedulePeriods(
       { startDate: '2026-11-11', endDate: '2026-11-12' },
     ],
   },
-  null,
+  null
 )
 assert.ok(periods)
 assert.equal(periods!.length, 2)
 assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates(periods), true)
 assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates([]), false)
+
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates(null, false), null)
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates(null, true)?.size, 0)
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates([], true)?.size, 0)
+assert.equal(resolveInstitutionAllowedScheduleEnabledDates(periods, true)?.has('2026-10-28'), true)
 
 const enabled = buildEnabledDatesFromAllowedSchedulePeriods(periods!)
 assert.equal(enabled.has('2026-10-28'), true)
@@ -366,11 +545,11 @@ assert.deepEqual(
     'institution-schedule-slot-1',
     'institution-schedule-slot-2',
   ]),
-  ['line:0', 'line:1'],
+  ['line:0', 'line:1']
 )
 assert.deepEqual(
   remapInstitutionSchedulePreviewSlotIds(['line:0', 'institution-schedule-slot-1', 'line:1']),
-  ['line:0', 'line:1'],
+  ['line:0', 'line:1']
 )
 
 const keepLineTokens = normalizeInstitutionFixedScheduleAnswerTokens(
@@ -387,7 +566,7 @@ const keepLineTokens = normalizeInstitutionFixedScheduleAnswerTokens(
       { id: 'institution-schedule-slot-1', label: 'seed 1' },
       { id: 'institution-schedule-slot-2', label: 'seed 2' },
     ],
-  },
+  }
 )
 assert.deepEqual(keepLineTokens, ['line:0', 'line:1'])
 
@@ -400,7 +579,7 @@ const remappedPreview = normalizeInstitutionFixedScheduleAnswerTokens(
       { id: 'line:1', label: '26년 10월 30일(금) 9:30 ~ 11:30', scheduleId: null },
     ],
   },
-  { items: [{ id: 'institution-schedule-slot-1', label: 'seed 1' }] },
+  { items: [{ id: 'institution-schedule-slot-1', label: 'seed 1' }] }
 )
 assert.deepEqual(remappedPreview, ['line:0', 'line:1'])
 
@@ -416,14 +595,18 @@ function testPreEducationExcludedFromCurriculumChartSessionCount() {
   })
   assert.equal(meta.curriculumChartSessionCount, 2)
 
-  const items = readInstitutionFixedScheduleChoiceItems(null, {}, {
-    educationScheduleLines: [scheduleLine],
-    educationStructure: 'curriculum',
-    sessionRound: 'single',
-    educationScheduleMode: 'date',
-    curriculumChartSessionCount: meta.curriculumChartSessionCount,
-    curriculumSessions: meta.curriculumSessions,
-  })
+  const items = readInstitutionFixedScheduleChoiceItems(
+    null,
+    {},
+    {
+      educationScheduleLines: [scheduleLine],
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      curriculumChartSessionCount: meta.curriculumChartSessionCount,
+      curriculumSessions: meta.curriculumSessions,
+    }
+  )
   assert.equal(items?.length, 1)
   assert.equal(items?.[0]?.label, `${scheduleLine} | 2차시`)
 }

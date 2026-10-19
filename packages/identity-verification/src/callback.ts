@@ -62,7 +62,8 @@ async function processRemoteCallback(
     const message = queryMessage ?? '본인인증에 실패했습니다.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
+      // postMessage is delivered asynchronously. Keep the pending challenge
+      // until the opener validates and clears it from its message handler.
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)
@@ -72,7 +73,6 @@ async function processRemoteCallback(
     const message = '인증 요청 정보가 일치하지 않습니다. 다시 시도해 주세요.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)
@@ -83,7 +83,6 @@ async function processRemoteCallback(
     const message = '인증 세션 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)
@@ -99,7 +98,6 @@ async function processRemoteCallback(
       const message = queryMessage ?? '본인인증이 완료되지 않았습니다.'
       const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
       if (posted) {
-        state.clearPendingChallenge()
         closeIdentityPopupSoon()
       }
       return failOutcome(message, cancelled, posted)
@@ -111,7 +109,6 @@ async function processRemoteCallback(
         '인증 프로필 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
       const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
       if (posted) {
-        state.clearPendingChallenge()
         closeIdentityPopupSoon()
       }
       return failOutcome(message, cancelled, posted)
@@ -165,7 +162,6 @@ async function processRemoteCallback(
       const message = '본인인증 프로필 정보를 확인할 수 없습니다.'
       const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
       if (posted) {
-        state.clearPendingChallenge()
         closeIdentityPopupSoon()
       }
       return failOutcome(message, cancelled, posted)
@@ -192,7 +188,7 @@ async function processRemoteCallback(
       )
     }
 
-    state.clearPendingChallenge()
+    // The opener clears the challenge after it accepts IDENTITY_VERIFIED.
     closeIdentityPopupSoon()
     return { kind: 'verified', payload }
   } catch (error) {
@@ -200,7 +196,6 @@ async function processRemoteCallback(
       error instanceof Error ? error.message : '본인인증 결과를 확인할 수 없습니다.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)
@@ -219,7 +214,6 @@ async function processMockCallback(
     const message = '인증 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)
@@ -230,7 +224,6 @@ async function processMockCallback(
     const message = '인증 세션이 만료되었습니다. 회원가입 화면에서 다시 시도해 주세요.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)
@@ -265,7 +258,7 @@ async function processMockCallback(
       )
     }
 
-    state.clearPendingChallenge()
+    // The opener clears the challenge after it accepts IDENTITY_VERIFIED.
     closeIdentityPopupSoon()
     return { kind: 'verified', payload }
   } catch (error) {
@@ -273,7 +266,6 @@ async function processMockCallback(
       error instanceof Error ? error.message : '본인인증 결과를 확인할 수 없습니다.'
     const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
     if (posted) {
-      state.clearPendingChallenge()
       closeIdentityPopupSoon()
     }
     return failOutcome(message, cancelled, posted)

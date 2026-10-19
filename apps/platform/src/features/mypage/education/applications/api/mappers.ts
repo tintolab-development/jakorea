@@ -297,6 +297,15 @@ export function mapPortalProgramApplicationDetail(
   if (detail.certificateAvailable != null) {
     mapped.certificateAvailable = detail.certificateAvailable
   }
+  if (detail.program) {
+    mapped.programConfig = {
+      programType: detail.program.programType,
+      educationFormLabel: detail.program.educationFormLabel,
+      educationJournalEnabled: detail.program.educationJournalEnabled,
+      surveyConfigured: detail.program.surveyConfigured,
+      satisfactionConfigured: detail.program.satisfactionConfigured,
+    }
+  }
   const recruitmentLabel = formatDateRange(
     detail.program?.recruitmentStartAt,
     detail.program?.recruitmentEndAt,
@@ -341,7 +350,7 @@ export function mapPortalProgramApplicationDetail(
   const nestedProgram = detail.program as
     | Pick<
         ProgramDetail,
-        'programAudience' | 'programType' | 'registrationKind' | 'educationScheduleLines' | 'eventSchedules'
+        'programAudience' | 'programType' | 'registrationKind' | 'educationScheduleLines' | 'eventSchedules' | 'educationFormLabel'
       >
     | undefined
   const isOrganizationApplication = isOrganizationEducationApplication(

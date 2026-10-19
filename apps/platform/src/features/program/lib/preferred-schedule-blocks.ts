@@ -16,6 +16,17 @@ function normalizeScheduleTime(raw: string): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+const SCHEDULE_TIME_RE = /^\d{2}:\d{2}$/
+
+function isValidScheduleTime(value: string): boolean {
+  if (!SCHEDULE_TIME_RE.test(value)) return false
+  const [hour, minute] = value.split(':').map(Number)
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59
+}
+
+export const PREFERRED_SCHEDULE_TIME_ORDER_ERROR_MESSAGE =
+  '교육 종료 시간은 시작 시간 이후로 입력해 주세요.'
+
 export type PreferredScheduleBlocksMapOptions = {
   /** 일정형 단일 기간 — 희망 교육일만 */
   dateOnly?: boolean
@@ -36,6 +47,7 @@ export function toPortalPreferredScheduleBlocks(
         date,
         sessionCount: 1,
         sessionTimes: [],
+        ...(block.session ? { session: block.session } : {}),
       })
       rank += 1
       continue
@@ -49,6 +61,7 @@ export function toPortalPreferredScheduleBlocks(
       preferenceRank: rank,
       date,
       sessionCount: 1,
+      ...(block.session ? { session: block.session } : {}),
       sessionTimes: [
         {
           sessionIndex: 1,
@@ -76,6 +89,21 @@ export function toPreferredScheduleAnswerValue(
   return mapped.length > 0 ? mapped : null
 }
 
+/** 고정 일정 선택형은 일정 객체가 아니라 Runtime option value 배열을 제출한다. */
+export function toFixedScheduleOptionAnswerValue(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'scheduleOptionId'>[],
+): string[] | null {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const block of blocks) {
+    const value = block.scheduleOptionId?.trim()
+    if (!value || seen.has(value)) continue
+    seen.add(value)
+    out.push(value)
+  }
+  return out.length > 0 ? out : null
+}
+
 /** 화면 검증 — 날짜만 있고 교시·시간이 비면 제출 차단 */
 export function findIncompletePreferredScheduleMessage(
   blocks: readonly ApplyPreferredScheduleBlock[],
@@ -98,6 +126,15 @@ export function findIncompletePreferredScheduleMessage(
     return options?.dateOnly
       ? '진행 희망 교육 일정에 희망 교육일을 입력해 주세요.'
       : '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.'
+  }
+  if (!options?.dateOnly) {
+    const hasInvalidTimeRange = blocks.some(block => {
+      const startTime = normalizeScheduleTime(block.startTime)
+      const endTime = normalizeScheduleTime(block.endTime)
+      if (!startTime || !endTime) return false
+      return !isValidScheduleTime(startTime) || !isValidScheduleTime(endTime) || endTime <= startTime
+    })
+    if (hasInvalidTimeRange) return PREFERRED_SCHEDULE_TIME_ORDER_ERROR_MESSAGE
   }
   if (toPortalPreferredScheduleBlocks(blocks, options).length === 0) {
     return '진행 희망 교육 일정을 한 개 이상 입력해 주세요.'
@@ -131,6 +168,7 @@ export function preferredScheduleBlocksFromDraftAnswers(
         : null
     blocks.push({
       date,
+      session: typeof row.session === 'string' ? row.session : undefined,
       classPeriod: typeof first?.classPeriod === 'string' ? first.classPeriod : '',
       startTime: normalizeScheduleTime(
         typeof first?.startTime === 'string'

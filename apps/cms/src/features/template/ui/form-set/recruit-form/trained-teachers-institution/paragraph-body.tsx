@@ -5,10 +5,10 @@ import { ApplicantRecruitParticipantInfoParagraph } from '@/features/template/ui
 import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-paragraph'
 
 const TRAINED_TEACHERS_RECRUIT_DEFAULTS = {
-  studentListRequired: 'need' as const,
-  maxClassCount: 4,
-  maxScheduleCount: 3,
-  maxSessionsPerDay: 8,
+  studentListRequired: 'none' as const,
+  maxClassCount: 2,
+  maxScheduleCount: 2,
+  maxSessionsPerDay: 5,
 }
 
 /** 템플릿 편집기 — 교육받은 교사_참여 기관 모집 폼 시드 단락 본문 */

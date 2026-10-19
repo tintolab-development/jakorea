@@ -189,9 +189,9 @@ export function GeneralProgramParticipantRecruitmentInfoView({
     : isIndividual
       ? APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS.participantRecruitInfo
       : APPLICANT_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo
-  // 교육받은 교사 등록 폼과 동일 — 최대 일정/1일 차시 상시 노출
-  const showMaxScheduleCountField = display.showMaxScheduleCountField || isTrainedTeachers
-  const showMaxSessionsPerDayField = display.showMaxSessionsPerDayField || isTrainedTeachers
+  // 교육받은 교사도 일반 기관 모집과 동일하게 일정 유형별 노출 정책을 사용한다.
+  const showMaxScheduleCountField = display.showMaxScheduleCountField
+  const showMaxSessionsPerDayField = display.showMaxSessionsPerDayField
   const lifecycle = display.recruitmentStatusLifecycle
   const statusView = lifecycle ? (
     <span

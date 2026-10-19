@@ -92,11 +92,14 @@ function ScheduleEventNameInput({
       onChange={event => {
         if (disabled) return
         const nextValue = event.target.value
-        updateProgramRegistrationOverlayKey<Record<number, string>>(SCHEDULE_EVENT_NAME_KEY, prev => {
-          const current = prev ?? EMPTY_EVENT_NAME_BY_DETAIL
-          if ((current[detailIndex] ?? '') === nextValue) return current
-          return { ...current, [detailIndex]: nextValue }
-        })
+        updateProgramRegistrationOverlayKey<Record<number, string>>(
+          SCHEDULE_EVENT_NAME_KEY,
+          prev => {
+            const current = prev ?? EMPTY_EVENT_NAME_BY_DETAIL
+            if ((current[detailIndex] ?? '') === nextValue) return current
+            return { ...current, [detailIndex]: nextValue }
+          }
+        )
       }}
     />
   )
@@ -275,6 +278,8 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   preEducationDisplayMode?: 'prepend' | 'replaceFirst'
   /** 교육받은 교사 — 과제 설정 비노출 (교육일지와 구분) */
   hideAssignmentSettings?: boolean
+  /** 교육받은 교사 일정형+복수 — 행사별 날짜는 단일 날짜만 허용 */
+  directScheduleEventDateOnly?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleCurriculumParagraph({
@@ -293,11 +298,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   preEducationBlockLabel = PRE_EDUCATION_SCHEDULE_LABEL,
   preEducationDisplayMode = 'prepend',
   hideAssignmentSettings = false,
+  directScheduleEventDateOnly = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
   const replaceFirstTraining =
     scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
-  const prependTraining =
-    scheduleCurriculumPreEducation && preEducationDisplayMode === 'prepend'
+  const prependTraining = scheduleCurriculumPreEducation && preEducationDisplayMode === 'prepend'
   const detailCount = Math.max(1, scheduleDetailCount)
   const groupCount =
     sessionRoundType === 'multi'
@@ -459,13 +464,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           detailIndex
         )
     )
-    updateProgramRegistrationOverlayKey(
-      GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
-      prev =>
-        reindexDetailRecordAfterDelete(
-          (prev as Record<number, Array<ScheduleGroupTimeSlot>>) ?? {},
-          detailIndex
-        )
+    updateProgramRegistrationOverlayKey(GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY, prev =>
+      reindexDetailRecordAfterDelete(
+        (prev as Record<number, Array<ScheduleGroupTimeSlot>>) ?? {},
+        detailIndex
+      )
     )
     updateProgramRegistrationOverlayKey(
       'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
@@ -526,10 +529,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     )
   }
 
-  const renderEducationFormField = (
-    detailIndex: number,
-    options?: { fullRow?: boolean }
-  ) => (
+  const renderEducationFormField = (detailIndex: number, options?: { fullRow?: boolean }) => (
     <DetailInfoForm.Field
       label="교육 형태"
       fullRow={options?.fullRow}
@@ -550,10 +550,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     />
   )
 
-  const renderParticipationField = (
-    detailIndex: number,
-    options?: { fullRow?: boolean }
-  ) => (
+  const renderParticipationField = (detailIndex: number, options?: { fullRow?: boolean }) => (
     <DetailInfoForm.Field
       label="참여 방식"
       fullRow={options?.fullRow}
@@ -921,9 +918,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
 
   const renderEventProgressScheduleField = (detailIndex: number) => {
     const scheduleRange = overlayScheduleToRange(scheduleDateByDetail[detailIndex])
-    const scheduleHasClock = Boolean(
-      scheduleRange && educationScheduleRangeHasClock(scheduleRange)
-    )
+    const scheduleHasClock = Boolean(scheduleRange && educationScheduleRangeHasClock(scheduleRange))
     return (
       <div className="detail-info-form-inputs-wrapper-no-gap">
         <EducationProgressScheduleDatePicker
@@ -931,6 +926,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           participantOrganization={participantOrganization}
           programType="schedule"
           sessionRound={sessionRoundType}
+          directEventDateOnly={directScheduleEventDateOnly}
           value={scheduleRange?.[0] ?? null}
           appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
           appliedSurfaceWithTime={scheduleHasClock}
@@ -992,9 +988,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         {Array.from({ length: detailCount }, (_, i) => {
           const n = i + 1
           const isTrainingDetail = replaceFirstTraining && n === 1
-          const eventHeading = isTrainingDetail
-            ? preEducationBlockLabel
-            : `행사 일정 ${pad2(n)}`
+          const eventHeading = isTrainingDetail ? preEducationBlockLabel : `행사 일정 ${pad2(n)}`
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
               {showEventHeadings || isTrainingDetail ? (
@@ -1051,9 +1045,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       {Array.from({ length: detailCount }, (_, i) => {
         const n = i + 1
         const isTrainingDetail = replaceFirstTraining && n === 1
-        const detailHeading = isTrainingDetail
-          ? preEducationBlockLabel
-          : `세부 일정 ${pad2(n)}`
+        const detailHeading = isTrainingDetail ? preEducationBlockLabel : `세부 일정 ${pad2(n)}`
         return (
           <div key={n} className="program-registration-schedule-curriculum__block">
             {detailCount > 1 || scheduleCurriculumPreEducation || isTrainingDetail ? (

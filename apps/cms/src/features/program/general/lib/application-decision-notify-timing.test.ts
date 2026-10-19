@@ -51,8 +51,16 @@ describe('toNestedDecisionNotification', () => {
     })
   })
 
-  it('즉시 발송은 생략한다', () => {
-    expect(toNestedDecisionNotification('immediate')).toBeUndefined()
+  it('즉시 발송은 IMMEDIATE를 명시한다', () => {
+    expect(toNestedDecisionNotification('immediate')).toEqual({
+      notification: { timing: 'IMMEDIATE' },
+    })
+  })
+
+  it('발표일 발송은 ON_ANNOUNCEMENT를 명시한다', () => {
+    expect(toNestedDecisionNotification('on_announcement')).toEqual({
+      notification: { timing: 'ON_ANNOUNCEMENT' },
+    })
   })
 })
 

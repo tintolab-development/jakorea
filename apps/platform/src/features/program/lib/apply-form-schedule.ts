@@ -7,6 +7,8 @@ import {
   APPLICATION_SCHEDULE_CHOICE_PARAGRAPH_IDS,
   applicationScheduleVisibilityFromRuntimeContext,
   countUniqueEducationScheduleCalendarDays,
+  expandEducationScheduleChoiceSlots,
+  extractEducationScheduleCalendarDates,
   institutionFixedScheduleOptionToken,
   isApplicationScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
@@ -15,6 +17,7 @@ import {
   readApplicationScheduleInputMode,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
   shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationPreferredScheduleSessionSelect,
   shouldShowApplicationPreferredScheduleParagraph,
@@ -22,6 +25,7 @@ import {
   shouldShowApplicationSchedulePeriodDateOnlyPreferred,
   syncApplicationScheduleChoiceParagraphsInDraft,
   type ReadInstitutionFixedScheduleChoiceOptions,
+  type RuntimeFixedScheduleChoiceItem,
 } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
@@ -87,6 +91,13 @@ export type ApplyScheduleDateBounds = {
 export type ApplySchedulePeriodBounds = {
   startDate: string
   endDate: string
+}
+
+export type ApplyRuntimeScheduleConfig = {
+  scheduleInputMode: ApplyScheduleInputMode | null
+  allowedSchedulePeriods: ApplySchedulePeriodBounds[] | null
+  minScheduleDate: string | null
+  maxScheduleDate: string | null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -156,10 +167,70 @@ export function readInstitutionAllowedSchedulePeriods(
   return raw
 }
 
+/** Portal form.runtimeContext의 일정 계약만 읽는다. 프로그램 상세 일정은 사용하지 않는다. */
+export function readRuntimeScheduleConfig(runtime: unknown): ApplyRuntimeScheduleConfig {
+  const record = isRecord(runtime) ? runtime : null
+  return {
+    scheduleInputMode: readApplyScheduleInputMode(runtime),
+    allowedSchedulePeriods:
+      record && 'allowedSchedulePeriods' in record
+        ? (readSchedulePeriodBoundsList(record.allowedSchedulePeriods) ?? [])
+        : null,
+    minScheduleDate: record ? readIsoDateOrNull(record.minScheduleDate) : null,
+    maxScheduleDate: record ? readIsoDateOrNull(record.maxScheduleDate) : null,
+  }
+}
+
+export function isRuntimeScheduleNotConfigured(runtime: unknown): boolean {
+  const config = readRuntimeScheduleConfig(runtime)
+  return (
+    config.scheduleInputMode === 'date_time_requests' &&
+    (config.allowedSchedulePeriods?.length ?? 0) === 0 &&
+    config.minScheduleDate == null &&
+    config.maxScheduleDate == null
+  )
+}
+
+export function resolveRuntimeScheduleDateBounds(runtime: unknown): ApplyScheduleDateBounds {
+  const config = readRuntimeScheduleConfig(runtime)
+  return {
+    minScheduleDate: config.minScheduleDate,
+    maxScheduleDate: config.maxScheduleDate,
+  }
+}
+
+export function resolveRuntimeScheduleEnabledDates(
+  runtime: unknown,
+  restrictWhenUnavailable = false
+): ReadonlySet<string> | null {
+  const config = readRuntimeScheduleConfig(runtime)
+  if (config.allowedSchedulePeriods != null && config.allowedSchedulePeriods.length > 0) {
+    return buildEnabledDatesFromAllowedSchedulePeriods(config.allowedSchedulePeriods)
+  }
+  return restrictWhenUnavailable && isRuntimeScheduleNotConfigured(runtime)
+    ? new Set<string>()
+    : null
+}
+
 export function shouldUseInstitutionAllowedSchedulePeriodDates(
   periods: ApplySchedulePeriodBounds[] | null
 ): boolean {
   return periods != null && periods.length > 0
+}
+
+/**
+ * 기간 지정형 기관 신청은 서버가 허용 기간을 내려준 경우에만 날짜를 연다.
+ * 런타임 계약이 없을 때 null을 반환하면 날짜 선택기가 전체 범위를 허용하므로,
+ * 해당 모드에서는 빈 Set으로 fail closed 한다.
+ */
+export function resolveInstitutionAllowedScheduleEnabledDates(
+  periods: ApplySchedulePeriodBounds[] | null,
+  restrictWhenUnavailable = false
+): ReadonlySet<string> | null {
+  if (!shouldUseInstitutionAllowedSchedulePeriodDates(periods)) {
+    return restrictWhenUnavailable ? new Set<string>() : null
+  }
+  return buildEnabledDatesFromAllowedSchedulePeriods(periods!)
 }
 
 export function buildEnabledDatesFromAllowedSchedulePeriods(
@@ -178,6 +249,54 @@ export function buildEnabledDatesFromAllowedSchedulePeriods(
   return set
 }
 
+/** 날짜 지정형 교육받은 교사 신청 — 등록된 교육일만 선택 가능하게 한다. */
+export function buildEnabledDatesFromEducationScheduleLines(
+  lines: readonly string[] | undefined
+): ReadonlySet<string> {
+  return extractEducationScheduleCalendarDates(lines)
+}
+
+export type TrainedTeachersFixedScheduleOption = {
+  value: string
+  label: string
+  date: string
+  classPeriod: string
+  startTime: string
+  endTime: string
+  session?: string
+}
+
+const FIXED_SCHEDULE_DATE_RE = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/
+const FIXED_SCHEDULE_TIME_RE = /(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/
+
+/** 교육받은 교사 날짜 지정형 — 원본 일정 line의 날짜·시간·회차를 선택지로 유지한다. */
+export function buildTrainedTeachersFixedScheduleOptions(
+  lines: readonly string[] | undefined
+): TrainedTeachersFixedScheduleOption[] {
+  const options: TrainedTeachersFixedScheduleOption[] = []
+  for (const [index, raw] of expandEducationScheduleChoiceSlots(lines).entries()) {
+    const label = raw.trim()
+    const dateMatch = label.match(FIXED_SCHEDULE_DATE_RE)
+    const timeMatch = label.match(FIXED_SCHEDULE_TIME_RE)
+    if (!dateMatch || !timeMatch) continue
+    const yearRaw = Number(dateMatch[1])
+    const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw
+    const month = Number(dateMatch[2])
+    const day = Number(dateMatch[3])
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) continue
+    options.push({
+      value: `line:${index}`,
+      label,
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      classPeriod: '',
+      startTime: timeMatch[1],
+      endTime: timeMatch[2],
+      ...(label.match(/(\d+)회차/)?.[1] ? { session: `${label.match(/(\d+)회차/)?.[1]}회차` } : {}),
+    })
+  }
+  return options
+}
+
 export function readInstitutionApplyScheduleDateBounds(
   runtime: unknown,
   paragraph?: unknown
@@ -192,11 +311,65 @@ export function readInstitutionApplyScheduleDateBounds(
   }
 }
 
+export function hasPreferredScheduleDateOutsideRuntime(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
+  runtime: unknown
+): boolean {
+  const config = readRuntimeScheduleConfig(runtime)
+  return blocks.some(block => {
+    const date = readIsoDateOrNull(block.date)
+    if (!date) return false
+    if (isRuntimeScheduleNotConfigured(runtime)) return true
+    if (
+      config.allowedSchedulePeriods != null &&
+      config.allowedSchedulePeriods.length > 0 &&
+      !config.allowedSchedulePeriods.some(
+        period => date >= period.startDate && date <= period.endDate
+      )
+    ) {
+      return true
+    }
+    return (
+      (config.minScheduleDate != null && date < config.minScheduleDate) ||
+      (config.maxScheduleDate != null && date > config.maxScheduleDate)
+    )
+  })
+}
+
+export const TRAINED_TEACHERS_REQUIRED_CONSENT_IDS = [
+  'program-application-trained-teachers-seed-personal-info',
+  'program-application-trained-teachers-seed-third-party',
+] as const
+
+export function findMissingRequiredBottomConsentId(
+  draft: WritingFormDraft | null | undefined
+): string | null {
+  if (!draft) return TRAINED_TEACHERS_REQUIRED_CONSENT_IDS[0]
+  return (
+    TRAINED_TEACHERS_REQUIRED_CONSENT_IDS.find(id => {
+      const paragraph = draft.paragraphs.find(item => item.id === id)
+      return (
+        !paragraph ||
+        !('showBottomConsent' in paragraph) ||
+        paragraph.showBottomConsent !== true ||
+        paragraph.bottomConsent !== 'agree'
+      )
+    }) ?? null
+  )
+}
+
+export function hasMissingRequiredBottomConsent(draft: WritingFormDraft | null | undefined): boolean {
+  return findMissingRequiredBottomConsentId(draft) != null
+}
+
 export {
   isInstitutionApplyScheduleChoiceParagraphId,
   institutionFixedScheduleOptionToken,
+  readApplicationScheduleRecruitmentLimitsFromRuntime,
   readInstitutionFixedScheduleChoiceItems,
+  readRuntimeFixedScheduleChoiceItems,
   type ReadInstitutionFixedScheduleChoiceOptions,
+  type RuntimeFixedScheduleChoiceItem,
 }
 
 const INSTITUTION_SCHEDULE_PREVIEW_SLOT_RE = /^institution-schedule-slot-(\d+)$/i
@@ -206,9 +379,7 @@ function isInstitutionSchedulePreviewSlotId(value: string): boolean {
 }
 
 /** 시드 미리보기 ID(`institution-schedule-slot-N`) → 런타임 `line:N-1`. */
-export function remapInstitutionSchedulePreviewSlotIds(
-  selectedIds: readonly string[],
-): string[] {
+export function remapInstitutionSchedulePreviewSlotIds(selectedIds: readonly string[]): string[] {
   const out: string[] = []
   const seen = new Set<string>()
   for (const selected of selectedIds) {
@@ -226,12 +397,12 @@ export function remapInstitutionSchedulePreviewSlotIds(
 export function normalizeInstitutionFixedScheduleAnswerTokens(
   selectedIds: readonly string[],
   runtime: unknown,
-  paragraph: unknown,
+  paragraph: unknown
 ): string[] {
   return normalizeInstitutionFixedScheduleAnswerTokensFromSchema(
     remapInstitutionSchedulePreviewSlotIds(selectedIds),
     runtime,
-    paragraph,
+    paragraph
   )
 }
 
@@ -267,7 +438,7 @@ export function resolveApplyPreferredScheduleMaxBlocks(
   const preferredUi = shouldShowApplicationPreferredScheduleParagraph(program)
   const recruitmentFallback = preferredUi ? 10 : undefined
   const fromProgramLimit =
-    program.maxPreferredScheduleCount != null && program.maxPreferredScheduleCount > 1
+    program.maxPreferredScheduleCount != null && program.maxPreferredScheduleCount >= 1
       ? program.maxPreferredScheduleCount
       : undefined
   return clampPreferredScheduleBlockCount(
@@ -275,18 +446,30 @@ export function resolveApplyPreferredScheduleMaxBlocks(
   )
 }
 
+/** 고정 일정형은 CMS 기간형 상한이 아니라 Runtime의 유효 선택지 수가 지망 상한이다. */
+export function resolveApplyPreferredScheduleMaxBlocksFromFixedOptions(
+  options: readonly Pick<RuntimeFixedScheduleChoiceItem, 'id'>[] | null | undefined
+): number {
+  const uniqueIds = new Set(
+    (options ?? []).map(option => option.id.trim()).filter(Boolean)
+  )
+  return clampPreferredScheduleBlockCount(uniqueIds.size > 0 ? uniqueIds.size : 1)
+}
+
 /** 모집 1일 최대 차시 — CMS `buildInstitutionSessionCountOptions`와 동일 상한 */
 
 /** 기관 복수+기간(모집 1일 최대 차시)만 기본 2지망 — CMS와 동일 */
 export function resolveApplyPreferredScheduleInitialBlockCount(
-  program: ApplyScheduleVisibilityFields & { maxPreferredScheduleCount?: number },
+  program: ApplyScheduleVisibilityFields & { maxPreferredScheduleCount?: number }
 ): number {
   if (!shouldShowApplicationMaxSessionsPerDayField(program)) return 1
   const maxBlocks = Math.max(1, Math.min(program.maxPreferredScheduleCount ?? 3, 10))
   return Math.min(2, maxBlocks)
 }
 
-export function createEmptyApplyPreferredScheduleBlocks(count: number): ApplyPreferredScheduleBlock[] {
+export function createEmptyApplyPreferredScheduleBlocks(
+  count: number
+): ApplyPreferredScheduleBlock[] {
   const n = Math.max(1, Math.min(count, 10))
   return Array.from({ length: n }, () => ({
     date: '',
@@ -298,7 +481,7 @@ export function createEmptyApplyPreferredScheduleBlocks(count: number): ApplyPre
 
 export function resolveApplyPreferredMaxSessionsPerDay(
   program: Pick<ProgramDetail, 'maxSessionsPerDay'>,
-  runtimeContext?: unknown,
+  runtimeContext?: unknown
 ): number | undefined {
   const fromRuntime = readApplicationScheduleRecruitmentLimitsFromRuntime(runtimeContext)
   return fromRuntime.maxSessionsPerDay ?? program.maxSessionsPerDay
@@ -341,7 +524,8 @@ export function applyScheduleParagraphsForProgram(
     educationStructure: visibility.educationStructure ?? 'curriculum',
     sessionRound: visibility.sessionRound ?? 'single',
     educationScheduleMode: visibility.educationScheduleMode ?? 'date',
-    educationScheduleLines: visibility.educationScheduleLines ?? program.educationScheduleLines ?? [],
+    educationScheduleLines:
+      visibility.educationScheduleLines ?? program.educationScheduleLines ?? [],
     maxScheduleCount: program.maxScheduleCount ?? program.maxPreferredScheduleCount,
     maxSessionsPerDay: program.maxSessionsPerDay,
     educationRoundCount: scheduleMeta.educationRoundCount,

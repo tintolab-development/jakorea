@@ -95,6 +95,10 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     title?: string
     programType?: string
     programGroup?: string
+    educationFormLabel?: string | null
+    educationJournalEnabled?: boolean | null
+    surveyConfigured?: boolean | null
+    satisfactionConfigured?: boolean | null
     thumbnailFileObjectId?: number | null
     recruitmentStartAt?: string | null
     recruitmentEndAt?: string | null

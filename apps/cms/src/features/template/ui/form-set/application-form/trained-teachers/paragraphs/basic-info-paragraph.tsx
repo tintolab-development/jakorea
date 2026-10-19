@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   shouldShowInstitutionApplicationPreferredEducationForm,
   useInstitutionApplicationProgramBridge,
@@ -99,14 +99,11 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
     ''
   )
 
-  useEffect(() => {
-    if (classCount === '') return
-    const selected = parseInt(classCount, 10)
-    const max = bridge.maxClassCount
-    if (max != null && max > 0 && (Number.isNaN(selected) || selected > max)) {
-      setClassCount('')
-    }
-  }, [bridge.maxClassCount, classCount, setClassCount])
+  const classCountExceedsLimit =
+    classCount !== '' &&
+    bridge.maxClassCount != null &&
+    bridge.maxClassCount > 0 &&
+    Number(classCount) > bridge.maxClassCount
 
   /** 로그인·소속 기관 자동 반영 — 값 없으면 placeholder (샘플 학교명 금지) */
   const autoFilledInstitutionName = (
@@ -269,6 +266,11 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           />
         ) : null}
       </DetailInfoForm.Row>
+      {classCountExceedsLimit ? (
+        <div style={{ color: '#d4380d' }} role="alert">
+          모집 가능 최대 학급 수를 초과했습니다. 학급 수를 조정한 후 저장해 주세요.
+        </div>
+      ) : null}
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field

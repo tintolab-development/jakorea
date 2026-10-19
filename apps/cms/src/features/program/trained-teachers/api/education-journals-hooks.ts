@@ -4,10 +4,14 @@ import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { trainedTeacherQueryKeys } from './query-keys'
 import {
   bulkDownloadTrainedTeacherEducationJournals,
+  createTrainedTeacherEducationJournalZipJob,
   downloadTrainedTeacherEducationJournal,
+  getTrainedTeacherEducationJournalZipJob,
   listTrainedTeacherEducationJournals,
   listTrainedTeacherParticipatingInstitutions,
 } from './education-journals-service'
+import type { EducationJournalGeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalGeneratedFileJobResponse'
+import { isEducationJournalZipJobPending } from './education-journals-job'
 import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import {
   buildTrainedTeacherParticipatingInstitutionsListQuery,
@@ -90,5 +94,49 @@ export function useBulkDownloadTrainedTeacherEducationJournals(
         ),
       })
     },
+  })
+}
+
+export function useCreateTrainedTeacherEducationJournalZipJob(
+  programId: string | undefined,
+  organizationApplicationId: string | undefined
+) {
+  return useMutation<EducationJournalGeneratedFileJobResponse, Error, TrainedTeachersEducationJournalEntry[]>({
+    mutationFn: entries =>
+      createTrainedTeacherEducationJournalZipJob(
+        programId!,
+        organizationApplicationId!,
+        entries
+      ),
+    retry: false,
+  })
+}
+
+export function useTrainedTeacherEducationJournalZipJob(
+  programId: string | undefined,
+  organizationApplicationId: string | undefined,
+  jobId: number | null
+) {
+  const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
+  return useQuery({
+    queryKey: trainedTeacherQueryKeys.educationJournalZipJob(
+      programId ?? '',
+      organizationApplicationId ?? '',
+      jobId ?? 0
+    ),
+    queryFn: () => getTrainedTeacherEducationJournalZipJob(jobId!),
+    enabled: remoteEnabled && Boolean(programId && organizationApplicationId && jobId),
+    staleTime: 0,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: false,
+    refetchInterval: query => {
+      if (query.state.error) return false
+      return query.state.data && isEducationJournalZipJobPending(query.state.data)
+        ? 1_500
+        : false
+    },
+    refetchIntervalInBackground: false,
   })
 }

@@ -21,7 +21,9 @@ import type { ProgramParticipantApplicationEditorVariant } from '@/features/temp
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@/features/template/model/program-application-form-economy-draft'
+import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import type { Program } from '@/types/domain'
 import { isGeneralIndividualTeamParticipationProgram } from '@/features/program/general/lib/individual-application-visibility'
 
@@ -37,6 +39,19 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
 ): ReadonlySet<string> | undefined {
   if (variant === 'institution' && params.institutionBridge) {
     return getInstitutionApplicationFormHiddenParagraphIds(params.institutionBridge)
+  }
+  if (variant === 'trained-teachers-application-institution' && params.institutionBridge) {
+    const hidden = getInstitutionApplicationFormHiddenParagraphIds(params.institutionBridge)
+    if (hidden == null) return undefined
+
+    // 교육받은 교사 신청 폼은 일반 기관 신청 폼과 별도 seed id를 사용한다.
+    // 공통 스키마의 scheduleChoice 판정을 전용 preferredSchedule id로 변환해
+    // specialized body가 숨겨질 때 원본 horizontal table fallback도 함께 제거한다.
+    if (!hidden.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)) return hidden
+    const next = new Set(hidden)
+    next.delete(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)
+    next.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+    return next
   }
   if (variant === 'volunteer') {
     return getVolunteerApplicationFormHiddenParagraphIds(params.paragraphs, {

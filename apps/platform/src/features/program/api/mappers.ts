@@ -45,7 +45,9 @@ function mapPortalMaxPreferredScheduleCount(
   isTrainedTeacher: boolean,
   usesEducationProgressFields: boolean
 ): number {
-  if (isTrainedTeacher) return 2
+  // 교육받은 교사 기간형의 실제 상한은 신청 폼 Runtime이 내려준다.
+  // Runtime이 없는 경우에도 근거 없는 2지망을 만들어내지 않도록 안전한 최소값만 둔다.
+  if (isTrainedTeacher) return 1
   if (!usesEducationProgressFields) return 1
   const visibility = {
     educationStructure:
@@ -1203,6 +1205,7 @@ export function mapPortalProgramDetail(
     educationVenueLabel,
     detailCase,
     programType,
+    educationJournalEnabled: remote.educationJournalEnabled,
     registrationKind: isTrainedTeacher ? 'trainedTeachers' : undefined,
     programAudience:
       remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',

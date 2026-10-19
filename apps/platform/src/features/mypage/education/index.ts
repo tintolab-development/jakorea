@@ -71,6 +71,7 @@ export {
   EducationDetailHeader,
   EducationDetailHeaderLayout,
   EducationStudentsPanel,
+  EducationJournalPanel,
   TeacherAssignedInstructorCard,
   TeacherEducationAssignmentAside,
   TeacherTextbookInfoCard,

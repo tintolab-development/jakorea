@@ -206,6 +206,46 @@ assert.deepEqual(
   [{ preferenceRank: 1, date: '2026-10-15' }],
 )
 
+const trainedTeachersPreferredScheduleKey =
+  'program-application-trained-teachers-seed-preferred-schedule'
+const trainedTeachersScheduleDraft = writingFormDraftFromApplicationForm({
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: trainedTeachersPreferredScheduleKey,
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      requiredMark: true,
+      answerRequired: true,
+      tableFlavor: 'text',
+      columnHeaders: ['항목', '내용'],
+      dataRows: [['', '']],
+      columnFields: [],
+      fieldDataRows: [],
+    },
+  ],
+})
+assert.ok(trainedTeachersScheduleDraft)
+const trainedTeachersFixedScheduleAnswer = buildApplicationAnswersFromDraft(
+  trainedTeachersScheduleDraft!,
+  { overrides: { [trainedTeachersPreferredScheduleKey]: ['schedule:187123'] } },
+)
+assert.deepEqual(
+  trainedTeachersFixedScheduleAnswer[trainedTeachersPreferredScheduleKey],
+  ['schedule:187123'],
+)
+assert.equal(
+  'fieldDataRows' in
+    (trainedTeachersFixedScheduleAnswer[trainedTeachersPreferredScheduleKey] as object),
+  false,
+)
+const trainedTeachersHiddenScheduleAnswer = buildApplicationAnswersFromDraft(
+  trainedTeachersScheduleDraft!,
+  { omitParagraphIds: new Set([trainedTeachersPreferredScheduleKey]) },
+)
+assert.equal(trainedTeachersPreferredScheduleKey in trainedTeachersHiddenScheduleAnswer, false)
+
 const hiddenScheduleId = 'program-participant-application-seed-schedule'
 const hiddenTeamId = 'program-participant-application-seed-team-info'
 const explanationId = 'program-participant-application-custom-explanation'

@@ -36,6 +36,7 @@ import {
 import {
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
+  isTrainedTeachersProgram,
 } from '@/features/program/general/lib/survey-audience'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
@@ -1650,11 +1651,14 @@ function participantTypesFromFlags(
 }
 
 function surveyKeysFromFlags(
-  values: GeneralProgramCommonInfoEditFormValues
+  values: GeneralProgramCommonInfoEditFormValues,
+  program?: Program
 ): GeneralProgramSurveyMenuKey[] {
   const keys: GeneralProgramSurveyMenuKey[] = []
   if (values.surveySurvey) keys.push('survey')
-  if (values.surveySatisfaction) keys.push('satisfaction')
+  if (values.surveySatisfaction && (!program || !isTrainedTeachersProgram(program))) {
+    keys.push('satisfaction')
+  }
   if (values.surveyLectureEvaluation) keys.push('lecture_evaluation')
   return keys
 }
@@ -2005,7 +2009,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     businessArea: businessAreaToProgramValue(values.businessArea),
     category: primaryCategory,
     generalParticipantTypes: participantTypes,
-    generalSurveyMenuKeys: surveyKeysFromFlags(values),
+    generalSurveyMenuKeys: surveyKeysFromFlags(values, existing),
     institutionType: institutionTypeFromVenueKind(values.venueKind),
     venue: values.venueKind === 'other' ? values.venueDetail?.trim() || undefined : undefined,
     detailedProgramId: isScheduleType
@@ -2069,9 +2073,12 @@ export type GeneralSurveyEditFieldConfig = (typeof GENERAL_SURVEY_EDIT_FIELDS)[n
 }
 
 export function getGeneralSurveyEditFieldsForAudience(
-  _isIndividualTarget: boolean
+  _isIndividualTarget: boolean,
+  program?: Program
 ): GeneralSurveyEditFieldConfig[] {
-  return GENERAL_SURVEY_EDIT_FIELDS.map(field => ({
+  return GENERAL_SURVEY_EDIT_FIELDS.filter(
+    field => field.id !== 'satisfaction' || !program || !isTrainedTeachersProgram(program)
+  ).map(field => ({
     ...field,
     label: PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[field.id],
   }))

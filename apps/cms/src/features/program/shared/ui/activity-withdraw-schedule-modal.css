@@ -112,6 +112,12 @@
   line-height: 150%;
 }
 
+.activity-withdraw-schedule-modal__error {
+  color: #d92d20;
+  font-size: 12px;
+  line-height: 150%;
+}
+
 .activity-withdraw-schedule-modal__footer {
   display: flex;
   width: 100%;

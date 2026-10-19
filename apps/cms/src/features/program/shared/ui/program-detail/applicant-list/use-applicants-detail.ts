@@ -66,6 +66,7 @@ import {
   type ApplicantSchoolApprovalNotifyOptions,
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import {
   patchApplicantInstructorForApprovalStatus,
   type ApplicantInstructorApprovalNotifyOptions,
@@ -136,6 +137,10 @@ export type ApplicantDetailMeta = {
   breadcrumbLabel: string
   kind: 'institution' | 'individual' | 'instructor'
 } | null
+
+export type InstitutionCancelApprovalResult =
+  | { status: 'ok'; response: ApplicationDecisionResponse }
+  | { status: 'error' | 'unavailable' }
 
 function buildApplicantDetailMetaFromRow(
   menu: ApplicantListMenu | '',
@@ -1356,27 +1361,47 @@ export function useApplicantsDetail({
       id: string,
       reason: string,
       notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
-    ): Promise<'ok' | 'error' | 'unavailable'> => {
+    ): Promise<InstitutionCancelApprovalResult> => {
       if (isTrainedTeachersSurface || !applicationsRemote.remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-org-application-cancel-approval',
           '일반 프로그램 · 기관 신청 승인 취소'
         )
-        return 'unavailable'
+        return { status: 'unavailable' }
       }
       try {
-        await applicationsRemote.cancelOrganizationApproval(id, {
+        const response = await applicationsRemote.cancelOrganizationApproval(id, {
           reason: reason.trim() || '승인 취소',
           ...(notification ? { notification } : {}),
         })
         await applicationsRemote.invalidateApplications()
-        return 'ok'
+        if (programId) {
+          await queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.institutions(programId),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramQueryKeys.detail(programId),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramQueryKeys.navigation(programId),
+          })
+        }
+        return { status: 'ok', response }
       } catch (error) {
         notifyRemoteDecisionFailure(error)
-        return 'error'
+        return { status: 'error' }
       }
     },
-    [applicationsRemote, isTrainedTeachersSurface, notifyRemoteDecisionFailure]
+    [
+      applicationsRemote,
+      isTrainedTeachersSurface,
+      notifyRemoteDecisionFailure,
+      programId,
+      queryClient,
+    ]
   )
 
   const applyRemoteInstitutionCancelRejection = useCallback(

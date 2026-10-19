@@ -538,7 +538,7 @@ function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
   if (program.registrationKind === 'trainedTeachers') {
     const raw = program.generalCommonInfo?.maxScheduleCount
     if (raw != null && raw >= 1) return Math.min(raw, 10)
-    return 2
+    return 1
   }
   const raw = program.generalCommonInfo?.maxScheduleCount
   if (raw == null || raw < 1) return 3

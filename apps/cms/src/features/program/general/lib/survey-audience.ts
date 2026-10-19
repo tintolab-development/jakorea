@@ -64,13 +64,22 @@ export function programHasVolunteerParticipant(program: Program): boolean {
 export { isCompanySchoolProgram }
 
 export function isTrainedTeachersProgram(program: Program): boolean {
+  const backendType = program.backendProgramType?.trim().toUpperCase()
+  if (
+    backendType === 'TRAINED_TEACHER' ||
+    backendType === 'TRAINED_TEACHER_PROGRAM' ||
+    backendType === 'EDUCATED_TEACHER' ||
+    backendType === 'EDUCATED_TEACHER_PROGRAM'
+  ) {
+    return true
+  }
   return (
     program.id.startsWith('trained-teachers-prog-') ||
     program.id.startsWith('trained-teachers-local-')
   )
 }
 
-/** 1사1교·교육받은 교사 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
+/** 1사1교 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
 export function isInstitutionTeacherOnlySatisfactionProgram(program: Program): boolean {
   return isCompanySchoolProgram(program) || isTrainedTeachersProgram(program)
 }
@@ -108,6 +117,7 @@ export function isGeneralIndividualParticipantTarget(
 export function getGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
+  if (isTrainedTeachersProgram(program)) return []
   return isGeneralIndividualProgram(program)
     ? GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
     : GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
@@ -118,7 +128,9 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
   const keys = resolveProgramSurveyMenuKeys(program)
-  if (!keys.includes('satisfaction')) {
+  // 교육받은 교사는 일반 기관과 동일하게 설문조사·강의평가만 제공하며
+  // 만족도조사와 교사/학생 대상 탭은 제공하지 않는다.
+  if (isTrainedTeachersProgram(program) || !keys.includes('satisfaction')) {
     return []
   }
 
