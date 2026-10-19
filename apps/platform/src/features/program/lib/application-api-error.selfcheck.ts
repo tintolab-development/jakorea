@@ -79,6 +79,10 @@ const contractErrorCases = [
     '하루 희망 차시 수가 모집 상한을 초과했습니다.',
   ],
   [
+    'PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED',
+    '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
+  ],
+  [
     'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED',
     '교육받은 교사 프로그램은 학교·기관 신청만 가능합니다.',
   ],
@@ -119,6 +123,17 @@ assert.equal(
     },
   }),
   '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
+)
+assert.equal(
+  getApiErrorMessageFromBody({
+    message: '입력값 또는 요청 조건을 확인해 주세요.',
+    error: {
+      code: 'PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED',
+      message: '입력값 또는 요청 조건을 확인해 주세요.',
+      field: 'preferredScheduleBlocks',
+    },
+  }),
+  '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
 )
 assert.equal(
   getProgramApplicationApiErrorMessage(axiosErr(affiliationBody)),
