@@ -194,7 +194,8 @@ export function buildProgramPortalPreviewDetail(
   const { program, sponsorName, audience, programType, portalCategories } = input
   const common = program.generalCommonInfo
   const info = recruitmentInfoFor(program, audience)
-  const targetLevels = audience === 'institutions' ? resolveProgramTargetLevels(program) : []
+  const participantRecruitment = common?.participantRecruitmentInfo
+  const targetLevels = resolveProgramTargetLevels(program)
 
   return {
     programId: toPortalProgramId(program.id),
@@ -238,11 +239,11 @@ export function buildProgramPortalPreviewDetail(
           ),
     remarks: info.notesNotApplicable ? undefined : firstTrimmed(info.remarks, program.remarks),
     applicationMethod: firstTrimmed(info.applicationMethod, program.applicationMethod) ?? null,
-    educationTargets: audience === 'institutions' && targetLevels.length > 0 ? targetLevels : undefined,
-    educationTargetDetail:
-      audience === 'institutions'
-        ? firstTrimmed(info.educationTargetDetail, program.educationTargetDetail)
-        : undefined,
+    educationTargets: targetLevels.length > 0 ? targetLevels : undefined,
+    educationTargetDetail: firstTrimmed(
+      participantRecruitment?.educationTargetDetail,
+      program.educationTargetDetail,
+    ),
     recruitmentTarget:
       audience === 'volunteers'
         ? firstTrimmed(

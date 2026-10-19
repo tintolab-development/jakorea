@@ -467,6 +467,32 @@ function findIncompleteScheduleCurriculumReasons(
   return reasons
 }
 
+function countNonEmptyEducationScheduleLines(overlay: Record<string, unknown>): number {
+  const lines = readOverlay(overlay, GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY)
+  if (!Array.isArray(lines)) return 0
+  return lines.filter(line => typeof line === 'string' && line.trim() !== '').length
+}
+
+export const EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE = '교육 일정 불일치 안내'
+export const EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE =
+  '교육 진행 예정일과 교육 진행 회차의 수가 일치하지 않습니다.\n회차 수에 맞게 진행 예정일을 등록해 주세요.'
+
+/**
+ * 커리큘럼형 + 복수 회차 + 날짜 지정 — 회차 수와 교육 진행 예정일 줄 수가 다른지.
+ * 예정일이 비어 있으면 필수 검사가 담당하므로 여기서는 보지 않는다.
+ */
+export function hasCurriculumMultiDateScheduleCountMismatch(
+  overlay: Record<string, unknown>,
+  ctx: GeneralProgramRegistrationRequiredFieldContext
+): boolean {
+  if (ctx.programType !== 'curriculum') return false
+  if (ctx.sessionRoundType !== 'multi') return false
+  if (ctx.educationScheduleMode !== 'date') return false
+  const lineCount = countNonEmptyEducationScheduleLines(overlay)
+  if (lineCount === 0) return false
+  return lineCount !== Math.max(1, ctx.curriculumSessionCount)
+}
+
 function findIncompleteEducationScheduleSettingsReasons(
   overlay: Record<string, unknown>,
   ctx: GeneralProgramRegistrationRequiredFieldContext

@@ -71,6 +71,10 @@ import {
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import {
+  EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
+  EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
+} from '@/features/program/general/lib/registration-required-fields'
+import {
   GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -845,6 +849,11 @@ export function GeneralProgramDetailFullPageModal({
           void showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
             content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+        } else if (result.kind === 'schedule-count-mismatch') {
+          void showAlert({
+            title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
+            content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
           })
         } else if (!isGlobalApiErrorAlertShown(result.error)) {
           void showAlert({

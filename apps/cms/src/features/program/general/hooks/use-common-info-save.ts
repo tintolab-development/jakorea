@@ -10,7 +10,10 @@ import {
   programToGeneralCommonInfoEditValues,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
-import { listIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import {
+  hasCurriculumMultiDateScheduleCountMismatch,
+  listIncompleteGeneralProgramRegistrationRequiredFields,
+} from '@/features/program/general/lib/registration-required-fields'
 import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   generalRegistrationRequiredFieldContextFromDetailEdit,
@@ -27,6 +30,7 @@ import { showUpdateCompletedAlert } from '@/shared/ui'
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
   | { ok: false; kind: 'validation'; keys: readonly string[] }
+  | { ok: false; kind: 'schedule-count-mismatch' }
   | { ok: false; kind: 'api'; error: unknown }
 
 export interface UseGeneralProgramCommonInfoSaveOptions {
@@ -56,12 +60,16 @@ export function useGeneralProgramCommonInfoSave({
     try {
       const extras = getGeneralRegistrationDetailEditExtras()
       const overlay = readGeneralRegistrationOverlayForSave()
+      const requiredCtx = generalRegistrationRequiredFieldContextFromDetailEdit(overlay, extras)
       const incompleteKeys = listIncompleteGeneralProgramRegistrationRequiredFields(
         overlay,
-        generalRegistrationRequiredFieldContextFromDetailEdit(overlay, extras)
+        requiredCtx
       )
       if (incompleteKeys.length > 0) {
         return { ok: false, kind: 'validation', keys: incompleteKeys }
+      }
+      if (hasCurriculumMultiDateScheduleCountMismatch(overlay, requiredCtx)) {
+        return { ok: false, kind: 'schedule-count-mismatch' }
       }
 
       const appliedFromOverlay = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
