@@ -7,7 +7,10 @@
 
 import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
-import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
+import {
+  resolveGeneralSurveyMenuKeys,
+  syncSurveyItemsIntoRegistrationOverlay,
+} from '@/features/program/general/lib/general-survey-menu-keys'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import {
   resolvePersistedProgramTargetLevels,
@@ -228,12 +231,19 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
         return {}
       }
       const programPartial = trainedTeacherConstraints(parsed.program as Partial<Program>)
+      // 일반 프로그램과 동일 — keys 없으면 overlay surveyItems에서 복원.
+      // keys 없이 sync하면 overlay를 전부 false로 덮어 설문이 유실된다.
+      const generalSurveyMenuKeys = resolveGeneralSurveyMenuKeys({
+        keys: programPartial.generalSurveyMenuKeys,
+        overlay: registrationOverlay,
+      })
       const reconciledOverlay = syncSurveyItemsIntoRegistrationOverlay(
         registrationOverlay,
-        programPartial.generalSurveyMenuKeys
+        generalSurveyMenuKeys
       )
       return {
         ...programPartial,
+        generalSurveyMenuKeys,
         ...(reconciledOverlay ? { registrationOverlay: reconciledOverlay } : {}),
       }
     }
@@ -251,9 +261,19 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]
     )
+    const constrained = trainedTeacherConstraints(normalized)
+    const generalSurveyMenuKeys = resolveGeneralSurveyMenuKeys({
+      keys: constrained.generalSurveyMenuKeys,
+      overlay: registrationOverlay,
+    })
+    const reconciledOverlay = syncSurveyItemsIntoRegistrationOverlay(
+      registrationOverlay,
+      generalSurveyMenuKeys
+    )
     return {
-      ...trainedTeacherConstraints(normalized),
-      ...(registrationOverlay ? { registrationOverlay } : {}),
+      ...constrained,
+      generalSurveyMenuKeys,
+      ...(reconciledOverlay ? { registrationOverlay: reconciledOverlay } : {}),
     }
   } catch {
     return {}

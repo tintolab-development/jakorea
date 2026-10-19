@@ -369,14 +369,22 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
           : venueKind === 'inside'
             ? 'inside_school'
             : (dto.institutionType as Program['institutionType']),
-    ipOwned: dto.ipOwned,
-    courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
-    partnerInvolvement: dto.partnerInvolvement,
+    ipOwned:
+      dto.ipOwned?.trim() ||
+      details.generalCommonInfo?.ipOwned?.trim() ||
+      undefined,
+    courseDeliveredBy: (dto.courseDeliveredBy ??
+      details.generalCommonInfo?.courseDeliveredBy) as Program['courseDeliveredBy'],
+    partnerInvolvement:
+      dto.partnerInvolvement ?? details.generalCommonInfo?.partnerInvolvement,
     programCategory: dto.programCategory,
     programChannel: dto.programChannel,
     educationTime: dto.educationTime,
     teamDivision: dto.teamDivision,
-    educationProcess: dto.educationProcess,
+    educationProcess:
+      dto.educationProcess?.trim() ||
+      details.generalCommonInfo?.educationProcess?.trim() ||
+      undefined,
     maleParticipants: dto.maleParticipants,
     femaleParticipants: dto.femaleParticipants,
     totalParticipants: rootFinalParticipants ?? dto.totalParticipants,

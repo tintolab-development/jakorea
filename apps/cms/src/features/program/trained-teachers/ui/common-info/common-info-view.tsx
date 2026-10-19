@@ -1807,6 +1807,8 @@ export function TrainedTeachersCommonInfoView({
     educatedTeachers: number | undefined
     /** programs PATCH 직후 GET echo 가 늦을 때 사업 분야 즉시 표시 */
     businessArea?: string
+    generalSurveyMenuKeys?: Program['generalSurveyMenuKeys']
+    registrationOverlay?: Program['registrationOverlay']
   } | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -1824,6 +1826,12 @@ export function TrainedTeachersCommonInfoView({
               : {}),
             educatedTeachers: savedOverride.educatedTeachers ?? program.educatedTeachers,
             generalCommonInfo: commonInfo,
+            ...(savedOverride.generalSurveyMenuKeys !== undefined
+              ? { generalSurveyMenuKeys: savedOverride.generalSurveyMenuKeys }
+              : {}),
+            ...(savedOverride.registrationOverlay !== undefined
+              ? { registrationOverlay: savedOverride.registrationOverlay }
+              : {}),
           }
         : program,
     [program, savedOverride, commonInfo]
@@ -2048,6 +2056,15 @@ export function TrainedTeachersCommonInfoView({
             finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
           }
 
+          const surveyOverride = {
+            ...(formPatch?.generalSurveyMenuKeys !== undefined
+              ? { generalSurveyMenuKeys: formPatch.generalSurveyMenuKeys }
+              : {}),
+            ...(formPatch?.registrationOverlay !== undefined
+              ? { registrationOverlay: formPatch.registrationOverlay }
+              : {}),
+          }
+
           if (needsInfoDetailPatch) {
             if (onPersist) {
               // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
@@ -2057,6 +2074,7 @@ export function TrainedTeachersCommonInfoView({
               setSavedOverride({
                 educatedTeachers: draft.kpiEducatedTeachers,
                 ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
+                ...surveyOverride,
                 commonInfo: {
                   ...commonInfoPayload,
                   kpi: kpiOverride,
@@ -2066,6 +2084,7 @@ export function TrainedTeachersCommonInfoView({
               setSavedOverride({
                 educatedTeachers: draft.kpiEducatedTeachers,
                 businessArea: savedBusinessArea,
+                ...surveyOverride,
                 commonInfo: {
                   ...commonInfoPayload,
                   kpi: kpiOverride,
@@ -2073,10 +2092,11 @@ export function TrainedTeachersCommonInfoView({
               })
             }
           } else {
-            // programs PATCH 만으로 KPI·사업분야 저장 — 재조회 전 화면 즉시 반영
+            // programs PATCH 만으로 KPI·사업분야·설문 저장 — 재조회 전 화면 즉시 반영
             setSavedOverride({
               educatedTeachers: draft.kpiEducatedTeachers,
               ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
+              ...surveyOverride,
               commonInfo: {
                 ...commonInfoPayload,
                 kpi: kpiOverride,

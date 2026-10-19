@@ -6,9 +6,14 @@ import {
   mapTrainedTeacherToUpdateRequest,
 } from '@/features/program/trained-teachers/api/adapters'
 import {
+  parseTrainedTeacherServiceDetailJson,
+  serializeTrainedTeacherServiceDetailJson,
+} from '@/features/program/trained-teachers/api/service-detail-json'
+import {
   mapTrainedTeacherInfoSaveToRequest,
   mergeTrainedTeacherInfoDetailIntoProgram,
 } from '@/features/program/trained-teachers/api/info-detail-adapters'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { stampTrainedTeachersSessionFields } from './stamp-session-fields'
 
 function baseProgram(): Program {
@@ -160,5 +165,114 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
     expect(detail.program?.generalCommonInfo?.curriculumSessions?.[1]?.educationFormLabel).toBe(
       '온라인'
     )
+  })
+
+  it('설문 keys·overlay가 serialize → parse 왕복에서 유지된다', () => {
+    const existing = baseProgram()
+    const withSurvey: Program = {
+      ...existing,
+      generalSurveyMenuKeys: ['survey', 'lecture_evaluation'],
+      registrationOverlay: {
+        'trainedTeachersRegistration.basicInfo.surveyItems': {
+          survey: true,
+          satisfaction: false,
+          lecture_evaluation: true,
+        },
+      },
+    }
+    const json = serializeTrainedTeacherServiceDetailJson(withSurvey)
+    const parsed = parseTrainedTeacherServiceDetailJson(json)
+    expect(parsed.generalSurveyMenuKeys).toEqual(['survey', 'lecture_evaluation'])
+    expect(
+      (
+        parsed.registrationOverlay?.[
+          'trainedTeachersRegistration.basicInfo.surveyItems'
+        ] as Record<string, boolean>
+      )?.survey
+    ).toBe(true)
+    expect(
+      (
+        parsed.registrationOverlay?.[
+          'trainedTeachersRegistration.basicInfo.surveyItems'
+        ] as Record<string, boolean>
+      )?.lecture_evaluation
+    ).toBe(true)
+
+    const loaded = mapTrainedTeacherDetailToProgram({
+      id: existing.id,
+      title: existing.title,
+      serviceDetailJson: json,
+    } as ProgramResponse)
+    expect(loaded.generalSurveyMenuKeys).toEqual(['survey', 'lecture_evaluation'])
+  })
+
+  it('program.generalSurveyMenuKeys가 없어도 overlay surveyItems에서 복원한다', () => {
+    const raw = JSON.stringify({
+      schemaVersion: 1,
+      program: {
+        generalCommonInfo: { announcementTitle: '공고' },
+      },
+      registration: {
+        overlay: {
+          'trainedTeachersRegistration.basicInfo.surveyItems': {
+            survey: true,
+            satisfaction: false,
+            lecture_evaluation: true,
+          },
+        },
+      },
+    })
+    const parsed = parseTrainedTeacherServiceDetailJson(raw)
+    expect(parsed.generalSurveyMenuKeys).toEqual(['survey', 'lecture_evaluation'])
+    expect(
+      (
+        parsed.registrationOverlay?.[
+          'trainedTeachersRegistration.basicInfo.surveyItems'
+        ] as Record<string, boolean>
+      )?.survey
+    ).toBe(true)
+  })
+
+  it('컬럼이 비어 있어도 nested educationProcess·partnerInvolvement를 hydrate한다', () => {
+    const existing = baseProgram()
+    const withEducation: Program = {
+      ...existing,
+      educationProcess: 'Digital (Computer)',
+      partnerInvolvement: true,
+      ipOwned: 'JA',
+      courseDeliveredBy: 'JA',
+    }
+    const request = mapTrainedTeacherToUpdateRequest(withEducation)
+    const loaded = mapTrainedTeacherDetailToProgram({
+      id: existing.id,
+      title: existing.title,
+      // 컬럼 echo 누락 — nested JSON만 있는 경우
+      educationProcess: null,
+      partnerInvolvement: null,
+      ipOwned: null,
+      courseDeliveredBy: null,
+      serviceDetailJson: request.serviceDetailJson,
+    } as unknown as ProgramResponse)
+    expect(loaded.educationProcess).toBe('Digital (Computer)')
+    expect(loaded.partnerInvolvement).toBe(true)
+    expect(loaded.ipOwned).toBe('JA')
+    expect(loaded.courseDeliveredBy).toBe('JA')
+  })
+
+  it('overlay-only 설문을 폼 시드가 체크 상태로 채운다', () => {
+    const values = programToDetailEditValues({
+      ...baseProgram(),
+      generalSurveyMenuKeys: undefined,
+      registrationOverlay: {
+        'trainedTeachersRegistration.basicInfo.surveyItems': {
+          survey: true,
+          satisfaction: false,
+          lecture_evaluation: true,
+        },
+      },
+    })
+    expect(values.surveySurvey).toBe(true)
+    expect(values.surveySatisfaction).toBe(false)
+    expect(values.surveyLectureEvaluation).toBe(true)
   })
 })
