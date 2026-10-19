@@ -20,9 +20,12 @@ const ROW_COPY_KEYS = [
   'endAt',
   'operationStartDate',
   'operationEndDate',
+  'interviewEnabled',
+  'interviewStartAt',
+  'interviewEndAt',
 ] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
 
-/** 생성된 요청 타입에 아직 없는 행 필드. 면접 여부는 넣지 않는다. */
+/** 생성된 요청 타입에 아직 없는 행 필드. */
 type RecruitmentRowRequest = ProgramRecruitmentRequest & {
   otherMatters?: string | null
 }

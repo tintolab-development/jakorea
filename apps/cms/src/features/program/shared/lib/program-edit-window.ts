@@ -37,6 +37,9 @@ export function toProgramRecruitmentWindows(
         contactName?: string | null
         contactPhone?: string | null
         contactEmail?: string | null
+        interviewEnabled?: boolean | null
+        interviewStartAt?: string | null
+        interviewEndAt?: string | null
         thumbnailFileObjectId?: number | null
         attachments?: Array<{
           attachmentId?: number
@@ -67,6 +70,9 @@ export function toProgramRecruitmentWindows(
     contactName: row.contactName ?? null,
     contactPhone: row.contactPhone ?? null,
     contactEmail: row.contactEmail ?? null,
+    interviewEnabled: row.interviewEnabled ?? null,
+    interviewStartAt: row.interviewStartAt ?? null,
+    interviewEndAt: row.interviewEndAt ?? null,
     thumbnailFileObjectId: row.thumbnailFileObjectId ?? null,
     attachments: (row.attachments ?? []).map(item => ({
       attachmentId: item.attachmentId,

@@ -34,8 +34,8 @@ function formatAssignedInterviewScheduleDisplay(applicant: UjatVolunteerApplican
 function clampManagerScore(value: string): number | null {
   if (value === '') return null
   const next = Number(value)
-  if (!Number.isFinite(next)) return null
-  return Math.min(MANAGER_SCORE_MAX, Math.max(0, Math.trunc(next)))
+  if (!Number.isFinite(next) || !Number.isInteger(next) || next < 1) return null
+  return Math.min(MANAGER_SCORE_MAX, next)
 }
 
 function formatScoreValue(score: number | null | undefined): string {
@@ -143,7 +143,7 @@ export const InterviewEvaluationSection = forwardRef<
             edit={
               <CmsNumericInput
                 mode="integer"
-                min={0}
+                min={1}
                 max={MANAGER_SCORE_MAX}
                 precision={0}
                 inputSize="medium"
@@ -160,7 +160,7 @@ export const InterviewEvaluationSection = forwardRef<
             edit={
               <CmsNumericInput
                 mode="integer"
-                min={0}
+                min={1}
                 max={MANAGER_SCORE_MAX}
                 precision={0}
                 inputSize="medium"
