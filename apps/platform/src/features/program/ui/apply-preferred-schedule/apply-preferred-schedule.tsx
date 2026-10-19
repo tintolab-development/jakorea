@@ -194,6 +194,9 @@ function PreferenceScheduleFields({
                   onValueChange={next => onPatch({ classPeriod: next ?? '' })}
                   aria-label="희망 차시"
                 />
+                <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                  교시
+                </PFText>
                 <DetailInfoForm.InputsSeparator />
               </>
             ) : (

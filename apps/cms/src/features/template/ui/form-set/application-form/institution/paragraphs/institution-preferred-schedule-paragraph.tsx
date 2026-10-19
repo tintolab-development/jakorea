@@ -92,6 +92,10 @@ function PreferenceScheduleFields({
 
   const timeInputsDisabled = dateOnlyPreferred
 
+  if (dateOnlyPreferred) {
+    return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
+  }
+
   return (
     <>
       <DetailInfoForm.Row type="double">

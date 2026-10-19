@@ -9,13 +9,15 @@ import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
-import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
+import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type {
   Program,
   ProgramCategory,
   ProgramFormat,
   ProgramLifecycleStatus,
   ProgramType,
+  ProgramRecruitmentWindow,
   GeneralProgramCommonInfoExtension,
 } from '@/types/domain'
 import type { Status } from '@/types/index'
@@ -240,6 +242,23 @@ function applicationDatesInsideBusiness(program: Program): {
   return { applicationStartDate, applicationEndDate }
 }
 
+function ujatVolunteerInterviewFields(
+  program: Program,
+  row?: ProgramRecruitmentWindow
+): {
+  interviewEnabled: true
+  interviewStartAt?: string
+  interviewEndAt?: string
+} {
+  const start = dateValue(row?.interviewStartAt ?? program.interviewStartDate)
+  const end = dateValue(row?.interviewEndAt ?? program.interviewEndDate)
+  return {
+    interviewEnabled: true,
+    ...(start ? { interviewStartAt: start } : {}),
+    ...(end ? { interviewEndAt: end } : {}),
+  }
+}
+
 function recruitmentRow(input: {
   recruitmentType: ProgramRecruitmentRequest['recruitmentType']
   targetType: string
@@ -250,6 +269,9 @@ function recruitmentRow(input: {
   maxCount?: number
   id?: number
   recruitTerm?: ProgramRecruitmentRequest['recruitTerm']
+  interviewEnabled?: boolean
+  interviewStartAt?: string
+  interviewEndAt?: string
 }): ProgramRecruitmentRequest {
   return {
     ...(input.id != null ? { id: input.id } : {}),
@@ -263,6 +285,9 @@ function recruitmentRow(input: {
     ...(input.operationEndDate ? { operationEndDate: input.operationEndDate } : {}),
     ...(input.maxCount != null && input.maxCount > 0 ? { maxCount: input.maxCount } : {}),
     selectionMethod: 'ADMIN_REVIEW',
+    ...(input.interviewEnabled === true ? { interviewEnabled: true } : {}),
+    ...(input.interviewStartAt ? { interviewStartAt: input.interviewStartAt } : {}),
+    ...(input.interviewEndAt ? { interviewEndAt: input.interviewEndAt } : {}),
   }
 }
 
@@ -310,6 +335,7 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
       recruitTerm: ProgramRecruitmentRequestRecruitTerm.FIRST_HALF,
       ...(h1?.id != null ? { id: h1.id } : {}),
+      ...ujatVolunteerInterviewFields(program, h1),
     }),
   ]
   // 프로그램 봉사자 기간은 상반기 행에만 맞춘다. 하반기 기간은 그 행의 startAt/endAt 변경분으로만 보낸다.
@@ -359,6 +385,9 @@ export function buildUjatNewVolunteerHalfRowRequests(
       ...(row.contactName != null ? { contactName: row.contactName } : {}),
       ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
       ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
+      interviewEnabled: true,
+      ...(row.interviewStartAt ? { interviewStartAt: row.interviewStartAt } : {}),
+      ...(row.interviewEndAt ? { interviewEndAt: row.interviewEndAt } : {}),
     }))
 }
 
@@ -386,6 +415,7 @@ function withUjatCreateRowCopy(
       contactName: display.managerName || program.managerName || undefined,
       contactPhone: display.contactPhone || program.contactPhone || undefined,
       contactEmail: display.contactEmail || program.contactEmail || undefined,
+      ...(kind === 'volunteer_h1' ? ujatVolunteerInterviewFields(program) : {}),
     }
   })
 }
@@ -706,6 +736,11 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
             : undefined,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
+      featuredOnHome: dto.featuredOnHome === true,
+      homeDisplayOrder:
+        typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
+          ? dto.homeDisplayOrder
+          : null,
     }),
     ujatRegistrationOverlay: overlay,
   },
@@ -714,8 +749,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       overlay,
     }
   )
+  const withInterview = hydrateUjatVolunteerInterviewFromRecruitmentRows(mapped)
   return {
-    ...mapped,
+    ...withInterview,
     generalParticipantTypes: generalParticipantTypesFromUjatFlags(
       resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
     ),
@@ -725,6 +761,22 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     },
     ujatRegistrationOverlay: overlay,
     periodStatus,
+  }
+}
+
+function hydrateUjatVolunteerInterviewFromRecruitmentRows(program: Program): Program {
+  if (program.interviewStartDate && program.interviewEndDate) return program
+  const rows = program.programRecruitments ?? []
+  const volunteers = rows.filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
+  const h1 =
+    volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
+    volunteers.find(row => row.recruitTerm == null) ??
+    volunteers[0]
+  if (!h1?.interviewStartAt && !h1?.interviewEndAt) return program
+  return {
+    ...program,
+    interviewStartDate: program.interviewStartDate ?? h1.interviewStartAt ?? undefined,
+    interviewEndDate: program.interviewEndDate ?? h1.interviewEndAt ?? undefined,
   }
 }
 
@@ -906,6 +958,7 @@ function coreRequest(
     merged: program,
     existing: program,
   })
+  applyPortalHomeFeaturedToRequest(body, program, 'full')
   return body
 }
 
@@ -1075,6 +1128,7 @@ function patchRequest(
     existing,
     patch,
   })
+  applyPortalHomeFeaturedToRequest(body, merged, 'patch', patch)
   return body
 }
 

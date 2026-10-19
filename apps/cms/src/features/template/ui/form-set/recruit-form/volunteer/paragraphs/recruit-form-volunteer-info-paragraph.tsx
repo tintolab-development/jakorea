@@ -97,10 +97,6 @@ export function RecruitFormVolunteerInfoParagraph() {
     }
     setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  const recruitRangeWithTime = useMemo(
-    () => (recruitRange == null ? false : dateRangeUsesClockTime(recruitRange[0], recruitRange[1])),
-    [recruitRange]
-  )
 
   const [docDeadlineIso, setDocDeadlineIso] = useGeneralRecruitOverlayKv<string | null>(
     'recruit.volunteer.docDeadlineIso',
@@ -306,7 +302,6 @@ export function RecruitFormVolunteerInfoParagraph() {
             setRecruitAnchor,
             recruitRange,
             setRecruitRange,
-            recruitRangeWithTime,
             docDeadlineDate,
             setDocDeadlineDate,
             docAnnounceMethod,

@@ -24,7 +24,19 @@ export {
   watchNiceAuthPopupClosed,
 } from './popup'
 
-export { postIdentityMessageToOpener, closeIdentityPopupSoon } from './messaging'
+export {
+  closeIdentityPopupOrResume,
+  closeIdentityPopupSoon,
+  deliverIdentityMessage,
+  postIdentityMessageToOpener,
+} from './messaging'
+
+export {
+  clearIdentityCompletion,
+  publishIdentityCompletion,
+  subscribeIdentityCompletion,
+  takeIdentityCompletion,
+} from './completion-channel'
 
 export { unwrapApiData, rethrowIdentityApiError } from './api-unwrap'
 

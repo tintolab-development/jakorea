@@ -391,9 +391,10 @@ export function PFTimeInput({
 
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
-  const rootClassName = [styles.root, className].filter(Boolean).join(' ')
+  const rootClassName = ['pf-time-input', styles.root, className].filter(Boolean).join(' ')
 
   const fieldClassName = [
+    'pf-time-input__field',
     selectStyles.field,
     selectStyles[size],
     isFormPage ? selectStyles.formPage : undefined,
@@ -406,6 +407,7 @@ export function PFTimeInput({
     .join(' ')
 
   const valueClassName = [
+    'pf-time-input__value',
     selectStyles.value,
     isFormPage ? selectStyles.formPageValue : sizeTypographyClassMap[size],
     isFormPage
@@ -572,7 +574,7 @@ export function PFTimeInput({
             ref={triggerRef}
             id={inputId}
             type="button"
-            className={styles.trigger}
+            className={['pf-time-input__trigger', styles.trigger].join(' ')}
             disabled={disabled}
             aria-haspopup="dialog"
             aria-expanded={isOpen}

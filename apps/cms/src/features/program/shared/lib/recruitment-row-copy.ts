@@ -136,6 +136,9 @@ export function writeRecruitmentRowCopy(
       | 'otherMatters'
       | 'startAt'
       | 'endAt'
+      | 'interviewEnabled'
+      | 'interviewStartAt'
+      | 'interviewEndAt'
     >
   >,
   volunteerHalf?: 'h1' | 'h2'

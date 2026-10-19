@@ -147,6 +147,7 @@ export function createInstructorsSchema({
                   startName="instructorApplicationStartDate"
                   endName="instructorApplicationEndDate"
                   clearToUndefined
+                  dateOnly
                 />
               ) : undefined,
           },

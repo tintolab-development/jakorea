@@ -12,6 +12,18 @@ export interface UjatCapacityStatus {
   educationRegionCode?: string;
   /** @nullable */
   educationRegionName?: string | null;
+  /** typed capacity table의 max_class_count */
+  maxSchools?: number;
+  /** typed capacity table의 max_volunteer_count */
+  maxVolunteers?: number;
+  /** 활성 교육 학급 배정 수 */
+  assignedSchools?: number;
+  /** 활성 봉사자 배정 수(동일 봉사자·반기 중복 제거) */
+  assignedVolunteers?: number;
+  /** maxSchools - assignedSchools의 0 이상 잔여 수 */
+  remainingSchools?: number;
+  /** maxVolunteers - assignedVolunteers의 0 이상 잔여 수 */
+  remainingVolunteers?: number;
   maxClassCount?: number;
   currentClassCount?: number;
   maxVolunteerCount?: number;

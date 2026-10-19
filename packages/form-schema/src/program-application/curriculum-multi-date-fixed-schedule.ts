@@ -58,6 +58,17 @@ function countEducationRoundsFromSessions(
   return regular.length > 0 ? regular.length : undefined
 }
 
+/** 복수 회차 행 `title` — CMS overlay `progress`는 숫자 또는 「N차시」로 노출된다. */
+function readProgressSessionCountFromRoundTitle(title: string | undefined): number | undefined {
+  const trimmed = title?.trim() ?? ''
+  if (!trimmed) return undefined
+  const asInt = readPositiveInt(trimmed)
+  if (asInt != null) return asInt
+  const 차시Match = trimmed.match(/^(\d+)\s*차시\s*$/)
+  if (차시Match) return readPositiveInt(차시Match[1])
+  return undefined
+}
+
 function readSessionsPerRoundFromSessions(
   sessions: readonly CurriculumSessionMetaRow[] | undefined
 ): number | undefined {
@@ -68,7 +79,7 @@ function readSessionsPerRoundFromSessions(
   )
   const first = rounds[0] ?? sessions.find(s => !isPreEducationSessionLabel(s.sessionLabel ?? ''))
   if (!first) return undefined
-  return readPositiveInt(first.title)
+  return readProgressSessionCountFromRoundTitle(first.title)
 }
 
 /** 기관 커리큘럼 + 복수 회차 + 날짜 지정 — 일정×회차 체크박스 matrix */
@@ -132,24 +143,21 @@ export function curriculumMultiDateFixedScheduleOptionId(
   return `line:${lineIndex}:education-round:${roundIndex}`
 }
 
-/** 교육 진행 예정일 줄 × 회차 수 */
+/**
+ * @deprecated 회차별 matrix 선택지는 더 이상 생성하지 않는다.
+ * 기존 import 호환을 위해 유지하되, 교육 진행 예정일 줄 1개당 선택지 1개만 반환한다.
+ */
 export function buildCurriculumMultiDateFixedScheduleChoiceItems(
   lines: readonly string[],
-  educationRoundCount: number
+  _educationRoundCount: number
 ): Array<{ id: string; label: string }> {
-  const roundCount = Math.max(1, Math.floor(educationRoundCount))
-  const items: Array<{ id: string; label: string }> = []
-  lines.forEach((line, lineIndex) => {
-    const base = line.trim()
-    if (!base) return
-    for (let round = 1; round <= roundCount; round += 1) {
-      items.push({
-        id: curriculumMultiDateFixedScheduleOptionId(lineIndex, round),
-        label: `${base} | ${round}회차`,
-      })
-    }
-  })
-  return items
+  return lines
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map((label, index) => ({
+      id: `line:${index}`,
+      label,
+    }))
 }
 
 const FIXED_SCHEDULE_SESSION_SUFFIX_RE = /\|\s*\d+\s*차시\s*$/
@@ -188,12 +196,7 @@ export function resolveFixedScheduleLinesToChoiceItems(
   lines: readonly string[],
   metaInput: CurriculumMultiDateFixedScheduleMetaInput = {}
 ): Array<{ id: string; label: string }> {
-  const meta = readCurriculumMultiDateFixedScheduleMeta(metaInput)
   const trimmed = expandEducationScheduleChoiceSlots(lines)
-  if (shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)) {
-    const roundCount = meta.educationRoundCount ?? 1
-    return buildCurriculumMultiDateFixedScheduleChoiceItems(trimmed, roundCount)
-  }
   return trimmed.map((label, index) => ({
     id: `line:${index}`,
     label: appendCurriculumSingleDateFixedScheduleSessionSuffix(label, visibility, metaInput),

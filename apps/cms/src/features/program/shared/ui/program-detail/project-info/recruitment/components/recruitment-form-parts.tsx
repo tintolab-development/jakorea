@@ -27,11 +27,14 @@ export function DateRangeEdit({
   endName,
   /** true: 빈 날짜를 `undefined`로 (강사 모집 등). false: `''` (참여자·봉사 운영 기간 등 Zod string) */
   clearToUndefined = false,
+  /** true: 모집 기간 등 — 시간 토글/표시 없이 날짜만 */
+  dateOnly = false,
 }: {
   form: UseFormReturn<ProgramDetailEditFormValues>
   startName: FieldPath<ProgramDetailEditFormValues>
   endName: FieldPath<ProgramDetailEditFormValues>
   clearToUndefined?: boolean
+  dateOnly?: boolean
 }) {
   const emit = (d: Dayjs | null) =>
     clearToUndefined ? (d ? d.toISOString() : undefined) : toIso(d)
@@ -46,9 +49,11 @@ export function DateRangeEdit({
           const end = toDayjs(form.watch(endName) as string | Date | undefined)
           const appliedRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
           const appliedWithTime =
-            appliedRange != null
-              ? dateRangeUsesClockTime(appliedRange[0], appliedRange[1])
-              : false
+            dateOnly
+              ? false
+              : appliedRange != null
+                ? dateRangeUsesClockTime(appliedRange[0], appliedRange[1])
+                : false
 
           return (
             <ParagraphDatePicker
@@ -59,6 +64,7 @@ export function DateRangeEdit({
               className="program-detail-info-tab__date-picker"
               placeholder="기간을 선택하세요"
               preferPeriodModeInPopover
+              showTimeToggle={!dateOnly}
               appliedSurfaceRange={appliedRange}
               appliedSurfaceWithTime={appliedWithTime}
               onRangeChange={range => {

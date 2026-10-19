@@ -29,6 +29,8 @@ export interface ProgramDetailResponse {
   programUuid?: string;
   programCode?: string;
   programType?: string;
+  /** 교육받은 교사 프로그램의 교육일지 기능 설정. 비대상 프로그램·detail row 없음·OFF는 false. */
+  educationJournalEnabled?: boolean;
   portalCategories?: string[];
   title?: string;
   titleEn?: string;
@@ -102,7 +104,7 @@ export interface ProgramDetailResponse {
   scheduleDetails?: ScheduleDetailItem[];
   /** 교육 진행 예정일 지정 방식. */
   educationScheduleMode?: ProgramDetailResponseEducationScheduleMode;
-  /** 교육 진행 예정일 표시 문자열(공통정보 그대로, 순서 유지). 없으면 []. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스. */
+  /** 교육 진행 예정일 표시 문자열(typed detail 원문 그대로, 순서 유지). 없으면 []. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다. */
   educationScheduleLines?: string[];
   /** 기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null. */
   educationScheduleRange?: ScheduleRange | null;

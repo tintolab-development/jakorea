@@ -139,6 +139,10 @@ function buildRecruitment(
     targetType: isIndividualAudience(program) ? 'INDIVIDUAL' : 'ORGANIZATION',
     startAt: toPortalDateTime(program.applicationStartDate),
     endAt: toPortalDateTime(program.applicationEndDate),
+    preEducationNoticeRequired:
+      info.preEducationNoticeRequired ?? info.advanceGuidanceRequired ?? null,
+    advanceGuidanceRequired:
+      info.advanceGuidanceRequired ?? info.preEducationNoticeRequired ?? null,
     interviewEnabled: program.generalParticipantInterviewEnabled ?? info.interviewEnabled ?? null,
     documentPassAnnouncementAt: toPortalDateTime(program.documentPassAnnouncementDate) ?? null,
     interviewStartAt: toPortalDateTime(program.interviewStartDate) ?? null,
@@ -221,6 +225,10 @@ export function buildProgramPortalPreviewDetail(
     additionalContentHtml: firstTrimmed(info.additionalContentHtml, program.additionalContentHtml),
     recruitmentGuide: firstTrimmed(info.recruitmentGuide, program.recruitmentGuide),
     learningSupportContent: firstTrimmed(info.learningSupportContent, program.learningSupportContent),
+    preEducationNoticeRequired:
+      info.preEducationNoticeRequired ?? info.advanceGuidanceRequired ?? null,
+    advanceGuidanceRequired:
+      info.advanceGuidanceRequired ?? info.preEducationNoticeRequired ?? null,
     otherMatters:
       audience === 'institutions'
         ? undefined

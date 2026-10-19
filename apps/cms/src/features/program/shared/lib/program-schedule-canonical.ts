@@ -110,9 +110,34 @@ function normalizeScheduleStatus(value: string | null | undefined): string | nul
   return trimmed || null
 }
 
+function parseScheduleDateTime(value: unknown): number | null {
+  if (typeof value !== 'string' || !value.trim()) return null
+  const parsed = Date.parse(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function isMultiDayAllDayPeriodWindow(schedule: unknown): boolean {
+  if (schedule == null || typeof schedule !== 'object') return false
+  const raw = schedule as {
+    allDay?: unknown
+    sessionNo?: unknown
+    startAt?: unknown
+    startDate?: unknown
+    endAt?: unknown
+    endDate?: unknown
+  }
+  if (raw.allDay !== true) return false
+  if (raw.sessionNo != null) return false
+  const start = parseScheduleDateTime(raw.startAt ?? raw.startDate)
+  const end = parseScheduleDateTime(raw.endAt ?? raw.endDate)
+  if (start == null || end == null) return false
+  return end - start > 24 * 60 * 60 * 1000
+}
+
 /**
  * 신규 강사·봉사·SCHEDULE 바인딩 후보 — 레거시 scheduleRole=null 은 허용(서버가 최종 검증).
  * PRE_EDUCATION/CLOSING 및 명시적 비-ACTIVE는 제외.
+ * 기간 지정 프로그램의 PROGRAM_DEFINED EDUCATION 창은 배정 가능한 수업일이 아니므로 제외한다.
  */
 export function isProgramScheduleRoleAllowedForNewEducationAssignment(
   schedule: unknown
@@ -134,6 +159,7 @@ export function isProgramScheduleStatusActiveForNewAssignment(schedule: unknown)
 export function isProgramScheduleCandidateForNewEducationAssignment(
   schedule: unknown
 ): boolean {
+  if (isMultiDayAllDayPeriodWindow(schedule)) return false
   return (
     isProgramScheduleRoleAllowedForNewEducationAssignment(schedule) &&
     isProgramScheduleStatusActiveForNewAssignment(schedule)

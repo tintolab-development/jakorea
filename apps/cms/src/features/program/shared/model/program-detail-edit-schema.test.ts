@@ -761,6 +761,8 @@ describe('trained teachers recruitment edit round-trip', () => {
     const patch = detailEditValuesToProgramPatch(values, ttProgram, {
       recruitmentAudience: 'participant',
     })
+    expect(patch).not.toHaveProperty('featuredOnHome')
+    expect(patch).not.toHaveProperty('homeDisplayOrder')
     const draft = {
       ...ttProgram,
       ...patch,

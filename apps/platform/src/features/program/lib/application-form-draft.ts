@@ -5,6 +5,7 @@
 
 import {
   clearWritingFormFillPreviewAnswers,
+  clearWritingFormParagraphFillPreviewAnswers,
   fieldCellValueToPlainText,
   normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
@@ -558,7 +559,30 @@ export function coerceApplicationFormDocument(form: unknown): Record<string, unk
   return attachBestRuntimeContext(merged, form)
 }
 
-/** form-binding 문단의 런타임 선택지·플래그를 draft 문단 id에 병합한다. */
+/** form-binding 문단 전체 스프레드 시 CMS 시드 `bottomConsent`·객관식 미리보기가 다시 선택된다. */
+const RUNTIME_BINDING_PARAGRAPH_FIELD_KEYS = [
+  'items',
+  'options',
+  'scheduleOptions',
+  'scheduleInputMode',
+  'runtimeResolved',
+  'runtimeInputMode',
+  'runtimeCondition',
+] as const
+
+function runtimeBindingParagraphPatch(
+  binding: Record<string, unknown>,
+): Partial<WritingFormParagraph> {
+  const patch: Record<string, unknown> = {}
+  for (const key of RUNTIME_BINDING_PARAGRAPH_FIELD_KEYS) {
+    if (key in binding) {
+      patch[key] = binding[key]
+    }
+  }
+  return patch as Partial<WritingFormParagraph>
+}
+
+/** form-binding 문단의 런타임 선택지·플래그만 draft 문단 id에 병합한다. */
 export function mergeApplicationBindingRuntimeParagraphs(
   draft: WritingFormDraft,
   formBinding: unknown,
@@ -574,14 +598,19 @@ export function mergeApplicationBindingRuntimeParagraphs(
   const merged = draft.paragraphs.map(paragraph => {
     const binding = bindingById.get(paragraph.id)
     if (!binding) return paragraph
-    return { ...paragraph, ...binding } as WritingFormParagraph
+    const patch = runtimeBindingParagraphPatch(binding)
+    if (Object.keys(patch).length === 0) return paragraph
+    return { ...paragraph, ...patch } as WritingFormParagraph
   })
   const mergedIds = new Set(merged.map(paragraph => paragraph.id))
   const appended = document.paragraphs.flatMap(paragraph => {
     if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) {
       return []
     }
-    return mergedIds.has(paragraph.id.trim()) ? [] : [paragraph as unknown as WritingFormParagraph]
+    if (mergedIds.has(paragraph.id.trim())) return []
+    return [
+      clearWritingFormParagraphFillPreviewAnswers(paragraph as unknown as WritingFormParagraph),
+    ]
   })
   return appended.length > 0 ? { ...draft, paragraphs: [...merged, ...appended] } : { ...draft, paragraphs: merged }
 }

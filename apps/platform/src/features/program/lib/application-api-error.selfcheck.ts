@@ -215,4 +215,11 @@ assert.deepEqual(readApplicationApiErrorEnvelope(fieldError), {
   details: { reason: 'debug-only' },
 })
 
+assert.equal(
+  getApiErrorMessageFromBody({
+    error: { code: 'UJAT_ORGANIZATION_ALREADY_APPLIED', message: 'UJAT_ORGANIZATION_ALREADY_APPLIED' },
+  }),
+  '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
+)
+
 console.log('application-api-error.selfcheck: ok')

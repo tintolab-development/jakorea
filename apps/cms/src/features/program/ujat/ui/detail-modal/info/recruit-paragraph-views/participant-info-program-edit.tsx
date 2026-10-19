@@ -124,6 +124,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                 startName="applicationStartDate"
                 endName="applicationEndDate"
                 placeholder="모집 기간을 선택하세요"
+                dateOnly
               />
             </div>
           }

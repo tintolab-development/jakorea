@@ -12,11 +12,12 @@ import {
 export type OrganizationApplicationApproveSlot = SlotRequest
 
 export type OrganizationApproveScheduleOption = {
-  /** UI 선택 키. 양수 = materialized `program_schedule.id`, 음수 = `line:N` placeholder */
+  /** UI 선택 키. 양수 = `education-slots.scheduleId`, 음수 = unresolved placeholder */
   scheduleId: number
   label: string
   /** 승인 `selectedScheduleId`로 보낼 수 있는 id. 없으면 칩 비활성 */
   confirmableScheduleId: number | null
+  unresolvedReason?: PreferredEducationSchedule['unresolvedReason']
 }
 
 export type OrganizationApproveScheduleValidation = {
@@ -33,7 +34,17 @@ export const ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE =
   '선택한 희망 교육 일정에 운영 일정 ID(scheduleId)가 없어 승인할 수 없습니다. 신청 상세 API에서 preferredEducationSchedules.scheduleId를 반영해 주세요.'
 
 export const ORGANIZATION_APPROVE_SCHEDULE_PROGRAM_MISMATCH_MESSAGE =
-  '희망 교육 일정 ID가 현재 프로그램 운영 일정과 일치하지 않습니다. 신청 상세·일정 API를 확인한 뒤 다시 선택해 주세요.'
+  '희망 교육 일정 ID가 현재 프로그램 공통 교육 일정과 일치하지 않습니다. 신청 상세·education-slots API를 확인한 뒤 다시 선택해 주세요.'
+
+export const ORGANIZATION_APPROVE_UNRESOLVED_REASON_MESSAGES: Record<
+  Exclude<PreferredEducationSchedule['unresolvedReason'], null | undefined>,
+  string
+> = {
+  NO_PROGRAM_DEFINED_SCHEDULE_MATCH:
+    '현재 프로그램 공통 교육 일정과 연결되지 않은 희망 일정입니다. 승인 후 교육 일정을 별도로 배정해 주세요.',
+  AMBIGUOUS_SCHEDULE_MATCH:
+    '동일한 시간의 공통 교육 일정이 여러 건이어서 자동 연결할 수 없습니다. 일정 확정 없이 승인하거나 관리자에게 일정 정리를 요청해 주세요.',
+}
 
 export function getUnresolvedPreferredScheduleMessage(reason: string | null | undefined): string {
   switch (reason?.trim()) {
@@ -134,11 +145,15 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
       formatScheduleLabel(schedule)
     const scheduleId = parseOrganizationPreferredScheduleId(schedule.scheduleId)
 
+    const unresolvedReason = schedule.unresolvedReason ?? null
+
     if (scheduleId != null) {
       if (seenPositiveIds.has(scheduleId)) continue
       seenPositiveIds.add(scheduleId)
       const confirmable =
-        programSchedules == null || programSchedules.length === 0
+        unresolvedReason != null
+          ? null
+          : programSchedules == null
           ? scheduleId
           : preferredScheduleMatchesProgramSchedule(schedule, scheduleId, programSchedules)
             ? scheduleId
@@ -147,6 +162,7 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
         scheduleId,
         label: label || `일정 ${scheduleId}`,
         confirmableScheduleId: confirmable,
+        unresolvedReason,
       })
       continue
     }
@@ -156,6 +172,7 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
       scheduleId: -(index + 1),
       label,
       confirmableScheduleId: null,
+      unresolvedReason,
     })
   }
 
@@ -210,6 +227,27 @@ export function organizationApproveScheduleOptionLabel(
 ): string | null {
   if (selectedOptionId == null) return null
   return scheduleOptions.find(option => option.scheduleId === selectedOptionId)?.label ?? null
+}
+
+export function organizationApproveUnconfirmableScheduleNotice(
+  scheduleOptions: OrganizationApproveScheduleOption[]
+): string | null {
+  const unresolvedReasons = scheduleOptions
+    .map(option => option.unresolvedReason)
+    .filter(
+      (
+        reason
+      ): reason is Exclude<PreferredEducationSchedule['unresolvedReason'], null | undefined> =>
+        reason === 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' || reason === 'AMBIGUOUS_SCHEDULE_MATCH'
+    )
+
+  if (unresolvedReasons.includes('AMBIGUOUS_SCHEDULE_MATCH')) {
+    return ORGANIZATION_APPROVE_UNRESOLVED_REASON_MESSAGES.AMBIGUOUS_SCHEDULE_MATCH
+  }
+  if (unresolvedReasons.includes('NO_PROGRAM_DEFINED_SCHEDULE_MATCH')) {
+    return ORGANIZATION_APPROVE_UNRESOLVED_REASON_MESSAGES.NO_PROGRAM_DEFINED_SCHEDULE_MATCH
+  }
+  return null
 }
 
 /**

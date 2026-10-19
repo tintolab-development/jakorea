@@ -58,6 +58,22 @@ describe('extractApiErrorMessage', () => {
       })
     ).toBe('CONFLICT: ADMIN_EMAIL_ALREADY_EXISTS')
   })
+
+  it('UJAT P0 코드는 서버 메시지가 코드일 때 한글 안내로 바꾼다', () => {
+    expect(
+      extractApiErrorMessage({
+        error: { code: 'UJAT_VOLUNTEER_INTERVIEW_REQUIRED', message: 'UJAT_VOLUNTEER_INTERVIEW_REQUIRED' },
+      })
+    ).toBe('UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.')
+    expect(
+      extractApiErrorMessage({
+        error: {
+          code: 'UJAT_ORGANIZATION_ALREADY_APPLIED',
+          message: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
+        },
+      })
+    ).toBe('같은 UJAT 프로그램에 이미 신청한 학교입니다.')
+  })
 })
 
 describe('getApiErrorCode / getApiErrorHttpStatus', () => {

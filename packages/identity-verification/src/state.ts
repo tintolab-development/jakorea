@@ -1,3 +1,9 @@
+import {
+  clearIdentityCompletion,
+  publishIdentityCompletion,
+  subscribeIdentityCompletion,
+  takeIdentityCompletion,
+} from './completion-channel'
 import type {
   IdentityMessage,
   IdentityVerificationRoutes,
@@ -5,13 +11,19 @@ import type {
 } from './types'
 
 export interface IdentityVerificationState {
+  readonly storagePrefix: string
   setPendingChallenge: (challenge: PendingIdentityChallenge) => void
   getPendingChallenge: () => PendingIdentityChallenge | null
   clearPendingChallenge: () => void
   buildCallbackUrl: () => string
   buildMockNiceUrl: (sessionId: number, nonce: string, name?: string) => string
+  buildResumePath: () => string
   validatePendingState: (queryState: string | null) => boolean
   isIdentityMessage: (data: unknown) => data is IdentityMessage
+  publishCompletion: (message: IdentityMessage) => void
+  takeCompletion: () => IdentityMessage | null
+  clearCompletion: () => void
+  subscribeCompletion: (handler: (message: IdentityMessage) => void) => () => void
 }
 
 export interface CreateIdentityVerificationStateOptions {
@@ -101,7 +113,20 @@ export function createIdentityVerificationState(
   }
 
   function buildCallbackUrl() {
-    return `${window.location.origin}${options.routes.callbackPath}`
+    const origin = options.publicOrigin?.() || window.location.origin
+    return `${origin}${options.routes.callbackPath}`
+  }
+
+  function buildResumePath() {
+    if (options.routes.resumePath) {
+      return options.routes.resumePath
+    }
+    return (
+      options.routes.callbackPath.replace(
+        /\/(?:[a-z0-9-]*-)?identity\/callback\/?$/i,
+        ''
+      ) || '/'
+    )
   }
 
   function buildMockNiceUrl(sessionId: number, nonce: string, name?: string) {
@@ -121,7 +146,8 @@ export function createIdentityVerificationState(
     }
     const pending = getPendingChallenge()
     if (!pending) {
-      return false
+      // 팝업 닫힘 레이스로 pending이 먼저 지워져도 콜백 쿼리의 sessionId·profileToken으로 완료한다.
+      return true
     }
     return pending.nonce === queryState
   }
@@ -135,12 +161,18 @@ export function createIdentityVerificationState(
   }
 
   return {
+    storagePrefix: prefix,
     setPendingChallenge,
     getPendingChallenge,
     clearPendingChallenge,
     buildCallbackUrl,
     buildMockNiceUrl,
+    buildResumePath,
     validatePendingState,
     isIdentityMessage,
+    publishCompletion: message => publishIdentityCompletion(prefix, message),
+    takeCompletion: () => takeIdentityCompletion(prefix),
+    clearCompletion: () => clearIdentityCompletion(prefix),
+    subscribeCompletion: handler => subscribeIdentityCompletion(prefix, handler),
   }
 }

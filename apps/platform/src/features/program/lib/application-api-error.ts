@@ -49,7 +49,11 @@ export function getApiErrorMessageFromBody(
   const code = extractErrorCode(data)
   const mappedMessage = code ? BLOCKED_REASON_MESSAGES[code] : undefined
   const nestedMessage = extractNestedErrorMessage(data)
-  if (nestedMessage && !(mappedMessage && isGenericApplicationErrorMessage(nestedMessage))) {
+  if (
+    nestedMessage &&
+    nestedMessage !== code &&
+    !(mappedMessage && isGenericApplicationErrorMessage(nestedMessage))
+  ) {
     return nestedMessage
   }
   if (mappedMessage) {
@@ -127,6 +131,10 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   /** 개인 프로그램 — 재학(ENROLLED)인데 회원 프로필 학년 없음 (POST; options SSOT 아님) */
   INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED:
     '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
+  UJAT_ORGANIZATION_ALREADY_APPLIED: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
+  UJAT_ACTIVITY_CERTIFICATE_ADMIN_ONLY: 'UJAT 활동인증서는 관리자만 발급할 수 있습니다.',
+  UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
+  UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =

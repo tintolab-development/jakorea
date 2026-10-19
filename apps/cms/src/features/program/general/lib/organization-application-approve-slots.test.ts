@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  organizationApproveUnconfirmableScheduleNotice,
   listOrganizationApproveScheduleOptions,
   resolveOrganizationApproveScheduleIdsFromSelection,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
@@ -97,6 +98,32 @@ describe('organization-application-approve-slots', () => {
     )
     expect(result.options[0]?.confirmableScheduleId).toBeNull()
     expect(result.options[0]?.scheduleId).toBe(88)
+  })
+
+  it('does not confirm preferred schedule when education-slots list is empty', () => {
+    const result = resolveOrganizationApproveScheduleOptionsFromPreferred(
+      [{ scheduleId: 88, label: 'slot' }],
+      []
+    )
+    expect(result.options[0]?.confirmableScheduleId).toBeNull()
+  })
+
+  it('disables unresolved preferred schedule with reason-specific notice', () => {
+    const result = resolveOrganizationApproveScheduleOptionsFromPreferred(
+      [
+        {
+          scheduleId: null,
+          label: 'slot',
+          unresolvedReason: 'AMBIGUOUS_SCHEDULE_MATCH',
+        },
+      ],
+      [{ id: 88, startAt: '2026-10-30T04:30:00Z', endAt: '2026-10-30T06:30:00Z' }]
+    )
+    expect(result.options[0]?.confirmableScheduleId).toBeNull()
+    expect(result.options[0]?.unresolvedReason).toBe('AMBIGUOUS_SCHEDULE_MATCH')
+    expect(organizationApproveUnconfirmableScheduleNotice(result.options)).toContain(
+      '자동 연결할 수 없습니다'
+    )
   })
 
   it('only exposes a positive numeric id whose program schedule has the same time range', () => {

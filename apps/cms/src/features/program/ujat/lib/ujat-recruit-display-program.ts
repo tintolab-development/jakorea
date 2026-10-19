@@ -123,11 +123,23 @@ export function resolveUjatRecruitDisplayProgram(
 function volunteerHalfPeriod(
   values: ProgramDetailEditFormValues,
   _half: UjatVolunteerRecruitHalf
-): { startAt?: string | null; endAt?: string | null } {
+): {
+  startAt?: string | null
+  endAt?: string | null
+  interviewEnabled?: boolean
+  interviewStartAt?: string | null
+  interviewEndAt?: string | null
+} {
   const startAt = values.volunteerApplicationStartDate?.trim() || null
   const endAt = values.volunteerApplicationEndDate?.trim() || null
-  if (!startAt && !endAt) return {}
-  return { startAt, endAt }
+  const interviewStartAt = values.interviewStartDate?.trim() || null
+  const interviewEndAt = values.interviewEndDate?.trim() || null
+  return {
+    ...(startAt || endAt ? { startAt, endAt } : {}),
+    interviewEnabled: true,
+    interviewStartAt,
+    interviewEndAt,
+  }
 }
 
 function rowAnnouncementTitle(

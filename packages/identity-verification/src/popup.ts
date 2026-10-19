@@ -29,9 +29,18 @@ export function openNiceAuthPopup(authUrl: string): Window {
   return popup
 }
 
+function isNiceAuthPopupClosed(popup: Window): boolean {
+  try {
+    return popup.closed
+  } catch {
+    // 교차 출처 이동 후 closed 접근이 막히면 아직 열린 것으로 본다.
+    return false
+  }
+}
+
 export function watchNiceAuthPopupClosed(popup: Window, onClosed: () => void): () => void {
   const timer = window.setInterval(() => {
-    if (popup.closed) {
+    if (isNiceAuthPopupClosed(popup)) {
       window.clearInterval(timer)
       onClosed()
     }

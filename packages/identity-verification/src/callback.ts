@@ -1,12 +1,20 @@
-import { closeIdentityPopupSoon, postIdentityMessageToOpener } from './messaging'
+import { closeIdentityPopupOrResume, deliverIdentityMessage } from './messaging'
 import {
   normalizeVerificationSession,
   pickVerifiedFieldsFromCallbackLocation,
 } from './parse-verification-session'
-import { pickProfileTokenFromSearchParams } from './parse-verified-identity-profile'
+import {
+  pickCallbackStatusFromSearchParams,
+  pickProfileTokenFromSearchParams,
+  pickSessionIdFromSearchParams,
+} from './parse-verified-identity-profile'
 import { toVerifiedBirthDate } from './birth-date'
 import type { IdentityVerificationClient } from './client'
-import type { IdentityCallbackOutcome, IdentityVerifiedPayload } from './types'
+import type {
+  IdentityCallbackOutcome,
+  IdentityMessage,
+  IdentityVerifiedPayload,
+} from './types'
 
 export interface ProcessIdentityCallbackOptions {
   /** useEffect cleanup 시 true — noOpener UI 억제 */
@@ -41,6 +49,14 @@ function failOutcome(
   return { kind: 'failed', message, noOpener: false }
 }
 
+function deliverToParent(client: IdentityVerificationClient, message: IdentityMessage): boolean {
+  const { delivered } = deliverIdentityMessage(message, client.state.storagePrefix)
+  if (delivered) {
+    closeIdentityPopupOrResume(client.state.buildResumePath())
+  }
+  return delivered
+}
+
 async function processRemoteCallback(
   client: IdentityVerificationClient,
   params: URLSearchParams,
@@ -56,50 +72,38 @@ async function processRemoteCallback(
   const queryMessage = params.get('message') ?? params.get('errorMessage')
   const queryState = params.get('state')
   const sessionIdRaw =
-    params.get('sessionId') ?? state.getPendingChallenge()?.sessionId?.toString() ?? ''
+    pickSessionIdFromSearchParams(params) ||
+    state.getPendingChallenge()?.sessionId?.toString() ||
+    ''
 
   if (queryError) {
     const message = queryMessage ?? '본인인증에 실패했습니다.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      // postMessage is delivered asynchronously. Keep the pending challenge
-      // until the opener validates and clears it from its message handler.
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 
   if (!state.validatePendingState(queryState)) {
     const message = '인증 요청 정보가 일치하지 않습니다. 다시 시도해 주세요.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 
   const sessionId = Number(sessionIdRaw)
   if (!sessionIdRaw || Number.isNaN(sessionId) || sessionId <= 0) {
     const message = '인증 세션 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 
   try {
     const session = normalizeVerificationSession(await client.fetchSession(sessionId))
-    const queryStatus = params.get('status')?.toUpperCase()
+    const queryStatus = pickCallbackStatusFromSearchParams(params)
     const isVerified =
       client.isSessionVerified(session.status) || queryStatus === 'VERIFIED'
 
     if (!isVerified) {
       const message = queryMessage ?? '본인인증이 완료되지 않았습니다.'
-      const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-      if (posted) {
-        closeIdentityPopupSoon()
-      }
+      const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
       return failOutcome(message, cancelled, posted)
     }
 
@@ -107,10 +111,7 @@ async function processRemoteCallback(
     if (!profileToken) {
       const message =
         '인증 프로필 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
-      const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-      if (posted) {
-        closeIdentityPopupSoon()
-      }
+      const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
       return failOutcome(message, cancelled, posted)
     }
 
@@ -160,10 +161,7 @@ async function processRemoteCallback(
 
     if (!skipVerifiedProfileFetch && (!verifiedName || !verifiedPhone)) {
       const message = '본인인증 프로필 정보를 확인할 수 없습니다.'
-      const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-      if (posted) {
-        closeIdentityPopupSoon()
-      }
+      const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
       return failOutcome(message, cancelled, posted)
     }
 
@@ -179,7 +177,7 @@ async function processRemoteCallback(
       verifiedAt: verifiedAt ?? new Date().toISOString(),
     }
 
-    const posted = postIdentityMessageToOpener(payload)
+    const posted = deliverToParent(client, payload)
     if (!posted) {
       return failOutcome(
         '인증은 완료되었으나 부모 창과 연결할 수 없습니다. 회원가입 탭으로 돌아가 주세요.',
@@ -188,16 +186,11 @@ async function processRemoteCallback(
       )
     }
 
-    // The opener clears the challenge after it accepts IDENTITY_VERIFIED.
-    closeIdentityPopupSoon()
     return { kind: 'verified', payload }
   } catch (error) {
     const message =
       error instanceof Error ? error.message : '본인인증 결과를 확인할 수 없습니다.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 }
@@ -212,20 +205,14 @@ async function processMockCallback(
 
   if (!webTransactionId) {
     const message = '인증 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 
   const pending = state.getPendingChallenge()
   if (!pending) {
     const message = '인증 세션이 만료되었습니다. 회원가입 화면에서 다시 시도해 주세요.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 
@@ -249,7 +236,7 @@ async function processMockCallback(
       verifiedAt: result.verifiedAt,
     }
 
-    const posted = postIdentityMessageToOpener(payload)
+    const posted = deliverToParent(client, payload)
     if (!posted) {
       return failOutcome(
         '인증은 완료되었으나 부모 창과 연결할 수 없습니다. 회원가입 탭으로 돌아가 주세요.',
@@ -258,16 +245,11 @@ async function processMockCallback(
       )
     }
 
-    // The opener clears the challenge after it accepts IDENTITY_VERIFIED.
-    closeIdentityPopupSoon()
     return { kind: 'verified', payload }
   } catch (error) {
     const message =
       error instanceof Error ? error.message : '본인인증 결과를 확인할 수 없습니다.'
-    const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
-    if (posted) {
-      closeIdentityPopupSoon()
-    }
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
     return failOutcome(message, cancelled, posted)
   }
 }

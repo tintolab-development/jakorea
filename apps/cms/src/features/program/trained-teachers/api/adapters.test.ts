@@ -1233,3 +1233,28 @@ describe('trained teacher businessArea', () => {
     expect(envelope.program?.generalCommonInfo).not.toHaveProperty('businessArea')
   })
 })
+
+describe('mapTrainedTeacherToUpdateRequest portal home featured', () => {
+  it('omits featured fields when PATCH does not include them', () => {
+    const program = {
+      id: '186009',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      featuredOnHome: true,
+      homeDisplayOrder: 3,
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(program, { title: '모집만 저장' })
+    expect(request.featuredOnHome).toBeUndefined()
+    expect(request.homeDisplayOrder).toBeUndefined()
+  })
+})

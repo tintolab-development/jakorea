@@ -45,6 +45,21 @@ export function pickProfileTokenFromSearchParams(params: URLSearchParams): strin
   return (
     params.get('profileToken')?.trim() ||
     params.get('profile_token')?.trim() ||
+    params.get('profile-token')?.trim() ||
     undefined
   )
+}
+
+export function pickSessionIdFromSearchParams(params: URLSearchParams): string {
+  return (
+    params.get('sessionId')?.trim() ||
+    params.get('session_id')?.trim() ||
+    params.get('identitySessionId')?.trim() ||
+    ''
+  )
+}
+
+export function pickCallbackStatusFromSearchParams(params: URLSearchParams): string | undefined {
+  const status = params.get('status')?.trim() || params.get('identityStatus')?.trim()
+  return status ? status.toUpperCase() : undefined
 }

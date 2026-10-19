@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
 
-const fetchAdminProgramSchedulesRemote = vi.fn()
+const fetchAdminProgramEducationSlotsRemote = vi.fn()
 const buildSurveyPollScheduleSelectOptionsForProgram = vi.fn()
 
 vi.mock('@/features/program/general/api/program-schedules-api-client', () => ({
-  fetchAdminProgramSchedulesRemote: (...args: unknown[]) => fetchAdminProgramSchedulesRemote(...args),
+  fetchAdminProgramEducationSlotsRemote: (...args: unknown[]) =>
+    fetchAdminProgramEducationSlotsRemote(...args),
 }))
 
 vi.mock('@/features/program/shared/lib/survey-management/survey-poll-schedule-options', () => ({
@@ -31,9 +32,9 @@ function baseProgram(overrides: Partial<Program> = {}): Program {
 
 describe('resolveSurveyPollBindingTargetWhenScheduleFieldHidden', () => {
   beforeEach(() => {
-    fetchAdminProgramSchedulesRemote.mockReset()
+    fetchAdminProgramEducationSlotsRemote.mockReset()
     buildSurveyPollScheduleSelectOptionsForProgram.mockReset()
-    fetchAdminProgramSchedulesRemote.mockResolvedValue([])
+    fetchAdminProgramEducationSlotsRemote.mockResolvedValue([])
   })
 
   it('기간형 프로그램은 PROGRAM 바인딩', async () => {
