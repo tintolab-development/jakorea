@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeOpenApiSchemaNode } from './normalize-openapi-schema-for-orval.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 export const adminRoot = join(__dirname, '../..')
@@ -52,6 +53,8 @@ export function writeOpenApiSubset({
     const { name: _removed, ...rest } = bearer
     subset.components.securitySchemes.bearerAuth = rest
   }
+
+  normalizeOpenApiSchemaNode(subset)
 
   writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
   console.log(`Wrote ${outputPath} (${pathCount} paths)`)

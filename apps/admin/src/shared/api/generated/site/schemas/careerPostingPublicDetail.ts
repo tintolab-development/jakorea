@@ -14,7 +14,6 @@ export interface CareerPostingPublicDetail {
   status?: CareerPostingPublicDetailStatus;
   title?: string;
   publishedOn?: string;
-  /** @nullable */
   publishedAt?: string | null;
   recruitStart?: string;
   recruitEnd?: string;

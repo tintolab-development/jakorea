@@ -6639,11 +6639,9 @@
             "type": "string"
           },
           "appliedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "version": {
             "type": "integer",
@@ -8386,11 +8384,9 @@
             "format": "date"
           },
           "publishedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "recruitStart": {
             "type": "string",
@@ -10043,10 +10039,8 @@
             "type": "string"
           },
           "addressDetail": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "educationLevel": {
             "type": "string",
@@ -10063,10 +10057,8 @@
             "type": "string"
           },
           "major": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "educationInfo": {
             "type": "string"
@@ -10089,23 +10081,17 @@
             "format": "date-time"
           },
           "confirmedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "confirmedByName": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "attachmentOriginalName": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           }
         }
       },

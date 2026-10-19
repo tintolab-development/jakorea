@@ -19,21 +19,16 @@ export interface CareerTalentApplicationDetailResponse {
   phone?: string;
   email?: string;
   addressRoad?: string;
-  /** @nullable */
   addressDetail?: string | null;
   educationLevel?: CareerTalentApplicationDetailResponseEducationLevel;
   schoolName?: string;
-  /** @nullable */
   major?: string | null;
   educationInfo?: string;
   careerType?: CareerTalentApplicationDetailResponseCareerType;
   careerInfo?: string;
   privacyAgreed?: boolean;
   appliedAt?: string;
-  /** @nullable */
   confirmedAt?: string | null;
-  /** @nullable */
   confirmedByName?: string | null;
-  /** @nullable */
   attachmentOriginalName?: string | null;
 }
