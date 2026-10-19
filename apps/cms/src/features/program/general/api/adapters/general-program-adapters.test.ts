@@ -394,41 +394,25 @@ describe('general-program-adapters', () => {
     expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1' }])
   })
 
-  it('maps featuredOnHome and homeDisplayOrder on create and omits them on unrelated PATCH', () => {
-    const create = mapGeneralProgramToCreateRequest({
-      ...sampleProgram,
-      featuredOnHome: true,
-      homeDisplayOrder: 2,
-    })
-    expect(create.featuredOnHome).toBe(true)
-    expect(create.homeDisplayOrder).toBe(2)
+  it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
+    const create = mapGeneralProgramToCreateRequest(sampleProgram)
+    expect(create.featuredOnHome).toBeUndefined()
+    expect(create.homeDisplayOrder).toBeUndefined()
 
-    const patch = mapGeneralProgramToUpdateRequest(
-      { ...sampleProgram, featuredOnHome: true, homeDisplayOrder: 2 },
-      { title: '제목만' },
-      sampleProgram
-    )
+    const patch = mapGeneralProgramToUpdateRequest(sampleProgram, { title: '제목만' }, sampleProgram)
     expect(patch.featuredOnHome).toBeUndefined()
     expect(patch.homeDisplayOrder).toBeUndefined()
-
-    const featuredPatch = mapGeneralProgramToUpdateRequest(
-      { ...sampleProgram, featuredOnHome: false, homeDisplayOrder: null },
-      { featuredOnHome: false, homeDisplayOrder: null },
-      sampleProgram
-    )
-    expect(featuredPatch.featuredOnHome).toBe(false)
-    expect(featuredPatch.homeDisplayOrder).toBeNull()
   })
 
-  it('hydrates featuredOnHome from admin GET', () => {
+  it('does not hydrate featuredOnHome from admin GET', () => {
     const program = mapAdminProgramDetailToProgram({
       id: '186095',
       title: '1사 1교 프로그램 [ 1번 ]',
       featuredOnHome: true,
       homeDisplayOrder: 1,
     })
-    expect(program.featuredOnHome).toBe(true)
-    expect(program.homeDisplayOrder).toBe(1)
+    expect(program).not.toHaveProperty('featuredOnHome')
+    expect(program).not.toHaveProperty('homeDisplayOrder')
   })
 
   it('maps multi sponsor manager contact refs into create sponsors[]', () => {

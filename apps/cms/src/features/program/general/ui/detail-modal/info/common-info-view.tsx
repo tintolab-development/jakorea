@@ -77,7 +77,6 @@ import {
   resolveGeneralProgramScheduleDetailsForView,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
-import { ProgramPortalHomeFeaturedFields } from '@/features/program/shared/ui/program-detail/portal-home-featured-fields'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
@@ -595,12 +594,6 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
-        <ProgramPortalHomeFeaturedFields
-          isEdit={isFormEdit}
-          featuredOnHome={program.featuredOnHome === true}
-          homeDisplayOrder={program.homeDisplayOrder}
-          control={isFormEdit ? editForm.control : undefined}
-        />
       </DetailInfoForm>
       <DetailInfoForm
         title="기본 정보"

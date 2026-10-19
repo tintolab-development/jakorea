@@ -1234,8 +1234,8 @@ describe('trained teacher businessArea', () => {
   })
 })
 
-describe('mapTrainedTeacherToUpdateRequest portal home featured', () => {
-  it('omits featured fields when PATCH does not include them', () => {
+describe('mapTrainedTeacherToUpdateRequest', () => {
+  it('does not send featuredOnHome or homeDisplayOrder', () => {
     const program = {
       id: '186009',
       sponsorId: '163302',
@@ -1250,8 +1250,6 @@ describe('mapTrainedTeacherToUpdateRequest portal home featured', () => {
       status: 'pending' as const,
       createdAt: '2026-01-01',
       updatedAt: '2026-01-01',
-      featuredOnHome: true,
-      homeDisplayOrder: 3,
     } as Program
     const request = mapTrainedTeacherToUpdateRequest(program, { title: '모집만 저장' })
     expect(request.featuredOnHome).toBeUndefined()

@@ -10,7 +10,6 @@ import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/das
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
-import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type {
   Program,
   ProgramCategory,
@@ -737,11 +736,6 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
             : undefined,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
-      featuredOnHome: dto.featuredOnHome === true,
-      homeDisplayOrder:
-        typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
-          ? dto.homeDisplayOrder
-          : null,
     }),
     ujatRegistrationOverlay: overlay,
   },
@@ -960,7 +954,6 @@ function coreRequest(
     merged: program,
     existing: program,
   })
-  applyPortalHomeFeaturedToRequest(body, program, 'full')
   return body
 }
 
@@ -1130,7 +1123,6 @@ function patchRequest(
     existing,
     patch,
   })
-  applyPortalHomeFeaturedToRequest(body, merged, 'patch', patch)
   return body
 }
 
