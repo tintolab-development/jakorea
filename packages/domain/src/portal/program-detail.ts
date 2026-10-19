@@ -57,6 +57,10 @@ export type PortalRecruitment = {
   volunteerInterviewSchedule?: PortalVolunteerInterviewSchedule | null
   /** GENERAL_*·UJAT 모집 행 값. 비어 있으면 null이며 프로그램 값으로 채우지 않는다. */
   applicationType?: string | null
+  /** 기관 모집 「사전 안내 사항 작성 여부」. false면 신청 양식 안내사항 단락 비노출. */
+  preEducationNoticeRequired?: boolean | null
+  /** BE 구필드 호환: 기관 모집 「사전 안내 사항 작성 여부」. */
+  advanceGuidanceRequired?: boolean | null
   announcementTitle?: string | null
   summary?: string | null
   programDescription?: string | null
@@ -181,6 +185,10 @@ export type PortalProgramDetail = {
   learningSupportContent?: string | null
   otherMatters?: string | null
   remarks?: string | null
+  /** 기관 모집 「사전 안내 사항 작성 여부」. false면 신청 양식 안내사항 단락 비노출. */
+  preEducationNoticeRequired?: boolean | null
+  /** BE 구필드 호환: 기관 모집 「사전 안내 사항 작성 여부」. */
+  advanceGuidanceRequired?: boolean | null
   /**
    * 교육 진행 정보. 모든 유형에 키가 온다.
    * 일반 개인/기관이 아니면 스칼라는 null, 배열은 [].

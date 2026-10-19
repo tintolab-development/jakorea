@@ -11,7 +11,6 @@ export type RecruitInterviewPeriodState = {
   setRecruitAnchor: (next: Dayjs | null) => void
   recruitRange: [Dayjs, Dayjs] | null
   setRecruitRange: (next: [Dayjs, Dayjs] | null) => void
-  recruitRangeWithTime: boolean
   docDeadlineDate: Dayjs | null
   setDocDeadlineDate: (next: Dayjs | null) => void
   docAnnounceMethod: string
@@ -56,8 +55,9 @@ export function RecruitInterviewConditionalRows({
                   width="100%"
                   placeholder="모집 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  showTimeToggle={false}
                   appliedSurfaceRange={state.recruitRange}
-                  appliedSurfaceWithTime={state.recruitRangeWithTime}
+                  appliedSurfaceWithTime={false}
                   onRangeChange={range => state.setRecruitRange(range)}
                   onChange={next => {
                     if (next == null) return
@@ -185,8 +185,9 @@ export function RecruitInterviewConditionalRows({
               width="100%"
               placeholder="모집 기간을 선택하세요"
               preferPeriodModeInPopover
+              showTimeToggle={false}
               appliedSurfaceRange={state.recruitRange}
-              appliedSurfaceWithTime={state.recruitRangeWithTime}
+              appliedSurfaceWithTime={false}
               onRangeChange={range => state.setRecruitRange(range)}
               onChange={next => {
                 if (next == null) return

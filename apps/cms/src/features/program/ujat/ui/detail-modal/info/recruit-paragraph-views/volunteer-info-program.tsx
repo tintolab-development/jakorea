@@ -423,6 +423,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     endName={recruitEndName}
                     placeholder="봉사자 모집 기간을 선택하세요"
                     clearToUndefined
+                    dateOnly
                   />
                 </div>
               ) : undefined

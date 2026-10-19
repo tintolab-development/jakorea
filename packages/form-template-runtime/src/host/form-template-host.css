@@ -48,3 +48,34 @@
   width: 100%;
   min-width: 0;
 }
+
+@media (max-width: 767px) {
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-text-input, .pf-select, .pf-date-input, .pf-time-input) {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-text-input__field, .pf-select__field, .pf-date-input__field, .pf-time-input__field) {
+    min-height: 52px;
+    height: 52px;
+    border-radius: var(--radius-16, 16px);
+    padding: 12px 14px;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-text-input__input, .pf-select__value, .pf-date-input__value, .pf-time-input__value) {
+    font-size: 15px;
+    line-height: 150%;
+  }
+
+  .form-template-host[data-surface='platformUser'] .pf-select__trigger {
+    padding: 12px 52px 12px 14px;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    :is(.pf-date-input__trigger, .pf-time-input__trigger) {
+    min-width: 0;
+  }
+}

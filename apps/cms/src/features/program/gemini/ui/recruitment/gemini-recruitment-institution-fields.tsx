@@ -240,6 +240,7 @@ export function GeminiRecruitmentInstitutionFields({
                   value={applicationPeriod}
                   onChange={onApplicationPeriodChange}
                   placeholder="기관 모집 기간을 선택하세요"
+                  dateOnly
                 />
               </div>
             ) : undefined

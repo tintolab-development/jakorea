@@ -120,10 +120,6 @@ export function RecruitFormInstructorInfoParagraph() {
     }
     setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  const recruitRangeWithTime = useMemo(
-    () => (recruitRange == null ? false : dateRangeUsesClockTime(recruitRange[0], recruitRange[1])),
-    [recruitRange]
-  )
 
   const [finalAnnounceIso, setFinalAnnounceIso] = useGeneralRecruitOverlayKv<string | null>(
     'recruit.instructor.finalAnnounceIso',
@@ -260,8 +256,9 @@ export function RecruitFormInstructorInfoParagraph() {
                 width="100%"
                 placeholder="모집 기간을 선택하세요"
                 preferPeriodModeInPopover
+                showTimeToggle={false}
                 appliedSurfaceRange={recruitRange}
-                appliedSurfaceWithTime={recruitRangeWithTime}
+                appliedSurfaceWithTime={false}
                 onRangeChange={range => setRecruitRange(range)}
                 onChange={next => {
                   if (next == null) return

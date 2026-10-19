@@ -56,3 +56,35 @@
 :global(.form-template-host) .radioOption:has(input:checked) :global(.typo-bd-md-rg) {
   color: var(--color-primary-500);
 }
+
+@media (max-width: 767px) {
+  .teacherContactRow {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .teacherContactSegment {
+    width: 100%;
+  }
+
+  .teacherContactCluster {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .teacherContactLabel {
+    font-size: 13px !important;
+    line-height: 150% !important;
+    color: var(--color-neutral-cool-600, #85969d) !important;
+  }
+
+  .teacherContactSeparator {
+    display: none;
+  }
+}

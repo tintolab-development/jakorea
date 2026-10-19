@@ -19,7 +19,6 @@ import type { ParticipatingSchoolRow } from '@/features/program/general/model/pa
 describe('schedule domain three-way integration', () => {
   const plannedSchedules = resolvePlannedEducationSlotsFromCaches({
     educationSlots: buildPlannedEducationSlotsFixture(),
-    programSchedules: buildPhysicalSchedulesWithMaterializedFixture(),
   })
 
   it('planned slot count is 4 while physical schedules are 5+', () => {

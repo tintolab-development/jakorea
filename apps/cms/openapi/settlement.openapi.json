@@ -12214,7 +12214,8 @@
           },
           "fileObjectId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "교육일지 제출 파일 ID. EDUCATION_JOURNAL 목적의 CLEAN·AVAILABLE 파일이어야 합니다."
           },
           "journalTitle": {
             "type": "string"
@@ -12222,7 +12223,10 @@
           "journalMemo": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "fileObjectId"
+        ]
       },
       "ApiResponseEducationJournalResponse": {
         "type": "object",
@@ -20500,6 +20504,52 @@
             "items": {
               "$ref": "#/components/schemas/PreferredScheduleSessionTime"
             }
+          },
+          "scheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "실제 program_schedule.id. 매핑되지 않은 legacy/삭제 일정은 null."
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "매핑된 실제 일정 시작 시각."
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "매핑된 실제 일정 종료 시각."
+          },
+          "round": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "실제 일정의 session_no(회차)."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "실제 일정명 또는 회차 라벨."
+          },
+          "scheduleStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "MATCHED | UNMATCHED | INACTIVE_OR_DELETED."
           }
         }
       },
@@ -35429,6 +35479,10 @@
           "programType": {
             "type": "string"
           },
+          "educationJournalEnabled": {
+            "type": "boolean",
+            "description": "교육받은 교사 프로그램의 교육일지 기능 설정. 비대상 프로그램·detail row 없음·OFF는 false."
+          },
           "portalCategories": {
             "type": "array",
             "items": {
@@ -35748,7 +35802,7 @@
           },
           "educationScheduleLines": {
             "type": "array",
-            "description": "교육 진행 예정일 표시 문자열(공통정보 그대로, 순서 유지). 없으면 []. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스.",
+            "description": "교육 진행 예정일 표시 문자열(typed detail 원문 그대로, 순서 유지). 없으면 []. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다.",
             "items": {
               "type": "string"
             }
@@ -36206,7 +36260,7 @@
           "form": {
             "type": "object",
             "additionalProperties": {},
-            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다."
+            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate가 포함됩니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용합니다. TRAINED_TEACHER 기간형 기관 신청은 businessStartDate/businessEndDate를 단일 허용 기간으로 반환하고, 그 외 유형은 typed detail 교육 가능 기간을 사용합니다. 유효한 일정이 없으면 빈 배열과 null 날짜를 반환합니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
           },
           "draftApplicationId": {
             "type": "integer",
@@ -37115,7 +37169,7 @@
           "answers": {
             "type": "object",
             "additionalProperties": {},
-            "description": "제출 양식 답변 맵. 키는 문단 id. 없으면 빈 객체 {}."
+            "description": "실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. 없으면 빈 객체 {}."
           },
           "preferredScheduleBlocks": {
             "type": "array",
@@ -37236,6 +37290,29 @@
               "null"
             ],
             "description": "해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다."
+          },
+          "programType": {
+            "type": "string",
+            "description": "프로그램 canonical type. 신청 상세의 programType과 동일합니다."
+          },
+          "educationFormLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램 설정의 교육 형태 라벨. 신청 답변의 educationFormat이 없을 때 표시 기준으로 사용할 수 있습니다."
+          },
+          "educationJournalEnabled": {
+            "type": "boolean",
+            "description": "TRAINED_TEACHER의 교육일지 설정값. 대상 외 프로그램이나 detail row 없음, OFF는 false입니다."
+          },
+          "surveyConfigured": {
+            "type": "boolean",
+            "description": "활성 SURVEY·QUESTIONNAIRE·LECTURE_EVALUATION 바인딩이 하나 이상인지 나타냅니다."
+          },
+          "satisfactionConfigured": {
+            "type": "boolean",
+            "description": "활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 과거 row가 있어도 항상 false입니다."
           }
         }
       },
@@ -48644,15 +48721,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

@@ -14,6 +14,7 @@ export const cmsIdentityVerificationClient = createIdentityVerificationClient({
   routes: {
     callbackPath: '/register/identity/callback',
     mockPath: '/register/identity/mock',
+    resumePath: '/register',
   },
   flow: 'MEMBER_SIGNUP',
   isRemoteEnabled: isIdentityVerificationRemoteEnabled,

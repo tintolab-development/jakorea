@@ -108,7 +108,12 @@ export function ujatVolunteerBasicInfoValuesFromDraftAnswer(
     major: text('major'),
     applicationRoute: text('applicationRoute'),
     applicationRouteOther: text('applicationRouteOther'),
-    applicationType: row.applicationType === 'ujat-graduate' ? 'ujat-graduate' : 'new',
+    applicationType:
+      row.applicationType === 'ujat-graduate'
+        ? 'ujat-graduate'
+        : row.applicationType === 'new'
+          ? 'new'
+          : '',
   }
 }
 

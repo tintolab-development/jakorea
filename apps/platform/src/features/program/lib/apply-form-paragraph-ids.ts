@@ -212,3 +212,8 @@ export function shouldShowEducationPlaceOnBasicInfo(paragraphId: string): boolea
     paragraphId === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
   )
 }
+
+/** 일반 기관 신청 — M·E-mail은 로그인 회원 정보로 고정 */
+export function shouldLockTeacherMobileEmailOnBasicInfo(paragraphId: string): boolean {
+  return paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+}

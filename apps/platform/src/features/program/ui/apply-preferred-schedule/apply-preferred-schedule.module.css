@@ -36,17 +36,18 @@
 }
 
 .scheduleForm .detail-info-form__row--double {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type {
-  flex: 0 1 36%;
-  max-width: 42%;
+  flex: 1 1 360px;
+  min-width: min(100%, 360px);
+  max-width: none;
 }
 
 .scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
-  flex: 1 1 64%;
-  min-width: 0;
+  flex: 2 1 680px;
+  min-width: min(100%, 680px);
 }
 
 .datePicker {
@@ -64,7 +65,7 @@
   gap: 0;
 }
 
-.timeInputs > :global(.pf-text-input-root) {
+.timeInputs > :global(.pf-text-input) {
   flex: 0 0 120px;
   width: 120px;
 }
@@ -154,4 +155,117 @@
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;
+}
+
+@media (max-width: 767px) {
+  .root {
+    --detail-info-label-w: 100%;
+    gap: 12px;
+  }
+
+  .blockRow {
+    display: block;
+  }
+
+  .blockTitle {
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 150%;
+    color: var(--color-neutral-cool-700, #647780);
+  }
+
+  .scheduleForm .detail-info-form__body {
+    border: 0;
+    border-radius: 12px;
+    background: var(--color-neutral-cool-50, #f5f8f8);
+    padding: 14px;
+  }
+
+  .scheduleForm .detail-info-form__row {
+    border-bottom: 0;
+  }
+
+  .scheduleForm .detail-info-form__row--double {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .scheduleForm .detail-info-form__row--double > .detail-info-form__field,
+  .scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type,
+  .scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    border-right: 0;
+  }
+
+  .scheduleForm .detail-info-form__field-label {
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 0 0 8px;
+    border-right: 0;
+    background: transparent;
+    color: var(--color-neutral-cool-600, #85969d);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 150%;
+    text-align: left;
+  }
+
+  .scheduleForm .detail-info-form__field-content {
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .datePicker,
+  .sessionSelect {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .timeInputs {
+    flex-wrap: wrap;
+    gap: 8px 0;
+  }
+
+  .timeInputs > :global(.detail-info-form-inputs-separator) {
+    display: none;
+  }
+
+  .timeInputs > :global(.pf-text-input),
+  .timeInputs > :global(.pf-time-input),
+  .timeInputs .sessionSelect {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .timeInputs .timePicker {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+
+  .timeUnit {
+    margin-right: 0;
+    align-self: center;
+    font-size: 13px;
+    line-height: 150%;
+  }
+
+  .tilde {
+    margin: 0 6px;
+    align-self: center;
+  }
+
+  .deleteCell {
+    margin-top: 8px;
+  }
 }

@@ -79,6 +79,7 @@ export function PFTextInput({
   const rootStyle = { ...toWidthStyle(width), ...style }
 
   const fieldClassName = [
+    'pf-text-input__field',
     styles.field,
     styles[size],
     isFormPage ? styles.formPage : undefined,
@@ -89,6 +90,7 @@ export function PFTextInput({
     .join(' ')
 
   const resolvedInputClassName = [
+    'pf-text-input__input',
     styles.input,
     isFormPage ? styles.formPageInput : sizeTypographyClassMap[size],
     inputClassName,
@@ -127,7 +129,7 @@ export function PFTextInput({
 
   return (
     <div
-      className={[styles.root, className].filter(Boolean).join(' ')}
+      className={['pf-text-input', styles.root, className].filter(Boolean).join(' ')}
       style={rootStyle}
     >
       {label ? (

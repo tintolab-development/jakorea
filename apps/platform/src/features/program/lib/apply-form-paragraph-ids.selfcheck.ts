@@ -16,6 +16,7 @@ import {
   isDynamicVolunteerInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
+  shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from './apply-form-paragraph-ids.ts'
 
@@ -57,6 +58,14 @@ assert.equal(
 )
 assert.equal(
   shouldShowEducationPlaceOnBasicInfo(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo),
+  false,
+)
+assert.equal(
+  shouldLockTeacherMobileEmailOnBasicInfo(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo),
+  true,
+)
+assert.equal(
+  shouldLockTeacherMobileEmailOnBasicInfo(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo),
   false,
 )
 assert.equal(

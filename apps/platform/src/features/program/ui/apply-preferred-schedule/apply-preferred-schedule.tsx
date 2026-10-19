@@ -172,6 +172,10 @@ function PreferenceScheduleFields({
     return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
   }
 
+  if (dateOnlyPreferred) {
+    return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
+  }
+
   return (
     <DetailInfoForm.Row type="double">
       {dateField}
@@ -194,6 +198,9 @@ function PreferenceScheduleFields({
                   onValueChange={next => onPatch({ classPeriod: next ?? '' })}
                   aria-label="희망 차시"
                 />
+                <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                  교시
+                </PFText>
                 <DetailInfoForm.InputsSeparator />
               </>
             ) : (
