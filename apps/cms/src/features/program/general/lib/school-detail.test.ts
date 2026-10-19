@@ -43,6 +43,7 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
     expect(merged.studentCount).toBe(0)
     expect(merged.teacherName).toBeUndefined()
     expect(merged.teacherPhone).toBeUndefined()
+    expect(merged.teacherMobile).toBeUndefined()
     expect(merged.teacherEmail).toBeUndefined()
     expect(merged.applicationReason).toBeUndefined()
     expect(merged.otherRequests).toBeUndefined()
@@ -57,5 +58,24 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
     expect(merged.studentCount).toBe(0)
     expect(merged.teacherName).toBeUndefined()
     expect(merged.teacherPhone).toBeUndefined()
+    expect(merged.teacherMobile).toBeUndefined()
+  })
+
+  it('teacherTel은 Tel, teacherPhone은 휴대폰으로 나눈다', () => {
+    const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
+      teacherName: '김교사',
+      teacherTel: '02-1234-5678',
+      teacherPhone: '010-1111-2222',
+      teacherEmail: 'teacher@example.com',
+      organizationAddress: '서울시 종로구',
+      organizationAddressDetail: '3층 교무실',
+    })
+
+    expect(merged.teacherName).toBe('김교사')
+    expect(merged.teacherPhone).toBe('02-1234-5678')
+    expect(merged.teacherMobile).toBe('010-1111-2222')
+    expect(merged.teacherEmail).toBe('teacher@example.com')
+    expect(merged.region).toBe('서울시 종로구')
+    expect(merged.addressDetail).toBe('3층 교무실')
   })
 })

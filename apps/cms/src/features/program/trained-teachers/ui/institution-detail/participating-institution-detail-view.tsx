@@ -33,6 +33,7 @@ import {
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
 } from '@/features/program/general/lib/participating-institution-application-edit-policy'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
+import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
 import { resolveParticipatingInstitutionActivityWithdrawPatch } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import {
   InstitutionAddressDetailEdit,
@@ -550,6 +551,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
       : '-'
 
+  const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
   const textbookCell =
     isApplicationInfoEditing && applicationInfoDraft && canEditTextbook ? (
       <div className="institution-basic-info__field-stack school-detail-fullpage-view__textbook-select-only">
@@ -559,15 +561,18 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           placeholder="교재명 선택"
           withAllOption={false}
           value={applicationInfoDraft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
-          options={textbookOptions.map(option => ({
+          options={textbookSelectOptions.map(option => ({
             label: option.label,
             value: option.value,
           }))}
           onChange={value => {
-            const selected = textbookOptions.find(option => option.value === value)
+            const selected = textbookSelectOptions.find(option => option.value === value)
+            const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
             updateApplicationInfoDraft({
-              textbookId: selected?.value ?? String(value ?? ''),
-              textbookName: selected?.textbookName ?? '',
+              textbookId: isNotUsed
+                ? TEXTBOOK_NOT_USED_OPTION_VALUE
+                : (selected?.value ?? String(value ?? '')),
+              textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
             })
           }}
         />

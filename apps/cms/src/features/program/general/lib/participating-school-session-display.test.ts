@@ -35,14 +35,12 @@ function baseSession(overrides: Partial<ParticipatingSchoolSession> = {}): Parti
 }
 
 describe('formatParticipatingSchoolSessionLine', () => {
-  it('scheduleLabel이 있으면 날짜 포맷 대신 그 문자열을 쓴다', () => {
-    expect(
-      formatParticipatingSchoolSessionLine(
-        baseSession({
-          scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
-        })
-      )
-    ).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+  it('scheduleLabel은 화면에서만 2026. 10. 26(월) 형식으로 바꾼다', () => {
+    const session = baseSession({
+      scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
+    })
+    expect(formatParticipatingSchoolSessionLine(session)).toBe('2026. 10. 26(월) 10:00 ~ 12:00')
+    expect(session.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
   })
 })
 

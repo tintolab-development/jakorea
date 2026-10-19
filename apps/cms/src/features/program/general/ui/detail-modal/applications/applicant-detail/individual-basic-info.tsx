@@ -476,7 +476,7 @@ export function ApplicantGeneralIndividualBasicInfo({
       <div className="institution-basic-info__field-stack">
         <CmsSelect
           className="institution-basic-info__full-width-control"
-          inputSize="large"
+          inputSize="small"
           placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
           loading={isTextbookCatalogLoading}
           value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
@@ -523,7 +523,7 @@ export function ApplicantGeneralIndividualBasicInfo({
     isEditMode && draft && onDraftChange ? (
       <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
         <CmsInput
-          inputSize="large"
+          inputSize="small"
           width="100%"
           style={{ flex: '1 1 0', minWidth: 0 }}
           value={draft.teamName}
@@ -531,7 +531,7 @@ export function ApplicantGeneralIndividualBasicInfo({
         />
         <DetailInfoForm.InputsSeparator />
         <CmsSelect
-          inputSize="large"
+          inputSize="small"
           width={140}
           value={draft.teamMemberCountSelect}
           options={TEAM_MEMBER_COUNT_OPTIONS.map(option => ({
@@ -553,7 +553,7 @@ export function ApplicantGeneralIndividualBasicInfo({
           <>
             <DetailInfoForm.InputsSeparator />
             <CmsNumericInput
-              inputSize="large"
+              inputSize="small"
               mode="integer"
               min={1}
               width="100%"

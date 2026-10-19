@@ -22,6 +22,7 @@ import {
 import {
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-attendance-export'
 import type {
@@ -478,7 +479,8 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         dataIndex: 'scheduleLabel',
         key: 'scheduleLabel',
         align: 'center',
-        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
+        render: (value: string | undefined) =>
+          renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
       },
       {
         title: '출결 현황',

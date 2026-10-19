@@ -40,6 +40,7 @@ import {
   isSubmissionTeamNotApplicableError,
 } from '@/features/program/general/lib/submission-team-applicable'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   ParticipatingIndividualParticipantAssignmentRow,
@@ -638,14 +639,18 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           width: 300,
           key: 'scheduleLabel',
           align: 'center',
-          render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
+          render: (value: string | undefined) =>
+            renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
         },
         {
           title: '과제 제출 기간',
           key: 'assignmentPeriodLabel',
           width: 300,
           align: 'center',
-          render: (_value, record) => record.assignmentPeriodLabel?.trim() || '-',
+          render: (_value, record) => {
+            const period = record.assignmentPeriodLabel?.trim()
+            return period ? formatCmsScheduleDisplayLabel(period) : '-'
+          },
         },
         {
           title: '제출 파일',

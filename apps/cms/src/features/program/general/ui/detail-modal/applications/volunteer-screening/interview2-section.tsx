@@ -1,10 +1,7 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import {
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
-  FilterTableToolbarButton,
-} from '@/shared/ui'
+import { CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import type {
   GeneralVolunteerApplicantRow,
@@ -392,7 +389,6 @@ export function GeneralVolunteerInterview2Section({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar}
               >
@@ -402,7 +398,6 @@ export function GeneralVolunteerInterview2Section({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleViewList}
               >

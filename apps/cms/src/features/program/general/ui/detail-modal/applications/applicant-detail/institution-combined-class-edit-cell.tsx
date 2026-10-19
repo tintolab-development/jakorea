@@ -46,8 +46,7 @@ export function InstitutionCombinedClassEditCell({
   }
 
   const isApplied = combinedClassApplication === '신청'
-  const isSelectEnabled =
-    isProgramEligible && isApplied && sameSchoolGradeOptions.length > 0
+  const isSelectEnabled = isProgramEligible && isApplied && sameSchoolGradeOptions.length > 0
   const selectedPartnerId = partnerIds[0]
 
   return (
@@ -55,7 +54,6 @@ export function InstitutionCombinedClassEditCell({
       <div className="institution-basic-info__combined-class-edit-row">
         <CmsRadio.Group
           className="institution-basic-info__combined-class-radios"
-          size="large"
           value={combinedClassApplication}
           onChange={event => {
             const next = event.target.value as CombinedClassApplicationStatus
@@ -65,11 +63,7 @@ export function InstitutionCombinedClassEditCell({
             }
           }}
         >
-          <CmsRadio
-            value="신청"
-            size="large"
-            disabled={!isProgramEligible || isApplyRadioDisabled}
-          >
+          <CmsRadio value="신청" size="large" disabled={!isProgramEligible || isApplyRadioDisabled}>
             신청
           </CmsRadio>
           <CmsRadio value="미신청" size="large" disabled={!isProgramEligible}>
@@ -79,8 +73,8 @@ export function InstitutionCombinedClassEditCell({
         <ProgramDetailTdDivider />
         <CmsSelect
           className="institution-basic-info__combined-class-select"
-          inputSize="large"
-          width={120}
+          inputSize="small"
+          width={140}
           disabled={!isSelectEnabled}
           placeholder="해당 없음"
           value={isSelectEnabled ? selectedPartnerId : undefined}
@@ -88,6 +82,7 @@ export function InstitutionCombinedClassEditCell({
             label: option.label,
             value: option.value,
           }))}
+          withAllOption={false}
           onChange={value => {
             if (value == null || value === '') {
               onPartnerIdsChange([])

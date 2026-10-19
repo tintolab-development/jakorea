@@ -57,6 +57,7 @@ import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-comp
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
@@ -66,7 +67,7 @@ function renderScheduleCell(label: string) {
   return (
     <div className="participating-institutions-section__sessions-cell">
       <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(label)}
+        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(label))}
       </div>
     </div>
   )

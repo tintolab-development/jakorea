@@ -177,7 +177,6 @@ export function GeneralVolunteerDocPassedSection({
       <FilterTableToolbarButton
         type="button"
         variant="secondary"
-        style={{ minWidth: 180 }}
         icon={<ButtonCalendarIcon />}
         onClick={handleViewCalendar}
       >
@@ -187,7 +186,6 @@ export function GeneralVolunteerDocPassedSection({
       <FilterTableToolbarButton
         type="button"
         variant="secondary"
-        style={{ minWidth: 180 }}
         icon={<ButtonListIcon />}
         onClick={handleViewList}
       >

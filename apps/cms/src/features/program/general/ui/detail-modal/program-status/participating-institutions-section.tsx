@@ -336,6 +336,11 @@ export function ParticipatingInstitutionsSection({
     [showTextbookStatusColumn]
   )
 
+  const educationScheduleColumnTitle =
+    programBridge.educationStructure === 'schedule' && programBridge.sessionRound === 'multi'
+      ? '교육 진행 일정'
+      : '진행 희망 교육 일정'
+
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
       {
@@ -362,7 +367,7 @@ export function ParticipatingInstitutionsSection({
         render: (region: string | undefined) => formatInstitutionRegionForTableDisplay(region),
       },
       {
-        title: '진행 희망 교육 일정',
+        title: educationScheduleColumnTitle,
         key: 'sessions',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
@@ -502,6 +507,7 @@ export function ParticipatingInstitutionsSection({
           ]),
     ],
     [
+      educationScheduleColumnTitle,
       getInstructorDisplayForSchool,
       handleTextbookStatusChange,
       isCompanySchool,
@@ -615,7 +621,6 @@ export function ParticipatingInstitutionsSection({
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
@@ -624,7 +629,6 @@ export function ParticipatingInstitutionsSection({
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleListView}
               >

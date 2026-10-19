@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type {
   ParticipatingIndividualInstructorLectureProgress,
   ParticipatingIndividualInstructorSubmissionStatus,
@@ -75,13 +76,13 @@ export function formatIndividualInstructorEducationScheduleLabel(input: {
   const sessionName = input.sessionName?.trim()
 
   if (timeRange && sessionName) {
-    return `${datePart} ${timeRange} | ${sessionName}`
+    return formatCmsScheduleDisplayLabel(`${datePart} ${timeRange} | ${sessionName}`)
   }
   if (timeRange) {
-    return `${datePart} ${timeRange}`
+    return formatCmsScheduleDisplayLabel(`${datePart} ${timeRange}`)
   }
   if (sessionName) {
-    return `${datePart} | ${sessionName}`
+    return formatCmsScheduleDisplayLabel(`${datePart} | ${sessionName}`)
   }
-  return datePart
+  return formatCmsScheduleDisplayLabel(datePart)
 }

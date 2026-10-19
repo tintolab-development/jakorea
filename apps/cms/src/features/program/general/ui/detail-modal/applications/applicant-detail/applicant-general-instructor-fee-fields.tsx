@@ -77,7 +77,7 @@ export function LectureFeeBasisEditField({
 
   return (
     <div className="applicant-general-instructor-basic-info__lecture-fee-edit">
-      <CmsRadioGroup
+      <CmsRadioGroup size="medium"
         className="applicant-general-instructor-basic-info__lecture-fee-radios"
         value={draft.lectureFeeBasisType}
         onChange={e =>
@@ -85,7 +85,7 @@ export function LectureFeeBasisEditField({
         }
       >
         {LECTURE_FEE_BASIS_TYPE_OPTIONS.map(option => (
-          <CmsRadio key={option.value} value={option.value}>
+          <CmsRadio size="medium" key={option.value} value={option.value}>
             {option.label}
           </CmsRadio>
         ))}
@@ -93,7 +93,7 @@ export function LectureFeeBasisEditField({
       <div className="applicant-general-instructor-basic-info__lecture-fee-amount-row">
         <CmsSelect
           className="applicant-general-instructor-basic-info__lecture-fee-measure"
-          inputSize="medium"
+          inputSize="small"
           withAllOption={false}
           disabled={isProgramBasis}
           value={
@@ -112,7 +112,7 @@ export function LectureFeeBasisEditField({
         <CmsNumericInput
           mode="currency"
           className="applicant-general-instructor-basic-info__lecture-fee-amount"
-          inputSize="medium"
+          inputSize="small"
           value={draft.lectureFeeAmount}
           onValueChange={value =>
             onDraftChange({
@@ -144,7 +144,7 @@ export function InstructorFeeGradeEditField({
     <div className="applicant-general-instructor-basic-info__field-stack">
       <CmsSelect
         className="applicant-general-instructor-basic-info__full-width-control"
-        inputSize="medium"
+        inputSize="small"
         withAllOption={false}
         placeholder="선택"
         value={draft.instructorFeeGrade || undefined}
@@ -169,7 +169,7 @@ export function BusinessIncomeEditField({
   onDraftChange: (partial: Partial<ApplicantInstructorEditDraft>) => void
 }) {
   return (
-    <CmsRadioGroup
+    <CmsRadioGroup size="medium"
       className="applicant-general-instructor-basic-info__business-income-radios"
       value={draft.businessIncomeEarnerStatus}
       onChange={e =>
@@ -178,8 +178,8 @@ export function BusinessIncomeEditField({
         })
       }
     >
-      <CmsRadio value="해당">해당</CmsRadio>
-      <CmsRadio value="해당 없음">해당 없음</CmsRadio>
+      <CmsRadio size="medium" value="해당">해당</CmsRadio>
+      <CmsRadio size="medium" value="해당 없음">해당 없음</CmsRadio>
     </CmsRadioGroup>
   )
 }

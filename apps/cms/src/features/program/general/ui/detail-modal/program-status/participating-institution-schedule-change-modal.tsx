@@ -5,10 +5,9 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import type { Program } from '@/types/domain'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import './participating-institution-schedule-change-modal.css'
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 function toDayjs(value: Date | string | null | undefined): Dayjs | null {
   if (value == null) return null
@@ -19,15 +18,13 @@ function toDayjs(value: Date | string | null | undefined): Dayjs | null {
 function formatDate(value: Date | string | null | undefined): string {
   const parsed = toDayjs(value)
   if (!parsed) return '-'
-  return `${parsed.format('YYYY년 M월 D일')}(${WEEKDAYS[parsed.day()]})`
+  return formatCmsScheduleDisplayLabel(parsed.format('YYYY-MM-DD'))
 }
 
 function formatSessionDate(session: ParticipatingSchoolSession): string {
-  const parsed = dayjs(session.date.replace(/\s/g, '').replace(/\./g, '-'))
-  const date = parsed.isValid()
-    ? `${parsed.format('YYYY.MM.DD')}(${WEEKDAYS[parsed.day()]})`
-    : session.date
-  return `${date} ${session.timeRange.replace(/\s*~\s*/g, ' - ')}`
+  const time = session.timeRange?.trim()
+  const body = !time || time === '-' ? session.date : `${session.date} ${time}`
+  return formatCmsScheduleDisplayLabel(body)
 }
 
 export type ParticipatingInstitutionScheduleChangePayload = {
@@ -120,7 +117,7 @@ export function ParticipatingInstitutionScheduleChangeModal({
                 view="-"
                 edit={
                   <CmsDatePicker
-                    inputSize="medium"
+                    inputSize="small"
                     value={changedDates[index] ?? null}
                     placeholder="변경 일정을 선택해 주세요"
                     format="YYYY.MM.DD"

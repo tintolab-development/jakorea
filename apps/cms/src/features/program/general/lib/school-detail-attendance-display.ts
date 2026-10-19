@@ -1,3 +1,4 @@
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
@@ -10,11 +11,10 @@ import {
 } from '../model/school-detail-types'
 
 function formatSessionDate(date: string, dayOfWeek: string): string {
-  const parts = date.split('.').map(part => part.trim())
-  if (parts.length >= 3) {
-    return `${parts[0]}. ${parts[1]}. ${parts[2]}(${dayOfWeek})`
-  }
-  return `${date}(${dayOfWeek})`
+  const cleaned = date.trim()
+  const formatted = formatCmsScheduleDisplayLabel(cleaned)
+  if (formatted !== cleaned || /\([월화수목금토일]\)/u.test(formatted)) return formatted
+  return formatCmsScheduleDisplayLabel(`${cleaned}(${dayOfWeek})`)
 }
 
 function formatEducationFormat(format: string): string {

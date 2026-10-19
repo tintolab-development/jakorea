@@ -30,6 +30,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -146,7 +147,7 @@ function renderEducationScheduleLines(lines: string[]) {
   if (lines.length === 0) return <>-</>
   const total = lines.length
   const showCount = total <= 3 ? total : 2
-  const displayLines = lines.slice(0, showCount)
+  const displayLines = lines.slice(0, showCount).map(line => formatCmsScheduleDisplayLabel(line))
   const restCount = total - showCount
   return (
     <div className="participating-institutions-section__sessions-cell">

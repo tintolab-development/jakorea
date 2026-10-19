@@ -6,14 +6,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import { participatingIndividualParticipantsFilterFields } from '@/features/program/general/lib/participating-individual-participants-filter-fields'
 import {
@@ -47,7 +46,11 @@ import {
 } from './participating-participant-fullpage-view'
 import { ParticipatingParticipantsCalendarView } from './participating-participants-calendar-view'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
-import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  ButtonCalendarIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -282,10 +285,11 @@ export function ParticipatingParticipantsSection({
             if (sessions.length === 0) return '-'
             return sessions
               .map(session => {
-                const date = session.date?.replace(/\./g, '. ') ?? ''
-                const time = session.timeRange?.replace('~', ' ~ ') ?? ''
+                const date = session.date?.trim() ?? ''
+                const time = session.timeRange?.trim() ?? ''
                 const round = session.classNum ?? (session.round ? `${session.round}차시` : '')
-                return [date, time, round].filter(Boolean).join(' | ')
+                const line = session.scheduleLabel?.trim() || [date, time].filter(Boolean).join(' ')
+                return formatCmsScheduleDisplayLabel(round ? `${line} | ${round}` : line)
               })
               .join('\n')
           },
@@ -350,7 +354,6 @@ export function ParticipatingParticipantsSection({
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
@@ -359,7 +362,6 @@ export function ParticipatingParticipantsSection({
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >

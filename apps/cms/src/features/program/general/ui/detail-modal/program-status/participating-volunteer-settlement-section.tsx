@@ -15,6 +15,7 @@ import { handleError } from '@/shared/utils/error-handler'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { lectureProgressAccent } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -187,7 +188,8 @@ export function ParticipatingVolunteerSettlementSection({
         key: 'volunteerScheduleLabel',
         align: 'center',
         width: 320,
-        render: (label: string) => renderProgramDetailPipeSeparated(label),
+        render: (label: string) =>
+          renderProgramDetailPipeSeparated(label ? formatCmsScheduleDisplayLabel(label) : label),
       },
       {
         title: '봉사 진행 현황',

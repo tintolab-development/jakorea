@@ -4,6 +4,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import type {
   ApplicantPreferredScheduleBlock,
@@ -46,7 +47,9 @@ export function getTrainedTeachersEducationJournals(
 export function formatTrainedTeachersEducationJournalScheduleLabel(
   entry: TrainedTeachersEducationJournalEntry
 ): string {
-  const datePart = `${entry.date.replace(/\./g, '. ')}(${entry.dayOfWeek})`.replace(/\s+/g, ' ')
+  const datePart = formatCmsScheduleDisplayLabel(
+    entry.dayOfWeek ? `${entry.date}(${entry.dayOfWeek})` : entry.date
+  )
   const parts = [datePart, entry.timeRange]
   if (entry.roundOrScheduleLabel?.trim()) {
     parts.push(entry.roundOrScheduleLabel.trim())

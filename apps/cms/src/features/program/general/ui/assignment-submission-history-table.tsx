@@ -13,6 +13,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { CmsButton } from '@/shared/ui'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
 import {
@@ -190,7 +191,8 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         key: 'educationDateLabel',
         width: 300,
         align: 'center',
-        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
+        render: (value: string | undefined) =>
+          renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
       },
       {
         title: '과제 제출 기간',
@@ -198,7 +200,8 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         key: 'assignmentPeriodLabel',
         width: 300,
         align: 'center',
-        render: (value: string | undefined) => value?.trim() || '-',
+        render: (value: string | undefined) =>
+          value?.trim() ? formatCmsScheduleDisplayLabel(value) : '-',
       },
       {
         title: '제출 파일',

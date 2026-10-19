@@ -52,18 +52,39 @@ describe('organization-merge-groups-mapper', () => {
     expect(findActiveMergeGroupForOrganizationApplication([activeGroup], 101)?.id).toBe(10)
   })
 
-  it('buildCreateMergeRequest includes leadTeacherMemberId when given', () => {
+  it('buildCreateMergeRequest includes lead and partner applications', () => {
     expect(
       buildCreateMergeRequest({
         leadOrganizationApplicationId: 100,
+        leadGrade: '5학년',
         partnerMembers: [{ organizationApplicationId: 101, grade: '6학년' }],
         leadTeacherMemberId: 2001,
       })
     ).toEqual({
       leadApplicationId: 100,
-      members: [{ organizationApplicationId: 101, grade: '6학년' }],
+      members: [
+        { organizationApplicationId: 100, grade: '5학년' },
+        { organizationApplicationId: 101, grade: '6학년' },
+      ],
+      changeReason: '합반 신청',
       leadTeacherMemberId: 2001,
     })
+  })
+
+  it('buildCreateMergeRequest does not duplicate the lead already listed as a partner', () => {
+    expect(
+      buildCreateMergeRequest({
+        leadOrganizationApplicationId: 100,
+        leadGrade: ' 5학년 ',
+        partnerMembers: [
+          { organizationApplicationId: 100, grade: '5학년' },
+          { organizationApplicationId: 101, grade: '6학년' },
+        ],
+      }).members
+    ).toEqual([
+      { organizationApplicationId: 100, grade: '5학년' },
+      { organizationApplicationId: 101, grade: '6학년' },
+    ])
   })
 
   it('buildMergeMemberRequestsFromPartnerRows maps grade and org app id', () => {

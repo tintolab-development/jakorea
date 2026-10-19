@@ -78,6 +78,7 @@ import { StudentCertificatePdfExportHost } from './student-certificate-pdf-expor
 import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './school-detail-fullpage-view.css'
+import { IndividualEducationScopeSection } from './individual-education-scope-section'
 import './participating-participant-fullpage-view.css'
 
 export const PARTICIPANT_DETAIL_TAB_KEYS = [
@@ -687,6 +688,13 @@ export function ParticipatingParticipantFullpageView({
                     : undefined
                 }
               />
+              {mergedParticipant.approvalStatus === 'approved' && mergedParticipant.id ? (
+                <IndividualEducationScopeSection
+                  program={program}
+                  participantId={mergedParticipant.id}
+                  applicationId={mergedParticipant.individualApplicationId}
+                />
+              ) : null}
             </div>
           </div>
         ) : activeTab === 'attendance' ? (

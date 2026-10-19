@@ -8,9 +8,7 @@ import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -71,7 +69,11 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import { renderParticipatingVolunteerCalendarMonthEventContent } from './participating-volunteer-calendar-month-event'
 import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
-import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  ButtonCalendarIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -441,12 +443,7 @@ export function ParticipatingVolunteersSection({
       if (prevVolunteerDetailId.current != null) onVolunteerDetailClose?.()
       prevVolunteerDetailId.current = null
     }
-  }, [
-    selectedVolunteerFromUrl,
-    volunteerIdFromUrl,
-    onVolunteerDetailOpen,
-    onVolunteerDetailClose,
-  ])
+  }, [selectedVolunteerFromUrl, volunteerIdFromUrl, onVolunteerDetailOpen, onVolunteerDetailClose])
 
   const handleCalendarView = () => {
     setCalendarSelectedSchools(null)
@@ -606,7 +603,6 @@ export function ParticipatingVolunteersSection({
           <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
               variant="secondary"
-              style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
@@ -615,7 +611,6 @@ export function ParticipatingVolunteersSection({
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
@@ -624,7 +619,6 @@ export function ParticipatingVolunteersSection({
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
@@ -633,16 +627,11 @@ export function ParticipatingVolunteersSection({
             )}
             <FilterTableToolbarButton
               variant="primary"
-              width={220}
               onClick={handleRegisterEmployeeVolunteerClick}
             >
               임직원 자원봉사자 등록
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              variant="primary"
-              width={140}
-              onClick={handleRegisterVolunteerClick}
-            >
+            <FilterTableToolbarButton variant="primary" onClick={handleRegisterVolunteerClick}>
               봉사자 등록
             </FilterTableToolbarButton>
           </div>

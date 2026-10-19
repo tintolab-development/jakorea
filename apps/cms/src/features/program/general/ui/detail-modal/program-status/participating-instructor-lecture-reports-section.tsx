@@ -20,6 +20,7 @@ import {
   downloadGeneralProgramLectureReports,
 } from '@/features/program/general/api/admin-program-progress-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -198,7 +199,8 @@ export function ParticipatingInstructorLectureReportsSection({
         key: 'educationScheduleLabel',
         align: 'center',
         width: 320,
-        render: (label: string) => renderProgramDetailPipeSeparated(label),
+        render: (label: string) =>
+          renderProgramDetailPipeSeparated(label ? formatCmsScheduleDisplayLabel(label) : label),
       },
       {
         title: '강의보고서 제출 기간',
@@ -206,6 +208,8 @@ export function ParticipatingInstructorLectureReportsSection({
         key: 'submissionPeriodLabel',
         align: 'center',
         width: 280,
+        render: (value: string | undefined) =>
+          value?.trim() ? formatCmsScheduleDisplayLabel(value) : '-',
       },
       {
         title: '강의 진행 여부',

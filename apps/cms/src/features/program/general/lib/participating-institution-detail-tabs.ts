@@ -19,7 +19,7 @@ export const GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS = [
 export type GeneralParticipatingInstitutionDetailTabKey =
   (typeof GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS)[number]
 
-/** 학생 명단·출석 관리 탭 — `studentListRequired === 'not_required'`이면 숨김 */
+/** 학생 명단·출석 관리 탭 — 모집 정보 「학생 명단 제출 여부」가 제출 필요가 아니면 숨김 */
 export const STUDENT_LIST_DEPENDENT_INSTITUTION_DETAIL_TAB_KEYS = [
   'students',
   'attendance',
@@ -28,11 +28,59 @@ export const STUDENT_LIST_DEPENDENT_INSTITUTION_DETAIL_TAB_KEYS = [
 export type StudentListDependentInstitutionDetailTabKey =
   (typeof STUDENT_LIST_DEPENDENT_INSTITUTION_DETAIL_TAB_KEYS)[number]
 
-/** 프로그램 모집 설정 「학생 명단 제출 여부」가 필요인 경우 */
+type ParticipatingInstitutionDetailTabSource = {
+  studentListRequired?: Program['studentListRequired']
+  generalParticipantTypes?: Program['generalParticipantTypes']
+  generalProgramAudience?: Program['generalProgramAudience']
+  category?: Program['category']
+  generalCommonInfo?: Program['generalCommonInfo']
+} | null
+
+function readStudentListRequiredFlag(
+  value: unknown
+): Program['studentListRequired'] | undefined {
+  if (value === 'required' || value === true) return 'required'
+  if (value === 'not_required' || value === false) return 'not_required'
+  return undefined
+}
+
+/** 모집 정보 `participantRecruitmentInfo` 우선, 없으면 프로그램 루트 값 */
+function resolveParticipatingInstitutionStudentListRequired(
+  program?: ParticipatingInstitutionDetailTabSource
+): Program['studentListRequired'] | undefined {
+  const info = program?.generalCommonInfo?.participantRecruitmentInfo
+  const fromRecruitment = readStudentListRequiredFlag(info?.studentListRequired)
+  if (fromRecruitment) return fromRecruitment
+  const fromProgram = readStudentListRequiredFlag(program?.studentListRequired)
+  if (fromProgram) return fromProgram
+  const label = info?.studentListRequiredLabel?.trim()
+  if (label === '제출 필요') return 'required'
+  if (label === '제출 불필요') return 'not_required'
+  return undefined
+}
+
+/** 프로그램 모집 정보 「학생 명단 제출 여부」가 제출 필요인 경우만 */
 export function isParticipatingInstitutionStudentListApplicable(
-  program?: Pick<Program, 'studentListRequired'> | null
+  program?: ParticipatingInstitutionDetailTabSource
 ): boolean {
-  return program?.studentListRequired !== 'not_required'
+  return resolveParticipatingInstitutionStudentListRequired(program) === 'required'
+}
+
+/** 공통 정보 참여자 유형에 강사(`teacher_instructor`)가 있는 경우 */
+export function isParticipatingInstitutionInstructorAssignmentApplicable(
+  program?: ParticipatingInstitutionDetailTabSource
+): boolean {
+  if (!program) return false
+  if (program.generalParticipantTypes?.length) {
+    return program.generalParticipantTypes.includes('teacher_instructor')
+  }
+  if (
+    program.generalProgramAudience === 'individual' ||
+    program.generalProgramAudience === 'organization'
+  ) {
+    return false
+  }
+  return program.category === 'instructor'
 }
 
 export function isStudentListDependentInstitutionDetailTab(
@@ -42,26 +90,30 @@ export function isStudentListDependentInstitutionDetailTab(
 }
 
 export function getGeneralParticipatingInstitutionDetailTabKeys(
-  program?: Pick<Program, 'studentListRequired'> | null,
+  program?: ParticipatingInstitutionDetailTabSource,
   studentRosterEnabled?: boolean
 ): readonly GeneralParticipatingInstitutionDetailTabKey[] {
+  const studentListApplicable = isParticipatingInstitutionStudentListApplicable(program)
+  const instructorAssignmentApplicable =
+    isParticipatingInstitutionInstructorAssignmentApplicable(program)
   return GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS.filter(key => {
     if (key === 'students' && studentRosterEnabled === false) return false
-    return (
-      isParticipatingInstitutionStudentListApplicable(program) ||
-      !isStudentListDependentInstitutionDetailTab(key)
-    )
+    if (key === 'instructors' && !instructorAssignmentApplicable) return false
+    return studentListApplicable || !isStudentListDependentInstitutionDetailTab(key)
   })
 }
 
 export function normalizeGeneralParticipatingInstitutionDetailTab(
   tab: GeneralParticipatingInstitutionDetailTabKey,
-  program?: Pick<Program, 'studentListRequired'> | null
+  program?: ParticipatingInstitutionDetailTabSource
 ): GeneralParticipatingInstitutionDetailTabKey {
   if (
     !isParticipatingInstitutionStudentListApplicable(program) &&
     isStudentListDependentInstitutionDetailTab(tab)
   ) {
+    return 'application'
+  }
+  if (tab === 'instructors' && !isParticipatingInstitutionInstructorAssignmentApplicable(program)) {
     return 'application'
   }
   return tab

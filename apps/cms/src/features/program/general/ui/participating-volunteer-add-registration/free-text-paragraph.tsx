@@ -24,7 +24,7 @@ export function ParticipatingVolunteerAddRegistrationFreeTextParagraph(
           </div>
           <div className="volunteer-free-text-items__card-body">
             <CmsTextArea
-              inputSize="medium"
+              inputSize="small"
               rows={3}
               maxLength={PROGRAM_VOLUNTEER_FREE_TEXT_MAX_LENGTH}
               showCount

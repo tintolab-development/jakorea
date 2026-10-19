@@ -14,6 +14,7 @@ export interface OrganizationApplicationRowRef {
   id: string
   organizationApplicationId?: string
   educationGrade?: string
+  teacherMemberId?: number
 }
 
 export function isActiveMergeGroup(group: MergeGroupResponse): boolean {
@@ -133,14 +134,26 @@ export function resolveCombinedClassMergeViewState(
 
 export function buildCreateMergeRequest(params: {
   leadOrganizationApplicationId: number
+  leadGrade: string
   partnerMembers: MergeMemberRequest[]
   changeReason?: string
   leadTeacherMemberId?: number
 }): CreateMergeRequest {
+  const leadGrade = params.leadGrade.trim()
+  const partnerMembers = params.partnerMembers.filter(
+    member => member.organizationApplicationId !== params.leadOrganizationApplicationId
+  )
+  const changeReason = params.changeReason?.trim() || '합반 신청'
   return {
     leadApplicationId: params.leadOrganizationApplicationId,
-    members: params.partnerMembers,
-    changeReason: params.changeReason,
+    members: [
+      {
+        organizationApplicationId: params.leadOrganizationApplicationId,
+        grade: leadGrade,
+      },
+      ...partnerMembers,
+    ],
+    changeReason,
     ...(params.leadTeacherMemberId != null
       ? { leadTeacherMemberId: params.leadTeacherMemberId }
       : {}),

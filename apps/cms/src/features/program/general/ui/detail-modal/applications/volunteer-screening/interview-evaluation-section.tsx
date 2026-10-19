@@ -189,7 +189,7 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
                 min={0}
                 max={GENERAL_INTERVIEW_MANAGER_SCORE_MAX}
                 precision={0}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 disabled={!editable.a}
                 value={managerAScore == null ? '' : String(managerAScore)}
@@ -207,7 +207,7 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
                 min={0}
                 max={GENERAL_INTERVIEW_MANAGER_SCORE_MAX}
                 precision={0}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 disabled={!editable.b}
                 value={managerBScore == null ? '' : String(managerBScore)}
@@ -223,7 +223,7 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
             label="비고"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={remark}
                 onChange={e => setRemark(e.target.value)}

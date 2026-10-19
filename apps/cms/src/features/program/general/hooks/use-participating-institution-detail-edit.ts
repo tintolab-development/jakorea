@@ -24,6 +24,8 @@ import {
   filterTextbooksForCombinedClassEdit,
   buildCombinedClassTextbookSelectOptions,
   buildParticipatingInstitutionTextbookSelectOptions,
+  ensureTextbookNotUsedSelectOption,
+  programOffersParticipatingTextbookSelect,
   programUsesTextbook,
   resolveParticipatingInstitutionTextbookDisplay,
   resolveTextbookFieldsFromSelection,
@@ -130,30 +132,19 @@ export function useParticipatingInstitutionDetailEdit({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const { showAlert } = useCmsAlert()
 
-  const educationGradeForTextbookOptions =
-    (isEditing ? draft?.educationGrade?.trim() : '') || row.educationGrade
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
-    useProgramTextbookCatalog(program)
-  const { catalog: gradeTextbookCatalog, isLoading: isGradeTextbookCatalogLoading } =
-    useProgramTextbookCatalog(program, educationGradeForTextbookOptions)
+    useProgramTextbookCatalog(program, undefined, { businessAreaOnly: true })
   const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
+  /** 일정형이 아니면 매칭 교재가 없어도 수정 셀렉트를 연다 */
+  const programAllowsTextbookSelect = useMemo(
+    () => programOffersParticipatingTextbookSelect(program, { isCompanySchool }),
+    [isCompanySchool, program]
+  )
 
   /** 카탈로그 로딩 중에는 필드를 숨기지 않음(새로고침 플래시 방지) */
   const usesTextbook = useMemo(
-    () =>
-      isCompanySchool ||
-      isTextbookCatalogLoading ||
-      isGradeTextbookCatalogLoading ||
-      programUsesTextbook(program, textbookCatalog) ||
-      programUsesTextbook(program, gradeTextbookCatalog),
-    [
-      isCompanySchool,
-      isGradeTextbookCatalogLoading,
-      isTextbookCatalogLoading,
-      gradeTextbookCatalog,
-      program,
-      textbookCatalog,
-    ]
+    () => isCompanySchool || isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog),
+    [isCompanySchool, isTextbookCatalogLoading, program, textbookCatalog]
   )
 
   const isCombinedClassProgramEligibleFlag = useMemo(
@@ -196,13 +187,7 @@ export function useParticipatingInstitutionDetailEdit({
     row.schoolName,
   ])
 
-  const resolvedTextbookCatalog = useMemo(() => {
-    if (gradeTextbookCatalog === undefined && textbookCatalog === undefined) return undefined
-    const byId = new Map<string, NonNullable<typeof textbookCatalog>[number]>()
-    for (const rowItem of textbookCatalog ?? []) byId.set(rowItem.id, rowItem)
-    for (const rowItem of gradeTextbookCatalog ?? []) byId.set(rowItem.id, rowItem)
-    return [...byId.values()]
-  }, [gradeTextbookCatalog, textbookCatalog])
+  const resolvedTextbookCatalog = textbookCatalog
 
   const textbookDisplay = useMemo(
     () =>
@@ -225,36 +210,34 @@ export function useParticipatingInstitutionDetailEdit({
   )
 
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
-    if (!usesTextbook) return []
+    if (!usesTextbook && !programAllowsTextbookSelect) return []
 
     const isCombinedSelect =
       !isCompanySchool &&
       (draft?.combinedClassApplication === '신청' ||
         toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청')
 
-    if (isCombinedSelect) {
-      return buildCombinedClassTextbookSelectOptions(program, textbookCatalog)
-    }
+    const options = isCombinedSelect
+      ? buildCombinedClassTextbookSelectOptions(program, textbookCatalog)
+      : buildParticipatingInstitutionTextbookSelectOptions({
+          program,
+          catalog: textbookCatalog,
+        })
 
-    return buildParticipatingInstitutionTextbookSelectOptions({
-      program,
-      educationGrade: educationGradeForTextbookOptions,
-      gradeCatalog: gradeTextbookCatalog,
-      programCatalog: textbookCatalog,
-    })
+    return ensureTextbookNotUsedSelectOption(options)
   }, [
     detail.combinedClassApplication,
     draft?.combinedClassApplication,
-    educationGradeForTextbookOptions,
-    gradeTextbookCatalog,
     isCompanySchool,
     program,
+    programAllowsTextbookSelect,
     textbookCatalog,
     usesTextbook,
   ])
 
-  /** 프로그램 진행 현황 — 승인 완료 시 교재 수정·등록 (합반 여부와 무관) */
-  const canEditTextbook = usesTextbook && row.approvalStatus === 'approved'
+  /** 승인 완료 시 교재 수정. 조건에 맞는 교재가 없어도 「해당 없음」 셀렉트를 연다 */
+  const canEditTextbook =
+    row.approvalStatus === 'approved' && (usesTextbook || programAllowsTextbookSelect)
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolParticipatingGradeOption[] => {
     if (!isCombinedClassProgramEligibleFlag) return []
@@ -286,18 +269,19 @@ export function useParticipatingInstitutionDetailEdit({
   }, [detail.id, resetEditState])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const enterEdit = useCallback(() => {
+  const enterEdit = useCallback((detailOverride?: SchoolDetailForModal) => {
+    const source = detailOverride ?? detail
     const hasTextbook =
-      Boolean(detail.textbookId?.trim()) ||
-      (Boolean(detail.textbookName?.trim()) && detail.textbookName?.trim() !== '해당 없음')
+      Boolean(source.textbookId?.trim()) ||
+      (Boolean(source.textbookName?.trim()) && source.textbookName?.trim() !== '해당 없음')
     const textbookIdFallback = hasTextbook
-      ? resolveTextbookIdFromName(detail.textbookName, textbookOptions) ||
-        detail.textbookId ||
+      ? resolveTextbookIdFromName(source.textbookName, textbookOptions) ||
+        source.textbookId ||
         textbookDisplay.textbookId ||
         ''
       : TEXTBOOK_NOT_USED_OPTION_VALUE
     let nextDraft = detailToParticipatingInstitutionEditDraft(
-      detail,
+      source,
       textbookIdFallback,
       textbookDisplay.textbookGrade
     )
@@ -335,7 +319,7 @@ export function useParticipatingInstitutionDetailEdit({
       setDraft(prev => {
         if (!prev) return prev
         const next = { ...prev, ...partial }
-        if (partial.textbookId != null && usesTextbook) {
+        if (partial.textbookId != null && (usesTextbook || programAllowsTextbookSelect)) {
           if (partial.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE || partial.textbookId === '') {
             return {
               ...next,
@@ -370,7 +354,14 @@ export function useParticipatingInstitutionDetailEdit({
       })
       setValidationErrors({})
     },
-    [program, resolvedTextbookCatalog, textbookCatalog, textbookOptions, usesTextbook]
+    [
+      program,
+      programAllowsTextbookSelect,
+      resolvedTextbookCatalog,
+      textbookCatalog,
+      textbookOptions,
+      usesTextbook,
+    ]
   )
 
   const saveEdit = useCallback(async (): Promise<boolean> => {

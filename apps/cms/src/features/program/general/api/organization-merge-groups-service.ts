@@ -69,6 +69,11 @@ export async function saveOrganizationCombinedClassRemote(
     return null
   }
 
+  const leadGrade = params.leadRow.educationGrade?.trim() ?? ''
+  if (!leadGrade) {
+    throw new Error('합반 기준 학년 정보가 없어 합반을 저장할 수 없습니다.')
+  }
+
   const partnerMembers = buildMergeMemberRequestsFromPartnerRows(
     params.partnerRowIds,
     params.allRows
@@ -113,13 +118,21 @@ export async function saveOrganizationCombinedClassRemote(
     await cancelOrganizationMergeGroupRemote(params.programId, existingLeadGroup.id)
   }
 
+  const rowTeacherMemberId = params.leadRow.teacherMemberId
+  const leadTeacherMemberId =
+    params.leadTeacherMemberId ??
+    (rowTeacherMemberId != null && Number.isFinite(rowTeacherMemberId) && rowTeacherMemberId > 0
+      ? rowTeacherMemberId
+      : undefined)
+
   return createOrganizationMergeGroupRemote(
     params.programId,
     buildCreateMergeRequest({
       leadOrganizationApplicationId: leadOrgAppId,
+      leadGrade,
       partnerMembers,
       changeReason: params.changeReason,
-      leadTeacherMemberId: params.leadTeacherMemberId,
+      leadTeacherMemberId,
     })
   )
 }

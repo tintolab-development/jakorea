@@ -4,6 +4,7 @@ import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/gen
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import type { Program } from '@/types/domain'
 
@@ -42,12 +43,12 @@ function formatMinutes(totalMinutes: number): string {
 /** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
 export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSession): string {
   const scheduleLabel = s.scheduleLabel?.trim()
-  if (scheduleLabel) return scheduleLabel
+  if (scheduleLabel) return formatCmsScheduleDisplayLabel(scheduleLabel)
 
   const datePart = s.date.replace(/\./g, '. ')
   const [startRaw, endRaw] = s.timeRange.split('~')
   const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
-  return `${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`
+  return formatCmsScheduleDisplayLabel(`${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`)
 }
 
 function participatingSchoolSessionToApplicantInput(
@@ -116,8 +117,8 @@ export function formatVolunteerAssignmentScheduleLine(
 
   if (!program) {
     const base = timePart ? `${dateWithDow} ${timePart}` : dateWithDow
-    if (s.round) return `${base} | ${s.round}차시`
-    return base
+    if (s.round) return formatCmsScheduleDisplayLabel(`${base} | ${s.round}차시`)
+    return formatCmsScheduleDisplayLabel(base)
   }
 
   const { sessionRound } = resolveEffectiveGeneralProgramTypeFields({
@@ -130,10 +131,10 @@ export function formatVolunteerAssignmentScheduleLine(
   const sessionName =
     sessionRound === 'single' ? undefined : resolveVolunteerAssignmentSessionName(s, program)
 
-  if (timePart && sessionName) return `${dateWithDow} ${timePart} | ${sessionName}`
-  if (timePart) return `${dateWithDow} ${timePart}`
-  if (sessionName) return `${dateWithDow} | ${sessionName}`
-  return dateWithDow
+  if (timePart && sessionName) return formatCmsScheduleDisplayLabel(`${dateWithDow} ${timePart} | ${sessionName}`)
+  if (timePart) return formatCmsScheduleDisplayLabel(`${dateWithDow} ${timePart}`)
+  if (sessionName) return formatCmsScheduleDisplayLabel(`${dateWithDow} | ${sessionName}`)
+  return formatCmsScheduleDisplayLabel(dateWithDow)
 }
 
 export function buildParticipatingSchoolSessionLines(
@@ -171,12 +172,14 @@ export function buildParticipatingSchoolPreferredScheduleLines(
     const totalSessions = fromDuration > 0 ? fromDuration : Math.max(group.length, 1)
 
     if (ranges.length === 0) {
-      return `${datePart}(${first.dayOfWeek}) | ${totalSessions}차시`
+      return formatCmsScheduleDisplayLabel(`${datePart}(${first.dayOfWeek}) | ${totalSessions}차시`)
     }
 
     const start = Math.min(...ranges.map(range => range.start))
     const end = Math.max(...ranges.map(range => range.end))
-    return `${datePart}(${first.dayOfWeek}) ${formatMinutes(start)} ~ ${formatMinutes(end)} | ${totalSessions}차시`
+    return formatCmsScheduleDisplayLabel(
+      `${datePart}(${first.dayOfWeek}) ${formatMinutes(start)} ~ ${formatMinutes(end)} | ${totalSessions}차시`
+    )
   })
 }
 

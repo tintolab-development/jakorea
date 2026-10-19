@@ -286,7 +286,8 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     const value = dto[key]
     return typeof value === 'number' && Number.isFinite(value) ? value : undefined
   }
-  const teacherPhone = stringField('teacherPhone')
+  const teacherTel = stringField('teacherTel')
+  const teacherMobile = stringField('teacherPhone')
   const teacherEmail = stringField('teacherEmail')
   const addressDetail = stringField('organizationAddressDetail')
   const educationFormat = formatRequestedEducationFormat(dto.requestedEducationFormat)
@@ -318,8 +319,8 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     classCount: numberField('requestedClassCount') ?? 0,
     studentCount: numberField('requestedStudentCount') ?? 0,
     teacherName,
-    teacherPhone,
-    teacherMobile: teacherPhone,
+    teacherPhone: teacherTel,
+    teacherMobile,
     teacherEmail,
     applicationReason,
     otherRequests,

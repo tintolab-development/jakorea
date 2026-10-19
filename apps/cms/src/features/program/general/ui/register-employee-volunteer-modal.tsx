@@ -88,7 +88,7 @@ function SessionVolunteerCountPair({
         <CmsNumericInput
           mode="integer"
           min={0}
-          inputSize="large"
+          inputSize="small"
           pattern="[0-9]*"
           width="100%"
           placeholder="자원봉사자 수"
@@ -317,7 +317,7 @@ export function RegisterEmployeeVolunteerModal({
               className="register-employee-volunteer-modal__field"
             >
               <CmsSelect
-                inputSize="large"
+                inputSize="small"
                 width="100%"
                 withAllOption={false}
                 placeholder="자원봉사자를 배정할 기관을 선택해 주세요"

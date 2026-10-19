@@ -2,6 +2,7 @@
  * 참여 기관·참여자(개인) 상세 — 교육 진행 일정 행 (일정 + 진행 현황)
  */
 
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { getSessionLineParts } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import {
@@ -59,7 +60,7 @@ export function ParticipatingProgressScheduleValue({
     return (
       <ProgramDetailTdSegmentWrap>
         {withProgramDetailTdDivider([
-          scheduleLabel,
+          formatCmsScheduleDisplayLabel(scheduleLabel),
           <span
             key="status"
             className={`participating-institution-application-info__session-status ${statusClass}`}
@@ -77,7 +78,7 @@ export function ParticipatingProgressScheduleValue({
   return (
     <ProgramDetailTdSegmentWrap>
       {withProgramDetailTdDivider([
-        `${datePart} ${timePart}`,
+        formatCmsScheduleDisplayLabel(`${datePart} ${timePart}`),
         periodPart,
         <span
           key="status"
