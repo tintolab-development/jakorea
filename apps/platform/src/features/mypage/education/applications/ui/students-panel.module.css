@@ -120,11 +120,12 @@
   padding: 0 var(--spacing-48);
 }
 
-/* 로딩·미등록·제출 완료가 같은 높이의 슬롯을 공유해 상태 전환 시 레이아웃이 밀리지 않게 합니다. */
+/* 로딩·미등록·제출 완료가 같은 프레임을 채워, 업로드 취소 때 높이와 일러스트 위치가 바뀌지 않게 합니다. */
 .portraitStatusArea {
   --portrait-status-min-height: 520px;
 
   display: flex;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: var(--portrait-status-min-height);
   flex-direction: column;
@@ -133,43 +134,47 @@
 .portraitBox,
 .portraitBoxEmpty,
 .portraitSubmittedBox {
+  display: flex;
   flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
+  min-height: 100%;
   box-sizing: border-box;
-}
-
-.portraitBox,
-.portraitBoxEmpty {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
-  padding: var(--spacing-48) var(--spacing-24);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-24);
-}
-
-.portraitBox {
-  align-items: center;
-  justify-content: center;
-}
-
-.portraitSubmittedBox {
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-24);
   padding: var(--spacing-48) var(--spacing-24);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-24);
+}
+
+/* 파일명·안내 문구·취소 버튼이 같은 슬롯을 써서 상태만 바뀌고 카드 높이는 유지됩니다. */
+.portraitStatusBody {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 148px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-24);
+  text-align: center;
+}
+
+.portraitSubmittedBox {
+  border-color: transparent;
   background: var(--color-neutral-cool-50, #f0f5f7);
   text-align: center;
 }
 
-.portraitSubmittedIllustration {
+.portraitStatusIllustration {
   display: block;
   width: 120px;
   height: 120px;
   flex-shrink: 0;
+  margin: 0;
 }
 
 .portraitSubmittedInfo {
@@ -195,8 +200,11 @@
 }
 
 .portraitUploadCancel {
-  min-width: 200px;
-  margin-top: var(--spacing-8);
+  width: 220px;
+  min-width: 220px;
+  flex-shrink: 0;
+  margin-top: 0;
+  white-space: nowrap;
 }
 
 .portraitUploadCancel:disabled {
@@ -207,13 +215,9 @@
   opacity: 1;
 }
 
-.portraitEmptyIllustration {
-  display: block;
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
-  aspect-ratio: 1 / 1;
-  margin-bottom: var(--spacing-16);
+.portraitEmptyCopy {
+  margin: 0;
+  text-align: center;
 }
 
 .emptyContent {

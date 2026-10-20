@@ -3,6 +3,7 @@ import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce } from '@/shared/lib/download-attachment'
 import {
   assertCertificateZipBlob,
+  CERTIFICATE_BULK_DOWNLOAD_ACCEPT,
   CERTIFICATE_BULK_DOWNLOAD_FILE_NAME,
   CertificateBulkDownloadError,
   readResponseHeader,
@@ -281,6 +282,7 @@ export async function downloadOrganizationStudentRosterTemplate(
 /**
  * POST .../organization-applications/{applicationId}/certificates/bulk-download
  * operationId `downloadPortalStudentCertificateZip` — 200 `application/zip` binary만 성공으로 처리합니다.
+ * 409여도 발급 API로 넘기지 않습니다. 이 호출은 기존 발급분 ZIP만 받습니다.
  */
 export async function downloadOrganizationStudentCertificates(
   applicationId: string,
@@ -298,7 +300,11 @@ export async function downloadOrganizationStudentCertificates(
     response = await axiosClient.post<Blob>(
       `${organizationApplicationPath(applicationId)}/certificates/bulk-download`,
       request,
-      { responseType: 'blob' }
+      {
+        responseType: 'blob',
+        headers: { Accept: CERTIFICATE_BULK_DOWNLOAD_ACCEPT },
+        transformResponse: [(data: unknown) => data],
+      }
     )
   } catch (error) {
     throw await toCertificateBulkDownloadError(error)

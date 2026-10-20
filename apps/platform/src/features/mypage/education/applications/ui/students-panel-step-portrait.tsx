@@ -135,54 +135,56 @@ export function StudentsPanelStepPortrait({
         ) : hasSubmission ? (
           <div className={styles.portraitSubmittedBox} role="status">
             <img
-              className={styles.portraitSubmittedIllustration}
+              className={styles.portraitStatusIllustration}
               src={illustHackerUrl}
               alt=""
               width={120}
               height={120}
               aria-hidden="true"
             />
-            <div className={styles.portraitSubmittedInfo}>
-              <PFText
-                as="p"
-                typo="hl-lg"
-                color="black"
-                className={styles.portraitSubmittedFileName}
-                title={resolvePortraitFileName(consent, uploadedFile)}
+            <div className={styles.portraitStatusBody}>
+              <div className={styles.portraitSubmittedInfo}>
+                <PFText
+                  as="p"
+                  typo="hl-lg"
+                  color="black"
+                  className={styles.portraitSubmittedFileName}
+                  title={resolvePortraitFileName(consent, uploadedFile)}
+                >
+                  {resolvePortraitFileName(consent, uploadedFile)}
+                </PFText>
+                <PFText as="p" typo="bd-lg-rg" color="neutral-cool-500">
+                  {formatPortraitFileMeta(consent, uploadedFile)}
+                </PFText>
+              </div>
+              <PFButton
+                type="button"
+                variant="tertiary"
+                size="xlarge"
+                className={styles.portraitUploadCancel}
+                disabled={!canCancelUpload || isCancelling || isUploading}
+                aria-busy={isCancelling}
+                onClick={onCancelUpload}
               >
-                {resolvePortraitFileName(consent, uploadedFile)}
-              </PFText>
-              <PFText as="p" typo="bd-lg-rg" color="neutral-cool-500">
-                {formatPortraitFileMeta(consent, uploadedFile)}
-              </PFText>
+                <span className={styles.buttonInner}>
+                  <img src={closeBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
+                  {isCancelling ? '취소 중' : '업로드 취소'}
+                </span>
+              </PFButton>
             </div>
-            <PFButton
-              type="button"
-              variant="tertiary"
-              size="xlarge"
-              className={styles.portraitUploadCancel}
-              disabled={!canCancelUpload || isCancelling || isUploading}
-              aria-busy={isCancelling}
-              onClick={onCancelUpload}
-            >
-              <span className={styles.buttonInner}>
-                <img src={closeBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
-                {isCancelling ? '취소 중' : '업로드 취소'}
-              </span>
-            </PFButton>
           </div>
         ) : (
           <div className={styles.portraitBoxEmpty}>
-            <div className={styles.emptyContent}>
-              <img
-                className={styles.portraitEmptyIllustration}
-                src={illustHackerUrl}
-                alt=""
-                width={120}
-                height={120}
-                aria-hidden="true"
-              />
-              <PFText as="p" typo="hl-lg" color="black">
+            <img
+              className={styles.portraitStatusIllustration}
+              src={illustHackerUrl}
+              alt=""
+              width={120}
+              height={120}
+              aria-hidden="true"
+            />
+            <div className={styles.portraitStatusBody}>
+              <PFText as="p" typo="hl-lg" color="black" className={styles.portraitEmptyCopy}>
                 아직 초상권 동의서가
                 <br />
                 등록되지 않았어요

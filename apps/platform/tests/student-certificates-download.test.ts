@@ -151,7 +151,11 @@ describe('organization student certificate bulk download', () => {
     expect(postMock).toHaveBeenCalledWith(
       BULK_DOWNLOAD_URL,
       { rosterIds: [1691594, 1691595], certificateType: 'COMPLETION' },
-      { responseType: 'blob' }
+      {
+        responseType: 'blob',
+        headers: { Accept: 'application/zip, application/json' },
+        transformResponse: expect.any(Array),
+      }
     )
   })
 
@@ -162,14 +166,14 @@ describe('organization student certificate bulk download', () => {
     expect(Object.keys(body).sort()).toEqual(['certificateType', 'rosterIds'])
   })
 
-  it('200 ZIP Blob을 서버 파일명과 무관하게 "학생 수료증.zip"으로 저장한다', async () => {
+  it('200 ZIP Blob을 student-certificates.zip으로 저장한다', async () => {
     const zip = new Blob(['PK\u0003\u0004zip-bytes'], { type: 'application/zip' })
     postMock.mockResolvedValue(zipResponse(zip))
 
     await downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594, 1691595])
 
     expect(URL.createObjectURL).toHaveBeenCalledWith(zip)
-    expect(anchor.download).toBe('학생 수료증.zip')
+    expect(anchor.download).toBe('student-certificates.zip')
     expect(anchor.click).toHaveBeenCalledTimes(1)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:certificate')
   })
@@ -227,15 +231,16 @@ describe('organization student certificate bulk download', () => {
   })
 
   it.each([
-    [400, 'PORTAL_CERTIFICATE_BULK_REQUEST_INVALID', '요청값이 올바르지 않습니다.'],
-    [400, 'PORTAL_CERTIFICATE_ROSTER_IDS_INVALID', 'roster 선택값이 중복되었거나 올바르지 않습니다.'],
-    [403, 'PERMISSION_DENIED', '해당 기관 신청에 접근할 권한이 없습니다.'],
-    [404, 'PORTAL_STUDENT_ROSTER_NOT_FOUND', '선택한 학생이 현재 기관 신청에 속하지 않습니다.'],
-    [404, 'ORGANIZATION_APPLICATION_NOT_FOUND', '기관 신청 정보를 찾을 수 없습니다.'],
-    [409, 'PORTAL_CERTIFICATE_ISSUANCE_NOT_READY', '수료 조건 또는 발급 상태를 충족하지 못했습니다.'],
-    [409, 'CERTIFICATE_ISSUE_REQUIRED', '발급 완료된 수료증이 없습니다.'],
-    [503, 'CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE', '수료증 PDF 공급자를 사용할 수 없습니다.'],
-  ])('%i %s 오류 Blob을 JSON으로 파싱해 안내한다', async (status, code, expected) => {
+    [400, 'PORTAL_CERTIFICATE_BULK_REQUEST_INVALID'],
+    [400, 'PORTAL_CERTIFICATE_ROSTER_IDS_INVALID'],
+    [403, 'PERMISSION_DENIED'],
+    [404, 'PORTAL_STUDENT_ROSTER_NOT_FOUND'],
+    [404, 'ORGANIZATION_APPLICATION_NOT_FOUND'],
+    [409, 'PORTAL_CERTIFICATE_ISSUANCE_NOT_READY'],
+    [409, 'CERTIFICATE_ISSUE_REQUIRED'],
+    [409, 'CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE'],
+    [503, 'CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE'],
+  ])('%i %s 오류 Blob을 JSON으로 파싱해 서버 message와 추적 ID를 안내한다', async (status, code) => {
     postMock.mockRejectedValue(blobError(status, apiErrorBody(code, 'server message', 'trace-1')))
 
     const error = await downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594]).catch(
@@ -243,19 +248,50 @@ describe('organization student certificate bulk download', () => {
     )
 
     expect(error).toBeInstanceOf(CertificateBulkDownloadError)
-    expect((error as CertificateBulkDownloadError).message).toBe(expected)
+    expect((error as CertificateBulkDownloadError).message).toBe(
+      'server message (오류 추적 ID: trace-1)'
+    )
     expect((error as CertificateBulkDownloadError).status).toBe(status)
     expect((error as CertificateBulkDownloadError).code).toBe(code)
     expect(anchor.click).not.toHaveBeenCalled()
   })
 
-  it('401 등 매핑되지 않은 코드는 traceId와 함께 일반 서버 오류로 안내한다', async () => {
+  it('서버 message가 없으면 error.code 안내와 추적 ID를 표시한다', async () => {
+    postMock.mockRejectedValue(
+      blobError(409, {
+        success: false,
+        data: null,
+        message: '',
+        error: { code: 'PORTAL_CERTIFICATE_ISSUANCE_NOT_READY', message: '', traceId: 'trace-409' },
+      })
+    )
+
+    await expect(downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594])).rejects.toThrow(
+      '수료 조건을 충족하지 않은 학생이 포함되어 있습니다. (오류 추적 ID: trace-409)'
+    )
+    expect(anchor.click).not.toHaveBeenCalled()
+  })
+
+  it('409여도 발급 API를 호출하지 않는다', async () => {
+    postMock.mockRejectedValue(
+      blobError(409, apiErrorBody('CERTIFICATE_ISSUE_REQUIRED', '발급 이력이 없습니다.', 'trace-issue'))
+    )
+
+    await expect(downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594])).rejects.toBeInstanceOf(
+      CertificateBulkDownloadError
+    )
+    expect(postMock).toHaveBeenCalledTimes(1)
+    expect(postMock.mock.calls[0][0]).toBe(BULK_DOWNLOAD_URL)
+    expect(String(postMock.mock.calls[0][0])).not.toMatch(/issue/)
+  })
+
+  it('401은 서버 message와 추적 ID를 덮지 않는다', async () => {
     postMock.mockRejectedValue(
       blobError(401, apiErrorBody('UNAUTHORIZED', '인증이 필요합니다.', 'trace-401'))
     )
 
     await expect(downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594])).rejects.toThrow(
-      '수료증 다운로드 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. (오류 추적 ID: trace-401)'
+      '인증이 필요합니다. (오류 추적 ID: trace-401)'
     )
     expect(anchor.click).not.toHaveBeenCalled()
   })
@@ -268,7 +304,7 @@ describe('organization student certificate bulk download', () => {
     )
 
     await expect(downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594])).rejects.toThrow(
-      '(오류 추적 ID: req-500)'
+      'error (오류 추적 ID: req-500)'
     )
   })
 
@@ -287,7 +323,7 @@ describe('organization student certificate bulk download', () => {
     )
 
     await expect(downloadOrganizationStudentCertificates(APPLICATION_ID, [9999999])).rejects.toThrow(
-      '선택한 학생이 현재 기관 신청에 속하지 않습니다.'
+      'not found'
     )
     expect(postMock.mock.calls[0][0]).toBe(BULK_DOWNLOAD_URL)
   })

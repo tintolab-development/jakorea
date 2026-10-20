@@ -24,6 +24,8 @@ type EducationSchedulePanelProps = {
   listTitle?: string
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  /** 결석 사유 제출 버튼·모달·사유 텍스트 노출 (교육받은 교사 신청 건은 false) */
+  absenceReasonEnabled?: boolean
 }
 
 /**
@@ -35,6 +37,7 @@ export function EducationSchedulePanel({
   listTitle = '교육일정',
   applicationType,
   applicationId,
+  absenceReasonEnabled = true,
 }: EducationSchedulePanelProps) {
   const [page, setPage] = useState(1)
   const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
@@ -114,27 +117,35 @@ export function EducationSchedulePanel({
         totalPages={totalPages}
         onPageChange={setPage}
         emptyMessage={emptyMessage}
+        alwaysShowPagination
       >
         {pageItems.map((item: EducationScheduleItem) => (
           <EducationScheduleRow
             key={item.id}
             item={item}
-            onAbsenceReasonSubmit={selectedItem => {
-              setAbsenceReasonScheduleId(selectedItem.scheduleId ?? null)
-              setAbsenceReasonOpenKey(key => key + 1)
-            }}
+            showAbsenceReason={absenceReasonEnabled}
+            onAbsenceReasonSubmit={
+              absenceReasonEnabled
+                ? selectedItem => {
+                    setAbsenceReasonScheduleId(selectedItem.scheduleId ?? null)
+                    setAbsenceReasonOpenKey(key => key + 1)
+                  }
+                : undefined
+            }
           />
         ))}
       </EducationSessionList>
-      <EducationAbsenceReasonModal
-        key={absenceReasonOpenKey}
-        open={absenceReasonScheduleId !== null}
-        items={absenceReasonItems}
-        initialScheduleId={absenceReasonScheduleId}
-        applicationType={applicationType}
-        applicationId={applicationId}
-        onClose={() => setAbsenceReasonScheduleId(null)}
-      />
+      {absenceReasonEnabled ? (
+        <EducationAbsenceReasonModal
+          key={absenceReasonOpenKey}
+          open={absenceReasonScheduleId !== null}
+          items={absenceReasonItems}
+          initialScheduleId={absenceReasonScheduleId}
+          applicationType={applicationType}
+          applicationId={applicationId}
+          onClose={() => setAbsenceReasonScheduleId(null)}
+        />
+      ) : null}
     </>
   )
 }

@@ -5,24 +5,27 @@ import type {
 
 /** OpenAPI `PortalCertificateBulkDownloadRequest.rosterIds.maxItems` */
 export const CERTIFICATE_BULK_DOWNLOAD_MAX_ROSTERS = 100
-export const CERTIFICATE_BULK_DOWNLOAD_FILE_NAME = '학생 수료증.zip'
+export const CERTIFICATE_BULK_DOWNLOAD_FILE_NAME = 'student-certificates.zip'
+export const CERTIFICATE_BULK_DOWNLOAD_ACCEPT = 'application/zip, application/json'
 
 const ZIP_CONTENT_TYPE = /^application\/zip\b/i
 
 const GENERIC_DOWNLOAD_ERROR_MESSAGE = '수료증을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
-const GENERIC_SERVER_ERROR_MESSAGE =
-  '수료증 다운로드 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
 const EMPTY_FILE_MESSAGE = '수료증 파일을 받지 못했습니다. 잠시 후 다시 시도해 주세요.'
 
-const CERTIFICATE_BULK_DOWNLOAD_ERROR_MESSAGES: Record<string, string> = {
-  PORTAL_STUDENT_ROSTER_NOT_FOUND: '선택한 학생이 현재 기관 신청에 속하지 않습니다.',
-  ORGANIZATION_APPLICATION_NOT_FOUND: '기관 신청 정보를 찾을 수 없습니다.',
-  PERMISSION_DENIED: '해당 기관 신청에 접근할 권한이 없습니다.',
-  PORTAL_CERTIFICATE_BULK_REQUEST_INVALID: '요청값이 올바르지 않습니다.',
-  PORTAL_CERTIFICATE_ROSTER_IDS_INVALID: 'roster 선택값이 중복되었거나 올바르지 않습니다.',
-  PORTAL_CERTIFICATE_ISSUANCE_NOT_READY: '수료 조건 또는 발급 상태를 충족하지 못했습니다.',
-  CERTIFICATE_ISSUE_REQUIRED: '발급 완료된 수료증이 없습니다.',
-  CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE: '수료증 PDF 공급자를 사용할 수 없습니다.',
+/** 서버 `message`가 없을 때만 쓰는 code별 안내. 화면 문구는 message를 우선합니다. */
+const CERTIFICATE_BULK_DOWNLOAD_FALLBACK_BY_CODE: Record<string, string> = {
+  PORTAL_CERTIFICATE_BULK_REQUEST_INVALID: '선택한 학생을 다시 확인해 주세요.',
+  PORTAL_CERTIFICATE_ROSTER_IDS_INVALID: '선택한 학생을 다시 확인해 주세요.',
+  PERMISSION_DENIED: '본인 신청서가 아닙니다.',
+  ORGANIZATION_APPLICATION_NOT_FOUND: '신청 정보를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+  PORTAL_STUDENT_ROSTER_NOT_FOUND: '선택한 학생을 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+  PORTAL_CERTIFICATE_ISSUANCE_NOT_READY: '수료 조건을 충족하지 않은 학생이 포함되어 있습니다.',
+  CERTIFICATE_ISSUE_REQUIRED: '발급 이력이 없는 학생이 포함되어 있습니다.',
+  CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE:
+    '이름 또는 프로그램명이 없어 수료증을 만들 수 없습니다.',
+  CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE:
+    '수료증 양식 또는 서버 설정에 문제가 있습니다. 관리자에게 문의해 주세요.',
 }
 
 export class CertificateBulkDownloadError extends Error {
@@ -208,10 +211,12 @@ export function resolveCertificateBulkDownloadErrorMessage(
   payload: CertificateBulkDownloadErrorPayload | null,
   requestId?: string
 ): string {
-  if (!payload) return withTraceId(GENERIC_DOWNLOAD_ERROR_MESSAGE, requestId)
-  const mapped = payload.code ? CERTIFICATE_BULK_DOWNLOAD_ERROR_MESSAGES[payload.code] : undefined
-  if (mapped) return mapped
-  return withTraceId(GENERIC_SERVER_ERROR_MESSAGE, payload.traceId ?? requestId)
+  const traceId = payload?.traceId ?? requestId
+  if (!payload) return withTraceId(GENERIC_DOWNLOAD_ERROR_MESSAGE, traceId)
+  if (payload.message) return withTraceId(payload.message, traceId)
+  const mapped = payload.code ? CERTIFICATE_BULK_DOWNLOAD_FALLBACK_BY_CODE[payload.code] : undefined
+  if (mapped) return withTraceId(mapped, traceId)
+  return withTraceId(GENERIC_DOWNLOAD_ERROR_MESSAGE, traceId)
 }
 
 type ErrorWithResponse = {
