@@ -191,8 +191,27 @@ export type PortalEducationScheduleList = {
   scopeStatus?: PortalEducationScheduleScopeStatus | string | null
 }
 
+export type PortalAbsenceReasonSubmission = {
+  submissionId?: number
+  attendanceId?: number
+  scheduleId?: number
+  revisionNo?: number
+  reviewStatus?: string
+  reason?: string
+  fileObjectIds?: number[]
+  submittedAt?: string
+}
+
+export type PortalAbsenceReasonSubmissionInput = {
+  applicationType: ProgramApplicationType
+  applicationId: string
+  scheduleId: number
+  reason: string
+  fileObjectIds?: number[]
+}
+
 function normalizePortalEducationScheduleScopeStatus(
-  value: string | null | undefined,
+  value: string | null | undefined
 ): PortalEducationScheduleScopeStatus | null {
   const normalized = value?.trim().toUpperCase()
   switch (normalized) {
@@ -207,27 +226,21 @@ function normalizePortalEducationScheduleScopeStatus(
 }
 
 function normalizePortalEducationStructure(
-  value: string | null | undefined,
+  value: string | null | undefined
 ): PortalEducationStructure | null {
   const normalized = value?.trim().toUpperCase()
   if (normalized === 'CURRICULUM' || normalized === 'SCHEDULE') return normalized
   return null
 }
 
-function normalizePortalSessionRound(
-  value: string | null | undefined,
-): PortalSessionRound | null {
+function normalizePortalSessionRound(value: string | null | undefined): PortalSessionRound | null {
   const normalized = value?.trim().toUpperCase()
   if (normalized === 'SINGLE' || normalized === 'MULTI') return normalized
   return null
 }
 
 /** Portal `.../forms` item.status */
-export type PortalFormResponseStatus =
-  | 'NOT_SUBMITTED'
-  | 'SUBMITTED'
-  | 'COMPLETED'
-  | 'DONE'
+export type PortalFormResponseStatus = 'NOT_SUBMITTED' | 'SUBMITTED' | 'COMPLETED' | 'DONE'
 
 export type PortalFormListItem = {
   bindingId?: number
@@ -286,7 +299,7 @@ function applicationPath(applicationType: ProgramApplicationType, applicationId:
 export async function fetchApplicationNotices(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalNoticeListResponse> {
   const items = await fetchAllApiPages(async (page, size) => {
     const { data } = await axiosClient.get<unknown>(
@@ -312,16 +325,20 @@ export async function fetchApplicationNoticeDetail(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalNoticeDetail> {
   const { data } = await axiosClient.get<unknown>(
     `${applicationPath(applicationType, applicationId)}/notices/${postId}`,
-    { signal },
+    { signal }
   )
   return unwrapEnvelope<PortalNoticeDetail>(data)
 }
 
-function noticePath(applicationType: ProgramApplicationType, applicationId: string, postId: string) {
+function noticePath(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string
+) {
   return `${applicationPath(applicationType, applicationId)}/notices/${postId}`
 }
 
@@ -339,7 +356,7 @@ export type PortalCreateApplicationNoticeResponse = {
 export async function createApplicationNotice(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  body: PortalCreateApplicationNoticeRequest,
+  body: PortalCreateApplicationNoticeRequest
 ): Promise<PortalCreateApplicationNoticeResponse> {
   const payload: PortalCreateApplicationNoticeRequest = {
     content: body.content,
@@ -351,7 +368,7 @@ export async function createApplicationNotice(
   }
   const { data } = await axiosClient.post<unknown>(
     `${applicationPath(applicationType, applicationId)}/notices`,
-    payload,
+    payload
   )
   // 성공 시 래퍼 없이 { postId } — envelope 있으면 unwrap만 적용
   return unwrapEnvelope<PortalCreateApplicationNoticeResponse>(data)
@@ -361,7 +378,7 @@ export async function putApplicationNoticeAttachments(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  fileObjectIds: number[],
+  fileObjectIds: number[]
 ): Promise<void> {
   await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/attachments`, {
     fileObjectIds,
@@ -372,7 +389,7 @@ export async function putApplicationNoticeInlineImages(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  fileObjectIds: number[],
+  fileObjectIds: number[]
 ): Promise<void> {
   await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/inline-images`, {
     fileObjectIds,
@@ -383,7 +400,7 @@ export async function createApplicationNoticeComment(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  content: string,
+  content: string
 ): Promise<void> {
   await axiosClient.post(`${noticePath(applicationType, applicationId, postId)}/comments`, {
     content,
@@ -395,11 +412,11 @@ export async function updateApplicationNoticeComment(
   applicationId: string,
   postId: string,
   commentId: string,
-  content: string,
+  content: string
 ): Promise<void> {
   await axiosClient.patch(
     `${noticePath(applicationType, applicationId, postId)}/comments/${commentId}`,
-    { content },
+    { content }
   )
 }
 
@@ -407,10 +424,10 @@ export async function deleteApplicationNoticeComment(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  commentId: string,
+  commentId: string
 ): Promise<void> {
   await axiosClient.delete(
-    `${noticePath(applicationType, applicationId, postId)}/comments/${commentId}`,
+    `${noticePath(applicationType, applicationId, postId)}/comments/${commentId}`
   )
 }
 
@@ -418,11 +435,11 @@ export async function fetchApplicationNoticeReactions(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalNoticeReactionState> {
   const { data } = await axiosClient.get<unknown>(
     `${noticePath(applicationType, applicationId, postId)}/reactions`,
-    { signal },
+    { signal }
   )
   return unwrapEnvelope<PortalNoticeReactionState>(data)
 }
@@ -431,11 +448,11 @@ export async function upsertApplicationNoticeReaction(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  reactionType: string,
+  reactionType: string
 ): Promise<PortalNoticeReactionState> {
   const { data } = await axiosClient.put<unknown>(
     `${noticePath(applicationType, applicationId, postId)}/reactions`,
-    { reactionType },
+    { reactionType }
   )
   return unwrapEnvelope<PortalNoticeReactionState>(data)
 }
@@ -444,10 +461,10 @@ export async function deleteApplicationNoticeReaction(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  reactionType: string,
+  reactionType: string
 ): Promise<PortalNoticeReactionState> {
   const { data } = await axiosClient.delete<unknown>(
-    `${noticePath(applicationType, applicationId, postId)}/reactions/${encodeURIComponent(reactionType)}`,
+    `${noticePath(applicationType, applicationId, postId)}/reactions/${encodeURIComponent(reactionType)}`
   )
   return unwrapEnvelope<PortalNoticeReactionState>(data)
 }
@@ -462,7 +479,7 @@ export async function fetchApplicationNoticeAttachments(
   applicationType: ProgramApplicationType,
   applicationId: string,
   keyword?: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalNoticeAttachmentListItem[]> {
   const trimmedKeyword = keyword?.trim()
   return fetchAllApiPages(async (page, size) => {
@@ -478,7 +495,8 @@ export async function fetchApplicationNoticeAttachments(
       }
     )
     const unwrapped = unwrapEnvelope<
-      { items?: PortalNoticeAttachmentListItem[]; totalPages?: number } | PortalNoticeAttachmentListItem[]
+      | { items?: PortalNoticeAttachmentListItem[]; totalPages?: number }
+      | PortalNoticeAttachmentListItem[]
     >(data)
     if (Array.isArray(unwrapped)) {
       return { items: unwrapped, totalPages: 1 }
@@ -495,11 +513,11 @@ export async function fetchApplicationNoticeInlineImageSrc(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  fileObjectId: number,
+  fileObjectId: number
 ): Promise<string> {
   const { data } = await axiosClient.get<Blob>(
     `${noticePath(applicationType, applicationId, postId)}/inline-images/${fileObjectId}/content`,
-    { responseType: 'blob', headers: { Accept: 'image/*,*/*' } },
+    { responseType: 'blob', headers: { Accept: 'image/*,*/*' } }
   )
   const signedUrl = await readDownloadUrlFromJsonBlob(data)
   const blob = signedUrl ? await fetchBlobOnce(signedUrl) : data
@@ -521,11 +539,11 @@ export async function resolveApplicationNoticeAttachmentUrl(downloadPath: string
 export async function fetchApplicationSchedules(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalEducationSchedulesResult> {
   const { data } = await axiosClient.get<unknown>(
     `${applicationPath(applicationType, applicationId)}/schedules`,
-    { signal },
+    { signal }
   )
   const unwrapped = unwrapEnvelope<PortalEducationScheduleList | PortalEducationSchedule[]>(data)
   if (Array.isArray(unwrapped)) {
@@ -541,16 +559,35 @@ export async function fetchApplicationSchedules(
   }
 }
 
+/** POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/absence-reasons */
+export async function submitApplicationAbsenceReason(
+  input: PortalAbsenceReasonSubmissionInput
+): Promise<PortalAbsenceReasonSubmission> {
+  const { data } = await axiosClient.post<unknown>(
+    `${applicationPath(input.applicationType, input.applicationId)}/schedules/${encodeURIComponent(String(input.scheduleId))}/absence-reasons`,
+    {
+      reason: input.reason.trim(),
+      ...(input.fileObjectIds && input.fileObjectIds.length > 0
+        ? { fileObjectIds: input.fileObjectIds }
+        : {}),
+    }
+  )
+  return unwrapEnvelope<PortalAbsenceReasonSubmission>(data)
+}
+
 async function fetchApplicationFormsOnce(
   applicationType: ProgramApplicationType,
   applicationId: string,
   formType?: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalFormListItem[]> {
-  const { data } = await axiosClient.get<unknown>(`${applicationPath(applicationType, applicationId)}/forms`, {
-    signal,
-    params: formType ? { formType } : undefined,
-  })
+  const { data } = await axiosClient.get<unknown>(
+    `${applicationPath(applicationType, applicationId)}/forms`,
+    {
+      signal,
+      params: formType ? { formType } : undefined,
+    }
+  )
   const unwrapped = unwrapEnvelope<PortalFormListResponse | PortalFormListItem[]>(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
@@ -565,7 +602,7 @@ export async function fetchApplicationForms(
   applicationType: ProgramApplicationType,
   applicationId: string,
   formType: 'SURVEY' | 'SATISFACTION',
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalFormListItem[]> {
   const queries =
     formType === 'SURVEY' ? PORTAL_SURVEY_FORM_TYPE_QUERIES : PORTAL_SATISFACTION_FORM_TYPE_QUERIES
@@ -576,7 +613,7 @@ export async function fetchApplicationForms(
       applicationType,
       applicationId,
       queryFormType,
-      signal,
+      signal
     )
     merged = dedupePortalFormListItems([...merged, ...batch])
     if (merged.length > 0) return merged
@@ -610,11 +647,11 @@ type PortalFormBindingRender = Record<string, unknown> & {
 export async function fetchPortalSurveyFormBinding(
   programId: number,
   bindingId: number,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalSurveyFormDocument> {
   const { data } = await axiosClient.get<unknown>(
     `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`,
-    { signal },
+    { signal }
   )
   const rendered = unwrapEnvelope<PortalFormBindingRender>(data)
   return {
@@ -634,12 +671,12 @@ export type PortalSurveySubmitBody = {
 export async function submitPortalSurveyResponse(
   programId: number,
   bindingId: number,
-  body: PortalSurveySubmitBody,
+  body: PortalSurveySubmitBody
 ): Promise<unknown> {
   try {
     const { data } = await axiosClient.post<unknown>(
       `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/responses`,
-      { answers: body.answers },
+      { answers: body.answers }
     )
     return unwrapEnvelope(data)
   } catch (error) {
@@ -662,11 +699,11 @@ export async function submitPortalSurveyResponse(
 export async function fetchExpenseReceipts(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalExpenseReceipt[]> {
   const { data } = await axiosClient.get<unknown>(
     `${applicationPath(applicationType, applicationId)}/expense-receipts`,
-    { signal },
+    { signal }
   )
   const unwrapped = unwrapEnvelope<PortalExpenseReceiptList | PortalExpenseReceipt[]>(data)
   if (Array.isArray(unwrapped)) return unwrapped
@@ -674,9 +711,11 @@ export async function fetchExpenseReceipts(
 }
 
 export async function fetchSettlementApplications(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalSettlementApplication[]> {
-  const { data } = await axiosClient.get<unknown>('/api/portal/me/settlement-applications', { signal })
+  const { data } = await axiosClient.get<unknown>('/api/portal/me/settlement-applications', {
+    signal,
+  })
   const unwrapped = unwrapEnvelope<
     PortalSettlementApplication[] | { items?: PortalSettlementApplication[] }
   >(data)
