@@ -21,6 +21,7 @@ export { FileRemoveIcon } from './FileRemoveIcon'
 export {
   ButtonAddIcon,
   ButtonCalendarIcon,
+  ButtonCheckIcon,
   ButtonClockIcon,
   ButtonCopyIcon,
   ButtonDeleteIcon,
