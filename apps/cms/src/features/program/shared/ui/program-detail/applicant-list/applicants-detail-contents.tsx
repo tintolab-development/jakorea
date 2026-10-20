@@ -6,6 +6,7 @@ import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { type ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
@@ -94,6 +95,13 @@ export type ApplicantType =
   | 'individual-applications'
 
 export type ApplicantDetailVariant = 'legacy' | 'general'
+
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+
+const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
+
+const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
 const DETAIL_TAB_PARAM = 'detailTab'
 
@@ -961,11 +969,16 @@ export function ApplicantsDetailContents({
     saveApplicant: onSaveIndividualDetail,
   })
 
+  const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
+  const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
+
   /* eslint-disable react-hooks/set-state-in-effect -- 개인 신청자 변경 시 코멘트·평가 UI 초기화 */
   useEffect(() => {
     setIsIndividualAdminCommentModalOpen(false)
     setIndividualAdminCommentDraft('')
     setOpenManagerDropdown(null)
+    setEditUnmaskConfirmOpen(false)
+    setEditUnmaskConfirmLoading(false)
   }, [applicantId, individualData?.adminComment])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -1310,6 +1323,7 @@ export function ApplicantsDetailContents({
 
   const {
     personalInfoRevealed,
+    revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
@@ -1354,6 +1368,33 @@ export function ApplicantsDetailContents({
     controlMode: 'headerStickyNoop',
   })
 
+  const requestStartIndividualEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      individualDetailEdit.enterEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [individualDetailEdit.enterEdit, personalInfoRevealed])
+
+  const closeEditUnmaskConfirm = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmOpen(false)
+  }, [editUnmaskConfirmLoading])
+
+  const confirmEditUnmaskAndStartEdit = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmLoading(true)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+      .then(result => {
+        if (!result.ok) return
+        setEditUnmaskConfirmOpen(false)
+        individualDetailEdit.enterEdit()
+      })
+      .finally(() => {
+        setEditUnmaskConfirmLoading(false)
+      })
+  }, [editUnmaskConfirmLoading, individualDetailEdit.enterEdit, revealWithReason])
+
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({
       applicantId,
@@ -1388,7 +1429,7 @@ export function ApplicantsDetailContents({
       },
       isGeneralIndividualEditEnabled,
       isEditingIndividualDetail: individualDetailEdit.isEditing,
-      onEnterIndividualEdit: individualDetailEdit.enterEdit,
+      onEnterIndividualEdit: requestStartIndividualEdit,
       onSaveIndividualEdit: () => {
         individualDetailEdit.saveEdit()
       },
@@ -1430,9 +1471,9 @@ export function ApplicantsDetailContents({
     institutionDetailEdit.isEditing,
     institutionDetailEdit.saveEdit,
     combinedClassProcess.openGradeRequiredAlert,
-    individualDetailEdit.enterEdit,
     individualDetailEdit.isEditing,
     individualDetailEdit.saveEdit,
+    requestStartIndividualEdit,
     instructorDetailEdit.enterEdit,
     instructorDetailEdit.isEditing,
     instructorDetailEdit.saveEdit,
@@ -1762,6 +1803,19 @@ export function ApplicantsDetailContents({
         ) : null}
         <div className="applicant-contents__panel">{tabPanel}</div>
         {personalInfoRevealModal}
+        {isIndividual ? (
+          <ConfirmModal
+            open={editUnmaskConfirmOpen}
+            title="정보 수정 안내"
+            content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+            confirmText="정보 수정"
+            cancelText="취소"
+            onConfirm={confirmEditUnmaskAndStartEdit}
+            onCancel={closeEditUnmaskConfirm}
+            confirmLoading={editUnmaskConfirmLoading}
+            zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+          />
+        ) : null}
         {adminCommentModals}
         {combinedClassProcess.modals}
       </div>

@@ -31,10 +31,11 @@ import {
   screeningInterview2DetailTitle,
 } from '@/features/program/general/lib/screening-subject-kind'
 import {
-  describeApprovedEducationScope,
   formatIndividualApprovalScopeErrorMessage,
   invalidateIndividualApprovalScopeQueries,
   isEducationScopeRevisionConflict,
+  isRejectedEducationScheduleSelectionError,
+  parseRejectedEducationScheduleIds,
 } from '@/features/program/general/lib/individual-approval-education-scope'
 import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
 import {
@@ -703,7 +704,7 @@ export function GeneralParticipantApplicantDetailView({
           setApproveTarget(null)
         }}
         onConfirm={payload => {
-          if (!approveTarget || decisionBusy) return
+          if (!approveTarget || decisionBusy) return Promise.resolve()
           const run = async () => {
             if (!useRemote) {
               void showAlert({
@@ -722,10 +723,6 @@ export function GeneralParticipantApplicantDetailView({
                   reason: payload.reason,
                 }
               )
-              const described = describeApprovedEducationScope({
-                requestedScheduleIds: payload.confirmedScheduleIds,
-                responseScheduleIds: response.educationScope?.scheduleIds,
-              })
               await invalidateIndividualApprovalScopeQueries(queryClient, {
                 programId: program.id,
                 applicationIds: [applicant.id],
@@ -748,17 +745,9 @@ export function GeneralParticipantApplicantDetailView({
                 })
               )
               setApproveTarget(null)
-              const assigned =
-                described.scheduleIds.length > 0
-                  ? `\n배정된 교육 일정: ${described.scheduleIds.join(', ')}`
-                  : ''
-              const added =
-                described.serverAddedScheduleIds.length > 0
-                  ? `\n서버가 포함한 일정: ${described.serverAddedScheduleIds.join(', ')}`
-                  : ''
               void showAlert({
                 title: '승인 완료',
-                content: `승인되었습니다.${assigned}${added}`,
+                content: '승인되었습니다.',
               })
             } catch (error) {
               await invalidateIndividualApprovalScopeQueries(queryClient, {
@@ -772,11 +761,15 @@ export function GeneralParticipantApplicantDetailView({
                   ? `${message}\n최신 교육 일정을 다시 불러왔습니다. 선택을 확인한 뒤 다시 승인해 주세요.`
                   : message,
               })
+              if (isRejectedEducationScheduleSelectionError(error)) {
+                const rejectedScheduleIds = parseRejectedEducationScheduleIds(error)
+                if (rejectedScheduleIds.length > 0) return { rejectedScheduleIds }
+              }
             } finally {
               setDecisionBusy(false)
             }
           }
-          void run()
+          return run()
         }}
       />
       <ParticipantApproveModal

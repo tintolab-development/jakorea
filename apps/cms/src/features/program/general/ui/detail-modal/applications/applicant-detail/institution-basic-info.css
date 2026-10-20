@@ -28,6 +28,13 @@
   width: 100%;
 }
 
+/* 수정 슬롯 직계 자식이 콘텐츠 폭만 차지해 셀렉트가 우측으로 밀리지 않도록 */
+.detail-info-form__field-content--edit > .institution-basic-info__textbook-select-only {
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+}
+
 .institution-basic-info__field-error,
 .institution-basic-info__form-error {
   color: #c32f4a;

@@ -4,6 +4,7 @@ import {
   isOpaqueScheduleOptionToken,
   resolveApplicationContentFromAnswers,
   resolvePreferredEducationScheduleDisplayLabel,
+  resolvePreferredScheduleLabelsFromAnswers,
 } from './application-content-from-answers.ts'
 
 const participant = resolveApplicationContentFromAnswers({
@@ -80,6 +81,29 @@ const lineResolved = resolvePreferredEducationScheduleDisplayLabel({
   educationScheduleLines: ['첫째 날 | 2차시', '2026년 04월 20일(월) 9:30 ~ 12:20 | 2차시'],
 })
 assert.equal(lineResolved, '2026년 04월 20일(월) 9:30 ~ 12:20 | 2차시')
+
+const pipedLine = '26년 4월 20일(월) 9:30 ~ 12:20 | 26년 4월 27일(일) 13:00 ~ 15:50'
+const pipedFirst = resolvePreferredEducationScheduleDisplayLabel({
+  preferredScheduleOptionValues: ['line:0'],
+  educationScheduleLines: [pipedLine],
+})
+assert.equal(pipedFirst, '26년 4월 20일(월) 9:30 ~ 12:20')
+assert.equal(pipedFirst?.includes('4월 27일'), false)
+
+const pipedSecond = resolvePreferredEducationScheduleDisplayLabel({
+  preferredScheduleOptionValues: ['line:1'],
+  educationScheduleLines: [pipedLine],
+})
+assert.equal(pipedSecond, '26년 4월 27일(일) 13:00 ~ 15:50')
+
+const pipedBoth = resolvePreferredScheduleLabelsFromAnswers({
+  preferredScheduleOptionValues: ['line:0', 'line:1'],
+  educationScheduleLines: [`${pipedLine} | 2차시`],
+})
+assert.deepEqual(pipedBoth, [
+  '26년 4월 20일(월) 9:30 ~ 12:20 | 2차시',
+  '26년 4월 27일(일) 13:00 ~ 15:50 | 2차시',
+])
 
 const fromSelectedLabels = resolveApplicationContentFromAnswers({
   'program-instructor-application-seed-available-schedule': {

@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
+import { clearInstructorApplySessionCache } from '@/features/mypage/instructor-apply/lib/instructor-apply-session-cache'
 import { postPortalLogout } from '@/features/auth/sign-in'
 import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
 import { parseProgramRoute } from '@/features/program/lib/routes'
@@ -82,6 +83,7 @@ export function AppLayout({
       }
       clearAuthTokens()
       clearAdminRegisteredWizardState()
+      clearInstructorApplySessionCache()
       setDevAuthLoggedIn(false)
       setIsLoggedIn(false)
       navigate('/')

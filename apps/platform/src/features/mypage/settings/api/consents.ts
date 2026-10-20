@@ -113,6 +113,12 @@ export type PortalConsentDocumentDetail = {
   /** 문서 서명·제출 시각 */
   signedAt?: string
   signedFileObjectId?: number
+  signatureFields?: Array<{
+    fieldKey?: string
+    signed?: boolean
+    signatureFileObjectId?: number
+    signedAt?: string
+  }>
   evidenceFileObjectId?: number
   evidenceOriginalFileName?: string
   filledDocument?: {

@@ -63,6 +63,7 @@ import {
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
 import { INSTRUCTOR_APPLY_PATH } from '../lib/constants'
 import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
+import { clearInstructorApplySessionCache } from './lib/instructor-apply-session-cache'
 import {
   applyLockedBasicToInstructorForm,
   resolveInstructorApplyHomeAddressLock,
@@ -316,6 +317,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
     if (!useRemoteSubmit) {
       window.setTimeout(() => {
         setSubmitting(false)
+        clearInstructorApplySessionCache()
         onSubmitSuccess()
       }, 300)
       return
@@ -340,6 +342,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
           {
             onSuccess: () => {
               setSubmitting(false)
+              clearInstructorApplySessionCache()
               onSubmitSuccess()
             },
             onError: error => {

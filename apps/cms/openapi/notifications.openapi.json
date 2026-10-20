@@ -14446,10 +14446,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -23035,15 +23035,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string"
           }
         }
       },
@@ -23150,10 +23150,10 @@
           "scheduleOrigin": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           }
         }

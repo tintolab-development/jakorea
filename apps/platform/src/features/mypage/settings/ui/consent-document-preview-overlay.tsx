@@ -12,10 +12,12 @@ import {
   resolveConsentDocumentPreviewConfig,
 } from '../lib/consent-document-preview-config'
 import { formatConsentSubmittedDateLabel } from '../lib/format-consent-submitted-date'
+import { loadConsentPreviewSignature } from '../lib/load-consent-preview-signature'
 import {
   readPaymentBasicInfoFromConsentDetail,
   resolveConsentPreviewDraft,
 } from '../lib/parse-consent-document-draft'
+import { resolveConsentPreviewSignerName } from '../lib/resolve-consent-preview-signer'
 import {
   filterPreviewParagraphs,
   sliceDraftForParagraphs,
@@ -45,12 +47,16 @@ function ConsentDocumentPreviewBody({
   submittedDateLabel,
   showClosingRecipient,
   paymentBasicInfo,
+  signerName,
+  signatureImageSrc,
 }: {
   templateId: string
   pageDraft: WritingFormDraft
   submittedDateLabel: string
   showClosingRecipient: boolean
   paymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
+  signerName?: string
+  signatureImageSrc?: string
 }) {
   const fillOptions = useMemo(
     () => buildPlatformConsentFillOptions(templateId),
@@ -68,6 +74,8 @@ function ConsentDocumentPreviewBody({
       submittedDateLabel={submittedDateLabel}
       showClosingRecipient={showClosingRecipient}
       paymentBasicInfo={paymentBasicInfo}
+      signerName={signerName}
+      signatureImageSrc={signatureImageSrc}
     />
   )
 }
@@ -88,6 +96,8 @@ export function ConsentDocumentPreviewOverlay({
   const [paymentBasicInfo, setPaymentBasicInfo] = useState<
     Partial<PaymentStatementBasicInfoValues> | undefined
   >()
+  const [signatureDisplayName, setSignatureDisplayName] = useState('')
+  const [signatureImageSrc, setSignatureImageSrc] = useState<string | undefined>()
 
   const previewConfig = item ? resolveConsentDocumentPreviewConfig(item.id) : null
   const headerTitle = item ? buildConsentDocumentPreviewHeaderTitle(item.title) : ''
@@ -109,6 +119,11 @@ export function ConsentDocumentPreviewOverlay({
       setCrimeImageSrc(null)
       setSubmittedAtRaw(undefined)
       setPaymentBasicInfo(undefined)
+      setSignatureDisplayName('')
+      setSignatureImageSrc(previous => {
+        if (previous) URL.revokeObjectURL(previous)
+        return undefined
+      })
       setLoadFailed(false)
       setLoadFailedMessage(LOAD_FAILED_MESSAGE)
       setIsLoading(false)
@@ -126,6 +141,11 @@ export function ConsentDocumentPreviewOverlay({
       setCrimeImageSrc(null)
       setSubmittedAtRaw(item.agreedAt)
       setPaymentBasicInfo(undefined)
+      setSignatureDisplayName('')
+      setSignatureImageSrc(previous => {
+        if (previous) URL.revokeObjectURL(previous)
+        return undefined
+      })
 
       try {
         let detail = null
@@ -139,6 +159,18 @@ export function ConsentDocumentPreviewOverlay({
           if (!cancelled) {
             setSubmittedAtRaw(detail.signedAt?.trim() || item.agreedAt)
             setPaymentBasicInfo(readPaymentBasicInfoFromConsentDetail(detail))
+            const signature = await loadConsentPreviewSignature({
+              signatureFields: detail.signatureFields,
+            })
+            if (!cancelled) {
+              setSignatureDisplayName(signature.displayName)
+              setSignatureImageSrc(previous => {
+                if (previous) URL.revokeObjectURL(previous)
+                return signature.imageSrc ?? undefined
+              })
+            } else if (signature.imageSrc) {
+              URL.revokeObjectURL(signature.imageSrc)
+            }
           }
         }
         if (cancelled) return
@@ -192,6 +224,11 @@ export function ConsentDocumentPreviewOverlay({
   const pageDraft =
     draft != null ? sliceDraftForParagraphs(draft, activeParagraphs) : null
   const submittedDateLabel = formatConsentSubmittedDateLabel(submittedAtRaw)
+  const signerName = resolveConsentPreviewSignerName({
+    draft,
+    paymentName: paymentBasicInfo?.nameKo,
+    signatureDisplayName,
+  })
   const showClosingRecipient =
     previewConfig?.templateId === 'agreement-third-party' && safePage === totalPages
 
@@ -234,6 +271,8 @@ export function ConsentDocumentPreviewOverlay({
                 submittedDateLabel={submittedDateLabel}
                 showClosingRecipient={showClosingRecipient}
                 paymentBasicInfo={paymentBasicInfo}
+                signerName={signerName}
+                signatureImageSrc={signatureImageSrc}
               />
             </div>
           </ConsentDocumentA4Page>

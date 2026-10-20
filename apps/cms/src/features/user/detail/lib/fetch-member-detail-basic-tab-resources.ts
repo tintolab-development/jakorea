@@ -3,7 +3,10 @@ import {
   fetchAffiliatedTeachersQuery,
   fetchMemberCommentsQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
-import { fetchMemberConsentRecordsQuery } from '@/features/user/api/hooks/use-member-detail-query'
+import {
+  fetchMemberConsentRecordsQuery,
+  fetchMemberConsentSummariesQuery,
+} from '@/features/user/api/hooks/use-member-detail-query'
 import {
   resolveAdminCommentResource,
 } from '@/features/user/api/resolve-admin-comment-resource'
@@ -56,9 +59,7 @@ export async function fetchMemberDetailBasicTabResources(
   const isPermissionMode = mode === 'permission'
   const tasks: Promise<unknown>[] = []
 
-  // 권한 승인 상세는 신청 스냅샷 우선 — consent·소속교사는 생략, 관리자 코멘트만 조회
   if (
-    !isPermissionMode &&
     shouldFetchMemberConsentRecords({
       role: displayUser.role,
       memberId,
@@ -66,6 +67,7 @@ export async function fetchMemberDetailBasicTabResources(
     }) &&
     memberId != null
   ) {
+    tasks.push(fetchMemberConsentSummariesQuery(queryClient, memberId))
     tasks.push(fetchMemberConsentRecordsQuery(queryClient, memberId))
   }
 

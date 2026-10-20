@@ -7,6 +7,8 @@ import {
   defaultIndividualApprovalScheduleIds,
   individualApprovalEducationSlotsQueryKey,
   individualApprovalProgramShapeFromProgram,
+  listIndividualPreferredScheduleOptions,
+  listPlannedEducationSlotOptions,
   normalizeIndividualApprovalReason,
   validateIndividualApprovalScheduleSelection,
   type IndividualApprovalScheduleOption,
@@ -27,6 +29,7 @@ import {
 } from '@/features/program/general/lib/organization-application-approve-slots'
 import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import '@/features/program/shared/ui/detail-modal/components/institution-approve-modal.css'
+import './individual-approve-scope-modal.css'
 
 type ApprovalProgram = Parameters<typeof individualApprovalProgramShapeFromProgram>[0]
 
@@ -46,6 +49,10 @@ export type IndividualApproveScopeConfirmPayload = {
   notifyTiming: PermissionModalPayload['notifyTiming']
   manualNotifyAt?: PermissionModalPayload['manualNotifyAt']
 }
+
+export type IndividualApproveScopeConfirmResult = {
+  rejectedScheduleIds?: number[]
+} | void
 
 export type IndividualBulkApproveScopeTarget = {
   id: string
@@ -77,116 +84,194 @@ function scheduleCardParts(option: IndividualApprovalScheduleOption): {
   }
 }
 
-function ScheduleChoices({
-  plan,
-  selectedIds,
+function assignedOptionTitle(
+  scheduleId: number,
+  plannedOptions: IndividualApprovalScheduleOption[],
+  preferredOptions: IndividualApprovalScheduleOption[]
+): string {
+  return (
+    plannedOptions.find(option => option.scheduleId === scheduleId)?.title ??
+    preferredOptions.find(option => option.scheduleId === scheduleId)?.title ??
+    '교육 일정'
+  )
+}
+
+function preferredOptionsForPlan(
+  plan: IndividualApprovalSchedulePlan,
+  preferred: PreferredEducationSchedule[] | undefined,
+  plannedOptions: IndividualApprovalScheduleOption[]
+): IndividualApprovalScheduleOption[] {
+  if (plan.kind !== 'all-program-slots') return plan.options
+  const selectableIds = new Set(
+    plannedOptions
+      .map(option => option.scheduleId)
+      .filter((id): id is number => id != null)
+  )
+  return listIndividualPreferredScheduleOptions(preferred, selectableIds)
+}
+
+function ScheduleCard({
+  option,
+  selected,
+  selectable,
+  rejected,
   onToggle,
 }: {
-  plan: IndividualApprovalSchedulePlan
-  selectedIds: number[]
+  option: IndividualApprovalScheduleOption
+  selected: boolean
+  selectable: boolean
+  rejected: boolean
   onToggle?: (scheduleId: number) => void
 }) {
-  const selectableOptions = plan.options.filter(
-    option => option.selectable && option.scheduleId != null && plan.kind !== 'all-program-slots'
+  const card = scheduleCardParts(option)
+  return (
+    <button
+      type="button"
+      className={[
+        'institution-approve-modal__schedule-card',
+        selected ? 'institution-approve-modal__schedule-card--selected' : '',
+        selectable ? '' : 'institution-approve-modal__schedule-card--readonly',
+        rejected ? 'institution-approve-modal__schedule-card--rejected' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-pressed={selectable ? selected : undefined}
+      disabled={!selectable}
+      onClick={() => {
+        if (!selectable || option.scheduleId == null) return
+        onToggle?.(option.scheduleId)
+      }}
+    >
+      <span className="institution-approve-modal__schedule-card-title">{card.title}</span>
+      {card.detail ? (
+        <span className="institution-approve-modal__schedule-card-detail">{card.detail}</span>
+      ) : null}
+      {option.blockedReason ? (
+        <span className="institution-approve-modal__schedule-card-note">{option.blockedReason}</span>
+      ) : null}
+    </button>
   )
-  const selectedOptions = selectableOptions.filter(option =>
-    selectedIds.includes(option.scheduleId as number)
+}
+
+export function IndividualEducationScheduleSections({
+  plannedOptions,
+  preferredOptions,
+  selectedIds,
+  rejectedIds,
+  plan,
+  assignedLocked = false,
+  preferredReadonly = false,
+  assignedEmptyLabel = ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
+  onToggle,
+}: {
+  plannedOptions: IndividualApprovalScheduleOption[]
+  preferredOptions: IndividualApprovalScheduleOption[]
+  selectedIds: number[]
+  rejectedIds?: ReadonlyArray<number>
+  plan: IndividualApprovalSchedulePlan
+  assignedLocked?: boolean
+  preferredReadonly?: boolean
+  assignedEmptyLabel?: string
+  onToggle?: (scheduleId: number) => void
+}) {
+  const rejected = new Set(rejectedIds ?? [])
+  const selectablePreferred = preferredOptions.filter(
+    option => option.selectable && option.scheduleId != null && !assignedLocked && !preferredReadonly
   )
   const assignmentHint =
     plan.kind === 'preferred-at-least-one'
       ? ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT
       : ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
+  const assignedIds =
+    assignedLocked && plan.kind === 'all-program-slots' ? plan.lockedScheduleIds : selectedIds
 
   return (
     <>
-      {plan.options.length > 0 ? (
-        <div className="institution-approve-modal__schedule-cards">
-          {plan.options.map(option => {
-            const card = scheduleCardParts(option)
-            const selected =
-              option.scheduleId != null &&
-              (plan.kind === 'all-program-slots' || selectedIds.includes(option.scheduleId))
-            const selectable = option.selectable && plan.kind !== 'all-program-slots'
-            return (
-              <button
-                key={option.key}
-                type="button"
-                className={[
-                  'institution-approve-modal__schedule-card',
-                  selected ? 'institution-approve-modal__schedule-card--selected' : '',
-                  selectable ? '' : 'institution-approve-modal__schedule-card--readonly',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                aria-pressed={selectable ? selected : undefined}
-                disabled={!selectable}
-                onClick={() => {
-                  if (!selectable || option.scheduleId == null) return
-                  onToggle?.(option.scheduleId)
-                }}
-              >
-                <span className="institution-approve-modal__schedule-card-title">{card.title}</span>
-                {card.detail ? (
-                  <span className="institution-approve-modal__schedule-card-detail">
-                    {card.detail}
-                  </span>
-                ) : null}
-                {option.blockedReason ? (
-                  <span className="institution-approve-modal__schedule-card-note">
-                    {option.blockedReason}
-                  </span>
-                ) : null}
-              </button>
-            )
-          })}
-        </div>
+      <div className="individual-approve-scope-modal__section">
+        <p className="individual-approve-scope-modal__section-label">신청일</p>
+        {preferredOptions.length > 0 ? (
+          <div className="institution-approve-modal__schedule-cards">
+            {preferredOptions.map(option => {
+              const selectable =
+                option.selectable &&
+                option.scheduleId != null &&
+                !assignedLocked &&
+                !preferredReadonly
+              const selected =
+                option.scheduleId != null &&
+                (assignedLocked || selectedIds.includes(option.scheduleId))
+              return (
+                <ScheduleCard
+                  key={option.key}
+                  option={option}
+                  selected={selectable ? selected : false}
+                  selectable={selectable}
+                  rejected={option.scheduleId != null && rejected.has(option.scheduleId)}
+                  onToggle={onToggle}
+                />
+              )
+            })}
+          </div>
+        ) : (
+          <p className="institution-approve-modal__notice">신청 희망 교육 일정이 없습니다.</p>
+        )}
+      </div>
+      {selectablePreferred.length > 0 && !assignedLocked ? (
+        <p className="institution-approve-modal__assignment-hint">{assignmentHint}</p>
+      ) : plan.kind === 'all-program-slots' ? (
+        <p className="institution-approve-modal__assignment-hint">
+          일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정합니다.
+        </p>
       ) : null}
-      {plan.blockedReason && plan.options.length === 0 ? (
+      {plan.blockedReason && selectablePreferred.length === 0 && plan.kind !== 'all-program-slots' ? (
         <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
           {plan.blockedReason}
         </p>
       ) : null}
-      {selectableOptions.length > 0 ? (
-        <p className="institution-approve-modal__assignment-hint">{assignmentHint}</p>
-      ) : null}
-      {selectableOptions.length > 0 ? (
-        <div className="institution-approve-modal__assigned">
-          <DetailInfoForm title="" hideHeader mode="edit">
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="배정된 일정"
-                edit={
-                  selectedOptions.length > 0 ? (
-                    <div className="institution-approve-modal__assigned-list">
-                      {selectedOptions.map(option => {
-                        const card = scheduleCardParts(option)
-                        return (
-                          <div key={option.key} className="institution-approve-modal__assigned-item">
-                            <span>{card.title}</span>
+      <div className="institution-approve-modal__assigned">
+        <DetailInfoForm title="" hideHeader mode="edit">
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="배정일"
+              edit={
+                assignedIds.length > 0 ? (
+                  <div className="institution-approve-modal__assigned-list">
+                    {assignedIds.map(scheduleId => {
+                      const title = assignedOptionTitle(
+                        scheduleId,
+                        plannedOptions,
+                        preferredOptions
+                      )
+                      const card = formatOrganizationApproveScheduleCard({ label: title })
+                      const chipTitle = card.title || title
+                      return (
+                        <div
+                          key={`assigned:${scheduleId}`}
+                          className="institution-approve-modal__assigned-item"
+                        >
+                          <span>{chipTitle}</span>
+                          {!assignedLocked && onToggle ? (
                             <ItemDeleteButton
                               className="item-delete-button"
-                              aria-label={`${card.title} 배정 삭제`}
-                              onClick={() => {
-                                if (option.scheduleId == null) return
-                                onToggle?.(option.scheduleId)
-                              }}
+                              aria-label={`${chipTitle} 배정 삭제`}
+                              onClick={() => onToggle(scheduleId)}
                             />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <span className="institution-approve-modal__assigned-empty">
-                      {ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}
-                    </span>
-                  )
-                }
-                view={null}
-              />
-            </DetailInfoForm.Row>
-          </DetailInfoForm>
-        </div>
-      ) : null}
+                          ) : null}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <span className="institution-approve-modal__assigned-empty">
+                    {assignedEmptyLabel}
+                  </span>
+                )
+              }
+              view={null}
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </div>
     </>
   )
 }
@@ -208,7 +293,9 @@ export function IndividualApproveScopeModal({
   preferredEducationSchedules?: PreferredEducationSchedule[]
   confirmLoading?: boolean
   onCancel: () => void
-  onConfirm: (payload: IndividualApproveScopeConfirmPayload) => void
+  onConfirm: (
+    payload: IndividualApproveScopeConfirmPayload
+  ) => IndividualApproveScopeConfirmResult | Promise<IndividualApproveScopeConfirmResult>
 }) {
   const { showAlert } = useCmsAlert()
   const programShape = useMemo(
@@ -232,12 +319,22 @@ export function IndividualApproveScopeModal({
       }),
     [preferredEducationSchedules, programShape, slotsQuery.data, slotsQuery.isSuccess]
   )
+  const plannedOptions = useMemo(
+    () => listPlannedEducationSlotOptions(slotsQuery.data),
+    [slotsQuery.data]
+  )
+  const preferredOptions = useMemo(
+    () => preferredOptionsForPlan(plan, preferredEducationSchedules, plannedOptions),
+    [plan, plannedOptions, preferredEducationSchedules]
+  )
   const selectionKey = planSelectionKey(open, plan)
   const [appliedSelectionKey, setAppliedSelectionKey] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [rejectedIds, setRejectedIds] = useState<number[]>([])
   if (appliedSelectionKey !== selectionKey) {
     setAppliedSelectionKey(selectionKey)
     setSelectedIds(open ? defaultIndividualApprovalScheduleIds(plan) : [])
+    setRejectedIds([])
   }
 
   const selection = validateIndividualApprovalScheduleSelection(plan, selectedIds)
@@ -245,6 +342,7 @@ export function IndividualApproveScopeModal({
   const confirmDisabled = slotsPending || slotsQuery.isError || !selection.ok
 
   const toggle = (scheduleId: number) => {
+    setRejectedIds(prev => prev.filter(id => id !== scheduleId))
     setSelectedIds(prev => {
       if (plan.kind === 'preferred-exact-one') return [scheduleId]
       if (prev.includes(scheduleId)) return prev.filter(id => id !== scheduleId)
@@ -253,9 +351,9 @@ export function IndividualApproveScopeModal({
   }
 
   const handleConfirm = (payload: PermissionModalPayload) => {
-    const reason = payload.reason.trim()
-    if (reason.length > 500) {
-      showAlert({ title: '승인 불가', content: '승인 사유는 500자 이하로 입력해 주세요.' })
+    const reason = normalizeIndividualApprovalReason(payload.reason)
+    if (!reason.ok) {
+      showAlert({ title: '승인 불가', content: reason.message })
       return
     }
     const next = validateIndividualApprovalScheduleSelection(plan, selectedIds)
@@ -263,12 +361,19 @@ export function IndividualApproveScopeModal({
       showAlert({ title: '승인 불가', content: next.message })
       return
     }
-    onConfirm({
-      reason,
-      confirmedScheduleIds: next.confirmedScheduleIds,
-      expectedScopeRevision: 0,
-      notifyTiming: payload.notifyTiming,
-      manualNotifyAt: payload.manualNotifyAt,
+    void Promise.resolve(
+      onConfirm({
+        reason: reason.reason,
+        confirmedScheduleIds: next.confirmedScheduleIds,
+        expectedScopeRevision: 0,
+        notifyTiming: payload.notifyTiming,
+        manualNotifyAt: payload.manualNotifyAt,
+      })
+    ).then(result => {
+      const rejected = result?.rejectedScheduleIds ?? []
+      if (rejected.length === 0) return
+      setRejectedIds(rejected)
+      setSelectedIds(prev => prev.filter(id => !rejected.includes(id)))
     })
   }
 
@@ -294,7 +399,15 @@ export function IndividualApproveScopeModal({
             프로그램 교육 일정을 불러오지 못했습니다.
           </p>
         ) : (
-          <ScheduleChoices plan={plan} selectedIds={selectedIds} onToggle={toggle} />
+          <IndividualEducationScheduleSections
+            plan={plan}
+            plannedOptions={plannedOptions}
+            preferredOptions={preferredOptions}
+            selectedIds={selectedIds}
+            rejectedIds={rejectedIds}
+            assignedLocked={plan.kind === 'all-program-slots'}
+            onToggle={toggle}
+          />
         )}
       </div>
     </PermissionModal>
@@ -316,7 +429,9 @@ export function IndividualBulkApproveScopeModal({
   program: ApprovalProgram
   confirmLoading?: boolean
   onCancel: () => void
-  onConfirm: (payload: IndividualBulkApproveScopeConfirmPayload) => void
+  onConfirm: (
+    payload: IndividualBulkApproveScopeConfirmPayload
+  ) => IndividualApproveScopeConfirmResult | Promise<IndividualApproveScopeConfirmResult>
 }) {
   const { showAlert } = useCmsAlert()
   const programShape = useMemo(
@@ -330,6 +445,10 @@ export function IndividualBulkApproveScopeModal({
     staleTime: 0,
     retry: false,
   })
+  const plannedOptions = useMemo(
+    () => listPlannedEducationSlotOptions(slotsQuery.data),
+    [slotsQuery.data]
+  )
   const plans = useMemo(
     () =>
       applicants.map(applicant => ({
@@ -348,8 +467,10 @@ export function IndividualBulkApproveScopeModal({
     : 'closed'
   const [appliedSelectionKey, setAppliedSelectionKey] = useState<string | null>(null)
   const [selectedByApplicant, setSelectedByApplicant] = useState<Record<string, number[]>>({})
+  const [rejectedIds, setRejectedIds] = useState<number[]>([])
   if (appliedSelectionKey !== selectionKey) {
     setAppliedSelectionKey(selectionKey)
+    setRejectedIds([])
     if (!open) {
       setSelectedByApplicant({})
     } else {
@@ -366,6 +487,11 @@ export function IndividualBulkApproveScopeModal({
     return {
       applicant: item.applicant,
       plan: item.plan,
+      preferredOptions: preferredOptionsForPlan(
+        item.plan,
+        item.applicant.preferredEducationSchedules,
+        plannedOptions
+      ),
       selection: validateIndividualApprovalScheduleSelection(item.plan, selected),
     }
   })
@@ -383,15 +509,28 @@ export function IndividualBulkApproveScopeModal({
       showAlert({ title: '승인 불가', content: '신청자별 교육 일정을 확인해 주세요.' })
       return
     }
-    onConfirm({
-      reason: reason.reason,
-      notifyTiming: payload.notifyTiming,
-      manualNotifyAt: payload.manualNotifyAt,
-      targets: resolvedTargets.map(item => ({
-        applicationId: item.applicant.id,
-        confirmedScheduleIds: item.selection.ok ? item.selection.confirmedScheduleIds : [],
-        expectedScopeRevision: 0,
-      })),
+    void Promise.resolve(
+      onConfirm({
+        reason: reason.reason,
+        notifyTiming: payload.notifyTiming,
+        manualNotifyAt: payload.manualNotifyAt,
+        targets: resolvedTargets.map(item => ({
+          applicationId: item.applicant.id,
+          confirmedScheduleIds: item.selection.ok ? item.selection.confirmedScheduleIds : [],
+          expectedScopeRevision: 0,
+        })),
+      })
+    ).then(result => {
+      const rejected = result?.rejectedScheduleIds ?? []
+      if (rejected.length === 0) return
+      setRejectedIds(rejected)
+      setSelectedByApplicant(prev => {
+        const next: Record<string, number[]> = {}
+        for (const [id, ids] of Object.entries(prev)) {
+          next[id] = ids.filter(scheduleId => !rejected.includes(scheduleId))
+        }
+        return next
+      })
     })
   }
 
@@ -399,7 +538,7 @@ export function IndividualBulkApproveScopeModal({
     <PermissionModal
       open={open}
       variant="approve"
-      className="individual-bulk-approve-scope-modal"
+      className="institution-approve-modal individual-bulk-approve-scope-modal"
       title="참여자 일괄 승인 안내"
       confirmLabel="승인"
       confirmLoading={confirmLoading}
@@ -424,11 +563,16 @@ export function IndividualBulkApproveScopeModal({
         ) : (
           resolvedTargets.map(item => (
             <div key={item.applicant.id}>
-              <p className="institution-approve-modal__schedule-label">{item.applicant.name}</p>
-              <ScheduleChoices
+              <p className="individual-approve-scope-modal__section-label">{item.applicant.name}</p>
+              <IndividualEducationScheduleSections
                 plan={item.plan}
+                plannedOptions={plannedOptions}
+                preferredOptions={item.preferredOptions}
                 selectedIds={selectedByApplicant[item.applicant.id] ?? []}
+                rejectedIds={rejectedIds}
+                assignedLocked={item.plan.kind === 'all-program-slots'}
                 onToggle={scheduleId => {
+                  setRejectedIds(prev => prev.filter(id => id !== scheduleId))
                   setSelectedByApplicant(prev => {
                     const current = prev[item.applicant.id] ?? []
                     const next =

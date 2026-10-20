@@ -627,7 +627,7 @@ export function useApplicantsDetail({
       }>
     }): Promise<
       | { status: 'skipped' }
-      | { status: 'error' }
+      | { status: 'error'; error?: unknown }
       | {
           status: 'ok'
           scheduleIds: number[]
@@ -717,7 +717,7 @@ export function useApplicantsDetail({
             ? `${message}\n최신 교육 일정을 다시 불러왔습니다. 선택을 확인한 뒤 다시 승인해 주세요.`
             : message,
         })
-        return { status: 'error' }
+        return { status: 'error', error }
       }
     },
     [applicationsRemote, programId, queryClient, showAlert]

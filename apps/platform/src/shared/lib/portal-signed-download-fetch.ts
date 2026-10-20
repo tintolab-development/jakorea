@@ -62,6 +62,7 @@ function assertNgrokSignedDownloadContentType(contentType: string): void {
 export async function fetchPortalSignedDownloadBlob(
   downloadUrl: string,
   requiredHeaders?: Record<string, string>,
+  options?: { acceptAnyContent?: boolean },
 ): Promise<Blob> {
   const url = downloadUrl.trim()
   if (!url) throw new Error('download url missing')
@@ -79,7 +80,14 @@ export async function fetchPortalSignedDownloadBlob(
   }
 
   if (isLocalNgrokPortalRawDownload(url)) {
-    assertNgrokSignedDownloadContentType(response.headers.get('Content-Type') ?? '')
+    const contentType = response.headers.get('Content-Type') ?? ''
+    if (options?.acceptAnyContent) {
+      if (contentType.toLowerCase().includes('text/html')) {
+        throw new Error('파일 응답이 아닙니다. ngrok 또는 파일 응답을 확인해 주세요.')
+      }
+    } else {
+      assertNgrokSignedDownloadContentType(contentType)
+    }
   }
 
   return response.blob()

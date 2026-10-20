@@ -52,11 +52,31 @@ function ConsentPreviewDate({ label }: { label: string }) {
   return <p className={previewTypography.previewDate}>{label}</p>
 }
 
-function ConsentPreviewSignature() {
+function ConsentPreviewSignature({
+  signerName,
+  signatureImageSrc,
+}: {
+  signerName?: string
+  signatureImageSrc?: string
+}) {
+  const name = signerName?.trim() ?? ''
+  const imageSrc = signatureImageSrc?.trim() ?? ''
   return (
-    <div className={previewTypography.previewSignature}>
+    <div
+      className={[
+        previewTypography.previewSignature,
+        name ? previewTypography.previewSignatureWithName : undefined,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <span className={previewTypography.previewSignatureLabel}>동의자</span>
-      <span className={previewTypography.previewSignatureMark}>(서명)</span>
+      {name ? <span className={previewTypography.previewSignatureName}>{name}</span> : null}
+      {imageSrc ? (
+        <img className={previewTypography.previewSignatureImage} src={imageSrc} alt="전자서명" />
+      ) : (
+        <span className={previewTypography.previewSignatureMark}>(서명)</span>
+      )}
     </div>
   )
 }
@@ -77,6 +97,7 @@ export function resolveConsentDocumentPreviewChrome(
   paragraph: WritingFormParagraph,
   nextParagraph: WritingFormParagraph | undefined,
   submittedDateLabel: string,
+  signature?: { signerName?: string; signatureImageSrc?: string },
 ): ConsentPreviewChrome | null {
   if (isDateParagraph(paragraph)) {
     return {
@@ -87,7 +108,12 @@ export function resolveConsentDocumentPreviewChrome(
 
   if (isSignatureParagraph(paragraph)) {
     return {
-      content: <ConsentPreviewSignature />,
+      content: (
+        <ConsentPreviewSignature
+          signerName={signature?.signerName}
+          signatureImageSrc={signature?.signatureImageSrc}
+        />
+      ),
       stack: 'signature',
     }
   }

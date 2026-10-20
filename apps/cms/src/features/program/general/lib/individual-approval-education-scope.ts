@@ -18,6 +18,7 @@ import {
 } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
+  extractApiErrorDetails,
   extractApiErrorMessage,
   getApiErrorCode,
   getApiErrorHttpStatus,
@@ -92,13 +93,24 @@ export const INDIVIDUAL_APPROVAL_OUTSIDE_PREFERENCE_MESSAGE =
 export const INDIVIDUAL_APPROVAL_ALL_SLOTS_MESSAGE =
   '일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정해야 합니다.'
 
-export const INDIVIDUAL_APPROVAL_REASON_MESSAGE = '승인 사유를 1자 이상 500자 이하로 입력해 주세요.'
+export const INDIVIDUAL_APPROVAL_DEFAULT_REASON = '교육 일정 확정'
 
-export const INDIVIDUAL_APPROVAL_UNRESOLVED_PREFERRED_MESSAGE =
-  '희망 일정에 교육 일정 ID(scheduleId)가 없어 선택할 수 없습니다. line 값은 일정 ID로 바꾸지 않습니다.'
+export const INDIVIDUAL_APPROVAL_REASON_MESSAGE = '승인 사유는 500자 이하로 입력해 주세요.'
 
-export const INDIVIDUAL_APPROVAL_UNMATCHED_PREFERRED_MESSAGE =
-  '신청 희망 일정이 프로그램 정의 교육 슬롯과 연결되지 않아 선택할 수 없습니다.'
+export const INDIVIDUAL_PREFERRED_PERIOD_NOTE = '신청 희망 기간'
+
+export const INDIVIDUAL_PREFERRED_AMBIGUOUS_NOTE =
+  '동일 시간 슬롯이 여러 개라 자동 매칭할 수 없습니다.'
+
+export const INDIVIDUAL_APPROVAL_NO_PREFERRED_MESSAGE = '신청 희망 교육 일정이 없습니다.'
+
+export const INDIVIDUAL_APPROVAL_NO_SELECTABLE_PREFERRED_MESSAGE =
+  '배정할 수 있는 신청 희망 일정이 없습니다.'
+
+const REJECTED_EDUCATION_SCHEDULE_CODES = new Set([
+  'EDUCATION_SCOPE_SCHEDULE_NOT_AVAILABLE',
+  'GENERAL_INDIVIDUAL_SCHEDULE_NOT_IN_PREFERENCE',
+])
 
 function positiveScheduleId(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
@@ -175,6 +187,25 @@ function formatInstantRange(startAt?: string | null, endAt?: string | null): str
   return range || null
 }
 
+function isDisplayableScheduleLabel(label: string | null | undefined): boolean {
+  const trimmed = label?.trim() ?? ''
+  if (!trimmed) return false
+  if (/^line:\d+$/i.test(trimmed)) return false
+  if (/^\d+$/.test(trimmed)) return false
+  return true
+}
+
+function formatSessionRoundLabel(
+  sessionNo: number | null | undefined,
+  scheduleId: number | null | undefined
+): string | null {
+  if (sessionNo == null || !Number.isFinite(sessionNo)) return null
+  const round = Math.trunc(sessionNo)
+  if (round <= 0 || round > 99) return null
+  if (scheduleId != null && round === scheduleId) return null
+  return `${round}회차`
+}
+
 export function formatIndividualEducationSlotTitle(input: {
   scheduleId: number
   sessionNo?: number | null
@@ -182,14 +213,80 @@ export function formatIndividualEducationSlotTitle(input: {
   endAt?: string | null
   label?: string | null
 }): string {
-  const label = input.label?.trim()
-  if (label) return formatCmsScheduleDisplayLabel(label)
-  const session =
-    input.sessionNo != null && Number.isFinite(input.sessionNo)
-      ? `${input.sessionNo}회차`
-      : `일정 ${input.scheduleId}`
+  if (isDisplayableScheduleLabel(input.label)) {
+    return formatCmsScheduleDisplayLabel(input.label!.trim())
+  }
   const range = formatInstantRange(input.startAt, input.endAt)
-  return range ? `${session} · ${range}` : session
+  const session = formatSessionRoundLabel(input.sessionNo, input.scheduleId)
+  if (range) return session ? `${session} · ${range}` : range
+  if (session) return session
+  return '교육 일정'
+}
+
+function formatIndividualPreferredScheduleTitle(
+  preferred: PreferredEducationSchedule,
+  index: number
+): string {
+  const range = formatInstantRange(preferred.startAt, preferred.endAt)
+  const scheduleId = positiveScheduleId(preferred.scheduleId)
+  if (scheduleId != null) {
+    return formatIndividualEducationSlotTitle({
+      scheduleId,
+      startAt: preferred.startAt,
+      endAt: preferred.endAt,
+      label: preferred.label,
+    })
+  }
+  if (range) return range
+  if (isDisplayableScheduleLabel(preferred.label)) {
+    return formatCmsScheduleDisplayLabel(preferred.label!.trim())
+  }
+  return `신청 희망 일정 ${index + 1}`
+}
+
+export function listPlannedEducationSlotOptions(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+): IndividualApprovalScheduleOption[] {
+  return listSelectableProgramDefinedEducationSlots(slots).map(slot => {
+    const scheduleId = slot.scheduleId as number
+    return {
+      key: `slot:${scheduleId}`,
+      scheduleId,
+      title: formatIndividualEducationSlotTitle({
+        scheduleId,
+        sessionNo: slot.sessionNo,
+        startAt: slot.startAt,
+        endAt: slot.endAt,
+      }),
+      selectable: false,
+      blockedReason: null,
+    }
+  })
+}
+
+function preferredNote(
+  preferred: PreferredEducationSchedule,
+  scheduleId: number | null,
+  selectableIds: ReadonlySet<number>
+): string | null {
+  if (preferred.unresolvedReason === 'AMBIGUOUS_SCHEDULE_MATCH') {
+    return INDIVIDUAL_PREFERRED_AMBIGUOUS_NOTE
+  }
+  if (
+    scheduleId == null ||
+    preferred.unresolvedReason === 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' ||
+    !selectableIds.has(scheduleId)
+  ) {
+    return INDIVIDUAL_PREFERRED_PERIOD_NOTE
+  }
+  return null
+}
+
+export function listIndividualPreferredScheduleOptions(
+  preferred: ReadonlyArray<PreferredEducationSchedule> | null | undefined,
+  selectableIds: ReadonlySet<number>
+): IndividualApprovalScheduleOption[] {
+  return (preferred ?? []).map((item, index) => preferredOption(item, index, selectableIds))
 }
 
 function assignmentKind(
@@ -208,36 +305,19 @@ function preferredOption(
   selectableIds: ReadonlySet<number>
 ): IndividualApprovalScheduleOption {
   const scheduleId = positiveScheduleId(preferred.scheduleId)
-  const title = formatIndividualEducationSlotTitle({
-    scheduleId: scheduleId ?? index + 1,
-    startAt: preferred.startAt,
-    endAt: preferred.endAt,
-    label: preferred.label,
-  })
-  if (scheduleId == null) {
-    return {
-      key: `preferred-unresolved:${index}`,
-      scheduleId: null,
-      title,
-      selectable: false,
-      blockedReason: INDIVIDUAL_APPROVAL_UNRESOLVED_PREFERRED_MESSAGE,
-    }
-  }
-  if (!selectableIds.has(scheduleId)) {
-    return {
-      key: `preferred-unmatched:${scheduleId}`,
-      scheduleId,
-      title,
-      selectable: false,
-      blockedReason: INDIVIDUAL_APPROVAL_UNMATCHED_PREFERRED_MESSAGE,
-    }
-  }
+  const selectable = scheduleId != null && selectableIds.has(scheduleId)
+  const note = selectable ? null : preferredNote(preferred, scheduleId, selectableIds)
   return {
-    key: `preferred:${scheduleId}`,
+    key:
+      scheduleId != null
+        ? selectable
+          ? `preferred:${scheduleId}`
+          : `preferred-unmatched:${scheduleId}:${index}`
+        : `preferred-unresolved:${index}`,
     scheduleId,
-    title,
-    selectable: true,
-    blockedReason: null,
+    title: formatIndividualPreferredScheduleTitle(preferred, index),
+    selectable,
+    blockedReason: note,
   }
 }
 
@@ -277,34 +357,21 @@ export function buildIndividualApprovalSchedulePlan(input: {
       kind,
       blockedReason: null,
       lockedScheduleIds,
-      options: selectable.map(slot => ({
-        key: `slot:${slot.scheduleId}`,
-        scheduleId: slot.scheduleId as number,
-        title: formatIndividualEducationSlotTitle({
-          scheduleId: slot.scheduleId as number,
-          sessionNo: slot.sessionNo,
-          startAt: slot.startAt,
-          endAt: slot.endAt,
-        }),
-        selectable: false,
-        blockedReason: null,
-      })),
+      options: listPlannedEducationSlotOptions(input.slots),
     }
   }
 
-  const options = (input.preferred ?? []).map((item, index) =>
-    preferredOption(item, index, selectableIds)
-  )
+  const options = listIndividualPreferredScheduleOptions(input.preferred, selectableIds)
   const selectableOptions = options.filter(option => option.selectable && option.scheduleId != null)
   if (selectableOptions.length === 0) {
     return {
       kind,
       blockedReason:
-        options.some(option => option.scheduleId == null)
-          ? INDIVIDUAL_APPROVAL_UNRESOLVED_PREFERRED_MESSAGE
-          : options.length > 0
-            ? INDIVIDUAL_APPROVAL_UNMATCHED_PREFERRED_MESSAGE
-            : '신청 희망 교육 일정이 없습니다.',
+        selectable.length === 0
+          ? INDIVIDUAL_APPROVAL_NO_SLOTS_MESSAGE
+          : options.length === 0
+            ? INDIVIDUAL_APPROVAL_NO_PREFERRED_MESSAGE
+            : INDIVIDUAL_APPROVAL_NO_SELECTABLE_PREFERRED_MESSAGE,
       options,
       lockedScheduleIds: [],
     }
@@ -381,10 +448,10 @@ export function normalizeIndividualApprovalReason(
   reason: string
 ): { ok: true; reason: string } | { ok: false; message: string } {
   const trimmed = reason.trim()
-  if (trimmed.length < 1 || trimmed.length > 500) {
+  if (trimmed.length > 500) {
     return { ok: false, message: INDIVIDUAL_APPROVAL_REASON_MESSAGE }
   }
-  return { ok: true, reason: trimmed }
+  return { ok: true, reason: trimmed || INDIVIDUAL_APPROVAL_DEFAULT_REASON }
 }
 
 export function buildIndividualApprovalWithScopeRequest(input: {
@@ -468,6 +535,29 @@ export function isEducationScopeRevisionConflict(error: unknown): boolean {
 
 export function isEducationScopeCertificateLocked(error: unknown): boolean {
   return getApiErrorCode(error) === 'EDUCATION_SCOPE_HAS_CERTIFICATE'
+}
+
+export function isRejectedEducationScheduleSelectionError(error: unknown): boolean {
+  const code = getApiErrorCode(error)
+  return code != null && REJECTED_EDUCATION_SCHEDULE_CODES.has(code)
+}
+
+export function parseRejectedEducationScheduleIds(error: unknown): number[] {
+  const data =
+    error && typeof error === 'object' && 'response' in error
+      ? (error as { response?: { data?: unknown } }).response?.data
+      : error
+  const raw = extractApiErrorDetails(data).rejectedScheduleIds?.trim()
+  if (!raw) return []
+  const seen = new Set<number>()
+  const ids: number[] = []
+  for (const part of raw.split(',')) {
+    const scheduleId = positiveScheduleId(Number(part.trim()))
+    if (scheduleId == null || seen.has(scheduleId)) continue
+    seen.add(scheduleId)
+    ids.push(scheduleId)
+  }
+  return ids
 }
 
 export function formatIndividualApprovalScopeErrorMessage(error: unknown): string {

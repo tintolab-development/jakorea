@@ -43,6 +43,8 @@ export type PlatformConsentFormBodyProps = {
   showClosingRecipient?: boolean
   /** 지급조서 확인 — 제출된 기본 정보. 없으면 항목은 `-` */
   paymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
+  signerName?: string
+  signatureImageSrc?: string
 }
 
 function shouldHideParagraph(
@@ -149,6 +151,8 @@ export function PlatformConsentFormBody({
   submittedDateLabel = '-',
   showClosingRecipient = false,
   paymentBasicInfo,
+  signerName,
+  signatureImageSrc,
 }: PlatformConsentFormBodyProps) {
   let numberedIndex = 0
 
@@ -179,6 +183,7 @@ export function PlatformConsentFormBody({
               paragraph,
               draft.paragraphs[index + 1],
               submittedDateLabel,
+              { signerName, signatureImageSrc },
             )
           : null
 

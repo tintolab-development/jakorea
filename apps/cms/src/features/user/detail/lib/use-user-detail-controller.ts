@@ -1288,6 +1288,9 @@ export function useUserDetailController({
           void queryClient.invalidateQueries({
             queryKey: memberQueryKeys.consentRecords(displayUser.memberId),
           })
+          void queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.consentSummaries(displayUser.memberId),
+          })
         }
       }
       if (basicInfoEditScope === 'profile') {

@@ -11,6 +11,7 @@ import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/parag
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
+import { expandEducationScheduleChoiceSlots } from '@jakorea/form-schema/program-application'
 
 const SELF_INTRO_ANSWER_KEYS = [
   PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro,
@@ -361,6 +362,32 @@ function formatScheduleRangeLabel(input: {
   return name ? `${label} | ${name}` : label
 }
 
+const FIXED_SCHEDULE_SESSION_SUFFIX_RE = /\|\s*\d+\s*차시\s*$/
+
+function withSourceSessionSuffix(
+  slot: string,
+  lines: readonly string[] | undefined,
+): string {
+  if (FIXED_SCHEDULE_SESSION_SUFFIX_RE.test(slot)) return slot
+  const suffix = (lines ?? [])
+    .map(line => line.trim().match(FIXED_SCHEDULE_SESSION_SUFFIX_RE)?.[0])
+    .find((value): value is string => Boolean(value))
+  return suffix ? `${slot} ${suffix}` : slot
+}
+
+/**
+ * 신청 폼 `line:N`과 동일하게 예정일 줄을 `|` 슬롯으로 펼친 뒤 인덱스를 본다.
+ * 한 줄에 날짜가 두 개인 날짜지정 선택지를 원본 배열 인덱스로 찾으면 `line:1`이 빠진다.
+ */
+function resolveEducationScheduleLineLabel(
+  index: number,
+  lines: readonly string[] | undefined,
+): string | undefined {
+  const slot = expandEducationScheduleChoiceSlots(lines)[index]?.trim()
+  if (!slot) return undefined
+  return withSourceSessionSuffix(slot, lines)
+}
+
 function resolveOneScheduleOptionToken(
   token: string,
   lookup: PreferredScheduleProgramLookup,
@@ -368,8 +395,7 @@ function resolveOneScheduleOptionToken(
   const lineMatch = token.trim().match(/^line:(\d+)$/i)
   if (lineMatch) {
     const index = Number(lineMatch[1])
-    const line = lookup.educationScheduleLines?.[index]?.trim()
-    return line || undefined
+    return resolveEducationScheduleLineLabel(index, lookup.educationScheduleLines)
   }
   const trimmed = token.trim()
   const educationPeriodMatch = trimmed.match(
