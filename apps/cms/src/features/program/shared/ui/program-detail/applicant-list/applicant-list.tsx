@@ -1919,7 +1919,8 @@ export function ApplicantList({
                 toInstructorApplicationNotificationRequest(
                   payload.notifyTiming,
                   payload.manualNotifyAt
-                )
+                ),
+                payload.faultParty
               )
               if (!success) return
               setInstructorCancelApprovalTarget(null)

@@ -12,6 +12,8 @@ import {
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
 import {
+  INSTRUCTOR_JA_FAULT_PARTY_HINT,
+  INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -84,6 +86,8 @@ export interface PermissionModalPayload {
   notifyTiming: PermissionModalNotifyTiming
   /** `notifyTiming === 'manual'` 일 때 확정된 일시 */
   manualNotifyAt?: Dayjs | null
+  /** 강사 취소 귀책. `faultPartyRequired`일 때 USER | ADMIN */
+  faultParty?: 'USER' | 'ADMIN'
 }
 
 export type PermissionModalVariant = 'reject' | 'approve'
@@ -119,6 +123,8 @@ export type PermissionModalProps = {
   className?: string
   /** true면 알림 발송 필드를 사유 입력 위에 표시 (기본: 사유 → 알림) */
   notifyBeforeReason?: boolean
+  /** 강사 배정/승인 취소 — 취소 귀책 필수 선택 (기본값 없음) */
+  faultPartyRequired?: boolean
 }
 
 function resolveVariantDefaults(variant: PermissionModalVariant): {
@@ -172,6 +178,7 @@ export function PermissionModal({
   infoCallout,
   className: classNameProp,
   notifyBeforeReason = false,
+  faultPartyRequired = false,
 }: PermissionModalProps) {
   const { showAlert } = useCmsAlert()
   const defaults = resolveVariantDefaults(variant)
@@ -182,6 +189,7 @@ export function PermissionModal({
   const reasonPlaceholder = reasonPlaceholderProp ?? defaults.reasonPlaceholder
 
   const [reason, setReason] = useState('')
+  const [faultParty, setFaultParty] = useState<'USER' | 'ADMIN' | undefined>(undefined)
   const [notifyTiming, setNotifyTiming] = useState<PermissionModalNotifyTiming>('immediate')
   const [manualNotifyAt, setManualNotifyAt] = useState<Dayjs | null>(null)
   const [dateTimePickerOpen, setDateTimePickerOpen] = useState(false)
@@ -191,6 +199,7 @@ export function PermissionModal({
   useEffect(() => {
     if (!open) return
     setReason('')
+    setFaultParty(undefined)
     setNotifyTiming('immediate')
     setManualNotifyAt(null)
     setDateTimePickerOpen(false)
@@ -207,6 +216,13 @@ export function PermissionModal({
     const trimmed = reason.trim()
     if (requireReason && !trimmed) {
       showIncompleteRequiredAlert()
+      return
+    }
+    if (faultPartyRequired && faultParty !== 'USER' && faultParty !== 'ADMIN') {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE,
+      })
       return
     }
     if (showNotifyTiming && notifyTiming === 'manual' && !manualNotifyAt) {
@@ -228,6 +244,7 @@ export function PermissionModal({
       reason: trimmed,
       notifyTiming,
       manualNotifyAt: notifyTiming === 'manual' ? manualNotifyAt : null,
+      ...(faultPartyRequired && faultParty ? { faultParty } : {}),
     })
   }
 
@@ -275,6 +292,28 @@ export function PermissionModal({
           {message ? <PermissionModalMessage text={message} /> : children}
 
           {infoCallout ? <div className="permission-modal__info-callout">{infoCallout}</div> : null}
+
+          {faultPartyRequired ? (
+            <div className="permission-modal__field">
+              <PermissionModalFieldLabel required>취소 귀책</PermissionModalFieldLabel>
+              <CmsRadio.Group
+                size="medium"
+                value={faultParty}
+                onChange={e => {
+                  const next = e.target.value
+                  if (next === 'USER' || next === 'ADMIN') setFaultParty(next)
+                }}
+              >
+                <CmsRadio value="USER" size="medium">
+                  강사 사유
+                </CmsRadio>
+                <CmsRadio value="ADMIN" size="medium">
+                  운영 사유
+                </CmsRadio>
+              </CmsRadio.Group>
+              <p className="permission-modal__hint">{INSTRUCTOR_JA_FAULT_PARTY_HINT}</p>
+            </div>
+          ) : null}
 
           {notifyBeforeReason && showNotifyTiming ? (
             <div className="permission-modal__field">

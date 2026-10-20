@@ -50,6 +50,7 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
@@ -440,8 +441,15 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
+      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
       const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
       const removedLabels = removedRows.map(r => r.scheduleLabel)
+      const cancelBody = toInstructorAssignmentCancelRequest({
+        reason: payload.reason,
+        notifyTiming: payload.notifyTiming,
+        manualNotifyAt: payload.manualNotifyAt,
+        faultParty: payload.faultParty,
+      })
 
       if (!assignment.remoteEnabled) {
         notifyProgramApiUnavailable(
@@ -454,7 +462,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         for (const row of removedRows) {
           const assignmentId = row.assignmentId ?? row.id
           if (!assignmentId) continue
-          await cancelInstructorAssignmentRemote(String(assignmentId))
+          await cancelInstructorAssignmentRemote(String(assignmentId), cancelBody)
         }
         await assignment.invalidate()
         setUnassignConfirmOpen(false)

@@ -19,16 +19,17 @@ export interface InstructorJaEvaluationResponse {
   administrativeAdjustmentScore?: number;
   cancellationAdjustmentScore?: number;
   lateReportAdjustmentScore?: number;
-  /** 정산 신청 기한 미준수 자동 감점 */
+  /** 호환용. 항상 0. 화면에서 행 제거/숨김. */
   lateSettlementAdjustmentScore?: number;
+  /** fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음. */
   totalScore?: number;
-  /** 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). */
+  /** 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null. */
   currentGrade?: InstructorJaEvaluationResponseCurrentGrade;
   evaluatedAt?: string;
   calculatedAt?: string;
   gradeChangedAt?: string;
-  /** 활성 정책 버전. 정책 미초기화면 null. */
+  /** 활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 미초기화면 null. */
   policyVersion?: string;
-  /** false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인. */
+  /** true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음. */
   policyReady?: boolean;
 }

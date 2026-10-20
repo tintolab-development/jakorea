@@ -56,6 +56,7 @@ export function InstructorCancelApprovalModal({
       reasonRequiredMessage="취소 사유를 입력해 주세요."
       notifyTimingOptions={variant === 'alreadySent' ? 'two' : 'three'}
       notifyBeforeReason
+      faultPartyRequired
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}

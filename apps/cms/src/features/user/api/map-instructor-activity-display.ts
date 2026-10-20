@@ -150,11 +150,15 @@ export function toInstructorFeeGradeDisplayLabel(
   const upper = trimmed.toUpperCase()
   if (INSTRUCTOR_STATUS_CODES.has(upper)) return undefined
   if (/승인|반려|대기/.test(trimmed)) return undefined
+  if (upper === 'SPECIAL' || upper === 'SPECIAL_LECTURE' || /특강/.test(trimmed)) {
+    return undefined
+  }
+  if (/^(JA_)?[ABCD]$/.test(upper)) return undefined
 
   const code = toInstructorFeeGradeCode(trimmed)
   if (code) return INSTRUCTOR_FEE_GRADE_LABELS[code]
 
-  return trimmed
+  return undefined
 }
 
 /** CmsSelect value — wire(`1`/`GRADE_1`)·부분(`1급`)·라벨(`1급 강사비`)을 옵션 value와 맞춘다. */
@@ -170,7 +174,7 @@ export function toInstructorFeeGradeApiValue(raw: string | undefined | null): st
   const code = toInstructorFeeGradeCode(trimmed)
   if (code) return code.replace('GRADE_', '')
 
-  return trimmed
+  return undefined
 }
 
 /**

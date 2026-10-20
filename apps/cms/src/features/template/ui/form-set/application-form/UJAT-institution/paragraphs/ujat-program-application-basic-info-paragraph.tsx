@@ -1,4 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -108,68 +109,70 @@ export function UjatProgramApplicationBasicInfoParagraph({
   )
 
   return (
-    <DetailInfoForm title="기본 정보" hideHeader mode="edit">
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="신청 기관명"
-          fullRow
-          readOnlyDisplay
-          view={autoFilledInstitutionName}
-        />
-      </DetailInfoForm.Row>
+    <div className="program-registration-paragraph">
+      <DetailInfoForm title="기본 정보" hideHeader mode="edit">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="신청 기관명"
+            fullRow
+            readOnlyDisplay
+            view={autoFilledInstitutionName}
+          />
+        </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="기관 소재지"
-          readOnlyDisplay
-          view={autoFilledInstitutionAddress}
-        />
-        <DetailInfoForm.Field
-          label="상세 주소"
-          edit={
-            <CmsInput
-              inputSize="small"
-              placeholder="교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요"
-              width="100%"
-              value={detailAddress}
-              onChange={e => setDetailAddress(e.target.value)}
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="담당 교사 정보" fullRow edit={teacherInfoInputs} view="-" />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="기타 요청사항"
-          fullRow
-          edit={
-            <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-              <CmsCheckbox checkboxSize="medium"
-                checked={otherRequestsNotApplicable}
-                onChange={e => setOtherRequestsNotApplicable(e.target.checked)}
-              >
-                해당 없음
-              </CmsCheckbox>
-              <DetailInfoForm.InputsSeparator />
-              <CmsTextArea
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="기관 소재지"
+            readOnlyDisplay
+            view={autoFilledInstitutionAddress}
+          />
+          <DetailInfoForm.Field
+            label="상세 주소"
+            edit={
+              <CmsInput
                 inputSize="small"
-                rows={1}
-                placeholder="기타 요청사항을 입력해 주세요."
+                placeholder="교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요"
                 width="100%"
-                value={otherRequests}
-                onChange={e => setOtherRequests(e.target.value)}
-                disabled={otherRequestsNotApplicable}
+                value={detailAddress}
+                onChange={e => setDetailAddress(e.target.value)}
               />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field label="담당 교사 정보" fullRow edit={teacherInfoInputs} view="-" />
+        </DetailInfoForm.Row>
+
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="기타 요청사항"
+            fullRow
+            edit={
+              <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
+                <CmsCheckbox checkboxSize="medium"
+                  checked={otherRequestsNotApplicable}
+                  onChange={e => setOtherRequestsNotApplicable(e.target.checked)}
+                >
+                  해당 없음
+                </CmsCheckbox>
+                <DetailInfoForm.InputsSeparator />
+                <CmsTextArea
+                  inputSize="small"
+                  rows={1}
+                  placeholder="기타 요청사항을 입력해 주세요."
+                  width="100%"
+                  value={otherRequests}
+                  onChange={e => setOtherRequests(e.target.value)}
+                  disabled={otherRequestsNotApplicable}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
   )
 }

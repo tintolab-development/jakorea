@@ -114,6 +114,13 @@ export const PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE 
 /** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
 export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
 
+/** 강사 배정/승인 취소 — 귀책 미선택 */
+export const INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE = '취소 귀책을 선택해 주세요.'
+
+/** 강사 사유 취소가 JA 평가 감점에 반영됨을 안내 */
+export const INSTRUCTOR_JA_FAULT_PARTY_HINT =
+  '강사 사유 선택 시 JA 평가 등급 감점에 반영됩니다'
+
 /** 참여 기관 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
 export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
   '배정 취소할 강사를 선택해 주세요.'

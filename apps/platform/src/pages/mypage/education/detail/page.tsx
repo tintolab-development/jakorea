@@ -234,8 +234,9 @@ export function MypageEducationDetailPage() {
     if (!isTeacher || !isTeacherOrgActivityDetail) return false
     return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
       policyQueryEnabled: true,
-      // 캐시가 있어도 다른 신청 건으로 전환·재검증 중에는 학생명단 탭을 잠시 노출하지 않습니다.
-      policyLoading: studentDocumentPolicyQuery.isLoading || studentDocumentPolicyQuery.isFetching,
+      // 이 신청 건의 policy가 아직 없을 때만 탭을 숨깁니다.
+      // 업로드 취소 등으로 같은 키를 다시 조회할 때는 캐시를 유지해 탭·본문이 바뀌지 않게 합니다.
+      policyLoading: studentDocumentPolicyQuery.isPending,
       policyError: studentDocumentPolicyQuery.isError,
     })
   }, [
@@ -243,12 +244,10 @@ export function MypageEducationDetailPage() {
     isTeacherOrgActivityDetail,
     studentDocumentPolicyQuery.data,
     studentDocumentPolicyQuery.isError,
-    studentDocumentPolicyQuery.isFetching,
-    studentDocumentPolicyQuery.isLoading,
+    studentDocumentPolicyQuery.isPending,
   ])
   const isStudentDocumentPolicyPending =
-    isTeacherOrgActivityDetail &&
-    (studentDocumentPolicyQuery.isLoading || studentDocumentPolicyQuery.isFetching)
+    isTeacherOrgActivityDetail && studentDocumentPolicyQuery.isPending
 
   const activityTabOptions = useMemo(
     () =>
@@ -673,6 +672,7 @@ export function MypageEducationDetailPage() {
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
           listTitle={EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL}
+          absenceReasonEnabled={!isOrganizationEducationApplication(application, program)}
         />
       )
     }

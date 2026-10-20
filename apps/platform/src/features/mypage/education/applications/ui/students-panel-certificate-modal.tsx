@@ -110,7 +110,9 @@ export function StudentsPanelCertificateModal({
       >
         <div className={styles.body}>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
-            무단결석 없이 마지막까지 모든 교육을 이수한 학생만 수료증 발급이 가능합니다.
+            무단결석 없이 마지막까지 모든 교육을 이수한 학생만 수료증 다운로드가 가능합니다.
+            파일은 관리자 수료증 양식의 제목·본문·이사장명·하단 정보를 따릅니다. 배경·로고·직인은
+            포함되지 않을 수 있습니다.
           </PFText>
 
           <div className={styles.tableFrame}>

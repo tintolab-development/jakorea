@@ -1614,7 +1614,8 @@ export function useApplicantsDetail({
   const handleCancelApprovalInstructor = async (
     id: string,
     reason = '승인 취소',
-    notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
+    notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest,
+    faultParty?: 'USER' | 'ADMIN'
   ) => {
     if (!applicationsRemote.instructorRemoteEnabled) {
       notifyProgramApiUnavailable(
@@ -1624,7 +1625,7 @@ export function useApplicantsDetail({
       return false
     }
     try {
-      await applicationsRemote.cancelInstructorApproval(id, reason, notification)
+      await applicationsRemote.cancelInstructorApproval(id, reason, notification, faultParty)
       await applicationsRemote.invalidateApplications()
       return true
     } catch (error) {

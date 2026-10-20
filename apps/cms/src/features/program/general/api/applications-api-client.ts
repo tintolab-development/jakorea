@@ -132,6 +132,13 @@ export type InstructorApplicationDecisionWithReasonRequest = {
   notification?: InstructorApplicationNotificationRequest
 }
 
+/** OpenAPI `InstructorApplicationApprovalCancellationRequest` */
+export type InstructorApplicationApprovalCancellationRequest = {
+  reason: string
+  notification?: InstructorApplicationNotificationRequest
+  faultParty?: 'USER' | 'ADMIN' | null
+}
+
 export type InstructorApplicationUpdatePayload = {
   managerComment?: string | null
   feePolicy?: InstructorApplicationFeePolicyRequest | null
@@ -537,7 +544,7 @@ export async function rejectInstructorApplicationRemote(
 
 export async function cancelInstructorApplicationApprovalRemote(
   applicationId: string,
-  payload: InstructorApplicationDecisionWithReasonRequest
+  payload: InstructorApplicationApprovalCancellationRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({

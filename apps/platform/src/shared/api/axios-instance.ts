@@ -73,6 +73,21 @@ function getErrorCode(data: unknown): string | undefined {
   return undefined
 }
 
+/** blob 다운로드 실패 본문이 JSON이면 기존 401/403 코드 분기가 동작하도록 복원합니다. 200 본문은 건드리지 않습니다. */
+async function hydrateJsonFromBlobError(error: AxiosError<TErrorResponse>): Promise<void> {
+  const response = error.response
+  if (!response || error.config?.responseType !== 'blob') return
+  const data: unknown = response.data
+  if (typeof Blob === 'undefined' || !(data instanceof Blob)) return
+  try {
+    const text = (await data.text()).trim()
+    if (!text.startsWith('{') && !text.startsWith('[')) return
+    response.data = JSON.parse(text) as TErrorResponse
+  } catch {
+    // ZIP/HTML 등 JSON이 아니면 원본 Blob을 유지합니다.
+  }
+}
+
 function resolveRequestUrl(config: InternalAxiosRequestConfig): string {
   const raw = `${config.baseURL ?? ''}${config.url ?? ''}`
   try {
@@ -348,6 +363,7 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   response => response,
   async (error: AxiosError<TErrorResponse>) => {
+    await hydrateJsonFromBlobError(error)
     const { response, config } = error
 
     if (!response || !config) {
