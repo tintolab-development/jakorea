@@ -5,7 +5,6 @@ import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/
 import type { PermissionModalNotifyTiming } from '@/shared/components/permission-modal'
 import {
   buildLectureFeeBasisDisplay,
-  DEFAULT_LECTURE_FEE_PAYMENT_CRITERIA,
   parseLectureFeeAmountDigits,
   resolveInstructorFeeGradeCode,
   resolveProgramBasisFeePolicyFromWageRows,
@@ -113,7 +112,7 @@ export function useInstructorFeeApprovalModal(params: {
   const [instructorFeeGrade, setInstructorFeeGrade] = useState(
     INSTRUCTOR_FEE_GRADE_OPTIONS[0]!.value
   )
-  const [lectureFeeMeasure, setLectureFeeMeasure] = useState(DEFAULT_LECTURE_FEE_PAYMENT_CRITERIA)
+  const [lectureFeeMeasure, setLectureFeeMeasure] = useState('')
   const [lectureFeeAmount, setLectureFeeAmount] = useState('')
   const [notifyTiming, setNotifyTiming] = useState<PermissionModalNotifyTiming>('immediate')
   const [manualNotifyAt, setManualNotifyAt] = useState<Dayjs | null>(null)
@@ -127,7 +126,7 @@ export function useInstructorFeeApprovalModal(params: {
     if (!open) return
     setLectureFeeBasisType('program')
     setInstructorFeeGrade(resolveDefaultInstructorFeeGrade(instructorFeeGradeLabel))
-    setLectureFeeMeasure(DEFAULT_LECTURE_FEE_PAYMENT_CRITERIA)
+    setLectureFeeMeasure('')
     setLectureFeeAmount('')
     setNotifyTiming('immediate')
     setManualNotifyAt(null)
@@ -166,7 +165,7 @@ export function useInstructorFeeApprovalModal(params: {
       if (next === 'program') {
         setInstructorFeeGrade(resolveDefaultInstructorFeeGrade(instructorFeeGradeLabel))
       } else if (next === 'special_lecture' || next === 'other_labor') {
-        setLectureFeeMeasure(prev => prev.trim() || DEFAULT_LECTURE_FEE_PAYMENT_CRITERIA)
+        setLectureFeeMeasure('')
       }
     },
     [instructorFeeGradeLabel]
