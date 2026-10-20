@@ -107,7 +107,9 @@ describe('IndividualApproveScopeModal', () => {
     expect(screen.getByText('프로그램 신청 승인 안내')).toBeTruthy()
     expect(screen.getByText(/김참여자/)).toBeTruthy()
     expect(screen.getByText(/회원에게 승인 알림이 발송됩니다/)).toBeTruthy()
-    expect(screen.getByText('배정된 일정')).toBeTruthy()
+    expect(screen.getByText('배정일')).toBeTruthy()
+    expect(screen.getByText('교육 진행 예정일')).toBeTruthy()
+    expect(screen.getByText('신청일')).toBeTruthy()
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168351])
@@ -192,8 +194,46 @@ describe('IndividualApproveScopeModal', () => {
     renderSingle({
       preferredEducationSchedules: [preferred(null, 'line:1')],
     })
-    expect((await screen.findAllByText(/scheduleId/)).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('신청 희망 기간')).length).toBeGreaterThan(0)
     expect((screen.getByRole('button', { name: '승인' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: /^line:1$/ })).toBeNull()
+  })
+
+  it('keeps a period window informational and approves only the matched slot', async () => {
+    fetchSlots.mockResolvedValue([educationSlot(168385)])
+    const { onConfirm } = renderSingle({
+      program: programOf('curriculum', 'multi'),
+      preferredEducationSchedules: [
+        {
+          ...preferred(null, '11월 희망 기간'),
+          startAt: '2026-11-01T00:00:00Z',
+          endAt: '2026-11-30T00:00:00Z',
+          unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH',
+        },
+        { ...preferred(168385, '매칭 슬롯'), round: 2 },
+      ],
+    })
+    expect((await screen.findAllByText('신청 희망 기간')).length).toBeGreaterThan(0)
+    expect(
+      (screen.getByRole('button', { name: /신청 희망 기간/ }) as HTMLButtonElement).disabled
+    ).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: /매칭 슬롯/ }))
+    submitApproval()
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168385])
+  })
+
+  it('highlights rejected schedule cards and deselects them after 409', async () => {
+    fetchSlots.mockResolvedValue([educationSlot(168351)])
+    const { onConfirm } = renderSingle({})
+    onConfirm.mockResolvedValue({ rejectedScheduleIds: [168351] })
+    const card = await screen.findByRole('button', { name: /^2026\. 11\. 05\(목\)$/ })
+    expect(card.getAttribute('aria-pressed')).toBe('true')
+    submitApproval()
+    await waitFor(() => {
+      expect(card.className).toContain('rejected')
+      expect(card.getAttribute('aria-pressed')).toBe('false')
+    })
   })
 
   it('disables approval when education slots are empty', async () => {

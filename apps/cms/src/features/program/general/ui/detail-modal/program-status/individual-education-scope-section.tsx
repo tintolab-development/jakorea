@@ -18,14 +18,20 @@ import {
   invalidateIndividualApprovalScopeQueries,
   isEducationScopeCertificateLocked,
   isEducationScopeRevisionConflict,
+  isRejectedEducationScheduleSelectionError,
+  listIndividualPreferredScheduleOptions,
+  listPlannedEducationSlotOptions,
   normalizeIndividualApprovalReason,
+  parseRejectedEducationScheduleIds,
   validateIndividualApprovalScheduleSelection,
 } from '@/features/program/general/lib/individual-approval-education-scope'
+import { IndividualEducationScheduleSections } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
 import type { Program } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsInput } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import '@/features/program/shared/ui/detail-modal/components/institution-approve-modal.css'
+import '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal.css'
 
 export function IndividualEducationScopeSection({
   program,
@@ -41,6 +47,7 @@ export function IndividualEducationScopeSection({
   const [editing, setEditing] = useState(false)
   const [certificateLocked, setCertificateLocked] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [rejectedIds, setRejectedIds] = useState<number[]>([])
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
   const programShape = useMemo(
@@ -81,11 +88,27 @@ export function IndividualEducationScopeSection({
       }),
     [preferred, preferredResolved, programShape, slotsQuery.data, slotsQuery.isSuccess]
   )
-  const assignedIds = scopeQuery.data?.scheduleIds ?? []
-  const selectableIds = new Set(
-    plan.options.map(option => option.scheduleId).filter((id): id is number => id != null)
+  const plannedOptions = useMemo(
+    () => listPlannedEducationSlotOptions(slotsQuery.data),
+    [slotsQuery.data]
   )
-  const serverOnlyIds = assignedIds.filter(id => !selectableIds.has(id) && !plan.lockedScheduleIds.includes(id))
+  const plannedIds = useMemo(
+    () =>
+      new Set(
+        plannedOptions
+          .map(option => option.scheduleId)
+          .filter((id): id is number => id != null)
+      ),
+    [plannedOptions]
+  )
+  const preferredOptions = useMemo(() => {
+    if (plan.kind !== 'all-program-slots') return plan.options
+    return listIndividualPreferredScheduleOptions(preferred, plannedIds)
+  }, [plan.kind, plan.options, plannedIds, preferred])
+  const assignedIds = (scopeQuery.data?.scheduleIds ?? []).filter(
+    (id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0
+  )
+  const serverOnlyIds = assignedIds.filter(id => !plannedIds.has(id))
   const sourceKey = [
     plan.kind,
     plan.lockedScheduleIds.join(','),
@@ -95,11 +118,15 @@ export function IndividualEducationScopeSection({
   const [appliedSourceKey, setAppliedSourceKey] = useState<string | null>(null)
   if (!editing && appliedSourceKey !== sourceKey) {
     setAppliedSourceKey(sourceKey)
+    setRejectedIds([])
     if (plan.kind === 'all-program-slots') {
       setSelectedIds(defaultIndividualApprovalScheduleIds(plan))
     } else {
       const allowed = new Set(
-        plan.options.filter(option => option.selectable).map(option => option.scheduleId)
+        plan.options
+          .filter(option => option.selectable)
+          .map(option => option.scheduleId)
+          .filter((id): id is number => id != null)
       )
       setSelectedIds(assignedIds.filter(id => allowed.has(id)))
     }
@@ -109,6 +136,7 @@ export function IndividualEducationScopeSection({
   const canEdit = !certificateLocked && !scopeQuery.isError
 
   const toggle = (scheduleId: number) => {
+    setRejectedIds(prev => prev.filter(id => id !== scheduleId))
     setSelectedIds(prev => {
       if (plan.kind === 'preferred-exact-one') return [scheduleId]
       if (prev.includes(scheduleId)) return prev.filter(id => id !== scheduleId)
@@ -145,10 +173,18 @@ export function IndividualEducationScopeSection({
       })
       setEditing(false)
       setReason('')
+      setRejectedIds([])
       showAlert({ title: '재배정 완료', content: '교육 일정을 변경했습니다.' })
     } catch (error) {
       await scopeQuery.refetch()
       if (isEducationScopeCertificateLocked(error)) setCertificateLocked(true)
+      if (isRejectedEducationScheduleSelectionError(error)) {
+        const rejected = parseRejectedEducationScheduleIds(error)
+        if (rejected.length > 0) {
+          setRejectedIds(rejected)
+          setSelectedIds(prev => prev.filter(id => !rejected.includes(id)))
+        }
+      }
       const message = formatIndividualApprovalScopeErrorMessage(error)
       showAlert({
         title: isEducationScopeRevisionConflict(error) ? '교육 일정 갱신' : '재배정 실패',
@@ -177,48 +213,31 @@ export function IndividualEducationScopeSection({
         <DetailInfoForm.Field
           label="배정 일정"
           view={
-            <div className="institution-approve-modal__schedule-section">
+            <div className="institution-approve-modal institution-approve-modal__schedule-section">
               {slotsQuery.isLoading || scopeQuery.isLoading ? (
                 <p className="institution-approve-modal__notice">교육 일정을 확인하는 중입니다.</p>
-              ) : plan.blockedReason && !editing ? (
-                <p className="institution-approve-modal__notice">{plan.blockedReason}</p>
               ) : (
-                <div className="institution-approve-modal__schedule-cards">
-                  {plan.options.map(option => {
-                    const selected =
-                      option.scheduleId != null &&
-                      (plan.kind === 'all-program-slots' || selectedIds.includes(option.scheduleId))
-                    const selectable = editing && option.selectable && plan.kind !== 'all-program-slots'
-                    return (
-                      <button
-                        key={option.key}
-                        type="button"
-                        className={[
-                          'institution-approve-modal__schedule-card',
-                          selected ? 'institution-approve-modal__schedule-card--selected' : '',
-                          selectable ? '' : 'institution-approve-modal__schedule-card--readonly',
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                        disabled={!selectable}
-                        onClick={() => {
-                          if (!selectable || option.scheduleId == null) return
-                          toggle(option.scheduleId)
-                        }}
-                      >
-                        <span className="institution-approve-modal__schedule-card-title">
-                          {option.title}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+                <>
+                  <IndividualEducationScheduleSections
+                    plan={plan}
+                    plannedOptions={plannedOptions}
+                    preferredOptions={preferredOptions}
+                    selectedIds={editing ? selectedIds : assignedIds}
+                    rejectedIds={rejectedIds}
+                    assignedLocked={editing && plan.kind === 'all-program-slots'}
+                    preferredReadonly={!editing}
+                    assignedEmptyLabel={
+                      editing ? '배정할 교육 일정을 선택해 주세요.' : '배정된 교육 일정이 없습니다.'
+                    }
+                    onToggle={editing ? toggle : undefined}
+                  />
+                  {serverOnlyIds.length > 0 ? (
+                    <p className="institution-approve-modal__notice">
+                      서버가 포함한 일정: {serverOnlyIds.join(', ')}
+                    </p>
+                  ) : null}
+                </>
               )}
-              {serverOnlyIds.length > 0 ? (
-                <p className="institution-approve-modal__notice">
-                  서버가 포함한 일정: {serverOnlyIds.join(', ')}
-                </p>
-              ) : null}
               {editing ? (
                 <>
                   <CmsInput
@@ -238,6 +257,7 @@ export function IndividualEducationScopeSection({
                       onClick={() => {
                         setEditing(false)
                         setReason('')
+                        setRejectedIds([])
                         setAppliedSourceKey(null)
                       }}
                     >

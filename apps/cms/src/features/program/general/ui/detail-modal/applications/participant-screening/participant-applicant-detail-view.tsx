@@ -35,6 +35,8 @@ import {
   formatIndividualApprovalScopeErrorMessage,
   invalidateIndividualApprovalScopeQueries,
   isEducationScopeRevisionConflict,
+  isRejectedEducationScheduleSelectionError,
+  parseRejectedEducationScheduleIds,
 } from '@/features/program/general/lib/individual-approval-education-scope'
 import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
 import {
@@ -703,7 +705,7 @@ export function GeneralParticipantApplicantDetailView({
           setApproveTarget(null)
         }}
         onConfirm={payload => {
-          if (!approveTarget || decisionBusy) return
+          if (!approveTarget || decisionBusy) return Promise.resolve()
           const run = async () => {
             if (!useRemote) {
               void showAlert({
@@ -772,11 +774,15 @@ export function GeneralParticipantApplicantDetailView({
                   ? `${message}\n최신 교육 일정을 다시 불러왔습니다. 선택을 확인한 뒤 다시 승인해 주세요.`
                   : message,
               })
+              if (isRejectedEducationScheduleSelectionError(error)) {
+                const rejectedScheduleIds = parseRejectedEducationScheduleIds(error)
+                if (rejectedScheduleIds.length > 0) return { rejectedScheduleIds }
+              }
             } finally {
               setDecisionBusy(false)
             }
           }
-          void run()
+          return run()
         }}
       />
       <ParticipantApproveModal

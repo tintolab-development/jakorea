@@ -103,6 +103,9 @@ const PROGRAM_SCHEDULE_NOT_ACTIVE_MESSAGE =
 const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE =
   '사전교육·폐회 등 교육 슬롯이 아닌 일정에는 배정할 수 없습니다. EDUCATION·SESSION 일정을 선택해 주세요.'
 
+const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_SURVEY_MESSAGE =
+  '교육 진행 예정일만 설문 대상으로 지정할 수 있습니다.'
+
 export function getProgramFormBindingErrorMessage(
   error: unknown,
   fallback: string,
@@ -123,6 +126,9 @@ export function getProgramFormBindingErrorMessage(
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
     return FORM_BINDING_ACTIVE_SLOT_CONFLICT_DEFAULT_MESSAGE
+  }
+  if (code === 'PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT' && context?.formType === 'SURVEY') {
+    return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_SURVEY_MESSAGE
   }
   return getGeneralProgramApiErrorMessage(error, fallback)
 }

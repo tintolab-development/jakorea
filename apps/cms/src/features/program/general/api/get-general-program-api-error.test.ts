@@ -265,6 +265,31 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
   })
 })
 
+describe('getProgramFormBindingErrorMessage PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT', () => {
+  const error = {
+    response: { data: { error: { code: 'PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT' } } },
+  }
+
+  it('uses planned-slot copy for survey registration', () => {
+    expect(
+      getProgramFormBindingErrorMessage(error, 'fallback', {
+        formType: 'SURVEY',
+        targetScope: 'SCHEDULE',
+      })
+    ).toBe('교육 진행 예정일만 설문 대상으로 지정할 수 있습니다.')
+  })
+
+  it('keeps assignment copy outside survey registration', () => {
+    expect(getProgramFormBindingErrorMessage(error, 'fallback')).toContain('EDUCATION')
+    expect(
+      getProgramFormBindingErrorMessage(error, 'fallback', {
+        formType: 'LECTURE_EVALUATION',
+        targetScope: 'SCHEDULE',
+      })
+    ).toContain('EDUCATION')
+  })
+})
+
 describe('getParticipationConsentRequiredMessage', () => {
   const consentMessage =
     '강사 활동에 필요한 동의가 부족합니다: 성범죄 경력조회 동의(동의 기록 없음), 교육진행자 서약(만료됨). 해당 동의를 다시 받은 뒤 처리해 주세요.'

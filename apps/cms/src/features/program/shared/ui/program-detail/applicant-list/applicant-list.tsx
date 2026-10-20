@@ -57,6 +57,10 @@ import {
   IndividualApproveScopeModal,
   IndividualBulkApproveScopeModal,
 } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
+import {
+  isRejectedEducationScheduleSelectionError,
+  parseRejectedEducationScheduleIds,
+} from '@/features/program/general/lib/individual-approval-education-scope'
 import type { ApplicantDetailMeta } from './use-applicants-detail'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
@@ -727,7 +731,7 @@ export function ApplicantList({
     async (input: {
       reason: string
       targets: Array<{ applicationId: string; confirmedScheduleIds: number[] }>
-    }) => {
+    }): Promise<{ rejectedScheduleIds?: number[] } | void> => {
       setIndividualScopeSubmitting(true)
       try {
         const result = await applyRemoteIndividualScopeApproval(input)
@@ -738,7 +742,11 @@ export function ApplicantList({
           )
           return
         }
-        if (result.status === 'error') return
+        if (result.status === 'error') {
+          if (!isRejectedEducationScheduleSelectionError(result.error)) return
+          const rejectedScheduleIds = parseRejectedEducationScheduleIds(result.error)
+          return rejectedScheduleIds.length > 0 ? { rejectedScheduleIds } : undefined
+        }
         const successIds =
           result.status === 'partial' ? result.successIds.map(String) : result.markApprovedIds
         if (successIds.length > 0) {
@@ -1542,7 +1550,7 @@ export function ApplicantList({
         }}
         onConfirm={payload => {
           if (!participantApproveTarget) return
-          void submitIndividualScopeApproval({
+          return submitIndividualScopeApproval({
             reason: payload.reason,
             targets: [
               {
@@ -1563,12 +1571,12 @@ export function ApplicantList({
           if (individualScopeSubmitting) return
           setParticipantScopeBulkOpen(false)
         }}
-        onConfirm={payload => {
-          void submitIndividualScopeApproval({
+        onConfirm={payload =>
+          submitIndividualScopeApproval({
             reason: payload.reason,
             targets: payload.targets,
           })
-        }}
+        }
       />
       <ParticipantApproveModal
         open={!requiresIndividualApprovalScope && participantApproveTarget != null}

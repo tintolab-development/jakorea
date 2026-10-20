@@ -133,7 +133,10 @@ import {
   resolveSurveyResultsParticipantTotal,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  getProgramFormBindingErrorMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -780,6 +783,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return
     }
     setSubmitting(true)
+    let surveyBindingTargetScope: string | undefined
     try {
       void findWritingTemplateRowByDefinitionId(selectedTemplateId)
 
@@ -832,6 +836,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               payload.targetScopeId = surveyTarget.targetScopeId
             }
           }
+          surveyBindingTargetScope = payload.targetScope
         }
         const result = await createBinding(payload)
         if (!result.ok) {
@@ -867,10 +872,17 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       handleError(error, { context: 'generalSurveyManagement.createSurvey' })
       void showAlert({
         title: '등록 실패',
-        content: getGeneralProgramApiErrorMessage(
-          error,
-          '설문 등록에 실패했습니다. 다시 시도해 주세요.'
-        ),
+        content:
+          createModalKind === 'survey'
+            ? getProgramFormBindingErrorMessage(
+                error,
+                '설문 등록에 실패했습니다. 다시 시도해 주세요.',
+                { formType: 'SURVEY', targetScope: surveyBindingTargetScope }
+              )
+            : getGeneralProgramApiErrorMessage(
+                error,
+                '설문 등록에 실패했습니다. 다시 시도해 주세요.'
+              ),
       })
     } finally {
       setSubmitting(false)
