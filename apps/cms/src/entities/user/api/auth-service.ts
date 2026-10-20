@@ -65,9 +65,7 @@ function buildMfaStateFromChallenge(
     challengeUuid: challenge.challengeUuid,
     mfaMethod: challenge.mfaMethod,
     challengeExpiresAt: challenge.expiresAt,
-    totpSecret: challenge.totpSecret,
-    otpauthUri: challenge.otpauthUri,
-    qrDataUrl: challenge.qrDataUrl,
+    mfaSetupRequired: challenge.mfaSetupRequired,
   }
 }
 

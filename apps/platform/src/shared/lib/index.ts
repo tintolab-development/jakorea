@@ -58,4 +58,14 @@ export {
   getEmptyAttachmentMimeType,
   needsEmptyAttachmentFallback,
 } from './download-attachment'
+export {
+  fetchPortalSignedDownloadBlob,
+  isLocalNgrokPortalRawDownload,
+} from './portal-signed-download-fetch'
+export type { LocalNgrokPortalRawDownloadOptions } from './portal-signed-download-fetch'
 export { buildYouTubeNocookieEmbedSrc, extractYouTubeVideoId } from './youtube'
+export {
+  getFileUploadOverlayActive,
+  getFileUploadOverlayServerSnapshot,
+  subscribeFileUploadOverlay,
+} from './file-upload-overlay'

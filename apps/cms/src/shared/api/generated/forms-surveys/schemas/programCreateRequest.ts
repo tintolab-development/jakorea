@@ -113,4 +113,11 @@ export interface ProgramCreateRequest {
   formBindings?: ProgramFormBindingRequest[];
   /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
   draftStatus?: ProgramCreateRequestDraftStatus;
+  /** CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 false. */
+  featuredOnHome?: boolean | null;
+  /**
+     * 홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.
+     * @minimum 1
+     */
+  homeDisplayOrder?: number | null;
 }

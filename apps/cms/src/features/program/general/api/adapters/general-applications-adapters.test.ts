@@ -964,6 +964,23 @@ describe('general-applications-adapters', () => {
     expect(row.affiliation).toBe('서울초등학교')
   })
 
+  it('keeps affiliation empty when BE has no affiliationName', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 57,
+        programId: 5001,
+        memberName: '소속없는참여자',
+        affiliationName: '',
+        affiliationOrganizationId: null,
+        applicationStatus: 'WAITING_REVIEW',
+      } as never,
+      0,
+      '5001'
+    )
+
+    expect(row.affiliation).toBe('')
+  })
+
   it('maps instructor application list item to applicant row', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
       instructorApplicationListItemFixture({

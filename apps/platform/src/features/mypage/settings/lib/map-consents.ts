@@ -80,7 +80,13 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
     seen.add(meta.id)
 
     const expired = summary.expired === true
-    const agreed = summary.agreed === true && !expired
+    const status = summary.status?.trim().toUpperCase() ?? ''
+    const hasWrittenDocument =
+      summary.documentId != null ||
+      summary.signed === true ||
+      ['AGREED', 'COMPLETED', 'SIGNED', 'SUBMITTED', 'CONSENTED', 'ACTIVE'].includes(status)
+    const isDocumentItem = DOCUMENT_SECTION_IDS.has(meta.id)
+    const agreed = !expired && (summary.agreed === true || (isDocumentItem && hasWrittenDocument))
     const item: SettingsConsentItem = {
       ...meta,
       required: summary.required ?? meta.required,
@@ -88,7 +94,7 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
       hint: expired || summary.reconsentRequired === true ? EXPIRED_HINT : meta.hint,
       documentId: summary.documentId ?? undefined,
-      withdrawable: summary.withdrawable === true,
+      withdrawable: isDocumentItem ? agreed : summary.withdrawable === true,
     }
     ;(DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems).push(item)
   }

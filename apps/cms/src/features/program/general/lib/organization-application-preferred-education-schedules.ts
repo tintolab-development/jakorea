@@ -92,6 +92,13 @@ export function readOrganizationApplicationPreferredEducationSchedules(
     .filter((entry): entry is PreferredEducationSchedule => entry != null)
 }
 
+export function readOrganizationApplicationPreferredEducationDates(dto: unknown): string[] {
+  if (!dto || typeof dto !== 'object') return []
+  const raw = (dto as { preferredEducationDates?: unknown }).preferredEducationDates
+  if (!Array.isArray(raw)) return []
+  return raw.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+}
+
 export function isCompanySchoolOrganizationApplication(dto: {
   programType?: string | null
 }): boolean {

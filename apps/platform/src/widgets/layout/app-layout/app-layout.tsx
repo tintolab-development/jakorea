@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
 import { postPortalLogout } from '@/features/auth/sign-in'
 import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
@@ -8,9 +8,13 @@ import {
   DEV_AUTH_CHANGE_EVENT,
   clearAuthTokens,
   getDevAuthLoggedIn,
+  getFileUploadOverlayActive,
+  getFileUploadOverlayServerSnapshot,
   getRefreshToken,
   setDevAuthLoggedIn,
+  subscribeFileUploadOverlay,
 } from '@/shared/lib'
+import { PFLoadingSpinner } from '@/shared/ui'
 import { SiteDocumentHead } from '@/features/site-shell'
 import type { HeaderTheme } from '@/widgets/layout/header-theme'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
@@ -51,6 +55,11 @@ export function AppLayout({
     isMypageHome || isHero || isHome || isSupportHero || isIntroduction
   /* 홈은 기존처럼 PC inverse. 그 외는 route의 headerTheme만 사용. 모바일 바는 theme 무관 */
   const inverseHeader = headerTheme === 'inverse' || isHome
+  const fileUploadActive = useSyncExternalStore(
+    subscribeFileUploadOverlay,
+    getFileUploadOverlayActive,
+    getFileUploadOverlayServerSnapshot,
+  )
 
   useEffect(() => {
     const handleDevAuthChange = () => {
@@ -113,6 +122,9 @@ export function AppLayout({
         {mainContent}
       </main>
       <Footer />
+      {fileUploadActive ? (
+        <PFLoadingSpinner blocking label="파일을 업로드하는 중" />
+      ) : null}
     </div>
   )
 }

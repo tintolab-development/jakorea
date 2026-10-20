@@ -83,11 +83,15 @@ function renderSingle(
   return { onConfirm }
 }
 
+function submitApproval() {
+  fireEvent.click(screen.getByRole('button', { name: '승인' }))
+}
+
 async function submitWithReason() {
   fireEvent.change(screen.getByPlaceholderText('승인 사유를 입력해 주세요.'), {
     target: { value: '교육 일정 확정' },
   })
-  fireEvent.click(screen.getByRole('button', { name: '승인' }))
+  submitApproval()
 }
 
 afterEach(() => {
@@ -99,12 +103,16 @@ describe('IndividualApproveScopeModal', () => {
   it('CURRICULUM / SINGLE approves the one preferred schedule', async () => {
     fetchSlots.mockResolvedValue([educationSlot(168351), educationSlot(168352, { sessionNo: 2 })])
     const { onConfirm } = renderSingle({})
-    await screen.findByRole('button', { name: /2026\. 11\. 05\(목\)/ })
-    await submitWithReason()
+    await screen.findByRole('button', { name: /^2026\. 11\. 05\(목\)$/ })
+    expect(screen.getByText('프로그램 신청 승인 안내')).toBeTruthy()
+    expect(screen.getByText(/김참여자/)).toBeTruthy()
+    expect(screen.getByText(/회원에게 승인 알림이 발송됩니다/)).toBeTruthy()
+    expect(screen.getByText('배정된 일정')).toBeTruthy()
+    submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168351])
     expect(onConfirm.mock.calls[0]?.[0].expectedScopeRevision).toBe(0)
-    expect(onConfirm.mock.calls[0]?.[0].reason).toBe('교육 일정 확정')
+    expect(onConfirm.mock.calls[0]?.[0].reason).toBe('')
   })
 
   it('CURRICULUM / SINGLE replaces the previous choice so two ids are not submitted', async () => {
@@ -124,7 +132,7 @@ describe('IndividualApproveScopeModal', () => {
     fireEvent.click(second)
     expect(second.getAttribute('aria-pressed')).toBe('true')
     expect(first.getAttribute('aria-pressed')).toBe('false')
-    await submitWithReason()
+    submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([2])
   })
@@ -140,7 +148,8 @@ describe('IndividualApproveScopeModal', () => {
     })
     fireEvent.click(await screen.findByRole('button', { name: /첫째 일정/ }))
     fireEvent.click(screen.getByRole('button', { name: /둘째 일정/ }))
-    await submitWithReason()
+    expect(screen.getByText('교육은 여러 개의 일정에 배정할 수 있습니다.')).toBeTruthy()
+    submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([21, 22])
   })
@@ -152,8 +161,8 @@ describe('IndividualApproveScopeModal', () => {
       program: programOf('schedule', 'single'),
       preferredEducationSchedules: [preferred(168371, '일정형 단일')],
     })
-    await screen.findByRole('button', { name: /일정형 단일/ })
-    await submitWithReason()
+    await screen.findByRole('button', { name: /^일정형 단일$/ })
+    submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168371])
   })
@@ -173,7 +182,7 @@ describe('IndividualApproveScopeModal', () => {
     expect((screen.getByRole('button', { name: /2회차/ }) as HTMLButtonElement).disabled).toBe(
       true
     )
-    await submitWithReason()
+    submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([31, 32])
   })
@@ -183,14 +192,16 @@ describe('IndividualApproveScopeModal', () => {
     renderSingle({
       preferredEducationSchedules: [preferred(null, 'line:1')],
     })
-    expect(await screen.findByText(/scheduleId/)).toBeTruthy()
+    expect((await screen.findAllByText(/scheduleId/)).length).toBeGreaterThan(0)
     expect((screen.getByRole('button', { name: '승인' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('disables approval when education slots are empty', async () => {
     fetchSlots.mockResolvedValue([])
     renderSingle({})
-    expect(await screen.findByText(/연결되지 않아|교육 일정이 없습니다/)).toBeTruthy()
+    expect(
+      (await screen.findAllByText(/연결되지 않아|교육 일정이 없습니다/)).length
+    ).toBeGreaterThan(0)
     await waitFor(() =>
       expect((screen.getByRole('button', { name: '승인' }) as HTMLButtonElement).disabled).toBe(true)
     )

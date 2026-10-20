@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
 import {
   CONSENT_VALUE,
@@ -23,6 +24,10 @@ import {
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
+import { platformQueryKeys } from '@/shared/api/query-keys'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { getAccessToken } from '@/shared/lib/auth-token'
+import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import {
   PFAlertModal,
   PFButton,
@@ -50,15 +55,21 @@ import {
   InstructorJaProfileFields,
   InstructorLicenseProfileFields,
 } from './instructor-profile-fields'
-import { getInstructorApplyConsentPath } from './consent/catalog'
+import {
+  getInstructorApplyConsentPath,
+  INSTRUCTOR_APPLY_CONSENT_KEYS,
+  type InstructorApplyConsentKey,
+} from './consent/catalog'
+import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
+import { INSTRUCTOR_APPLY_PATH } from '../lib/constants'
 import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
 import {
   applyLockedBasicToInstructorForm,
   resolveInstructorApplyHomeAddressLock,
   type InstructorApplyLockedBasicInfo,
 } from './map-locked-basic-info'
-import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { getAccessToken } from '@/shared/lib/auth-token'
+import { fetchPortalConsents } from '../settings/api/consents'
+import { mapPortalConsentsToInstructorApplyValues } from './lib/map-portal-consents-to-apply'
 import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
@@ -77,6 +88,7 @@ function chunkPairs<T>(items: readonly T[]): T[][] {
 }
 
 const CONSENT_DOCUMENT_ROWS = chunkPairs(CONSENT_DOCUMENT_ITEMS)
+
 const SECTION_TITLE = {
   consent: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'consent'),
   basic: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'basic'),
@@ -202,10 +214,22 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
       preserveEmploymentStatus,
     )
   })
+  const [consentAgreedAt, setConsentAgreedAt] = useState<
+    Partial<Record<InstructorApplyConsentKey, string>>
+  >({})
   const [alert, setAlert] = useState<AlertState>(null)
   const [submitting, setSubmitting] = useState(false)
   const createMutation = useCreateInstructorRoleRequestMutation()
   const useRemoteSubmit = isRemoteApiConfigured() && Boolean(getAccessToken())
+  const consentsQuery = useQuery({
+    queryKey: platformQueryKeys.mypage.consents(),
+    queryFn: ({ signal }) => fetchPortalConsents(signal),
+    enabled: useRemoteSubmit,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
   const isSubmitting = submitting || createMutation.isPending
   const homeAddressLock = resolveInstructorApplyHomeAddressLock(lockedBasic)
 
@@ -214,6 +238,19 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
       applyLockedBasicToInstructorForm(prev, lockedBasic, employmentTouchedRef.current),
     )
   }, [lockedBasic])
+
+  useEffect(() => {
+    if (!useRemoteSubmit || !consentsQuery.isSuccess || consentsQuery.isFetching) return
+    const mapped = mapPortalConsentsToInstructorApplyValues(consentsQuery.data)
+    setConsentAgreedAt(mapped.agreedAt)
+    setValues(prev => {
+      const unchanged = INSTRUCTOR_APPLY_CONSENT_KEYS.every(
+        key => prev[key] === mapped.values[key],
+      )
+      if (unchanged) return prev
+      return { ...prev, ...mapped.values }
+    })
+  }, [useRemoteSubmit, consentsQuery.isSuccess, consentsQuery.isFetching, consentsQuery.data])
 
   useEffect(() => {
     saveInstructorApplyFormDraft(values)
@@ -239,6 +276,12 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const handleConsentDocumentWrite = (key: InstructorConsentDocumentKey) => {
     saveInstructorApplyFormDraft(values)
     navigate(getInstructorApplyConsentPath(key))
+  }
+
+  const handleConsentDocumentView = (key: InstructorConsentDocumentKey) => {
+    saveInstructorApplyFormDraft(values)
+    const returnTo = encodeURIComponent(INSTRUCTOR_APPLY_PATH)
+    navigate(`${getInstructorApplyConsentPath(key)}?mode=view&returnTo=${returnTo}`)
   }
 
   const handleSubmit = () => {
@@ -345,6 +388,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
               <PFFormFieldRow key={row.map(item => item.key).join('-')} type="double">
                 {row.map(item => {
                   const agreed = values[item.key] === CONSENT_VALUE.agree
+                  const agreedAt = consentAgreedAt[item.key as InstructorApplyConsentKey]
                   return (
                     <PFFormField
                       key={item.key}
@@ -354,14 +398,30 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                     >
                       <PFFormInlineSeparatedFields>
                         <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
-                        <PFButton
-                          type="button"
-                          variant="secondary"
-                          size="formPage"
-                          onClick={() => handleConsentDocumentWrite(item.key)}
-                        >
-                          동의서 작성
-                        </PFButton>
+                        {agreed ? (
+                          <PFButton
+                            type="button"
+                            variant="secondary"
+                            size="formPage"
+                            onClick={() => handleConsentDocumentView(item.key)}
+                          >
+                            동의서 보기
+                          </PFButton>
+                        ) : (
+                          <PFButton
+                            type="button"
+                            variant="secondary"
+                            size="formPage"
+                            onClick={() => handleConsentDocumentWrite(item.key)}
+                          >
+                            동의서 작성
+                          </PFButton>
+                        )}
+                        {agreed && agreedAt ? (
+                          <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                            {formatInstructorConsentAgreedAtLabel(agreedAt)}
+                          </PFText>
+                        ) : null}
                       </PFFormInlineSeparatedFields>
                     </PFFormField>
                   )

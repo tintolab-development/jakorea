@@ -24,11 +24,13 @@ export function PlatformIdTypeWithInputFields({
   paragraph,
   onChange,
   lockResidentIdType = false,
+  readOnly = false,
 }: {
   paragraph: IdTypeWithInputParagraph
   onChange: (next: IdTypeWithInputParagraph) => void
   /** 행정정보 공동이용 — 라디오를 주민등록번호로 고정·비활성 */
   lockResidentIdType?: boolean
+  readOnly?: boolean
 }) {
   const options = paragraph.options?.length ? paragraph.options : []
   const selectedId = lockResidentIdType
@@ -38,6 +40,18 @@ export function PlatformIdTypeWithInputFields({
       : (options[0]?.id ?? '')
   const isResident = isIdTypeResidentOptionId(selectedId)
   const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
+  const selectedLabel = options.find(option => option.id === selectedId)?.label?.trim() || '-'
+  const residentText = [residentParts.front, residentParts.back].filter(part => part.trim()).join('-')
+  const inputText = isResident ? residentText : paragraph.inputValue.trim()
+
+  if (readOnly) {
+    return (
+      <div className={styles.idTypeWithInput}>
+        <p className={styles.cellText}>{selectedLabel}</p>
+        <p className={styles.cellText}>{inputText || '-'}</p>
+      </div>
+    )
+  }
 
   const placeholder =
     selectedId !== ''

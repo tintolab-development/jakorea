@@ -11490,6 +11490,61 @@
         }
       }
     },
+    "/api/auth/verification-sessions/guardian/{sessionId}/final-consent-challenge": {
+      "post": {
+        "tags": [
+          "본인인증"
+        ],
+        "summary": "Issue single-use post-NICE guardian final consent challenge",
+        "description": "### 이 API가 하는 일\n- Issue single-use post-NICE guardian final consent challenge\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/auth/verification-sessions/guardian/{sessionId}/final-consent-challenge`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_CONSENT_METADATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Requires challenge status token and verified NICE identity; challenge expires in five minutes and is consumed by final explicit consent.",
+        "operationId": "issueGuardianFinalConsentChallenge",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "X-Verification-Status-Token",
+            "in": "header",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianFinalConsentChallengeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/auth/verification-sessions/guardian/{sessionId}/consent": {
       "post": {
         "tags": [
@@ -32079,8 +32134,8 @@
         "tags": [
           "인증/세션"
         ],
-        "summary": "관리자 로그인 완료 후 본인 MFA 설정 등록/갱신",
-        "description": "### 이 API가 하는 일\n- 관리자 로그인 완료 후 본인 MFA 설정 등록/갱신\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: 인증/세션 (`auth/session`)\n- 호출 방식: `POST /api/admin/auth/mfa/setup`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_auth_mfa_setup`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 auth/session API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ADMIN_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: access token 기반 인증된 관리자 전용 MFA 설정 route입니다. 로그인 전 QR 등록은 /api/admin/auth/mfa/enrollment를 사용합니다.",
+        "summary": "관리자 로그인 완료 후 본인 MFA 설정 등록",
+        "description": "### 이 API가 하는 일\n- 관리자 로그인 완료 후 본인 MFA 설정 등록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: 인증/세션 (`auth/session`)\n- 호출 방식: `POST /api/admin/auth/mfa/setup`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_auth_mfa_setup`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 auth/session API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ADMIN_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: access token 기반 인증된 관리자 전용 MFA route입니다. 이미 등록된 계정의 기존 Secret 교체는 MFA_ALREADY_ENROLLED(409)로 차단합니다.",
         "operationId": "setupMfa",
         "requestBody": {
           "content": {
@@ -32126,8 +32181,8 @@
         "tags": [
           "인증/세션"
         ],
-        "summary": "관리자 로그인 직후 MFA 인증 단계 기반 QR 등록 정보 조회",
-        "description": "### 이 API가 하는 일\n- 관리자 로그인 직후 MFA 인증 단계 기반 QR 등록 정보 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: 인증/세션 (`auth/session`)\n- 호출 방식: `POST /api/admin/auth/mfa/enrollment`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: mfaMethod, enabled, challengeUuid\n- 응답 사용 위치: qrDataUrl 또는 qrCodeDataUrl을 MFA 모달 QR 이미지로 표시\n- 프론트 조회 키: `post_admin_auth_mfa_enrollment`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 로그인 직후 MFA challengeUuid로 Microsoft Authenticator QR 등록 정보를 조회합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 로그인 전 access token이 없는 MFA enrollment 전용 공개 route입니다. challengeUuid 검증 후 QR 정보만 반환합니다.",
+        "summary": "관리자 로그인 직후 미등록 계정의 challenge 기반 QR 등록 정보 조회",
+        "description": "### 이 API가 하는 일\n- 관리자 로그인 직후 미등록 계정의 challenge 기반 QR 등록 정보 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: 인증/세션 (`auth/session`)\n- 호출 방식: `POST /api/admin/auth/mfa/enrollment`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: mfaMethod, enabled, challengeUuid\n- 응답 사용 위치: qrDataUrl 또는 qrCodeDataUrl을 MFA 모달 QR 이미지로 표시\n- 프론트 조회 키: `post_admin_auth_mfa_enrollment`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 로그인 직후 MFA challengeUuid로 Microsoft Authenticator QR 등록 정보를 조회합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 등록 완료 계정은 MFA_ALREADY_ENROLLED(409)로 차단합니다. pending Secret만 반환하며 OTP 성공 전에는 활성화되지 않습니다.",
         "operationId": "enrollMfa",
         "requestBody": {
           "content": {
@@ -33314,6 +33369,120 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseAdminAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/admin-accounts/{adminAccountId}/mfa/reset": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "MASTER 관리자 MFA 초기화 및 재등록 요구",
+        "description": "### 이 API가 하는 일\n- MASTER 관리자 MFA 초기화 및 재등록 요구\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/mfa/reset`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_ONLY 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUTHENTICATOR 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기존 Secret/pending/challenge/session 무효화",
+        "operationId": "reset",
+        "parameters": [
+          {
+            "name": "adminAccountId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/admin-accounts/{adminAccountId}/mfa/reset/step-up": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "MASTER 관리자 MFA 초기화 실행자 TOTP step-up",
+        "description": "### 이 API가 하는 일\n- MASTER 관리자 MFA 초기화 실행자 TOTP step-up\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/mfa/reset/step-up`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_ONLY 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUTHENTICATOR 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 5분 단회 대상 바인딩 proof 발급",
+        "operationId": "stepUp",
+        "parameters": [
+          {
+            "name": "adminAccountId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpResponse"
                 }
               }
             }
@@ -42760,6 +42929,15 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "featuredOnHome",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -71390,12 +71568,14 @@
           },
           "targetType": {
             "type": "string",
+            "description": "Optional. Omit both target fields for member-wide PORTRAIT_RIGHTS; the server binds the authenticated member. PROGRAM plus targetId preserves program-scoped consent.",
             "maxLength": 100,
             "minLength": 0
           },
           "targetId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Optional with targetType. For MEMBER scope, must equal the authenticated member ID; for PROGRAM scope, the member must be a participant."
           }
         },
         "required": [
@@ -72747,6 +72927,18 @@
           }
         }
       },
+      "GuardianFinalConsentChallengeResponse": {
+        "type": "object",
+        "properties": {
+          "challengeToken": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "GuardianConsentEvidenceRequest": {
         "type": "object",
         "properties": {
@@ -72761,6 +72953,11 @@
           "guardianRelation": {
             "type": "string",
             "maxLength": 255,
+            "minLength": 0
+          },
+          "finalConsentToken": {
+            "type": "string",
+            "maxLength": 256,
             "minLength": 0
           }
         },
@@ -76167,10 +76364,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -76572,6 +76769,22 @@
               "DRAFT",
               "PUBLISHED"
             ]
+          },
+          "featuredOnHome": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 false."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.",
+            "minimum": 1
           }
         }
       },
@@ -76748,7 +76961,7 @@
               "string",
               "null"
             ],
-            "description": "공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, \"\" 이면 비움. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 보내도 저장하지 않고 null로 둔다."
+            "description": "공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, \"\" 이면 비움"
           },
           "summary": {
             "type": [
@@ -84610,7 +84823,7 @@
               "string",
               "null"
             ],
-            "description": "이 모집 행의 공고 제목. 비어 있으면 null. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 저장하지 않는다."
+            "description": "이 모집 행의 공고 제목. 비어 있으면 null."
           },
           "summary": {
             "type": [
@@ -85008,6 +85221,18 @@
           "settlementPolicy": {
             "$ref": "#/components/schemas/ProgramSettlementPolicyResponse"
           },
+          "featuredOnHome": {
+            "type": "boolean",
+            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. Portal featuredOnHome 필터와 동일 컬럼."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서. 양의 정수이며 null이면 후순위."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -85016,15 +85241,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
-          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -88460,6 +88685,58 @@
           "newPassword"
         ]
       },
+      "ResetRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "recoveryType": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "DEVICE_LOST|DEVICE_CHANGED|AUTHENTICATOR_REMOVED|ENROLLMENT_INCOMPLETE|SECRET_UNAVAILABLE|ADMINISTRATIVE_RECOVERY"
+          },
+          "verificationReference": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "stepUpProof": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason",
+          "recoveryType",
+          "stepUpProof",
+          "verificationReference"
+        ]
+      },
+      "StepUpRequest": {
+        "type": "object",
+        "properties": {
+          "totpCode": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[0-9]{6,8}$"
+          }
+        },
+        "required": [
+          "totpCode"
+        ]
+      },
+      "StepUpResponse": {
+        "type": "object",
+        "properties": {
+          "stepUpProof": {
+            "type": "string"
+          }
+        }
+      },
       "InstructorPortalEditableProfile": {
         "type": "object",
         "description": "강사가 포탈에서 직접 수정할 수 있는 프로필 필드만 노출한 요청 계약",
@@ -90006,7 +90283,7 @@
           },
           "serviceDetailJson": {
             "type": "string",
-            "description": "교육받은 교사: 요청 envelope의 program.*와 registration.overlay.*를 키 단위로 저장 snapshot에 덮어씁니다. 보낸 키는 교체하고 생략한 키는 유지합니다. registration/overlay 전체를 교체하지 않으므로 설문·공고·KPI·교육과정 nested 값이 보존됩니다. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지합니다. RFC-7396 깊은 병합은 하지 않으며 루트 generalCommonInfo는 제거합니다. 일반 프로그램은 기존 RFC-7396 병합."
+            "description": "양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합."
           },
           "clearFields": {
             "type": "array",
@@ -90025,6 +90302,22 @@
               "DRAFT",
               "PUBLISHED"
             ]
+          },
+          "featuredOnHome": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서. 1 이상 정수. 생략 시 기존 값을 유지하고 clearFields에 포함하면 null로 초기화한다.",
+            "minimum": 1
           }
         }
       },
@@ -92144,8 +92437,7 @@
             }
           },
           "title": {
-            "type": "string",
-            "description": "회원에게 보이는 공고명. overlay 공고명, 공통정보 announcementTitle 순이며 없으면 program.name_ko. GENERAL_* 봉사자 행은 모집 announcementTitle을 쓰지 않고 공통정보 공고명과 같다. UJAT 봉사자는 모집별 공고명을 쓴다. name_ko 컬럼은 바꾸지 않는다."
+            "type": "string"
           },
           "summary": {
             "type": "string"
@@ -92252,6 +92544,21 @@
               "hybrid",
               "participant_choice"
             ]
+          },
+          "featuredOnHome": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서(오름차순). 미노출이면 null."
           },
           "recruitmentId": {
             "type": [
@@ -92451,8 +92758,7 @@
             }
           },
           "title": {
-            "type": "string",
-            "description": "회원에게 보이는 공고명. 포커스 없는 조회는 공통정보 공고명. GENERAL_* 봉사자 포커스는 공통정보 공고명과 같고 행 announcementTitle은 쓰지 않는다. UJAT 봉사자 포커스는 모집별 공고명."
+            "type": "string"
           },
           "titleEn": {
             "type": "string"
@@ -92493,20 +92799,6 @@
               "CLOSED",
               "NONE"
             ]
-          },
-          "preEducationNoticeRequired": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영."
-          },
-          "advanceGuidanceRequired": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집에서만 내려가며 두 필드는 항상 같은 boolean입니다."
           },
           "applicationTargetMode": {
             "type": "string"
@@ -92561,7 +92853,7 @@
               "string",
               "null"
             ],
-            "description": "프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다.",
+            "description": "교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.",
             "enum": [
               "elementary",
               "middle",
@@ -92572,17 +92864,13 @@
           },
           "educationTargets": {
             "type": "array",
-            "description": "프로그램 공통 교육 대상 코드 배열. 포커스와 무관하게 같다. 없으면 생략. 강사·봉사자 recruitmentTargets를 넣지 않는다.",
+            "description": "교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult.",
             "items": {
               "type": "string"
             }
           },
           "educationTargetDetail": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "프로그램 공통 교육 대상 상세. 포커스와 무관하게 같다. 없으면 null."
+            "type": "string"
           },
           "recruitmentTarget": {
             "type": [
@@ -92972,7 +93260,7 @@
               "string",
               "null"
             ],
-            "description": "이 모집 행의 공고 제목. GENERAL_* 봉사자 행은 공통정보 공고명을 쓰므로 항상 null. UJAT 봉사자는 모집별 공고명. 그 외·없으면 null."
+            "description": "이 모집 행의 제목. 없으면 null."
           },
           "summary": {
             "type": [
@@ -92991,20 +93279,6 @@
                 "type": "null"
               }
             ]
-          },
-          "preEducationNoticeRequired": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 해당 행이 기관 참여자 모집이 아니면 생략. 미설정 레거시는 true."
-          },
-          "advanceGuidanceRequired": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집 행에서만 내려가며 두 필드는 항상 같은 boolean입니다."
           }
         }
       },
@@ -93254,7 +93528,7 @@
           "form": {
             "type": "object",
             "additionalProperties": {},
-            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate, maxScheduleCount, maxSessionsPerDay가 포함됩니다. 기관 신청에는 preEducationNoticeRequired와 advanceGuidanceRequired도 포함되며 두 값은 동일한 boolean입니다. 기관 설정이 없던 레거시는 true로 투영하고 CMS에서 해당없음으로 지정한 경우에만 false입니다. maxScheduleCount는 기간형 희망 일정 개수 상한이고 maxSessionsPerDay는 CURRICULUM+MULTI+PERIOD의 1일 최대 차시이며 적용되지 않으면 null입니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용하며 TRAINED_TEACHER 기간형 기관 신청은 CMS typed detail 교육 가능 기간을 사용합니다. typed detail 교육 기간이 없으면 빈 배열과 null 날짜를 반환하며 프로그램 사업기간으로 대체하지 않습니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
+            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate, maxScheduleCount, maxSessionsPerDay가 포함됩니다. maxScheduleCount는 기간형 희망 일정 개수 상한이고 maxSessionsPerDay는 CURRICULUM+MULTI+PERIOD의 1일 최대 차시이며 적용되지 않으면 null입니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용하며 TRAINED_TEACHER 기간형 기관 신청은 CMS typed detail 교육 가능 기간을 사용합니다. typed detail 교육 기간이 없으면 빈 배열과 null 날짜를 반환하며 프로그램 사업기간으로 대체하지 않습니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
           },
           "draftApplicationId": {
             "type": "integer",
@@ -96970,6 +97244,9 @@
           },
           "identityVerified": {
             "type": "boolean"
+          },
+          "niceStartState": {
+            "type": "string"
           },
           "explicitConsentAt": {
             "type": "string",

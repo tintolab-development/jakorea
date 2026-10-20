@@ -1,5 +1,6 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import type {
   PublicTalentApplicationCreateRequest,
   PublicTalentApplicationCreateResponse,
@@ -74,6 +75,10 @@ async function confirmTalentAttachment(
 
 /** 선택 첨부 — prepare → PUT uploadUrl → confirm → assetId */
 export async function uploadTalentApplicationAttachment(file: File): Promise<number> {
+  return withFileUploadOverlay(() => uploadPreparedTalentApplicationAttachment(file))
+}
+
+async function uploadPreparedTalentApplicationAttachment(file: File): Promise<number> {
   const prepared = await prepareTalentAttachment(file)
   const assetId = prepared.assetId
   const version = prepared.version

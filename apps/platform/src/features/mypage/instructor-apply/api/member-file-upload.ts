@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import { isAxiosError } from 'axios'
 
 const POLL_INTERVAL_MS = 2_000
@@ -255,6 +256,27 @@ export async function uploadMemberPortalFile(input: {
     ? resolvePolicyFileType(input.file, input.policy)
     : resolveMemberPortalUploadContentType(input.file)
   const checksumSha256 = input.checksumSha256?.trim() || undefined
+  return withFileUploadOverlay(() =>
+    uploadPreparedMemberPortalFile({
+      file: input.file,
+      filePurpose: input.filePurpose,
+      fileSize,
+      contentType,
+      checksumSha256,
+      notifyStatus,
+    })
+  )
+}
+
+async function uploadPreparedMemberPortalFile(input: {
+  file: File
+  filePurpose: string
+  fileSize: number
+  contentType: string
+  checksumSha256: string | undefined
+  notifyStatus: (status: MemberFileUploadStatus) => void
+}): Promise<number> {
+  const { fileSize, contentType, checksumSha256, notifyStatus } = input
   notifyStatus('PREPARING')
   let prepared: MemberFileUploadResponse
   try {

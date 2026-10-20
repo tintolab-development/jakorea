@@ -39,6 +39,8 @@ export interface ParticipatingSchoolSession {
   scheduleUnresolved?: boolean
   /** OSA `assignmentId` — 동일 program scheduleId·학급별 row 구분 */
   osaAssignmentId?: number
+  /** 원본 시작 시각(ISO). 합반 교육일 비교용. 표시 라벨을 파싱하지 않는다. */
+  startAt?: string | null
 }
 
 export interface ParticipatingSchoolRow {
@@ -70,6 +72,8 @@ export interface ParticipatingSchoolRow {
   hopeEducationSessions?: ParticipatingSchoolSession[]
   /** 기관 신청 B — organization-applications `preferredEducationSchedules` 원본 */
   preferredEducationSchedules?: PreferredEducationSchedule[]
+  /** 상세 응답 additive. 합반 비교 시 OSA가 없으면 이 날짜를 우선한다. */
+  preferredEducationDates?: string[]
   /** 프로그램 ID (교육받은 교사 등 프로그램별 참여 기관 필터용) */
   programId?: string
   /** 기관 신청 ID — 강사 배정 create/list 스코프 */

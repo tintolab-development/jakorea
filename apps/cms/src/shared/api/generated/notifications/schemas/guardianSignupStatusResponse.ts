@@ -11,6 +11,7 @@ export interface GuardianSignupStatusResponse {
   status?: string;
   explicitConsentRecorded?: boolean;
   identityVerified?: boolean;
+  niceStartState?: string;
   explicitConsentAt?: string;
   expiresAt?: string;
   usedAt?: string;

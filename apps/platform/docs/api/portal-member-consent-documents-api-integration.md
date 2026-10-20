@@ -15,7 +15,7 @@ CMS Orval 타입과 동일한 계약을 Platform `settings/api`에서 hand-writt
 ## Request / response (요약)
 
 - **Create** — `MemberPortalConsentDocumentCreateRequest`: `{ consentType, targetType?, targetId? }`  
-  - `PORTRAIT_RIGHTS`(마이페이지 회원 초상권): `targetType: MEMBER`, `targetId`: `GET /api/portal/auth/me` → `memberId`
+  - `PORTRAIT_RIGHTS`(마이페이지 회원 초상권): `{ consentType: PORTRAIT_RIGHTS }`만 전송. `targetType: MEMBER`는 `PORTAL_CONSENT_TARGET_TYPE_INVALID`.
 - **Document** — `MemberPortalConsentDocumentResponse`: `documentId`, `signatureFields[]` (`fieldKey`, `required`, `signed`, …)
 - **Sign field** — `MemberPortalConsentSignFieldRequest`: `{ signatureProfileId }`
 - **Complete** — `MemberPortalConsentCompleteRequest`: `{ filledDocument?, identityVerificationSessionId?, consentStatus?, programEligible? }`  

@@ -146,6 +146,7 @@ import { isGeneralOrganizationProgram } from '@/features/program/general/lib/org
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
 import { buildCombinedClassLeadTeacherCandidatesFromParticipating } from '@/features/program/general/lib/combined-class-lead-teacher'
+import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
 import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
 import { useCombinedClassProcess } from '@/features/program/general/hooks/use-combined-class-process'
 import {
@@ -884,6 +885,20 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             : error instanceof Error && error.message.trim()
               ? error.message
               : '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.institutions(programId),
+        })
+        updateApplicationInfoDraft({
+          combinedClassApplication: '신청',
+          combinedClassPartnerSchoolIds: retainMatchingCombinedClassPartnerIds(
+            row,
+            participatingSchoolList,
+            partnerIds
+          ),
         })
         return false
       }

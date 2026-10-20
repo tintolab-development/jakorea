@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { buildPlatformConsentFillOptions, isCrimeConsentTemplate } from '@jakorea/form-schema/consent'
+import type { PaymentStatementBasicInfoValues } from '@jakorea/form-schema/consent'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
@@ -10,7 +11,11 @@ import {
   buildConsentDocumentPreviewHeaderTitle,
   resolveConsentDocumentPreviewConfig,
 } from '../lib/consent-document-preview-config'
-import { resolveConsentPreviewDraft } from '../lib/parse-consent-document-draft'
+import { formatConsentSubmittedDateLabel } from '../lib/format-consent-submitted-date'
+import {
+  readPaymentBasicInfoFromConsentDetail,
+  resolveConsentPreviewDraft,
+} from '../lib/parse-consent-document-draft'
 import {
   filterPreviewParagraphs,
   sliceDraftForParagraphs,
@@ -37,9 +42,15 @@ type ConsentDocumentPreviewOverlayProps = {
 function ConsentDocumentPreviewBody({
   templateId,
   pageDraft,
+  submittedDateLabel,
+  showClosingRecipient,
+  paymentBasicInfo,
 }: {
   templateId: string
   pageDraft: WritingFormDraft
+  submittedDateLabel: string
+  showClosingRecipient: boolean
+  paymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
 }) {
   const fillOptions = useMemo(
     () => buildPlatformConsentFillOptions(templateId),
@@ -54,6 +65,9 @@ function ConsentDocumentPreviewBody({
       fillOptions={fillOptions}
       documentPreview
       documentPreviewTemplateId={templateId}
+      submittedDateLabel={submittedDateLabel}
+      showClosingRecipient={showClosingRecipient}
+      paymentBasicInfo={paymentBasicInfo}
     />
   )
 }
@@ -70,6 +84,10 @@ export function ConsentDocumentPreviewOverlay({
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [crimeImageSrc, setCrimeImageSrc] = useState<string | null>(null)
   const [loadFailedMessage, setLoadFailedMessage] = useState(LOAD_FAILED_MESSAGE)
+  const [submittedAtRaw, setSubmittedAtRaw] = useState<string | undefined>()
+  const [paymentBasicInfo, setPaymentBasicInfo] = useState<
+    Partial<PaymentStatementBasicInfoValues> | undefined
+  >()
 
   const previewConfig = item ? resolveConsentDocumentPreviewConfig(item.id) : null
   const headerTitle = item ? buildConsentDocumentPreviewHeaderTitle(item.title) : ''
@@ -89,6 +107,8 @@ export function ConsentDocumentPreviewOverlay({
     if (!open || item == null || previewConfig == null) {
       setDraft(null)
       setCrimeImageSrc(null)
+      setSubmittedAtRaw(undefined)
+      setPaymentBasicInfo(undefined)
       setLoadFailed(false)
       setLoadFailedMessage(LOAD_FAILED_MESSAGE)
       setIsLoading(false)
@@ -104,6 +124,8 @@ export function ConsentDocumentPreviewOverlay({
       setLoadFailedMessage(LOAD_FAILED_MESSAGE)
       setDraft(null)
       setCrimeImageSrc(null)
+      setSubmittedAtRaw(item.agreedAt)
+      setPaymentBasicInfo(undefined)
 
       try {
         let detail = null
@@ -114,6 +136,10 @@ export function ConsentDocumentPreviewOverlay({
             return
           }
           detail = await fetchPortalConsentDocument(item.documentId)
+          if (!cancelled) {
+            setSubmittedAtRaw(detail.signedAt?.trim() || item.agreedAt)
+            setPaymentBasicInfo(readPaymentBasicInfoFromConsentDetail(detail))
+          }
         }
         if (cancelled) return
 
@@ -165,6 +191,9 @@ export function ConsentDocumentPreviewOverlay({
   const activeParagraphs = pages[safePage - 1] ?? []
   const pageDraft =
     draft != null ? sliceDraftForParagraphs(draft, activeParagraphs) : null
+  const submittedDateLabel = formatConsentSubmittedDateLabel(submittedAtRaw)
+  const showClosingRecipient =
+    previewConfig?.templateId === 'agreement-third-party' && safePage === totalPages
 
   if (!open || item == null) return null
 
@@ -202,6 +231,9 @@ export function ConsentDocumentPreviewOverlay({
               <ConsentDocumentPreviewBody
                 templateId={previewConfig!.templateId}
                 pageDraft={pageDraft}
+                submittedDateLabel={submittedDateLabel}
+                showClosingRecipient={showClosingRecipient}
+                paymentBasicInfo={paymentBasicInfo}
               />
             </div>
           </ConsentDocumentA4Page>

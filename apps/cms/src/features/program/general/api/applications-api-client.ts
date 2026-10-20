@@ -147,8 +147,10 @@ export type OrganizationDecisionNotifyRequest = {
 /** OpenAPI `SlotRequest` — 레거시 slots 호환 입력 */
 export type OrganizationApplicationApproveSlotRequest = SlotRequest
 
-/** OpenAPI `OrganizationApplicationApproveRequest`와 동일한 승인 payload */
-export type OrganizationApplicationApprovePayload = OrganizationApplicationApproveRequest
+/** OpenAPI `OrganizationApplicationApproveRequest` + 희망 일정 행 id(미매핑 승인) */
+export type OrganizationApplicationApprovePayload = OrganizationApplicationApproveRequest & {
+  requestedScheduleId?: number
+}
 
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
 export type ApplicationDecisionCancelRequestWithNotification = Omit<

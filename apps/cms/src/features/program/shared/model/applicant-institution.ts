@@ -114,6 +114,8 @@ export interface ApplicantSchoolRow {
   confirmedListAssignmentSessions?: ParticipatingSchoolSession[]
   /** 기관 신청 희망 교육 일정 B (배정 후보 SSOT) */
   preferredEducationSchedules?: PreferredEducationSchedule[]
+  /** 상세 응답 additive. 합반 비교 시 OSA가 없으면 이 날짜를 우선한다. */
+  preferredEducationDates?: string[]
   /**
    * 기관 신청 상세 — Admin `requested-schedules` SSOT 동기화 상태.
    * OAS `OrganizationApplicationDetailResponse.sessions`와 혼동하지 않는다.

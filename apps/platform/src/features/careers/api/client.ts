@@ -1,5 +1,6 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import type {
   PublicCareerGuideResponse,
   PublicCareerPostingDetail,
@@ -199,6 +200,13 @@ async function confirmCareerTalentAttachment(
  */
 export async function uploadCareerTalentApplicationAttachment(file: File): Promise<number> {
   const contentType = assertAttachmentAllowed(file)
+  return withFileUploadOverlay(() => uploadPreparedCareerTalentAttachment(file, contentType))
+}
+
+async function uploadPreparedCareerTalentAttachment(
+  file: File,
+  contentType: string,
+): Promise<number> {
   const prepared = await prepareCareerTalentAttachment(file)
   const assetId = prepared.assetId
   const version = prepared.version

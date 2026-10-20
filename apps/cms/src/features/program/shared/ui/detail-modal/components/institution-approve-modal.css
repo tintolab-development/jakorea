@@ -67,10 +67,10 @@
 .institution-approve-modal .institution-approve-modal__schedule-card:disabled {
   appearance: none;
   display: flex;
-  min-width: 100px;
-  padding: var(--Spacing-10, 10px) var(--Spacing-16, 16px);
   flex-direction: column;
   align-items: flex-start;
+  min-width: 100px;
+  padding: var(--Spacing-10, 10px) var(--Spacing-16, 16px);
   justify-content: center;
   gap: 2px;
   align-self: stretch;
