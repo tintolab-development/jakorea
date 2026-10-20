@@ -250,15 +250,48 @@ export function useSubmitProgramApplication(programId: number | null) {
       }
       return submitPortalApplication(programId, body)
     },
-    onSuccess: async () => {
+    onSuccess: async (response, variables) => {
       if (programId == null) return
+      const applicationId = response.applicationId
+      const applicationType = variables.applicationType
+      const applicationIdKey = applicationId == null ? null : String(applicationId)
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
         }),
         queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.all(),
+          queryKey: platformQueryKeys.program.applicationForm({
+            programId: String(programId),
+            bindingId: variables.formBindingId,
+            recruitmentId: variables.recruitmentId,
+            applicationType,
+          }),
         }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+        }),
+        ...(applicationIdKey
+          ? [
+              queryClient.invalidateQueries({
+                queryKey: platformQueryKeys.mypage.programApplications.detail(
+                  applicationType,
+                  applicationIdKey,
+                ),
+              }),
+              queryClient.invalidateQueries({
+                queryKey: platformQueryKeys.mypage.programApplications.schedules(
+                  applicationType,
+                  applicationIdKey,
+                ),
+              }),
+              queryClient.invalidateQueries({
+                queryKey: platformQueryKeys.mypage.programApplications.assignments(
+                  applicationType,
+                  applicationIdKey,
+                ),
+              }),
+            ]
+          : []),
       ])
     },
     onError: error => {

@@ -28,9 +28,13 @@ export const PREFERRED_SCHEDULE_TIME_ORDER_ERROR_MESSAGE =
   '교육 종료 시간은 시작 시간 이후로 입력해 주세요.'
 
 export type PreferredScheduleBlocksMapOptions = {
-  /** 일정형 단일 기간 — 희망 교육일만 */
+  /** 일정형 단일 기간 — 희망 교육일만 (sessionTimes는 빈 배열) */
   dateOnly?: boolean
+  /** UJAT 기관 — { preferenceRank, date }만. classPeriod/sessionTimes 없음. max 10 */
+  dateFieldsOnly?: boolean
 }
+
+export const UJAT_PREFERRED_SCHEDULE_BLOCK_MAX = 10
 
 export function toPortalPreferredScheduleBlocks(
   blocks: readonly ApplyPreferredScheduleBlock[],
@@ -40,6 +44,16 @@ export function toPortalPreferredScheduleBlocks(
   let rank = 1
   for (const block of blocks) {
     const date = block.date.trim()
+    if (options?.dateFieldsOnly) {
+      if (!date) continue
+      out.push({
+        preferenceRank: rank,
+        date,
+      })
+      rank += 1
+      if (out.length >= UJAT_PREFERRED_SCHEDULE_BLOCK_MAX) break
+      continue
+    }
     if (options?.dateOnly) {
       if (!date) continue
       out.push({

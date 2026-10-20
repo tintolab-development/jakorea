@@ -17,7 +17,8 @@ import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/parag
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import type { WritingFormParagraph } from '@jakorea/form-schema/writing-form'
-import type { ProgramApplyFormCase } from './apply-form-case.ts'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
+import { isVolunteerApplyFormCase, type ProgramApplyFormCase } from './apply-form-case.ts'
 import { shouldShowIndividualTeamInfoParagraph } from './apply-form-case.ts'
 import type { ProgramDetail } from '../model/types.ts'
 import { isApplyScheduleChoiceParagraphId } from './apply-form-schedule.ts'
@@ -171,7 +172,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
     hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
   }
 
-  if (applyCase === 'individual-volunteer') {
+  if (isVolunteerApplyFormCase(applyCase)) {
     const volunteerParagraphs = input.volunteerJaExperienceParagraph
       ? paragraphs.map(p =>
           p.id === input.volunteerJaExperienceParagraph!.id
@@ -184,8 +185,11 @@ export function resolvePortalApplicationHiddenParagraphIds(
       isTemplateAuthoringMode: false,
     })
     volunteerHidden?.forEach(id => hidden.add(id))
-    if (input.volunteerActivityScheduleEnabled === false) {
+    if (applyCase === 'individual-volunteer' && input.volunteerActivityScheduleEnabled === false) {
       hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule)
+    }
+    if (applyCase === 'ujat-volunteer' && input.volunteerInterviewEnabled === false) {
+      hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule)
     }
   }
 

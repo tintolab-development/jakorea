@@ -600,7 +600,7 @@ export function ApplyInstructorAvailableSchedule({
   copy = INSTRUCTOR_SCHEDULE_COPY,
 }: ApplyInstructorAvailableScheduleProps) {
   const selected = slots.filter(slot => value.selectedSlotIds.includes(slot.id))
-  const showCalendar = slots.every(slot => slot.dateKey != null)
+  const showCalendar = slots.length > 0 && slots.every(slot => slot.dateKey != null)
   const anchorDateKey = firstSlotDateKey(slots)
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(anchorDateKey)
 

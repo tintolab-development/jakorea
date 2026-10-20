@@ -18,6 +18,8 @@ import { createProgramApplicationFormInstitutionDraft } from '@jakorea/form-sche
 import { createProgramApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { createProgramApplicationFormTrainedTeachersDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { createProgramApplicationFormVolunteerDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { createUjatProgramApplicationFormInstitutionDraft } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import { createUjatProgramApplicationFormVolunteerDraft } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import {
   clearWritingFormFillPreviewAnswers,
   type WritingFormDraft,
@@ -62,8 +64,12 @@ function createSeedDraftForApplyCase(applyCase: ProgramApplyFormCase): WritingFo
       return createProgramParticipantApplicationDraft()
     case 'individual-volunteer':
       return createProgramApplicationFormVolunteerDraft()
+    case 'ujat-volunteer':
+      return createUjatProgramApplicationFormVolunteerDraft()
     case 'institution-general':
       return createProgramApplicationFormInstitutionDraft()
+    case 'institution-ujat':
+      return createUjatProgramApplicationFormInstitutionDraft()
     case 'institution-economy':
       return createProgramApplicationFormEconomyDraft()
     case 'institution-gemini':

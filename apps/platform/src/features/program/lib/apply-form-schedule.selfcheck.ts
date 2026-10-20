@@ -502,6 +502,13 @@ function testTrainedTeacherPeriodDateBounds() {
     ).map(({ date, sessionTimes }) => ({ date, sessionTimes })),
     [{ date: '2026-11-05', sessionTimes: [] }]
   )
+  assert.deepEqual(
+    toPortalPreferredScheduleBlocks(
+      [{ date: '2026-04-03', classPeriod: '1교시', startTime: '09:00', endTime: '10:00' }],
+      { dateFieldsOnly: true }
+    ),
+    [{ preferenceRank: 1, date: '2026-04-03' }]
+  )
 
   const consentDraft = {
     schemaVersion: 1,

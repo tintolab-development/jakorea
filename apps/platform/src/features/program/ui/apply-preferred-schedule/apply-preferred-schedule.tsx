@@ -42,12 +42,14 @@ function normalizeHHmm(raw: string): string {
 type ApplyPreferredScheduleAddButtonProps = {
   onClick: () => void
   disabled?: boolean
+  children?: string
 }
 
 /** 단락 카드 제목 우측 — CMS `InstitutionPreferredScheduleCardTitleTrailing` 대응 */
 export function ApplyPreferredScheduleAddButton({
   onClick,
   disabled = false,
+  children = '희망 교육 일정 추가',
 }: ApplyPreferredScheduleAddButtonProps) {
   return (
     <PFButton
@@ -63,7 +65,7 @@ export function ApplyPreferredScheduleAddButton({
     >
       <span className={styles.addButtonLabel}>
         <span className={styles.addButtonIcon} aria-hidden />
-        희망 교육 일정 추가
+        {children}
       </span>
     </PFButton>
   )

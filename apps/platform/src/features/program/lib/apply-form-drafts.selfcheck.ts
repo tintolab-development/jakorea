@@ -10,12 +10,14 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakor
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
-import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import {
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
   GEMINI_RECRUITMENT_FIXTURES,
   TRAINED_TEACHERS_REGISTRATION_FIXTURES,
+  UJAT_PARTICIPANT_FIXTURE,
   UJAT_VOLUNTEER_FIXTURE,
 } from './cms-registration-fixtures.ts'
 import { mapCmsProgramToPlatformDetail } from './map-from-cms.ts'
@@ -33,7 +35,11 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
     ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === programId) ??
     TRAINED_TEACHERS_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
-    (programId === UJAT_VOLUNTEER_FIXTURE.id ? UJAT_VOLUNTEER_FIXTURE : null)
+    (programId === UJAT_VOLUNTEER_FIXTURE.id
+      ? UJAT_VOLUNTEER_FIXTURE
+      : programId === UJAT_PARTICIPANT_FIXTURE.id
+        ? UJAT_PARTICIPANT_FIXTURE
+        : null)
   assert.ok(fixture, `fixture missing: ${programId}`)
   const detail = mapCmsProgramToPlatformDetail(fixture)
   if (extra?.participationMethod) {
@@ -64,8 +70,16 @@ function testCaseToTemplateCode() {
     'application-volunteer'
   )
   assert.equal(
+    getApplicationTemplateCodeForApplyCase('ujat-volunteer'),
+    'application-ujat-volunteer'
+  )
+  assert.equal(
     getApplicationTemplateCodeForApplyCase('institution-general'),
     'application-participant-school'
+  )
+  assert.equal(
+    getApplicationTemplateCodeForApplyCase('institution-ujat'),
+    'application-ujat-school'
   )
   assert.equal(
     getApplicationTemplateCodeForApplyCase('institution-economy'),
@@ -121,16 +135,36 @@ function testVolunteer() {
   const { applyCase, templateCode, ids } = paragraphIds(
     PROGRAM_APPLY_FORM_CASE_SSOT_IDS.individualVolunteer
   )
-  assert.equal(applyCase, 'individual-volunteer')
-  assert.equal(templateCode, 'application-volunteer')
+  assert.equal(applyCase, 'ujat-volunteer')
+  assert.equal(templateCode, 'application-ujat-volunteer')
   assert.deepEqual(ids, [
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection,
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience,
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram,
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
-    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation,
+  ])
+}
+
+function testInstitutionUjat() {
+  const { applyCase, templateCode, ids } = paragraphIds(
+    PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionUjat
+  )
+  assert.equal(applyCase, 'institution-ujat')
+  assert.equal(templateCode, 'application-ujat-school')
+  assert.deepEqual(ids, [
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation,
   ])
 }
 
@@ -290,6 +324,7 @@ function run() {
   testIndividualGeneral()
   testIndividualTeam()
   testVolunteer()
+  testInstitutionUjat()
   testInstitutionGeneral()
   testScheduleSingleDateUsesRegisteredLines()
   testScheduleMultiHidesScheduleChoice()

@@ -37,6 +37,17 @@ assert.equal(pickApplicationOption(options, { recruitmentId: 1001 })?.recruitmen
 assert.equal(pickApplicationOption(options, { recruitmentId: 1001 })?.canApply, false)
 assert.equal(pickApplicationOption(options, { recruitmentId: 9999 }), null)
 assert.equal(pickApplicationOption(options, { applicationTypes: ['INSTRUCTOR'] })?.recruitmentId, 1002)
+assert.equal(
+  pickApplicationOption(options, {
+    applicationTypes: ['INSTRUCTOR'],
+    programType: 'UJAT',
+  }),
+  null,
+)
+assert.equal(
+  pickApplicationOption(options, { recruitmentId: 1003, programType: 'UJAT' })?.applicationType,
+  'VOLUNTEER',
+)
 assert.equal(pickApplicationOption(options, { applicationTypes: ['VOLUNTEER'] }), null)
 assert.equal(applicationOptionKey(options[1]!), '1002:INSTRUCTOR')
 assert.equal(applicationOptionKey({ recruitmentId: 1002 }), null)

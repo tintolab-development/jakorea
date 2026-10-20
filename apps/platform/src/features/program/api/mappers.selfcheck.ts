@@ -816,6 +816,34 @@ assert.deepEqual(mixedTabs.categories, ['instructor', 'institution'])
 assert.equal(mixedTabs.categoryLabel, '강사 · 기관')
 assert.equal(mixedTabs.category, 'instructor')
 
+const ujatHidesInstructorTab = mapPortalProgramListItem({
+  programId: 182199,
+  title: 'UJAT',
+  programType: 'UJAT',
+  portalCategories: ['ORGANIZATION', 'INSTRUCTOR', 'YOUTH_YOUNG'],
+  availableApplicationTypes: ['ORGANIZATION', 'INSTRUCTOR', 'VOLUNTEER'],
+})
+assert.ok(ujatHidesInstructorTab)
+assert.deepEqual(ujatHidesInstructorTab.categories, ['institution', 'youth'])
+assert.equal(ujatHidesInstructorTab.applicationTypes?.includes('INSTRUCTOR'), false)
+
+const ujatDetailIgnoresInstructorCategory = mapPortalProgramDetail({
+  programId: 182199,
+  title: 'UJAT',
+  programType: 'UJAT',
+  portalCategories: ['INSTRUCTOR', 'ORGANIZATION'],
+  recruitments: [
+    {
+      recruitmentId: 182221,
+      recruitmentType: 'PARTICIPANT',
+      applicationTypes: ['ORGANIZATION'],
+    },
+  ],
+})
+assert.ok(ujatDetailIgnoresInstructorCategory)
+assert.equal(ujatDetailIgnoresInstructorCategory.detailCase, 'ujat-participant')
+assert.deepEqual(ujatDetailIgnoresInstructorCategory.categories, ['institution'])
+
 const closedInstructorStillListed = mapPortalProgramListItem({
   programId: 186041,
   title: '강사 마감 카드',

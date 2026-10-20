@@ -49,6 +49,20 @@ export type PortalApplicationOption = {
   existingApplication?: PortalExistingApplication | null
 }
 
+export type UjatPreferredEducationDateOption = {
+  id: string
+  date: string
+  label: string
+}
+
+export type PortalFormRuntimeContext = {
+  interviewEnabled?: boolean
+  ujatPreferredEducationDateOptions?: UjatPreferredEducationDateOption[]
+  activityTerm?: string | null
+  ujatActivityTerm?: string | null
+  [key: string]: unknown
+}
+
 export type PortalApplicationFormResponse = {
   programId?: number
   recruitmentId?: number

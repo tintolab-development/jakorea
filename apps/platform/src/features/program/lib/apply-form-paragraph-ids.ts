@@ -10,6 +10,7 @@ import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/pa
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 
 const INSTITUTION_LIKE_BASIC_INFO_IDS = new Set<string>([
@@ -104,6 +105,37 @@ export function isVolunteerPreviousJaProgramParagraphId(id: string): boolean {
 /** 일반 봉사자 신청 — CMS `VolunteerFreeTextItemsParagraph` */
 export function isVolunteerFreeTextItemsParagraphId(id: string): boolean {
   return id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems
+}
+
+export function isUjatInstitutionBasicInfoParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+}
+
+export function isUjatInstitutionGradeInfoParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo
+}
+
+export function isUjatInstitutionClassTimeParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime
+}
+
+export function isUjatInstitutionPreferredScheduleParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule
+}
+
+export function isUjatInstitutionSubmitConfirmationParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation
+}
+
+export function isUjatVolunteerSubmitConfirmationParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation
+}
+
+export function isUjatSubmitConfirmationParagraphId(id: string): boolean {
+  return (
+    isUjatInstitutionSubmitConfirmationParagraphId(id) ||
+    isUjatVolunteerSubmitConfirmationParagraphId(id)
+  )
 }
 
 /** UJAT 봉사자 신청 — CMS `UjatProgramApplicationVolunteerBasicInfoParagraph` */

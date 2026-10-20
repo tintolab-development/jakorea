@@ -46,7 +46,7 @@ import {
   formatDisplayDateRangeCompact,
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
-} from '@/shared/lib/format-display-date'
+} from '../../../shared/lib/format-display-date.ts'
 
 function mapPortalMaxPreferredScheduleCount(
   remote: PortalProgramDetail,
@@ -334,12 +334,26 @@ function fallbackTab(programType: string | undefined): ProgramTab {
  * `portalCategories`가 오면 그 배열 전체를 쓴다. 진행 중 행 하나만 남기지 않는다.
  * 필드가 없는 구 응답만 programType으로 탭 하나를 만든다.
  */
+function isUjatProgramType(programType: string | undefined): boolean {
+  const type = (programType ?? '').trim().toUpperCase()
+  return type === 'UJAT' || type === 'UJAT_PROGRAM'
+}
+
+function publicPortalCategoryCodes(
+  categories: string[] | undefined,
+  programType: string | undefined,
+): string[] {
+  const codes = (categories ?? []).map(item => item.trim().toUpperCase()).filter(Boolean)
+  if (!isUjatProgramType(programType)) return codes
+  return codes.filter(code => code !== 'INSTRUCTOR')
+}
+
 function mapPortalTabs(
   categories: string[] | undefined,
   programType: string | undefined
 ): ProgramTab[] {
   if (categories == null) return [fallbackTab(programType)]
-  const codes = new Set(categories.map(item => item.trim().toUpperCase()))
+  const codes = new Set(publicPortalCategoryCodes(categories, programType))
   return PORTAL_CATEGORY_ORDER.flatMap(code => {
     const tab = PORTAL_CATEGORY_CODE[code]
     return codes.has(code) && tab ? [tab] : []
@@ -405,7 +419,7 @@ function detailCaseForFocus(
   const types = new Set(applicationTypes.map(item => item.trim().toUpperCase()))
   const only = types.size === 1 ? [...types][0] : undefined
   if (only === 'VOLUNTEER') return type === 'UJAT' ? 'ujat-volunteer' : 'volunteer'
-  if (only === 'INSTRUCTOR') return 'instructor'
+  if (only === 'INSTRUCTOR') return type === 'UJAT' ? 'ujat-volunteer' : 'instructor'
   if (only === 'ORGANIZATION' && type === 'UJAT') return 'ujat-participant'
   return 'general'
 }
@@ -425,13 +439,13 @@ function mapDetailCase(
   // 교육받은 교사는 강사 모집이 아니라 기관(ORGANIZATION) 참여형 프로그램이다.
   // 포커스 없는 상세도 일반 기관 프로그램과 같은 기본정보·추가 섹션을 사용한다.
   if (type === 'TRAINED_TEACHER') return 'general'
-  if (codes.includes('INSTRUCTOR')) return 'instructor'
   if (type === 'UJAT') {
     const volunteer = (recruitments ?? []).some(
       row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
     )
     return volunteer ? 'ujat-volunteer' : 'ujat-participant'
   }
+  if (codes.includes('INSTRUCTOR')) return 'instructor'
   const volunteer = (recruitments ?? []).some(
     row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
   )
@@ -1419,7 +1433,9 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     educationFormLabel: EDUCATION_FORM_LABEL[educationForm],
     applicationTypes: (remote.availableApplicationTypes ?? [])
       .map(item => item.trim().toUpperCase())
-      .filter(Boolean),
+      .filter(item =>
+        isUjatProgramType(remote.programType) ? item !== 'INSTRUCTOR' : Boolean(item),
+      ),
     ...(remote.recruitmentId != null &&
     Number.isSafeInteger(remote.recruitmentId) &&
     remote.recruitmentId > 0
@@ -1431,7 +1447,11 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     ...(readString(remote.targetType)
       ? { targetType: readString(remote.targetType)!.toUpperCase() }
       : {}),
-    ...(readString(remote.applicationType)
+    ...(readString(remote.applicationType) &&
+    !(
+      isUjatProgramType(remote.programType) &&
+      readString(remote.applicationType)!.toUpperCase() === 'INSTRUCTOR'
+    )
       ? { applicationType: readString(remote.applicationType)!.toUpperCase() }
       : {}),
     thumbnailUrl:

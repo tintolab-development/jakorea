@@ -1,0 +1,8 @@
+.root {
+  width: 100%;
+}
+
+.studentInputsRow {
+  flex-wrap: wrap;
+  align-items: center;
+}

@@ -45,7 +45,7 @@ import {
   formatDisplayDate,
   formatDisplayDateRange,
   normalizeScheduleDisplayLabel,
-} from '@/shared/lib/format-display-date'
+} from '../../../shared/lib/format-display-date.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {

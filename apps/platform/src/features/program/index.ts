@@ -38,6 +38,10 @@ export {
   resolveProgramApplyFormCase,
   shouldShowIndividualTeamInfoParagraph,
 } from './lib/apply-form-drafts'
+export {
+  isVolunteerApplyFormCase,
+  isUjatInstitutionApplyFormCase,
+} from './lib/apply-form-case'
 export type {
   ProgramApplicationTemplateCode,
   ProgramApplyFormCase,
