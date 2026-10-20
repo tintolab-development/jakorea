@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { useInstructorApplySessionCacheOnLeave } from '@/features/mypage/instructor-apply/lib/use-instructor-apply-session-cache-on-leave'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
@@ -13,6 +14,7 @@ import {
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
 
 export function MypageInstructorApplyConsentPage() {
+  useInstructorApplySessionCacheOnLeave()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { consentKey = '' } = useParams<{ consentKey: string }>()
