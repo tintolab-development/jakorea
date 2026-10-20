@@ -101,7 +101,9 @@ export function rowToEditDraft(row: ApplicantSchoolRow): ApplicantInstitutionEdi
   return {
     adminComment: row.adminComment ?? '',
     textbookId: detail?.textbookId ?? '',
-    textbookName: detail?.textbookName ?? '',
+    // TT 기관 신청 상세 응답은 교재명을 row 최상위에 내려줄 수 있다.
+    // 상세 확장 필드가 비어도 목록/상세 응답의 정본을 편집 draft에 유지한다.
+    textbookName: detail?.textbookName ?? row.textbookName ?? '',
     combinedClassApplication: combinedStatus,
     combinedClassPartnerApplicantIds: detail?.combinedClassPartnerApplicantIds ?? [],
     ...applicationFields,

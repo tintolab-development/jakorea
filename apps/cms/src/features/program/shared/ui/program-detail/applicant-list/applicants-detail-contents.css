@@ -21,6 +21,13 @@
   margin-bottom: 24px;
 }
 
+/* 기관 신청 상세: 풀페이지 스크롤의 마지막 콘텐츠 아래 공통 하단 여백 확보 */
+.applicant-contents__page-bottom-spacer {
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex: 0 0 auto;
+}
+
 .applicant-contents__header-actions .cms-button {
   border-radius: 8px !important;
   font-weight: 600;
