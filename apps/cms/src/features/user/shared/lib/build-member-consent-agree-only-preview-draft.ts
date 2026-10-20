@@ -33,6 +33,7 @@ export type MemberConsentAgreeOnlyPreviewResult = {
 }
 
 export type MemberConsentSubmittedDocumentMeta = {
+  consentRecordId?: number
   filledDocumentAvailable?: boolean
   formResponseId?: number
   filledDocumentId?: number
@@ -51,6 +52,7 @@ export function shouldFetchSubmittedConsentDocument(
     return meta === true
   }
   if (meta.filledDocumentAvailable === true) return true
+  if (meta.consentRecordId != null && Number.isFinite(meta.consentRecordId)) return true
   if (meta.formResponseId != null && Number.isFinite(meta.formResponseId)) return true
   if (meta.filledDocumentId != null && Number.isFinite(meta.filledDocumentId)) return true
   return Boolean(meta.filledDocumentRevealEndpoint?.trim())
@@ -62,10 +64,9 @@ export function shouldFetchSubmittedConsentDocument(
  */
 export function shouldAttemptSubmittedConsentDocumentFetch(
   meta: boolean | undefined | MemberConsentSubmittedDocumentMeta,
-  options?: { documentAgreed?: boolean }
+  _options?: { documentAgreed?: boolean }
 ): boolean {
-  if (shouldFetchSubmittedConsentDocument(meta)) return true
-  return options?.documentAgreed === true
+  return shouldFetchSubmittedConsentDocument(meta)
 }
 
 export function isMemberConsentCrimeTemplateId(templateId: string): boolean {

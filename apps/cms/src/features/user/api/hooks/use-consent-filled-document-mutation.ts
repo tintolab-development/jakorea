@@ -6,6 +6,7 @@ export type ConsentFilledDocumentMutationInput = {
   memberId: number
   consentType: string
   reason: string
+  consentRecordId?: number
 }
 
 /**
@@ -21,7 +22,12 @@ export function useConsentFilledDocumentMutation() {
       if (reason.length < 1 || reason.length > 500) {
         throw new Error('개인정보 열람 사유를 1자 이상 500자 이하로 입력해 주세요.')
       }
-      return fetchConsentFilledDocumentRemote(input.memberId, input.consentType, { reason })
+      return fetchConsentFilledDocumentRemote(
+        input.memberId,
+        input.consentType,
+        { reason },
+        input.consentRecordId
+      )
     },
     retry: false,
     gcTime: 0,

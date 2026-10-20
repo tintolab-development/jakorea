@@ -1,11 +1,7 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
-import {
-  AGREEMENT_CRIME_TEMPLATE_CODE,
-  parseAgreementCrimeConsentSettings,
-} from '@/features/template/lib/agreement-crime-consent-settings'
+import { AGREEMENT_CRIME_TEMPLATE_CODE } from '@/features/template/lib/agreement-crime-consent-settings'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { schemaJsonToWritingFormDraft } from '@/features/template/api/adapters/form-template-draft-adapters'
 import {
@@ -23,7 +19,6 @@ import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/mo
 import {
   buildMemberConsentAgreeOnlyPreviewDraft,
   shouldAttemptSubmittedConsentDocumentFetch,
-  shouldFetchSubmittedConsentDocument,
   type MemberConsentAgreeOnlyPreviewResult,
 } from '@/features/user/shared/lib/build-member-consent-agree-only-preview-draft'
 import { restoreAgreementNoticeFilledDocumentDraft } from '@/features/user/shared/lib/restore-agreement-notice-filled-document-draft'
@@ -52,6 +47,8 @@ const MEMBER_CONSENT_VIEW_MODAL_Z_INDEX = 1200
 const REVEAL_REASON_MODAL_Z_INDEX = 1300
 const DEFAULT_CRIME_DOWNLOAD_FILENAME = '성범죄_경력조회_동의서.png'
 const NO_SUBMITTED_CONSENT_MESSAGE = '제출된 동의서를 불러올 수 없습니다.'
+const CRIME_SNAPSHOT_UNAVAILABLE_MESSAGE =
+  '서버에는 동의 당시 스냅샷이 보관되어 있지만 이 화면에서는 업로드 원본을 제공하지 않습니다. 원본 열람 방식은 별도 확인이 필요합니다.'
 const SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE =
   '제출된 동의서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
 const SYNTHETIC_PREVIEW_NOTICE = '현재 화면은 미리보기 화면입니다.'
@@ -66,6 +63,7 @@ export interface MemberConsentDocumentViewModalProps {
   /** true면 제출 filled-document 경로. false/undefined면 동의-only 합성 미리보기(메타 없을 때) */
   filledDocumentAvailable?: boolean
   formResponseId?: number
+  consentRecordId?: number
   filledDocumentId?: number
   filledDocumentRevealEndpoint?: string
   /** consent-records 메타 없을 때 filled-document API 시도 여부 */
@@ -131,23 +129,8 @@ function MemberConsentCrimeDocumentView({
   loadFailed: boolean
   onClose: () => void
 }) {
-  const [templateSrc, setTemplateSrc] = useState<string>(crimeConsentDefaultImage)
-
-  useEffect(() => {
-    if (!open || useSubmittedRemote) return
-    let cancelled = false
-    void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
-      if (cancelled) return
-      const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
-      setTemplateSrc(settings.documentImageUrl ?? crimeConsentDefaultImage)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [open, useSubmittedRemote])
-
-  const displaySrc = useSubmittedRemote ? evidenceObjectUrl : templateSrc
-  const showEmpty = useSubmittedRemote && !isLoading && (loadFailed || displaySrc == null)
+  const displaySrc = useSubmittedRemote ? evidenceObjectUrl : null
+  const showEmpty = !isLoading && (loadFailed || displaySrc == null)
   const filename = filled?.evidenceOriginalFileName?.trim() || DEFAULT_CRIME_DOWNLOAD_FILENAME
 
   const handleDownload = useCallback(async () => {
@@ -224,7 +207,9 @@ function MemberConsentCrimeDocumentView({
               <Spin tip="동의서를 불러오는 중입니다." />
             </div>
           ) : showEmpty ? (
-            <p className="member-consent-agreement-modal__error">{NO_SUBMITTED_CONSENT_MESSAGE}</p>
+            <p className="member-consent-agreement-modal__error">
+              {CRIME_SNAPSHOT_UNAVAILABLE_MESSAGE}
+            </p>
           ) : displaySrc != null ? (
             <div className="crime-consent-doc-modal__a4-outer">
               <CrimeConsentDocumentPreview
@@ -396,6 +381,7 @@ export function MemberConsentDocumentViewModal({
   membersRemote = false,
   filledDocumentAvailable,
   formResponseId,
+  consentRecordId,
   filledDocumentId,
   filledDocumentRevealEndpoint,
   documentAgreed,
@@ -408,29 +394,35 @@ export function MemberConsentDocumentViewModal({
   const [evidenceMimeType, setEvidenceMimeType] = useState<string | null>(null)
   const [reasonOpen, setReasonOpen] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
-  const [submittedFetchFallback, setSubmittedFetchFallback] = useState(false)
   const [synthetic, setSynthetic] = useState<MemberConsentAgreeOnlyPreviewResult | null>(null)
   const [syntheticLoading, setSyntheticLoading] = useState(false)
+  const requestedDocumentKeyRef = useRef<string | null>(null)
 
   const submissionMeta = useMemo(
     () => ({
+      consentRecordId,
       filledDocumentAvailable,
       formResponseId,
       filledDocumentId,
       filledDocumentRevealEndpoint,
     }),
-    [filledDocumentAvailable, filledDocumentId, filledDocumentRevealEndpoint, formResponseId]
+    [
+      consentRecordId,
+      filledDocumentAvailable,
+      filledDocumentId,
+      filledDocumentRevealEndpoint,
+      formResponseId,
+    ]
   )
-  const hasSubmissionMeta = shouldFetchSubmittedConsentDocument(submissionMeta)
   const useSubmittedPath = shouldAttemptSubmittedConsentDocumentFetch(submissionMeta, {
     documentAgreed,
   })
-  const isSyntheticPreview = !useSubmittedPath || submittedFetchFallback
+  const isSyntheticPreview = !useSubmittedPath
   const isCrime = templateId === AGREEMENT_CRIME_TEMPLATE_CODE
   const requiresPrivacyReveal = memberConsentViewRequiresPrivacyReveal(templateId)
   const canFetchRemote = Boolean(
     useSubmittedPath &&
-      !submittedFetchFallback &&
+      !isCrime &&
       membersRemote &&
       open &&
       memberId != null &&
@@ -440,10 +432,20 @@ export function MemberConsentDocumentViewModal({
   const loadFilledDocument = useCallback(
     (reason: string) => {
       if (memberId == null || !consentType?.trim()) return
+      const requestKey = `${memberId}:${consentType.trim()}:${consentRecordId ?? 'current'}:${reason}`
+      if (requestedDocumentKeyRef.current === requestKey) return
+      requestedDocumentKeyRef.current = requestKey
+      setFilled(null)
+      setEvidenceMimeType(null)
+      setEvidenceObjectUrl(current => {
+        if (current) URL.revokeObjectURL(current)
+        return null
+      })
       setLoadFailed(false)
       void mutation
-        .mutateAsync({ memberId, consentType: consentType.trim(), reason })
+        .mutateAsync({ memberId, consentType: consentType.trim(), consentRecordId, reason })
         .then(async response => {
+          if (requestedDocumentKeyRef.current !== requestKey) return
           setFilled(response)
           if (!isCrime) return
           try {
@@ -458,6 +460,7 @@ export function MemberConsentDocumentViewModal({
               return URL.createObjectURL(blob)
             })
           } catch (error) {
+            if (requestedDocumentKeyRef.current !== requestKey) return
             setLoadFailed(true)
             handleError(error, {
               defaultMessage: getMemberApiErrorMessage(
@@ -468,18 +471,14 @@ export function MemberConsentDocumentViewModal({
           }
         })
         .catch(error => {
-          if (documentAgreed === true && !hasSubmissionMeta && memberUser != null && !isCrime) {
-            setSubmittedFetchFallback(true)
-            setLoadFailed(false)
-            return
-          }
+          if (requestedDocumentKeyRef.current !== requestKey) return
           setLoadFailed(true)
           handleError(error, {
             defaultMessage: getMemberApiErrorMessage(error, SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE),
           })
         })
     },
-    [consentType, documentAgreed, hasSubmissionMeta, isCrime, memberId, memberUser, mutation]
+    [consentRecordId, consentType, isCrime, memberId, mutation]
   )
   const loadFilledDocumentRef = useRef(loadFilledDocument)
   loadFilledDocumentRef.current = loadFilledDocument
@@ -489,10 +488,10 @@ export function MemberConsentDocumentViewModal({
       setFilled(null)
       setLoadFailed(false)
       setReasonOpen(false)
-      setSubmittedFetchFallback(false)
       setSynthetic(null)
       setSyntheticLoading(false)
       setEvidenceMimeType(null)
+      requestedDocumentKeyRef.current = null
       mutation.reset()
       return
     }
@@ -508,6 +507,7 @@ export function MemberConsentDocumentViewModal({
     if (!isSyntheticPreview || isCrime || memberUser == null) {
       setSynthetic(null)
       setSyntheticLoading(false)
+      if (isCrime) setLoadFailed(true)
       return
     }
 
@@ -544,7 +544,9 @@ export function MemberConsentDocumentViewModal({
     isCrime,
     templateId,
     memberUser,
-    submittedFetchFallback,
+    memberId,
+    consentRecordId,
+    consentType,
   ])
 
   useEffect(() => {
@@ -562,10 +564,10 @@ export function MemberConsentDocumentViewModal({
     setFilled(null)
     setLoadFailed(false)
     setReasonOpen(false)
-    setSubmittedFetchFallback(false)
     setSynthetic(null)
     setSyntheticLoading(false)
     mutation.reset()
+    requestedDocumentKeyRef.current = null
     onClose()
   }, [evidenceObjectUrl, mutation, onClose])
 
@@ -577,10 +579,11 @@ export function MemberConsentDocumentViewModal({
     [loadFilledDocument]
   )
 
+  const remoteRequestPending = mutation.isPending && filled == null && !loadFailed
   const isLoading = canFetchRemote
     ? requiresPrivacyReveal
-      ? reasonOpen || mutation.isPending
-      : mutation.isPending || (filled == null && !loadFailed)
+      ? reasonOpen || remoteRequestPending
+      : remoteRequestPending
     : isSyntheticPreview && !isCrime
       ? syntheticLoading
       : false
@@ -598,7 +601,7 @@ export function MemberConsentDocumentViewModal({
           open={open}
           modalTitle={modalTitle}
           useSubmittedRemote={canFetchRemote}
-          isSyntheticPreview={isSyntheticPreview}
+          isSyntheticPreview={false}
           filled={filled}
           evidenceObjectUrl={evidenceObjectUrl}
           evidenceMimeType={evidenceMimeType}

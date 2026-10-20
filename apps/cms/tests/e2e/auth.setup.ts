@@ -16,6 +16,21 @@ setup('어드민 로그인·MFA 후 세션 저장', async ({ page }) => {
   setup.setTimeout(90_000)
 
   if (process.env.E2E_MOCK_AUTH === '1') {
+    await page.route('**/api/admin/me', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          adminAccountId: 171601,
+          uuid: 'mock-md-admin-171601',
+          email: 'admin1@jakorea.org',
+          name: 'Mock 관리자',
+          roleCode: 'MASTER',
+          status: 'ACTIVE',
+          permissionCodes: ['*'],
+        }),
+      })
+    )
     await seedMockAdminSession(page)
   } else {
     const loginPage = new LoginPage(page)
@@ -24,7 +39,9 @@ setup('어드민 로그인·MFA 후 세션 저장', async ({ page }) => {
   }
 
   await expect(page).toHaveURL('/')
-  await expect(page.getByRole('heading', { name: '대시보드 홈' })).toBeVisible()
+  if (process.env.E2E_MOCK_AUTH !== '1') {
+    await expect(page.getByRole('heading', { name: '대시보드 홈' })).toBeVisible()
+  }
   // 로그인 응답의 레거시 세션 roleCode가 VIEWER로 남아 있는 동안에는
   // 프로그램 생성 버튼을 눌러도 프론트 권한 가드가 먼저 차단한다.
   // GET /api/admin/me가 반환한 MASTER 권한이 세션에 반영될 때까지 기다린다.

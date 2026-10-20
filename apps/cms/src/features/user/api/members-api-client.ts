@@ -546,12 +546,17 @@ export async function fetchMemberConsentSummariesRemote(
 export async function fetchConsentFilledDocumentRemote(
   memberId: number,
   consentType: string,
-  body: AdminPrivacyUnmaskRequest
+  body: AdminPrivacyUnmaskRequest,
+  consentRecordId?: number
 ): Promise<FilledDocumentResponse> {
   return unwrapApiBody(
-    await membersApi.consentFilledDocument(memberId, consentType, body, undefined, {
-      skipGlobalErrorAlert: true,
-    })
+    await membersApi.consentFilledDocument(
+      memberId,
+      consentType,
+      body,
+      consentRecordId == null ? undefined : { consentRecordId },
+      { skipGlobalErrorAlert: true }
+    )
   )
 }
 

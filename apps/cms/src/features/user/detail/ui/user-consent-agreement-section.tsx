@@ -103,6 +103,7 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       formResponseId?: number
+      consentRecordId?: number
       filledDocumentId?: number
       filledDocumentAvailable?: boolean
       filledDocumentRevealEndpoint?: string
@@ -506,6 +507,7 @@ type ActiveConsentView = {
   documentAgreed?: boolean
   filledDocumentAvailable?: boolean
   formResponseId?: number
+  consentRecordId?: number
   filledDocumentId?: number
   filledDocumentRevealEndpoint?: string
 }
@@ -552,6 +554,7 @@ export function UserConsentAgreementSection({
           documentAgreed: document.agreed,
           filledDocumentAvailable: document.filledDocumentAvailable,
           formResponseId: document.formResponseId,
+          consentRecordId: document.consentRecordId,
           filledDocumentId: document.filledDocumentId,
           filledDocumentRevealEndpoint: document.filledDocumentRevealEndpoint,
         })
@@ -627,6 +630,7 @@ export function UserConsentAgreementSection({
           membersRemote={membersRemote}
           filledDocumentAvailable={activeView.filledDocumentAvailable}
           formResponseId={activeView.formResponseId}
+          consentRecordId={activeView.consentRecordId}
           filledDocumentId={activeView.filledDocumentId}
           filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
           documentAgreed={activeView.documentAgreed}

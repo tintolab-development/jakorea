@@ -35,6 +35,9 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
     }
 
     const code = extractApiErrorCode(axiosErr.response?.data)
+    if (code === 'PORTRAIT_CONSENT_CONTENT_UNAVAILABLE') {
+      return '초상권 동의 상태는 유지되지만 보존 정책 또는 작성 내용 부재로 제출 작성본을 조회할 수 없습니다.'
+    }
     const mapped = code ? MEMBER_ERROR_CODE_MESSAGES[code] : undefined
     if (mapped) {
       const serverMessage = extractApiErrorMessage(axiosErr.response?.data, {
