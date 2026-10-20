@@ -193,6 +193,13 @@
   min-height: 100%;
 }
 
+/* 수정 슬롯이 직계 자식을 가로 중앙 정렬하므로, 교재명 셀렉트만 왼쪽 */
+.detail-info-form__field-content--edit > .school-detail-fullpage-view__textbook-select-only {
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+}
+
 /* 교재명 행: 교재명·수량·상태(태그/드롭다운) 한 줄 정렬 — StatusDropdown 트리거가 block처럼 줄바꿈되지 않도록 */
 .school-detail-fullpage-view__textbook-value-row {
   display: flex;

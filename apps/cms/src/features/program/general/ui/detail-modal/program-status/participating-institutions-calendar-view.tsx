@@ -12,7 +12,7 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
-import { resolveParticipatingSchoolHopeSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import {
   formatInstitutionRegionForCalendarListDisplay,
 } from '@/shared/lib/format-institution-region-display'
@@ -267,8 +267,7 @@ function buildEventsFromSchools(
   const events: CalendarEvent[] = []
   for (const row of schools) {
     if (!usePreferredScheduleFormat) {
-      const hopeSessions = resolveParticipatingSchoolHopeSessions(row)
-      const calendarSessions = hopeSessions.length > 0 ? hopeSessions : (row.sessions ?? [])
+      const calendarSessions = resolveParticipatingProgressAssignedSessions(row.sessions)
       for (const session of calendarSessions) {
         const d = parseSessionDate(session.date)
         if (!d.isValid()) continue

@@ -3,8 +3,7 @@
  * FilterTableLayout + 테이블(교육 참여 기관 목록, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
  */
 
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout, FilterTableToolbarButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
@@ -12,7 +11,6 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
-  type ParticipatingSchoolSession,
   PARTICIPATING_INSTITUTION_TEXTBOOK_STATUS_LABELS,
   TEXTBOOK_STATUS_OPTION_KEYS,
 } from '@/features/program/general/model/participating-schools'
@@ -56,8 +54,13 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
   buildParticipatingSchoolPreferredScheduleLines,
-  formatParticipatingSchoolSessionLine,
+  formatGeneralEducationScheduleLine,
+  prepareGeneralEducationScheduleSessions,
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveScheduleDetailTimeSpan,
 } from '../../../lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import {
   useIsTrainedTeachersProgramsSurface,
@@ -65,20 +68,17 @@ import {
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import type { GeneralProgramNavigationCapabilities } from '@/features/program/general/hooks/use-general-program-navigation'
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
-import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import {
+  isCombinedClassNonLeadMember,
+  resolveCombinedClassMergeViewState,
+} from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
-import { resolveParticipatingSchoolHopeSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
-
-function formatSessionLine(s: ParticipatingSchoolSession): string {
-  return formatParticipatingSchoolSessionLine(s)
-}
 
 function ParticipatingInstitutionTextbookStatusBadge({ status }: { status: TextbookStatusKey }) {
   if (status === 'not_applicable') return <>-</>
@@ -243,7 +243,6 @@ export function ParticipatingInstitutionsSection({
     resetKey: `${resolvedProgramId ?? ''}:${viewMode}:${JSON.stringify(progressFilters)}`,
   })
 
-  const queryClient = useQueryClient()
   const isCompanySchool = isCompanySchoolProgram(program)
   const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(resolvedProgramId)
@@ -263,36 +262,6 @@ export function ParticipatingInstitutionsSection({
     if (!selectedRowFromUrl || !mergeGroupsQuery.data?.length) return null
     return resolveCombinedClassMergeViewState(mergeGroupsQuery.data, selectedRowFromUrl, schoolList)
   }, [mergeGroupsQuery.data, schoolList, selectedRowFromUrl])
-
-  const handleSaveCombinedClass = useCallback(
-    async (params: {
-      combinedClassApplication: '신청' | '미신청'
-      combinedClassPartnerSchoolIds: string[]
-    }) => {
-      if (!resolvedProgramId || !selectedRowFromUrl || !mergeGroupsAllowed) return
-      await saveOrganizationCombinedClassRemote({
-        programId: resolvedProgramId,
-        programType: program?.backendProgramType,
-        leadRow: selectedRowFromUrl,
-        allRows: schoolList,
-        combinedClassApplication: params.combinedClassApplication,
-        partnerRowIds: params.combinedClassPartnerSchoolIds,
-        existingMergeGroups: mergeGroupsQuery.data,
-      })
-      await queryClient.invalidateQueries({
-        queryKey: generalProgramProgressQueryKeys.mergeGroups(resolvedProgramId),
-      })
-    },
-    [
-      mergeGroupsAllowed,
-      mergeGroupsQuery.data,
-      program,
-      queryClient,
-      resolvedProgramId,
-      schoolList,
-      selectedRowFromUrl,
-    ]
-  )
 
   /** 상세 뷰 진입/종료 시 부모에 제목용 학교명 알림 */
   useEffect(() => {
@@ -320,6 +289,19 @@ export function ParticipatingInstitutionsSection({
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
   )
+  const educationScheduleShape = useMemo(() => {
+    const shape = generalEducationScheduleShapeFromBridge(programBridge)
+    if (!shape) return null
+    return { ...shape, curriculumSessionLabels: readCurriculumSessionLabels(program) }
+  }, [program, programBridge])
+  const detailScheduleTimeSpan = useMemo(
+    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
+    [program]
+  )
+  const educationScheduleLines = useMemo(
+    () => readProgramEducationScheduleLines(program),
+    [program]
+  )
   const maxClassCount = isCompanySchool ? programBridge.maxClassCount : undefined
   const showTextbookFeatures = program
     ? isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog)
@@ -336,8 +318,10 @@ export function ParticipatingInstitutionsSection({
     [showTextbookStatusColumn]
   )
 
-  const educationScheduleColumnTitle =
-    programBridge.educationStructure === 'schedule' && programBridge.sessionRound === 'multi'
+  const showAssignedEducationSchedule = !isCompanySchool && !isTrainedTeachersSurface
+  const educationScheduleColumnTitle = showAssignedEducationSchedule
+    ? '교육 진행 일정'
+    : programBridge.educationStructure === 'schedule' && programBridge.sessionRound === 'multi'
       ? '교육 진행 일정'
       : '진행 희망 교육 일정'
 
@@ -373,17 +357,21 @@ export function ParticipatingInstitutionsSection({
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
-          const applicationId = record.organizationApplicationId?.trim()
-          const hopeSessions = resolveParticipatingSchoolHopeSessions(
-            record,
-            programId && applicationId
-              ? { programId: String(programId), organizationApplicationId: applicationId }
-              : undefined
-          )
-          const sessionLines =
-            isCompanySchool || isTrainedTeachersSurface
-              ? buildParticipatingSchoolPreferredScheduleLines(record.sessions)
-              : hopeSessions.map(formatSessionLine)
+          const assignedSessions = resolveParticipatingProgressAssignedSessions(record.sessions)
+          const sessionLines = showAssignedEducationSchedule
+            ? prepareGeneralEducationScheduleSessions(assignedSessions, educationScheduleShape, {
+                detailScheduleTimeSpan,
+                educationScheduleLines:
+                  assignedSessions.length === 0 ? educationScheduleLines : [],
+              })
+                .map(session =>
+                  formatGeneralEducationScheduleLine(session, educationScheduleShape, {
+                    detailScheduleTimeSpan,
+                  })
+                )
+                .filter(Boolean)
+            : buildParticipatingSchoolPreferredScheduleLines(record.sessions)
+          if (showAssignedEducationSchedule && sessionLines.length === 0) return '-'
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessionLines.slice(0, showCount)
@@ -507,7 +495,11 @@ export function ParticipatingInstitutionsSection({
           ]),
     ],
     [
+      detailScheduleTimeSpan,
       educationScheduleColumnTitle,
+      educationScheduleLines,
+      educationScheduleShape,
+      showAssignedEducationSchedule,
       getInstructorDisplayForSchool,
       handleTextbookStatusChange,
       isCompanySchool,
@@ -572,17 +564,18 @@ export function ParticipatingInstitutionsSection({
           onTabChange={onSchoolTabChange}
           onClearSchoolId={onClearSchoolId ?? (() => {})}
           onSaveBasicInfo={patch => {
-            setSavedBasicPatches(prev => ({
-              ...prev,
-              [patch.id]: { ...prev[patch.id], ...patch },
-            }))
+            setSavedBasicPatches(prev => {
+              const previous = { ...prev[patch.id] }
+              delete previous.combinedClassApplication
+              delete previous.combinedClassPartnerSchoolIds
+              delete previous.combinedClassPartnerGrades
+              return {
+                ...prev,
+                [patch.id]: { ...previous, ...patch },
+              }
+            })
           }}
-          onSaveCombinedClass={
-            mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
-              ? handleSaveCombinedClass
-              : undefined
-          }
-          combinedClassReadOnly={selectedRowMergeView?.isLead === false}
+          combinedClassReadOnly={isCombinedClassNonLeadMember(selectedRowMergeView)}
           onSaveInstructorInfo={(id, instructors) => {
             setSavedInstructorPatches(prev => ({ ...prev, [id]: instructors }))
           }}
