@@ -24,6 +24,7 @@ import {
 import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { buildCombinedClassLeadTeacherCandidatesFromApplicants } from '@/features/program/general/lib/combined-class-lead-teacher'
+import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
 import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
 import { useCombinedClassProcess } from '@/features/program/general/hooks/use-combined-class-process'
 import {
@@ -828,6 +829,20 @@ export function ApplicantsDetailContents({
             : error instanceof Error && error.message.trim()
               ? error.message
               : '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        await queryClient.invalidateQueries({
+          queryKey: [...generalApplicationsQueryKeys.all, 'organization', programId],
+        })
+        institutionDetailEdit.updateDraft({
+          combinedClassApplication: '신청',
+          combinedClassPartnerApplicantIds: retainMatchingCombinedClassPartnerIds(
+            institutionData,
+            institutionList,
+            partnerIds
+          ),
         })
         return false
       }

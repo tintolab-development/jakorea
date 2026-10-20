@@ -69,6 +69,7 @@ import {
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import {
   isCompanySchoolOrganizationApplication,
+  readOrganizationApplicationPreferredEducationDates,
   readOrganizationApplicationPreferredEducationSchedules,
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
@@ -405,6 +406,7 @@ export function mapOrganizationApplicationListSessionsToConfirmedSessions(
       timeRange: timeLabel,
       status: 'pending',
       resolvedScheduleId: Math.trunc(scheduleId),
+      startAt: startRaw,
     })
   }
 
@@ -472,6 +474,7 @@ export function mapOrganizationApplicationDetailOperationalSessions(
       scheduleUnresolved:
         session.scheduleUnresolved ??
         (resolvedScheduleId == null && session.requestedScheduleId != null),
+      startAt: session.startAt?.trim() || undefined,
     }
   })
 }
@@ -507,6 +510,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 ): ApplicantSchoolRow {
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const preferredEducationDates = readOrganizationApplicationPreferredEducationDates(dto)
   const sessions = resolveOrganizationApplicationHopeSessions(
     dto,
     preferred,
@@ -541,6 +545,8 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     confirmedListAssignmentSessions:
       confirmedListAssignmentSessions.length > 0 ? confirmedListAssignmentSessions : undefined,
     preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
+    preferredEducationDates:
+      preferredEducationDates.length > 0 ? preferredEducationDates : undefined,
     desiredEducationPeriod,
     detail: {
       ...readOrganizationApplicationEconomyDisplayFields(dto),
@@ -618,6 +624,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const preferredEducationDates = readOrganizationApplicationPreferredEducationDates(dto)
   const listItemShape = dto as OrganizationApplicationListItemResponse
   const sessions = resolveOrganizationApplicationHopeSessions(
     listItemShape,
@@ -645,6 +652,8 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     availableActions: dto.availableActions ?? [],
     sessions,
     preferredEducationSchedules: preferred,
+    preferredEducationDates:
+      preferredEducationDates.length > 0 ? preferredEducationDates : undefined,
     desiredEducationPeriod: requestedScheduleMemo,
     detail: {
       ...detailFields,
@@ -1171,6 +1180,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         resolvedScheduleId,
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
+        startAt: session.startAt?.trim() || undefined,
       }
     })
 }

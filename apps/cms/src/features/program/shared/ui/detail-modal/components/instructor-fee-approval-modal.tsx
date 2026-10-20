@@ -128,7 +128,9 @@ export function InstructorFeeApprovalModal({
           <CmsFieldFrame
             size="medium"
             label="강사비 책정 방식"
+            required
             labelClassName="cms-input__label"
+            requiredClassName="cms-input__required"
             className="instructor-fee-approval-modal__field"
           >
             <CmsRadio.Group
@@ -197,7 +199,9 @@ export function InstructorFeeApprovalModal({
           <CmsFieldFrame
             size="medium"
             label="알림 발송"
+            required
             labelClassName="cms-input__label"
+            requiredClassName="cms-input__required"
             className="instructor-fee-approval-modal__field"
           >
             <CmsRadio.Group
