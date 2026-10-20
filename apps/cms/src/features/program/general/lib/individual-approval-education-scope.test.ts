@@ -100,6 +100,19 @@ describe('individual approval education scope', () => {
         reason: '교육 일정 확정',
       },
     })
+    expect(
+      buildIndividualApprovalWithScopeRequest({
+        confirmedScheduleIds: [168351],
+        reason: '   ',
+      })
+    ).toEqual({
+      ok: true,
+      body: {
+        confirmedScheduleIds: [168351],
+        expectedScopeRevision: 0,
+        reason: '교육 일정 확정',
+      },
+    })
   })
 
   it('blocks CURRICULUM / SINGLE when two schedules are selected', () => {
@@ -161,6 +174,14 @@ describe('individual approval education scope', () => {
     expect(plan.options[0]?.scheduleId).toBeNull()
     expect(plan.options[0]?.selectable).toBe(false)
     expect(plan.options[0]?.blockedReason).toBe(INDIVIDUAL_PREFERRED_PERIOD_NOTE)
+    expect(plan.options[0]?.title).not.toMatch(/line:1/i)
+    expect(plan.options[0]?.title).not.toMatch(/\b51\b/)
+  })
+
+  it('does not expose schedule ids in preferred or planned titles', () => {
+    const plan = planFor('CURRICULUM', 'SINGLE', [preferred(168351)], [slot(168351)])
+    expect(plan.options[0]?.title).not.toMatch(/168351/)
+    expect(plan.options[0]?.title).not.toMatch(/일정\s+\d+/)
   })
 
   it('keeps a 168383 period window informational and approves only the matched 168385 slot', () => {

@@ -108,13 +108,13 @@ describe('IndividualApproveScopeModal', () => {
     expect(screen.getByText(/김참여자/)).toBeTruthy()
     expect(screen.getByText(/회원에게 승인 알림이 발송됩니다/)).toBeTruthy()
     expect(screen.getByText('배정일')).toBeTruthy()
-    expect(screen.getByText('교육 진행 예정일')).toBeTruthy()
+    expect(screen.queryByText('교육 진행 예정일')).toBeNull()
     expect(screen.getByText('신청일')).toBeTruthy()
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168351])
     expect(onConfirm.mock.calls[0]?.[0].expectedScopeRevision).toBe(0)
-    expect(onConfirm.mock.calls[0]?.[0].reason).toBe('')
+    expect(onConfirm.mock.calls[0]?.[0].reason).toBe('교육 일정 확정')
   })
 
   it('CURRICULUM / SINGLE replaces the previous choice so two ids are not submitted', async () => {
@@ -178,12 +178,12 @@ describe('IndividualApproveScopeModal', () => {
       program: programOf('schedule', 'multi'),
       preferredEducationSchedules: [],
     })
+    expect(await screen.findByText('신청 희망 교육 일정이 없습니다.')).toBeTruthy()
     expect(
-      ((await screen.findByRole('button', { name: /1회차/ })) as HTMLButtonElement).disabled
-    ).toBe(true)
-    expect((screen.getByRole('button', { name: /2회차/ }) as HTMLButtonElement).disabled).toBe(
-      true
-    )
+      screen.getByText('일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정합니다.')
+    ).toBeTruthy()
+    expect(screen.queryByText('교육 진행 예정일')).toBeNull()
+    expect(screen.getAllByText(/2026\. 11\. 05\(목\)/).length).toBeGreaterThan(0)
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([31, 32])

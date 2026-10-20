@@ -93,7 +93,9 @@ export const INDIVIDUAL_APPROVAL_OUTSIDE_PREFERENCE_MESSAGE =
 export const INDIVIDUAL_APPROVAL_ALL_SLOTS_MESSAGE =
   '일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정해야 합니다.'
 
-export const INDIVIDUAL_APPROVAL_REASON_MESSAGE = '승인 사유를 1자 이상 500자 이하로 입력해 주세요.'
+export const INDIVIDUAL_APPROVAL_DEFAULT_REASON = '교육 일정 확정'
+
+export const INDIVIDUAL_APPROVAL_REASON_MESSAGE = '승인 사유는 500자 이하로 입력해 주세요.'
 
 export const INDIVIDUAL_PREFERRED_PERIOD_NOTE = '신청 희망 기간'
 
@@ -185,6 +187,25 @@ function formatInstantRange(startAt?: string | null, endAt?: string | null): str
   return range || null
 }
 
+function isDisplayableScheduleLabel(label: string | null | undefined): boolean {
+  const trimmed = label?.trim() ?? ''
+  if (!trimmed) return false
+  if (/^line:\d+$/i.test(trimmed)) return false
+  if (/^\d+$/.test(trimmed)) return false
+  return true
+}
+
+function formatSessionRoundLabel(
+  sessionNo: number | null | undefined,
+  scheduleId: number | null | undefined
+): string | null {
+  if (sessionNo == null || !Number.isFinite(sessionNo)) return null
+  const round = Math.trunc(sessionNo)
+  if (round <= 0 || round > 99) return null
+  if (scheduleId != null && round === scheduleId) return null
+  return `${round}회차`
+}
+
 export function formatIndividualEducationSlotTitle(input: {
   scheduleId: number
   sessionNo?: number | null
@@ -192,14 +213,14 @@ export function formatIndividualEducationSlotTitle(input: {
   endAt?: string | null
   label?: string | null
 }): string {
-  const label = input.label?.trim()
-  if (label) return formatCmsScheduleDisplayLabel(label)
-  const session =
-    input.sessionNo != null && Number.isFinite(input.sessionNo)
-      ? `${input.sessionNo}회차`
-      : `일정 ${input.scheduleId}`
+  if (isDisplayableScheduleLabel(input.label)) {
+    return formatCmsScheduleDisplayLabel(input.label!.trim())
+  }
   const range = formatInstantRange(input.startAt, input.endAt)
-  return range ? `${session} · ${range}` : session
+  const session = formatSessionRoundLabel(input.sessionNo, input.scheduleId)
+  if (range) return session ? `${session} · ${range}` : range
+  if (session) return session
+  return '교육 일정'
 }
 
 function formatIndividualPreferredScheduleTitle(
@@ -207,7 +228,6 @@ function formatIndividualPreferredScheduleTitle(
   index: number
 ): string {
   const range = formatInstantRange(preferred.startAt, preferred.endAt)
-  const label = preferred.label?.trim()
   const scheduleId = positiveScheduleId(preferred.scheduleId)
   if (scheduleId != null) {
     return formatIndividualEducationSlotTitle({
@@ -218,7 +238,9 @@ function formatIndividualPreferredScheduleTitle(
     })
   }
   if (range) return range
-  if (label) return formatCmsScheduleDisplayLabel(label)
+  if (isDisplayableScheduleLabel(preferred.label)) {
+    return formatCmsScheduleDisplayLabel(preferred.label!.trim())
+  }
   return `신청 희망 일정 ${index + 1}`
 }
 
@@ -426,10 +448,10 @@ export function normalizeIndividualApprovalReason(
   reason: string
 ): { ok: true; reason: string } | { ok: false; message: string } {
   const trimmed = reason.trim()
-  if (trimmed.length < 1 || trimmed.length > 500) {
+  if (trimmed.length > 500) {
     return { ok: false, message: INDIVIDUAL_APPROVAL_REASON_MESSAGE }
   }
-  return { ok: true, reason: trimmed }
+  return { ok: true, reason: trimmed || INDIVIDUAL_APPROVAL_DEFAULT_REASON }
 }
 
 export function buildIndividualApprovalWithScopeRequest(input: {

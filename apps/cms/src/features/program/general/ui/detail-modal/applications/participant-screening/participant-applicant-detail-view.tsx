@@ -31,7 +31,6 @@ import {
   screeningInterview2DetailTitle,
 } from '@/features/program/general/lib/screening-subject-kind'
 import {
-  describeApprovedEducationScope,
   formatIndividualApprovalScopeErrorMessage,
   invalidateIndividualApprovalScopeQueries,
   isEducationScopeRevisionConflict,
@@ -724,10 +723,6 @@ export function GeneralParticipantApplicantDetailView({
                   reason: payload.reason,
                 }
               )
-              const described = describeApprovedEducationScope({
-                requestedScheduleIds: payload.confirmedScheduleIds,
-                responseScheduleIds: response.educationScope?.scheduleIds,
-              })
               await invalidateIndividualApprovalScopeQueries(queryClient, {
                 programId: program.id,
                 applicationIds: [applicant.id],
@@ -750,17 +745,9 @@ export function GeneralParticipantApplicantDetailView({
                 })
               )
               setApproveTarget(null)
-              const assigned =
-                described.scheduleIds.length > 0
-                  ? `\n배정된 교육 일정: ${described.scheduleIds.join(', ')}`
-                  : ''
-              const added =
-                described.serverAddedScheduleIds.length > 0
-                  ? `\n서버가 포함한 일정: ${described.serverAddedScheduleIds.join(', ')}`
-                  : ''
               void showAlert({
                 title: '승인 완료',
-                content: `승인되었습니다.${assigned}${added}`,
+                content: '승인되었습니다.',
               })
             } catch (error) {
               await invalidateIndividualApprovalScopeQueries(queryClient, {

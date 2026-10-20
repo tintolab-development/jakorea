@@ -770,17 +770,9 @@ export function ApplicantList({
         setSelectedRowKeys([])
         setParticipantApproveTarget(null)
         setParticipantScopeBulkOpen(false)
-        const assigned =
-          result.scheduleIds.length > 0
-            ? `\n배정된 교육 일정: ${result.scheduleIds.join(', ')}`
-            : ''
-        const added =
-          result.serverAddedScheduleIds.length > 0
-            ? `\n서버가 포함한 일정: ${result.serverAddedScheduleIds.join(', ')}`
-            : ''
         showAlert({
           title: '승인 완료',
-          content: `승인되었습니다.${assigned}${added}`,
+          content: '승인되었습니다.',
         })
       } finally {
         setIndividualScopeSubmitting(false)

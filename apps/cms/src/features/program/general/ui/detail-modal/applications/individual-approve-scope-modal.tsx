@@ -92,7 +92,7 @@ function assignedOptionTitle(
   return (
     plannedOptions.find(option => option.scheduleId === scheduleId)?.title ??
     preferredOptions.find(option => option.scheduleId === scheduleId)?.title ??
-    `일정 ${scheduleId}`
+    '교육 일정'
   )
 }
 
@@ -187,24 +187,6 @@ export function IndividualEducationScheduleSections({
 
   return (
     <>
-      <div className="individual-approve-scope-modal__section">
-        <p className="individual-approve-scope-modal__section-label">교육 진행 예정일</p>
-        {plannedOptions.length > 0 ? (
-          <div className="institution-approve-modal__schedule-cards">
-            {plannedOptions.map(option => (
-              <ScheduleCard
-                key={option.key}
-                option={option}
-                selected={false}
-                selectable={false}
-                rejected={option.scheduleId != null && rejected.has(option.scheduleId)}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="institution-approve-modal__notice">배정 가능한 프로그램 교육 일정이 없습니다.</p>
-        )}
-      </div>
       <div className="individual-approve-scope-modal__section">
         <p className="individual-approve-scope-modal__section-label">신청일</p>
         {preferredOptions.length > 0 ? (
@@ -369,9 +351,9 @@ export function IndividualApproveScopeModal({
   }
 
   const handleConfirm = (payload: PermissionModalPayload) => {
-    const reason = payload.reason.trim()
-    if (reason.length > 500) {
-      showAlert({ title: '승인 불가', content: '승인 사유는 500자 이하로 입력해 주세요.' })
+    const reason = normalizeIndividualApprovalReason(payload.reason)
+    if (!reason.ok) {
+      showAlert({ title: '승인 불가', content: reason.message })
       return
     }
     const next = validateIndividualApprovalScheduleSelection(plan, selectedIds)
@@ -381,7 +363,7 @@ export function IndividualApproveScopeModal({
     }
     void Promise.resolve(
       onConfirm({
-        reason,
+        reason: reason.reason,
         confirmedScheduleIds: next.confirmedScheduleIds,
         expectedScopeRevision: 0,
         notifyTiming: payload.notifyTiming,

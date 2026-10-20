@@ -233,7 +233,7 @@ export function IndividualEducationScopeSection({
                   />
                   {serverOnlyIds.length > 0 ? (
                     <p className="institution-approve-modal__notice">
-                      서버가 포함한 일정: {serverOnlyIds.join(', ')}
+                      서버가 포함한 일정이 있습니다.
                     </p>
                   ) : null}
                 </>
