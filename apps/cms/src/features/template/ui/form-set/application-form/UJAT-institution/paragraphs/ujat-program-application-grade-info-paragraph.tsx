@@ -1,6 +1,7 @@
 import { Fragment, useMemo } from 'react'
 import './ujat-program-application-grade-info-paragraph.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -193,7 +194,7 @@ export function UjatProgramApplicationGradeInfoParagraph({
   const ids = applicationGradeBlockIds.length > 0 ? applicationGradeBlockIds : ['ujat-grade-solo']
 
   return (
-    <>
+    <div className="program-registration-paragraph">
       {ids.map((blockKey, blockIndex) => (
         <div key={blockKey} className="ujat-program-application-grade-info-paragraph__block">
           <div className="ujat-program-application-grade-info-paragraph__block-body">
@@ -220,6 +221,6 @@ export function UjatProgramApplicationGradeInfoParagraph({
           ) : null}
         </div>
       ))}
-    </>
+    </div>
   )
 }

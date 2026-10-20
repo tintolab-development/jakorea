@@ -38,13 +38,13 @@ import { FileAttachment } from '@/features/template/ui/paragraph/single-item/fil
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
 import { resolveUjatVolunteerSubmitConfirmationItemLabel } from '@/features/template/lib/ujat-volunteer-submit-confirmation-label'
-import { resolveUjatInstitutionSubmitConfirmationItemLabel } from '@/features/template/lib/ujat-institution-submit-confirmation-label'
 import { isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import {
   isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed,
   isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed,
 } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { UjatProgramApplicationApplicationRegionParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/application-region-paragraph'
+import { UjatProgramApplicationSubmitConfirmationParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/submit-confirmation-paragraph'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
@@ -781,14 +781,26 @@ export function renderFormParagraphBody(
           />
         )
       }
-      if (
-        options?.ujatProgramApplicationFormInstitution === true &&
-        isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(p.id)
-      ) {
+      if (isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(p.id)) {
         return (
           <UjatProgramApplicationApplicationRegionParagraph
             readOnlyPreview={isPreviewReadonly}
             choiceDisplayOnly={structureLockedChoiceDisplayOnly}
+            fallbackLabels={p.items.map(item => item.label)}
+          />
+        )
+      }
+      if (
+        options?.ujatProgramApplicationFormInstitution === true &&
+        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id)
+      ) {
+        return (
+          <UjatProgramApplicationSubmitConfirmationParagraph
+            paragraph={p}
+            onChange={next => updateParagraph(p.id, () => next)}
+            readOnlyPreview={isPreviewReadonly}
+            choiceDisplayOnly={structureLockedChoiceDisplayOnly}
+            replaceYearPlaceholder={paragraphInteractionMode !== 'authoring'}
           />
         )
       }
@@ -797,20 +809,15 @@ export function renderFormParagraphBody(
           ? options?.ujatProgramApplicationFormVolunteer?.recruitCohortLabel
           : undefined
       const resolveItemDisplayLabel =
-        options?.ujatProgramApplicationFormInstitution === true &&
-        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id) &&
-        paragraphInteractionMode !== 'authoring'
+        ujatVolunteerRecruitCohort &&
+        options?.ujatProgramApplicationFormVolunteer?.enabled === true &&
+        isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(p.id)
           ? (item: { id: string; label: string }) =>
-              resolveUjatInstitutionSubmitConfirmationItemLabel(item.label)
-          : ujatVolunteerRecruitCohort &&
-              options?.ujatProgramApplicationFormVolunteer?.enabled === true &&
-              isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(p.id)
-            ? (item: { id: string; label: string }) =>
-                resolveUjatVolunteerSubmitConfirmationItemLabel(
-                  item.label,
-                  ujatVolunteerRecruitCohort
-                )
-            : undefined
+              resolveUjatVolunteerSubmitConfirmationItemLabel(
+                item.label,
+                ujatVolunteerRecruitCohort
+              )
+          : undefined
       const suppressMcItemsEditor =
         structureLocked ||
         isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)

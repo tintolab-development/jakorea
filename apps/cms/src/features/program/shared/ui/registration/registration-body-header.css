@@ -20,4 +20,11 @@
 .full-page-modal__body-header-leading .registration-body-header__tabs .cms-text-tabs__row {
   margin: 0;
   padding: 0;
+  align-items: flex-end;
+}
+
+.full-page-modal__body-header-leading
+  .registration-body-header__tabs
+  .cms-text-tabs__tab:first-child {
+  padding-left: 0;
 }

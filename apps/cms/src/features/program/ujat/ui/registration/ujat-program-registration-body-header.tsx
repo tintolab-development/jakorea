@@ -42,7 +42,6 @@ export function UjatProgramRegistrationBodyHeader({
         variant="list"
         activeKey={applicationTab}
         onChange={tab => onSelectStep(registrationStepFromApplicationTab(tab))}
-        wrap
         ariaLabel="UJAT 신청 정보"
         items={UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS.map(key => ({
           key,
@@ -59,7 +58,6 @@ export function UjatProgramRegistrationBodyHeader({
       variant="list"
       activeKey={recruitTab}
       onChange={(tab: UjatRecruitTabKey) => onSelectStep(registrationStepFromRecruitTab(tab))}
-      wrap
       ariaLabel="UJAT 모집 정보"
       items={UJAT_RECRUIT_TAB_KEYS.map(key => ({
         key,

@@ -1,4 +1,4 @@
-/* 진행 희망 교육 일정 — 상단 날짜 그리드(사용자 정보형과 유사) */
+/* 진행 희망 교육 일정 — Figma 4082:106502 */
 .ujat-preferred-education-schedule__grid-wrap {
   padding: 16px;
   margin-bottom: 0;
@@ -13,13 +13,79 @@
 
 .ujat-preferred-education-schedule__grid-wrap .user-info-grid {
   margin: 0;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-.ujat-preferred-education-schedule__grid-wrap .user-info-grid__item {
-  white-space: normal;
-  min-height: 54px;
-  max-height: 54px;
-  display: inline-flex;
+@media (max-width: 1024px) {
+  .ujat-preferred-education-schedule__grid-wrap .user-info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* btn / select — 기본: 보더 #3d3d3d 16%, 텍스트 80% · 선택: mint 보더·6% 오버레이·Semibold */
+.ujat-preferred-education-schedule__chip.paragraph-chip {
+  display: flex;
   align-items: center;
   justify-content: center;
+  height: 54px;
+  min-height: 54px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid rgb(61 61 61 / 16%);
+  background: var(--main-WT, #fff);
+  color: rgb(61 61 61 / 80%);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-preferred-education-schedule__chip.paragraph-chip--interactive:hover:not(
+    .paragraph-chip--selected
+  ) {
+  border-color: var(--color-mint-01, #01a1af);
+  background: rgb(1 161 175 / 4%);
+}
+
+.ujat-preferred-education-schedule__chip.paragraph-chip--selected {
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background:
+    linear-gradient(0deg, rgb(1 161 175 / 6%) 0%, rgb(1 161 175 / 6%) 100%),
+    #fff;
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.program-registration-paragraph
+  .ujat-preferred-education-schedule__summary-row
+  .detail-info-form__field,
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field,
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field-label,
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field-content {
+  min-height: 54px;
+}
+
+.program-registration-paragraph
+  .ujat-preferred-education-schedule__summary-row
+  .detail-info-form__field-label,
+.program-registration-paragraph
+  .ujat-preferred-education-schedule__summary-row
+  .detail-info-form__field-content,
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field-label,
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field-content {
+  padding: 12px 16px;
+}
+
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field-label {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-preferred-education-schedule__summary-row .detail-info-form__field-content {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
 }

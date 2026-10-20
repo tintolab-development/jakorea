@@ -18,7 +18,8 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
   gradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions | null,
   gradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions | null,
   paragraphInteractionMode: ParagraphBodyInteractionMode = 'authoring',
-  programLinkedPreview = false
+  programLinkedPreview = false,
+  choiceDisplayOnly = false
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
@@ -52,6 +53,7 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
         <UjatProgramApplicationPreferredEducationScheduleParagraph
           paragraphInteractionMode={paragraphInteractionMode}
           programLinkedPreview={programLinkedPreview}
+          choiceDisplayOnly={choiceDisplayOnly}
         />
       )
     default:
