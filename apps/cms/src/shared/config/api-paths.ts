@@ -17,6 +17,9 @@ export const adminAuthPaths = {
   refresh: () => `${adminAuthPaths.prefix}/refresh`,
   mfaVerify: () => `${adminAuthPaths.prefix}/mfa/verify`,
   mfaEnrollment: () => `${adminAuthPaths.prefix}/mfa/enrollment`,
+  mfaResetStepUp: (adminAccountId: number) =>
+    `/api/admin/admin-accounts/${adminAccountId}/mfa/reset/step-up`,
+  mfaReset: (adminAccountId: number) => `/api/admin/admin-accounts/${adminAccountId}/mfa/reset`,
   signupComplete: () => `${adminAuthPaths.prefix}/signup/complete`,
   emailCheck: () => `${adminAuthPaths.prefix}/email/check`,
   emailRecoveryLookup: () => `${adminAuthPaths.prefix}/email-recovery/lookup`,

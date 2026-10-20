@@ -2,8 +2,10 @@
  * MFA/OTP 인증 모달
  */
 
+import { useEffect, useState } from 'react'
 import { Modal, Form, Alert, Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { trimQrImagePadding } from '@/features/auth/lib/trim-qr-image-padding'
 import { useMfaVerification } from '@/features/auth/hooks/use-mfa-verification'
 import { ADMIN_MFA_LOCAL_TEST_CODE } from '@/shared/constants/mfa-policy'
 import { MfaModalHeader } from './mfa-modal-header'
@@ -25,6 +27,8 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     provisioning,
     provisioningLoading,
     provisioningError,
+    showQrSetup,
+    verifyNotice,
     isLocalTestMfa,
     failedAttempts,
     isLocked,
@@ -32,6 +36,24 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     lockMessage,
     otpResetToken,
   } = useMfaVerification({ open })
+  const qrSource = provisioning?.qrDataUrl
+  const [qrSrc, setQrSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!qrSource) {
+      setQrSrc(null)
+      return
+    }
+
+    let cancelled = false
+    void trimQrImagePadding(qrSource).then(next => {
+      if (!cancelled) setQrSrc(next)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [qrSource])
 
   if (!user || user.role !== 'ADMIN') {
     return null
@@ -64,10 +86,24 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
       }}
     >
       <div className="mfa-verification-modal__body">
-        <MfaModalHeader isLocalTest={isLocalTestMfa} />
+        <MfaModalHeader isLocalTest={isLocalTestMfa} showQrSetup={showQrSetup} />
 
         {lockMessage && (
-          <Alert type="error" description={lockMessage} showIcon className="mfa-verification-modal__alert" />
+          <Alert
+            type="error"
+            description={lockMessage}
+            showIcon
+            className="mfa-verification-modal__alert"
+          />
+        )}
+
+        {verifyNotice && !lockMessage && (
+          <Alert
+            type="error"
+            description={verifyNotice}
+            showIcon
+            className="mfa-verification-modal__alert"
+          />
         )}
 
         {isLocalTestMfa && (
@@ -88,25 +124,36 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
           />
         )}
 
-        {!isLocalTestMfa && (
+        {showQrSetup && (
           <div className="mfa-verification-modal__qr">
             {provisioningLoading ? (
               <Spin tip="QR 코드 생성 중…" />
-            ) : provisioning ? (
-              <img
-                src={provisioning.qrDataUrl}
-                alt="TOTP QR"
-                className="mfa-verification-modal__qr-image"
-                width={220}
-                height={220}
-              />
+            ) : provisioning?.qrDataUrl || provisioning?.manualSecret ? (
+              <>
+                {qrSrc ? (
+                  <img
+                    src={qrSrc}
+                    alt="TOTP QR"
+                    className="mfa-verification-modal__qr-image"
+                    width={160}
+                    height={160}
+                  />
+                ) : (
+                  <Spin />
+                )}
+              </>
             ) : provisioningError ? null : (
               <Spin tip="QR 코드 생성 중…" />
             )}
           </div>
         )}
 
-        <Form form={form} layout="vertical" onFinish={handleVerify} className="mfa-verification-modal__form">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleVerify}
+          className="mfa-verification-modal__form"
+        >
           <MfaOtpInput
             onChange={onOtpCodeChange}
             disabled={isLocked}

@@ -1,5 +1,5 @@
 /**
- * MFA API 서비스 (Mock)
+ * MFA API 서비스
  * Phase 0.5.1: MFA/OTP UX
  */
 
@@ -8,129 +8,45 @@ import type {
   OtpSendResponse,
   OtpVerifyRequest,
   OtpVerifyResponse,
-  TotpProvisioning } from '@/types/mfa'
-import { generateSecret, generateURI } from 'otplib'
-import QRCode from 'qrcode'
-import { TOTP_ISSUER } from '@/shared/constants/totp'
+  TotpProvisioning,
+} from '@/types/mfa'
+import { isAdminLocalTestMfa, OTP_POLICY } from '@/shared/constants/mfa-policy'
 import {
-  ADMIN_MFA_METHOD,
-  isAdminLocalTestMfa,
-  OTP_POLICY,
-} from '@/shared/constants/mfa-policy'
-import { fetchAdminMfaEnrollment, fetchAdminMfaVerify, AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
+  fetchAdminMfaEnrollment,
+  fetchAdminMfaVerify,
+  AdminMfaApiError,
+} from '@/features/auth/api/admin-auth-fetcher'
+import { buildAdminMfaEnrollmentRequest } from '@/features/auth/lib/admin-mfa-contract'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
-
-// Mock: 사용자별 OTP 저장 (실제로는 백엔드에서 관리)
-void new Map<string, { otp: string; expiresAt: string }>()
-
-/**
- * OTP 발송
- */
-export async function sendOtp(_request: OtpSendRequest): Promise<OtpSendResponse> {
-  void _request
-  throw new Error('SMS OTP 발송 API가 연동되지 않았습니다.')
-}
-
-/**
- * OTP 검증
- */
-export async function verifyOtp(_request: OtpVerifyRequest): Promise<OtpVerifyResponse> {
-  void _request
-  throw new Error('SMS OTP 검증 API가 연동되지 않았습니다.')
-}
 
 export interface GetTotpProvisioningOptions {
   challengeUuid?: string
   mfaMethod?: string
-  totpSecret?: string
-  otpauthUri?: string
-  qrDataUrl?: string
 }
 
-const TOTP_QR_SIZE = 220
-
-async function buildTotpProvisioningFromSecret(
-  email: string,
-  secret: string,
-  otpauthUri?: string
-): Promise<TotpProvisioning> {
-  const resolvedUri =
-    otpauthUri ?? generateURI({ issuer: TOTP_ISSUER, label: email, secret })
-  // 백엔드 qrDataUrl은 여백·해상도가 제각각일 수 있어 URI 기준으로 항상 220×220 재생성
-  const resolvedQr = await QRCode.toDataURL(resolvedUri, {
-    margin: 0,
-    width: TOTP_QR_SIZE,
-  })
-
+async function getRemoteTotpProvisioning(challengeUuid: string): Promise<TotpProvisioning> {
+  const setupResult = await fetchAdminMfaEnrollment(buildAdminMfaEnrollmentRequest(challengeUuid))
   return {
-    otpauthUri: resolvedUri,
-    qrDataUrl: resolvedQr,
-    manualSecret: secret,
+    otpauthUri: '',
+    qrDataUrl: setupResult.qrDataUrl ?? '',
+    manualSecret: setupResult.manualEntryKey ?? '',
   }
 }
 
-async function getRemoteTotpProvisioning(
-  email: string,
-  challengeUuid: string,
-  preset?: Pick<GetTotpProvisioningOptions, 'totpSecret' | 'otpauthUri' | 'qrDataUrl'>
-): Promise<TotpProvisioning> {
-  if (preset?.totpSecret || preset?.otpauthUri) {
-    const secret = preset.totpSecret ?? generateSecret()
-    return buildTotpProvisioningFromSecret(email, secret, preset.otpauthUri)
-  }
-
-  // otpauthUri 없이 이미지만 온 경우 — 재생성 불가, 원본 사용(표시 크기는 CSS)
-  if (preset?.qrDataUrl) {
-    return {
-      otpauthUri: '',
-      qrDataUrl: preset.qrDataUrl,
-      manualSecret: '',
-    }
-  }
-
-  let setupResult = await fetchAdminMfaEnrollment({
-    mfaMethod: ADMIN_MFA_METHOD.TOTP,
-    enabled: true,
-    challengeUuid,
-  })
-
-  let secret = setupResult.totpSecret
-  if (!secret) {
-    secret = generateSecret()
-    setupResult = await fetchAdminMfaEnrollment({
-      mfaMethod: ADMIN_MFA_METHOD.TOTP,
-      enabled: true,
-      challengeUuid,
-      totpSecret: secret,
-    })
-    secret = setupResult.totpSecret ?? secret
-  }
-
-  return buildTotpProvisioningFromSecret(email, secret, setupResult.otpauthUri)
-}
-
-/** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 */
+/** 첫 등록 challenge의 pending QR. 기등록 계정은 호출하지 않는다. */
 export async function getTotpProvisioning(
-  email: string,
+  _email: string,
   options?: GetTotpProvisioningOptions
 ): Promise<TotpProvisioning | null> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  if (options?.challengeUuid) {
-    try {
-      return await getRemoteTotpProvisioning(email, options.challengeUuid, options)
-    } catch (error) {
-      if (isAdminLocalTestMfa(options.mfaMethod)) {
-        return null
-      }
-      throw error
-    }
+  void _email
+  if (isAdminLocalTestMfa(options?.mfaMethod)) return null
+  if (!options?.challengeUuid) {
+    throw new Error('MFA challengeUuid 없이 TOTP provisioning을 조회할 수 없습니다.')
   }
-
-  throw new Error('MFA challengeUuid 없이 TOTP provisioning을 조회할 수 없습니다.')
+  return getRemoteTotpProvisioning(options.challengeUuid)
 }
 
-/** TOTP 6자리 검증 — challengeUuid 있으면 실 API mfa/verify (API 로그인) */
+/** TOTP 6자리 검증 — challengeUuid 있으면 실 API mfa/verify */
 export async function verifyTotp(
   _email: string,
   otpCode: string,
@@ -184,4 +100,20 @@ export async function verifyTotp(
     isLocked: false,
     lockUntil: null,
   }
+}
+
+/**
+ * OTP 발송
+ */
+export async function sendOtp(_request: OtpSendRequest): Promise<OtpSendResponse> {
+  void _request
+  throw new Error('SMS OTP 발송 API가 연동되지 않았습니다.')
+}
+
+/**
+ * OTP 검증
+ */
+export async function verifyOtp(_request: OtpVerifyRequest): Promise<OtpVerifyResponse> {
+  void _request
+  throw new Error('SMS OTP 검증 API가 연동되지 않았습니다.')
 }
