@@ -224,13 +224,34 @@ async function sleep(ms: number) {
   await new Promise(resolve => window.setTimeout(resolve, ms))
 }
 
+/** OpenAPI `MemberPortalFileUploadRequest.filePurpose` — 서버가 수락하는 값. */
+export type MemberPortalFilePurpose =
+  | 'ASSIGNMENT_ATTACHMENT'
+  | 'SURVEY_ATTACHMENT'
+  | 'ABSENCE_EVIDENCE'
+  | 'PORTRAIT_CONSENT'
+  | 'EXPENSE_RECEIPT'
+  | 'INSTRUCTOR_APPLICATION'
+  | 'VOLUNTEER_APPLICATION_EVIDENCE'
+  | 'PROGRAM_POST_ATTACHMENT'
+  | 'PROGRAM_POST_INLINE_IMAGE'
+  | 'STUDENT_ROSTER'
+  | 'CRIMINAL_HISTORY_EVIDENCE'
+  | 'EDUCATION_JOURNAL'
+  | 'MEMBER_ELECTRONIC_SIGNATURE'
+  | 'ELECTRONIC_SIGNATURE'
+
+export function isPortalElectronicSignaturePurpose(purpose: string): boolean {
+  return purpose === 'MEMBER_ELECTRONIC_SIGNATURE' || purpose === 'ELECTRONIC_SIGNATURE'
+}
+
 /**
  * POST /api/portal/me/files/upload-requests → PUT → confirm → CLEAN+AVAILABLE.
  * 회원 본인 파일만. multipart 가 아니다.
  */
 export async function uploadMemberPortalFile(input: {
   file: File
-  filePurpose: string
+  filePurpose: MemberPortalFilePurpose | string
   checksumSha256?: string
   policy?: MemberFileUploadPolicy
   onStatusChange?: (status: MemberFileUploadStatus) => void

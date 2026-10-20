@@ -34,14 +34,19 @@ export type PortalStudentRosterResponse = {
   rows?: PortalStudentRosterItem[]
 }
 
-/** PUT .../student-roster 요청 — 6개 기본 양식 컬럼만 필수입니다. */
+/**
+ * PUT .../student-roster 요청.
+ * phone·email은 신규 행만 필수. 기존 행(rosterId 또는 natural key 매칭)은 생략·null이면 저장된 값을 유지하며,
+ * 조회 응답의 maskedPhone/maskedEmail을 넣으면 형식 검증에 걸린다.
+ */
 export type PortalStudentRosterRowRequest = {
+  rosterId?: number | null
   studentName: string
   gender: string
   birthDate: string
   className: string
-  phone: string
-  email: string
+  phone?: string | null
+  email?: string | null
   grade?: string | null
   studentNo?: number | null
   notes?: string | null
