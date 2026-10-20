@@ -42,7 +42,7 @@ export interface ProgramRecruitmentResponse {
   applicationType?: ProgramRecruitmentResponseApplicationType;
   /** UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null. */
   recruitTerm?: ProgramRecruitmentResponseRecruitTerm;
-  /** 이 모집 행의 공고 제목. 비어 있으면 null. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 저장하지 않는다. */
+  /** 이 모집 행의 공고 제목. 비어 있으면 null. */
   announcementTitle?: string | null;
   /** 이 모집 행의 한 줄 소개. 비어 있으면 null. */
   summary?: string | null;

@@ -32,7 +32,6 @@ export interface ProgramDetailResponse {
   /** 교육받은 교사 프로그램의 교육일지 기능 설정. 비대상 프로그램·detail row 없음·OFF는 false. */
   educationJournalEnabled?: boolean;
   portalCategories?: string[];
-  /** 회원에게 보이는 공고명. 포커스 없는 조회는 공통정보 공고명. GENERAL_* 봉사자 포커스는 공통정보 공고명과 같고 행 announcementTitle은 쓰지 않는다. UJAT 봉사자 포커스는 모집별 공고명. */
   title?: string;
   titleEn?: string;
   summary?: string;
@@ -44,10 +43,6 @@ export interface ProgramDetailResponse {
   periodStatus?: string;
   /** 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개. */
   recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
-  /** 기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영. */
-  preEducationNoticeRequired?: boolean | null;
-  /** preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집에서만 내려가며 두 필드는 항상 같은 boolean입니다. */
-  advanceGuidanceRequired?: boolean | null;
   applicationTargetMode?: string;
   businessField?: string;
   venue?: string;
@@ -62,12 +57,11 @@ export interface ProgramDetailResponse {
   learningSupportContent?: string;
   otherMatters?: string;
   remarks?: string;
-  /** 프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다. */
+  /** 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다. */
   educationTarget?: ProgramDetailResponseEducationTarget;
-  /** 프로그램 공통 교육 대상 코드 배열. 포커스와 무관하게 같다. 없으면 생략. 강사·봉사자 recruitmentTargets를 넣지 않는다. */
+  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
   educationTargets?: string[];
-  /** 프로그램 공통 교육 대상 상세. 포커스와 무관하게 같다. 없으면 null. */
-  educationTargetDetail?: string | null;
+  educationTargetDetail?: string;
   /** 강사·봉사자 모집 공고 포커스일 때 nested recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null. */
   recruitmentTarget?: string | null;
   /** 강사·봉사자 모집 대상 코드 배열. recruitmentTarget 없을 때 FE 라벨 조합용. 참여자 포커스는 생략. */

@@ -102,9 +102,13 @@ export interface ProgramResponse {
   schedules?: ProgramScheduleResponse[];
   recruitments?: ProgramRecruitmentResponse[];
   settlementPolicy?: ProgramSettlementPolicyResponse;
+  /** CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. Portal featuredOnHome 필터와 동일 컬럼. */
+  featuredOnHome?: boolean;
+  /** 홈 캐러셀 정렬 순서. 양의 정수이며 null이면 후순위. */
+  homeDisplayOrder?: number | null;
   createdAt?: string;
   updatedAt?: string;
-  businessStartDate?: string;
   businessEndDate?: string;
   businessYear?: number;
+  businessStartDate?: string;
 }
