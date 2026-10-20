@@ -68,3 +68,10 @@ export async function putPortalSignatureCurrent(
   const res = await axiosClient.put(PORTAL_SIGNATURES_CURRENT, body)
   return unwrapEnvelope<PortalSignatureProfileResponse>(res.data) ?? {}
 }
+
+export async function fetchPortalSignatureCurrent(
+  signal?: AbortSignal,
+): Promise<PortalSignatureProfileResponse> {
+  const res = await axiosClient.get(PORTAL_SIGNATURES_CURRENT, { signal })
+  return unwrapEnvelope<PortalSignatureProfileResponse>(res.data) ?? {}
+}
