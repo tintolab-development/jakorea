@@ -30,13 +30,14 @@ import {
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
-  PFFormFieldValueText,
   PFFormHomeAddressFields,
   PFFormInlineSeparatedFields,
   PFFormSection,
+  PFStateBadge,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { downloadCrimeConsentFormDocument } from './consent/crime-consent-form-document'
 import { getInstructorApplyApiErrorMessage } from './api/get-instructor-apply-api-error-message'
 import { mapInstructorApplyFormToCreateRequest } from './api/map-create-request'
 import { resolveInstructorApplyTermsAgreementVersions } from './api/resolve-terms-agreement-versions'
@@ -63,20 +64,26 @@ import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
 const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
+const DOWNLOAD_FAILED_MESSAGE = '동의서 양식을 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.'
+
+const DOCUMENT_CARD_META: Record<
+  InstructorConsentDocumentKey,
+  { validityLabel: string; hint?: string }
+> = {
+  consentPortrait: { validityLabel: '1년' },
+  consentPaymentStatement: {
+    validityLabel: '10년',
+    hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
+  },
+  consentEducatorPledge: { validityLabel: '1년' },
+  consentAdministrativeJoint: { validityLabel: '1년' },
+  consentSexOffenseCheck: { validityLabel: '1년' },
+}
 const FORM_SURFACE = 'platformApply' as const
 const FORM_LAYOUT = getInstructorFormLayout(FORM_SURFACE)
 const CONSENT_DOCUMENT_ITEMS = getInstructorConsentDocumentItems(FORM_SURFACE)
 const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE)
 
-function chunkPairs<T>(items: readonly T[]): T[][] {
-  const rows: T[][] = []
-  for (let index = 0; index < items.length; index += 2) {
-    rows.push(items.slice(index, index + 2) as T[])
-  }
-  return rows
-}
-
-const CONSENT_DOCUMENT_ROWS = chunkPairs(CONSENT_DOCUMENT_ITEMS)
 const SECTION_TITLE = {
   consent: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'consent'),
   basic: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'basic'),
@@ -241,6 +248,21 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
     navigate(getInstructorApplyConsentPath(key))
   }
 
+  const handleConsentDocumentView = (key: InstructorConsentDocumentKey) => {
+    saveInstructorApplyFormDraft(values)
+    navigate(getInstructorApplyConsentPath(key, { mode: 'view' }))
+  }
+
+  const handleConsentDocumentWithdraw = (key: InstructorConsentDocumentKey) => {
+    setValues(prev => ({ ...prev, [key]: CONSENT_VALUE.disagree }))
+  }
+
+  const handleCrimeConsentDownload = () => {
+    void downloadCrimeConsentFormDocument().catch(() => {
+      setAlert({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+    })
+  }
+
   const handleSubmit = () => {
     const { missingRequired, formatMessages } = collectInstructorRegisterValidation(
       values,
@@ -340,35 +362,91 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
           footer={FORM_LAYOUT.consent.footerText}
           required={FORM_LAYOUT.consent.allItemsRequired}
         >
-          <PFFormFieldTable>
-            {CONSENT_DOCUMENT_ROWS.map(row => (
-              <PFFormFieldRow key={row.map(item => item.key).join('-')} type="double">
-                {row.map(item => {
-                  const agreed = values[item.key] === CONSENT_VALUE.agree
-                  return (
-                    <PFFormField
-                      key={item.key}
-                      label={item.label}
-                      labelWidth="wide"
-                      required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
+          <div className={styles.consentCards}>
+            {CONSENT_DOCUMENT_ITEMS.map(item => {
+              const agreed = values[item.key] === CONSENT_VALUE.agree
+              const meta = DOCUMENT_CARD_META[item.key]
+              const isCrime = item.key === 'consentSexOffenseCheck'
+              return (
+                <article key={item.key} className={styles.consentCard}>
+                  <PFText typo="bd-md-sb" color="black">
+                    {item.label}
+                  </PFText>
+                  <div className={styles.consentStatus}>
+                    <PFStateBadge
+                      size="small"
+                      tone={agreed ? 'progress' : 'disabled'}
+                      className={styles.consentBadge}
                     >
-                      <PFFormInlineSeparatedFields>
-                        <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
+                      {agreed ? '동의함' : '미동의'}
+                    </PFStateBadge>
+                    {agreed ? (
+                      <PFText typo="bd-sm-rg" color="neutral-cool-500">
+                        유효기간 {meta.validityLabel}
+                      </PFText>
+                    ) : meta.hint ? (
+                      <PFText typo="bd-sm-rg" color="neutral-cool-500">
+                        {meta.hint}
+                      </PFText>
+                    ) : null}
+                  </div>
+                  {agreed ? (
+                    <div className={styles.consentActions}>
+                      <PFButton
+                        type="button"
+                        size="large"
+                        variant="tertiary"
+                        className={styles.consentActionButton}
+                        onClick={() => handleConsentDocumentWithdraw(item.key)}
+                      >
+                        동의 철회
+                      </PFButton>
+                      {isCrime ? (
                         <PFButton
                           type="button"
-                          variant="secondary"
-                          size="formPage"
-                          onClick={() => handleConsentDocumentWrite(item.key)}
+                          size="large"
+                          variant="tertiary"
+                          className={styles.consentActionButton}
+                          onClick={handleCrimeConsentDownload}
                         >
-                          동의서 작성
+                          동의서 다운로드
                         </PFButton>
-                      </PFFormInlineSeparatedFields>
-                    </PFFormField>
-                  )
-                })}
-              </PFFormFieldRow>
-            ))}
-          </PFFormFieldTable>
+                      ) : (
+                        <PFButton
+                          type="button"
+                          size="large"
+                          variant="tertiary"
+                          className={styles.consentActionButton}
+                          onClick={() => handleConsentDocumentView(item.key)}
+                        >
+                          동의서 확인
+                        </PFButton>
+                      )}
+                      <PFButton
+                        type="button"
+                        size="large"
+                        variant="primary"
+                        className={styles.consentActionButton}
+                        onClick={() => handleConsentDocumentWrite(item.key)}
+                      >
+                        {isCrime ? '동의서 제출' : '동의서 재작성'}
+                      </PFButton>
+                    </div>
+                  ) : (
+                    <PFButton
+                      type="button"
+                      size="large"
+                      variant="primary"
+                      width="100%"
+                      onClick={() => handleConsentDocumentWrite(item.key)}
+                    >
+                      동의서 작성
+                    </PFButton>
+                  )}
+                </article>
+              )
+            })}
+          </div>
         </PFFormSection>
 
         <PFFormSection id="instructor-apply-basic" title={SECTION_TITLE.basic} required>

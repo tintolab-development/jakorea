@@ -35,8 +35,12 @@ export function getInstructorApplyConsentPageDescription(
   return PAGE_DESCRIPTIONS[key]
 }
 
-export function getInstructorApplyConsentPath(key: InstructorConsentDocumentKey): string {
-  return instructorApplyConsentPath(key)
+export function getInstructorApplyConsentPath(
+  key: InstructorConsentDocumentKey,
+  options?: { mode?: 'view' },
+): string {
+  const path = instructorApplyConsentPath(key)
+  return options?.mode === 'view' ? `${path}?mode=view` : path
 }
 
 export const CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'

@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import { isAxiosError } from 'axios'
 
 const POLL_INTERVAL_MS = 2_000
@@ -147,6 +148,22 @@ export async function uploadMemberPortalFile(input: {
   ) {
     throw new MemberFileTooLargeError()
   }
+  return withFileUploadOverlay(() =>
+    uploadPreparedMemberPortalFile({
+      file: input.file,
+      filePurpose: input.filePurpose,
+      fileBytes,
+      fileSize,
+    }),
+  )
+}
+
+async function uploadPreparedMemberPortalFile(input: {
+  file: File
+  filePurpose: string
+  fileBytes: ArrayBuffer | null
+  fileSize: number
+}): Promise<number> {
   const contentType = resolveMemberPortalUploadContentType(input.file)
   const prepared = unwrap<MemberFileUploadResponse>(
     (
@@ -156,7 +173,7 @@ export async function uploadMemberPortalFile(input: {
           filePurpose: input.filePurpose,
           originalFileName: input.file.name,
           contentType,
-          fileSize,
+          fileSize: input.fileSize,
         },
         { headers: { 'Idempotency-Key': crypto.randomUUID() } }
       )
@@ -169,7 +186,7 @@ export async function uploadMemberPortalFile(input: {
   const uploadResponse = await fetch(prepared.uploadUrl, {
     method: prepared.method?.trim() || 'PUT',
     headers,
-    body: fileBytes ?? input.file,
+    body: input.fileBytes ?? input.file,
   })
   if (!uploadResponse.ok) {
     const detail = await uploadResponse.text().catch(() => '')
@@ -185,7 +202,7 @@ export async function uploadMemberPortalFile(input: {
   unwrap(
     (
       await axiosClient.post(confirmPath, {
-        fileSize,
+        fileSize: input.fileSize,
         contentType,
       })
     ).data
