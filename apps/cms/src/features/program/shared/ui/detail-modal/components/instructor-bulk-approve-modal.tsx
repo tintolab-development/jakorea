@@ -8,11 +8,28 @@ import './instructor-bulk-approve-modal.css'
 
 export type InstructorBulkApproveModalProps = {
   open: boolean
+  /** 일괄 시 대표(첫) 강사명 — `[이름] 님 외 N명` */
+  subjectName: string
   /** 선택한 강사 수 */
   selectionCount: number
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+}
+
+export function buildInstructorBulkApproveCopy({
+  subjectName,
+  selectionCount,
+}: {
+  subjectName: string
+  selectionCount: number
+}): { title: string; message: string } {
+  const name = subjectName.trim() || '회원'
+  const rest = Math.max(0, selectionCount - 1)
+  return {
+    title: '프로그램 신청 일괄 승인 안내',
+    message: `**[${name}] 님 외 ${rest}명**의 프로그램 신청을 승인하시겠습니까?\n승인 시 회원에게 승인 알림이 발송됩니다.`,
+  }
 }
 
 function InstructorBulkApproveInfoCallout() {
@@ -34,18 +51,20 @@ function InstructorBulkApproveInfoCallout() {
 
 export function InstructorBulkApproveModal({
   open,
+  subjectName,
   selectionCount,
   onCancel,
   onConfirm,
   zIndex,
 }: InstructorBulkApproveModalProps) {
+  const copy = buildInstructorBulkApproveCopy({ subjectName, selectionCount })
   return (
     <PermissionModal
       open={open}
       variant="approve"
       className="instructor-bulk-approve-modal"
-      title="강사 일괄 승인 안내"
-      message={`선택한 **${selectionCount}명**의 모든 강사의 프로그램 참여를 일괄 승인하시겠습니까?\n승인 시 각 강사에게 개별로 승인 알림이 발송됩니다.`}
+      title={copy.title}
+      message={copy.message}
       infoCallout={<InstructorBulkApproveInfoCallout />}
       confirmLabel="승인"
       onCancel={onCancel}

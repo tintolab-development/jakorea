@@ -190,8 +190,7 @@ export function formatLectureAssignDateLabel(date: Dayjs): string {
 }
 
 export function formatLectureAssignTagLabel(date: Dayjs, schoolName: string): string {
-  const shortSchool = schoolName.replace(/초등학교$/, '초').replace(/중학교$/, '중')
-  return `${formatLectureAssignDateLabel(date)} ${shortSchool}`
+  return `${formatLectureAssignDateLabel(date)} ${schoolName}`
 }
 
 /** 승인된 기관 신청의 희망 교육 일정만 슬롯으로 변환 (강사 신청 — 강의 진행 가능 일정) */

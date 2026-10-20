@@ -63,21 +63,25 @@ function InstructorLectureAssignTag({
   item,
   onRemove,
   onToggleLead,
+  showLead = true,
 }: {
   item: InstructorLectureAssignItem
   onRemove: () => void
   onToggleLead: (checked: boolean) => void
+  showLead?: boolean
 }) {
   return (
     <span className="instructor-lecture-assign-modal__assigned-tag">
       <span className="instructor-lecture-assign-modal__assigned-tag-text">{item.tagLabel}</span>
-      <CmsCheckbox
-        checkboxSize="medium"
-        checked={item.scheduleLead === true}
-        onChange={event => onToggleLead(event.target.checked)}
-      >
-        리드
-      </CmsCheckbox>
+      {showLead ? (
+        <CmsCheckbox
+          checkboxSize="medium"
+          checked={item.scheduleLead === true}
+          onChange={event => onToggleLead(event.target.checked)}
+        >
+          리드
+        </CmsCheckbox>
+      ) : null}
       <button
         type="button"
         className="instructor-lecture-assign-modal__assigned-tag-remove"
@@ -232,6 +236,7 @@ export function InstructorLectureAssignModal({
           <InstructorLectureAssignTag
             key={item.slotKey}
             item={item}
+            showLead={isIndividual}
             onRemove={() => handleRemoveAssignment(item.slotKey)}
             onToggleLead={checked => handleToggleScheduleLead(item.slotKey, checked)}
           />
@@ -245,9 +250,9 @@ export function InstructorLectureAssignModal({
 
   const description = isIndividual
     ? `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 일정을 선택해 주세요.`
-    : `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 기관 및 일정을 선택해 주세요.\n강의는 **동일한 날짜에 1개의 기관에만 배정 가능**합니다.`
+    : `**[${instructor.instructorName}]** 님을 배정할 기관 및 일정을 선택해 주세요.\n일정은 하루 1개의 기관에만 배정 가능합니다.`
 
-  const summaryLabel = isIndividual || useSlotListLayout ? '배정된 일정' : '배정된 항목 수'
+  const summaryLabel = '배정된 일정'
 
   const usePeriodSlotChip = isIndividual || useSlotListLayout
 
@@ -255,7 +260,7 @@ export function InstructorLectureAssignModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="강사 배정 안내"
+      title={isIndividual ? '강사 배정 안내' : '기관 배정 안내'}
       width={useSlotListLayout ? INDIVIDUAL_MODAL_WIDTH : 800}
       className={[
         'instructor-lecture-assign-modal',
@@ -292,7 +297,7 @@ export function InstructorLectureAssignModal({
             disabled={!canConfirm}
             onClick={handleConfirm}
           >
-            강의 배정
+            {isIndividual ? '강의 배정' : '기관 배정'}
           </CmsButton>
         </div>
       }

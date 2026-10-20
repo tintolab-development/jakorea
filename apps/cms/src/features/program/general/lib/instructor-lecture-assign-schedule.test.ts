@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import {
+  formatLectureAssignTagLabel,
   getSchoolIdForDateFromAssignments,
   isLectureAssignSlotDisabled,
   parseInstructorLectureAssignScheduleFromInstitutions,
@@ -8,6 +9,7 @@ import {
   type InstructorLectureAssignItem,
   type InstructorLectureAssignSlot,
 } from './instructor-lecture-assign-schedule'
+import dayjs from 'dayjs'
 
 const gangseoSlot: InstructorLectureAssignSlot = {
   key: '2026-03-19|assign-school-gangseo|1',
@@ -42,6 +44,13 @@ const gangseoSecondSession: InstructorLectureAssignSlot = {
 }
 
 describe('instructor-lecture-assign-schedule', () => {
+  it('배정 칩은 학교명을 약식 없이 그대로 표기한다', () => {
+    expect(formatLectureAssignTagLabel(dayjs('2026-11-03'), '부명초등학교')).toBe(
+      '2026. 11. 03(화) 부명초등학교'
+    )
+    expect(toLectureAssignItem(gangseoSlot).tagLabel).toBe('2026. 03. 19(목) 강서초등학교')
+  })
+
   it('같은 날 다른 기관 슬롯은 비활성화한다', () => {
     const assigned: InstructorLectureAssignItem[] = [toLectureAssignItem(gangseoSlot)]
     expect(getSchoolIdForDateFromAssignments(assigned, '2026-03-19')).toBe('assign-school-gangseo')
