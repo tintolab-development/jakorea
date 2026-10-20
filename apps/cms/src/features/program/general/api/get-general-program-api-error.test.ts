@@ -220,6 +220,28 @@ describe('getProgramFormBindingErrorMessage', () => {
     ).toContain('이 프로그램에 등록된 강의평가가 이미 있습니다')
   })
 
+  it('TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY는 서버 메시지를 쓴다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: {
+                code: 'TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY',
+                message: '교육받은 교사 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.',
+                field: 'targetRole',
+              },
+            },
+          },
+        },
+        'fallback',
+        { formType: 'SATISFACTION' }
+      )
+    ).toBe('교육받은 교사 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.')
+  })
+
   it('만족도 등 다른 formType 슬롯 충돌은 기본 슬롯 안내를 쓴다', () => {
     expect(
       getProgramFormBindingErrorMessage(slotConflictError, 'fallback', {

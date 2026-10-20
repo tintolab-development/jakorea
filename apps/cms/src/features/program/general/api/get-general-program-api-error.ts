@@ -94,6 +94,9 @@ const FORM_BINDING_ACTIVE_SLOT_CONFLICT_LECTURE_EVAL_PROGRAM_MESSAGE =
 const FORM_BINDING_ACTIVE_SLOT_CONFLICT_DEFAULT_MESSAGE =
   '같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다. 기존 바인딩을 확인하거나 다른 대상을 선택해 주세요.'
 
+const TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY_MESSAGE =
+  '교육받은 교사 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.'
+
 const PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE =
   '교육 일정의 논리 슬롯 식별자(educationSlotKey)는 변경할 수 없습니다. 일정 시간만 수정하거나 새 일정을 추가해 주세요.'
 
@@ -109,6 +112,11 @@ export function getProgramFormBindingErrorMessage(
   context?: ProgramFormBindingErrorContext
 ): string {
   const code = extractApiErrorCode(error)
+  if (code === 'TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY_MESSAGE
+  }
   if (code === 'PROGRAM_FORM_BINDING_ACTIVE_SLOT_CONFLICT') {
     const isLectureEvalProgram =
       context?.formType === 'LECTURE_EVALUATION' && context?.targetScope === 'PROGRAM'
