@@ -19,6 +19,7 @@ import type {
   InstructorAssignmentListItemEnriched,
   RepresentativeInstructorBody,
 } from '@/features/program/general/api/instructor-assignment-types'
+import type { InstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 
 export type InstructorAssignmentsListQuery = {
   programId?: string | number
@@ -66,12 +67,14 @@ export async function createInstructorAssignmentRemote(
 }
 
 export async function cancelInstructorAssignmentRemote(
-  assignmentId: string
+  assignmentId: string,
+  payload: InstructorAssignmentCancelRequest
 ): Promise<InstructorAssignmentDecisionResponse> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/program-execution/instructor-assignments/${encodeURIComponent(assignmentId)}/cancel`,
       method: 'POST',
+      data: payload,
     })
   )
 }

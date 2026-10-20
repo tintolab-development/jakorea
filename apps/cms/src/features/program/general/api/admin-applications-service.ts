@@ -417,12 +417,14 @@ export async function rejectGeneralInstructorApplication(
 export async function cancelGeneralInstructorApplicationApproval(
   applicationId: string,
   reason: string,
-  notification?: InstructorApplicationNotificationRequest
+  notification?: InstructorApplicationNotificationRequest,
+  faultParty?: 'USER' | 'ADMIN'
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await cancelInstructorApplicationApprovalRemote(applicationId, {
     reason: reason.trim() || '승인 취소',
     ...(notification ? { notification } : {}),
+    ...(faultParty ? { faultParty } : {}),
   })
 }
 

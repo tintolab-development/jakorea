@@ -96,6 +96,7 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import type { SchoolAddInstructorAssignOption } from '../../../lib/school-add-instructor-assign'
 import {
   isOneSchoolPerDayConflictErrorCode,
@@ -1678,15 +1679,22 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
+      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
       const removedRows = assignedRows.filter(r => selectedAssignedKeys.includes(r.id))
       const removedInstructorNames = removedRows.map(r => r.instructorName)
+      const cancelBody = toInstructorAssignmentCancelRequest({
+        reason: payload.reason,
+        notifyTiming: payload.notifyTiming,
+        manualNotifyAt: payload.manualNotifyAt,
+        faultParty: payload.faultParty,
+      })
 
       if (assignmentBoardRemoteEnabled) {
         try {
           for (const removed of removedRows) {
             const assignmentId = removed.assignmentId ?? removed.id
             if (!assignmentId) continue
-            await cancelInstructorAssignmentRemote(String(assignmentId))
+            await cancelInstructorAssignmentRemote(String(assignmentId), cancelBody)
           }
           await invalidateAssignmentBoard()
         } catch {

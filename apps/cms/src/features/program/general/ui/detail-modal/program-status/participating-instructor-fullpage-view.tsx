@@ -79,6 +79,7 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   mapParticipatingSessionsToInstructorAssignOptions,
@@ -793,8 +794,15 @@ export function ParticipatingInstructorFullpageView({
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedSchoolKeys.length === 0) return
+      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
       const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
       const removedSchoolNames = selectedRows.map(r => r.schoolName)
+      const cancelBody = toInstructorAssignmentCancelRequest({
+        reason: payload.reason,
+        notifyTiming: payload.notifyTiming,
+        manualNotifyAt: payload.manualNotifyAt,
+        faultParty: payload.faultParty,
+      })
 
       if (institutionAssignment.remoteEnabled) {
         try {
@@ -806,7 +814,7 @@ export function ParticipatingInstructorFullpageView({
                   ? [row.assignmentId]
                   : []
             for (const assignmentId of ids) {
-              await cancelInstructorAssignmentRemote(assignmentId)
+              await cancelInstructorAssignmentRemote(assignmentId, cancelBody)
             }
           }
           await institutionAssignment.invalidate()
@@ -1088,7 +1096,7 @@ export function ParticipatingInstructorFullpageView({
             : undefined
           await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, {
             reason,
-            faultParty: 'ADMIN',
+            faultParty: payload.faultParty,
             stopScheduleId:
               stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
                 ? stopScheduleIdNum

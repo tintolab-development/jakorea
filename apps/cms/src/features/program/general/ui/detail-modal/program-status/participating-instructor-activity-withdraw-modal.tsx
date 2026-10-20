@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { ParticipatingInstructorActivityWithdrawScheduleOption } from '@/features/program/general/lib/participating-instructor-activity-withdraw'
+import {
+  INSTRUCTOR_JA_FAULT_PARTY_HINT,
+  INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE,
+} from '@/shared/constants/messages'
 import './participating-instructor-activity-withdraw-modal.css'
 
 const MODAL_Z_INDEX = 1100
@@ -14,6 +19,7 @@ const ACTIVITY_WITHDRAW_CONFIRM_PLACEHOLDER =
 
 export type ParticipatingInstructorActivityWithdrawModalPayload = {
   stopScheduleId?: string
+  faultParty: 'USER' | 'ADMIN'
 }
 
 export type ParticipatingInstructorActivityWithdrawModalProps = {
@@ -33,21 +39,26 @@ export function ParticipatingInstructorActivityWithdrawModal({
 }: ParticipatingInstructorActivityWithdrawModalProps) {
   const [confirmKeyword, setConfirmKeyword] = useState('')
   const [stopScheduleRowId, setStopScheduleRowId] = useState<string | undefined>(undefined)
+  const [faultParty, setFaultParty] = useState<'USER' | 'ADMIN' | undefined>(undefined)
+  const [faultPartyError, setFaultPartyError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
     setConfirmKeyword('')
     setStopScheduleRowId(undefined)
+    setFaultParty(undefined)
+    setFaultPartyError(null)
   }, [open])
 
   const hasScheduleOptions = scheduleOptions.length > 0
 
   const canConfirm = useMemo(() => {
     if (confirmKeyword.trim() !== ACTIVITY_WITHDRAW_CONFIRM_VALUE) return false
+    if (faultParty !== 'USER' && faultParty !== 'ADMIN') return false
     if (!hasScheduleOptions) return true
     if (!stopScheduleRowId) return false
     return scheduleOptions.some(option => option.value === stopScheduleRowId)
-  }, [confirmKeyword, hasScheduleOptions, scheduleOptions, stopScheduleRowId])
+  }, [confirmKeyword, faultParty, hasScheduleOptions, scheduleOptions, stopScheduleRowId])
 
   const handleCancel = useCallback(() => {
     setConfirmKeyword('')
@@ -57,16 +68,21 @@ export function ParticipatingInstructorActivityWithdrawModal({
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm) return
+    if (faultParty !== 'USER' && faultParty !== 'ADMIN') {
+      setFaultPartyError(INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE)
+      return
+    }
     onConfirm({
       stopScheduleId: hasScheduleOptions ? stopScheduleRowId : undefined,
+      faultParty,
     })
     setConfirmKeyword('')
     setStopScheduleRowId(undefined)
-  }, [canConfirm, hasScheduleOptions, onConfirm, stopScheduleRowId])
+  }, [canConfirm, faultParty, hasScheduleOptions, onConfirm, stopScheduleRowId])
 
   const description = hasScheduleOptions
-    ? `**[${instructorName}]** 강사의 프로그램 참여 활동을 기관 사유로 포기 처리하시겠습니까?\n진행된 교육 일정이 있으면 활동 중단일까지 실적에 반영되며, 이후 일정은 반영되지 않습니다.\n활동을 중단할 교육 일정을 선택해 주세요.`
-    : `**[${instructorName}]** 강사의 프로그램 참여 활동을 기관 사유로 포기 처리하시겠습니까?\n진행된 교육 일정이 없어 즉시 활동 포기 처리됩니다.`
+    ? `**[${instructorName}]** 강사의 프로그램 참여 활동을 포기 처리하시겠습니까?\n진행된 교육 일정이 있으면 활동 중단일까지 실적에 반영되며, 이후 일정은 반영되지 않습니다.\n활동을 중단할 교육 일정을 선택해 주세요.`
+    : `**[${instructorName}]** 강사의 프로그램 참여 활동을 포기 처리하시겠습니까?\n진행된 교육 일정이 없어 즉시 활동 포기 처리됩니다.`
 
   const footer = (
     <div className="participating-instructor-activity-withdraw-modal__footer">
@@ -98,6 +114,36 @@ export function ParticipatingInstructorActivityWithdrawModal({
       description={description}
     >
       <div className="participating-instructor-activity-withdraw-modal__form">
+        <div className="participating-instructor-activity-withdraw-modal__field">
+          <span className="participating-instructor-activity-withdraw-modal__label">
+            취소 귀책
+          </span>
+          <CmsRadio.Group
+            size="medium"
+            value={faultParty}
+            onChange={event => {
+              const next = event.target.value
+              if (next !== 'USER' && next !== 'ADMIN') return
+              setFaultParty(next)
+              setFaultPartyError(null)
+            }}
+          >
+            <CmsRadio value="USER" size="medium">
+              강사 사유
+            </CmsRadio>
+            <CmsRadio value="ADMIN" size="medium">
+              운영 사유
+            </CmsRadio>
+          </CmsRadio.Group>
+          <p className="participating-instructor-activity-withdraw-modal__hint">
+            {INSTRUCTOR_JA_FAULT_PARTY_HINT}
+          </p>
+          {faultPartyError ? (
+            <span className="participating-instructor-activity-withdraw-modal__error" role="alert">
+              {faultPartyError}
+            </span>
+          ) : null}
+        </div>
         <CmsInput
           inputSize="large"
           width="100%"
