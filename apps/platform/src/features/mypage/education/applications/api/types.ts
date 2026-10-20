@@ -79,7 +79,11 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   formBindingId?: number
   templateVersionId?: number
   formResponseStatus?: string
-  /** 없으면 BE `{}` */
+  /**
+   * 문단 id → 제출 답변. 없으면 BE `{}`.
+   * MEMBER_SELF 상세의 기본정보(`*seed-basic-info`) `teacherTel` / `teacherMobile` /
+   * `teacherEmail`은 마스킹되지 않은 원문 string (CMS admin 마스킹과 별개).
+   */
   answers?: Record<string, unknown>
   /** 관리자 배정 2차 면접 — 미배정 `null` */
   assignedInterviewStartAt?: string | null

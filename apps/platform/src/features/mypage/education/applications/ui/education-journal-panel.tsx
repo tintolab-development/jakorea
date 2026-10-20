@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, useState } from 'react'
-import { PFPagination, PFButton, PFText } from '@/shared/ui'
+import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
+import { PFButton, PFDataTable, PFPagination, PFText, type PFDataTableColumn } from '@/shared/ui'
 import {
   useDownloadPortalEducationJournal,
   usePortalEducationJournals,
@@ -10,6 +11,9 @@ import styles from './education-journal-panel.module.css'
 
 const PAGE_SIZE = 10
 const EMPTY_JOURNALS: PortalEducationJournal[] = []
+const TABLE_MIN_WIDTH = '720px'
+
+type JournalRow = PortalEducationJournal & { displayNo: number }
 
 function fileNameOf(journal: PortalEducationJournal): string {
   return (
@@ -17,6 +21,10 @@ function fileNameOf(journal: PortalEducationJournal): string {
     journal.journalTitle?.trim() ||
     `교육일지_${journal.journalId ?? ''}`
   )
+}
+
+function journalRowKey(journal: PortalEducationJournal): string {
+  return String(journal.journalId ?? `${journal.fileObjectId}-${journal.submittedAt}`)
 }
 
 function errorMessage(error: unknown): string {
@@ -82,10 +90,52 @@ export function EducationJournalPanel({
   const journals = journalsQuery.data ?? EMPTY_JOURNALS
   const totalPages = Math.max(1, Math.ceil(journals.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
-  const visibleJournals = useMemo(
-    () => journals.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [journals, safePage]
-  )
+  const visibleJournals = useMemo((): JournalRow[] => {
+    const start = (safePage - 1) * PAGE_SIZE
+    return journals.slice(start, start + PAGE_SIZE).map((journal, index) => ({
+      ...journal,
+      displayNo: journals.length - (start + index),
+    }))
+  }, [journals, safePage])
+
+  const columns = useMemo((): PFDataTableColumn<JournalRow>[] => {
+    return [
+      {
+        key: 'no',
+        label: 'No',
+        width: '66px',
+        render: row => String(row.displayNo),
+      },
+      {
+        key: 'fileName',
+        label: '파일명',
+        align: 'left',
+        render: row => {
+          const fileName = fileNameOf(row)
+          const fileObjectId = row.fileObjectId
+          if (fileObjectId != null && fileObjectId > 0) {
+            return (
+              <button
+                type="button"
+                className={styles.fileButton}
+                onClick={() => downloadMutation.mutate({ fileObjectId, fileName })}
+                disabled={downloadMutation.isPending}
+              >
+                {fileName}
+              </button>
+            )
+          }
+          return fileName
+        },
+      },
+      {
+        key: 'submittedAt',
+        label: '제출일자',
+        width: '180px',
+        render: row => submittedDateLabel(row.submittedAt ?? row.createdAt),
+      },
+    ]
+  }, [downloadMutation])
 
   const handleFileChange = (file: File | undefined) => {
     if (!enabled || !file || submitMutation.isPending) return
@@ -107,14 +157,15 @@ export function EducationJournalPanel({
           <PFText
             id={`${inputId}-title`}
             as="h2"
-            typo="hd-sm"
+            typo="hl-sm"
             color="black"
             className={styles.title}
           >
-            <span className={styles.step}>Step 1</span> 교육일지를 제출해 주세요
+            교육일지를 제출해 주세요.
           </PFText>
-          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600" className={styles.description}>
-            교육 진행 후 교육일지를 파일로 제출해 주세요.
+          <PFText as="p" typo="bd-md-md" color="black" className={styles.description}>
+            진행이 완료된 교육에 대한 교육일지를 제출해 주세요. 제공된 엑셀 양식을 작성해 업로드
+            해주세요.
           </PFText>
         </div>
         {enabled ? (
@@ -130,13 +181,20 @@ export function EducationJournalPanel({
             />
             <PFButton
               type="button"
-              variant="primary"
-              size="medium"
+              variant="certificate"
               onClick={() => inputRef.current?.click()}
               disabled={submitMutation.isPending}
               className={styles.submitButton}
             >
               {submitMutation.isPending ? '제출 중' : '교육일지 제출하기'}
+              <img
+                className={styles.submitIllustration}
+                src={illustQuotationUrl}
+                alt=""
+                width={48}
+                height={48}
+                aria-hidden="true"
+              />
             </PFButton>
           </div>
         ) : null}
@@ -156,48 +214,16 @@ export function EducationJournalPanel({
         <PFText as="p" typo="bd-md-rg" color="error">
           {errorMessage(journalsQuery.error)}
         </PFText>
-      ) : journals.length ? (
+      ) : (
         <>
-          <div className={styles.table} role="table" aria-label="제출한 교육일지 목록">
-            <div className={`${styles.tableRow} ${styles.tableHeader}`} role="row">
-              <span role="columnheader">No</span>
-              <span role="columnheader">파일명</span>
-              <span role="columnheader">제출일자</span>
-            </div>
-            {visibleJournals.map((journal, index) => {
-              const fileName = fileNameOf(journal)
-              const fileObjectId = journal.fileObjectId
-              return (
-                <div
-                  key={journal.journalId ?? `${fileObjectId}-${journal.submittedAt}-${index}`}
-                  className={styles.tableRow}
-                  role="row"
-                >
-                  <span className={styles.number} role="cell">
-                    {journals.length - ((safePage - 1) * PAGE_SIZE + index)}
-                  </span>
-                  <span className={styles.fileCell} role="cell">
-                    {fileObjectId != null && fileObjectId > 0 ? (
-                      <button
-                        type="button"
-                        className={styles.fileButton}
-                        onClick={() => downloadMutation.mutate({ fileObjectId, fileName })}
-                        disabled={downloadMutation.isPending}
-                      >
-                        {fileName}
-                      </button>
-                    ) : (
-                      fileName
-                    )}
-                  </span>
-                  <span className={styles.date} role="cell">
-                    {submittedDateLabel(journal.submittedAt ?? journal.createdAt)}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          {totalPages > 1 ? (
+          <PFDataTable
+            columns={columns}
+            rows={visibleJournals}
+            rowKey={journalRowKey}
+            minWidth={TABLE_MIN_WIDTH}
+            emptyMessage="제출된 교육일지가 없습니다."
+          />
+          {journals.length > 0 && totalPages > 1 ? (
             <div className={styles.pagination}>
               <PFPagination
                 currentPage={safePage}
@@ -208,10 +234,6 @@ export function EducationJournalPanel({
             </div>
           ) : null}
         </>
-      ) : (
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          제출된 교육일지가 없습니다.
-        </PFText>
       )}
 
       {submitMutation.isError ? (

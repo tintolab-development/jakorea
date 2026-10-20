@@ -160,9 +160,7 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
   const q = params.q.trim()
   const pageIndex = Math.max(params.page, 1) - 1
   const listEnabled =
-    remote &&
-    !q &&
-    (params.category === 'all' || categoryId != null || !categoriesPending)
+    remote && (params.category === 'all' || categoryId != null || !categoriesPending)
 
   const query = useQuery({
     queryKey: platformQueryKeys.impactStory.list({
@@ -190,8 +188,6 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
     retryDelay: queryRetryDelay,
   })
 
-  const preview = useImpactStoriesPreview()
-
   return useMemo(() => {
     if (!remote || query.isError) {
       const local = paginateLocal(getImpactStoryListFallback(), params)
@@ -200,28 +196,6 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
         isRemoteEnabled: remote,
         isPending: false,
         isError: query.isError,
-      }
-    }
-
-    if (q) {
-      if (preview.isPending) {
-        return {
-          items: [],
-          totalPages: 1,
-          totalCount: 0,
-          currentPage: params.page,
-          isRemoteEnabled: remote,
-          isPending: true,
-          isError: false,
-        }
-      }
-      const source = preview.isError ? getImpactStoryListFallback() : preview.items
-      const local = paginateLocal(source, params)
-      return {
-        ...local,
-        isRemoteEnabled: remote,
-        isPending: false,
-        isError: false,
       }
     }
 
@@ -237,25 +211,19 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
       }
     }
 
-    const items = mapPublicStoryListItems(query.data.items)
-    const totalCount =
-      typeof query.data.totalCount === 'number' ? query.data.totalCount : items.length
-    const totalPages =
-      typeof query.data.totalPages === 'number' && query.data.totalPages > 0
-        ? query.data.totalPages
-        : Math.max(1, Math.ceil(totalCount / IMPACT_STORIES_PAGE_SIZE) || 1)
-    const currentPage = Math.min(Math.max(params.page, 1), Math.max(totalPages, 1))
+    const totalCount = query.data.totalCount ?? 0
+    const totalPages = query.data.totalPages ?? 0
 
     return {
-      items,
+      items: mapPublicStoryListItems(query.data.items),
       totalPages: totalCount === 0 ? 1 : totalPages,
       totalCount,
-      currentPage,
+      currentPage: params.page,
       isRemoteEnabled: remote,
       isPending: false,
       isError: false,
     }
-  }, [categoriesPending, params, preview.isError, preview.isPending, preview.items, q, query.data, query.isError, query.isPending, remote])
+  }, [categoriesPending, params, q, query.data, query.isError, query.isPending, remote])
 }
 
 export function useFeaturedImpactStories(): ImpactStoryListItem[] {

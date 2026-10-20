@@ -43,8 +43,8 @@
   text-align: left;
 }
 
-.empty {
-  margin: 0;
-  padding: var(--spacing-32) 0;
+.emptyCell {
+  padding: var(--spacing-48) var(--spacing-12);
+  border-right: none;
   text-align: center;
 }
