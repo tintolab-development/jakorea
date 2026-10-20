@@ -234,16 +234,21 @@ export function MypageEducationDetailPage() {
     if (!isTeacher || !isTeacherOrgActivityDetail) return false
     return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
       policyQueryEnabled: true,
-      policyLoading: studentDocumentPolicyQuery.isLoading,
+      // 캐시가 있어도 다른 신청 건으로 전환·재검증 중에는 학생명단 탭을 잠시 노출하지 않습니다.
+      policyLoading: studentDocumentPolicyQuery.isLoading || studentDocumentPolicyQuery.isFetching,
+      policyError: studentDocumentPolicyQuery.isError,
     })
   }, [
     isTeacher,
     isTeacherOrgActivityDetail,
     studentDocumentPolicyQuery.data,
+    studentDocumentPolicyQuery.isError,
+    studentDocumentPolicyQuery.isFetching,
     studentDocumentPolicyQuery.isLoading,
   ])
   const isStudentDocumentPolicyPending =
-    isTeacherOrgActivityDetail && studentDocumentPolicyQuery.isLoading
+    isTeacherOrgActivityDetail &&
+    (studentDocumentPolicyQuery.isLoading || studentDocumentPolicyQuery.isFetching)
 
   const activityTabOptions = useMemo(
     () =>

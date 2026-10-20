@@ -4,6 +4,7 @@ import illustHackerUrl from '@/shared/assets/illustration/illust-hacker.svg'
 import fileDownloadMintUrl from '@/shared/assets/icons/file-download-mint.svg'
 import fileUploadBlackUrl from '@/shared/assets/icons/file-upload-black.svg'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import type { PortraitConsentTemplateDownloadProgress } from '../lib/student-documents-template-download'
 import styles from './students-panel.module.css'
 
 const PORTRAIT_UPLOAD_ACCEPT =
@@ -15,6 +16,7 @@ type StudentsPanelStepPortraitProps = {
   hasSubmission: boolean
   uploadBlockedMessage?: string | null
   isDownloadingTemplate: boolean
+  downloadProgress?: PortraitConsentTemplateDownloadProgress | null
   isUploading: boolean
   onDownloadTemplate: () => void
   onUploadFile: (file: File) => void
@@ -26,6 +28,7 @@ export function StudentsPanelStepPortrait({
   hasSubmission,
   uploadBlockedMessage,
   isDownloadingTemplate,
+  downloadProgress,
   isUploading,
   onDownloadTemplate,
   onUploadFile,
@@ -75,14 +78,20 @@ export function StudentsPanelStepPortrait({
         >
           <span className={styles.buttonInner}>
             <img src={fileDownloadMintUrl} alt="" width={20} height={20} aria-hidden="true" />
-            양식 다운로드
+            {downloadProgress === 'requesting'
+              ? '다운로드 요청 중'
+              : downloadProgress === 'generating'
+                ? '양식 생성 중'
+                : downloadProgress === 'downloading'
+                  ? '다운로드 중'
+                  : '양식 다운로드'}
           </span>
         </PFButton>
         <PFButton
           type="button"
           size="large"
           variant="tertiary"
-          disabled={isUploading}
+          disabled={isUploading || Boolean(uploadBlockedMessage)}
           onClick={handlePickFile}
         >
           <span className={styles.buttonInner}>
@@ -91,6 +100,12 @@ export function StudentsPanelStepPortrait({
           </span>
         </PFButton>
       </div>
+
+      {uploadBlockedMessage ? (
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          {uploadBlockedMessage}
+        </PFText>
+      ) : null}
 
       <input
         ref={fileInputRef}

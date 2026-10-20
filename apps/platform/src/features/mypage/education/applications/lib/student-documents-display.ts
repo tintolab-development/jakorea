@@ -41,14 +41,9 @@ export function formatPortalStudentGradeClass(
   grade?: string | null,
   className?: string | null,
 ): string {
-  const g = grade?.trim() ?? ''
   const c = className?.trim() ?? ''
-  if (g && c) {
-    if (c.includes(g)) return c
-    return `${g} ${c}`.trim()
-  }
-  const combined = c || g
-  return combined || DASH
+  if (c) return c
+  return grade?.trim() || DASH
 }
 
 export function resolvePortalStudentRosterRowNo(

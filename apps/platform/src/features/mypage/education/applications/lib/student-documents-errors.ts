@@ -14,6 +14,11 @@ const STUDENT_DOCUMENTS_ERROR_MESSAGES: Record<string, string> = {
   STUDENT_ROSTER_UPLOAD_NOT_ALLOWED: '학생 명단 제출 및 수정 기한이 지났습니다.',
   PORTRAIT_CONSENT_UPLOAD_NOT_ALLOWED: '초상권 동의서 제출 및 수정 기한이 지났습니다.',
   ROSTER_IMPORT_FAILED: '학생 명단 파일을 확인해 주세요. 양식·필수 항목·형식을 다시 확인해 주세요.',
+  VALIDATION_FAILED: '학생명, 성별, 생년월일, 학급, 연락처, 이메일은 필수 입력값입니다.',
+  STUDENT_ROSTER_REVISION_CONFLICT:
+    '학생 명단이 다른 화면에서 변경되었습니다. 최신 명단을 다시 확인해 주세요.',
+  STUDENT_ROSTER_MEMBER_ID_CONFLICT:
+    '학생 명단의 회원 정보가 현재 신청 정보와 일치하지 않습니다.',
   FILE_NOT_AVAILABLE: '파일 검사가 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.',
 }
 
@@ -49,10 +54,7 @@ export function resolveStudentDocumentsErrorMessage(
   const mapped = code ? STUDENT_DOCUMENTS_ERROR_MESSAGES[code] : undefined
   const apiMessage = readPortalErrorMessage(responseData)
 
-  if (code === 'BAD_REQUEST' && apiMessage) {
-    return apiMessage
-  }
-  if (mapped) return mapped
   if (apiMessage) return apiMessage
+  if (mapped) return mapped
   return fallback
 }

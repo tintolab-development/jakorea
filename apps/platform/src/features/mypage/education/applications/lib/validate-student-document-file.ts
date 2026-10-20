@@ -1,6 +1,4 @@
-const ROSTER_NAME_PATTERN = /\.(xlsx|xls|csv)$/i
-const ROSTER_MIME_PATTERN =
-  /^(application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|application\/vnd\.ms-excel|text\/csv)$/i
+import { validateStudentRosterUploadFile } from './student-roster-upload-policy'
 
 const PORTRAIT_NAME_PATTERN = /\.(pdf|jpe?g|png|webp)$/i
 const PORTRAIT_MIME_PATTERN = /^(application\/pdf|image\/jpeg|image\/png|image\/webp)$/i
@@ -12,14 +10,7 @@ function isWithinSize(file: File): boolean {
 }
 
 export function validateStudentRosterImportFile(file: File): string | null {
-  if (!isWithinSize(file)) {
-    return '학생 명단 파일은 15MB 이하만 업로드할 수 있습니다.'
-  }
-  const mime = file.type.trim().toLowerCase()
-  if (!ROSTER_MIME_PATTERN.test(mime) && !ROSTER_NAME_PATTERN.test(file.name)) {
-    return '학생 명단은 Excel(xlsx, xls) 또는 CSV 파일만 업로드할 수 있습니다.'
-  }
-  return null
+  return validateStudentRosterUploadFile(file)
 }
 
 export function validatePortraitConsentUploadFile(file: File): string | null {

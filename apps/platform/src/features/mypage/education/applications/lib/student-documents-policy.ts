@@ -18,9 +18,16 @@ export function isPortalStudentDocumentsUnsupported(
 /** 교사 교육현황 — 학생 명단(·출석 관리) 탭 노출. `GET .../student-documents/policy` SSOT */
 export function shouldShowTeacherStudentDocumentDependentTabs(
   policy: PortalStudentDocumentPolicy | null | undefined,
-  options: { policyQueryEnabled: boolean; policyLoading: boolean },
+  options: { policyQueryEnabled: boolean; policyLoading: boolean; policyError?: boolean },
 ): boolean {
-  if (!options.policyQueryEnabled || options.policyLoading || policy == null) return false
+  if (
+    !options.policyQueryEnabled ||
+    options.policyLoading ||
+    options.policyError ||
+    policy == null
+  ) {
+    return false
+  }
   return isPortalStudentDocumentsSupported(policy)
 }
 

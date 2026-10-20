@@ -23,10 +23,8 @@ import {
   resolveRosterUploadBlockedMessage,
   STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE,
 } from '../lib/student-documents-policy'
-import {
-  validatePortraitConsentUploadFile,
-  validateStudentRosterImportFile,
-} from '../lib/validate-student-document-file'
+import { validatePortraitConsentUploadFile } from '../lib/validate-student-document-file'
+import type { PortraitConsentTemplateDownloadProgress } from '../lib/student-documents-template-download'
 import { PFAlertModal, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { StudentsPanelCertificateModal } from './students-panel-certificate-modal'
 import { StudentsPanelStepPortrait } from './students-panel-step-portrait'
@@ -52,20 +50,22 @@ export function EducationStudentsPanel({
   const documentsUiScope = isOrganizationStudentDocumentsUiScope(
     applicationType,
     applicationId,
-    documentsScope,
+    documentsScope
   )
   const remoteEnabled = isOrganizationStudentDocumentsQueryEnabled(
     applicationType,
     applicationId,
-    documentsScope,
+    documentsScope
   )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [portraitTemplateDownloadProgress, setPortraitTemplateDownloadProgress] =
+    useState<PortraitConsentTemplateDownloadProgress | null>(null)
   const [certificateModalOpen, setCertificateModalOpen] = useState(false)
 
   const policyQuery = useOrganizationStudentDocumentPolicyQuery(
     applicationType,
     applicationId,
-    documentsScope,
+    documentsScope
   )
   const policy = policyQuery.data
   const documentsSupported = isPortalStudentDocumentsSupported(policy)
@@ -76,48 +76,69 @@ export function EducationStudentsPanel({
     applicationType,
     applicationId,
     documentsScope,
-    documentsQueryOptions,
+    documentsQueryOptions
   )
   const portraitQuery = useOrganizationPortraitConsentQuery(
     applicationType,
     applicationId,
     documentsScope,
-    documentsQueryOptions,
+    documentsQueryOptions
   )
 
   const downloadRosterTemplate = useDownloadStudentRosterTemplateMutation(applicationId)
-  const downloadPortraitTemplate = useDownloadPortraitConsentTemplateMutation(applicationId)
-  const importRoster = useImportOrganizationStudentRosterMutation(applicationId)
-  const submitPortrait = useSubmitOrganizationPortraitConsentMutation(applicationId)
+  const downloadPortraitTemplate = useDownloadPortraitConsentTemplateMutation(applicationId, {
+    onProgress: progress => setPortraitTemplateDownloadProgress(progress),
+  })
+  const importRoster = useImportOrganizationStudentRosterMutation(applicationId, applicationType)
+  const submitPortrait = useSubmitOrganizationPortraitConsentMutation(
+    applicationId,
+    applicationType
+  )
 
   const rows = rosterQuery.data?.rows ?? []
   const rosterCount = resolveStudentRosterCount(rosterQuery.data?.totalCount, rows.length)
 
   const rosterUploadBlockedMessage = useMemo(
     () => resolveRosterUploadBlockedMessage(policy),
-    [policy],
+    [policy]
   )
   const portraitUploadBlockedMessage = useMemo(
     () => resolvePortraitUploadBlockedMessage(policy),
-    [policy],
+    [policy]
   )
 
   const hasPortraitSubmission = useMemo(
     () => hasOrganizationPortraitConsentSubmission(portraitQuery.data),
-    [portraitQuery.data],
+    [portraitQuery.data]
   )
 
   const certificateButtonEnabled = rosterCount > 0
 
   const isPolicyLoading = remoteEnabled && policyQuery.isLoading
   const isDocumentsLoading =
-    remoteEnabled &&
-    documentsSupported &&
-    (rosterQuery.isLoading || portraitQuery.isLoading)
+    remoteEnabled && documentsSupported && (rosterQuery.isLoading || portraitQuery.isLoading)
   const isLoading = isPolicyLoading || isDocumentsLoading
 
   const handleAsyncError = (error: unknown, fallback: string) => {
     setErrorMessage(resolveStudentDocumentsErrorMessage(error, fallback))
+  }
+
+  const runPortraitTemplateDownload = () => {
+    if (!ensureDocumentsApiReady()) return
+    if (portraitUploadBlockedMessage) {
+      setErrorMessage(portraitUploadBlockedMessage)
+      return
+    }
+
+    setPortraitTemplateDownloadProgress('requesting')
+    void downloadPortraitTemplate
+      .mutateAsync()
+      .catch(error => {
+        setErrorMessage(
+          resolveStudentDocumentsErrorMessage(error, '초상권 동의서 양식을 받지 못했습니다.')
+        )
+      })
+      .finally(() => setPortraitTemplateDownloadProgress(null))
   }
 
   const ensureDocumentsApiReady = (): boolean => {
@@ -195,11 +216,6 @@ export function EducationStudentsPanel({
             setErrorMessage(rosterUploadBlockedMessage)
             return
           }
-          const validationError = validateStudentRosterImportFile(file)
-          if (validationError) {
-            setErrorMessage(validationError)
-            return
-          }
           void importRoster
             .mutateAsync(file)
             .catch(error => handleAsyncError(error, '학생 명단을 업로드하지 못했습니다.'))
@@ -213,17 +229,9 @@ export function EducationStudentsPanel({
         hasSubmission={hasPortraitSubmission}
         uploadBlockedMessage={portraitUploadBlockedMessage}
         isDownloadingTemplate={downloadPortraitTemplate.isPending}
+        downloadProgress={portraitTemplateDownloadProgress}
         isUploading={submitPortrait.isPending}
-        onDownloadTemplate={() => {
-          if (!ensureDocumentsApiReady()) return
-          if (portraitUploadBlockedMessage) {
-            setErrorMessage(portraitUploadBlockedMessage)
-            return
-          }
-          void downloadPortraitTemplate
-            .mutateAsync()
-            .catch(error => handleAsyncError(error, '초상권 동의서 양식을 받지 못했습니다.'))
-        }}
+        onDownloadTemplate={runPortraitTemplateDownload}
         onUploadFile={file => {
           if (!ensureDocumentsApiReady()) return
           if (portraitUploadBlockedMessage) {
@@ -246,7 +254,9 @@ export function EducationStudentsPanel({
         title="안내"
         description={errorMessage ?? ''}
         confirmLabel="확인"
-        onConfirm={() => setErrorMessage(null)}
+        onConfirm={() => {
+          setErrorMessage(null)
+        }}
       />
 
       <StudentsPanelCertificateModal
