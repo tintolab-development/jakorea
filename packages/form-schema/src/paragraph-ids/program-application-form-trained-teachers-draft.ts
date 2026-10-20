@@ -122,6 +122,9 @@ function createTrainedTeachersPlaceholderTable(
     requiredMark: true,
     paragraphTitle: title,
     paragraphDescription,
+    ...(id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo
+      ? { systemFieldKeys: ['educationFormat'] }
+      : {}),
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -193,6 +196,18 @@ export function migrateProgramApplicationFormTrainedTeachersParagraphs(
 ): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table' &&
+      !paragraph.systemFieldKeys?.includes('educationFormat')
+    ) {
+      changed = true
+      return {
+        ...paragraph,
+        systemFieldKeys: [...(paragraph.systemFieldKeys ?? []), 'educationFormat'],
+      }
+    }
     if (
       paragraph.id !== PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent ||
       paragraph.kind !== 'single_item' ||

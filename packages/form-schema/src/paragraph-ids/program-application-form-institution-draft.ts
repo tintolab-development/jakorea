@@ -173,7 +173,8 @@ function createInstitutionGuidanceHorizontalTable(): HorizontalTableParagraph {
 function createInstitutionSeedHorizontalTable(
   id: string,
   title: string,
-  paragraphDescription: string
+  paragraphDescription: string,
+  systemFieldKeys?: string[]
 ): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
     id,
@@ -182,6 +183,7 @@ function createInstitutionSeedHorizontalTable(
     requiredMark: true,
     paragraphTitle: title,
     paragraphDescription,
+    ...(systemFieldKeys != null ? { systemFieldKeys } : {}),
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -233,7 +235,8 @@ export function createProgramApplicationFormInstitutionDraft(): WritingFormDraft
     createInstitutionSeedHorizontalTable(
       PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo,
       '기본 정보',
-      '설명 입력'
+      '설명 입력',
+      ['educationFormat']
     ),
     createInstitutionGuidanceHorizontalTable(),
     createInstitutionSeedHorizontalTable(
@@ -279,6 +282,18 @@ export function migrateProgramApplicationFormInstitutionParagraphs(
 ): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table' &&
+      !paragraph.systemFieldKeys?.includes('educationFormat')
+    ) {
+      changed = true
+      return {
+        ...paragraph,
+        systemFieldKeys: [...(paragraph.systemFieldKeys ?? []), 'educationFormat'],
+      }
+    }
     if (
       paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection &&
       paragraph.kind === 'single_item' &&
