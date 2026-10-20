@@ -67,11 +67,17 @@ export type PortalStudentDocumentPolicy = {
   portraitConsentUploadAllowed?: boolean
 }
 
+/** OpenAPI `PortraitConsentResponse` — GET 빈 본문(미제출·취소)은 null로 정규화합니다. */
 export type PortalOrganizationPortraitConsent = {
   artifactId?: number
   organizationApplicationId?: number
   programId?: number
   fileObjectId?: number
+  originalFileName?: string | null
+  /** byte */
+  fileSize?: number | null
+  updatedAt?: string | null
+  /** SUBMITTED | APPROVED | REJECTED */
   status?: string
   revisionNo?: number
   submittedByMemberId?: number
@@ -80,6 +86,15 @@ export type PortalOrganizationPortraitConsent = {
   reviewedByAdminId?: number
   reviewedAt?: string
   rejectReason?: string
+}
+
+/**
+ * OpenAPI `PortalCertificateBulkDownloadRequest` (operationId `downloadPortalStudentCertificateZip`)
+ * rosterIds: minItems 1 · maxItems 100 · 현재 기관 신청 roster의 rosterId
+ */
+export type PortalCertificateBulkDownloadRequest = {
+  rosterIds: number[]
+  certificateType: 'COMPLETION'
 }
 
 export const PORTAL_FILE_PURPOSE_STUDENT_ROSTER = 'STUDENT_ROSTER'

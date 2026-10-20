@@ -45,8 +45,7 @@ const FAILED_UPLOAD_STATUSES = new Set(['FAILED', 'QUARANTINED'])
 const FAILED_SCAN_STATUSES = new Set(['INFECTED', 'FAILED'])
 const TERMINAL_FILE_STATUSES = new Set(['DELETED', 'EXPIRED', 'REMOVED', 'PURGED'])
 
-const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-const XLSX_MIME_ALIASES = new Set(['application/haansoftxlsx'])
+export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 const VOLUNTEER_EVIDENCE_MAX_BYTES = 15 * 1024 * 1024
 
 function fileExtension(fileName: string): string {
@@ -54,12 +53,15 @@ function fileExtension(fileName: string): string {
   return name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : ''
 }
 
-function resolveMemberPortalUploadContentType(file: File): string {
+/**
+ * 브라우저가 전달하는 MIME보다 확장자 기반의 백엔드 canonical MIME이 우선하는
+ * 회원 파일 형식만 정규화한다. 파일 바이트는 그대로 전달하고, 실제 내용 검증은
+ * Storage/백엔드 보안 검사와 파서가 담당한다.
+ */
+export function resolveMemberPortalUploadContentType(file: File): string {
   const typed = file.type.trim()
   const ext = fileExtension(file.name)
-  if (ext === 'xlsx') {
-    if (!typed || XLSX_MIME_ALIASES.has(typed.toLowerCase())) return XLSX_MIME
-  }
+  if (ext === 'xlsx') return XLSX_MIME
   if (ext === 'xls') return typed || 'application/vnd.ms-excel'
   if (ext === 'csv') return typed || 'text/csv'
   if (ext === 'pdf') return typed || 'application/pdf'
@@ -200,7 +202,7 @@ function isTerminalFailureStatus(value: string | undefined): boolean {
 
 function resolvePolicyFileType(file: File, policy: MemberFileUploadPolicy): string {
   const extension = fileExtension(file.name)
-  const mimeType = file.type.trim().toLowerCase()
+  const mimeType = resolveMemberPortalUploadContentType(file).toLowerCase()
   const match = policy.allowedFileTypes?.find(
     fileType =>
       fileType.extensions.some(allowedExtension => allowedExtension.toLowerCase() === extension) &&

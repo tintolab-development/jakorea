@@ -1,4 +1,8 @@
-import type { PortalStudentDocumentPolicy } from '../api/student-documents-types'
+import type {
+  PortalOrganizationPortraitConsent,
+  PortalStudentDocumentPolicy,
+} from '../api/student-documents-types'
+import { hasOrganizationPortraitConsentSubmission } from './student-documents-display'
 
 export const STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE =
   '이 프로그램은 학생 명단 및 초상권 동의서 제출 대상이 아닙니다.'
@@ -41,6 +45,16 @@ export function resolveRosterUploadBlockedMessage(
     return '교육 일정이 배정되면 학생 명단을 제출할 수 있습니다.'
   }
   return '학생 명단 제출 및 수정 기한이 지났습니다.'
+}
+
+/** 「업로드 취소」: 현재 제출 있음 + 기한 내(`portraitConsentUploadAllowed === true`) + 미승인 */
+export function canCancelOrganizationPortraitConsent(
+  consent: PortalOrganizationPortraitConsent | null | undefined,
+  policy: PortalStudentDocumentPolicy | null | undefined,
+): boolean {
+  if (!hasOrganizationPortraitConsentSubmission(consent)) return false
+  if (policy?.portraitConsentUploadAllowed !== true) return false
+  return consent?.status?.trim().toUpperCase() !== 'APPROVED'
 }
 
 export function resolvePortraitUploadBlockedMessage(

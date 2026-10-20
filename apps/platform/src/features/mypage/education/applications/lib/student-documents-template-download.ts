@@ -1,5 +1,9 @@
 export const PORTRAIT_CONSENT_TEMPLATE_FILE_NAME = '학생 초상권 동의서.zip'
 export const PORTRAIT_CONSENT_TEMPLATE_MIME_TYPE = 'application/zip'
+export const PORTRAIT_CONSENT_UPLOAD_EXTENSION = 'docx'
+export const PORTRAIT_CONSENT_UPLOAD_MIME_TYPE =
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+export const PORTRAIT_CONSENT_UPLOAD_ACCEPT = `${PORTRAIT_CONSENT_UPLOAD_MIME_TYPE},.${PORTRAIT_CONSENT_UPLOAD_EXTENSION}`
 
 export const PORTRAIT_CONSENT_TEMPLATE_PENDING_STATUSES = new Set([
   'REQUESTED',
@@ -27,10 +31,7 @@ export const PORTRAIT_CONSENT_TEMPLATE_FAILED_STATUSES = new Set([
   'EXPIRED',
 ])
 
-export type PortraitConsentTemplateDownloadProgress =
-  | 'requesting'
-  | 'generating'
-  | 'downloading'
+export type PortraitConsentTemplateDownloadProgress = 'requesting' | 'generating' | 'downloading'
 
 export type GeneratedFileJobResponse = {
   id?: number
@@ -64,20 +65,20 @@ function statusOf(job: GeneratedFileJobResponse | null | undefined): string {
 }
 
 export function isPortraitConsentTemplateJobPending(
-  job: GeneratedFileJobResponse | null | undefined,
+  job: GeneratedFileJobResponse | null | undefined
 ): boolean {
   const status = statusOf(job)
   return status === '' || PORTRAIT_CONSENT_TEMPLATE_PENDING_STATUSES.has(status)
 }
 
 export function isPortraitConsentTemplateJobCompleted(
-  job: GeneratedFileJobResponse | null | undefined,
+  job: GeneratedFileJobResponse | null | undefined
 ): boolean {
   return PORTRAIT_CONSENT_TEMPLATE_COMPLETED_STATUSES.has(statusOf(job))
 }
 
 export function isPortraitConsentTemplateJobFailed(
-  job: GeneratedFileJobResponse | null | undefined,
+  job: GeneratedFileJobResponse | null | undefined
 ): boolean {
   return PORTRAIT_CONSENT_TEMPLATE_FAILED_STATUSES.has(statusOf(job))
 }
@@ -85,11 +86,17 @@ export function isPortraitConsentTemplateJobFailed(
 export function extractPortraitConsentTemplateFileName(
   ...sources: Array<GeneratedFileJobResponse | PortalFileDownloadResolveResponse | null | undefined>
 ): string {
+  return extractGeneratedFileName(...sources) ?? PORTRAIT_CONSENT_TEMPLATE_FILE_NAME
+}
+
+export function extractGeneratedFileName(
+  ...sources: Array<GeneratedFileJobResponse | PortalFileDownloadResolveResponse | null | undefined>
+): string | undefined {
   for (const source of sources) {
     const fileName = source?.originalFileName ?? source?.fileName ?? source?.filename
     if (typeof fileName === 'string' && fileName.trim()) return fileName.trim()
   }
-  return PORTRAIT_CONSENT_TEMPLATE_FILE_NAME
+  return undefined
 }
 
 export function normalizeZipBlob(blob: Blob): Blob {
@@ -116,7 +123,9 @@ export function parseGeneratedFileJobPayload(payload: unknown): GeneratedFileJob
   return null
 }
 
-export async function parseGeneratedFileJobBlob(blob: Blob): Promise<GeneratedFileJobResponse | null> {
+export async function parseGeneratedFileJobBlob(
+  blob: Blob
+): Promise<GeneratedFileJobResponse | null> {
   if (!/\bjson\b/i.test(blob.type) && blob.size > 16_384) return null
   const text = (await blob.text()).trim()
   if (!text.startsWith('{')) return null
@@ -128,7 +137,7 @@ export async function parseGeneratedFileJobBlob(blob: Blob): Promise<GeneratedFi
 }
 
 export function parsePortalFileDownloadResolvePayload(
-  payload: unknown,
+  payload: unknown
 ): PortalFileDownloadResolveResponse | null {
   if (payload == null || typeof payload !== 'object' || payload instanceof Blob) return null
   const record = payload as Record<string, unknown>

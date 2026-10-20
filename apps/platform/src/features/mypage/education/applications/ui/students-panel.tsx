@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { ProgramApplicationType } from '../api/types'
 import {
   isOrganizationStudentDocumentsQueryEnabled,
   isOrganizationStudentDocumentsUiScope,
+  useCancelOrganizationPortraitConsentMutation,
   useDownloadPortraitConsentTemplateMutation,
   useDownloadStudentRosterTemplateMutation,
   useImportOrganizationStudentRosterMutation,
@@ -11,12 +12,18 @@ import {
   useOrganizationStudentRosterQuery,
   useSubmitOrganizationPortraitConsentMutation,
 } from '../api/student-documents-hooks'
+import { certificateRowsForApplication } from '../lib/certificate-bulk-download'
+import { resolveOrganizationApplicationId } from '../lib/resolve-organization-application-id'
 import {
   hasOrganizationPortraitConsentSubmission,
   resolveStudentRosterCount,
 } from '../lib/student-documents-display'
-import { resolveStudentDocumentsErrorMessage } from '../lib/student-documents-errors'
 import {
+  readStudentDocumentsErrorCode,
+  resolveStudentDocumentsErrorMessage,
+} from '../lib/student-documents-errors'
+import {
+  canCancelOrganizationPortraitConsent,
   isPortalStudentDocumentsSupported,
   isPortalStudentDocumentsUnsupported,
   resolvePortraitUploadBlockedMessage,
@@ -31,6 +38,17 @@ import { StudentsPanelStepPortrait } from './students-panel-step-portrait'
 import { StudentsPanelStepRoster } from './students-panel-step-roster'
 import { StudentsPanelUnsupported } from './students-panel-unsupported'
 import styles from './students-panel.module.css'
+
+type PortraitUploadedFile = {
+  name: string
+  size: number
+}
+
+type PortraitUploadedFileState = PortraitUploadedFile & {
+  applicationId: string
+  /** PUT 응답 fileObjectId — 현재 서버 제출과 같을 때만 로컬 메타를 보조로 씁니다. */
+  fileObjectId: number | null
+}
 
 export type EducationStudentsPanelProps = {
   applicationId: string
@@ -60,7 +78,10 @@ export function EducationStudentsPanel({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [portraitTemplateDownloadProgress, setPortraitTemplateDownloadProgress] =
     useState<PortraitConsentTemplateDownloadProgress | null>(null)
+  const [portraitUploadedFileState, setPortraitUploadedFileState] =
+    useState<PortraitUploadedFileState | null>(null)
   const [certificateModalOpen, setCertificateModalOpen] = useState(false)
+  const portraitCancelInFlightRef = useRef(false)
 
   const policyQuery = useOrganizationStudentDocumentPolicyQuery(
     applicationType,
@@ -94,9 +115,30 @@ export function EducationStudentsPanel({
     applicationId,
     applicationType
   )
+  const cancelPortrait = useCancelOrganizationPortraitConsentMutation(
+    applicationId,
+    applicationType
+  )
+
+  const portraitConsent = portraitQuery.data
+  const portraitUploadedFile =
+    portraitUploadedFileState?.applicationId === applicationId &&
+    portraitUploadedFileState.fileObjectId != null &&
+    portraitUploadedFileState.fileObjectId === portraitConsent?.fileObjectId
+      ? portraitUploadedFileState
+      : null
+  const canCancelPortrait = canCancelOrganizationPortraitConsent(portraitConsent, policy)
 
   const rows = rosterQuery.data?.rows ?? []
   const rosterCount = resolveStudentRosterCount(rosterQuery.data?.totalCount, rows.length)
+  const certificateRows = useMemo(
+    () =>
+      certificateRowsForApplication(
+        rosterQuery.data,
+        resolveOrganizationApplicationId(applicationId) ?? ''
+      ),
+    [rosterQuery.data, applicationId]
+  )
 
   const rosterUploadBlockedMessage = useMemo(
     () => resolveRosterUploadBlockedMessage(policy),
@@ -118,6 +160,7 @@ export function EducationStudentsPanel({
   const isDocumentsLoading =
     remoteEnabled && documentsSupported && (rosterQuery.isLoading || portraitQuery.isLoading)
   const isLoading = isPolicyLoading || isDocumentsLoading
+  const isFileUploading = importRoster.isPending || submitPortrait.isPending
 
   const handleAsyncError = (error: unknown, fallback: string) => {
     setErrorMessage(resolveStudentDocumentsErrorMessage(error, fallback))
@@ -139,6 +182,27 @@ export function EducationStudentsPanel({
         )
       })
       .finally(() => setPortraitTemplateDownloadProgress(null))
+  }
+
+  const runPortraitCancel = () => {
+    if (!ensureDocumentsApiReady()) return
+    if (!portraitConsent || !canCancelPortrait) return
+    if (cancelPortrait.isPending || portraitCancelInFlightRef.current) return
+
+    portraitCancelInFlightRef.current = true
+    void cancelPortrait
+      .mutateAsync(portraitConsent)
+      .then(() => setPortraitUploadedFileState(null))
+      .catch(error => {
+        if (readStudentDocumentsErrorCode(error) === 'PORTRAIT_CONSENT_NOT_FOUND') {
+          setPortraitUploadedFileState(null)
+          return
+        }
+        handleAsyncError(error, '초상권 동의서 업로드를 취소하지 못했습니다.')
+      })
+      .finally(() => {
+        portraitCancelInFlightRef.current = false
+      })
   }
 
   const ensureDocumentsApiReady = (): boolean => {
@@ -225,12 +289,16 @@ export function EducationStudentsPanel({
 
       <StudentsPanelStepPortrait
         isLoading={isLoading}
-        consent={portraitQuery.data}
+        consent={portraitConsent}
+        uploadedFile={portraitUploadedFile}
         hasSubmission={hasPortraitSubmission}
         uploadBlockedMessage={portraitUploadBlockedMessage}
         isDownloadingTemplate={downloadPortraitTemplate.isPending}
         downloadProgress={portraitTemplateDownloadProgress}
         isUploading={submitPortrait.isPending}
+        canCancelUpload={canCancelPortrait}
+        isCancelling={cancelPortrait.isPending}
+        onCancelUpload={runPortraitCancel}
         onDownloadTemplate={runPortraitTemplateDownload}
         onUploadFile={file => {
           if (!ensureDocumentsApiReady()) return
@@ -245,6 +313,14 @@ export function EducationStudentsPanel({
           }
           void submitPortrait
             .mutateAsync(file)
+            .then(data => {
+              setPortraitUploadedFileState({
+                applicationId,
+                fileObjectId: typeof data.fileObjectId === 'number' ? data.fileObjectId : null,
+                name: file.name,
+                size: file.size,
+              })
+            })
             .catch(error => handleAsyncError(error, '초상권 동의서를 업로드하지 못했습니다.'))
         }}
       />
@@ -259,9 +335,16 @@ export function EducationStudentsPanel({
         }}
       />
 
+      {isFileUploading ? (
+        <div className={styles.fileUploadLoadingOverlay} aria-busy="true">
+          <PFLoadingSpinner label="파일 업로드 처리 중" />
+        </div>
+      ) : null}
+
       <StudentsPanelCertificateModal
+        applicationId={applicationId}
         open={certificateModalOpen}
-        rows={rows}
+        rows={certificateRows}
         onClose={() => setCertificateModalOpen(false)}
       />
     </div>
