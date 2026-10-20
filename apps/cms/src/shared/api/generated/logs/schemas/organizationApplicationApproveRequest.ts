@@ -12,16 +12,16 @@ import type { SlotRequest } from './slotRequest';
  */
 export interface OrganizationApplicationApproveRequest {
   /**
-     * 기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보냅니다.
+     * 기존 FE 호환용 복수 일정 입력. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 선택 사항이며 scheduleId만 보냅니다. selectedScheduleId와 동시에 보낼 수 없습니다.
      * @minItems 0
      * @maxItems 500
      */
   slots?: SlotRequest[];
-  /** 선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다. */
+  /** 선택 확정할 희망 교육 일정의 program_schedule.id. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 사용하며 없으면 별도 배정합니다. */
   selectedScheduleId?: number;
   /** GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다. */
   requestedScheduleId?: number | null;
-  /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다. */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;

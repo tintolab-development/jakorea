@@ -19,29 +19,32 @@ export interface StudentRosterRowRequest {
      * @minLength 0
      * @maxLength 30
      */
-  gender?: string;
+  gender: string;
   birthDate: string;
   /**
+     * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
      * @minLength 0
      * @maxLength 30
      */
-  grade: string;
+  grade?: string | null;
   /**
      * @minLength 0
      * @maxLength 50
      */
   className: string;
   /**
+     * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
      * @minimum 1
      * @maximum 999
      */
-  studentNo: number;
-  phone?: string;
+  studentNo?: number | null;
+  /** @minLength 1 */
+  phone: string;
   /**
      * @minLength 0
      * @maxLength 255
      */
-  email?: string;
+  email: string;
   /**
      * @minLength 0
      * @maxLength 200

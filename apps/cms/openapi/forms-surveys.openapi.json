@@ -2709,8 +2709,10 @@
           },
           "grade": {
             "type": "string",
+            "description": "선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.",
             "maxLength": 30,
-            "minLength": 0
+            "minLength": 0,
+            "nullable": true
           },
           "className": {
             "type": "string",
@@ -2720,11 +2722,14 @@
           "studentNo": {
             "type": "integer",
             "format": "int32",
+            "description": "선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.",
             "maximum": 999,
-            "minimum": 1
+            "minimum": 1,
+            "nullable": true
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "email": {
             "type": "string",
@@ -2741,9 +2746,10 @@
         "required": [
           "birthDate",
           "className",
-          "grade",
-          "studentName",
-          "studentNo"
+          "email",
+          "gender",
+          "phone",
+          "studentName"
         ]
       },
       "StudentRosterItemResponse": {
@@ -2880,6 +2886,7 @@
       },
       "PortraitConsentResponse": {
         "type": "object",
+        "description": "현재 유효한 기관 단위 초상권 동의서 제출 1건. 제출이 없거나 업로드 취소된 경우 GET은 본문 없이 200을 반환합니다.",
         "properties": {
           "artifactId": {
             "type": "integer",
@@ -2898,11 +2905,13 @@
             "format": "int64"
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "description": "제출 상태: SUBMITTED | APPROVED | REJECTED"
           },
           "revisionNo": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "기관 신청 단위 제출 revision. 재제출할 때마다 증가하며 업로드 취소 후 재제출해도 이전 번호를 재사용하지 않습니다. DELETE의 expectedRevisionNo로 보냅니다."
           },
           "submittedByMemberId": {
             "type": "integer",
@@ -2926,6 +2935,22 @@
           },
           "rejectReason": {
             "type": "string"
+          },
+          "originalFileName": {
+            "type": "string",
+            "description": "업로드 당시 원본 파일명. 파일 원장에 값이 없으면 null",
+            "nullable": true
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "파일 크기(byte). 파일 원장에 값이 없으면 null",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "제출 행 최종 변경 시각(ISO-8601)"
           }
         }
       },
@@ -7649,14 +7674,17 @@
       },
       "AbsenceReasonSubmissionRequest": {
         "type": "object",
+        "description": "회원 포탈 결석 사유 제출. 증빙 파일은 본인 업로드·ABSENCE_EVIDENCE·CLEAN·AVAILABLE(레거시 CONFIRMED 포함) 상태만 허용합니다.",
         "properties": {
           "reason": {
             "type": "string",
+            "description": "결석 사유. 필수, 최대 2,000자",
             "maxLength": 2000,
             "minLength": 0
           },
           "fileObjectIds": {
             "type": "array",
+            "description": "선택적 결석 증빙 파일 ID. 최대 20개이며 본인 소유·ABSENCE_EVIDENCE·CLEAN·AVAILABLE(레거시 CONFIRMED 포함) 파일만 허용",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -8186,18 +8214,29 @@
       },
       "PortalCertificateBulkDownloadRequest": {
         "type": "object",
+        "description": "기관 신청서에 속한 학생 roster의 기존 수료증 ZIP 다운로드 요청입니다.",
         "properties": {
           "rosterIds": {
             "type": "array",
+            "description": "현재 기관 신청서에 속한 학생 roster ID 목록입니다. 최대 100개까지 요청할 수 있습니다.",
+            "example": [
+              1691594,
+              1691595
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
             },
             "maxItems": 100,
-            "minItems": 0
+            "minItems": 1
           },
           "certificateType": {
-            "type": "string"
+            "type": "string",
+            "description": "수료증 유형입니다. 현재 COMPLETION만 지원합니다.",
+            "enum": [
+              "COMPLETION"
+            ],
+            "example": "COMPLETION"
           }
         },
         "required": [
@@ -9452,6 +9491,18 @@
         "properties": {
           "filePurpose": {
             "type": "string",
+            "description": "파일 용도. PORTRAIT_CONSENT는 학생 초상권 동의서이며 PDF/JPG/JPEG/PNG/WEBP/DOCX, 파일당 20MB입니다. ABSENCE_EVIDENCE는 결석 사유 증빙이며 JPG/JPEG/PNG, 파일당 20MB입니다.",
+            "enum": [
+              "ASSIGNMENT_ATTACHMENT",
+              "SURVEY_ATTACHMENT",
+              "ABSENCE_EVIDENCE",
+              "PORTRAIT_CONSENT",
+              "EXPENSE_RECEIPT",
+              "INSTRUCTOR_APPLICATION",
+              "VOLUNTEER_APPLICATION_EVIDENCE",
+              "PROGRAM_POST_ATTACHMENT",
+              "PROGRAM_POST_INLINE_IMAGE"
+            ],
             "maxLength": 80,
             "minLength": 0
           },
@@ -15758,6 +15809,45 @@
           "stopScheduleId"
         ]
       },
+      "OrganizationApplicationApproveRequest": {
+        "type": "object",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "description": "기존 FE 호환용 복수 일정 입력. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 선택 사항이며 scheduleId만 보냅니다. selectedScheduleId와 동시에 보낼 수 없습니다.",
+            "items": {
+              "$ref": "#/components/schemas/SlotRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          },
+          "selectedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "선택 확정할 희망 교육 일정의 program_schedule.id. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 사용하며 없으면 별도 배정합니다.",
+            "example": 188901
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
+            "example": 184944,
+            "nullable": true
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601",
+            "example": "2026-10-20T09:00:00+09:00"
+          }
+        }
+      },
       "EducationJournalExportRequest": {
         "type": "object",
         "properties": {
@@ -17342,6 +17432,12 @@
             "items": {
               "$ref": "#/components/schemas/AttendanceItemRequest"
             }
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "선택. 지정하면 해당 프로그램의 기관 신청이어야 하며(아니면 404 ORGANIZATION_APPLICATION_NOT_FOUND), 모든 participantId가 그 신청의 기관 참여자 또는 학생명단 참여자여야 합니다(아니면 400 ATTENDANCE_PARTICIPANT_ORGANIZATION_APPLICATION_MISMATCH). 생략하면 프로그램 소속만 검증합니다.",
+            "nullable": true
           }
         }
       },
@@ -19202,45 +19298,6 @@
           },
           "assignmentStatus": {
             "type": "string"
-          }
-        }
-      },
-      "OrganizationApplicationApproveRequest": {
-        "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
-        "properties": {
-          "slots": {
-            "type": "array",
-            "description": "기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보냅니다.",
-            "items": {
-              "$ref": "#/components/schemas/SlotRequest"
-            },
-            "maxItems": 500,
-            "minItems": 0
-          },
-          "selectedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다.",
-            "example": 188901
-          },
-          "requestedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
-            "example": 184944,
-            "nullable": true
-          },
-          "timing": {
-            "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
-            "example": "SCHEDULED"
-          },
-          "scheduledAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601",
-            "example": "2026-10-20T09:00:00+09:00"
           }
         }
       },
@@ -37348,6 +37405,54 @@
             "format": "int64",
             "description": "신청 당시 지정된 교재 id. 없으면 null.",
             "nullable": true
+          },
+          "educationSchedules": {
+            "type": "array",
+            "description": "기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다.",
+            "items": {
+              "$ref": "#/components/schemas/TrainedTeacherOrganizationEducationSchedule"
+            }
+          },
+          "gradeBlocks": {
+            "type": "array",
+            "description": "CMS 학생 명단 학급 Select SSOT. 공통 기관 신청 상세 gradeBlocks와 같은 형식이며 활성 학생 명단의 grade/className으로 묶습니다. 명단이 없으면 신청 학년(requested_grade)과 requestedClassCount만 담은 블록 1개(classes=[])이고, 둘 다 없으면 null. classes가 []이면 classCount로 반 목록을 만들지 않습니다.",
+            "items": {
+              "$ref": "#/components/schemas/GradeBlock"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "TrainedTeacherOrganizationEducationSchedule": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_schedule.id. 출석 조회·저장의 scheduleId 로 사용합니다."
+          },
+          "round": {
+            "type": "integer",
+            "format": "int32",
+            "description": "일정 session_no(회차). 없으면 null.",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "description": "일정명. 없으면 null.",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "일정 시작 시각. 없으면 null.",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "일정 종료 시각. 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -42989,15 +43094,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
