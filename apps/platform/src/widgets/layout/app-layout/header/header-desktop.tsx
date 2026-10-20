@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
 import { PFText } from '@/shared/ui'
@@ -36,7 +36,7 @@ function NavigationSubMenuItem({
   const isDisabled = !item.href
   const itemClassName = [
     styles.menuItem,
-    'typo-bd-md-md',
+    'typo-bd-lg-sb',
     isDisabled ? styles.menuItemDisabled : undefined,
   ]
     .filter(Boolean)
@@ -116,6 +116,8 @@ export function HeaderDesktop({
   )
   const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const [menuPanelBottom, setMenuPanelBottom] = useState<number | null>(null)
+  const navigationRef = useRef<HTMLElement | null>(null)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cancelScheduledClose = () => {
@@ -152,6 +154,34 @@ export function HeaderDesktop({
 
   useEffect(() => () => cancelScheduledClose(), [])
 
+  useLayoutEffect(() => {
+    if (!isNavOpen) return
+
+    const updateMenuPanelBottom = () => {
+      const navigation = navigationRef.current
+      if (!navigation) return
+      setMenuPanelBottom(navigation.getBoundingClientRect().bottom)
+    }
+
+    updateMenuPanelBottom()
+    window.addEventListener('resize', updateMenuPanelBottom)
+
+    const navigation = navigationRef.current
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' || !navigation
+        ? null
+        : new ResizeObserver(updateMenuPanelBottom)
+
+    if (resizeObserver && navigation) {
+      resizeObserver.observe(navigation)
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateMenuPanelBottom)
+      resizeObserver?.disconnect()
+    }
+  }, [isNavOpen])
+
   const headerClassName = [
     styles.header,
     transparent ? styles.headerTransparent : undefined,
@@ -175,7 +205,12 @@ export function HeaderDesktop({
           <img className={styles.logo} src={logoUrl} alt="JA Korea" />
         </Link>
 
-        <nav className={styles.navigation} aria-label="주요 메뉴" aria-expanded={isNavOpen}>
+        <nav
+          ref={navigationRef}
+          className={styles.navigation}
+          aria-label="주요 메뉴"
+          aria-expanded={isNavOpen}
+        >
           {groups.map(group => {
             const isHighlighted = group.groupCode === highlightedGroupCode
             const isRouteActive = group.groupCode === activeGroupCode
@@ -284,6 +319,14 @@ export function HeaderDesktop({
           </div>
         )}
       </div>
+
+      {isNavOpen && menuPanelBottom !== null ? (
+        <div
+          className={styles.navigationBackdrop}
+          style={{ top: `${menuPanelBottom}px` }}
+          aria-hidden="true"
+        />
+      ) : null}
 
     </header>
   )
