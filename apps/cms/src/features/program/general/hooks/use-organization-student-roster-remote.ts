@@ -23,6 +23,7 @@ import {
   parseStudentRosterRevisionNo,
 } from '@/features/program/general/lib/student-roster-revision'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -35,13 +36,17 @@ export function useOrganizationStudentRosterRemote(input: {
   enabled?: boolean
   /** 명단 저장 후 함께 무효화할 유형별 기관 신청 상세 키 (예: 교육받은 교사 상세) */
   dependentQueryKeys?: readonly QueryKey[]
+  /** 교육받은 교사 화면 — 일반/1사1교 신청 remote 플래그 대신 TT remote 플래그로 활성 */
+  trainedTeachersSurface?: boolean
 }) {
   const queryClient = useQueryClient()
   const applicationId =
     input.organizationApplicationId != null && String(input.organizationApplicationId).trim() !== ''
       ? String(input.organizationApplicationId)
       : ''
-  const remoteCapability = shouldUseOrganizationApplicationRemoteApi()
+  const remoteCapability =
+    shouldUseOrganizationApplicationRemoteApi() ||
+    (input.trainedTeachersSurface === true && shouldUseTrainedTeacherProgramsRemoteApi())
   const enabled = Boolean(input.enabled !== false && remoteCapability && applicationId)
 
   useNotifyProgramApiUnavailableOnce(

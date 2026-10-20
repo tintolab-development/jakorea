@@ -93,16 +93,21 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
   sessions: ParticipatingSchoolSession[]
   rosterStudents: SchoolDetailStudentRow[]
   attendancesByScheduleId: Record<string, AttendanceItemResponse[]>
+  /**
+   * true면 출결 기록이 없는 회차도 노출 (sessions가 기관 실제 진행 일정 SSOT일 때 — 교육받은 교사).
+   * 기본은 출결 응답이 있는 회차만.
+   */
+  includeSessionsWithoutAttendance?: boolean
 }): SchoolDetailAttendanceSessionGroup[] {
   const { schoolId, program, sessions, rosterStudents, attendancesByScheduleId } = input
   const total = rosterStudents.length
 
   return sessions.filter(session => {
     const scheduleId = session.resolvedScheduleId
-    const attendances =
+    const hasScheduleId =
       typeof scheduleId === 'number' && Number.isFinite(scheduleId) && scheduleId > 0
-        ? attendancesByScheduleId[String(scheduleId)]
-        : undefined
+    if (input.includeSessionsWithoutAttendance) return hasScheduleId
+    const attendances = hasScheduleId ? attendancesByScheduleId[String(scheduleId)] : undefined
     return Array.isArray(attendances) && attendances.length > 0
   }).map(session => {
     const id = resolveSessionGroupId(schoolId, session)
@@ -118,10 +123,9 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
         .filter(item => item.participantId != null)
         .map(item => [Number(item.participantId), item] as const)
     )
-    const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(
-      program,
-      session.round
-    )
+    const sessionLeadLabel =
+      session.educationScheduleLabel?.trim() ||
+      resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
     const header = buildAttendanceSessionHeaderParts(session, sessionLeadLabel)
     return {
       id,
@@ -193,7 +197,8 @@ export async function fetchSchoolDetailAttendanceBundle(input: {
 
   const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
     input.programId,
-    scheduleIds
+    scheduleIds,
+    { organizationApplicationId: input.organizationApplicationId }
   )
 
   return { rosterStudents, attendancesByScheduleId }

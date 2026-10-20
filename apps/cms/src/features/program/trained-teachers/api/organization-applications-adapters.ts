@@ -98,6 +98,35 @@ function numericScheduleId(value: string | number | null | undefined): number | 
   return null
 }
 
+const KST_DATE_TIME_FORMAT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+/** ISO date-time → KST `YYYY-MM-DD` / `HH:mm`. 오프셋 없는 값은 이미 KST로 본다. */
+function kstDateTimeParts(value: string | null | undefined): { date: string; time: string } | null {
+  const raw = value?.trim() ?? ''
+  if (!raw) return null
+  if (!/(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(raw)) {
+    const [date = '', time = ''] = raw.split(/[T ]/)
+    return { date: date.slice(0, 10), time: time.slice(0, 5) }
+  }
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return null
+  const parts = Object.fromEntries(
+    KST_DATE_TIME_FORMAT.formatToParts(parsed).map(part => [part.type, part.value])
+  )
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`,
+  }
+}
+
 /**
  * TT 상세 `educationSchedules[]`(기관 실제 진행 일정) → 출석 세션.
  * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 대체하지 않는다.
@@ -113,18 +142,21 @@ export function mapTrainedTeacherEducationSchedulesToSessions(
         schedule.scheduleId > 0
     )
     .map((schedule, index) => {
-      const isoDate = schedule.startAt?.trim().slice(0, 10) ?? ''
-      const startTime = timeFromDateTime(schedule.startAt)
-      const endTime = timeFromDateTime(schedule.endAt)
+      const start = kstDateTimeParts(schedule.startAt)
+      const end = kstDateTimeParts(schedule.endAt)
+      const isoDate = start?.date ?? ''
+      const startTime = start?.time ?? ''
+      const endTime = end?.time ?? ''
       return {
         round: schedule.round ?? index + 1,
         date: isoDate ? formatPreferredScheduleDateForSession(isoDate) : '',
         dayOfWeek: isoDate ? dayOfWeekFromIsoDate(isoDate) : '',
         duration: '1차시',
         format: '',
-        classNum: schedule.label?.trim() || '',
+        classNum: '',
         timeRange: startTime && endTime ? `${startTime}~${endTime}` : startTime || endTime,
         resolvedScheduleId: schedule.scheduleId,
+        ...(schedule.label?.trim() ? { educationScheduleLabel: schedule.label.trim() } : {}),
       }
     })
 }

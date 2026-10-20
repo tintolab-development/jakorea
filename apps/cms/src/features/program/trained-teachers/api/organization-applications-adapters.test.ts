@@ -68,6 +68,12 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
             endAt: '2026-06-05T10:00:00',
           },
           { scheduleId: 0, round: 3 },
+          {
+            scheduleId: 502,
+            round: null,
+            startAt: '2026-11-06T15:00:00Z',
+            endAt: '2026-11-06T16:30:00Z',
+          },
         ],
       },
       0,
@@ -80,6 +86,13 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
         dayOfWeek: '금',
         timeRange: '09:00~10:00',
         resolvedScheduleId: 501,
+        educationScheduleLabel: '2회차',
+      }),
+      expect.objectContaining({
+        date: '2026.11.07',
+        dayOfWeek: '토',
+        timeRange: '00:00~01:30',
+        resolvedScheduleId: 502,
       }),
     ])
     expect(

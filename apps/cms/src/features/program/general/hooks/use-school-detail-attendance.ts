@@ -170,8 +170,9 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       program,
       rosterStudents: remoteQuery.data.rosterStudents,
       attendancesByScheduleId: remoteQuery.data.attendancesByScheduleId,
+      includeSessionsWithoutAttendance: trainedTeacherAttendanceRemoteEnabled,
     })
-  }, [program, remoteEnabled, remoteQuery.data, row])
+  }, [program, remoteEnabled, remoteQuery.data, row, trainedTeacherAttendanceRemoteEnabled])
 
   const educationScheduleOptions = useMemo(() => {
     // The program schedule list also contains institution-unassigned rows.

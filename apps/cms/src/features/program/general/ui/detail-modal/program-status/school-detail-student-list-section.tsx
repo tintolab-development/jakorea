@@ -66,7 +66,11 @@ import {
   fetchStudentLectureAttendanceByParticipantRemote,
   saveStudentLectureAttendanceByParticipantRemote,
 } from '../../../api/student-lecture-attendance-api'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { LectureAttendanceDetail } from '../../../model/school-detail-types'
 import {
@@ -229,14 +233,19 @@ export function SchoolDetailStudentListSection({
   const rosterAddSessionRef = useRef<StudentRosterCommitSession | null>(null)
   const { showAlert } = useCmsAlert()
 
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const rosterRemote = useOrganizationStudentRosterRemote({
     organizationApplicationId,
     educationGrade,
     dependentQueryKeys: rosterDependentQueryKeys,
+    trainedTeachersSurface: isTrainedTeachersSurface,
   })
-  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(
+  const generalProgressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(
     programId != null ? String(programId) : undefined
   )
+  const progressRemoteEnabled =
+    generalProgressRemoteEnabled ||
+    (isTrainedTeachersSurface && programId != null && shouldUseTrainedTeacherProgramsRemoteApi())
 
   const showStudentListEditModeBlockedAlert = useCallback(
     () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),
