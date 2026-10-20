@@ -119,6 +119,8 @@
 }
 
 .lecture-attendance-modal__status-text {
+  display: inline-block;
+  text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -126,18 +128,17 @@
   line-height: 150%;
 }
 
-.lecture-attendance-modal__status-text--attended,
-.lecture-attendance-modal__status-text--late {
-  color: var(--default-BK, #3d3d3d);
+.lecture-attendance-modal__status-text--attended {
+  color: var(--Netural-black, #3d3d3d);
 }
 
+.lecture-attendance-modal__status-text--late,
 .lecture-attendance-modal__status-text--absent {
-  color: var(--color-red, #c32f4a);
+  color: var(--Status-red-main, #c32f4a);
 }
 
 .lecture-attendance-modal__status-text--not_held {
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.5;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   cursor: not-allowed;
 }
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import './program-attendance-detail.css'
 
 export type ProgramAttendanceStatusTextKind =
   | 'present'
@@ -33,12 +34,17 @@ export function ProgramAttendanceStatusText({
   }
 
   if (kind === 'withdrawn') {
-    return <span className="cms-data-table__cell-accent--danger">{label}</span>
+    return <span className="program-attendance-detail__status-withdrawn">{label}</span>
   }
 
   if (kind === 'pending' || kind === 'dash') {
     return <span className="program-attendance-detail__dash">-</span>
   }
 
-  return <>{label}</>
+  return <span className="program-attendance-detail__status-present">{label}</span>
+}
+
+export function CompletionStatusText({ label }: { label: string }) {
+  const tone = label.startsWith('수료 불가') ? 'danger' : label === '수료 완료' ? 'done' : 'neutral'
+  return <span className={`program-completion-status-text program-completion-status-text--${tone}`}>{label}</span>
 }

@@ -108,13 +108,13 @@
 }
 
 .program-lifecycle-status-text[data-recruitment-tone='scheduled'] {
-  color: var(--color-green, #1e8c29);
+  color: var(--Status-green-main, #1e8c29);
 }
 
 .program-lifecycle-status-text[data-recruitment-tone='recruiting'] {
-  color: var(--color-blue, #017eaf);
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .program-lifecycle-status-text[data-recruitment-tone='completed'] {
-  color: var(--main-BK, #3d3d3d);
+  color: var(--Netural-black, #3d3d3d);
 }

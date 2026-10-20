@@ -45,26 +45,35 @@
 
 .app-radio-group--large .ant-radio-wrapper .ant-radio,
 .app-radio--large.ant-radio-wrapper .ant-radio {
-  width: 20px;
-  height: 20px;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .app-radio-group--large .ant-radio-wrapper .ant-radio .ant-radio-inner,
 .app-radio--large.ant-radio-wrapper .ant-radio .ant-radio-inner {
-  width: 20px;
-  height: 20px;
+  width: 20px !important;
+  height: 20px !important;
   box-sizing: border-box;
+  border-radius: 50%;
 }
 
-.app-radio-group--large .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
-.app-radio--large.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
+/* antd ::after 는 기본 16px·음수 margin. 커스텀 원 크기와 어긋나면 미선택 테두리가 비뚤어 보임 */
+.app-radio-group--large .ant-radio-wrapper .ant-radio-inner::after,
+.app-radio--large.ant-radio-wrapper .ant-radio-inner::after {
   width: 10px !important;
   height: 10px !important;
   margin-block-start: 0 !important;
   margin-inline-start: 0 !important;
   inset-block-start: 50% !important;
   inset-inline-start: 50% !important;
+  transform: translate(-50%, -50%) scale(0) !important;
+  opacity: 0 !important;
+}
+
+.app-radio-group--large .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
+.app-radio--large.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
   transform: translate(-50%, -50%) scale(1) !important;
+  opacity: 1 !important;
 }
 
 /* ----- medium: 원 18px, 본문 14px/125%, 원–텍스트 6px ----- */
@@ -86,26 +95,34 @@
 
 .app-radio-group--medium .ant-radio-wrapper .ant-radio,
 .app-radio--medium.ant-radio-wrapper .ant-radio {
-  width: 18px;
-  height: 18px;
+  width: 18px !important;
+  height: 18px !important;
 }
 
 .app-radio-group--medium .ant-radio-wrapper .ant-radio .ant-radio-inner,
 .app-radio--medium.ant-radio-wrapper .ant-radio .ant-radio-inner {
-  width: 18px;
-  height: 18px;
+  width: 18px !important;
+  height: 18px !important;
   box-sizing: border-box;
+  border-radius: 50%;
 }
 
-.app-radio-group--medium .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
-.app-radio--medium.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
+.app-radio-group--medium .ant-radio-wrapper .ant-radio-inner::after,
+.app-radio--medium.ant-radio-wrapper .ant-radio-inner::after {
   width: 9px !important;
   height: 9px !important;
   margin-block-start: 0 !important;
   margin-inline-start: 0 !important;
   inset-block-start: 50% !important;
   inset-inline-start: 50% !important;
+  transform: translate(-50%, -50%) scale(0) !important;
+  opacity: 0 !important;
+}
+
+.app-radio-group--medium .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
+.app-radio--medium.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
   transform: translate(-50%, -50%) scale(1) !important;
+  opacity: 1 !important;
 }
 
 /* Ant baseline spacer 제거 — flex row에서 항목별 세로 위치 틀어짐 방지 */

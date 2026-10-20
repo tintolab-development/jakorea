@@ -2,9 +2,11 @@
  * 참여 기관·참여자(개인) 상세 — 교육 진행 일정 행 (일정 + 진행 현황)
  */
 
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatGeneralEducationScheduleLine,
+  type GeneralEducationScheduleShape,
+} from '@/features/program/general/lib/participating-school-session-display'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
-import { getSessionLineParts } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -43,50 +45,32 @@ function resolveSessionProgressDisplay(session: ParticipatingSchoolSession): {
   return { label, statusClass }
 }
 
-function padScheduleTimePart(part: string): string {
-  const trimmed = part.trim()
-  const [h, m = '00'] = trimmed.split(':')
-  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
-}
-
 export function ParticipatingProgressScheduleValue({
   session,
+  shape = null,
+  detailScheduleTimeSpan = null,
 }: {
   session: ParticipatingSchoolSession
+  shape?: GeneralEducationScheduleShape | null
+  detailScheduleTimeSpan?: string | null
 }) {
-  const scheduleLabel = session.scheduleLabel?.trim()
+  const line = formatGeneralEducationScheduleLine(session, shape, { detailScheduleTimeSpan })
   const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
-  if (scheduleLabel) {
-    return (
-      <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider([
-          formatCmsScheduleDisplayLabel(scheduleLabel),
-          <span
-            key="status"
-            className={`participating-institution-application-info__session-status ${statusClass}`}
-          >
-            {statusLabel}
-          </span>,
-        ])}
-      </ProgramDetailTdSegmentWrap>
-    )
-  }
-
-  const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
-  const [startRaw, endRaw] = session.timeRange.split('~')
-  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
+  const status = (
+    <span
+      key="status"
+      className={`participating-institution-application-info__session-status ${statusClass}`}
+    >
+      {statusLabel}
+    </span>
+  )
+  const parts = line
+    .split(' | ')
+    .map(part => part.trim())
+    .filter(Boolean)
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([
-        formatCmsScheduleDisplayLabel(`${datePart} ${timePart}`),
-        periodPart,
-        <span
-          key="status"
-          className={`participating-institution-application-info__session-status ${statusClass}`}
-        >
-          {statusLabel}
-        </span>,
-      ])}
+      {withProgramDetailTdDivider([...parts, status])}
     </ProgramDetailTdSegmentWrap>
   )
 }

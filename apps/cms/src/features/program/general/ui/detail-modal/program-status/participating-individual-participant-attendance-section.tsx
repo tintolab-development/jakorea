@@ -45,6 +45,7 @@ import {
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { ProgramAttendanceRateValue } from '@/features/program/shared/ui/program-attendance-rate-value'
 import {
+  CompletionStatusText,
   ProgramAttendanceStatusText,
   type ProgramAttendanceStatusTextKind,
 } from '@/features/program/shared/ui/program-attendance-status-text'
@@ -551,7 +552,9 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
             <tbody>
               <tr>
                 <th scope="row">수료 여부</th>
-                <td>{summary.completionStatusLabel}</td>
+                <td>
+                  <CompletionStatusText label={summary.completionStatusLabel} />
+                </td>
                 <th scope="row">지각 횟수</th>
                 <td>{summary.lateCountLabel}</td>
               </tr>
