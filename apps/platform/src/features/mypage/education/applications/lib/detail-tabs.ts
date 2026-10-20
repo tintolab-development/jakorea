@@ -114,7 +114,11 @@ function appendSurveySatisfactionTabs(
   if (isTrainedTeacher(options) ? options.surveyConfigured === true : isConfigured(options.surveyConfigured)) {
     items.push({ key: 'survey', label: '설문조사' })
   }
-  if (!isTrainedTeacher(options) && isConfigured(options.satisfactionConfigured)) {
+  if (
+    isTrainedTeacher(options)
+      ? options.satisfactionConfigured === true
+      : isConfigured(options.satisfactionConfigured)
+  ) {
     items.push({ key: 'satisfaction', label: '만족도조사' })
   }
 }
