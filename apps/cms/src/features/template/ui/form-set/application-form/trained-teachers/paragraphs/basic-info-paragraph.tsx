@@ -36,7 +36,7 @@ const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 
 
 /** 교육받은 교사 프로그램 참여자 신청 폼 — 기본 정보 */
 export function TrainedTeachersProgramApplicationBasicInfoParagraph({
-  isTemplateAuthoringMode: _isTemplateAuthoringMode = false,
+  isTemplateAuthoringMode = false,
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
@@ -48,7 +48,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       ),
     [bridge.maxClassCount]
   )
-  const showPreferredEducationForm = shouldShowInstitutionApplicationPreferredEducationForm(bridge)
+  const showPreferredEducationForm =
+    isTemplateAuthoringMode || shouldShowInstitutionApplicationPreferredEducationForm(bridge)
 
   const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.applicationGrade',

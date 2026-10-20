@@ -157,7 +157,7 @@ const InstitutionApplicationEducationFormField = memo(function InstitutionApplic
 
 /** 프로그램 참여자 신청 폼 (학교) — 기본 정보 단락 (`DetailInfoForm` 격자) */
 export function ProgramApplicationFormInstitutionBasicInfoParagraph({
-  isTemplateAuthoringMode: _isTemplateAuthoringMode = false,
+  isTemplateAuthoringMode = false,
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
@@ -179,6 +179,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
     () => isParticipantSelectionEducationFormInOverlay(getProgramRegistrationOverlayRecord())
   )
   const showPreferredEducationForm =
+    isTemplateAuthoringMode ||
     shouldShowInstitutionApplicationPreferredEducationForm(bridge) ||
     participantSelectionInRegistrationOverlay
 
