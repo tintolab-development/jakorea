@@ -8,7 +8,8 @@
 import type { SlotRequest } from './slotRequest';
 
 /**
- * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.
+ * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, 기간형 희망 행 id, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.
+ * requestedScheduleId는 selectedScheduleId·slots와 동시에 보내지 않습니다.
  */
 export interface OrganizationApplicationApproveRequest {
   /**
@@ -17,6 +18,11 @@ export interface OrganizationApplicationApproveRequest {
      * @maxItems 500
      */
   slots?: SlotRequest[];
+  /**
+   * 기간형 단일 회차에서 확정할 희망 일정 행 id (`program_application_requested_schedule.id`).
+   * `program_schedule.id`가 아니며 selectedScheduleId·slots와 함께 보내지 않습니다.
+   */
+  requestedScheduleId?: number | null;
   /** 선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다. */
   selectedScheduleId?: number;
   /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */

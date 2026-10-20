@@ -20781,7 +20781,7 @@
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, 기간형 희망 행 id, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다. requestedScheduleId는 selectedScheduleId·slots와 동시에 보내지 않습니다.",
         "properties": {
           "slots": {
             "type": "array",
@@ -20791,6 +20791,13 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "기간형 단일 회차에서 확정할 희망 일정 행 id(program_application_requested_schedule.id). program_schedule.id가 아니며 selectedScheduleId·비어 있지 않은 slots와 동시에 보내면 400입니다.",
+            "example": 184944
           },
           "selectedScheduleId": {
             "type": "integer",
