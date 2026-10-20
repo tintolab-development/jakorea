@@ -111,9 +111,39 @@ assert.equal(
   '2026년 10월 28일(수) ~ 2026년 11월 12일(목)',
 )
 
+const educationPeriodResolved = resolvePreferredScheduleLabelsFromAnswers({
+  preferredScheduleOptionValues: ['schedule:186659:education-period:0'],
+  schedules: [
+    {
+      scheduleId: 186659,
+      startAt: '2026-10-28T00:30:00Z',
+      endAt: '2026-11-12T03:20:00Z',
+      scheduleName: '기간 지정 강의',
+    },
+  ],
+})
+assert.equal(educationPeriodResolved.length, 1)
+assert.ok(educationPeriodResolved[0]?.includes('2026년'))
+assert.ok(educationPeriodResolved[0]?.includes('기간 지정 강의'))
+
 const multilineDisplay = resolveApplicationContentFromAnswers({
   scheduleChoice: '26년 10월 28일(수) ~ 26년 11월 12일(목)\n26년 11월 25일(수) ~ 26년 12월 11일(금)',
 })
 assert.ok(multilineDisplay.preferredEducationScheduleLabel?.includes('11월 25일'))
+
+const dateOnlyMappedToFormOption = resolvePreferredEducationScheduleDisplayLabel({
+  preferredEducationScheduleLabel: '2026. 11. 03(화)',
+  educationScheduleLines: [
+    '2026. 11. 03(화) 10:00 ~ 12:00 | 1차시',
+    '2026. 11. 27(금) 10:38 ~ 11:38 | 2차시',
+  ],
+})
+assert.equal(dateOnlyMappedToFormOption, '2026년 11월 3일(화) 10:00 ~ 12:00 | 1차시')
+
+const dateOnlyKeepsStoredWithoutLines = resolvePreferredEducationScheduleDisplayLabel({
+  preferredEducationScheduleLabel: '2026. 11. 03(화)',
+})
+assert.ok(dateOnlyKeepsStoredWithoutLines?.includes('11월'))
+assert.equal(dateOnlyKeepsStoredWithoutLines?.includes('10:00'), false)
 
 console.log('application-content-from-answers.selfcheck: ok')

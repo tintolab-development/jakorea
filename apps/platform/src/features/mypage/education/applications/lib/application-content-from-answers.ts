@@ -162,6 +162,79 @@ function displayScheduleText(raw: string): string {
     .join('\n')
 }
 
+const CLOCK_RE = /(\d{1,2}):(\d{2})/g
+const DATE_DOT_RE = /(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/g
+const DATE_ISO_RE = /(\d{4})-(\d{2})-(\d{2})/g
+const DATE_KO_RE = /(\d{2,4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/g
+
+function pad2(value: number | string): string {
+  return String(value).padStart(2, '0')
+}
+
+function dateKeysFromText(text: string): string[] {
+  const keys: string[] = []
+  const push = (yearRaw: string, month: string, day: string) => {
+    const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw
+    keys.push(`${year}-${pad2(month)}-${pad2(day)}`)
+  }
+  for (const match of text.matchAll(DATE_DOT_RE)) {
+    push(match[1] ?? '', match[2] ?? '', match[3] ?? '')
+  }
+  for (const match of text.matchAll(DATE_ISO_RE)) {
+    push(match[1] ?? '', match[2] ?? '', match[3] ?? '')
+  }
+  for (const match of text.matchAll(DATE_KO_RE)) {
+    push(match[1] ?? '', match[2] ?? '', match[3] ?? '')
+  }
+  return [...new Set(keys)]
+}
+
+function clocksFromText(text: string): string[] {
+  return [...text.matchAll(CLOCK_RE)].map(
+    match => `${pad2(match[1] ?? '0')}:${match[2] ?? '00'}`,
+  )
+}
+
+/**
+ * 날짜만 저장된 희망 일정을 신청 폼 고정 선택지(교육 진행 예정일) 문구로 되돌린다.
+ * 시각이 있거나 날짜가 둘 이상이면 저장 문구를 유지한다.
+ */
+function resolveFormOptionLabelForStoredLine(
+  storedLine: string,
+  lines: readonly string[] | undefined,
+): string | undefined {
+  const trimmed = storedLine.trim()
+  if (!trimmed || clocksFromText(trimmed).length > 0) return undefined
+  const storedDates = dateKeysFromText(trimmed)
+  if (storedDates.length !== 1) return undefined
+  const storedDate = storedDates[0]
+  const slots = expandEducationScheduleChoiceSlots(lines)
+    .map(slot => slot.trim())
+    .filter(Boolean)
+  if (slots.length === 0) return undefined
+  const sameDate = slots.filter(slot => dateKeysFromText(slot)[0] === storedDate)
+  if (sameDate.length !== 1) return undefined
+  const slot = sameDate[0]
+  if (!slot) return undefined
+  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, lines))
+}
+
+function mapStoredScheduleLabelToFormOptions(
+  stored: string,
+  lines: readonly string[] | undefined,
+): string {
+  return stored
+    .split('\n')
+    .map(line => {
+      const trimmed = line.trim()
+      if (!trimmed) return ''
+      if (isOpaqueScheduleOptionToken(trimmed)) return trimmed
+      return resolveFormOptionLabelForStoredLine(trimmed, lines) ?? displayScheduleText(trimmed)
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
 function flattenAnswerStrings(raw: unknown): string[] {
   if (typeof raw === 'string') {
     const trimmed = raw.trim()
@@ -264,8 +337,12 @@ export function collectPreferredScheduleOptionValues(
   for (const key of PREFERRED_SCHEDULE_ANSWER_KEYS) {
     if (key === 'preferredScheduleBlocks' || !(key in answers)) continue
     const row = asRecord(answers[key])
-    if (row && Array.isArray(row.selectedSlotIds)) {
-      for (const id of row.selectedSlotIds) {
+    const selectedIds = [
+      ...(Array.isArray(row?.selectedSlotIds) ? row.selectedSlotIds : []),
+      ...(Array.isArray(row?.selectedOptionIds) ? row.selectedOptionIds : []),
+    ]
+    if (selectedIds.length > 0) {
+      for (const id of selectedIds) {
         const token = readTrimmedString(id)
         if (!token || !isOpaqueScheduleOptionToken(token) || seen.has(token)) continue
         seen.add(token)
@@ -357,28 +434,24 @@ function resolveOneScheduleOptionToken(
     return resolveEducationScheduleLineLabel(index, lookup.educationScheduleLines)
   }
   const trimmed = token.trim()
-  const educationPeriodMatch = trimmed.match(
+  /** `schedule:123` · `schedule:123:organization-application:9` · `schedule:123:education-period:0` */
+  const scheduleMatch = trimmed.match(
     /^schedule:(\d+)(?::organization-application:\d+)?(?::education-period:(\d+))?$/i,
   )
-  if (educationPeriodMatch?.[3] != null) {
-    const scheduleId = Number(educationPeriodMatch[1])
-    const periodIndex = Number(educationPeriodMatch[3])
-    if (!Number.isFinite(scheduleId) || !Number.isFinite(periodIndex)) return undefined
-    const hit = lookup.schedules?.find(
-      row =>
-        row.scheduleId === scheduleId &&
-        (row.educationPeriodIndex == null || row.educationPeriodIndex === periodIndex),
-    )
-    const periodLabel = readTrimmedString(hit?.periodLabel)
-    if (periodLabel) return normalizeScheduleDisplayLabel(periodLabel)
-    return undefined
-  }
-  const scheduleMatch = trimmed.match(/^schedule:(\d+)(?::organization-application:\d+)?$/i)
   const bareId = /^\d{4,}$/.test(trimmed) ? Number(trimmed) : null
   const scheduleId = scheduleMatch ? Number(scheduleMatch[1]) : bareId
   if (scheduleId == null || !Number.isFinite(scheduleId)) return undefined
-  const hit = lookup.schedules?.find(row => row.scheduleId === scheduleId)
+
+  const periodRaw = scheduleMatch?.[2]
+  const periodIndex = periodRaw != null ? Number(periodRaw) : undefined
+  const hit = lookup.schedules?.find(row => {
+    if (row.scheduleId !== scheduleId) return false
+    if (periodIndex == null || !Number.isFinite(periodIndex)) return true
+    return row.educationPeriodIndex == null || row.educationPeriodIndex === periodIndex
+  })
   if (!hit) return undefined
+  const periodLabel = readTrimmedString(hit.periodLabel)
+  if (periodLabel) return normalizeScheduleDisplayLabel(periodLabel)
   return formatScheduleRangeLabel(hit)
 }
 
@@ -422,7 +495,9 @@ export function resolvePreferredEducationScheduleDisplayLabel(input: {
   schedules?: PreferredScheduleProgramLookup['schedules']
 }): string | undefined {
   const stored = input.preferredEducationScheduleLabel?.trim()
-  if (stored && !isOpaqueScheduleOptionToken(stored)) return displayScheduleText(stored)
+  if (stored && !isOpaqueScheduleOptionToken(stored)) {
+    return mapStoredScheduleLabelToFormOptions(stored, input.educationScheduleLines) || undefined
+  }
 
   const optionValues =
     input.preferredScheduleOptionValues && input.preferredScheduleOptionValues.length > 0

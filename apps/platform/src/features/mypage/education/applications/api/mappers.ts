@@ -259,6 +259,27 @@ function resolveInterviewFields(
   }
 }
 
+function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(raw)
+      return normalizeApplicationAnswers(parsed)
+    } catch {
+      return {}
+    }
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const record = raw as Record<string, unknown>
+  const nested = record.answers
+  if (nested && typeof nested === 'object' && !Array.isArray(nested) && !('documentId' in nested)) {
+    const nestedRecord = nested as Record<string, unknown>
+    if (Object.keys(nestedRecord).some(key => key.includes('-seed-') || key.includes('schedule'))) {
+      return nestedRecord
+    }
+  }
+  return record
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
 ): EducationApplicationListItem | null {
@@ -298,7 +319,7 @@ export function mapPortalProgramApplicationDetail(
   )
   if (recruitmentLabel !== '-') mapped.recruitmentPeriodLabel = recruitmentLabel
 
-  const answers = detail.answers ?? {}
+  const answers = normalizeApplicationAnswers(detail.answers)
   const fromAnswers = resolveApplicationContentFromAnswers(answers)
   const preferredFromBlocks = resolvePreferredEducationScheduleLabelFromAnswers({
     preferredScheduleBlocks: detail.preferredScheduleBlocks ?? [],
