@@ -14,6 +14,7 @@ import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/mem
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { customInstance } from '@/shared/api/orval-mutator'
 import { parseMemberConsentSummariesPayload } from '@/features/user/api/parse-member-consent-summaries-payload'
+import { resolveConsentSignedSignatureField } from '@/features/user/shared/lib/resolve-consent-signed-signature-field'
 import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas/schoolMemberDetailResponse'
 import type { AdminPreRegisterSchoolRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterSchoolRequest'
 import type {
@@ -24,6 +25,7 @@ import type {
   AdminPreRegisterInstructorRequest,
   AdminPrivacyUnmaskRequest,
   FilledDocumentResponse,
+  SignedConsentDocumentResponse,
   AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
@@ -558,6 +560,112 @@ export async function fetchConsentFilledDocumentRemote(
       { skipGlobalErrorAlert: true }
     )
   )
+}
+
+function consentRecordQuery(consentRecordId?: number) {
+  return consentRecordId == null ? undefined : { consentRecordId }
+}
+
+function asDownloadBlob(payload: unknown): Blob | null {
+  if (payload instanceof Blob) return payload.size > 0 ? payload : null
+  const unwrapped = unwrapApiBody(payload)
+  if (unwrapped instanceof Blob) return unwrapped.size > 0 ? unwrapped : null
+  return null
+}
+
+function isUsableSignatureImageBlob(blob: Blob | null): blob is Blob {
+  if (blob == null || blob.size < 1) return false
+  const type = blob.type.toLowerCase()
+  if (type.includes('text/html') || type.includes('application/json')) return false
+  return true
+}
+
+/** POST 전자서명 스냅샷 메타 — 민감정보, 쿼리 캐시에 넣지 말 것 */
+export async function fetchConsentSignedDocumentRemote(
+  memberId: number,
+  consentType: string,
+  body: AdminPrivacyUnmaskRequest,
+  consentRecordId?: number
+): Promise<SignedConsentDocumentResponse> {
+  return unwrapApiBody(
+    await membersApi.signedConsentDocument(
+      memberId,
+      consentType,
+      body,
+      consentRecordQuery(consentRecordId),
+      { skipGlobalErrorAlert: true }
+    )
+  )
+}
+
+/** POST 전자서명 이미지 Blob — 실패 시 null (본문 보기를 막지 않음) */
+export async function fetchConsentSignedSignatureImageRemote(
+  memberId: number,
+  consentType: string,
+  fieldKey: string,
+  body: AdminPrivacyUnmaskRequest,
+  consentRecordId?: number
+): Promise<Blob | null> {
+  const payload = await membersApi.signedConsentSignatureImage(
+    memberId,
+    consentType,
+    fieldKey,
+    body,
+    consentRecordQuery(consentRecordId),
+    {
+      skipGlobalErrorAlert: true,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'image/png,image/jpeg,image/webp,image/*,*/*',
+      },
+    }
+  )
+  const blob = asDownloadBlob(payload)
+  return isUsableSignatureImageBlob(blob) ? blob : null
+}
+
+/** signed-document + 서명 이미지. content 실패 시 회원 서명 파일 민감 다운로드로 폴백 */
+export async function loadConsentSignedSignatureBlobRemote(input: {
+  memberId: number
+  consentType: string
+  reason: string
+  consentRecordId?: number
+}): Promise<Blob | null> {
+  let signed: SignedConsentDocumentResponse
+  try {
+    signed = await fetchConsentSignedDocumentRemote(
+      input.memberId,
+      input.consentType,
+      { reason: input.reason },
+      input.consentRecordId
+    )
+  } catch {
+    return null
+  }
+  const field = resolveConsentSignedSignatureField(signed.signatureFields)
+  if (field == null) return null
+  try {
+    const blob = await fetchConsentSignedSignatureImageRemote(
+      input.memberId,
+      input.consentType,
+      field.fieldKey,
+      { reason: input.reason },
+      input.consentRecordId
+    )
+    if (blob) return blob
+  } catch {
+    /* fileObjectId 폴백 */
+  }
+  if (field.signatureFileObjectId == null) return null
+  try {
+    const blob = await loadSensitiveAdminFileBlob({
+      fileObjectId: field.signatureFileObjectId,
+      reason: input.reason,
+    })
+    return isUsableSignatureImageBlob(blob) ? blob : null
+  } catch {
+    return null
+  }
 }
 
 function mimeFromEvidenceFileName(fileName: string | null | undefined): string | null {

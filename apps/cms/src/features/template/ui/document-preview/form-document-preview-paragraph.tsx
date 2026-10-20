@@ -615,6 +615,7 @@ function renderBody(
             displayMode={renderMode === 'contentOnly' ? 'document' : 'authoring'}
             participantName={paragraphBodyOptions?.agreementSystemParticipantName}
             now={paragraphBodyOptions?.agreementSystemNow}
+            signatureImageSrc={paragraphBodyOptions?.agreementSystemSignatureImageSrc}
           />
         )
       }

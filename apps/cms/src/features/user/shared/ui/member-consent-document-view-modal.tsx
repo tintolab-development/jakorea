@@ -1,6 +1,7 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { resolveAgreementA4DocumentHiddenParagraphIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { AGREEMENT_CRIME_TEMPLATE_CODE } from '@/features/template/lib/agreement-crime-consent-settings'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { schemaJsonToWritingFormDraft } from '@/features/template/api/adapters/form-template-draft-adapters'
@@ -13,7 +14,10 @@ import { TemplatePreviewModal } from '@/features/template/ui/modal/template-prev
 import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { useConsentFilledDocumentMutation } from '@/features/user/api/hooks/use-consent-filled-document-mutation'
-import { fetchConsentEvidenceBlobRemote } from '@/features/user/api/members-api-client'
+import {
+  fetchConsentEvidenceBlobRemote,
+  loadConsentSignedSignatureBlobRemote,
+} from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal'
 import {
@@ -76,9 +80,7 @@ export interface MemberConsentDocumentViewModalProps {
 function filledSchemaToDraft(schemaJson: unknown): WritingFormDraft | null {
   if (schemaJson == null) return null
   try {
-    const parsed = schemaJsonToWritingFormDraft(
-      schemaJson as string | Record<string, unknown>
-    )
+    const parsed = schemaJsonToWritingFormDraft(schemaJson as string | Record<string, unknown>)
     if (parsed == null) return null
     return normalizeNoticeIdTypeResidentInputInDraft(parsed)
   } catch {
@@ -177,7 +179,9 @@ function MemberConsentCrimeDocumentView({
           {isSyntheticPreview ? (
             <div className="member-consent-document-view-modal__notice-wrap">
               <div className="member-consent-document-view-modal__notice">
-                <span className="template-preview-modal__notice-text">{SYNTHETIC_PREVIEW_NOTICE}</span>
+                <span className="template-preview-modal__notice-text">
+                  {SYNTHETIC_PREVIEW_NOTICE}
+                </span>
                 <CmsButton variant="secondary" size="medium" width={120} onClick={onClose}>
                   닫기
                 </CmsButton>
@@ -193,7 +197,7 @@ function MemberConsentCrimeDocumentView({
                   variant="secondary"
                   icon={<ButtonDownloadIcon />}
                   onClick={() => void handleDownload()}
-                  className="crime-consent-doc-modal__download-btn"
+                  size="medium"
                   disabled={!displaySrc}
                 >
                   문서 다운로드
@@ -238,6 +242,7 @@ function MemberConsentAgreementDocumentView({
   isLoading,
   loadFailed,
   memberUser,
+  signatureImageSrc,
   onClose,
 }: {
   open: boolean
@@ -249,6 +254,7 @@ function MemberConsentAgreementDocumentView({
   isLoading: boolean
   loadFailed: boolean
   memberUser?: Omit<User, 'password'>
+  signatureImageSrc?: string | null
   onClose: () => void
 }) {
   const agreementConfig = useMemo(() => resolveAgreementWritingFormConfig(templateId), [templateId])
@@ -269,17 +275,35 @@ function MemberConsentAgreementDocumentView({
 
   const paragraphBodyOptions = useMemo(() => {
     const base = agreementConfig?.paragraphBodyOptions
-    return {
+    const withCommon = {
       ...(base ?? {}),
       paragraphInteractionMode: 'preview' as const,
       paymentStatementDisplayMode: 'document' as const,
-      /** A4 보기: 대리작성 카드(shadow) 대신 날짜·서명 플랫 스택 — FormDocumentPreviewBody contentOnly에서도 처리 */
       ...(paymentValues != null ? { paymentStatementBasicInfoValues: paymentValues } : {}),
       ...(participantName != null && participantName !== ''
         ? { agreementSystemParticipantName: participantName }
         : {}),
     }
-  }, [agreementConfig?.paragraphBodyOptions, paymentValues, participantName])
+    const showSubmittedSignatureStack = !isSyntheticPreview && filled != null
+    if (!showSubmittedSignatureStack) return withCommon
+    const signatureSrc = signatureImageSrc?.trim() ?? ''
+    const savedAt = filled.savedAt?.trim()
+    return {
+      ...withCommon,
+      agreementAdminProxyConfirm: false,
+      hiddenParagraphIds: resolveAgreementA4DocumentHiddenParagraphIds(withCommon.hiddenParagraphIds),
+      agreementSystemDisplayMode: 'document' as const,
+      ...(signatureSrc ? { agreementSystemSignatureImageSrc: signatureSrc } : {}),
+      ...(savedAt ? { agreementSystemNow: new Date(savedAt) } : {}),
+    }
+  }, [
+    agreementConfig?.paragraphBodyOptions,
+    filled,
+    isSyntheticPreview,
+    participantName,
+    paymentValues,
+    signatureImageSrc,
+  ])
 
   const displayDraft = useMemo((): WritingFormDraft | null => {
     if (isSyntheticPreview) return synthetic?.draft ?? null
@@ -392,6 +416,7 @@ export function MemberConsentDocumentViewModal({
   const [filled, setFilled] = useState<FilledDocumentResponse | null>(null)
   const [evidenceObjectUrl, setEvidenceObjectUrl] = useState<string | null>(null)
   const [evidenceMimeType, setEvidenceMimeType] = useState<string | null>(null)
+  const [signatureImageSrc, setSignatureImageSrc] = useState<string | null>(null)
   const [reasonOpen, setReasonOpen] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
   const [synthetic, setSynthetic] = useState<MemberConsentAgreeOnlyPreviewResult | null>(null)
@@ -421,12 +446,7 @@ export function MemberConsentDocumentViewModal({
   const isCrime = templateId === AGREEMENT_CRIME_TEMPLATE_CODE
   const requiresPrivacyReveal = memberConsentViewRequiresPrivacyReveal(templateId)
   const canFetchRemote = Boolean(
-    useSubmittedPath &&
-      !isCrime &&
-      membersRemote &&
-      open &&
-      memberId != null &&
-      consentType?.trim()
+    useSubmittedPath && !isCrime && membersRemote && open && memberId != null && consentType?.trim()
   )
 
   const loadFilledDocument = useCallback(
@@ -441,13 +461,35 @@ export function MemberConsentDocumentViewModal({
         if (current) URL.revokeObjectURL(current)
         return null
       })
+      setSignatureImageSrc(current => {
+        if (current) URL.revokeObjectURL(current)
+        return null
+      })
       setLoadFailed(false)
       void mutation
         .mutateAsync({ memberId, consentType: consentType.trim(), consentRecordId, reason })
         .then(async response => {
           if (requestedDocumentKeyRef.current !== requestKey) return
           setFilled(response)
-          if (!isCrime) return
+          if (!isCrime) {
+            try {
+              const blob = await loadConsentSignedSignatureBlobRemote({
+                memberId,
+                consentType: consentType.trim(),
+                reason,
+                consentRecordId,
+              })
+              if (requestedDocumentKeyRef.current !== requestKey) return
+              if (blob == null || blob.size < 1) return
+              setSignatureImageSrc(prev => {
+                if (prev) URL.revokeObjectURL(prev)
+                return URL.createObjectURL(blob)
+              })
+            } catch {
+              /* 서명 이미지는 선택 — filled 본문 보기를 막지 않음 */
+            }
+            return
+          }
           try {
             const blob = await fetchConsentEvidenceBlobRemote(response, reason)
             if (blob == null || blob.size < 1) {
@@ -491,6 +533,10 @@ export function MemberConsentDocumentViewModal({
       setSynthetic(null)
       setSyntheticLoading(false)
       setEvidenceMimeType(null)
+      setSignatureImageSrc(current => {
+        if (current) URL.revokeObjectURL(current)
+        return null
+      })
       requestedDocumentKeyRef.current = null
       mutation.reset()
       return
@@ -555,10 +601,20 @@ export function MemberConsentDocumentViewModal({
     }
   }, [evidenceObjectUrl])
 
+  useEffect(() => {
+    return () => {
+      if (signatureImageSrc) URL.revokeObjectURL(signatureImageSrc)
+    }
+  }, [signatureImageSrc])
+
   const handleClose = useCallback(() => {
     if (evidenceObjectUrl) {
       URL.revokeObjectURL(evidenceObjectUrl)
       setEvidenceObjectUrl(null)
+    }
+    if (signatureImageSrc) {
+      URL.revokeObjectURL(signatureImageSrc)
+      setSignatureImageSrc(null)
     }
     setEvidenceMimeType(null)
     setFilled(null)
@@ -569,7 +625,7 @@ export function MemberConsentDocumentViewModal({
     mutation.reset()
     requestedDocumentKeyRef.current = null
     onClose()
-  }, [evidenceObjectUrl, mutation, onClose])
+  }, [evidenceObjectUrl, mutation, onClose, signatureImageSrc])
 
   const handleRevealConfirm = useCallback(
     (reason: string) => {
@@ -588,11 +644,7 @@ export function MemberConsentDocumentViewModal({
       ? syntheticLoading
       : false
   const remoteUnavailable =
-    canFetchRemote &&
-    requiresPrivacyReveal &&
-    !reasonOpen &&
-    !mutation.isPending &&
-    filled == null
+    canFetchRemote && requiresPrivacyReveal && !reasonOpen && !mutation.isPending && filled == null
 
   if (isCrime) {
     return (
@@ -636,6 +688,7 @@ export function MemberConsentDocumentViewModal({
             : loadFailed || remoteUnavailable
         }
         memberUser={memberUser}
+        signatureImageSrc={signatureImageSrc}
         onClose={handleClose}
       />
       {reasonOpen ? (

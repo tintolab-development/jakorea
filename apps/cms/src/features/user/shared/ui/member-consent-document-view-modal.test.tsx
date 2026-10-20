@@ -30,6 +30,16 @@ vi.mock('@/shared/ui/cms-alert-modal-provider', () => ({
   useCmsAlert: () => ({ showAlert: vi.fn() }),
 }))
 
+const loadConsentSignedSignatureBlobRemote = vi.fn()
+vi.mock('@/features/user/api/members-api-client', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/features/user/api/members-api-client')>()
+  return {
+    ...actual,
+    loadConsentSignedSignatureBlobRemote: (...args: unknown[]) =>
+      loadConsentSignedSignatureBlobRemote(...args),
+  }
+})
+
 const cases = [
   { title: 'payment', templateId: 'agreement-third-party', type: 'PAYMENT_STATEMENT_CONSENT', create: createPaymentStatementPreConsentDraft },
   { title: 'portrait', templateId: 'agreement-portrait', type: 'PORTRAIT_RIGHTS', create: createAgreementPortraitDraft },
@@ -48,7 +58,12 @@ function renderModal(props: Record<string, unknown>) {
 
 describe('member consent filled document rendering', () => {
   afterEach(cleanup)
-  beforeEach(() => { mutateAsync.mockReset(); reset.mockReset() })
+  beforeEach(() => {
+    mutateAsync.mockReset()
+    reset.mockReset()
+    loadConsentSignedSignatureBlobRemote.mockReset()
+    loadConsentSignedSignatureBlobRemote.mockResolvedValue(null)
+  })
 
   it.each(cases)('$title renders the server-filled schema in the A4 document view', async item => {
     const draft = item.create()
@@ -90,6 +105,50 @@ describe('member consent filled document rendering', () => {
     await waitFor(() => expect(document.body.textContent).toContain('원본'))
     expect(mutateAsync).not.toHaveBeenCalled()
     expect(document.querySelector('.crime-consent-doc-modal__a4-outer img')).toBeNull()
+  })
+
+  it('shows the document signature stack for submitted consents even without an image', async () => {
+    const draft = createAgreementPortraitDraft()
+    mutateAsync.mockResolvedValue({
+      filledDocumentId: 9001,
+      schemaJson: writingFormDraftToSchemaJson(draft),
+    })
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      filledDocumentAvailable: true,
+      memberUser: { name: '황범진' },
+    })
+    await waitFor(() => expect(document.body.textContent).toContain('동의자'))
+    expect(document.body.textContent).toContain('(서명)')
+    expect(document.body.textContent).not.toContain('당사자의 서면 동의')
+  })
+
+  it('shows the portal e-signature image when signed-document returns a signed field', async () => {
+    const draft = createAgreementPortraitDraft()
+    mutateAsync.mockResolvedValue({
+      filledDocumentId: 9001,
+      consentRecordId: 81,
+      memberId: 701,
+      consentType: 'PORTRAIT_RIGHTS',
+      savedAt: '2026-10-20T10:14:06.121586Z',
+      schemaJson: writingFormDraftToSchemaJson(draft),
+    })
+    loadConsentSignedSignatureBlobRemote.mockResolvedValue(
+      new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
+    )
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-portal-signature')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      filledDocumentAvailable: true,
+    })
+    await waitFor(() => expect(loadConsentSignedSignatureBlobRemote).toHaveBeenCalledTimes(1))
+    await waitFor(() => {
+      const image = document.querySelector('img[alt="전자서명"]') as HTMLImageElement | null
+      expect(image?.getAttribute('src')).toBe('blob:mock-portal-signature')
+    })
   })
 
   it('clears mutation state when the modal closes', async () => {

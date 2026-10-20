@@ -132,7 +132,6 @@
 
 /* 문서 다운로드 — outlined 느낌 맞춤 */
 .crime-consent-doc-modal__download-btn.cms-button.ant-btn {
-  width: 180px;
   padding: 6px 16px 6px 10px !important;
   display: inline-flex;
   flex-direction: row !important;

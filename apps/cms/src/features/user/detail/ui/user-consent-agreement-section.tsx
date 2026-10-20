@@ -321,7 +321,7 @@ function ConsentDocumentRow({
       </span>
       {agreed ? (
         <>
-          <CmsButton variant="secondary" size="h32" width={100} onClick={open} disabled={!open}>
+          <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
           {agreedAtDisplay ? (
@@ -331,7 +331,7 @@ function ConsentDocumentRow({
           ) : null}
         </>
       ) : (
-        <CmsButton variant="default" size="medium" width={120} disabled>
+        <CmsButton variant="default" size="h32" disabled>
           동의서 보기
         </CmsButton>
       )}
@@ -386,7 +386,7 @@ function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrit
       <span className="user-consent-agreement-section__value-sep" aria-hidden>
         |
       </span>
-      <CmsButton variant="secondary" size="medium" type="button" onClick={onWrite}>
+      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
         동의서 작성
       </CmsButton>
     </span>
