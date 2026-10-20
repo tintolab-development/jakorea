@@ -1,4 +1,5 @@
 import { addMonths, startOfDay, type CalendarDay } from '../pf-calendar/calendar-month'
+import { formatDisplayDateRange } from '../../lib/format-display-date.ts'
 
 /** Platform 날짜 인풋 공통 최소 연도 */
 export const DATE_INPUT_MIN_YEAR = 1950
@@ -168,18 +169,14 @@ export function formatDisplayDate(value: string): string {
   return `${year}. ${month}. ${day}`
 }
 
-/** 필터 트리거용 — `2026년 9월 13일` */
+/** 필터 트리거용 — `2026년 9월 13일(일)` */
 export function formatKoreanDate(value: string): string {
-  const date = parseIsoDate(value)
-  if (!date) return ''
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+  return formatDisplayDate(value)
 }
 
 export function formatKoreanDateRange(start: string, end: string): string {
-  const startLabel = formatKoreanDate(start)
-  const endLabel = formatKoreanDate(end)
-  if (!startLabel || !endLabel) return ''
-  return `${startLabel} ~ ${endLabel}`
+  const label = formatDisplayDateRange(start, end, { empty: '' })
+  return label === '-' ? '' : label
 }
 
 export type DateRangeValue = {

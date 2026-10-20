@@ -38,6 +38,7 @@ import type {
   PublicCareerTalentEducationLevel,
   PublicCareerTalentJobInterest,
 } from './types'
+import { formatDisplayDate, formatDisplayDateRange } from '../../../shared/lib/format-display-date.ts'
 
 const CULTURE_CODE_TO_ID: Record<string, ThriveValueId> = {
   MAKE_AN_IMPACT: 'impact',
@@ -176,8 +177,6 @@ function mapPostingStatus(status: string | undefined): CareerJobStatus | null {
   return null
 }
 
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 /** YYYY-MM-DD → `2026년 05월 08일`. 타임존으로 하루 밀리지 않게 날짜만 쓴다. */
 export function formatCareerPublishedAtLabel(publishedOn: string | undefined | null): string {
   if (typeof publishedOn !== 'string') return ''
@@ -204,20 +203,10 @@ export function formatCareerPublishedAtDetailLabel(value: string | undefined | n
   return `${dateLabel} ${period} ${hours12}:${minutes}`
 }
 
-/** YYYY-MM-DD → `2026년 04월 03일(금)`. 잘못된 날짜는 빈 문자열. */
+/** YYYY-MM-DD → `2026년 4월 3일(금)`. 잘못된 날짜는 빈 문자열. */
 export function formatCareerDateWithWeekday(value: string | undefined | null): string {
   if (typeof value !== 'string') return ''
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
-  if (!match) return ''
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  const date = new Date(year, month - 1, day)
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return ''
-  }
-  const weekday = WEEKDAY_LABELS[date.getDay()]
-  return `${match[1]}년 ${match[2]}월 ${match[3]}일(${weekday})`
+  return formatDisplayDate(value)
 }
 
 /** 시작·종료가 둘 다 유효할 때만. 하나라도 없으면 빈 문자열. */
@@ -228,7 +217,7 @@ export function formatCareerRecruitPeriodLabel(
   const startLabel = formatCareerDateWithWeekday(start)
   const endLabel = formatCareerDateWithWeekday(end)
   if (!startLabel || !endLabel) return ''
-  return `${startLabel} ~ ${endLabel}`
+  return formatDisplayDateRange(start, end, { empty: '' })
 }
 
 export function mapPublicCareerPostingItem(
