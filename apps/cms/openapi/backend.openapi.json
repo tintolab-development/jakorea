@@ -64593,14 +64593,21 @@
             "minimum": 1
           },
           "phone": {
-            "type": "string",
-            "minLength": 1
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신규 행은 필수. 기존 활성 행(rosterId 또는 이름·생년월일·학년·반·번호 일치)은 생략하거나 빈 문자열이면 저장된 암호화 연락처를 유지합니다. 값을 보내면 하이픈 전화번호 형식을 검사합니다."
           },
           "email": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "email",
             "maxLength": 255,
-            "minLength": 0
+            "minLength": 0,
+            "description": "신규 행은 필수. 기존 활성 행은 생략하거나 빈 문자열이면 저장된 암호화 이메일을 유지합니다. 값을 보내면 이메일 형식을 검사합니다."
           },
           "notes": {
             "type": "string",
@@ -64609,12 +64616,10 @@
           }
         },
         "required": [
-          "birthDate",
-          "className",
-          "email",
+          "studentName",
           "gender",
-          "phone",
-          "studentName"
+          "birthDate",
+          "className"
         ]
       },
       "StudentRosterItemResponse": {
@@ -71452,7 +71457,7 @@
         "properties": {
           "filePurpose": {
             "type": "string",
-            "description": "파일 용도. PORTRAIT_CONSENT는 학생 초상권 동의서이며 PDF/JPG/JPEG/PNG/WEBP/DOCX, 파일당 20MB입니다. ABSENCE_EVIDENCE는 결석 사유 증빙이며 JPG/JPEG/PNG, 파일당 20MB입니다.",
+            "description": "파일 용도. PORTRAIT_CONSENT는 학생 초상권 동의서이며 PDF/JPG/JPEG/PNG/WEBP/DOCX, 파일당 20MB입니다. ABSENCE_EVIDENCE는 결석 사유 증빙이며 JPG/JPEG/PNG, 파일당 20MB입니다. STUDENT_ROSTER는 CSV/XLSX 20MB, CRIMINAL_HISTORY_EVIDENCE는 PDF/JPG/JPEG/PNG/WEBP 20MB, EDUCATION_JOURNAL은 일반 첨부 50MB, MEMBER_ELECTRONIC_SIGNATURE는 PNG/JPEG/WebP 5MB(서버가 ELECTRONIC_SIGNATURE로 정규화 저장)입니다.",
             "enum": [
               "ASSIGNMENT_ATTACHMENT",
               "SURVEY_ATTACHMENT",
@@ -71462,7 +71467,11 @@
               "INSTRUCTOR_APPLICATION",
               "VOLUNTEER_APPLICATION_EVIDENCE",
               "PROGRAM_POST_ATTACHMENT",
-              "PROGRAM_POST_INLINE_IMAGE"
+              "PROGRAM_POST_INLINE_IMAGE",
+              "STUDENT_ROSTER",
+              "CRIMINAL_HISTORY_EVIDENCE",
+              "EDUCATION_JOURNAL",
+              "MEMBER_ELECTRONIC_SIGNATURE"
             ],
             "maxLength": 80,
             "minLength": 0
@@ -94580,7 +94589,7 @@
           },
           "satisfactionConfigured": {
             "type": "boolean",
-            "description": "활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 과거 row가 있어도 항상 false입니다."
+            "description": "활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 교사 대상 활성 SATISFACTION만 true입니다."
           }
         }
       },

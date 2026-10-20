@@ -31,6 +31,6 @@ export interface MemberPortalProgramSummary {
   educationJournalEnabled?: boolean;
   /** 활성 SURVEY·QUESTIONNAIRE·LECTURE_EVALUATION 바인딩이 하나 이상인지 나타냅니다. */
   surveyConfigured?: boolean;
-  /** 활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 과거 row가 있어도 항상 false입니다. */
+  /** 활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 교사 대상 활성 SATISFACTION만 true입니다. */
   satisfactionConfigured?: boolean;
 }
