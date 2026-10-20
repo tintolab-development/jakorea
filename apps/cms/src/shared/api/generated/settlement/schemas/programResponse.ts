@@ -108,7 +108,7 @@ export interface ProgramResponse {
   homeDisplayOrder?: number | null;
   createdAt?: string;
   updatedAt?: string;
+  businessStartDate?: string;
   businessEndDate?: string;
   businessYear?: number;
-  businessStartDate?: string;
 }
