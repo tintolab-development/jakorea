@@ -1,4 +1,5 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
+import { formatDisplayDateRange } from '../../../../../shared/lib/format-display-date.ts'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import {
   formatInterviewAtLabel,
@@ -178,23 +179,8 @@ function mapCategoryLabel(
   return '일반'
 }
 
-function formatDate(value: string | null | undefined): string | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
-}
-
 function formatDateRange(start: string | null | undefined, end: string | null | undefined): string {
-  const startLabel = formatDate(start)
-  const endLabel = formatDate(end)
-  if (startLabel && endLabel) return `${startLabel} – ${endLabel}`
-  if (startLabel) return startLabel
-  if (endLabel) return endLabel
-  return '-'
+  return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
 function mapRecruitmentStatus(displayStatus: EducationDisplayStatus): RecruitmentStatus {

@@ -12,7 +12,7 @@ const participant = resolveApplicationContentFromAnswers({
   'program-participant-application-seed-schedule': ['2026년 04월 20일(월) 9:30 ~ 12:20'],
 })
 assert.equal(participant.selfIntroMotivation, '자기소개입니다.')
-assert.equal(participant.preferredEducationScheduleLabel, '2026년 04월 20일(월) 9:30 ~ 12:20')
+assert.equal(participant.preferredEducationScheduleLabel, '2026년 4월 20일(월) 09:30 ~ 12:20')
 
 const handoffShortKeys = resolveApplicationContentFromAnswers({
   selfIntro: '지원 동기입니다.',
@@ -37,10 +37,7 @@ assert.ok(volunteer.preferredEducationScheduleLabel?.includes('2026년'))
 assert.ok(volunteer.preferredEducationScheduleLabel?.includes('09:30') || volunteer.preferredEducationScheduleLabel?.includes('9:30'))
 
 const interview = formatInterviewAtLabel('2026-03-15T09:00:00+09:00')
-assert.ok(interview?.includes('2026년'))
-assert.ok(interview?.includes('03월'))
-assert.ok(interview?.includes('15일'))
-assert.ok(interview?.includes('09시'))
+assert.equal(interview, '2026년 3월 15일(일) 09:00')
 
 assert.equal(isOpaqueScheduleOptionToken('schedule:186626'), true)
 assert.equal(
@@ -71,38 +68,36 @@ const resolved = resolvePreferredEducationScheduleDisplayLabel({
     },
   ],
 })
-assert.ok(resolved?.includes('2026년'))
-assert.ok(resolved?.includes('04월'))
-assert.ok(resolved?.includes('20일'))
+assert.ok(resolved?.includes('2026년 4월 20일(월)'))
 assert.ok(resolved?.includes('특별 JOB담'))
 
 const lineResolved = resolvePreferredEducationScheduleDisplayLabel({
   preferredScheduleOptionValues: ['line:1'],
   educationScheduleLines: ['첫째 날 | 2차시', '2026년 04월 20일(월) 9:30 ~ 12:20 | 2차시'],
 })
-assert.equal(lineResolved, '2026년 04월 20일(월) 9:30 ~ 12:20 | 2차시')
+assert.equal(lineResolved, '2026년 4월 20일(월) 09:30 ~ 12:20 | 2차시')
 
 const pipedLine = '26년 4월 20일(월) 9:30 ~ 12:20 | 26년 4월 27일(일) 13:00 ~ 15:50'
 const pipedFirst = resolvePreferredEducationScheduleDisplayLabel({
   preferredScheduleOptionValues: ['line:0'],
   educationScheduleLines: [pipedLine],
 })
-assert.equal(pipedFirst, '26년 4월 20일(월) 9:30 ~ 12:20')
+assert.equal(pipedFirst, '2026년 4월 20일(월) 09:30 ~ 12:20')
 assert.equal(pipedFirst?.includes('4월 27일'), false)
 
 const pipedSecond = resolvePreferredEducationScheduleDisplayLabel({
   preferredScheduleOptionValues: ['line:1'],
   educationScheduleLines: [pipedLine],
 })
-assert.equal(pipedSecond, '26년 4월 27일(일) 13:00 ~ 15:50')
+assert.equal(pipedSecond, '2026년 4월 27일(월) 13:00 ~ 15:50')
 
 const pipedBoth = resolvePreferredScheduleLabelsFromAnswers({
   preferredScheduleOptionValues: ['line:0', 'line:1'],
   educationScheduleLines: [`${pipedLine} | 2차시`],
 })
 assert.deepEqual(pipedBoth, [
-  '26년 4월 20일(월) 9:30 ~ 12:20 | 2차시',
-  '26년 4월 27일(일) 13:00 ~ 15:50 | 2차시',
+  '2026년 4월 20일(월) 09:30 ~ 12:20 | 2차시',
+  '2026년 4월 27일(월) 13:00 ~ 15:50 | 2차시',
 ])
 
 const fromSelectedLabels = resolveApplicationContentFromAnswers({
@@ -113,7 +108,7 @@ const fromSelectedLabels = resolveApplicationContentFromAnswers({
 })
 assert.equal(
   fromSelectedLabels.preferredEducationScheduleLabel,
-  '26년 10월 28일(수) ~ 26년 11월 12일(목)',
+  '2026년 10월 28일(수) ~ 2026년 11월 12일(목)',
 )
 
 const multilineDisplay = resolveApplicationContentFromAnswers({

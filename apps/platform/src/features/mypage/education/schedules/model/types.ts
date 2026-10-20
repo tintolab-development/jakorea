@@ -54,7 +54,7 @@ export type EducationScheduleItem = {
   sessionNumber: number
   /** 교육 진행일 (ISO date or datetime). 없으면 빈 문자열 — 날짜 폴백은 Row */
   heldAt: string
-  /** 커리큘럼형 회차명 / 일정형 일정명 */
+  /** 카드 청록 라벨 — 공통정보 차시/단원명/일정명. 없으면 '-' */
   title: string
   attendanceStatus: EducationScheduleAttendanceStatus | null
   /** 사유 불참 시 사유 */

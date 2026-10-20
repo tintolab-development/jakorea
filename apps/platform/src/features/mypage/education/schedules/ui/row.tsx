@@ -29,8 +29,6 @@ export function EducationScheduleRow({ item, onAbsenceReasonSubmit }: EducationS
   const showAbsenceSubmit =
     hasOperationalSchedule && canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
   const attendance = hasOperationalSchedule ? item.attendanceStatus : null
-  const rowLabel = item.sessionLabel?.trim() || item.scheduleLabel?.trim()
-  const subtitle = rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title
   const absenceReason = hasOperationalSchedule ? item.absenceReason?.trim() : undefined
 
   return (
@@ -45,7 +43,7 @@ export function EducationScheduleRow({ item, onAbsenceReasonSubmit }: EducationS
           date={heldLabel}
           subtitle={
             <PFText as="span" typo="bd-lg-sb" color="primary-500">
-              {subtitle}
+              {item.title}
             </PFText>
           }
           aside={

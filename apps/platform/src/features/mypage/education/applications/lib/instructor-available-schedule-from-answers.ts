@@ -5,16 +5,15 @@ import {
   resolvePreferredScheduleLabelsFromAnswers,
   type PreferredScheduleProgramLookup,
 } from './application-content-from-answers'
+import {
+  isScheduleDateLikeText,
+  normalizeScheduleDisplayLabel,
+} from '../../../../../shared/lib/format-display-date.ts'
 
 const INSTRUCTOR_SCHEDULE_ANSWER_KEYS = [
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
 ] as const
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-const APPLY_SUMMARY_SEGMENT_RE =
-  /^(.+?)\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*\(([^)]+)\)\s*$/
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
@@ -27,35 +26,19 @@ function readTrimmedString(value: unknown): string | undefined {
   return trimmed || undefined
 }
 
-function weekdayKoFromDateKey(dateKey: string): string {
-  const [year, month, day] = dateKey.split('-').map(part => Number(part))
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return ''
-  const utc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
-  const weekday = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Seoul',
-    weekday: 'short',
-  }).format(utc)
-  const ko = WEEKDAY_KO.find(w => weekday.startsWith(w.slice(0, 1)))
-  if (ko) return ko
-  const map: Record<string, string> = { Sun: '일', Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토' }
-  return map[weekday] ?? ''
-}
-
-/** 신청 양식 summary — `강서초등학교 : 2026년 3월 9일 (09:30 ~ 12:00)` */
+/** 신청 양식 summary — `강서초등학교 : 2026년 3월 9일 (09:30 ~ 12:00)` → `2026년 3월 9일(월) 09:30 ~ 12:00 | 강서초등학교` */
 export function convertApplyScheduleSummarySegmentToMypageLine(segment: string): string {
   const trimmed = segment.trim()
   if (!trimmed) return ''
-  const match = trimmed.match(APPLY_SUMMARY_SEGMENT_RE)
-  if (!match) return trimmed
-  const school = match[1]!.trim()
-  const year = match[2]!
-  const month = match[3]!.padStart(2, '0')
-  const day = match[4]!.padStart(2, '0')
-  const time = match[5]!.trim()
-  const dateKey = `${year}-${month}-${day}`
-  const weekday = weekdayKoFromDateKey(dateKey)
-  const weekdayPart = weekday ? `(${weekday})` : ''
-  return `${year}년 ${month}월 ${day}일${weekdayPart} ${time} | ${school}`
+  const colon = trimmed.indexOf(':')
+  if (colon > 0) {
+    const school = trimmed.slice(0, colon).trim()
+    const rest = trimmed.slice(colon + 1).trim()
+    if (school && isScheduleDateLikeText(rest)) {
+      return `${normalizeScheduleDisplayLabel(rest)} | ${school}`
+    }
+  }
+  return normalizeScheduleDisplayLabel(trimmed)
 }
 
 function splitSummarySegments(summary: string): string[] {

@@ -644,8 +644,14 @@ export function useApplicationSchedulesQuery(
     ...queryOptions(),
   })
   const items = useMemo(
-    () => (query.data?.items ?? []).map((item, index) => mapPortalEducationSchedule(item, index)),
-    [query.data?.items]
+    () =>
+      (query.data?.items ?? []).map((item, index) =>
+        mapPortalEducationSchedule(item, index, {
+          educationStructure: query.data?.educationStructure,
+          sessionRound: query.data?.sessionRound,
+        }),
+      ),
+    [query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )
   return {
     enabled,

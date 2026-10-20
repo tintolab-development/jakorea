@@ -69,7 +69,7 @@ const pipedLineCards = resolveTeacherPreferredSchedules({
   },
 })
 assert.equal(pipedLineCards.length, 1)
-assert.equal(pipedLineCards[0]!.value, '26년 4월 27일(일) 13:00 ~ 15:50')
+assert.equal(pipedLineCards[0]!.value, '2026년 4월 27일(월) 13:00 ~ 15:50')
 
 const inactiveBlock = resolveTeacherPreferredSchedules({
   preferredScheduleBlocks: [
