@@ -50,6 +50,12 @@
   text-align: center;
 }
 
+.toolbarTitleBone {
+  width: 120px;
+  height: 16px;
+  border-radius: var(--radius-4);
+}
+
 @media (--bp-below-pc) {
   .hero {
     margin-bottom: var(--spacing-32);
@@ -88,6 +94,11 @@
 @media (--bp-pc-up) {
   .page {
     padding-inline: 80px;
+  }
+
+  .toolbarTitleBone {
+    width: 220px;
+    height: 36px;
   }
 }
 
