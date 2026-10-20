@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import {
   formatDisplayDate,
   formatDisplayDateRange,
+  formatDisplayDateRangeCompact,
   formatDisplayDateTime,
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
@@ -30,6 +31,15 @@ assert.equal(
 )
 assert.equal(formatDisplayDateRange('2026-04-20', '2026-04-20'), '2026년 4월 20일(월)')
 assert.equal(formatDisplayDateRange(null, null), '-')
+assert.equal(
+  formatDisplayDateRangeCompact('2026-05-15', '2026-06-15'),
+  '2026년 5월 15일 ~ 6월 15일',
+)
+assert.equal(
+  formatDisplayDateRangeCompact('2026-12-15', '2027-01-15'),
+  '2026년 12월 15일 ~ 2027년 1월 15일',
+)
+assert.equal(formatDisplayDateRangeCompact('2026-05-15', '2026-05-15'), '2026년 5월 15일')
 
 assert.equal(
   normalizeScheduleDisplayLabel('26년 4월 20일(월) 9:30 ~ 12:20'),

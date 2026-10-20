@@ -76,6 +76,7 @@ export {
   formatDisplayDate,
   formatDisplayDateParts,
   formatDisplayDateRange,
+  formatDisplayDateRangeCompact,
   formatDisplayDateTime,
   formatDisplayDateTimeRange,
   isScheduleDateLikeText,

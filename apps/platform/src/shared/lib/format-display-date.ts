@@ -170,6 +170,29 @@ export function formatDisplayDateRange(
   return `${formatDisplayDateParts(startParts!)} ~ ${formatDisplayDateParts(endParts!)}`
 }
 
+/** 모집기간처럼 날짜만 짧게 표시할 때 사용한다. 같은 연도는 종료일의 연도를 생략한다. */
+export function formatDisplayDateRangeCompact(
+  start: Date | string | null | undefined,
+  end: Date | string | null | undefined,
+  options: FormatDisplayRangeOptions = {},
+): string {
+  const empty = options.empty ?? '-'
+  const startParts = start == null || start === '' ? null : parseSource(start, 'date')
+  const endParts = end == null || end === '' ? null : parseSource(end, 'date')
+  if (!startParts && !endParts) return empty
+
+  const formatDate = (parts: DisplayDateTimeParts, includeYear = true) =>
+    includeYear
+      ? `${parts.year}년 ${parts.month}월 ${parts.day}일`
+      : `${parts.month}월 ${parts.day}일`
+
+  if (startParts && !endParts) return formatDate(startParts)
+  if (!startParts && endParts) return formatDate(endParts)
+  if (sameCalendarDay(startParts!, endParts!)) return formatDate(startParts!)
+
+  return `${formatDate(startParts!)} ~ ${formatDate(endParts!, startParts!.year !== endParts!.year)}`
+}
+
 export function formatDisplayDateTimeRange(
   start: Date | string | null | undefined,
   end: Date | string | null | undefined,
