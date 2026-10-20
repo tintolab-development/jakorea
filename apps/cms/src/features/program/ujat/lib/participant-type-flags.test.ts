@@ -56,9 +56,13 @@ describe('resolveUjatParticipantTypeFlags', () => {
     expect(ujatParticipantTypeLabels(flags)).toBe('학교/기관, 봉사자')
   })
 
-  it('유형·overlay가 없으면 UJAT 기본(학교/기관, 봉사자)이다', () => {
-    expect(ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program()))).toBe(
-      '학교/기관, 봉사자'
-    )
+  it('유형·overlay가 없으면 조회는 빈 값이다', () => {
+    expect(ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program()))).toBe('-')
+  })
+
+  it('신규 등록 폼만 학교/기관·봉사자 기본값을 쓴다', () => {
+    expect(
+      ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program(), undefined, { fillDefaults: true }))
+    ).toBe('학교/기관, 봉사자')
   })
 })

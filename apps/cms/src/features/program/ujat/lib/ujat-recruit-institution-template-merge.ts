@@ -154,12 +154,14 @@ export function pickUjatRecruitInstitutionOverlay(
   return out
 }
 
-/** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. */
+/** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. GET 행이 있으면 기간·문의처는 덮지 않는다. */
 export function applyUjatRecruitInstitutionOverlayOntoProgram(
   program: Program,
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  options?: { preferOverlay?: boolean }
 ): Program {
   if (Object.keys(overlay).length === 0) return program
+  const preferOverlay = options?.preferOverlay !== false
   const programRange = readRangeSeal(overlay, OVERLAY_KEYS.programRange)
   const recruitRange = readRangeSeal(overlay, OVERLAY_KEYS.recruitRange)
   const result = overlay[OVERLAY_KEYS.resultAnnounce] as ResultSeal | undefined
@@ -176,22 +178,28 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
     ...program,
     mainTitle: program.mainTitle,
     title: program.title,
-    startDate: programRange?.start?.trim() ? programRange.start : program.startDate,
-    endDate: programRange?.end?.trim() ? programRange.end : program.endDate,
+    startDate:
+      preferOverlay && programRange?.start?.trim() ? programRange.start : program.startDate,
+    endDate: preferOverlay && programRange?.end?.trim() ? programRange.end : program.endDate,
     targetLevel: (targetLevels?.[0] as Program['targetLevel']) ?? program.targetLevel,
     targetLevels: (targetLevels as Program['targetLevels']) ?? program.targetLevels,
     district: district ?? program.district,
-    applicationStartDate: recruitRange?.start?.trim()
-      ? recruitRange.start
-      : program.applicationStartDate,
-    applicationEndDate: recruitRange?.end?.trim() ? recruitRange.end : program.applicationEndDate,
+    applicationStartDate:
+      preferOverlay && recruitRange?.start?.trim()
+        ? recruitRange.start
+        : program.applicationStartDate,
+    applicationEndDate:
+      preferOverlay && recruitRange?.end?.trim() ? recruitRange.end : program.applicationEndDate,
     resultAnnouncementDate: result?.date?.trim() ? result.date : program.resultAnnouncementDate,
     resultAnnouncementMethod: result?.method?.trim()
       ? result.method
       : program.resultAnnouncementMethod,
-    managerName: contact?.name?.trim() ? contact.name : program.managerName,
-    contactPhone: contact?.phone?.trim() ? contact.phone : program.contactPhone,
-    contactEmail: contact?.email?.trim() ? contact.email : program.contactEmail,
+    managerName:
+      preferOverlay && contact?.name?.trim() ? contact.name : program.managerName,
+    contactPhone:
+      preferOverlay && contact?.phone?.trim() ? contact.phone : program.contactPhone,
+    contactEmail:
+      preferOverlay && contact?.email?.trim() ? contact.email : program.contactEmail,
     oneLineIntroduction: notes ?? program.oneLineIntroduction,
     description:
       overlayString(overlay, OVERLAY_KEYS.description) ?? program.description,
@@ -215,7 +223,7 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
             ? announcementPublished
             : program.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished,
         contactOrganizationName:
-          contact?.name?.trim() ||
+          (preferOverlay ? contact?.name?.trim() : undefined) ||
           program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName,
         notesNotApplicable: false,
       },

@@ -20,11 +20,11 @@ import type {
   GeneralProgramCommonInfoExtension,
 } from '@/types/domain'
 import type { Status } from '@/types/index'
-import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 import {
   mapPeriodStatusToLifecycle,
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
+import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -62,7 +62,10 @@ import {
   hasVolunteerHalfOverlayKeys,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
-import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
+import {
+  UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
+  UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
+} from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import {
   normalizeProgramBusinessAreaValue,
   resolvePersistedProgramTargetLevels,
@@ -113,11 +116,6 @@ function idOf(value: string | number | undefined): string {
   return value == null ? '' : String(value)
 }
 
-function overlayText(overlay: Record<string, unknown>, key: string): string | undefined {
-  const value = overlay[key]
-  return typeof value === 'string' ? value.trim() || undefined : undefined
-}
-
 function recordOf(value: unknown): Record<string, unknown> | null {
   return value != null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -140,6 +138,7 @@ function numberStringOf(value: unknown): string | undefined {
 
 function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unknown> {
   const root = recordOf(value)
+  if (!root) return {}
   const result: UjatRegionCapacityBySemesterState = { h1: {}, h2: {} }
   const semesters = [
     ['h1', root?.FIRST_HALF] as const,
@@ -163,8 +162,7 @@ function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unkn
     }
   }
 
-  // 상세 serviceDetailJson의 지역 정원을 canonical source로 사용한다.
-  // 값이 없으면 이전 registration.overlay 정원을 재사용하지 않도록 빈 상태를 반환한다.
+  if (Object.keys(result.h1).length === 0 && Object.keys(result.h2).length === 0) return {}
   return { [UJAT_REGION_CAPACITY_OVERLAY_KEY]: result }
 }
 
@@ -218,7 +216,18 @@ function overlayFromPrimarySemesterCalendars(value: unknown): Record<string, unk
 }
 
 function dateValue(value: Date | string | undefined): string | undefined {
-  return value instanceof Date ? value.toISOString() : value
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value !== 'string') return undefined
+  return value.trim() ? value : undefined
+}
+
+/** GET echo — 빈 title을 대표명·시드 문구로 채우지 않는다. */
+function echoProgramManagementTitle(
+  title: string | null | undefined,
+  nameKo?: string | null
+): string {
+  if (typeof title === 'string') return title
+  return typeof nameKo === 'string' ? nameKo : ''
 }
 
 function parsedMillis(value: string | undefined): number | undefined {
@@ -303,8 +312,6 @@ function recruitmentRow(input: {
  * BE `STRUCTURED_RECRUITMENTS_GENERAL_ONLY` 가 UJAT를 거절하면 서버에서 허용해야 한다.
  */
 export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRecruitmentRequest[] {
-  const operationStartDate = dateValue(program.startDate)
-  const operationEndDate = dateValue(program.endDate)
   const institutionStart = dateValue(program.applicationStartDate)
   const institutionEnd = dateValue(program.applicationEndDate)
   const volunteers = (program.programRecruitments ?? [])
@@ -317,19 +324,25 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
     })
   const h1 =
     volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
-    volunteers.find(row => row.recruitTerm == null)
-  const volunteerStart = dateValue(
-    program.volunteerApplicationStartDate ?? program.applicationStartDate
-  )
-  const volunteerEnd = dateValue(program.volunteerApplicationEndDate ?? program.applicationEndDate)
+    (volunteers.every(row => row.recruitTerm == null) ? volunteers[0] : undefined)
+  const volunteerStart = dateValue(h1?.startAt ?? program.volunteerApplicationStartDate)
+  const volunteerEnd = dateValue(h1?.endAt ?? program.volunteerApplicationEndDate)
   const rows = [
     recruitmentRow({
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
       targetType: 'ORGANIZATION',
       startAt: institutionStart,
       endAt: institutionEnd,
-      operationStartDate,
-      operationEndDate,
+      operationStartDate: dateValue(
+        program.programRecruitments?.find(
+          row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+        )?.operationStartDate ?? undefined
+      ),
+      operationEndDate: dateValue(
+        program.programRecruitments?.find(
+          row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+        )?.operationEndDate ?? undefined
+      ),
       maxCount: program.participatingSchoolCount ?? program.approvedStudentCount,
     }),
     recruitmentRow({
@@ -337,8 +350,8 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       targetType: 'COLLEGE_STUDENT',
       startAt: volunteerStart,
       endAt: volunteerEnd,
-      operationStartDate,
-      operationEndDate,
+      operationStartDate: dateValue(h1?.operationStartDate ?? undefined),
+      operationEndDate: dateValue(h1?.operationEndDate ?? undefined),
       maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
       recruitTerm: ProgramRecruitmentRequestRecruitTerm.FIRST_HALF,
       ...(h1?.id != null ? { id: h1.id } : {}),
@@ -435,8 +448,6 @@ function withUjatCreateSecondHalfVolunteerRow(
         recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
         targetType: 'COLLEGE_STUDENT',
         ...range,
-        operationStartDate: dateValue(program.startDate),
-        operationEndDate: dateValue(program.endDate),
         maxCount: program.ujatSecondHalfVolunteerCount,
         recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
         interviewEnabled: true,
@@ -461,6 +472,13 @@ function withUjatCreateRowCopy(
     const display = resolveUjatRecruitDisplayProgram(program, kind)
     const publicTitle = resolveUjatRecruitAnnouncementTitle(display, kind)
     const { interviewStartAt: _start, interviewEndAt: _end, ...rowWithoutInterview } = row
+    const programRangeKey =
+      kind === 'institution'
+        ? UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRange
+        : UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.programRange
+    const programRange = recordOf((program.ujatRegistrationOverlay ?? {})[programRangeKey])
+    const operationStartDate = dateValue(programRange?.start as string | undefined) ?? row.operationStartDate
+    const operationEndDate = dateValue(programRange?.end as string | undefined) ?? row.operationEndDate
     return {
       ...(kind === 'institution' ? row : rowWithoutInterview),
       announcementTitle: publicTitle !== '-' ? publicTitle : undefined,
@@ -470,9 +488,11 @@ function withUjatCreateRowCopy(
       learningSupportContent: display.learningSupportContent || undefined,
       additionalContentHtml: display.additionalContentHtml || undefined,
       remarks: display.otherNotes || undefined,
-      contactName: display.managerName || program.managerName || undefined,
-      contactPhone: display.contactPhone || program.contactPhone || undefined,
-      contactEmail: display.contactEmail || program.contactEmail || undefined,
+      contactName: display.managerName || undefined,
+      contactPhone: display.contactPhone || undefined,
+      contactEmail: display.contactEmail || undefined,
+      ...(operationStartDate ? { operationStartDate } : {}),
+      ...(operationEndDate ? { operationEndDate } : {}),
       ...(kind === 'institution' ? {} : ujatVolunteerInterviewFields(display)),
     }
   })
@@ -538,17 +558,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   }
   const fromJson = parseServiceDetail(dtoExt.serviceDetailJson)
   const registrationOverlay = parseRegistrationOverlay(dtoExt.serviceDetailJson)
-  const title =
-    overlayText(registrationOverlay, 'ujat.basicInfo.programManagementName') ||
-    dto.title?.trim() ||
-    dto.nameKo?.trim() ||
-    overlayText(registrationOverlay, 'ujat.basicInfo.repKo') ||
-    dto.mainTitle?.trim() ||
-    '제목 없음'
-  const mainTitle =
-    dto.mainTitle?.trim() ||
-    overlayText(registrationOverlay, 'ujat.basicInfo.repKo') ||
-    title
+  const title = echoProgramManagementTitle(dto.title, dto.nameKo)
+  const mainTitle = typeof dto.mainTitle === 'string' ? dto.mainTitle : ''
   const ujatProgressStatus = resolveUjatProgressStatus({
     ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
     periodStatus: dto.periodStatus,
@@ -665,18 +676,11 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       kpi: responseKpi,
     }
   )
-  const title =
-    dto.title?.trim() ||
-    dtoExt.nameKo?.trim() ||
-    overlayText(overlay, 'ujat.basicInfo.programManagementName') ||
-    overlayText(overlay, 'ujat.basicInfo.repKo') ||
-    dto.mainTitle?.trim() ||
-    '제목 없음'
+  const title = echoProgramManagementTitle(dto.title, dtoExt.nameKo)
   const periodStatus = dtoExt.periodStatus
   const ujatProgressStatus = resolveUjatProgressStatus({
     ujatProgressStatus: details.ujatProgressStatus,
     periodStatus,
-    primaryFallback: resolveUjatPrimaryProgressById(id),
   })
   const lifecycleStatus =
     (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
@@ -705,10 +709,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ...details,
       generalCommonInfo,
       id,
-      sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
+      sponsorId: dto.sponsorId?.trim() || '',
       title,
-      mainTitle:
-        dto.mainTitle?.trim() || overlayText(overlay, 'ujat.basicInfo.repKo') || title,
+      mainTitle: typeof dto.mainTitle === 'string' ? dto.mainTitle : '',
       type: (dto.type as ProgramType | undefined) ?? 'offline',
       format: (dto.format as ProgramFormat | undefined) ?? 'course',
       category: (dto.category as ProgramCategory | undefined) ?? 'school',
@@ -951,7 +954,7 @@ function coreRequest(
     // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
-    mainTitle: program.mainTitle ?? program.title,
+    mainTitle: program.mainTitle,
     textbookName: program.textbookName,
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,

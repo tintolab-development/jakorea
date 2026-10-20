@@ -110,10 +110,7 @@ export function resolveUjatHalfEducationScheduleDisplay(
   half: UjatHalfSemesterKey,
   overlayInput?: Record<string, unknown>
 ): UjatHalfEducationScheduleDisplay {
-  const overlay = {
-    ...buildUjatHalfEducationScheduleOverlayDefaults(half),
-    ...(overlayInput ?? resolveUjatRegistrationBasicInfoOverlay()),
-  }
+  const overlay = overlayInput ?? resolveUjatRegistrationBasicInfoOverlay()
   const keys = ujatHalfScheduleOverlayKeys(half)
 
   const preMulti = readMultiBundle(overlay, keys.preMulti)
@@ -123,6 +120,10 @@ export function resolveUjatHalfEducationScheduleDisplay(
   const preDelivery = readDelivery(overlay, keys.preDelivery, 'online')
   const eventDelivery = readDelivery(overlay, keys.eventDelivery, 'offline')
   const closingDelivery = readDelivery(overlay, keys.closingDelivery, 'online')
+  const hasPre = overlay[keys.preName] != null || overlay[keys.preMulti] != null || overlay[keys.preDelivery] != null
+  const hasEvent = overlay[keys.eventName] != null || overlay[keys.eventRange] != null || overlay[keys.eventDelivery] != null
+  const hasClosing =
+    overlay[keys.closingName] != null || overlay[keys.closingMulti] != null || overlay[keys.closingDelivery] != null
 
   const textbookMode = readTextbookMode(overlay, keys.preTextbookMode)
   const textbookInstructorRaw = overlay[keys.preTextbookInstructorId]
@@ -133,18 +134,20 @@ export function resolveUjatHalfEducationScheduleDisplay(
     preEducation: {
       scheduleName: readString(overlay, keys.preName, '사전교육(발대식)'),
       scheduleText: formatMultiScheduleLines(preMulti),
-      deliveryLabel: UJAT_EDUCATION_DELIVERY_LABEL[preDelivery],
-      textbookEducationLabel: formatTextbookEducationLabel(textbookMode, textbookInstructorId),
+      deliveryLabel: hasPre ? UJAT_EDUCATION_DELIVERY_LABEL[preDelivery] : '-',
+      textbookEducationLabel: hasPre
+        ? formatTextbookEducationLabel(textbookMode, textbookInstructorId)
+        : '-',
     },
     eventSchedule: {
       scheduleName: readString(overlay, keys.eventName, '교육 진행'),
       scheduleText: formatUjatEventRangeLabel(eventRange),
-      deliveryLabel: UJAT_EDUCATION_DELIVERY_LABEL[eventDelivery],
+      deliveryLabel: hasEvent ? UJAT_EDUCATION_DELIVERY_LABEL[eventDelivery] : '-',
     },
     closingCeremony: {
       scheduleName: readString(overlay, keys.closingName, '해단식'),
       scheduleText: formatMultiScheduleLines(closingMulti),
-      deliveryLabel: UJAT_EDUCATION_DELIVERY_LABEL[closingDelivery],
+      deliveryLabel: hasClosing ? UJAT_EDUCATION_DELIVERY_LABEL[closingDelivery] : '-',
     },
   }
 }

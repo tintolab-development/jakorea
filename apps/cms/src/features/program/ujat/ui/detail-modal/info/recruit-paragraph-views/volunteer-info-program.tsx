@@ -94,7 +94,6 @@ function resolveActivityTermDisplay(program: Program, half: UjatVolunteerRecruit
 
 export function UjatRecruitVolunteerInfoProgramView({
   program,
-  sponsorName,
   form,
   isEdit,
   volunteerHalf,
@@ -200,7 +199,6 @@ export function UjatRecruitVolunteerInfoProgramView({
   const recruitmentContactName =
     program.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName?.trim() ||
     program.contactName?.trim() ||
-    sponsorName?.trim() ||
     ''
   const announcementPublishedEdit =
     isEdit && form ? (
@@ -517,7 +515,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                       render={({ field }) => (
                         <CmsInput
                           {...field}
-                          value={field.value ?? sponsorName ?? ''}
+                          value={field.value ?? ''}
                           placeholder="담당 문의처"
                           inputSize="small"
                           className="program-detail-info-tab__contact-name-input"

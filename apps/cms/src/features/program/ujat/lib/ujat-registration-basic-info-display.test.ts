@@ -10,6 +10,7 @@ import {
   resolveUjatSurveyMenuItems,
 } from './ujat-registration-basic-info-display'
 import {
+  UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SPONSOR_ALL_VALUE,
@@ -63,7 +64,28 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     expect(display.programManagementName).toBe('기업가정신 스타트업 체험 운영')
     expect(display.publicProgramTitle).toBe('고등학생 기업가정신 캠프 참가자 모집')
     expect(display.businessField).toBe('경제금융')
-    expect(display.participantTypes).toBe('학교/기관, 봉사자')
+    expect(display.participantTypes).toBe('-')
+  })
+
+  it('빈 GET 공통정보는 FE 기본값 대신 - 이다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      title: '',
+      mainTitle: '',
+      titleEn: '',
+      ujatRegistrationOverlay: {},
+    })
+    expect(display.repKo).toBe('-')
+    expect(display.repEn).toBe('-')
+    expect(display.programManagementName).toBe('-')
+    expect(display.businessField).toBe('-')
+    expect(display.ipOwned).toBe('-')
+    expect(display.participantTypes).toBe('-')
+  })
+
+  it('신규 등록 빈 폼은 대표명 기본값을 유지한다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {})
+    expect(next.mainTitle).toBe(UJAT_BASIC_INFO_REP_KO_DEFAULT)
   })
 
   it('overlay 참여자 플래그가 없어도 상세에 학교/기관, 봉사자가 보인다', () => {

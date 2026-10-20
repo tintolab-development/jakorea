@@ -66,7 +66,6 @@ function resolveEducationTargetLabel(program: Program, isTemplateAuthoring: bool
 
 export function UjatRecruitParticipantInfoProgramView({
   program,
-  sponsorName,
   form,
   isEdit,
   sectionTitle = '참여 기관 모집 정보',
@@ -119,7 +118,6 @@ export function UjatRecruitParticipantInfoProgramView({
     program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName?.trim() ||
     program.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
     program.contactName?.trim() ||
-    sponsorName?.trim() ||
     ''
 
   return (
@@ -327,7 +325,7 @@ export function UjatRecruitParticipantInfoProgramView({
                     render={({ field }) => (
                       <CmsInput
                         {...field}
-                        value={field.value ?? sponsorName ?? ''}
+                        value={field.value ?? ''}
                         placeholder="담당 문의처"
                         inputSize="small"
                         className="program-detail-info-tab__contact-name-input"

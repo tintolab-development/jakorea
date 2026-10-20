@@ -1,12 +1,11 @@
 import type { DateValue } from '@/types'
 import type { Program, ProgramRound } from '@/types/domain'
-import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
+import { pickUjatVolunteerRecruitmentRow } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 import {
   pickUjatRecruitVolunteerOverlay,
   resolveUjatVolunteerActivityTermFromOverlay,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import { loadUjatRecruitVolunteerTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import type { UjatVolunteerRecruitHalf } from './ujat-recruit-paragraph-props'
 
 export function getUjatVolunteerRound(
@@ -24,10 +23,7 @@ export function resolveUjatVolunteerActivityTermDisplay(
   program: Program,
   half: UjatVolunteerRecruitHalf
 ): string {
-  const overlay = {
-    ...(loadUjatRecruitVolunteerTemplateSave()?.overlay ?? {}),
-    ...pickUjatRecruitVolunteerOverlay(readUjatRegistrationOverlayFromProgram(program)),
-  }
+  const overlay = pickUjatRecruitVolunteerOverlay(readUjatRegistrationOverlayFromProgram(program))
   return (
     resolveUjatVolunteerActivityTermFromOverlay(overlay, half) ||
     getUjatVolunteerRound(program, half)?.curriculum?.trim() ||
@@ -39,19 +35,19 @@ export function getUjatVolunteerRecruitPeriod(
   program: Program,
   half: UjatVolunteerRecruitHalf
 ): { start?: DateValue; end?: DateValue } {
-  const row = pickRecruitmentCopyRow(program, 'volunteer', half)
-  if (row?.startAt || row?.endAt) {
+  const row = pickUjatVolunteerRecruitmentRow(program, half)
+  if (row) {
     return {
-      start: row.startAt ?? undefined,
-      end: row.endAt ?? undefined,
+      start: row.startAt?.trim() ? row.startAt : undefined,
+      end: row.endAt?.trim() ? row.endAt : undefined,
     }
   }
-  const round = getUjatVolunteerRound(program, half)
-  if (round?.startDate && round?.endDate) {
-    return { start: round.startDate, end: round.endDate }
-  }
+  const volunteerRows = (program.programRecruitments ?? []).filter(
+    item => (item.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
+  )
+  if (volunteerRows.length > 0) return {}
   return {
-    start: program.volunteerApplicationStartDate ?? program.applicationStartDate,
-    end: program.volunteerApplicationEndDate ?? program.applicationEndDate,
+    start: program.volunteerApplicationStartDate,
+    end: program.volunteerApplicationEndDate,
   }
 }

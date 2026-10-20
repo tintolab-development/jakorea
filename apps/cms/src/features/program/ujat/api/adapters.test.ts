@@ -212,10 +212,7 @@ describe('UJAT program adapters', () => {
       serviceDetailJson: updated.serviceDetailJson ?? undefined,
     })
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
-    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
-      h1: {},
-      h2: {},
-    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual(capacity)
   })
 
   it('부분 수정에 ips와 후원 담당자 sponsors를 싣고 재조회한다', () => {
@@ -454,6 +451,43 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
       finalSchools: 30,
       finalClasses: 30,
     })
+  })
+
+  it('빈 title·null KPI는 대표명·시드로 채우지 않고 extras 없으면 overlay 정원을 유지한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: '',
+      mainTitle: null,
+      titleEn: null,
+      businessArea: null,
+      totalParticipants: null,
+      finalClasses: 0,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      serviceDetailJson: JSON.stringify({
+        registration: {
+          overlay: {
+            'ujat.capacity.byRegion': {
+              h1: { 서울: { classCount: '3', volunteerCount: '6' } },
+            },
+            'ujat.wage.paymentItemValues': [],
+          },
+        },
+      }),
+    } as unknown as Parameters<typeof fromDetail>[0])
+    expect(mapped.title).toBe('')
+    expect(mapped.mainTitle).toBe('')
+    expect(mapped.titleEn == null || mapped.titleEn === '').toBe(true)
+    expect(mapped.totalParticipants == null).toBe(true)
+    expect(mapped.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: undefined,
+      finalClasses: 0,
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
+      h1: { 서울: { classCount: '3', volunteerCount: '6' } },
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.wage.paymentItemValues']).toEqual([])
   })
 
   it('등록 overlay 모집 공고명·설명을 create body와 상세 매핑에 남긴다', () => {

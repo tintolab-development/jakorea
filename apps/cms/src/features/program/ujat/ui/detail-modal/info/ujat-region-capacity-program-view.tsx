@@ -20,7 +20,7 @@ export function UjatRegionCapacityProgramView({
   h1Values?: UjatRegionCapacitySemesterValues
   h2Values?: UjatRegionCapacitySemesterValues
 }) {
-  const overlay = program.ujatRegistrationOverlay
+  const overlay = program.ujatRegistrationOverlay ?? {}
   const h1Values = h1ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h1', overlay)
   const h2Values = h2ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h2', overlay)
   const mode = isEdit ? 'edit' : 'view'
