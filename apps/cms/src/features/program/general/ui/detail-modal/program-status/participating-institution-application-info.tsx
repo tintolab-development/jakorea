@@ -10,7 +10,6 @@ import {
   shouldShowInstitutionApplicationGuidanceParagraph,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton } from '@/shared/ui'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   prepareGeneralEducationScheduleSessions,
@@ -69,7 +68,6 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   /** 배정 일정 없음·로딩 등 — 기본: 등록된 교육 일정이 없습니다. */
   scheduleSessionsEmptyMessage?: string
   useCompanySchoolScheduleFormat?: boolean
-  onScheduleChangeClick?: () => void
 }
 
 function padScheduleTimePart(part: string): string {
@@ -190,7 +188,6 @@ export function ParticipatingInstitutionApplicationInfo({
   sessions,
   scheduleSessionsEmptyMessage = '등록된 교육 일정이 없습니다.',
   useCompanySchoolScheduleFormat = false,
-  onScheduleChangeClick,
 }: ParticipatingInstitutionApplicationInfoProps) {
   const institutionApplicationBridge = resolveInstitutionApplicationProgramBridge(program)
   const scheduleShape = generalEducationScheduleShapeFromBridge(institutionApplicationBridge)
@@ -213,13 +210,6 @@ export function ParticipatingInstitutionApplicationInfo({
     institutionApplicationBridge
   )
   const basicInfoFormMode = isBasicInfoEditing ? 'edit' : 'view'
-
-  const scheduleChangeButton =
-    isBasicInfoEditing && onScheduleChangeClick ? (
-      <CmsButton variant="secondary" size="medium" type="button" onClick={onScheduleChangeClick}>
-        일정 변경
-      </CmsButton>
-    ) : null
 
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
@@ -359,32 +349,29 @@ export function ParticipatingInstitutionApplicationInfo({
       </section>
 
       {showGuidanceSection ? (
-        <DetailInfoForm title="안내 사항" mode={basicInfoFormMode}>
+        <DetailInfoForm title="안내 사항" mode="view">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="강의 공간 내 컴퓨터 여부"
               fullRow
-              readOnlyDisplay={!isBasicInfoEditing}
+              readOnlyDisplay
               view={computerInRoom}
-              edit={computerInRoom}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="대기 장소 안내"
               fullRow
-              readOnlyDisplay={!isBasicInfoEditing}
+              readOnlyDisplay
               view={waitingPlace}
-              edit={waitingPlace}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="식사 가능 여부 및 안내"
               fullRow
-              readOnlyDisplay={!isBasicInfoEditing}
+              readOnlyDisplay
               view={mealInfo}
-              edit={mealInfo}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
@@ -393,9 +380,8 @@ export function ParticipatingInstitutionApplicationInfo({
                 INSTITUTION_OTHER_NOTES_TABLE_LABEL
               )}
               fullRow
-              readOnlyDisplay={!isBasicInfoEditing}
+              readOnlyDisplay
               view={otherNotes}
-              edit={otherNotes}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
@@ -409,11 +395,7 @@ export function ParticipatingInstitutionApplicationInfo({
         </DetailInfoForm>
       ) : null}
 
-      <DetailInfoForm
-        title="교육 진행 일정"
-        mode={basicInfoFormMode}
-        titleTrailing={scheduleChangeButton}
-      >
+      <DetailInfoForm title="교육 진행 일정" mode="view">
         {displaySessions.length === 0 ? (
           <DetailInfoForm.Row type="custom">
             <p className="participating-institution-application-info__schedule-empty">

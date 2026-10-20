@@ -5,6 +5,7 @@ import { isGeneralProgramScheduleType } from '@/features/program/general/model/c
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   dedupeTextbooksByName,
+  filterTextbooksForIndividualApplicant,
   resolveIndividualTextbookOptionLabel,
   resolveProgramEducationTargets,
   textbookMatchesProgramEducationTargets,
@@ -109,16 +110,22 @@ export function buildCombinedClassTextbookSelectOptions(
 
 /**
  * 진행 현황 참여 기관 교재 셀렉.
- * 사업분야가 같은 사용 중 교재만. 교육 대상·신청 학년으로 빼지 않는다.
+ * 프로그램 사업 분야 + 신청 학년이 포함되는 사용 중 교재. 라벨은 `교재명 educationTarget`.
  */
 export function buildParticipatingInstitutionTextbookSelectOptions(params: {
   program: Program
+  educationGrade?: string
   catalog?: TextbookRow[]
 }): TextbookSelectOption[] {
   if (params.catalog === undefined) return [textbookNotUsedSelectOption]
 
+  const grade = params.educationGrade?.trim() ?? ''
+  const rows = grade
+    ? filterTextbooksForIndividualApplicant(params.program, grade, params.catalog)
+    : []
+
   return ensureTextbookNotUsedSelectOption(
-    filterTextbooksByProgramBusinessArea(params.program, params.catalog).map(row => ({
+    rows.map(row => ({
       value: row.id,
       label: resolveIndividualTextbookOptionLabel(row),
       textbookName: row.textbookName,

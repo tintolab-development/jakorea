@@ -220,10 +220,9 @@ export function useApplicantInstitutionDetailEdit({
   }, [])
 
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
-    if (!program || !applicantEducationGrade) return []
     return buildApplicantInstitutionTextbookOptions(
       program,
-      applicantEducationGrade,
+      applicantEducationGrade ?? '',
       textbookCatalog
     )
   }, [applicantEducationGrade, program, textbookCatalog])

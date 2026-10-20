@@ -8,7 +8,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'rea
 import type { QueryKey } from '@tanstack/react-query'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
-import { CheckOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import {
@@ -60,7 +59,10 @@ import {
   resolveStudentRosterManualCommitFailureAlert,
   type StudentRosterCommitSession,
 } from '../../../lib/student-roster-revision'
-import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail'
+import {
+  getSchoolDetailStudents,
+  getStudentLectureAttendanceSessions,
+} from '../../../lib/school-detail'
 import { useOrganizationStudentRosterRemote } from '../../../hooks/use-organization-student-roster-remote'
 import {
   fetchStudentLectureAttendanceByParticipantRemote,
@@ -120,7 +122,7 @@ import {
   studentListTableDataColumnSize,
 } from './school-detail-student-list-table'
 
-import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { ButtonCheckIcon, ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const STUDENT_GENDER_EDIT_OPTIONS = [
   { value: 'male', label: '남' },
@@ -423,8 +425,13 @@ export function SchoolDetailStudentListSection({
           )
         )
       } catch (error) {
-        handleError(error, { context: 'schoolDetailStudentListSection.portraitConsentFileDownload' })
-        showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE })
+        handleError(error, {
+          context: 'schoolDetailStudentListSection.portraitConsentFileDownload',
+        })
+        showAlert({
+          title: '안내',
+          content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE,
+        })
         return
       }
 
@@ -465,13 +472,19 @@ export function SchoolDetailStudentListSection({
     void (async () => {
       try {
         if (files.length === 0) {
-          showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE })
+          showAlert({
+            title: '안내',
+            content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE,
+          })
           return
         }
         await downloadLectureReportPdfFiles(files)
       } catch (error) {
         handleError(error, { context: 'schoolDetailStudentListSection.portraitConsentDownload' })
-        showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE })
+        showAlert({
+          title: '안내',
+          content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE,
+        })
       } finally {
         portraitConsentExportResultsRef.current = []
         setPortraitConsentExportActive(false)
@@ -626,9 +639,7 @@ export function SchoolDetailStudentListSection({
     const commitCheck = validateStudentRosterCommit({
       ...rosterCommitGuardContext,
       commitRows: rows,
-      expectedRevisionNo: rosterRemote.remoteEnabled
-        ? editSession?.expectedRevisionNo
-        : undefined,
+      expectedRevisionNo: rosterRemote.remoteEnabled ? editSession?.expectedRevisionNo : undefined,
     })
     if (!commitCheck.ok) {
       showAlert({ title: '저장할 수 없음', content: commitCheck.message })
@@ -636,14 +647,10 @@ export function SchoolDetailStudentListSection({
     }
 
     if (rosterRemote.remoteEnabled) {
-      if (
-        !editSession ||
-        editSession.organizationApplicationId !== organizationApplicationKey
-      ) {
+      if (!editSession || editSession.organizationApplicationId !== organizationApplicationKey) {
         showAlert({
           title: '저장할 수 없음',
-          content:
-            '학생 명단 편집 세션이 만료되었습니다. 정보 수정을 다시 시작해 주세요.',
+          content: '학생 명단 편집 세션이 만료되었습니다. 정보 수정을 다시 시작해 주세요.',
         })
         return
       }
@@ -755,10 +762,7 @@ export function SchoolDetailStudentListSection({
             showAlert({ title: '등록할 수 없음', content: addCheck.message })
             return
           }
-          if (
-            !addSession ||
-            addSession.organizationApplicationId !== organizationApplicationKey
-          ) {
+          if (!addSession || addSession.organizationApplicationId !== organizationApplicationKey) {
             showAlert({
               title: '등록할 수 없음',
               content: '학생 추가 세션이 만료되었습니다. 모달을 닫고 다시 시도해 주세요.',
@@ -939,9 +943,7 @@ export function SchoolDetailStudentListSection({
     <div className="school-detail-student-list-section__toolbar-actions program-application-list-toolbar">
       <FilterTableToolbarButton
         variant="secondary"
-        width={180}
-        icon={<CheckOutlined />}
-        className="school-detail-student-list-section__btn-outline"
+        icon={<ButtonCheckIcon />}
         disabled={portraitConsentExportActive}
         onClick={handlePortraitConsentConfirmClick}
       >
@@ -950,7 +952,6 @@ export function SchoolDetailStudentListSection({
       <FilterTableToolbarButton
         variant="secondary"
         icon={<ButtonDownloadIcon />}
-        className="school-detail-student-list-section__btn-outline"
         disabled={certificateExportActive}
         onClick={handleCertificateIssueClick}
       >
@@ -969,11 +970,7 @@ export function SchoolDetailStudentListSection({
               void handleStudentListSave()
             }}
           />
-          <FilterTableToolbarButton
-            variant="primary"
-            width={140}
-            onClick={handleOpenAddStudentModal}
-          >
+          <FilterTableToolbarButton variant="primary" onClick={handleOpenAddStudentModal}>
             학생 추가
           </FilterTableToolbarButton>
         </>
@@ -982,14 +979,13 @@ export function SchoolDetailStudentListSection({
           {onEditInfo && (
             <FilterTableToolbarButton
               variant={PROGRAM_EDIT_INFO_BUTTON_PROPS.variant}
-              width={PROGRAM_EDIT_INFO_BUTTON_PROPS.width}
               onClick={onEditInfo}
             >
               {PROGRAM_EDIT_INFO_BUTTON_LABEL}
             </FilterTableToolbarButton>
           )}
           {onAddStudent && (
-            <FilterTableToolbarButton variant="primary" width={140} onClick={onAddStudent}>
+            <FilterTableToolbarButton variant="primary" onClick={onAddStudent}>
               학생 추가
             </FilterTableToolbarButton>
           )}
@@ -1382,9 +1378,7 @@ export function SchoolDetailStudentListSection({
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}
         onCancel={handleCertificateIssueModalCancel}
-        applicationIds={
-          selectedStudentKeys.length === 1 ? [String(selectedStudentKeys[0])] : []
-        }
+        applicationIds={selectedStudentKeys.length === 1 ? [String(selectedStudentKeys[0])] : []}
         onIssue={handleCertificateIssueConfirm}
       />
       <FormCertificatePdfExportOverlay

@@ -29,6 +29,7 @@ import {
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import {
+  formatInstitutionApplicationGradeDisplay,
   getInstitutionAffiliatedTeacherOptions,
   mergeInstitutionAffiliatedTeacherOptions,
   shouldShowInstitutionApplicationEducationFormatField,
@@ -193,6 +194,14 @@ export function useParticipatingInstitutionDetailEdit({
     ]
   )
 
+  const applicantEducationGrade = useMemo(() => {
+    const raw =
+      isEditing && draft?.educationGrade
+        ? draft.educationGrade
+        : (row.educationGrade ?? detail.educationGrade)
+    return formatInstitutionApplicationGradeDisplay(raw ?? '')
+  }, [detail.educationGrade, draft?.educationGrade, isEditing, row.educationGrade])
+
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
     if (!usesTextbook && !programAllowsTextbookSelect) return []
 
@@ -205,11 +214,13 @@ export function useParticipatingInstitutionDetailEdit({
       ? buildCombinedClassTextbookSelectOptions(program, textbookCatalog)
       : buildParticipatingInstitutionTextbookSelectOptions({
           program,
+          educationGrade: applicantEducationGrade,
           catalog: textbookCatalog,
         })
 
     return ensureTextbookNotUsedSelectOption(options)
   }, [
+    applicantEducationGrade,
     detail.combinedClassApplication,
     draft?.combinedClassApplication,
     isCompanySchool,

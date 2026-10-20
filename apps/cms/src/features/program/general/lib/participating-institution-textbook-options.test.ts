@@ -46,9 +46,10 @@ describe('buildCombinedClassTextbookSelectOptions', () => {
 })
 
 describe('buildParticipatingInstitutionTextbookSelectOptions', () => {
-  it('사업분야가 같으면 교육 대상·학년이 달라도 포함한다', () => {
+  it('사업 분야가 같고 신청 학년이 포함된 교재만 노출한다', () => {
     const options = buildParticipatingInstitutionTextbookSelectOptions({
       program: { businessArea: '기업가정신', targetLevel: 'elementary' } as Program,
+      educationGrade: '3학년',
       catalog: [
         {
           ...catalog[0],
@@ -68,24 +69,37 @@ describe('buildParticipatingInstitutionTextbookSelectOptions', () => {
         },
         {
           ...catalog[0],
+          id: 'other-grade',
+          businessArea: '기업가정신',
+          educationTarget: '초등학교',
+          grade: '5학년, 6학년',
+          textbookName: '고학년 교재',
+        },
+        {
+          ...catalog[0],
           id: 'other',
           businessArea: '경제금융',
           educationTarget: '초등학교',
-          grade: '1학년',
+          grade: '3학년',
           textbookName: '다른 분야',
         },
       ],
     })
     expect(options.map(option => option.value)).toEqual([
       TEXTBOOK_NOT_USED_OPTION_VALUE,
-      'elem',
       'middle',
+      'elem',
     ])
+    expect(options.map(option => option.label)).toContain('초등 교재 초등학교')
+    expect(options.map(option => option.label)).toContain('중학 교재 중학교')
+    expect(options.map(option => option.value)).not.toContain('other-grade')
+    expect(options.map(option => option.value)).not.toContain('other')
   })
 
   it('같은 사업분야 교재가 없어도 해당 없음을 둔다', () => {
     const options = buildParticipatingInstitutionTextbookSelectOptions({
       program,
+      educationGrade: '3학년',
       catalog: [],
     })
     expect(options).toEqual([

@@ -12,6 +12,7 @@ import {
   type InstitutionApplicationDetailEditFields,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 
 export type CombinedClassApplicationStatus = '신청' | '미신청'
 
@@ -97,13 +98,18 @@ export function rowToEditDraft(row: ApplicantSchoolRow): ApplicantInstitutionEdi
   const combinedStatus: CombinedClassApplicationStatus =
     detail?.combinedClassApplication === '신청' ? '신청' : '미신청'
   const applicationFields = buildInstitutionApplicationEditFieldsFromApplicantDetail(detail, row)
+  const rawTextbookId = detail?.textbookId?.trim() ?? ''
+  // TT 기관 신청 상세 응답은 교재명을 row 최상위에 내려줄 수 있다.
+  const rawTextbookName = (detail?.textbookName ?? row.textbookName ?? '').trim()
+  const textbookUnspecified =
+    (!rawTextbookId && !rawTextbookName) ||
+    rawTextbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+    rawTextbookName === '해당 없음'
 
   return {
     adminComment: row.adminComment ?? '',
-    textbookId: detail?.textbookId ?? '',
-    // TT 기관 신청 상세 응답은 교재명을 row 최상위에 내려줄 수 있다.
-    // 상세 확장 필드가 비어도 목록/상세 응답의 정본을 편집 draft에 유지한다.
-    textbookName: detail?.textbookName ?? row.textbookName ?? '',
+    textbookId: textbookUnspecified ? TEXTBOOK_NOT_USED_OPTION_VALUE : rawTextbookId,
+    textbookName: rawTextbookName || '해당 없음',
     combinedClassApplication: combinedStatus,
     combinedClassPartnerApplicantIds: detail?.combinedClassPartnerApplicantIds ?? [],
     ...applicationFields,
