@@ -25,6 +25,28 @@ describe('trained teacher institution detail tabs', () => {
     ])
   })
 
+  it('hides student roster and attendance when student list is not required', () => {
+    expect(getTrainedTeachersInstitutionDetailTabKeys(true, true, false)).toEqual([
+      'application',
+      'journal',
+    ])
+    expect(normalizeTrainedTeachersInstitutionDetailTab('students', true, false)).toBe(
+      'application'
+    )
+    expect(normalizeTrainedTeachersInstitutionDetailTab('attendance', true, false)).toBe(
+      'application'
+    )
+  })
+
+  it('keeps student roster and attendance when student list is required', () => {
+    expect(getTrainedTeachersInstitutionDetailTabKeys(true, true, true)).toEqual([
+      'application',
+      'students',
+      'attendance',
+      'journal',
+    ])
+  })
+
   it('accepts the students deep link', () => {
     expect(isTrainedTeachersInstitutionDetailTabKey('students')).toBe(true)
     expect(normalizeTrainedTeachersInstitutionDetailTab('students')).toBe('students')

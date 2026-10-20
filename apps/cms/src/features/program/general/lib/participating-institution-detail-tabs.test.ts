@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import type { Program } from '@/types/domain'
 import {
   getTrainedTeachersInstitutionDetailTabKeys,
   normalizeTrainedTeachersInstitutionDetailTab,
 } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
 import {
   getGeneralParticipatingInstitutionDetailTabKeys,
+  getParticipatingInstitutionDetailTabKeys,
   normalizeGeneralParticipatingInstitutionDetailTab,
 } from './participating-institution-detail-tabs'
 
@@ -88,6 +90,29 @@ describe('프로그램 진행 현황 하위 capability', () => {
     const tabs = getTrainedTeachersInstitutionDetailTabKeys(false)
 
     expect(tabs).toEqual(['application', 'students', 'attendance'])
+  })
+
+  it('교육받은 교사는 학생 명단 제출 불필요면 학생 명단·출석 탭을 숨긴다', () => {
+    expect(getTrainedTeachersInstitutionDetailTabKeys(true, true, false)).toEqual([
+      'application',
+      'journal',
+    ])
+    const trainedTeacher = {
+      id: '186263',
+      backendProgramType: 'TRAINED_TEACHER',
+    } as Program
+    expect(
+      getParticipatingInstitutionDetailTabKeys({
+        ...trainedTeacher,
+        studentListRequired: 'required',
+      })
+    ).toEqual(['application', 'students', 'attendance', 'journal'])
+    expect(
+      getParticipatingInstitutionDetailTabKeys({
+        ...trainedTeacher,
+        studentListRequired: 'not_required',
+      })
+    ).toEqual(['application', 'journal'])
   })
 
   it('교육일지 capability가 없으면 교육받은 교사 기존 탭 fallback을 유지한다', () => {

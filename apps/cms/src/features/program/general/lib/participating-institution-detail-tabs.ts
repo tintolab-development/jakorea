@@ -1,7 +1,7 @@
 import type { Program } from '@/types/domain'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import {
-  TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS,
+  getTrainedTeachersInstitutionDetailTabKeys,
   type TrainedTeachersInstitutionDetailTabKey,
   normalizeTrainedTeachersInstitutionDetailTab,
   isTrainedTeachersInstitutionDetailTabKey,
@@ -128,7 +128,11 @@ export function getParticipatingInstitutionDetailTabKeys(
   program?: Program | null
 ): readonly ParticipatingInstitutionDetailTabKey[] {
   if (isTrainedTeachersDetailProgram(program ?? null)) {
-    return TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS
+    return getTrainedTeachersInstitutionDetailTabKeys(
+      undefined,
+      undefined,
+      isParticipatingInstitutionStudentListApplicable(program)
+    )
   }
   return getGeneralParticipatingInstitutionDetailTabKeys(program)
 }
@@ -139,7 +143,11 @@ export function normalizeParticipatingInstitutionDetailTab(
   educationJournalEnabled?: boolean
 ): ParticipatingInstitutionDetailTabKey {
   if (isTrainedTeachersDetailProgram(program ?? null)) {
-    return normalizeTrainedTeachersInstitutionDetailTab(tab, educationJournalEnabled)
+    return normalizeTrainedTeachersInstitutionDetailTab(
+      tab,
+      educationJournalEnabled,
+      isParticipatingInstitutionStudentListApplicable(program)
+    )
   }
   const generalTab = (tab ?? 'application') as GeneralParticipatingInstitutionDetailTabKey
   if (

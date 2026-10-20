@@ -16,6 +16,7 @@ import {
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { isParticipatingInstitutionStudentListApplicable } from '@/features/program/general/lib/participating-institution-detail-tabs'
 import {
   evaluateOrganizationAttendanceScopeReadiness,
   formatOrganizationAttendanceScopeBlockedDescription,
@@ -98,9 +99,11 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
   const applicationsRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
   const trainedTeacherAttendanceRemoteEnabled =
     useIsTrainedTeachersProgramsSurface() && shouldUseTrainedTeacherProgramsRemoteApi()
+  const studentListApplicable = isParticipatingInstitutionStudentListApplicable(program)
   const remoteEnabled = Boolean(
     (progressRemoteEnabled || trainedTeacherAttendanceRemoteEnabled) &&
       (applicationsRemoteEnabled || trainedTeacherAttendanceRemoteEnabled) &&
+      studentListApplicable &&
       programId &&
       organizationApplicationId
   )

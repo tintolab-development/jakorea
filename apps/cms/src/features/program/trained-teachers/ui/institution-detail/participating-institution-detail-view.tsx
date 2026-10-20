@@ -92,6 +92,7 @@ import { TrainedTeachersParticipatingInstitutionApplicationInfo } from './partic
 import { TrainedTeachersEducationJournalSection } from './education-journal-section'
 import { SchoolDetailAttendanceSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-attendance-section'
 import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
+import { isParticipatingInstitutionStudentListApplicable } from '@/features/program/general/lib/participating-institution-detail-tabs'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import type { SchoolDetailFullpageViewProps } from '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view'
 import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
@@ -117,16 +118,24 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const queryClient = useQueryClient()
   const [internalTab, setInternalTab] =
     useState<TrainedTeachersInstitutionDetailTabKey>('application')
+  const studentListApplicable = isParticipatingInstitutionStudentListApplicable(program)
   const visibleDetailTabs = useMemo(
     () =>
       getTrainedTeachersInstitutionDetailTabKeys(
         navigationCapabilities?.educationJournalEnabled,
-        navigationCapabilities?.studentRosterEnabled
+        navigationCapabilities?.studentRosterEnabled,
+        studentListApplicable
       ),
-    [navigationCapabilities?.educationJournalEnabled, navigationCapabilities?.studentRosterEnabled]
+    [
+      navigationCapabilities?.educationJournalEnabled,
+      navigationCapabilities?.studentRosterEnabled,
+      studentListApplicable,
+    ]
   )
   const normalizedActiveTab = normalizeTrainedTeachersInstitutionDetailTab(
-    activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
+    activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab,
+    navigationCapabilities?.educationJournalEnabled,
+    studentListApplicable
   )
   const activeTab = visibleDetailTabs.includes(normalizedActiveTab)
     ? normalizedActiveTab
