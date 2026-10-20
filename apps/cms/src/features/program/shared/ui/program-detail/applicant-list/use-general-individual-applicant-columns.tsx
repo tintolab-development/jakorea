@@ -59,6 +59,7 @@ export function useGeneralIndividualApplicantColumns(
         minWidth: GENERAL_DETAIL_INDIVIDUAL_AFFILIATION_COL_WIDTH,
         align: 'center',
         ellipsis: true,
+        render: (value: string | undefined) => value?.trim() || '-',
       },
       {
         title: '신청 학년',
