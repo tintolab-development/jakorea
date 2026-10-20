@@ -3,6 +3,10 @@ import type { Program } from '@/types/domain'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { GENERAL_RECRUIT_OVERLAY_KEYS } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import {
+  replaceGeneralRecruitOverlay,
+  resetGeneralRecruitOverlayStoreForTests,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { parseDisplayPeriodLabelToIsoRange } from './general-program-recruitment-operation-period'
 import {
   parseTargetLevelsFromDisplayLabel,
@@ -46,6 +50,33 @@ describe('programToRecruitmentTabEditValues volunteer nested seed', () => {
 })
 
 describe('resolveGeneralProgramForRecruitmentEdit', () => {
+  it('strict remote 모드에서는 브라우저 in-memory 모집 overlay를 사용하지 않는다', () => {
+    replaceGeneralRecruitOverlay({
+      [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.participantDescription]: '브라우저 임시값',
+    })
+    const program = {
+      id: 'trained-teacher-remote-1',
+      title: '원격 프로그램',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '원격 컬럼 설명',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          programDescription: '원격 모집 설명',
+        },
+      },
+    } as Program
+
+    try {
+      expect(
+        resolveGeneralProgramForRecruitmentEdit(program, { strictRemote: true }).description
+      ).toBe('원격 컬럼 설명')
+    } finally {
+      resetGeneralRecruitOverlayStoreForTests()
+    }
+  })
+
   it('participantRecruitmentInfo 라벨만 있을 때 targetLevels·기간을 폼 시드용 program에 채운다', () => {
     const program = {
       id: 'general-prog-1',

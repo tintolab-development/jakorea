@@ -39,8 +39,8 @@ type ParticipatingInstitutionDetailTabSource = {
 function readStudentListRequiredFlag(
   value: unknown
 ): Program['studentListRequired'] | undefined {
-  if (value === 'required' || value === true) return 'required'
-  if (value === 'not_required' || value === false) return 'not_required'
+  if (value === 'required') return 'required'
+  if (value === 'not_required') return 'not_required'
   return undefined
 }
 

@@ -11,11 +11,8 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { mergeProgramSponsorAssignments } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
-import type { Program } from '@/types/domain'
 
 export interface UseGeneralProgramDetailOptions {
-  /** 목록 행에서 전달된 스냅샷 — remote 로딩 중 placeholder */
-  initialProgram?: Program | null
   enabled?: boolean
 }
 
@@ -37,7 +34,7 @@ export function useGeneralProgramDetail(
   programId: string | undefined,
   options: UseGeneralProgramDetailOptions = {}
 ) {
-  const { initialProgram = null, enabled = true } = options
+  const { enabled = true } = options
   const { user } = useAuthStore()
   const remoteEnabled = useGeneralProgramsRemoteEnabled(
     Boolean(programId) && enabled,
@@ -63,9 +60,9 @@ export function useGeneralProgramDetail(
   }, [remoteEnabled, programId, enabled])
 
   const remoteProgram = useMemo(() => {
-    if (remoteQuery.data == null) {
-      return remoteQuery.isFetching ? initialProgram : null
-    }
+    // 원격 모드에서는 목록 행이나 로컬 snapshot을 상세 응답처럼 사용하지 않는다.
+    // 서버 상세가 없으면 로딩/오류 상태를 유지하고, 로컬 snapshot으로 내려가지 않는다.
+    if (remoteQuery.data == null) return null
     // 재검증 중인 오래된 sponsor 캐시가 저장 직후의 핵심 상세를 덮지 않게 한다.
     if (
       sponsorAssignmentsQuery.data == null ||
@@ -76,9 +73,7 @@ export function useGeneralProgramDetail(
     }
     return mergeProgramSponsorAssignments(remoteQuery.data, sponsorAssignmentsQuery.data)
   }, [
-    initialProgram,
     remoteQuery.data,
-    remoteQuery.isFetching,
     sponsorAssignmentsQuery.data,
     sponsorAssignmentsQuery.isError,
     sponsorAssignmentsQuery.isFetching,

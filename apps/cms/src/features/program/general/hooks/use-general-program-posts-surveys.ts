@@ -459,7 +459,9 @@ export function useGeneralProgramFormBindings(programId: string | undefined) {
     bindings: query.data ?? [],
     classified,
     loading: remoteEnabled ? query.isFetching || query.isLoading : false,
-    isRemoteDataSource: remoteEnabled && !query.isError,
+    error: query.error,
+    isSuccess: query.isSuccess,
+    isRemoteDataSource: remoteEnabled && query.isSuccess && !query.isError,
   }
 }
 

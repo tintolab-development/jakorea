@@ -32,6 +32,15 @@ export type ApplicantPreferredScheduleBlock = {
   dayOfWeek: string
   sessionCount: number
   sessionTimes: ApplicantPreferredScheduleSessionTime[]
+  /** TT 서버가 고유 매칭한 실제 program_schedule.id */
+  scheduleId?: number | null
+  /** 매칭된 운영 일정의 시작·종료 시각 */
+  startAt?: string | null
+  endAt?: string | null
+  /** 매칭된 운영 일정 회차·표시 라벨 */
+  round?: number | null
+  label?: string | null
+  scheduleStatus?: string | null
 }
 
 /** 신청 기관 상세 — 기본 정보·안내 사항 확장 필드 (mock/UI 공통) */

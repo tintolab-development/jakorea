@@ -1606,10 +1606,11 @@ function firstRecruitDetailText(...values: Array<string | undefined>): string | 
  */
 export function resolveGeneralRecruitDetailDisplayProgram(
   program: Program,
-  audience: GeneralRecruitDetailAudience
+  audience: GeneralRecruitDetailAudience,
+  options?: { strictRemote?: boolean }
 ): Program {
   const common = program.generalCommonInfo
-  const overlay = program.registrationOverlay ?? {}
+  const overlay = options?.strictRemote ? {} : program.registrationOverlay ?? {}
   const keys = GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo
   const info =
     audience === 'participant'
@@ -1715,11 +1716,9 @@ export function resolveGeneralRecruitDetailDisplayProgram(
             )
           )
 
-  const withPersistedRecruitMedia = applyGeneralRecruitOverlayToProgram(
-    program,
-    overlay,
-    { preferOverlay: false }
-  )
+  const withPersistedRecruitMedia = options?.strictRemote
+    ? program
+    : applyGeneralRecruitOverlayToProgram(program, overlay, { preferOverlay: false })
 
   const withAudienceCopy = applyRecruitmentRowCopy(
     {

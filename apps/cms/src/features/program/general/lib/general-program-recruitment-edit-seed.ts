@@ -188,16 +188,23 @@ function enrichVolunteerRecruitmentScalars(program: Program): Program {
 }
 
 /** 모집 탭 edit·저장 baseline — GET 행이 기간·문의처·면접 정본. overlay는 행이 없는 키만. */
-export function resolveGeneralProgramForRecruitmentEdit(program: Program): Program {
+export function resolveGeneralProgramForRecruitmentEdit(
+  program: Program,
+  options?: { strictRemote?: boolean }
+): Program {
   const fromRows = hydrateRecruitmentWindowsOntoProgram(program)
-  const withPersistedOverlay = applyGeneralRecruitOverlayToProgram(
-    fromRows,
-    program.registrationOverlay ?? {},
-    { preferOverlay: false }
-  )
-  const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
-    preferOverlay: false,
-  })
+  // 교육받은 교사 원격 모드에서는 모집 row·serviceDetailJson만 SSOT로 사용한다.
+  // registration.overlay는 편집기 호환 데이터이므로 모집정보를 복원하는 데 사용하지 않는다.
+  const withPersistedOverlay = options?.strictRemote
+    ? fromRows
+    : applyGeneralRecruitOverlayToProgram(fromRows, program.registrationOverlay ?? {}, {
+        preferOverlay: false,
+      })
+  const withOverlay = options?.strictRemote
+    ? withPersistedOverlay
+    : resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
+        preferOverlay: false,
+      })
   return hydrateRecruitmentWindowsOntoProgram(
     hydrateGeneralRecruitmentInfoFromRows(
       enrichVolunteerRecruitmentScalars(
@@ -207,13 +214,34 @@ export function resolveGeneralProgramForRecruitmentEdit(program: Program): Progr
   )
 }
 
-export function programToRecruitmentTabEditValues(
+/** 원격 모집 화면에서 필수 row/nested 응답이 없을 때 seed 화면을 만들지 않기 위한 상태. */
+export function getGeneralRecruitmentRemoteUnavailableReason(
   program: Program,
   audience: GeneralRecruitDetailAudience
+): string | undefined {
+  if (pickRecruitmentCopyRow(program, audience) == null) {
+    return '원격 모집정보를 불러올 수 없습니다.'
+  }
+  const info =
+    audience === 'participant'
+      ? program.generalCommonInfo?.participantRecruitmentInfo
+      : audience === 'instructor'
+        ? program.generalCommonInfo?.instructorRecruitmentInfo
+        : program.generalCommonInfo?.volunteerRecruitmentInfo
+  if (info == null) return '원격 모집정보를 불러올 수 없습니다.'
+  return undefined
+}
+
+export function programToRecruitmentTabEditValues(
+  program: Program,
+  audience: GeneralRecruitDetailAudience,
+  options?: { strictRemote?: boolean }
 ): ProgramDetailEditFormValues {
-  const merged = resolveGeneralProgramForRecruitmentEdit(program)
+  const merged = resolveGeneralProgramForRecruitmentEdit(program, options)
   const base = programToDetailEditValues(merged)
-  const detail = resolveGeneralRecruitDetailDisplayProgram(merged, audience)
+  const detail = resolveGeneralRecruitDetailDisplayProgram(merged, audience, {
+    strictRemote: options?.strictRemote,
+  })
   const recruitmentRow = pickRecruitmentCopyRow(merged, audience)
   const recruitmentCopy = recruitmentRow != null && hasRecruitmentCopy(recruitmentRow)
   const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo

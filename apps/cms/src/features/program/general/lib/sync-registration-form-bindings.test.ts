@@ -88,6 +88,41 @@ describe('resolveApplicationFormLoadSource', () => {
     })
     expect(source).toEqual({ templateVersionId: 501, preferLocalDraft: false })
   })
+
+  it('uses the API binding even when its templateId matches the catalog in strict remote mode', () => {
+    const source = resolveApplicationFormLoadSource({
+      programId: '186264',
+      templateCode: 'application-trained-teachers',
+      catalogTemplateId: 22,
+      strictRemote: true,
+      bindings: [
+        binding({
+          formType: 'APPLICATION',
+          templateId: 22,
+          templateVersionId: 902,
+          targetRole: 'ORGANIZATION',
+          templateName: '교육받은 교사 참여 기관 신청',
+        }),
+      ],
+    })
+
+    expect(source).toEqual({ templateVersionId: 902, preferLocalDraft: false })
+  })
+
+  it('does not fall back to a local seed when the strict remote binding is missing', () => {
+    const source = resolveApplicationFormLoadSource({
+      programId: '186264',
+      templateCode: 'application-trained-teachers',
+      catalogTemplateId: 22,
+      strictRemote: true,
+      bindings: [],
+    })
+
+    expect(source).toEqual({
+      preferLocalDraft: false,
+      unavailableReason: '신청 양식 바인딩이 없습니다.',
+    })
+  })
 })
 
 describe('resolveProgramOperationalFormLoadSource', () => {

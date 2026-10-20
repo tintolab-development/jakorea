@@ -92,11 +92,13 @@ describe('InstitutionApproveModal schedule sources', () => {
       sessionRound: 'multi',
     })
 
-    expect(
-      await screen.findByText(/신청 희망 교육 일정이 없습니다/)
-    ).toBeTruthy()
-    const firstSlot = await screen.findByRole('button', { name: /2026\. 11\. 02\(월\) 10:00 ~ 12:00/ })
-    const secondSlot = screen.getByRole('button', { name: /2회차 · 2026\. 11\. 09\(월\) 13:30 ~ 16:00/ })
+    expect(await screen.findByText(/신청 희망 교육 일정이 없습니다/)).toBeTruthy()
+    const firstSlot = await screen.findByRole('button', {
+      name: /2026\. 11\. 02\(월\) 10:00 ~ 12:00/,
+    })
+    const secondSlot = screen.getByRole('button', {
+      name: /2회차 · 2026\. 11\. 09\(월\) 13:30 ~ 16:00/,
+    })
     expect(screen.getByText('공통 교육 예정 일정')).toBeTruthy()
     expect(screen.queryByText('00:00')).toBeNull()
 
@@ -186,7 +188,12 @@ describe('InstitutionApproveModal schedule sources', () => {
       sessionRound: 'single',
       scheduleConfig: {
         preferredEducationSchedules: [
-          { scheduleId: 187134, label: '11월 2일 오전', startAt: '2026-11-02T01:00:00Z', endAt: '2026-11-02T03:00:00Z' },
+          {
+            scheduleId: 187134,
+            label: '11월 2일 오전',
+            startAt: '2026-11-02T01:00:00Z',
+            endAt: '2026-11-02T03:00:00Z',
+          },
         ],
       },
     })
@@ -200,6 +207,193 @@ describe('InstitutionApproveModal schedule sources', () => {
     fireEvent.click(screen.getByRole('button', { name: '승인' }))
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187134 })
+  })
+
+  it('교육받은 교사 preferredScheduleBlocks도 일반 기관 일정 카드와 동일하게 배정한다', async () => {
+    fetchSlots.mockResolvedValue([
+      educationSlot(187134, {
+        sessionNo: 2,
+        startAt: '2026-04-20T00:30:00Z',
+        endAt: '2026-04-20T03:20:00Z',
+      }),
+    ])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-04-20',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [],
+            scheduleId: 187134,
+            startAt: '2026-04-20T00:30:00Z',
+            endAt: '2026-04-20T03:20:00Z',
+            round: 2,
+            label: '2026.04.20(월) 09:30 ~ 12:20',
+            scheduleStatus: 'MATCHED',
+          },
+        ],
+      },
+      educationScheduleMode: 'date',
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+    })
+
+    await waitFor(() => expect(fetchSlots).toHaveBeenCalled())
+    const choice = await screen.findByRole('button', {
+      name: /2026\.\s*04\.\s*20\(월\) 09:30 ~ 12:20/,
+    })
+    expect(screen.getByText('2차시')).toBeTruthy()
+    expect((choice as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(choice)
+    await waitFor(() => expect(choice.getAttribute('aria-pressed')).toBe('true'))
+    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
+    await waitFor(() => expect(approve.disabled).toBe(false))
+    fireEvent.click(approve)
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187134 })
+  })
+
+  it('교육받은 교사 기간형도 매칭된 일정 id를 선택 확정한다', async () => {
+    fetchSlots.mockResolvedValue([])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-04-20',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [],
+            scheduleId: 187134,
+            startAt: '2026-04-20T00:30:00Z',
+            endAt: '2026-04-20T03:20:00Z',
+            round: 2,
+            label: '2026.04.20(월) 09:30 ~ 12:20',
+            scheduleStatus: 'MATCHED',
+          },
+        ],
+      },
+      educationScheduleMode: 'period',
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+    })
+
+    const choice = await screen.findByRole('button', {
+      name: /2026\.\s*04\.\s*20\(월\) 09:30 ~ 12:20/,
+    })
+    fireEvent.click(choice)
+    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
+    await waitFor(() => expect(approve.disabled).toBe(false))
+    fireEvent.click(approve)
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187134 })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleId')
+  })
+
+  it('교육받은 교사 복수 회차는 서버가 매칭한 preferredScheduleBlocks만 배정한다', async () => {
+    fetchSlots.mockResolvedValue([
+      program186266Slots[0]!,
+      program186266Slots[1]!,
+      educationSlot(187136, {
+        sessionNo: 3,
+        startAt: '2026-11-16T04:30:00Z',
+        endAt: '2026-11-16T07:00:00Z',
+      }),
+    ])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 2,
+            date: '2026-11-09',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '1차시', timeRange: '13:30 ~ 16:00' }],
+            scheduleId: 187135,
+            scheduleStatus: 'MATCHED',
+            round: 2,
+          },
+          {
+            preferenceRank: 1,
+            date: '2026-11-02',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '1차시', timeRange: '10:00 ~ 12:00' }],
+            scheduleId: 187134,
+            scheduleStatus: 'MATCHED',
+            round: 1,
+          },
+        ],
+      },
+      educationScheduleMode: 'date',
+      educationStructure: 'schedule',
+      sessionRound: 'multi',
+    })
+
+    const first = await screen.findByRole('button', { name: /2026\.\s*11\.\s*02/ })
+    const second = await screen.findByRole('button', { name: /2026\.\s*11\.\s*09/ })
+    expect((first as HTMLButtonElement).disabled).toBe(false)
+    expect((second as HTMLButtonElement).disabled).toBe(false)
+    expect(screen.queryByText('교육 진행 일정')).toBeNull()
+    fireEvent.click(first)
+    fireEvent.click(second)
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({
+      slots: [{ scheduleId: 187134 }, { scheduleId: 187135 }],
+    })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
+  })
+
+  it('교육받은 교사 MATCHED가 아닌 일정은 비활성으로 보이고 무본문 승인을 유지한다', async () => {
+    fetchSlots.mockResolvedValue([])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-04-20',
+            dayOfWeek: '월',
+            sessionCount: 2,
+            sessionTimes: [
+              { sessionIndex: 1, classPeriod: '1차시', timeRange: '09:30 ~ 10:50' },
+              { sessionIndex: 2, classPeriod: '2차시', timeRange: '11:00 ~ 12:20' },
+            ],
+            scheduleId: null,
+            scheduleStatus: 'UNMATCHED',
+            round: 2,
+          },
+          {
+            preferenceRank: 2,
+            date: '2026-04-27',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '1차시', timeRange: '13:00 ~ 15:50' }],
+            scheduleId: 187135,
+            scheduleStatus: 'INACTIVE_OR_DELETED',
+            round: 1,
+          },
+        ],
+      },
+      educationScheduleMode: 'date',
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+    })
+
+    const choice = await screen.findByRole('button', { name: /2026\.\s*04\.\s*20/ })
+    expect((choice as HTMLButtonElement).disabled).toBe(true)
+    const inactiveChoice = await screen.findByRole('button', { name: /2026\.\s*04\.\s*27/ })
+    expect((inactiveChoice as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/서버가 프로그램 운영 일정과 연결하지 못한 희망 일정/)).toBeTruthy()
+    expect(screen.getByText(/종료되었거나 삭제된 일정/)).toBeTruthy()
+    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
+    await waitFor(() => expect(approve.disabled).toBe(false))
+    fireEvent.click(approve)
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
   })
 
   it('기간 지정 단일 회차는 희망 일정 행 id 1건만 승인하고 공통 슬롯 id는 보내지 않는다', async () => {

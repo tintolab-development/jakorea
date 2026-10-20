@@ -93,6 +93,19 @@
   min-height: 100%;
 }
 
+.application-view__preview-panel--error {
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  color: #667278;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.application-view__preview-panel--error p {
+  margin: 0;
+}
+
 .application-view__preview-panel .form-editor-left {
   width: 100%;
   max-width: 1400px;

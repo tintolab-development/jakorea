@@ -51,6 +51,8 @@ export function GeneralProgramRecruitmentView({
   onCancel,
   onSave,
   onOpenRecruitmentPreview,
+  remoteUnavailableReason,
+  remoteStrict = false,
 }: {
   program: Program
   activeRecruitTab: GeneralRecruitTabKey
@@ -73,10 +75,24 @@ export function GeneralProgramRecruitmentView({
   onSave: () => void
   /** 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
   onOpenRecruitmentPreview?: (tab: GeneralRecruitTabKey) => void
+  /** 원격 SSOT 필수 응답이 없을 때 local seed 대신 표시할 오류 */
+  remoteUnavailableReason?: string
+  /** 교육받은 교사 원격 모드 — persisted/browser overlay를 모집 표시에서 제외 */
+  remoteStrict?: boolean
 }) {
   const handleOpenPreview = useCallback(() => {
     onOpenRecruitmentPreview?.(activeRecruitTab)
   }, [activeRecruitTab, onOpenRecruitmentPreview])
+
+  if (remoteUnavailableReason != null) {
+    return (
+      <div className="recruitment-view program-detail-fullpage-modal__info-tab">
+        <div className="recruitment-view__body recruitment-view__body--error" role="alert">
+          {remoteUnavailableReason}
+        </div>
+      </div>
+    )
+  }
 
   const recruitmentEditable = canGeneralProgramRecruitmentInfoEdit(
     program,
@@ -102,7 +118,9 @@ export function GeneralProgramRecruitmentView({
       )
       detail = (
         <DetailInfoSection
-          program={resolveGeneralRecruitDetailDisplayProgram(program, 'participant')}
+          program={resolveGeneralRecruitDetailDisplayProgram(program, 'participant', {
+            strictRemote: remoteStrict,
+          })}
           isEditMode={isEditModeInstitutions && recruitmentEditable}
           form={isEditModeInstitutions && recruitmentEditable ? institutionsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
@@ -123,7 +141,9 @@ export function GeneralProgramRecruitmentView({
       )
       detail = (
         <InstructorDetailInfoSection
-          program={resolveGeneralRecruitDetailDisplayProgram(program, 'instructor')}
+          program={resolveGeneralRecruitDetailDisplayProgram(program, 'instructor', {
+            strictRemote: remoteStrict,
+          })}
           isEditMode={isEditModeInstructors && recruitmentEditable}
           form={isEditModeInstructors && recruitmentEditable ? instructorsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
@@ -142,7 +162,9 @@ export function GeneralProgramRecruitmentView({
       detail = (
         <>
           <VolunteerDetailInfoSection
-            program={resolveGeneralRecruitDetailDisplayProgram(program, 'volunteer')}
+            program={resolveGeneralRecruitDetailDisplayProgram(program, 'volunteer', {
+              strictRemote: remoteStrict,
+            })}
             isEditMode={isEditModeVolunteers && recruitmentEditable}
             form={isEditModeVolunteers && recruitmentEditable ? volunteersForm : undefined}
             onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
