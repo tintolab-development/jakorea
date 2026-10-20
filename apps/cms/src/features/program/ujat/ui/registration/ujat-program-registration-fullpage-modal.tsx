@@ -43,8 +43,12 @@ import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/share
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
-import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
-import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
+import { UjatDevAutofillToolbar } from '@/features/program/ujat/ui/registration/dev-autofill-toolbar'
+import {
+  resolveUjatDevAutofillDefaultBusinessYear,
+  UJAT_DEV_AUTOFILL_DEFAULT_CASE_ID,
+  type UjatDevAutofillCaseId,
+} from '@/features/program/ujat/lib/dev-autofill-cases'
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
@@ -100,6 +104,10 @@ function UjatProgramRegistrationFullpageModalInner({
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
+  const [devAutofillCaseId, setDevAutofillCaseId] = useState<UjatDevAutofillCaseId>(
+    UJAT_DEV_AUTOFILL_DEFAULT_CASE_ID
+  )
+  const [devAutofillBusinessYear] = useState(() => resolveUjatDevAutofillDefaultBusinessYear())
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
@@ -348,10 +356,10 @@ function UjatProgramRegistrationFullpageModalInner({
           )
         }
         headerActionsLeading={
-          <RegistrationDevAutofillButton
-            onClick={async () => {
-              await applyDevProgramRegistrationAutofill('ujat')
-            }}
+          <UjatDevAutofillToolbar
+            caseId={devAutofillCaseId}
+            businessYear={devAutofillBusinessYear}
+            onCaseIdChange={setDevAutofillCaseId}
           />
         }
         footerActions={footerActions}

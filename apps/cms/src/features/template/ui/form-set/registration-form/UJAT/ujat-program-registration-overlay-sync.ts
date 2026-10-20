@@ -58,6 +58,10 @@ export function patchUjatProgramRegistrationOverlay(partial: Record<string, unkn
   store.patch(partial)
 }
 
+export function replaceUjatProgramRegistrationOverlay(next: Record<string, unknown>): void {
+  store.replace(next)
+}
+
 export function updateUjatProgramRegistrationOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
