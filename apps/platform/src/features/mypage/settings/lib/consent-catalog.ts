@@ -141,7 +141,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     kind: 'document',
     agreed: false,
     validityLabel: '10년',
-    hint: '정산 신청 시 최초 1회 작성. 유효기간 10년',
+    hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
   },
   {
     id: 'educatorPledge',
@@ -151,6 +151,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     agreed: true,
     agreedAt: MOCK_AGREED_AT,
     validityLabel: '1년',
+    withdrawable: true,
   },
   {
     id: 'administrativeJoint',
@@ -160,6 +161,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     agreed: true,
     agreedAt: MOCK_AGREED_AT,
     validityLabel: '1년',
+    withdrawable: true,
   },
   {
     id: 'sexOffenseCheck',
@@ -169,6 +171,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     agreed: true,
     agreedAt: MOCK_AGREED_AT,
     validityLabel: '1년',
+    withdrawable: true,
   },
 ]
 

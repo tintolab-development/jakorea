@@ -46,8 +46,16 @@ assert.equal(adultById.serviceTerms?.withdrawable, false)
 assert.equal(adultById.marketing?.agreed, false)
 assert.equal(adultById.portrait?.withdrawable, true)
 assert.equal(adultById.paymentStatement?.agreed, true)
+assert.equal(adultById.paymentStatement?.withdrawable, true)
 assert.equal(adultById.educatorPledge?.agreed, false)
 assert.equal(adultById.educatorPledge?.withdrawable, false)
+
+const writtenDocument = buildConsentItemsFromSummaries([
+  { consentType: 'FACILITATOR_PLEDGE', agreed: false, documentId: 42, signed: true },
+  { consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT', agreed: false, status: 'COMPLETED' },
+])
+assert.equal(writtenDocument.documentItems.find(item => item.id === 'educatorPledge')?.agreed, true)
+assert.equal(writtenDocument.documentItems.find(item => item.id === 'sexOffenseCheck')?.agreed, true)
 
 const expired = buildConsentItemsFromSummaries([
   { consentType: 'PORTRAIT_RIGHTS', agreed: true, expired: true, agreedAt: '2025-01-01T00:00:00' },

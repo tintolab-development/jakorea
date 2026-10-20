@@ -143,9 +143,8 @@ export async function submitPortalConsentDocumentFromWriteState(
 /** 마이페이지 — 초상권 수집·이용 동의서 */
 export async function submitPortalPortraitConsentFromWriteState(
   state: PortraitPortalConsentWriteState,
-  options?: { memberId?: number },
 ): Promise<void> {
-  const createBody = await buildPortalPortraitRightsConsentCreateRequest(options?.memberId)
+  const createBody = buildPortalPortraitRightsConsentCreateRequest()
   const created = await createPortalConsentDocument(createBody)
   const documentId = created.documentId
   if (documentId == null) {

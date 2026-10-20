@@ -27,12 +27,15 @@ import {
   isSettingsDocumentConsentItemId,
   settingsConsentItemIdToWriteKey,
 } from '../lib/settings-consent-key'
+import { downloadSubmittedCrimeConsent } from '../lib/download-submitted-crime-consent'
 import { ConsentWithdrawComplete, ConsentWithdrawConfirm } from './consent-withdraw-confirm'
 import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overlay'
 import styles from './consents-view.module.css'
 
 const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
 const WITHDRAW_FAILED_MESSAGE = '동의 철회에 실패했어요. 잠시 후 다시 시도해 주세요.'
+const DOWNLOAD_FAILED_MESSAGE =
+  '업로드한 동의서를 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_FAILED_MESSAGE = '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_CONFLICT_MESSAGE = '이미 반영된 상태예요. 최신 동의 현황으로 갱신했어요.'
 
@@ -85,7 +88,10 @@ const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy
   },
   educatorPledge: {
     title: '교육진행자 서약을 철회할까요?',
-    description: '철회 시 UJAT·프로그램 강의 참여가 제한될 수 있습니다.',
+    description: [
+      '철회 시 제출하신 교육진행자 서약서를 더 이상 확인하거나 활용하지 않아요.',
+      '서약하지 않은 상태에서는 교육진행자 활동이 제한돼요.',
+    ].join('\n'),
     completeTitle: '교육진행자 서약 동의가 철회되었어요.',
     completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 서약서를 작성해 주세요.',
   },
@@ -96,8 +102,11 @@ const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy
     completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 동의서를 작성해 주세요.',
   },
   sexOffenseCheck: {
-    title: '성범죄 경력 조회 동의를 철회할까요?',
-    description: '철회 시 UJAT·프로그램 강의 참여가 제한될 수 있습니다.',
+    title: '성범죄경력 조회 동의를 철회할까요?',
+    description: [
+      '철회 시 제출하신 성범죄경력 조회서를 더 이상 확인하거나 활용하지 않아요.',
+      '동의하지 않은 상태에서는 교육진행자 활동이 제한돼요.',
+    ].join('\n'),
     completeTitle: '성범죄 경력 조회 동의가 철회되었어요.',
     completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 동의서를 작성해 주세요.',
   },
@@ -150,7 +159,7 @@ function ConsentRequirementLabel({ required }: { required: boolean }) {
 
 function ConsentStatusBadge({ agreed }: { agreed: boolean }) {
   return (
-    <PFStateBadge size="small" tone={agreed ? 'progress' : 'disabled'}>
+    <PFStateBadge size="small" tone={agreed ? 'progress' : 'disabled'} className={styles.statusBadge}>
       {agreed ? '동의함' : '미동의'}
     </PFStateBadge>
   )
@@ -159,22 +168,28 @@ function ConsentStatusBadge({ agreed }: { agreed: boolean }) {
 function ConsentCard({
   item,
   marketingAgreed,
+  showRequirementLabel = true,
   onMarketingChange,
   onViewTerms,
   onViewDocument,
   onWriteDocument,
+  onDownloadDocument,
   onWithdraw,
 }: {
   item: SettingsConsentItem
   marketingAgreed: boolean
+  showRequirementLabel?: boolean
   onMarketingChange: (next: boolean) => void
   onViewTerms: (item: SettingsConsentItem) => void
   onViewDocument?: (item: SettingsConsentItem) => void
   onWriteDocument?: (item: SettingsConsentItem) => void
+  onDownloadDocument?: (item: SettingsConsentItem) => void
   onWithdraw?: (item: SettingsConsentItem) => void
 }) {
   const agreed = item.kind === 'toggle' ? marketingAgreed : item.agreed
-  const canWithdraw = agreed && item.withdrawable === true && onWithdraw != null
+  const canWithdraw =
+    agreed && onWithdraw != null && (item.kind === 'document' || item.withdrawable === true)
+  const isCrimeDocument = item.id === 'sexOffenseCheck'
   const cardClassName = [
     styles.card,
     item.required ? styles.cardRequired : styles.cardOptional,
@@ -184,7 +199,7 @@ function ConsentCard({
     <article className={cardClassName}>
       <div className={styles.cardHeader}>
         <div className={styles.titleGroup}>
-          <ConsentRequirementLabel required={item.required} />
+          {showRequirementLabel ? <ConsentRequirementLabel required={item.required} /> : null}
           <PFText typo="bd-md-sb" color="black">
             {item.title}
           </PFText>
@@ -250,7 +265,7 @@ function ConsentCard({
         <div className={styles.actions}>
           {canWithdraw ? (
             <PFButton
-              size="medium"
+              size="large"
               variant="tertiary"
               className={styles.actionButton}
               onClick={() => onWithdraw?.(item)}
@@ -258,21 +273,32 @@ function ConsentCard({
               동의 철회
             </PFButton>
           ) : null}
+          {isCrimeDocument ? (
+            <PFButton
+              size="large"
+              variant="tertiary"
+              className={styles.actionButton}
+              onClick={() => onDownloadDocument?.(item)}
+            >
+              동의서 다운로드
+            </PFButton>
+          ) : (
+            <PFButton
+              size="large"
+              variant="tertiary"
+              className={styles.actionButton}
+              onClick={() => onViewDocument?.(item)}
+            >
+              동의서 확인
+            </PFButton>
+          )}
           <PFButton
-            size="medium"
-            variant="tertiary"
-            className={styles.actionButton}
-            onClick={() => onViewDocument?.(item)}
-          >
-            동의서 확인
-          </PFButton>
-          <PFButton
-            size="medium"
+            size="large"
             variant="primary"
             className={styles.actionButton}
             onClick={() => onWriteDocument?.(item)}
           >
-            동의서 재작성
+            {isCrimeDocument ? '동의서 제출' : '동의서 재작성'}
           </PFButton>
         </div>
       ) : null}
@@ -280,7 +306,7 @@ function ConsentCard({
       {item.kind === 'document' && !agreed ? (
         <div className={styles.actions}>
           <PFButton
-            size="medium"
+            size="large"
             variant="primary"
             width="100%"
             onClick={() => onWriteDocument?.(item)}
@@ -326,6 +352,16 @@ export function SettingsConsentsView() {
     const consentKey = settingsConsentItemIdToWriteKey(item.id)
     if (!consentKey) return
     navigate(settingsConsentWritePath(consentKey))
+  }
+
+  const handleDownloadDocument = (item: SettingsConsentItem) => {
+    if (item.id !== 'sexOffenseCheck' || item.documentId == null) {
+      setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      return
+    }
+    void downloadSubmittedCrimeConsent(item.documentId).catch(() => {
+      setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+    })
   }
 
   const showWithdrawComplete = (id: SettingsConsentItemId, changedAt?: string | null) => {
@@ -470,12 +506,14 @@ export function SettingsConsentsView() {
             key={item.id}
             item={item}
             marketingAgreed={marketingAgreed}
+            showRequirementLabel={false}
             onMarketingChange={handleMarketingChange}
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
             }}
             onViewDocument={setDocumentPreviewItem}
             onWriteDocument={handleWriteDocument}
+            onDownloadDocument={handleDownloadDocument}
             onWithdraw={resolveWithdrawCopy(item.id) ? setWithdrawTarget : undefined}
           />
         ))}

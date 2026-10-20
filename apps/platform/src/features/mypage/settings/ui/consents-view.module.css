@@ -95,13 +95,18 @@
   gap: var(--spacing-8);
 }
 
+.statusBadge {
+  width: auto;
+  min-width: 52px;
+}
+
 .statusToggle {
   flex-shrink: 0;
 }
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
   align-items: stretch;
   gap: var(--spacing-8);
@@ -110,7 +115,7 @@
 .actions .actionButton {
   box-sizing: border-box;
   flex: 1 1 0;
-  min-width: max-content;
+  min-width: 0;
   padding-inline: var(--spacing-8);
   white-space: nowrap;
 }
