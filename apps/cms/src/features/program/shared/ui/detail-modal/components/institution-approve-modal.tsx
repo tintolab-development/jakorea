@@ -42,6 +42,8 @@ export type InstitutionApproveScheduleConfig = {
 export type InstitutionApproveConfirmPayload = PermissionModalPayload & {
   /** 기간형 단일 회차 희망 일정 행 id. selectedScheduleId·slots와 함께 두지 않는다. */
   requestedScheduleId?: number
+  /** TRAINED_TEACHER + PERIOD에서 서버가 내려준 희망 순위. scheduleId가 아니다. */
+  preferredScheduleRank?: number
   selectedScheduleId?: number
   slots?: Array<{ scheduleId: number }>
 }
@@ -58,6 +60,10 @@ export type InstitutionApproveModalProps = {
   organizationApplicationId?: string
   /** 기간 지정은 공통 예정 슬롯과 비교하지 않는다. 생략하면 날짜 지정 검증을 유지한다. */
   educationScheduleMode?: OrganizationApproveEducationScheduleMode
+  /** 기간형 희망 순위 승인을 허용할 명시적인 프로그램 유형 가드. */
+  isTrainedTeacherProgram?: boolean
+  /** 서버 원본 신청 상태. 기간형 희망 순위 UI는 SUBMITTED에서만 노출한다. */
+  applicationStatus?: string | null
   /** 단일 회차는 한 일정, 복수 회차는 여러 일정. 생략하면 단일로 본다. */
   sessionRound?: 'single' | 'multi' | null
   /** 기간 지정 신청 가능 최대 일정 수 */
@@ -152,6 +158,19 @@ function mapTrainedTeacherPreferredScheduleBlock(
   }
 }
 
+function preferredScheduleStatusLabel(status: string | null | undefined): string | null {
+  switch (status?.trim().toUpperCase()) {
+    case 'MATCHED':
+      return '운영 일정 연결됨'
+    case 'UNMATCHED':
+      return '승인 시 실제 일정 생성'
+    case 'INACTIVE_OR_DELETED':
+      return '사용할 수 없음'
+    default:
+      return null
+  }
+}
+
 export function InstitutionApproveModal({
   open,
   schoolName,
@@ -163,6 +182,8 @@ export function InstitutionApproveModal({
   programId,
   organizationApplicationId,
   educationScheduleMode = 'date',
+  isTrainedTeacherProgram = false,
+  applicationStatus = null,
   sessionRound = 'single',
   maxScheduleCount = null,
   educationStructure = null,
@@ -173,6 +194,10 @@ export function InstitutionApproveModal({
 }: InstitutionApproveModalProps) {
   const { showAlert } = useCmsAlert()
   const periodSchedule = educationScheduleMode === 'period'
+  const isTrainedTeacherPeriodApproval =
+    isTrainedTeacherProgram &&
+    periodSchedule &&
+    applicationStatus?.trim().toUpperCase() === 'SUBMITTED'
   const hasStructuredPreferredScheduleSource = scheduleConfig?.preferredScheduleBlocks != null
   const preferredFromDetail = useMemo(() => {
     const generalSchedules = scheduleConfig?.preferredEducationSchedules
@@ -252,6 +277,12 @@ export function InstitutionApproveModal({
             ? Number(option.optionKey.slice('preferred:'.length))
             : -1
           const source = index >= 0 ? preferredSource[index] : undefined
+          const sourceMetadata = source as
+            | (PreferredEducationSchedule & {
+                preferenceOrder?: number
+                scheduleStatus?: string | null
+              })
+            | undefined
           const requestedRow: RequestedScheduleResponse | undefined =
             index >= 0 ? requestedRowsForDetail[index] : undefined
           const card = formatOrganizationApproveScheduleCard({
@@ -277,8 +308,15 @@ export function InstitutionApproveModal({
             title: card.title || option.label,
             detail: card.detail,
             confirmableScheduleId: option.confirmableScheduleId,
+            preferredScheduleRank: sourceMetadata?.preferenceOrder,
+            scheduleStatus: sourceMetadata?.scheduleStatus ?? null,
+            statusLabel: preferredScheduleStatusLabel(sourceMetadata?.scheduleStatus),
             requestedScheduleId: undefined as number | undefined,
-            note: option.assignmentNote ?? null,
+            note:
+              isTrainedTeacherPeriodApproval &&
+              sourceMetadata?.scheduleStatus?.trim().toUpperCase() === 'UNMATCHED'
+                ? '승인 시 선택한 희망 일정이 기관별 교육 일정으로 생성됩니다.'
+                : option.assignmentNote ?? null,
           }
         }),
     [
@@ -292,6 +330,7 @@ export function InstitutionApproveModal({
       scheduleOptions,
       sessionRound,
       sessionsPerRound,
+      isTrainedTeacherPeriodApproval,
     ]
   )
   const periodSingleRequestedApproval =
@@ -326,6 +365,9 @@ export function InstitutionApproveModal({
           title: card.title || requestedDate || String(row.id),
           detail: card.detail,
           confirmableScheduleId: null as number | null,
+          preferredScheduleRank: undefined as number | undefined,
+          scheduleStatus: null as string | null,
+          statusLabel: null as string | null,
           requestedScheduleId: row.id,
           note: null as string | null,
         },
@@ -360,6 +402,9 @@ export function InstitutionApproveModal({
         maxScheduleCount,
       })
   const [selectedOptionKeys, setSelectedOptionKeys] = useState<string[]>([])
+  const [selectedPreferredScheduleRank, setSelectedPreferredScheduleRank] = useState<number | null>(
+    null
+  )
   const selectionResetQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.organizationApproveSelectionReset(
       requestedApplicationId || '__none__'
@@ -373,6 +418,7 @@ export function InstitutionApproveModal({
   useEffect(() => {
     if (!open) return
     setSelectedOptionKeys([])
+    setSelectedPreferredScheduleRank(null)
   }, [open, preferredFromDetail, selectionResetQuery.data])
 
   const usesScheduleSection = scheduleConfig != null
@@ -433,6 +479,9 @@ export function InstitutionApproveModal({
       title: option.label,
       detail: null as string | null,
       confirmableScheduleId: option.scheduleId,
+      preferredScheduleRank: undefined as number | undefined,
+      scheduleStatus: null as string | null,
+      statusLabel: null as string | null,
       requestedScheduleId: undefined as number | undefined,
       note: null as string | null,
     }))
@@ -444,16 +493,30 @@ export function InstitutionApproveModal({
   ])
   const selectableCards = periodSingleRequestedApproval
     ? requestedScheduleCards
-    : hasPreferredSchedules
-      ? scheduleCards.filter(card =>
-          hasStructuredPreferredScheduleSource
+      : hasPreferredSchedules
+        ? scheduleCards.filter(card =>
+          isTrainedTeacherPeriodApproval
+            ? card.preferredScheduleRank != null &&
+              card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
+            : hasStructuredPreferredScheduleSource
             ? card.confirmableScheduleId != null
             : periodSchedule || card.confirmableScheduleId != null
         )
       : commonAssignmentCards
-  const selectedCards = selectableCards.filter(card => selectedOptionKeys.includes(card.key))
+  const selectedCards = selectableCards.filter(card =>
+    isTrainedTeacherPeriodApproval
+      ? card.preferredScheduleRank === selectedPreferredScheduleRank
+      : selectedOptionKeys.includes(card.key)
+  )
 
   const toggleSchedule = (optionKey: string) => {
+    if (isTrainedTeacherPeriodApproval) {
+      const selectedCard = selectableCards.find(card => card.key === optionKey)
+      const rank = selectedCard?.preferredScheduleRank
+      if (rank == null) return
+      setSelectedPreferredScheduleRank(previous => (previous === rank ? null : rank))
+      return
+    }
     setSelectedOptionKeys(prev => {
       if (prev.includes(optionKey)) return prev.filter(key => key !== optionKey)
       if (!allowsMultipleSchedules) return [optionKey]
@@ -462,7 +525,8 @@ export function InstitutionApproveModal({
   }
 
   const allowUnassignedApproval =
-    hasStructuredPreferredScheduleSource && selectableCards.length === 0
+    isTrainedTeacherPeriodApproval ||
+    (hasStructuredPreferredScheduleSource && selectableCards.length === 0)
   const scheduleSelectionRequired =
     usesScheduleSection && !autoAssignSchedule && !allowUnassignedApproval
   const handleConfirm = (payload: PermissionModalPayload) => {
@@ -482,6 +546,15 @@ export function InstitutionApproveModal({
         ...(schedulePayload.slots?.length
           ? { slots: schedulePayload.slots }
           : { selectedScheduleId: schedulePayload.selectedScheduleId }),
+      })
+      return
+    }
+    if (isTrainedTeacherPeriodApproval) {
+      onConfirm({
+        ...payload,
+        ...(selectedPreferredScheduleRank != null
+          ? { preferredScheduleRank: selectedPreferredScheduleRank }
+          : {}),
       })
       return
     }
@@ -599,7 +672,9 @@ export function InstitutionApproveModal({
         <div className="institution-approve-modal__schedule-cards">
           {scheduleCardsForView.map(card => {
             const selectable = selectableCards.some(item => item.key === card.key)
-            const selected = selectedOptionKeys.includes(card.key)
+            const selected = isTrainedTeacherPeriodApproval
+              ? card.preferredScheduleRank === selectedPreferredScheduleRank
+              : selectedOptionKeys.includes(card.key)
             return (
               <button
                 key={card.key}
@@ -624,7 +699,12 @@ export function InstitutionApproveModal({
                     {card.detail}
                   </span>
                 ) : null}
-                {card.note ? (
+                {!isTrainedTeacherPeriodApproval && card.statusLabel ? (
+                  <span className="institution-approve-modal__schedule-card-status">
+                    {card.statusLabel}
+                  </span>
+                ) : null}
+                {!isTrainedTeacherPeriodApproval && card.note ? (
                   <span className="institution-approve-modal__schedule-card-note">{card.note}</span>
                 ) : null}
               </button>

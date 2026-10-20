@@ -88,6 +88,8 @@ export interface ApplicantInstitutionDetailExtend {
 
 export interface ApplicantSchoolRow {
   id: string
+  /** 서버 원본 신청 상태. 화면용 approvalStatus와 분리해 승인 모달 조건에 사용한다. */
+  applicationStatus?: string
   /** BE 기관 ID — 신청 PK와 구분 */
   organizationId?: number
   /** BE 담당 교사 회원 ID */

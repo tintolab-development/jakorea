@@ -128,6 +128,7 @@ import {
 } from '@/features/program/general/lib/organization-application-approve-slots'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -367,6 +368,9 @@ export function useApplicantsDetail({
     ): Promise<'ok' | 'error' | 'skipped'> => {
       if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
       try {
+        const approvalResponses: Array<{
+          scheduleAssignmentStatus?: string | null
+        } | null | undefined> = []
         const numericIds = ids.map(id => Number(id))
         const generalRemote = !isTrainedTeachersSurface ? applicationsRemote : null
         const canBulk =
@@ -399,7 +403,10 @@ export function useApplicantsDetail({
               if (generalRemote && body) {
                 await generalRemote.approveOrganization(id, body)
               } else if (isTrainedTeachersSurface) {
-                await institutionApplicationsRemote.approveOrganization(id, body)
+                const response = await institutionApplicationsRemote.approveOrganization(id, body)
+                if (response != null && typeof response === 'object') {
+                  approvalResponses.push(response)
+                }
               } else {
                 await institutionApplicationsRemote.approveOrganization(id)
               }
@@ -417,46 +424,70 @@ export function useApplicantsDetail({
         }
         await institutionApplicationsRemote.invalidateApplications()
         if (decision === 'approve') {
+          const refresh = programId
+            ? organizationApprovalRefreshTargets(programId, ids)
+            : null
+          const scheduleSelectionRequested =
+            (approvePayload?.slots?.length ?? 0) > 0 ||
+            approvePayload?.selectedScheduleId != null ||
+            (typeof approvePayload?.requestedScheduleId === 'number' &&
+              approvePayload.requestedScheduleId > 0) ||
+            (typeof approvePayload?.preferredScheduleRank === 'number' &&
+              approvePayload.preferredScheduleRank > 0)
+          const scheduleAssigned = approvalResponses.some(
+            response => response?.scheduleAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
+          )
           if (programId) {
             await queryClient.invalidateQueries({
               queryKey: generalProgramQueryKeys.formBindings(programId),
             })
             await invalidateProgramAdminSchedulesQuery(queryClient, programId)
           }
-          const confirmedOrganizationSchedule =
-            (approvePayload?.slots?.length ?? 0) > 0 ||
-            approvePayload?.selectedScheduleId != null ||
-            (typeof approvePayload?.requestedScheduleId === 'number' &&
-              approvePayload.requestedScheduleId > 0)
-          if (confirmedOrganizationSchedule) {
+          if (scheduleSelectionRequested || scheduleAssigned) {
             await queryClient.invalidateQueries({
               queryKey: generalProgramProgressQueryKeys.all,
             })
-            const refresh = programId
-              ? organizationApprovalRefreshTargets(programId, ids)
-              : null
-            for (let index = 0; index < ids.length; index += 1) {
-              const applicationId = ids[index] ?? ''
+          }
+          for (let index = 0; index < ids.length; index += 1) {
+            const applicationId = ids[index] ?? ''
+            await queryClient.invalidateQueries({
+              queryKey:
+                refresh?.organizationDetails[index] ??
+                generalApplicationsQueryKeys.organizationDetail(applicationId),
+            })
+            if (isTrainedTeachersSurface && programId) {
               await queryClient.invalidateQueries({
-                queryKey:
-                  refresh?.organizationDetails[index] ??
-                  generalApplicationsQueryKeys.organizationDetail(applicationId),
-              })
-              await queryClient.invalidateQueries({
-                queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(applicationId),
+                queryKey: trainedTeacherQueryKeys.organizationApplication(
+                  programId,
+                  applicationId
+                ),
               })
             }
-            if (refresh) {
-              for (const queryKey of refresh.organizationScheduleAssignments) {
-                await queryClient.invalidateQueries({ queryKey })
-              }
+            await queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(applicationId),
+            })
+          }
+          if (refresh) {
+            for (const queryKey of refresh.organizationScheduleAssignments) {
+              await queryClient.invalidateQueries({ queryKey })
+            }
+            if (scheduleSelectionRequested || scheduleAssigned) {
               await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
             }
           }
         }
         return 'ok'
       } catch (error) {
-        if (getApiErrorCode(error) === 'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID') {
+        const errorCode = getApiErrorCode(error)
+        if (
+          [
+            'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_INVALID',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_NOT_SUPPORTED',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_PERIOD_REQUIRED',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_OUTSIDE_PERIOD',
+          ].includes(errorCode ?? '')
+        ) {
           for (const id of ids) {
             queryClient.setQueryData(
               generalApplicationsQueryKeys.organizationApproveSelectionReset(id),
@@ -468,6 +499,11 @@ export function useApplicantsDetail({
             void queryClient.invalidateQueries({
               queryKey: generalApplicationsQueryKeys.organizationDetail(id),
             })
+            if (isTrainedTeachersSurface && programId) {
+              void queryClient.invalidateQueries({
+                queryKey: trainedTeacherQueryKeys.organizationApplication(programId, id),
+              })
+            }
           }
         }
         notifyRemoteDecisionFailure(error)

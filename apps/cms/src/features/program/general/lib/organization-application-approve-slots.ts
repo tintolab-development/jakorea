@@ -891,6 +891,14 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
     '현재 신청 상태에서는 승인할 수 없습니다. 목록을 새로고침한 후 다시 시도해 주세요.',
   TRAINED_TEACHER_ORGANIZATION_APPLICATION_SCHEDULE_INVALID:
     '선택한 교육 일정이 변경되었거나 사용할 수 없습니다. 최신 일정을 다시 확인해 주세요.',
+  TRAINED_TEACHER_PREFERRED_SCHEDULE_INVALID:
+    '선택한 희망 일정이 현재 신청에 존재하지 않거나 사용할 수 없습니다. 신청 상세를 다시 확인해 주세요.',
+  TRAINED_TEACHER_PREFERRED_SCHEDULE_NOT_SUPPORTED:
+    '기간형 희망 일정 선택을 지원하지 않는 신청입니다. 신청 상세를 새로고침해 주세요.',
+  TRAINED_TEACHER_PREFERRED_SCHEDULE_PERIOD_REQUIRED:
+    '기간형 프로그램에서만 희망 일정 순위를 선택할 수 있습니다.',
+  TRAINED_TEACHER_PREFERRED_SCHEDULE_OUTSIDE_PERIOD:
+    '선택한 희망 일정이 프로그램 교육 기간을 벗어났습니다. 신청 상세를 새로고침한 뒤 다시 시도해 주세요.',
 }
 
 export function formatOrganizationApplicationApproveErrorMessage(error: unknown): string | null {

@@ -157,6 +157,8 @@ export type OrganizationApplicationApproveSlotRequest = SlotRequest
 /** OpenAPI `OrganizationApplicationApproveRequest` + 희망 일정 행 id(미매핑 승인) */
 export type OrganizationApplicationApprovePayload = OrganizationApplicationApproveRequest & {
   requestedScheduleId?: number
+  /** TRAINED_TEACHER + PERIOD에서 서버가 내려준 희망 순위. scheduleId가 아니다. */
+  preferredScheduleRank?: number
 }
 
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */

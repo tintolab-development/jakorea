@@ -1348,6 +1348,8 @@ export function ApplicantList({
         educationScheduleMode={
           program?.generalCommonInfo?.educationScheduleMode === 'period' ? 'period' : 'date'
         }
+        isTrainedTeacherProgram={isTrainedTeacherProgram}
+        applicationStatus={institutionApproveRow?.applicationStatus}
         sessionRound={institutionApproveTypeFields.sessionRound}
         maxScheduleCount={
           program?.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount ?? null
@@ -1380,6 +1382,7 @@ export function ApplicantList({
                   ? buildTrainedTeacherApproveRequest({
                       timing: notify?.timing,
                       scheduledAt: notify?.scheduledAt,
+                      preferredScheduleRank: payload.preferredScheduleRank,
                       selectedScheduleId: payload.selectedScheduleId,
                       selectedScheduleIds: payload.slots?.map(slot => slot.scheduleId),
                     })

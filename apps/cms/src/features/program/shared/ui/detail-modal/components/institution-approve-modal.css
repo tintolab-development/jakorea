@@ -95,6 +95,7 @@
   border-color: #00a0af;
   background: #e7f6f8;
   color: #00a0af;
+  opacity: 1;
 }
 
 .institution-approve-modal .institution-approve-modal__schedule-card:not(:disabled) {
@@ -120,11 +121,16 @@
 }
 
 .institution-approve-modal .institution-approve-modal__schedule-card-detail,
-.institution-approve-modal .institution-approve-modal__schedule-card-note {
+.institution-approve-modal .institution-approve-modal__schedule-card-note,
+.institution-approve-modal .institution-approve-modal__schedule-card-status {
   color: #8c8c8c;
   font-size: 13px;
   font-weight: 400;
   line-height: 20px;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card-status {
+  color: #00a0af;
 }
 
 .institution-approve-modal__assignment-hint {
