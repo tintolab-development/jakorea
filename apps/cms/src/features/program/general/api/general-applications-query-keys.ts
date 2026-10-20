@@ -18,6 +18,13 @@ export const generalApplicationsQueryKeys = {
       'organization-requested-schedules',
       applicationId,
     ] as const,
+  /** 기간형 승인 오류 시 팝업 선택만 비운다. 신청 데이터는 담지 않는다. */
+  organizationApproveSelectionReset: (applicationId: string) =>
+    [
+      ...generalApplicationsQueryKeys.all,
+      'organization-approve-selection-reset',
+      applicationId,
+    ] as const,
   instructorList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.all, 'instructor', programId, status ?? 'all'] as const,
   instructorDetail: (applicationId: string) =>

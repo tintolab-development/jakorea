@@ -20769,7 +20769,7 @@
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId·slots(scheduleId만 포함), 또는 PERIOD·기간형 희망 행 id(requestedScheduleId) 확정을 지원합니다. requestedScheduleId·selectedScheduleId·비어 있지 않은 slots는 동시에 보낼 수 없습니다.",
         "properties": {
           "slots": {
             "type": "array",
@@ -20787,11 +20787,13 @@
             "example": 188901
           },
           "requestedScheduleId": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
-            "example": 184944,
-            "nullable": true
+            "description": "GENERAL_ORGANIZATION PERIOD·기간형 단일 회차에서 확정할 program_application_requested_schedule.id. program_schedule.id가 아니며 selectedScheduleId·비어 있지 않은 slots와 동시에내면 400입니다. resolvedScheduleId가 null이어도 유효합니다.",
+            "example": 184944
           },
           "timing": {
             "type": "string",

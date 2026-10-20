@@ -24,11 +24,11 @@ export const UJAT_PROGRAM_LIST_PROGRESS_LABELS: Record<UjatProgramProgressStatus
 }
 
 export const UJAT_PROGRAM_LIST_PROGRESS_COLORS: Record<UjatProgramProgressStatus, string> = {
-  EDUCATION_SCHEDULED: 'var(--color-green, #1e8c29)',
-  PARTICIPANT_RECRUITING: 'var(--color-orange, #f07917)',
-  VOLUNTEER_RECRUITING: 'var(--color-purple, #8457ce)',
-  EDUCATION_IN_PROGRESS: 'var(--color-blue, #017eaf)',
-  PROGRAM_ENDED: '#374151',
+  EDUCATION_SCHEDULED: 'var(--Status-green-main, #1e8c29)',
+  PARTICIPANT_RECRUITING: 'var(--Status-orange-main, #f07917)',
+  VOLUNTEER_RECRUITING: 'var(--Status-purple-main, #8457ce)',
+  EDUCATION_IN_PROGRESS: 'var(--Status-blue-main, #017eaf)',
+  PROGRAM_ENDED: 'var(--Netural-black, #3d3d3d)',
 }
 
 export function getUjatProgramListProgressLabel(

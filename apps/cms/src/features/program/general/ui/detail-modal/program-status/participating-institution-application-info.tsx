@@ -12,7 +12,14 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
+import {
+  prepareGeneralEducationScheduleSessions,
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveParticipatingInstitutionScheduleRowLabel,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {
   institutionApplicationTableLabelWithParenthesisHint,
@@ -185,8 +192,25 @@ export function ParticipatingInstitutionApplicationInfo({
   useCompanySchoolScheduleFormat = false,
   onScheduleChangeClick,
 }: ParticipatingInstitutionApplicationInfoProps) {
+  const institutionApplicationBridge = resolveInstitutionApplicationProgramBridge(program)
+  const scheduleShape = generalEducationScheduleShapeFromBridge(institutionApplicationBridge)
+  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
+    program.generalCommonInfo?.scheduleDetails
+  )
+  const curriculumSessionLabels = readCurriculumSessionLabels(program)
+  const displaySessions = useCompanySchoolScheduleFormat
+    ? sessions
+    : prepareGeneralEducationScheduleSessions(
+        sessions,
+        scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
+        {
+          detailScheduleTimeSpan,
+          educationScheduleLines:
+            sessions.length === 0 ? readProgramEducationScheduleLines(program) : [],
+        }
+      )
   const showGuidanceSection = shouldShowInstitutionApplicationGuidanceParagraph(
-    resolveInstitutionApplicationProgramBridge(program)
+    institutionApplicationBridge
   )
   const basicInfoFormMode = isBasicInfoEditing ? 'edit' : 'view'
 
@@ -390,7 +414,7 @@ export function ParticipatingInstitutionApplicationInfo({
         mode={basicInfoFormMode}
         titleTrailing={scheduleChangeButton}
       >
-        {sessions.length === 0 ? (
+        {displaySessions.length === 0 ? (
           <DetailInfoForm.Row type="custom">
             <p className="participating-institution-application-info__schedule-empty">
               {scheduleSessionsEmptyMessage}
@@ -399,7 +423,7 @@ export function ParticipatingInstitutionApplicationInfo({
         ) : useCompanySchoolScheduleFormat ? (
           <CompanySchoolProgressScheduleFields sessions={sessions} />
         ) : (
-          sessions.map((session, index) => (
+          displaySessions.map((session, index) => (
             <DetailInfoForm.Row
               type="single"
               key={`${session.osaAssignmentId ?? 's'}-${session.resolvedScheduleId ?? 'r'}-${session.round}-${index}`}
@@ -408,7 +432,15 @@ export function ParticipatingInstitutionApplicationInfo({
                 label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
                 fullRow
                 readOnlyDisplay
-                view={<ParticipatingProgressScheduleValue session={session} />}
+                view={
+                  <ParticipatingProgressScheduleValue
+                    session={session}
+                    shape={
+                      scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
+                    }
+                    detailScheduleTimeSpan={detailScheduleTimeSpan}
+                  />
+                }
               />
             </DetailInfoForm.Row>
           ))

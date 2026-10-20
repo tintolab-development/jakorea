@@ -557,7 +557,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       <div className="institution-basic-info__field-stack school-detail-fullpage-view__textbook-select-only">
         <CmsSelect
           className="institution-basic-info__full-width-control"
-          inputSize="large"
+          inputSize="small"
           placeholder="교재명 선택"
           withAllOption={false}
           value={applicationInfoDraft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}

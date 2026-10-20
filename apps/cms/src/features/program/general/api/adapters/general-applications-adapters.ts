@@ -37,7 +37,10 @@ import type {
 } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { mapParticipantSessionsToEducationSchedules } from '@/features/program/general/lib/map-participant-sessions-to-education-schedules'
-import { isOrganizationPreferredDateOnlyRange } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatOrganizationApproveScheduleCardTitle,
+  isOrganizationPreferredDateOnlyRange,
+} from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import { readGeneralVolunteerProjection } from '@/features/program/general/lib/general-volunteer-application-projection'
@@ -234,6 +237,75 @@ function preferredSessionsHaveCalendarDate(sessions: ParticipatingSchoolSession[
   return sessions.some(session => resolveSessionCalendarDateKey(session) != null)
 }
 
+function isBlankOrMidnightClock(value: string | null | undefined): boolean {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return true
+  return /^(?:00|0|24):00(?::00)?$/.test(trimmed)
+}
+
+/** 저장된 기간형 희망 행. resolvedScheduleId가 없어도 원본 일정으로 남긴다. */
+export function isStoredPeriodRequestedScheduleRow(
+  row: RequestedScheduleResponse | null | undefined
+): boolean {
+  if (row == null || typeof row.id !== 'number' || !Number.isInteger(row.id) || row.id <= 0) {
+    return false
+  }
+  const requestedDate = row.requestedDate?.trim() ?? ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) return false
+  return (row.sessionTimes ?? []).every(
+    time => isBlankOrMidnightClock(time.startTime) && isBlankOrMidnightClock(time.endTime)
+  )
+}
+
+/**
+ * `/requested-schedules` 기간형 원본. 건수를 2로 가정하지 않고, resolvedScheduleId가 null이어도 포함한다.
+ */
+export function mapStoredPeriodRequestedSchedulesToHopeSessions(
+  schedules: readonly RequestedScheduleResponse[] | null | undefined
+): ParticipatingSchoolSession[] {
+  const rows = [...(schedules ?? [])]
+    .filter(isStoredPeriodRequestedScheduleRow)
+    .sort(
+      (left, right) =>
+        (left.preferenceOrder ?? 99) - (right.preferenceOrder ?? 99) ||
+        (left.id ?? 0) - (right.id ?? 0)
+    )
+  return rows.map((row, index) => {
+    const order = row.preferenceOrder ?? index + 1
+    const requestedDate = row.requestedDate?.trim() ?? ''
+    const start = new Date(`${requestedDate}T00:00:00+09:00`)
+    const dateParts = Number.isNaN(start.getTime())
+      ? { date: requestedDate, dayOfWeek: '-' }
+      : formatPreferredScheduleDate(start)
+    const title = formatOrganizationApproveScheduleCardTitle(requestedDate, requestedDate)
+    const scheduleLabel = title ? `${title} | ${order}지망` : `${requestedDate} | ${order}지망`
+    const hopedSessionCount =
+      typeof row.sessionCount === 'number' &&
+      Number.isInteger(row.sessionCount) &&
+      row.sessionCount > 0
+        ? row.sessionCount
+        : null
+    const resolvedScheduleId =
+      typeof row.resolvedScheduleId === 'number' &&
+      Number.isInteger(row.resolvedScheduleId) &&
+      row.resolvedScheduleId > 0
+        ? row.resolvedScheduleId
+        : null
+    return {
+      round: order,
+      ...dateParts,
+      duration: hopedSessionCount != null ? `${hopedSessionCount}차시` : '-',
+      format: '-',
+      classNum: `${order}지망`,
+      timeRange: '-',
+      status: 'pending',
+      scheduleLabel,
+      requestedScheduleId: row.id ?? undefined,
+      resolvedScheduleId,
+    }
+  })
+}
+
 /**
  * 기관 신청 목록·상세 「진행 희망 교육 일정」.
  * 상세 DTO `sessions`(OSA·배정 hybrid)는 사용하지 않는다.
@@ -246,6 +318,8 @@ export function resolveOrganizationApplicationHopeSessions(
   if (isCompanySchoolOrganizationApplication(dto)) {
     return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
   }
+  const storedPeriodHopes = mapStoredPeriodRequestedSchedulesToHopeSessions(requestedSchedules)
+  if (storedPeriodHopes.length > 0) return storedPeriodHopes
   /** 신청 희망/선택 일정(B). OSA `sessions[]`와 별개 — 캘린더·목록은 preferred 우선 */
   const fromPreferred = mapPreferredEducationSchedulesToSessions(preferred)
   if (fromPreferred.length > 0) {

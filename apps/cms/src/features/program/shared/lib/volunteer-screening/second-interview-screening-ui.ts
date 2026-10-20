@@ -10,7 +10,8 @@ export type SecondInterviewScreeningTone =
   | 'waiting'
   | 'fail'
   | 'withdrawn'
-  | 'passOrReserve'
+  | 'pass'
+  | 'reserve'
   | 'completed'
 
 export type SecondInterviewScreeningEffectiveStatus =
@@ -24,7 +25,8 @@ export function resolveSecondInterviewScreeningTone(
   if (status === 'waiting') return 'waiting'
   if (status === 'fail') return 'fail'
   if (status === 'completed') return 'completed'
-  return 'passOrReserve'
+  if (status === 'pass') return 'pass'
+  return 'reserve'
 }
 
 export function resolveSecondInterviewScreeningPopoverLabel(

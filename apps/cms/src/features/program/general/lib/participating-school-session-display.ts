@@ -40,6 +40,240 @@ function formatMinutes(totalMinutes: number): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+export type GeneralEducationScheduleShape = {
+  educationStructure?: 'curriculum' | 'schedule' | null
+  sessionRound?: 'single' | 'multi' | null
+  educationScheduleMode?: 'date' | 'period' | null
+  /** 커리큘럼 단일 — 교육 진행 차시 수 */
+  curriculumSessionCount?: number | null
+  /** 회차순 커리큘럼 라벨. `N차시`만 진행 시간 줄에 붙인다. */
+  curriculumSessionLabels?: readonly string[] | null
+}
+
+const RANK_SUFFIX_RE = /\s*\|\s*\d+\s*지망\s*$/u
+const SESSION_SUFFIX_RE = /\s*\|\s*(?:\d+\s*)?(?:차시|회차)\s*$/u
+const CLOCK_RE = /\d{1,2}:\d{2}/
+
+function stripDisplaySuffix(label: string): string {
+  return label.replace(RANK_SUFFIX_RE, '').replace(SESSION_SUFFIX_RE, '').trim()
+}
+
+function labelHasClock(label: string): boolean {
+  return CLOCK_RE.test(stripDisplaySuffix(label))
+}
+
+function readExplicitSessionCount(session: {
+  classNum?: string
+  duration?: string
+  scheduleLabel?: string
+}): string | null {
+  const sources = [session.classNum, session.duration, session.scheduleLabel]
+  for (const source of sources) {
+    const match = source?.match(/(\d+)\s*차시/)
+    if (match) return `${match[1]}차시`
+  }
+  return null
+}
+
+function readCurriculumSessionText(
+  session: { round?: number; classNum?: string; duration?: string; scheduleLabel?: string },
+  shape: GeneralEducationScheduleShape | null | undefined
+): string | null {
+  if (shape?.educationStructure !== 'curriculum') return null
+  const explicit = readExplicitSessionCount(session)
+  if (explicit) return explicit
+  const round = session.round
+  if (round != null && round > 0) {
+    const fromLabel = shape.curriculumSessionLabels?.[round - 1]?.match(/(\d+)\s*차시/)
+    if (fromLabel) return `${fromLabel[1]}차시`
+  }
+  if (shape.sessionRound !== 'multi') {
+    const count = shape.curriculumSessionCount
+    if (typeof count === 'number' && Number.isFinite(count) && count > 0) return `${Math.trunc(count)}차시`
+  }
+  return null
+}
+
+function composeEducationDateTime(session: {
+  date: string
+  dayOfWeek: string
+  timeRange: string
+  scheduleLabel?: string
+}): string {
+  const label = session.scheduleLabel?.trim()
+  if (label && labelHasClock(label)) {
+    return formatCmsScheduleDisplayLabel(stripDisplaySuffix(label))
+  }
+  const time = session.timeRange?.trim() ?? ''
+  const hasClock = CLOCK_RE.test(time) && time !== '-' && !/^00:00\s*~\s*00:00$/.test(time.replace(/\s/g, ''))
+  const datePart = session.date?.trim()
+    ? `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
+    : ''
+  if (datePart && hasClock) {
+    const [startRaw, endRaw] = time.split('~')
+    const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
+    return formatCmsScheduleDisplayLabel(`${datePart} ${timePart}`)
+  }
+  if (label) return formatCmsScheduleDisplayLabel(stripDisplaySuffix(label))
+  if (datePart) return formatCmsScheduleDisplayLabel(datePart)
+  return ''
+}
+
+/** 일정·단일·기간 — 세부 일정 진행 시간의 첫 시작 ~ 마지막 종료 */
+export function resolveScheduleDetailTimeSpan(
+  details: ReadonlyArray<{ progressTimeSummary?: string | null }> | null | undefined
+): string | null {
+  const ranges: Array<{ start: number; end: number }> = []
+  for (const detail of details ?? []) {
+    const summary = detail.progressTimeSummary?.trim()
+    if (!summary) continue
+    for (const part of summary.split(/\s*\|\s*/)) {
+      const match = part
+        .trim()
+        .replace(/^그룹\s+\S+\s*:\s*/, '')
+        .match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
+      if (!match) continue
+      const range = parseTimeRangeMinutes(`${match[1]}~${match[2]}`)
+      if (!range || (range.start === 0 && range.end === 0)) continue
+      ranges.push(range)
+    }
+  }
+  if (ranges.length === 0) return null
+  const start = Math.min(...ranges.map(range => range.start))
+  const end = Math.max(...ranges.map(range => range.end))
+  return `${formatMinutes(start)} ~ ${formatMinutes(end)}`
+}
+
+/**
+ * 일반 프로그램 교육 진행 시간 한 줄.
+ * 커리큘럼에 차시가 있을 때만 `| N차시`를 붙인다. 지망 순위는 값에 넣지 않는다.
+ */
+export function formatGeneralEducationScheduleLine(
+  session: {
+    date: string
+    dayOfWeek: string
+    timeRange: string
+    scheduleLabel?: string
+    classNum?: string
+    duration?: string
+    round?: number
+  },
+  shape?: GeneralEducationScheduleShape | null,
+  options?: { detailScheduleTimeSpan?: string | null }
+): string {
+  const structure = shape?.educationStructure
+  const round = shape?.sessionRound
+  const mode = shape?.educationScheduleMode
+  const scheduleSinglePeriod =
+    structure === 'schedule' && round === 'single' && mode === 'period'
+
+  let base = ''
+  if (scheduleSinglePeriod) {
+    const datePart = session.date?.trim()
+      ? formatCmsScheduleDisplayLabel(
+          `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
+        )
+      : ''
+    const span = options?.detailScheduleTimeSpan?.trim()
+    base = datePart && span ? `${datePart} ${span}` : composeEducationDateTime(session)
+  } else {
+    base = composeEducationDateTime(session)
+  }
+  if (!base) return ''
+  if (structure === 'schedule') return base
+
+  const sessionText = readCurriculumSessionText(session, shape)
+  if (sessionText && !base.includes(sessionText)) return `${base} | ${sessionText}`
+  return base
+}
+
+export function readCurriculumSessionLabels(
+  program: {
+    generalCommonInfo?: {
+      curriculumSessions?: ReadonlyArray<{ sessionLabel?: string | null; title?: string | null }> | null
+    } | null
+  } | null
+  | undefined
+): string[] {
+  return (program?.generalCommonInfo?.curriculumSessions ?? []).map(session => {
+    if (session.sessionLabel?.includes('차시')) return session.sessionLabel
+    if (session.title?.includes('차시')) return session.title
+    return session.sessionLabel ?? ''
+  })
+}
+
+export function readProgramEducationScheduleLines(
+  program: {
+    generalCommonInfo?: {
+      educationScheduleLines?: readonly string[] | null
+      scheduleDetails?: ReadonlyArray<{ scheduleDateLabel?: string | null }> | null
+    } | null
+  } | null
+  | undefined
+): string[] {
+  const lines = (program?.generalCommonInfo?.educationScheduleLines ?? [])
+    .map(line => line.trim())
+    .filter(Boolean)
+  if (lines.length > 0) return lines
+  return (program?.generalCommonInfo?.scheduleDetails ?? [])
+    .map(detail => detail.scheduleDateLabel?.trim() ?? '')
+    .filter(Boolean)
+}
+
+function educationScheduleLineSession(line: string, index: number): ParticipatingSchoolSession {
+  return {
+    round: index + 1,
+    date: '',
+    dayOfWeek: '',
+    duration: '',
+    format: '',
+    classNum: '',
+    timeRange: '',
+    scheduleLabel: line,
+  }
+}
+
+/**
+ * 목록·상세·진행이 같은 세션 목록을 포맷터에 넣도록 맞춘다.
+ * 일정·복수는 교육 진행(일정형) 줄, 일정·단일·기간은 날짜당 한 줄이다.
+ */
+export function prepareGeneralEducationScheduleSessions(
+  sessions: readonly ParticipatingSchoolSession[],
+  shape?: GeneralEducationScheduleShape | null,
+  options?: {
+    detailScheduleTimeSpan?: string | null
+    educationScheduleLines?: readonly string[] | null
+  }
+): ParticipatingSchoolSession[] {
+  if (shape?.educationStructure === 'schedule' && shape.sessionRound === 'multi') {
+    const lines = (options?.educationScheduleLines ?? []).map(line => line.trim()).filter(Boolean)
+    if (lines.length > 0) return lines.map(educationScheduleLineSession)
+  }
+
+  if (
+    shape?.educationStructure === 'schedule' &&
+    shape.sessionRound === 'single' &&
+    shape.educationScheduleMode === 'period'
+  ) {
+    const span = options?.detailScheduleTimeSpan?.trim()
+    const seen = new Set<string>()
+    const collapsed: ParticipatingSchoolSession[] = []
+    for (const session of sessions) {
+      const key = `${session.date}|${session.dayOfWeek}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      collapsed.push({
+        ...session,
+        scheduleLabel: undefined,
+        timeRange: span || session.timeRange,
+      })
+    }
+    return collapsed
+  }
+
+  return [...sessions]
+}
+
 /** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
 export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSession): string {
   const scheduleLabel = s.scheduleLabel?.trim()

@@ -27,6 +27,11 @@ import { useParticipatingIndividualParticipantColumns } from '@/features/program
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
+import {
   buildParticipatingParticipantCertificateContext,
   hydrateParticipatingParticipantCertificateProfile,
 } from '@/features/program/general/lib/participating-individual-participant-certificate'
@@ -104,7 +109,17 @@ export function ParticipatingParticipantsSection({
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
   )
-  const columns = useParticipatingIndividualParticipantColumns(programBridge)
+  const scheduleDisplay = useMemo(
+    () => ({
+      detailScheduleTimeSpan: resolveScheduleDetailTimeSpan(
+        program?.generalCommonInfo?.scheduleDetails
+      ),
+      curriculumSessionLabels: readCurriculumSessionLabels(program),
+      educationScheduleLines: readProgramEducationScheduleLines(program),
+    }),
+    [program]
+  )
+  const columns = useParticipatingIndividualParticipantColumns(programBridge, scheduleDisplay)
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,
     {

@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -144,9 +145,9 @@ import { isCombinedClassProgramEligible } from '@/features/program/general/lib/c
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
-import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
-import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
-import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+import { buildCombinedClassLeadTeacherCandidatesFromParticipating } from '@/features/program/general/lib/combined-class-lead-teacher'
+import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
+import { useCombinedClassProcess } from '@/features/program/general/hooks/use-combined-class-process'
 import {
   buildProgramApiUnavailableSaveContent,
   notifyProgramApiUnavailable,
@@ -165,6 +166,7 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
+import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -193,6 +195,8 @@ import {
 import { buildParticipatingSchoolPreferredScheduleLines } from '@/features/program/general/lib/participating-school-session-display'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
+import { mapStoredPeriodRequestedSchedulesToHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
   mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
@@ -402,10 +406,6 @@ export interface SchoolDetailFullpageViewProps {
   onTabChange?: (key: SchoolDetailTabKey) => void
   onClearSchoolId: () => void
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
-  onSaveCombinedClass?: (params: {
-    combinedClassApplication: '신청' | '미신청'
-    combinedClassPartnerSchoolIds: string[]
-  }) => Promise<void>
   combinedClassReadOnly?: boolean
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
   savedBasicPatches?: Record<string, Partial<SchoolDetailForModal>>
@@ -436,7 +436,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     onTabChange,
     onClearSchoolId: _onClearSchoolId,
     onSaveBasicInfo,
-    onSaveCombinedClass,
     combinedClassReadOnly = false,
     onSaveInstructorInfo,
     savedBasicPatches = {},
@@ -529,7 +528,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [scheduleChangeSubmitting, setScheduleChangeSubmitting] = useState(false)
-  const [leadTeacherSubmitting, setLeadTeacherSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -653,14 +651,29 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     programSchedulesForOsaQuery.data,
   ])
 
-  const hopeEducationSessions = useMemo(
-    () =>
-      resolveParticipatingSchoolHopeSessions(row, {
-        programId,
-        organizationApplicationId: organizationApplicationIdForDetail,
-      }),
-    [organizationApplicationIdForDetail, programId, row]
-  )
+  const requestedHopeSchedulesQuery = useQuery({
+    ...organizationRequestedSchedulesQueryOptions(organizationApplicationIdForDetail),
+    enabled: isGeneralOrgProgram && organizationApplicationIdForDetail.length > 0,
+  })
+
+  const hopeEducationSessions = useMemo(() => {
+    if (isGeneralOrgProgram) {
+      const storedPeriodHopes = mapStoredPeriodRequestedSchedulesToHopeSessions(
+        requestedHopeSchedulesQuery.data
+      )
+      if (storedPeriodHopes.length > 0) return storedPeriodHopes
+    }
+    return resolveParticipatingSchoolHopeSessions(row, {
+      programId,
+      organizationApplicationId: organizationApplicationIdForDetail,
+    })
+  }, [
+    isGeneralOrgProgram,
+    organizationApplicationIdForDetail,
+    programId,
+    requestedHopeSchedulesQuery.data,
+    row,
+  ])
 
   const assignmentsQuerySettled =
     !organizationScheduleAssignmentsEnabled ||
@@ -672,13 +685,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       isCompanySchool,
       isGeneralOrganization: isGeneralOrgProgram,
       assignedSessions: assignmentsQuerySettled ? assignedEducationSessions : [],
-      hopeSessions: assignmentsQuerySettled ? hopeEducationSessions : [],
-      participantSessions,
+      participantSessions: assignmentsQuerySettled ? participantSessions : [],
     })
   }, [
     assignedEducationSessions,
     assignmentsQuerySettled,
-    hopeEducationSessions,
     isCompanySchool,
     isGeneralOrgProgram,
     participantSessions,
@@ -691,17 +702,19 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     }
     if (
       organizationScheduleAssignmentsQuery.isError &&
-      hopeEducationSessions.length === 0
+      assignedEducationSessions.length === 0 &&
+      participantSessions.length === 0
     ) {
       return '배정된 교육 일정을 불러오지 못했습니다.'
     }
     return '등록된 교육 일정이 없습니다.'
   }, [
-    hopeEducationSessions.length,
+    assignedEducationSessions.length,
     isGeneralOrgProgram,
     organizationScheduleAssignmentsEnabled,
     organizationScheduleAssignmentsQuery.isError,
     organizationScheduleAssignmentsQuery.isLoading,
+    participantSessions.length,
   ])
 
   const instructorAssignScheduleSessions = useMemo(() => {
@@ -779,11 +792,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     [program, participantSessions]
   )
 
-  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
-    memberRowIds: string[]
-    candidates: CombinedClassLeadTeacherCandidate[]
-  } | null>(null)
-  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
   const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
   const mergeGroupsQuery = useOrganizationMergeGroups(
     programId,
@@ -797,11 +805,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     program,
     participatingSchoolList,
     onSaveBasicInfo,
-    onSaveCombinedClass,
     combinedClassReadOnly,
-    onCombinedClassApplied: params => {
-      setCombinedClassLeadTeacherModal(params)
-    },
   })
 
   const {
@@ -820,6 +824,111 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
+
+  const combinedClassProcess = useCombinedClassProcess({
+    active:
+      isApplicationInfoEditing &&
+      isCombinedClassProgramEligibleFlag &&
+      !combinedClassReadOnly,
+    resetKey: detail.id,
+    schoolName: mergedDetail.schoolName ?? row.schoolName ?? '',
+    leadGrade: row.educationGrade ?? mergedDetail.educationGrade ?? '',
+    committedApplication: mergedDetail.combinedClassApplication === '신청' ? '신청' : '미신청',
+    committedPartnerIds: mergedDetail.combinedClassPartnerSchoolIds ?? [],
+    partnerOptions: sameSchoolGradeOptions,
+    applySelection: next => {
+      updateApplicationInfoDraft({
+        combinedClassApplication: next.application,
+        combinedClassPartnerSchoolIds: next.partnerIds,
+      })
+    },
+    buildCandidates: partnerIds =>
+      buildCombinedClassLeadTeacherCandidatesFromParticipating(
+        mergedDetail,
+        row,
+        participatingSchoolList.filter(item => partnerIds.includes(item.id))
+      ),
+    onProcess: async ({ partnerIds, leadTeacherMemberId }) => {
+      if (!mergeGroupsAllowed || !shouldUseOrganizationMergeGroupsRemoteApi() || !progressRemoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-org-merge-lead-teacher-progress',
+          '일반 프로그램 · 합반 담당 교사 지정'
+        )
+        return false
+      }
+      try {
+        const saved = await saveOrganizationCombinedClassRemote({
+          programId,
+          programType: program.backendProgramType,
+          leadRow: row,
+          allRows: participatingSchoolList,
+          combinedClassApplication: '신청',
+          partnerRowIds: partnerIds,
+          existingMergeGroups: mergeGroupsQuery.data,
+          leadTeacherMemberId,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        return saved?.id ?? true
+      } catch (error) {
+        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+        void showAlert({
+          title: '처리 실패',
+          content: axios.isAxiosError(error)
+            ? resolveOrganizationMergeErrorMessage(responseData, {
+                httpStatus,
+                fallback: '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+              })
+            : error instanceof Error && error.message.trim()
+              ? error.message
+              : '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+        })
+        return false
+      }
+    },
+    onCancelMerge: async mergeGroupId => {
+      if (!mergeGroupsAllowed || !shouldUseOrganizationMergeGroupsRemoteApi() || !progressRemoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-org-merge-lead-teacher-progress',
+          '일반 프로그램 · 합반 취소'
+        )
+        return false
+      }
+      try {
+        await saveOrganizationCombinedClassRemote({
+          programId,
+          programType: program.backendProgramType,
+          leadRow: row,
+          allRows: participatingSchoolList,
+          combinedClassApplication: '미신청',
+          partnerRowIds: [],
+          existingMergeGroups: mergeGroupsQuery.data,
+          mergeGroupId,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        return true
+      } catch (error) {
+        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+        void showAlert({
+          title: '처리 실패',
+          content: axios.isAxiosError(error)
+            ? resolveOrganizationMergeErrorMessage(responseData, {
+                httpStatus,
+                fallback: '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
+              })
+            : error instanceof Error && error.message.trim()
+              ? error.message
+              : '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
+        })
+        return false
+      }
+    },
+  })
 
   const programProgressStatus =
     mergedDetail.programProgressStatus ??
@@ -2003,7 +2112,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       <div className="institution-basic-info__field-stack school-detail-fullpage-view__textbook-select-only">
         <CmsSelect
           className="institution-basic-info__full-width-control"
-          inputSize="large"
+          inputSize="small"
           placeholder="교재명 선택"
           withAllOption={false}
           value={applicationInfoDraft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
@@ -2047,14 +2156,16 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         combinedClassApplication={applicationInfoDraft.combinedClassApplication}
         partnerIds={applicationInfoDraft.combinedClassPartnerSchoolIds}
         onCombinedClassApplicationChange={next =>
-          updateApplicationInfoDraft({
-            combinedClassApplication: next,
-            combinedClassPartnerSchoolIds:
-              next === '신청' ? applicationInfoDraft.combinedClassPartnerSchoolIds : [],
-          })
+          combinedClassProcess.onApplicationChange(
+            next,
+            next === '신청' ? applicationInfoDraft.combinedClassPartnerSchoolIds : []
+          )
         }
         onPartnerIdsChange={partnerIds =>
-          updateApplicationInfoDraft({ combinedClassPartnerSchoolIds: partnerIds })
+          combinedClassProcess.onPartnerIdsChange(
+            partnerIds,
+            applicationInfoDraft.combinedClassApplication
+          )
         }
         sameSchoolGradeOptions={sameSchoolGradeOptions}
         isProgramEligible={combinedClassProgramEligible}
@@ -2120,7 +2231,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
-                  void saveApplicationInfoEdit()
+                  void saveApplicationInfoEdit().then(result => {
+                    if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
+                      combinedClassProcess.openGradeRequiredAlert()
+                    }
+                  })
                 }}
               />
               {showAdminCommentSection ? (
@@ -2883,70 +2998,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
       />
-      <InstitutionCombinedClassLeadTeacherModal
-        open={combinedClassLeadTeacherModal != null}
-        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
-        onCancel={() => {
-          if (leadTeacherSubmitting) return
-          setCombinedClassLeadTeacherModal(null)
-        }}
-        onConfirm={candidate => {
-          if (!combinedClassLeadTeacherModal) return
-          const leadTeacherMemberId = candidate.teacherMemberId
-          if (leadTeacherMemberId == null || !Number.isFinite(leadTeacherMemberId)) {
-            void showAlert({
-              title: '처리 실패',
-              content: '담당 교사 회원 ID가 없어 지정할 수 없습니다.',
-            })
-            return
-          }
-          if (
-            !mergeGroupsAllowed ||
-            !shouldUseOrganizationMergeGroupsRemoteApi() ||
-            !progressRemoteEnabled
-          ) {
-            notifyProgramApiUnavailable(
-              'general-org-merge-lead-teacher-progress',
-              '일반 프로그램 · 합반 담당 교사 지정'
-            )
-            return
-          }
-          void (async () => {
-            setLeadTeacherSubmitting(true)
-            try {
-              await saveOrganizationCombinedClassRemote({
-                programId,
-                programType: program.backendProgramType,
-                leadRow: row,
-                allRows: participatingSchoolList,
-                combinedClassApplication: '신청',
-                partnerRowIds: combinedClassLeadTeacherModal.memberRowIds.filter(
-                  id => id !== row.id
-                ),
-                existingMergeGroups: mergeGroupsQuery.data,
-                leadTeacherMemberId,
-              })
-              await queryClient.invalidateQueries({
-                queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
-              })
-              setCombinedClassLeadTeacherModal(null)
-              setCombinedClassCompleteLabel(candidate.label)
-            } catch {
-              void showAlert({
-                title: '처리 실패',
-                content: '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
-              })
-            } finally {
-              setLeadTeacherSubmitting(false)
-            }
-          })()
-        }}
-      />
-      <InstitutionCombinedClassCompleteModal
-        open={combinedClassCompleteLabel != null}
-        teacherLabel={combinedClassCompleteLabel ?? ''}
-        onClose={() => setCombinedClassCompleteLabel(null)}
-      />
+      {combinedClassProcess.modals}
     </div>
   )
 }

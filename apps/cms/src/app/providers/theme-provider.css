@@ -251,6 +251,11 @@
   --Spacing-6: 6px;
   --Brand-500: #00a0af;
   --Status-red-main: #c32f4a;
+  --Status-green-main: #1e8c29;
+  --Status-blue-main: #017eaf;
+  --Status-orange-main: #f07917;
+  --Status-purple-main: #8457ce;
+  --Status-pink-main: #e8007c;
   --Background-disabled: linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%), #fff;
   --Radius-8: 8px;
 

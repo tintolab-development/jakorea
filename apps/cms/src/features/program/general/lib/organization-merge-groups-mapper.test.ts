@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assertOrganizationMergeMembers,
   buildCreateMergeRequest,
   buildMergeMemberRequestsFromPartnerRows,
   findActiveMergeGroupForOrganizationApplication,
   isActiveMergeGroup,
+  isCombinedClassNonLeadMember,
   resolveCombinedClassMergeViewState,
 } from './organization-merge-groups-mapper'
 import type { MergeGroupResponse } from '@/shared/api/generated/dashboard/schemas/mergeGroupResponse'
@@ -48,6 +50,28 @@ describe('organization-merge-groups-mapper', () => {
     expect(state.isLead).toBe(false)
   })
 
+  it('미신청은 합반 라디오를 다시 열 수 있고, 비리드 멤버만 잠근다', () => {
+    expect(
+      isCombinedClassNonLeadMember({
+        combinedClassApplication: '미신청',
+        isLead: false,
+      })
+    ).toBe(false)
+    expect(isCombinedClassNonLeadMember(null)).toBe(false)
+    expect(
+      isCombinedClassNonLeadMember({
+        combinedClassApplication: '신청',
+        isLead: true,
+      })
+    ).toBe(false)
+    expect(
+      isCombinedClassNonLeadMember({
+        combinedClassApplication: '신청',
+        isLead: false,
+      })
+    ).toBe(true)
+  })
+
   it('findActiveMergeGroupForOrganizationApplication finds member group', () => {
     expect(findActiveMergeGroupForOrganizationApplication([activeGroup], 101)?.id).toBe(10)
   })
@@ -85,6 +109,32 @@ describe('organization-merge-groups-mapper', () => {
       { organizationApplicationId: 100, grade: '5학년' },
       { organizationApplicationId: 101, grade: '6학년' },
     ])
+  })
+
+  it('assertOrganizationMergeMembers blocks fewer than two applications and the same grade', () => {
+    expect(() =>
+      assertOrganizationMergeMembers({
+        leadOrganizationApplicationId: 100,
+        leadGrade: '1학년',
+        partnerMembers: [],
+      })
+    ).toThrow('합반에는 리드 신청을 포함해 승인된 신청 2건 이상이 필요합니다.')
+
+    expect(() =>
+      assertOrganizationMergeMembers({
+        leadOrganizationApplicationId: 100,
+        leadGrade: '1학년',
+        partnerMembers: [{ organizationApplicationId: 101, grade: '1학년' }],
+      })
+    ).toThrow('합반 대상 신청은 서로 다른 학년이어야 합니다.')
+
+    expect(() =>
+      assertOrganizationMergeMembers({
+        leadOrganizationApplicationId: 100,
+        leadGrade: '',
+        partnerMembers: [{ organizationApplicationId: 101, grade: '2학년' }],
+      })
+    ).toThrow('리드 신청의 학년 정보를 확인할 수 없습니다.')
   })
 
   it('buildMergeMemberRequestsFromPartnerRows maps grade and org app id', () => {

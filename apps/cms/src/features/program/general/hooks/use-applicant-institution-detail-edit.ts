@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
@@ -7,12 +8,11 @@ import {
   resolveCombinedClassApplyRadioDisabled,
 } from '@/features/program/general/lib/combined-class-edit-policy'
 import {
-  buildCombinedClassLeadTeacherCandidatesFromApplicants,
-  type CombinedClassLeadTeacherCandidate,
-} from '@/features/program/general/lib/combined-class-lead-teacher'
+  COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT,
+  type InstitutionInfoSaveResult,
+} from '@/features/program/general/lib/combined-class-copy'
 import {
   draftToSavePayload,
-  hasApplicantInstitutionCombinedClassDraftChanges,
   hasApplicantInstitutionNonCombinedClassDraftChanges,
   parseApplicantInstitutionEditDraft,
   rowToEditDraft,
@@ -34,12 +34,12 @@ import {
 } from '@/features/program/general/lib/applicant-institution-textbook'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { getSameSchoolApplicantGrades } from '@/features/program/general/lib/get-same-school-applicant-grades'
+import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import {
   buildInstitutionClassCountOptions,
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
-import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   fetchOrganizationApplicationDetailRemote,
   updateOrganizationApplicationRemote,
@@ -76,16 +76,7 @@ export interface UseApplicantInstitutionDetailEditParams {
   program: Program | null | undefined
   institutionList: ApplicantSchoolRow[]
   onSaved: (updatedRows: ApplicantSchoolRow[]) => void
-  onSaveCombinedClass?: (params: {
-    combinedClassApplication: '신청' | '미신청'
-    combinedClassPartnerApplicantIds: string[]
-  }) => Promise<void>
   combinedClassReadOnly?: boolean
-  /** 합반 「신청」 저장 후 담당 교사 지정 모달용 */
-  onCombinedClassApplied?: (params: {
-    memberRowIds: string[]
-    candidates: CombinedClassLeadTeacherCandidate[]
-  }) => void
 }
 
 export function useApplicantInstitutionDetailEdit({
@@ -93,9 +84,7 @@ export function useApplicantInstitutionDetailEdit({
   program,
   institutionList,
   onSaved,
-  onSaveCombinedClass,
   combinedClassReadOnly = false,
-  onCombinedClassApplied,
 }: UseApplicantInstitutionDetailEditParams) {
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
@@ -138,13 +127,19 @@ export function useApplicantInstitutionDetailEdit({
       institutionList,
       program.id,
       institution.schoolName,
-      institution.id
+      institution.id,
+      institution.educationGrade
     ).map(row => ({
       value: row.id,
       label: row.educationGrade,
       educationGrade: row.educationGrade,
     }))
-  }, [institution, institutionList, isCombinedClassProgramEligibleFlag, program?.id])
+  }, [
+    institution,
+    institutionList,
+    isCombinedClassProgramEligibleFlag,
+    program?.id,
+  ])
 
   const isCombinedClassApplyRadioDisabled =
     resolveCombinedClassApplyRadioDisabled(sameSchoolGradeOptions)
@@ -242,8 +237,17 @@ export function useApplicantInstitutionDetailEdit({
     })
   }, [institution, program, textbookCatalog])
 
-  const saveEdit = useCallback(async (): Promise<boolean> => {
+  const saveEdit = useCallback(async (): Promise<InstitutionInfoSaveResult> => {
     if (!institution || !draft) return false
+
+    if (
+      isCombinedClassProgramEligibleFlag &&
+      !combinedClassReadOnly &&
+      draft.combinedClassApplication === '신청' &&
+      draft.combinedClassPartnerApplicantIds.length === 0
+    ) {
+      return COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT
+    }
 
     const normalizedDraft: ApplicantInstitutionEditDraft = {
       ...draft,
@@ -275,34 +279,17 @@ export function useApplicantInstitutionDetailEdit({
 
     setIsSaving(true)
     try {
-      const partnersChanged = hasApplicantInstitutionCombinedClassDraftChanges(
-        institution,
-        normalizedDraft
-      )
       const nonMergeChanged = hasApplicantInstitutionNonCombinedClassDraftChanges(
         institution,
         normalizedDraft
       )
 
-      let savedCombinedClass = false
-      let remotelyUpdatedInstitution = institution
-      if (
-        partnersChanged &&
-        onSaveCombinedClass &&
-        isCombinedClassProgramEligibleFlag &&
-        !combinedClassReadOnly
-      ) {
-        await onSaveCombinedClass({
-          combinedClassApplication: normalizedDraft.combinedClassApplication,
-          combinedClassPartnerApplicantIds: normalizedDraft.combinedClassPartnerApplicantIds,
-        })
-        savedCombinedClass = true
-      } else if (partnersChanged && !onSaveCombinedClass) {
-        notifyProgramApiUnavailable('general-org-merge-groups', '일반 프로그램 · 기관 합반 신청')
-        return false
+      if (!nonMergeChanged) {
+        resetEditState()
+        return true
       }
 
-      if (nonMergeChanged) {
+      {
         const selectedTeacher = teacherOptions.find(
           option => option.label === normalizedDraft.teacherName
         )
@@ -365,7 +352,7 @@ export function useApplicantInstitutionDetailEdit({
         })
         // PATCH 응답/목록 캐시가 아니라 상세 GET을 저장 후 canonical source로 사용한다.
         const response = await fetchOrganizationApplicationDetailRemote(institution.id)
-        remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
+        const remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
           response,
           institution
         )
@@ -392,74 +379,37 @@ export function useApplicantInstitutionDetailEdit({
             })
           }
         }
-      }
 
-      if (!savedCombinedClass && !nonMergeChanged) {
-        resetEditState()
-        return true
-      }
-
-      const updatedRows = institutionList.map(row => {
-        if (row.id !== institution.id) {
-          if (
-            !normalizedDraft.combinedClassPartnerApplicantIds.includes(row.id) ||
-            normalizedDraft.combinedClassApplication !== '신청'
-          ) {
-            return row
-          }
-          return {
-            ...row,
-            detail: {
-              ...row.detail,
-              combinedClassApplication: '신청' as const,
-              combinedClassPartnerApplicantIds: [
-                institution.id,
-                ...normalizedDraft.combinedClassPartnerApplicantIds.filter(id => id !== row.id),
-              ],
-            },
-          }
-        }
-        return {
-          ...remotelyUpdatedInstitution,
-          detail: {
-            ...remotelyUpdatedInstitution.detail,
-            combinedClassApplication: normalizedDraft.combinedClassApplication,
-            combinedClassPartnerApplicantIds:
-              normalizedDraft.combinedClassApplication === '신청'
-                ? normalizedDraft.combinedClassPartnerApplicantIds
-                : [],
-          },
-        }
-      })
-
-      onSaved(updatedRows)
-      resetEditState()
-
-      if (
-        savedCombinedClass &&
-        normalizedDraft.combinedClassApplication === '신청' &&
-        normalizedDraft.combinedClassPartnerApplicantIds.length > 0 &&
-        !combinedClassReadOnly
-      ) {
-        const partnerRows = updatedRows.filter(row =>
-          normalizedDraft.combinedClassPartnerApplicantIds.includes(row.id)
-        )
-        const leadRow = updatedRows.find(row => row.id === institution.id) ?? institution
-        const candidates = buildCombinedClassLeadTeacherCandidatesFromApplicants(
-          leadRow,
-          partnerRows
-        )
-        if (candidates.length > 0) {
-          onCombinedClassApplied?.({
-            memberRowIds: [institution.id, ...normalizedDraft.combinedClassPartnerApplicantIds],
-            candidates,
+        onSaved(
+          institutionList.map(row => {
+            if (row.id !== institution.id) return row
+            return {
+              ...remotelyUpdatedInstitution,
+              detail: {
+                ...remotelyUpdatedInstitution.detail,
+                combinedClassApplication: row.detail?.combinedClassApplication,
+                combinedClassPartnerApplicantIds: row.detail?.combinedClassPartnerApplicantIds ?? [],
+                combinedClassPartnerGrades: row.detail?.combinedClassPartnerGrades ?? [],
+              },
+            }
           })
-        }
+        )
       }
 
+      resetEditState()
       return true
-    } catch {
-      setValidationErrors({ form: '저장에 실패했습니다. 다시 시도해 주세요.' })
+    } catch (error) {
+      const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+      const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+      const message = axios.isAxiosError(error)
+        ? resolveOrganizationMergeErrorMessage(responseData, {
+            httpStatus,
+            fallback: '저장에 실패했습니다. 다시 시도해 주세요.',
+          })
+        : error instanceof Error && error.message.trim()
+          ? error.message
+          : '저장에 실패했습니다. 다시 시도해 주세요.'
+      setValidationErrors({ form: message })
       return false
     } finally {
       setIsSaving(false)
@@ -470,8 +420,6 @@ export function useApplicantInstitutionDetailEdit({
     institution,
     institutionList,
     isCombinedClassProgramEligibleFlag,
-    onCombinedClassApplied,
-    onSaveCombinedClass,
     onSaved,
     program?.id,
     queryClient,

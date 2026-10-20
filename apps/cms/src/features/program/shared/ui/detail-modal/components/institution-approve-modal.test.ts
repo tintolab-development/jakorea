@@ -202,11 +202,67 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187134 })
   })
 
-  it('기간 지정 희망일은 공통 슬롯과 같은 날짜여도 배정 id를 만들지 않는다', async () => {
+  it('기간 지정 단일 회차는 희망 일정 행 id 1건만 승인하고 공통 슬롯 id는 보내지 않는다', async () => {
     fetchSlots.mockResolvedValue(program186266Slots)
+    fetchRequested.mockResolvedValue([
+      {
+        id: 184944,
+        preferenceOrder: 1,
+        requestedDate: '2026-11-05',
+        resolvedScheduleId: 187141,
+        sessionCount: 1,
+        sessionTimes: [],
+      },
+      {
+        id: 184945,
+        preferenceOrder: 2,
+        requestedDate: '2026-11-13',
+        resolvedScheduleId: null,
+        sessionCount: 1,
+        sessionTimes: [],
+      },
+    ] as never)
     const { onConfirm } = renderModal({
-      organizationApplicationId: undefined,
       educationScheduleMode: 'period',
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      scheduleConfig: {
+        preferredEducationSchedules: [
+          { label: '2026-11-05', startAt: '2026-11-05', endAt: '2026-11-05' },
+        ],
+      },
+    })
+
+    expect(screen.queryByText('공통 교육 예정 일정')).toBeNull()
+    const firstChoice = await screen.findByRole('button', { name: /2026\. 11\. 05/ })
+    const secondChoice = await screen.findByRole('button', { name: /2026\. 11\. 13/ })
+    expect((secondChoice as HTMLButtonElement).disabled).toBe(false)
+    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
+    await waitFor(() => expect(approve.disabled).toBe(true))
+    fireEvent.click(firstChoice)
+    await waitFor(() => expect(approve.disabled).toBe(false))
+    fireEvent.click(approve)
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ requestedScheduleId: 184944 })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+  })
+
+  it('커리큘럼 기간형은 희망 일정 행 id를 승인 본문에 넣지 않는다', async () => {
+    fetchSlots.mockResolvedValue(program186266Slots)
+    fetchRequested.mockResolvedValue([
+      {
+        id: 184944,
+        preferenceOrder: 1,
+        requestedDate: '2026-11-02',
+        resolvedScheduleId: null,
+        sessionCount: 1,
+        sessionTimes: [],
+      },
+    ] as never)
+    const { onConfirm } = renderModal({
+      educationScheduleMode: 'period',
+      educationStructure: 'curriculum',
       sessionRound: 'single',
       scheduleConfig: {
         preferredEducationSchedules: [
@@ -215,18 +271,11 @@ describe('InstitutionApproveModal schedule sources', () => {
       },
     })
 
-    expect(screen.queryByText(/기간 지정 희망일은 프로그램 공통 예정 슬롯과 매칭하지 않습니다/)).toBeNull()
-    expect(screen.queryByText('공통 교육 예정 일정')).toBeNull()
-    expect(screen.queryByText(/26년 11월 2일/)).toBeNull()
     const preferredCard = await screen.findByRole('button', { name: /2026\. 11\. 02/ })
-    expect((preferredCard as HTMLButtonElement).disabled).toBe(false)
-    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
-    await waitFor(() => expect(approve.disabled).toBe(true))
     fireEvent.click(preferredCard)
-    await waitFor(() => expect(approve.disabled).toBe(false))
-    expect(preferredCard.getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(approve)
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
   })

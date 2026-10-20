@@ -54,19 +54,17 @@ export function InstitutionCombinedClassEditCell({
       <div className="institution-basic-info__combined-class-edit-row">
         <CmsRadio.Group
           className="institution-basic-info__combined-class-radios"
+          size="medium"
           value={combinedClassApplication}
           onChange={event => {
             const next = event.target.value as CombinedClassApplicationStatus
             onCombinedClassApplicationChange(next)
-            if (next !== '신청') {
-              onPartnerIdsChange([])
-            }
           }}
         >
-          <CmsRadio value="신청" size="large" disabled={!isProgramEligible || isApplyRadioDisabled}>
+          <CmsRadio value="신청" size="medium" disabled={!isProgramEligible || isApplyRadioDisabled}>
             신청
           </CmsRadio>
-          <CmsRadio value="미신청" size="large" disabled={!isProgramEligible}>
+          <CmsRadio value="미신청" size="medium" disabled={!isProgramEligible}>
             미신청
           </CmsRadio>
         </CmsRadio.Group>

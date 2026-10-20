@@ -108,6 +108,11 @@ import type {
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
 import {
   toFlatDecisionNotifyTiming,
@@ -225,6 +230,15 @@ export function useApplicantsDetail({
 
   const institutionApplicationBridge = useMemo(
     () => (program ? resolveInstitutionApplicationProgramBridge(program) : null),
+    [program]
+  )
+  const detailScheduleTimeSpan = useMemo(
+    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
+    [program]
+  )
+  const curriculumSessionLabels = useMemo(() => readCurriculumSessionLabels(program), [program])
+  const educationScheduleLines = useMemo(
+    () => readProgramEducationScheduleLines(program),
     [program]
   )
 
@@ -403,7 +417,12 @@ export function useApplicantsDetail({
             })
             await invalidateProgramAdminSchedulesQuery(queryClient, programId)
           }
-          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
+          const confirmedOrganizationSchedule =
+            (approvePayload?.slots?.length ?? 0) > 0 ||
+            approvePayload?.selectedScheduleId != null ||
+            (typeof approvePayload?.requestedScheduleId === 'number' &&
+              approvePayload.requestedScheduleId > 0)
+          if (confirmedOrganizationSchedule) {
             await queryClient.invalidateQueries({
               queryKey: generalProgramProgressQueryKeys.all,
             })
@@ -411,10 +430,14 @@ export function useApplicantsDetail({
               ? organizationApprovalRefreshTargets(programId, ids)
               : null
             for (let index = 0; index < ids.length; index += 1) {
+              const applicationId = ids[index] ?? ''
               await queryClient.invalidateQueries({
                 queryKey:
                   refresh?.organizationDetails[index] ??
-                  generalApplicationsQueryKeys.organizationDetail(ids[index] ?? ''),
+                  generalApplicationsQueryKeys.organizationDetail(applicationId),
+              })
+              await queryClient.invalidateQueries({
+                queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(applicationId),
               })
             }
             if (refresh) {
@@ -427,6 +450,20 @@ export function useApplicantsDetail({
         }
         return 'ok'
       } catch (error) {
+        if (getApiErrorCode(error) === 'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID') {
+          for (const id of ids) {
+            queryClient.setQueryData(
+              generalApplicationsQueryKeys.organizationApproveSelectionReset(id),
+              Date.now()
+            )
+            void queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(id),
+            })
+            void queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+            })
+          }
+        }
         notifyRemoteDecisionFailure(error)
         return 'error'
       }
@@ -1154,6 +1191,9 @@ export function useApplicantsDetail({
     setOpenApprovalDropdownId,
     preset: institutionColumnPreset,
     programBridge: institutionApplicationBridge,
+    detailScheduleTimeSpan,
+    curriculumSessionLabels,
+    educationScheduleLines,
   })
 
   const instructorColumnsLegacy = useInstructorApplicantColumns({
@@ -1173,7 +1213,12 @@ export function useApplicantsDetail({
       ? instructorColumnsGeneral
       : instructorColumnsLegacy
 
-  const individualColumns = useGeneralIndividualApplicantColumns(institutionApplicationBridge)
+  const individualColumns = useGeneralIndividualApplicantColumns(
+    institutionApplicationBridge,
+    detailScheduleTimeSpan,
+    curriculumSessionLabels,
+    educationScheduleLines
+  )
 
   const handleBulkReject = async () => {
     if (selectedRowKeys.length === 0) {

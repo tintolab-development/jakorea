@@ -145,27 +145,10 @@
 .institution-approve-modal__assigned-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   color: #1a1a1a;
   font-size: 14px;
   line-height: 1.5;
-}
-
-.institution-approve-modal__assigned-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #c5ced1;
-  color: #fff;
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
 }
 
 .institution-approve-modal__assigned-empty {

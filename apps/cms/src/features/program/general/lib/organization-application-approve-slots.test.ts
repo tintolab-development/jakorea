@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
+import { mapStoredPeriodRequestedSchedulesToHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { organizationApprovalRefreshTargets } from './organization-application-approve-slots'
 import {
   ABSENT_PREFERRED_SCHEDULE_MESSAGE,
   allowsMultipleOrganizationEducationScheduleAssignment,
   buildOrganizationApplicationApproveSchedulePayload,
+  buildPeriodSingleRequestedScheduleApprovePayload,
+  isGeneralOrganizationPeriodSingleRequestedScheduleApproval,
+  mergeOrganizationApplicationApproveBody,
   organizationApproveUnconfirmableScheduleNotice,
   listOrganizationApproveScheduleOptions,
   ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT,
@@ -430,6 +434,69 @@ describe('period organization approval does not use date-slot mapping', () => {
       unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
     },
   ]
+
+  it('일정형·단일·기간 승인은 희망 일정 행 id 1건만 담고 공통 슬롯 id와 섞지 않는다', () => {
+    expect(
+      isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
+        educationScheduleMode: 'PERIOD',
+        sessionRound: 'SINGLE',
+        educationStructure: 'schedule',
+      })
+    ).toBe(true)
+    expect(
+      isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
+        educationScheduleMode: 'period',
+        sessionRound: 'multi',
+        educationStructure: 'schedule',
+      })
+    ).toBe(false)
+    expect(
+      isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
+        educationScheduleMode: 'date',
+        sessionRound: 'single',
+        educationStructure: 'schedule',
+      })
+    ).toBe(false)
+    expect(buildPeriodSingleRequestedScheduleApprovePayload([184944, 184945])).toBeNull()
+    expect(buildPeriodSingleRequestedScheduleApprovePayload([184945])).toEqual({
+      requestedScheduleId: 184945,
+    })
+    expect(
+      mergeOrganizationApplicationApproveBody({
+        timing: 'IMMEDIATE',
+        requestedScheduleId: 184944,
+        selectedScheduleId: 187141,
+        slots: [{ scheduleId: 187141 }],
+      })
+    ).toEqual({ timing: 'IMMEDIATE', requestedScheduleId: 184944 })
+    expect(
+      mergeOrganizationApplicationApproveBody({
+        timing: 'IMMEDIATE',
+        selectedScheduleId: 187134,
+      })
+    ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187134 })
+    const hopes = mapStoredPeriodRequestedSchedulesToHopeSessions([
+      {
+        id: 184945,
+        preferenceOrder: 2,
+        requestedDate: '2026-11-13',
+        resolvedScheduleId: null,
+        sessionCount: 1,
+        sessionTimes: [],
+      },
+      {
+        id: 184944,
+        preferenceOrder: 1,
+        requestedDate: '2026-11-05',
+        resolvedScheduleId: 187141,
+        sessionCount: 1,
+        sessionTimes: [],
+      },
+    ] as never)
+    expect(hopes.map(session => session.requestedScheduleId)).toEqual([184944, 184945])
+    expect(hopes[1]?.resolvedScheduleId).toBeNull()
+    expect(hopes).toHaveLength(2)
+  })
 
   it('일정형·단일·기간 — 희망일을 공통 슬롯 누락으로 보지 않고 배정 id를 만들지 않는다', () => {
     const result = resolveOrganizationApproveScheduleOptionsFromPreferred(

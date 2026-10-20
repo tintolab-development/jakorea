@@ -13,11 +13,16 @@
 
 /* ----- variant: text ----- */
 .status-badge--variant-text {
-  display: inline;
+  display: inline-block;
   padding: 0;
   border: none;
   background: transparent;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
   font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 /* ----- variant: badge (공통) ----- */
@@ -39,43 +44,43 @@
 /* ----- programEnrollment 액센트 (7단계 진행 현황 텍스트·배지 공통, CMS 전역 SSOT) ----- */
 .status-badge--variant-text.status-badge--program-enrollment-waiting-result,
 .status-badge--variant-badge.status-badge--program-enrollment-waiting-result {
-  --status-accent: var(--color-orange, #f07917);
+  --status-accent: var(--Status-orange-main, #f07917);
   color: var(--status-accent);
 }
 
 .status-badge--variant-text.status-badge--program-enrollment-document-pass,
 .status-badge--variant-badge.status-badge--program-enrollment-document-pass {
-  --status-accent: var(--color-purple, #8457ce);
+  --status-accent: var(--Status-purple-main, #8457ce);
   color: var(--status-accent);
 }
 
 .status-badge--variant-text.status-badge--program-enrollment-education-scheduled,
 .status-badge--variant-badge.status-badge--program-enrollment-education-scheduled {
-  --status-accent: var(--color-green, #1e8c29);
+  --status-accent: var(--Status-green-main, #1e8c29);
   color: var(--status-accent);
 }
 
 .status-badge--variant-text.status-badge--program-enrollment-education-in-progress,
 .status-badge--variant-badge.status-badge--program-enrollment-education-in-progress {
-  --status-accent: var(--color-blue, #017eaf);
+  --status-accent: var(--Status-blue-main, #017eaf);
   color: var(--status-accent);
 }
 
 .status-badge--variant-text.status-badge--program-enrollment-program-ended,
 .status-badge--variant-badge.status-badge--program-enrollment-program-ended {
-  --status-accent: #374151;
+  --status-accent: var(--Netural-black, #3d3d3d);
   color: var(--status-accent);
 }
 
 .status-badge--variant-text.status-badge--program-enrollment-interview-failed,
 .status-badge--variant-badge.status-badge--program-enrollment-interview-failed {
-  --status-accent: var(--main-BK, #3d3d3d);
+  --status-accent: var(--Netural-black, #3d3d3d);
   color: var(--status-accent);
 }
 
 .status-badge--variant-text.status-badge--program-enrollment-rejected,
 .status-badge--variant-badge.status-badge--program-enrollment-rejected {
-  --status-accent: var(--color-red, #c32f4a);
+  --status-accent: var(--Status-red-main, #c32f4a);
   color: var(--status-accent);
 }
 

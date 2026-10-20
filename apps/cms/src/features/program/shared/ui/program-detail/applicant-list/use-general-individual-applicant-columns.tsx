@@ -7,6 +7,8 @@ import type { InstitutionApplicationProgramBridge } from '@/features/program/gen
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { getInstitutionApplicationSessionsTableSlice } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
+import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from './applicants-detail-session-format'
 import { GeneralDetailSessionLine } from './general-detail-session-line'
 
 /** 기관 신청 목록(general-detail)과 동일한 여유 폭 */
@@ -23,7 +25,10 @@ const GENERAL_DETAIL_INDIVIDUAL_NO_COL_WIDTH = 72
  * (신청 폼 단락 숨김 조건과 달리, 심사 목록에서는 열을 유지하고 값 없으면 `-`)
  */
 export function useGeneralIndividualApplicantColumns(
-  programBridge?: InstitutionApplicationProgramBridge | null
+  programBridge?: InstitutionApplicationProgramBridge | null,
+  detailScheduleTimeSpan?: string | null,
+  curriculumSessionLabels?: readonly string[] | null,
+  educationScheduleLines?: readonly string[] | null
 ): ColumnsType<GeneralIndividualApplicantRow> {
   const applicantNameColWidth = PARTICIPANT_APPLICANT_NAME_COL_WIDTH
 
@@ -100,7 +105,15 @@ export function useGeneralIndividualApplicantColumns(
             'applicant-details__td-sessions applicant-details__td-sessions--general-detail applicant-details__td-sessions--center',
         }),
         render: (_: unknown, record: GeneralIndividualApplicantRow) => {
-          const sessions = record.sessions ?? []
+          const sessions = prepareGeneralEducationScheduleSessions(
+            record.sessions ?? [],
+            generalEducationScheduleShapeFromBridge(programBridge),
+            {
+              detailScheduleTimeSpan,
+              educationScheduleLines:
+                educationScheduleLines ?? programBridge?.educationScheduleLines,
+            }
+          )
           if (sessions.length === 0) return '-'
           const { displaySessions, restCount } =
             getInstitutionApplicationSessionsTableSlice(sessions)
@@ -108,7 +121,12 @@ export function useGeneralIndividualApplicantColumns(
             <div className="applicant-details__sessions-cell">
               {displaySessions.map(s => (
                 <div key={s.round} className="applicant-details__session-line">
-                  <GeneralDetailSessionLine session={s} bridge={programBridge} />
+                  <GeneralDetailSessionLine
+                    session={s}
+                    bridge={programBridge}
+                    detailScheduleTimeSpan={detailScheduleTimeSpan}
+                    curriculumSessionLabels={curriculumSessionLabels}
+                  />
                 </div>
               ))}
               {restCount > 0 && (
@@ -121,5 +139,11 @@ export function useGeneralIndividualApplicantColumns(
     ]
 
     return columns
-  }, [programBridge, applicantNameColWidth])
+  }, [
+    applicantNameColWidth,
+    curriculumSessionLabels,
+    detailScheduleTimeSpan,
+    educationScheduleLines,
+    programBridge,
+  ])
 }

@@ -535,6 +535,74 @@ function uniquePositiveScheduleIds(ids: readonly number[]): number[] {
   return unique
 }
 
+/**
+ * 일반 기관 · 일정형 · 단일 회차 · 기간형.
+ * 이 경로만 희망 일정 행 id를 승인 본문에 넣는다. 복수 회차·날짜형은 기존 selectedScheduleId/slots를 유지한다.
+ */
+export function isGeneralOrganizationPeriodSingleRequestedScheduleApproval(input: {
+  educationScheduleMode?: string | null
+  sessionRound?: string | null
+  educationStructure?: string | null
+}): boolean {
+  const mode = String(input.educationScheduleMode ?? '').trim().toLowerCase()
+  const round = String(input.sessionRound ?? 'single').trim().toLowerCase()
+  const structure = String(input.educationStructure ?? 'schedule').trim().toLowerCase()
+  return mode === 'period' && round !== 'multi' && structure === 'schedule'
+}
+
+/** 기간형 단일 회차는 원본 희망 일정 행을 정확히 1건만 승인 본문에 넣는다. */
+export function buildPeriodSingleRequestedScheduleApprovePayload(
+  selectedRequestedScheduleIds: readonly number[]
+): { requestedScheduleId: number } | null {
+  const ids = uniquePositiveScheduleIds(selectedRequestedScheduleIds)
+  if (ids.length !== 1) return null
+  return { requestedScheduleId: ids[0] }
+}
+
+export type OrganizationApplicationApproveBody = {
+  requestedScheduleId?: number
+  selectedScheduleId?: number
+  slots?: Array<{ scheduleId: number }>
+  timing?: string
+  scheduledAt?: string
+}
+
+/**
+ * 승인 POST 본문. requestedScheduleId가 있으면 selectedScheduleId·slots를 넣지 않는다.
+ */
+export function mergeOrganizationApplicationApproveBody(input: {
+  timing?: string | null
+  scheduledAt?: string | null
+  requestedScheduleId?: number | null
+  selectedScheduleId?: number | null
+  slots?: ReadonlyArray<{ scheduleId: number }> | null
+}): OrganizationApplicationApproveBody {
+  const timing = input.timing?.trim() || 'IMMEDIATE'
+  const timingFields: OrganizationApplicationApproveBody = {
+    timing,
+    ...(timing === 'SCHEDULED' && input.scheduledAt?.trim()
+      ? { scheduledAt: input.scheduledAt.trim() }
+      : {}),
+  }
+  const requestedId = uniquePositiveScheduleIds(
+    input.requestedScheduleId == null ? [] : [input.requestedScheduleId]
+  )[0]
+  if (requestedId != null) {
+    return { ...timingFields, requestedScheduleId: requestedId }
+  }
+  const slotIds = uniquePositiveScheduleIds((input.slots ?? []).map(slot => slot.scheduleId))
+  if (slotIds.length > 0) {
+    return { ...timingFields, slots: slotIds.map(scheduleId => ({ scheduleId })) }
+  }
+  const selectedId = uniquePositiveScheduleIds(
+    input.selectedScheduleId == null ? [] : [input.selectedScheduleId]
+  )[0]
+  if (selectedId != null) {
+    return { ...timingFields, selectedScheduleId: selectedId }
+  }
+  return timingFields
+}
+
 export function buildOrganizationApplicationApproveSchedulePayload(input: {
   preferred: PreferredEducationSchedule[] | undefined
   educationSlots: ProgramScheduleResponse[] | undefined
@@ -760,6 +828,16 @@ export function hasUnresolvedOrganizationApprovePreferredSchedules(
 }
 
 const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
+  ORGANIZATION_APPROVE_SCHEDULE_SELECTOR_CONFLICT:
+    '승인 요청에 일정 선택 값이 함께 전달되었습니다. 희망 일정만 다시 선택해 주세요.',
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID:
+    '선택한 희망 일정을 확인할 수 없습니다. 희망 일정을 다시 불러옵니다.',
+  ORGANIZATION_APPROVE_REQUESTED_DATE_OUTSIDE_PERIOD:
+    '선택한 희망 일정이 교육 기간 밖입니다.',
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_PERIOD_REQUIRED:
+    '기간 지정 프로그램이 아니라 희망 일정 행으로 승인할 수 없습니다.',
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_NOT_SUPPORTED:
+    '이 프로그램 유형에서는 희망 일정 행으로 승인할 수 없습니다.',
   ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED:
     ORGANIZATION_APPROVE_MISSING_SCHEDULE_ID_MESSAGE,
   ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED:

@@ -42,15 +42,25 @@ export function buildOrganizationApplicationIdToRowIdMap(
   return map
 }
 
+function sameApplicationId(
+  left: number | string | null | undefined,
+  right: number | string | null | undefined
+): boolean {
+  if (left == null || right == null || left === '' || right === '') return false
+  const leftId = Number(left)
+  const rightId = Number(right)
+  return Number.isFinite(leftId) && leftId === rightId
+}
+
 export function findActiveMergeGroupForOrganizationApplication(
   groups: MergeGroupResponse[],
   organizationApplicationId: number
 ): MergeGroupResponse | undefined {
   return groups.find(group => {
     if (!isActiveMergeGroup(group)) return false
-    if (group.leadApplicationId === organizationApplicationId) return true
-    return group.members?.some(
-      member => member.organizationApplicationId === organizationApplicationId
+    if (sameApplicationId(group.leadApplicationId, organizationApplicationId)) return true
+    return group.members?.some(member =>
+      sameApplicationId(member.organizationApplicationId, organizationApplicationId)
     )
   })
 }
@@ -61,7 +71,8 @@ export function findActiveLeadMergeGroup(
 ): MergeGroupResponse | undefined {
   return groups.find(
     group =>
-      isActiveMergeGroup(group) && group.leadApplicationId === leadOrganizationApplicationId
+      isActiveMergeGroup(group) &&
+      sameApplicationId(group.leadApplicationId, leadOrganizationApplicationId)
   )
 }
 
@@ -91,12 +102,14 @@ export function resolveCombinedClassMergeViewState(
   }
 
   const rowIdByOrgAppId = buildOrganizationApplicationIdToRowIdMap(allRows)
-  const isLead = group.leadApplicationId === orgAppId
+  const isLead = sameApplicationId(group.leadApplicationId, orgAppId)
   const members = group.members ?? []
 
   if (isLead) {
     const partnerMembers = members.filter(
-      member => member.organizationApplicationId !== group.leadApplicationId && member.lead !== true
+      member =>
+        !sameApplicationId(member.organizationApplicationId, group.leadApplicationId) &&
+        member.lead !== true
     )
     const partnerIds: string[] = []
     const partnerGrades: string[] = []
@@ -129,6 +142,46 @@ export function resolveCombinedClassMergeViewState(
     combinedClassPartnerGrades: leadGrade ? [leadGrade] : [],
     mergeGroupId: group.id,
     isLead: false,
+  }
+}
+
+/** 활성 합반의 비리드 멤버만 편집 잠금. 미신청(그룹 없음)은 라디오로 다시 신청할 수 있다. */
+export function isCombinedClassNonLeadMember(
+  view: Pick<CombinedClassMergeViewState, 'combinedClassApplication' | 'isLead'> | null | undefined
+): boolean {
+  return view?.combinedClassApplication === '신청' && view.isLead === false
+}
+
+export function assertOrganizationMergeMembers(params: {
+  leadOrganizationApplicationId: number
+  leadGrade: string
+  partnerMembers: MergeMemberRequest[]
+}): void {
+  const leadGrade = params.leadGrade.trim()
+  if (!leadGrade) {
+    throw new Error('리드 신청의 학년 정보를 확인할 수 없습니다.')
+  }
+
+  const grades = new Set<string>([leadGrade])
+  const applicationIds = new Set<number>([params.leadOrganizationApplicationId])
+
+  for (const member of params.partnerMembers) {
+    const grade = member.grade.trim()
+    if (!grade) {
+      throw new Error('합반 대상 신청의 학년 정보를 확인해 주세요.')
+    }
+    if (grades.has(grade)) {
+      throw new Error('합반 대상 신청은 서로 다른 학년이어야 합니다.')
+    }
+    if (applicationIds.has(member.organizationApplicationId)) {
+      throw new Error('동일한 신청이 중복 선택되었습니다.')
+    }
+    grades.add(grade)
+    applicationIds.add(member.organizationApplicationId)
+  }
+
+  if (applicationIds.size < 2) {
+    throw new Error('합반에는 리드 신청을 포함해 승인된 신청 2건 이상이 필요합니다.')
   }
 }
 
