@@ -14,15 +14,16 @@ import { serializeTrainedTeacherServiceDetailJson } from './service-detail-json'
 
 describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
   it('maps BE periodStatus to typed lifecycle for table/filter sync', () => {
-    expect(mapTrainedTeacherListItemToProgram({ id: 186005, periodStatus: 'SCHEDULED' }).lifecycleStatus).toBe(
-      'scheduled'
-    )
-    expect(mapTrainedTeacherListItemToProgram({ id: 186002, periodStatus: 'IN_PROGRESS' }).lifecycleStatus).toBe(
-      'in_progress'
-    )
-    expect(mapTrainedTeacherListItemToProgram({ id: 186001, periodStatus: 'COMPLETED' }).lifecycleStatus).toBe(
-      'completed'
-    )
+    expect(
+      mapTrainedTeacherListItemToProgram({ id: 186005, periodStatus: 'SCHEDULED' }).lifecycleStatus
+    ).toBe('scheduled')
+    expect(
+      mapTrainedTeacherListItemToProgram({ id: 186002, periodStatus: 'IN_PROGRESS' })
+        .lifecycleStatus
+    ).toBe('in_progress')
+    expect(
+      mapTrainedTeacherListItemToProgram({ id: 186001, periodStatus: 'COMPLETED' }).lifecycleStatus
+    ).toBe('completed')
   })
 
   it('echoes detail textbookName / managerName / venue from list GET', () => {
@@ -227,7 +228,7 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
   })
 
-  it('falls back to serviceDetailJson when API field is absent', () => {
+  it('does not invent educationStructure from serviceDetailJson when the column is absent', () => {
     const programWithSchedule: Program = {
       id: 'tmp',
       sponsorId: 's',
@@ -249,7 +250,7 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
       serviceDetailJson: serializeTrainedTeacherServiceDetailJson(programWithSchedule),
     }
     const mapped = mapTrainedTeacherDetailToProgram(dto)
-    expect(mapped.generalProgramEducationStructure).toBe('schedule')
+    expect(mapped.generalProgramEducationStructure).toBeUndefined()
   })
 
   it('maps detailedProgramName from API into generalCommonInfo', () => {
@@ -260,22 +261,23 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('세부 프로그램')
   })
 
-  it('공고용명은 nested announcementTitle을 쓰고 title(대표명)로 덮지 않는다', () => {
+  it('공고용명은 GET title을 우선하고 nested announcementTitle은 fallback이다', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       ...baseDto,
       title: '교육받은교사(수정2)',
-      mainTitle: '교육받은교사(수정2)',
+      // mainTitle과 같으면 representative alias로 스킵되어 nested echo가 이긴다
+      mainTitle: '교육받은교사(수정)',
       serviceDetailJson: JSON.stringify({
         schemaVersion: 1,
         program: {
           generalCommonInfo: {
-            announcementTitle: '공고용 프로그램명',
+            announcementTitle: '구 공고 echo',
           },
         },
       }),
     })
     expect(mapped.title).toBe('교육받은교사(수정2)')
-    expect(mapped.generalCommonInfo?.announcementTitle).toBe('공고용 프로그램명')
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
   })
 
   it('세부 프로그램명에 textbookName(교재명)을 쓰지 않는다', () => {
@@ -303,6 +305,8 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
       mainTitle: '교육받은교사(수정)',
       textbookName: '사회공헌 프로젝트',
       venue: '별관 301호',
+      venueDetail: '상세 문장 A동',
+      venueKind: 'other',
       institutionType: 'inside_school',
       serviceDetailJson: JSON.stringify({
         schemaVersion: 1,
@@ -323,11 +327,12 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
       }),
     })
     expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
-    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBeUndefined()
     expect(mapped.textbookName).toBe('사회공헌 프로젝트')
+    expect(mapped.venue).toBe('별관 301호')
     expect(mapped.generalCommonInfo?.venueKind).toBe('other')
-    expect(mapped.generalCommonInfo?.venueDetail).toBe('별관 301호')
-    expect(mapped.institutionType).toBeUndefined()
+    expect(mapped.generalCommonInfo?.venueDetail).toBe('상세 문장 A동')
+    expect(mapped.institutionType).toBe('inside_school')
   })
 })
 
@@ -574,7 +579,7 @@ describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
 })
 
 describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
-  it('sends top-level finalSchools / finalClasses / venueKind for BE generalCommonInfo mirror', () => {
+  it('sends top-level venue / venueKind / venueDetail separately', () => {
     const program = {
       id: '186005',
       sponsorId: '163302',
@@ -591,6 +596,7 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
       updatedAt: '2026-01-01',
       totalParticipants: 120,
       participatingSchoolCount: 8,
+      venue: '본관',
       generalCommonInfo: {
         venueKind: 'other' as const,
         venueDetail: '별관 301호',
@@ -605,9 +611,12 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     }
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.totalParticipants).toBe(120)
-    expect(request.venue).toBe('별관 301호')
+    expect(request.venue).toBe('본관')
+    expect(request.venueDetail).toBe('별관 301호')
+    expect(request.venueKind).toBe('other')
     expect(request.serviceDetailJson).toContain('"finalSchools":8')
     expect(request.serviceDetailJson).toContain('"venueKind":"other"')
+    expect(request.serviceDetailJson).toContain('"venueDetail":"별관 301호"')
   })
 
   it('writes a single program envelope and drops stale nested textbook/sponsor mirrors', () => {
@@ -817,7 +826,7 @@ describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그�
     updatedAt: '2026-01-01',
   }
 
-  it('sends detailedProgramId and mirrors the selected name to textbookName', () => {
+  it('sends detailedProgramId and does not copy the selected name onto textbookName', () => {
     const program = {
       ...baseProgram,
       detailedProgramId: '163006',
@@ -825,12 +834,13 @@ describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그�
     }
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.detailedProgramId).toBe(163006)
-    expect(request.textbookName).toBe('실제 선택한 세부 프로그램명')
+    expect(request.textbookName).toBeUndefined()
+    expect(request.mainTitle).toBeUndefined()
     expect(request.teamDivision).toBeUndefined()
 
     const createRequest = mapTrainedTeacherToCreateRequest(program)
     expect(createRequest.detailedProgramId).toBe(163006)
-    expect(createRequest.textbookName).toBe('실제 선택한 세부 프로그램명')
+    expect(createRequest.textbookName).toBeUndefined()
   })
 
   it('detailedProgramId가 없거나 sentinel(해당없음)이면 null(undefined)로 보낸다', () => {
@@ -889,7 +899,7 @@ describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
       }),
     })
     expect(mapped.totalParticipants).toBe(200)
-    expect(mapped.participatingSchoolCount).toBe(1)
+    expect(mapped.participatingSchoolCount).toBeUndefined()
     expect(mapped.generalCommonInfo?.kpi?.finalParticipants).toBe(200)
     expect(mapped.generalCommonInfo?.kpi?.finalSchools).toBe(1)
     expect(mapped.generalCommonInfo?.kpi?.finalClasses).toBe(1)
@@ -1170,7 +1180,7 @@ describe('mapTrainedTeacherDetailToProgram recruitment columns (BE 2026-09-23 ha
 })
 
 describe('trained teacher businessArea', () => {
-  it('normalizes the column and falls back to serviceDetailJson when the column is empty', () => {
+  it('normalizes the businessArea column and does not read stale JSON when the column is empty', () => {
     const fromColumn = mapTrainedTeacherDetailToProgram({
       id: '186005',
       title: 'TT',
@@ -1192,17 +1202,17 @@ describe('trained teacher businessArea', () => {
         program: { businessArea: '디지털 리터러시' },
       }),
     })
-    expect(fromJson.businessArea).toBe('디지털리터러시')
+    expect(fromJson.businessArea).toBeUndefined()
   })
 
-  it('reads businessField alias when businessArea column is empty', () => {
+  it('does not read businessField alias when businessArea column is empty', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       id: '186005',
       title: 'TT',
       sponsorId: 'sponsor-1',
       businessField: '진로취업',
     } as Parameters<typeof mapTrainedTeacherDetailToProgram>[0])
-    expect(mapped.businessArea).toBe('진로취업')
+    expect(mapped.businessArea).toBeUndefined()
   })
 
   it('sends the master name on the column and in serviceDetailJson, not inside generalCommonInfo', () => {
@@ -1232,6 +1242,33 @@ describe('trained teacher businessArea', () => {
     expect(envelope.program?.businessArea).toBe('진로취업')
     expect(envelope.program?.generalCommonInfo).not.toHaveProperty('businessArea')
   })
+
+  it('clears businessArea with clearFields instead of empty string', () => {
+    const existing = {
+      id: '186005',
+      sponsorId: 'sponsor-1',
+      title: 'TT',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      businessArea: '진로취업',
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(existing, { businessArea: '' })
+    expect(request.businessArea).toBeUndefined()
+    expect(request.clearFields).toEqual(expect.arrayContaining(['businessArea']))
+    const envelope = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { businessArea?: string; generalCommonInfo?: Record<string, unknown> | null }
+    }
+    expect(envelope.program?.businessArea).toBeUndefined()
+    expect(envelope.program?.generalCommonInfo?.businessArea).toBeUndefined()
+  })
 })
 
 describe('mapTrainedTeacherToUpdateRequest', () => {
@@ -1252,7 +1289,8 @@ describe('mapTrainedTeacherToUpdateRequest', () => {
       updatedAt: '2026-01-01',
     } as Program
     const request = mapTrainedTeacherToUpdateRequest(program, { title: '모집만 저장' })
-    expect(request.featuredOnHome).toBeUndefined()
-    expect(request.homeDisplayOrder).toBeUndefined()
+    const requestRecord = request as unknown as Record<string, unknown>
+    expect(requestRecord.featuredOnHome).toBeUndefined()
+    expect(requestRecord.homeDisplayOrder).toBeUndefined()
   })
 })

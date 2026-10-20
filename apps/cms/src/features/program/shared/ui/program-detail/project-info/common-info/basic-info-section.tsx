@@ -48,10 +48,7 @@ import {
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import {
-  PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
-  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
-} from '@/features/template/lib/program-registration-survey-items'
+import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   formatDate,
@@ -71,6 +68,7 @@ import { ProgramLifecycleEnrollmentStatusText } from '@/shared/components/progra
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { isTrainedTeachersProgram } from '@/features/program/general/lib/survey-audience'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -278,6 +276,11 @@ function formatCompanySchoolVenue(program: Program): string {
   const kind = resolveVenueKind(program)
   const kindLabel =
     kind === 'outside' ? '기관 밖' : kind === 'other' ? '기타(직접입력)' : '기관 안'
+  if (isTrainedTeachersProgram(program)) {
+    const venueName = program.venue?.trim() || '-'
+    const venueDetail = program.generalCommonInfo?.venueDetail?.trim() || '-'
+    return `${kindLabel} | ${venueName} | ${venueDetail}`
+  }
   const detail =
     program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
   return `${kindLabel} | ${detail}`
@@ -338,20 +341,23 @@ export function BasicInfoSection({
         .filter((row): row is SponsorManagementRow => row != null),
     [sponsorEditContext.sponsors, sponsorManagementIds]
   )
+  // 후원사 셀렉트 = 전체 카탈로그(useSponsorSelectOptions).
+  // sponsorEditContext는 선택분만 detail/contacts 로드 — 옵션 목록으로 쓰면 1건만 노출된다.
   const sponsorManagementOptions = useMemo(() => {
-    const options = sponsorEditContext.sponsors.map(row => ({
-      value: row.id,
-      label: row.name,
-    }))
+    const options = [...sponsorOptions]
     for (const id of sponsorManagementIds) {
       if (!id || options.some(option => option.value === id)) continue
+      const detailName = sponsorEditContext.sponsors.find(row => row.id === id)?.name?.trim()
       options.push({
         value: id,
-        label: (sponsorManagementIds.length === 1 ? sponsorName?.trim() : '') || id,
+        label:
+          detailName ||
+          (sponsorManagementIds.length === 1 ? sponsorName?.trim() : '') ||
+          id,
       })
     }
     return options
-  }, [sponsorEditContext.sponsors, sponsorManagementIds, sponsorName])
+  }, [sponsorOptions, sponsorManagementIds, sponsorEditContext.sponsors, sponsorName])
   const sponsorManagerOptions = useMemo(() => {
     const options: Array<{
       value: string
@@ -506,7 +512,10 @@ export function BasicInfoSection({
 
   if (companySchoolLayout) {
     const commonInfo = program.generalCommonInfo
-    const announcementTitle = resolvePublicProgramTitleDisplay(program)
+    const trainedTeacherCommonInfo = isTrainedTeachersProgram(program)
+    const announcementTitle = trainedTeacherCommonInfo
+      ? program.title?.trim() || '-'
+      : resolvePublicProgramTitleDisplay(program)
     const detailedProgramName = commonInfo?.detailedProgramName?.trim() || '-'
     const educationProcessLabel = isEconomyCommonInfo
       ? optionLabel(
@@ -516,13 +525,16 @@ export function BasicInfoSection({
       : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
     const ipOwnedLabel = optionLabel(
       isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
-      program.ipOwned ?? 'JA'
+      trainedTeacherCommonInfo ? program.ipOwned : (program.ipOwned ?? 'JA')
     )
     const courseDeliveredByLabel = optionLabel(
       COURSE_DELIVERED_BY_OPTIONS,
-      program.courseDeliveredBy ?? 'JA'
+      trainedTeacherCommonInfo ? program.courseDeliveredBy : (program.courseDeliveredBy ?? 'JA')
     )
-    const ipsLabel = optionLabel(IPS_OPTIONS, program.ips ?? 'Prepare')
+    const ipsLabel = optionLabel(
+      IPS_OPTIONS,
+      trainedTeacherCommonInfo ? program.ips : (program.ips ?? 'Prepare')
+    )
     return (
       <div className="project-info-basic-info-section__company-school-forms">
         <DetailInfoForm title="기본 정보" hideHeader={hideFormTitles} mode="view">
@@ -981,20 +993,54 @@ export function BasicInfoSection({
                     )}
                   />
                   <DetailInfoForm.InputsSeparator />
-                  <Controller
-                    name="venueDetail"
-                    control={commonInfoForm.control}
-                    render={({ field }) => (
-                      <CmsInput
-                        inputSize="small"
-                        placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-                        width="100%"
-                        style={{ flex: '1 1 0', minWidth: 0 }}
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
+                  {isTrainedTeachersProgram(program) ? (
+                    <>
+                      <Controller
+                        name="venue"
+                        control={commonInfoForm.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            inputSize="small"
+                            placeholder="장소명"
+                            width="100%"
+                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            value={field.value ?? ''}
+                            onChange={field.onChange}
+                          />
+                        )}
                       />
-                    )}
-                  />
+                      <DetailInfoForm.InputsSeparator />
+                      <Controller
+                        name="venueDetail"
+                        control={commonInfoForm.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            inputSize="small"
+                            placeholder="상세 장소"
+                            width="100%"
+                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            value={field.value ?? ''}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </>
+                  ) : (
+                    <Controller
+                      name="venueDetail"
+                      control={commonInfoForm.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          inputSize="small"
+                          placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                          width="100%"
+                          style={{ flex: '1 1 0', minWidth: 0 }}
+                          value={field.value ?? ''}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  )}
                 </div>
               }
             />
@@ -1007,16 +1053,10 @@ export function BasicInfoSection({
               view={formatCompanySchoolSurveyItems(program)}
               edit={
                 <div className="detail-info-form-inputs-wrapper">
-                  {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
+                  {getGeneralSurveyEditFieldsForAudience(false, program).map(item => (
                     <Controller
-                      key={id}
-                      name={
-                        id === 'survey'
-                          ? 'surveySurvey'
-                          : id === 'satisfaction'
-                            ? 'surveySatisfaction'
-                            : 'surveyLectureEvaluation'
-                      }
+                      key={item.id}
+                      name={item.formKey}
                       control={commonInfoForm.control}
                       render={({ field }) => (
                         <CmsCheckbox
@@ -1024,7 +1064,7 @@ export function BasicInfoSection({
                           checked={Boolean(field.value)}
                           onChange={e => field.onChange(e.target.checked)}
                         >
-                          {PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+                          {item.label}
                         </CmsCheckbox>
                       )}
                     />

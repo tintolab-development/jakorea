@@ -22,6 +22,8 @@ export const TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
 export interface TrainedTeacherServiceDetailJsonV1 {
   schemaVersion: typeof TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION
+  /** 일반 프로그램 serviceDetailJson과 동일 위치. 체크박스 ↔ LNB SSOT */
+  generalSurveyMenuKeys?: Program['generalSurveyMenuKeys']
   program: Partial<Program>
   registration?: { overlay?: Record<string, unknown> }
 }
@@ -113,6 +115,12 @@ function trainedTeacherEducationSelection(
   }
 }
 
+/** BE nested 병합 — 빈 문자열·null로 기존 값을 지우지 않도록 omit */
+function omitEmptyNestedString(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
 function sanitizeTrainedTeacherCommonInfo(
   common: Program['generalCommonInfo'] | undefined,
   program: Program
@@ -125,6 +133,17 @@ function sanitizeTrainedTeacherCommonInfo(
   for (const key of TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS) {
     delete stripped[key]
   }
+  // 빈 venue/교육과정 문자열은 omit — BE가 기존 nested를 유지한다.
+  delete stripped.venueKind
+  delete stripped.venueDetail
+  delete stripped.educationProcess
+  delete stripped.ipOwned
+  delete stripped.courseDeliveredBy
+  delete stripped.partnerInvolvement
+  const venueKind = omitEmptyNestedString(
+    typeof common.venueKind === 'string' ? common.venueKind : undefined
+  )
+  const venueDetail = omitEmptyNestedString(common.venueDetail)
   const sponsorManagementIds = (
     common.sponsorManagementIds?.length
       ? common.sponsorManagementIds
@@ -136,8 +155,7 @@ function sanitizeTrainedTeacherCommonInfo(
   )
     .map(id => String(id).trim())
     .filter(Boolean)
-  const detailedProgramName =
-    common.detailedProgramName?.trim() || program.textbookName?.trim() || undefined
+  const detailedProgramName = common.detailedProgramName?.trim() || undefined
   const participantRecruitmentInfo = common.participantRecruitmentInfo
     ? {
         ...common.participantRecruitmentInfo,
@@ -148,6 +166,10 @@ function sanitizeTrainedTeacherCommonInfo(
   return {
     ...(stripped as NonNullable<Program['generalCommonInfo']>),
     ...educationSelection,
+    ...(venueKind === 'inside' || venueKind === 'outside' || venueKind === 'other'
+      ? { venueKind }
+      : {}),
+    ...(venueDetail ? { venueDetail } : {}),
     ...(sponsorManagementIds.length > 0
       ? {
           sponsorManagementIds,
@@ -160,8 +182,49 @@ function sanitizeTrainedTeacherCommonInfo(
   }
 }
 
+/** TT 설문 키 정규화 — survey / satisfaction / lecture_evaluation (공통정보 체크 ↔ LNB SSOT) */
+function trainedTeacherSurveyMenuKeys(
+  keys: Program['generalSurveyMenuKeys']
+): Program['generalSurveyMenuKeys'] {
+  if (keys === undefined) return undefined
+  return resolveGeneralSurveyMenuKeys({ keys })
+}
+
+function readStoredSurveyMenuKeys(value: unknown): Program['generalSurveyMenuKeys'] | undefined {
+  return Array.isArray(value) ? (value as Program['generalSurveyMenuKeys']) : undefined
+}
+
+/**
+ * 루트 `generalSurveyMenuKeys`가 있으면(빈 배열 포함) 그게 SSOT.
+ * BE가 루트 필드를 버리고 `program`만 남기면 그 안의 키를 쓴다.
+ * overlay surveyItems만으로 체크를 되살리지 않는다.
+ */
+function resolveStoredTrainedTeacherSurveyMenuKeys(input: {
+  rootKeys: unknown
+  programKeys: unknown
+}): Program['generalSurveyMenuKeys'] {
+  const rootKeys = readStoredSurveyMenuKeys(input.rootKeys)
+  if (rootKeys !== undefined) return trainedTeacherSurveyMenuKeys(rootKeys)
+  return trainedTeacherSurveyMenuKeys(readStoredSurveyMenuKeys(input.programKeys))
+}
+
+/** 키가 있을 때만 overlay 체크를 맞춘다. 키 생략 시 저장된 surveyItems를 false로 지우지 않는다. */
+function reconcileSurveyOverlay(
+  overlay: Record<string, unknown> | undefined,
+  keys: Program['generalSurveyMenuKeys']
+): Record<string, unknown> | undefined {
+  if (keys === undefined) return overlay
+  return syncSurveyItemsIntoRegistrationOverlay(overlay, keys)
+}
+
 function trainedTeacherDetails(program: Program): Partial<Program> {
   const businessArea = resolveStoredBusinessArea(program.businessArea) || undefined
+  const sessionRound =
+    program.generalProgramSessionRound === 'single' ||
+    program.generalProgramSessionRound === 'multi'
+      ? program.generalProgramSessionRound
+      : undefined
+  const generalSurveyMenuKeys = trainedTeacherSurveyMenuKeys(program.generalSurveyMenuKeys)
   return trainedTeacherConstraints({
     ...(businessArea ? { businessArea } : {}),
     posterImage: program.posterImage,
@@ -181,10 +244,11 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
     satisfactionFormTemplateId: program.satisfactionFormTemplateId,
     lectureReportFormTemplateId: program.lectureReportFormTemplateId,
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
-    generalSurveyMenuKeys: program.generalSurveyMenuKeys,
+    // 빈 배열도 실어 전부 해제를 BE에 전달 (키 생략 ≠ 해제)
+    ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
-    generalProgramSessionRound: program.generalProgramSessionRound,
+    ...(sessionRound ? { generalProgramSessionRound: sessionRound } : {}),
     generalCommonInfo: sanitizeTrainedTeacherCommonInfo(program.generalCommonInfo, program),
     scheduleTimeEnabled: program.scheduleTimeEnabled,
     startTime: program.startTime,
@@ -195,15 +259,20 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
 }
 
 export function serializeTrainedTeacherServiceDetailJson(program: Program): string {
-  const registrationOverlay = syncSurveyItemsIntoRegistrationOverlay(
-    persistScheduleEducationFormByDetailOverlay(
-      buildRegistrationOverlayForPersist(program),
-      program.generalCommonInfo?.scheduleDetails
-    ),
-    program.generalSurveyMenuKeys
+  const generalSurveyMenuKeys = trainedTeacherSurveyMenuKeys(program.generalSurveyMenuKeys)
+  const baseOverlay = persistScheduleEducationFormByDetailOverlay(
+    buildRegistrationOverlayForPersist(program),
+    program.generalCommonInfo?.scheduleDetails
   )
+  // keys가 있을 때만(빈 배열 포함) overlay surveyItems를 맞춤. 키 생략 시 overlay를 지우지 않는다.
+  const registrationOverlay =
+    generalSurveyMenuKeys !== undefined
+      ? syncSurveyItemsIntoRegistrationOverlay(baseOverlay, generalSurveyMenuKeys)
+      : baseOverlay
   const payload: TrainedTeacherServiceDetailJsonV1 = {
     schemaVersion: TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION,
+    // 일반 프로그램과 동일 — 루트 generalSurveyMenuKeys가 LNB SSOT
+    ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
     program: trainedTeacherDetails(program),
     ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
   }
@@ -231,16 +300,11 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
         return {}
       }
       const programPartial = trainedTeacherConstraints(parsed.program as Partial<Program>)
-      // 일반 프로그램과 동일 — keys 없으면 overlay surveyItems에서 복원.
-      // keys 없이 sync하면 overlay를 전부 false로 덮어 설문이 유실된다.
-      const generalSurveyMenuKeys = resolveGeneralSurveyMenuKeys({
-        keys: programPartial.generalSurveyMenuKeys,
-        overlay: registrationOverlay,
+      const generalSurveyMenuKeys = resolveStoredTrainedTeacherSurveyMenuKeys({
+        rootKeys: parsed.generalSurveyMenuKeys,
+        programKeys: programPartial.generalSurveyMenuKeys,
       })
-      const reconciledOverlay = syncSurveyItemsIntoRegistrationOverlay(
-        registrationOverlay,
-        generalSurveyMenuKeys
-      )
+      const reconciledOverlay = reconcileSurveyOverlay(registrationOverlay, generalSurveyMenuKeys)
       return {
         ...programPartial,
         generalSurveyMenuKeys,
@@ -262,14 +326,11 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]
     )
     const constrained = trainedTeacherConstraints(normalized)
-    const generalSurveyMenuKeys = resolveGeneralSurveyMenuKeys({
-      keys: constrained.generalSurveyMenuKeys,
-      overlay: registrationOverlay,
+    const generalSurveyMenuKeys = resolveStoredTrainedTeacherSurveyMenuKeys({
+      rootKeys: parsed.generalSurveyMenuKeys,
+      programKeys: constrained.generalSurveyMenuKeys,
     })
-    const reconciledOverlay = syncSurveyItemsIntoRegistrationOverlay(
-      registrationOverlay,
-      generalSurveyMenuKeys
-    )
+    const reconciledOverlay = reconcileSurveyOverlay(registrationOverlay, generalSurveyMenuKeys)
     return {
       ...constrained,
       generalSurveyMenuKeys,
