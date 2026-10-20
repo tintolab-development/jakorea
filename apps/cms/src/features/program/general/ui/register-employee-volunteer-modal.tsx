@@ -3,7 +3,7 @@
  * 프로그램 진행 현황 > 참여 봉사자 > 임직원 자원봉사자 등록
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Form } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -44,6 +44,8 @@ export interface RegisterEmployeeVolunteerModalProps {
   open: boolean
   onCancel: () => void
   sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>
+  /** 기관 선택 시 배정 일정 라벨이 반영된 행(미전달 시 sessionRows) */
+  resolveSessionRowsForInstitution?: (institutionId?: string) => EmployeeVolunteerSessionRow[]
   institutionOptions: RegisterEmployeeVolunteerInstitutionOption[]
   savedRegistrations: ReadonlyArray<EmployeeVolunteerInstitutionRegistration>
   /** 개인 프로그램 — 배정 기관 셀렉 비노출 */
@@ -62,10 +64,10 @@ export interface RegisterEmployeeVolunteerModalProps {
 const MODAL_WIDTH = 880
 
 const INSTITUTION_DESCRIPTION =
-  '각 배정 기관의 진행 일정별로 신규 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
+  '각 배정 기관의 진행 일정별로 신규 참여 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
 
 const INDIVIDUAL_PROGRAM_DESCRIPTION =
-  '프로그램 교육 진행 일정별로 신규 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
+  '프로그램 교육 진행 일정별로 신규 참여 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
 
 function SessionVolunteerCountPair({
   sessionRow,
@@ -91,7 +93,7 @@ function SessionVolunteerCountPair({
           inputSize="small"
           pattern="[0-9]*"
           width="100%"
-          placeholder="자원봉사자 수"
+          placeholder="자원봉사자 수 입력"
           aria-label={`${sessionRow.label} ${label} 자원봉사자 수`}
         />
       </Form.Item>
@@ -103,6 +105,7 @@ export function RegisterEmployeeVolunteerModal({
   open,
   onCancel,
   sessionRows,
+  resolveSessionRowsForInstitution,
   institutionOptions,
   savedRegistrations,
   hideInstitutionSelect = false,
@@ -116,6 +119,21 @@ export function RegisterEmployeeVolunteerModal({
   const [form] = Form.useForm<RegisterEmployeeVolunteerFormValues>()
   const [submitting, setSubmitting] = useState(false)
   const selectedInstitutionId = Form.useWatch('institutionId', form)
+  const displaySessionRows = useMemo(() => {
+    if (hideInstitutionSelect) {
+      return resolveSessionRowsForInstitution?.(programLevelRegistrationScopeId) ?? [...sessionRows]
+    }
+    if (!selectedInstitutionId) {
+      return [...sessionRows]
+    }
+    return resolveSessionRowsForInstitution?.(selectedInstitutionId) ?? [...sessionRows]
+  }, [
+    hideInstitutionSelect,
+    programLevelRegistrationScopeId,
+    resolveSessionRowsForInstitution,
+    selectedInstitutionId,
+    sessionRows,
+  ])
   const appliedScopeIdRef = useRef<string | null>(null)
   const appliedSavedSnapshotRef = useRef<string>('')
 
@@ -238,7 +256,7 @@ export function RegisterEmployeeVolunteerModal({
     }
 
     const countsBySessionId = form.getFieldValue('countsBySessionId') ?? {}
-    if (!hasCompleteEmployeeVolunteerCounts(sessionRows, countsBySessionId)) {
+    if (!hasCompleteEmployeeVolunteerCounts(displaySessionRows, countsBySessionId)) {
       onIncompleteCounts()
       return
     }
@@ -246,7 +264,7 @@ export function RegisterEmployeeVolunteerModal({
     const normalizedCounts: Partial<
       Record<EmployeeVolunteerSessionRowId, EmployeeVolunteerSessionCounts>
     > = {}
-    for (const row of sessionRows) {
+    for (const row of displaySessionRows) {
       const entry = countsBySessionId[row.id]
       normalizedCounts[row.id] = {
         newCount: entry?.newCount ?? 0,
@@ -303,57 +321,63 @@ export function RegisterEmployeeVolunteerModal({
           requiredMark={false}
           initialValues={{ countsBySessionId: createEmptyEmployeeVolunteerFormCounts(sessionRows) }}
         >
-          {!hideInstitutionSelect ? (
-            <Form.Item
-              name="institutionId"
-              label={
-                <span>
-                  배정 기관
-                  <span className="register-employee-volunteer-modal__required" aria-hidden>
-                    *
-                  </span>
-                </span>
-              }
-              className="register-employee-volunteer-modal__field"
-            >
-              <CmsSelect
-                inputSize="small"
-                width="100%"
-                withAllOption={false}
-                placeholder="자원봉사자를 배정할 기관을 선택해 주세요"
-                options={institutionOptions}
-                notFoundContent={
-                  institutionOptions.length === 0 ? '배정 가능한 기관이 없습니다' : undefined
-                }
-                getPopupContainer={() => document.body}
-              />
-            </Form.Item>
-          ) : null}
-
-          {sessionRows.length > 0 ? (
-            <div
-              className="register-employee-volunteer-modal__grid"
-              role="group"
-              aria-label="일정별 임직원 자원봉사자 수"
-            >
-              {sessionRows.map(sessionRow => (
-                <div key={sessionRow.id} className="register-employee-volunteer-modal__row">
-                  <div className="register-employee-volunteer-modal__session-label">
-                    {sessionRow.label}
-                  </div>
-                  <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap register-employee-volunteer-modal__counts">
-                    <SessionVolunteerCountPair sessionRow={sessionRow} field="newCount" />
-                    <DetailInfoForm.InputsSeparator />
-                    <SessionVolunteerCountPair sessionRow={sessionRow} field="returningCount" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="register-employee-volunteer-modal__empty">
-              프로그램 교육 일정 정보가 없어 입력할 일정을 표시할 수 없습니다.
-            </p>
-          )}
+          <DetailInfoForm title="임직원 자원봉사자 등록" hideHeader mode="edit">
+            {!hideInstitutionSelect ? (
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="배정 기관"
+                  required
+                  fullRow
+                  view="-"
+                  edit={
+                    <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
+                      <CmsSelect
+                        inputSize="small"
+                        width="100%"
+                        withAllOption={false}
+                        placeholder="자원봉사자를 배정할 기관을 선택해 주세요"
+                        value={selectedInstitutionId || undefined}
+                        options={institutionOptions}
+                        onChange={next =>
+                          form.setFieldValue('institutionId', next ? String(next) : undefined)
+                        }
+                        notFoundContent={
+                          institutionOptions.length === 0
+                            ? '배정 가능한 기관이 없습니다'
+                            : undefined
+                        }
+                        getPopupContainer={() => document.body}
+                      />
+                    </div>
+                  }
+                />
+              </DetailInfoForm.Row>
+            ) : null}
+            {displaySessionRows.length > 0 ? (
+              displaySessionRows.map(sessionRow => (
+                <DetailInfoForm.Row type="single" key={sessionRow.id}>
+                  <DetailInfoForm.Field
+                    label={sessionRow.label}
+                    fullRow
+                    view="-"
+                    edit={
+                      <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap register-employee-volunteer-modal__counts">
+                        <SessionVolunteerCountPair sessionRow={sessionRow} field="newCount" />
+                        <DetailInfoForm.InputsSeparator />
+                        <SessionVolunteerCountPair sessionRow={sessionRow} field="returningCount" />
+                      </div>
+                    }
+                  />
+                </DetailInfoForm.Row>
+              ))
+            ) : (
+              <DetailInfoForm.Row type="custom">
+                <p className="register-employee-volunteer-modal__empty">
+                  프로그램 교육 일정 정보가 없어 입력할 일정을 표시할 수 없습니다.
+                </p>
+              </DetailInfoForm.Row>
+            )}
+          </DetailInfoForm>
         </Form>
       </div>
     </ContentModal>

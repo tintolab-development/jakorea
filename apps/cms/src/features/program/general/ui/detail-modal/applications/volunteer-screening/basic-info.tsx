@@ -4,13 +4,11 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { formatGeneralJaVolunteerExperienceLabel } from '@/features/program/general/lib/volunteer-screening-constants'
 import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
-import { openPortal1365Main } from '@/shared/constants/external-urls'
-import { CmsButton } from '@/shared/ui'
+import { IndividualApplicantId1365Cell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-screening-sections'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import { VolunteerEvidenceFileList } from './evidence-files'
 import {
   GeneralDocumentScreeningStatusText,
   GeneralInterviewAssignmentStatusText,
@@ -64,18 +62,6 @@ function resolveStatusField(
   }
 }
 
-function VolunteerId1365Cell({ id1365 }: { id1365: string }) {
-  return (
-    <span className="general-volunteer-applicant-basic-info__id1365-cell">
-      <span>{id1365}</span>
-      <DetailInfoForm.InputsSeparator />
-      <CmsButton type="button" size="medium" onClick={openPortal1365Main}>
-        1365 바로가기
-      </CmsButton>
-    </span>
-  )
-}
-
 export function GeneralVolunteerApplicantBasicInfo({
   applicant,
   maskSensitive,
@@ -101,8 +87,7 @@ export function GeneralVolunteerApplicantBasicInfo({
       applicant.name
     )
 
-  const statusField =
-    statusRow === 'none' ? null : resolveStatusField(applicant, statusRow)
+  const statusField = statusRow === 'none' ? null : resolveStatusField(applicant, statusRow)
 
   return (
     <section className="general-volunteer-applicant-basic-info">
@@ -135,7 +120,7 @@ export function GeneralVolunteerApplicantBasicInfo({
           <DetailInfoForm.Field
             label="1365 ID"
             readOnlyDisplay
-            view={<VolunteerId1365Cell id1365={applicant.id1365} />}
+            view={<IndividualApplicantId1365Cell id1365={applicant.id1365?.trim() ?? ''} />}
           />
           <DetailInfoForm.Field
             label="JA 봉사 진행 경험"
@@ -143,21 +128,6 @@ export function GeneralVolunteerApplicantBasicInfo({
             view={formatGeneralJaVolunteerExperienceLabel(applicant.hasJaVolunteerExperience)}
           />
         </DetailInfoForm.Row>
-        {applicant.hasJaVolunteerExperience ? (
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="이전 참여 JA 봉사 프로그램"
-              fullRow
-              readOnlyDisplay
-              view={
-                <div className="general-volunteer-applicant-basic-info__previous-ja">
-                  <span>{applicant.previousJaProgram?.trim() || '-'}</span>
-                  <VolunteerEvidenceFileList files={applicant.evidenceAttachments ?? []} />
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
-        ) : null}
       </DetailInfoForm>
     </section>
   )

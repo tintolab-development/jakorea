@@ -65,7 +65,9 @@
   --detail-info-label-w: 220px;
 }
 
-.general-volunteer-applicant-basic-info > .detail-info-form:first-child .detail-info-form__field-content {
+.general-volunteer-applicant-basic-info
+  > .detail-info-form:first-child
+  .detail-info-form__field-content {
   justify-content: flex-start;
 }
 
@@ -80,15 +82,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--spacing-8, 8px);
-}
-
-.general-volunteer-applicant-basic-info__previous-ja {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
 }
 
 .general-volunteer-applicant-basic-info .detail-info-form__field-label {
@@ -309,7 +302,7 @@
 .general-volunteer-applicant-detail .general-volunteer-interview2__score-value {
   color: var(--color-mint-01, #01a1af);
   font-family: Pretendard;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;

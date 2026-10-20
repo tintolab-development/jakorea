@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { getGeneralVolunteerActivityWithdrawScheduleOptions } from './general-volunteer-activity-withdraw'
+import {
+  buildGeneralVolunteerScreeningActivityWithdrawCompleteDescription,
+  buildGeneralVolunteerScreeningActivityWithdrawDescription,
+  getGeneralVolunteerActivityWithdrawScheduleOptions,
+} from './general-volunteer-activity-withdraw'
 import type { Program } from '@/types/domain'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
@@ -15,6 +19,15 @@ function baseProgram(overrides: Partial<Program> = {}): Program {
     ...overrides,
   } as Program
 }
+
+describe('general volunteer screening activity withdraw copy', () => {
+  it('builds confirm and complete descriptions', () => {
+    expect(buildGeneralVolunteerScreeningActivityWithdrawDescription('김제이')).toContain('김제이')
+    expect(buildGeneralVolunteerScreeningActivityWithdrawCompleteDescription('김제이')).toBe(
+      '[김제이] 님의 프로그램 활동이 포기 처리되었습니다.'
+    )
+  })
+})
 
 describe('getGeneralVolunteerActivityWithdrawScheduleOptions', () => {
   it('단일 회차 프로그램은 프로그램 진행 1건을 노출한다', () => {
