@@ -11,6 +11,7 @@ import {
 } from '@/features/program/shared/model/applicant-institution'
 import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
+import type { ProgramSchedule } from '@/types/domain'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 
@@ -61,6 +62,76 @@ export function mapPreferredScheduleBlocksToSessions(
       timeRange,
     }
   })
+}
+
+function dateFromProgramSchedule(schedule: ProgramSchedule): string {
+  const raw = schedule.startDate?.trim() || schedule.startAt?.slice(0, 10) || ''
+  return raw.slice(0, 10)
+}
+
+function dayOfWeekFromIsoDate(date: string): string {
+  const parsed = new Date(`${date}T00:00:00+09:00`)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return ['일', '월', '화', '수', '목', '금', '토'][parsed.getDay()] ?? ''
+}
+
+function timeFromDateTime(value: string | null | undefined): string {
+  const raw = value?.trim() ?? ''
+  if (!raw) return ''
+  const time = raw.includes('T') ? raw.split('T')[1] : raw.split(' ')[1]
+  return time?.slice(0, 5) ?? ''
+}
+
+function numericScheduleId(value: string | number | null | undefined): number | null {
+  if (typeof value === 'number' && Number.isSafeInteger(value)) return value
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value)
+    return Number.isSafeInteger(parsed) ? parsed : null
+  }
+  return null
+}
+
+/** 프로그램 상세 schedules[] → 교육 진행 일정 표시용 block. 신청 희망 일정은 사용하지 않는다. */
+export function mapProgramSchedulesToPreferredScheduleBlocks(
+  schedules: ReadonlyArray<ProgramSchedule> | undefined
+): ApplicantPreferredScheduleBlock[] {
+  const activeSchedules = (schedules ?? [])
+    .filter(schedule => schedule.scheduleStatus === 'ACTIVE')
+    .filter(schedule => dateFromProgramSchedule(schedule) !== '')
+    .sort((a, b) => String(a.startAt ?? '').localeCompare(String(b.startAt ?? '')))
+
+  const grouped = new Map<string, ProgramSchedule[]>()
+  for (const schedule of activeSchedules) {
+    const date = dateFromProgramSchedule(schedule)
+    const current = grouped.get(date) ?? []
+    current.push(schedule)
+    grouped.set(date, current)
+  }
+
+  return [...grouped.entries()].map(([date, dateSchedules], index) => ({
+    preferenceRank: index + 1,
+    date,
+    dayOfWeek: dayOfWeekFromIsoDate(date),
+    sessionCount: dateSchedules.length,
+    sessionTimes: dateSchedules.map((schedule, sessionIndex) => {
+      const sessionNo = schedule.sessionNo ?? sessionIndex + 1
+      const startTime = timeFromDateTime(schedule.startAt)
+      const endTime = timeFromDateTime(schedule.endAt)
+      return {
+        sessionIndex: sessionNo,
+        classPeriod: `${sessionNo}차시`,
+        timeRange: startTime && endTime ? `${startTime} ~ ${endTime}` : startTime || endTime || '-',
+        ...(startTime ? { startTime } : {}),
+        ...(endTime ? { endTime } : {}),
+      }
+    }),
+    scheduleId: numericScheduleId(dateSchedules[0]?.id),
+    startAt: dateSchedules[0]?.startAt ?? null,
+    endAt: dateSchedules[dateSchedules.length - 1]?.endAt ?? null,
+    round: dateSchedules[0]?.sessionNo ?? null,
+    label: dateSchedules[0]?.scheduleName ?? null,
+    scheduleStatus: 'ACTIVE',
+  }))
 }
 
 /** BE DTO는 OpenAPI 축소본보다 runtime 필드가 더 있을 수 있음 — 기존 투영 유지 */
@@ -162,6 +233,18 @@ export function mapPreferredScheduleBlocks(
         dayOfWeek: block.dayOfWeek?.trim() || '',
         sessionCount: Math.max(sessionCount, sessionTimes.length, 1),
         sessionTimes,
+        scheduleId:
+          typeof block.scheduleId === 'number' && Number.isFinite(block.scheduleId)
+            ? Math.trunc(block.scheduleId)
+            : null,
+        startAt: block.startAt?.trim() || null,
+        endAt: block.endAt?.trim() || null,
+        round:
+          typeof block.round === 'number' && Number.isFinite(block.round)
+            ? Math.trunc(block.round)
+            : null,
+        label: block.label?.trim() || null,
+        scheduleStatus: block.scheduleStatus?.trim() || null,
       }
     })
     .filter((block): block is ApplicantPreferredScheduleBlock => block != null)

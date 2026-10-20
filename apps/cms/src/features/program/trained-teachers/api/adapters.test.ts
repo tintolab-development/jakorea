@@ -1179,6 +1179,67 @@ describe('mapTrainedTeacherDetailToProgram recruitment columns (BE 2026-09-23 ha
   })
 })
 
+describe('mapTrainedTeacherDetailToProgram schedules', () => {
+  it('keeps only ACTIVE schedules and sorts them by startAt', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186264',
+      title: '교육받은 교사',
+      schedules: [
+        {
+          id: 4,
+          sessionNo: 4,
+          startAt: '2026-11-20T13:00:00+09:00',
+          scheduleStatus: 'ACTIVE',
+        },
+        {
+          id: 2,
+          sessionNo: 2,
+          startAt: '2026-11-07T13:00:00+09:00',
+          scheduleStatus: 'CANCELLED',
+        },
+        {
+          id: 1,
+          sessionNo: 1,
+          startAt: '2026-11-07T09:00:00+09:00',
+          scheduleStatus: 'ACTIVE',
+        },
+      ],
+    } as ProgramResponse)
+
+    expect(mapped.schedules?.map(schedule => schedule.id)).toEqual([1, 4])
+    expect(mapped.schedules?.every(schedule => schedule.scheduleStatus === 'ACTIVE')).toBe(true)
+  })
+})
+
+describe('mapTrainedTeacherDetailToProgram recruitment windows', () => {
+  it('maps recruitment startAt/endAt and operation dates without startDate aliases', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186264',
+      title: '교육받은 교사',
+      recruitments: [
+        {
+          id: 801,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-10-15T00:00:00+09:00',
+          endAt: '2026-11-19T23:59:59+09:00',
+          operationStartDate: '2026-11-07',
+          operationEndDate: '2026-11-28',
+        },
+      ],
+    } as ProgramResponse)
+
+    expect(mapped.programRecruitments?.[0]).toMatchObject({
+      startAt: '2026-10-15T00:00:00+09:00',
+      endAt: '2026-11-19T23:59:59+09:00',
+      operationStartDate: '2026-11-07',
+      operationEndDate: '2026-11-28',
+    })
+    expect(mapped.programRecruitments?.[0]).not.toHaveProperty('startDate')
+    expect(mapped.programRecruitments?.[0]).not.toHaveProperty('endDate')
+  })
+})
+
 describe('trained teacher businessArea', () => {
   it('normalizes the businessArea column and does not read stale JSON when the column is empty', () => {
     const fromColumn = mapTrainedTeacherDetailToProgram({

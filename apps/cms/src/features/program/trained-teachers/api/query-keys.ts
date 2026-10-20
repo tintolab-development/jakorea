@@ -8,10 +8,11 @@ export const trainedTeacherQueryKeys = {
     [...trainedTeacherQueryKeys.details(), programId] as const,
   organizationApplicationsRoot: () =>
     [...trainedTeacherQueryKeys.all, 'organization-applications'] as const,
+  organizationApplicationsProgram: (programId: string) =>
+    [...trainedTeacherQueryKeys.organizationApplicationsRoot(), programId] as const,
   organizationApplications: (programId: string, filtersKey = '') =>
     [
-      ...trainedTeacherQueryKeys.organizationApplicationsRoot(),
-      programId,
+      ...trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
       filtersKey,
     ] as const,
   organizationApplication: (programId: string, applicationId: string) =>
@@ -40,17 +41,18 @@ export const trainedTeacherQueryKeys = {
     ] as const,
   educationCompletionsRoot: () =>
     [...trainedTeacherQueryKeys.all, 'education-completions'] as const,
+  educationCompletionsProgram: (programId: string) =>
+    [...trainedTeacherQueryKeys.educationCompletionsRoot(), programId] as const,
   educationCompletions: (programId: string, organizationApplicationId = '') =>
     [
-      ...trainedTeacherQueryKeys.educationCompletionsRoot(),
-      programId,
+      ...trainedTeacherQueryKeys.educationCompletionsProgram(programId),
       organizationApplicationId,
     ] as const,
+  participatingInstitutionsProgram: (programId: string) =>
+    [...trainedTeacherQueryKeys.all, 'participating-institutions', programId] as const,
   participatingInstitutions: (programId: string, filtersKey = '') =>
     [
-      ...trainedTeacherQueryKeys.all,
-      'participating-institutions',
-      programId,
+      ...trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
       filtersKey,
     ] as const,
   performanceSummary: (programId: string) =>

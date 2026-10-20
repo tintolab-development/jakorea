@@ -134,25 +134,16 @@ export async function fetchTrainedTeacherOverviewStages(): Promise<GeneralProgra
 
 export async function getTrainedTeacherProgram(programId: string): Promise<Program> {
   assertRemoteReady()
-  const [dto, sponsorsResult] = await Promise.all([
+  const [dto, sponsors, infoDetail] = await Promise.all([
     fetchAdminProgramByIdRemote(programId),
-    fetchAdminProgramSponsorsRemote(programId).then(
-      data => ({ ok: true as const, data }),
-      () => ({ ok: false as const, data: null })
-    ),
+    fetchAdminProgramSponsorsRemote(programId),
+    fetchTrainedTeacherInfoDetailRemote(programId),
   ])
   const base = mapTrainedTeacherDetailToProgram(dto)
-  const withInfo = await (async () => {
-    try {
-      const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
-      return mergeTrainedTeacherInfoDetailIntoProgram(base, infoDetail)
-    } catch {
-      return base
-    }
-  })()
-  // sponsors API 가 후원·담당자 SSOT — 실패 시 merge skip (빈 배열 clear 오인 방지)
-  if (!sponsorsResult.ok) return withInfo
-  return mergeTrainedTeacherSponsorAssignments(withInfo, sponsorsResult.data)
+  const withInfo = mergeTrainedTeacherInfoDetailIntoProgram(base, infoDetail)
+  // 원격 모드에서는 프로그램 상세를 구성하는 모든 API 응답이 SSOT다.
+  // 어느 하나라도 실패하면 호출부가 명시적 오류 상태를 표시하도록 예외를 전파한다.
+  return mergeTrainedTeacherSponsorAssignments(withInfo, sponsors)
 }
 
 export async function createTrainedTeacherProgram(

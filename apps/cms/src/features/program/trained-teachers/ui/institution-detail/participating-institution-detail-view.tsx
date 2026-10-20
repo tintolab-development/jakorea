@@ -70,6 +70,7 @@ import {
   buildTrainedTeacherActivityWithdrawScheduleOptions,
   parseTrainedTeacherStopScheduleId,
 } from '@/features/program/trained-teachers/lib/organization-activity-withdraw-schedules'
+import { mapProgramSchedulesToPreferredScheduleBlocks } from '@/features/program/trained-teachers/api/organization-applications-adapters'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { ApplicationGiveUpRequestFaultParty as FaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
@@ -177,9 +178,13 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       textbookName: remote.textbookName,
       applicationReason: remote.detail?.applicationReason,
       otherRequests: remote.detail?.otherRequests,
-      preferredScheduleBlocks: remote.preferredScheduleBlocks ?? [],
     }
   }, [applicationDetailQuery.data])
+
+  const programScheduleBlocks = useMemo(
+    () => mapProgramSchedulesToPreferredScheduleBlocks(program.schedules),
+    [program.schedules]
+  )
 
   useEffect(() => {
     if (!activityWithdrawModalOpen || !ttRemoteEnabled) return
@@ -221,7 +226,10 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const mergedDetail = {
     ...detail,
     ...(applicationBasicInfo ?? {}),
-    ...savedBasicPatch,
+    ...(!ttRemoteEnabled || activeTab !== 'application' ? savedBasicPatch : {}),
+    ...(ttRemoteEnabled && activeTab === 'application'
+      ? { preferredScheduleBlocks: programScheduleBlocks }
+      : {}),
   }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
@@ -432,7 +440,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId),
           })
           await queryClient.invalidateQueries({
-            queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+            queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
           })
           await queryClient.invalidateQueries({
             queryKey: trainedTeacherQueryKeys.lists(),
@@ -465,7 +473,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             getApiErrorCode(error) === 'TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP'
           ) {
             await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
             })
             await queryClient.invalidateQueries({
               queryKey: trainedTeacherQueryKeys.organizationApplication(programId, detail.id),
@@ -619,6 +627,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     )
   }
 
+  if (canFetchApplicationDetail && applicationDetailQuery.isPending) {
+    return (
+      <div className="school-detail-fullpage-view" role="status">
+        기관 신청 상세 정보를 불러오는 중입니다.
+      </div>
+    )
+  }
+
   if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTab === 'application') {
     return (
       <div className="school-detail-fullpage-view">
@@ -724,7 +740,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
-              preferredScheduleBlocks={mergedDetail.preferredScheduleBlocks}
+              preferredScheduleBlocks={
+                ttRemoteEnabled ? programScheduleBlocks : mergedDetail.preferredScheduleBlocks
+              }
               schoolName={mergedDetail.schoolName}
               educationGrade={
                 isApplicationDetailEditing ? (

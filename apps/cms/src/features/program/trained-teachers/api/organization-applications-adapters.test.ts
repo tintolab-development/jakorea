@@ -3,6 +3,7 @@ import { mapApplicantSchoolToParticipatingSchool } from './education-journals-se
 import { getSchoolDetailByRow } from '@/features/program/general/lib/school-detail'
 import {
   mapPreferredScheduleBlocks,
+  mapProgramSchedulesToPreferredScheduleBlocks,
   mapTrainedTeacherOrganizationApplicationToRow,
 } from './organization-applications-adapters'
 
@@ -231,6 +232,42 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     )
     expect(row.availableActions).toContain('RESEND_NOTIFICATION')
     expect(row.approvalNotificationSentAt).toBeTruthy()
+  })
+})
+
+describe('mapProgramSchedulesToPreferredScheduleBlocks', () => {
+  it('uses program detail ACTIVE schedules even when application preferences are empty', () => {
+    const blocks = mapProgramSchedulesToPreferredScheduleBlocks([
+      {
+        id: 2,
+        sessionNo: 2,
+        startAt: '2026-04-20T09:50:00+09:00',
+        endAt: '2026-04-20T10:30:00+09:00',
+        scheduleStatus: 'ACTIVE',
+      },
+      {
+        id: 1,
+        sessionNo: 1,
+        startAt: '2026-04-20T09:00:00+09:00',
+        endAt: '2026-04-20T09:40:00+09:00',
+        scheduleStatus: 'ACTIVE',
+      },
+      {
+        id: 3,
+        sessionNo: 3,
+        startAt: '2026-04-21T09:00:00+09:00',
+        endAt: '2026-04-21T09:40:00+09:00',
+        scheduleStatus: 'CANCELLED',
+      },
+    ])
+
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0]).toMatchObject({
+      date: '2026-04-20',
+      dayOfWeek: '월',
+      sessionCount: 2,
+    })
+    expect(blocks[0]?.sessionTimes.map(session => session.sessionIndex)).toEqual([1, 2])
   })
 })
 
