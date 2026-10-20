@@ -82,12 +82,23 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
             <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
               모집기간
             </PFText>
-            <PFText as="span" typo="bd-lg-sb" color={isClosed ? 'neutral-cool-500' : 'black'}>
+            <PFText
+              as="span"
+              typo="bd-lg-sb"
+              color={isClosed ? 'neutral-cool-500' : 'black'}
+              className={styles.recruitmentDate}
+            >
               {program.recruitmentPeriodLabel}
             </PFText>
           </div>
 
-          <PFArrowButton variant="primary" size="medium" decorative disabled={isClosed} />
+          <PFArrowButton
+            variant="primary"
+            size="medium"
+            decorative
+            disabled={isClosed}
+            className={styles.arrow}
+          />
         </>
       }
     />

@@ -56,14 +56,23 @@
 
 .recruitment {
   display: flex;
-  flex: 0 0 auto;
-  width: 15.5rem;
-  min-width: 15.5rem;
+  min-width: 0;
+  flex: 0 1 21.5rem;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-4);
-  white-space: nowrap;
   text-align: left;
+}
+
+.recruitmentDate {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.arrow {
+  flex-shrink: 0;
 }
 
 /* 모바일 — 카드 본문 하단 모집기간 (PC는 aside) */
@@ -144,11 +153,27 @@
 }
 
 @media (--bp-pc-up) {
+  .cardContent {
+    min-width: min(100%, 16rem);
+  }
+
   .contentColumn {
     gap: var(--spacing-20);
   }
 
   .bottomBlock {
     gap: var(--spacing-12);
+  }
+
+  .asideDesktop {
+    min-width: 0;
+    flex-shrink: 1;
+    gap: var(--spacing-24);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .asideDesktop {
+    gap: var(--spacing-40);
   }
 }
