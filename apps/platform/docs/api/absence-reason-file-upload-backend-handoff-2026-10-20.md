@@ -89,7 +89,73 @@
 - 결석 사유 제출의 `fileObjectIds`는 본인 소유·`CLEAN`·`AVAILABLE` 파일만 허용한다는 설명
 - 목적값·소유권·파일 상태 위반 시의 최종 HTTP 상태 및 `error.code`
 
-## 5. 인수 테스트
+## 5. 백엔드 전달용 프롬프트
+
+```text
+[Platform] 교육현황 > 교육 일정 > 결석 사유 제출 증빙 파일 연동 계약 확인 요청
+
+신규 API path를 추가하지 말고, 아래 기존 회원 포탈 API의 정책과 OpenAPI 명세를 확인·보완해 주세요.
+
+대상 API:
+- POST /api/portal/me/files/upload-requests
+- PUT {uploadUrl} (응답의 method와 requiredHeaders 사용)
+- POST /api/portal/me/files/{fileObjectId}/confirm
+- GET /api/portal/me/files/{fileObjectId}
+- POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/absence-reasons
+
+1. 파일 업로드 목적값
+- filePurpose=ABSENCE_EVIDENCE를 회원 포탈 업로드 허용 목적값으로 처리해 주세요.
+- ABSENCE_REASON_EVIDENCE라는 목적값은 사용하지 않습니다.
+- ownerDomain, ownerType, ownerId는 요청 body로 받지 말고 인증된 회원으로 결정해 주세요.
+
+2. 결석 증빙 파일 정책
+- JPG/JPEG: contentType=image/jpeg
+- PNG: contentType=image/png
+- 파일당 최대 20 * 1024 * 1024 bytes
+- 한 결석 사유 제출당 fileObjectIds 최대 20개
+- PDF, WEBP, GIF, DOCX 등은 거부해 주세요.
+- 파일명 확장자와 contentType이 불일치하면 거부해 주세요.
+
+3. 업로드 상태 전이
+- upload-request 응답에 fileObjectId, uploadUrl, method, requiredHeaders를 반환해 주세요.
+- confirm 요청의 fileSize와 contentType을 필수로 검증해 주세요.
+- GET 파일 상태가 scanStatus=CLEAN 및 uploadStatus=AVAILABLE이 된 경우에만 제출 연결을 허용해 주세요.
+- 레거시 uploadStatus=CONFIRMED를 지원해야 한다면 CLEAN과 함께만 허용해 주세요.
+- PENDING_UPLOAD, PREPARED, CONFIRM_REQUESTED, PENDING_SCAN, INFECTED, FAILED,
+  QUARANTINED, 삭제·만료 상태는 결석 사유 제출 연결을 허용하지 말아 주세요.
+
+4. 결석 사유 제출 검증
+- reason은 trim 기준 필수이며 최대 2,000자입니다.
+- fileObjectIds가 없으면 파일 없이 사유만 제출할 수 있어야 합니다.
+- 연결된 모든 fileObjectId가 현재 인증 회원 소유인지 확인해 주세요.
+- 모든 연결 파일의 filePurpose가 ABSENCE_EVIDENCE인지 확인해 주세요.
+- 모든 연결 파일이 허용 확장자·MIME, 20MB 이하, CLEAN/AVAILABLE인지 확인해 주세요.
+- 파일이 20개를 초과하면 거부해 주세요.
+
+5. 오류 계약
+- 업로드 요청: MEMBER_FILE_PURPOSE_NOT_ALLOWED,
+  MEMBER_FILE_TYPE_NOT_ALLOWED, MEMBER_FILE_SIZE_EXCEEDED, 401
+- confirm: MEMBER_FILE_CONFIRM_NOT_ALLOWED, MEMBER_FILE_NOT_OWNED, 401
+- 결석 사유 제출: INVALID_ABSENCE_REASON, VALIDATION_FAILED,
+  SUBMISSION_FILE_PURPOSE_NOT_ALLOWED, MEMBER_FILE_TYPE_NOT_ALLOWED,
+  INVALID_VALUE, 401, 403, 409
+- error.code와 HTTP status가 위 기준으로 일관되게 반환되도록 해 주세요.
+
+6. OpenAPI
+- MemberPortalFileUploadRequest.filePurpose에 ABSENCE_EVIDENCE 허용값과 설명을 명시해 주세요.
+- ABSENCE_EVIDENCE 설명에 JPG/JPEG/PNG 및 파일당 20MB 정책을 명시해 주세요.
+- confirm의 fileSize/contentType 필수 조건을 명시해 주세요.
+- 결석 사유 제출 fileObjectIds의 maxItems=20과 소유권·목적값·CLEAN/AVAILABLE 검증을 설명에 명시해 주세요.
+
+완료 후 다음을 회신해 주세요.
+- 로컬/스테이징에서 인증 회원 기준 각 API 호출 결과
+- 실제 응답의 fileObjectId, uploadUrl, method, requiredHeaders
+- 업로드 후 CLEAN/AVAILABLE 전이 결과
+- 결석 사유 제출 응답의 submissionId, scheduleId, reviewStatus
+- OpenAPI 갱신 여부 및 관련 error.code 목록
+```
+
+## 6. 인수 테스트
 
 인증된 일반 회원 계정과 실제 교육 일정으로 다음을 확인한다.
 
@@ -103,7 +169,7 @@
 8. 파일 보안 검사 실패·타임아웃 시 결석 사유 제출이 실행되지 않는다.
 9. 제출 성공 후 교육 일정 조회에서 결석 사유 상태가 갱신된다.
 
-## 6. FE 구현 위치
+## 7. FE 구현 위치
 
 - 파일 업로드 공통 처리: `src/features/mypage/instructor-apply/api/member-file-upload.ts`
 - 결석 사유 모달: `src/features/mypage/education/schedules/ui/absence-reason-modal.tsx`
