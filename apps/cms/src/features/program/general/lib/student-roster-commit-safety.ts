@@ -17,6 +17,20 @@ export type StudentRosterCommitValidationCode =
   | 'DUPLICATE_ROSTER_ID'
   | 'MISSING_EXISTING_ROSTER_ROW'
   | 'ROW_COUNT_MISMATCH'
+  | 'NEW_ROW_CONTACT_REQUIRED'
+
+function isLikelyMaskedPii(value?: string | null): boolean {
+  if (!value) return false
+  return /[*•]/.test(value)
+}
+
+export function studentRosterRowHasCommitContact(
+  row: Pick<SchoolDetailStudentRow, 'contact' | 'email'>
+): boolean {
+  const phone = row.contact?.trim()
+  const email = row.email?.trim()
+  return Boolean(phone && !isLikelyMaskedPii(phone) && email && !isLikelyMaskedPii(email))
+}
 
 export type StudentRosterCommitValidationResult =
   | { ok: true }
@@ -128,6 +142,18 @@ export function validateStudentRosterCommit(input: {
         code: 'ROW_COUNT_MISMATCH',
         message: '저장 요청 학생 수가 조회된 전체 명단보다 적습니다.',
       }
+    }
+  }
+
+  for (let index = 0; index < commitRows.length; index += 1) {
+    const row = commitRows[index]
+    if (row == null) continue
+    if (parsePositiveRosterId(row.id) != null) continue
+    if (studentRosterRowHasCommitContact(row)) continue
+    return {
+      ok: false,
+      code: 'NEW_ROW_CONTACT_REQUIRED',
+      message: `신규 학생은 연락처와 이메일이 필요합니다. (${index + 1}행)`,
     }
   }
 

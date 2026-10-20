@@ -8,11 +8,10 @@ import type { StudentRosterRowRequest } from '@/shared/api/generated/dashboard/s
 export type OrganizationStudentRosterResponse = StudentRosterResponse
 
 /**
- * PUT row — OpenAPI는 phone·email 필수지만 CMS는 마스킹 값만 보유하므로
- * 원문이 없으면 생략한다 (마스킹 값 전송·원문 추정 금지).
+ * PUT row — 기존 행은 phone·email 생략 시 서버가 저장된 값을 유지한다.
+ * 마스킹 값은 형식 검증에 걸리므로 보내지 않는다. 신규 행만 둘 다 필수.
  */
-export type StudentRosterRowCommitPayload = Omit<StudentRosterRowRequest, 'phone' | 'email'> &
-  Partial<Pick<StudentRosterRowRequest, 'phone' | 'email'>>
+export type StudentRosterRowCommitPayload = StudentRosterRowRequest
 
 /** 수동 편집·전체 교체 PUT — `expectedRevisionNo` + `rows`만 전송 */
 export type OrganizationStudentRosterManualCommitRequest = Pick<

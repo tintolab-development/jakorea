@@ -92,6 +92,22 @@ describe('student-roster-adapters', () => {
     ).toBeNull()
   })
 
+  it('includes plaintext phone/email only when the user actually changed them', () => {
+    const payload = mapStudentRowToRosterRequest({
+      id: '123',
+      no: 1,
+      name: '김학생',
+      gender: 'male',
+      birthDate: '2014. 03. 01.',
+      gradeClass: '1반',
+      contact: '010-1234-5678',
+      email: 'new@example.com',
+    })
+    expect(payload.rosterId).toBe(123)
+    expect(payload.phone).toBe('010-1234-5678')
+    expect(payload.email).toBe('new@example.com')
+  })
+
   it('omits masked phone/email on commit payload', () => {
     const payload = mapStudentRowToRosterRequest(
       {
