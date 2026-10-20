@@ -6,7 +6,10 @@ import {
   buildActivityCertificateFileName,
   buildActivityCertificateInitialStringValues,
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
-import { INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
+import {
+  CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS,
+  INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+} from '@/features/template/lib/certificate-form-settings'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
@@ -54,7 +57,7 @@ export function ActivityCertificateIssuancePreviewModal({
     templateCode: INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
     fallbackTitleName: ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
     runtimeStringValues,
-    runtimeStringOverrideKeys: ['participantInfo'],
+    runtimeStringOverrideKeys: CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS,
   })
   const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
     useFormCertificatePreviewProps(modalState, undefined, pdfSerialNumber)

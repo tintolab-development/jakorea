@@ -16,11 +16,13 @@ import { useCmsAlert } from '@/shared/ui'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
-  sortParticipatingIndividualParticipantAttendanceRows,
+  buildParticipatingIndividualParticipantAttendanceRowsFromAssigned,
   buildParticipatingIndividualParticipantAttendanceSummary,
 } from '@/features/program/general/lib/participating-individual-participant-attendance'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
+  resolveParticipatingIndividualParticipantAbsenceDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -60,7 +62,6 @@ import {
 import {
   buildAttendanceItemRequest,
   buildProgressAttendanceSessionsFromRemote,
-  mapDashboardScheduleStatusToEducationProgress,
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -134,15 +135,6 @@ function mapDetailStatusToProgressStatus(
   return 'absent'
 }
 
-function mapProgressStatusToDetailStatus(
-  status: ParticipatingIndividualProgressAttendanceStatus
-): ParticipatingIndividualParticipantAttendanceRow['attendanceStatus'] {
-  if (status === 'late') return 'late'
-  if (status === 'excused_absence') return 'excused_absence'
-  if (status === 'present') return 'present'
-  return 'absent'
-}
-
 function renderAttendanceStatus(row: ParticipatingIndividualParticipantAttendanceRow) {
   return (
     <ProgramAttendanceStatusText
@@ -156,13 +148,16 @@ function renderAttendanceStatus(row: ParticipatingIndividualParticipantAttendanc
 export interface ParticipatingIndividualParticipantAttendanceSectionProps {
   program: Program
   participant: ParticipatingIndividualParticipantRow
+  /** education-scope 배정 일정. 출석 내역은 이 목록만 노출한다. */
+  assignedSessions?: readonly ParticipatingSchoolSession[]
+  assignedSessionsLoading?: boolean
 }
 
 export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   ParticipatingIndividualParticipantAttendanceSectionHandle,
   ParticipatingIndividualParticipantAttendanceSectionProps
 >(function ParticipatingIndividualParticipantAttendanceSection(
-  { program, participant },
+  { program, participant, assignedSessions = [], assignedSessionsLoading = false },
   ref
 ) {
   const { showAlert } = useCmsAlert()
@@ -188,35 +183,21 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     return buildProgressAttendanceSessionsFromRemote(remoteQuery.data)
   }, [remoteEnabled, remoteQuery.data])
 
-  const remoteRows = useMemo(() => {
-    if (remoteSessions == null) return null
-    return sortParticipatingIndividualParticipantAttendanceRows(
-      remoteSessions.map(session => {
-        const self = session.participants.find(row => row.participantId === participant.id)
-        const status =
-          self?.attendanceRecorded && self.attendanceStatus != null
-            ? mapProgressStatusToDetailStatus(self.attendanceStatus)
-            : 'pending'
-        const educationProgress =
-          session.scheduleEducationProgress ??
-          mapDashboardScheduleStatusToEducationProgress(undefined)
-        return {
-          id: session.id,
-          scheduleId: session.id,
-          scheduleLabel: session.headerScheduleSummary,
-          attendanceStatus: participant.activityWithdrawn ? 'withdrawn' : status,
-          lateTime: self?.lateTime,
-          remark: self?.remark,
-          educationProgress,
-        } satisfies ParticipatingIndividualParticipantAttendanceRow
-      })
-    )
-  }, [participant.activityWithdrawn, participant.id, remoteSessions])
-
   const sourceRows = useMemo(() => {
-    if (!remoteEnabled) return []
-    return remoteRows ?? []
-  }, [remoteEnabled, remoteRows])
+    if (assignedSessionsLoading) return []
+    return buildParticipatingIndividualParticipantAttendanceRowsFromAssigned({
+      assignedSessions,
+      attendanceSessions: remoteSessions,
+      participant,
+      program,
+    })
+  }, [
+    assignedSessions,
+    assignedSessionsLoading,
+    participant,
+    program,
+    remoteSessions,
+  ])
 
   const [rows, setRows] = useState(() => sourceRows)
   const [absenceReasons, setAbsenceReasons] = useState<
@@ -409,11 +390,26 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     [remoteEnabled, rows, saveMutation, showAlert]
   )
 
+  const assignedScheduleIdSet = useMemo(
+    () =>
+      new Set(
+        rows
+          .map(row => row.scheduleId?.trim())
+          .filter((id): id is string => Boolean(id))
+      ),
+    [rows]
+  )
+
   const remoteAbsenceReasons = useMemo(() => {
     const items = absenceReasonQuery.data
     if (!items) return null
     return items
       .filter(item => {
+        const scheduleId =
+          item.scheduleId != null && String(item.scheduleId).trim() !== ''
+            ? String(item.scheduleId)
+            : null
+        if (scheduleId != null && !assignedScheduleIdSet.has(scheduleId)) return false
         if (item.participantId != null && String(item.participantId) === participant.id) return true
         if (
           participant.memberId &&
@@ -427,20 +423,25 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       .map(item => {
         const names = item.originalFileNames ?? []
         const fileName = names.find(name => name?.trim())?.trim() ?? null
-        const dateSource = item.scheduleStartAt?.trim() || item.scheduleName?.trim() || ''
+        const matchedRow =
+          item.scheduleId != null
+            ? rows.find(row => row.scheduleId === String(item.scheduleId))
+            : undefined
         return {
           id: String(item.submissionId ?? item.scheduleId ?? item.reason ?? 'absence'),
           scheduleRowId: String(item.scheduleId ?? ''),
-          dateLabel: dateSource
-            ? formatParticipatingIndividualParticipantAttendanceShortDateLabel(dateSource)
-            : '-',
+          dateLabel: resolveParticipatingIndividualParticipantAbsenceDateLabel({
+            scheduleLabel: matchedRow?.scheduleLabel,
+            scheduleStartAt: item.scheduleStartAt,
+            scheduleName: item.scheduleName,
+          }),
           reason: item.reason?.trim() || '-',
           fileName,
           fileObjectIds: item.fileObjectIds,
           originalFileNames: names,
         } satisfies ParticipatingIndividualParticipantAbsenceReason
       })
-  }, [absenceReasonQuery.data, participant.id, participant.memberId])
+  }, [absenceReasonQuery.data, assignedScheduleIdSet, participant.id, participant.memberId, rows])
 
   const handleAbsenceFileDownload = useCallback(
     (item: ProgramAttendanceAbsenceReasonItem) => {

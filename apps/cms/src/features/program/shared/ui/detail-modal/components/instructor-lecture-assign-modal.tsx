@@ -5,8 +5,6 @@
  */
 
 import { useRef } from 'react'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { formatIndividualLectureAssignTagLabel } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
@@ -62,26 +60,13 @@ const ASSIGNED_SCHEDULE_REMOVE_ICON = (
 function InstructorLectureAssignTag({
   item,
   onRemove,
-  onToggleLead,
-  showLead = true,
 }: {
   item: InstructorLectureAssignItem
   onRemove: () => void
-  onToggleLead: (checked: boolean) => void
-  showLead?: boolean
 }) {
   return (
     <span className="instructor-lecture-assign-modal__assigned-tag">
       <span className="instructor-lecture-assign-modal__assigned-tag-text">{item.tagLabel}</span>
-      {showLead ? (
-        <CmsCheckbox
-          checkboxSize="medium"
-          checked={item.scheduleLead === true}
-          onChange={event => onToggleLead(event.target.checked)}
-        >
-          리드
-        </CmsCheckbox>
-      ) : null}
       <button
         type="button"
         className="instructor-lecture-assign-modal__assigned-tag-remove"
@@ -187,9 +172,6 @@ export function InstructorLectureAssignModal({
     handleSelectDate,
     handleAddSlot,
     handleRemoveAssignment,
-    handleToggleScheduleLead,
-    existingLeadScheduleIds,
-    existingLeadQueryReady,
     canConfirm,
   } = useInstructorLectureAssignModal({
     open,
@@ -207,26 +189,7 @@ export function InstructorLectureAssignModal({
 
   const handleConfirm = () => {
     if (!canConfirm) return
-    const replacingExistingLead =
-      existingLeadQueryReady &&
-      assignedItems.some(
-        item =>
-          item.scheduleLead === true &&
-          item.scheduleId != null &&
-          existingLeadScheduleIds.has(item.scheduleId)
-      )
-    const confirm = () => onConfirm({ assignments: assignedItems })
-    if (replacingExistingLead) {
-      cmsAlertModal.show({
-        title: '리드 강사 교체 안내',
-        content:
-          '선택한 일정에 기존 리드 강사가 있습니다. 승인하면 기존 리드 강사는 일반 강사로 변경되고, 해당 강사가 새로운 리드 강사가 됩니다. 계속하시겠습니까?',
-        confirmLabel: '계속하기',
-        onConfirm: confirm,
-      })
-      return
-    }
-    confirm()
+    onConfirm({ assignments: assignedItems })
   }
 
   const assignedTags =
@@ -236,9 +199,7 @@ export function InstructorLectureAssignModal({
           <InstructorLectureAssignTag
             key={item.slotKey}
             item={item}
-            showLead={isIndividual}
             onRemove={() => handleRemoveAssignment(item.slotKey)}
-            onToggleLead={checked => handleToggleScheduleLead(item.slotKey, checked)}
           />
         ))}
       </div>

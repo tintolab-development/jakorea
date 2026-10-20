@@ -799,6 +799,8 @@ export function ParticipatingParticipantFullpageView({
               ref={attendanceSectionRef}
               program={program}
               participant={mergedParticipant}
+              assignedSessions={progressScheduleSessions}
+              assignedSessionsLoading={progressScheduleSessionsLoading}
             />
           </div>
         ) : activeTab === 'assignments' ? (

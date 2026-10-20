@@ -35,8 +35,6 @@ export type InstructorLectureAssignItem = {
   tagLabel: string
   scheduleId?: number
   organizationApplicationId?: number | null
-  /** 승인 API에 전달할 일정별 리드 강사 여부 */
-  scheduleLead?: boolean
 }
 
 /** 개인 프로그램 강의 배정 — 기관 ID 대체값 */
@@ -384,13 +382,12 @@ export function parseScheduleIdFromSlotKey(slotKey: string): number | null {
 export type InstructorApplicationApprovalAssignmentInput = {
   scheduleId: number
   organizationApplicationId?: number
-  scheduleLead: boolean
 }
 
 export function mapLectureAssignItemsToApprovalAssignments(
   assignments: InstructorLectureAssignItem[]
 ): InstructorApplicationApprovalAssignmentInput[] {
-  return assignments.flatMap((assignment, index) => {
+  return assignments.flatMap(assignment => {
     const scheduleId = assignment.scheduleId ?? parseScheduleIdFromSlotKey(assignment.slotKey)
     if (scheduleId == null || scheduleId < 1) return []
     const orgFromItem = assignment.organizationApplicationId
@@ -408,7 +405,6 @@ export function mapLectureAssignItemsToApprovalAssignments(
       {
         scheduleId,
         ...(organizationApplicationId != null ? { organizationApplicationId } : {}),
-        scheduleLead: assignment.scheduleLead ?? index === 0,
       },
     ]
   })
