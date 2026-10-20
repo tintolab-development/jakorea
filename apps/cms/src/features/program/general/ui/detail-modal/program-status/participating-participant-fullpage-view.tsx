@@ -4,13 +4,14 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type {
   GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -24,7 +25,16 @@ import {
 import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
-import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  fetchGeneralParticipantEducationScope,
+  giveUpGeneralParticipatingInstitution,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { fetchAdminProgramEducationSlotsRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { individualApprovalEducationSlotsQueryKey } from '@/features/program/general/lib/individual-approval-education-scope'
+import {
+  resolveParticipatingIndividualProgressScheduleSessions,
+  resolveParticipatingIndividualProgressScheduleSessionsFallback,
+} from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
 import {
   saveIndividualApplicationAdminCommentRemote,
   saveIndividualApplicationDetailRemote,
@@ -78,7 +88,6 @@ import { StudentCertificatePdfExportHost } from './student-certificate-pdf-expor
 import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './school-detail-fullpage-view.css'
-import { IndividualEducationScopeSection } from './individual-education-scope-section'
 import './participating-participant-fullpage-view.css'
 
 export const PARTICIPANT_DETAIL_TAB_KEYS = [
@@ -104,6 +113,13 @@ const TAB_LABELS: Record<ParticipantDetailTabKey, string> = {
   assignments: '과제 관리',
   settlement: '정산 현황',
 }
+
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+
+const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
+
+const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
 export interface ParticipatingParticipantFullpageViewProps {
   program: Program
@@ -158,9 +174,59 @@ export function ParticipatingParticipantFullpageView({
   const sessions = mergedParticipant.sessions ?? []
   const isActivityWithdrawn = mergedParticipant.activityWithdrawn === true
 
+  const educationScopeQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.educationScope(program.id, mergedParticipant.id),
+    queryFn: () => fetchGeneralParticipantEducationScope(program.id, mergedParticipant.id),
+    enabled:
+      progressRemoteEnabled &&
+      mergedParticipant.approvalStatus === 'approved' &&
+      Boolean(mergedParticipant.id.trim()),
+    staleTime: 0,
+    retry: false,
+  })
+  const educationSlotsQuery = useQuery({
+    queryKey: individualApprovalEducationSlotsQueryKey(program.id),
+    queryFn: () => fetchAdminProgramEducationSlotsRemote(program.id),
+    enabled:
+      progressRemoteEnabled &&
+      mergedParticipant.approvalStatus === 'approved' &&
+      (educationScopeQuery.data?.scheduleIds?.length ?? 0) > 0,
+    staleTime: 0,
+    retry: false,
+  })
+
+  const progressScheduleSessions = useMemo(() => {
+    if (mergedParticipant.approvalStatus !== 'approved') return []
+    if (!progressRemoteEnabled) {
+      return resolveParticipatingIndividualProgressScheduleSessionsFallback(sessions)
+    }
+    if (!educationScopeQuery.isSuccess) return []
+    return resolveParticipatingIndividualProgressScheduleSessions({
+      participantSessions: sessions,
+      assignedScheduleIds: educationScopeQuery.data?.scheduleIds,
+      educationSlots: educationSlotsQuery.data,
+    })
+  }, [
+    educationScopeQuery.data?.scheduleIds,
+    educationScopeQuery.isSuccess,
+    educationSlotsQuery.data,
+    mergedParticipant.approvalStatus,
+    progressRemoteEnabled,
+    sessions,
+  ])
+
+  const progressScheduleSessionsLoading =
+    progressRemoteEnabled &&
+    mergedParticipant.approvalStatus === 'approved' &&
+    educationScopeQuery.isLoading
+
   const activityWithdrawScheduleOptions = useMemo(
-    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
-    [program, sessions]
+    () =>
+      getParticipatingInstitutionActivityWithdrawScheduleOptions(
+        program,
+        progressScheduleSessions.length > 0 ? progressScheduleSessions : sessions
+      ),
+    [program, progressScheduleSessions, sessions]
   )
 
   const hasStudentSatisfactionSurvey = useMemo(
@@ -242,6 +308,7 @@ export function ParticipatingParticipantFullpageView({
 
   const {
     personalInfoRevealed,
+    revealWithReason,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
@@ -253,6 +320,8 @@ export function ParticipatingParticipantFullpageView({
   })
 
   const privacyMasked = !personalInfoRevealed
+  const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
+  const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
 
   const handleParticipantSaved = useCallback((updatedRow: GeneralIndividualApplicantRow) => {
     setParticipantPatches(prev => ({
@@ -291,6 +360,33 @@ export function ParticipatingParticipantFullpageView({
     },
   })
 
+  const requestStartApplicationInfoEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      enterApplicationInfoEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [enterApplicationInfoEdit, personalInfoRevealed])
+
+  const closeEditUnmaskConfirm = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmOpen(false)
+  }, [editUnmaskConfirmLoading])
+
+  const confirmEditUnmaskAndStartEdit = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmLoading(true)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+      .then(result => {
+        if (!result.ok) return
+        setEditUnmaskConfirmOpen(false)
+        enterApplicationInfoEdit()
+      })
+      .finally(() => {
+        setEditUnmaskConfirmLoading(false)
+      })
+  }, [editUnmaskConfirmLoading, enterApplicationInfoEdit, revealWithReason])
+
   useEffect(() => {
     setParticipantPatches({})
     setSavedAdminComment(baseParticipant.adminComment ?? '')
@@ -301,6 +397,8 @@ export function ParticipatingParticipantFullpageView({
     setCertificateIssueModalOpen(false)
     setCertificateExportContext(null)
     setCertificateExportActive(false)
+    setEditUnmaskConfirmOpen(false)
+    setEditUnmaskConfirmLoading(false)
   }, [initialParticipant.id, baseParticipant.adminComment])
 
   const setActiveTab = (key: string) => {
@@ -601,7 +699,7 @@ export function ParticipatingParticipantFullpageView({
               </CmsButton>
               <ProgramEditInfoActions
                 isEditing={isApplicationInfoEditing}
-                onEdit={enterApplicationInfoEdit}
+                onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
@@ -687,14 +785,9 @@ export function ParticipatingParticipantFullpageView({
                     ? saveTeamRole
                     : undefined
                 }
+                progressScheduleSessions={progressScheduleSessions}
+                progressScheduleSessionsLoading={progressScheduleSessionsLoading}
               />
-              {mergedParticipant.approvalStatus === 'approved' && mergedParticipant.id ? (
-                <IndividualEducationScopeSection
-                  program={program}
-                  participantId={mergedParticipant.id}
-                  applicationId={mergedParticipant.individualApplicationId}
-                />
-              ) : null}
             </div>
           </div>
         ) : activeTab === 'attendance' ? (
@@ -755,6 +848,17 @@ export function ParticipatingParticipantFullpageView({
         />
       ) : null}
       {personalInfoRevealModal}
+      <ConfirmModal
+        open={editUnmaskConfirmOpen}
+        title="정보 수정 안내"
+        content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+        confirmText="정보 수정"
+        cancelText="취소"
+        onConfirm={confirmEditUnmaskAndStartEdit}
+        onCancel={closeEditUnmaskConfirm}
+        confirmLoading={editUnmaskConfirmLoading}
+        zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+      />
       <MemberAdminCommentModal
         open={adminCommentModalOpen}
         value={adminCommentDraft}

@@ -68,6 +68,7 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 import '@/features/user/detail/ui/instructor-resume/resume.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
+import './institution-basic-info.css'
 
 export interface ApplicantGeneralIndividualBasicInfoProps {
   applicant: GeneralIndividualApplicantRow
@@ -89,6 +90,9 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   onTeamRoleChange?: (
     teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
   ) => void | Promise<void>
+  /** 진행 현황 참여자 상세 — education-scope 배정 일정만 (미전달 시 participant sessions) */
+  progressScheduleSessions?: ParticipatingSchoolSession[]
+  progressScheduleSessionsLoading?: boolean
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -309,9 +313,11 @@ const TEAM_MEMBER_COUNT_OPTIONS = [
 function IndividualApplicantProgressScheduleSection({
   program,
   sessions,
+  loading = false,
 }: {
   program: Program
   sessions: readonly ParticipatingSchoolSession[]
+  loading?: boolean
 }) {
   const bridge = resolveInstitutionApplicationProgramBridge(program)
   const scheduleShape = generalEducationScheduleShapeFromBridge(bridge)
@@ -331,7 +337,13 @@ function IndividualApplicantProgressScheduleSection({
   const shape = scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
   return (
     <DetailInfoForm title="교육 진행 일정" mode="view">
-      {displaySessions.length === 0 ? (
+      {loading ? (
+        <DetailInfoForm.Row type="custom">
+          <p className="general-volunteer-applicant-detail__empty-schedule">
+            교육 일정을 확인하는 중입니다.
+          </p>
+        </DetailInfoForm.Row>
+      ) : displaySessions.length === 0 ? (
         <DetailInfoForm.Row type="custom">
           <p className="general-volunteer-applicant-detail__empty-schedule">
             등록된 교육 일정이 없습니다.
@@ -393,6 +405,8 @@ export function ApplicantGeneralIndividualBasicInfo({
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
   onTeamRoleChange,
+  progressScheduleSessions,
+  progressScheduleSessionsLoading = false,
 }: ApplicantGeneralIndividualBasicInfoProps) {
   const detail = applicant.detail
   const isProgressContext = detailContext === 'progress'
@@ -513,12 +527,15 @@ export function ApplicantGeneralIndividualBasicInfo({
 
   const textbookEditCell =
     isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack">
+      <div
+        className="institution-basic-info__field-stack institution-basic-info__textbook-select-only"
+      >
         <CmsSelect
           className="institution-basic-info__full-width-control"
           inputSize="small"
           placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
           loading={isTextbookCatalogLoading}
+          withAllOption={false}
           value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
           options={(textbookOptions.length > 0
             ? textbookOptions
@@ -665,7 +682,8 @@ export function ApplicantGeneralIndividualBasicInfo({
     showProgressScheduleSection && program ? (
       <IndividualApplicantProgressScheduleSection
         program={program}
-        sessions={applicant.sessions ?? []}
+        sessions={progressScheduleSessions ?? applicant.sessions ?? []}
+        loading={progressScheduleSessionsLoading}
       />
     ) : null
 
