@@ -9,6 +9,7 @@ import {
   individualApprovalProgramShapeFromProgram,
   normalizeIndividualApprovalReason,
   validateIndividualApprovalScheduleSelection,
+  type IndividualApprovalScheduleOption,
   type IndividualApprovalSchedulePlan,
 } from '@/features/program/general/lib/individual-approval-education-scope'
 import {
@@ -16,7 +17,15 @@ import {
   PermissionModalMessage,
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
+  ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT,
+  ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT,
+} from '@/features/program/general/lib/organization-application-approve-slots'
+import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import '@/features/program/shared/ui/detail-modal/components/institution-approve-modal.css'
 
 type ApprovalProgram = Parameters<typeof individualApprovalProgramShapeFromProgram>[0]
@@ -51,6 +60,23 @@ export type IndividualBulkApproveScopeConfirmPayload = {
   targets: Array<{ applicationId: string; confirmedScheduleIds: number[]; expectedScopeRevision: number }>
 }
 
+/** 기관 승인 안내와 같은 문장 구조. 호칭·수신 대상만 참여자용이다. */
+export function buildIndividualApproveMessage(participantName: string): string {
+  const name = participantName.trim() || '참여자'
+  return `**[${name}]** 님의 프로그램 신청을 승인하시겠습니까?\n승인 시 선택한 일정으로 교육이 배정되며, 회원에게 승인 알림이 발송됩니다.`
+}
+
+function scheduleCardParts(option: IndividualApprovalScheduleOption): {
+  title: string
+  detail: string
+} {
+  const card = formatOrganizationApproveScheduleCard({ label: option.title })
+  return {
+    title: card.title || option.title,
+    detail: card.detail,
+  }
+}
+
 function ScheduleChoices({
   plan,
   selectedIds,
@@ -60,48 +86,108 @@ function ScheduleChoices({
   selectedIds: number[]
   onToggle?: (scheduleId: number) => void
 }) {
-  if (plan.blockedReason) {
-    return (
-      <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
-        {plan.blockedReason}
-      </p>
-    )
-  }
+  const selectableOptions = plan.options.filter(
+    option => option.selectable && option.scheduleId != null && plan.kind !== 'all-program-slots'
+  )
+  const selectedOptions = selectableOptions.filter(option =>
+    selectedIds.includes(option.scheduleId as number)
+  )
+  const assignmentHint =
+    plan.kind === 'preferred-at-least-one'
+      ? ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT
+      : ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
+
   return (
-    <div className="institution-approve-modal__schedule-cards">
-      {plan.options.map(option => {
-        const selected =
-          option.scheduleId != null &&
-          (plan.kind === 'all-program-slots' || selectedIds.includes(option.scheduleId))
-        const selectable = option.selectable && plan.kind !== 'all-program-slots'
-        return (
-          <button
-            key={option.key}
-            type="button"
-            className={[
-              'institution-approve-modal__schedule-card',
-              selected ? 'institution-approve-modal__schedule-card--selected' : '',
-              selectable ? '' : 'institution-approve-modal__schedule-card--readonly',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            aria-pressed={selectable ? selected : undefined}
-            disabled={!selectable}
-            onClick={() => {
-              if (!selectable || option.scheduleId == null) return
-              onToggle?.(option.scheduleId)
-            }}
-          >
-            <span className="institution-approve-modal__schedule-card-title">{option.title}</span>
-            {option.blockedReason ? (
-              <span className="institution-approve-modal__schedule-card-note">
-                {option.blockedReason}
-              </span>
-            ) : null}
-          </button>
-        )
-      })}
-    </div>
+    <>
+      {plan.options.length > 0 ? (
+        <div className="institution-approve-modal__schedule-cards">
+          {plan.options.map(option => {
+            const card = scheduleCardParts(option)
+            const selected =
+              option.scheduleId != null &&
+              (plan.kind === 'all-program-slots' || selectedIds.includes(option.scheduleId))
+            const selectable = option.selectable && plan.kind !== 'all-program-slots'
+            return (
+              <button
+                key={option.key}
+                type="button"
+                className={[
+                  'institution-approve-modal__schedule-card',
+                  selected ? 'institution-approve-modal__schedule-card--selected' : '',
+                  selectable ? '' : 'institution-approve-modal__schedule-card--readonly',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                aria-pressed={selectable ? selected : undefined}
+                disabled={!selectable}
+                onClick={() => {
+                  if (!selectable || option.scheduleId == null) return
+                  onToggle?.(option.scheduleId)
+                }}
+              >
+                <span className="institution-approve-modal__schedule-card-title">{card.title}</span>
+                {card.detail ? (
+                  <span className="institution-approve-modal__schedule-card-detail">
+                    {card.detail}
+                  </span>
+                ) : null}
+                {option.blockedReason ? (
+                  <span className="institution-approve-modal__schedule-card-note">
+                    {option.blockedReason}
+                  </span>
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
+      {plan.blockedReason && plan.options.length === 0 ? (
+        <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
+          {plan.blockedReason}
+        </p>
+      ) : null}
+      {selectableOptions.length > 0 ? (
+        <p className="institution-approve-modal__assignment-hint">{assignmentHint}</p>
+      ) : null}
+      {selectableOptions.length > 0 ? (
+        <div className="institution-approve-modal__assigned">
+          <DetailInfoForm title="" hideHeader mode="edit">
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="배정된 일정"
+                edit={
+                  selectedOptions.length > 0 ? (
+                    <div className="institution-approve-modal__assigned-list">
+                      {selectedOptions.map(option => {
+                        const card = scheduleCardParts(option)
+                        return (
+                          <div key={option.key} className="institution-approve-modal__assigned-item">
+                            <span>{card.title}</span>
+                            <ItemDeleteButton
+                              className="item-delete-button"
+                              aria-label={`${card.title} 배정 삭제`}
+                              onClick={() => {
+                                if (option.scheduleId == null) return
+                                onToggle?.(option.scheduleId)
+                              }}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <span className="institution-approve-modal__assigned-empty">
+                      {ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}
+                    </span>
+                  )
+                }
+                view={null}
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        </div>
+      ) : null}
+    </>
   )
 }
 
@@ -167,9 +253,9 @@ export function IndividualApproveScopeModal({
   }
 
   const handleConfirm = (payload: PermissionModalPayload) => {
-    const reason = normalizeIndividualApprovalReason(payload.reason)
-    if (!reason.ok) {
-      showAlert({ title: '승인 불가', content: reason.message })
+    const reason = payload.reason.trim()
+    if (reason.length > 500) {
+      showAlert({ title: '승인 불가', content: '승인 사유는 500자 이하로 입력해 주세요.' })
       return
     }
     const next = validateIndividualApprovalScheduleSelection(plan, selectedIds)
@@ -178,7 +264,7 @@ export function IndividualApproveScopeModal({
       return
     }
     onConfirm({
-      reason: reason.reason,
+      reason,
       confirmedScheduleIds: next.confirmedScheduleIds,
       expectedScopeRevision: 0,
       notifyTiming: payload.notifyTiming,
@@ -186,26 +272,20 @@ export function IndividualApproveScopeModal({
     })
   }
 
-  const subject = participantName.trim() || '참여자'
   return (
     <PermissionModal
       open={open}
       variant="approve"
-      className="individual-approve-scope-modal"
-      title="참여자 승인 안내"
+      className="institution-approve-modal individual-approve-scope-modal"
+      title="프로그램 신청 승인 안내"
       confirmLabel="승인"
       confirmLoading={confirmLoading}
       confirmDisabled={confirmDisabled}
-      requireReason
-      reasonLabel="승인 사유"
-      reasonPlaceholder="승인 사유를 입력해 주세요."
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={600}
     >
-      <PermissionModalMessage
-        text={`**[${subject}]**의 프로그램 참여를 승인하시겠습니까?\n선택한 교육 일정으로 배정되며, 참여자에게 승인 알림이 발송됩니다.`}
-      />
+      <PermissionModalMessage text={buildIndividualApproveMessage(participantName)} />
       <div className="institution-approve-modal__schedule-section">
         {slotsPending ? (
           <p className="institution-approve-modal__notice">교육 일정을 확인하는 중입니다.</p>
