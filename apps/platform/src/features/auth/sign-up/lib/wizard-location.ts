@@ -7,7 +7,6 @@ export type SignUpWizardPhase =
   | 'guardian-agreement'
   | 'guardian-profile'
   | 'guardian-identity'
-  | 'guardian-final-consent'
   | 'identity'
   | 'agreement'
 
@@ -26,8 +25,7 @@ export function isUnderAgeSignUpWizardPhase(phase: SignUpWizardPhase | null): bo
     phase === 'guardian-consent' ||
     phase === 'guardian-agreement' ||
     phase === 'guardian-profile' ||
-    phase === 'guardian-identity' ||
-    phase === 'guardian-final-consent'
+    phase === 'guardian-identity'
   )
 }
 
@@ -38,7 +36,6 @@ export function parseSignUpPhase(searchParams: URLSearchParams): SignUpWizardPha
     case 'guardian-agreement':
     case 'guardian-profile':
     case 'guardian-identity':
-    case 'guardian-final-consent':
     case 'identity':
     case 'agreement':
       return phase
