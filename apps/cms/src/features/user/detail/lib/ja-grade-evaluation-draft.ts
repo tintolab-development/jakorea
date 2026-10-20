@@ -23,11 +23,11 @@ const JA_GRADE_SCALE_SCORE_DESCRIPTION =
 
 /** 제목 설명 중 bold(700) 처리 구간 */
 export const JA_GRADE_INTRO_GRADE_RANGE_BOLD =
-  'A등급(85~100점), B등급(60~84점), C등급(50~59점), D등급(0~49점) 4가지 등급으로 분류'
+  'A 85~100점 / B 60~84점 / C 50~59점 / D 50점 미만'
 
 const JA_GRADE_INTRO_DESCRIPTION = [
   '관리자의 평가 항목은 총 4개 문항으로, 각 항목 당 25점씩 총 100점 만점으로 평가됩니다.',
-  `평가등급은 행정 평가까지 반영된 최종 점수에 따라 ${JA_GRADE_INTRO_GRADE_RANGE_BOLD}됩니다.`,
+  `평가등급은 행정 평가까지 반영된 최종 점수에 따라 ${JA_GRADE_INTRO_GRADE_RANGE_BOLD} 4가지 등급으로 분류됩니다.`,
 ].join('\n')
 
 const JA_GRADE_Q1_BODY = [
@@ -56,12 +56,12 @@ const JA_GRADE_Q4_BODY = [
 
 const JA_GRADE_Q5_LINES = [
   '평가 내용',
-  '• 강의보고서 기한 미준수 2회 이상',
-  '• 강의 취소 이력 2건 이상',
+  '• 강의 취소 이력: 2회당 -5점',
+  '• 강의보고서 제출기한 미준수: 2회당 -5점',
   '',
-  '매 2회 발생 시마다 -5점',
-  'ex. 강의보고서 3회 누락, 강의취소 2회 시 기준 점수 - 10점',
-  'ex. 강의보고서 1회 누락, 강의취소 1회 누락 시 감점 없음. 동일 항목 2회 이상일 경우부터 감점 처리',
+  '항목별로 따로 계산합니다. 두 항목 건수를 합치지 않습니다.',
+  'ex. 강의보고서 3회 + 취소 2회 → -5 + -5 = -10',
+  'ex. 강의보고서 1회 + 취소 1회 → 감점 없음',
 ]
 
 function createScaleQuestion(

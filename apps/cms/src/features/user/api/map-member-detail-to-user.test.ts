@@ -204,7 +204,7 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.listMetrics?.instructorCareerSummaryLabel).toBe('경제교육 5년')
     expect(user.listMetrics?.instructorCareerYearsLabel).toBe('경제교육 5년')
     expect(user.listMetrics?.permissionApplicationTypeLabel).toBe('UJAT')
-    expect(user.listMetrics?.instructorFeeGradeLabel).toBe('A')
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBeUndefined()
     expect(user.listMetrics?.jaEvaluationGrade).toBe('B')
     expect(user.instructorInfo?.bankName).toBe('국민')
     expect(user.instructorInfo?.accountNumber).toBe('123-456')
@@ -551,7 +551,7 @@ describe('mapInstructorMemberDetailToUser', () => {
 
     expect(user.detailAddress).toBe('서울시 마포구')
     expect(user.detailAddressDetail).toBe('101호')
-    expect(user.listMetrics?.instructorFeeGradeLabel).toBe('특강')
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBeUndefined()
     expect(user.listMetrics?.jaEvaluationGrade).toBe('S')
     expect(user.listMetrics?.highestEducationLabel).toBe('대학원')
     expect(user.instructorInfo?.isBusinessIncome).toBe(false)
