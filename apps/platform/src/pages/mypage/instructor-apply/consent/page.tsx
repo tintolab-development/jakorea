@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { ConsentWriteFormPage } from '@/features/mypage/consent/ui/consent-write-form-page'
 import {
   INSTRUCTOR_APPLY_PATH,
@@ -12,6 +14,7 @@ import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
 
 export function MypageInstructorApplyConsentPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { consentKey = '' } = useParams<{ consentKey: string }>()
   const [searchParams] = useSearchParams()
   const isValidKey = isInstructorApplyConsentKey(consentKey)
@@ -45,7 +48,10 @@ export function MypageInstructorApplyConsentPage() {
         readOnly={isView}
         submitContext="instructorApply"
         onTitleAside={setTitleAside}
-        onComplete={() => navigate(returnTo)}
+        onComplete={() => {
+          void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
+          navigate(returnTo)
+        }}
       />
     </ConsentWriteFormPage>
   )

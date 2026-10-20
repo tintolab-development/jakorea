@@ -1,9 +1,21 @@
-import type { PlatformConsentFillOptions } from '@jakorea/form-schema/consent'
-import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
+import type {
+  PaymentStatementBasicInfoValues,
+  PlatformConsentFillOptions,
+} from '@jakorea/form-schema/consent'
+import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  type WritingFormDraft,
+  type WritingFormParagraph,
+} from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
 import type { ReactNode } from 'react'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFFormSection } from '@/shared/ui'
+import { ConsentPreviewPaymentInfo } from '@/features/mypage/settings/ui/consent-document-preview-payment-info'
+import {
+  ConsentPreviewRecipient,
+  resolveConsentDocumentPreviewChrome,
+} from '@/features/mypage/settings/ui/consent-document-preview-signature'
 import {
   PlatformConsentParagraphBody,
   resolvePlatformConsentSectionRequired,
@@ -25,6 +37,12 @@ export type PlatformConsentFormBodyProps = {
   /** A4 동의서 미리보기 — CMS `form-document-preview-body` 타이포 */
   documentPreview?: boolean
   documentPreviewTemplateId?: string
+  /** 동의서 확인 — 서명란 날짜. `YYYY년 MM월 DD일` 또는 `-` */
+  submittedDateLabel?: string
+  /** 지급조서 마지막 페이지 — `JA KOREA 귀하` */
+  showClosingRecipient?: boolean
+  /** 지급조서 확인 — 제출된 기본 정보. 없으면 항목은 `-` */
+  paymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
 }
 
 function shouldHideParagraph(
@@ -33,6 +51,18 @@ function shouldHideParagraph(
   documentPreview?: boolean,
 ): boolean {
   if (hiddenParagraphIds.has(paragraph.id)) return true
+  if (documentPreview && paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient) {
+    return true
+  }
+  if (
+    documentPreview &&
+    paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+    paragraph.kind === 'description' &&
+    paragraph.variant === 'closing' &&
+    paragraph.body.trim() === ''
+  ) {
+    return true
+  }
   if (paragraph.kind === 'description' && paragraph.variant === 'system') {
     if (paragraph.systemPreset === 'agreement_signature') return false
     if (documentPreview && paragraph.systemPreset === 'agreement_date') return false
@@ -45,13 +75,14 @@ function shouldHideParagraph(
 }
 
 /** 제목·카드 셸 없이 본문만 (마무리글, 전자서명 슬롯, 지급조서 중간 안내 등) */
-function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
+function isBodyOnlyParagraph(paragraph: WritingFormParagraph, documentPreview?: boolean): boolean {
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine) return true
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) return true
   if (
     paragraph.kind === 'description' &&
     paragraph.variant === 'system' &&
-    paragraph.systemPreset === 'agreement_signature'
+    (paragraph.systemPreset === 'agreement_signature' ||
+      (documentPreview && paragraph.systemPreset === 'agreement_date'))
   ) {
     return true
   }
@@ -64,10 +95,16 @@ function wrapConsentParagraph(
   title: string,
   content: ReactNode,
   documentPreview?: boolean,
+  previewAttrs?: { stack?: 'signature'; rule?: 'confirm' | 'date' },
 ): ReactNode {
-  if (isBodyOnlyParagraph(paragraph)) {
+  if (isBodyOnlyParagraph(paragraph, documentPreview)) {
     return (
-      <div key={paragraph.id} className={styles.bodyOnlyWrap}>
+      <div
+        key={paragraph.id}
+        className={styles.bodyOnlyWrap}
+        data-consent-preview-stack={previewAttrs?.stack}
+        data-consent-preview-rule={previewAttrs?.rule}
+      >
         {content}
       </div>
     )
@@ -109,6 +146,9 @@ export function PlatformConsentFormBody({
   renderAfterParagraphSlot,
   documentPreview = false,
   documentPreviewTemplateId,
+  submittedDateLabel = '-',
+  showClosingRecipient = false,
+  paymentBasicInfo,
 }: PlatformConsentFormBodyProps) {
   let numberedIndex = 0
 
@@ -123,7 +163,7 @@ export function PlatformConsentFormBody({
 
   return (
     <div className={rootClassName}>
-      {draft.paragraphs.map(paragraph => {
+      {draft.paragraphs.map((paragraph, index) => {
         if (shouldHideParagraph(paragraph, hiddenParagraphIds, documentPreview)) {
           return null
         }
@@ -134,21 +174,38 @@ export function PlatformConsentFormBody({
 
         const slot = renderParagraphSlot?.(paragraph)
         const afterSlot = renderAfterParagraphSlot?.(paragraph)
+        const previewChrome = documentPreview
+          ? resolveConsentDocumentPreviewChrome(
+              paragraph,
+              draft.paragraphs[index + 1],
+              submittedDateLabel,
+            )
+          : null
 
         const content =
-          slot != null
-            ? slot
-            : (
-                <PlatformConsentParagraphBody
-                  paragraph={paragraph}
-                  onUpdateParagraph={onUpdateParagraph}
-                  fillOptions={fillOptions}
-                  lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
-                  documentPreview={documentPreview}
-                />
-              )
+          documentPreview && paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord
+            ? <ConsentPreviewPaymentInfo values={paymentBasicInfo} />
+            : previewChrome != null
+              ? previewChrome.content
+              : slot != null
+                ? slot
+                : (
+                    <PlatformConsentParagraphBody
+                      paragraph={paragraph}
+                      onUpdateParagraph={onUpdateParagraph}
+                      fillOptions={fillOptions}
+                      lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
+                      documentPreview={documentPreview}
+                    />
+                  )
 
-        const wrapped = wrapConsentParagraph(paragraph, title, content, documentPreview)
+        const wrapped = wrapConsentParagraph(
+          paragraph,
+          title,
+          content,
+          documentPreview,
+          previewChrome ?? undefined,
+        )
 
         if (afterSlot != null && !documentPreview) {
           return (
@@ -161,6 +218,11 @@ export function PlatformConsentFormBody({
 
         return wrapped
       })}
+      {showClosingRecipient ? (
+        <div className={styles.bodyOnlyWrap}>
+          <ConsentPreviewRecipient />
+        </div>
+      ) : null}
     </div>
   )
 }

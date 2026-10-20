@@ -78,9 +78,11 @@ function applyMultipleChoiceConsent(
 function PlatformAgreementNoticeTableBody({
   paragraph,
   onUpdateParagraph,
+  documentPreview = false,
 }: {
   paragraph: HorizontalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
+  documentPreview?: boolean
 }) {
   const { headers, rows, emphasizedColumns } = resolveHorizontalTablePlatformView(paragraph)
   const idType = paragraph.idTypeWithInput
@@ -102,6 +104,7 @@ function PlatformAgreementNoticeTableBody({
             <PlatformIdTypeWithInputFields
               paragraph={idType}
               lockResidentIdType
+              readOnly={documentPreview}
               onChange={next =>
                 onUpdateParagraph(paragraph.id, current =>
                   current.kind === 'single_item' && current.variant === 'horizontal_table'
@@ -120,13 +123,19 @@ function PlatformAgreementNoticeTableBody({
 function PlatformHorizontalTableBody({
   paragraph,
   onUpdateParagraph,
+  documentPreview = false,
 }: {
   paragraph: HorizontalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
+  documentPreview?: boolean
 }) {
   if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table) {
     return (
-      <PlatformAgreementNoticeTableBody paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
+      <PlatformAgreementNoticeTableBody
+        paragraph={paragraph}
+        onUpdateParagraph={onUpdateParagraph}
+        documentPreview={documentPreview}
+      />
     )
   }
 
@@ -163,6 +172,7 @@ function PlatformHorizontalTableBody({
             <PlatformIdTypeWithInputFields
               paragraph={idType}
               lockResidentIdType={paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table}
+              readOnly={documentPreview}
               onChange={next =>
                 onUpdateParagraph(paragraph.id, current =>
                   current.kind === 'single_item' && current.variant === 'horizontal_table'
@@ -201,7 +211,11 @@ export function PlatformConsentParagraphBody({
 }) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     return (
-      <PlatformHorizontalTableBody paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
+      <PlatformHorizontalTableBody
+        paragraph={paragraph}
+        onUpdateParagraph={onUpdateParagraph}
+        documentPreview={documentPreview}
+      />
     )
   }
 
@@ -211,6 +225,7 @@ export function PlatformConsentParagraphBody({
         <PlatformPortraitPersonalConsentTable
           paragraph={paragraph}
           onUpdateParagraph={onUpdateParagraph}
+          readOnly={documentPreview}
         />
       )
     }
@@ -318,6 +333,10 @@ export function PlatformConsentParagraphBody({
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
+    const text = paragraph.bodyText.trim()
+    if (documentPreview) {
+      return <p className={previewTypography.explanationText}>{text || '-'}</p>
+    }
     const interactive = isExplanationInteractive(paragraph.id, fillOptions)
     if (interactive) {
       const isNoticeExplanationPlain =
@@ -343,9 +362,6 @@ export function PlatformConsentParagraphBody({
         />
       )
     }
-    if (documentPreview) {
-      return <p className={previewTypography.explanationText}>{paragraph.bodyText}</p>
-    }
     return (
       <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
         {paragraph.bodyText}
@@ -357,6 +373,26 @@ export function PlatformConsentParagraphBody({
     paragraph.kind === 'single_item' &&
     (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay')
   ) {
+    if (documentPreview) {
+      const items = paragraph.items ?? []
+      if (items.length === 0) {
+        return (
+          <p className={previewTypography.explanationText}>{paragraph.bodyText.trim() || '-'}</p>
+        )
+      }
+      return (
+        <div className={previewTypography.answerStack}>
+          {items.map(item => (
+            <div key={item.id} className={previewTypography.answerItem}>
+              {item.label?.trim() ? (
+                <p className={previewTypography.answerLabel}>{item.label.trim()}</p>
+              ) : null}
+              <p className={previewTypography.explanationText}>{item.bodyText.trim() || '-'}</p>
+            </div>
+          ))}
+        </div>
+      )
+    }
     return (
       <ConsentShortEssayFillFields
         paragraph={paragraph}
