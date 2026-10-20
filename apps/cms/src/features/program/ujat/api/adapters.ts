@@ -55,7 +55,14 @@ import {
 import {
   resolveUjatRecruitAnnouncementTitle,
   resolveUjatRecruitDisplayProgram,
+  type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { pickUjatRecruitVolunteerOverlay } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import {
+  hasVolunteerHalfOverlayKeys,
+  type UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import {
   normalizeProgramBusinessAreaValue,
   resolvePersistedProgramTargetLevels,
@@ -391,20 +398,71 @@ export function buildUjatNewVolunteerHalfRowRequests(
     }))
 }
 
-/** 생성 시 기관·봉사자(상반기) 탭 문구와 담당자를 각 행에 담는다. */
+function ujatVolunteerHalfRecruitRange(
+  program: Program,
+  half: UjatVolunteerRecruitHalf
+): { startAt?: string; endAt?: string } {
+  const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
+  const key =
+    half === 'h1'
+      ? UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.recruitRangeH1
+      : UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.recruitRangeH2
+  const seal = recordOf(overlay[key])
+  const startAt = stringOf(seal?.start) ?? undefined
+  const endAt = stringOf(seal?.end) ?? undefined
+  return { ...(startAt ? { startAt } : {}), ...(endAt ? { endAt } : {}) }
+}
+
+/**
+ * 하반기 봉사자 모집 행. 등록 위저드는 하반기를 별도 반기 키로만 저장하므로
+ * 하반기 입력이 있을 때 `SECOND_HALF` 행을 따로 만든다. 상반기 값으로 채우지 않는다.
+ */
+function withUjatCreateSecondHalfVolunteerRow(
+  rows: ProgramRecruitmentRequest[] | undefined,
+  program: Program
+): ProgramRecruitmentRequest[] | undefined {
+  if (rows == null) return rows
+  if (rows.some(row => row.recruitTerm === ProgramRecruitmentRequestRecruitTerm.SECOND_HALF)) {
+    return rows
+  }
+  const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
+  const range = ujatVolunteerHalfRecruitRange(program, 'h2')
+  if (!hasVolunteerHalfOverlayKeys(overlay, 'h2') && !range.startAt && !range.endAt) return rows
+  return [
+    ...rows,
+    {
+      ...recruitmentRow({
+        recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+        targetType: 'COLLEGE_STUDENT',
+        ...range,
+        operationStartDate: dateValue(program.startDate),
+        operationEndDate: dateValue(program.endDate),
+        maxCount: program.ujatSecondHalfVolunteerCount,
+        recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
+        interviewEnabled: true,
+      }),
+      applicationType: 'VOLUNTEER',
+    },
+  ]
+}
+
+/** 생성 시 기관·상반기·하반기 봉사자 탭 문구·담당자·면접 기간을 각 행의 반기 값으로 담는다. */
 function withUjatCreateRowCopy(
   rows: ProgramRecruitmentRequest[] | undefined,
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
   return rows?.map(row => {
-    const kind =
-      row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
-        ? 'volunteer_h1'
-        : 'institution'
+    const kind: UjatRecruitDisplayKind =
+      row.recruitmentType !== ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
+        ? 'institution'
+        : row.recruitTerm === ProgramRecruitmentRequestRecruitTerm.SECOND_HALF
+          ? 'volunteer_h2'
+          : 'volunteer_h1'
     const display = resolveUjatRecruitDisplayProgram(program, kind)
     const publicTitle = resolveUjatRecruitAnnouncementTitle(display, kind)
+    const { interviewStartAt: _start, interviewEndAt: _end, ...rowWithoutInterview } = row
     return {
-      ...row,
+      ...(kind === 'institution' ? row : rowWithoutInterview),
       announcementTitle: publicTitle !== '-' ? publicTitle : undefined,
       programDescription: display.description || undefined,
       recruitmentGuide: display.recruitmentGuide || undefined,
@@ -415,7 +473,7 @@ function withUjatCreateRowCopy(
       contactName: display.managerName || program.managerName || undefined,
       contactPhone: display.contactPhone || program.contactPhone || undefined,
       contactEmail: display.contactEmail || program.contactEmail || undefined,
-      ...(kind === 'volunteer_h1' ? ujatVolunteerInterviewFields(program) : {}),
+      ...(kind === 'institution' ? {} : ujatVolunteerInterviewFields(display)),
     }
   })
 }
@@ -1148,7 +1206,10 @@ export function toCreateRequest(
     programType: 'UJAT',
     serviceDetailJson: serviceDetailJson ?? undefined,
     ...coreWithoutDetail,
-    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments ?? undefined, copySource),
+    recruitments: withUjatCreateRowCopy(
+      withUjatCreateSecondHalfVolunteerRow(coreWithoutDetail.recruitments ?? undefined, copySource),
+      copySource
+    ),
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     autoApplyDefaultFormBindings: true,
