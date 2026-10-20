@@ -7,6 +7,7 @@ import {
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import {
   areMergeMemberRequestsEqual,
+  assertOrganizationMergeMembers,
   buildCreateMergeRequest,
   buildMergeMemberRequestsFromPartnerRows,
   findActiveLeadMergeGroup,
@@ -41,6 +42,8 @@ export interface SaveOrganizationCombinedClassParams {
   combinedClassApplication: '신청' | '미신청'
   partnerRowIds: string[]
   existingMergeGroups?: MergeGroupResponse[]
+  /** 방금 생성한 합반 그룹. 목록 조회가 아직 반영되지 않았을 때 취소에 사용한다. */
+  mergeGroupId?: number
   changeReason?: string
   leadTeacherMemberId?: number
 }
@@ -63,24 +66,28 @@ export async function saveOrganizationCombinedClassRemote(
   const existingLeadGroup = findActiveLeadMergeGroup(mergeGroups, leadOrgAppId)
 
   if (params.combinedClassApplication === '미신청') {
-    if (existingLeadGroup?.id != null) {
-      return cancelOrganizationMergeGroupRemote(params.programId, existingLeadGroup.id)
+    const cachedId = params.mergeGroupId ?? existingLeadGroup?.id
+    if (cachedId != null) {
+      return cancelOrganizationMergeGroupRemote(params.programId, cachedId)
     }
-    return null
+    const freshGroups = await fetchOrganizationMergeGroupsRemote(params.programId)
+    const freshLeadGroup = findActiveLeadMergeGroup(freshGroups, leadOrgAppId)
+    if (freshLeadGroup?.id != null) {
+      return cancelOrganizationMergeGroupRemote(params.programId, freshLeadGroup.id)
+    }
+    throw new Error('취소할 합반 정보를 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.')
   }
 
   const leadGrade = params.leadRow.educationGrade?.trim() ?? ''
-  if (!leadGrade) {
-    throw new Error('합반 기준 학년 정보가 없어 합반을 저장할 수 없습니다.')
-  }
-
   const partnerMembers = buildMergeMemberRequestsFromPartnerRows(
     params.partnerRowIds,
     params.allRows
   )
-  if (partnerMembers.length === 0) {
-    throw new Error('합반 대상 학년의 기관 신청 ID 또는 학년 정보가 없습니다.')
-  }
+  assertOrganizationMergeMembers({
+    leadOrganizationApplicationId: leadOrgAppId,
+    leadGrade,
+    partnerMembers,
+  })
 
   const partnersUnchanged =
     existingLeadGroup != null &&
