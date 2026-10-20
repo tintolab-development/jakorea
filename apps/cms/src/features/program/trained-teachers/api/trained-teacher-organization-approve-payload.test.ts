@@ -27,6 +27,33 @@ describe('buildTrainedTeacherApproveRequest', () => {
     })
   })
 
+  it('기간형 희망 일정은 preferenceRank만 preferredScheduleRank로 보낸다', () => {
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        preferredScheduleRank: 1,
+        selectedScheduleId: 187157,
+        selectedScheduleIds: [187157],
+      })
+    ).toEqual({ timing: 'IMMEDIATE', preferredScheduleRank: 1 })
+  })
+
+  it('유효하지 않은 희망 순위는 전송하지 않는다', () => {
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        preferredScheduleRank: 0,
+      })
+    ).toBeUndefined()
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        preferredScheduleRank: 1.5,
+        selectedScheduleId: 187157,
+      })
+    ).toEqual({ timing: 'IMMEDIATE' })
+  })
+
   it('SCHEDULED는 scheduledAt을 포함하고 다른 timing에는 포함하지 않는다', () => {
     expect(
       buildTrainedTeacherApproveRequest({

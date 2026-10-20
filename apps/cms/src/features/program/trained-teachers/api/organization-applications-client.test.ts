@@ -73,6 +73,31 @@ describe('approveTrainedTeacherOrganizationApplicationRemote', () => {
     })
   })
 
+  it('기간형 희망 순위 payload와 배정 상태 응답을 전달한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 1691437,
+      fromStatus: 'SUBMITTED',
+      toStatus: 'APPROVED',
+      scheduleAssignmentStatus: 'ASSIGNED',
+    })
+
+    await expect(
+      approveTrainedTeacherOrganizationApplicationRemote('186263', '1691437', {
+        timing: 'IMMEDIATE',
+        preferredScheduleRank: 1,
+      })
+    ).resolves.toMatchObject({ scheduleAssignmentStatus: 'ASSIGNED' })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/programs/186263/trained-teacher/organization-applications/1691437/approve',
+      method: 'POST',
+      data: {
+        timing: 'IMMEDIATE',
+        preferredScheduleRank: 1,
+      },
+    })
+  })
+
   it('payload가 없으면 기존 무본문 승인 요청을 보낸다', async () => {
     await approveTrainedTeacherOrganizationApplicationRemote('168006', '928514')
 

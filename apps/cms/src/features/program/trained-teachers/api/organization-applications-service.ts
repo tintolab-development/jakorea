@@ -3,6 +3,7 @@ import type { OrganizationApplicationApprovePayload } from '@/features/program/g
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'
+import type { TrainedTeacherOrganizationDecisionResponse } from './trained-teacher-organization-approve-payload'
 import {
   approveTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationRemote,
@@ -48,9 +49,9 @@ export async function approveTrainedTeacherOrganizationApplication(
   programId: string,
   applicationId: string,
   payload?: OrganizationApplicationApprovePayload
-): Promise<void> {
+): Promise<TrainedTeacherOrganizationDecisionResponse | undefined> {
   assertRemoteReady()
-  await approveTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
+  return approveTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
 }
 
 export async function rejectTrainedTeacherOrganizationApplication(

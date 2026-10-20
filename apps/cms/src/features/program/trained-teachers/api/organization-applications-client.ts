@@ -5,7 +5,10 @@ import type { OrganizationApplicationApprovePayload } from '@/features/program/g
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 import type { TrainedTeacherOrganizationApplicationsListQuery } from './organization-applications-list-query'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
-import type { TrainedTeacherApproveRequest } from './trained-teacher-organization-approve-payload'
+import type {
+  TrainedTeacherApproveRequest,
+  TrainedTeacherOrganizationDecisionResponse,
+} from './trained-teacher-organization-approve-payload'
 
 function listUrl(programId: string): string {
   return `/api/admin/programs/${encodeURIComponent(programId)}/trained-teacher/organization-applications`
@@ -49,8 +52,8 @@ export async function approveTrainedTeacherOrganizationApplicationRemote(
   programId: string,
   applicationId: string,
   payload?: OrganizationApplicationApprovePayload | TrainedTeacherApproveRequest
-): Promise<void> {
-  await unwrapApiBody(
+): Promise<TrainedTeacherOrganizationDecisionResponse | undefined> {
+  return unwrapApiBody<TrainedTeacherOrganizationDecisionResponse>(
     await customInstance({
       url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/approve`,
       method: 'POST',

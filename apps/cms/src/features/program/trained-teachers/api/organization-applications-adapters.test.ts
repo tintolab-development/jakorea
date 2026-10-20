@@ -32,6 +32,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.teacherName).toBe('김교사')
     expect(row.classCount).toBe(3)
     expect(row.studentCount).toBe(90)
+    expect(row.applicationStatus).toBe('APPROVED')
     expect(row.approvalStatus).toBe('approved')
     expect(row.desiredEducationPeriod).toBe('3월 희망')
     expect(row.preferredScheduleBlocks).toEqual([])

@@ -372,6 +372,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   }
   return {
     id: toId(dto.applicationId),
+    applicationStatus: dto.applicationStatus?.trim() || undefined,
     no: index + 1,
     schoolName,
     region,
