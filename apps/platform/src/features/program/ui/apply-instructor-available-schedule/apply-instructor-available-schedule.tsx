@@ -158,7 +158,6 @@ function joinScheduleCardLine(parts: readonly string[]): string {
     .join(' | ')
 }
 
-
 function isTimeRangeLikeText(value: string): boolean {
   return /\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2}/.test(value.trim())
 }

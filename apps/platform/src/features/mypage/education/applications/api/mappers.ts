@@ -1,5 +1,5 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import { formatDisplayDateRange } from '../../../../../shared/lib/format-display-date.ts'
+import { formatDisplayDateRange } from '@/shared/lib/format-display-date'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import {
   formatInterviewAtLabel,

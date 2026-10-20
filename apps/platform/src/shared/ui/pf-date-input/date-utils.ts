@@ -1,5 +1,5 @@
 import { addMonths, startOfDay, type CalendarDay } from '../pf-calendar/calendar-month'
-import { formatDisplayDateRange } from '../../lib/format-display-date.ts'
+import { formatDisplayDate, formatDisplayDateRange } from '../../lib/format-display-date.ts'
 
 /** Platform 날짜 인풋 공통 최소 연도 */
 export const DATE_INPUT_MIN_YEAR = 1950
@@ -160,7 +160,8 @@ export function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export function formatDisplayDate(value: string): string {
+/** 날짜 인풋 트리거 — `2026. 09. 13` */
+export function formatDateInputDisplay(value: string): string {
   const date = parseIsoDate(value)
   if (!date) return ''
   const year = date.getFullYear()

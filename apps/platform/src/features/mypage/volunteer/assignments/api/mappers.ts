@@ -7,7 +7,7 @@ import type {
   VolunteerWaitingScheduleRow,
 } from '../model/types'
 import { formatVolunteerDistanceKm } from '../lib/format-distance'
-import { normalizeScheduleDisplayLabel } from '../../../../../shared/lib/format-display-date.ts'
+import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
 import { isScheduleLineWithinLastSession } from '../lib/status'
 import type {
   PortalVolunteerAssignedItem,

@@ -18,7 +18,7 @@ import {
   formatDisplayDateTimeRange,
   formatDisplayClockLabel,
   normalizeScheduleDisplayLabel,
-} from '../../../../../shared/lib/format-display-date.ts'
+} from '@/shared/lib/format-display-date'
 
 const SELF_INTRO_ANSWER_KEYS = [
   PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro,

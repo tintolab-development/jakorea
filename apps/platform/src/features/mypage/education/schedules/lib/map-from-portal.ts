@@ -9,7 +9,7 @@ import { resolveEducationScheduleCommonInfoLabel } from './common-info-label.ts'
 import {
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
-} from '../../../../../shared/lib/format-display-date.ts'
+} from '@/shared/lib/format-display-date'
 import type {
   EducationAssignmentSubmitStatus,
   EducationScheduleAssignment,

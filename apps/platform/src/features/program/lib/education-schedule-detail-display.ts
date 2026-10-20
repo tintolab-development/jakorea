@@ -1,4 +1,4 @@
-import { normalizeScheduleDisplayLabel } from '../../../shared/lib/format-display-date.ts'
+import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
 
 /** 프로그램 상세 세부내용 — 교육 일정 카드 제목 */
 export function educationScheduleDetailCardLabel(index: number, total: number): string {

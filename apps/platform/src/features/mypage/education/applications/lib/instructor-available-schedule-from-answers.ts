@@ -8,7 +8,7 @@ import {
 import {
   isScheduleDateLikeText,
   normalizeScheduleDisplayLabel,
-} from '../../../../../shared/lib/format-display-date.ts'
+} from '@/shared/lib/format-display-date'
 
 const INSTRUCTOR_SCHEDULE_ANSWER_KEYS = [
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,

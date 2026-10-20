@@ -38,7 +38,7 @@ import type {
   PublicCareerTalentEducationLevel,
   PublicCareerTalentJobInterest,
 } from './types'
-import { formatDisplayDate, formatDisplayDateRange } from '../../../shared/lib/format-display-date.ts'
+import { formatDisplayDate, formatDisplayDateRange } from '@/shared/lib/format-display-date'
 
 const CULTURE_CODE_TO_ID: Record<string, ThriveValueId> = {
   MAKE_AN_IMPACT: 'impact',

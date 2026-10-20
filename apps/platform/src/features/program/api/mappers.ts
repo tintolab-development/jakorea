@@ -43,7 +43,7 @@ import {
   formatDisplayDate,
   formatDisplayDateRange,
   normalizeScheduleDisplayLabel,
-} from '../../../shared/lib/format-display-date.ts'
+} from '@/shared/lib/format-display-date'
 
 function mapPortalMaxPreferredScheduleCount(
   remote: PortalProgramDetail,
