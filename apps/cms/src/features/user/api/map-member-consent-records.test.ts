@@ -62,7 +62,6 @@ describe('applyTermsAgreementsToSchema', () => {
       type: 'document',
       agreed: false,
     })
-    // 개인 상세는 등록과 동일하게 지급조서·교육진행자 등 8항목 노출
     expect(field('지급조서 사전 동의서')).toMatchObject({ type: 'document', agreed: true })
     expect(field('교육진행자 서약서')).toMatchObject({ type: 'document', agreed: false })
   })
@@ -118,9 +117,11 @@ describe('applyTermsAgreementsToSchema', () => {
 })
 
 describe('applyMemberConsentToSchema', () => {
-  it('상세 termsAgreements가 있으면 consent-records보다 우선한다', () => {
+  it('Summary agreed가 consent-records 이력(과거 false)보다 우선한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
-      termsAgreements: [{ termsType: 'MARKETING', agreed: true }],
+      consentSummaries: [
+        { consentType: 'MARKETING', agreed: true, agreedAt: '2026-03-01T00:00:00Z' },
+      ],
       consentRecords: [
         { consentType: 'MARKETING', consentValue: false, consentedAt: '2026-02-01T00:00:00Z' },
       ],
@@ -130,10 +131,14 @@ describe('applyMemberConsentToSchema', () => {
     expect(marketing).toMatchObject({ type: 'remote_consent', agreed: true })
   })
 
-  it('consent-records의 filledDocumentAvailable·formResponseId·filledDocumentId·consentType을 terms SSOT 위에 보강한다', () => {
+  it('consent-records의 filledDocumentAvailable·formResponseId를 Summary agreed 위에 보강한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
-      termsAgreements: [
-        { termsType: 'PORTRAIT_RIGHTS', agreed: true, agreedAt: '2026-01-15T09:15:42Z' },
+      consentSummaries: [
+        {
+          consentType: 'PORTRAIT_RIGHTS',
+          agreed: true,
+          agreedAt: '2026-01-15T09:15:42Z',
+        },
       ],
       consentRecords: [
         {
@@ -164,7 +169,7 @@ describe('applyMemberConsentToSchema', () => {
     })
   })
 
-  it('filledDocumentAvailable이 없어도 formResponseId만으로 문서 메타를 전달한다', () => {
+  it('관리자 상세 termsAgreements 경로에서 records 메타를 보강한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       termsAgreements: [
         { termsType: 'ADMINISTRATIVE_INFO_CONSENT', agreed: true, agreedAt: '2026-03-01T00:00:00Z' },
@@ -190,7 +195,7 @@ describe('applyMemberConsentToSchema', () => {
     })
   })
 
-  it('consent-records의 formResponseId를 document 필드에 전달한다', () => {
+  it('records만 있으면 동의 여부를 계산하지 않는다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       consentRecords: [
         {
@@ -208,8 +213,21 @@ describe('applyMemberConsentToSchema', () => {
 
     expect(portrait).toMatchObject({
       type: 'document',
-      agreed: true,
-      formResponseId: 42,
+      agreed: false,
     })
+  })
+
+  it('지급조서 PRE_CONSENT summary를 UI 지급조서 항목 하나에 매핑한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        { consentType: 'PAYMENT_STATEMENT_CONSENT', agreed: true, agreedAt: '2026-01-01T00:00:00Z' },
+      ],
+    })
+
+    const payment = rows
+      .flatMap(r => r.fields)
+      .find(f => f.label === '지급조서 사전 동의서')?.value
+
+    expect(payment).toMatchObject({ type: 'document', agreed: true })
   })
 })

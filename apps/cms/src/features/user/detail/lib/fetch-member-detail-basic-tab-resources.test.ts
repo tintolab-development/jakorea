@@ -4,6 +4,7 @@ import { fetchMemberDetailBasicTabResources, shouldFetchMemberConsentRecords } f
 
 vi.mock('@/features/user/api/hooks/use-member-detail-query', () => ({
   fetchMemberConsentRecordsQuery: vi.fn().mockResolvedValue([]),
+  fetchMemberConsentSummariesQuery: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/features/user/api/hooks/use-member-detail-subresource-queries', () => ({
@@ -11,7 +12,10 @@ vi.mock('@/features/user/api/hooks/use-member-detail-subresource-queries', () =>
   fetchMemberCommentsQuery: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { fetchMemberConsentRecordsQuery } from '@/features/user/api/hooks/use-member-detail-query'
+import {
+  fetchMemberConsentRecordsQuery,
+  fetchMemberConsentSummariesQuery,
+} from '@/features/user/api/hooks/use-member-detail-query'
 import {
   fetchAffiliatedTeachersQuery,
   fetchMemberCommentsQuery,
@@ -55,7 +59,7 @@ describe('shouldFetchMemberConsentRecords', () => {
 })
 
 describe('fetchMemberDetailBasicTabResources', () => {
-  it('개인 detail-info — consent-records fetch', async () => {
+  it('개인 detail-info — consent summaries·records fetch', async () => {
     const queryClient = {} as QueryClient
 
     await fetchMemberDetailBasicTabResources(queryClient, {
@@ -67,6 +71,7 @@ describe('fetchMemberDetailBasicTabResources', () => {
       showSchoolAffiliatedTeachers: false,
     })
 
+    expect(fetchMemberConsentSummariesQuery).toHaveBeenCalledWith(queryClient, 2)
     expect(fetchMemberConsentRecordsQuery).toHaveBeenCalledWith(queryClient, 2)
     expect(fetchAffiliatedTeachersQuery).not.toHaveBeenCalled()
   })
@@ -160,8 +165,9 @@ describe('fetchMemberDetailBasicTabResources', () => {
     expect(fetchAffiliatedTeachersQuery).not.toHaveBeenCalled()
   })
 
-  it('권한 승인 상세(permission) — comments만 fetch · consent·소속교사 생략', async () => {
+  it('강사 권한 승인 상세(permission) — 현재 동의 summaries·records + comments · 소속교사 생략', async () => {
     vi.mocked(fetchMemberConsentRecordsQuery).mockClear()
+    vi.mocked(fetchMemberConsentSummariesQuery).mockClear()
     vi.mocked(fetchAffiliatedTeachersQuery).mockClear()
     vi.mocked(fetchMemberCommentsQuery).mockClear()
     const queryClient = {} as QueryClient
@@ -176,7 +182,8 @@ describe('fetchMemberDetailBasicTabResources', () => {
       currentUser: { role: 'ADMIN' },
     })
 
-    expect(fetchMemberConsentRecordsQuery).not.toHaveBeenCalled()
+    expect(fetchMemberConsentSummariesQuery).toHaveBeenCalledWith(queryClient, 42)
+    expect(fetchMemberConsentRecordsQuery).toHaveBeenCalledWith(queryClient, 42)
     expect(fetchAffiliatedTeachersQuery).not.toHaveBeenCalled()
     expect(fetchMemberCommentsQuery).toHaveBeenCalledWith(
       queryClient,

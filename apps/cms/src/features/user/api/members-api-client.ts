@@ -13,6 +13,7 @@ import {
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { customInstance } from '@/shared/api/orval-mutator'
+import { parseMemberConsentSummariesPayload } from '@/features/user/api/parse-member-consent-summaries-payload'
 import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas/schoolMemberDetailResponse'
 import type { AdminPreRegisterSchoolRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterSchoolRequest'
 import type {
@@ -77,6 +78,7 @@ import type { ListMemberCommentsParams } from '@/shared/api/generated/members/sc
 import type { AdminPermissionResponse } from '@/shared/api/generated/members/schemas/adminPermissionResponse'
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
+import type { MemberPortalConsentSummary } from '@/shared/api/generated/members/schemas/memberPortalConsentSummary'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
 import type { InstructorJaEvaluationInput } from '@/shared/api/generated/members/schemas/instructorJaEvaluationInput'
 import type { InstructorJaEvaluationResponse } from '@/shared/api/generated/members/schemas/instructorJaEvaluationResponse'
@@ -522,6 +524,22 @@ export async function fetchMemberConsentRecordsRemote(
 ): Promise<MemberConsentRecordResponse[]> {
   const data = await unwrapApiBody(await membersApi.consentRecords(memberId))
   return Array.isArray(data) ? data : []
+}
+
+/** GET /api/admin/users/{memberId}/consents — Envelope 없이 ConsentSummary[] */
+export async function fetchMemberConsentSummariesRemote(
+  memberId: number,
+  signal?: AbortSignal
+): Promise<MemberPortalConsentSummary[]> {
+  const body = await customInstance<MemberPortalConsentSummary[] | { data?: unknown }>(
+    {
+      url: `/api/admin/users/${memberId}/consents`,
+      method: 'GET',
+      signal,
+    },
+    { skipGlobalErrorAlert: true }
+  )
+  return parseMemberConsentSummariesPayload(body)
 }
 
 /** POST 동의서 작성본 원문 — 민감정보, 쿼리 캐시에 넣지 말 것 */
