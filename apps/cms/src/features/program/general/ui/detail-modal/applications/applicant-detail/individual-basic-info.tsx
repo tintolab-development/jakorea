@@ -30,7 +30,14 @@ import {
   type IndividualApplicantScreeningStage,
 } from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
-import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
+import {
+  prepareGeneralEducationScheduleSessions,
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveParticipatingInstitutionScheduleRowLabel,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { getProgramProgressDisplayStatus } from '@/shared/constants/status'
 import { ParticipatingProgressScheduleValue } from '@/features/program/general/ui/detail-modal/program-status/participating-progress-schedule-row'
@@ -306,22 +313,44 @@ function IndividualApplicantProgressScheduleSection({
   program: Program
   sessions: readonly ParticipatingSchoolSession[]
 }) {
+  const bridge = resolveInstitutionApplicationProgramBridge(program)
+  const scheduleShape = generalEducationScheduleShapeFromBridge(bridge)
+  const curriculumSessionLabels = readCurriculumSessionLabels(program)
+  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
+    program.generalCommonInfo?.scheduleDetails
+  )
+  const displaySessions = prepareGeneralEducationScheduleSessions(
+    sessions,
+    scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
+    {
+      detailScheduleTimeSpan,
+      educationScheduleLines:
+        sessions.length === 0 ? readProgramEducationScheduleLines(program) : [],
+    }
+  )
+  const shape = scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
   return (
     <DetailInfoForm title="교육 진행 일정" mode="view">
-      {sessions.length === 0 ? (
+      {displaySessions.length === 0 ? (
         <DetailInfoForm.Row type="custom">
           <p className="general-volunteer-applicant-detail__empty-schedule">
             등록된 교육 일정이 없습니다.
           </p>
         </DetailInfoForm.Row>
       ) : (
-        sessions.map((session, index) => (
+        displaySessions.map((session, index) => (
           <DetailInfoForm.Row type="single" key={`${session.round}-${session.date}-${index}`}>
             <DetailInfoForm.Field
               label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
               fullRow
               readOnlyDisplay
-              view={<ParticipatingProgressScheduleValue session={session} />}
+              view={
+                <ParticipatingProgressScheduleValue
+                  session={session}
+                  shape={shape}
+                  detailScheduleTimeSpan={detailScheduleTimeSpan}
+                />
+              }
             />
           </DetailInfoForm.Row>
         ))
@@ -399,7 +428,18 @@ export function ApplicantGeneralIndividualBasicInfo({
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
-  const sessions = applicant.sessions ?? []
+  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
+    program?.generalCommonInfo?.scheduleDetails
+  )
+  const curriculumSessionLabels = readCurriculumSessionLabels(program)
+  const sessions = prepareGeneralEducationScheduleSessions(
+    applicant.sessions ?? [],
+    generalEducationScheduleShapeFromBridge(institutionApplicationBridge),
+    {
+      detailScheduleTimeSpan,
+      educationScheduleLines: readProgramEducationScheduleLines(program),
+    }
+  )
 
   const nameCell = renderIndividualApplicantNameWithHistoryBadges({
     applicantName: applicant.applicantName,
@@ -616,12 +656,17 @@ export function ApplicantGeneralIndividualBasicInfo({
     <ApplicantPreferredScheduleDetailSection
       sessions={sessions}
       bridge={institutionApplicationBridge}
+      detailScheduleTimeSpan={detailScheduleTimeSpan}
+      curriculumSessionLabels={curriculumSessionLabels}
     />
   ) : null
 
   const progressScheduleSection =
     showProgressScheduleSection && program ? (
-      <IndividualApplicantProgressScheduleSection program={program} sessions={sessions} />
+      <IndividualApplicantProgressScheduleSection
+        program={program}
+        sessions={applicant.sessions ?? []}
+      />
     ) : null
 
   const programProgressStatusCell =

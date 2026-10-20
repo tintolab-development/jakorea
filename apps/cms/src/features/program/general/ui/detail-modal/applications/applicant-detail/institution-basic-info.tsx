@@ -4,6 +4,7 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -42,7 +43,14 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import { institutionHopeScheduleEmptyMessage } from '@/features/program/general/lib/institution-hope-schedule-empty-message'
-import { readOrganizationApplicationHopeSessionsForDisplay } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { resolveOrganizationApplicationHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  prepareGeneralEducationScheduleSessions,
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
+import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -245,10 +253,12 @@ export function ApplicantGeneralInstitutionBasicInfo({
     : null
   const combinedClassProgramEligible =
     isCombinedClassProgramEligibleProp ?? isCombinedClassProgramEligible(program)
-  const showScheduleSection = shouldShowInstitutionApplicationDetailScheduleSection(
-    institutionApplicationBridge,
-    institution
+  const detailScheduleTimeSpan = useMemo(
+    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
+    [program]
   )
+  const curriculumSessionLabels = useMemo(() => readCurriculumSessionLabels(program), [program])
+  const educationScheduleLines = useMemo(() => readProgramEducationScheduleLines(program), [program])
   const showGuidanceSection =
     institutionApplicationBridge == null ||
     shouldShowInstitutionApplicationGuidanceParagraph(institutionApplicationBridge)
@@ -297,14 +307,51 @@ export function ApplicantGeneralInstitutionBasicInfo({
       buildTeacherInfoCell(institution, detail)
     )
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
-  const sessions = useMemo(
-    () =>
-      readOrganizationApplicationHopeSessionsForDisplay(
-        institution,
-        program?.backendProgramType
-      ),
-    [institution, program?.backendProgramType]
-  )
+  const useStoredRequestedHopeSchedules = !isCompanySchoolProgram(program)
+  const requestedHopeSchedulesQuery = useQuery({
+    ...organizationRequestedSchedulesQueryOptions(institution.id),
+    enabled: useStoredRequestedHopeSchedules && institution.id.trim().length > 0,
+  })
+  const sessions = useMemo(() => {
+    const preferred = institution.preferredEducationSchedules ?? []
+    const fromHope = useStoredRequestedHopeSchedules
+      ? resolveOrganizationApplicationHopeSessions(
+          {
+            programType: program?.backendProgramType?.trim() || 'GENERAL_ORGANIZATION',
+            availableActions: [],
+            sessions: [],
+            preferredEducationSchedules: [],
+          },
+          preferred,
+          requestedHopeSchedulesQuery.data
+        )
+      : (institution.sessions ?? [])
+    return prepareGeneralEducationScheduleSessions(
+      fromHope,
+      institutionApplicationBridge
+        ? {
+            educationStructure: institutionApplicationBridge.educationStructure,
+            sessionRound: institutionApplicationBridge.sessionRound,
+            educationScheduleMode: institutionApplicationBridge.educationScheduleMode,
+            curriculumSessionCount: institutionApplicationBridge.curriculumChartSessionCount,
+            curriculumSessionLabels,
+          }
+        : null,
+      { detailScheduleTimeSpan, educationScheduleLines }
+    )
+  }, [
+    curriculumSessionLabels,
+    detailScheduleTimeSpan,
+    educationScheduleLines,
+    institution,
+    institutionApplicationBridge,
+    program?.backendProgramType,
+    requestedHopeSchedulesQuery.data,
+    useStoredRequestedHopeSchedules,
+  ])
+  const showScheduleSection =
+    sessions.length > 0 ||
+    shouldShowInstitutionApplicationDetailScheduleSection(institutionApplicationBridge, institution)
 
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 
@@ -586,6 +633,8 @@ export function ApplicantGeneralInstitutionBasicInfo({
         <ApplicantPreferredScheduleDetailSection
           sessions={sessions}
           bridge={institutionApplicationBridge}
+          detailScheduleTimeSpan={detailScheduleTimeSpan}
+          curriculumSessionLabels={curriculumSessionLabels}
           emptyMessage={institutionHopeScheduleEmptyMessage(institution)}
         />
       ) : null}

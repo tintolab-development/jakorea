@@ -4,13 +4,7 @@
  */
 
 import {
-  ProgramDetailTdDivider,
-  ProgramDetailTdSegmentWrap,
-} from '@/features/program/shared/ui/program-detail-td-divider'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import {
-  enrichGeneralDetailScheduleLineLabel,
-  getSessionLineParts,
+  formatGeneralDetailSessionLine,
   type ApplicantSessionLineInput,
 } from './applicants-detail-session-format'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -19,41 +13,22 @@ import './general-detail-session-line.css'
 export function GeneralDetailSessionLine({
   session,
   bridge,
+  detailScheduleTimeSpan,
+  curriculumSessionLabels,
 }: {
   session: ApplicantSessionLineInput
   bridge?: InstitutionApplicationProgramBridge | null
+  detailScheduleTimeSpan?: string | null
+  curriculumSessionLabels?: readonly string[] | null
 }) {
-  const scheduleLabel = session.scheduleLabel?.trim()
-  if (scheduleLabel) {
-    return (
-      <div className="general-detail-session-line">
-        <span>
-          {formatCmsScheduleDisplayLabel(enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge))}
-        </span>
-      </div>
-    )
-  }
-
-  const { datePart, durationPart, periodPart } = getSessionLineParts(session, 'general-detail', bridge)
-  const schedulePart = formatCmsScheduleDisplayLabel(`${datePart} ${durationPart}`)
-
-  if (!periodPart) {
-    return (
-      <div className="general-detail-session-line">
-        <span>
-          {formatCmsScheduleDisplayLabel(enrichGeneralDetailScheduleLineLabel(schedulePart, bridge))}
-        </span>
-      </div>
-    )
-  }
-
+  const line = formatGeneralDetailSessionLine(session, bridge, {
+    detailScheduleTimeSpan,
+    curriculumSessionLabels,
+  })
+  if (!line) return <>-</>
   return (
     <div className="general-detail-session-line">
-      <ProgramDetailTdSegmentWrap>
-        <span>{schedulePart}</span>
-        <ProgramDetailTdDivider />
-        <span>{periodPart}</span>
-      </ProgramDetailTdSegmentWrap>
+      <span>{line}</span>
     </div>
   )
 }

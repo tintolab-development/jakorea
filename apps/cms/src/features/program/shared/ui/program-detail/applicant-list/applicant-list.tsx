@@ -88,6 +88,7 @@ import {
   toNestedDecisionNotification,
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
+import { mergeOrganizationApplicationApproveBody } from '@/features/program/general/lib/organization-application-approve-slots'
 import { patchInstructorForCancelApproval } from '@/features/program/general/lib/instructor-cancel-approval'
 import {
   patchInstructorForCancelRejection,
@@ -664,6 +665,22 @@ export function ApplicantList({
     return instructorList.find(row => row.id === id) ?? null
   }, [selectedRowKeys, instructorList])
 
+  const openInstructorSingleApprove = useCallback(
+    (row: ApplicantInstructorRow) => {
+      if (useInstructorAssignFlow) {
+        setInstructorApprovalTarget({ id: row.id, name: row.instructorName, step: 'assign' })
+        return
+      }
+      setInstructorApprovalTarget({
+        id: row.id,
+        name: row.instructorName,
+        step: 'fee',
+        assignments: [],
+      })
+    },
+    [setInstructorApprovalTarget, useInstructorAssignFlow]
+  )
+
   const firstSelectedInstitutionName = useMemo(() => {
     const id = selectedRowKeys[0]
     if (id == null) return ''
@@ -833,6 +850,11 @@ export function ApplicantList({
       return
     }
     if (useGeneralInstructorBulkActionModal) {
+      const single = resolveSingleSelectedInstructor()
+      if (single) {
+        openInstructorSingleApprove(single)
+        return
+      }
       setInstructorBulkApproveOpen(true)
       return
     }
@@ -1180,16 +1202,7 @@ export function ApplicantList({
           onApprove={id => {
             const row = selectedItem
             if (row && 'instructorName' in row && row.id === id) {
-              if (useInstructorAssignFlow) {
-                setInstructorApprovalTarget({ id, name: row.instructorName, step: 'assign' })
-              } else {
-                setInstructorApprovalTarget({
-                  id,
-                  name: row.instructorName,
-                  step: 'fee',
-                  assignments: [],
-                })
-              }
+              openInstructorSingleApprove(row)
             }
           }}
           onReject={id => {
@@ -1332,14 +1345,13 @@ export function ApplicantList({
             setInstitutionApproveSubmitting(true)
             try {
               const approvePayload = requiresGeneralOrganizationApproveSlots
-                ? {
-                    ...notify,
-                    ...(payload.slots?.length
-                      ? { slots: payload.slots }
-                      : payload.selectedScheduleId != null
-                        ? { selectedScheduleId: payload.selectedScheduleId }
-                        : {}),
-                  }
+                ? mergeOrganizationApplicationApproveBody({
+                    timing: notify?.timing,
+                    scheduledAt: notify?.scheduledAt,
+                    requestedScheduleId: payload.requestedScheduleId,
+                    selectedScheduleId: payload.selectedScheduleId,
+                    slots: payload.slots,
+                  })
                 : notify
               const remote = await applyRemoteInstitutionDecision(
                 [id],
@@ -2060,6 +2072,7 @@ export function ApplicantList({
       />
       <InstructorBulkApproveModal
         open={instructorBulkApproveOpen}
+        subjectName={firstSelectedInstructorName}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkApproveOpen(false)}
         onConfirm={payload => {
