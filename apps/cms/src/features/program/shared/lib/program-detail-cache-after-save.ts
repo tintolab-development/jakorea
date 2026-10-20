@@ -22,7 +22,10 @@ export function programDetailCacheAfterSave(
   }
 }
 
-/** 저장 draft의 UJAT 세션 overlay를 echo에 남긴다. 패치에 있으면 패치가 우선이다. */
+/**
+ * 저장 draft의 overlay·설문 keys를 echo에 남긴다. 패치에 있으면 패치가 우선이다.
+ * (TT/GENERAL 공통정보 — PATCH echo가 keys·registrationOverlay를 빼도 LNB가 바로 반영되게)
+ */
 export function programDetailCacheFromSave(
   programId: string,
   echoed: Program,
@@ -30,11 +33,30 @@ export function programDetailCacheFromSave(
   patch?: Partial<Program>
 ): Program {
   const next = programDetailCacheAfterSave(programId, echoed, patch)
-  if (!draft.ujatRegistrationOverlay && !patch?.ujatRegistrationOverlay) return next
+  const generalSurveyMenuKeys =
+    patch?.generalSurveyMenuKeys !== undefined
+      ? patch.generalSurveyMenuKeys
+      : draft.generalSurveyMenuKeys !== undefined
+        ? draft.generalSurveyMenuKeys
+        : next.generalSurveyMenuKeys
+  const registrationOverlay =
+    patch?.registrationOverlay ?? draft.registrationOverlay ?? next.registrationOverlay
+  const ujatRegistrationOverlay =
+    patch?.ujatRegistrationOverlay ?? draft.ujatRegistrationOverlay ?? next.ujatRegistrationOverlay
+
+  if (
+    generalSurveyMenuKeys === next.generalSurveyMenuKeys &&
+    registrationOverlay === next.registrationOverlay &&
+    ujatRegistrationOverlay === next.ujatRegistrationOverlay
+  ) {
+    return next
+  }
+
   return {
     ...next,
-    ujatRegistrationOverlay:
-      patch?.ujatRegistrationOverlay ?? draft.ujatRegistrationOverlay,
+    ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
+    ...(registrationOverlay !== undefined ? { registrationOverlay } : {}),
+    ...(ujatRegistrationOverlay !== undefined ? { ujatRegistrationOverlay } : {}),
   }
 }
 

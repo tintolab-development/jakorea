@@ -392,7 +392,7 @@ describe('program detail title edit fields', () => {
     }
     const patch = detailEditValuesToProgramPatch(values, existing)
     expect(patch.title).toBe('수정 공고명')
-    expect(patch.textbookName).toBe('수정 세부명')
+    expect(patch.textbookName).toBe('기존 세부명')
     expect(patch.generalCommonInfo?.announcementTitle).toBe('수정 공고명')
     expect(patch.generalCommonInfo?.detailedProgramName).toBe('수정 세부명')
   })

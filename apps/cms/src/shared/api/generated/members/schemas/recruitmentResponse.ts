@@ -48,10 +48,14 @@ export interface RecruitmentResponse {
   remarks?: string | null;
   /** 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. */
   otherMatters?: string | null;
-  /** 이 모집 행의 제목. 없으면 null. */
+  /** 이 모집 행의 공고 제목. GENERAL_* 봉사자 행은 공통정보 공고명을 쓰므로 항상 null. UJAT 봉사자는 모집별 공고명. 그 외·없으면 null. */
   announcementTitle?: string | null;
   /** 이 모집 행의 요약. 없으면 null. */
   summary?: string | null;
   /** 봉사자(VOLUNTEER) 모집이고 면접이 켜진 경우 「면접 진행 가능 일정」. 신청폼 면접 선택지와 같은 규칙(슬롯 우선, 없으면 CMS volunteerInterviewScheduleInfo 펼침). 그 외 모집 유형·면접 미운영은 null(필드 생략). options는 없으면 []. */
   volunteerInterviewSchedule?: VolunteerInterviewScheduleResponse | null;
+  /** 기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 해당 행이 기관 참여자 모집이 아니면 생략. 미설정 레거시는 true. */
+  preEducationNoticeRequired?: boolean | null;
+  /** preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집 행에서만 내려가며 두 필드는 항상 같은 boolean입니다. */
+  advanceGuidanceRequired?: boolean | null;
 }

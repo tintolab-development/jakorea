@@ -32,6 +32,7 @@ export interface ProgramDetailResponse {
   /** 교육받은 교사 프로그램의 교육일지 기능 설정. 비대상 프로그램·detail row 없음·OFF는 false. */
   educationJournalEnabled?: boolean;
   portalCategories?: string[];
+  /** 회원에게 보이는 공고명. 포커스 없는 조회는 공통정보 공고명. GENERAL_* 봉사자 포커스는 공통정보 공고명과 같고 행 announcementTitle은 쓰지 않는다. UJAT 봉사자 포커스는 모집별 공고명. */
   title?: string;
   titleEn?: string;
   summary?: string;
@@ -43,6 +44,10 @@ export interface ProgramDetailResponse {
   periodStatus?: string;
   /** 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개. */
   recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
+  /** 기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영. */
+  preEducationNoticeRequired?: boolean | null;
+  /** preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집에서만 내려가며 두 필드는 항상 같은 boolean입니다. */
+  advanceGuidanceRequired?: boolean | null;
   applicationTargetMode?: string;
   businessField?: string;
   venue?: string;

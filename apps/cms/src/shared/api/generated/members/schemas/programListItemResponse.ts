@@ -20,6 +20,7 @@ export interface ProgramListItemResponse {
   programType?: string;
   /** 회원포탈 탭 유형 */
   portalCategories?: string[];
+  /** 회원에게 보이는 공고명. overlay 공고명, 공통정보 announcementTitle 순이며 없으면 program.name_ko. GENERAL_* 봉사자 행은 모집 announcementTitle을 쓰지 않고 공통정보 공고명과 같다. UJAT 봉사자는 모집별 공고명을 쓴다. name_ko 컬럼은 바꾸지 않는다. */
   title?: string;
   summary?: string;
   operationMethod?: string;
@@ -47,10 +48,6 @@ export interface ProgramListItemResponse {
   targetGradeTo?: string;
   /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. */
   educationForm?: ProgramListItemResponseEducationForm;
-  /** Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼. */
-  featuredOnHome?: boolean | null;
-  /** 홈 캐러셀 정렬 순서(오름차순). 미노출이면 null. */
-  homeDisplayOrder?: number | null;
   /** 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. */
   recruitmentId?: number | null;
   /** 이 행의 모집 유형. */

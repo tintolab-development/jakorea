@@ -33,24 +33,6 @@ function parseIsoRange(value: unknown): { start: string; end: string } | undefin
   return { start, end }
 }
 
-function mergeDetailRows<T extends object>(
-  programRows: T[] | undefined,
-  patchRows: T[] | undefined
-): T[] | undefined {
-  if (!patchRows?.length) return programRows
-  if (!programRows?.length) return patchRows
-  const length = Math.max(programRows.length, patchRows.length)
-  return Array.from({ length }, (_, index) => {
-    const base = (programRows[index] ?? {}) as Record<string, unknown>
-    const overlay = (patchRows[index] ?? {}) as Record<string, unknown>
-    const merged: Record<string, unknown> = { ...base }
-    for (const [key, value] of Object.entries(overlay)) {
-      if (value !== undefined && value !== null && value !== '') merged[key] = value
-    }
-    return merged as T
-  })
-}
-
 function commonInfoFromConfigJson(
   parsed: Record<string, unknown>
 ): NonNullable<Program['generalCommonInfo']> | undefined {
@@ -177,55 +159,34 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
 }
 
 /**
- * 교육받은 교사 공통정보 저장 직후 캐시.
- * programs PATCH가 넣어 둔 기본정보(장소·후원·공고)는 유지하고,
- * 일지·연수·커리큘럼·일정은 이번 detail 저장 payload로 덮는다.
- * detail 저장 뒤 programs GET이 구값이면 그 GET으로 캐시를 통째로 바꾸지 않는다.
+ * 교육받은 교사 공통정보(detail) 저장 직후 캐시.
+ * 차시·일지·연수는 GET이 정본이다.
+ * 설문 진행 항목은 이 PATCH가 쓰지 않는다. 열린 상세에 키가 있으면 그 값을 유지하고,
+ * 없을 때만 GET 키를 쓴다.
  */
 export function applyTrainedTeacherInfoDetailSaveToCache(
   cached: Program | undefined,
   saved: Program,
   programId: string,
-  payloadCommon?: Partial<NonNullable<Program['generalCommonInfo']>>
+  _payloadCommon?: Partial<NonNullable<Program['generalCommonInfo']>>
 ): Program {
-  const base = cached ?? saved
+  const cachedSurveyKeys = cached?.generalSurveyMenuKeys
+  const keepCachedSurvey = cachedSurveyKeys !== undefined
+  const generalSurveyMenuKeys = keepCachedSurvey ? cachedSurveyKeys : saved.generalSurveyMenuKeys
+  const registrationOverlay = keepCachedSurvey
+    ? (cached?.registrationOverlay ?? saved.registrationOverlay)
+    : (saved.registrationOverlay ?? cached?.registrationOverlay)
   return {
-    ...base,
-    id: programId || base.id,
-    updatedAt: saved.updatedAt ?? base.updatedAt,
-    educatedTeachers: saved.educatedTeachers ?? base.educatedTeachers,
-    generalCommonInfo: {
-      ...base.generalCommonInfo,
-      ...payloadCommon,
-      kpi: base.generalCommonInfo?.kpi ?? payloadCommon?.kpi,
-      curriculumSessions:
-        payloadCommon?.curriculumSessions ??
-        saved.generalCommonInfo?.curriculumSessions ??
-        base.generalCommonInfo?.curriculumSessions,
-      scheduleDetails:
-        payloadCommon?.scheduleDetails ??
-        saved.generalCommonInfo?.scheduleDetails ??
-        base.generalCommonInfo?.scheduleDetails,
-      educationJournalEnabled:
-        payloadCommon?.educationJournalEnabled ??
-        saved.generalCommonInfo?.educationJournalEnabled ??
-        base.generalCommonInfo?.educationJournalEnabled,
-      teacherTrainingEnabled:
-        payloadCommon?.teacherTrainingEnabled ??
-        saved.generalCommonInfo?.teacherTrainingEnabled ??
-        base.generalCommonInfo?.teacherTrainingEnabled,
-      teacherTrainingScheduleName:
-        payloadCommon?.teacherTrainingScheduleName ??
-        saved.generalCommonInfo?.teacherTrainingScheduleName ??
-        base.generalCommonInfo?.teacherTrainingScheduleName,
-    },
+    ...saved,
+    id: programId || saved.id,
+    ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
+    ...(registrationOverlay !== undefined ? { registrationOverlay } : {}),
   }
 }
 
 export function mergeTrainedTeacherInfoDetailIntoProgram(
   program: Program,
-  dto: TrainedTeacherProgramDetailResponse,
-  options?: { tablePreference?: 'program' | 'detail' }
+  dto: TrainedTeacherProgramDetailResponse
 ): Program {
   const patch = mapTrainedTeacherInfoDetailToProgramPatch(dto)
   const programCommon = program.generalCommonInfo
@@ -243,35 +204,13 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           dto.educationJournalEnabled ??
           programCommon?.educationJournalEnabled ??
           patchCommon?.educationJournalEnabled,
-        // 한쪽 JSON이 일정명·진행 시간을 빼도 다른 쪽 값을 남긴다.
-        curriculumSessions:
-          options?.tablePreference === 'program'
-            ? mergeDetailRows(patchCommon?.curriculumSessions, programCommon?.curriculumSessions)
-            : mergeDetailRows(programCommon?.curriculumSessions, patchCommon?.curriculumSessions),
-        scheduleDetails:
-          options?.tablePreference === 'program'
-            ? mergeDetailRows(patchCommon?.scheduleDetails, programCommon?.scheduleDetails)
-            : mergeDetailRows(programCommon?.scheduleDetails, patchCommon?.scheduleDetails),
-        educationScheduleLines:
-          programCommon?.educationScheduleLines ?? patchCommon?.educationScheduleLines,
-        educationScheduleMode:
-          programCommon?.educationScheduleMode ?? patchCommon?.educationScheduleMode,
-        educationScheduleRange:
-          programCommon?.educationScheduleRange ?? patchCommon?.educationScheduleRange,
-        // KPI SSOT = programs PATCH / serviceDetailJson — configJson 이 옛 kpi 로 덮지 않음
-        kpi: {
-          ...patchKpi,
-          ...programKpi,
-          finalParticipants:
-            program.totalParticipants ??
-            programKpi?.finalParticipants ??
-            patchKpi?.finalParticipants ??
-            0,
-          finalSchools: programKpi?.finalSchools ?? patchKpi?.finalSchools ?? 0,
-          finalClasses: programKpi?.finalClasses ?? patchKpi?.finalClasses ?? 0,
-          instructorCount: programKpi?.instructorCount ?? patchKpi?.instructorCount ?? 0,
-          volunteerCount: programKpi?.volunteerCount ?? patchKpi?.volunteerCount ?? 0,
-        },
+        // detail GET 배열이 정본. programs JSON 이전 행으로 셀을 채우지 않는다. 없으면 빈 표.
+        curriculumSessions: patchCommon?.curriculumSessions,
+        scheduleDetails: patchCommon?.scheduleDetails,
+        educationScheduleLines: patchCommon?.educationScheduleLines,
+        educationScheduleMode: patchCommon?.educationScheduleMode,
+        educationScheduleRange: patchCommon?.educationScheduleRange,
+        kpi: programKpi ?? patchKpi,
       },
       {
         teacherTrainingEnabled:
@@ -284,10 +223,9 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           patchCommon?.teacherTrainingScheduleName,
       }
     ),
-    educatedTeachers: program.educatedTeachers ?? patch.educatedTeachers,
+    educatedTeachers: program.educatedTeachers,
     totalParticipants: program.totalParticipants,
-    participatingSchoolCount:
-      program.participatingSchoolCount ?? programKpi?.finalSchools,
+    participatingSchoolCount: program.participatingSchoolCount,
     updatedAt: patch.updatedAt ?? program.updatedAt,
   }
 }

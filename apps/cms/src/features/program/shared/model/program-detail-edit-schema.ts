@@ -59,6 +59,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
 import {
+  normalizeGeneralSurveyMenuKeys,
   resolveProgramSurveyMenuKeys,
   syncSurveyItemsIntoRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -292,6 +293,8 @@ const programDetailEditSchemaBase = z.object({
     ),
   contactEmail: z.string().optional(),
   venueKind: z.enum(['inside', 'outside', 'other']).optional(),
+  /** 장소명 (top-level venue). TT는 venueDetail과 분리 왕복 */
+  venue: z.string().optional(),
   venueDetail: z.string().optional(),
   oneLineIntroduction: z.string().optional(),
   /** 모집 비고 (BE remarks) — oneLineIntroduction 과 분리 */
@@ -738,6 +741,9 @@ export function programToDetailEditValues(
         : program.sponsorId
           ? [program.sponsorId]
           : []
+  const isTrainedTeacherForm =
+    program.backendProgramType === 'TRAINED_TEACHER' ||
+    looksLikeTrainedTeacherProgramId(program.id)
   const sponsorManagerLine =
     program.generalCommonInfo?.sponsorManagerLine?.trim() ||
     program.managerName?.trim() ||
@@ -836,11 +842,24 @@ export function programToDetailEditValues(
         undefined
       )
     })(),
-    venueKind: resolveVenueKind(program),
-    venueDetail:
-      program.generalCommonInfo?.venueDetail?.trim() ||
-      program.venue?.trim() ||
-      undefined,
+    venueKind: isTrainedTeacherForm
+      ? program.generalCommonInfo?.venueKind === 'inside' ||
+        program.generalCommonInfo?.venueKind === 'outside' ||
+        program.generalCommonInfo?.venueKind === 'other'
+        ? program.generalCommonInfo.venueKind
+        : undefined
+      : resolveVenueKind(program),
+    venue: program.venue?.trim() || undefined,
+    venueDetail: (() => {
+      const nested = program.generalCommonInfo?.venueDetail?.trim()
+      if (nested) return nested
+      // TT: venue≠venueDetail 분리 — 레거시(venue만 있는) 경우만 detail에 채움
+      const isTt =
+        program.backendProgramType === 'TRAINED_TEACHER' ||
+        looksLikeTrainedTeacherProgramId(program.id)
+      if (isTt) return undefined
+      return program.venue?.trim() || undefined
+    })(),
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
     remarks:
       program.remarks?.trim() ||
@@ -970,13 +989,14 @@ export function programToDetailEditValues(
     educationScheduleMode: program.generalCommonInfo?.educationScheduleMode ?? 'date',
     mainTitle: program.mainTitle ?? undefined,
     titleEn: program.titleEn ?? undefined,
-    announcementTitle:
-      resolvePublicProgramTitle({
-        announcementTitle: program.generalCommonInfo?.announcementTitle,
-        overlay: program.ujatRegistrationOverlay ?? program.registrationOverlay,
-        mainTitle: program.mainTitle,
-        title: program.title,
-      }) || undefined,
+    announcementTitle: isTrainedTeacherForm
+      ? program.title?.trim() || undefined
+      : resolvePublicProgramTitle({
+          announcementTitle: program.generalCommonInfo?.announcementTitle,
+          overlay: program.ujatRegistrationOverlay ?? program.registrationOverlay,
+          mainTitle: program.mainTitle,
+          title: program.title,
+        }) || undefined,
     detailedProgramName: program.generalCommonInfo?.detailedProgramName?.trim() || undefined,
     detailedProgramId: program.detailedProgramId ?? undefined,
     educationStructure: (() => {
@@ -1036,12 +1056,21 @@ export function programToDetailEditValues(
     educationProcess: program.educationProcess ?? undefined,
     ipOwned: program.ipOwned ?? undefined,
     courseDeliveredBy: normalizeCourseDeliveredByFormValue(program.courseDeliveredBy),
-    partnerInvolvement: program.partnerInvolvement ?? false,
+    partnerInvolvement: isTrainedTeacherForm
+      ? program.partnerInvolvement
+      : program.partnerInvolvement ?? false,
     ips: normalizeIpsFormValue(program.ips),
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     ...(() => {
-      const keys = resolveProgramSurveyMenuKeys(program)
+      const isTrainedTeacherSeed =
+        program.backendProgramType === 'TRAINED_TEACHER' ||
+        looksLikeTrainedTeacherProgramId(program.id)
+      const keys = isTrainedTeacherSeed
+        ? program.generalSurveyMenuKeys === undefined
+          ? []
+          : normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys)
+        : resolveProgramSurveyMenuKeys(program)
       return {
         surveySurvey: keys.includes('survey'),
         surveySatisfaction: keys.includes('satisfaction'),
@@ -1286,6 +1315,7 @@ export function detailEditValuesToProgramPatch(
     values.surveySurvey != null ||
     values.surveySatisfaction != null ||
     values.surveyLectureEvaluation != null
+  // 체크된 항목만 keys에 실음. 전부 해제 시 [] — LNB가 keys를 SSOT로 따른다.
   const generalSurveyMenuKeys = surveyKeysTouched
     ? ([
         ...(values.surveySurvey ? (['survey'] as const) : []),
@@ -1311,9 +1341,7 @@ export function detailEditValuesToProgramPatch(
     title:
       (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
       existing.title,
-    textbookName:
-      (isTrainedTeacherProgram ? values.detailedProgramName?.trim() : undefined) ||
-      existing.textbookName,
+    textbookName: existing.textbookName,
     startDate,
     endDate,
     category: values.category,
@@ -1324,10 +1352,11 @@ export function detailEditValuesToProgramPatch(
     lifecycleStatus: values.lifecycleStatus ?? existing.lifecycleStatus,
     applicationStartDate,
     applicationEndDate,
-    businessArea:
-      resolveStoredBusinessArea(values.businessArea) ||
-      resolveStoredBusinessArea(existing.businessArea) ||
-      undefined,
+    businessArea: isTrainedTeacherProgram
+      ? resolveStoredBusinessArea(values.businessArea) || undefined
+      : resolveStoredBusinessArea(values.businessArea) ||
+        resolveStoredBusinessArea(existing.businessArea) ||
+        undefined,
     sponsorId:
       values.sponsorId ||
       values.sponsorManagementIds?.[0] ||
@@ -1344,7 +1373,9 @@ export function detailEditValuesToProgramPatch(
           : values.venueKind === 'other'
             ? undefined
             : existing.institutionType,
-    venue: values.venueDetail?.trim() || undefined,
+    venue: isTrainedTeacherProgram
+      ? values.venue?.trim() || undefined
+      : values.venueDetail?.trim() || values.venue?.trim() || undefined,
     oneLineIntroduction: values.oneLineIntroduction,
     remarks:
       values.participantRecruitmentNotesNotApplicable === 'not_applicable'

@@ -9,7 +9,6 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
-import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { shouldRetryTrainedTeacherQuery } from './errors'
@@ -32,10 +31,9 @@ import {
   type TrainedTeachersCommonInfoSavePayload,
 } from './info-detail-adapters'
 import {
-  programDetailCacheFromSave,
-  syncOpenProgramDetailCache,
-} from '@/features/program/shared/lib/program-detail-cache-after-save'
-import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
+  listTrainedTeacherSurveyReflectionQueryKeys,
+  reflectTrainedTeacherProgramSave,
+} from './detail-cache'
 
 function filtersKey(filters: TrainedTeacherListFilters, remoteEnabled: boolean): string {
   return JSON.stringify({ source: remoteEnabled ? 'remote' : 'mock', ...filters })
@@ -146,20 +144,12 @@ export function useUpdateTrainedTeacherProgram() {
     }) => updateTrainedTeacherProgram(programId, program, patch),
     retry: false,
     onSuccess: async (program, variables) => {
-      const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
-      await syncOpenProgramDetailCache(
-        queryClient,
-        detailKey,
-        programDetailCacheFromSave(
-          variables.programId,
-          program,
-          variables.program,
-          variables.patch
-        )
-      )
-      invalidateTrainedTeacherListCaches(queryClient)
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(variables.programId),
+      // GET이 설문 키를 빼도 이번 저장 patch를 상세 키에 남긴다. 상세 쿼리는 무효화하지 않는다.
+      await reflectTrainedTeacherProgramSave(queryClient, {
+        programId: variables.programId,
+        echoed: program,
+        draft: variables.program,
+        patch: variables.patch,
       })
     },
   })
@@ -217,26 +207,19 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
       const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
       await queryClient.cancelQueries({ queryKey: detailKey })
       const previous = queryClient.getQueryData<Program>(detailKey)
+      // 차시·일지는 GET이 정본. GET이 설문 키를 빼면 방금 반영한 상세 캐시 키를 유지한다.
       const merged = applyTrainedTeacherInfoDetailSaveToCache(
         previous,
         program,
-        variables.programId,
-        variables.payload.commonInfo
+        variables.programId
       )
-      const previousBusinessArea = resolveStoredBusinessArea(previous?.businessArea)
-      const nextBusinessArea = resolveStoredBusinessArea(merged.businessArea)
-      // programs PATCH(A) 직후 GET이 구값이면 캐시를 통째로 바꾸지 않는다.
-      // detailKey invalidate는 A 설문을 덮어쓰므로 set만 하고 목록·navigation만 갱신한다.
-      queryClient.setQueryData(
-        detailKey,
-        previousBusinessArea && previousBusinessArea !== nextBusinessArea
-          ? { ...merged, businessArea: previousBusinessArea }
-          : merged
-      )
+      queryClient.setQueryData(detailKey, merged)
       invalidateTrainedTeacherListCaches(queryClient)
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(variables.programId),
-      })
+      await Promise.all(
+        listTrainedTeacherSurveyReflectionQueryKeys(variables.programId).map(queryKey =>
+          queryClient.invalidateQueries({ queryKey })
+        )
+      )
     },
   })
 }

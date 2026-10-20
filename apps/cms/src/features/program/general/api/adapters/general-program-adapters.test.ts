@@ -89,12 +89,12 @@ describe('general-program-adapters', () => {
   })
 
   it('normalizes Korean targetLevel labels from list API', () => {
-    expect(
-      mapAdminProgramListItemToProgram({ id: 1, targetLevel: '중학생' }).targetLevel
-    ).toBe('middle')
-    expect(
-      mapAdminProgramListItemToProgram({ id: 2, targetLevel: '대학생' }).targetLevel
-    ).toBe('university')
+    expect(mapAdminProgramListItemToProgram({ id: 1, targetLevel: '중학생' }).targetLevel).toBe(
+      'middle'
+    )
+    expect(mapAdminProgramListItemToProgram({ id: 2, targetLevel: '대학생' }).targetLevel).toBe(
+      'university'
+    )
   })
 
   it('maps API list item to Program domain', () => {
@@ -257,7 +257,9 @@ describe('general-program-adapters', () => {
     expect(cleared.remarks).toBeUndefined()
     expect(cleared.generalCommonInfo?.participantRecruitmentInfo?.applicationMethod).toBeUndefined()
     expect(cleared.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBeUndefined()
-    expect(cleared.generalCommonInfo?.instructorRecruitmentInfo?.applicationMethod).toBe('강사 지원')
+    expect(cleared.generalCommonInfo?.instructorRecruitmentInfo?.applicationMethod).toBe(
+      '강사 지원'
+    )
   })
 
   it('mapGeneralApiProgramTypeToAudience covers GENERAL_* values', () => {
@@ -368,9 +370,10 @@ describe('general-program-adapters', () => {
 
   it('maps Program to create request with core fields', () => {
     const request = mapGeneralProgramToCreateRequest(sampleProgram)
-    const create = request as import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
-      applicationTargetMode?: string
-    }
+    const create =
+      request as import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
+        applicationTargetMode?: string
+      }
 
     expect(create.title).toBe('테스트 프로그램')
     expect(create.type).toBe('offline')
@@ -395,11 +398,18 @@ describe('general-program-adapters', () => {
   })
 
   it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
-    const create = mapGeneralProgramToCreateRequest(sampleProgram)
+    const create = mapGeneralProgramToCreateRequest(sampleProgram) as unknown as Record<
+      string,
+      unknown
+    >
     expect(create.featuredOnHome).toBeUndefined()
     expect(create.homeDisplayOrder).toBeUndefined()
 
-    const patch = mapGeneralProgramToUpdateRequest(sampleProgram, { title: '제목만' }, sampleProgram)
+    const patch = mapGeneralProgramToUpdateRequest(
+      sampleProgram,
+      { title: '제목만' },
+      sampleProgram
+    ) as unknown as Record<string, unknown>
     expect(patch.featuredOnHome).toBeUndefined()
     expect(patch.homeDisplayOrder).toBeUndefined()
   })
@@ -410,7 +420,7 @@ describe('general-program-adapters', () => {
       title: '1사 1교 프로그램 [ 1번 ]',
       featuredOnHome: true,
       homeDisplayOrder: 1,
-    })
+    } as unknown as ProgramResponse)
     expect(program).not.toHaveProperty('featuredOnHome')
     expect(program).not.toHaveProperty('homeDisplayOrder')
   })
@@ -965,15 +975,22 @@ describe('general-program-adapters', () => {
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       studentListRequired?: string
       registration?: { overlay?: Record<string, unknown> }
-      generalCommonInfo?: { paymentItems?: string; participantRecruitmentInfo?: { studentListRequired?: string } }
+      generalCommonInfo?: {
+        paymentItems?: string
+        participantRecruitmentInfo?: { studentListRequired?: string }
+      }
     }
     expect(detail.studentListRequired).toBe('required')
     expect(detail.generalCommonInfo?.participantRecruitmentInfo?.studentListRequired).toBe(
       'required'
     )
     expect(detail.generalCommonInfo?.paymentItems).toBeUndefined()
-    expect(detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemValues']).toBeUndefined()
-    expect(detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemLabels']).toBeUndefined()
+    expect(
+      detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemValues']
+    ).toBeUndefined()
+    expect(
+      detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemLabels']
+    ).toBeUndefined()
     expect(request.serviceDetailJson).not.toContain('숙박비')
   })
 
@@ -1016,11 +1033,7 @@ describe('general-program-adapters', () => {
         paymentItems: '강사 교통비, 숙박비',
       },
     }
-    const request = mapGeneralProgramToUpdateRequest(
-      { ...existing, ...patch },
-      patch,
-      existing
-    )
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing)
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       generalCommonInfo?: { paymentItems?: string }
     }

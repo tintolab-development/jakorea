@@ -2065,34 +2065,17 @@ export function TrainedTeachersCommonInfoView({
               : {}),
           }
 
-          if (needsInfoDetailPatch) {
-            if (onPersist) {
-              // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
-              await onPersist({
-                commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
-              })
-              setSavedOverride({
-                educatedTeachers: draft.kpiEducatedTeachers,
-                ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
-                ...surveyOverride,
-                commonInfo: {
-                  ...commonInfoPayload,
-                  kpi: kpiOverride,
-                },
-              })
-            } else {
-              setSavedOverride({
-                educatedTeachers: draft.kpiEducatedTeachers,
-                businessArea: savedBusinessArea,
-                ...surveyOverride,
-                commonInfo: {
-                  ...commonInfoPayload,
-                  kpi: kpiOverride,
-                },
-              })
-            }
+          if (needsInfoDetailPatch && onPersist) {
+            // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
+            await onPersist({
+              commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
+            })
+          }
+          if (onBeforePersist || onPersist) {
+            // remote: 부모 detail 쿼리(저장 직후 GET)가 SSOT.
+            // savedOverride로 FE 값을 얹으면 서버 미반영인데 저장된 것처럼 보이다가 재진입 시 롤백된다.
+            setSavedOverride(null)
           } else {
-            // programs PATCH 만으로 KPI·사업분야·설문 저장 — 재조회 전 화면 즉시 반영
             setSavedOverride({
               educatedTeachers: draft.kpiEducatedTeachers,
               ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
@@ -2188,20 +2171,18 @@ export function TrainedTeachersCommonInfoView({
         <TrainedTeachersCurriculumSection
           sessionRound={sessionRound}
           commonInfo={{
-            ...((commonInfo.curriculumSessions?.length ?? 0) > 0
-              ? commonInfo
-              : {
-                  ...commonInfo,
-                  curriculumSessions: [emptyCurriculumSession(sessionRound)],
-                }),
+            ...commonInfo,
+            ...(isEditMode && (commonInfo.curriculumSessions?.length ?? 0) === 0
+              ? { curriculumSessions: [emptyCurriculumSession(sessionRound)] }
+              : {}),
             ipsScheduleDetail:
-              (isEditMode && form
-                ? form.watch('ipsScheduleDetail')
-                : commonInfo.ipsScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('ipsScheduleDetail') ?? 'common')
+                : commonInfo.ipsScheduleDetail,
             educationFormScheduleDetail:
-              (isEditMode && form
-                ? form.watch('educationFormScheduleDetail')
-                : commonInfo.educationFormScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('educationFormScheduleDetail') ?? 'common')
+                : commonInfo.educationFormScheduleDetail,
           }}
           isEditMode={isEditMode}
           draft={draft}
@@ -2211,20 +2192,18 @@ export function TrainedTeachersCommonInfoView({
         <TrainedTeachersScheduleSection
           sessionRound={sessionRound}
           commonInfo={{
-            ...((commonInfo.scheduleDetails?.length ?? 0) > 0
-              ? commonInfo
-              : {
-                  ...commonInfo,
-                  scheduleDetails: [emptyScheduleDetail(sessionRound)],
-                }),
+            ...commonInfo,
+            ...(isEditMode && (commonInfo.scheduleDetails?.length ?? 0) === 0
+              ? { scheduleDetails: [emptyScheduleDetail(sessionRound)] }
+              : {}),
             ipsScheduleDetail:
-              (isEditMode && form
-                ? form.watch('ipsScheduleDetail')
-                : commonInfo.ipsScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('ipsScheduleDetail') ?? 'common')
+                : commonInfo.ipsScheduleDetail,
             educationFormScheduleDetail:
-              (isEditMode && form
-                ? form.watch('educationFormScheduleDetail')
-                : commonInfo.educationFormScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('educationFormScheduleDetail') ?? 'common')
+                : commonInfo.educationFormScheduleDetail,
           }}
           isEditMode={isEditMode}
           draft={draft}

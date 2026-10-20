@@ -230,7 +230,10 @@ export const platformQueryKeys = {
     /** 공개 채용 안내 — GET /api/public/careers/guide (Class B, 싱글톤) */
     guide: () => [...platformQueryKeys.careers.all(), 'guide'] as const,
     /** 공개 채용공고 — GET /api/public/careers/postings (Class C, RECRUITING·RESULT) */
-    postings: () => [...platformQueryKeys.careers.all(), 'postings'] as const,
+    postings: (query: { q: string; page: number; size: number }) =>
+      [...platformQueryKeys.careers.all(), 'postings', query.q, query.page, query.size] as const,
+    /** 상세 인접글 — q 없이 size 100부터 이어 받는 공개 순서 */
+    postingsAdjacent: () => [...platformQueryKeys.careers.all(), 'postings', 'adjacent'] as const,
     /** 공개 채용공고 상세 — GET /api/public/careers/postings/{key} (Class D) */
     postingDetail: (id: string) =>
       [...platformQueryKeys.careers.all(), 'postings', 'detail', id] as const,
@@ -242,7 +245,15 @@ export const platformQueryKeys = {
     programIntro: (fieldCode: string) =>
       [...platformQueryKeys.education.all(), 'program-intro', fieldCode] as const,
     /** 공개 교재 목록 — GET /api/public/education/textbooks (Class C, items) */
-    textbooks: () => [...platformQueryKeys.education.all(), 'textbooks'] as const,
+    textbooks: (query: { fieldCode?: string; sort: string; page: number; size: number }) =>
+      [
+        ...platformQueryKeys.education.all(),
+        'textbooks',
+        query.fieldCode ?? 'all',
+        query.sort,
+        query.page,
+        query.size,
+      ] as const,
     /** 공개 교재 상세 — GET /api/public/education/textbooks/{id} (Class D) */
     textbookDetail: (id: string) =>
       [...platformQueryKeys.education.all(), 'textbooks', 'detail', id] as const,

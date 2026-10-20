@@ -108,17 +108,10 @@ export interface ProgramUpdateRequest {
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
-  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합. */
+  /** 교육받은 교사: 요청 envelope의 program.*와 registration.overlay.*를 키 단위로 저장 snapshot에 덮어씁니다. 보낸 키는 교체하고 생략한 키는 유지합니다. registration/overlay 전체를 교체하지 않으므로 설문·공고·KPI·교육과정 nested 값이 보존됩니다. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지합니다. RFC-7396 깊은 병합은 하지 않으며 루트 generalCommonInfo는 제거합니다. 일반 프로그램은 기존 RFC-7396 병합. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
   /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
   draftStatus?: ProgramUpdateRequestDraftStatus;
-  /** CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다. */
-  featuredOnHome?: boolean | null;
-  /**
-     * 홈 캐러셀 정렬 순서. 1 이상 정수. 생략 시 기존 값을 유지하고 clearFields에 포함하면 null로 초기화한다.
-     * @minimum 1
-     */
-  homeDisplayOrder?: number | null;
 }

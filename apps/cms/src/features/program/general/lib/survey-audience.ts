@@ -117,7 +117,10 @@ export function isGeneralIndividualParticipantTarget(
 export function getGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
-  if (isTrainedTeachersProgram(program)) return []
+  // 1사1교·교육받은 교사 — 교사 단일 만족도 (공통정보 체크 ↔ LNB)
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
+    return [{ key: 'teacher', label: '교사' }]
+  }
   return isGeneralIndividualProgram(program)
     ? GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
     : GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
@@ -128,12 +131,11 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
   const keys = resolveProgramSurveyMenuKeys(program)
-  // 교육받은 교사는 일반 기관과 동일하게 설문조사·강의평가만 제공하며
-  // 만족도조사와 교사/학생 대상 탭은 제공하지 않는다.
-  if (isTrainedTeachersProgram(program) || !keys.includes('satisfaction')) {
+  if (!keys.includes('satisfaction')) {
     return []
   }
 
+  // 교육받은 교사·1사1교 — 공통정보에 만족도조사 체크 시 LNB에 교사 탭만
   if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
     return [{ key: 'teacher', label: '교사' }]
   }

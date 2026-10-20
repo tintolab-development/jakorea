@@ -33,7 +33,6 @@ import {
   type TrainedTeacherListFilters,
 } from './list-params'
 import { TRAINED_TEACHER_PROGRAM_API_TYPE } from './adapters'
-import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
 
 /** remote list 스냅샷 — 상세 분기(isTrainedTeachersDetailProgram)용 */
 let remoteIdSnapshot: Set<string> | null = null
@@ -182,30 +181,10 @@ export async function updateTrainedTeacherProgram(
 ): Promise<Program> {
   assertRemoteReady()
   const request = mapTrainedTeacherToUpdateRequest(program, patch)
-  const dto = await updateAdminProgramRemote(programId, request)
-  const sponsorsResult = await fetchAdminProgramSponsorsRemote(programId).then(
-    data => ({ ok: true as const, data }),
-    () => ({ ok: false as const, data: null })
-  )
-  let mapped = mapTrainedTeacherDetailToProgram(dto)
-  // PATCH echo 가 businessArea 를 빼거나 구값을 주면, 방금 보낸 마스터명을 유지한다.
-  const requestedBusinessArea = resolveStoredBusinessArea(request.businessArea)
-  if (
-    requestedBusinessArea &&
-    resolveStoredBusinessArea(mapped.businessArea) !== requestedBusinessArea
-  ) {
-    mapped = { ...mapped, businessArea: requestedBusinessArea }
-  }
-  try {
-    const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
-    mapped = mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail, {
-      tablePreference: 'program',
-    })
-  } catch {
-    // info-detail 실패 시 program GET 매핑만 사용
-  }
-  if (!sponsorsResult.ok) return mapped
-  return mergeTrainedTeacherSponsorAssignments(mapped, sponsorsResult.data)
+  await updateAdminProgramRemote(programId, request)
+  // patch로 PATCH echo를 덮지 않는다. FE만 바뀐 것처럼 보이다가 재조회 시 롤백되던 원인.
+  // 저장 직후 GET이 SSOT — 서버가 안 남기면 화면도 구값으로 남는다.
+  return getTrainedTeacherProgram(programId)
 }
 
 /** 공통 정보 LNB — trained-teacher/detail PATCH */
@@ -214,12 +193,12 @@ export async function updateTrainedTeacherProgramInfoDetail(
   payload: TrainedTeachersCommonInfoSavePayload
 ): Promise<Program> {
   assertRemoteReady()
-  const dto = await patchTrainedTeacherInfoDetailRemote(
+  await patchTrainedTeacherInfoDetailRemote(
     programId,
     mapTrainedTeacherInfoSaveToRequest(payload)
   )
-  const base = await fetchAdminProgramByIdRemote(programId)
-  return mergeTrainedTeacherInfoDetailIntoProgram(mapTrainedTeacherDetailToProgram(base), dto)
+  // PATCH echo로 폼을 유지하지 않는다. programs · sponsors · detail GET이 정본.
+  return getTrainedTeacherProgram(programId)
 }
 
 export async function deleteTrainedTeacherProgram(programId: string): Promise<void> {

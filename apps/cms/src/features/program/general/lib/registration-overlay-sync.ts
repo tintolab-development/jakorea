@@ -31,7 +31,6 @@ import {
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { initialProgramRegistrationSurveyItems } from '@/features/template/lib/program-registration-survey-items'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
-import { isTrainedTeachersProgram } from '@/features/program/general/lib/survey-audience'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -472,11 +471,10 @@ function wageOverlayFromProgram(program: Program): Record<string, unknown> {
 function surveyItemsFromProgram(program: Program): Record<string, boolean> {
   const keys = new Set<string>(program.generalSurveyMenuKeys ?? [])
   const base = initialProgramRegistrationSurveyItems(false)
-  const satisfactionEnabled = !isTrainedTeachersProgram(program) && (
+  const satisfactionEnabled =
     keys.has('satisfaction') ||
     keys.has('student_satisfaction') ||
     keys.has('teacher_satisfaction')
-  )
   return {
     ...base,
     survey: keys.has('survey'),
