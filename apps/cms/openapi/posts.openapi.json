@@ -14586,10 +14586,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -34797,6 +34797,9 @@
           },
           "identityVerified": {
             "type": "boolean"
+          },
+          "niceStartState": {
+            "type": "string"
           },
           "explicitConsentAt": {
             "type": "string",
