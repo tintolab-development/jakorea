@@ -34,6 +34,32 @@ assert.equal(overlaid.groups.length, 1)
 const career = overlaid.groups[0]?.children.find(item => item.menuCode === 'EDU_CAREER')
 assert.equal(career?.label, '진로·취업')
 assert.equal(career?.href, '/education/career')
+
+const designLabelOverlay = mapPublicGnb([
+  {
+    groupCode: 'EDUCATION',
+    groupName: '교육 소개',
+    menus: [
+      { menuCode: 'EDU_ENTREPRENEURSHIP', displayName: '기업가 정신' },
+      { menuCode: 'EDU_DIGITAL_LITERACY', displayName: '디지털 리터러시' },
+      { menuCode: 'EDU_MATERIAL', displayName: '교재 소개' },
+    ],
+  },
+])
+assert.equal(
+  designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_ENTREPRENEURSHIP')
+    ?.label,
+  '기업가정신'
+)
+assert.equal(
+  designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_DIGITAL_LITERACY')
+    ?.label,
+  '디지털리터러시'
+)
+assert.equal(
+  designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_MATERIAL')?.label,
+  '교재'
+)
 assert.equal(
   overlaid.groups[0]?.children.some(item => item.menuCode === 'NOT_A_MENU'),
   false,

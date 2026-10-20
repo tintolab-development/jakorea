@@ -3,6 +3,7 @@ import {
   isKnownGnbGroupCode,
   isKnownGnbMenuCode,
   GNB_MENU_ROUTES,
+  GNB_DESIGN_LABEL_OVERRIDES,
   type GnbNavGroup,
   type GnbNavItem,
 } from './menu-routes.ts'
@@ -89,7 +90,10 @@ export function mapPublicGnb(remote: unknown): SiteGnbView | null {
       if (!fallbackMenus.has(menuCode) || seenMenus.has(menuCode)) continue
       const displayName = readLabel(rawMenu.displayName)
       if (!displayName) continue
-      const menu = overlayMenu(menuCode, displayName)
+      const canonicalLabel = isKnownGnbMenuCode(menuCode)
+        ? GNB_DESIGN_LABEL_OVERRIDES[menuCode]
+        : undefined
+      const menu = overlayMenu(menuCode, canonicalLabel ?? displayName)
       if (!menu) continue
       seenMenus.add(menuCode)
       children.push(menu)
