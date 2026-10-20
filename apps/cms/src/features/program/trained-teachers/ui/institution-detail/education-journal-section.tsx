@@ -29,6 +29,8 @@ import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './education-journal-section.css'
 
 const VIEW_CELL_CLASSNAME = 'trained-teachers-education-journal-section__view-cell'
+const PROGRESS_NO_COLUMN_WIDTH = 88
+const PROGRESS_SUBMITTED_DATE_COLUMN_WIDTH = 240
 
 type JournalTableRow = TrainedTeachersEducationJournalEntry & { no: number }
 
@@ -257,7 +259,7 @@ export function TrainedTeachersEducationJournalSection({
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 80,
+        width: PROGRESS_NO_COLUMN_WIDTH,
         align: 'center',
       },
       {
@@ -269,7 +271,7 @@ export function TrainedTeachersEducationJournalSection({
       {
         title: '제출일자',
         key: 'submittedDate',
-        width: 160,
+        width: PROGRESS_SUBMITTED_DATE_COLUMN_WIDTH,
         align: 'center',
         render: (_: unknown, record) =>
           formatTrainedTeachersEducationJournalSubmittedDate(record.submittedAt),

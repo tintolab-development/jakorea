@@ -1,7 +1,8 @@
+import JSZip from 'jszip'
 import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
+import { downloadAdminFile, loadAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { downloadFile } from '@/shared/lib/file-download'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
@@ -31,6 +32,21 @@ function triggerBlobDownload(fileName: string, blob: Blob): void {
   void downloadBlob(blob, fileName)
 }
 
+async function removeZipManifest(blob: Blob): Promise<Blob> {
+  const zip = await JSZip.loadAsync(await blob.arrayBuffer())
+  for (const path of Object.keys(zip.files)) {
+    if (path.replace(/\\/g, '/') === 'manifest.json') {
+      zip.remove(path)
+    }
+  }
+  return zip.generateAsync({ type: 'blob' })
+}
+
+async function downloadEducationJournalZip(fileName: string, blob: Blob): Promise<void> {
+  const sanitizedBlob = await removeZipManifest(blob)
+  await downloadBlob(sanitizedBlob, fileName)
+}
+
 async function downloadFromEndpoint(fileName: string, endpoint?: string): Promise<void> {
   if (!endpoint?.trim()) {
     void downloadFile(fileName)
@@ -42,6 +58,11 @@ async function downloadFromEndpoint(fileName: string, endpoint?: string): Promis
   } catch {
     void downloadFile(fileName, endpoint)
   }
+}
+
+async function downloadZipFromEndpoint(fileName: string, endpoint: string): Promise<void> {
+  const blob = await fetchTrainedTeacherEducationJournalFileBlob(endpoint)
+  await downloadEducationJournalZip(fileName, blob)
 }
 
 export async function listTrainedTeacherEducationJournals(
@@ -105,7 +126,7 @@ export async function bulkDownloadTrainedTeacherEducationJournals(
     journalIds: journalIds.length > 0 ? journalIds : undefined,
   })
   if (response.downloadEndpoint) {
-    await downloadFromEndpoint(
+    await downloadZipFromEndpoint(
       `교육일지_일괄_${organizationApplicationId}.zip`,
       response.downloadEndpoint
     )
@@ -148,10 +169,14 @@ export async function downloadTrainedTeacherEducationJournalZipJob(
   assertRemoteReady()
   const fileName = `교육일지_일괄_${organizationApplicationId}.zip`
   if (job.fileObjectId != null && job.fileObjectId > 0) {
-    await downloadAdminFile({ fileObjectId: job.fileObjectId, fileName })
+    const blob = await loadAdminFileBlob(job.fileObjectId)
+    await downloadEducationJournalZip(fileName, blob)
     return
   }
-  await downloadFromEndpoint(fileName, job.generatedFileEndpoint)
+  if (!job.generatedFileEndpoint?.trim()) {
+    throw new Error('교육일지 ZIP 다운로드 경로가 없습니다.')
+  }
+  await downloadZipFromEndpoint(fileName, job.generatedFileEndpoint)
 }
 
 /** 승인된 기관 신청 → 진행 현황 참여 기관 목록 */
@@ -182,10 +207,9 @@ export function mapApplicantSchoolToParticipatingSchool(
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
-    sessions:
-      row.sessions?.length
-        ? row.sessions
-        : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
+    sessions: row.sessions?.length
+      ? row.sessions
+      : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
     preferredScheduleBlocks: row.preferredScheduleBlocks,
     educationTarget: row.educationTarget,
     progressLabel: row.progressLabel,

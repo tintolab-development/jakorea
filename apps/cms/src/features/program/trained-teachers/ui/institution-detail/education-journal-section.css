@@ -2,6 +2,23 @@
   margin-bottom: 16px;
 }
 
+.trained-teachers-education-journal-section--progress {
+  --table-no-column-width: 88px;
+  --table-submitted-date-column-width: 240px;
+}
+
+/* 공통 테이블이 No. 이후 열을 auto로 재분배하므로 제출일자 폭을 시안 값으로 재확정 */
+.trained-teachers-education-journal-section--progress
+  .ant-table-wrapper.cms-data-table.trained-teachers-education-journal-section__table:not(
+    .cms-data-table--skip-auto-no-col
+  ):not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(3) {
+  width: var(--table-submitted-date-column-width) !important;
+  min-width: var(--table-submitted-date-column-width) !important;
+  max-width: var(--table-submitted-date-column-width) !important;
+}
+
 .trained-teachers-education-journal-section__bulk-download-button {
   flex-shrink: 0;
   white-space: nowrap;
