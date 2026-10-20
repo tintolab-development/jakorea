@@ -93,6 +93,7 @@ describe('student-roster-revision', () => {
       expectedRevisionNo: 5,
       rows: commit.map(row => ({
         studentName: row.name,
+        gender: 'male',
         birthDate: '2015-01-01',
         grade: '3학년',
         className: '1반',

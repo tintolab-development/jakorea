@@ -4,7 +4,7 @@
 
 import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
 import { validateStudentRosterExpectedRevisionNo } from '@/features/program/general/lib/student-roster-revision'
-import type { StudentRosterCommitRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterCommitRequest'
+import type { OrganizationStudentRosterManualCommitRequest } from '@/features/program/general/api/student-roster-commit-types'
 
 export const STUDENT_ROSTER_PUT_MAX_ROWS = 500
 
@@ -190,9 +190,9 @@ export function validateStudentRosterEditEntry(input: {
 
 /** 수동 편집 PUT body — 조회 응답의 `sourceFileObjectId`는 포함하지 않음 (import API 전용) */
 export function buildStudentRosterCommitRequestBody(input: {
-  rows: StudentRosterCommitRequest['rows']
+  rows: OrganizationStudentRosterManualCommitRequest['rows']
   expectedRevisionNo: number
-}): StudentRosterCommitRequest {
+}): OrganizationStudentRosterManualCommitRequest {
   return {
     rows: input.rows,
     expectedRevisionNo: input.expectedRevisionNo,

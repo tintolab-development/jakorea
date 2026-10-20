@@ -1,13 +1,11 @@
 /**
  * 학생 등록 모달 폼 스키마
- * 필수: 학생명, 성별, 생년월일(8자리), 학급 / 선택: 연락처, 이메일, 비고 (react-hook-form)
+ * 필수: 학생명, 성별, 생년월일(8자리), 학급, 연락처, 이메일 / 선택: 비고 (react-hook-form)
+ * 필수 항목은 `StudentRosterRowRequest` required와 동일.
  */
 
 import { z } from 'zod'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-
-/** 선택 입력(빈 문자열 허용)용 문자열, max 제한이 필요하면 union으로 각각 정의 */
-const optionalString = z.union([z.string(), z.literal('')])
 
 /** 8자리(YYYYMMDD) → 목록 표시 형식 `YYYY. MM. DD.` */
 export function formatStudentBirthDateFromDigits(digits: string): string {
@@ -31,20 +29,20 @@ export const addStudentFormSchema = z.object({
   gradeClass: z
     .string()
     .trim()
-    .min(1, '학급을 선택해주세요')
-    .max(20, '학급은 20자 이내로 입력해주세요'),
-  contact: z.union([
-    z
-      .string()
-      .trim()
-      .max(20, '연락처는 20자 이내로 입력해주세요')
-      .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
-    z.literal(''),
-  ]),
-  email: optionalString.refine(
-    v => !v || v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-    '올바른 이메일 형식을 입력해주세요'
-  ),
+    .min(1, '학급을 입력해주세요')
+    .max(50, '학급은 50자 이내로 입력해주세요'),
+  contact: z
+    .string()
+    .trim()
+    .min(1, '연락처를 입력해주세요')
+    .max(20, '연락처는 20자 이내로 입력해주세요')
+    .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
+  email: z
+    .string()
+    .trim()
+    .min(1, '이메일을 입력해주세요')
+    .max(255, '이메일은 255자 이내로 입력해주세요')
+    .refine(v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), '올바른 이메일 형식을 입력해주세요'),
   notes: z.union([
     z.string().trim().max(200, '비고는 200자 이내로 입력해주세요'),
     z.literal(''),
