@@ -203,6 +203,8 @@ export async function fetchSchoolDetailAttendanceBundle(input: {
 export async function saveSchoolDetailAttendanceSessionRemote(input: {
   programId: string
   scheduleId: number
+  /** 지정 시 서버가 participantId가 이 기관 신청 소속인지 검증 */
+  organizationApplicationId?: string | number | null
   students: SchoolDetailAttendanceStudentRow[]
 }): Promise<void> {
   const attendances = input.students
@@ -223,8 +225,12 @@ export async function saveSchoolDetailAttendanceSessionRemote(input: {
     throw new Error('저장할 출결 대상(participantId)이 없습니다.')
   }
 
+  const organizationApplicationId = Number(input.organizationApplicationId)
   await bulkUpsertProgramAttendancesRemote(input.programId, {
     scheduleId: input.scheduleId,
+    ...(Number.isSafeInteger(organizationApplicationId) && organizationApplicationId > 0
+      ? { organizationApplicationId }
+      : {}),
     attendances,
   })
 }

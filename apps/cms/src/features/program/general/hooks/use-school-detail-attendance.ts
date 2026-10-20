@@ -303,6 +303,7 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       await saveSchoolDetailAttendanceSessionRemote({
         programId,
         scheduleId,
+        organizationApplicationId,
         students: payload.students,
       })
     },
