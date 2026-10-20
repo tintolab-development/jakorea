@@ -36,7 +36,8 @@ const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
 const WITHDRAW_FAILED_MESSAGE = '동의 철회에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const DOWNLOAD_FAILED_MESSAGE =
   '업로드한 동의서를 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.'
-const MARKETING_FAILED_MESSAGE = '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
+const MARKETING_FAILED_MESSAGE =
+  '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_CONFLICT_MESSAGE = '이미 반영된 상태예요. 최신 동의 현황으로 갱신했어요.'
 
 const MARKETING_AGREE_COPY = {
@@ -81,10 +82,13 @@ type WithdrawCopy = {
 const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> = {
   paymentStatement: {
     title: '지급조서 사전 동의를 철회할까요?',
-    description:
-      '철회 시 급여 항목 지급·정산 신청이 제한될 수 있습니다. 다시 이용하려면 동의서를 작성해 주세요.',
+    description: [
+      '철회 시 정산 금액 지급을 위한 정보를 더 이상 수집하거나 활용하지 않아요.',
+      '단, 이미 지급된 내역은 세법에 따라 일정 기간 보관돼요.',
+      '동의하지 않은 상태에서는 정산 신청 및 지급이 제한돼요.',
+    ].join('\n'),
     completeTitle: '지급조서 사전 동의가 철회되었어요.',
-    completeGuide: '정산을 신청하려면 [약관 및 정책 동의 관리]에서 동의서를 다시 작성해 주세요.',
+    completeGuide: '정산 신청을 원하시면 [내 정보 수정]에서 다시 동의해 주세요.',
   },
   educatorPledge: {
     title: '교육진행자 서약을 철회할까요?',
@@ -117,9 +121,9 @@ const BASIC_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> 
   portrait: {
     title: '초상권 수집·이용 동의를 철회할까요?',
     description: [
-      '철회 시 회원님의 사진·영상을 활용하거나 새롭게 수집하지 않습니다.',
-      '단, 이미 배포된 자료는 회수가 어려울 수 있습니다.',
-      '동의하지 않은 상태에서는 JA Korea의 프로그램 신청 및 참여가 제한됩니다.',
+      '철회 시 회원님의 사진·영상을 활용하거나 새롭게 수집하지 않아요.',
+      '단, 이미 배포된 자료는 회수가 어려울 수 있어요.',
+      '동의하지 않은 상태에서는 JA Korea의 프로그램 신청 및 참여가 제한돼요.',
     ].join('\n'),
     completeTitle: '초상권 수집·이용 동의가 철회되었어요.',
     completeGuide:
@@ -134,8 +138,8 @@ const BASIC_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> 
   marketing: {
     title: '마케팅 정보 수신 동의를 철회할까요?',
     description: [
-      '철회 시 JA Korea의 홍보 안내를 더 이상 받지 않습니다.',
-      '신청 내역, 계정 보안 등 서비스 이용에 필요한 안내는 계속 받을 수 있습니다.',
+      '철회 시 JA Korea의 홍보 안내를 더 이상 받지 않아요.',
+      '신청 내역, 계정 보안 등 서비스 이용에 필요한 안내는 계속 받을 수 있어요.',
     ].join('\n'),
     completeTitle: '마케팅 정보 수신 동의가 철회되었어요.',
     completeGuide: '홍보 안내를 받으시려면 [내 정보 수정]에서 다시 동의해 주세요.',
@@ -159,7 +163,11 @@ function ConsentRequirementLabel({ required }: { required: boolean }) {
 
 function ConsentStatusBadge({ agreed }: { agreed: boolean }) {
   return (
-    <PFStateBadge size="small" tone={agreed ? 'progress' : 'disabled'} className={styles.statusBadge}>
+    <PFStateBadge
+      size="small"
+      tone={agreed ? 'progress' : 'disabled'}
+      className={styles.statusBadge}
+    >
       {agreed ? '동의함' : '미동의'}
     </PFStateBadge>
   )
@@ -255,7 +263,12 @@ function ConsentCard({
 
       {item.kind === 'terms' && canWithdraw ? (
         <div className={styles.actions}>
-          <PFButton size="medium" variant="tertiary" width="100%" onClick={() => onWithdraw?.(item)}>
+          <PFButton
+            size="medium"
+            variant="tertiary"
+            width="100%"
+            onClick={() => onWithdraw?.(item)}
+          >
             동의 철회
           </PFButton>
         </div>
@@ -329,7 +342,7 @@ export function SettingsConsentsView() {
   const marketingAgreed = marketingOverride ?? marketingItem?.agreed ?? false
   const [withdrawTarget, setWithdrawTarget] = useState<SettingsConsentItem | null>(null)
   const [withdrawnIds, setWithdrawnIds] = useState<ReadonlySet<SettingsConsentItemId>>(
-    () => new Set(),
+    () => new Set()
   )
   const [isWithdrawing, setIsWithdrawing] = useState(false)
   const [isMarketingSaving, setIsMarketingSaving] = useState(false)
@@ -375,12 +388,12 @@ export function SettingsConsentsView() {
     queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
 
   const basicItems = consents.basicItems.map(item =>
-    withdrawnIds.has(item.id) ? { ...item, agreed: false, agreedAt: undefined } : item,
+    withdrawnIds.has(item.id) ? { ...item, agreed: false, agreedAt: undefined } : item
   )
 
   /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
   const saveMarketingConsent = async (
-    agreed: boolean,
+    agreed: boolean
   ): Promise<
     { ok: true; agreedAt?: string | null; withdrawnAt?: string | null } | { ok: false }
   > => {

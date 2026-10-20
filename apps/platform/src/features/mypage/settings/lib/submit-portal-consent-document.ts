@@ -30,6 +30,8 @@ const FIELD_KEY_TO_SIGNATURE_SLOT: Record<string, 'mid' | 'final'> = {
   [EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature]: 'final',
   [AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature]: 'final',
   [AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature]: 'final',
+  /** 화면 서명은 확인 문구 단락에 그리고, 값은 signatures.final에 둔다. */
+  [AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing]: 'final',
 }
 
 export type PortraitPortalConsentWriteState = {
@@ -65,12 +67,10 @@ async function registerSignatureProfile(signature: FormSignatureValue): Promise<
   return profile.signatureProfileId
 }
 
-function resolveSignatureForFieldKey(
-  fieldKey: string,
+function readSignatureSlot(
   signatures: SchemaConsentWriteState['signatures'],
+  slot: 'mid' | 'final',
 ): FormSignatureValue | null {
-  const slot = FIELD_KEY_TO_SIGNATURE_SLOT[fieldKey]
-  if (!slot) return null
   const raw = signatures?.[slot]
   if (!raw) return null
   if (typeof raw === 'string') {
@@ -79,9 +79,19 @@ function resolveSignatureForFieldKey(
   return raw.dataUrl ? raw : null
 }
 
+function resolveSignatureForFieldKey(
+  fieldKey: string,
+  signatures: SchemaConsentWriteState['signatures'],
+): FormSignatureValue | null {
+  const slot = FIELD_KEY_TO_SIGNATURE_SLOT[fieldKey]
+  if (!slot) return null
+  return readSignatureSlot(signatures, slot)
+}
+
 async function signDocumentSignatureFields(
   documentId: number,
   state: SchemaConsentWriteState,
+  options?: { fallbackSlot?: 'mid' | 'final' },
 ): Promise<void> {
   let detail = await fetchPortalConsentDocumentDetail(documentId)
   const fields = [...(detail.signatureFields ?? [])].sort(
@@ -91,7 +101,11 @@ async function signDocumentSignatureFields(
   for (const field of fields) {
     const fieldKey = field.fieldKey?.trim()
     if (!fieldKey || field.signed === true) continue
-    const signature = resolveSignatureForFieldKey(fieldKey, state.signatures)
+    const signature =
+      resolveSignatureForFieldKey(fieldKey, state.signatures) ??
+      (field.required && options?.fallbackSlot
+        ? readSignatureSlot(state.signatures, options.fallbackSlot)
+        : null)
     if (!signature) {
       if (field.required) {
         throw new Error('필수 전자서명이 누락되었습니다.')
@@ -151,7 +165,7 @@ export async function submitPortalPortraitConsentFromWriteState(
     throw new Error('동의서 문서를 만들지 못했습니다.')
   }
 
-  await signDocumentSignatureFields(documentId, state)
+  await signDocumentSignatureFields(documentId, state, { fallbackSlot: 'final' })
 
   const filledDocument = buildPortraitFilledDocument(state.draft)
   const hints = resolvePortraitPortalCompleteHints(state.draft)

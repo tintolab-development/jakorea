@@ -110,10 +110,15 @@ export type PortalConsentDocumentDetail = {
   content?: string
   schemaJson?: unknown
   renderStatus?: string
+  /** 문서 서명·제출 시각 */
+  signedAt?: string
   signedFileObjectId?: number
   evidenceFileObjectId?: number
   evidenceOriginalFileName?: string
   filledDocument?: {
+    templateCode?: string
+    schemaJson?: unknown
+    paymentBasicInfo?: Record<string, unknown>
     evidenceFileObjectId?: number
     evidenceOriginalFileName?: string
   } | null
