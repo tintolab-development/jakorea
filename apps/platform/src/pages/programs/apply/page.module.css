@@ -106,6 +106,19 @@
   padding: 0 8px;
 }
 
+.scheduleChoiceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.scheduleChoiceDescription {
+  margin: 0;
+  color: var(--color-neutral-cool-500, #85969d) !important;
+}
+
 .multipleChoiceItem {
   max-width: 100%;
   padding-left: 0;
@@ -115,6 +128,21 @@
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+}
+
+.scheduleChoiceLabel {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.scheduleChoiceDivider {
+  flex: 0 0 auto;
+}
+
+.scheduleChoiceSegment {
+  min-width: 0;
 }
 
 /* FormTemplateHost가 typo-* 를 unset — 신청 슬롯 본문은 16px 고정 */

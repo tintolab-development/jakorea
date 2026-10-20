@@ -164,6 +164,7 @@ assert.ok(listed)
 assert.equal(listed.id, '186012')
 assert.equal(listed.recruitmentStatus, 'recruiting')
 assert.equal(listed.educationTargetLabel, '대학(원)생')
+assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일 ~ 9월 18일')
 
 const recruitingAlias = mapPortalProgramListItem({
   programId: 3,
@@ -277,7 +278,6 @@ assert.ok(generalCurriculum)
 assert.equal(generalCurriculum.sessions.length, 2)
 assert.equal(generalCurriculum.sessions[0]?.title, '필요와 욕구, 현명한 소비')
 assert.equal(generalCurriculum.sessions[0]?.educationFormLabel, undefined)
-assert.equal(generalCurriculum.sessions[0]?.ipsTypeSummary, undefined)
 assert.equal(generalCurriculum.sessions[0]?.assignmentPeriod, undefined)
 assert.equal(generalCurriculum.sessions[1]?.title, '')
 assert.equal(generalCurriculum.eventSchedules.length, 0)
@@ -300,7 +300,8 @@ const periodEducationSchedule = mapPortalProgramDetail({
   title: '기간 일정',
   educationStructure: 'curriculum',
   educationScheduleMode: 'period',
-  educationScheduleLines: ['26년 11월 19일(목) 0:00 ~ 26년 11월 30일(월) 23:59'],
+  educationScheduleLines: ['표시용 문구가 기간을 덮으면 안 됨'],
+  educationScheduleRange: { start: '2026-11-01', end: '2026-11-30' },
   curriculumSessions: [],
   scheduleDetails: [],
 })
@@ -309,8 +310,23 @@ assert.equal(periodEducationSchedule.educationSchedules.length, 1)
 assert.equal(periodEducationSchedule.educationSchedules[0]?.label, '교육 일정')
 assert.equal(
   periodEducationSchedule.educationSchedules[0]?.value,
-  '2026년 11월 19일(목) ~ 2026년 11월 30일(월)'
+  '2026년 11월 1일(일) ~ 2026년 11월 30일(월)'
 )
+assert.deepEqual(periodEducationSchedule.educationScheduleRange, {
+  start: '2026-11-01',
+  end: '2026-11-30',
+})
+const periodWithoutRange = mapPortalProgramDetail({
+  programId: 186100,
+  programType: 'TRAINED_TEACHER',
+  title: '기간 범위 없음',
+  educationStructure: 'curriculum',
+  educationScheduleMode: 'period',
+  educationScheduleLines: ['26년 11월 19일(목) ~ 26년 11월 30일(월)'],
+})
+assert.ok(periodWithoutRange)
+assert.equal(periodWithoutRange.educationSchedules.length, 0)
+assert.equal(periodWithoutRange.educationScheduleRange, null)
 assert.equal(generalCurriculum.educationForm, 'online')
 assert.equal(generalCurriculum.educationFormLabel, '온라인')
 assert.equal(generalCurriculum.participationMethod, 'individual')
@@ -406,6 +422,45 @@ assert.equal(
   '그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10'
 )
 
+const trainedTeacherSchedule = mapPortalProgramDetail({
+  programId: 186264,
+  programType: 'TRAINED_TEACHER',
+  title: '교육받은 교사 일정형',
+  educationStructure: 'schedule',
+  sessionRound: 'multi',
+  educationFormScheduleDetail: 'common',
+  ipsScheduleDetail: 'common',
+  ipsTypeSummary: '일정 공통 | Prepare | 해당없음',
+  scheduleDetails: [
+    {
+      scheduleLabel: '세부 일정 01',
+      blockKind: 'sub',
+      name: '필요와 욕구, 현명한 소비',
+      scheduleDateLabel: '26년 11월 2일(월) 10:00 ~ 12:00',
+      progressTimeSummary: '13:30 ~ 15:30',
+      ipsTypeSummary: '일정 공통 | Prepare | 해당없음',
+    },
+    {
+      scheduleLabel: '세부 일정 02',
+      blockKind: 'sub',
+      name: '저축 목표 세우기',
+      scheduleDateLabel: '26년 11월 9일(월) 13:30 ~ 16:00',
+      progressTimeSummary: '09:30 ~ 11:30',
+      ipsTypeSummary: '일정 공통 | Prepare | 해당없음',
+    },
+  ],
+})
+assert.ok(trainedTeacherSchedule)
+assert.equal(
+  trainedTeacherSchedule.eventSchedules[0]?.dateLabel,
+  '2026년 11월 2일(월) 10:00 ~ 12:00'
+)
+assert.equal(
+  trainedTeacherSchedule.eventSchedules[1]?.dateLabel,
+  '2026년 11월 9일(월) 13:30 ~ 16:00'
+)
+assert.equal('ipsTypeSummary' in trainedTeacherSchedule.eventSchedules[0]!, false)
+
 const organization = mapPortalProgramDetail({
   programId: 186011,
   programType: 'GENERAL_ORGANIZATION',
@@ -452,6 +507,7 @@ const trainedTeacherProgress = mapPortalProgramDetail({
   educationTarget: 'high',
   educationTargets: ['high', 'adult'],
   educationTargetDetail: '고등학교 1~2학년, 성인 일반',
+  learningSupportContent: '교재와 활동지를 제공합니다.',
   otherMatters: '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
   remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
   educationStructure: 'curriculum',
@@ -473,6 +529,7 @@ const trainedTeacherProgress = mapPortalProgramDetail({
       title: '수정3',
       description: '수정3',
       assignmentEnabled: false,
+      assignmentPeriod: '2026년 10월 14일(수) ~ 2026년 10월 20일(화)',
       educationFormLabel: '온라인',
       ipsTypeSummary: 'Succeed | Workshop (워크숍)',
     },
@@ -488,12 +545,15 @@ assert.equal(
   trainedTeacherProgress.educationVenueLabel,
   '기관 안 | 서울시 강서구 가양 데시앙플렉스'
 )
-assert.equal(trainedTeacherProgress.detailCase, 'instructor')
+assert.equal(trainedTeacherProgress.detailCase, 'general')
 assert.equal(trainedTeacherProgress.educationStructure, 'curriculum')
 assert.equal(trainedTeacherProgress.sessions.length, 1)
 assert.equal(trainedTeacherProgress.sessions[0]?.title, '수정3')
 assert.equal(trainedTeacherProgress.sessions[0]?.educationFormLabel, undefined)
-assert.equal(trainedTeacherProgress.sessions[0]?.ipsTypeSummary, undefined)
+assert.equal(
+  trainedTeacherProgress.sessions[0]?.assignmentPeriod,
+  '2026년 10월 14일(수) ~ 2026년 10월 20일(화)'
+)
 assert.equal(trainedTeacherProgress.educationForm, 'online')
 assert.equal(trainedTeacherProgress.educationFormLabel, '온라인')
 assert.equal(
@@ -539,12 +599,12 @@ assert.deepEqual(trainedTeacherProgress.educationScheduleLines, [
   '2026년 10월 20일(화) 13:30 ~ 16:00 | 1차시',
 ])
 assert.equal(
-  trainedTeacherProgress.extraSections.find(section => section.title === '기타사항')?.body,
-  '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.'
+  trainedTeacherProgress.extraSections.find(section => section.title === '학습 지원 내용')?.body,
+  '교재와 활동지를 제공합니다.'
 )
 assert.equal(
-  trainedTeacherProgress.extraSections.find(section => section.title === '비고')?.body,
-  '신청 전 학교 담당 교사 확인이 필요합니다.'
+  trainedTeacherProgress.extraSections.some(section => section.title === '기타사항'),
+  false
 )
 
 const codedTargetDetail = mapPortalProgramDetail({

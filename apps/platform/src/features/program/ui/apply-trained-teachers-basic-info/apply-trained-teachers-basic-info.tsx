@@ -448,7 +448,7 @@ export function findIncompleteTrainedTeachersBasicInfoMessage(
 }
 
 export type BasicInfoAnswerFromValuesOptions = {
-  /** 프로그램 `educationForm === participant_choice` 일 때만 희망 교육 형태·장소를 보낸다. */
+  /** 서버 런타임에서 선택 가능할 때만 희망 교육 형태·장소를 보낸다. */
   includePreferredEducationFields?: boolean
 }
 

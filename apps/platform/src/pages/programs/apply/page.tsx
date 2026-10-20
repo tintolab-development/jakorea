@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
@@ -232,13 +232,52 @@ import {
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
-import { PFAlertModal, PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFCheckbox,
+  PFDivider,
+  PFText,
+  PFTextarea,
+  PFTextInput,
+} from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+function readPreferredEducationFormChoice(runtimeContext: unknown): boolean | null {
+  if (!runtimeContext || typeof runtimeContext !== 'object' || Array.isArray(runtimeContext)) {
+    return null
+  }
+  const value = (runtimeContext as { showEducationFormChoice?: unknown }).showEducationFormChoice
+  return typeof value === 'boolean' ? value : null
+}
+
 function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
+}
+
+function ScheduleChoiceLabel({ label }: { label: string }) {
+  const parts = label.split(/\s*\|\s*/)
+  if (parts.length < 2) return label
+
+  return (
+    <span className={styles.scheduleChoiceLabel}>
+      {parts.map((part, index) => (
+        <Fragment key={`${part}-${index}`}>
+          {index > 0 ? (
+            <PFDivider orientation="vertical" className={styles.scheduleChoiceDivider} />
+          ) : null}
+          <span className={styles.scheduleChoiceSegment}>{part}</span>
+        </Fragment>
+      ))}
+    </span>
+  )
+}
+
+function TrainedTeacherScheduleChoiceLabel({ label }: { label: string }) {
+  const separatorIndex = label.indexOf('|')
+  return separatorIndex >= 0 ? label.slice(0, separatorIndex).trim() : label
 }
 
 function findDraftParagraph(
@@ -460,12 +499,15 @@ export function ProgramApplyPage() {
   const profileTeacherName = profileDefaults.teacherName
   const profileTeacherMobile = profileDefaults.teacherMobile
   const profileTeacherEmail = profileDefaults.teacherEmail
-  const showPreferredEducationForm = program?.educationForm === 'participant_choice'
   const remoteForm = applicationFormQuery.bundle?.form
   const applicationFormDocument = useMemo(
     () => coerceApplicationFormDocument(remoteForm),
     [remoteForm]
   )
+  const applicationFormRuntimeContext = applicationFormDocument?.runtimeContext
+  const showPreferredEducationForm =
+    readPreferredEducationFormChoice(applicationFormRuntimeContext) ??
+    program?.educationForm === 'participant_choice'
   const educationScheduleLinesForApply = useMemo(
     () =>
       readEducationScheduleLinesForApplicationForm(
@@ -622,10 +664,6 @@ export function ProgramApplyPage() {
     showTrainedTeachersPreferredSchedule ||
     showGeneralPreferredSchedule ||
     showEconomyPreferredSchedule
-  const applicationFormRuntimeContext = useMemo(
-    () => coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-    [remoteForm]
-  )
   const institutionPreferredSessionSelect = useMemo(() => {
     if (!program || !showGeneralPreferredSchedule) {
       return { show: false, options: [] as { value: string; label: string }[] }
@@ -1278,34 +1316,44 @@ export function ProgramApplyPage() {
         }
         const maxCount = applicationRecruitmentLimits.maxScheduleCount
         return (
-          <div className={styles.multipleChoice}>
-            {choiceItems.map(item => {
-              const checked = trainedTeachersFixedSelectedIds.includes(item.id)
-              const atCap =
-                maxCount != null &&
-                maxCount >= 1 &&
-                trainedTeachersFixedSelectedIds.length >= maxCount &&
-                !checked
-              return (
-                <PFCheckbox
-                  key={item.id}
-                  className={styles.multipleChoiceItem}
-                  size="large"
-                  checked={checked}
-                  disabled={atCap}
-                  onCheckedChange={nextChecked => {
-                    setTrainedTeachersFixedSelectedIds(prev => {
-                      const next = nextChecked
-                        ? capFixedScheduleSelectedIds([...prev, item.id], maxCount)
-                        : prev.filter(id => id !== item.id)
-                      return next
-                    })
-                  }}
-                >
-                  {item.label}
-                </PFCheckbox>
-              )
-            })}
+          <div className={styles.scheduleChoiceBlock}>
+            <PFText
+              as="p"
+              typo="bd-md-rg"
+              color="neutral-cool-500"
+              className={styles.scheduleChoiceDescription}
+            >
+              진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.
+            </PFText>
+            <div className={styles.multipleChoice}>
+              {choiceItems.map(item => {
+                const checked = trainedTeachersFixedSelectedIds.includes(item.id)
+                const atCap =
+                  maxCount != null &&
+                  maxCount >= 1 &&
+                  trainedTeachersFixedSelectedIds.length >= maxCount &&
+                  !checked
+                return (
+                  <PFCheckbox
+                    key={item.id}
+                    className={styles.multipleChoiceItem}
+                    size="large"
+                    checked={checked}
+                    disabled={atCap}
+                    onCheckedChange={nextChecked => {
+                      setTrainedTeachersFixedSelectedIds(prev => {
+                        const next = nextChecked
+                          ? capFixedScheduleSelectedIds([...prev, item.id], maxCount)
+                          : prev.filter(id => id !== item.id)
+                        return next
+                      })
+                    }}
+                  >
+                    <TrainedTeacherScheduleChoiceLabel label={item.label} />
+                  </PFCheckbox>
+                )
+              })}
+            </div>
           </div>
         )
       }
@@ -1430,7 +1478,11 @@ export function ProgramApplyPage() {
                   })
                 }}
               >
-                {item.label}
+                {isApplyScheduleChoiceParagraphId(paragraph.id) ? (
+                  <ScheduleChoiceLabel label={item.label} />
+                ) : (
+                  item.label
+                )}
               </PFCheckbox>
             ))}
           </div>

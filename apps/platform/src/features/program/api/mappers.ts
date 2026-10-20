@@ -33,6 +33,7 @@ import type {
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
 import {
   educationScheduleDetailCardLabel,
+  formatEducationScheduleRangeForDetailCard,
   formatEducationScheduleLineForDetailCard,
 } from '../lib/education-schedule-detail-display.ts'
 import {
@@ -42,7 +43,9 @@ import {
 import {
   formatDisplayDate,
   formatDisplayDateRange,
+  formatDisplayDateRangeCompact,
   normalizeScheduleDisplayLabel,
+  parseScheduleDisplayLabel,
 } from '@/shared/lib/format-display-date'
 
 function mapPortalMaxPreferredScheduleCount(
@@ -226,7 +229,7 @@ function formatRange(start: Date | null, end: Date | null): string {
 }
 
 function formatCompactRange(start: Date | null, end: Date | null): string {
-  return formatDisplayDateRange(start, end, { empty: '-' })
+  return formatDisplayDateRangeCompact(start, end, { empty: '-' })
 }
 
 function mapEducationForm(value: string | undefined): EducationForm {
@@ -314,7 +317,7 @@ function mapEducationTargets(remote: { educationTarget?: string; educationTarget
 function fallbackTab(programType: string | undefined): ProgramTab {
   switch ((programType ?? '').trim().toUpperCase()) {
     case 'TRAINED_TEACHER':
-      return 'instructor'
+      return 'institution'
     case 'GENERAL_ORGANIZATION':
     case 'GEMINI':
     case 'GEMINI_TRAINING':
@@ -419,7 +422,10 @@ function mapDetailCase(
   if (type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING') {
     return 'gemini'
   }
-  if (type === 'TRAINED_TEACHER' || codes.includes('INSTRUCTOR')) return 'instructor'
+  // 교육받은 교사는 강사 모집이 아니라 기관(ORGANIZATION) 참여형 프로그램이다.
+  // 포커스 없는 상세도 일반 기관 프로그램과 같은 기본정보·추가 섹션을 사용한다.
+  if (type === 'TRAINED_TEACHER') return 'general'
+  if (codes.includes('INSTRUCTOR')) return 'instructor'
   if (type === 'UJAT') {
     const volunteer = (recruitments ?? []).some(
       row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
@@ -742,6 +748,8 @@ function recruitmentOperatingDates(recruitments: PortalRecruitment[] | undefined
 type EducationProgressRowVisibility = {
   /** 루트 교육 형태가 있으면 행 값은 반복하지 않는다. */
   showEducationForm: boolean
+  /** 기간형 배정 정보는 교육받은 교사 프로그램에서만 공개한다. */
+  showAssignmentPeriod: boolean
 }
 
 function mapPortalCurriculumSessions(
@@ -750,17 +758,28 @@ function mapPortalCurriculumSessions(
   rows: EducationProgressRowVisibility
 ): ProgramSession[] {
   if (structure !== 'curriculum') return []
-  return (sessions ?? []).map(session => ({
-    sessionLabel: session.sessionLabel ?? '',
-    title: session.title ?? '',
-    description: session.description ?? '',
-    ...(optionalText(session.scheduleDateLabel)
-      ? { dateLabel: normalizeScheduleDisplayLabel(session.scheduleDateLabel) }
-      : {}),
-    ...(rows.showEducationForm && optionalText(session.educationFormLabel)
-      ? { educationFormLabel: session.educationFormLabel?.trim() }
-      : {}),
-  }))
+  return (sessions ?? []).map(session => {
+    const dateLabel = optionalText(session.scheduleDateLabel)
+    const educationFormLabel = rows.showEducationForm
+      ? optionalText(session.educationFormLabel)
+      : undefined
+    const participationMethodLabel = optionalText(session.participationMethodLabel)
+    const assignmentPeriod = rows.showAssignmentPeriod
+      ? optionalText(session.assignmentPeriod)
+      : undefined
+    return {
+      sessionLabel: session.sessionLabel ?? '',
+      title: session.title ?? '',
+      description: session.description ?? '',
+      ...(dateLabel ? { dateLabel: normalizeScheduleDisplayLabel(dateLabel) } : {}),
+      ...(educationFormLabel ? { educationFormLabel } : {}),
+      ...(participationMethodLabel ? { participationMethodLabel } : {}),
+      ...(session.assignmentEnabled !== undefined
+        ? { assignmentEnabled: session.assignmentEnabled }
+        : {}),
+      ...(assignmentPeriod ? { assignmentPeriod } : {}),
+    }
+  })
 }
 
 function formatGroupTimes(times: PortalEducationScheduleDetail['groupTimes']): string | undefined {
@@ -795,21 +814,47 @@ function mapPortalScheduleDetails(
     const timeSummary =
       optionalText(detail.progressTimeSummary) ?? formatGroupTimes(detail.groupTimes)
     const scheduleDateLabel = optionalText(detail.scheduleDateLabel)
+    const scheduleDateHasTime = Boolean(
+      scheduleDateLabel && parseScheduleDisplayLabel(scheduleDateLabel).timeRange
+    )
     const combined =
       isMultiSessionRound(sessionRound)
-        ? [scheduleDateLabel, timeSummary].filter((part): part is string => Boolean(part)).join(' ')
+        ? scheduleDateHasTime
+          ? scheduleDateLabel
+          : [scheduleDateLabel, timeSummary]
+              .filter((part): part is string => Boolean(part))
+              .join(' ')
         : (timeSummary ?? scheduleDateLabel ?? '')
     const dateLabel = combined ? normalizeScheduleDisplayLabel(combined) : ''
+    const educationFormLabel = rows.showEducationForm
+      ? optionalText(detail.educationFormLabel)
+      : undefined
+    const participationMethodLabel = optionalText(detail.participationMethodLabel)
+    const assignmentPeriod = rows.showAssignmentPeriod
+      ? optionalText(detail.assignmentPeriod)
+      : undefined
     return {
       scheduleLabel,
       name: detail.name ?? '',
       dateLabel,
       ...(detail.blockKind ? { blockKind: detail.blockKind } : {}),
-      ...(rows.showEducationForm && optionalText(detail.educationFormLabel)
-        ? { educationFormLabel: detail.educationFormLabel?.trim() }
+      ...(educationFormLabel ? { educationFormLabel } : {}),
+      ...(participationMethodLabel ? { participationMethodLabel } : {}),
+      ...(detail.assignmentEnabled !== undefined
+        ? { assignmentEnabled: detail.assignmentEnabled }
         : {}),
+      ...(assignmentPeriod ? { assignmentPeriod } : {}),
     }
   })
+}
+
+function mapPortalEducationScheduleRange(
+  range: PortalProgramDetail['educationScheduleRange'],
+): ProgramDetail['educationScheduleRange'] {
+  const start = optionalText(range?.start)
+  const end = optionalText(range?.end)
+  if (!start && !end) return null
+  return { start: start ?? null, end: end ?? null }
 }
 
 const EDUCATION_TARGET_CODE = new Set(['elementary', 'middle', 'high', 'university', 'adult'])
@@ -840,6 +885,14 @@ function mapPortalEducationScheduleCards(
     return []
   }
   const mode = remote.educationScheduleMode === 'period' ? 'period' : 'date'
+  if (mode === 'period') {
+    const rangeLabel = formatEducationScheduleRangeForDetailCard(
+      remote.educationScheduleRange?.start,
+      remote.educationScheduleRange?.end,
+    )
+    if (!rangeLabel) return []
+    return [{ label: educationScheduleDetailCardLabel(0, 1), value: rangeLabel }]
+  }
   const lines = educationScheduleLines.map(line =>
     formatEducationScheduleLineForDetailCard(line, mode)
   )
@@ -1115,6 +1168,7 @@ export function mapPortalProgramDetail(
   const legacyEventSchedules = legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
+    showAssignmentPeriod: isTrainedTeacher,
   }
   const sessions = usesEducationProgressFields
     ? mapPortalCurriculumSessions(
@@ -1267,6 +1321,7 @@ export function mapPortalProgramDetail(
     educationStructure,
     sessionRound,
     educationScheduleMode,
+    educationScheduleRange: mapPortalEducationScheduleRange(remote.educationScheduleRange),
     educationScheduleLines,
     maxPreferredScheduleCount: mapPortalMaxPreferredScheduleCount(
       remote,
