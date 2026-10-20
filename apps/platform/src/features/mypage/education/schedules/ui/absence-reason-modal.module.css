@@ -89,10 +89,29 @@
   gap: var(--spacing-12);
 }
 
-.fileName {
+.fileInfo {
+  display: flex;
   min-width: 0;
   flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.fileName {
+  min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.fileActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.fileSelectionNotice {
+  margin: 0;
 }
 
 .formError {

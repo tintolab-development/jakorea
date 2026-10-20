@@ -210,6 +210,9 @@ export type PortalAbsenceReasonSubmissionInput = {
   fileObjectIds?: number[]
 }
 
+export const PORTAL_ABSENCE_REASON_MAX_LENGTH = 2_000
+export const PORTAL_ABSENCE_REASON_MAX_FILE_COUNT = 20
+
 function normalizePortalEducationScheduleScopeStatus(
   value: string | null | undefined
 ): PortalEducationScheduleScopeStatus | null {
@@ -563,10 +566,21 @@ export async function fetchApplicationSchedules(
 export async function submitApplicationAbsenceReason(
   input: PortalAbsenceReasonSubmissionInput
 ): Promise<PortalAbsenceReasonSubmission> {
+  const reason = input.reason.trim()
+  if (!reason) throw new Error('불참 사유를 작성해 주세요.')
+  if (reason.length > PORTAL_ABSENCE_REASON_MAX_LENGTH) {
+    throw new Error(`불참 사유는 ${PORTAL_ABSENCE_REASON_MAX_LENGTH}자 이내로 작성해 주세요.`)
+  }
+  if (input.fileObjectIds && input.fileObjectIds.length > PORTAL_ABSENCE_REASON_MAX_FILE_COUNT) {
+    throw new Error(
+      `증빙서류는 최대 ${PORTAL_ABSENCE_REASON_MAX_FILE_COUNT}개까지 첨부할 수 있습니다.`
+    )
+  }
+
   const { data } = await axiosClient.post<unknown>(
     `${applicationPath(input.applicationType, input.applicationId)}/schedules/${encodeURIComponent(String(input.scheduleId))}/absence-reasons`,
     {
-      reason: input.reason.trim(),
+      reason,
       ...(input.fileObjectIds && input.fileObjectIds.length > 0
         ? { fileObjectIds: input.fileObjectIds }
         : {}),

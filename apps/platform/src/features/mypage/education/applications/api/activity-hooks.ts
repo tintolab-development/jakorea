@@ -679,15 +679,28 @@ export function useSubmitApplicationAbsenceReason(
         applicationId,
       })
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       if (!applicationType || !applicationId) return
-      void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.schedules(
-          applicationType,
-          applicationId
-        ),
-        exact: true,
-      })
+      await Promise.all([
+        // 신청 목록에도 출결·결석 상태 요약이 포함될 수 있으므로 목록 prefix를 갱신한다.
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.detail(
+            applicationType,
+            applicationId
+          ),
+          exact: true,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.schedules(
+            applicationType,
+            applicationId
+          ),
+          exact: true,
+        }),
+      ])
     },
     retry: false,
   })
