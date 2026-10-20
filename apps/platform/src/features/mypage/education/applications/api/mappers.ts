@@ -8,6 +8,8 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
+import { readUjatPortalBannerState } from '../lib/ujat-portal-banner'
+import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
@@ -198,6 +200,7 @@ export function mapPortalProgramApplicationListItem(
   const detailCase = mapDetailCase(applicationType, row.programGroup)
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
+  const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
 
   return {
     id: String(row.applicationId),
@@ -218,6 +221,7 @@ export function mapPortalProgramApplicationListItem(
     ...(row.pendingSurveyCount != null && row.pendingSurveyCount > 0
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
+    ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
   }
 }
 
@@ -381,6 +385,14 @@ export function mapPortalProgramApplicationDetail(
       },
       nestedProgram,
     )
+  }
+
+  if (mapped.detailCase === 'ujat-participant') {
+    const ujatContent = buildUjatApplicationContentFromPortal({
+      answers,
+      preferredScheduleBlocks: detail.preferredScheduleBlocks,
+    })
+    if (ujatContent) mapped.ujatApplicationContent = ujatContent
   }
 
   return mapped

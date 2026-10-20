@@ -40,6 +40,8 @@ import {
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   shouldShowDocumentPassBanner,
   TeacherApplicationContent,
+  UjatApplicationContent,
+  UjatScheduleBanner,
   TeacherEducationAssignmentAside,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -71,6 +73,13 @@ import {
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
+import {
+  resolveUjatScheduleBannerFromState,
+  sanitizeUjatParticipantBasicInfoFields,
+  shouldShowUjatScheduleBanner,
+  shouldUseUjatApplicationContent,
+} from '@/features/mypage/education/applications/lib/ujat-portal-banner'
+import { educationUjatProgressConfirmPath } from '@/features/mypage/education/applications/lib/guidance-path'
 import type { EducationApplicationListItem } from '@/features/mypage/education/applications/model/types'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -346,10 +355,11 @@ export function MypageEducationDetailPage() {
   }, [application, isTeacher, program])
 
   const applicationInfoBody = useMemo(() => {
+    if (!application || !program || !isTeacher) return undefined
+    if (shouldUseUjatApplicationContent(application.detailCase)) {
+      return <UjatApplicationContent content={application.ujatApplicationContent} />
+    }
     if (
-      !application ||
-      !program ||
-      !isTeacher ||
       !isOrganizationEducationApplication(application, program) ||
       !teacherApplicationContent
     ) {
@@ -376,6 +386,8 @@ export function MypageEducationDetailPage() {
     application,
     application?.applicationType,
     application?.id,
+    application?.detailCase,
+    application?.ujatApplicationContent,
     isTeacher,
     program,
     program?.educationForm,
@@ -588,7 +600,23 @@ export function MypageEducationDetailPage() {
     )
   }
 
-  const showBanner = shouldShowDocumentPassBanner(application)
+  const ujatScheduleBanner = shouldShowUjatScheduleBanner(
+    application.detailCase,
+    application.ujatPortalBannerState,
+  )
+    ? resolveUjatScheduleBannerFromState(application.ujatPortalBannerState)
+    : null
+  const showBanner = !ujatScheduleBanner && shouldShowDocumentPassBanner(application)
+  const programForInfo = shouldUseUjatApplicationContent(application.detailCase)
+    ? {
+        ...program,
+        basicInfoFields: sanitizeUjatParticipantBasicInfoFields(
+          application.detailCase,
+          program.educationTargetDetailLabel,
+          program.basicInfoFields,
+        ),
+      }
+    : program
   const showCancelCta =
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const showTeacherAssignment =
@@ -623,7 +651,9 @@ export function MypageEducationDetailPage() {
 
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      isTeacher && teacherApplicationContent ? (
+      shouldUseUjatApplicationContent(application.detailCase) ? (
+        <UjatApplicationContent content={application.ujatApplicationContent} />
+      ) : isTeacher && teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
           applicationType={application.applicationType}
@@ -799,7 +829,22 @@ export function MypageEducationDetailPage() {
         }
       />
 
-      {showBanner ? (
+      {ujatScheduleBanner ? (
+        <UjatScheduleBanner
+          copy={ujatScheduleBanner}
+          onActivate={
+            ujatScheduleBanner.clickable
+              ? () =>
+                  navigate(
+                    educationUjatProgressConfirmPath(
+                      application.id,
+                      application.applicationType,
+                    ),
+                  )
+              : undefined
+          }
+        />
+      ) : showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 
@@ -817,7 +862,7 @@ export function MypageEducationDetailPage() {
 
           {appliedSection === 'program' ? (
             <ProgramInfoBody
-              program={program}
+              program={programForInfo}
               showPeriodSponsor
               showApplyCta={false}
               showCancelCta={showCancelCta}

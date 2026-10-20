@@ -1,7 +1,7 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import type { EducationForm, ProgramDetailCase } from '@/features/program'
 import type { PortalPreferredScheduleBlock } from '@/features/program/api/application-types'
-import type { ProgramApplicationType } from '../api/types'
+import type { ProgramApplicationType, UjatPortalBannerState } from '../api/types'
 
 export type EducationApplicationTab = 'all' | 'applied' | 'in_progress' | 'completed'
 
@@ -137,6 +137,13 @@ export type EducationApplicationListItem = {
   certificateAvailable?: boolean
   /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
   pendingSurveyCount?: number
+  /**
+   * UJAT 기관 일정협의 배너 — Portal `supplement.ujat.portalBannerState`.
+   * 재계산하지 않고 서버 값만 전달한다.
+   */
+  ujatPortalBannerState?: UjatPortalBannerState
+  /** 교사 UJAT 신청 내용 탭 — 학년별 신청·수업시간 */
+  ujatApplicationContent?: EducationUjatApplicationContent
 }
 
 /** 교사 회원 신청 내용 — 신청 기관 정보 */
@@ -188,6 +195,37 @@ export type EducationTeacherApplicationContent = {
   institution: EducationTeacherApplicationInstitution
   guidance: EducationTeacherApplicationGuidance
   preferredSchedules: EducationTeacherPreferredSchedule[]
+}
+
+export type EducationUjatApplicationInstitution = {
+  name: string
+  address: string
+  addressDetail: string
+  teacherContact: string
+  otherRequests: string
+}
+
+export type EducationUjatGradeBlock = {
+  gradeLabel: string
+  classCountLabel: string
+  classesLabel: string
+}
+
+export type EducationUjatClassPeriod = {
+  periodLabel: string
+  timeLabel: string
+}
+
+export type EducationUjatClassTimeBlock = {
+  gradeRangeLabel: string
+  periods: EducationUjatClassPeriod[]
+}
+
+export type EducationUjatApplicationContent = {
+  preferredDates: string[]
+  institution: EducationUjatApplicationInstitution
+  gradeBlocks: EducationUjatGradeBlock[]
+  classTimeBlocks: EducationUjatClassTimeBlock[]
 }
 
 export type EducationApplicationListParams = {
