@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { fetchProgramPlannedEducationSlots } from '@/features/program/general/lib/program-planned-education-slots'
 import {
@@ -14,7 +15,10 @@ import {
   ABSENT_PREFERRED_SCHEDULE_MESSAGE,
   allowsMultipleOrganizationEducationScheduleAssignment,
   buildOrganizationApplicationApproveSchedulePayload,
+  buildPeriodSingleRequestedScheduleApprovePayload,
+  isGeneralOrganizationPeriodSingleRequestedScheduleApproval,
   ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
+  ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT,
   organizationEducationScheduleAssignmentHint,
   resolveOrganizationApproveScheduleOptionsFromPreferred,
   resolveOrganizationScheduleMultiAutoAssign,
@@ -22,6 +26,7 @@ import {
   type OrganizationApproveEducationScheduleMode,
 } from '@/features/program/general/lib/organization-application-approve-slots'
 import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './instructor-bulk-approve-modal.css'
@@ -32,6 +37,8 @@ export type InstitutionApproveScheduleConfig = {
 }
 
 export type InstitutionApproveConfirmPayload = PermissionModalPayload & {
+  /** 기간형 단일 회차 희망 일정 행 id. selectedScheduleId·slots와 함께 두지 않는다. */
+  requestedScheduleId?: number
   selectedScheduleId?: number
   slots?: Array<{ scheduleId: number }>
 }
@@ -142,16 +149,6 @@ export function InstitutionApproveModal({
       (left, right) => (left.preferenceOrder ?? 99) - (right.preferenceOrder ?? 99)
     )
   }, [requestedSchedules])
-  const allowsMultipleSchedules = allowsMultipleOrganizationEducationScheduleAssignment({
-    sessionRound,
-    educationScheduleMode,
-    maxScheduleCount,
-  })
-  const assignmentHint = organizationEducationScheduleAssignmentHint({
-    sessionRound,
-    educationScheduleMode,
-    maxScheduleCount,
-  })
   const scheduleCards = useMemo(
     () =>
       scheduleOptions
@@ -182,6 +179,7 @@ export function InstitutionApproveModal({
             title: card.title || option.label,
             detail: card.detail,
             confirmableScheduleId: option.confirmableScheduleId,
+            requestedScheduleId: undefined as number | undefined,
             note: option.assignmentNote ?? null,
           }
         }),
@@ -198,22 +196,97 @@ export function InstitutionApproveModal({
       sessionsPerRound,
     ]
   )
+  const periodSingleRequestedApproval = isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
+    educationScheduleMode,
+    sessionRound,
+    educationStructure,
+  })
+  const requestedScheduleCards = useMemo(() => {
+    if (!periodSingleRequestedApproval) return []
+    return requestedRowsForDetail.flatMap(row => {
+      if (typeof row.id !== 'number' || !Number.isInteger(row.id) || row.id <= 0) return []
+      const requestedDate = row.requestedDate?.trim() || row.periodStartDate?.trim() || ''
+      const card = formatOrganizationApproveScheduleCard({
+        label: row.label,
+        startAt: requestedDate || row.periodStartDate,
+        endAt: requestedDate || row.periodEndDate || row.periodStartDate,
+        preferenceOrder: row.preferenceOrder,
+        sessionCount: row.sessionCount,
+        educationScheduleMode,
+        educationStructure,
+        sessionRound,
+        curriculumChartSessionCount,
+        curriculumSessions,
+        sessionsPerRound,
+        educationRoundCount,
+      })
+      return [
+        {
+          key: `requested-schedule:${row.id}`,
+          title: card.title || requestedDate || String(row.id),
+          detail: card.detail,
+          confirmableScheduleId: null as number | null,
+          requestedScheduleId: row.id,
+          note: null as string | null,
+        },
+      ]
+    })
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessions,
+    educationRoundCount,
+    educationScheduleMode,
+    educationStructure,
+    periodSingleRequestedApproval,
+    requestedRowsForDetail,
+    sessionRound,
+    sessionsPerRound,
+  ])
+  const scheduleCardsForView = periodSingleRequestedApproval ? requestedScheduleCards : scheduleCards
+  const allowsMultipleSchedules = periodSingleRequestedApproval
+    ? false
+    : allowsMultipleOrganizationEducationScheduleAssignment({
+        sessionRound,
+        educationScheduleMode,
+        maxScheduleCount,
+      })
+  const assignmentHint = periodSingleRequestedApproval
+    ? ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
+    : organizationEducationScheduleAssignmentHint({
+        sessionRound,
+        educationScheduleMode,
+        maxScheduleCount,
+      })
   const [selectedOptionKeys, setSelectedOptionKeys] = useState<string[]>([])
+  const selectionResetQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationApproveSelectionReset(
+      requestedApplicationId || '__none__'
+    ),
+    queryFn: () => 0,
+    enabled: false,
+    initialData: 0,
+    staleTime: Infinity,
+  })
 
   useEffect(() => {
     if (!open) return
     setSelectedOptionKeys([])
-  }, [open, scheduleConfig?.preferredEducationSchedules])
+  }, [open, scheduleConfig?.preferredEducationSchedules, selectionResetQuery.data])
 
   const usesScheduleSection = scheduleConfig != null
   const autoAssignSchedule =
     usesScheduleSection && educationStructure === 'schedule' && sessionRound === 'multi'
-  const hasPreferredSchedules = scheduleOptions.length > 0
-  const awaitingRequestedSchedules =
-    usesScheduleSection &&
-    !autoAssignSchedule &&
-    preferredDetailCount === 0 &&
-    requestedSchedulesQuery.isLoading
+  const hasPreferredSchedules = periodSingleRequestedApproval
+    ? requestedScheduleCards.length > 0
+    : scheduleOptions.length > 0
+  const awaitingRequestedSchedules = periodSingleRequestedApproval
+    ? usesScheduleSection &&
+      requestedApplicationId.length > 0 &&
+      requestedSchedulesQuery.isLoading
+    : usesScheduleSection &&
+      !autoAssignSchedule &&
+      preferredDetailCount === 0 &&
+      requestedSchedulesQuery.isLoading
   const slotsLoading = usesScheduleSection && programSchedulesQuery.isLoading
 
   useEffect(() => {
@@ -252,12 +325,15 @@ export function InstitutionApproveModal({
       title: option.label,
       detail: null as string | null,
       confirmableScheduleId: option.scheduleId,
+      requestedScheduleId: undefined as number | undefined,
       note: null as string | null,
     }))
   }, [hasPreferredSchedules, periodSchedule, scheduleValidation.commonSlotOptions])
-  const selectableCards = hasPreferredSchedules
-    ? scheduleCards.filter(card => periodSchedule || card.confirmableScheduleId != null)
-    : commonAssignmentCards
+  const selectableCards = periodSingleRequestedApproval
+    ? requestedScheduleCards
+    : hasPreferredSchedules
+      ? scheduleCards.filter(card => periodSchedule || card.confirmableScheduleId != null)
+      : commonAssignmentCards
   const selectedCards = selectableCards.filter(card => selectedOptionKeys.includes(card.key))
 
   const toggleSchedule = (optionKey: string) => {
@@ -297,6 +373,25 @@ export function InstitutionApproveModal({
       showAlert({
         title: '승인 불가',
         content: ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
+      })
+      return
+    }
+    if (periodSingleRequestedApproval) {
+      const requestedPayload = buildPeriodSingleRequestedScheduleApprovePayload(
+        selectedCards.flatMap(card =>
+          card.requestedScheduleId != null ? [card.requestedScheduleId] : []
+        )
+      )
+      if (requestedPayload == null) {
+        showAlert({
+          title: '승인 불가',
+          content: ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
+        })
+        return
+      }
+      onConfirm({
+        ...payload,
+        requestedScheduleId: requestedPayload.requestedScheduleId,
       })
       return
     }
@@ -382,7 +477,7 @@ export function InstitutionApproveModal({
         <p className="institution-approve-modal__notice">신청 희망 일정을 확인하는 중입니다.</p>
       ) : hasPreferredSchedules ? (
         <div className="institution-approve-modal__schedule-cards">
-          {scheduleCards.map(card => {
+          {scheduleCardsForView.map(card => {
             const selectable = selectableCards.some(item => item.key === card.key)
             const selected = selectedOptionKeys.includes(card.key)
             return (
@@ -464,14 +559,11 @@ export function InstitutionApproveModal({
                       {selectedCards.map(card => (
                         <div key={card.key} className="institution-approve-modal__assigned-item">
                           <span>{card.title}</span>
-                          <button
-                            type="button"
-                            className="institution-approve-modal__assigned-remove"
+                          <ItemDeleteButton
+                            className="item-delete-button"
                             aria-label={`${card.title} 배정 삭제`}
                             onClick={() => toggleSchedule(card.key)}
-                          >
-                            <span aria-hidden>×</span>
-                          </button>
+                          />
                         </div>
                       ))}
                     </div>

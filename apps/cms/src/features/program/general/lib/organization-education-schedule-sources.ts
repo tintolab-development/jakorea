@@ -15,8 +15,9 @@ import { generalProgramQueryKeys } from '@/features/program/general/api/general-
  * 일반 기관 프로그램 — 교육 일정 3종 SSOT (다중 기관·다중 신청)
  *
  * ① 프로그램 교육 진행 예정일: `programId` — GET programs/{id}/education-slots (공통정보는 lines PATCH)
- * ② 기관 희망 일정: `organizationApplicationId` (목록·상세는 programId로 조회 후 신청 id로 매핑)
+ * ② 기관 희망 일정: `organizationApplicationId` (신청 목록·상세. 진행 현황 표시에는 쓰지 않음)
  * ③ 실제 배정: `programId` + `organizationApplicationId` — OSA GET schedule-assignments
+ *    진행 현황 목록은 참여자 API `sessions`(확정 배정)를, 상세는 OSA 배정(없으면 같은 sessions)을 쓴다.
  *
  * 동일 프로그램 내 기관 A/B, 동일 기관의 다른 프로그램 신청 데이터를 혼합하지 않는다.
  * 신청 id는 전역 유일하나, FE는 programId·organizationApplicationId를 함께 검증한다.
@@ -241,26 +242,31 @@ export function mapOrganizationScheduleAssignmentSlotsToAssignedSessions(
   })
 }
 
+/** 진행 현황 — 확정/배정 일정. 미확정 희망(`scheduleUnresolved`)은 제외한다. */
+export function resolveParticipatingProgressAssignedSessions(
+  sessions: ParticipatingSchoolSession[] | undefined
+): ParticipatingSchoolSession[] {
+  return (sessions ?? []).filter(session => session.scheduleUnresolved !== true)
+}
+
 /**
  * 참여 기관 상세 「교육 진행 일정」.
- * 일반 기관은 OSA 배정이 있으면 배정을, 없으면 목록과 같은 희망 일정을 쓴다.
+ * 일반 기관은 OSA 배정이 있으면 배정을, 없으면 참여자 API의 확정 일정을 쓴다.
  */
 export function resolveParticipatingInstitutionApplicationScheduleSessions(input: {
   isCompanySchool: boolean
   isGeneralOrganization: boolean
   assignedSessions: ParticipatingSchoolSession[]
-  hopeSessions: ParticipatingSchoolSession[]
   participantSessions: ParticipatingSchoolSession[]
 }): ParticipatingSchoolSession[] {
   if (input.isCompanySchool) return input.participantSessions
-  if (input.isGeneralOrganization) {
-    if (input.assignedSessions.length > 0) return input.assignedSessions
-    return input.hopeSessions
+  if (input.isGeneralOrganization && input.assignedSessions.length > 0) {
+    return input.assignedSessions
   }
-  return input.participantSessions
+  return resolveParticipatingProgressAssignedSessions(input.participantSessions)
 }
 
-/** 참여 기관 목록 「진행 희망 교육 일정」 — 해당 신청의 희망만 (row 단위) */
+/** 기관 신청 희망 일정 — 신청 화면용. 진행 현황 목록·상세 표시에는 쓰지 않는다. */
 export function resolveParticipatingSchoolHopeSessions(
   row: Pick<
     ParticipatingSchoolRow,

@@ -7,12 +7,13 @@ import {
   mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
   readPreferredEducationSchedulesForScope,
   resolveParticipatingInstitutionApplicationScheduleSessions,
+  resolveParticipatingProgressAssignedSessions,
   resolveParticipatingSchoolHopeSessions,
 } from './organization-education-schedule-sources'
 import type { SlotResponse } from '@/shared/api/generated/dashboard/schemas/slotResponse'
 
 describe('organization-education-schedule-sources', () => {
-  it('detail schedule falls back to list hope sessions when OSA assignment is empty', () => {
+  it('detail schedule uses OSA assignment, then confirmed participant sessions', () => {
     const hope = [
       {
         round: 1,
@@ -22,9 +23,10 @@ describe('organization-education-schedule-sources', () => {
         format: '-',
         classNum: '1지망',
         timeRange: '09:30 ~ 11:30',
+        scheduleUnresolved: true,
       },
     ]
-    const assigned = [
+    const confirmed = [
       {
         round: 1,
         date: '2026.11.13',
@@ -40,19 +42,18 @@ describe('organization-education-schedule-sources', () => {
         isCompanySchool: false,
         isGeneralOrganization: true,
         assignedSessions: [],
-        hopeSessions: hope,
-        participantSessions: assigned,
+        participantSessions: [...confirmed, ...hope],
       })
-    ).toBe(hope)
+    ).toEqual(confirmed)
     expect(
       resolveParticipatingInstitutionApplicationScheduleSessions({
         isCompanySchool: false,
         isGeneralOrganization: true,
-        assignedSessions: assigned,
-        hopeSessions: hope,
-        participantSessions: [],
+        assignedSessions: confirmed,
+        participantSessions: hope,
       })
-    ).toBe(assigned)
+    ).toBe(confirmed)
+    expect(resolveParticipatingProgressAssignedSessions([...confirmed, ...hope])).toEqual(confirmed)
   })
 
   it('resolveParticipatingSchoolHopeSessions prefers hopeEducationSessions over sessions', () => {
