@@ -1,3 +1,15 @@
+/* Figma popup_medium (node 5733:49169) — content 904 · summary pad 24/gap 32 · details pad 32/gap 20 */
+
+.loading {
+  display: flex;
+  width: 100%;
+  min-height: 240px;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-40) 0;
+}
+
 .body {
   display: flex;
   width: 100%;
@@ -20,11 +32,12 @@
   background: var(--color-neutral-cool-50);
 }
 
+/* Figma clip 160×220 (image source 176×220, object-fit cover) */
 .thumbnailWrap {
-  width: 176px;
+  width: 160px;
   height: 220px;
   flex-shrink: 0;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 160 / 220;
   overflow: hidden;
   border-radius: var(--radius-12);
 }
@@ -41,7 +54,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: 50% 50%;
 }
 
@@ -56,7 +69,6 @@
 .summaryCopy {
   display: flex;
   min-width: 0;
-  min-height: 158px;
   flex-direction: column;
   gap: var(--spacing-4);
 }
@@ -93,13 +105,14 @@
   width: 100%;
   min-width: 0;
   align-items: flex-start;
-  gap: var(--spacing-24);
+  gap: var(--spacing-16);
 }
 
 .detailLabel {
-  width: 88px;
+  width: 56px;
   flex-shrink: 0;
   margin: 0;
+  text-align: right;
 }
 
 .detailValue {
@@ -111,7 +124,7 @@
 .units {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-16);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -120,10 +133,13 @@
 .unit {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-4);
 }
 
 .unitHeading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
   margin: 0;
   color: var(--color-primary-500);
   word-break: keep-all;
@@ -139,6 +155,43 @@
   word-break: keep-all;
 }
 
+/* 단원 소개 HTML — 시안처럼 단원 제목 primary, 본문 간격 맞춤 */
+.unitIntro {
+  max-height: none;
+  overflow: visible;
+}
+
+.unitIntro :global(.rich-text-content),
+.unitIntro :global(.ProseMirror) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.unitIntro :global(.ProseMirror > *) {
+  margin: 0;
+}
+
+.unitIntro :global(h1),
+.unitIntro :global(h2),
+.unitIntro :global(h3),
+.unitIntro :global(h4),
+.unitIntro :global(p:has(strong:only-child)),
+.unitIntro :global(p > strong:only-child) {
+  color: var(--color-primary-500);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.unitIntro :global(p) {
+  color: var(--color-neutral-black);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  word-break: keep-all;
+}
+
 @media (--bp-below-pc) {
   .summary {
     flex-direction: column;
@@ -148,7 +201,11 @@
 
   .thumbnailWrap {
     width: 120px;
-    height: 150px;
+    height: 165px;
+  }
+
+  .details {
+    padding: 0 var(--spacing-20) var(--spacing-20);
   }
 
   .detailRow {
@@ -158,5 +215,6 @@
 
   .detailLabel {
     width: auto;
+    text-align: left;
   }
 }

@@ -128,10 +128,26 @@
 
 /*
  * 행 높이: 썸네일 125 + 상하 패딩 16×2 = 157
- * cms-data-table 기본 54px 재정의
+ * cms-data-table 은 index.css 로 이 파일보다 늦게 로드되며
+ * `:not(.ant-table-placeholder):not(.ant-table-measure-row)` 로 specificity 가 높다.
+ * 동일 :not 를 포함해 padding/height 가 호버·cell-row-hover 에서도 덮이지 않게 한다.
  */
-.education-textbooks-table.cms-data-table .ant-table-tbody > tr > td,
-.education-textbooks-table.cms-data-table .ant-table-tbody > tr:hover > td {
+.education-textbooks-table .ant-table-tbody > tr.ant-table-row {
+  transition: none;
+}
+
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
   height: 157px !important;
   min-height: 157px !important;
   max-height: 157px !important;
@@ -139,6 +155,7 @@
   vertical-align: middle !important;
   box-sizing: border-box !important;
   overflow: hidden;
+  transition: none !important;
 }
 
 /* 체크 60 */
@@ -148,12 +165,16 @@
   > th.ant-table-selection-column,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.ant-table-selection-column,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr:hover
-  > td.ant-table-selection-column {
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.ant-table-selection-column,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-selection-column.ant-table-cell-row-hover {
   width: 60px !important;
   min-width: 60px !important;
   max-width: 60px !important;
@@ -168,12 +189,16 @@
   > th.cms-table-col--no,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.cms-table-col--no,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr:hover
-  > td.cms-table-col--no {
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.cms-table-col--no,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-table-col--no.ant-table-cell-row-hover {
   width: 80px !important;
   min-width: 80px !important;
   max-width: 80px !important;
@@ -188,25 +213,33 @@
   > tr
   > th.cms-table-col--usage,
 .education-textbooks-table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.cms-table-col--usage,
-.education-textbooks-table.cms-data-table
-  .ant-table-tbody
-  > tr:hover
-  > td.cms-table-col--usage,
-.education-textbooks-table.cms-data-table
   .ant-table-thead
   > tr
   > th.education-textbooks-page__active-col,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-table-col--usage,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.education-textbooks-page__active-col,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr:hover
-  > td.education-textbooks-page__active-col {
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.cms-table-col--usage,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.education-textbooks-page__active-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-table-col--usage.ant-table-cell-row-hover,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.education-textbooks-page__active-col.ant-table-cell-row-hover {
   width: 100px !important;
   min-width: 100px !important;
   max-width: 100px !important;
@@ -217,6 +250,7 @@
 /**
  * 썸네일 th · td 동일 스펙 (시안 width 120)
  * ※ td 에 display:flex 금지 — table-cell 깨져 열 너비/헤더 정렬 붕괴
+ * ※ padding:0 이 cms-data-table 기본(10×16)에 덮이면 이미지가 좌측으로 밀림
  */
 .education-textbooks-table.cms-data-table
   .ant-table-thead
@@ -224,12 +258,16 @@
   > th.education-textbooks-page__thumb-col,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.education-textbooks-page__thumb-col,
 .education-textbooks-table.cms-data-table
   .ant-table-tbody
-  > tr:hover
-  > td.education-textbooks-page__thumb-col {
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.education-textbooks-page__thumb-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.education-textbooks-page__thumb-col.ant-table-cell-row-hover {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -240,24 +278,23 @@
   text-align: center !important;
 }
 
+/* 열 폭 100% 채운 뒤 flex 로 이미지 중앙 — 고정 width+margin auto 는 패딩 충돌 시 좌측 치우침 */
 .education-textbooks-page__thumb-cell {
   display: flex;
   box-sizing: border-box;
-  width: 120px;
-  max-width: 120px;
+  width: 100%;
   height: 157px;
   padding: 16px;
   justify-content: center;
   align-items: center;
   gap: 4px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .education-textbooks-page__thumb-wrap {
   position: relative;
   display: block;
-  flex: 0 0 auto;
-  flex-shrink: 0;
+  flex: 0 0 88px;
   width: 88px;
   height: 125px;
   aspect-ratio: 88 / 125;
