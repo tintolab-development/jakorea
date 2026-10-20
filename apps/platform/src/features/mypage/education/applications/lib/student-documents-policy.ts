@@ -6,10 +6,7 @@ export const STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE =
 export function isPortalStudentDocumentsSupported(
   policy: PortalStudentDocumentPolicy | null | undefined,
 ): boolean {
-  if (policy?.studentDocumentsSupported === false) return false
-  if (policy?.studentDocumentsSupported === true) return true
-  // BE 배포 전 policy(필드 없음) — 기존 화면 유지, import 실패는 error.code로 안내
-  return policy != null
+  return policy?.studentDocumentsSupported === true
 }
 
 export function isPortalStudentDocumentsUnsupported(
@@ -23,13 +20,8 @@ export function shouldShowTeacherStudentDocumentDependentTabs(
   policy: PortalStudentDocumentPolicy | null | undefined,
   options: { policyQueryEnabled: boolean; policyLoading: boolean },
 ): boolean {
-  if (!options.policyQueryEnabled) {
-    return true
-  }
-  if (options.policyLoading || policy == null) {
-    return false
-  }
-  return !isPortalStudentDocumentsUnsupported(policy)
+  if (!options.policyQueryEnabled || options.policyLoading || policy == null) return false
+  return isPortalStudentDocumentsSupported(policy)
 }
 
 /** `studentDocumentsSupported === true`일 때만 호출 */

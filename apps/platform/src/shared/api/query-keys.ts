@@ -360,6 +360,7 @@ export const platformQueryKeys = {
           params.page,
           params.size,
         ] as const,
+      listPrefix: () => [...platformQueryKeys.mypage.programApplications.all(), 'list'] as const,
       /** 내 신청 상세 — GET /api/portal/me/program-applications/{applicationType}/{applicationId} */
       detail: (applicationType: string, applicationId: string) =>
         [

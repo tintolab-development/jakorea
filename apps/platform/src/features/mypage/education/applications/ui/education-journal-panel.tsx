@@ -1,6 +1,14 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
-import { PFButton, PFDataTable, PFPagination, PFText, type PFDataTableColumn } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFDataTable,
+  PFLoadingSpinner,
+  PFPagination,
+  PFText,
+  type PFDataTableColumn,
+} from '@/shared/ui'
 import {
   useDownloadPortalEducationJournal,
   usePortalEducationJournals,
@@ -34,10 +42,19 @@ function errorMessage(error: unknown): string {
       ? (responseData as { error?: { code?: unknown; message?: unknown } }).error
       : undefined
   const code = typeof responseError?.code === 'string' ? responseError.code : ''
-  const message =
-    [code, error instanceof Error ? error.message : '', typeof responseError?.message === 'string' ? responseError.message : '']
-      .filter(Boolean)
-      .join(' ')
+  const message = [
+    code,
+    error instanceof Error ? error.message : '',
+    typeof responseError?.message === 'string' ? responseError.message : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  if (
+    message.includes('파일 저장소 업로드에 실패했습니다') ||
+    message.includes('INTERNAL_SERVER_ERROR')
+  ) {
+    return '교육일지 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  }
   if (message.includes('TRAINED_TEACHER_EDUCATION_JOURNAL_DISABLED')) {
     return '교육일지를 사용하지 않는 프로그램입니다.'
   }
@@ -81,8 +98,8 @@ export function EducationJournalPanel({
 }) {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [page, setPage] = useState(1)
+  const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const journalsQuery = usePortalEducationJournals(programId, organizationApplicationId)
   const submitMutation = useSubmitPortalEducationJournal(programId, organizationApplicationId)
   const downloadMutation = useDownloadPortalEducationJournal()
@@ -118,7 +135,12 @@ export function EducationJournalPanel({
               <button
                 type="button"
                 className={styles.fileButton}
-                onClick={() => downloadMutation.mutate({ fileObjectId, fileName })}
+                onClick={() =>
+                  downloadMutation.mutate(
+                    { fileObjectId, fileName },
+                    { onError: error => setAlertMessage(errorMessage(error)) }
+                  )
+                }
                 disabled={downloadMutation.isPending}
               >
                 {fileName}
@@ -139,13 +161,14 @@ export function EducationJournalPanel({
 
   const handleFileChange = (file: File | undefined) => {
     if (!enabled || !file || submitMutation.isPending) return
-    setSelectedFile(file)
     // 같은 파일을 다시 선택해도 change 이벤트가 발생하도록 초기화한다.
     if (inputRef.current) inputRef.current.value = ''
     submitMutation.mutate(file, {
       onSuccess: () => {
-        setSelectedFile(null)
         setPage(1)
+      },
+      onError: error => {
+        setAlertMessage(errorMessage(error))
       },
     })
   }
@@ -186,7 +209,7 @@ export function EducationJournalPanel({
               disabled={submitMutation.isPending}
               className={styles.submitButton}
             >
-              {submitMutation.isPending ? '제출 중' : '교육일지 제출하기'}
+              교육일지 제출하기
               <img
                 className={styles.submitIllustration}
                 src={illustQuotationUrl}
@@ -199,12 +222,6 @@ export function EducationJournalPanel({
           </div>
         ) : null}
       </div>
-
-      {selectedFile ? (
-        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600" className={styles.selectedFile}>
-          {selectedFile.name} 업로드 중입니다.
-        </PFText>
-      ) : null}
 
       {journalsQuery.isLoading ? (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -236,15 +253,17 @@ export function EducationJournalPanel({
         </>
       )}
 
-      {submitMutation.isError ? (
-        <PFText as="p" typo="bd-sm-rg" color="error" className={styles.error}>
-          {errorMessage(submitMutation.error)}
-        </PFText>
-      ) : null}
-      {downloadMutation.isError ? (
-        <PFText as="p" typo="bd-sm-rg" color="error" className={styles.error}>
-          {errorMessage(downloadMutation.error)}
-        </PFText>
+      <PFAlertModal
+        open={alertMessage != null}
+        title="안내"
+        description={alertMessage ?? undefined}
+        onConfirm={() => setAlertMessage(null)}
+      />
+
+      {submitMutation.isPending ? (
+        <div className={styles.submitLoadingOverlay} aria-busy="true">
+          <PFLoadingSpinner label="교육일지 제출 처리 중" />
+        </div>
       ) : null}
     </section>
   )
