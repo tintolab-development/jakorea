@@ -13,12 +13,8 @@ import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  changeGeneralParticipatingInstitutionSchedules,
-  giveUpGeneralParticipatingInstitution,
-} from '@/features/program/general/api/admin-program-progress-service'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { buildParticipantScheduleDateMoves } from '@/features/program/general/lib/participating-institution-schedule-date-moves'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -127,14 +123,11 @@ import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
-  InstitutionComputerInRoomEdit,
   InstitutionEducationFormatRadios,
   InstitutionGradeSelectEdit,
-  InstitutionMealEdit,
   InstitutionMultilineEdit,
   InstitutionReadonlyInput,
   InstitutionTeacherEdit,
-  InstitutionWaitingRoomEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import {
   buildInstitutionClassCountOptions,
@@ -188,7 +181,6 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
-import { ParticipatingInstitutionScheduleChangeModal } from './participating-institution-schedule-change-modal'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   resolveParticipatingInstitutionActivityWithdrawPatch,
@@ -527,9 +519,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     [postsRemote, remotePostFiles]
   )
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
-  const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
-  const [scheduleChangeSubmitting, setScheduleChangeSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -548,7 +538,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setActivityWithdrawModalOpen(false)
-    setScheduleChangeModalOpen(false)
   }, [detail.id, detail.adminComment, savedBasicPatches[detail.id]?.adminComment])
 
   const organizationApplicationId = Number(row.organizationApplicationId)
@@ -2389,55 +2378,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   (mergedDetail.otherRequests ?? '-')
                 )
               }
-              computerInRoom={
-                isApplicationDetailEditing ? (
-                  <InstitutionComputerInRoomEdit
-                    value={applicationInfoDraft.computerInRoom}
-                    onChange={value => updateApplicationInfoDraft({ computerInRoom: value })}
-                  />
-                ) : (
-                  (mergedDetail.computerInRoom ?? '-')
-                )
-              }
-              waitingPlace={
-                isApplicationDetailEditing ? (
-                  <InstitutionWaitingRoomEdit
-                    available={applicationInfoDraft.waitingRoomAvailable}
-                    location={applicationInfoDraft.waitingRoomLocation}
-                    onChange={patch => updateApplicationInfoDraft(patch)}
-                  />
-                ) : (
-                  (mergedDetail.waitingRoomLocation ?? '-')
-                )
-              }
-              mealInfo={
-                isApplicationDetailEditing ? (
-                  <InstitutionMealEdit
-                    provided={applicationInfoDraft.mealProvided}
-                    notice={applicationInfoDraft.mealNotice}
-                    onChange={patch => updateApplicationInfoDraft(patch)}
-                  />
-                ) : (
-                  mealDisplay
-                )
-              }
-              otherNotes={
-                isApplicationDetailEditing ? (
-                  <InstitutionMultilineEdit
-                    value={applicationInfoDraft.parkingInfo}
-                    onChange={value => updateApplicationInfoDraft({ parkingInfo: value })}
-                    placeholder="주차, 전달사항 등을 입력해 주세요."
-                  />
-                ) : (
-                  (mergedDetail.parkingInfo ?? '-')
-                )
-              }
+              computerInRoom={mergedDetail.computerInRoom ?? '-'}
+              waitingPlace={mergedDetail.waitingRoomLocation ?? '-'}
+              mealInfo={mealDisplay}
+              otherNotes={mergedDetail.parkingInfo ?? '-'}
               criminalCheck={formatGuidanceSegmentValue(mergedDetail.criminalCheckRequest)}
               program={program}
               sessions={applicationTabScheduleSessions}
               scheduleSessionsEmptyMessage={applicationTabScheduleEmptyMessage}
               useCompanySchoolScheduleFormat={isCompanySchool}
-              onScheduleChangeClick={() => setScheduleChangeModalOpen(true)}
             />
           </div>
         )}
@@ -2935,84 +2884,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         confirming={activityWithdrawSubmitting}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
-      />
-      <ParticipatingInstitutionScheduleChangeModal
-        open={scheduleChangeModalOpen}
-        program={program}
-        sessions={applicationTabScheduleSessions}
-        onCancel={() => {
-          if (scheduleChangeSubmitting) return
-          setScheduleChangeModalOpen(false)
-        }}
-        onConfirm={payload => {
-          if (!progressRemoteEnabled) {
-            notifyProgramApiUnavailable(
-              'general-participating-institution-schedule-change',
-              '일반 프로그램 · 참여 기관 교육 진행 일정 변경'
-            )
-            return
-          }
-          const moves = buildParticipantScheduleDateMoves(payload.changes)
-          if (!moves.ok) {
-            void showAlert({
-              title: '일정 변경 실패',
-              content: moves.message,
-            })
-            return
-          }
-          void (async () => {
-            setScheduleChangeSubmitting(true)
-            try {
-              for (const move of moves.moves) {
-                await changeGeneralParticipatingInstitutionSchedules(programId, detail.id, move)
-              }
-              await queryClient.invalidateQueries({
-                queryKey: generalProgramProgressQueryKeys.institutions(programId),
-              })
-              // A schedule move changes the canonical schedule set used by
-              // attendance screens. Clear all institution attendance variants
-              // so an old schedule cannot remain visible after the move.
-              await queryClient.invalidateQueries({
-                queryKey: [
-                  ...generalProgramProgressQueryKeys.all,
-                  'institution-attendance',
-                  programId,
-                  String(detail.id),
-                ],
-              })
-              await queryClient.invalidateQueries({
-                queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
-              })
-              await queryClient.invalidateQueries({
-                queryKey: generalProgramProgressQueryKeys.participants(programId, 'ORGANIZATION'),
-              })
-              if (organizationApplicationIdForDetail) {
-                await queryClient.invalidateQueries({
-                  queryKey: organizationScheduleAssignmentsQueryKey(
-                    programId,
-                    organizationApplicationIdForDetail
-                  ),
-                })
-              }
-              setScheduleChangeModalOpen(false)
-              showAlert({
-                title: '일정 변경',
-                content: '교육 진행 일정 변경이 저장되었습니다.',
-              })
-            } catch (error) {
-              const message =
-                error instanceof Error && error.message.trim()
-                  ? error.message
-                  : '교육 진행 일정을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.'
-              showAlert({
-                title: '일정 변경 실패',
-                content: message,
-              })
-            } finally {
-              setScheduleChangeSubmitting(false)
-            }
-          })()
-        }}
       />
       <MemberAdminCommentModal
         open={adminCommentModalOpen}

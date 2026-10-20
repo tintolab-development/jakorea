@@ -143,6 +143,14 @@ describe('applyMemberConsentToSchema', () => {
       consentRecords: [
         {
           consentType: 'PORTRAIT_RIGHTS',
+          consentRecordId: 50,
+          consentedAt: '2026-01-14T09:15:42Z',
+          formResponseId: 41,
+        },
+        {
+          consentType: 'PORTRAIT_RIGHTS',
+          consentRecordId: 51,
+          consentedAt: '2026-01-15T09:15:42Z',
           consentValue: false,
           formResponseId: 42,
           filledDocumentId: 7,
@@ -167,6 +175,11 @@ describe('applyMemberConsentToSchema', () => {
         '/api/admin/users/1/consent-records/PORTRAIT_RIGHTS/filled-document',
       consentType: 'PORTRAIT_RIGHTS',
     })
+    if (portrait?.type === 'document') {
+      expect(portrait.consentRecordId).toBeUndefined()
+    } else {
+      throw new Error('Expected portrait consent to remain a document value')
+    }
   })
 
   it('관리자 상세 termsAgreements 경로에서 records 메타를 보강한다', () => {

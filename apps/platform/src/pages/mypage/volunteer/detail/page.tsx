@@ -8,7 +8,6 @@ import {
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
-  resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
@@ -43,6 +42,7 @@ import {
   isRemoteApiConfigured,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
+import { resolveMypagePreferredScheduleLines } from '@/features/mypage/education/applications/lib/mypage-preferred-schedule-lines'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from '../../education/detail/page.module.css'
 
@@ -182,6 +182,20 @@ export function MypageVolunteerDetailPage() {
   const withdrawnDuringKeys = useMemo(
     () => withdrawnDuringTabItems.map(item => item.key),
     [withdrawnDuringTabItems],
+  )
+
+  const preferredEducationScheduleLines = useMemo(
+    () =>
+      application && program
+        ? resolveMypagePreferredScheduleLines({
+            applicationType: application.applicationType ?? routeApplicationType ?? 'VOLUNTEER',
+            answers: application.applicationAnswers,
+            preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
+            preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+            program,
+          })
+        : [],
+    [application, program, routeApplicationType],
   )
 
   useEffect(() => {
@@ -344,18 +358,12 @@ export function MypageVolunteerDetailPage() {
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
 
-  const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
-    preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
-    preferredScheduleOptionValues: application.preferredScheduleOptionValues,
-    educationScheduleLines: program.educationScheduleLines,
-    schedules: program.eventSchedules,
-  })
-
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
       <EducationApplicationContent
         selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        preferredEducationScheduleLines={preferredEducationScheduleLines}
+        alwaysShowPreferredSchedule
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
@@ -369,7 +377,8 @@ export function MypageVolunteerDetailPage() {
         <VolunteerNoticePanel
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
-          preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+          preferredEducationScheduleLines={preferredEducationScheduleLines}
+          alwaysShowPreferredSchedule
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

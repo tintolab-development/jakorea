@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import type { Program } from '@/types/domain'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import {
+  getGeneralVolunteerActivityWithdrawScheduleOptions,
+  resolveGeneralVolunteerActivityWithdrawStopScheduleId,
+} from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
   type GeneralVolunteerApplicantRow,
   type GeneralVolunteerInterviewEvaluationPayload,
 } from '@/features/program/general/model/volunteer-applicant'
-import {
-  screeningWithdrawCompleteContent,
-  type ScreeningSubjectKind,
-} from '@/features/program/general/lib/screening-subject-kind'
+import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   filterGeneralInterview2Applicants,
@@ -58,15 +62,17 @@ import {
   guardGeneralVolunteerInterview2Pass,
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
-import type { ApplicationGiveUpReasonModalPayload } from '@/features/program/shared/ui/application-give-up-reason-modal'
+import type { GeneralVolunteerScreeningActivityWithdrawModalPayload } from './general-volunteer-screening-activity-withdraw-modal'
 
 export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 
 export function useGeneralVolunteerInterview2({
   programId,
+  program,
   subjectKind = 'volunteer',
 }: {
   programId: string
+  program: Program
   subjectKind?: ScreeningSubjectKind
 }) {
   const { showAlert } = useCmsAlert()
@@ -110,6 +116,19 @@ export function useGeneralVolunteerInterview2({
   const [viewMode, setViewMode] = useState<GeneralVolunteerInterview2ViewMode>('list')
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false)
+  const [withdrawCompleteVolunteerName, setWithdrawCompleteVolunteerName] = useState<string | null>(
+    null
+  )
+  const activityWithdrawScheduleOptions = useMemo(
+    () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
+    [program]
+  )
+  const programSchedulesQuery = useQuery({
+    queryKey: ['admin-program-schedules', programId],
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId),
+    enabled: remoteEnabled && Boolean(programId),
+  })
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [bulkFailModalOpen, setBulkFailModalOpen] = useState(false)
   const [bulkFailCompleteCount, setBulkFailCompleteCount] = useState<number | null>(null)
@@ -402,18 +421,28 @@ export function useGeneralVolunteerInterview2({
     [applySecondInterviewStatus, selectedRowKeys, showAlert]
   )
 
-  const requestWithdrawActivity = useCallback((row: GeneralVolunteerApplicantRow) => {
-    if (!guardGeneralVolunteerWithdrawActivity(row)) return
-    setWithdrawTargetId(row.id)
-  }, [])
+  const requestWithdrawActivity = useCallback(
+    (row: GeneralVolunteerApplicantRow) => {
+      if (!guardGeneralVolunteerWithdrawActivity(row)) return
+      if (activityWithdrawScheduleOptions.length === 0) {
+        showAlert({
+          title: '안내',
+          content: '활동 포기 처리할 수 있는 교육 일정이 없습니다.',
+        })
+        return
+      }
+      setWithdrawTargetId(row.id)
+    },
+    [activityWithdrawScheduleOptions.length, showAlert]
+  )
 
   const cancelWithdrawActivity = useCallback(() => {
     setWithdrawTargetId(null)
   }, [])
 
   const confirmWithdrawActivity = useCallback(
-    async (payload: ApplicationGiveUpReasonModalPayload) => {
-      if (!withdrawTargetId) return
+    async (payload: GeneralVolunteerScreeningActivityWithdrawModalPayload) => {
+      if (!withdrawTargetId || withdrawSubmitting) return
       const row = list.find(item => item.id === withdrawTargetId)
       if (!row) {
         setWithdrawTargetId(null)
@@ -424,16 +453,39 @@ export function useGeneralVolunteerInterview2({
         setWithdrawTargetId(null)
         return
       }
-      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, payload.reason)
-      setWithdrawTargetId(null)
-      if (!handled) return
-      showAlert({
-        title: '활동 포기',
-        content: screeningWithdrawCompleteContent(subjectKind, row.name),
-      })
+      const stopScheduleId = resolveGeneralVolunteerActivityWithdrawStopScheduleId(
+        program,
+        programSchedulesQuery.data ?? [],
+        payload.stopSessionKey
+      )
+      const reason = `활동 포기 (${payload.stopScheduleLabel})`
+      setWithdrawSubmitting(true)
+      try {
+        const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, {
+          reason,
+          ...(stopScheduleId != null ? { stopScheduleId } : {}),
+          faultParty: payload.faultParty,
+        })
+        if (!handled) return
+        setWithdrawTargetId(null)
+        setWithdrawCompleteVolunteerName(row.name)
+      } finally {
+        setWithdrawSubmitting(false)
+      }
     },
-    [list, showAlert, subjectKind, volunteerRemote, withdrawTargetId]
+    [
+      list,
+      program,
+      programSchedulesQuery.data,
+      volunteerRemote,
+      withdrawSubmitting,
+      withdrawTargetId,
+    ]
   )
+
+  const closeWithdrawCompleteModal = useCallback(() => {
+    setWithdrawCompleteVolunteerName(null)
+  }, [])
 
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
@@ -564,7 +616,6 @@ export function useGeneralVolunteerInterview2({
       payload: GeneralVolunteerInterviewEvaluationPayload
     ): Promise<boolean> => {
       if (!guardGeneralVolunteerInterview2Evaluation(row)) return false
-      if (payload.managerAScore == null && payload.managerBScore == null) return false
 
       if (!volunteerRemote.remoteEnabled) {
         notifyProgramApiUnavailable('general-volunteer-interview-evaluation', '봉사자 면접 평가')
@@ -635,6 +686,10 @@ export function useGeneralVolunteerInterview2({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    withdrawSubmitting,
+    activityWithdrawScheduleOptions,
+    withdrawCompleteVolunteerName,
+    closeWithdrawCompleteModal,
     requestInterview2Pass,
     requestInterview2Fail,
     cancelPassVolunteer,

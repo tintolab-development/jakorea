@@ -4,7 +4,6 @@ import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { getInstitutionApplicationSessionsTableSlice } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
@@ -68,7 +67,7 @@ export function useGeneralIndividualApplicantColumns(
         width: GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH,
         minWidth: GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH,
         align: 'center',
-        render: (value: string) => formatInstitutionApplicationGradeDisplay(value ?? '') || '-',
+        render: (value: string | undefined) => value?.trim() || '-',
       },
       {
         title: '자택 주소지',
@@ -127,6 +126,7 @@ export function useGeneralIndividualApplicantColumns(
                     bridge={programBridge}
                     detailScheduleTimeSpan={detailScheduleTimeSpan}
                     curriculumSessionLabels={curriculumSessionLabels}
+                    preferFormOptionLabel
                   />
                 </div>
               ))}

@@ -6,6 +6,7 @@
 
 import addUrl from '@/shared/assets/icons/buttons/add-mint.svg'
 import calendarUrl from '@/shared/assets/icons/buttons/calendar-mint.svg'
+import checkUrl from '@/shared/assets/icons/buttons/check-mint.svg'
 import clockUrl from '@/shared/assets/icons/inputs/clock-mint.svg'
 import copyUrl from '@/shared/assets/icons/buttons/copy-mint.svg'
 import deleteUrl from '@/shared/assets/icons/buttons/delete-mint.svg'
@@ -28,6 +29,11 @@ export function ButtonCopyIcon(props: ButtonIconProps) {
 /** 24 프레임 — 15×17 글리프 중앙 */
 export function ButtonDeleteIcon(props: ButtonIconProps) {
   return <MaskIcon src={deleteUrl} maskSize="62.5% 70.833%" {...props} />
+}
+
+/** 20 프레임 — 글자 높이에 맞는 체크 글리프 */
+export function ButtonCheckIcon(props: ButtonIconProps) {
+  return <MaskIcon src={checkUrl} {...props} />
 }
 
 /** 20 프레임 */

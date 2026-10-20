@@ -39,6 +39,7 @@ export function ApplicantPreferredScheduleDetailSection({
                   bridge={bridge}
                   detailScheduleTimeSpan={detailScheduleTimeSpan}
                   curriculumSessionLabels={curriculumSessionLabels}
+                  preferFormOptionLabel
                 />
               }
             />

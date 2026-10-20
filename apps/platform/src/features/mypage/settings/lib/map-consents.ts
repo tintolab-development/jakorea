@@ -80,19 +80,23 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
     seen.add(meta.id)
 
     const expired = summary.expired === true
+    const reconsentRequired = summary.reconsentRequired === true
     const status = summary.status?.trim().toUpperCase() ?? ''
-    const hasWrittenDocument =
-      summary.documentId != null ||
+    /** 작성 중 draft documentId만으로는 완료가 아니다. 서버 `agreed`/`signed`/완료 status만 인정. */
+    const hasCompletedDocument =
       summary.signed === true ||
       ['AGREED', 'COMPLETED', 'SIGNED', 'SUBMITTED', 'CONSENTED', 'ACTIVE'].includes(status)
     const isDocumentItem = DOCUMENT_SECTION_IDS.has(meta.id)
-    const agreed = !expired && (summary.agreed === true || (isDocumentItem && hasWrittenDocument))
+    const agreed =
+      !expired &&
+      !reconsentRequired &&
+      (summary.agreed === true || (isDocumentItem && hasCompletedDocument))
     const item: SettingsConsentItem = {
       ...meta,
       required: summary.required ?? meta.required,
       agreed,
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
-      hint: expired || summary.reconsentRequired === true ? EXPIRED_HINT : meta.hint,
+      hint: expired || reconsentRequired ? EXPIRED_HINT : meta.hint,
       documentId: summary.documentId ?? undefined,
       withdrawable: isDocumentItem ? agreed : summary.withdrawable === true,
     }

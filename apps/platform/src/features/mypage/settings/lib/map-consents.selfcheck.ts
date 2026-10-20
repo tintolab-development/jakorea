@@ -57,6 +57,18 @@ const writtenDocument = buildConsentItemsFromSummaries([
 assert.equal(writtenDocument.documentItems.find(item => item.id === 'educatorPledge')?.agreed, true)
 assert.equal(writtenDocument.documentItems.find(item => item.id === 'sexOffenseCheck')?.agreed, true)
 
+const draftDocument = buildConsentItemsFromSummaries([
+  {
+    consentType: 'FACILITATOR_PLEDGE',
+    agreed: false,
+    signed: false,
+    status: 'DRAFT',
+    documentId: 1694356,
+    reconsentRequired: true,
+  },
+])
+assert.equal(draftDocument.documentItems.find(item => item.id === 'educatorPledge')?.agreed, false)
+
 const expired = buildConsentItemsFromSummaries([
   { consentType: 'PORTRAIT_RIGHTS', agreed: true, expired: true, agreedAt: '2025-01-01T00:00:00' },
 ])

@@ -103,6 +103,7 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       formResponseId?: number
+      consentRecordId?: number
       filledDocumentId?: number
       filledDocumentAvailable?: boolean
       filledDocumentRevealEndpoint?: string
@@ -320,7 +321,7 @@ function ConsentDocumentRow({
       </span>
       {agreed ? (
         <>
-          <CmsButton variant="secondary" size="h32" width={100} onClick={open} disabled={!open}>
+          <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
           {agreedAtDisplay ? (
@@ -330,7 +331,7 @@ function ConsentDocumentRow({
           ) : null}
         </>
       ) : (
-        <CmsButton variant="default" size="medium" width={120} disabled>
+        <CmsButton variant="default" size="h32" disabled>
           동의서 보기
         </CmsButton>
       )}
@@ -385,7 +386,7 @@ function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrit
       <span className="user-consent-agreement-section__value-sep" aria-hidden>
         |
       </span>
-      <CmsButton variant="secondary" size="medium" type="button" onClick={onWrite}>
+      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
         동의서 작성
       </CmsButton>
     </span>
@@ -506,6 +507,7 @@ type ActiveConsentView = {
   documentAgreed?: boolean
   filledDocumentAvailable?: boolean
   formResponseId?: number
+  consentRecordId?: number
   filledDocumentId?: number
   filledDocumentRevealEndpoint?: string
 }
@@ -552,6 +554,7 @@ export function UserConsentAgreementSection({
           documentAgreed: document.agreed,
           filledDocumentAvailable: document.filledDocumentAvailable,
           formResponseId: document.formResponseId,
+          consentRecordId: document.consentRecordId,
           filledDocumentId: document.filledDocumentId,
           filledDocumentRevealEndpoint: document.filledDocumentRevealEndpoint,
         })
@@ -627,6 +630,7 @@ export function UserConsentAgreementSection({
           membersRemote={membersRemote}
           filledDocumentAvailable={activeView.filledDocumentAvailable}
           formResponseId={activeView.formResponseId}
+          consentRecordId={activeView.consentRecordId}
           filledDocumentId={activeView.filledDocumentId}
           filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
           documentAgreed={activeView.documentAgreed}

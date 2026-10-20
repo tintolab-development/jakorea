@@ -164,6 +164,7 @@ export function ParticipatingVolunteersSection({
 
   const {
     sessionRows: employeeVolunteerSessionRows,
+    resolveSessionRowsForInstitution,
     approvedInstitutionOptions,
     registrations: employeeVolunteerRegistrations,
     isIndividualProgram: isEmployeeVolunteerIndividualProgram,
@@ -717,6 +718,7 @@ export function ParticipatingVolunteersSection({
         open={employeeVolunteerModalOpen}
         onCancel={() => setEmployeeVolunteerModalOpen(false)}
         sessionRows={employeeVolunteerSessionRows}
+        resolveSessionRowsForInstitution={resolveSessionRowsForInstitution}
         institutionOptions={approvedInstitutionOptions}
         savedRegistrations={employeeVolunteerRegistrations}
         hideInstitutionSelect={isEmployeeVolunteerIndividualProgram}

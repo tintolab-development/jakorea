@@ -127,9 +127,9 @@ export function CrimeRecordConsentDocumentFullpageModal({
             <div className="crime-consent-doc-modal__actions">
               <CmsButton
                 variant="secondary"
+                size="medium"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
-                className="crime-consent-doc-modal__download-btn"
               >
                 문서 다운로드
               </CmsButton>

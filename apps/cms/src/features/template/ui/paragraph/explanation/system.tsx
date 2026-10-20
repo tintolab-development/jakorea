@@ -32,6 +32,7 @@ export function ExplanationSystem({
   displayMode = 'authoring',
   participantName,
   now,
+  signatureImageSrc,
 }: {
   paragraph: SystemParagraph
   onChange: (next: SystemParagraph) => void
@@ -41,6 +42,8 @@ export function ExplanationSystem({
   participantName?: string
   /** write·document 모드 날짜(미주입 시 `new Date()`) */
   now?: Date
+  /** document 모드 — 포털 제출 전자서명. 없으면 `(서명)` */
+  signatureImageSrc?: string
 }) {
   const preset = paragraph.systemPreset
   if (preset !== 'agreement_date' && preset !== 'agreement_signature') {
@@ -48,6 +51,7 @@ export function ExplanationSystem({
   }
 
   const trimmedName = (participantName ?? '').trim()
+  const trimmedSignatureSrc = signatureImageSrc?.trim() ?? ''
   const resolvedNow = now ?? new Date()
   /**
    * authoring(템플릿 편집): YYYY placeholder.
@@ -82,7 +86,15 @@ export function ExplanationSystem({
             <span className="explanation-system-signature-document__participant">{trimmedName}</span>
           </span>
         ) : null}
-        <span className="explanation-system-signature-document__mark">(서명)</span>
+        {trimmedSignatureSrc ? (
+          <img
+            className="explanation-system-signature-document__image"
+            src={trimmedSignatureSrc}
+            alt="전자서명"
+          />
+        ) : (
+          <span className="explanation-system-signature-document__mark">(서명)</span>
+        )}
       </div>
     ) : null
 

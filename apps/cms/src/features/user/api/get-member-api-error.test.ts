@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest'
 import { getMemberApiErrorMessage } from './get-member-api-error'
 
 describe('getMemberApiErrorMessage', () => {
+  it('maps PORTRAIT_CONSENT_CONTENT_UNAVAILABLE from a 410 response', () => {
+    const message = getMemberApiErrorMessage(
+      {
+        response: {
+          status: 410,
+          data: { success: false, error: { code: 'PORTRAIT_CONSENT_CONTENT_UNAVAILABLE' } },
+        },
+      },
+      'fallback'
+    )
+
+    expect(message).not.toBe('fallback')
+    expect(message).toContain('초상권')
+  })
+
   it('maps CMS_INDIVIDUAL_GRADE_REQUIRED_WHEN_ENROLLED when server message is empty', () => {
     const error = {
       response: {

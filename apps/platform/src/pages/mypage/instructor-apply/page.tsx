@@ -87,7 +87,7 @@ export function MypageInstructorApplyPage() {
         title={
           isPendingReview ? (
             <InstructorApplyPendingTitle />
-          ) : isRejected && !reapplyAfterReject ? (
+          ) : isRejected ? (
             <InstructorApplyRejectedTitle />
           ) : (
             '강사 신청'
@@ -121,13 +121,15 @@ export function MypageInstructorApplyPage() {
               )
             }}
           />
-        ) : remoteSession && !canSubmit ? (
+        ) : remoteSession && !canSubmit && !reapplyAfterReject ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             {statusMessage}
           </PFText>
         ) : (
           <InstructorApplyForm
             lockedBasic={lockedBasic}
+            seedFromSubmittedRequest={reapplyAfterReject}
+            rejectedSummary={reapplyAfterReject ? currentRequestQuery.data : undefined}
             onSubmitSuccess={() => setSuccessOpen(true)}
           />
         )}

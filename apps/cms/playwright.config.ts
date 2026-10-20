@@ -50,7 +50,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: e2eMockAuth ? `pnpm dev -- --port ${e2ePort}` : 'pnpm dev',
+    command: e2eMockAuth ? `pnpm exec vite --host 127.0.0.1 --port ${e2ePort}` : 'pnpm dev',
     url: baseURL,
     reuseExistingServer: !isCI && !e2eMockAuth,
     timeout: 180_000,

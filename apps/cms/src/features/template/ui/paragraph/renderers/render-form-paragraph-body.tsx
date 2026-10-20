@@ -136,6 +136,8 @@ export type RenderFormParagraphBodyOptions = {
   agreementSystemDisplayMode?: AgreementSystemBodyDisplayMode
   agreementSystemParticipantName?: string
   agreementSystemNow?: Date
+  /** A4 문서 보기 — 포털 제출 전자서명 이미지. 없으면 `(서명)` */
+  agreementSystemSignatureImageSrc?: string
   /**
    * 관리자 대리 작성(회원 등록) — 마무리·날짜·서명을 2단 확인 카드로 합침.
    * `agreementSystemParticipantName`과 함께 쓰며, 날짜·서명 단락은 `hiddenParagraphIds`로 숨긴다.
@@ -679,6 +681,7 @@ export function renderFormParagraphBody(
             displayMode={options?.agreementSystemDisplayMode ?? 'authoring'}
             participantName={options?.agreementSystemParticipantName}
             now={options?.agreementSystemNow}
+            signatureImageSrc={options?.agreementSystemSignatureImageSrc}
           />
         )
       }

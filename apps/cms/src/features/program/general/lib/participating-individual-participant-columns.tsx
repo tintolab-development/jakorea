@@ -8,6 +8,7 @@ import {
 } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
@@ -75,6 +76,7 @@ export function useParticipatingIndividualParticipantColumns(
         key: 'educationGrade',
         width: GRADE_COL_WIDTH,
         align: 'center',
+        render: (value: string | undefined) => value?.trim() || '-',
       },
       {
         title: '자택 주소지',
@@ -95,14 +97,12 @@ export function useParticipatingIndividualParticipantColumns(
         }),
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingIndividualParticipantRow) => {
-          const rawSessions = record.sessions ?? []
+          const assignedSessions = resolveParticipatingProgressAssignedSessions(record.sessions)
           const sessions = prepareGeneralEducationScheduleSessions(
-            rawSessions,
+            assignedSessions,
             generalEducationScheduleShapeFromBridge(programBridge),
             {
               detailScheduleTimeSpan: scheduleDisplay?.detailScheduleTimeSpan,
-              educationScheduleLines:
-                rawSessions.length === 0 ? scheduleDisplay?.educationScheduleLines : [],
             }
           )
           if (sessions.length === 0) return '-'

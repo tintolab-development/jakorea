@@ -74,6 +74,7 @@ import {
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
+import { isK12SchoolAffiliationName } from '@/features/program/general/lib/k12-school-affiliation'
 import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { mapInstructorPreferredOrganizationsToPreferredSchools } from '@/features/program/general/lib/map-instructor-preferred-organizations'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
@@ -206,10 +207,12 @@ function pickFirstTrimmed(...values: Array<string | null | undefined>): string {
   return ''
 }
 
-/** 개인 신청 목록 — applicationGrade 우선, BE 스냅샷·profile 보조 키 fallback */
+/** 개인 신청 목록 — 초/중/고 소속일 때만 사용자 학년. 아니면 빈 값(화면 `-`) */
 export function readIndividualApplicationListGrade(
   dto: IndividualApplicationListItemEnriched
 ): string {
+  const affiliation = readIndividualApplicationListAffiliationDisplayName(dto)
+  if (!isK12SchoolAffiliationName(affiliation)) return ''
   const raw = pickFirstTrimmed(
     dto.applicationGrade,
     dto.affiliationGrade,
@@ -1277,8 +1280,11 @@ export function mapIndividualApplicationDetailToApplicantRow(
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditDocumentEvaluation,
     affiliation: profile?.affiliationSchool?.trim() || base.affiliation || '',
-    educationGrade:
-      formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || '',
+    educationGrade: isK12SchoolAffiliationName(
+      profile?.affiliationSchool?.trim() || base.affiliation
+    )
+      ? formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || ''
+      : '',
     homeAddress: profile?.homeAddress?.trim() || base.homeAddress || '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     adminComment: dto.managerComment ?? undefined,
@@ -1384,7 +1390,9 @@ export function mapParticipantToParticipatingIndividualRow(
     applicantName: dto.memberName?.trim() || '이름 없음',
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     affiliation: affiliation.affiliation,
-    educationGrade: dto.grade?.trim() || '',
+    educationGrade: isK12SchoolAffiliationName(affiliation.affiliation)
+      ? formatApplicantGradeLabel(dto.grade)
+      : '',
     homeAddress,
     approvalStatus: 'approved',
     programId,

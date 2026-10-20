@@ -280,7 +280,9 @@ export function useGeneralVolunteerDocPassed({
         setWithdrawTargetId(null)
         return
       }
-      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, payload.reason)
+      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, {
+        reason: payload.reason,
+      })
       setWithdrawTargetId(null)
       if (!handled) return
       showAlert({

@@ -389,19 +389,27 @@ export function useGeneralVolunteerApplicationsRemote({
   )
 
   const applyRemoteGiveUp = useCallback(
-    async (applicationId: string, reason: string) => {
+    async (
+      applicationId: string,
+      payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
+    ) => {
       if (!remoteEnabled) return false
-      const trimmed = reason.trim()
+      const trimmed = payload.reason.trim()
       const validation = validateApplicationGiveUpReason(trimmed)
       if (validation) {
         showAlert({ title: '활동 포기', content: validation })
         return false
       }
       try {
+        const request = {
+          reason: trimmed,
+          ...(payload.stopScheduleId != null ? { stopScheduleId: payload.stopScheduleId } : {}),
+          ...(payload.faultParty != null ? { faultParty: payload.faultParty } : {}),
+        }
         if (subjectKind === 'participant') {
-          await giveUpIndividualApplicationRemote(applicationId, { reason: trimmed })
+          await giveUpIndividualApplicationRemote(applicationId, request)
         } else {
-          await giveUpGeneralVolunteerApplication(applicationId, { reason: trimmed })
+          await giveUpGeneralVolunteerApplication(applicationId, request)
         }
         await invalidateApplications()
         return true

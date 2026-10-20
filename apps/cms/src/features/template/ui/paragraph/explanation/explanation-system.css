@@ -116,3 +116,13 @@
   font-weight: 400;
   line-height: 150%; /* 30px */
 }
+
+.explanation-system-signature-document__image {
+  display: block;
+  max-width: 160px;
+  max-height: 48px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: right center;
+}

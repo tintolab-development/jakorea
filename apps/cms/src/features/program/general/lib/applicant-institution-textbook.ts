@@ -16,8 +16,8 @@ import type { TextbookSelectOption } from '@/features/program/general/hooks/use-
 export const APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL = '해당 없음'
 
 /**
- * 기관 신청·참여 기관 교재 셀렉 — 개인과 동일:
- * matches(사업분야+학년), 라벨 `교재명 educationTarget`, 맨 앞 「해당 없음」.
+ * 기관 신청·참여 기관 교재 셀렉.
+ * 프로그램 사업 분야 + 신청 학년 포함 교재. 라벨 `교재명 educationTarget`, 맨 앞 「해당 없음」.
  */
 export function buildApplicantInstitutionTextbookOptions(
   program: Program | null | undefined,

@@ -2,11 +2,34 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   computeGeneralInterviewTotalScore,
+  formatGeneralInterviewManagerScoreDisplay,
+  generalInterviewManagerScoreFromSelectValue,
+  generalInterviewManagerScoreToSelectValue,
+  GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE,
   isGeneralInterviewTotalScoreUnevaluated,
   parseGeneralInterviewSlotEndFromRow,
   resolveGeneralEffectiveSecondInterviewStatus,
 } from './general-volunteer-interview2-display'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+
+describe('general interview manager score select', () => {
+  it('maps 1~5 and 미평가 sentinel', () => {
+    expect(generalInterviewManagerScoreToSelectValue(3)).toBe('3')
+    expect(generalInterviewManagerScoreToSelectValue(null)).toBe(
+      GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE
+    )
+    expect(generalInterviewManagerScoreFromSelectValue('4')).toBe(4)
+    expect(
+      generalInterviewManagerScoreFromSelectValue(GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE)
+    ).toBeNull()
+  })
+
+  it('formats view label', () => {
+    expect(formatGeneralInterviewManagerScoreDisplay(null)).toBe('미평가')
+    expect(formatGeneralInterviewManagerScoreDisplay(2)).toBe('2')
+    expect(formatGeneralInterviewManagerScoreDisplay(0)).toBe('0')
+  })
+})
 
 describe('general interview total score (BE unevaluated parity)', () => {
   it('treats no submissions as unevaluated', () => {

@@ -67,6 +67,7 @@ const DOCUMENT_LABELS = new Set([
 type AgreementOverlay = {
   agreed: boolean
   agreedAt?: string
+  consentRecordId?: number
   formResponseId?: number
   filledDocumentId?: number
   filledDocumentAvailable?: boolean
@@ -114,6 +115,7 @@ function agreementToFieldValue(
       filledDocumentAvailable: agreement.filledDocumentAvailable,
       filledDocumentRevealEndpoint: agreement.filledDocumentRevealEndpoint,
       consentType: agreement.consentType,
+      consentRecordId: agreement.consentRecordId,
     }
   }
 
@@ -216,6 +218,7 @@ function mergeRecordMetaIntoOverlay(
   if (!meta) return overlay
   return {
     ...overlay,
+    consentRecordId: meta.consentRecordId ?? overlay.consentRecordId,
     formResponseId: meta.formResponseId ?? overlay.formResponseId,
     filledDocumentId: meta.filledDocumentId ?? overlay.filledDocumentId,
     filledDocumentAvailable: meta.filledDocumentAvailable ?? overlay.filledDocumentAvailable,

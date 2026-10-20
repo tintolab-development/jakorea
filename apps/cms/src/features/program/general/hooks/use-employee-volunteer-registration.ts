@@ -9,7 +9,10 @@ import {
   type EmployeeVolunteerSessionCounts,
   upsertEmployeeVolunteerInstitutionRegistration,
 } from '../lib/employee-volunteer-registration'
-import { resolveEmployeeVolunteerSessionRows } from '../lib/employee-volunteer-session-rows'
+import {
+  resolveEmployeeVolunteerSessionRows,
+  resolveEmployeeVolunteerSessionRowsForInstitution,
+} from '../lib/employee-volunteer-session-rows'
 import type { Program } from '@/types/domain'
 import type { EmployeeVolunteerSessionRowId } from '../lib/employee-volunteer-session-rows'
 import {
@@ -160,8 +163,20 @@ export function useEmployeeVolunteerRegistration(
     ]
   )
 
+  const resolveSessionRowsForInstitution = useCallback(
+    (institutionId?: string) => {
+      if (!program || isIndividualProgram || !institutionId) {
+        return sessionRows
+      }
+      const school = schools.find(row => row.id === institutionId)
+      return resolveEmployeeVolunteerSessionRowsForInstitution(program, school)
+    },
+    [isIndividualProgram, program, schools, sessionRows]
+  )
+
   return {
     sessionRows,
+    resolveSessionRowsForInstitution,
     approvedInstitutionOptions,
     registrations,
     isIndividualProgram,
