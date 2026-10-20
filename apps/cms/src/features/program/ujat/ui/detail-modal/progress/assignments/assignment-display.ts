@@ -49,9 +49,9 @@ export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_COLOR: Record<
   UjatAssignmentSubmissionStatusTone,
   string
 > = {
-  completed: 'var(--main-BK, #3D3D3D)',
-  not_submitted: '#C32F4A',
-  deadline_missed: 'var(--color-green, #1E8C29)',
+  completed: 'var(--Netural-black, #3D3D3D)',
+  not_submitted: 'var(--Status-red-main, #C32F4A)',
+  deadline_missed: 'var(--Status-purple-main, #8457CE)',
 } as const
 
 export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_CLASSNAME: Record<

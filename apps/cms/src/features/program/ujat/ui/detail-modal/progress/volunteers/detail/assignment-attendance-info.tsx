@@ -1,6 +1,7 @@
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { useCmsAlert } from '@/shared/ui'
 import { ProgramAttendanceAbsenceReasons } from '@/features/program/shared/ui/program-attendance-absence-reasons'
+import { CompletionStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
 import {
   hasExcusedAbsenceInAssignmentRows,
   type UjatVolunteerAssignmentAbsenceReason,
@@ -46,7 +47,9 @@ export function UjatEducationProgressVolunteerAssignmentAttendanceInfo({
             <tbody>
               <tr>
                 <th>수료 여부</th>
-                <td>{attendanceSummary.completionStatus}</td>
+                <td>
+                  <CompletionStatusText label={attendanceSummary.completionStatus} />
+                </td>
                 <th>지각 횟수</th>
                 <td>{attendanceSummary.lateCountLabel}</td>
               </tr>

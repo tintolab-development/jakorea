@@ -1,7 +1,7 @@
 .ujat-education-progress-assignments {
-  --ujat-assignment-status-completed-color: var(--main-BK, #3d3d3d);
-  --ujat-assignment-status-not-submitted-color: #c32f4a;
-  --ujat-assignment-status-deadline-missed-color: var(--color-green, #1e8c29);
+  --ujat-assignment-status-completed-color: var(--Netural-black, #3d3d3d);
+  --ujat-assignment-status-not-submitted-color: var(--Status-red-main, #c32f4a);
+  --ujat-assignment-status-deadline-missed-color: var(--Status-purple-main, #8457ce);
 }
 
 .ujat-education-progress-assignments__session-group {
@@ -66,7 +66,9 @@
 .ujat-education-progress-assignments__status {
   display: block;
   text-align: center;
-  font-size: 16px;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }

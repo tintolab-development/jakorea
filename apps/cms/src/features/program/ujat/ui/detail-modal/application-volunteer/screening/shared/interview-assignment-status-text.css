@@ -1,12 +1,22 @@
+.ujat-interview-assignment-status-text {
+  display: inline-block;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
 .ujat-interview-assignment-status-text--waiting {
-  color: var(--color-green, #1e8c29);
+  color: var(--Status-green-main, #1e8c29);
 }
 
 .ujat-interview-assignment-status-text--assigned {
-  color: var(--main-BK, #3d3d3d);
+  color: var(--Netural-black, #3d3d3d);
 }
 
 .ujat-interview-assignment-status-text--withdrawn {
-  color: var(--color-red, #c32f4a);
-  font-weight: 500;
+  color: var(--Status-red-main, #c32f4a);
 }
