@@ -2,8 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   fetchSchoolDetailAttendanceBundle,
@@ -92,9 +96,11 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       : ''
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId || undefined)
   const applicationsRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+  const trainedTeacherAttendanceRemoteEnabled =
+    useIsTrainedTeachersProgramsSurface() && shouldUseTrainedTeacherProgramsRemoteApi()
   const remoteEnabled = Boolean(
-    progressRemoteEnabled &&
-      applicationsRemoteEnabled &&
+    (progressRemoteEnabled || trainedTeacherAttendanceRemoteEnabled) &&
+      (applicationsRemoteEnabled || trainedTeacherAttendanceRemoteEnabled) &&
       programId &&
       organizationApplicationId
   )

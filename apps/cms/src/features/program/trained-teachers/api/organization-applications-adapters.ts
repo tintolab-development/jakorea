@@ -10,6 +10,7 @@ import {
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
+import type { TrainedTeacherOrganizationEducationSchedule } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationEducationSchedule'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
 import type { ProgramSchedule } from '@/types/domain'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
@@ -60,6 +61,12 @@ export function mapPreferredScheduleBlocksToSessions(
       format: '',
       classNum: firstTime?.classPeriod || '',
       timeRange,
+      resolvedScheduleId:
+        typeof block.scheduleId === 'number' &&
+        Number.isFinite(block.scheduleId) &&
+        block.scheduleId > 0
+          ? Math.trunc(block.scheduleId)
+          : null,
     }
   })
 }
@@ -89,6 +96,37 @@ function numericScheduleId(value: string | number | null | undefined): number | 
     return Number.isSafeInteger(parsed) ? parsed : null
   }
   return null
+}
+
+/**
+ * TT 상세 `educationSchedules[]`(기관 실제 진행 일정) → 출석 세션.
+ * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 대체하지 않는다.
+ */
+export function mapTrainedTeacherEducationSchedulesToSessions(
+  schedules: ReadonlyArray<TrainedTeacherOrganizationEducationSchedule> | null | undefined
+): ParticipatingSchoolSession[] {
+  return (schedules ?? [])
+    .filter(
+      schedule =>
+        typeof schedule.scheduleId === 'number' &&
+        Number.isSafeInteger(schedule.scheduleId) &&
+        schedule.scheduleId > 0
+    )
+    .map((schedule, index) => {
+      const isoDate = schedule.startAt?.trim().slice(0, 10) ?? ''
+      const startTime = timeFromDateTime(schedule.startAt)
+      const endTime = timeFromDateTime(schedule.endAt)
+      return {
+        round: schedule.round ?? index + 1,
+        date: isoDate ? formatPreferredScheduleDateForSession(isoDate) : '',
+        dayOfWeek: isoDate ? dayOfWeekFromIsoDate(isoDate) : '',
+        duration: '1차시',
+        format: '',
+        classNum: schedule.label?.trim() || '',
+        timeRange: startTime && endTime ? `${startTime}~${endTime}` : startTime || endTime,
+        resolvedScheduleId: schedule.scheduleId,
+      }
+    })
 }
 
 /** 프로그램 상세 schedules[] → 교육 진행 일정 표시용 block. 신청 희망 일정은 사용하지 않는다. */
@@ -317,6 +355,10 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     programId: toId(dto.programId) || programId,
     desiredEducationPeriod: memo || undefined,
     preferredScheduleBlocks,
+    ...('gradeBlocks' in dto ? { gradeBlocks: dto.gradeBlocks ?? null } : {}),
+    ...('educationSchedules' in dto
+      ? { educationScheduleSessions: mapTrainedTeacherEducationSchedulesToSessions(dto.educationSchedules) }
+      : {}),
     ...(sessions?.length ? { sessions } : {}),
     educationTarget,
     lectureRound,

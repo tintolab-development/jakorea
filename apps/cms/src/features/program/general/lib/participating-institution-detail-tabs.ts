@@ -123,7 +123,7 @@ export type ParticipatingInstitutionDetailTabKey =
   | GeneralParticipatingInstitutionDetailTabKey
   | TrainedTeachersInstitutionDetailTabKey
 
-/** 프로그램 유형별 참여 기관 상세 탭 — TT는 신청 정보 | 교육 일지만 */
+/** 프로그램 유형별 참여 기관 상세 탭 — TT는 신청 정보 | 학생 명단 | 출석 관리 | 교육 일지 */
 export function getParticipatingInstitutionDetailTabKeys(
   program?: Program | null
 ): readonly ParticipatingInstitutionDetailTabKey[] {

@@ -87,11 +87,16 @@ describe('프로그램 진행 현황 하위 capability', () => {
   it('교육일지 capability가 비활성이면 교육받은 교사 교육 일지 탭만 숨긴다', () => {
     const tabs = getTrainedTeachersInstitutionDetailTabKeys(false)
 
-    expect(tabs).toEqual(['application'])
+    expect(tabs).toEqual(['application', 'students', 'attendance'])
   })
 
   it('교육일지 capability가 없으면 교육받은 교사 기존 탭 fallback을 유지한다', () => {
-    expect(getTrainedTeachersInstitutionDetailTabKeys()).toEqual(['application', 'journal'])
+    expect(getTrainedTeachersInstitutionDetailTabKeys()).toEqual([
+      'application',
+      'students',
+      'attendance',
+      'journal',
+    ])
   })
 
   it('교육일지 OFF 상태의 legacy 딥링크를 신청 정보로 정규화한다', () => {

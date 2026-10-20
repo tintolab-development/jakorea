@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
@@ -33,6 +33,8 @@ export function useOrganizationStudentRosterRemote(input: {
   organizationApplicationId?: string | number | null
   educationGrade?: string | null
   enabled?: boolean
+  /** 명단 저장 후 함께 무효화할 유형별 기관 신청 상세 키 (예: 교육받은 교사 상세) */
+  dependentQueryKeys?: readonly QueryKey[]
 }) {
   const queryClient = useQueryClient()
   const applicationId =
@@ -86,6 +88,9 @@ export function useOrganizationStudentRosterRemote(input: {
         queryClient.invalidateQueries({
           queryKey: generalProgramProgressQueryKeys.studentRoster(applicationId),
         }),
+        ...(input.dependentQueryKeys ?? []).map(queryKey =>
+          queryClient.invalidateQueries({ queryKey, exact: true })
+        ),
       ])
     },
     onError: error => {

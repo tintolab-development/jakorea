@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
+import type { QueryKey } from '@tanstack/react-query'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import { CheckOutlined } from '@ant-design/icons'
@@ -157,6 +158,8 @@ export interface SchoolDetailStudentListSectionProps {
    * (참여 기관 풀페이지 학생 명단 탭 등)
    */
   studentListInfoEditComingSoonAlert?: boolean
+  /** 명단 저장 후 함께 무효화할 유형별 기관 신청 상세 키 — 미지정 시 일반 기관 상세만 */
+  rosterDependentQueryKeys?: readonly QueryKey[]
   onIssueCertificates?: () => void
   onEditInfo?: () => void
   onAddStudent?: () => void
@@ -180,6 +183,7 @@ export function SchoolDetailStudentListSection({
   hasStudentSatisfactionSurvey = true,
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
+  rosterDependentQueryKeys,
   onIssueCertificates: _onIssueCertificates,
   onEditInfo,
   onAddStudent,
@@ -228,6 +232,7 @@ export function SchoolDetailStudentListSection({
   const rosterRemote = useOrganizationStudentRosterRemote({
     organizationApplicationId,
     educationGrade,
+    dependentQueryKeys: rosterDependentQueryKeys,
   })
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(
     programId != null ? String(programId) : undefined

@@ -7,6 +7,7 @@ import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-tea
 export function isTrainedTeachersDetailProgram(program: Program | null): boolean {
   if (!program?.id) return false
   const id = String(program.id)
+  if (program.backendProgramType?.trim().toUpperCase() === 'TRAINED_TEACHER') return true
   if (looksLikeTrainedTeacherProgramId(id)) return true
   if (id.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)) return true
   const remoteIds = getTrainedTeacherRemoteIdSnapshot()

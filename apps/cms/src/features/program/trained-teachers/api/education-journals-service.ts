@@ -190,6 +190,7 @@ export function mapApplicantSchoolToParticipatingSchool(
     completed != null && total != null ? `${completed}/${total}` : undefined
   return {
     id: row.id,
+    organizationApplicationId: row.id,
     no: index + 1,
     schoolName: row.schoolName,
     region: row.region || '',
