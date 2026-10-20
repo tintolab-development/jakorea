@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
 
 const DOWNLOAD_PURPOSE = '회원 마이페이지 성범죄 경력 조회 동의서 다운로드'
 const FALLBACK_FILE_NAME = '성범죄 경력 조회 동의서'
@@ -57,12 +58,7 @@ export async function downloadSubmittedCrimeConsent(documentId: number): Promise
   const url = body.downloadUrl?.trim()
   if (!url) throw new Error('download url missing')
 
-  const headers = body.requiredHeaders ?? {}
-  const response = await fetch(url, {
-    headers: Object.keys(headers).length > 0 ? headers : undefined,
-  })
-  if (!response.ok) throw new Error('fetch failed')
-  const blob = await response.blob()
+  const blob = await fetchPortalSignedDownloadBlob(url, body.requiredHeaders)
   if (blob.size === 0) throw new Error('empty download')
   saveBlobFile(ensureFileName(FALLBACK_FILE_NAME, blob), blob)
 }
