@@ -17,11 +17,7 @@ export type {
   PFChevronButtonSize,
 } from './pf-chevron-button'
 export { PFPageButton } from './pf-page-button'
-export type {
-  PFPageButtonDirection,
-  PFPageButtonProps,
-  PFPageButtonSize,
-} from './pf-page-button'
+export type { PFPageButtonDirection, PFPageButtonProps, PFPageButtonSize } from './pf-page-button'
 export { PFCategoryBadge } from './pf-category-badge'
 export type {
   PFCategoryBadgeIconVariant,
@@ -37,6 +33,8 @@ export type { PFStateBadgeProps, PFStateBadgeSize, PFStateBadgeTone } from './pf
 export { SchoolTeacherEmploymentStatusBadge } from './school-teacher-employment-status-badge'
 export type { SchoolTeacherEmploymentStatusBadgeProps } from './school-teacher-employment-status-badge'
 export { PFButton } from './pf-button'
+export { PFDescriptionList } from './pf-description-list'
+export type { PFDescriptionListProps } from './pf-description-list'
 export { PFCheckbox } from './pf-checkbox'
 export type { PFCheckboxProps, PFCheckboxSize } from './pf-checkbox'
 export { PFCircleAddButton } from './pf-circle-add-button'
@@ -101,10 +99,7 @@ export type {
   PFFormSectionProps,
 } from './pf-form'
 export { PFAttachmentDropdown } from './pf-attachment-dropdown'
-export type {
-  PFAttachmentDropdownItem,
-  PFAttachmentDropdownProps,
-} from './pf-attachment-dropdown'
+export type { PFAttachmentDropdownItem, PFAttachmentDropdownProps } from './pf-attachment-dropdown'
 export { PFFileDownload } from './pf-file-download'
 export type { PFFileDownloadProps } from './pf-file-download'
 export { PFModal } from './pf-modal'
@@ -184,11 +179,7 @@ export type {
   PFDateInputVariant,
 } from './pf-date-input'
 export { PFOptionList } from './pf-option-list'
-export type {
-  PFOptionListOption,
-  PFOptionListProps,
-  PFOptionListRole,
-} from './pf-option-list'
+export type { PFOptionListOption, PFOptionListProps, PFOptionListRole } from './pf-option-list'
 export { PFSelect } from './pf-select'
 export type {
   PFSelectMessageStatus,

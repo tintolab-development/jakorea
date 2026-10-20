@@ -92,6 +92,22 @@ describe('student-roster-adapters', () => {
     ).toBeNull()
   })
 
+  it('includes plaintext phone/email only when the user actually changed them', () => {
+    const payload = mapStudentRowToRosterRequest({
+      id: '123',
+      no: 1,
+      name: '김학생',
+      gender: 'male',
+      birthDate: '2014. 03. 01.',
+      gradeClass: '1반',
+      contact: '010-1234-5678',
+      email: 'new@example.com',
+    })
+    expect(payload.rosterId).toBe(123)
+    expect(payload.phone).toBe('010-1234-5678')
+    expect(payload.email).toBe('new@example.com')
+  })
+
   it('omits masked phone/email on commit payload', () => {
     const payload = mapStudentRowToRosterRequest(
       {
@@ -132,6 +148,23 @@ describe('student-roster-adapters', () => {
     expect(payload.className).toBe('2반')
   })
 
+  it('omits placeholder grade and masked contacts on PUT row', () => {
+    const payload = mapStudentRowToRosterRequest({
+      id: '7',
+      no: 1,
+      name: '박학생',
+      gender: 'female',
+      gradeClass: '1반',
+      birthDate: '2010. 01. 01.',
+      contact: '010-****-5678',
+      email: 'p***@example.com',
+    })
+    expect(payload.gender).toBe('female')
+    expect('grade' in payload).toBe(false)
+    expect('phone' in payload).toBe(false)
+    expect('email' in payload).toBe(false)
+  })
+
   it('builds commit body without forcing sourceFileObjectId 0', () => {
     const body = mapStudentRowsToRosterCommitRequest({
       educationGrade: '초5',
@@ -148,7 +181,7 @@ describe('student-roster-adapters', () => {
       ],
     })
     expect(body.expectedRevisionNo).toBe(0)
-    expect(body.sourceFileObjectId).toBeUndefined()
+    expect('sourceFileObjectId' in body).toBe(false)
     expect(body.rows[0]?.phone).toBe('010-1234-5678')
   })
 
@@ -187,7 +220,7 @@ describe('student-roster-adapters', () => {
         },
       ],
     })
-    expect(body.sourceFileObjectId).toBeUndefined()
+    expect('sourceFileObjectId' in body).toBe(false)
     expect(body.rows[0]?.memberId).toBe(4401)
     expect(body.rows[0]?.rosterId).toBe(1)
   })

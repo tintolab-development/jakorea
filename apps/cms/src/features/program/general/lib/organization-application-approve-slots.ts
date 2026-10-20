@@ -32,6 +32,8 @@ export type OrganizationApproveAssignmentPolicy = 'program_defined_slot' | 'appr
 
 export type OrganizationApproveScheduleAssignmentBlock =
   | 'UNMAPPED'
+  | 'UNMATCHED'
+  | 'INACTIVE_OR_DELETED'
   | 'AMBIGUOUS'
   | 'NO_PROGRAM_MATCH'
   | 'NOT_IN_PROGRAM_SLOTS'
@@ -208,6 +210,10 @@ function assignmentNoteFor(
   block: OrganizationApproveScheduleAssignmentBlock | null
 ): string | null {
   switch (block) {
+    case 'UNMATCHED':
+      return '서버가 프로그램 운영 일정과 연결하지 못한 희망 일정입니다.'
+    case 'INACTIVE_OR_DELETED':
+      return '종료되었거나 삭제된 일정입니다.'
     case 'UNMAPPED':
       return '공통 교육 슬롯과 연결되지 않은 신청 희망 일정입니다.'
     case 'AMBIGUOUS':
@@ -386,7 +392,10 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
   preferred: PreferredEducationSchedule[] | undefined,
   programSchedules?: ProgramScheduleResponse[],
   educationScheduleMode: OrganizationApproveEducationScheduleMode = 'date',
-  requestedSchedules?: readonly RequestedScheduleResponse[] | null
+  requestedSchedules?: readonly RequestedScheduleResponse[] | null,
+  allowMatchedPeriodScheduleIds = false,
+  requireMatchedScheduleStatus = false,
+  trustMatchedPreferredScheduleIds = false
 ): OrganizationApproveScheduleValidation {
   const list = selectOrganizationApprovePreferredSchedules(preferred, requestedSchedules)
   const periodMode = educationScheduleMode === 'period'
@@ -415,6 +424,7 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
     const label = preferredOptionLabel(schedule, scheduleId)
     if (!label) continue
     const unresolvedReason = schedule.unresolvedReason ?? null
+    const scheduleStatus = schedule.scheduleStatus?.trim().toUpperCase() || null
     const round =
       typeof schedule.round === 'number' && Number.isInteger(schedule.round) && schedule.round > 0
         ? schedule.round
@@ -424,7 +434,23 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
     let block: OrganizationApproveScheduleAssignmentBlock | null = null
     let sessionNo: number | null = null
 
-    if (periodMode || !slotsResolved || slotsById == null) {
+    if (requireMatchedScheduleStatus && scheduleStatus !== 'MATCHED') {
+      block = scheduleStatus === 'INACTIVE_OR_DELETED' ? 'INACTIVE_OR_DELETED' : 'UNMATCHED'
+    } else if (trustMatchedPreferredScheduleIds && scheduleId != null && !unresolvedReason) {
+      // TT 상세의 MATCHED scheduleId는 서버가 이미 program_schedule과 매칭한 정본이다.
+      // 클라이언트가 날짜·시간으로 다시 계산하거나 education-slots 응답에 의존하지 않는다.
+      confirmableScheduleId = scheduleId
+      sessionNo = round
+    } else if (periodMode) {
+      // TT 상세 응답은 기간형이어도 서버가 실제 program_schedule 매칭을
+      // 함께 제공한다. 이 경우 일반 PERIOD의 requested-schedule 행 대신
+      // 매칭된 일정 id를 그대로 확정할 수 있도록 한다.
+      if (allowMatchedPeriodScheduleIds && scheduleId != null && !unresolvedReason) {
+        confirmableScheduleId = scheduleId
+        sessionNo = round
+      }
+      block = null
+    } else if (!slotsResolved || slotsById == null) {
       block = null
     } else if (unresolvedReason === 'AMBIGUOUS_SCHEDULE_MATCH') {
       block = 'AMBIGUOUS'
@@ -467,7 +493,7 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
       assignable: confirmableScheduleId != null,
       sessionNo,
       round,
-      assignmentNote: periodMode || !slotsResolved ? null : assignmentNoteFor(block),
+      assignmentNote: block == null ? null : assignmentNoteFor(block),
     })
   }
 
@@ -544,9 +570,15 @@ export function isGeneralOrganizationPeriodSingleRequestedScheduleApproval(input
   sessionRound?: string | null
   educationStructure?: string | null
 }): boolean {
-  const mode = String(input.educationScheduleMode ?? '').trim().toLowerCase()
-  const round = String(input.sessionRound ?? 'single').trim().toLowerCase()
-  const structure = String(input.educationStructure ?? 'schedule').trim().toLowerCase()
+  const mode = String(input.educationScheduleMode ?? '')
+    .trim()
+    .toLowerCase()
+  const round = String(input.sessionRound ?? 'single')
+    .trim()
+    .toLowerCase()
+  const structure = String(input.educationStructure ?? 'schedule')
+    .trim()
+    .toLowerCase()
   return mode === 'period' && round !== 'multi' && structure === 'schedule'
 }
 
@@ -832,8 +864,7 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
     '승인 요청에 일정 선택 값이 함께 전달되었습니다. 희망 일정만 다시 선택해 주세요.',
   ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID:
     '선택한 희망 일정을 확인할 수 없습니다. 희망 일정을 다시 불러옵니다.',
-  ORGANIZATION_APPROVE_REQUESTED_DATE_OUTSIDE_PERIOD:
-    '선택한 희망 일정이 교육 기간 밖입니다.',
+  ORGANIZATION_APPROVE_REQUESTED_DATE_OUTSIDE_PERIOD: '선택한 희망 일정이 교육 기간 밖입니다.',
   ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_PERIOD_REQUIRED:
     '기간 지정 프로그램이 아니라 희망 일정 행으로 승인할 수 없습니다.',
   ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_NOT_SUPPORTED:
@@ -852,6 +883,14 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
     '이미 시작되었거나 출석 이력이 있는 일정은 변경할 수 없습니다.',
   GENERAL_ORGANIZATION_APPLICATION_NOT_APPROVED:
     '승인된 기관 신청에만 교육 일정을 배정할 수 있습니다.',
+  INVALID_NOTIFICATION_SCHEDULE:
+    '알림 예약 일시가 올바르지 않습니다. 현재 시각 이후의 일시를 선택해 주세요.',
+  TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND:
+    '교육받은 교사 기관 신청을 찾을 수 없습니다. 목록을 새로고침한 후 다시 시도해 주세요.',
+  TRAINED_TEACHER_ORGANIZATION_APPLICATION_STATUS_CONFLICT:
+    '현재 신청 상태에서는 승인할 수 없습니다. 목록을 새로고침한 후 다시 시도해 주세요.',
+  TRAINED_TEACHER_ORGANIZATION_APPLICATION_SCHEDULE_INVALID:
+    '선택한 교육 일정이 변경되었거나 사용할 수 없습니다. 최신 일정을 다시 확인해 주세요.',
 }
 
 export function formatOrganizationApplicationApproveErrorMessage(error: unknown): string | null {

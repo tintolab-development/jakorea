@@ -162,6 +162,40 @@ describe('persist-recruitment-row-save', () => {
     ).toBe('2026-10-31T14:59:59.999Z')
   })
 
+  it('원격 SSOT 모드에서는 재조회 API 응답을 draft·patch·행 응답으로 덮지 않는다', async () => {
+    const program = orgProgram()
+    const refetched: Program = {
+      ...program,
+      title: 'remote response',
+      registrationOverlay: { 'remote.key': 'server' },
+      generalCommonInfo: {
+        participantRecruitmentInfo: { recruitmentTarget: '서버 기준' },
+      },
+    }
+    const result = await persistRecruitmentTabSave({
+      baseline: program,
+      draft: program,
+      patch: {
+        title: 'local draft',
+        registrationOverlay: { 'local.key': 'stale' },
+        generalCommonInfo: {
+          participantRecruitmentInfo: { recruitmentTarget: '로컬 기준' },
+        },
+      },
+      audience: 'participant',
+      refetchProgram: async () => refetched,
+      remoteResponsePriority: true,
+    })
+    expect(result.mode).toBe('row')
+    if (result.mode !== 'row') return
+    expect(result.program).toBe(refetched)
+    expect(result.program.title).toBe('remote response')
+    expect(result.program.registrationOverlay).toEqual({ 'remote.key': 'server' })
+    expect(result.program.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget).toBe(
+      '서버 기준'
+    )
+  })
+
   it('재조회 nested가 옛값이면 저장한 봉사자 모집 정보를 화면에 남긴다', () => {
     const program = orgProgram()
     const fetched = {

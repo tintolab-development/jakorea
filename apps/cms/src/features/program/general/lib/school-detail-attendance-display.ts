@@ -85,7 +85,9 @@ export function buildAttendanceSessionHeaderParts(
   const formatLabel = formatEducationFormat(session.format)
   const periodRangeLabel = buildPeriodRangeLabel(session.round)
   const title = `${sessionLeadLabel} : ${dateLabel}`
-  const scheduleSummary = `${session.duration} (${formatLabel})`
+  const scheduleSummary = formatLabel.trim()
+    ? `${session.duration} (${formatLabel})`
+    : session.duration
   const headerPrefix = `${title} ${scheduleSummary} | ${periodRangeLabel}`
   return { sessionLeadLabel, title, scheduleSummary, periodRangeLabel, headerPrefix }
 }

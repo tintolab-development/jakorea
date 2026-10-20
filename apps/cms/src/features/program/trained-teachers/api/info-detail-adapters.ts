@@ -158,29 +158,16 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
   }
 }
 
-/**
- * 교육받은 교사 공통정보(detail) 저장 직후 캐시.
- * 차시·일지·연수는 GET이 정본이다.
- * 설문 진행 항목은 이 PATCH가 쓰지 않는다. 열린 상세에 키가 있으면 그 값을 유지하고,
- * 없을 때만 GET 키를 쓴다.
- */
+/** 저장 직후 재조회한 원격 응답을 그대로 상세 캐시에 반영한다. */
 export function applyTrainedTeacherInfoDetailSaveToCache(
-  cached: Program | undefined,
+  _cached: Program | undefined,
   saved: Program,
   programId: string,
   _payloadCommon?: Partial<NonNullable<Program['generalCommonInfo']>>
 ): Program {
-  const cachedSurveyKeys = cached?.generalSurveyMenuKeys
-  const keepCachedSurvey = cachedSurveyKeys !== undefined
-  const generalSurveyMenuKeys = keepCachedSurvey ? cachedSurveyKeys : saved.generalSurveyMenuKeys
-  const registrationOverlay = keepCachedSurvey
-    ? (cached?.registrationOverlay ?? saved.registrationOverlay)
-    : (saved.registrationOverlay ?? cached?.registrationOverlay)
   return {
     ...saved,
     id: programId || saved.id,
-    ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
-    ...(registrationOverlay !== undefined ? { registrationOverlay } : {}),
   }
 }
 

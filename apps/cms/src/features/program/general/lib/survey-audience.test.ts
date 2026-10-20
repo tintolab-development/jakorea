@@ -15,7 +15,9 @@ import {
   getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
+  isTrainedTeachersProgram,
   programHasGeneralSatisfactionSurvey,
+  resolveSatisfactionFormBindingTargetRole,
 } from './survey-audience'
 import { getGeneralSurveyMenuItems } from './detail-meta'
 import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
@@ -371,6 +373,22 @@ describe('general survey audience', () => {
       'satisfaction',
       'lecture_evaluation',
     ])
+  })
+
+  it('교육받은 교사 만족도 바인딩 targetRole은 항상 TEACHER이다', () => {
+    const trainedTeachers = program({
+      id: '186264',
+      backendProgramType: 'TRAINED_TEACHER',
+    })
+    expect(isTrainedTeachersProgram(trainedTeachers)).toBe(true)
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('TEACHER')
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, null)).toBe('TEACHER')
+    const general = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+    })
+    expect(resolveSatisfactionFormBindingTargetRole(general, 'student')).toBe('STUDENT')
+    expect(resolveSatisfactionFormBindingTargetRole(general, 'teacher')).toBe('TEACHER')
   })
 
   it('교육받은 교사 keys에서 만족도를 빼면 LNB에서도 빠진다', () => {

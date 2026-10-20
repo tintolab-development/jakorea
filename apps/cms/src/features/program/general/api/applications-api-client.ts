@@ -138,9 +138,9 @@ export type InstructorApplicationUpdatePayload = {
   businessIncomeEarnerStatus?: '해당' | '해당 없음' | string
 }
 
-/** 기관 승인·반려 / 강사 일괄 — 평탄 timing. 생략 시 즉시 발송. IMMEDIATE에 scheduledAt 금지. */
+/** 기관 승인·반려 / 강사 일괄 — 평탄 timing. 생략 시 즉시 발송. IMMEDIATE·ON_ANNOUNCEMENT에 scheduledAt 금지. */
 export type OrganizationDecisionNotifyRequest = {
-  timing?: 'IMMEDIATE' | 'SCHEDULED'
+  timing?: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT'
   scheduledAt?: string
 }
 

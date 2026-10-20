@@ -141,7 +141,9 @@ describe('school-detail-attendance-api', () => {
     })
 
     expect(fetchOrganizationStudentRosterRemoteMock).toHaveBeenCalledWith('10')
-    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [77])
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [77], {
+      organizationApplicationId: '10',
+    })
     expect(bundle.rosterStudents[0]?.participantId).toBe(9)
     expect(bundle.attendancesByScheduleId['77']?.[0]?.status).toBe('ABSENT')
   })

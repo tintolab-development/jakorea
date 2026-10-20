@@ -111,10 +111,11 @@ export function useGeneralProgramApplicationsRemoteSync({
   })
 
   useEffect(() => {
-    if (organizationQuery.data) {
-      setInstitutionList(organizationQuery.data.pages.flatMap(page => page.rows))
-    }
-  }, [organizationQuery.data, setInstitutionList])
+    // 교육받은 교사 화면에서는 전용 query가 기관 신청 목록의 유일한 원천이다.
+    // 비활성화된 generic query의 캐시를 로컬 목록에 복사하지 않는다.
+    if (!remoteEnabled || !organizationQuery.data) return
+    setInstitutionList(organizationQuery.data.pages.flatMap(page => page.rows))
+  }, [organizationQuery.data, remoteEnabled, setInstitutionList])
 
   useEffect(() => {
     if (instructorQuery.data) {

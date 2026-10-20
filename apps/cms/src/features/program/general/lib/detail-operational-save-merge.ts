@@ -279,16 +279,22 @@ export function buildMergedRegistrationOverlayForRecruitSave(args: {
   remotePatch: Partial<Program>
   values: ProgramDetailEditFormValues
   audience: ProgramDetailRecruitmentAudience
+  /** 원격 SSOT 모드에서는 브라우저 in-memory/localStorage overlay를 읽지 않는다. */
+  strictRemote?: boolean
 }): Record<string, unknown> {
   const catalogCodes = recruitCatalogTemplateCodesForAudience(args.program, args.audience)
   const formPatch = recruitOverlayPatchFromDetailEditValues(args.values, args.audience)
-  const peeked = peekRecruitOverlaySlicesForCatalogs(
-    args.audience === 'volunteer' && catalogCodes.length === 0
-      ? [VOLUNTEER_RECRUIT_CATALOG]
-      : catalogCodes
-  )
+  const peeked = args.strictRemote
+    ? {}
+    : peekRecruitOverlaySlicesForCatalogs(
+        args.audience === 'volunteer' && catalogCodes.length === 0
+          ? [VOLUNTEER_RECRUIT_CATALOG]
+          : catalogCodes
+      )
   const volunteerInterview =
-    args.audience === 'volunteer' ? peekVolunteerInterviewOverlayForSave(catalogCodes) : {}
+    !args.strictRemote && args.audience === 'volunteer'
+      ? peekVolunteerInterviewOverlayForSave(catalogCodes)
+      : {}
   return {
     ...(args.program.registrationOverlay ?? {}),
     ...(args.remotePatch.registrationOverlay ?? {}),
@@ -373,10 +379,11 @@ export function ensureRecruitOperationalEditScope(
 /** 스코프 설정 후 program.registrationOverlay를 audience별 catalog에 시드 */
 export function prepareRecruitOperationalEditFromProgram(
   program: Program,
-  audience: ProgramDetailRecruitmentAudience
+  audience: ProgramDetailRecruitmentAudience,
+  options?: { strictRemote?: boolean }
 ): void {
   ensureRecruitOperationalEditScope(program, audience)
-  seedOperationalRecruitOverlaysFromProgram(program)
+  if (!options?.strictRemote) seedOperationalRecruitOverlaysFromProgram(program)
 }
 
 /** 모집 편집 진입 — program.registrationOverlay를 audience별 catalog scope에 시드 */

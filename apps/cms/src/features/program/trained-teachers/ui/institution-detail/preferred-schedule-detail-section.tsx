@@ -25,11 +25,11 @@ export function TrainedTeachersPreferredScheduleDetailSection({
   return (
     <section className="applicant-institution-basic-info__section">
       <h3 className="applicant-institution-basic-info__title">{sectionTitle}</h3>
-      <div className="applicant-institution-basic-info__table-wrap">
-        <table className="applicant-institution-basic-info__table">
-          {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
-          <tbody>
-            {blocks.length === 0 ? (
+      {blocks.length === 0 ? (
+        <div className="applicant-institution-basic-info__table-wrap">
+          <table className="applicant-institution-basic-info__table">
+            {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
+            <tbody>
               <tr>
                 <td
                   colSpan={2}
@@ -38,38 +38,60 @@ export function TrainedTeachersPreferredScheduleDetailSection({
                   등록된 교육 일정이 없습니다.
                 </td>
               </tr>
-            ) : (
-              blocks.flatMap(block => {
-                const dateRow = (
-                  <InstitutionApplicationTableRowSingleCol
-                    key={`${block.preferenceRank}-date`}
-                    label="희망 교육일 및 차시"
-                    value={
-                      <ProgramDetailTdSegmentWrap>
-                        {withProgramDetailTdDivider(preferredDateSegments(block))}
-                      </ProgramDetailTdSegmentWrap>
-                    }
-                  />
-                )
-                const timeRows = block.sessionTimes.map(session => (
-                  <InstitutionApplicationTableRowSingleCol
-                    key={`${block.preferenceRank}-time-${session.sessionIndex}`}
-                    label={`${session.sessionIndex}차시 희망 교육 시간`}
-                    value={
-                      <ProgramDetailTdSegmentWrap>
-                        {withProgramDetailTdDivider(
-                          preferredSessionTimeSegments(session.classPeriod, session.timeRange)
-                        )}
-                      </ProgramDetailTdSegmentWrap>
-                    }
-                  />
-                ))
-                return [dateRow, ...timeRows]
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="applicant-institution-basic-info__schedule-preference-list">
+          {blocks.map(block => {
+            const dateRow = (
+              <InstitutionApplicationTableRowSingleCol
+                key={`${block.preferenceRank}-date`}
+                label="희망 교육일 및 차시"
+                value={
+                  <ProgramDetailTdSegmentWrap>
+                    {withProgramDetailTdDivider(preferredDateSegments(block))}
+                  </ProgramDetailTdSegmentWrap>
+                }
+              />
+            )
+            const timeRows = block.sessionTimes.map(session => (
+              <InstitutionApplicationTableRowSingleCol
+                key={`${block.preferenceRank}-time-${session.sessionIndex}`}
+                label={`${session.sessionIndex}차시 희망 교육 시간`}
+                value={
+                  <ProgramDetailTdSegmentWrap>
+                    {withProgramDetailTdDivider(
+                      preferredSessionTimeSegments(session.classPeriod, session.timeRange)
+                    )}
+                  </ProgramDetailTdSegmentWrap>
+                }
+              />
+            ))
+
+            return (
+              <div
+                className="applicant-institution-basic-info__schedule-preference"
+                key={`preference-${block.preferenceRank}`}
+              >
+                <h4 className="applicant-institution-basic-info__schedule-preference-title">
+                  <span aria-hidden="true" />
+                  {block.preferenceRank}지망
+                </h4>
+                <div className="applicant-institution-basic-info__table-wrap">
+                  <table className="applicant-institution-basic-info__table">
+                    {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
+                    <tbody>
+                      {dateRow}
+                      {timeRows}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </section>
   )
 }

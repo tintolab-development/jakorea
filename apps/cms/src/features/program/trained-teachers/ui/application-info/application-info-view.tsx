@@ -13,6 +13,7 @@ import {
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { isTrainedTeachersApplicationFormEditable } from '@/features/program/trained-teachers/lib/application-form-edit-policy'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
@@ -21,6 +22,7 @@ import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-pan
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import '@/features/program/general/ui/detail-modal/info/application-view.css'
 
 const TRAINED_TEACHERS_APPLICATION_VARIANT = 'trained-teachers-application-institution' as const
@@ -35,6 +37,7 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
     []
   )
   const [editorActive, setEditorActive] = useState(true)
+  const remoteStrict = shouldUseTrainedTeacherProgramsRemoteApi()
 
   useEffect(() => {
     patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
@@ -43,10 +46,12 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
     }
   }, [program])
 
-  const formSource = useProgramApplicationFormLoadSource(program, TRAINED_TEACHERS_APPLICATION_VARIANT)
+  const formSource = useProgramApplicationFormLoadSource(program, TRAINED_TEACHERS_APPLICATION_VARIANT, {
+    remoteStrict,
+  })
 
   const vm = useProgramParticipantApplicationEditor(
-    editorActive && !formSource.bindingsLoading,
+    editorActive && !formSource.bindingsLoading && formSource.unavailableReason == null,
     templateName,
     TRAINED_TEACHERS_APPLICATION_VARIANT,
     {
@@ -54,6 +59,7 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
       programLinkedApplicationFormPreview: true,
       templateVersionId: formSource.templateVersionId,
       preferLocalDraft: formSource.preferLocalDraft,
+      requireRemoteDraft: remoteStrict,
     }
   )
 
@@ -68,6 +74,22 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
     window.addEventListener(WRITING_FORM_TEMPLATE_SAVE_EVENT, handleSave)
     return () => window.removeEventListener(WRITING_FORM_TEMPLATE_SAVE_EVENT, handleSave)
   }, [templateId])
+
+  if (formSource.unavailableReason != null || vm.remoteDraftLoadError != null) {
+    return (
+      <div className="application-view__preview-panel application-view__preview-panel--error">
+        <p>원격 신청 양식을 불러올 수 없습니다.</p>
+      </div>
+    )
+  }
+
+  if (vm.isDraftLoading) {
+    return (
+      <div className="application-view__preview-panel application-view__preview-panel--loading">
+        <FormDraftLoading />
+      </div>
+    )
+  }
 
   return (
     <div className="application-view__preview-panel application-view__preview-panel--readonly">

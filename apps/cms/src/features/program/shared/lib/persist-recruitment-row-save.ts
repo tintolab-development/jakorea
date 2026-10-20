@@ -459,6 +459,8 @@ export async function persistRecruitmentTabSave(args: {
   audience: RecruitmentCopyAudience
   volunteerHalf?: 'h1' | 'h2'
   refetchProgram: (programId: string) => Promise<Program>
+  /** 원격 SSOT 모드에서는 재조회한 API 응답을 로컬 draft/patch와 병합하지 않는다. */
+  remoteResponsePriority?: boolean
   /** 행 PATCH 이후·재조회 전. nested·overlay를 프로그램에 남긴다. 실패해도 행 저장은 유지한다. */
   beforeRefetch?: () => Promise<void>
 }): Promise<{ mode: 'row'; program: Program } | { mode: 'fallback'; patch: Partial<Program> }> {
@@ -478,6 +480,9 @@ export async function persistRecruitmentTabSave(args: {
     console.error('[program] recruitment nested snapshot save failed', error)
   }
   const fetched = await args.refetchProgram(String(args.draft.id ?? args.baseline.id))
+  if (args.remoteResponsePriority) {
+    return { mode: 'row', program: fetched }
+  }
   return {
     mode: 'row',
     program: applySavedRecruitmentOntoProgram({

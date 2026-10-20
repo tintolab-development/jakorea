@@ -1046,6 +1046,74 @@
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "초상권 동의서 업로드 취소",
+        "description": "### 이 API가 하는 일\n- 초상권 동의서 업로드 취소\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `DELETE /api/portal/me/organization-applications/{applicationId}/portrait-consent`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 교사 본인 기관 신청의 현재 유효 제출만 해제하고 승인 건·기한 경과는 거부하며 감사로그 fail-closed",
+        "operationId": "cancelPortraitConsent",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "expectedRevisionNo",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
+          },
+          "204": {
+            "description": "업로드 취소 완료. 본문 없음"
+          },
+          "400": {
+            "description": "applicationId 또는 expectedRevisionNo 형식이 유효하지 않거나 기관 신청을 찾을 수 없습니다.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "회원 인증이 필요합니다.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "403": {
+            "description": "해당 기관 신청서를 소유하지 않은 회원입니다.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "PORTRAIT_CONSENT_NOT_FOUND: 취소할 현재 제출이 없습니다(이미 취소된 경우 포함)."
+          },
+          "409": {
+            "description": "PORTRAIT_CONSENT_DEADLINE_PASSED, PORTRAIT_CONSENT_ALREADY_APPROVED, PORTRAIT_CONSENT_REVISION_CONFLICT, PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED 또는 신청 상태상 수정할 수 없습니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          },
+          "503": {
+            "description": "AUDIT_LOG_UNAVAILABLE: 감사로그를 기록하지 못해 취소하지 않았습니다."
+          }
+        }
       }
     },
     "/api/portal/me/notifications/preferences": {
@@ -8489,8 +8557,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "초상권 동의서 PDF 양식 생성",
-        "description": "### 이 API가 하는 일\n- 초상권 동의서 PDF 양식 생성\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/organization-applications/{applicationId}/portrait-consent/template`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 본인 리소스만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS/Portal 기능정의서 제출기한·양식 다운로드 교차검증 반영",
+        "summary": "학생 초상권 동의서 ZIP 양식 다운로드",
+        "description": "### 이 API가 하는 일\n- 학생 초상권 동의서 ZIP 양식 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/organization-applications/{applicationId}/portrait-consent/template`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 본인 리소스만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS/Portal 기능정의서 제출기한·양식 다운로드 교차검증 반영",
         "operationId": "createPortraitConsentTemplate",
         "parameters": [
           {
@@ -8537,7 +8605,7 @@
         ],
         "summary": "교사 신청서 학생 기존 수료증 ZIP 다운로드",
         "description": "### 이 API가 하는 일\n- 교사 신청서 학생 기존 수료증 ZIP 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/organization-applications/{applicationId}/certificates/bulk-download`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: PORTAL_APPLICATION_OWNERSHIP 권한 필요\n- 접근 범위: APPLICATION_SCOPE 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 수료증/참여인증서는 발급 상태와 다운로드 이력을 함께 확인합니다. `COMPLETION_ISSUED`, `PARTICIPATION_ISSUED`, `ISSUED`는 발급 완료 배지로 표시합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 신청서 소유 roster와 기존 issue만 재다운로드; official PDF 미설치 시 503",
-        "operationId": "bulkDownloadCertificates",
+        "operationId": "downloadPortalStudentCertificateZip",
         "parameters": [
           {
             "name": "applicationId",
@@ -8562,7 +8630,36 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "검증된 기존 수료증 ZIP 바이너리입니다. 신규 발급은 수행하지 않습니다.",
+            "headers": {
+              "Cache-Control": {
+                "description": "브라우저/프록시 캐시를 사용하지 않습니다.",
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Content-Disposition": {
+                "description": "다운로드 파일명입니다.",
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"student-certificates.zip\""
+                }
+              }
+            },
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "rosterIds 또는 certificateType이 유효하지 않습니다.",
             "content": {
               "application/zip": {
                 "schema": {
@@ -8571,20 +8668,58 @@
               }
             }
           },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
           "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+            "description": "회원 인증이 필요합니다.",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            }
           },
           "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+            "description": "해당 기관 신청서를 소유하지 않은 회원입니다.",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "기관 신청 또는 학생 roster를 찾을 수 없습니다.",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            }
           },
           "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+            "description": "수료 자격, 동의, 발급 이력 또는 신청 상태 검증에 실패했습니다.",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            }
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          },
+          "503": {
+            "description": "공식 수료증 PDF 공급자를 사용할 수 없습니다.",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            }
           }
         }
       }
@@ -16981,6 +17116,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationApplicationApproveRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
@@ -17000,6 +17144,9 @@
           },
           "403": {
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -22068,8 +22215,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "초상권 동의서 PDF 양식 생성",
-        "description": "### 이 API가 하는 일\n- 초상권 동의서 PDF 양식 생성\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/organization-applications/{applicationId}/portrait-consent/template`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS/Portal 기능정의서 제출기한·양식 다운로드 교차검증 반영",
+        "summary": "학생 초상권 동의서 ZIP 양식 다운로드",
+        "description": "### 이 API가 하는 일\n- 학생 초상권 동의서 ZIP 양식 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/organization-applications/{applicationId}/portrait-consent/template`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS/Portal 기능정의서 제출기한·양식 다운로드 교차검증 반영",
         "operationId": "createPortraitConsentTemplate_1",
         "parameters": [
           {
@@ -54388,6 +54535,16 @@
                 "format": "int64"
               }
             }
+          },
+          {
+            "name": "organizationApplicationId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         ],
         "responses": {
@@ -64461,7 +64618,11 @@
             "format": "date"
           },
           "grade": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.",
             "maxLength": 30,
             "minLength": 0
           },
@@ -64471,19 +64632,31 @@
             "minLength": 0
           },
           "studentNo": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
+            "description": "선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.",
             "maximum": 999,
             "minimum": 1
           },
           "phone": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신규 행은 필수. 기존 활성 행(rosterId 또는 이름·생년월일·학년·반·번호 일치)은 생략하거나 빈 문자열이면 저장된 암호화 연락처를 유지합니다. 값을 보내면 하이픈 전화번호 형식을 검사합니다."
           },
           "email": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "email",
             "maxLength": 255,
-            "minLength": 0
+            "minLength": 0,
+            "description": "신규 행은 필수. 기존 활성 행은 생략하거나 빈 문자열이면 저장된 암호화 이메일을 유지합니다. 값을 보내면 이메일 형식을 검사합니다."
           },
           "notes": {
             "type": "string",
@@ -64492,11 +64665,10 @@
           }
         },
         "required": [
-          "birthDate",
-          "className",
-          "grade",
           "studentName",
-          "studentNo"
+          "gender",
+          "birthDate",
+          "className"
         ]
       },
       "StudentRosterItemResponse": {
@@ -64637,6 +64809,7 @@
       },
       "PortraitConsentResponse": {
         "type": "object",
+        "description": "현재 유효한 기관 단위 초상권 동의서 제출 1건. 제출이 없거나 업로드 취소된 경우 GET은 본문 없이 200을 반환합니다.",
         "properties": {
           "artifactId": {
             "type": "integer",
@@ -64655,11 +64828,13 @@
             "format": "int64"
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "description": "제출 상태: SUBMITTED | APPROVED | REJECTED"
           },
           "revisionNo": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "기관 신청 단위 제출 revision. 재제출할 때마다 증가하며 업로드 취소 후 재제출해도 이전 번호를 재사용하지 않습니다. DELETE의 expectedRevisionNo로 보냅니다."
           },
           "submittedByMemberId": {
             "type": "integer",
@@ -64683,6 +64858,26 @@
           },
           "rejectReason": {
             "type": "string"
+          },
+          "originalFileName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "업로드 당시 원본 파일명. 파일 원장에 값이 없으면 null"
+          },
+          "fileSize": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "파일 크기(byte). 파일 원장에 값이 없으면 null"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "제출 행 최종 변경 시각(ISO-8601)"
           }
         }
       },
@@ -69488,14 +69683,17 @@
       },
       "AbsenceReasonSubmissionRequest": {
         "type": "object",
+        "description": "회원 포탈 결석 사유 제출. 증빙 파일은 본인 업로드·ABSENCE_EVIDENCE·CLEAN·AVAILABLE(레거시 CONFIRMED 포함) 상태만 허용합니다.",
         "properties": {
           "reason": {
             "type": "string",
+            "description": "결석 사유. 필수, 최대 2,000자",
             "maxLength": 2000,
             "minLength": 0
           },
           "fileObjectIds": {
             "type": "array",
+            "description": "선택적 결석 증빙 파일 ID. 최대 20개이며 본인 소유·ABSENCE_EVIDENCE·CLEAN·AVAILABLE(레거시 CONFIRMED 포함) 파일만 허용",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -70029,18 +70227,29 @@
       },
       "PortalCertificateBulkDownloadRequest": {
         "type": "object",
+        "description": "기관 신청서에 속한 학생 roster의 기존 수료증 ZIP 다운로드 요청입니다.",
         "properties": {
           "rosterIds": {
             "type": "array",
+            "description": "현재 기관 신청서에 속한 학생 roster ID 목록입니다. 최대 100개까지 요청할 수 있습니다.",
+            "example": [
+              1691594,
+              1691595
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
             },
             "maxItems": 100,
-            "minItems": 0
+            "minItems": 1
           },
           "certificateType": {
-            "type": "string"
+            "type": "string",
+            "description": "수료증 유형입니다. 현재 COMPLETION만 지원합니다.",
+            "enum": [
+              "COMPLETION"
+            ],
+            "example": "COMPLETION"
           }
         },
         "required": [
@@ -71297,6 +71506,22 @@
         "properties": {
           "filePurpose": {
             "type": "string",
+            "description": "파일 용도. PORTRAIT_CONSENT는 학생 초상권 동의서이며 PDF/JPG/JPEG/PNG/WEBP/DOCX, 파일당 20MB입니다. ABSENCE_EVIDENCE는 결석 사유 증빙이며 JPG/JPEG/PNG, 파일당 20MB입니다. STUDENT_ROSTER는 CSV/XLSX 20MB, CRIMINAL_HISTORY_EVIDENCE는 PDF/JPG/JPEG/PNG/WEBP 20MB, EDUCATION_JOURNAL은 일반 첨부 50MB, MEMBER_ELECTRONIC_SIGNATURE는 PNG/JPEG/WebP 5MB(서버가 ELECTRONIC_SIGNATURE로 정규화 저장)입니다.",
+            "enum": [
+              "ASSIGNMENT_ATTACHMENT",
+              "SURVEY_ATTACHMENT",
+              "ABSENCE_EVIDENCE",
+              "PORTRAIT_CONSENT",
+              "EXPENSE_RECEIPT",
+              "INSTRUCTOR_APPLICATION",
+              "VOLUNTEER_APPLICATION_EVIDENCE",
+              "PROGRAM_POST_ATTACHMENT",
+              "PROGRAM_POST_INLINE_IMAGE",
+              "STUDENT_ROSTER",
+              "CRIMINAL_HISTORY_EVIDENCE",
+              "EDUCATION_JOURNAL",
+              "MEMBER_ELECTRONIC_SIGNATURE"
+            ],
             "maxLength": 80,
             "minLength": 0
           },
@@ -77800,6 +78025,47 @@
           "stopScheduleId"
         ]
       },
+      "OrganizationApplicationApproveRequest": {
+        "type": "object",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "description": "기존 FE 호환용 복수 일정 입력. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 선택 사항이며 scheduleId만 보냅니다. selectedScheduleId와 동시에 보낼 수 없습니다.",
+            "items": {
+              "$ref": "#/components/schemas/SlotRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          },
+          "selectedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "선택 확정할 희망 교육 일정의 program_schedule.id. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 사용하며 없으면 별도 배정합니다.",
+            "example": 188901
+          },
+          "requestedScheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
+            "example": 184944
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601",
+            "example": "2026-10-20T09:00:00+09:00"
+          }
+        }
+      },
       "EducationJournalExportRequest": {
         "type": "object",
         "properties": {
@@ -79406,6 +79672,14 @@
             "items": {
               "$ref": "#/components/schemas/AttendanceItemRequest"
             }
+          },
+          "organizationApplicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "선택. 지정하면 해당 프로그램의 기관 신청이어야 하며(아니면 404 ORGANIZATION_APPLICATION_NOT_FOUND), 모든 participantId가 그 신청의 기관 참여자 또는 학생명단 참여자여야 합니다(아니면 400 ATTENDANCE_PARTICIPANT_ORGANIZATION_APPLICATION_MISMATCH). 생략하면 프로그램 소속만 검증합니다."
           }
         }
       },
@@ -81336,38 +81610,6 @@
           },
           "assignmentStatus": {
             "type": "string"
-          }
-        }
-      },
-      "OrganizationApplicationApproveRequest": {
-        "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId 또는 scheduleId만 포함한 slots 입력을 지원합니다.",
-        "properties": {
-          "slots": {
-            "type": "array",
-            "description": "기존 FE 호환용 일정 입력. GENERAL_ORGANIZATION에서는 선택 사항이며 scheduleId만 보냅니다.",
-            "items": {
-              "$ref": "#/components/schemas/SlotRequest"
-            },
-            "maxItems": 500,
-            "minItems": 0
-          },
-          "selectedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "선택 확정할 희망 교육 일정의 program_schedule.id. 없으면 승인 후 별도 배정합니다.",
-            "example": 188901
-          },
-          "timing": {
-            "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
-            "example": "SCHEDULED"
-          },
-          "scheduledAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601",
-            "example": "2026-10-20T09:00:00+09:00"
           }
         }
       },
@@ -94396,7 +94638,7 @@
           },
           "satisfactionConfigured": {
             "type": "boolean",
-            "description": "활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 과거 row가 있어도 항상 false입니다."
+            "description": "활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 교사 대상 활성 SATISFACTION만 true입니다."
           }
         }
       },
@@ -100057,6 +100299,64 @@
             ],
             "format": "int64",
             "description": "신청 당시 지정된 교재 id. 없으면 null."
+          },
+          "educationSchedules": {
+            "type": "array",
+            "description": "기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다.",
+            "items": {
+              "$ref": "#/components/schemas/TrainedTeacherOrganizationEducationSchedule"
+            }
+          },
+          "gradeBlocks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "CMS 학생 명단 학급 Select SSOT. 공통 기관 신청 상세 gradeBlocks와 같은 형식이며 활성 학생 명단의 grade/className으로 묶습니다. 명단이 없으면 신청 학년(requested_grade)과 requestedClassCount만 담은 블록 1개(classes=[])이고, 둘 다 없으면 null. classes가 []이면 classCount로 반 목록을 만들지 않습니다.",
+            "items": {
+              "$ref": "#/components/schemas/GradeBlock"
+            }
+          }
+        }
+      },
+      "TrainedTeacherOrganizationEducationSchedule": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_schedule.id. 출석 조회·저장의 scheduleId 로 사용합니다."
+          },
+          "round": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "일정 session_no(회차). 없으면 null."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일정명. 없으면 null."
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "일정 시작 시각. 없으면 null."
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "일정 종료 시각. 없으면 null."
           }
         }
       },

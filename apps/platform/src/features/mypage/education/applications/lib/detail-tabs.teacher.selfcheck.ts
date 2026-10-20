@@ -49,7 +49,7 @@ const trainedTeacher = buildTeacherInProgressDetailTabItems({
 })
 assert.deepEqual(
   trainedTeacher.map(item => item.key),
-  ['notice', 'schedule', 'students', 'survey'],
+  ['notice', 'schedule', 'students', 'survey', 'satisfaction'],
 )
 
 const teacherWithJournal = buildTeacherInProgressDetailTabItems({
@@ -68,7 +68,7 @@ const trainedTeacherWithJournal = buildTeacherInProgressDetailTabItems({
 })
 assert.deepEqual(
   trainedTeacherWithJournal.map(item => item.key),
-  ['educationJournal', 'schedule', 'students', 'survey'],
+  ['educationJournal', 'schedule', 'students', 'survey', 'satisfaction'],
 )
 
 const teacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems(options)
@@ -83,7 +83,7 @@ const trainedTeacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems({
 })
 assert.deepEqual(
   trainedTeacherWithdrawn.map(item => item.key),
-  ['schedule', 'students', 'survey'],
+  ['schedule', 'students', 'survey', 'satisfaction'],
 )
 
 const generalWithdrawn = buildWithdrawnDuringDetailTabItems(options)

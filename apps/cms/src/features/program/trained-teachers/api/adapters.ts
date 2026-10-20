@@ -12,6 +12,7 @@ import type {
   ProgramCategory,
   ProgramFormat,
   ProgramLifecycleStatus,
+  ProgramSchedule,
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types'
@@ -79,6 +80,28 @@ function toStudentListRequired(value: string | undefined): Program['studentListR
 
 function toCourseDeliveredBy(value: string | undefined): Program['courseDeliveredBy'] {
   return value === 'JA' || value === 'Jointly' || value === 'Partner' ? value : undefined
+}
+
+/** 프로그램 상세의 교육 일정은 ACTIVE만 남기고 시작 시각 기준으로 정렬한다. */
+function mapProgramSchedules(
+  schedules: ProgramResponse['schedules'] | null | undefined
+): ProgramSchedule[] | undefined {
+  if (!Array.isArray(schedules)) return undefined
+
+  return schedules
+    .filter(schedule => schedule.scheduleStatus === 'ACTIVE')
+    .map(schedule => ({
+      id: schedule.id ?? null,
+      sessionNo: schedule.sessionNo ?? null,
+      scheduleName: schedule.scheduleName ?? null,
+      startAt: schedule.startAt ?? null,
+      endAt: schedule.endAt ?? null,
+      startDate: schedule.startDate ?? null,
+      endDate: schedule.endDate ?? null,
+      scheduleStatus: schedule.scheduleStatus ?? null,
+      scheduleOrigin: schedule.scheduleOrigin ?? null,
+    }))
+    .sort((a, b) => String(a.startAt ?? '').localeCompare(String(b.startAt ?? '')))
 }
 
 /** @deprecated shared `mergeProgramSponsorAssignments` 사용. TT 기존 import 호환. */
@@ -233,6 +256,13 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     }) || undefined
   const remarks = dto.remarks?.trim() || undefined
   const educationTargetDetail = dto.educationTargetDetail?.trim() || undefined
+  const nestedStudentListRequired = toStudentListRequired(
+    (
+      details.generalCommonInfo?.participantRecruitmentInfo as
+        | { studentListRequired?: string }
+        | undefined
+    )?.studentListRequired
+  )
 
   const nestedKpi = details.generalCommonInfo?.kpi
   const rootFinalParticipants = toJavaInt(dto.totalParticipants)
@@ -350,7 +380,9 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
     recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
-    studentListRequired: toStudentListRequired(dto.studentListRequired),
+    // BE 응답은 구버전/Primary 데이터에서 serviceDetailJson 중첩값만 제공할 수 있다.
+    // top-level 컬럼이 있으면 그것을 우선하고, 없을 때만 같은 원격 응답의 nested 값을 사용한다.
+    studentListRequired: toStudentListRequired(dto.studentListRequired) ?? nestedStudentListRequired,
     remarks,
     educationTargetDetail,
     generalParticipantTypes: ['school_institution'],
@@ -375,6 +407,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     updatedAt: dto.updatedAt,
     backendProgramType: dto.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
+    schedules: mapProgramSchedules(dto.schedules),
   })
   return mapped
 }

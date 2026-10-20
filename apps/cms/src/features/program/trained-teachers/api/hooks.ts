@@ -26,12 +26,8 @@ import {
   updateTrainedTeacherProgramInfoDetail,
   type TrainedTeacherProgramsRemoteListPage,
 } from './service'
+import { type TrainedTeachersCommonInfoSavePayload } from './info-detail-adapters'
 import {
-  applyTrainedTeacherInfoDetailSaveToCache,
-  type TrainedTeachersCommonInfoSavePayload,
-} from './info-detail-adapters'
-import {
-  listTrainedTeacherSurveyReflectionQueryKeys,
   reflectTrainedTeacherProgramSave,
 } from './detail-cache'
 
@@ -144,12 +140,9 @@ export function useUpdateTrainedTeacherProgram() {
     }) => updateTrainedTeacherProgram(programId, program, patch),
     retry: false,
     onSuccess: async (program, variables) => {
-      // GET이 설문 키를 빼도 이번 저장 patch를 상세 키에 남긴다. 상세 쿼리는 무효화하지 않는다.
       await reflectTrainedTeacherProgramSave(queryClient, {
         programId: variables.programId,
         echoed: program,
-        draft: variables.program,
-        patch: variables.patch,
       })
     },
   })
@@ -204,22 +197,10 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
     }) => updateTrainedTeacherProgramInfoDetail(programId, payload),
     retry: false,
     onSuccess: async (program, variables) => {
-      const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
-      await queryClient.cancelQueries({ queryKey: detailKey })
-      const previous = queryClient.getQueryData<Program>(detailKey)
-      // 차시·일지는 GET이 정본. GET이 설문 키를 빼면 방금 반영한 상세 캐시 키를 유지한다.
-      const merged = applyTrainedTeacherInfoDetailSaveToCache(
-        previous,
-        program,
-        variables.programId
-      )
-      queryClient.setQueryData(detailKey, merged)
-      invalidateTrainedTeacherListCaches(queryClient)
-      await Promise.all(
-        listTrainedTeacherSurveyReflectionQueryKeys(variables.programId).map(queryKey =>
-          queryClient.invalidateQueries({ queryKey })
-        )
-      )
+      await reflectTrainedTeacherProgramSave(queryClient, {
+        programId: variables.programId,
+        echoed: program,
+      })
     },
   })
 }

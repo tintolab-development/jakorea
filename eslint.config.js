@@ -19,6 +19,7 @@ export default tseslint.config(
       '**/.playwright-mcp/**',
       '**/playwright/.auth/**',
       '**/tests/e2e/.auth/**',
+      'apps/platform/tests/**',
       '**/src/shared/api/generated/**',
     ],
   },

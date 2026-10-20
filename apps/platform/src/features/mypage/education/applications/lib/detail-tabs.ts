@@ -64,7 +64,7 @@ type ActivityTabOptions = {
   satisfactionConfigured?: boolean
   /**
    * 교사 회원 — 학생 명단 탭(출석 관리 탭 추가 시 동일 플래그).
-   * `GET .../student-documents/policy`의 `studentDocumentsSupported === false`이면 false.
+   * `GET .../student-documents/policy`의 `studentDocumentsSupported === true`일 때만 true.
    */
   teacherStudentDocumentTabsVisible?: boolean
   /** 서버가 명시적으로 ON인 교육받은 교사 교육일지 탭만 노출한다. */
@@ -114,7 +114,11 @@ function appendSurveySatisfactionTabs(
   if (isTrainedTeacher(options) ? options.surveyConfigured === true : isConfigured(options.surveyConfigured)) {
     items.push({ key: 'survey', label: '설문조사' })
   }
-  if (!isTrainedTeacher(options) && isConfigured(options.satisfactionConfigured)) {
+  if (
+    isTrainedTeacher(options)
+      ? options.satisfactionConfigured === true
+      : isConfigured(options.satisfactionConfigured)
+  ) {
     items.push({ key: 'satisfaction', label: '만족도조사' })
   }
 }

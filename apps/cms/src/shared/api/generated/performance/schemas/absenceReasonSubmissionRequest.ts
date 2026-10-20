@@ -6,13 +6,18 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 회원 포탈 결석 사유 제출. 증빙 파일은 본인 업로드·ABSENCE_EVIDENCE·CLEAN·AVAILABLE(레거시 CONFIRMED 포함) 상태만 허용합니다.
+ */
 export interface AbsenceReasonSubmissionRequest {
   /**
+     * 결석 사유. 필수, 최대 2,000자
      * @minLength 0
      * @maxLength 2000
      */
   reason: string;
   /**
+     * 선택적 결석 증빙 파일 ID. 최대 20개이며 본인 소유·ABSENCE_EVIDENCE·CLEAN·AVAILABLE(레거시 CONFIRMED 포함) 파일만 허용
      * @minItems 0
      * @maxItems 20
      */

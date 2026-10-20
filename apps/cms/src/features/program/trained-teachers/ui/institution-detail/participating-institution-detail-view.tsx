@@ -1,5 +1,5 @@
 /**
- * 교육받은 교사 — 프로그램 진행 현황 참여 기관 상세 (신청 정보 | 교육 일지 2탭)
+ * 교육받은 교사 — 프로그램 진행 현황 참여 기관 상세 (신청 정보 | 학생 명단 | 출석 관리 | 교육 일지)
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -70,6 +70,7 @@ import {
   buildTrainedTeacherActivityWithdrawScheduleOptions,
   parseTrainedTeacherStopScheduleId,
 } from '@/features/program/trained-teachers/lib/organization-activity-withdraw-schedules'
+import { mapProgramSchedulesToPreferredScheduleBlocks } from '@/features/program/trained-teachers/api/organization-applications-adapters'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { ApplicationGiveUpRequestFaultParty as FaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
@@ -89,6 +90,9 @@ import {
 } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
 import { TrainedTeachersParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
 import { TrainedTeachersEducationJournalSection } from './education-journal-section'
+import { SchoolDetailAttendanceSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-attendance-section'
+import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import type { SchoolDetailFullpageViewProps } from '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view'
 import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 import '@/features/program/general/ui/detail-modal/program-status/participating-institutions-section.css'
@@ -115,8 +119,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     useState<TrainedTeachersInstitutionDetailTabKey>('application')
   const visibleDetailTabs = useMemo(
     () =>
-      getTrainedTeachersInstitutionDetailTabKeys(navigationCapabilities?.educationJournalEnabled),
-    [navigationCapabilities?.educationJournalEnabled]
+      getTrainedTeachersInstitutionDetailTabKeys(
+        navigationCapabilities?.educationJournalEnabled,
+        navigationCapabilities?.studentRosterEnabled
+      ),
+    [navigationCapabilities?.educationJournalEnabled, navigationCapabilities?.studentRosterEnabled]
   )
   const normalizedActiveTab = normalizeTrainedTeachersInstitutionDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
@@ -148,8 +155,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   })
 
   const applicationDetailId = Number.isFinite(Number(row.id)) ? row.id : ''
+  const activeTabUsesApplicationDetail = activeTab !== 'journal'
   const canFetchApplicationDetail =
-    ttRemoteEnabled && activeTab === 'application' && applicationDetailId !== ''
+    ttRemoteEnabled && activeTabUsesApplicationDetail && applicationDetailId !== ''
   const applicationDetailQuery = useQuery({
     queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationDetailId),
     queryFn: () => getTrainedTeacherOrganizationApplication(programId, applicationDetailId),
@@ -177,9 +185,18 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       textbookName: remote.textbookName,
       applicationReason: remote.detail?.applicationReason,
       otherRequests: remote.detail?.otherRequests,
-      preferredScheduleBlocks: remote.preferredScheduleBlocks ?? [],
+      gradeBlocks: remote.gradeBlocks ?? null,
     }
   }, [applicationDetailQuery.data])
+  const rosterDependentQueryKeys = useMemo(
+    () => [trainedTeacherQueryKeys.organizationApplication(programId, applicationDetailId)],
+    [applicationDetailId, programId]
+  )
+
+  const programScheduleBlocks = useMemo(
+    () => mapProgramSchedulesToPreferredScheduleBlocks(program.schedules),
+    [program.schedules]
+  )
 
   useEffect(() => {
     if (!activityWithdrawModalOpen || !ttRemoteEnabled) return
@@ -221,9 +238,20 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const mergedDetail = {
     ...detail,
     ...(applicationBasicInfo ?? {}),
-    ...savedBasicPatch,
+    ...(!ttRemoteEnabled || activeTab !== 'application' ? savedBasicPatch : {}),
+    ...(ttRemoteEnabled && activeTab === 'application'
+      ? { preferredScheduleBlocks: programScheduleBlocks }
+      : {}),
   }
   const sessions = row.sessions ?? []
+  const attendanceRow = useMemo(() => {
+    if (activeTab !== 'attendance' || !applicationDetailQuery.data) return row
+    return {
+      ...row,
+      organizationApplicationId: row.organizationApplicationId ?? row.id,
+      sessions: applicationDetailQuery.data.educationScheduleSessions ?? [],
+    }
+  }, [activeTab, applicationDetailQuery.data, row])
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
 
   const activityWithdrawScheduleOptions = useMemo(
@@ -432,7 +460,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId),
           })
           await queryClient.invalidateQueries({
-            queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+            queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
           })
           await queryClient.invalidateQueries({
             queryKey: trainedTeacherQueryKeys.lists(),
@@ -465,7 +493,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             getApiErrorCode(error) === 'TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP'
           ) {
             await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
             })
             await queryClient.invalidateQueries({
               queryKey: trainedTeacherQueryKeys.organizationApplication(programId, detail.id),
@@ -619,7 +647,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     )
   }
 
-  if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTab === 'application') {
+  if (canFetchApplicationDetail && applicationDetailQuery.isPending) {
+    return (
+      <div className="school-detail-fullpage-view" role="status">
+        기관 신청 상세 정보를 불러오는 중입니다.
+      </div>
+    )
+  }
+
+  if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTabUsesApplicationDetail) {
     return (
       <div className="school-detail-fullpage-view">
         <CmsTextTabs
@@ -724,7 +760,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
-              preferredScheduleBlocks={mergedDetail.preferredScheduleBlocks}
+              preferredScheduleBlocks={
+                ttRemoteEnabled ? programScheduleBlocks : mergedDetail.preferredScheduleBlocks
+              }
               schoolName={mergedDetail.schoolName}
               educationGrade={
                 isApplicationDetailEditing ? (
@@ -804,6 +842,32 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           </div>
         )}
 
+        {activeTab === 'students' && (
+          <div className="program-detail-fullpage-modal__info-tab">
+            <SchoolDetailStudentListSection
+              schoolId={detail.id}
+              studentCount={detail.studentCount}
+              classCount={mergedDetail.classCount}
+              registeredGradeBlocks={mergedDetail.gradeBlocks}
+              schoolName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+              educationGrade={mergedDetail.educationGrade ?? ''}
+              organizationApplicationId={row.organizationApplicationId ?? row.id}
+              programId={program.id}
+              programTitle={program.mainTitle ?? program.title ?? ''}
+              programStartDate={program.startDate}
+              programEndDate={program.endDate}
+              participationAppliedAt={mergedDetail.participationAppliedAt}
+              hasStudentSatisfactionSurvey={normalizeGeneralSurveyMenuKeys(
+                program.generalSurveyMenuKeys ?? []
+              ).includes('satisfaction')}
+              readOnly={false}
+              rosterDependentQueryKeys={rosterDependentQueryKeys}
+              onViewDetail={() => {}}
+              onSaveEdit={() => {}}
+            />
+          </div>
+        )}
+
         {activeTab === 'journal' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__journal-tab">
             <TrainedTeachersEducationJournalSection
@@ -812,6 +876,12 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               institutionName={mergedDetail.schoolName ?? row.schoolName}
               programId={program?.id ?? row.programId}
             />
+          </div>
+        )}
+
+        {activeTab === 'attendance' && (
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__attendance-tab">
+            <SchoolDetailAttendanceSection row={attendanceRow} program={program} />
           </div>
         )}
       </div>

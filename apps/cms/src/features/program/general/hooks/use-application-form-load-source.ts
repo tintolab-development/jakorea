@@ -19,7 +19,13 @@ import { getTemplateIdForParticipantApplicationVariant } from '@/features/templa
 export function useProgramApplicationFormLoadSource(
   program: Program,
   variant: ProgramParticipantApplicationEditorVariant,
-  options?: { ensureScopedBinding?: boolean; /** @deprecated use ensureScopedBinding */ attachLocalDrafts?: boolean }
+  options?: {
+    ensureScopedBinding?: boolean
+    /** 원격 프로그램은 binding 응답이 없을 때 local seed로 대체하지 않는다. */
+    remoteStrict?: boolean
+    /** @deprecated use ensureScopedBinding */
+    attachLocalDrafts?: boolean
+  }
 ) {
   const queryClient = useQueryClient()
   const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
@@ -27,9 +33,11 @@ export function useProgramApplicationFormLoadSource(
   const catalogTemplateId = getFormTemplateVersionCacheEntry(templateCode)?.templateId
   const ensureScopedBinding =
     options?.ensureScopedBinding === true || options?.attachLocalDrafts === true
+  const remoteStrict = options?.remoteStrict === true
   const [scopedSource, setScopedSource] = useState<{
     templateVersionId?: number
     preferLocalDraft: boolean
+    unavailableReason?: string
   } | null>(null)
 
   useEffect(() => {
@@ -38,17 +46,28 @@ export function useProgramApplicationFormLoadSource(
       return
     }
     let cancelled = false
-    void ensureProgramScopedOperationalBinding(program, templateCode).then(next => {
-      if (cancelled) return
-      setScopedSource(next)
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.formBindings(program.id),
-      })
+    void ensureProgramScopedOperationalBinding(program, templateCode, {
+      strictRemote: remoteStrict,
     })
+      .then(next => {
+        if (cancelled) return
+        setScopedSource(next)
+        void queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.formBindings(program.id),
+        })
+      })
+      .catch(error => {
+        if (cancelled) return
+        setScopedSource({
+          preferLocalDraft: false,
+          unavailableReason:
+            error instanceof Error ? error.message : '신청 양식을 불러오지 못했습니다.',
+        })
+      })
     return () => {
       cancelled = true
     }
-  }, [ensureScopedBinding, program, queryClient, templateCode])
+  }, [ensureScopedBinding, program, queryClient, remoteStrict, templateCode])
 
   const fallbackSource = resolveApplicationFormLoadSource({
     programId: program.id,
@@ -56,13 +75,21 @@ export function useProgramApplicationFormLoadSource(
     templateCode,
     bindings: bindingsQuery.bindings,
     catalogTemplateId,
+    strictRemote: remoteStrict,
   })
   const source = ensureScopedBinding && scopedSource != null ? scopedSource : fallbackSource
+  const unavailableReason =
+    remoteStrict && bindingsQuery.error != null
+      ? '신청 양식 바인딩을 불러오지 못했습니다.'
+      : source.unavailableReason
 
   return {
     templateCode,
     templateVersionId: source.templateVersionId,
-    preferLocalDraft: source.preferLocalDraft,
+    preferLocalDraft: remoteStrict ? false : source.preferLocalDraft,
     bindingsLoading: bindingsQuery.loading || (ensureScopedBinding && scopedSource == null),
+    error: bindingsQuery.error,
+    isRemoteDataSource: bindingsQuery.isRemoteDataSource,
+    unavailableReason,
   }
 }

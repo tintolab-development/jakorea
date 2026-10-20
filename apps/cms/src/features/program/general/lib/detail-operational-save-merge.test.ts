@@ -77,6 +77,24 @@ describe('detail-operational-save-merge', () => {
     expect(merged[GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]).toEqual(['adult'])
   })
 
+  it('원격 SSOT 모드에서는 브라우저 overlay store를 저장 source로 사용하지 않는다', () => {
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', {
+      [GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]: ['stale-local'],
+      'recruit.instructor.inquiryEmail': 'stale@example.com',
+    })
+    const program = baseProgram()
+    const values = programToRecruitmentTabEditValues(program, 'instructor')
+    const merged = buildMergedRegistrationOverlayForRecruitSave({
+      program,
+      remotePatch: {},
+      values,
+      audience: 'instructor',
+      strictRemote: true,
+    })
+    expect(merged[GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]).toEqual(['adult'])
+    expect(merged['recruit.instructor.inquiryEmail']).toBeUndefined()
+  })
+
   it('participant form patch가 targetLevels에 반영되고 resync 후 overlay에 남는다', () => {
     const program = baseProgram()
     const values = programToRecruitmentTabEditValues(program, 'participant')

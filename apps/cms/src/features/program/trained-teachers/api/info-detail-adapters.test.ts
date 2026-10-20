@@ -352,7 +352,7 @@ describe('trained-teacher info detail adapters', () => {
     expect(patch.generalCommonInfo?.scheduleDetails?.[0]?.name).toBe('')
   })
 
-  it('저장 직후 캐시는 차시·장소는 GET을 쓰고, GET이 뺀 설문 키는 유지한다', () => {
+  it('저장 직후 캐시는 서버 GET 응답을 그대로 사용한다', () => {
     const cached = {
       id: '186018',
       title: '수정3',
@@ -394,7 +394,7 @@ describe('trained-teacher info detail adapters', () => {
     expect(next.id).toBe('186018')
     expect(next.title).toBe('구 제목')
     expect(next.businessArea).toBe('경제금융')
-    expect(next.generalSurveyMenuKeys).toEqual(['teacher'])
+    expect(next.generalSurveyMenuKeys).toEqual(['survey'])
     expect(next.generalCommonInfo?.venueDetail).toBe('구 장소')
     expect(next.generalCommonInfo?.venueKind).toBe('outside')
     expect(next.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('서버 차시')

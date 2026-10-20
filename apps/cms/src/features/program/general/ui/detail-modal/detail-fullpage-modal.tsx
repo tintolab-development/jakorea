@@ -19,6 +19,8 @@ import { useGeneralProgramNavigation } from '@/features/program/general/hooks/us
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import { getTrainedTeacherProgram } from '@/features/program/trained-teachers/api/service'
+import { reflectTrainedTeacherProgramSave } from '@/features/program/trained-teachers/api/detail-cache'
 import { persistGeneralRecruitmentNestedSnapshot } from '@/features/program/general/lib/persist-recruitment-nested-snapshot'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
@@ -142,9 +144,13 @@ import {
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import {
+  getGeneralRecruitmentRemoteUnavailableReason,
   programToRecruitmentTabEditValues,
   resolveGeneralProgramForRecruitmentEdit,
 } from '@/features/program/general/lib/general-program-recruitment-edit-seed'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { useUpdateTrainedTeacherProgram } from '@/features/program/trained-teachers/api/hooks'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import { ProgramManagersTab } from './managers/program-managers-tab'
@@ -518,6 +524,7 @@ export function GeneralProgramDetailFullPageModal({
     programId
   )
   const updateGeneralProgramMutation = useUpdateGeneralProgram()
+  const updateTrainedTeacherProgramMutation = useUpdateTrainedTeacherProgram()
   const {
     program: detailProgram,
     loading,
@@ -525,7 +532,6 @@ export function GeneralProgramDetailFullPageModal({
     sponsorName,
     canWrite,
   } = useGeneralProgramDetail(open ? programId : undefined, {
-    initialProgram: program,
     enabled: open,
   })
   const {
@@ -541,9 +547,7 @@ export function GeneralProgramDetailFullPageModal({
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
     // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
     if (remoteEnabled) {
-      return detailProgram
-        ? hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(detailProgram))
-        : null
+      return detailProgram ? hydrateRecruitmentWindowsOntoProgram(detailProgram) : null
     }
     const base =
       detailProgram ??
@@ -553,21 +557,43 @@ export function GeneralProgramDetailFullPageModal({
     return hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(base))
   }, [detailProgram, program, programId, remoteEnabled])
 
+  const strictRemoteRecruitment =
+    shouldUseTrainedTeacherProgramsRemoteApi() &&
+    displayProgram != null &&
+    isTrainedTeachersDetailProgram(displayProgram)
+
   const recruitmentEditProgram = useMemo(
-    () => (displayProgram ? resolveGeneralProgramForRecruitmentEdit(displayProgram) : null),
-    [displayProgram]
+    () => {
+      if (!displayProgram) return null
+      return resolveGeneralProgramForRecruitmentEdit(displayProgram, {
+        strictRemote: strictRemoteRecruitment,
+      })
+    },
+    [displayProgram, strictRemoteRecruitment]
   )
 
   const mapParticipantRecruitmentEditValues = useCallback(
-    (p: Program) => programToRecruitmentTabEditValues(p, 'participant'),
+    (p: Program) => {
+      const strictRemote =
+        shouldUseTrainedTeacherProgramsRemoteApi() && isTrainedTeachersDetailProgram(p)
+      return programToRecruitmentTabEditValues(p, 'participant', { strictRemote })
+    },
     []
   )
   const mapInstructorRecruitmentEditValues = useCallback(
-    (p: Program) => programToRecruitmentTabEditValues(p, 'instructor'),
+    (p: Program) => {
+      const strictRemote =
+        shouldUseTrainedTeacherProgramsRemoteApi() && isTrainedTeachersDetailProgram(p)
+      return programToRecruitmentTabEditValues(p, 'instructor', { strictRemote })
+    },
     []
   )
   const mapVolunteerRecruitmentEditValues = useCallback(
-    (p: Program) => programToRecruitmentTabEditValues(p, 'volunteer'),
+    (p: Program) => {
+      const strictRemote =
+        shouldUseTrainedTeacherProgramsRemoteApi() && isTrainedTeachersDetailProgram(p)
+      return programToRecruitmentTabEditValues(p, 'volunteer', { strictRemote })
+    },
     []
   )
 
@@ -577,6 +603,16 @@ export function GeneralProgramDetailFullPageModal({
       patch?: Partial<Program>,
       baseline?: Program | null
     ) => {
+      if (strictRemoteRecruitment) {
+        const echoed = await updateTrainedTeacherProgramMutation.mutateAsync({
+          programId: draft.id,
+          program: draft,
+          patch,
+        })
+        clearGeneralProgramDetailSession(draft.id)
+        setSelectedProgram(echoed)
+        return
+      }
       if (remoteEnabled) {
         await updateGeneralProgramMutation.mutateAsync({
           programId: draft.id,
@@ -586,7 +622,6 @@ export function GeneralProgramDetailFullPageModal({
           baseline: baseline ?? displayProgram ?? draft,
         })
         clearGeneralProgramDetailSession(draft.id)
-        setSelectedProgram(draft)
         return
       }
 
@@ -605,7 +640,15 @@ export function GeneralProgramDetailFullPageModal({
         // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
       }
     },
-    [displayProgram, remoteEnabled, setSelectedProgram, updateGeneralProgramMutation, updateProgram]
+    [
+      displayProgram,
+      remoteEnabled,
+      setSelectedProgram,
+      strictRemoteRecruitment,
+      updateGeneralProgramMutation,
+      updateProgram,
+      updateTrainedTeacherProgramMutation,
+    ]
   )
 
   const persistRecruitmentTab = useCallback(
@@ -617,20 +660,42 @@ export function GeneralProgramDetailFullPageModal({
             draft,
             patch,
             audience,
-            refetchProgram: fetchGeneralProgramRemoteById,
-            beforeRefetch: () => persistGeneralRecruitmentNestedSnapshot(draft),
+            refetchProgram: strictRemoteRecruitment
+              ? getTrainedTeacherProgram
+              : fetchGeneralProgramRemoteById,
+            remoteResponsePriority: strictRemoteRecruitment,
+            beforeRefetch: strictRemoteRecruitment
+              ? undefined
+              : () => persistGeneralRecruitmentNestedSnapshot(draft),
           })
           if (result.mode === 'row') {
             clearGeneralProgramDetailSession(draft.id)
-            seedOperationalRecruitOverlaysFromProgram(result.program)
-            setSelectedProgram(result.program)
-            await syncOpenProgramDetailCache(
-              queryClient,
-              generalProgramQueryKeys.detail(draft.id),
-              result.program,
-              { refetch: false }
-            )
-            invalidateGeneralProgramListCaches(queryClient)
+            if (strictRemoteRecruitment) {
+              await reflectTrainedTeacherProgramSave(queryClient, {
+                programId: draft.id,
+                echoed: result.program,
+              })
+            } else {
+              seedOperationalRecruitOverlaysFromProgram(result.program)
+              setSelectedProgram(result.program)
+              await syncOpenProgramDetailCache(
+                queryClient,
+                generalProgramQueryKeys.detail(draft.id),
+                result.program,
+                { refetch: false }
+              )
+              invalidateGeneralProgramListCaches(queryClient)
+            }
+            return
+          }
+          if (strictRemoteRecruitment) {
+            const echoed = await updateTrainedTeacherProgramMutation.mutateAsync({
+              programId: draft.id,
+              program: draft,
+              patch: result.patch,
+            })
+            clearGeneralProgramDetailSession(draft.id)
+            setSelectedProgram(echoed)
             return
           }
           await persistGeneralProgramDraft(draft, result.patch, baseline)
@@ -642,7 +707,15 @@ export function GeneralProgramDetailFullPageModal({
           baseline
         )
       },
-    [displayProgram, persistGeneralProgramDraft, queryClient, remoteEnabled, setSelectedProgram]
+    [
+      displayProgram,
+      persistGeneralProgramDraft,
+      queryClient,
+      remoteEnabled,
+      setSelectedProgram,
+      strictRemoteRecruitment,
+      updateTrainedTeacherProgramMutation,
+    ]
   )
 
   const volunteerInterviewEnabled = displayProgram
@@ -1069,6 +1142,7 @@ export function GeneralProgramDetailFullPageModal({
     onSaveEdit: recruitmentEditProgram ? persistParticipantRecruitmentDraft : undefined,
     validateSchema: programParticipantRecruitmentSaveSchema,
     recruitmentAudience: 'participant',
+    strictRemote: strictRemoteRecruitment,
   })
 
   const isEditModeInstructors =
@@ -1099,6 +1173,7 @@ export function GeneralProgramDetailFullPageModal({
     validateSchema: programInstructorRecruitmentSaveSchema,
     recruitmentAudience: 'instructor',
     recruitmentNotesField: 'instructorRecruitmentRemarks',
+    strictRemote: strictRemoteRecruitment,
   })
 
   const isEditModeVolunteers =
@@ -1128,6 +1203,7 @@ export function GeneralProgramDetailFullPageModal({
     onSaveEdit: recruitmentEditProgram ? persistVolunteerRecruitmentDraft : undefined,
     validateSchema: programVolunteerRecruitmentSaveSchema,
     recruitmentAudience: 'volunteer',
+    strictRemote: strictRemoteRecruitment,
   })
 
   const handleRecruitmentEdit = useCallback(() => {
@@ -1146,19 +1222,25 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     if (recruitSubTab === 'institutions') {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'participant')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'participant', {
+        strictRemote: strictRemoteRecruitment,
+      })
       institutionsResetToProgram()
       setEditMode('institutions')
       return
     }
     if (recruitSubTab === 'instructors') {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor', {
+        strictRemote: strictRemoteRecruitment,
+      })
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (recruitSubTab === 'volunteers') {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'volunteer')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'volunteer', {
+        strictRemote: strictRemoteRecruitment,
+      })
       volunteersResetToProgram()
       setEditMode('volunteers')
     }
@@ -1172,6 +1254,7 @@ export function GeneralProgramDetailFullPageModal({
     volunteersResetToProgram,
     setEditMode,
     showAlert,
+    strictRemoteRecruitment,
   ])
 
   const handleRecruitmentSave = useCallback(async () => {
@@ -2125,7 +2208,20 @@ export function GeneralProgramDetailFullPageModal({
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
               <GeneralProgramRecruitmentView
                 program={recruitmentEditProgram ?? displayProgram}
+                remoteStrict={strictRemoteRecruitment}
                 activeRecruitTab={recruitSubTab}
+                remoteUnavailableReason={
+                  strictRemoteRecruitment && displayProgram
+                    ? getGeneralRecruitmentRemoteUnavailableReason(
+                        displayProgram,
+                        recruitSubTab === 'instructors'
+                          ? 'instructor'
+                          : recruitSubTab === 'volunteers'
+                            ? 'volunteer'
+                            : 'participant'
+                      )
+                    : undefined
+                }
                 onRecruitTabChange={handleRecruitSubTabChange}
                 showInstructorTab={showInstructorApplications}
                 showVolunteerTab={showVolunteerApplications}

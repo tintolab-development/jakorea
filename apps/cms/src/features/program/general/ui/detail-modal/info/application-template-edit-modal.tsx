@@ -43,6 +43,7 @@ import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { seedOperationalOverlayFromProgramCatalog } from '@/features/program/general/lib/detail-operational-save-merge'
 import { invalidateProgramFormBindingsCache } from '@/features/program/general/lib/sync-registration-form-bindings'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 
 export function GeneralProgramApplicationTemplateEditModal({
   open,
@@ -76,6 +77,9 @@ export function GeneralProgramApplicationTemplateEditModal({
     [variant]
   )
   const registryEntry = useMemo(() => lookupTemplateRegistry(definitionId), [definitionId])
+  const remoteStrict =
+    variant === 'trained-teachers-application-institution' &&
+    shouldUseTrainedTeacherProgramsRemoteApi()
   const headerTitle = useMemo(
     () => resolvePreviewHeaderTitle(registryEntry, templateName),
     [registryEntry, templateName]
@@ -88,10 +92,10 @@ export function GeneralProgramApplicationTemplateEditModal({
   }, [open])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || remoteStrict) return
     setOperationalOverlayScope(definitionId)
     seedOperationalOverlayFromProgramCatalog(scopedProgram, definitionId)
-  }, [open, definitionId, scopedProgram])
+  }, [open, definitionId, remoteStrict, scopedProgram])
 
   useEffect(() => {
     if (!open) return
@@ -113,10 +117,11 @@ export function GeneralProgramApplicationTemplateEditModal({
 
   const formSource = useProgramApplicationFormLoadSource(scopedProgram, variant, {
     ensureScopedBinding: open,
+    remoteStrict,
   })
 
   const vm = useProgramParticipantApplicationEditor(
-    open && !formSource.bindingsLoading,
+    open && !formSource.bindingsLoading && formSource.unavailableReason == null,
     templateName,
     variant,
     {
@@ -133,6 +138,7 @@ export function GeneralProgramApplicationTemplateEditModal({
       variant === 'trained-teachers-application-institution',
     templateVersionId: formSource.templateVersionId,
     preferLocalDraft: formSource.preferLocalDraft,
+    requireRemoteDraft: remoteStrict,
     }
   )
 
@@ -211,8 +217,22 @@ export function GeneralProgramApplicationTemplateEditModal({
       zIndex={1200}
       onPreview={vm.handlePreview}
       onSave={handleSave}
-      leftContent={vm.isDraftLoading ? <FormDraftLoading /> : panels.leftContent}
-      rightNavigation={vm.isDraftLoading ? null : panels.rightNavigation}
+      leftContent={
+        formSource.unavailableReason != null || vm.remoteDraftLoadError != null ? (
+          <div className="form-draft-unavailable" role="alert">
+            원격 신청 양식을 불러올 수 없습니다.
+          </div>
+        ) : vm.isDraftLoading ? (
+          <FormDraftLoading />
+        ) : (
+          panels.leftContent
+        )
+      }
+      rightNavigation={
+        formSource.unavailableReason != null || vm.remoteDraftLoadError != null || vm.isDraftLoading
+          ? null
+          : panels.rightNavigation
+      }
     />
     </RegistrationWizardValidationHighlightProvider>
   )

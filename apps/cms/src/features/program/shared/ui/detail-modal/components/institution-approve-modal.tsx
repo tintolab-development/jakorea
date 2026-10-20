@@ -9,6 +9,7 @@ import {
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
+import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
 import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import {
@@ -34,6 +35,8 @@ import './institution-approve-modal.css'
 
 export type InstitutionApproveScheduleConfig = {
   preferredEducationSchedules?: PreferredEducationSchedule[]
+  /** 교육받은 교사 신청의 구조화된 희망 일정. 일반 신청 일정과 같은 카드·배정 흐름으로 투영한다. */
+  preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
 }
 
 export type InstitutionApproveConfirmPayload = PermissionModalPayload & {
@@ -83,6 +86,72 @@ export function buildInstitutionApproveMessage(
   return `**[${trimmedName}]**의 프로그램 참여를 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
 }
 
+function normalizeScheduleDateToken(value: string): string {
+  const match = /^(\d{4})[.-](\d{1,2})[.-](\d{1,2})$/.exec(value.trim())
+  if (!match) return value.trim()
+  return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`
+}
+
+function readScheduleClock(value: string | undefined): string | null {
+  const match = /^(\d{1,2}):(\d{2})/.exec(value?.trim() ?? '')
+  if (!match) return null
+  return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+}
+
+function readSessionClock(
+  session: ApplicantPreferredScheduleBlock['sessionTimes'][number] | undefined,
+  side: 'start' | 'end'
+): string | null {
+  const explicit = readScheduleClock(side === 'start' ? session?.startTime : session?.endTime)
+  if (explicit) return explicit
+  const parts = session?.timeRange?.split(/\s*[~\-–]\s*/u) ?? []
+  return readScheduleClock(side === 'start' ? parts[0] : parts.at(-1))
+}
+
+function resolveTrainedTeacherScheduleDateTimes(block: ApplicantPreferredScheduleBlock): {
+  startAt?: string
+  endAt?: string
+} {
+  const date = normalizeScheduleDateToken(block.date)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return {}
+  const first = block.sessionTimes[0]
+  const last = block.sessionTimes.at(-1) ?? first
+  const startClock = readSessionClock(first, 'start')
+  const endClock = readSessionClock(last, 'end')
+  if (!startClock || !endClock) {
+    return { startAt: date, endAt: date }
+  }
+  return {
+    startAt: `${date}T${startClock}:00+09:00`,
+    endAt: `${date}T${endClock}:00+09:00`,
+  }
+}
+
+function mapTrainedTeacherPreferredScheduleBlock(
+  block: ApplicantPreferredScheduleBlock
+): PreferredEducationSchedule & { preferenceOrder?: number; sessionCount?: number } {
+  const derivedDateTimes = resolveTrainedTeacherScheduleDateTimes(block)
+  const startAt = block.startAt?.trim() || derivedDateTimes.startAt
+  const endAt = block.endAt?.trim() || derivedDateTimes.endAt || startAt
+  const baseLabel = block.label?.trim() || ''
+  const sessionLabelNumber = block.round ?? block.sessionCount
+  const sessionDetail =
+    sessionLabelNumber > 0 && !/\d+\s*(?:차시|회차)/u.test(baseLabel)
+      ? `${sessionLabelNumber}차시`
+      : ''
+  const label = [baseLabel, sessionDetail].filter(Boolean).join(' | ') || undefined
+  return {
+    scheduleId: block.scheduleId ?? null,
+    round: block.round ?? null,
+    startAt,
+    endAt,
+    label,
+    preferenceOrder: block.preferenceRank,
+    sessionCount: block.sessionCount,
+    scheduleStatus: block.scheduleStatus?.trim().toUpperCase() || null,
+  }
+}
+
 export function InstitutionApproveModal({
   open,
   schoolName,
@@ -104,12 +173,27 @@ export function InstitutionApproveModal({
 }: InstitutionApproveModalProps) {
   const { showAlert } = useCmsAlert()
   const periodSchedule = educationScheduleMode === 'period'
-  const preferredFromDetail = scheduleConfig?.preferredEducationSchedules
+  const hasStructuredPreferredScheduleSource = scheduleConfig?.preferredScheduleBlocks != null
+  const preferredFromDetail = useMemo(() => {
+    const generalSchedules = scheduleConfig?.preferredEducationSchedules
+    if (!hasStructuredPreferredScheduleSource && generalSchedules && generalSchedules.length > 0) {
+      return generalSchedules
+    }
+    return [...(scheduleConfig?.preferredScheduleBlocks ?? [])]
+      .sort((left, right) => left.preferenceRank - right.preferenceRank)
+      .map(mapTrainedTeacherPreferredScheduleBlock)
+  }, [
+    hasStructuredPreferredScheduleSource,
+    scheduleConfig?.preferredEducationSchedules,
+    scheduleConfig?.preferredScheduleBlocks,
+  ])
   const preferredDetailCount = preferredFromDetail?.length ?? 0
   const requestedApplicationId = organizationApplicationId?.trim() ?? ''
   const requestedSchedulesQuery = useQuery({
     ...organizationRequestedSchedulesQueryOptions(requestedApplicationId),
-    enabled: open && requestedApplicationId.length > 0,
+    // 교육받은 교사는 전용 상세 응답의 preferredScheduleBlocks가 정본이므로
+    // GENERAL requested-schedules fallback을 호출하지 않는다.
+    enabled: open && requestedApplicationId.length > 0 && !hasStructuredPreferredScheduleSource,
   })
   const programSchedulesQuery = useQuery({
     queryKey: generalProgramQueryKeys.educationSlots(programId ?? ''),
@@ -121,18 +205,28 @@ export function InstitutionApproveModal({
   const educationSlots = programSchedulesQuery.isSuccess
     ? (programSchedulesQuery.data ?? [])
     : undefined
-  const requestedSchedules = requestedSchedulesQuery.isSuccess
-    ? requestedSchedulesQuery.data
-    : undefined
+  const requestedSchedules =
+    !hasStructuredPreferredScheduleSource && requestedSchedulesQuery.isSuccess
+      ? requestedSchedulesQuery.data
+      : undefined
   const scheduleValidation = useMemo(
     () =>
       resolveOrganizationApproveScheduleOptionsFromPreferred(
         preferredFromDetail,
         educationSlots,
         educationScheduleMode,
-        requestedSchedules
+        requestedSchedules,
+        hasStructuredPreferredScheduleSource,
+        hasStructuredPreferredScheduleSource,
+        hasStructuredPreferredScheduleSource
       ),
-    [educationScheduleMode, educationSlots, preferredFromDetail, requestedSchedules]
+    [
+      educationScheduleMode,
+      educationSlots,
+      hasStructuredPreferredScheduleSource,
+      preferredFromDetail,
+      requestedSchedules,
+    ]
   )
   const scheduleOptions = scheduleValidation.options
   const preferredSource = useMemo(
@@ -164,8 +258,12 @@ export function InstitutionApproveModal({
             label: source?.label ?? option.label,
             startAt: source?.startAt,
             endAt: source?.endAt,
-            preferenceOrder: requestedRow?.preferenceOrder,
-            sessionCount: requestedRow?.sessionCount,
+            preferenceOrder:
+              requestedRow?.preferenceOrder ??
+              (source as { preferenceOrder?: number } | undefined)?.preferenceOrder,
+            sessionCount:
+              requestedRow?.sessionCount ??
+              (source as { sessionCount?: number } | undefined)?.sessionCount,
             educationScheduleMode,
             educationStructure,
             sessionRound,
@@ -196,11 +294,13 @@ export function InstitutionApproveModal({
       sessionsPerRound,
     ]
   )
-  const periodSingleRequestedApproval = isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
-    educationScheduleMode,
-    sessionRound,
-    educationStructure,
-  })
+  const periodSingleRequestedApproval =
+    !hasStructuredPreferredScheduleSource &&
+    isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
+      educationScheduleMode,
+      sessionRound,
+      educationStructure,
+    })
   const requestedScheduleCards = useMemo(() => {
     if (!periodSingleRequestedApproval) return []
     return requestedRowsForDetail.flatMap(row => {
@@ -242,7 +342,9 @@ export function InstitutionApproveModal({
     sessionRound,
     sessionsPerRound,
   ])
-  const scheduleCardsForView = periodSingleRequestedApproval ? requestedScheduleCards : scheduleCards
+  const scheduleCardsForView = periodSingleRequestedApproval
+    ? requestedScheduleCards
+    : scheduleCards
   const allowsMultipleSchedules = periodSingleRequestedApproval
     ? false
     : allowsMultipleOrganizationEducationScheduleAssignment({
@@ -271,18 +373,19 @@ export function InstitutionApproveModal({
   useEffect(() => {
     if (!open) return
     setSelectedOptionKeys([])
-  }, [open, scheduleConfig?.preferredEducationSchedules, selectionResetQuery.data])
+  }, [open, preferredFromDetail, selectionResetQuery.data])
 
   const usesScheduleSection = scheduleConfig != null
   const autoAssignSchedule =
-    usesScheduleSection && educationStructure === 'schedule' && sessionRound === 'multi'
+    usesScheduleSection &&
+    !hasStructuredPreferredScheduleSource &&
+    educationStructure === 'schedule' &&
+    sessionRound === 'multi'
   const hasPreferredSchedules = periodSingleRequestedApproval
     ? requestedScheduleCards.length > 0
     : scheduleOptions.length > 0
   const awaitingRequestedSchedules = periodSingleRequestedApproval
-    ? usesScheduleSection &&
-      requestedApplicationId.length > 0 &&
-      requestedSchedulesQuery.isLoading
+    ? usesScheduleSection && requestedApplicationId.length > 0 && requestedSchedulesQuery.isLoading
     : usesScheduleSection &&
       !autoAssignSchedule &&
       preferredDetailCount === 0 &&
@@ -304,6 +407,7 @@ export function InstitutionApproveModal({
       programId,
       organizationApplicationId,
       preferredEducationSchedules: scheduleConfig?.preferredEducationSchedules,
+      preferredScheduleBlocks: scheduleConfig?.preferredScheduleBlocks,
       invalidReason: scheduleValidation.invalidReason,
       duplicateScheduleIds: scheduleValidation.duplicateScheduleIds,
     })
@@ -312,6 +416,7 @@ export function InstitutionApproveModal({
     organizationApplicationId,
     programId,
     scheduleConfig?.preferredEducationSchedules,
+    scheduleConfig?.preferredScheduleBlocks,
     awaitingRequestedSchedules,
     scheduleOptions.length,
     scheduleValidation.duplicateScheduleIds,
@@ -319,7 +424,10 @@ export function InstitutionApproveModal({
   ])
 
   const commonAssignmentCards = useMemo(() => {
-    if (periodSchedule || hasPreferredSchedules) return []
+    // 교육받은 교사 신청은 상세의 preferredScheduleBlocks만 정본으로 사용한다.
+    // 프로그램 공통 슬롯을 fallback 카드로 노출하면 신청자가 고르지 않은
+    // 일정이 승인 payload에 섞일 수 있으므로 일반 기관에서만 표시한다.
+    if (hasStructuredPreferredScheduleSource || periodSchedule || hasPreferredSchedules) return []
     return scheduleValidation.commonSlotOptions.map(option => ({
       key: option.optionKey ?? `common:${option.scheduleId}`,
       title: option.label,
@@ -328,11 +436,20 @@ export function InstitutionApproveModal({
       requestedScheduleId: undefined as number | undefined,
       note: null as string | null,
     }))
-  }, [hasPreferredSchedules, periodSchedule, scheduleValidation.commonSlotOptions])
+  }, [
+    hasPreferredSchedules,
+    hasStructuredPreferredScheduleSource,
+    periodSchedule,
+    scheduleValidation.commonSlotOptions,
+  ])
   const selectableCards = periodSingleRequestedApproval
     ? requestedScheduleCards
     : hasPreferredSchedules
-      ? scheduleCards.filter(card => periodSchedule || card.confirmableScheduleId != null)
+      ? scheduleCards.filter(card =>
+          hasStructuredPreferredScheduleSource
+            ? card.confirmableScheduleId != null
+            : periodSchedule || card.confirmableScheduleId != null
+        )
       : commonAssignmentCards
   const selectedCards = selectableCards.filter(card => selectedOptionKeys.includes(card.key))
 
@@ -344,7 +461,10 @@ export function InstitutionApproveModal({
     })
   }
 
-  const scheduleSelectionRequired = usesScheduleSection && !autoAssignSchedule
+  const allowUnassignedApproval =
+    hasStructuredPreferredScheduleSource && selectableCards.length === 0
+  const scheduleSelectionRequired =
+    usesScheduleSection && !autoAssignSchedule && !allowUnassignedApproval
   const handleConfirm = (payload: PermissionModalPayload) => {
     if (autoAssignSchedule) {
       const schedulePayload = autoAssign.payload
@@ -536,7 +656,9 @@ export function InstitutionApproveModal({
                   aria-pressed={selected}
                   onClick={() => toggleSchedule(card.key)}
                 >
-                  <span className="institution-approve-modal__schedule-card-title">{card.title}</span>
+                  <span className="institution-approve-modal__schedule-card-title">
+                    {card.title}
+                  </span>
                 </button>
               )
             })}
@@ -608,11 +730,7 @@ export function InstitutionApproveModal({
       width={600}
     >
       <PermissionModalMessage
-        text={buildInstitutionApproveMessage(
-          schoolName,
-          usesScheduleSection,
-          autoAssignSchedule
-        )}
+        text={buildInstitutionApproveMessage(schoolName, usesScheduleSection, autoAssignSchedule)}
       />
       {scheduleSection}
     </PermissionModal>

@@ -6,6 +6,14 @@ export const STUDENT_ROSTER_UPLOAD_MAX_ROWS = 500
 export const STUDENT_ROSTER_FILE_ACCEPT =
   '.xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
+export const STUDENT_ROSTER_ALLOWED_FILE_TYPES = [
+  {
+    extensions: ['xlsx'],
+    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  },
+  { extensions: ['csv'], contentType: 'text/csv' },
+] as const
+
 const ALLOWED_EXTENSIONS = new Set(['xlsx', 'csv'])
 
 function fileExtension(fileName: string): string {

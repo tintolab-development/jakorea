@@ -1,4 +1,5 @@
 import type { Dayjs } from 'dayjs'
+import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 
@@ -32,6 +33,15 @@ export type ApplicantPreferredScheduleBlock = {
   dayOfWeek: string
   sessionCount: number
   sessionTimes: ApplicantPreferredScheduleSessionTime[]
+  /** TT 서버가 고유 매칭한 실제 program_schedule.id */
+  scheduleId?: number | null
+  /** 매칭된 운영 일정의 시작·종료 시각 */
+  startAt?: string | null
+  endAt?: string | null
+  /** 매칭된 운영 일정 회차·표시 라벨 */
+  round?: number | null
+  label?: string | null
+  scheduleStatus?: string | null
 }
 
 /** 신청 기관 상세 — 기본 정보·안내 사항 확장 필드 (mock/UI 공통) */
@@ -116,6 +126,10 @@ export interface ApplicantSchoolRow {
    * remote SoT — desiredEducationScheduleMemo를 파싱해 채우지 않음.
    */
   preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
+  /** TT 기관 신청 상세 `gradeBlocks` — 학생 명단 학급 Select SSOT. 목록 응답에는 없음 */
+  gradeBlocks?: GradeBlock[] | null
+  /** TT 기관 신청 상세 `educationSchedules` — 출석 조회 scheduleIds SSOT. 목록 응답에는 없음 */
+  educationScheduleSessions?: ParticipatingSchoolSession[]
   /** TT 교육 대상 (org-application additive) */
   educationTarget?: string
   /** TT 강의 회차 라벨 (config) */

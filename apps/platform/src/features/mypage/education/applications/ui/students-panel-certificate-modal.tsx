@@ -1,75 +1,101 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PortalStudentRosterItem } from '../api/student-documents-types'
+import { useDownloadOrganizationStudentCertificatesMutation } from '../api/student-documents-hooks'
 import {
   formatPortalStudentBirthDate,
   formatPortalStudentGender,
   formatPortalStudentGradeClass,
 } from '../lib/student-documents-display'
+import {
+  type CertificateSelection,
+  currentCertificateSelectionKeys,
+  resolveSelectedRosterIds,
+  toCertificateRosterEntries,
+  validateCertificateRosterIds,
+} from '../lib/certificate-bulk-download'
+import { resolveStudentDocumentsErrorMessage } from '../lib/student-documents-errors'
 import fileDownloadBlackUrl from '@/shared/assets/icons/file-download-black.svg'
 import { PFAlertModal, PFButton, PFCheckbox, PFModal, PFText } from '@/shared/ui'
 import styles from './students-panel-certificate-modal.module.css'
 
-function rosterRowKey(row: PortalStudentRosterItem, index: number): string {
-  if (row.rosterId != null) return String(row.rosterId)
-  return `${index}-${row.studentName ?? ''}-${row.studentNo ?? ''}-${row.birthDate ?? ''}`
-}
-
 type StudentsPanelCertificateModalProps = {
+  applicationId: string
   open: boolean
   onClose: () => void
   rows: PortalStudentRosterItem[]
 }
 
 export function StudentsPanelCertificateModal({
+  applicationId,
   open,
   onClose,
   rows,
 }: StudentsPanelCertificateModalProps) {
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set())
+  const [selection, setSelection] = useState<CertificateSelection>(() => ({
+    applicationId,
+    keys: new Set(),
+  }))
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
-  const [isDownloading, setIsDownloading] = useState(false)
+  const downloadCertificates = useDownloadOrganizationStudentCertificatesMutation(applicationId)
+  const isDownloading = downloadCertificates.isPending
+  const downloadInFlightRef = useRef(false)
 
-  const rowEntries = useMemo(
-    () => rows.map((row, index) => ({ row, index, key: rosterRowKey(row, index) })),
-    [rows],
+  const rowEntries = useMemo(() => toCertificateRosterEntries(rows), [rows])
+  const selectableKeys = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rowEntries.flatMap(entry => (entry.selectionKey == null ? [] : [entry.selectionKey])),
+        ),
+      ),
+    [rowEntries],
+  )
+  const selectedKeys = currentCertificateSelectionKeys(selection, applicationId)
+  const selectedRosterIds = useMemo(
+    () => resolveSelectedRosterIds(rowEntries, selectedKeys),
+    [rowEntries, selectedKeys],
   )
 
-  const allKeys = useMemo(() => rowEntries.map(entry => entry.key), [rowEntries])
-
   useEffect(() => {
-    if (!open) {
-      setSelectedKeys(new Set())
-      setIsDownloading(false)
-      return
-    }
-    setSelectedKeys(new Set())
-  }, [open, rows])
+    setSelection({ applicationId, keys: new Set() })
+    setAlertMessage(null)
+  }, [open, rows, applicationId])
 
-  const allSelected = allKeys.length > 0 && allKeys.every(key => selectedKeys.has(key))
+  const allSelected =
+    selectableKeys.length > 0 && selectableKeys.every(key => selectedKeys.has(key))
 
   const toggleAll = useCallback(() => {
-    setSelectedKeys(allSelected ? new Set() : new Set(allKeys))
-  }, [allKeys, allSelected])
+    setSelection({ applicationId, keys: allSelected ? new Set() : new Set(selectableKeys) })
+  }, [applicationId, allSelected, selectableKeys])
 
-  const toggleRow = useCallback((key: string, checked: boolean) => {
-    setSelectedKeys(prev => {
-      const next = new Set(prev)
-      if (checked) next.add(key)
-      else next.delete(key)
-      return next
-    })
-  }, [])
+  const toggleRow = useCallback(
+    (key: string, checked: boolean) => {
+      setSelection(prev => {
+        const next = new Set(currentCertificateSelectionKeys(prev, applicationId))
+        if (checked) next.add(key)
+        else next.delete(key)
+        return { applicationId, keys: next }
+      })
+    },
+    [applicationId],
+  )
 
-  const handleDownload = () => {
-    if (selectedKeys.size === 0) {
-      setAlertMessage('수료증을 발급할 학생을 선택해 주세요.')
+  const handleDownload = async () => {
+    if (isDownloading || downloadInFlightRef.current) return
+    const validationMessage = validateCertificateRosterIds(selectedRosterIds)
+    if (validationMessage) {
+      setAlertMessage(validationMessage)
       return
     }
-    setIsDownloading(true)
-    window.setTimeout(() => {
-      setIsDownloading(false)
-      setAlertMessage('수료증 다운로드 기능을 준비 중입니다.')
-    }, 200)
+    downloadInFlightRef.current = true
+    try {
+      await downloadCertificates.mutateAsync(selectedRosterIds)
+      onClose()
+    } catch (error) {
+      setAlertMessage(resolveStudentDocumentsErrorMessage(error, '수료증을 다운로드하지 못했습니다.'))
+    } finally {
+      downloadInFlightRef.current = false
+    }
   }
 
   return (
@@ -95,6 +121,7 @@ export function StudentsPanelCertificateModal({
                     <PFCheckbox
                       size="small"
                       checked={allSelected}
+                      disabled={selectableKeys.length === 0 || isDownloading}
                       aria-label="전체 선택"
                       onCheckedChange={() => toggleAll()}
                     />
@@ -137,14 +164,17 @@ export function StudentsPanelCertificateModal({
                 </tr>
               </thead>
               <tbody>
-                {rowEntries.map(({ row, index, key }) => (
-                  <tr key={key}>
+                {rowEntries.map(({ row, index, selectionKey }) => (
+                  <tr key={`${index}-${selectionKey ?? 'unselectable'}`}>
                     <td className={styles.checkboxCell}>
                       <PFCheckbox
                         size="small"
-                        checked={selectedKeys.has(key)}
+                        checked={selectionKey != null && selectedKeys.has(selectionKey)}
+                        disabled={selectionKey == null || isDownloading}
                         aria-label={`${row.studentName?.trim() || '학생'} 선택`}
-                        onCheckedChange={checked => toggleRow(key, checked)}
+                        onCheckedChange={checked => {
+                          if (selectionKey != null) toggleRow(selectionKey, checked)
+                        }}
                       />
                     </td>
                     <td>
@@ -204,7 +234,7 @@ export function StudentsPanelCertificateModal({
               className={styles.footerButton}
               variant="primary"
               size="xlarge"
-              disabled={isDownloading || selectedKeys.size === 0}
+              disabled={isDownloading || selectedRosterIds.length === 0}
               onClick={handleDownload}
             >
               <span className={styles.downloadInner}>

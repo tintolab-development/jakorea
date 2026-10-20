@@ -11,8 +11,8 @@ import { applyTrainedTeacherInfoDetailSaveToCache } from './info-detail-adapters
 
 const programId = '186009'
 
-describe('교육받은 교사 설문 진행 항목 쿼리 반영', () => {
-  it('상세 구독 키에 설문 키를 남기고 상세는 무효화하지 않는다', async () => {
+describe('교육받은 교사 저장 응답 캐시 반영', () => {
+  it('서버 재조회 응답을 그대로 캐시하고 상세는 무효화하지 않는다', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     })
@@ -33,18 +33,6 @@ describe('교육받은 교사 설문 진행 항목 쿼리 반영', () => {
     queryClient.setQueryData(generalProgramQueryKeys.surveys(programId), [])
     queryClient.setQueryData(trainedTeacherQueryKeys.list('filters'), { pages: [], pageParams: [] })
 
-    const draft = {
-      id: programId,
-      title: 'TT',
-      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
-      registrationOverlay: {
-        'trainedTeachersRegistration.basicInfo.surveyItems': {
-          survey: true,
-          satisfaction: true,
-          lecture_evaluation: true,
-        },
-      },
-    } as unknown as Program
     const echoed = {
       id: programId,
       title: '서버 제목',
@@ -56,27 +44,14 @@ describe('교육받은 교사 설문 진행 항목 쿼리 반영', () => {
     await reflectTrainedTeacherProgramSave(queryClient, {
       programId,
       echoed,
-      draft,
-      patch: {
-        title: undefined,
-        businessArea: undefined,
-        generalSurveyMenuKeys: draft.generalSurveyMenuKeys,
-        registrationOverlay: draft.registrationOverlay,
-      },
     })
 
     const cached = queryClient.getQueryData<Program>(detailKey)
     expect(cached?.title).toBe('서버 제목')
     expect(cached?.businessArea).toBe('경제금융')
     expect(cached?.venue).toBe('서버 장소')
-    expect(cached?.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
-    expect(
-      (
-        cached?.registrationOverlay?.[
-          'trainedTeachersRegistration.basicInfo.surveyItems'
-        ] as Record<string, boolean>
-      )?.satisfaction
-    ).toBe(true)
+    expect(cached?.generalSurveyMenuKeys).toEqual(['survey'])
+    expect(cached?.registrationOverlay).toBeUndefined()
     expect(detailFetches).toBe(0)
     expect(queryClient.getQueryState(detailKey)?.isInvalidated).toBe(false)
     expect(queryClient.getQueryState(trainedTeacherQueryKeys.list('filters'))?.isInvalidated).toBe(
@@ -112,11 +87,7 @@ describe('교육받은 교사 설문 진행 항목 쿼리 반영', () => {
       programId
     )
     queryClient.setQueryData(detailKey, afterInfoDetail)
-    expect(queryClient.getQueryData<Program>(detailKey)?.generalSurveyMenuKeys).toEqual([
-      'survey',
-      'satisfaction',
-      'lecture_evaluation',
-    ])
+    expect(queryClient.getQueryData<Program>(detailKey)?.generalSurveyMenuKeys).toEqual(['survey'])
     expect(queryClient.getQueryData<Program>(detailKey)?.title).toBe('일지 저장 후')
 
     queryClient.clear()

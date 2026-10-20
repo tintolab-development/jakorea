@@ -14,52 +14,24 @@ export function listTrainedTeacherSurveyReflectionQueryKeys(programId: string) {
   return [
     generalProgramQueryKeys.navigation(programId),
     ...listGeneralProgramSurveyCacheInvalidationQueryKeys(programId),
+    trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
+    trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
+    trainedTeacherQueryKeys.educationCompletionsProgram(programId),
+    trainedTeacherQueryKeys.performanceSummary(programId),
+    trainedTeacherQueryKeys.programSchedules(programId),
   ]
 }
 
-/**
- * 저장 직후 GET이 정본이다. 설문 키·overlay만 이번 저장 값으로 덮는다.
- * patch 전체를 얹으면 `undefined` 필드가 GET의 제목·장소 등을 지운다.
- */
-function trainedTeacherDetailAfterProgramSave(
-  programId: string,
-  echoed: Program,
-  draft: Program,
-  patch?: Partial<Program>
-): Program {
-  const generalSurveyMenuKeys =
-    patch?.generalSurveyMenuKeys !== undefined
-      ? patch.generalSurveyMenuKeys
-      : draft.generalSurveyMenuKeys !== undefined
-        ? draft.generalSurveyMenuKeys
-        : echoed.generalSurveyMenuKeys
-  const registrationOverlay =
-    patch?.registrationOverlay ?? draft.registrationOverlay ?? echoed.registrationOverlay
-  return {
-    ...echoed,
-    id: programId || echoed.id,
-    ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
-    ...(registrationOverlay !== undefined ? { registrationOverlay } : {}),
-  }
-}
-
-/** 열린 교육받은 교사 상세가 구독하는 키에 설문 키·overlay를 반영하고, 파생 설문 쿼리만 무효화한다. */
+/** 저장 직후 재조회한 원격 응답을 그대로 상세 캐시에 반영한다. */
 export async function reflectTrainedTeacherProgramSave(
   queryClient: QueryClient,
   input: {
     programId: string
     echoed: Program
-    draft: Program
-    patch?: Partial<Program>
   }
 ): Promise<Program> {
   const detailKey = trainedTeacherQueryKeys.detail(input.programId)
-  const next = trainedTeacherDetailAfterProgramSave(
-    input.programId,
-    input.echoed,
-    input.draft,
-    input.patch
-  )
+  const next = { ...input.echoed, id: input.programId || input.echoed.id }
   await syncOpenProgramDetailCache(queryClient, detailKey, next, { refetch: false })
   invalidateTrainedTeacherListCaches(queryClient)
   await Promise.all(

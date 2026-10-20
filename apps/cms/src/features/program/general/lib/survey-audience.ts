@@ -79,6 +79,19 @@ export function isTrainedTeachersProgram(program: Program): boolean {
   )
 }
 
+/** SATISFACTION form-binding `targetRole`. 교육받은 교사는 교사만 허용. */
+export function resolveSatisfactionFormBindingTargetRole(
+  program: Program,
+  audience: GeneralSatisfactionAudienceKey | null | undefined
+): 'TEACHER' | 'STUDENT' | 'VOLUNTEER' | 'INDIVIDUAL' | undefined {
+  if (isTrainedTeachersProgram(program)) return 'TEACHER'
+  if (audience == null) return undefined
+  if (audience === 'teacher') return 'TEACHER'
+  if (audience === 'student') return 'STUDENT'
+  if (audience === 'volunteer_h1' || audience === 'volunteer_h2') return 'VOLUNTEER'
+  return 'INDIVIDUAL'
+}
+
 /** 1사1교 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
 export function isInstitutionTeacherOnlySatisfactionProgram(program: Program): boolean {
   return isCompanySchoolProgram(program) || isTrainedTeachersProgram(program)

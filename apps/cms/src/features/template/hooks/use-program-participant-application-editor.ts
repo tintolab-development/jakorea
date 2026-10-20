@@ -365,6 +365,8 @@ export type UseProgramParticipantApplicationEditorOptions = {
   templateVersionId?: number
   /** 바인딩 전용 version이 없을 때 등록 위저드 localStorage 초안을 우선 */
   preferLocalDraft?: boolean
+  /** 원격 신청 양식은 remote draft가 없을 때 seed/local draft로 대체하지 않음 */
+  requireRemoteDraft?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -680,6 +682,7 @@ export function useProgramParticipantApplicationEditor(
           ?.latestVersionId
       : undefined)
   const preferLocalDraft = editorOptions?.preferLocalDraft === true
+  const requireRemoteDraft = editorOptions?.requireRemoteDraft === true
   const registrationWizardOpen = editorOptions?.registrationWizardOpen
   const keepSessionCacheAcrossParticipantDeactivate = registrationWizardOpen === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
@@ -754,6 +757,7 @@ export function useProgramParticipantApplicationEditor(
   const [draftHydrateKey, setDraftHydrateKey] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(() => active)
+  const [remoteDraftLoadError, setRemoteDraftLoadError] = useState<unknown>(null)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [ujatGradeApplicationBlockIds, setUjatGradeApplicationBlockIds] = useState<string[]>(() => [
     crypto.randomUUID(),
@@ -902,8 +906,10 @@ export function useProgramParticipantApplicationEditor(
       snapshottedOnSwitchRef.current = draftHydrateKey
     }
     setDraftHydrateKey(editorHydrateKey)
-    const cached = sessionDraftCacheRef.current.get(editorHydrateKey)
-    const cacheIsHydrated = storageHydratedTemplateIdsRef.current.has(editorHydrateKey)
+    const cached = requireRemoteDraft ? undefined : sessionDraftCacheRef.current.get(editorHydrateKey)
+    const cacheIsHydrated = requireRemoteDraft
+      ? false
+      : storageHydratedTemplateIdsRef.current.has(editorHydrateKey)
     const autofilled =
       usesRegistrationWizardDraft
         ? peekRegistrationWizardSessionDrafts().find(
@@ -915,12 +921,13 @@ export function useProgramParticipantApplicationEditor(
     const nextDraft =
       cached != null && cacheIsHydrated
         ? cached.draft
-        : (autofilled?.draft ?? createSeedDraft())
+        : (autofilled?.draft ?? (requireRemoteDraft ? EMPTY_WRITING_FORM_DRAFT : createSeedDraft()))
     const normalized = normalizeEditorDraft(nextDraft)
     setDraft(normalized)
     setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-    setIsDraftLoading(false)
+    setIsDraftLoading(requireRemoteDraft)
+    setRemoteDraftLoadError(null)
   }
   overlayVariantRef.current = variant
 
@@ -976,6 +983,7 @@ export function useProgramParticipantApplicationEditor(
     const hydrateKey = editorHydrateKey
     const clearOverlaysOnHydrate = peekWizardContentResetPending()
     const replaceHydratedOverlay = clearOverlaysOnHydrate || !usesRegistrationWizardDraft
+    setRemoteDraftLoadError(null)
     const finishWizardDetailHydrate = () => {
       if (replaceHydratedOverlay) commitRecruitDetailContentReset()
       if (clearOverlaysOnHydrate) consumeWizardContentResetPending()
@@ -988,8 +996,10 @@ export function useProgramParticipantApplicationEditor(
       setSingleItemListActiveItemId(null)
     }
 
-    const cached = sessionDraftCacheRef.current.get(hydrateKey)
-    const cacheIsHydrated = storageHydratedTemplateIdsRef.current.has(hydrateKey)
+    const cached = requireRemoteDraft ? undefined : sessionDraftCacheRef.current.get(hydrateKey)
+    const cacheIsHydrated = requireRemoteDraft
+      ? false
+      : storageHydratedTemplateIdsRef.current.has(hydrateKey)
     // draft는 render에서 맞춤. 여기선 overlay만 보강해 탭 전환 재페인트가 나지 않게 한다.
     if (cached && cacheIsHydrated && !clearOverlaysOnHydrate) {
       if (variant === 'ujat-recruit-institution') {
@@ -1027,9 +1037,9 @@ export function useProgramParticipantApplicationEditor(
           setUjatGradeClassTimeBlockIds,
         })
       }
-      setIsDraftLoading(false)
+      setIsDraftLoading(requireRemoteDraft)
     } else {
-      setIsDraftLoading(false)
+      setIsDraftLoading(requireRemoteDraft)
     }
 
     const preferSessionCache = cached != null && cacheIsHydrated && !clearOverlaysOnHydrate
@@ -1182,6 +1192,11 @@ export function useProgramParticipantApplicationEditor(
           consumeWizardContentResetPending()
         }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
+      }).catch(error => {
+        if (cancelled) return
+        console.warn('[participant-application-editor] draft load failed', error)
+        setRemoteDraftLoadError(error)
+        setIsDraftLoading(false)
       })
     } else {
       void loadDraftPromise.then(saved => {
@@ -1190,6 +1205,33 @@ export function useProgramParticipantApplicationEditor(
           return
         }
         if (preferSessionCache) return
+
+        if (requireRemoteDraft) {
+          if (saved?.draft == null) {
+            setRemoteDraftLoadError(new Error('원격 신청 양식을 불러올 수 없습니다.'))
+            setIsDraftLoading(false)
+            return
+          }
+          applyDraftNow(saved.draft)
+          restoreParticipantOverlayForVariant(variant, saved.overlay, {
+            resetIfMissing: replaceHydratedOverlay,
+            replace: replaceHydratedOverlay,
+            persistTemplateId: templateId,
+          })
+          finishWizardDetailHydrate()
+          applyParticipantApplicationEditorState({
+            variant,
+            editorState: saved.editorState,
+            setVolunteerExceptionScheduleCount,
+            setUjatVolunteerApplicationType,
+            setUjatGradeApplicationBlockIds,
+            setUjatApplicationGradeByBlockId,
+            setUjatGradeClassTimeBlockIds,
+          })
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
+          setIsDraftLoading(false)
+          return
+        }
         const autofilled = clearOverlaysOnHydrate
           ? undefined
           : peekRegistrationWizardSessionDrafts().find(
@@ -1266,6 +1308,11 @@ export function useProgramParticipantApplicationEditor(
           consumeWizardContentResetPending()
         }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
+      }).catch(error => {
+        if (cancelled) return
+        console.warn('[participant-application-editor] draft load failed', error)
+        setRemoteDraftLoadError(error)
+        setIsDraftLoading(false)
       })
     }
 
@@ -1331,6 +1378,7 @@ export function useProgramParticipantApplicationEditor(
     normalizeEditorDraft,
     persistTemplateVersionId,
     preferLocalDraft,
+    requireRemoteDraft,
     registrationWizardProgramType,
     skipDraftRestore,
     usesRegistrationWizardDraft,
@@ -2169,6 +2217,7 @@ export function useProgramParticipantApplicationEditor(
   return {
     draft,
     isDraftLoading,
+    remoteDraftLoadError,
     activeParagraphId,
     singleItemListActiveItemId,
     structureLockedParagraphIds: effectiveStructureLockedParagraphIds,

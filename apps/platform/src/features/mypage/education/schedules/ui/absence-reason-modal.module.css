@@ -1,0 +1,156 @@
+.modal {
+  display: flex;
+  width: var(--width-popup-md, 600px);
+  min-height: 200px;
+  padding: var(--spacing-28, 28px);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-28, 28px);
+  max-height: calc(100dvh - 40px);
+  border: 1px solid var(--color-border-default, #d9d9d9);
+  border-radius: var(--radius-24, 24px);
+  background: var(--color-neutral-white, #fff);
+  box-shadow: 0 10px 20px 0 rgb(0 0 0 / 10%);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--spacing-28);
+  overflow-y: auto;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.description p {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.fileField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.filePicker {
+  /* Figma node 11005-342266: PFButton xlarge(53px) 규격 */
+  box-sizing: border-box;
+  height: 53px;
+  min-width: 0;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.fileList {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  align-self: stretch;
+  margin: var(--spacing-8) 0 0;
+  padding: var(--spacing-16);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-12);
+  border-radius: var(--radius-12, 12px);
+  background: var(--color-neutral-warm-80, #f7f7f7);
+}
+
+.fileRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.fileInfo {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.fileName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fileActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.fileSelectionNotice {
+  margin: 0;
+}
+
+.formError {
+  margin: calc(var(--spacing-12) * -1) 0 0;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: var(--spacing-16);
+}
+
+.actions > button {
+  width: min(320px, 100%);
+}
+
+@media (--bp-below-pc) {
+  .modal {
+    width: 100%;
+    max-height: 100%;
+    padding: var(--spacing-28) var(--spacing-20);
+    gap: var(--spacing-24);
+  }
+
+  .content {
+    gap: var(--spacing-24);
+    margin-top: var(--spacing-20);
+  }
+
+  .fields {
+    gap: var(--spacing-24);
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions > button {
+    width: 100%;
+  }
+}

@@ -111,7 +111,9 @@ import {
   isGeneralIndividualProgram,
   isInstitutionTeacherOnlySatisfactionProgram,
   isGeneralSatisfactionSurveyNavTab,
+  isTrainedTeachersProgram,
   resolveGeneralSatisfactionAudienceFromNavTab,
+  resolveSatisfactionFormBindingTargetRole,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 import { buildGeneralSurveyEmptyState } from './survey-empty-state'
@@ -287,6 +289,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     null
   )
   const [submitting, setSubmitting] = useState(false)
+  const [createFieldError, setCreateFieldError] = useState<{
+    field: string
+    message: string
+  } | null>(null)
   const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const [templateEditId, setTemplateEditId] = useState<string | null>(null)
@@ -403,6 +409,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     for (const item of classifiedBindings) {
       if (item.kind === 'satisfaction') {
         const audience = item.satisfactionAudience ?? fallbackSatisfactionAudience
+        if (isTrainedTeachersProgram(program) && audience !== 'teacher') continue
         nextSatisfaction[audience] = item.survey
       }
     }
@@ -458,22 +465,24 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     [program]
   )
   const isInstitutionTeacherOnlySatisfaction = isInstitutionTeacherOnlySatisfactionProgram(program)
+  const isTrainedTeacherSatisfaction = isTrainedTeachersProgram(program)
   const showSatisfactionAudienceTabs =
     !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
   const satisfactionSurveysForView = useMemo(() => {
     const next: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
+    const programTotal = isTrainedTeacherSatisfaction ? undefined : program.totalParticipants
     for (const [key, survey] of Object.entries(satisfactionSurveysByAudience) as Array<
       [GeneralSatisfactionAudienceKey, RegisteredSurvey | undefined]
     >) {
       if (survey == null) continue
       next[key] = {
         ...survey,
-        participantTotal: resolveSurveyResultsParticipantTotal(survey, program.totalParticipants),
+        participantTotal: resolveSurveyResultsParticipantTotal(survey, programTotal),
       }
     }
     return next
-  }, [program.totalParticipants, satisfactionSurveysByAudience])
+  }, [isTrainedTeacherSatisfaction, program.totalParticipants, satisfactionSurveysByAudience])
   const lectureEvalSurveyForView =
     lectureEvalSurvey == null
       ? null
@@ -598,14 +607,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     const formType =
       kind === 'satisfaction' ? 'SATISFACTION' : kind === 'lecture' ? 'LECTURE_EVALUATION' : 'SURVEY'
     const targetRole =
-      kind === 'satisfaction' && audience
-        ? audience === 'teacher'
-          ? 'TEACHER'
-          : audience === 'student'
-            ? 'STUDENT'
-            : audience === 'volunteer_h1' || audience === 'volunteer_h2'
-              ? 'VOLUNTEER'
-              : 'INDIVIDUAL'
+      kind === 'satisfaction'
+        ? resolveSatisfactionFormBindingTargetRole(program, audience)
         : kind === 'lecture'
           ? 'ADMIN'
           : undefined
@@ -708,6 +711,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const openCreateModal = useCallback(
     (kind: CreateModalKind, satisfactionAudience?: GeneralSatisfactionAudienceKey) => {
       setSubmitting(false)
+      setCreateFieldError(null)
       if (kind === 'satisfaction' && satisfactionAudience != null) {
         setPendingSatisfactionAudience(satisfactionAudience)
         setSelectedTemplateId(
@@ -757,6 +761,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const closeCreateModal = useCallback(() => {
     if (submitting) return
     setCreateModalKind(null)
+    setCreateFieldError(null)
   }, [submitting])
 
   const submitCreateModal = useCallback(async () => {
@@ -783,6 +788,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return
     }
     setSubmitting(true)
+    setCreateFieldError(null)
     let surveyBindingTargetScope: string | undefined
     try {
       void findWritingTemplateRowByDefinitionId(selectedTemplateId)
@@ -841,6 +847,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         const result = await createBinding(payload)
         if (!result.ok) {
           await invalidateSurveyCaches()
+          if (result.field === 'targetRole') {
+            setCreateFieldError({ field: result.field, message: result.message })
+            return
+          }
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
@@ -1476,7 +1486,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       showAudienceTabs={showSatisfactionAudienceTabs}
       showShareButton
       onAudienceChange={setActiveSatisfactionAudience}
-      onRegisterClick={() => openCreateModal('satisfaction', activeSatisfactionAudience)}
+      onRegisterClick={() =>
+        openCreateModal(
+          'satisfaction',
+          isTrainedTeacherSatisfaction ? 'teacher' : activeSatisfactionAudience
+        )
+      }
       onShareClick={() => shareSatisfactionSurveyUrl(activeSatisfactionAudience)}
       onDeleteClick={() => {
         const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
@@ -1606,6 +1621,22 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         }
       >
         <div className="survey-management-create-modal__fields">
+          {createModalKind === 'satisfaction' && isTrainedTeacherSatisfaction ? (
+            <CmsSelect
+              width="100%"
+              withAllOption={false}
+              allowClear={false}
+              label="대상"
+              required
+              options={[{ label: '교사', value: 'TEACHER' }]}
+              value="TEACHER"
+              onChange={() => undefined}
+              error={createFieldError?.field === 'targetRole'}
+              message={
+                createFieldError?.field === 'targetRole' ? createFieldError.message : undefined
+              }
+            />
+          ) : null}
           <CmsSelect
             width="100%"
             withAllOption={false}

@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
+import type { QueryKey } from '@tanstack/react-query'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import { CheckOutlined } from '@ant-design/icons'
@@ -65,7 +66,11 @@ import {
   fetchStudentLectureAttendanceByParticipantRemote,
   saveStudentLectureAttendanceByParticipantRemote,
 } from '../../../api/student-lecture-attendance-api'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { LectureAttendanceDetail } from '../../../model/school-detail-types'
 import {
@@ -157,6 +162,8 @@ export interface SchoolDetailStudentListSectionProps {
    * (참여 기관 풀페이지 학생 명단 탭 등)
    */
   studentListInfoEditComingSoonAlert?: boolean
+  /** 명단 저장 후 함께 무효화할 유형별 기관 신청 상세 키 — 미지정 시 일반 기관 상세만 */
+  rosterDependentQueryKeys?: readonly QueryKey[]
   onIssueCertificates?: () => void
   onEditInfo?: () => void
   onAddStudent?: () => void
@@ -180,6 +187,7 @@ export function SchoolDetailStudentListSection({
   hasStudentSatisfactionSurvey = true,
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
+  rosterDependentQueryKeys,
   onIssueCertificates: _onIssueCertificates,
   onEditInfo,
   onAddStudent,
@@ -225,13 +233,19 @@ export function SchoolDetailStudentListSection({
   const rosterAddSessionRef = useRef<StudentRosterCommitSession | null>(null)
   const { showAlert } = useCmsAlert()
 
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const rosterRemote = useOrganizationStudentRosterRemote({
     organizationApplicationId,
     educationGrade,
+    dependentQueryKeys: rosterDependentQueryKeys,
+    trainedTeachersSurface: isTrainedTeachersSurface,
   })
-  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(
+  const generalProgressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(
     programId != null ? String(programId) : undefined
   )
+  const progressRemoteEnabled =
+    generalProgressRemoteEnabled ||
+    (isTrainedTeachersSurface && programId != null && shouldUseTrainedTeacherProgramsRemoteApi())
 
   const showStudentListEditModeBlockedAlert = useCallback(
     () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),

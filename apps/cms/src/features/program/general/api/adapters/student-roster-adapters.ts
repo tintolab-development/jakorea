@@ -3,10 +3,12 @@
  */
 
 import type { StudentRosterItemResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterItemResponse'
-import type { StudentRosterRowRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterRowRequest'
-import type { StudentRosterCommitRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterCommitRequest'
 import type { StudentRosterResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterResponse'
 import { buildStudentRosterCommitRequestBody } from '@/features/program/general/lib/student-roster-commit-safety'
+import type {
+  OrganizationStudentRosterManualCommitRequest,
+  StudentRosterRowCommitPayload,
+} from '@/features/program/general/api/student-roster-commit-types'
 import type {
   SchoolDetailStudentRow,
   StudentGenderKey,
@@ -152,7 +154,7 @@ export function mapStudentRosterResponseToRows(
 }
 
 export type MapStudentRowToRosterRequestOptions = {
-  /** 기관 교육 학년 — API `grade` 필수 필드 채움 */
+  /** 기관 교육 학년 — 반 표시에 학년이 없을 때 선택 필드 `grade`에 사용 */
   educationGrade?: string | null
 }
 
@@ -163,18 +165,19 @@ export type MapStudentRowToRosterRequestOptions = {
 export function mapStudentRowToRosterRequest(
   row: SchoolDetailStudentRow,
   options: MapStudentRowToRosterRequestOptions = {}
-): StudentRosterRowRequest {
+): StudentRosterRowCommitPayload {
   const { grade, className } = parseStudentGradeClassForRosterApi(
     row.gradeClass ?? '',
     options.educationGrade
   )
-  const payload: StudentRosterRowRequest = {
+  const payload: StudentRosterRowCommitPayload = {
     studentName: row.name.trim(),
+    gender: mapStudentGenderKeyToApi(row.gender) ?? '',
     birthDate: mapDisplayBirthDateToApi(row.birthDate),
-    grade,
     className,
     studentNo: Math.min(999, Math.max(1, row.no || 1)),
   }
+  if (grade !== '-') payload.grade = grade
   const rosterId = Number.parseInt(row.id, 10)
   if (Number.isFinite(rosterId) && rosterId > 0) {
     payload.rosterId = rosterId
@@ -186,9 +189,6 @@ export function mapStudentRowToRosterRequest(
   ) {
     payload.memberId = row.memberId
   }
-  const gender = mapStudentGenderKeyToApi(row.gender)
-  if (gender) payload.gender = gender
-
   const phone = row.contact?.trim()
   if (phone && !isLikelyMaskedPii(phone)) payload.phone = phone
 
@@ -205,7 +205,7 @@ export function mapStudentRowsToRosterCommitRequest(input: {
   rows: SchoolDetailStudentRow[]
   educationGrade?: string | null
   expectedRevisionNo: number
-}): StudentRosterCommitRequest {
+}): OrganizationStudentRosterManualCommitRequest {
   const rows = input.rows.map(row =>
     mapStudentRowToRosterRequest(row, { educationGrade: input.educationGrade })
   )

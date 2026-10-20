@@ -120,21 +120,91 @@
   padding: 0 var(--spacing-48);
 }
 
+/* 로딩·미등록·제출 완료가 같은 높이의 슬롯을 공유해 상태 전환 시 레이아웃이 밀리지 않게 합니다. */
+.portraitStatusArea {
+  --portrait-status-min-height: 520px;
+
+  display: flex;
+  min-width: 0;
+  min-height: var(--portrait-status-min-height);
+  flex-direction: column;
+}
+
+.portraitBox,
+.portraitBoxEmpty,
+.portraitSubmittedBox {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .portraitBox,
 .portraitBoxEmpty {
   display: flex;
-  min-height: 200px;
-  box-sizing: border-box;
   flex-direction: column;
   gap: var(--spacing-8);
-  padding: 107px 92px;
+  padding: var(--spacing-48) var(--spacing-24);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-24);
 }
 
 .portraitBox {
-  padding: var(--spacing-24);
+  align-items: center;
   justify-content: center;
+}
+
+.portraitSubmittedBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-24);
+  padding: var(--spacing-48) var(--spacing-24);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-cool-50, #f0f5f7);
+  text-align: center;
+}
+
+.portraitSubmittedIllustration {
+  display: block;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.portraitSubmittedInfo {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.portraitSubmittedFileName {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portraitSubmittedInfo :global(.typo-bd-lg-rg) {
+  margin: 0;
+  color: var(--color-neutral-cool-500);
+}
+
+.portraitUploadCancel {
+  min-width: 200px;
+  margin-top: var(--spacing-8);
+}
+
+.portraitUploadCancel:disabled {
+  border: 1px solid var(--color-border-default);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .portraitEmptyIllustration {
@@ -184,6 +254,17 @@
   border-radius: 0;
 }
 
+.fileUploadLoadingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 35%);
+  cursor: wait;
+}
+
 @media (--bp-below-pc) {
   .shell {
     flex-direction: column;
@@ -193,6 +274,10 @@
 
   .stepSide {
     width: 100%;
+  }
+
+  .portraitStatusArea {
+    --portrait-status-min-height: 400px;
   }
 
   .rosterActionRow {

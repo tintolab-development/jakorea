@@ -57,10 +57,6 @@
   white-space: nowrap;
 }
 
-.selectedFile {
-  margin: calc(var(--spacing-8) * -1) 0 0;
-}
-
 .fileButton {
   max-width: 100%;
   overflow: hidden;
@@ -87,8 +83,15 @@
   padding-top: var(--spacing-8);
 }
 
-.error {
-  margin-top: calc(var(--spacing-8) * -1);
+.submitLoadingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 35%);
+  cursor: wait;
 }
 
 @media (--bp-below-pc) {

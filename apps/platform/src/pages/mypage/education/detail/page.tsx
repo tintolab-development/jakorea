@@ -231,18 +231,24 @@ export function MypageEducationDetailPage() {
   )
 
   const teacherStudentDocumentTabsVisible = useMemo(() => {
-    if (!isTeacher) return undefined
-    if (!isTeacherOrgActivityDetail) return true
+    if (!isTeacher || !isTeacherOrgActivityDetail) return false
     return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
       policyQueryEnabled: true,
-      policyLoading: studentDocumentPolicyQuery.isLoading,
+      // 캐시가 있어도 다른 신청 건으로 전환·재검증 중에는 학생명단 탭을 잠시 노출하지 않습니다.
+      policyLoading: studentDocumentPolicyQuery.isLoading || studentDocumentPolicyQuery.isFetching,
+      policyError: studentDocumentPolicyQuery.isError,
     })
   }, [
     isTeacher,
     isTeacherOrgActivityDetail,
     studentDocumentPolicyQuery.data,
+    studentDocumentPolicyQuery.isError,
+    studentDocumentPolicyQuery.isFetching,
     studentDocumentPolicyQuery.isLoading,
   ])
+  const isStudentDocumentPolicyPending =
+    isTeacherOrgActivityDetail &&
+    (studentDocumentPolicyQuery.isLoading || studentDocumentPolicyQuery.isFetching)
 
   const activityTabOptions = useMemo(
     () =>
@@ -464,10 +470,14 @@ export function MypageEducationDetailPage() {
   }, [])
 
   useEffect(() => {
+    if (isStudentDocumentPolicyPending) return
     if (isWithdrawnDuring) {
       const fallback = withdrawnDuringKeys[0] ?? 'schedule'
       if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
         setSection(fallback)
+        const nextPath = buildDetailPath(applicationId, fallback, application?.applicationType)
+        const currentPath = `${window.location.pathname}${window.location.search}`
+        if (nextPath !== currentPath) window.history.replaceState(null, '', nextPath)
       }
       return
     }
@@ -475,6 +485,9 @@ export function MypageEducationDetailPage() {
       const fallback = inProgressKeys[0] ?? 'notice'
       if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
         setSection(fallback)
+        const nextPath = buildDetailPath(applicationId, fallback, application?.applicationType)
+        const currentPath = `${window.location.pathname}${window.location.search}`
+        if (nextPath !== currentPath) window.history.replaceState(null, '', nextPath)
       }
       return
     }
@@ -483,11 +496,14 @@ export function MypageEducationDetailPage() {
     }
   }, [
     isActivityStatus,
+    isStudentDocumentPolicyPending,
     isProgramApplicationStatus,
     isWithdrawnDuring,
     section,
     inProgressKeys,
     withdrawnDuringKeys,
+    application?.applicationType,
+    applicationId,
   ])
 
   const handleBack = () => {
@@ -579,11 +595,14 @@ export function MypageEducationDetailPage() {
   const showTeacherAssignment =
     isTeacher && hasTeacherAssignmentAsideContent(application.teacherAssignment)
   const appliedSection = isAppliedSection(section) ? section : 'program'
-  const activitySection = isActivitySection(section)
-    ? section
-    : isWithdrawnDuring
-      ? (withdrawnDuringKeys[0] ?? 'schedule')
-      : (inProgressKeys[0] ?? 'notice')
+  const activitySection =
+    isActivitySection(section) &&
+    ((isWithdrawnDuring && withdrawnDuringKeys.includes(section)) ||
+      (isActivityStatus && inProgressKeys.includes(section)))
+      ? section
+      : isWithdrawnDuring
+        ? (withdrawnDuringKeys[0] ?? 'schedule')
+        : (inProgressKeys[0] ?? 'notice')
 
   const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
     preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,

@@ -125,6 +125,7 @@ export {
   isOrganizationStudentDocumentsQueryEnabled,
   useDownloadPortraitConsentTemplateMutation,
   useDownloadStudentRosterTemplateMutation,
+  useCommitOrganizationStudentRosterMutation,
   useImportOrganizationStudentRosterMutation,
   useOrganizationPortraitConsentQuery,
   useOrganizationStudentDocumentPolicyQuery,

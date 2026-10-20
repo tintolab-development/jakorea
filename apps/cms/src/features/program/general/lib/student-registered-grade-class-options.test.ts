@@ -38,6 +38,18 @@ describe('buildRegisteredGradeClassSelectOptions', () => {
     ).toEqual([])
   })
 
+  it('반 이름에 학년이 포함된 classNo는 반 번호로 바꾸지 않는다 (교육받은 교사)', () => {
+    expect(
+      buildRegisteredGradeClassSelectOptions([
+        { gradeLabel: null, classCount: 1, classes: [{ classNo: '4학년 1반' }] },
+      ]).map(option => option.value)
+    ).toEqual(['4학년 1반'])
+  })
+
+  it('gradeBlocks가 null이면 옵션을 만들지 않는다', () => {
+    expect(buildRegisteredGradeClassSelectOptions(null, '4학년')).toEqual([])
+  })
+
   it('여러 학년이면 학년을 포함해 표시한다 (TC-06)', () => {
     const options = buildRegisteredGradeClassSelectOptions([
       {

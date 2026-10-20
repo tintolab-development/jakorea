@@ -271,7 +271,10 @@ export function useApplicantsDetail({
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
     menu,
-    usesProgramInstitutionApplications,
+    // 교육받은 교사는 전용 endpoint가 기관 신청 목록의 유일한 원천이다.
+    // 일반 기관 신청 endpoint를 동시에 호출하면 응답 경합으로 목록이 덮어써질 수 있다.
+    usesProgramInstitutionApplications:
+      isTrainedTeachersSurface ? false : usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
     setInstitutionList,
@@ -282,6 +285,7 @@ export function useApplicantsDetail({
     programId,
     enabled:
       isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications,
+    clearWhenDisabled: isTrainedTeachersSurface,
     listFilters: appliedFilters,
     setInstitutionList,
   })
@@ -394,6 +398,8 @@ export function useApplicantsDetail({
                 approvePayload ?? (notify ? { ...notify } : notify)
               if (generalRemote && body) {
                 await generalRemote.approveOrganization(id, body)
+              } else if (isTrainedTeachersSurface) {
+                await institutionApplicationsRemote.approveOrganization(id, body)
               } else {
                 await institutionApplicationsRemote.approveOrganization(id)
               }
@@ -1004,7 +1010,7 @@ export function useApplicantsDetail({
 
   useEffect(() => {
     if (viewMode !== 'calendar' || !programId) return
-    if (menu === 'institutions' && usesProgramInstitutionApplications) {
+    if (!isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications) {
       void queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.organizationList(programId),
       })
@@ -1019,6 +1025,7 @@ export function useApplicantsDetail({
     }
   }, [
     instructorColumnPreset,
+    isTrainedTeachersSurface,
     menu,
     programId,
     queryClient,
@@ -1039,6 +1046,7 @@ export function useApplicantsDetail({
       menu === 'instructors' && instructorColumnPreset === 'general-detail'
     if (
       (menu !== 'institutions' && !hydrateForInstructorCalendar) ||
+      isTrainedTeachersSurface ||
       !usesProgramInstitutionApplications ||
       viewMode !== 'calendar' ||
       !programId ||
@@ -1085,6 +1093,7 @@ export function useApplicantsDetail({
     institutionScheduleHydrationSignature,
     institutionList.length,
     instructorColumnPreset,
+    isTrainedTeachersSurface,
     menu,
     programId,
     queryClient,
@@ -1908,6 +1917,9 @@ export function useApplicantsDetail({
     organizationNotificationResendRemoteEnabled: isTrainedTeachersSurface
       ? trainedTeacherApplicationsRemote.remoteEnabled
       : applicationsRemote.remoteEnabled,
+    applicationsError: isTrainedTeachersSurface
+      ? trainedTeacherApplicationsRemote.applicationsError
+      : null,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
