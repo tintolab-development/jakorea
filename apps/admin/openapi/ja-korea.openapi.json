@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://127.0.0.1:8081",
       "description": "Generated server url"
     }
   ],
@@ -10176,7 +10176,7 @@
           }
         }
       },
-      "CareerPostingPublicListResponse": {
+      "PageResponseCareerPostingPublicItem": {
         "type": "object",
         "properties": {
           "items": {
@@ -10184,6 +10184,22 @@
             "items": {
               "$ref": "#/components/schemas/CareerPostingPublicItem"
             }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

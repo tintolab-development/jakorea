@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://127.0.0.1:8081",
       "description": "Generated server url"
     }
   ],
@@ -460,11 +460,14 @@
         "tags": [
           "education-public-controller"
         ],
+        "summary": "List published education textbooks",
+        "description": "Returns enabled textbooks whose business field is enabled and whose name is not blank. fieldCode, targetId, sort, page, and size apply together before the page window. totalCount and totalPages are the filtered totals, not the current page length. page is 0-based (default 0). size defaults to 20, Platform uses 10, and size must be 1..100. A page at or past totalPages returns empty items with the same totalCount and totalPages. sort defaults to LATEST (createdAt DESC, id DESC). sort=NAME orders textbookName ASC with PostgreSQL collation ko-KR-x-icu, then id ASC. Any other sort value is 400 BAD_REQUEST. fieldCode must be CAREER_EMPLOYMENT, ECONOMICS_FINANCE, ENTREPRENEURSHIP, or DIGITAL_LITERACY. Any other code is 400 VALIDATION_ERROR.",
         "operationId": "textbooks",
         "parameters": [
           {
-            "name": "businessFieldCode",
+            "name": "fieldCode",
             "in": "query",
+            "description": "Business field code. Omit or blank for every enabled field. CAREER_EMPLOYMENT, ECONOMICS_FINANCE, ENTREPRENEURSHIP, DIGITAL_LITERACY. Any other code is 400.",
             "required": false,
             "schema": {
               "type": "string"
@@ -473,6 +476,7 @@
           {
             "name": "targetId",
             "in": "query",
+            "description": "Education target id. Omit to ignore target.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -481,8 +485,26 @@
             }
           },
           {
+            "name": "sort",
+            "in": "query",
+            "description": "LATEST (default): createdAt DESC, id DESC. NAME: textbookName ASC (ko-KR-x-icu), id ASC. Any other value is 400.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "LATEST",
+              "description": "Public textbook list sort. Omit or use LATEST for createdAt DESC, id DESC. NAME orders textbookName ASC with PostgreSQL collation ko-KR-x-icu, then id ASC.",
+              "enum": [
+                "LATEST",
+                "NAME",
+                "LATEST",
+                "NAME"
+              ]
+            }
+          },
+          {
             "name": "page",
             "in": "query",
+            "description": "0-based page index. Default 0.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -493,6 +515,7 @@
           {
             "name": "size",
             "in": "query",
+            "description": "Page size. Default 20. Minimum 1, maximum 100. Platform list uses 10.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -8087,7 +8110,7 @@
           }
         }
       },
-      "CareerPostingPublicListResponse": {
+      "PageResponseCareerPostingPublicItem": {
         "type": "object",
         "properties": {
           "items": {
@@ -8095,6 +8118,22 @@
             "items": {
               "$ref": "#/components/schemas/CareerPostingPublicItem"
             }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
