@@ -59,3 +59,8 @@ export {
   needsEmptyAttachmentFallback,
 } from './download-attachment'
 export { buildYouTubeNocookieEmbedSrc, extractYouTubeVideoId } from './youtube'
+export {
+  getFileUploadOverlayActive,
+  getFileUploadOverlayServerSnapshot,
+  subscribeFileUploadOverlay,
+} from './file-upload-overlay'

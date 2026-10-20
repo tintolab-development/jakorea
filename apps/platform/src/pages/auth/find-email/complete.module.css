@@ -17,7 +17,6 @@
   width: 100%;
   align-items: center;
   justify-content: center;
-  margin-top: var(--spacing-56);
   padding: var(--spacing-24);
   border-radius: var(--radius-16);
   background: var(--color-neutral-cool-50);
