@@ -14,14 +14,14 @@ import { ScrollRevealYoutubeVideo } from '@/shared/ui'
 import styles from './home-page.module.css'
 
 function TitleLines({ title }: { title: string }) {
-  const lines = title.split(/\r?\n/).filter(Boolean)
+  const lines = title
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
   return (
     <>
       {lines.map((line, index) => (
-        <span key={`${line}-${index}`}>
-          {index > 0 ? <br /> : null}
-          {line}
-        </span>
+        <span key={`${line}-${index}`}>{line}</span>
       ))}
     </>
   )
@@ -44,6 +44,7 @@ export function HomePage() {
           <ScrollRevealYoutubeVideo
             youtubeUrl={youtubeUrl}
             title={<TitleLines title={videoTitle} />}
+            titleClassName={styles.youtubeTitle}
             iframeTitle="JA Korea 소개 영상"
             animateOnce
             className={styles.youtubeReveal}

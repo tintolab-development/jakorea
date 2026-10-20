@@ -24,7 +24,8 @@
 
 @media (--bp-pc-up) {
   .inner {
-    padding-inline: var(--spacing-40);
+    width: min(var(--content-shell-max-width), calc(100vw - var(--spacing-80)));
+    padding-inline: 0;
     gap: 0;
   }
 
@@ -72,7 +73,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: var(--spacing-64);
+    gap: var(--spacing-80);
   }
 }
 
@@ -84,7 +85,7 @@
 
 .featuredMedia {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 2;
   border-radius: var(--radius-16);
   overflow: hidden;
 }
@@ -100,7 +101,7 @@
 
 @media (--bp-pc-up) {
   .featuredMedia {
-    width: 44%;
+    width: 50%;
     flex-shrink: 0;
   }
 }
