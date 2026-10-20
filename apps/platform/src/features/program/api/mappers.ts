@@ -39,6 +39,11 @@ import {
   appendCurriculumSingleDateFixedScheduleSessionSuffix,
   shouldShowApplicationPreferredScheduleParagraph,
 } from '@jakorea/form-schema/program-application'
+import {
+  formatDisplayDate,
+  formatDisplayDateRange,
+  normalizeScheduleDisplayLabel,
+} from '../../../shared/lib/format-display-date.ts'
 
 function mapPortalMaxPreferredScheduleCount(
   remote: PortalProgramDetail,
@@ -93,8 +98,6 @@ const RECRUITMENT_STATUS = {
   recruiting: 'recruiting',
   closed: 'closed',
 } as const satisfies Record<string, RecruitmentStatus>
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 const PORTAL_CATEGORY_CODE: Record<string, ProgramTab> = {
   INSTRUCTOR: 'instructor',
@@ -218,34 +221,12 @@ function formatYmd(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-function formatDateLabel(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const w = WEEKDAY_KO[date.getDay()]
-  return `${y}.${m}.${d}(${w})`
-}
-
-function formatYmdCompact(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
-}
-
 function formatRange(start: Date | null, end: Date | null): string {
-  if (!start && !end) return '-'
-  if (start && end) return `${formatDateLabel(start)} – ${formatDateLabel(end)}`
-  if (start) return formatDateLabel(start)
-  return end ? formatDateLabel(end) : '-'
+  return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
 function formatCompactRange(start: Date | null, end: Date | null): string {
-  if (!start && !end) return '-'
-  if (start && !end) return formatYmdCompact(start)
-  if (!start && end) return formatYmdCompact(end)
-  if (!start || !end) return '-'
-  return `${formatYmdCompact(start)} – ${formatYmdCompact(end)}`
+  return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
 function mapEducationForm(value: string | undefined): EducationForm {
@@ -619,7 +600,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       if (documentAt) {
         phases.push({
           label: selectionLabel('1차 합격자 발표일'),
-          value: formatYmdCompact(documentAt),
+          value: formatDisplayDate(documentAt),
         })
       }
       const interviewStart = toDate(row.interviewStartAt ?? undefined)
@@ -635,7 +616,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
     if (finalAt) {
       phases.push({
         label: selectionLabel('최종 합격자 발표'),
-        value: formatYmdCompact(finalAt),
+        value: formatDisplayDate(finalAt),
       })
     }
     return phases
@@ -774,7 +755,7 @@ function mapPortalCurriculumSessions(
     title: session.title ?? '',
     description: session.description ?? '',
     ...(optionalText(session.scheduleDateLabel)
-      ? { dateLabel: session.scheduleDateLabel?.trim() }
+      ? { dateLabel: normalizeScheduleDisplayLabel(session.scheduleDateLabel) }
       : {}),
     ...(rows.showEducationForm && optionalText(session.educationFormLabel)
       ? { educationFormLabel: session.educationFormLabel?.trim() }
@@ -814,10 +795,11 @@ function mapPortalScheduleDetails(
     const timeSummary =
       optionalText(detail.progressTimeSummary) ?? formatGroupTimes(detail.groupTimes)
     const scheduleDateLabel = optionalText(detail.scheduleDateLabel)
-    const dateLabel =
+    const combined =
       isMultiSessionRound(sessionRound)
         ? [scheduleDateLabel, timeSummary].filter((part): part is string => Boolean(part)).join(' ')
         : (timeSummary ?? scheduleDateLabel ?? '')
+    const dateLabel = combined ? normalizeScheduleDisplayLabel(combined) : ''
     return {
       scheduleLabel,
       name: detail.name ?? '',
@@ -867,18 +849,6 @@ function mapPortalEducationScheduleCards(
   }))
 }
 
-/** YYYY-MM-DD(KST date-only) → local Date. ISO datetime은 toDate. */
-function toDateOnly(value: string | null | undefined): Date | null {
-  const raw = value?.trim()
-  if (!raw) return null
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
-  if (match) {
-    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-    return Number.isNaN(date.getTime()) ? null : date
-  }
-  return toDate(raw)
-}
-
 /**
  * 봉사자 모집 행 `volunteerInterviewSchedule` → `ProgramDetail` 필드.
  * 프로그램 상세 세부내용에는 비노출(신청 폼·후속 연동용).
@@ -891,17 +861,16 @@ function mapVolunteerInterviewSchedule(
     .find((schedule): schedule is PortalVolunteerInterviewSchedule => schedule != null)
   if (remote == null) return undefined
 
-  const periodLabel = formatCompactRange(
-    toDateOnly(remote.periodStartDate),
-    toDateOnly(remote.periodEndDate)
-  )
+  const periodLabel = formatDisplayDateRange(remote.periodStartDate, remote.periodEndDate, {
+    empty: '-',
+  })
   const availableTimeSlots = readString(remote.availableTimeSlots ?? undefined)
   const recurringUnavailable = readString(remote.recurringUnavailable ?? undefined)
   const options = (remote.options ?? []).flatMap(option => {
     const id = readString(option.id)
     const label = readString(option.label)
     if (!id || !label) return []
-    return [{ id, label }]
+    return [{ id, label: normalizeScheduleDisplayLabel(label) }]
   })
 
   const hasPeriod = periodLabel !== '-'
@@ -1181,14 +1150,16 @@ export function mapPortalProgramDetail(
       ? 'period'
       : 'date'
     : 'period'
-  const educationScheduleLines = usesEducationProgressFields
-    ? appendSessionSuffixToEducationScheduleLines(remote.educationScheduleLines ?? [], {
-        educationStructure,
-        sessionRound,
-        educationScheduleMode,
-        sessions,
-      })
-    : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-')
+  const educationScheduleLines = (
+    usesEducationProgressFields
+      ? appendSessionSuffixToEducationScheduleLines(remote.educationScheduleLines ?? [], {
+          educationStructure,
+          sessionRound,
+          educationScheduleMode,
+          sessions,
+        })
+      : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-')
+  ).map(line => normalizeScheduleDisplayLabel(line))
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 

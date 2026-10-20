@@ -55,12 +55,14 @@ scheduleStatus, attendanceStatus, surveyCount
 
 **단일회차 = item 1개가 아니다.** 단일이어도 차시/세부일정이 여러 줄일 수 있다. 카드 1장 = `items` 1개.
 
-| 조합 | items 출처 | 행 라벨 | `title` | 상세 |
-| --- | --- | --- | --- | --- |
-| 커리큘럼 × 단일 | `curriculumSessions[]` | `sessionLabel` 예 `1차시` (없으면 `N차시`) | 단원명 | `content`, `startAt`/`endAt` |
-| 커리큘럼 × 복수 | 동일 | `sessionLabel` 예 `1회차` (없으면 `N회차`) | 단원명 | 동일 + 회차별 과제기간 |
-| 일정 × 단일 | `scheduleDetails[]` | `scheduleLabel` 예 `세부 일정 01` | 일정명 | `progressTimeLabel` 또는 `groupTimes`, `blockKind` |
-| 일정 × 복수 | 동일 | `세부 일정` → `행사 일정` (프로그램 상세와 동일) | 일정명 | 날짜+시간을 한 줄 |
+| 조합 | items 출처 | 카드 청록 라벨 (공통정보) | 상세 |
+| --- | --- | --- | --- |
+| 커리큘럼 × 단일 | `curriculumSessions[]` | **단원명** (`unitName`, 없으면 운영명이 아닌 `title`) | `content`, `startAt`/`endAt` |
+| 커리큘럼 × 복수 | 동일 | **차시** (`1차시`. `unitName`/`title`이 `N` 또는 `N차시`) | 동일 + 회차별 과제기간 |
+| 일정 × 단일 | `scheduleDetails[]` | **일정명** (`scheduleName`, 없으면 운영명이 아닌 `title`) | `progressTimeLabel` 또는 `groupTimes`, `blockKind` |
+| 일정 × 복수 | 동일 | **일정명** (`scheduleName`, 없으면 운영명이 아닌 `title`) | 날짜+시간을 한 줄 |
+
+카드 서브타이틀은 프로그램 공통정보만 쓴다. 운영 슬롯 기본명(`공통 교육 예정…`), `locationName`, `${n}회차`, 블록 헤딩(`세부 일정 01` / `1회차`)은 쓰지 않는다. 공통정보 값이 없으면 `-`.
 
 과제·출석·결석 사유는 4조합 모두 **item 단위**.
 
@@ -130,11 +132,11 @@ type Assignment = {
 | `sessionNo` | required | 1-based. 활동 포기 `lastParticipatedSession` 필터 |
 | `startAt` | required | ISO. 카드 날짜 + 진행 완료/예정 |
 | `endAt` | optional | ISO. 진행 시간 |
-| `title` | required | 카드 서브타이틀. 커리큘럼=단원명, 일정형=일정명 |
-| `sessionLabel` | optional | 커리큘럼 `1차시` / `1회차` |
-| `scheduleLabel` | optional | 일정형 `세부 일정 01` / `행사 일정 01` |
+| `title` | optional | 운영 행 제목. 슬롯 기본명(`공통 교육 예정…`)이면 FE가 카드 라벨로 쓰지 않음 |
+| `sessionLabel` | optional | 커리큘럼 `1차시` / `1회차`. 카드 청록 라벨 SSOT가 아님 |
+| `scheduleLabel` | optional | 일정형 `세부 일정 01` / `행사 일정 01`. 카드 청록 라벨 SSOT가 아님 |
 | `blockKind` | optional | 일정형만 |
-| `unitName` | optional | 단원명. `title`과 같으면 생략 가능 |
+| `unitName` | optional | 단원명(단일) 또는 진행 차시(복수). 카드 라벨 우선 |
 | `content` | optional | 교육내용 (커리큘럼 `description`) |
 | `scheduleName` | optional | 일정명. `title`과 같으면 생략 가능 |
 | `progressTimeLabel` | optional | 없으면 FE가 `startAt`~`endAt` 포맷 |
