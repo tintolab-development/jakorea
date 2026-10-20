@@ -2,7 +2,7 @@
 
 **출처:** BE 인수인계 `미성년.md` (2026-10-14, JABACK `3,4` 미커밋 기준)  
 **앱:** Platform (`apps/platform`)  
-**상태:** BE 로컬 검증 완료 · 브리지 플래그 기본 OFF · **FE Guardian Bridge 연동 반영 (2026-10-14)**
+**상태:** BE 로컬 검증 완료 · 브리지 플래그 기본 OFF · **FE Guardian Bridge + 최종 동의 challenge 연동 (2026-10-21)**
 
 OpenAPI·DTO는 BE에서 **`openapi/backend.openapi.json`** 최신본을 받아 이 문서와 대조할 것.
 
@@ -14,7 +14,7 @@ OpenAPI·DTO는 BE에서 **`openapi/backend.openapi.json`** 최신본을 받아 
 | --- | --- | --- |
 | 보호자 NICE | `POST .../identity/nice/start` + `flow: MEMBER_SIGNUP` | **Guardian 전용** `POST .../guardian/{id}/nice/start` |
 | `guardianVerificationSessionId` | NICE **Identity** `sessionId`를 그대로 저장 | **Guardian Challenge** `sessionId` (5-3)만 전달 |
-| 가입 전제 | 약관 체크 + NICE 1회 | **Intent → Challenge → 최초 consent → NICE → status → 재동의 consent → signup** |
+| 가입 전제 | 약관 체크 + NICE 1회 | **Intent → Challenge → 최초 consent → NICE → status → final-consent-challenge → 최종 consent → signup** |
 | 최종 body | `member` only | **`member.signupIntentId`** + Guardian session id |
 
 **절대 금지:** `guardianVerificationSessionId = identitySessionId` (NICE start 응답 sessionId).
@@ -26,11 +26,13 @@ OpenAPI·DTO는 BE에서 **`openapi/backend.openapi.json`** 최신본을 받아 
 1. `GET /api/portal/auth/signup/terms?memberType=GENERAL&birthDate=` — `GUARDIAN_CONSENT.version` 확보 (기존 `useSignupTermsQuery` 재사용 가능)
 2. `POST /api/portal/auth/signup/intents` — `{ memberType, birthDate, gender }` → **`intentId`** (TTL 30분, gender enum은 OpenAPI 확인 — Intent는 `FEMALE` 예시)
 3. `POST /api/auth/verification-sessions/guardian` — `signupIntentId`, `guardianName`, `guardianPhone`, `guardianRelation` → **`sessionId`(Guardian)**, **`statusToken`**
-4. `POST .../guardian/{guardianSessionId}/consent` + header `X-Verification-Status-Token` — 최초 동의 → **`status: PENDING`** 정상
-5. `POST .../guardian/{guardianSessionId}/nice/start` + status token — → **`sessionId`(Identity)**, `authUrl`, `flow: GUARDIAN_SIGNUP`
-6. NICE return → 서버 callback; FE는 **`GET .../guardian/{guardianSessionId}/signup-status`** 로 판단
-7. `identityVerified=true` & `status=PENDING` → **사용자 명시적 재동의** 후 동일 consent API 재호출 → **`CONSENTED`**
-8. `POST /api/portal/auth/signup/general` — `member.signupIntentId`, `member.guardianVerificationSessionId`(Guardian id), 아동 `name`/`birthDate`, **아동 `identityVerificationSessionId` 없음**
+4. `POST .../guardian/{guardianSessionId}/consent` + header `X-Verification-Status-Token` — 최초 동의(`finalConsentToken` 없음) → **`status: PENDING`** 정상
+5. `GET .../signup-status` — 이미 `identityVerified` 또는 `CONSENTED`면 NICE start를 다시 치지 않음
+6. `POST .../guardian/{guardianSessionId}/nice/start` + status token + `Idempotency-Key: guardian-nice-{guardianSessionId}` — → **`sessionId`(Identity)**, `authUrl`, `flow: GUARDIAN_SIGNUP`
+7. NICE return → 서버 callback; FE는 **`GET .../guardian/{guardianSessionId}/signup-status`** 로 판단. 콜백에서는 consent를 호출하지 않음
+8. `identityVerified=true` & `status=PENDING` → `POST .../final-consent-challenge` → `challengeToken`을 **`finalConsentToken`**으로 최종 consent에 포함 → **`CONSENTED`**
+9. `status=CONSENTED`면 최종 consent POST를 생략하고 가입 단계로 진행
+10. `POST /api/portal/auth/signup/general` — `member.signupIntentId`, `member.guardianVerificationSessionId`(Guardian id), 아동 `name`/`birthDate`, **아동 `identityVerificationSessionId` 없음**
 
 ### 약관 (BE 확인)
 
@@ -43,8 +45,9 @@ OpenAPI·DTO는 BE에서 **`openapi/backend.openapi.json`** 최신본을 받아 
 | HTTP | FE 처리 |
 | --- | --- |
 | 400 `SIGNUP_INVALID_REQUEST` | 매핑·ID 타입 점검, 무한 재시도 금지 |
-| 401 | status token / 세션 — 재시작 |
-| 409 | 버전·순서 충돌 — Intent부터 재시작 검토 |
+| 401 | status token / 세션 무효 — 보호자 프로필부터 재시작. 로그인 `INVALID_CREDENTIALS` 문구 노출 금지 |
+| 409 | POST 재시도 금지. `GET signup-status` 후 `CONSENTED`면 다음 단계, `identityVerified`면 challenge만 |
+| 410 | 세션/challenge 만료 — Intent·Challenge부터 재시작 |
 | 503 `GUARDIAN_SIGNUP_BRIDGE_NOT_ENABLED_PENDING_SECURITY_APPROVAL` | **공용 NICE 우회 금지**, 안내 문구 |
 
 ---
@@ -62,19 +65,15 @@ CHILD_INPUT → INTENT_ISSUED → GUARDIAN_CHALLENGE → FIRST_CONSENT (PENDING)
 
 ---
 
-## 4. 현재 jakorea FE 갭 (2026-10-14)
+## 4. 현재 jakorea FE (2026-10-21)
 
-| 영역 | 현재 | 필요 |
-| --- | --- | --- |
-| Intent / Guardian API client | 없음 | `endpoints.ts` + client 추가 |
-| `signupIntentId` | mapper/types 없음 | `MemberSignupRequest` + mapInput |
-| `guardian-client.ts` | 공용 Identity + `MEMBER_SIGNUP` | Guardian Challenge + 전용 NICE |
-| `handleGuardianIdentitySuccess` | NICE identity id → `guardianVerificationSessionId` | Guardian id 유지, identity id 분리 |
-| 보호자 vs 아동 이름·전화 | WIP: `memberProfileName`, minor birth SSOT | Challenge 전 보호자 입력·관계 순서 (기획 확정) |
-| NICE 후 재동의 UI | 없음 | `identityVerified && PENDING` 단계 화면 |
-| 플래그 OFF | — | 503 처리 |
+- Intent / Guardian / NICE start / signup-status / **final-consent-challenge** client 연동
+- `guardianVerificationSessionId`는 Guardian Challenge id. Identity sessionId와 분리
+- NICE 성공 후 별도 재동의 화면 없이 `final-consent-challenge` → 최종 consent 자동 제출
+- 중복 NICE/consent POST는 `GET signup-status` + 409 재조회로 차단
+- 성인 전환·생년 변경 시 Guardian sessionStorage를 정리
 
-로컬에서 이미 적용된 FE(브랜치 WIP): 미성년 생년 SSOT, Identity postMessage 세션 격리, 약관「필수 항목 전체 동의」— **신규 Guardian Bridge API 연동 전까지는 신규 BE와 호환되지 않을 수 있음**.
+deprecated `guardian-client.ts`(`flow: MEMBER_SIGNUP`)는 화면에서 사용하지 않는다.
 
 ---
 
@@ -104,4 +103,4 @@ CHILD_INPUT → INTENT_ISSUED → GUARDIAN_CHALLENGE → FIRST_CONSENT (PENDING)
 
 **이전 BE 수정 요청(구 계약):** [signup-under14-general-backend-modification-request-2026-10-13.md](./signup-under14-general-backend-modification-request-2026-10-13.md) — **Guardian Bridge 도입 후 일부는 대체됨.**
 
-**Last updated:** 2026-10-14
+**Last updated:** 2026-10-21

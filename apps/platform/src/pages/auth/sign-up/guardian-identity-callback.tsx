@@ -15,7 +15,7 @@ import {
   GUARDIAN_IDENTITY_COMPLETION_PREFIX,
   readGuardianSignupBridgeState,
 } from '@/features/auth/sign-up/lib/guardian-signup-bridge-storage'
-import { getSignupApiErrorMessage } from '@/features/auth/sign-up/lib/helpers'
+import { resolveGuardianBridgeError } from '@/features/auth/sign-up/lib/guardian/guardian-bridge-errors'
 import styles from './identity-callback.module.css'
 
 const GUARDIAN_BRIDGE_CALLBACK_FLOW = 'GUARDIAN_SIGNUP_BRIDGE'
@@ -105,10 +105,7 @@ export function SignUpGuardianIdentityCallbackPage() {
         setNoOpener(true)
         setErrorMessage('부모 창을 찾을 수 없습니다. 회원가입 탭으로 돌아가 주세요.')
       } catch (error) {
-        const message = getSignupApiErrorMessage(
-          error,
-          '보호자 인증 상태를 확인하지 못했습니다. 다시 시도해 주세요.',
-        )
+        const message = resolveGuardianBridgeError(error).message
         const posted = deliverGuardianIdentity({ type: 'IDENTITY_FAILED', message })
         if (!posted) {
           setNoOpener(true)

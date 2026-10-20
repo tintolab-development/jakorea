@@ -13,6 +13,7 @@ export type ApplicantSessionLineInput = {
 import { appendCurriculumSingleDateFixedScheduleSessionSuffix } from '@jakorea/form-schema/program-application'
 import type { SessionLinePreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { formatHopeScheduleFormOptionLine } from '@/features/program/general/lib/hope-schedule-form-option'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
 import {
   formatGeneralEducationScheduleLine,
@@ -79,15 +80,20 @@ export function generalEducationScheduleShapeFromBridge(
   }
 }
 
-/** 일반 상세 목록 — 진행 화면과 같은 교육 일정 한 줄 */
+/** 일반 상세 목록 — `preferFormOptionLabel`이면 폼 선택지 문구, 아니면 진행 화면과 같은 한 줄 */
 export function formatGeneralDetailSessionLine(
   s: ApplicantSessionLineInput,
   bridge?: InstitutionApplicationProgramBridge | null,
   options?: {
     detailScheduleTimeSpan?: string | null
     curriculumSessionLabels?: readonly string[] | null
+    preferFormOptionLabel?: boolean
   }
 ): string {
+  if (options?.preferFormOptionLabel) {
+    const formOptionLine = formatHopeScheduleFormOptionLine(s, bridge)
+    if (formOptionLine) return formOptionLine
+  }
   const shape = generalEducationScheduleShapeFromBridge(bridge)
   return formatGeneralEducationScheduleLine(
     s,

@@ -15,15 +15,18 @@ export function GeneralDetailSessionLine({
   bridge,
   detailScheduleTimeSpan,
   curriculumSessionLabels,
+  preferFormOptionLabel = false,
 }: {
   session: ApplicantSessionLineInput
   bridge?: InstitutionApplicationProgramBridge | null
   detailScheduleTimeSpan?: string | null
   curriculumSessionLabels?: readonly string[] | null
+  preferFormOptionLabel?: boolean
 }) {
   const line = formatGeneralDetailSessionLine(session, bridge, {
     detailScheduleTimeSpan,
     curriculumSessionLabels,
+    preferFormOptionLabel,
   })
   if (!line) return <>-</>
   return (

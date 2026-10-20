@@ -350,6 +350,7 @@ export function useInstitutionApplicantColumns(params: {
                         bridge={programBridge}
                         detailScheduleTimeSpan={detailScheduleTimeSpan}
                         curriculumSessionLabels={curriculumSessionLabels}
+                        preferFormOptionLabel
                       />
                     </div>
                   )

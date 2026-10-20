@@ -37,12 +37,7 @@ export function ProgramEditInfoActions({
   }
 
   if (useToolbarButton) {
-    return (
-      <FilterTableToolbarButton
-        {...shared}
-        width={PROGRAM_EDIT_INFO_BUTTON_PROPS.width}
-      />
-    )
+    return <FilterTableToolbarButton {...shared} />
   }
 
   return <CmsButton {...PROGRAM_EDIT_INFO_BUTTON_PROPS} {...shared} />

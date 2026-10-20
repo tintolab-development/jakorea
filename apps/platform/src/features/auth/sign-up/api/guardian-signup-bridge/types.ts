@@ -33,6 +33,7 @@ export type GuardianConsentRequest = {
   agreed: boolean
   termsVersion: string
   guardianRelation: string
+  finalConsentToken?: string
 }
 
 export type GuardianConsentResponse = {
@@ -54,5 +55,10 @@ export type GuardianSignupStatusResponse = {
   guardianSessionId?: number
   status?: string
   identityVerified?: boolean
+  expiresAt?: string
+}
+
+export type GuardianFinalConsentChallengeResponse = {
+  challengeToken?: string
   expiresAt?: string
 }

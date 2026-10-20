@@ -686,6 +686,8 @@ export async function giveUpGeneralVolunteerApplication(
   const trimmed = payload.reason.trim()
   await giveUpVolunteerApplicationRemote(applicationId, {
     reason: trimmed,
+    ...(payload.stopScheduleId != null ? { stopScheduleId: payload.stopScheduleId } : {}),
+    ...(payload.faultParty != null ? { faultParty: payload.faultParty } : {}),
   })
 }
 

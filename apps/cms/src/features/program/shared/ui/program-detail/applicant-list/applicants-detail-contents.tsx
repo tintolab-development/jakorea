@@ -1571,6 +1571,9 @@ export function ApplicantsDetailContents({
           }
           combinedClassReadOnly={institutionDetailEdit.combinedClassReadOnly}
           hideCombinedClass={isCombinedClassHidden}
+          textbookOptions={institutionDetailEdit.textbookOptions}
+          textbookDisplayLabel={institutionDetailEdit.textbookDisplayLabel}
+          isTextbookCatalogLoading={institutionDetailEdit.isTextbookCatalogLoading}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
           isAdminCommentEditing={false}
