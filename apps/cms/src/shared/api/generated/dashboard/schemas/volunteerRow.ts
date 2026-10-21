@@ -14,6 +14,7 @@ export interface VolunteerRow {
   educationRegionCode?: string;
   participantStatus?: string;
   giveUp?: boolean;
+  /** 배정일수. 0 가능. 목록 GET의 null과 구분 */
   totalAssignedDays?: number;
   cells?: AllocationCell[];
 }
