@@ -10,7 +10,7 @@ import {
   type EducationApplicationListParams,
   EducationApplicationListSkeleton,
 } from '@/features/mypage'
-import { PFPagination, PFText } from '@/shared/ui'
+import { PFEmptyState, PFPagination } from '@/shared/ui'
 import styles from '../education/page.module.css'
 
 type LectureListContentProps = {
@@ -78,9 +78,10 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
           ))}
         </div>
       ) : (
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-          해당하는 프로그램이 없습니다.
-        </PFText>
+        <PFEmptyState
+          title="해당하는 프로그램이 없어요"
+          description="신청한 프로그램이 생기면 이곳에서 확인할 수 있어요."
+        />
       )}
 
       {totalElements > 0 ? (
