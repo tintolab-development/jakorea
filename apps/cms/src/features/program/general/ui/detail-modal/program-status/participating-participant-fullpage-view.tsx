@@ -103,13 +103,6 @@ const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
 
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
-const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
-
-const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
-
-const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
-
 export interface ParticipatingParticipantFullpageViewProps {
   program: Program
   participant: ParticipatingIndividualParticipantRow

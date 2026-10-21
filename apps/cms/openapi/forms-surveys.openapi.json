@@ -3456,7 +3456,7 @@
           },
           "traceId": {
             "type": "string",
-            "description": "서버 로그 추적용 ID",
+            "description": "5xx 등 서버 오류의 로그 추적용 ID. 4xx 클라이언트 오류 본문에는 넣지 않습니다.",
             "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f",
             "nullable": true
           },
@@ -14346,10 +14346,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -25209,7 +25209,7 @@
       },
       "CertificateSerialAllocateRequest": {
         "type": "object",
-        "description": "인증서 고유번호(YY-JA-NNNNN) 멱등 발급 요청",
+        "description": "인증서 고유번호(YY-JA-NNNNN) 발급 요청. 호출마다 새 번호를 할당합니다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -25251,7 +25251,7 @@
       },
       "CertificateSerialAllocateResponse": {
         "type": "object",
-        "description": "인증서 고유번호 멱등 발급 응답",
+        "description": "인증서 고유번호 발급 응답",
         "properties": {
           "serialNumber": {
             "type": "string",
@@ -25266,7 +25266,7 @@
           },
           "reused": {
             "type": "boolean",
-            "description": "기존 발급 번호 재사용 여부",
+            "description": "호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false",
             "example": false
           }
         }

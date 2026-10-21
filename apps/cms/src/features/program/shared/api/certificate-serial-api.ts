@@ -65,7 +65,8 @@ export function getCertificateSerialAllocateErrorMessage(error: unknown): string
 /**
  * `POST /api/admin/certificates/issues/serial` (`allocateCertificateSerial`).
  * mock / 404·501 폴백 없이 실 API만 호출한다. 실패 시 throw — 호출부는 PDF를 만들지 않는다.
- * `reused: true`여도 정상 반환한다.
+ * 서버는 호출마다 새 번호를 발급하므로 `reused`는 하위 호환 필드로만 전달하며,
+ * 발급 또는 PDF 생성 여부를 결정하는 데 사용하지 않는다. 정상 응답에서는 false다.
  */
 export function buildCertificateSerialAllocateRequest(
   subject: CertificateSerialSubject
