@@ -1,6 +1,7 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, type InfiniteData } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import type { AdminFaq } from '@/features/posts/model/admin-faq'
+import type { PostsListPage } from '@/features/posts/api/posts-list-page'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import {
   applyCreatedFaqToLists,
@@ -54,5 +55,40 @@ describe('faq-query-cache', () => {
     applyUpdatedFaqToLists(queryClient, faq({ id: '1', question: '비공개', status: 'draft' }))
 
     expect(queryClient.getQueryData<AdminFaq[]>(publicKey)).toEqual([])
+  })
+
+  it('removes deleted faqs from infinite list pages and decrements totalElements', () => {
+    const queryClient = new QueryClient()
+    const listKey = postsQueryKeys.faqs.list('')
+    const cached: InfiniteData<PostsListPage<AdminFaq>> = {
+      pages: [
+        {
+          items: [faq({ id: '1', question: '유지' }), faq({ id: '2', question: '삭제' })],
+          page: 0,
+          size: 20,
+          totalElements: 3,
+          totalPages: 1,
+          hasNext: false,
+        },
+        {
+          items: [faq({ id: '3', question: '다음페이지' })],
+          page: 1,
+          size: 20,
+          totalElements: 3,
+          totalPages: 1,
+          hasNext: false,
+        },
+      ],
+      pageParams: [0, 1],
+    }
+    queryClient.setQueryData(listKey, cached)
+
+    applyDeletedFaqToLists(queryClient, ['2', '3'])
+
+    const next = queryClient.getQueryData<InfiniteData<PostsListPage<AdminFaq>>>(listKey)
+    expect(next?.pages[0]?.items.map(row => row.id)).toEqual(['1'])
+    expect(next?.pages[0]?.totalElements).toBe(1)
+    expect(next?.pages[1]?.items.map(row => row.id)).toEqual([])
+    expect(next?.pages[1]?.totalElements).toBe(1)
   })
 })
