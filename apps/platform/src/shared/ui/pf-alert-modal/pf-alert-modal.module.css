@@ -48,9 +48,12 @@
 }
 
 .description {
+  display: block;
   width: 100%;
+  min-width: 0;
   margin: 0;
   text-align: center;
+  overflow-wrap: break-word;
   word-break: keep-all;
   white-space: pre-line;
 }
