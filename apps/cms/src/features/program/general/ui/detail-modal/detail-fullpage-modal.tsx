@@ -191,7 +191,7 @@ import {
 import {
   normalizeParticipantDetailTab,
   type ParticipantDetailTabKey,
-} from './program-status/participating-participant-fullpage-view'
+} from '@/features/program/general/lib/participating-individual-detail-tabs'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
@@ -249,8 +249,11 @@ function parseVolunteerTabFromSearch(searchParams: URLSearchParams): VolunteerDe
   return normalizeVolunteerDetailTab(searchParams.get(VOLUNTEER_TAB_PARAM))
 }
 
-function parseParticipantTabFromSearch(searchParams: URLSearchParams): ParticipantDetailTabKey {
-  return normalizeParticipantDetailTab(searchParams.get(PARTICIPANT_TAB_PARAM))
+function parseParticipantTabFromSearch(
+  searchParams: URLSearchParams,
+  program?: Program | null
+): ParticipantDetailTabKey {
+  return normalizeParticipantDetailTab(searchParams.get(PARTICIPANT_TAB_PARAM), program)
 }
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
@@ -847,7 +850,7 @@ export function GeneralProgramDetailFullPageModal({
   }, [volunteerIdFromUrl, searchParams, searchParamsKey])
   const participantIdFromUrl = open ? searchParams.get(PARTICIPANT_ID_PARAM) : null
   const activeParticipantTab = participantIdFromUrl
-    ? parseParticipantTabFromSearch(searchParams)
+    ? parseParticipantTabFromSearch(searchParams, displayProgram)
     : 'application'
 
   const isClosingRef = useRef(false)
@@ -1930,7 +1933,7 @@ export function GeneralProgramDetailFullPageModal({
       prev => {
         if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(PARTICIPANT_TAB_PARAM)
-        const normalized = parseParticipantTabFromSearch(prev)
+        const normalized = parseParticipantTabFromSearch(prev, displayProgram)
         if (raw === normalized) return prev
         const next = new URLSearchParams(prev)
         next.set(PARTICIPANT_TAB_PARAM, normalized)
@@ -1938,7 +1941,7 @@ export function GeneralProgramDetailFullPageModal({
       },
       { replace: true }
     )
-  }, [open, participantIdFromUrl, setSearchParams])
+  }, [open, participantIdFromUrl, displayProgram, setSearchParams])
 
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return

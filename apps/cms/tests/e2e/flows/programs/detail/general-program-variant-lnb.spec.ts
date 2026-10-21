@@ -28,7 +28,7 @@ test.describe('일반 프로그램 P0 variant LNB', () => {
     })
   })
 
-  test('1.2) CASE-03 개인 — 참여자 신청·출석·과제·게시글, 기관 신청 없음', async ({ page }) => {
+  test('1.2) CASE-03 개인 단일 회차 — 참여자 신청·출석·게시글, 과제 없음', async ({ page }) => {
     test.setTimeout(180_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)
@@ -41,8 +41,8 @@ test.describe('일반 프로그램 P0 variant LNB', () => {
     await detail.expectLnbHidden(/기관 신청 목록/)
 
     await detail.expectProgressTabLabels({
-      mustHave: ['참여자', '출석 관리', '과제 관리', '게시글'],
-      mustNotHave: ['참여 기관'],
+      mustHave: ['참여자', '출석 관리', '게시글'],
+      mustNotHave: ['과제 관리', '참여 기관'],
     })
   })
 
@@ -62,7 +62,7 @@ test.describe('일반 프로그램 P0 variant LNB', () => {
     })
   })
 
-  test('1.4) CASE-07 개인 일정형 — 개인 progress LNB', async ({ page }) => {
+  test('1.4) CASE-07 개인 일정형 단일 회차 — 개인 progress LNB', async ({ page }) => {
     test.setTimeout(180_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)
@@ -73,11 +73,28 @@ test.describe('일반 프로그램 P0 variant LNB', () => {
 
     await detail.expectLnbVisible(/참여자 신청 목록/)
     await detail.expectProgressTabLabels({
-      mustHave: ['참여자', '출석 관리', '과제 관리', '게시글'],
+      mustHave: ['참여자', '출석 관리', '게시글'],
+      mustNotHave: ['과제 관리'],
     })
   })
 
-  test('1.5) CASE-02 multi vs CASE-01 single — 공통정보 회차 표기', async ({ page }) => {
+  test('1.5) CASE-04 개인 복수 회차 — 과제 관리 LNB', async ({ page }) => {
+    test.setTimeout(180_000)
+    await page.goto('/programs/general')
+    await expectAuthenticatedShell(page)
+
+    const detail = new GeneralProgramDetailPage(page)
+    const opened = await detail.tryOpenP0Case('CASE-04')
+    test.skip(!opened, `시드 없음: ${P0_SEED_TITLES['CASE-04']}`)
+
+    await detail.expectLnbVisible(/참여자 신청 목록/)
+    await detail.expectProgressTabLabels({
+      mustHave: ['참여자', '출석 관리', '과제 관리', '게시글'],
+      mustNotHave: ['참여 기관'],
+    })
+  })
+
+  test('1.6) CASE-02 multi vs CASE-01 single — 공통정보 회차 표기', async ({ page }) => {
     test.setTimeout(240_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)
@@ -97,7 +114,7 @@ test.describe('일반 프로그램 P0 variant LNB', () => {
     await detail.expectContentSettled()
   })
 
-  test('1.6) CASE-06 — 신청 정보에서 희망 일정 단락 숨김(가능하면)', async ({ page }) => {
+  test('1.7) CASE-06 — 신청 정보에서 희망 일정 단락 숨김(가능하면)', async ({ page }) => {
     test.setTimeout(180_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)
@@ -119,7 +136,7 @@ test.describe('일반 프로그램 P0 variant LNB', () => {
     }
   })
 
-  test('1.7) CASE-09 — 회차별 교육형태·IPS 상이 표기(가능하면)', async ({ page }) => {
+  test('1.8) CASE-09 — 회차별 교육형태·IPS 상이 표기(가능하면)', async ({ page }) => {
     test.setTimeout(180_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)

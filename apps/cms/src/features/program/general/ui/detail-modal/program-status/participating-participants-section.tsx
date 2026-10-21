@@ -45,10 +45,8 @@ import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certific
 import { handleError } from '@/shared/utils/error-handler'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import type { Program } from '@/types/domain'
-import {
-  ParticipatingParticipantFullpageView,
-  type ParticipantDetailTabKey,
-} from './participating-participant-fullpage-view'
+import type { ParticipantDetailTabKey } from '@/features/program/general/lib/participating-individual-detail-tabs'
+import { ParticipatingParticipantFullpageView } from './participating-participant-fullpage-view'
 import { ParticipatingParticipantsCalendarView } from './participating-participants-calendar-view'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import {

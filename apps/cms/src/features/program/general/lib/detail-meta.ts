@@ -15,6 +15,7 @@ import {
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { shouldShowGeneralIndividualAssignment } from '@/features/program/general/lib/assignment-visibility'
 import type { GeneralProgressTabKey } from '@/features/program/general/lib/progress-tabs'
 import {
   programHasGeneralSatisfactionSurvey,
@@ -180,11 +181,11 @@ export function getGeneralProgressMenuItems(program: Program): GeneralProgressMe
     items.push({ tab: 'progress_volunteers', label: '참여 봉사자' })
   }
   if (isIndividual) {
-    items.push(
-      { tab: 'progress_attendance', label: '출석 관리' },
-      { tab: 'progress_assignments', label: '과제 관리' },
-      { tab: 'progress_posts', label: '게시글' }
-    )
+    items.push({ tab: 'progress_attendance', label: '출석 관리' })
+    if (shouldShowGeneralIndividualAssignment(program)) {
+      items.push({ tab: 'progress_assignments', label: '과제 관리' })
+    }
+    items.push({ tab: 'progress_posts', label: '게시글' })
   }
 
   return items

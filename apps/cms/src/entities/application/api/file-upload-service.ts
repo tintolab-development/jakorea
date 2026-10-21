@@ -21,6 +21,7 @@ export interface FileUploadResult {
   fileName: string
   fileSize: number
   uploadedAt: string
+  fileObjectId?: number
 }
 
 /**

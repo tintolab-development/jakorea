@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'reac
 import { Input } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  contentUrlForFileObjectId,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import templateCertificateBg from '@/assets/images/template/certificate-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
@@ -175,7 +182,7 @@ export function TemplateCustomFieldsForm({
     return merged
   })
   const [logoPreviewUrlByField, setLogoPreviewUrlByField] = useState<Record<string, string>>({})
-  const [logoUploading] = useState(false)
+  const [logoUploading, setLogoUploading] = useState(false)
   const logoPreviewUrlsRef = useRef<Record<string, string>>({})
   const logoFileInputRef = useRef<HTMLInputElement>(null)
 
@@ -272,8 +279,37 @@ export function TemplateCustomFieldsForm({
       })
       onLogoFileSelected?.(fieldName, file)
       input.value = ''
+      try {
+        setLogoUploading(true)
+        const uploaded = await uploadAdminFileMaybeMock({
+          file,
+          owner: buildAdminFileOwner(
+            ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
+            1,
+            ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+          ),
+        })
+        const result: FileUploadResult = {
+          url: contentUrlForFileObjectId(uploaded.fileObjectId),
+          fileName: file.name,
+          fileSize: file.size,
+          uploadedAt: new Date().toISOString(),
+          fileObjectId: uploaded.fileObjectId,
+        }
+        _onLogoUploadResult?.(fieldName, result)
+      } catch {
+        URL.revokeObjectURL(previewUrl)
+        setLogoPreviewUrlByField(prev => {
+          const next = { ...prev }
+          delete next[fieldName]
+          return next
+        })
+        onLogoFileSelected?.(fieldName, null)
+      } finally {
+        setLogoUploading(false)
+      }
     },
-    [activeField, onLogoFileSelected]
+    [activeField, onLogoFileSelected, _onLogoUploadResult]
   )
 
   const activeLogoPreviewUrl =

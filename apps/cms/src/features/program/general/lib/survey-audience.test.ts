@@ -157,6 +157,7 @@ describe('general survey audience', () => {
       program({
         generalProgramAudience: 'individual',
         generalParticipantTypes: ['individual', 'teacher_instructor', 'volunteer'],
+        generalProgramSessionRound: 'multi',
       })
     )
     expect(items.map(item => item.label)).toEqual([
@@ -167,6 +168,18 @@ describe('general survey audience', () => {
       '과제 관리',
       '게시글',
     ])
+  })
+
+  it('개인 프로그램 단일 회차 진행 현황 LNB에는 과제를 포함하지 않는다', () => {
+    const items = getGeneralProgressMenuItems(
+      program({
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+        generalProgramSessionRound: 'single',
+      })
+    )
+
+    expect(items.map(item => item.label)).toEqual(['참여자', '출석 관리', '게시글'])
   })
 
   it('기관 프로그램 진행 현황 LNB는 참여 기관·강사·봉사자만 노출한다', () => {
