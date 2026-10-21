@@ -7,7 +7,7 @@
  */
 
 /**
- * 공통정보 차시/회차 행. sessionLabel/title/description은 항상 문자열(없으면 ""), 나머지는 값이 없으면 생략.
+ * 공통정보 차시/회차 행. sessionLabel/title/description은 항상 문자열(없으면 ""), 빈 placeholder 행과 IPS 요약은 반환하지 않으며 나머지는 값이 없으면 생략.
  */
 export interface CurriculumSessionItem {
   sessionLabel?: string;
@@ -17,6 +17,5 @@ export interface CurriculumSessionItem {
   assignmentPeriod?: string;
   educationFormLabel?: string;
   participationMethodLabel?: string;
-  ipsTypeSummary?: string;
   scheduleDateLabel?: string;
 }

@@ -5,8 +5,10 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GradeBlock } from './gradeBlock';
 import type { OrganizationApplicationListItemResponsePreviousYearParticipation } from './organizationApplicationListItemResponsePreviousYearParticipation';
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
+import type { OrganizationApplicationListItemResponseRequestedEducationFormat } from './organizationApplicationListItemResponseRequestedEducationFormat';
 import type { OrganizationApplicationListItemResponseScheduleConfirmStatus } from './organizationApplicationListItemResponseScheduleConfirmStatus';
 import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 import type { Session } from './session';
@@ -28,6 +30,8 @@ export interface OrganizationApplicationListItemResponse {
   temporaryAssignmentStatus?: string | null;
   requestedStudentCount?: number;
   requestedClassCount?: number;
+  /** 기관 신청 답변에서 저장된 희망 교육 형태. 없으면 null이며 프로그램 교육 형태를 추정해 채우지 않습니다. */
+  requestedEducationFormat?: OrganizationApplicationListItemResponseRequestedEducationFormat;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
@@ -44,7 +48,7 @@ export interface OrganizationApplicationListItemResponse {
   regionSido?: string;
   regionSigungu?: string;
   sessions?: Session[];
-  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
+  /** 신청자가 고른 교육 진행 희망일. UJAT은 신청서 「교육 진행 희망일」 원문과 왕복하며 startAt(Asia/Seoul 해당일 00:00)이 날짜 열 O/- 의 SSOT. 빈 배열이면 해당 열은 전부 -. 임시배정·승인 후 확정 진행일은 sessions[].startAt. 다른 컬럼으로 채우지 않음. */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   mergeGroupId?: number;
   mergeStatus?: string;
@@ -61,4 +65,6 @@ export interface OrganizationApplicationListItemResponse {
   assignedInstructorCount?: number | null;
   /** 운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null */
   operatingStudentCount?: number | null;
+  /** 학년별 학급. [{gradeLabel, classCount}]. 다학년 신청 원문·학급 카탈로그가 있으면 학년마다 한 줄. 없으면 null이며 grade+requestedClassCount로 추정해 여러 줄을 만들지 않음 */
+  gradeBlocks?: GradeBlock[] | null;
 }

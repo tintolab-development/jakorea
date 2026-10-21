@@ -15,4 +15,10 @@ export interface Profile {
   email?: string;
   external1365Id?: string;
   privacyState?: string;
+  /** 자택 주소. MASKED GET은 시/도만 반환하거나, 시/도를 판별할 수 없으면 null. 시군구·동·상세로 채우지 않음. UNMASKED는 저장된 원문 주소(기본+상세). 없으면 null */
+  homeAddress?: string | null;
+  /** 자택 시/도. 저장된 region_sido 또는 주소에서 인식된 시/도. 없으면 null */
+  homeAddressSido?: string | null;
+  /** 자택 시군구. MASKED GET은 항상 null. UNMASKED는 저장된 원문 또는 인식값. 없으면 null */
+  homeAddressSigungu?: string | null;
 }

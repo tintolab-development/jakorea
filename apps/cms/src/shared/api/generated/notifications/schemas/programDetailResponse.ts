@@ -32,6 +32,7 @@ export interface ProgramDetailResponse {
   /** 교육받은 교사 프로그램의 교육일지 기능 설정. 비대상 프로그램·detail row 없음·OFF는 false. */
   educationJournalEnabled?: boolean;
   portalCategories?: string[];
+  /** 회원에게 보이는 공고명. 포커스 없는 조회는 공통정보 공고명. GENERAL_* 봉사자 포커스는 공통정보 공고명과 같고 행 announcementTitle은 쓰지 않는다. UJAT 봉사자 포커스는 모집별 공고명. */
   title?: string;
   titleEn?: string;
   summary?: string;
@@ -43,6 +44,10 @@ export interface ProgramDetailResponse {
   periodStatus?: string;
   /** 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개. */
   recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
+  /** 기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영. */
+  preEducationNoticeRequired?: boolean | null;
+  /** preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집에서만 내려가며 두 필드는 항상 같은 boolean입니다. */
+  advanceGuidanceRequired?: boolean | null;
   applicationTargetMode?: string;
   businessField?: string;
   venue?: string;
@@ -57,11 +62,12 @@ export interface ProgramDetailResponse {
   learningSupportContent?: string;
   otherMatters?: string;
   remarks?: string;
-  /** 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다. */
+  /** 프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다. */
   educationTarget?: ProgramDetailResponseEducationTarget;
-  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
+  /** 프로그램 공통 교육 대상 코드 배열. 포커스와 무관하게 같다. 없으면 생략. 강사·봉사자 recruitmentTargets를 넣지 않는다. */
   educationTargets?: string[];
-  educationTargetDetail?: string;
+  /** 프로그램 공통 교육 대상 상세. 포커스와 무관하게 같다. 없으면 null. */
+  educationTargetDetail?: string | null;
   /** 강사·봉사자 모집 공고 포커스일 때 nested recruitmentTarget 한글 요약. 참여자 포커스·미지정 조회는 null. */
   recruitmentTarget?: string | null;
   /** 강사·봉사자 모집 대상 코드 배열. recruitmentTarget 없을 때 FE 라벨 조합용. 참여자 포커스는 생략. */
@@ -96,17 +102,15 @@ export interface ProgramDetailResponse {
   educationFormLabel?: string | null;
   /** 개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null. */
   participationMethod?: ProgramDetailResponseParticipationMethod;
-  /** IPS 표시 문자열. ipsScheduleDetail=perSchedule이면 null(행 값 사용). */
-  ipsTypeSummary?: string | null;
   /** 공통정보 차시/회차. educationStructure=curriculum일 때만 채우고 그 외는 []. curricula[]와 별개. */
   curriculumSessions?: CurriculumSessionItem[];
   /** 공통정보 사전교육·세부·행사 일정. educationStructure=schedule일 때만 채우고 그 외는 []. scheduleCurriculumPreEducation=true면 첫 원소 blockKind=preEducation. schedules[]와 별개. */
   scheduleDetails?: ScheduleDetailItem[];
   /** 교육 진행 예정일 지정 방식. */
   educationScheduleMode?: ProgramDetailResponseEducationScheduleMode;
-  /** 교육 진행 예정일 표시 문자열(typed detail 원문 그대로, 순서 유지). 없으면 []. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다. */
+  /** 교육 진행 예정일 표시 문자열. 문자열 행은 순서를 유지하고 레거시 객체 행은 저장된 label 또는 날짜 범위를 문자열로 정규화합니다. 값이 없으면 []이며 빈 문자열과 00:00 ~ 00:00 줄은 제외합니다. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다. */
   educationScheduleLines?: string[];
-  /** 기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null. */
+  /** 기간 지정(period)일 때 프로그램 전체 교육 기간 {start,end}. typed educationScheduleRange가 있으면 그 값(start/startDate, end/endDate)을 YYYY-MM-DD로 정규화한다. 객체는 없고 기간형 표시 줄만 있으면 최소 시작일~최대 종료일이다. 한쪽에만 날짜가 있으면 다른 쪽은 null. date 모드이거나 canonical 기간이 없으면 null. businessStartDate/businessEndDate, 모집 기간, 운영 기간으로 채우지 않는다. */
   educationScheduleRange?: ScheduleRange | null;
   /** recruitmentId 조회일 때 그 모집의 시작. 쿼리가 없으면 null. */
   recruitmentStartAt?: string | null;

@@ -7,7 +7,7 @@
  */
 
 /**
- * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
+ * 프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다.
  */
 export type ProgramDetailResponseEducationTarget = typeof ProgramDetailResponseEducationTarget[keyof typeof ProgramDetailResponseEducationTarget] | null;
 

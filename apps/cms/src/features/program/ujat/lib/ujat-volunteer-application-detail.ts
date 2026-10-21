@@ -123,7 +123,8 @@ function applyVolunteerProfile(
     contactRaw: contact || row.contactRaw,
     emailRaw: email || row.emailRaw,
     id1365: text(profile.external1365Id) || row.id1365,
-    homeAddress: text(profile.homeAddress) || row.homeAddress,
+    /** MASKED는 homeAddress(시/도) 또는 homeAddressSido. sigungu로 보완하지 않음. */
+    homeAddress: text(profile.homeAddress) || text(profile.homeAddressSido) || row.homeAddress,
   }
 }
 

@@ -26,6 +26,6 @@ export interface ProgramScheduleResponse {
   scheduleStatus?: string;
   publiclyVisible?: boolean;
   scheduleOrigin?: string;
-  endDate?: string;
   startDate?: string;
+  endDate?: string;
 }

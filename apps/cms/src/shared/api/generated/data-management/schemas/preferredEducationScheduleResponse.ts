@@ -10,7 +10,7 @@
  * 신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 정확히 하나의 PROGRAM_DEFINED 교육 슬롯과 일치할 때만 그 program_schedule id를 scheduleId로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 고유 매칭이 불가능하면 scheduleId=null과 unresolvedReason을 반환한다.
  */
 export interface PreferredEducationScheduleResponse {
-  /** 정확히 매칭된 PROGRAM_DEFINED program_schedule id. 고유 매칭이 불가능하면 null. */
+  /** 정확히 매칭된 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). 여러 날 기간 창·신청 파생·UNKNOWN 일정이나 고유 매칭이 불가능하면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다. */
   scheduleId?: number | null;
   round?: number | null;
   /** 선택 일정의 시작 시각. */

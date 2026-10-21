@@ -13,6 +13,7 @@ export interface OrganizationApplicationSession {
   scheduleId?: number;
   sessionNo?: number | null;
   scheduleName?: string | null;
+  /** 임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열 */
   startAt?: string | null;
   endAt?: string | null;
   /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */

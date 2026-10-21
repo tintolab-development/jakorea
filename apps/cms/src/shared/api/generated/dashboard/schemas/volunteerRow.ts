@@ -14,7 +14,7 @@ export interface VolunteerRow {
   educationRegionCode?: string;
   participantStatus?: string;
   giveUp?: boolean;
-  /** 배정일수. 0 가능. 목록 GET의 null과 구분 */
+  /** UJAT 교육 진행 배정일수. 취소가 아닌 ujat_dgbong_volunteer_schedule_assignment의 서로 다른 program_schedule_id 수. 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays와 같은 이름 */
   totalAssignedDays?: number;
   cells?: AllocationCell[];
 }
