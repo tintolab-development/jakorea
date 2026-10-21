@@ -7,6 +7,7 @@ import {
   programDetailCompanySchoolCommonInfoEditSchema,
   programDetailEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
+  programDetailUjatCommonInfoEditSchema,
   programToDetailEditValues,
   volunteerDocumentInterviewNestedPatch,
 } from './program-detail-edit-schema'
@@ -135,6 +136,36 @@ describe('programDetailCompanySchoolCommonInfoEditSchema', () => {
     }
 
     expect(programDetailCompanySchoolCommonInfoEditSchema.safeParse(values).success).toBe(true)
+    expect(programDetailEditSchema.safeParse(values).success).toBe(false)
+  })
+})
+
+describe('programDetailUjatCommonInfoEditSchema', () => {
+  it('UJAT 공통정보 탭에 없는 모집 필수값이 비어도 저장 검증을 통과한다', () => {
+    const values = {
+      ...programToDetailEditValues({
+        ...program,
+        backendProgramType: 'UJAT',
+        managerName: undefined,
+        description: undefined,
+        learningSupportContent: undefined,
+        applicationStartDate: undefined,
+        applicationEndDate: undefined,
+        resultAnnouncementDate: undefined,
+        resultAnnouncementMethod: undefined,
+      } as unknown as Program),
+      managerName: '',
+      description: '',
+      learningSupportContent: '',
+      applicationStartDate: '',
+      applicationEndDate: '',
+      resultAnnouncementDate: '',
+      resultAnnouncementMethod: '',
+      sponsorId: '163384',
+      sponsorManagementIds: ['163384'],
+    }
+
+    expect(programDetailUjatCommonInfoEditSchema.safeParse(values).success).toBe(true)
     expect(programDetailEditSchema.safeParse(values).success).toBe(false)
   })
 })

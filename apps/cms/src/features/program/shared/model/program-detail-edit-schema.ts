@@ -512,6 +512,12 @@ export const programDetailCompanySchoolCommonInfoEditSchema =
   programDetailOverviewCommonInfoEditSchema
 
 /**
+ * UJAT 공통 정보 — 화면에 없는 모집·설명·학습지원 필드로 저장이 막히지 않게 한다.
+ * overlay 등록 필수 검사는 `hasIncompleteUjatProgramRegistrationRequiredFields`가 담당.
+ */
+export const programDetailUjatCommonInfoEditSchema = programDetailOverviewCommonInfoEditSchema
+
+/**
  * 교육받은 교사 공통 정보 — 등록 위저드와 동일한 기본 정보 필수.
  */
 export const programDetailTrainedTeachersCommonInfoEditSchema =
