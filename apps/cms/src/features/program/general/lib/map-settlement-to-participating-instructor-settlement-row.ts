@@ -135,3 +135,27 @@ export function summarizeParticipatingInstructorSettlementProgress(
   const total = sessionTotals.length > 0 ? Math.max(...sessionTotals) : rows.length
   return { completed, total }
 }
+
+/** 요약 카드 — 표시 가능한 지급조서 상태 집계 */
+export function summarizeParticipatingInstructorPaymentStatementStatus(
+  rows: Array<
+    Pick<
+      ParticipatingInstructorSettlementApiRow,
+      'lectureProgress' | 'hasPaymentStatementApplication' | 'paymentStatementStatus'
+    >
+  >
+): InstructorSettlementUiStatus {
+  const statuses = rows
+    .filter(
+      row =>
+        row.lectureProgress === 'completed' &&
+        row.hasPaymentStatementApplication &&
+        row.paymentStatementStatus !== 'none'
+    )
+    .map(row => row.paymentStatementStatus)
+
+  if (statuses.length === 0) return 'none'
+  const unique = new Set(statuses)
+  if (unique.size === 1) return statuses[0]!
+  return 'partial_confirmation'
+}
