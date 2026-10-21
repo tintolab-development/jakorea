@@ -186,6 +186,7 @@ export function UserDetailFullPageModal({
         ? actions.patchAdminPermissionVariantFromDetailView
         : undefined,
       onTeacherEmploymentStatusChange: actions.patchTeacherEmploymentStatus,
+      onAffiliatedTeachersChanged: actions.refreshSchoolAfterAffiliatedTeachersChanged,
       onOpenInstructorPermissionRevoke: actions.openInstructorPermissionRevoke,
       onCloseInstructorPermissionRevoke: actions.closeInstructorPermissionRevoke,
       onConfirmInstructorPermissionRevoke: actions.confirmInstructorPermissionRevoke,
@@ -220,6 +221,7 @@ export function UserDetailFullPageModal({
     actions.updateBasicInfoDraft,
     actions.patchAdminPermissionVariantFromDetailView,
     actions.patchTeacherEmploymentStatus,
+    actions.refreshSchoolAfterAffiliatedTeachersChanged,
     actions.openInstructorPermissionRevoke,
     actions.closeInstructorPermissionRevoke,
     actions.confirmInstructorPermissionRevoke,

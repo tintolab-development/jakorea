@@ -51,7 +51,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     deleteButton: '학교 삭제',
     deleteGuideTitle: '학교 삭제 안내',
     deleteConfirmButton: '삭제',
-    deleteDoneTitle: '학교 삭제 완료',
+    deleteDoneTitle: '삭제 완료',
   },
   instructors: {
     menuLabel: '강사 회원',
@@ -528,9 +528,22 @@ export class MemberListCrudPage {
       .fill('삭제')
 
     const deletePromise = this.page.waitForResponse(
-      res =>
-        res.request().method() === 'POST' &&
-        /\/api\/admin\/users\/[^/]+\/delete\/?$/.test(new URL(res.url()).pathname),
+      res => {
+        const method = res.request().method()
+        const path = new URL(res.url()).pathname
+        if (this.kind === 'institutions') {
+          return (
+            (method === 'DELETE' &&
+              /\/api\/admin\/organizations\/schools\/\d+\/?$/.test(path)) ||
+            (method === 'POST' &&
+              /\/api\/admin\/organizations\/schools\/bulk-delete\/?$/.test(path))
+          )
+        }
+        return (
+          method === 'POST' &&
+          /\/api\/admin\/users\/[^/]+\/delete\/?$/.test(path)
+        )
+      },
       { timeout: 60_000 }
     )
 
