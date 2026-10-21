@@ -1,5 +1,6 @@
-import styles from './pf-loading-spinner.module.css'
+import { useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import styles from './pf-loading-spinner.module.css'
 
 type PFLoadingSpinnerProps = {
   className?: string
@@ -16,6 +17,16 @@ export function PFLoadingSpinner({
   centered = false,
   blocking = false,
 }: PFLoadingSpinnerProps) {
+  const [mainTarget, setMainTarget] = useState<HTMLElement | null>(null)
+
+  useLayoutEffect(() => {
+    if (!centered || blocking) {
+      setMainTarget(null)
+      return
+    }
+    setMainTarget(document.querySelector<HTMLElement>('[data-pf-main="true"]'))
+  }, [centered, blocking])
+
   const spinner = (
     <span
       className={[
@@ -35,10 +46,14 @@ export function PFLoadingSpinner({
     </span>
   )
 
-  if (typeof document === 'undefined') return spinner
-  if (blocking) return createPortal(spinner, document.body)
-  if (!centered) return spinner
+  if (blocking) {
+    if (typeof document === 'undefined') return spinner
+    return createPortal(spinner, document.body)
+  }
 
-  const main = document.querySelector<HTMLElement>('[data-pf-main="true"]')
-  return main ? createPortal(spinner, main) : spinner
+  if (centered && mainTarget) {
+    return createPortal(spinner, mainTarget)
+  }
+
+  return spinner
 }

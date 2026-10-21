@@ -1,7 +1,5 @@
 /**
- * FAQ 등록/수정 모달 — Figma `popup / multiple / w800 / FAQ 등록 및 수정`
- * 셸 800 · padding 24/30/34 · radius 16 · 헤더·본문·푸터 gap 30
- * (셸 padding·radius는 ContentModal 공통 스펙을 쓰고, 여기서는 레이아웃만 맞춤)
+ * FAQ 등록/수정 모달 — 공지사항 등록(`notice-register-modal`)과 동일 large(1400) 셸
  */
 
 .faq-form-modal-wrap {
@@ -24,7 +22,7 @@
   content: none !important;
 }
 
-.faq-form-modal-wrap .ant-modal.faq-form-modal {
+.faq-form-modal-wrap .ant-modal.faq-form-modal.teal-header-modal--large {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
@@ -33,54 +31,44 @@
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   padding-bottom: 0 !important;
-  width: min(800px, calc(100vw - 32px)) !important;
-  max-width: min(800px, calc(100vw - 32px)) !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
   flex: none !important;
   box-sizing: border-box !important;
 }
 
-/* 셸: ContentModal 공통(24/30/34 · radius 16) 유지. 높이는 콘텐츠에 맞춤 */
-.content-modal.faq-form-modal.teal-header-modal.ant-modal .ant-modal-content {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-  height: auto;
-  max-height: min(calc(100dvh - 48px), 900px);
-  overflow: hidden;
-  box-sizing: border-box;
+.content-modal.faq-form-modal.teal-header-modal--large .ant-modal-content {
+  max-height: min(960px, calc(100dvh - 32px));
 }
 
-/* 헤더 · 본문 · 푸터 — gap 30px (시안) */
 .content-modal.faq-form-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 30px;
-  flex: 0 1 auto;
-  min-height: 0;
+  overflow: hidden;
   width: 100%;
   padding: 0;
-  overflow: hidden;
   box-sizing: border-box;
 }
 
+/* 헤더 ↔ 본문 · 본문(에디터) ↔ 푸터 — 공지 등록 모달과 동일 24px */
 .content-modal.faq-form-modal .teal-header-modal__header {
-  margin-bottom: 0;
+  margin-bottom: 24px;
   width: 100%;
   flex-shrink: 0;
 }
 
 .content-modal.faq-form-modal .ant-modal-body > .teal-header-modal__footer,
 .content-modal.faq-form-modal .teal-header-modal__footer {
-  margin-top: 0;
-  width: 100%;
   flex-shrink: 0;
+  margin-top: 24px;
+  width: 100%;
 }
 
 .content-modal.faq-form-modal .teal-header-modal__body {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -158,22 +146,19 @@
   margin-bottom: 6px;
 }
 
-.faq-form-modal__fields .cms-textarea {
+/* 내용(답변) WYSIWYG — 공지 등록 에디터와 동일 높이·폭 */
+.faq-form-modal__editor-host {
   width: 100%;
-}
-
-/* 내용(답변) — 시안 740×200 높이 고정, 세로 resize만 */
-.faq-form-modal__answer.cms-textarea,
-.faq-form-modal__answer.cms-textarea .cms-textarea__control,
-.faq-form-modal__answer.cms-textarea .cms-textarea__inner,
-.faq-form-modal__answer.cms-textarea .cms-textarea__inner textarea.ant-input {
-  height: 200px;
-  min-height: 200px;
+  height: 369px;
+  min-height: 369px;
+  flex-shrink: 0;
   box-sizing: border-box;
 }
 
-.faq-form-modal__answer.cms-textarea .cms-textarea__inner textarea.ant-input {
-  resize: vertical;
+.faq-form-modal__editor-host .rich-text-editor {
+  height: 100%;
+  min-height: inherit;
+  border-radius: var(--rt-radius, 8px);
 }
 
 .faq-form-modal .content-modal__footer-actions {

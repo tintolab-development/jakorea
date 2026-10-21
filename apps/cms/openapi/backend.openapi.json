@@ -73437,6 +73437,27 @@
           },
           "privacyState": {
             "type": "string"
+          },
+          "homeAddress": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "MASKED GET: 시/도만. 판별 불가면 null. unmask: 원문(기본+상세). 기관 주소로 채우지 않음"
+          },
+          "homeAddressSido": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "시/도 또는 null"
+          },
+          "homeAddressSigungu": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "MASKED GET은 항상 null. unmask 시 원문 또는 null"
           }
         }
       },
@@ -99903,28 +99924,28 @@
               "string",
               "null"
             ],
-            "description": "일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+            "description": "일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음"
           },
           "essayEducationExperience": {
             "type": [
               "string",
               "null"
             ],
-            "description": "일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+            "description": "일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음"
           },
           "essayNecessity": {
             "type": [
               "string",
               "null"
             ],
-            "description": "일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+            "description": "일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음"
           },
           "essayJaExperience": {
             "type": [
               "string",
               "null"
             ],
-            "description": "일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+            "description": "일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음"
           },
           "rejectReason": {
             "type": "string",
@@ -100043,6 +100064,14 @@
               "null"
             ],
             "description": "발대식 참석. 저장값이 없으면 null. false로 채우지 않음"
+          },
+          "totalAssignedDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "합격 재사용 목록 배정일수. 없으면 null. 0으로 채우지 않음"
           }
         }
       },
@@ -101818,13 +101847,14 @@
           },
           "sessions": {
             "type": "array",
+            "description": "임시 배정·승인 후 확정 진행일. startAt만 교육 진행 일정 열에 사용. 없으면 []. 희망일(preferredEducationSchedules)과 혼용 금지. null 아님",
             "items": {
               "$ref": "#/components/schemas/Session"
             }
           },
           "preferredEducationSchedules": {
             "type": "array",
-            "description": "승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개.",
+            "description": "신청 희망 교육일. 목록 희망일 열 O/- SSOT는 각 startAt의 Asia/Seoul 달력일. 배열(없으면 []). null 아님. sessions[]·grade·regionSido·프로그램 일정으로 채우지 않음. scheduleId가 null이어도 startAt이 있으면 O.",
             "items": {
               "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
             }
@@ -101893,6 +101923,34 @@
             ],
             "format": "int32",
             "description": "운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null"
+          },
+          "gradeBlocks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "다학년 학급. 배열이면 학년마다 한 줄. null이면 grade + requestedClassCount 한 줄. 빈 배열과 null을 구분. classes 없음",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationApplicationListGradeBlock"
+            }
+          }
+        }
+      },
+      "OrganizationApplicationListGradeBlock": {
+        "type": "object",
+        "properties": {
+          "gradeLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "classCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -103428,7 +103486,8 @@
           },
           "totalAssignedDays": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "배정일수. 0 가능. 목록 GET의 null과 구분"
           },
           "cells": {
             "type": "array",

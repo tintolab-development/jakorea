@@ -22,7 +22,6 @@ import type {
   UjatVolunteerGrade,
   UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UJAT_VOLUNTEER_GRADE_OPTIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
@@ -76,6 +75,64 @@ function resolveInstitutionRegionKey(
   return (matched as UjatInstitutionApplicationRegionKey | undefined) ?? UNRESOLVED_REGION_KEY
 }
 
+function displayTextOrDash(value: string | null | undefined): string {
+  return value?.trim() || '-'
+}
+
+const SEOUL_YMD = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** `startAt` → Asia/Seoul 달력일 `YYYY-MM-DD`. 파싱 불가면 선행 날짜만. */
+export function toSeoulYmd(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value.trim().match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? null
+  }
+  return SEOUL_YMD.format(parsed)
+}
+
+function isoDatesFromStartAts(
+  items: ReadonlyArray<{ startAt?: string | null } | undefined> | null | undefined
+): string[] {
+  const dates: string[] = []
+  for (const item of items ?? []) {
+    const iso = toSeoulYmd(item?.startAt)
+    if (iso && !dates.includes(iso)) dates.push(iso)
+  }
+  return dates.sort()
+}
+
+function mapListGradeClassCounts(
+  dto: OrganizationApplicationListItemResponse
+): UjatInstitutionApplicationRow['gradeClassCounts'] {
+  if (Array.isArray(dto.gradeBlocks)) {
+    return dto.gradeBlocks.map(block => ({
+      gradeLabel: block.gradeLabel?.trim() || '-',
+      classCount: typeof block.classCount === 'number' ? block.classCount : null,
+    }))
+  }
+
+  const gradeLabel = dto.grade?.trim() || '-'
+  const classCount = typeof dto.requestedClassCount === 'number' ? dto.requestedClassCount : null
+  if (gradeLabel === '-' && classCount == null) return []
+  return [{ gradeLabel, classCount }]
+}
+
+function scheduleSlotsFromPreferredDates(
+  preferred: OrganizationApplicationListItemResponse['preferredEducationSchedules']
+): UjatInstitutionApplicationRow['scheduleSlots'] {
+  const slots = buildEmptyScheduleSlots()
+  for (const iso of isoDatesFromStartAts(preferred)) {
+    slots[iso] = 'O'
+  }
+  return slots
+}
+
 /**
  * roster/class assignment가 없으면 신청 건수만으로 표 행을 채움.
  * grade/className/studentCount는 roster SSOT — 목록 DTO만으로는 학년 분해 불가.
@@ -87,28 +144,23 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     regionKey?: UjatInstitutionApplicationRegionKey
   }
 ): UjatInstitutionApplicationRow {
-  const classCount = dto.requestedClassCount ?? 0
   const regionKey = resolveInstitutionRegionKey(dto, options)
-  const gradeLabel = dto.grade?.trim() || '신청 학급'
-
-  const gradeClassCounts =
-    classCount > 0
-      ? [{ gradeLabel, classCount }]
-      : ([] as UjatInstitutionApplicationRow['gradeClassCounts'])
+  const gradeClassCounts = mapListGradeClassCounts(dto)
 
   return {
     id: toId(dto.id),
     regionKey,
     no: index + 1,
-    institutionName: dto.organizationName?.trim() || '기관명 없음',
+    institutionName: displayTextOrDash(dto.organizationName),
     tempAssignmentStatus: mapOrgStatusToTempAssignment(
       dto.applicationStatus,
       dto.temporaryAssignmentStatus
     ),
     gradeClassCounts,
-    totalClassCount: sumGradeClassCounts(gradeClassCounts) || classCount,
-    scheduleSlots: buildEmptyScheduleSlots(),
-    teacherName: dto.teacherName?.trim() || '-',
+    totalClassCount: sumGradeClassCounts(gradeClassCounts),
+    scheduleSlots: scheduleSlotsFromPreferredDates(dto.preferredEducationSchedules),
+    sessionIsoDates: isoDatesFromStartAts(dto.sessions),
+    teacherName: displayTextOrDash(dto.teacherName),
     scheduleConfirmStatus: parseUjatScheduleConfirmStatus(dto.scheduleConfirmStatus),
     assignedInstructorCount: dto.assignedInstructorCount ?? null,
     operatingStudentCount: dto.operatingStudentCount ?? null,
@@ -141,8 +193,17 @@ export function mapOrganizationApplicationDetailToUjatInstitutionRow(
       scheduleConfirmStatus: dto.scheduleConfirmStatus,
       assignedInstructorCount: dto.assignedInstructorCount,
       operatingStudentCount: dto.operatingStudentCount,
-      sessions: [],
-      preferredEducationSchedules: [],
+      sessions: (dto.sessions ?? []).map(session => ({ startAt: session.startAt })),
+      preferredEducationSchedules: dto.preferredEducationSchedules ?? [],
+      gradeBlocks:
+        dto.gradeBlocks === undefined
+          ? undefined
+          : dto.gradeBlocks === null
+            ? null
+            : dto.gradeBlocks.map(block => ({
+                gradeLabel: block.gradeLabel ?? null,
+                classCount: block.classCount ?? null,
+              })),
     },
     index
   )
@@ -264,12 +325,7 @@ function mapManagerEvaluation(value: unknown): UjatManagerEvaluation {
 }
 
 function mapVolunteerGrade(value: unknown): UjatVolunteerGrade | '' {
-  const trimmed = typeof value === 'string' ? value.trim() : ''
-  const raw = trimmed === '휴학' ? '휴학생' : trimmed
-  if ((UJAT_VOLUNTEER_GRADE_OPTIONS as readonly string[]).includes(raw)) {
-    return raw as UjatVolunteerGrade
-  }
-  return ''
+  return typeof value === 'string' ? (value.trim() as UjatVolunteerGrade | '') : ''
 }
 
 function formatAssignedInterviewFromIso(
@@ -348,44 +404,16 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     giveUpYn: dto.giveUpYn,
   })
 
-  const enriched = dto as VolunteerApplicationListItemResponse & {
-    preferredRegion?: string | null
-    preferredActivityRegion?: string | null
-    grade?: string | null
-    applicationGrade?: string | null
-    educationExperience?: string | boolean | null
-    hasEducationExperience?: boolean | null
-    contact?: string | null
-    email?: string | null
-    interviewAvailability?: VolunteerApplicationListItemResponse extends {
-      interviewAvailability?: infer T
-    }
-      ? T
-      : Array<{ startAt?: string; endAt?: string }>
-    interviewAvailabilityCount?: number | null
-  }
-
-  const preferredRegion =
-    enriched.preferredActivityRegion?.trim() || enriched.preferredRegion?.trim() || ''
-  const grade = mapVolunteerGrade(enriched.applicationGrade ?? enriched.grade)
+  const preferredRegion = dto.preferredRegion?.trim() || ''
+  const grade = mapVolunteerGrade(dto.grade)
   const hasEducationExperience =
-    typeof enriched.hasEducationExperience === 'boolean'
-      ? enriched.hasEducationExperience
-      : typeof enriched.educationExperience === 'boolean'
-        ? enriched.educationExperience
-        : typeof enriched.educationExperience === 'string'
-          ? /yes|있|true|y/i.test(enriched.educationExperience)
-          : null
+    typeof dto.hasEducationExperience === 'boolean' ? dto.hasEducationExperience : null
 
   const assigned = formatAssignedInterviewFromIso(
     dto.assignedInterviewStartAt,
     dto.assignedInterviewEndAt
   )
-  const interviewAvailability = mapInterviewAvailability(
-    enriched.interviewAvailability as
-      | Array<{ startAt?: string; endAt?: string }>
-      | undefined
-  )
+  const interviewAvailability = mapInterviewAvailability(dto.interviewAvailability)
   const interviewEvals = dto.interviewEvaluations ?? []
   const slotScore = (
     item: { score?: number | null; scoreTotal?: number | null } | undefined
@@ -399,23 +427,25 @@ export function mapVolunteerApplicationToUjatApplicantRow(
   return {
     id: toId(dto.id),
     no: index + 1,
-    name: dto.memberName?.trim() || '이름 없음',
+    name: displayTextOrDash(dto.memberName),
     grade,
     preferredRegion,
-    contact: enriched.contact?.trim() || '-',
-    email: enriched.email?.trim() || '-',
+    contact: displayTextOrDash(dto.contact),
+    email: displayTextOrDash(dto.email),
     contactRaw: '',
     emailRaw: '',
     hasEducationExperience,
     applicationType: dto.isReparticipation ? 'ujat-graduate' : 'new',
-    essayIntro: '',
-    essayEducationExperience: '',
-    essayNecessity: '',
-    essayJaExperience: '',
+    essayIntro: dto.essayIntro?.trim() ?? '',
+    essayEducationExperience: dto.essayEducationExperience?.trim() ?? '',
+    essayNecessity: dto.essayNecessity?.trim() ?? '',
+    essayJaExperience: dto.essayJaExperience?.trim() ?? '',
+    totalAssignedDays: typeof dto.totalAssignedDays === 'number' ? dto.totalAssignedDays : null,
+    homeAddress: '',
     managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     documentScreeningStatus: projection.documentScreeningStatus,
-    interviewSlotCount: enriched.interviewAvailabilityCount ?? interviewAvailability.length,
+    interviewSlotCount: dto.interviewAvailabilityCount ?? interviewAvailability.length,
     interviewAssignmentStatus:
       dto.interviewAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
         ? 'assigned'

@@ -37,13 +37,13 @@ export interface VolunteerApplicationListItemResponse {
   giveUpYn?: boolean;
   applicationFormResponseId?: number;
   essaySubmitted?: boolean;
-  /** 일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
+  /** 일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음 */
   essayIntro?: string | null;
-  /** 일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
+  /** 일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음 */
   essayEducationExperience?: string | null;
-  /** 일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
+  /** 일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음 */
   essayNecessity?: string | null;
-  /** 일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null */
+  /** 일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 일반·UJAT 신청 원문(application.ujat.essay*). 마스킹하지 않음 */
   essayJaExperience?: string | null;
   /** 현재 반려 사유. 반려 상태가 아니면 null */
   rejectReason?: string;
@@ -84,4 +84,6 @@ export interface VolunteerApplicationListItemResponse {
   id1365?: string | null;
   /** 발대식 참석. 저장값이 없으면 null. false로 채우지 않음 */
   openingCeremonyAttended?: boolean | null;
+  /** 합격 재사용 목록 배정일수. 없으면 null. 0으로 채우지 않음 */
+  totalAssignedDays?: number | null;
 }

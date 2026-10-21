@@ -13,6 +13,7 @@ import {
   MOCK_VERIFIED_PHONE,
   SchoolSearchModal,
 } from '@/features/auth/sign-up'
+import { NewsletterSubscribeModal } from '@/features/impact-story'
 import { PfRichTextEditor, RichTextViewer, useRichTextEditor } from '@/shared/rich-text'
 import {
   GoogleSocialLoginIcon,
@@ -806,6 +807,7 @@ export function DesignSystemPage() {
   const [richTextHtmlPreview, setRichTextHtmlPreview] = useState('')
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isNewsletterSubscribeOpen, setIsNewsletterSubscribeOpen] = useState(false)
   const [isLargeModalOpen, setIsLargeModalOpen] = useState(false)
   const [isBottomModalOpen, setIsBottomModalOpen] = useState(false)
   const [isFullModalOpen, setIsFullModalOpen] = useState(false)
@@ -2274,6 +2276,9 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           <PFButton variant="secondary" onClick={() => setIsModalOpen(true)}>
             size md
           </PFButton>
+          <PFButton variant="secondary" onClick={() => setIsNewsletterSubscribeOpen(true)}>
+            뉴스레터 신청하기
+          </PFButton>
           <PFButton variant="secondary" onClick={() => setIsLargeModalOpen(true)}>
             size lg
           </PFButton>
@@ -2667,6 +2672,11 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           PFModal size=&quot;md&quot; (600px). X 버튼과 자유로운 children 콘텐츠를 가집니다.
         </PFText>
       </PFModal>
+
+      <NewsletterSubscribeModal
+        open={isNewsletterSubscribeOpen}
+        onClose={() => setIsNewsletterSubscribeOpen(false)}
+      />
 
       <PFModal
         open={isLargeModalOpen}

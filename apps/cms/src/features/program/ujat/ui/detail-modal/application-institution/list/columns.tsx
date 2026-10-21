@@ -27,9 +27,12 @@ const SCHEDULE_CELL_CLASS = 'ujat-institution-application-list__cell-schedule'
 const INSTITUTION_CELL_CLASS = 'ujat-institution-application-list__cell-institution'
 
 function renderGradeClassCounts(row: UjatInstitutionApplicationRow) {
+  if (row.gradeClassCounts.length === 0) return '-'
   return (
     <UjatInlineDividedSegments
-      segments={row.gradeClassCounts.map(g => `${g.gradeLabel} ${g.classCount}학급`)}
+      segments={row.gradeClassCounts.map(
+        g => `${g.gradeLabel} / ${g.classCount == null ? '-' : g.classCount}`
+      )}
     />
   )
 }

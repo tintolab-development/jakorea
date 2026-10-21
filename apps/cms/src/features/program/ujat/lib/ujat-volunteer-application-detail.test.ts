@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { applyUjatVolunteerProjection } from './ujat-volunteer-application-detail'
+import {
+  applyUjatVolunteerApplicationDetail,
+  applyUjatVolunteerProjection,
+} from './ujat-volunteer-application-detail'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
 
@@ -36,6 +39,8 @@ const row = {
   applicationRoute: '',
   scheduleChangeCancelCount: 0,
   interviewAvailability: [],
+  totalAssignedDays: null,
+  homeAddress: '',
 } satisfies UjatVolunteerApplicantRow
 
 const certificate: VolunteerApplicationEvidenceAttachment = {
@@ -82,5 +87,15 @@ describe('applyUjatVolunteerProjection', () => {
       certificateFileName: 'certificate.pdf',
     })
     expect(next.evidenceAttachments).toEqual([certificate])
+  })
+
+  it('profile.homeAddress만 자택 주소지로 쓰고 기관 주소는 쓰지 않는다', () => {
+    const next = applyUjatVolunteerApplicationDetail(
+      row,
+      { ujat: { essayIntro: '상세 서술형' }, general: { essayIntro: '일반 서술형' } },
+      { homeAddress: '서울특별시', homeAddressSido: '서울특별시', homeAddressSigungu: null },
+    )
+    expect(next.homeAddress).toBe('서울특별시')
+    expect(next.essayIntro).toBe('상세 서술형')
   })
 })

@@ -2,6 +2,7 @@ import {
   AchievementSection,
   FALLBACK_IMPACT_TITLE,
   HeroCarousel,
+  HomePopupOverlay,
   PartnerMarqueeSection,
   ProgramCarouselSection,
   SocialRail,
@@ -61,6 +62,7 @@ export function HomePage() {
       </div>
 
       <SocialRail />
+      <HomePopupOverlay />
     </div>
   )
 }

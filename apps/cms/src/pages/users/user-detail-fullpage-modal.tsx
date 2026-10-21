@@ -44,6 +44,7 @@ import {
 } from '@/features/user/detail/lib/teacher-detail-url-context'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import './user-detail-modal.css'
+import './user-detail-fullpage-modal.css'
 
 export type {
   UserDetailLnbKey,

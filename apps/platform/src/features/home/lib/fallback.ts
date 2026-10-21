@@ -117,6 +117,7 @@ export const HOME_MAIN_FALLBACK: HomeMainFallback = {
       iconUrl: snsYoutubeUrl,
     },
   ],
+  popups: [],
 }
 
 export function getHomeMainFallback(): HomeMainFallback {

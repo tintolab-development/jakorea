@@ -89,7 +89,7 @@ function mapApplicantToProgressVolunteer(
     memberId: row.memberId,
     birthDate: row.birthDate,
     id1365: row.id1365,
-    totalAssignmentDays: null,
+    totalAssignedDays: typeof row.totalAssignedDays === 'number' ? row.totalAssignedDays : null,
     assignmentStatus: withdrawn
       ? 'activity_abandoned'
       : completed

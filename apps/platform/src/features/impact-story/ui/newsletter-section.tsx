@@ -1,30 +1,59 @@
 import { useId, useState, type FormEvent } from 'react'
+import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
+import { useNewsletterSubscribeMutation } from '../api/use-newsletter-subscribe'
+import { NewsletterSubscribeModal } from './newsletter-subscribe-modal'
+import { NewsletterSuccessModal } from './newsletter-success-modal'
 import styles from './newsletter-section.module.css'
 
 export function NewsletterSection() {
   const consentId = useId()
   const nameId = useId()
   const emailId = useId()
+  const subscribeMutation = useNewsletterSubscribeMutation()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [agreed, setAgreed] = useState(false)
+  const [isSubscribeOpen, setIsSubscribeOpen] = useState(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const canSubmit = agreed && name.trim().length > 0 && email.trim().length > 0
-
-  const completeSubscribe = () => {
-    if (!canSubmit) return
-    // Mock only — API 연동 전
-    setName('')
-    setEmail('')
-    setAgreed(false)
+  const showSuccess = () => {
+    setIsSubscribeOpen(false)
+    setErrorMessage('')
     setIsSuccessOpen(true)
+  }
+
+  const trySubscribeFromBanner = async () => {
+    if (!agreed) {
+      setErrorMessage('뉴스레터 구독을 위한 이름 및 이메일 주소 수집에\n동의해 주세요.')
+      return
+    }
+
+    const trimmedName = name.trim()
+    const trimmedEmail = email.trim()
+    const isComplete = Boolean(trimmedName) && isValidEmailId(trimmedEmail)
+
+    if (!isComplete) {
+      setIsSubscribeOpen(true)
+      return
+    }
+
+    try {
+      await subscribeMutation.mutateAsync({ name: trimmedName, email: trimmedEmail })
+      setName('')
+      setEmail('')
+      setAgreed(false)
+      showSuccess()
+    } catch (error) {
+      setErrorMessage(getNewsletterSubscribeErrorMessage(error))
+    }
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    completeSubscribe()
+    void trySubscribeFromBanner()
   }
 
   return (
@@ -109,25 +138,32 @@ export function NewsletterSection() {
           </div>
 
           <PFButton
-            type="button"
+            type="submit"
             size="xlarge"
             variant="primary"
             width="100%"
             className={styles.submit}
-            aria-disabled={!canSubmit}
-            onClick={completeSubscribe}
+            disabled={subscribeMutation.isPending}
           >
-            뉴스레터 구독하기
+            {subscribeMutation.isPending ? '처리 중…' : '뉴스레터 구독하기'}
           </PFButton>
         </form>
       </div>
 
+      <NewsletterSubscribeModal
+        open={isSubscribeOpen}
+        onClose={() => setIsSubscribeOpen(false)}
+        onSuccess={showSuccess}
+      />
+
+      <NewsletterSuccessModal open={isSuccessOpen} onConfirm={() => setIsSuccessOpen(false)} />
+
       <PFAlertModal
-        open={isSuccessOpen}
+        open={Boolean(errorMessage)}
         confirmVariant="primary"
-        title="뉴스레터 구독이 완료되었어요"
-        description={'JA Korea의 교육 프로그램과\n새로운 소식을 이메일로 전해드릴게요.'}
-        onConfirm={() => setIsSuccessOpen(false)}
+        title="뉴스레터 구독 안내"
+        description={errorMessage}
+        onConfirm={() => setErrorMessage('')}
       />
     </section>
   )

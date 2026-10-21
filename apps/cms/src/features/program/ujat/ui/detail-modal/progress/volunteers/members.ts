@@ -34,7 +34,7 @@ function parseRegionKeyFromAddress(address: string | undefined): UjatInstitution
 function normalizeVolunteerGrade(raw: string): UjatEducationProgressVolunteerGrade {
   const g = raw.trim()
   if (!g) return '1학년'
-  if (g.includes('휴학')) return '휴학생'
+  if (g.includes('휴학')) return '휴학'
   if (g.includes('졸업유예') || g.includes('졸업 유예')) return '졸업유예'
 
   const matched = UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS.find(
@@ -107,7 +107,7 @@ export async function buildUjatEducationProgressVolunteerRowFromMember(
     regionLabel: regionLabelForKey(member.regionKey),
     mobile: member.mobile,
     email: member.email,
-    totalAssignmentDays: null,
+    totalAssignedDays: null,
     assignmentStatus: 'assignment_waiting',
   }
 }

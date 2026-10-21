@@ -3,22 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchVolunteerApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
-import {
-  UJAT_VOLUNTEER_GRADE_OPTIONS,
-  type UjatVolunteerGrade,
-} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import type { Profile } from '@/shared/api/generated/dashboard/schemas/profile'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { mapUjatVolunteerGradeLabel } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
 const UJAT_PREVIOUS_TERM_QUESTION_KEY = 'ujat-program-application-volunteer-seed-previous-term'
-
-const GRADE_BY_CODE: Record<string, UjatVolunteerGrade> = {
-  '1': '1학년',
-  '2': '2학년',
-  '3': '3학년',
-  '4': '4학년',
-  leave: '휴학생',
-  deferred: '졸업유예',
-}
 
 type UjatProjection = {
   universityName?: string | null
@@ -44,12 +34,18 @@ function text(value: string | null | undefined): string {
   return value?.trim() ?? ''
 }
 
-function gradeFromProjection(projection: UjatProjection): UjatVolunteerGrade | null {
-  const label = text(projection.gradeLabel)
-  if ((UJAT_VOLUNTEER_GRADE_OPTIONS as readonly string[]).includes(label)) {
-    return label as UjatVolunteerGrade
-  }
-  return GRADE_BY_CODE[text(projection.grade)] ?? null
+function gradeFromProjection(projection: UjatProjection): string | null {
+  const fromLabel = text(projection.gradeLabel)
+  if (fromLabel) return fromLabel
+  const fromCode = text(projection.grade)
+  return fromCode || null
+}
+
+function projectionGradeToRowGrade(projection: UjatProjection): UjatVolunteerApplicantRow['grade'] {
+  const raw = gradeFromProjection(projection)
+  if (!raw) return ''
+  if (raw === '휴학생') return '휴학'
+  return mapUjatVolunteerGradeLabel(raw)
 }
 
 export function applyUjatVolunteerProjection(
@@ -59,7 +55,7 @@ export function applyUjatVolunteerProjection(
 ): UjatVolunteerApplicantRow {
   if (!projection && attachments.length === 0) return row
   const source = projection ?? {}
-  const grade = gradeFromProjection(source)
+  const grade = projectionGradeToRowGrade(source)
   const applicationType =
     source.applicationType === 'ujat-graduate' || source.applicationType === 'new'
       ? source.applicationType
@@ -75,7 +71,7 @@ export function applyUjatVolunteerProjection(
   return {
     ...row,
     universityName: text(source.universityName) || row.universityName,
-    grade: grade ?? row.grade,
+    grade: grade || row.grade,
     major: text(source.major) || row.major,
     applicationRoute: text(source.applicationRouteLabel) || text(source.applicationRoute) || row.applicationRoute,
     applicationRouteOther: text(source.applicationRouteOther) || row.applicationRouteOther,
@@ -109,15 +105,41 @@ function readProjection(application: unknown): UjatProjection | null {
   return ujat as UjatProjection
 }
 
-/** 상세·마스킹 해제 응답의 `application`에서 UJAT 항목과 첨부를 덮어쓴다 */
+function applyVolunteerProfile(
+  row: UjatVolunteerApplicantRow,
+  profile: Profile | null | undefined,
+): UjatVolunteerApplicantRow {
+  if (!profile) return row
+  const contact = text(profile.contact)
+  const email = text(profile.email)
+  return {
+    ...row,
+    name: text(profile.name) || row.name,
+    gender: toGenderLabelOrRaw(profile.gender) || row.gender,
+    birthDate: text(profile.birthDate) || row.birthDate,
+    age: typeof profile.age === 'number' ? profile.age : row.age,
+    contact: contact || row.contact,
+    email: email || row.email,
+    contactRaw: contact || row.contactRaw,
+    emailRaw: email || row.emailRaw,
+    id1365: text(profile.external1365Id) || row.id1365,
+    homeAddress: text(profile.homeAddress) || row.homeAddress,
+  }
+}
+
+/** 상세·마스킹 해제 응답의 `application`·`profile`에서 UJAT 항목을 덮어쓴다 */
 export function applyUjatVolunteerApplicationDetail(
   row: UjatVolunteerApplicantRow,
   application: unknown,
+  profile?: Profile | null,
 ): UjatVolunteerApplicantRow {
-  return applyUjatVolunteerProjection(
-    row,
-    readProjection(application),
-    readVolunteerApplicationAttachments(application),
+  return applyVolunteerProfile(
+    applyUjatVolunteerProjection(
+      row,
+      readProjection(application),
+      readVolunteerApplicationAttachments(application),
+    ),
+    profile,
   )
 }
 
@@ -136,10 +158,10 @@ export function useUjatVolunteerApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!detailQuery.data) return row
-    return applyUjatVolunteerProjection(
+    return applyUjatVolunteerApplicationDetail(
       row,
-      readProjection(detailQuery.data.application),
-      readVolunteerApplicationAttachments(detailQuery.data.application),
+      detailQuery.data.application,
+      detailQuery.data.profile,
     )
   }, [detailQuery.data, row])
 }

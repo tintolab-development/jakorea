@@ -11,7 +11,8 @@ export type UjatEducationProgressVolunteerGrade =
   | '2학년'
   | '3학년'
   | '4학년'
-  | '휴학생'
+  | '졸업'
+  | '휴학'
   | '졸업유예'
 
 /** 회원 관리 > 개인 회원 — 봉사자 추가 등록 셀렉트 옵션 */
@@ -33,7 +34,7 @@ export type UjatEducationProgressVolunteerRow = {
   regionLabel: string
   mobile: string
   email: string
-  totalAssignmentDays: number | null
+  totalAssignedDays: number | null
   assignmentStatus: UjatEducationProgressVolunteerAssignmentStatus
   /** 1365 출석 조인용 */
   memberId?: string
@@ -55,7 +56,8 @@ export const UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS = [
   '2학년',
   '3학년',
   '4학년',
-  '휴학생',
+  '졸업',
+  '휴학',
   '졸업유예',
 ] as const satisfies readonly UjatEducationProgressVolunteerGrade[]
 

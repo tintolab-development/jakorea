@@ -40,7 +40,11 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+  TABLE_CONFIG,
+} from '@/shared/constants/table'
 import { buildProgressYearSelectOptions, lectureAttendanceHasAtLeastOne } from '@/shared/utils'
 import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
@@ -367,6 +371,8 @@ export function MemberProgramLectureHistory({
         {
           title: 'No.',
           key: 'no',
+          width: TABLE_COLUMN_WIDTHS.index,
+          className: CMS_TABLE_NO_COL_CLASS,
           align: 'center',
           render: (_: unknown, __: UserHistory, index: number) =>
             descendingTableRowNo(rowCount, index),
@@ -405,6 +411,8 @@ export function MemberProgramLectureHistory({
       {
         title: 'No.',
         key: 'no',
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_: unknown, __: Application, index: number) =>
           descendingTableRowNo(rowCount, index),
@@ -713,6 +721,7 @@ export function MemberProgramLectureHistory({
       >
         <CmsDataTable<Application | UserHistory>
           className="cms-data-table"
+          size={TABLE_CONFIG.size}
           scroll={{ x: 'max-content' }}
           loading={loading}
           rowSelection={

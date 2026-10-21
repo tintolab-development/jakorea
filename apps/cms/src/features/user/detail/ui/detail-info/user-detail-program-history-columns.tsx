@@ -10,6 +10,7 @@ import {
   PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER,
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 export interface CreateProgramHistoryColumnsParams {
   onProgressStatusChange: (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => void
@@ -28,7 +29,8 @@ export function createProgramHistoryColumns({
     {
       title: 'No.',
       key: 'no',
-      width: 80,
+      width: TABLE_COLUMN_WIDTHS.index,
+      className: CMS_TABLE_NO_COL_CLASS,
       align: 'center',
       render: (_: unknown, __: Application, index: number) => index + 1,
     },
@@ -100,7 +102,7 @@ export function createProgramHistoryColumns({
         <span className="user-detail-modal__assignment-cell" onClick={e => e.stopPropagation()}>
           <CmsButton
             variant="default"
-            size="small"
+            size="medium"
             disabled={!record.hasAssignmentSubmission}
             onClick={() => onOpenAssignmentSubmission(record)}
           >

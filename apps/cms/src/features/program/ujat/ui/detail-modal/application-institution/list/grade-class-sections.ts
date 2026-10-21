@@ -10,7 +10,7 @@ export function expandGradeClassCountsToSections(
   gradeClassCounts: ReadonlyArray<UjatInstitutionGradeClassCount>
 ): UjatInstitutionGradeClassSection[] {
   return gradeClassCounts.flatMap(grade =>
-    Array.from({ length: grade.classCount }, (_, index) => ({
+    Array.from({ length: grade.classCount ?? 0 }, (_, index) => ({
       gradeLabel: grade.gradeLabel,
       classNo: index + 1,
     }))

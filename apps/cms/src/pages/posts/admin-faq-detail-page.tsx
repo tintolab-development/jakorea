@@ -155,7 +155,7 @@ export function AdminFaqDetailPage() {
           </div>
           <hr className="admin-faq-detail-page__section-divider" />
           <div className="admin-faq-detail-page__body">
-            <RichTextViewer content={faq.answer} />
+            <RichTextViewer content={faq.answer} maxHeight="100%" />
           </div>
         </div>
         <div className="admin-faq-detail-page__actions">

@@ -82,6 +82,12 @@ export const platformQueryKeys = {
     detail: (id: string) => [...platformQueryKeys.impactStory.all(), 'detail', id] as const,
   },
 
+  newsletter: {
+    all: () => [...platformQueryKeys.all, 'newsletter'] as const,
+    /** 내 구독 상태 — GET /api/portal/me/newsletter/subscription (Class F) */
+    me: () => [...platformQueryKeys.newsletter.all(), 'me'] as const,
+  },
+
   program: {
     all: () => [...platformQueryKeys.all, 'program'] as const,
     /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */

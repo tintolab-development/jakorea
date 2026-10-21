@@ -45,6 +45,10 @@ export interface UjatVolunteerApplicantRow {
   essayEducationExperience: string
   essayNecessity: string
   essayJaExperience: string
+  /** 목록 GET `totalAssignedDays`. 없으면 null */
+  totalAssignedDays: number | null
+  /** 상세·unmask `profile.homeAddress`. MASKED는 시/도, UNMASKED는 원문 */
+  homeAddress: string
   managerAEvaluation: UjatManagerEvaluation
   managerBEvaluation: UjatManagerEvaluation
   documentScreeningStatus: UjatDocumentScreeningStatus
