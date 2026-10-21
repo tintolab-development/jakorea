@@ -213,7 +213,11 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
         reason,
         Number.isSafeInteger(programId) ? programId : undefined,
       )
-      return applyUjatVolunteerApplicationDetail(applicant, response.application)
+      return applyUjatVolunteerApplicationDetail(
+        applicant,
+        response.application,
+        response.profile,
+      )
     },
     [applicant],
   )

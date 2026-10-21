@@ -28,7 +28,7 @@ export {
 
 export type UjatInstitutionGradeClassCount = {
   gradeLabel: string
-  classCount: number
+  classCount: number | null
 }
 
 export type UjatInstitutionApplicationRow = {
@@ -41,6 +41,8 @@ export type UjatInstitutionApplicationRow = {
   gradeClassCounts: UjatInstitutionGradeClassCount[]
   totalClassCount: number
   scheduleSlots: Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>
+  /** GET sessions[].startAt 날짜. 없으면 빈 배열 */
+  sessionIsoDates: string[]
   teacherName: string
   scheduleConfirmStatus?: UjatInstitutionScheduleConfirmStatus | null
   assignedInstructorCount?: number | null

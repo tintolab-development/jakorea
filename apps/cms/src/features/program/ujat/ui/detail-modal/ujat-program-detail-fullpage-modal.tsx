@@ -17,7 +17,10 @@ import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
-import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programDetailUjatCommonInfoEditSchema,
+  programToDetailEditValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import {
   applyUjatRecruitAnnouncementTitleToDraft,
@@ -1259,12 +1262,17 @@ export function UjatProgramDetailFullPageModal({
   const infoForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInfo,
+    schema: programDetailUjatCommonInfoEditSchema,
     holdValuesWhileEditing: true,
   })
-  const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
-    useProgramDetailInfoSave({
+  const {
+    triggerSave: infoTriggerSave,
+    resetToProgram: infoResetToProgram,
+    takeSaveFailure: takeInfoSaveFailure,
+  } = useProgramDetailInfoSave({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
+      validateSchema: programDetailUjatCommonInfoEditSchema,
       onSaveEdit:
         displayProgram && updateProgram
           ? async (draft, patch) => {
@@ -1303,6 +1311,7 @@ export function UjatProgramDetailFullPageModal({
                 setSearchParams(next, { replace: true })
               } catch (error) {
                 handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+                throw error
               }
             }
           : undefined,
@@ -1371,11 +1380,26 @@ export function UjatProgramDetailFullPageModal({
       if (ok) {
         detailRequiredHighlight.clear()
         setEditMode(null)
+        return
+      }
+      if (takeInfoSaveFailure() === 'validation') {
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
       }
     } finally {
       endOverlay()
     }
-  }, [detailRequiredHighlight, displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
+  }, [
+    detailRequiredHighlight,
+    displayProgram,
+    infoForm,
+    infoTriggerSave,
+    setEditMode,
+    showAlert,
+    takeInfoSaveFailure,
+  ])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)

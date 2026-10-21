@@ -155,9 +155,9 @@ export function useUjatVolunteerDocPassed({
   }, [pendingFilters])
 
   const filteredSorted = useMemo(() => {
-    const filtered = filterDocPassedApplicants(list, DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS)
+    const filtered = filterDocPassedApplicants(list, appliedFilters)
     return sortUjatVolunteerDocPassedApplicants(filtered)
-  }, [list])
+  }, [appliedFilters, list])
   const infiniteScrollResetKey = useMemo(
     () => `${programId}:${half}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, half, programId]

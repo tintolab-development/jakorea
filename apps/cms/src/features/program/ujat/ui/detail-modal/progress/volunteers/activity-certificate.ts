@@ -92,7 +92,10 @@ function buildStudentRowFromUjatDetail(
     gradeClass: applicant.grade,
     contact: applicant.contact,
     email: applicant.email,
-    lectureAttendance: `${row.totalAssignmentDays ?? 0}/${Math.max(row.totalAssignmentDays ?? 0, 1)}`,
+    lectureAttendance:
+      row.totalAssignedDays == null
+        ? '-'
+        : `${row.totalAssignedDays}/${Math.max(row.totalAssignedDays, 1)}`,
     satisfactionSurveyCompleted: true,
     notes: assignedInstitutionName,
   }

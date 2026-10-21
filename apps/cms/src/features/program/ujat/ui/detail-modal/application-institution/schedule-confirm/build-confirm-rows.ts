@@ -1,5 +1,6 @@
 import { formatScheduleColumnTitle } from '../education-schedule'
 import { parseGradeClassSectionValue } from '../list/grade-class-sections'
+import type { UjatInstitutionApplicationRow } from '../list/types'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { getUjatScheduleAssignRegionState } from '../schedule-assign/store'
 import {
@@ -64,9 +65,31 @@ function buildFromScheduleAssignStore(
   }
 }
 
+function sessionIsoDatesOnly(row: UjatInstitutionApplicationRow): string[] {
+  return [...row.sessionIsoDates].sort()
+}
+
+function gradeCountsFromApplicationRow(
+  row: UjatInstitutionApplicationRow
+): {
+  assignedGradeCounts: UjatScheduleConfirmRow['assignedGradeCounts']
+  totalEducationClassCount: number
+} {
+  const assignedGradeCounts = emptyGradeCounts()
+  let totalEducationClassCount = 0
+  for (const grade of row.gradeClassCounts) {
+    const label = grade.gradeLabel as (typeof UJAT_SCHEDULE_CONFIRM_GRADE_YEAR_LABELS)[number]
+    if (label in assignedGradeCounts) {
+      assignedGradeCounts[label] += grade.classCount ?? 0
+      totalEducationClassCount += grade.classCount ?? 0
+    }
+  }
+  return { assignedGradeCounts, totalEducationClassCount }
+}
+
 export function buildUjatScheduleConfirmRows(
   regionKey: UjatInstitutionApplicationRegionKey,
-  sourceRows: readonly import('../list/types').UjatInstitutionApplicationRow[] = []
+  sourceRows: readonly UjatInstitutionApplicationRow[] = []
 ): UjatScheduleConfirmRow[] {
   const source = sourceRows.filter(
     row => row.regionKey === regionKey && row.tempAssignmentStatus === 'temp_assigned'
@@ -74,6 +97,15 @@ export function buildUjatScheduleConfirmRows(
 
   return source.map((row, index) => {
     const snapshot = buildFromScheduleAssignStore(row.id, regionKey)
+    const isoDates = snapshot.hasStoreAssignment
+      ? snapshot.confirmedScheduleIsoDates
+      : sessionIsoDatesOnly(row)
+    const grades = snapshot.hasStoreAssignment
+      ? {
+          assignedGradeCounts: snapshot.assignedGradeCounts,
+          totalEducationClassCount: snapshot.totalEducationClassCount,
+        }
+      : gradeCountsFromApplicationRow(row)
 
     return {
       id: row.id,
@@ -82,10 +114,13 @@ export function buildUjatScheduleConfirmRows(
       institutionName: row.institutionName,
       scheduleConfirmStatus: row.scheduleConfirmStatus ?? null,
       assignedInstructorCount: row.assignedInstructorCount ?? null,
-      confirmedScheduleDisplay: snapshot.confirmedScheduleDisplay || '-',
-      confirmedScheduleIsoDates: snapshot.confirmedScheduleIsoDates,
-      assignedGradeCounts: snapshot.assignedGradeCounts,
-      totalEducationClassCount: snapshot.totalEducationClassCount,
+      confirmedScheduleDisplay:
+        (snapshot.hasStoreAssignment
+          ? snapshot.confirmedScheduleDisplay
+          : isoDates.map(formatScheduleColumnTitle).join(', ')) || '-',
+      confirmedScheduleIsoDates: isoDates,
+      assignedGradeCounts: grades.assignedGradeCounts,
+      totalEducationClassCount: grades.totalEducationClassCount,
       teacherName: row.teacherName,
     }
   })
