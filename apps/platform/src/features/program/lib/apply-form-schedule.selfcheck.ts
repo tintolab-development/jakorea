@@ -34,6 +34,11 @@ import {
   shouldShowApplyPreferredSchedule,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
   shouldShowApplyScheduleParagraph,
+  isApplyScheduleChoiceHiddenInSet,
+  pickApplyScheduleChoiceParagraph,
+  readApplyFixedScheduleChoiceIds,
+  resolveApplyScheduleChoiceAnswerKey,
+  resolveHiddenScheduleAutoSubmitIds,
 } from './apply-form-schedule.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
@@ -869,5 +874,100 @@ function testPreEducationExcludedFromCurriculumChartSessionCount() {
 }
 
 testPreEducationExcludedFromCurriculumChartSessionCount()
+
+function testHiddenScheduleAutoSubmitIds() {
+  assert.deepEqual(
+    resolveHiddenScheduleAutoSubmitIds({
+      hidden: true,
+      forcedHidden: false,
+      choiceIds: ['line:0'],
+    }),
+    ['line:0'],
+  )
+  assert.deepEqual(
+    resolveHiddenScheduleAutoSubmitIds({
+      hidden: true,
+      forcedHidden: true,
+      choiceIds: ['line:0', 'line:1'],
+    }),
+    ['line:0', 'line:1'],
+  )
+  assert.equal(
+    resolveHiddenScheduleAutoSubmitIds({
+      hidden: false,
+      forcedHidden: false,
+      choiceIds: ['line:0'],
+    }),
+    null,
+  )
+  assert.equal(
+    resolveHiddenScheduleAutoSubmitIds({
+      hidden: true,
+      forcedHidden: false,
+      choiceIds: [],
+    }),
+    null,
+  )
+  assert.equal(
+    resolveHiddenScheduleAutoSubmitIds({
+      hidden: true,
+      forcedHidden: false,
+      choiceIds: ['line:0', 'line:1'],
+    }),
+    null,
+  )
+  assert.deepEqual(
+    readApplyFixedScheduleChoiceIds({
+      runtimeChoices: [{ id: 'schedule:12' }, { id: ' schedule:12 ' }, { id: '' }],
+    }),
+    ['schedule:12'],
+  )
+
+  const individualScheduleId = PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+  const formParagraph = {
+    id: individualScheduleId,
+    items: [{ id: 'line:0' }, { id: 'line:1' }],
+  }
+  const pickedFromForm = pickApplyScheduleChoiceParagraph(
+    [{ id: 'program-participant-application-seed-personal-info' }],
+    [formParagraph],
+  )
+  assert.equal((pickedFromForm as { id: string }).id, individualScheduleId)
+  assert.equal(
+    isApplyScheduleChoiceHiddenInSet(new Set([individualScheduleId]), undefined),
+    true,
+  )
+  assert.equal(isApplyScheduleChoiceHiddenInSet(new Set(), undefined), false)
+  assert.equal(
+    resolveApplyScheduleChoiceAnswerKey('individual-general', undefined),
+    individualScheduleId,
+  )
+  assert.equal(
+    resolveApplyScheduleChoiceAnswerKey('institution-general', undefined),
+    PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+  )
+  assert.equal(resolveApplyScheduleChoiceAnswerKey('individual-volunteer', undefined), '')
+  assert.deepEqual(
+    resolveHiddenScheduleAutoSubmitIds({
+      hidden: isApplyScheduleChoiceHiddenInSet(new Set([individualScheduleId]), pickedFromForm),
+      forcedHidden: true,
+      choiceIds: readApplyFixedScheduleChoiceIds({
+        paragraph: pickedFromForm,
+        educationScheduleLines: [
+          '26년 4월 20일(월) 9:30 ~ 12:20',
+          '26년 4월 27일(월) 13:00 ~ 15:50',
+        ],
+        program: {
+          educationStructure: 'schedule',
+          sessionRound: 'multi',
+          educationScheduleMode: 'date',
+        },
+      }),
+    }),
+    ['line:0', 'line:1'],
+  )
+}
+
+testHiddenScheduleAutoSubmitIds()
 
 console.log('apply-form-schedule.selfcheck: ok')

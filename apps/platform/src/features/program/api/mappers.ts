@@ -20,6 +20,7 @@ import {
   selectRecruitmentsForFocus,
   type PortalRecruitmentFocus,
 } from '../lib/portal-recruitment.ts'
+import { readCanonicalPreEducationNoticeFlag } from '../lib/portal-application-hidden-paragraph-ids.ts'
 import type {
   PortalCurriculum,
   PortalEducationCurriculumSession,
@@ -157,22 +158,25 @@ function readString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
-function readBoolean(value: unknown): boolean | undefined {
-  return typeof value === 'boolean' ? value : undefined
-}
-
-function readCanonicalPreEducationNoticeFlag(source: unknown): boolean | undefined {
-  if (!source || typeof source !== 'object' || Array.isArray(source)) return undefined
-  const record = source as Record<string, unknown>
-  return (
-    readBoolean(record.preEducationNoticeRequired) ??
-    readBoolean(record.advanceGuidanceRequired)
-  )
-}
-
 /** 기관 참여자 모집 행. 강사·봉사자 행은 제외한다. */
+function resolvePortalProgramAudience(
+  remote: PortalProgramDetail,
+  focus?: PortalRecruitmentFocus | null,
+): 'organization' | 'individual' {
+  const focusTypes = (focus?.applicationTypes ?? [])
+    .map(type => type.trim().toUpperCase())
+    .filter(Boolean)
+  if (focusTypes.includes('ORGANIZATION') && !focusTypes.includes('INDIVIDUAL')) {
+    return 'organization'
+  }
+  if (focus?.portalTab === 'ORGANIZATION') return 'organization'
+  return remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization'
+}
+
 function isOrganizationParticipantRecruitment(row: PortalRecruitment | undefined): boolean {
-  if (!row || row.recruitmentType?.trim().toUpperCase() !== 'PARTICIPANT') return false
+  if (!row) return false
+  const recruitmentType = row.recruitmentType?.trim().toUpperCase()
+  if (recruitmentType === 'INSTRUCTOR' || recruitmentType === 'VOLUNTEER') return false
   const targetType = row.targetType?.trim().toUpperCase()
   const applicationType = row.applicationType?.trim().toUpperCase()
   const applicationTypes = (row.applicationTypes ?? []).map(type => type.trim().toUpperCase())
@@ -1301,10 +1305,14 @@ export function mapPortalProgramDetail(
     programType,
     educationJournalEnabled: remote.educationJournalEnabled,
     registrationKind: isTrainedTeacher ? 'trainedTeachers' : undefined,
-    programAudience:
-      remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
+    programAudience: resolvePortalProgramAudience(remote, focus),
     participationMethod: mapParticipationMethod(remote),
-    ...(preEducationNoticeRequired !== undefined ? { preEducationNoticeRequired } : {}),
+    ...(preEducationNoticeRequired !== undefined
+      ? {
+          preEducationNoticeRequired,
+          advanceGuidanceRequired: preEducationNoticeRequired,
+        }
+      : {}),
     recruitmentRoleLabel: roleLabel,
     ...(selected?.ambiguous
       ? { recruitmentSelectionAmbiguous: true }
