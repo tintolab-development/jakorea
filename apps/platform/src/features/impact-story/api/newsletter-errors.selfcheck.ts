@@ -4,6 +4,7 @@ import {
   getNewsletterSubscribeErrorMessage,
   NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK,
 } from './newsletter-errors.ts'
+import { getNewsletterSubscribeResultCopy } from './newsletter-result.ts'
 
 function axiosErr(status: number, data: unknown) {
   return new AxiosError('Request failed', undefined, undefined, undefined, {
@@ -33,3 +34,24 @@ assert.equal(
 )
 
 assert.equal(getNewsletterSubscribeErrorMessage({}), NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK)
+
+assert.equal(
+  getNewsletterSubscribeResultCopy({
+    status: 'PENDING',
+    message: '구독 확인 절차를 진행해주세요.',
+  }).title,
+  '구독 확인 메일을 확인해 주세요',
+)
+
+assert.equal(
+  getNewsletterSubscribeResultCopy({
+    status: 'PENDING',
+    message: '구독 확인 절차를 진행해주세요.',
+  }).description,
+  '구독 확인 절차를 진행해주세요.',
+)
+
+assert.equal(
+  getNewsletterSubscribeResultCopy({ status: 'SUBSCRIBED' }).title,
+  '뉴스레터 구독이 완료되었어요',
+)

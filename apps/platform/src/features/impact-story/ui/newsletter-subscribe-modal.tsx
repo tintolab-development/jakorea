@@ -1,6 +1,7 @@
 import { useCallback, useId, useState, type FormEvent } from 'react'
 import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
+import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
 import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
 import { useNewsletterSubscribeMutation } from '../api/use-newsletter-subscribe'
 import styles from './newsletter-subscribe-modal.module.css'
@@ -8,7 +9,7 @@ import styles from './newsletter-subscribe-modal.module.css'
 export type NewsletterSubscribeModalProps = {
   open: boolean
   onClose: () => void
-  onSuccess?: () => void
+  onSuccess?: (result?: NewsletterSubscribeResponse | null) => void
 }
 
 type FieldErrors = {
@@ -73,9 +74,12 @@ export function NewsletterSubscribeModal({
     }
 
     try {
-      await subscribeMutation.mutateAsync({ name: trimmedName, email: trimmedEmail })
+      const result = await subscribeMutation.mutateAsync({
+        name: trimmedName,
+        email: trimmedEmail,
+      })
       resetForm()
-      onSuccess?.()
+      onSuccess?.(result)
     } catch (error) {
       setErrorMessage(getNewsletterSubscribeErrorMessage(error))
     }
