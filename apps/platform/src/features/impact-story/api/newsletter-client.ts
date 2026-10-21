@@ -38,9 +38,12 @@ export type NewsletterSubscribeRequest = {
   consentVersion: string
 }
 
+/** POST /api/portal/public/newsletter/subscriptions — NewsletterSubscribeResponse.status */
+export type NewsletterSubscribeStatus = 'PENDING' | 'SUBSCRIBED' | 'FAILED' | 'SKIPPED_LOCAL'
+
 /** 202 SubscribeResponse */
 export type NewsletterSubscribeResponse = {
-  status?: string
+  status?: NewsletterSubscribeStatus | string
   message?: string
 }
 

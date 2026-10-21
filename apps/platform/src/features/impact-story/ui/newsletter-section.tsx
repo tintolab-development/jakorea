@@ -3,6 +3,10 @@ import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
 import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
+import {
+  getNewsletterSubscribeResultCopy,
+  isNewsletterSubscribeAccepted,
+} from '../api/newsletter-result'
 import { useNewsletterSubscribeMutation } from '../api/use-newsletter-subscribe'
 import { NewsletterSubscribeModal } from './newsletter-subscribe-modal'
 import { NewsletterSuccessModal } from './newsletter-success-modal'
@@ -51,7 +55,11 @@ export function NewsletterSection() {
       setName('')
       setEmail('')
       setAgreed(false)
-      showSuccess(result)
+      if (isNewsletterSubscribeAccepted(result.status)) {
+        showSuccess(result)
+        return
+      }
+      setErrorMessage(getNewsletterSubscribeResultCopy(result).description)
     } catch (error) {
       setErrorMessage(getNewsletterSubscribeErrorMessage(error))
     }

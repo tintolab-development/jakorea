@@ -3,6 +3,10 @@ import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
 import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
 import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
+import {
+  getNewsletterSubscribeResultCopy,
+  isNewsletterSubscribeAccepted,
+} from '../api/newsletter-result'
 import { useNewsletterSubscribeMutation } from '../api/use-newsletter-subscribe'
 import styles from './newsletter-subscribe-modal.module.css'
 
@@ -79,7 +83,11 @@ export function NewsletterSubscribeModal({
         email: trimmedEmail,
       })
       resetForm()
-      onSuccess?.(result)
+      if (isNewsletterSubscribeAccepted(result.status)) {
+        onSuccess?.(result)
+        return
+      }
+      setErrorMessage(getNewsletterSubscribeResultCopy(result).description)
     } catch (error) {
       setErrorMessage(getNewsletterSubscribeErrorMessage(error))
     }
