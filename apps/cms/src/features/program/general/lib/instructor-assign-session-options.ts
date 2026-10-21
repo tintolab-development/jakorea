@@ -42,19 +42,57 @@ function normalizeTimeRangeDisplay(s: string): string {
   return parts.join(' ~ ')
 }
 
+function isTimeOnlyScheduleLabel(value: string): boolean {
+  const compact = value.trim().replace(/\s*~\s*/g, '~')
+  const [start, end] = compact.split('~')
+  if (!start || !end) return false
+  return /^\d{1,2}:\d{2}$/.test(start.trim()) && /^\d{1,2}:\d{2}$/.test(end.trim())
+}
+
+/** 참여 학교 회차 일정 → 배정 모달 날짜·시간 라벨 */
+export function resolveInstructorAssignSessionDisplayLabels(
+  session: ParticipatingSchoolSession
+): { dateLabel: string; timeLabel: string; scheduleLabel: string } {
+  const timeRange = normalizeTimeRangeDisplay(session.timeRange)
+  const dateRaw = session.date.trim()
+
+  if (!dateRaw) {
+    return {
+      dateLabel: '',
+      timeLabel: timeRange,
+      scheduleLabel: timeRange,
+    }
+  }
+
+  if (isTimeOnlyScheduleLabel(dateRaw)) {
+    const time = normalizeTimeRangeDisplay(dateRaw)
+    return {
+      dateLabel: '',
+      timeLabel: time,
+      scheduleLabel: time,
+    }
+  }
+
+  const dateLabel = formatScheduleDateLabel(dateRaw, session.dayOfWeek)
+  return {
+    dateLabel,
+    timeLabel: timeRange,
+    scheduleLabel: `${dateLabel} ${timeRange}`,
+  }
+}
+
 /** 참여 학교 회차 → 배정일 태그 (완료 회차는 비활성) */
 export function mapParticipatingSessionsToInstructorAssignOptions(
   sessions: ParticipatingSchoolSession[] | undefined | null
 ): InstructorAssignSessionOption[] {
   if (!sessions?.length) return []
   return sessions.map(s => {
-    const dateLabel = formatScheduleDateLabel(s.date, s.dayOfWeek)
-    const timeRange = normalizeTimeRangeDisplay(s.timeRange)
+    const { dateLabel, timeLabel, scheduleLabel } = resolveInstructorAssignSessionDisplayLabels(s)
     return {
       id: `session-${s.round}-${s.date}-${s.timeRange}`,
-      dateLabel,
-      timeLabel: timeRange,
-      scheduleLabel: `${dateLabel} ${timeRange}`,
+      dateLabel: dateLabel || undefined,
+      timeLabel,
+      scheduleLabel,
       sessionRoundLabel: `${s.round}차시`,
       capacityLabel: '0명',
       disabled:
