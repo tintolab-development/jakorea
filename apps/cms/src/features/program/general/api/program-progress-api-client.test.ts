@@ -16,6 +16,7 @@ import {
   fetchAttendancesByScheduleIdsRemote,
   fetchEmployeeVolunteerCountsRemote,
   fetchProgramAttendancesBulkRemote,
+  fetchProgramParticipantsRemote,
   patchParticipantTextbookDeliveryRemote,
   putEmployeeVolunteerCountsRemote,
   putParticipantAssignedOrganizationsRemote,
@@ -82,6 +83,35 @@ describe('fetchAttendancesByScheduleIdsRemote', () => {
     await expect(fetchAttendancesByScheduleIdsRemote('p1', [10, 11])).resolves.toEqual({
       '10': [{ scheduleId: 10, participantId: 77, status: 'PRESENT' }],
     })
+  })
+})
+
+describe('fetchProgramParticipantsRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('applicationStatus REJECTED 행은 진행 현황 목록에서 제외한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      items: [
+        { participantId: 1, applicationStatus: 'APPROVED', memberName: '승인' },
+        { participantId: 2, applicationStatus: 'REJECTED', memberName: '승인취소' },
+      ],
+      page: 0,
+      size: 20,
+      totalElements: 2,
+      totalPages: 1,
+    })
+
+    await expect(fetchProgramParticipantsRemote('168001', { participantType: 'INDIVIDUAL' })).resolves.toEqual(
+      {
+        items: [{ participantId: 1, applicationStatus: 'APPROVED', memberName: '승인' }],
+        page: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+      }
+    )
   })
 })
 
