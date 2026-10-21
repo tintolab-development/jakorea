@@ -286,10 +286,12 @@ function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
 
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
+  knownApplicationType?: ProgramApplicationType | null,
 ): EducationApplicationListItem | null {
   const displayStatus = resolvePortalDisplayStatus(detail)
   const mapped = mapPortalProgramApplicationListItem({
     ...detail,
+    applicationType: detail.applicationType ?? knownApplicationType ?? undefined,
     displayStatus:
       detail.displayStatus ??
       Object.entries(DISPLAY_STATUS_FROM_API).find(([, status]) => status === displayStatus)?.[0],
@@ -357,7 +359,9 @@ export function mapPortalProgramApplicationDetail(
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
 
-  const applicationType = readApplicationType(detail.applicationType)
+  const applicationType =
+    readApplicationType(detail.applicationType) ??
+    (knownApplicationType ? readApplicationType(knownApplicationType) ?? knownApplicationType : null)
   const nestedProgram = detail.program as
     | Pick<
         ProgramDetail,
@@ -366,8 +370,9 @@ export function mapPortalProgramApplicationDetail(
     | undefined
   const isOrganizationApplication = isOrganizationEducationApplication(
     {
-      applicationType: applicationType ?? undefined,
+      applicationType: applicationType ?? mapped.applicationType,
       categoryLabel: mapped.categoryLabel,
+      applicationAnswers: answers,
     },
     nestedProgram,
   )

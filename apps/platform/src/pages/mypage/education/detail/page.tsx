@@ -60,6 +60,7 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import {
+  resolveEducationApplicationProgramFocus,
   shouldShowTeacherInstitutionGuidanceEditLink,
   shouldShowTeacherInstitutionGuidanceOnApplicationTab,
   shouldShowTeacherInstitutionGuidanceWrite,
@@ -183,9 +184,13 @@ export function MypageEducationDetailPage() {
     applicationId,
   )
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
+  const programDetailFocus = useMemo(
+    () => resolveEducationApplicationProgramFocus(application),
+    [application],
+  )
   const remoteProgramQuery = useProgramDetail(
     application?.programId ?? null,
-    { fresh: true },
+    { fresh: true, focus: programDetailFocus },
   )
   const remoteProgram = remoteProgramQuery.program
   const program = useMemo(() => {
@@ -355,7 +360,7 @@ export function MypageEducationDetailPage() {
   }, [application, isTeacher, program])
 
   const applicationInfoBody = useMemo(() => {
-    if (!application || !program || !isTeacher) return undefined
+    if (!application || !program) return undefined
     if (shouldUseUjatApplicationContent(application.detailCase)) {
       return <UjatApplicationContent content={application.ujatApplicationContent} />
     }
@@ -388,7 +393,6 @@ export function MypageEducationDetailPage() {
     application?.id,
     application?.detailCase,
     application?.ujatApplicationContent,
-    isTeacher,
     program,
     program?.educationForm,
     routeApplicationType,
@@ -653,10 +657,19 @@ export function MypageEducationDetailPage() {
     canShowEducationApplicationContent(application.displayStatus) ? (
       shouldUseUjatApplicationContent(application.detailCase) ? (
         <UjatApplicationContent content={application.ujatApplicationContent} />
-      ) : isTeacher && teacherApplicationContent ? (
+      ) : isOrganizationEducationApplication(application, program) &&
+        teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
-          applicationType={application.applicationType}
+          applicationType={
+            application.applicationType ??
+            routeApplicationType ??
+            resolveOrganizationApplicationTypeForContent(
+              undefined,
+              program,
+              application.applicationAnswers,
+            )
+          }
           content={teacherApplicationContent}
           showGuidanceWriteLink={showTeacherGuidanceEditLink}
           institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}

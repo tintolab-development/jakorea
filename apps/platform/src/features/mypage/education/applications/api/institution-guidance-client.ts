@@ -46,10 +46,15 @@ export async function savePortalTeacherInstitutionGuidance(input: {
   applicationId: string
   detailCase: ProgramDetailCase | undefined
   state: TeacherInstitutionGuidanceFormState
+  existingAnswers?: Record<string, unknown> | null
 }): Promise<OrganizationGuidanceAnswersPatchResponse> {
   if (input.applicationType !== 'ORGANIZATION') {
     throw new Error('기관 프로그램 신청만 안내사항을 수정할 수 있습니다.')
   }
-  const answers = buildInstitutionGuidanceAnswerPatch(input.state, input.detailCase)
+  const answers = buildInstitutionGuidanceAnswerPatch(
+    input.state,
+    input.detailCase,
+    input.existingAnswers,
+  )
   return patchOrganizationGuidanceAnswers(input.applicationId, { answers })
 }
