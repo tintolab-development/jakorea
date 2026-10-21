@@ -13,7 +13,6 @@ import {
   ujatVolunteerRecruitInterviewNamespace,
   ujatVolunteerRecruitInterviewRangeSealKey,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
   hydrateMissingVolunteerInterviewOverlay,
   listFilledVolunteerInterviewExceptionBlockIds,
@@ -86,7 +85,7 @@ export function UjatRecruitInterviewScheduleProgramView({
     setExceptionBlockKeys(prev => {
       if (prev.length > 0) return prev
       const ids = listFilledVolunteerInterviewExceptionBlockIds(
-        { ...source, ...getGeneralRecruitOverlayRecord() },
+        source,
         'recruit',
         interviewNamespace
       )

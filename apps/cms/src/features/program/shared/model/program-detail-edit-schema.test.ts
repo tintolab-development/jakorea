@@ -790,3 +790,48 @@ describe('trained teachers recruitment edit round-trip', () => {
     expect(draft.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors).toBe(0)
   })
 })
+
+describe('detailEditValuesToProgramPatch — UJAT 설문 4종', () => {
+  it('UJAT는 overlay 4종을 유지하고 satisfaction으로 접지 않는다', () => {
+    const existing = {
+      ...program,
+      backendProgramType: 'UJAT',
+      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.surveyItems': {
+          survey: true,
+          volunteer_satisfaction: true,
+          school_satisfaction: false,
+          lecture_evaluation: false,
+        },
+        'ujat.basicInfo.participant.organization': true,
+        'ujat.basicInfo.participant.volunteer': false,
+      },
+    } as Program
+    const values = {
+      ...programToDetailEditValues(existing),
+      surveySurvey: true,
+      surveySatisfaction: true,
+      surveyLectureEvaluation: true,
+    }
+    const patch = detailEditValuesToProgramPatch(values, existing)
+    expect(patch.generalSurveyMenuKeys).toEqual(['survey', 'volunteer_satisfaction'])
+    expect(patch.generalParticipantTypes).toEqual(['school_institution'])
+  })
+
+  it('일반 프로그램은 설문 3종 satisfaction을 유지한다', () => {
+    const existing = {
+      ...program,
+      backendProgramType: 'GENERAL_ORGANIZATION',
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    } as Program
+    const values = {
+      ...programToDetailEditValues(existing),
+      surveySurvey: true,
+      surveySatisfaction: true,
+      surveyLectureEvaluation: false,
+    }
+    const patch = detailEditValuesToProgramPatch(values, existing)
+    expect(patch.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction'])
+  })
+})

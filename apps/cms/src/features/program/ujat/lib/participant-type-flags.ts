@@ -25,6 +25,14 @@ function overlayHasParticipantKey(overlay: Record<string, unknown>): boolean {
   return Object.values(PARTICIPANT_OVERLAY_KEYS).some(key => typeof overlay[key] === 'boolean')
 }
 
+/** 공통정보 저장 — overlay 체크를 `generalParticipantTypes`에 그대로 실는다. GET types보다 overlay가 우선. */
+export function ujatParticipantFlagsFromOverlaySave(
+  overlay: Record<string, unknown> | undefined
+): UjatParticipantTypeFlags | null {
+  if (!overlay || !overlayHasParticipantKey(overlay)) return null
+  return flagsFromOverlay(overlay, false)
+}
+
 function emptyFlags(): UjatParticipantTypeFlags {
   return {
     individual: false,
