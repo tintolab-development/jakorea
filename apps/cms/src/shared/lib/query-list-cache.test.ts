@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, type InfiniteData } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import {
   applyCreatedToArrayLists,
@@ -133,5 +133,29 @@ describe('query-list-cache', () => {
       '9',
     ])
     expect(queryClient.getQueryData<Row[]>(listKey('inactive'))?.[0]?.name).toBe('수정')
+  })
+
+  it('removes deleted rows from infinite list pages', () => {
+    const queryClient = new QueryClient()
+    type Page = { items: Row[]; totalElements: number }
+    const key = listKey('infinite')
+    queryClient.setQueryData<InfiniteData<Page>>(key, {
+      pages: [
+        {
+          items: [
+            { id: '1', name: '유지', active: true },
+            { id: '2', name: '삭제', active: true },
+          ],
+          totalElements: 2,
+        },
+      ],
+      pageParams: [0],
+    })
+
+    applyDeletedToArrayLists<Row>(queryClient, LIST_PREFIX, '2', row => row.id)
+
+    const next = queryClient.getQueryData<InfiniteData<Page>>(key)
+    expect(next?.pages[0]?.items.map(row => row.id)).toEqual(['1'])
+    expect(next?.pages[0]?.totalElements).toBe(1)
   })
 })

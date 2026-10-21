@@ -576,6 +576,7 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   return baseProgram({
     id,
     title,
+    backendProgramType: dto.programType ?? 'UJAT',
     mainTitle,
     titleEn: dto.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(dto),
@@ -709,6 +710,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ...details,
       generalCommonInfo,
       id,
+      backendProgramType: dto.programType ?? 'UJAT',
       sponsorId: dto.sponsorId?.trim() || '',
       title,
       mainTitle: typeof dto.mainTitle === 'string' ? dto.mainTitle : '',

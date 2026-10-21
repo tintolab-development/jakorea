@@ -176,6 +176,34 @@ describe('UJAT 등록 필드 → 상세 표시 누락 점검', () => {
     expect(volunteerEdit.volunteerApplicationEndDate).toBe(rowEnd)
   })
 
+  it('모집 fallback은 display 스냅샷이 아니라 draft 행을 유지한다', () => {
+    const displayRows = [
+      {
+        recruitmentType: 'PARTICIPANT' as const,
+        startAt: '2026-01-01T00:00:00.000Z',
+        endAt: '2026-01-31T00:00:00.000Z',
+      },
+    ]
+    const draftRows = [
+      {
+        recruitmentType: 'PARTICIPANT' as const,
+        startAt: '2026-03-01T00:00:00.000Z',
+        endAt: '2026-03-31T00:00:00.000Z',
+      },
+    ]
+    const draft = {
+      ...buildUjatProgramListRowFromRegistrationSnapshot({
+        id: 'ujat-fallback-rows',
+        overlay: FULL_OVERLAY,
+      }),
+      programRecruitments: draftRows,
+    }
+    const display = { ...draft, programRecruitments: displayRows }
+    const fallback = { ...draft, programRecruitments: draft.programRecruitments }
+    expect(fallback.programRecruitments).toEqual(draftRows)
+    expect(fallback.programRecruitments).not.toEqual(display.programRecruitments)
+  })
+
   it('하반기 행이 없으면 startAt 순서로 상반기를 하반기로 쓰지 않는다', () => {
     const program = {
       ...buildUjatProgramListRowFromRegistrationSnapshot({

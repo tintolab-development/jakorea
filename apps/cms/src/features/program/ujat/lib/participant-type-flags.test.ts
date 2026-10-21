@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
+  generalParticipantTypesFromUjatFlags,
   resolveUjatParticipantTypeFlags,
+  ujatParticipantFlagsFromOverlaySave,
   ujatParticipantTypeLabels,
 } from './participant-type-flags'
 
@@ -64,5 +66,14 @@ describe('resolveUjatParticipantTypeFlags', () => {
     expect(
       ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program(), undefined, { fillDefaults: true }))
     ).toBe('학교/기관, 봉사자')
+  })
+
+  it('overlay 저장 체크는 GET types와 달라도 types에 반영한다', () => {
+    const flags = ujatParticipantFlagsFromOverlaySave({
+      'ujat.basicInfo.participant.organization': true,
+      'ujat.basicInfo.participant.volunteer': false,
+    })
+    expect(flags).not.toBeNull()
+    expect(generalParticipantTypesFromUjatFlags(flags!)).toEqual(['school_institution'])
   })
 })

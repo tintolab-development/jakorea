@@ -38,13 +38,17 @@ export function resolveUjatBusinessKpiDisplay(
     ...readUjatRegistrationOverlayFromProgram(program),
     ...overlayInput,
   }
+  const overlayNumber = (key: string): number | null => {
+    const value = overlay[key]
+    return typeof value === 'number' && Number.isFinite(value) ? value : null
+  }
   return {
-    // 상세 응답 최상위 KPI를 adapter가 generalCommonInfo.kpi에 복사한다.
-    // 목록/세션 오버레이/기본값을 fallback으로 사용하지 않는다.
-    finalParticipants: kpiNumber(kpi?.finalParticipants),
-    volunteerCount: kpiNumber(kpi?.volunteerCount),
-    finalSchools: kpiNumber(kpi?.finalSchools),
-    finalClasses: kpiNumber(kpi?.finalClasses),
+    // 상세 응답 KPI가 있으면 그 값. PATCH echo가 비우면 overlay `ujat.kpi.*`를 표시한다.
+    finalParticipants:
+      kpiNumber(kpi?.finalParticipants) ?? overlayNumber('ujat.kpi.participantCount'),
+    volunteerCount: kpiNumber(kpi?.volunteerCount) ?? overlayNumber('ujat.kpi.volunteer'),
+    finalSchools: kpiNumber(kpi?.finalSchools) ?? overlayNumber('ujat.kpi.dispatchedSchool'),
+    finalClasses: kpiNumber(kpi?.finalClasses) ?? overlayNumber('ujat.kpi.dispatchedClass'),
     hasVolunteerRecruitment: resolveUjatHasVolunteerRecruitment(overlay, program),
   }
 }

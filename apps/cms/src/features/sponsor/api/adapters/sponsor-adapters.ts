@@ -39,7 +39,7 @@ function parseSponsorshipStatus(value: string | undefined): SponsorSponsorshipSt
 
 export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
   return {
-    id: dto.id ?? '',
+    id: dto.id == null ? '' : String(dto.id),
     name: dto.name ?? '',
     nameEn: dto.nameEn,
     description: dto.description,

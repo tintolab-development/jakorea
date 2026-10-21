@@ -54,6 +54,7 @@ import {
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { deleteUser } from '@/entities/user/api/user-service'
+import { resolveAffiliatedTeacherWithdrawTarget } from '@/features/user/api/map-affiliated-teacher-row'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { buildMemberWithdrawMessageLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
@@ -256,13 +257,18 @@ export function UserDetailFullpageBasicTabContent({
       if (affiliatedTeacherWithdrawTargets.length === 0) return
       setAffiliatedTeacherWithdrawLoading(true)
       try {
+        let withdrawn = 0
         for (const row of affiliatedTeacherWithdrawTargets) {
-          const userId = row.linkedUserId?.trim()
-          if (!userId) continue
-          await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
-            memberId: row.teacherMemberId,
+          const target = resolveAffiliatedTeacherWithdrawTarget(row)
+          if (!target) continue
+          await deleteUser(target.userId, 'CMS 관리자 회원 탈퇴', {
+            memberId: target.memberId,
             withdrawConfirmationText,
           })
+          withdrawn += 1
+        }
+        if (withdrawn === 0) {
+          throw new Error('탈퇴 처리할 교사 회원 식별자가 없습니다.')
         }
         if (user.memberId != null) {
           await queryClient.invalidateQueries({

@@ -86,6 +86,8 @@ export interface UserDetailFullpageShellValue {
   ) => void | Promise<void>
   /** 교사(겸직 아님) 재직 현황 태그 — PATCH 후 교사 상세 재조회 */
   onTeacherEmploymentStatusChange?: (status: SchoolTeacherEmploymentStatus) => void | Promise<void>
+  /** 소속 교사 선택 탈퇴 후 학교 교사 수·목록 가드 갱신 */
+  onAffiliatedTeachersChanged?: () => void | Promise<void>
   onOpenInstructorPermissionRevoke: () => void
   onCloseInstructorPermissionRevoke: () => void
   onConfirmInstructorPermissionRevoke: (payload: {

@@ -359,7 +359,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repEn']).toBe(
       'Local Spending and Saving'
     )
-    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBeUndefined()
+    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
   })
 
   it('기본 semesterCalendars의 교육일정을 등록 화면 overlay로 매핑한다', () => {

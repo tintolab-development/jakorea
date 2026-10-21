@@ -66,6 +66,14 @@ describe('mapSponsorResponse', () => {
     expect(row.totalDonationAmount).toBe(0)
     expect(row.totalBeneficiaryCount).toBe(0)
   })
+
+  it('list id를 문자열로 정규화한다', () => {
+    const row = mapSponsorResponse({
+      id: 12 as unknown as string,
+      name: '스타벅스',
+    })
+    expect(row.id).toBe('12')
+  })
 })
 
 describe('mapSponsorDetailResponse', () => {

@@ -42,6 +42,7 @@ import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/u
 import {
   generalParticipantTypesFromUjatFlags,
   resolveUjatParticipantTypeFlags,
+  ujatParticipantFlagsFromOverlaySave,
   ujatParticipantTypeLabels,
 } from '@/features/program/ujat/lib/participant-type-flags'
 
@@ -397,9 +398,11 @@ export function applyUjatRegistrationOverlayToProgram(
     if (fillDefaults) return fallback ?? 0
     return fallback
   }
-  const participantFlags = resolveUjatParticipantTypeFlags(program, overlayInput, {
-    fillDefaults,
-  })
+  const participantFlags =
+    ujatParticipantFlagsFromOverlaySave(overlayInput) ??
+    resolveUjatParticipantTypeFlags(program, overlayInput, {
+      fillDefaults,
+    })
 
   return {
     ...program,

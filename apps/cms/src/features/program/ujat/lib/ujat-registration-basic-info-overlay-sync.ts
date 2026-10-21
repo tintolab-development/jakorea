@@ -13,7 +13,10 @@ import {
   ujatSurveyItemsFromProgramKeys,
 } from '@/features/program/ujat/lib/registration-survey-items'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
-import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import {
+  applyUjatRegistrationOverlayToProgram,
+  resolveUjatRegistrationBasicInfoOverlay,
+} from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   buildUjatWageOverlayPatchFromPaymentItemIds,
   resolveUjatPaymentItemIdsFromProgram,
@@ -208,8 +211,8 @@ export function resyncUjatRegistrationOverlayFromProgram(
   extra?: Record<string, unknown>
 ): Record<string, unknown> {
   const merged = {
-    ...(extra ?? {}),
     ...buildUjatRegistrationBasicInfoOverlayFromProgram(program),
+    ...(extra ?? {}),
   }
   return preferExplicitUjatSurveyItems(
     merged,
@@ -231,6 +234,21 @@ export function resyncUjatPersistOverlayFromProgram(
   return touchUjatRegistrationOperationAnchorFromRangeSeal(next)
 }
 
+function pickUjatRecruitSessionKeys(record: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (
+      key.startsWith('ujat.recruit.') ||
+      key.startsWith('recruit.') ||
+      key.startsWith('recruitVolunteer') ||
+      key.startsWith('ujatRecruit')
+    ) {
+      out[key] = value
+    }
+  }
+  return out
+}
+
 /** 상세·모집 저장 시 draft에 세션 overlay를 실어 serviceDetailJson round-trip에 반영 */
 export function buildUjatProgramDraftWithSessionOverlay(
   draft: Program,
@@ -241,16 +259,21 @@ export function buildUjatProgramDraftWithSessionOverlay(
     ? collectUjatRegistrationCreateOverlay({
         ...sessionFromStore,
         ...(draft.ujatRegistrationOverlay ?? {}),
+        ...pickUjatRecruitSessionKeys(sessionFromStore),
       })
     : {
-        ...sessionFromStore,
         ...(draft.ujatRegistrationOverlay ?? {}),
+        ...sessionFromStore,
       }
+  const overlay = resyncUjatPersistOverlayFromProgram(draft, session, {
+    includeRecruit: options?.includeRecruitSession === true,
+  })
+  const applied = applyUjatRegistrationOverlayToProgram(draft, overlay, {
+    kpiClearedAsZero: true,
+  })
   return {
-    ...draft,
-    ujatRegistrationOverlay: resyncUjatPersistOverlayFromProgram(draft, session, {
-      includeRecruit: options?.includeRecruitSession === true,
-    }),
+    ...applied,
+    ujatRegistrationOverlay: overlay,
   }
 }
 
@@ -336,11 +359,14 @@ export function reconcileUjatRegistrationOverlayFromApi(
     next['ujat.basicInfo.sponsorContactId'] = contactIds[0] ?? ''
   }
   if (dto.kpi) {
-    next['ujat.kpi.participantCount'] = dto.kpi.finalParticipants
-    next['ujat.kpi.instructor'] = dto.kpi.instructorCount
-    next['ujat.kpi.volunteer'] = dto.kpi.volunteerCount
-    next['ujat.kpi.dispatchedSchool'] = dto.kpi.finalSchools
-    next['ujat.kpi.dispatchedClass'] = dto.kpi.finalClasses
+    const assignKpi = (key: string, value: unknown) => {
+      if (typeof value === 'number' && Number.isFinite(value)) next[key] = value
+    }
+    assignKpi('ujat.kpi.participantCount', dto.kpi.finalParticipants)
+    assignKpi('ujat.kpi.instructor', dto.kpi.instructorCount)
+    assignKpi('ujat.kpi.volunteer', dto.kpi.volunteerCount)
+    assignKpi('ujat.kpi.dispatchedSchool', dto.kpi.finalSchools)
+    assignKpi('ujat.kpi.dispatchedClass', dto.kpi.finalClasses)
   }
 
   return next

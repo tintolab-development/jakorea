@@ -53,19 +53,23 @@ export function useNoticeMutations() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteNotice,
-    onSuccess: (_data, id) => {
+    onSuccess: async (_data, id) => {
+      await queryClient.cancelQueries({ queryKey: postsQueryKeys.notices.lists() })
       discardDeletedDetailQuery(queryClient, postsQueryKeys.notices.detail(id))
       applyDeletedNoticeToLists(queryClient, id)
+      await invalidateNoticeLists(queryClient)
     },
   })
 
   const bulkDeleteMutation = useMutation({
     mutationFn: deleteNotices,
-    onSuccess: (_data, ids) => {
+    onSuccess: async (_data, ids) => {
+      await queryClient.cancelQueries({ queryKey: postsQueryKeys.notices.lists() })
       for (const id of ids) {
         discardDeletedDetailQuery(queryClient, postsQueryKeys.notices.detail(id))
-        applyDeletedNoticeToLists(queryClient, id)
       }
+      applyDeletedNoticeToLists(queryClient, ids)
+      await invalidateNoticeLists(queryClient)
     },
   })
 

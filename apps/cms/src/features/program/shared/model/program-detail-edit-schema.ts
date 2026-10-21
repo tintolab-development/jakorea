@@ -63,6 +63,11 @@ import {
   resolveProgramSurveyMenuKeys,
   syncSurveyItemsIntoRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolveUjatPersistedSurveyMenuKeysForSave } from '@/features/program/ujat/lib/registration-survey-items'
+import {
+  generalParticipantTypesFromUjatFlags,
+  ujatParticipantFlagsFromOverlaySave,
+} from '@/features/program/ujat/lib/participant-type-flags'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
@@ -112,6 +117,15 @@ const optionalNonNegJavaInt = z.preprocess(
     .max(JAVA_INT_MAX, `0 ~ ${JAVA_INT_MAX.toLocaleString('ko-KR')} 범위로 입력해주세요`)
     .optional()
 )
+
+function isUjatDetailEditProgram(
+  program: Pick<import('@/types/domain').Program, 'backendProgramType' | 'ujatRegistrationOverlay'>
+): boolean {
+  return (
+    program.backendProgramType?.trim().toUpperCase() === 'UJAT' ||
+    program.ujatRegistrationOverlay != null
+  )
+}
 
 function clampJavaInt(value: number | null | undefined): number | undefined {
   if (value == null || !Number.isFinite(value)) return undefined
@@ -1315,14 +1329,25 @@ export function detailEditValuesToProgramPatch(
     values.surveySurvey != null ||
     values.surveySatisfaction != null ||
     values.surveyLectureEvaluation != null
+  const isUjatProgram = isUjatDetailEditProgram(existing)
+  const ujatSurveyMenuKeys = isUjatProgram
+    ? resolveUjatPersistedSurveyMenuKeysForSave(
+        existing.ujatRegistrationOverlay,
+        existing.generalSurveyMenuKeys
+      )
+    : undefined
   // 체크된 항목만 keys에 실음. 전부 해제 시 [] — LNB가 keys를 SSOT로 따른다.
-  const generalSurveyMenuKeys = surveyKeysTouched
-    ? ([
-        ...(values.surveySurvey ? (['survey'] as const) : []),
-        ...(values.surveySatisfaction ? (['satisfaction'] as const) : []),
-        ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
-      ] as GeneralProgramSurveyMenuKey[])
-    : existing.generalSurveyMenuKeys
+  // UJAT는 overlay 4종을 유지한다. 일반 3종 `satisfaction`으로 접지 않는다.
+  const generalSurveyMenuKeys = isUjatProgram
+    ? (ujatSurveyMenuKeys as GeneralProgramSurveyMenuKey[] | undefined) ??
+      existing.generalSurveyMenuKeys
+    : surveyKeysTouched
+      ? ([
+          ...(values.surveySurvey ? (['survey'] as const) : []),
+          ...(values.surveySatisfaction ? (['satisfaction'] as const) : []),
+          ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
+        ] as GeneralProgramSurveyMenuKey[])
+      : existing.generalSurveyMenuKeys
   const registrationOverlay =
     isTrainedTeacherProgram && surveyKeysTouched
       ? syncSurveyItemsIntoRegistrationOverlay(
@@ -1330,6 +1355,9 @@ export function detailEditValuesToProgramPatch(
           generalSurveyMenuKeys
         )
       : undefined
+  const ujatParticipantFlags = isUjatProgram
+    ? ujatParticipantFlagsFromOverlaySave(existing.ujatRegistrationOverlay)
+    : null
   const volunteerContactEmail = recruitAudienceScalar(
     values.volunteerContactEmail,
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail,
@@ -1412,6 +1440,9 @@ export function detailEditValuesToProgramPatch(
       values.kpiFinalSchools ?? existing.participatingSchoolCount
     ),
     generalSurveyMenuKeys,
+    ...(ujatParticipantFlags
+      ? { generalParticipantTypes: generalParticipantTypesFromUjatFlags(ujatParticipantFlags) }
+      : {}),
     ...(registrationOverlay ? { registrationOverlay } : {}),
     generalCommonInfo: {
       ...existing.generalCommonInfo,
