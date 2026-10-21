@@ -13,6 +13,7 @@ import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/share
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { invalidateGeminiRecruitmentListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddTemplateFlow } from '../../hooks/use-recruitment-add-template-flow'
 import {
@@ -113,8 +114,14 @@ export function GeminiRecruitmentAddFullpageModal({
     const snapshot = form.buildSaveSnapshot()
     const endOverlay = beginBlockingOverlay()
     try {
-      await geminiRecruitmentService.register(snapshot)
+      const created = await geminiRecruitmentService.register(snapshot)
       removeGeminiRecruitmentAddDraft()
+      if (created.id && created.detail) {
+        queryClient.setQueryData(
+          geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
+          created.detail
+        )
+      }
       invalidateGeminiRecruitmentListCaches(queryClient)
       setCompleteSuccessOpen(true)
     } catch {
