@@ -21,6 +21,7 @@ export { homePublicMainQueryOptions, useHomeMain } from './api/use-home-main'
 
 export { AchievementSection } from './ui/achievement-section'
 export { HeroCarousel } from './ui/hero-carousel'
+export { HomePopupOverlay } from './ui/popup-overlay'
 export type { HeroCarouselProps } from './ui/hero-carousel'
 export { PartnerMarqueeSection } from './ui/partner-marquee-section'
 export { ProgramCarouselSection } from './ui/program-carousel-section'
