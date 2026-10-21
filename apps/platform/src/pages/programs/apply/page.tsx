@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
@@ -291,7 +291,6 @@ import {
   PFAlertModal,
   PFButton,
   PFCheckbox,
-  PFDivider,
   PFText,
   PFTextarea,
   PFTextInput,
@@ -305,18 +304,15 @@ function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
 }
 
 function ScheduleChoiceLabel({ label }: { label: string }) {
-  const parts = label.split(/\s*\|\s*/)
+  const parts = label.split(/\s*\|\s*/).filter(part => part.length > 0)
   if (parts.length < 2) return label
 
   return (
     <span className={styles.scheduleChoiceLabel}>
       {parts.map((part, index) => (
-        <Fragment key={`${part}-${index}`}>
-          {index > 0 ? (
-            <PFDivider orientation="vertical" className={styles.scheduleChoiceDivider} />
-          ) : null}
-          <span className={styles.scheduleChoiceSegment}>{part}</span>
-        </Fragment>
+        <span key={`${part}-${index}`} className={styles.scheduleChoiceSegment}>
+          {part}
+        </span>
       ))}
     </span>
   )
