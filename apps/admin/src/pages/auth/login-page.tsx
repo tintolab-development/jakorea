@@ -212,11 +212,7 @@ export function LoginPage() {
             </Form.Item>
           </Form>
 
-          <LoginUtilityLinks
-            registerPath={
-              redirectPath ? `/register?redirect=${encodeURIComponent(redirectPath)}` : '/register'
-            }
-          />
+          <LoginUtilityLinks />
           <LoginSocialSection />
 
           <div className="login-dev-quick">
