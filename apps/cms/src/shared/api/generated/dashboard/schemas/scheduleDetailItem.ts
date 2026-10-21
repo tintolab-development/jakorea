@@ -9,7 +9,7 @@ import type { GroupTime } from './groupTime';
 import type { ScheduleDetailItemBlockKind } from './scheduleDetailItemBlockKind';
 
 /**
- * 공통정보 일정형 블록. scheduleLabel/blockKind/name은 항상 존재, 나머지는 값이 없으면 생략.
+ * 공통정보 일정형 블록. scheduleLabel/blockKind/name은 항상 존재, 나머지는 값이 없으면 생략. scheduleDateLabel에 날짜와 시간이 있으면 표시 시간의 기준으로 사용하고 progressTimeSummary와 잘못된 범위를 조합하지 않습니다.
  */
 export interface ScheduleDetailItem {
   scheduleLabel?: string;
@@ -22,5 +22,4 @@ export interface ScheduleDetailItem {
   assignmentPeriod?: string;
   educationFormLabel?: string;
   participationMethodLabel?: string;
-  ipsTypeSummary?: string;
 }

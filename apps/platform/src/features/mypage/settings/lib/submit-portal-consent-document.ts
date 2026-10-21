@@ -22,7 +22,8 @@ import type { FormSignatureValue } from '@/shared/ui/pf-form-signature-block/typ
 import { buildPortalPortraitRightsConsentCreateRequest } from './portal-portrait-consent-create-request'
 import { resolvePortraitPortalCompleteHints } from './resolve-portrait-portal-complete'
 
-const SIGNATURE_FILE_PURPOSE = 'MEMBER_ELECTRONIC_SIGNATURE'
+/** OpenAPI: ELECTRONIC_SIGNATURE가 저장 정본. MEMBER_ELECTRONIC_SIGNATURE는 동등 alias. */
+const SIGNATURE_FILE_PURPOSE = 'ELECTRONIC_SIGNATURE'
 
 const FIELD_KEY_TO_SIGNATURE_SLOT: Record<string, 'mid' | 'final'> = {
   [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature]: 'mid',

@@ -2504,7 +2504,7 @@
           "answers": {
             "type": "object",
             "additionalProperties": {},
-            "description": "문단 답. 키는 schemaJson.paragraphs에 저장된 질문 키이며 추출 순서는 questionKey, fieldKey, key, name, id 입니다. 작성 양식은 문단 id를 그 키로 저장합니다. 값은 문자열, 문자열 배열, 또는 객체입니다."
+            "description": "문단 답. 키는 schemaJson.paragraphs에 저장된 질문 키이며 추출 순서는 questionKey, fieldKey, key, name, id 입니다. 작성 양식은 문단 id를 그 키로 저장합니다. 값은 문자열, 문자열 배열, 또는 객체입니다. 기관 신청 기본정보 객체의 educationFormat은 참여자 선택 교육 형태에서만 online|offline|hybrid를 허용하며 없으면 기본값을 넣지 않습니다."
           },
           "requestedSchedules": {
             "type": "array",
@@ -2532,6 +2532,7 @@
           },
           "preferredScheduleBlocks": {
             "type": "array",
+            "description": "희망 교육 일정 블록. UJAT 학교 신청은 date-only(preferenceRank, date)이며 classPeriod/startTime/endTime은 보내지 않습니다. 선택 id는 answers['ujat-program-application-institution-seed-preferred-education-schedule'].selectedIds에 h1:YYYY-MM-DD 또는 h2:YYYY-MM-DD로 둡니다.",
             "items": {
               "$ref": "#/components/schemas/PreferredScheduleBlockRequest"
             },
@@ -2821,9 +2822,9 @@
           "email": {
             "type": "string",
             "format": "email",
+            "description": "신규 행은 필수. 기존 활성 행은 생략하거나 빈 문자열이면 저장된 암호화 이메일을 유지합니다. 값을 보내면 이메일 형식을 검사합니다.",
             "maxLength": 255,
             "minLength": 0,
-            "description": "신규 행은 필수. 기존 활성 행은 생략하거나 빈 문자열이면 저장된 암호화 이메일을 유지합니다. 값을 보내면 이메일 형식을 검사합니다.",
             "nullable": true
           },
           "notes": {
@@ -2833,10 +2834,10 @@
           }
         },
         "required": [
-          "studentName",
-          "gender",
           "birthDate",
-          "className"
+          "className",
+          "gender",
+          "studentName"
         ]
       },
       "StudentRosterItemResponse": {
@@ -9578,14 +9579,19 @@
         "properties": {
           "filePurpose": {
             "type": "string",
-            "description": "파일 용도. PORTRAIT_CONSENT는 학생 초상권 동의서이며 PDF/JPG/JPEG/PNG/WEBP/DOCX, 파일당 20MB입니다. ABSENCE_EVIDENCE는 결석 사유 증빙이며 JPG/JPEG/PNG, 파일당 20MB입니다.",
+            "description": "파일 용도. STUDENT_ROSTER는 학생 명단(CSV/XLSX, 20MB). PORTRAIT_CONSENT는 학생 초상권 동의서(PDF/JPG/JPEG/PNG/WEBP/DOCX, 20MB). CRIMINAL_HISTORY_EVIDENCE는 성범죄 경력 증빙(PDF/JPG/JPEG/PNG/WEBP, 20MB). EDUCATION_JOURNAL은 교육일지(일반 첨부, 50MB). ELECTRONIC_SIGNATURE와 MEMBER_ELECTRONIC_SIGNATURE는 동등한 회원 서명 용도이며 서버는 ELECTRONIC_SIGNATURE로 저장합니다(PNG/JPEG/WebP, 5MB). ABSENCE_EVIDENCE는 결석 사유 증빙(JPG/JPEG/PNG, 20MB).",
             "enum": [
               "ASSIGNMENT_ATTACHMENT",
               "SURVEY_ATTACHMENT",
               "ABSENCE_EVIDENCE",
               "PORTRAIT_CONSENT",
+              "STUDENT_ROSTER",
+              "CRIMINAL_HISTORY_EVIDENCE",
+              "EDUCATION_JOURNAL",
               "EXPENSE_RECEIPT",
               "INSTRUCTOR_APPLICATION",
+              "ELECTRONIC_SIGNATURE",
+              "MEMBER_ELECTRONIC_SIGNATURE",
               "VOLUNTEER_APPLICATION_EVIDENCE",
               "PROGRAM_POST_ATTACHMENT",
               "PROGRAM_POST_INLINE_IMAGE"
@@ -11517,6 +11523,21 @@
           },
           "privacyState": {
             "type": "string"
+          },
+          "homeAddress": {
+            "type": "string",
+            "description": "자택 주소. MASKED GET은 시/도만 반환하거나, 시/도를 판별할 수 없으면 null. 시군구·동·상세로 채우지 않음. UNMASKED는 저장된 원문 주소(기본+상세). 없으면 null",
+            "nullable": true
+          },
+          "homeAddressSido": {
+            "type": "string",
+            "description": "자택 시/도. 저장된 region_sido 또는 주소에서 인식된 시/도. 없으면 null",
+            "nullable": true
+          },
+          "homeAddressSigungu": {
+            "type": "string",
+            "description": "자택 시군구. MASKED GET은 항상 null. UNMASKED는 저장된 원문 또는 인식값. 없으면 null",
+            "nullable": true
           }
         }
       },
@@ -11807,6 +11828,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "scheduleAssignmentStatus": {
+            "type": "string",
+            "description": "기관 승인 후 일정 배정 상태. ASSIGNED는 active OSA가 있고, UNASSIGNED는 APPROVED이지만 OSA가 없습니다. 기관 승인 외 결정에서는 null입니다.",
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED"
+            ],
+            "nullable": true
           }
         }
       },
@@ -14446,10 +14476,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -14841,18 +14871,6 @@
               "PUBLISHED"
             ],
             "nullable": true
-          },
-          "featuredOnHome": {
-            "type": "boolean",
-            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 false.",
-            "nullable": true
-          },
-          "homeDisplayOrder": {
-            "type": "integer",
-            "format": "int32",
-            "description": "홈 캐러셀 정렬 순서. 1 이상 정수이며 null이면 후순위.",
-            "minimum": 1,
-            "nullable": true
           }
         }
       },
@@ -14860,7 +14878,8 @@
         "type": "object",
         "properties": {
           "formType": {
-            "type": "string"
+            "type": "string",
+            "description": "REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램은 SURVEY, SATISFACTION, LECTURE_EVALUATION을 허용합니다. SATISFACTION은 교사 대상(targetRole=TEACHER)만 허용하며 학생 대상·대상 미지정은 400 TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY."
           },
           "templateId": {
             "type": "integer",
@@ -15020,7 +15039,7 @@
           },
           "announcementTitle": {
             "type": "string",
-            "description": "공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, \"\" 이면 비움",
+            "description": "공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, \"\" 이면 비움. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 보내도 저장하지 않고 null로 둔다.",
             "nullable": true
           },
           "summary": {
@@ -15973,7 +15992,7 @@
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
         "properties": {
           "slots": {
             "type": "array",
@@ -15995,6 +16014,13 @@
             "format": "int64",
             "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
             "example": 184944,
+            "nullable": true
+          },
+          "preferredScheduleRank": {
+            "type": "integer",
+            "format": "int32",
+            "description": "TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId와 동시에 보낼 수 없습니다.",
+            "example": 1,
             "nullable": true
           },
           "timing": {
@@ -17705,6 +17731,39 @@
           }
         }
       },
+      "InstructorAssignmentCancelRequest": {
+        "type": "object",
+        "description": "강사 배정 취소 요청. 봉사자/UJAT AssignmentCancelRequest와 분리되며 faultParty를 포함한다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "취소 사유. 이미 배정 알림이 발송된 경우 필수이며, 발송 전 취소에서는 생략할 수 있습니다.",
+            "example": "강사 개인 사정으로 배정 취소",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "취소 알림 발송 방식. IMMEDIATE 또는 SCHEDULED. 이미 배정 알림이 발송된 경우에만 사용됩니다.",
+            "example": "IMMEDIATE"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다."
+          },
+          "faultParty": {
+            "type": "string",
+            "nullable": true,
+            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
+          }
+        }
+      },
       "InstructorAssignRequest": {
         "type": "object",
         "description": "강사 일정 배정 요청",
@@ -19393,7 +19452,7 @@
           "scheduleId": {
             "type": "integer",
             "format": "int64",
-            "description": "정확히 매칭된 PROGRAM_DEFINED program_schedule id. 고유 매칭이 불가능하면 null.",
+            "description": "정확히 매칭된 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). 여러 날 기간 창·신청 파생·UNKNOWN 일정이나 고유 매칭이 불가능하면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다.",
             "nullable": true
           },
           "round": {
@@ -20424,6 +20483,53 @@
           }
         }
       },
+      "SubscriptionView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "subjectType": {
+            "type": "string"
+          },
+          "maskedEmail": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "syncStatus": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subscribedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "unsubscribedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSyncAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSyncErrorCode": {
+            "type": "string"
+          }
+        }
+      },
       "AccountDirectoryBulkDeleteRequest": {
         "type": "object",
         "description": "CMS 전체 회원 통합 일괄 삭제 요청",
@@ -21257,33 +21363,43 @@
             }
           },
           "fixedEvaluationScore": {
-            "type": "number"
+            "type": "number",
+            "description": "4개 항목 합 ×5 (20~100). 평가 전 null",
+            "nullable": true
           },
           "administrativeAdjustmentScore": {
-            "type": "number"
+            "type": "number",
+            "description": "취소·보고서 감점의 합 (0 이하)"
           },
           "cancellationAdjustmentScore": {
-            "type": "number"
+            "type": "number",
+            "description": "강사 사유 취소 감점 (0, -5, -10 …). projection 없으면 null",
+            "nullable": true
           },
           "lateReportAdjustmentScore": {
-            "type": "number"
+            "type": "number",
+            "description": "강의보고서 기한 미준수 감점 (0, -5, -10 …). projection 없으면 null",
+            "nullable": true
           },
           "lateSettlementAdjustmentScore": {
             "type": "number",
-            "description": "정산 신청 기한 미준수 자동 감점"
+            "description": "호환용. 항상 0. 화면에서 행 제거/숨김."
           },
           "totalScore": {
-            "type": "number"
+            "type": "number",
+            "description": "fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음.",
+            "nullable": true
           },
           "currentGrade": {
             "type": "string",
-            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).",
+            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null.",
             "enum": [
               "A",
               "B",
               "C",
               "D"
-            ]
+            ],
+            "nullable": true
           },
           "evaluatedAt": {
             "type": "string",
@@ -21299,11 +21415,12 @@
           },
           "policyVersion": {
             "type": "string",
-            "description": "활성 정책 버전. 정책 미초기화면 null."
+            "nullable": true,
+            "description": "활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 평가 이력 없으면 활성 정책 버전, 미초기화면 null."
           },
           "policyReady": {
             "type": "boolean",
-            "description": "false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인."
+            "description": "true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음."
           }
         }
       },
@@ -21881,6 +21998,30 @@
           },
           "notification": {
             "$ref": "#/components/schemas/Notification"
+          }
+        }
+      },
+      "ApprovalCancellation": {
+        "type": "object",
+        "description": "강사 신청 승인 취소 요청",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "faultParty": {
+            "type": "string",
+            "description": "취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER",
+            "nullable": true
           }
         }
       },
@@ -22642,7 +22783,7 @@
           },
           "announcementTitle": {
             "type": "string",
-            "description": "이 모집 행의 공고 제목. 비어 있으면 null.",
+            "description": "이 모집 행의 공고 제목. 비어 있으면 null. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 저장하지 않는다.",
             "nullable": true
           },
           "summary": {
@@ -23017,16 +23158,6 @@
           "settlementPolicy": {
             "$ref": "#/components/schemas/ProgramSettlementPolicyResponse"
           },
-          "featuredOnHome": {
-            "type": "boolean",
-            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. Portal featuredOnHome 필터와 동일 컬럼."
-          },
-          "homeDisplayOrder": {
-            "type": "integer",
-            "format": "int32",
-            "description": "홈 캐러셀 정렬 순서. 양의 정수이며 null이면 후순위.",
-            "nullable": true
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -23150,10 +23281,10 @@
           "scheduleOrigin": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -27666,7 +27797,7 @@
       },
       "ProgramUpdateRequest": {
         "type": "object",
-        "description": "프론트 프로그램 수정 요청",
+        "description": "프론트 프로그램 수정 요청. UJAT serviceDetailJson 설문은 survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation 4종이며 satisfaction 한 키로 접지 않는다.",
         "properties": {
           "sponsorId": {
             "type": "string"
@@ -27973,7 +28104,7 @@
           },
           "serviceDetailJson": {
             "type": "string",
-            "description": "양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합."
+            "description": "교육받은 교사: 요청 envelope의 program.*와 registration.overlay.*를 키 단위로 저장 snapshot에 덮어씁니다. 보낸 키는 교체하고 생략한 키는 유지합니다. registration/overlay 전체를 교체하지 않으므로 설문·공고·KPI·교육과정 nested 값이 보존됩니다. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지합니다. RFC-7396 깊은 병합은 하지 않으며 루트 generalCommonInfo는 제거합니다. 일반 프로그램은 기존 RFC-7396 병합이며 설문 3종(survey, satisfaction, lecture_evaluation)을 유지합니다. UJAT 설문은 survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation 4종이며 satisfaction으로 접지 않고, overlay ujat.basicInfo.surveyItems 4 boolean이 있으면 keys로 덮어쓰지 않습니다. 모집 행만 PATCH하면 설문 keys/surveyItems는 재계산하지 않습니다."
           },
           "clearFields": {
             "type": "array",
@@ -27989,18 +28120,6 @@
               "DRAFT",
               "PUBLISHED"
             ],
-            "nullable": true
-          },
-          "featuredOnHome": {
-            "type": "boolean",
-            "description": "CMS 프로그램 단위 Platform 홈 캐러셀 노출 여부. 생략 시 기존 값을 유지한다. false이면 homeDisplayOrder를 null로 정규화한다.",
-            "nullable": true
-          },
-          "homeDisplayOrder": {
-            "type": "integer",
-            "format": "int32",
-            "description": "홈 캐러셀 정렬 순서. 1 이상 정수. 생략 시 기존 값을 유지하고 clearFields에 포함하면 null로 초기화한다.",
-            "minimum": 1,
             "nullable": true
           }
         }
@@ -30095,7 +30214,8 @@
             }
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "회원에게 보이는 공고명. overlay 공고명, 공통정보 announcementTitle 순이며 없으면 program.name_ko. GENERAL_* 봉사자 행은 모집 announcementTitle을 쓰지 않고 공통정보 공고명과 같다. UJAT 봉사자는 모집별 공고명을 쓴다. name_ko 컬럼은 바꾸지 않는다."
           },
           "summary": {
             "type": "string"
@@ -30199,17 +30319,6 @@
             ],
             "nullable": true
           },
-          "featuredOnHome": {
-            "type": "boolean",
-            "description": "Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼.",
-            "nullable": true
-          },
-          "homeDisplayOrder": {
-            "type": "integer",
-            "format": "int32",
-            "description": "홈 캐러셀 정렬 순서(오름차순). 미노출이면 null.",
-            "nullable": true
-          },
           "recruitmentId": {
             "type": "integer",
             "format": "int64",
@@ -30302,7 +30411,7 @@
       },
       "CurriculumSessionItem": {
         "type": "object",
-        "description": "공통정보 차시/회차 행. sessionLabel/title/description은 항상 문자열(없으면 \"\"), 나머지는 값이 없으면 생략.",
+        "description": "공통정보 차시/회차 행. sessionLabel/title/description은 항상 문자열(없으면 \"\"), 빈 placeholder 행과 IPS 요약은 반환하지 않으며 나머지는 값이 없으면 생략.",
         "properties": {
           "sessionLabel": {
             "type": "string"
@@ -30323,9 +30432,6 @@
             "type": "string"
           },
           "participationMethodLabel": {
-            "type": "string"
-          },
-          "ipsTypeSummary": {
             "type": "string"
           },
           "scheduleDateLabel": {
@@ -30398,7 +30504,8 @@
             }
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "회원에게 보이는 공고명. 포커스 없는 조회는 공통정보 공고명. GENERAL_* 봉사자 포커스는 공통정보 공고명과 같고 행 announcementTitle은 쓰지 않는다. UJAT 봉사자 포커스는 모집별 공고명."
           },
           "titleEn": {
             "type": "string"
@@ -30436,6 +30543,16 @@
               "CLOSED",
               "NONE"
             ],
+            "nullable": true
+          },
+          "preEducationNoticeRequired": {
+            "type": "boolean",
+            "description": "기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영.",
+            "nullable": true
+          },
+          "advanceGuidanceRequired": {
+            "type": "boolean",
+            "description": "preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집에서만 내려가며 두 필드는 항상 같은 boolean입니다.",
             "nullable": true
           },
           "applicationTargetMode": {
@@ -30486,7 +30603,7 @@
           },
           "educationTarget": {
             "type": "string",
-            "description": "교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.",
+            "description": "프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다.",
             "enum": [
               "elementary",
               "middle",
@@ -30498,13 +30615,15 @@
           },
           "educationTargets": {
             "type": "array",
-            "description": "교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult.",
+            "description": "프로그램 공통 교육 대상 코드 배열. 포커스와 무관하게 같다. 없으면 생략. 강사·봉사자 recruitmentTargets를 넣지 않는다.",
             "items": {
               "type": "string"
             }
           },
           "educationTargetDetail": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램 공통 교육 대상 상세. 포커스와 무관하게 같다. 없으면 null.",
+            "nullable": true
           },
           "recruitmentTarget": {
             "type": "string",
@@ -30644,11 +30763,6 @@
             ],
             "nullable": true
           },
-          "ipsTypeSummary": {
-            "type": "string",
-            "description": "IPS 표시 문자열. ipsScheduleDetail=perSchedule이면 null(행 값 사용).",
-            "nullable": true
-          },
           "curriculumSessions": {
             "type": "array",
             "description": "공통정보 차시/회차. educationStructure=curriculum일 때만 채우고 그 외는 []. curricula[]와 별개.",
@@ -30674,13 +30788,13 @@
           },
           "educationScheduleLines": {
             "type": "array",
-            "description": "교육 진행 예정일 표시 문자열(typed detail 원문 그대로, 순서 유지). 없으면 []. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다.",
+            "description": "교육 진행 예정일 표시 문자열. 문자열 행은 순서를 유지하고 레거시 객체 행은 저장된 label 또는 날짜 범위를 문자열로 정규화합니다. 값이 없으면 []이며 빈 문자열과 00:00 ~ 00:00 줄은 제외합니다. Portal runtime 선택지는 이 표시 문자열을 line:N으로 변환하지 않고 실제 program_schedule만 사용합니다.",
             "items": {
               "type": "string"
             }
           },
           "educationScheduleRange": {
-            "description": "기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null.",
+            "description": "기간 지정(period)일 때 프로그램 전체 교육 기간 {start,end}. typed educationScheduleRange가 있으면 그 값(start/startDate, end/endDate)을 YYYY-MM-DD로 정규화한다. 객체는 없고 기간형 표시 줄만 있으면 최소 시작일~최대 종료일이다. 한쪽에만 날짜가 있으면 다른 쪽은 null. date 모드이거나 canonical 기간이 없으면 null. businessStartDate/businessEndDate, 모집 기간, 운영 기간으로 채우지 않는다.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/ScheduleRange"
@@ -30831,7 +30945,7 @@
           },
           "announcementTitle": {
             "type": "string",
-            "description": "이 모집 행의 제목. 없으면 null.",
+            "description": "이 모집 행의 공고 제목. GENERAL_* 봉사자 행은 공통정보 공고명을 쓰므로 항상 null. UJAT 봉사자는 모집별 공고명. 그 외·없으면 null.",
             "nullable": true
           },
           "summary": {
@@ -30849,12 +30963,22 @@
                 "type": "null"
               }
             ]
+          },
+          "preEducationNoticeRequired": {
+            "type": "boolean",
+            "description": "기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 해당 행이 기관 참여자 모집이 아니면 생략. 미설정 레거시는 true.",
+            "nullable": true
+          },
+          "advanceGuidanceRequired": {
+            "type": "boolean",
+            "description": "preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집 행에서만 내려가며 두 필드는 항상 같은 boolean입니다.",
+            "nullable": true
           }
         }
       },
       "ScheduleDetailItem": {
         "type": "object",
-        "description": "공통정보 일정형 블록. scheduleLabel/blockKind/name은 항상 존재, 나머지는 값이 없으면 생략.",
+        "description": "공통정보 일정형 블록. scheduleLabel/blockKind/name은 항상 존재, 나머지는 값이 없으면 생략. scheduleDateLabel에 날짜와 시간이 있으면 표시 시간의 기준으로 사용하고 progressTimeSummary와 잘못된 범위를 조합하지 않습니다.",
         "properties": {
           "scheduleLabel": {
             "type": "string"
@@ -30893,20 +31017,24 @@
           },
           "participationMethodLabel": {
             "type": "string"
-          },
-          "ipsTypeSummary": {
-            "type": "string"
           }
         }
       },
       "ScheduleRange": {
         "type": "object",
+        "description": "교육 기간. start/end는 YYYY-MM-DD이거나 해당 쪽이 없으면 null.",
         "properties": {
           "start": {
-            "type": "string"
+            "type": "string",
+            "format": "date",
+            "description": "교육 기간 시작일",
+            "nullable": true
           },
           "end": {
-            "type": "string"
+            "type": "string",
+            "format": "date",
+            "description": "교육 기간 종료일",
+            "nullable": true
           }
         }
       },
@@ -31078,7 +31206,7 @@
           "form": {
             "type": "object",
             "additionalProperties": {},
-            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate, maxScheduleCount, maxSessionsPerDay가 포함됩니다. maxScheduleCount는 기간형 희망 일정 개수 상한이고 maxSessionsPerDay는 CURRICULUM+MULTI+PERIOD의 1일 최대 차시이며 적용되지 않으면 null입니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용하며 TRAINED_TEACHER 기간형 기관 신청은 CMS typed detail 교육 가능 기간을 사용합니다. typed detail 교육 기간이 없으면 빈 배열과 null 날짜를 반환하며 프로그램 사업기간으로 대체하지 않습니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
+            "description": "런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. form.runtimeContext에는 scheduleInputMode, scheduleOptions, allowedSchedulePeriods, minScheduleDate, maxScheduleDate, maxScheduleCount, maxSessionsPerDay가 포함됩니다. UJAT 학교 신청(application-ujat-school)은 runtimeContext.ujatPreferredEducationDateOptions를 항상 배열로 포함하며 후보가 없으면 []입니다. 각 항목은 id(h1:YYYY-MM-DD 또는 h2:YYYY-MM-DD), date(YYYY-MM-DD, Asia/Seoul), label입니다. 봉사자 신청은 runtimeContext.interviewEnabled를 포함하며 false이면 면접 단락이 runtimeHidden입니다. 기관 신청에는 preEducationNoticeRequired와 advanceGuidanceRequired도 포함되며 두 값은 동일한 boolean입니다. 기관 설정이 없던 레거시는 true로 투영하고 CMS에서 해당없음으로 지정한 경우에만 false입니다. maxScheduleCount는 기간형 희망 일정 개수 상한이고 maxSessionsPerDay는 CURRICULUM+MULTI+PERIOD의 1일 최대 차시이며 적용되지 않으면 null입니다. fixed_schedule_options의 scheduleOptions는 실제 program_schedule만 사용하며 id/value/scheduleId/startAt/endAt/label을 제공합니다. date_time_requests의 allowedSchedulePeriods는 프로그램 유형별 교육 일정 정책을 사용하며 TRAINED_TEACHER 기간형 기관 신청은 CMS typed detail 교육 가능 기간을 사용합니다. typed detail 교육 기간이 없으면 빈 배열과 null 날짜를 반환하며 프로그램 사업기간으로 대체하지 않습니다. line:N 및 템플릿 seed 일정은 신규 runtime 선택지로 반환하지 않습니다."
           },
           "draftApplicationId": {
             "type": "integer",
@@ -32084,11 +32212,11 @@
           },
           "surveyConfigured": {
             "type": "boolean",
-            "description": "활성 SURVEY·QUESTIONNAIRE·LECTURE_EVALUATION 바인딩이 하나 이상인지 나타냅니다."
+            "description": "CMS 공통정보 generalSurveyMenuKeys에 survey가 있는지. form-binding·일정 매핑·shareActive·작성 기간과 무관. 강의평가(lecture_evaluation)만으로는 true가 되지 않습니다. 없으면 false."
           },
           "satisfactionConfigured": {
             "type": "boolean",
-            "description": "활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 과거 row가 있어도 항상 false입니다."
+            "description": "CMS 공통정보 generalSurveyMenuKeys에 satisfaction이 있는지. 레거시 student_satisfaction·teacher_satisfaction·volunteer_satisfaction·school_satisfaction도 satisfaction으로 봅니다. TRAINED_TEACHER 특수 분기 없음. form-binding과 무관. 없으면 false."
           }
         }
       },
@@ -33441,53 +33569,6 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "SubscriptionView": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "subjectType": {
-            "type": "string"
-          },
-          "maskedEmail": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "syncStatus": {
-            "type": "string"
-          },
-          "source": {
-            "type": "string"
-          },
-          "agreedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "subscribedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "unsubscribedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastSyncAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastSyncErrorCode": {
-            "type": "string"
           }
         }
       },
@@ -37218,11 +37299,13 @@
           },
           "contact": {
             "type": "string",
-            "description": "목록용 마스킹 연락처"
+            "description": "목록용 마스킹 연락처. 원문이 없으면 null",
+            "nullable": true
           },
           "email": {
             "type": "string",
-            "description": "목록용 마스킹 이메일"
+            "description": "목록용 마스킹 이메일. 원문이 없으면 null",
+            "nullable": true
           },
           "applicationStatus": {
             "type": "string"
@@ -37255,22 +37338,22 @@
           },
           "essayIntro": {
             "type": "string",
-            "description": "일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null",
+            "description": "자유 작성 1번(intro) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음",
             "nullable": true
           },
           "essayEducationExperience": {
             "type": "string",
-            "description": "일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null",
+            "description": "자유 작성 2번(educationExperience) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음",
             "nullable": true
           },
           "essayNecessity": {
             "type": "string",
-            "description": "일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null",
+            "description": "자유 작성 3번(necessity) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음",
             "nullable": true
           },
           "essayJaExperience": {
             "type": "string",
-            "description": "일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null",
+            "description": "자유 작성 4번(jaExperience) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음",
             "nullable": true
           },
           "rejectReason": {
@@ -37343,7 +37426,7 @@
           },
           "grade": {
             "type": "string",
-            "description": "UJAT 학년 라벨. 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예. 없거나 UJAT이 아니면 null. 추측하지 않음",
+            "description": "UJAT 학년. 저장값이 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예 또는 1|2|3|4|leave|deferred|graduate 이면 목록은 한글 라벨로 정규화. 그 외·미응답·UJAT이 아니면 null. 추측하지 않음",
             "nullable": true
           },
           "preferredRegion": {
@@ -37370,6 +37453,12 @@
           "id1365": {
             "type": "string",
             "description": "UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id",
+            "nullable": true
+          },
+          "totalAssignedDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "UJAT 교육 진행 배정일수. allocation-matrix volunteers[].totalAssignedDays와 같은 이름·같은 계산(취소가 아닌 서로 다른 program_schedule_id 수). 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
             "nullable": true
           },
           "openingCeremonyAttended": {
@@ -39018,6 +39107,16 @@
             "type": "integer",
             "format": "int32"
           },
+          "requestedEducationFormat": {
+            "type": "string",
+            "description": "기관 신청 답변에서 저장된 희망 교육 형태. 없으면 null이며 프로그램 교육 형태를 추정해 채우지 않습니다.",
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "HYBRID"
+            ],
+            "nullable": true
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
@@ -39077,7 +39176,7 @@
           },
           "preferredEducationSchedules": {
             "type": "array",
-            "description": "승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개.",
+            "description": "신청자가 고른 교육 진행 희망일. UJAT은 신청서 「교육 진행 희망일」 원문과 왕복하며 startAt(Asia/Seoul 해당일 00:00)이 날짜 열 O/- 의 SSOT. 빈 배열이면 해당 열은 전부 -. 임시배정·승인 후 확정 진행일은 sessions[].startAt. 다른 컬럼으로 채우지 않음.",
             "items": {
               "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
             }
@@ -39133,6 +39232,14 @@
             "type": "integer",
             "format": "int32",
             "description": "운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null",
+            "nullable": true
+          },
+          "gradeBlocks": {
+            "type": "array",
+            "description": "학년별 학급. [{gradeLabel, classCount}]. 다학년 신청 원문·학급 카탈로그가 있으면 학년마다 한 줄. 없으면 null이며 grade+requestedClassCount로 추정해 여러 줄을 만들지 않음",
+            "items": {
+              "$ref": "#/components/schemas/GradeBlock"
+            },
             "nullable": true
           }
         }
@@ -40633,7 +40740,8 @@
           },
           "totalAssignedDays": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "UJAT 교육 진행 배정일수. 취소가 아닌 ujat_dgbong_volunteer_schedule_assignment의 서로 다른 program_schedule_id 수. 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays와 같은 이름"
           },
           "cells": {
             "type": "array",
@@ -47128,6 +47236,126 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "className": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "InstructorApplicationApprovalCancellationRequest": {
+        "type": "object",
+        "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "example": "강사 개인 사정"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "faultParty": {
+            "type": "string",
+            "nullable": true,
+            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         }
       },

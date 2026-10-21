@@ -6,7 +6,12 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 교육 기간. start/end는 YYYY-MM-DD이거나 해당 쪽이 없으면 null.
+ */
 export interface ScheduleRange {
-  start?: string;
-  end?: string;
+  /** 교육 기간 시작일 */
+  start?: string | null;
+  /** 교육 기간 종료일 */
+  end?: string | null;
 }

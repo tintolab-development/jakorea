@@ -7,6 +7,7 @@
  */
 
 export interface ProgramFormBindingRequest {
+  /** REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램은 SURVEY, SATISFACTION, LECTURE_EVALUATION을 허용합니다. SATISFACTION은 교사 대상(targetRole=TEACHER)만 허용하며 학생 대상·대상 미지정은 400 TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY. */
   formType?: string;
   templateId?: number;
   templateVersionId?: number;

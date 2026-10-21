@@ -8,7 +8,7 @@
 import type { SlotRequest } from './slotRequest';
 
 /**
- * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.
+ * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.
  */
 export interface OrganizationApplicationApproveRequest {
   /**
@@ -21,6 +21,8 @@ export interface OrganizationApplicationApproveRequest {
   selectedScheduleId?: number;
   /** GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다. */
   requestedScheduleId?: number | null;
+  /** TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId와 동시에 보낼 수 없습니다. */
+  preferredScheduleRank?: number | null;
   /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다. */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */

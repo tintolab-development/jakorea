@@ -38,7 +38,7 @@ export interface ProgramRecruitmentRequest {
   applicationType?: ProgramRecruitmentRequestApplicationType;
   /** UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null. */
   recruitTerm?: ProgramRecruitmentRequestRecruitTerm;
-  /** 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움 */
+  /** 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 보내도 저장하지 않고 null로 둔다. */
   announcementTitle?: string | null;
   /** 한 줄 소개. null 유지, "" 비움 */
   summary?: string | null;

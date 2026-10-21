@@ -80,6 +80,8 @@ function pickTrimmed(...values: Array<string | undefined | null>): string | unde
 /** OpenAPI 외 BE가 내려줄 수 있는 동의어 필드 */
 type InstructorProfileLoose = InstructorDetailResponse & {
   homeAddressDetail?: string
+  /** Profile.homeAddressSido — MASKED는 시/도만. sigungu로 보완하지 않음 */
+  homeAddressSido?: string | null
   feeGrade?: string
   jaGrade?: string
   businessIncome?: boolean | string
@@ -178,6 +180,7 @@ function resolveInstructorHomeAddressParts(
   const homeAddress = pickTrimmed(
     cmsProfile?.homeAddress?.line,
     profile?.homeAddress,
+    profile?.homeAddressSido,
     (profile as { address?: string } | null)?.address,
     looseDetail.homeAddress,
     (looseDetail as { address?: string }).address,
@@ -509,7 +512,11 @@ function applyInstructorProfile(
     user.bio = selfIntro
   }
 
-  const homeAddress = pickTrimmed(profile?.homeAddress, (profile as { address?: string } | null)?.address)
+  const homeAddress = pickTrimmed(
+    profile?.homeAddress,
+    profile?.homeAddressSido,
+    (profile as { address?: string } | null)?.address
+  )
   const homeAddressDetail = pickTrimmed(profile?.homeAddressDetail)
   if (homeAddress) {
     user.detailAddress = homeAddress
