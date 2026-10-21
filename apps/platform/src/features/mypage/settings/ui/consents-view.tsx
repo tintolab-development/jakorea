@@ -101,7 +101,10 @@ const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy
   },
   administrativeJoint: {
     title: '행정정보 공동이용 사전동의를 철회할까요?',
-    description: '철회 시 UJAT·프로그램 강의 참여가 제한될 수 있습니다.',
+    description: [
+      '철회 시 제출하신 행정정보 공동이용 동의서를 더 이상 확인하지 않아요.',
+      '동의하지 않은 상태에서는 교육진행자 활동이 제한돼요.',
+    ].join('\n'),
     completeTitle: '행정정보 공동이용 사전동의가 철회되었어요.',
     completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 동의서를 작성해 주세요.',
   },
