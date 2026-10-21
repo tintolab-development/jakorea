@@ -54,11 +54,14 @@ function isFileUploadResult(value: unknown): value is FileUploadResult {
 function parseImageField(value: unknown): FileUploadResult | undefined {
   if (!isFileUploadResult(value)) return undefined
   const row = value as FileUploadResult & Record<string, unknown>
+  const fileObjectId =
+    typeof row.fileObjectId === 'number' && row.fileObjectId > 0 ? row.fileObjectId : undefined
   return {
     url: row.url,
     fileName: typeof row.fileName === 'string' && row.fileName !== '' ? row.fileName : 'image',
     fileSize: typeof row.fileSize === 'number' ? row.fileSize : 0,
     uploadedAt: typeof row.uploadedAt === 'string' ? row.uploadedAt : new Date().toISOString(),
+    ...(fileObjectId != null ? { fileObjectId } : {}),
   }
 }
 
