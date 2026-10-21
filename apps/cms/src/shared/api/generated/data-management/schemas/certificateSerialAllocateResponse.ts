@@ -7,13 +7,13 @@
  */
 
 /**
- * 인증서 고유번호 멱등 발급 응답
+ * 인증서 고유번호 발급 응답
  */
 export interface CertificateSerialAllocateResponse {
   /** 고유번호 (YY-JA-NNNNN) */
   serialNumber?: string;
   /** certificate_issue 장부 PK */
   issueId?: number;
-  /** 기존 발급 번호 재사용 여부 */
+  /** 호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false */
   reused?: boolean;
 }

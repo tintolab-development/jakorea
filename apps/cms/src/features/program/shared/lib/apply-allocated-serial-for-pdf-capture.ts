@@ -32,7 +32,7 @@ export type AllocatedCertificateSerialForPdf = {
 }
 
 /**
- * 다운로드 직전에만 고유번호를 받아 PDF 캡처 DOM에 반영한다.
+ * 다운로드 직전마다 서버에서 새 고유번호를 받아 PDF 캡처 DOM에 반영한다.
  * 미리보기 화면에는 넣지 않는다.
  */
 export async function applyAllocatedSerialForPdfCapture(args: {
