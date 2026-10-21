@@ -6445,7 +6445,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubscribeRequest"
+                "$ref": "#/components/schemas/NewsletterSubscribeRequest"
               }
             }
           },
@@ -6460,7 +6460,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscribeResponse"
+                  "$ref": "#/components/schemas/NewsletterSubscribeResponse"
                 }
               }
             }
@@ -8768,7 +8768,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubscribeRequest"
+                "$ref": "#/components/schemas/NewsletterSubscribeRequest"
               }
             }
           },
@@ -8783,7 +8783,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscribeResponse"
+                  "$ref": "#/components/schemas/NewsletterSubscribeResponse"
                 }
               }
             }
@@ -68727,8 +68727,15 @@
           }
         }
       },
-      "SubscribeRequest": {
+      "NewsletterSubscribeRequest": {
         "type": "object",
+        "required": [
+          "email",
+          "name",
+          "source",
+          "marketingConsent",
+          "consentVersion"
+        ],
         "properties": {
           "email": {
             "type": "string"
@@ -68743,20 +68750,34 @@
             "type": "boolean"
           },
           "consentVersion": {
-            "type": "string"
+            "type": "string",
+            "description": "GET /api/public/terms-documents/MARKETING/current 의 version. 하드코딩 금지."
           }
         }
       },
-      "SubscribeResponse": {
+      "NewsletterSubscribeResponse": {
         "type": "object",
         "properties": {
           "status": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBSCRIBED",
+              "FAILED",
+              "SKIPPED_LOCAL"
+            ],
+            "description": "PENDING=확인 메일 발송, SUBSCRIBED=즉시 구독 완료, FAILED=스티비 동기화 실패, SKIPPED_LOCAL=로컬 mock"
           },
           "message": {
             "type": "string"
           }
         }
+      },
+      "SubscribeRequest": {
+        "$ref": "#/components/schemas/NewsletterSubscribeRequest"
+      },
+      "SubscribeResponse": {
+        "$ref": "#/components/schemas/NewsletterSubscribeResponse"
       },
       "PortalWithdrawalRequest": {
         "type": "object",
