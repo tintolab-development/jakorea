@@ -29,7 +29,7 @@ export function UserDetailAdminCommentSection({
           <CmsInput
             value={adminCommentDraft ?? ''}
             onChange={e => onAdminCommentChange(e.target.value)}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             placeholder="관리자 코멘트를 입력하세요"
             aria-label="관리자 코멘트"

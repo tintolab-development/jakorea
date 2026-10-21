@@ -141,7 +141,7 @@ function UjatRegionDateMultiScheduleRows({
           key={id}
           className="detail-info-form-inputs-wrapper half-education-schedule__schedule-row"
         >
-          <CmsSelect
+          <CmsSelect inputSize="small"
             mode="multiple"
             withAllOption={false}
             style={{ width: 360 }}
@@ -162,7 +162,7 @@ function UjatRegionDateMultiScheduleRows({
             }
           />
           <DetailInfoForm.InputsSeparator />
-          <ParagraphDatePicker
+          <ParagraphDatePicker inputSize="small"
             mode="single"
             presetMode="schedule"
             customizable={false}
@@ -226,13 +226,13 @@ function ScheduleEducationRadioRow({
   )
   return (
     <CmsRadioGroup
-      size="large"
+      size="medium"
       value={value}
       onChange={e => setValue(e.target.value as UjatEducationDelivery)}
     >
-      <CmsRadio value="online">온라인</CmsRadio>
-      <CmsRadio value="offline">오프라인</CmsRadio>
-      <CmsRadio value="hybrid">온/오프라인</CmsRadio>
+      <CmsRadio size="medium" value="online">온라인</CmsRadio>
+      <CmsRadio size="medium" value="offline">오프라인</CmsRadio>
+      <CmsRadio size="medium" value="hybrid">온/오프라인</CmsRadio>
     </CmsRadioGroup>
   )
 }
@@ -277,7 +277,7 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
   return (
     <div className="detail-info-form-inputs-wrapper half-education-schedule__textbook-row">
       <CmsRadioGroup
-        size="large"
+        size="medium"
         value={mode}
         onChange={e => {
           const next = e.target.value as UjatTextbookEducationMode
@@ -285,13 +285,13 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
           if (next === 'ja') setInstructorId(undefined)
         }}
       >
-        <CmsRadio value="ja">JA 진행</CmsRadio>
-        <CmsRadio value="instructor_outsource">강사 섭외</CmsRadio>
+        <CmsRadio size="medium" value="ja">JA 진행</CmsRadio>
+        <CmsRadio size="medium" value="instructor_outsource">강사 섭외</CmsRadio>
       </CmsRadioGroup>
       {mode === 'instructor_outsource' ? (
         <>
           <DetailInfoForm.InputsSeparator />
-          <CmsSelect
+          <CmsSelect inputSize="small"
             showSearch
             optionFilterProp="label"
             placeholder="교재 교육 강사를 선택해 주세요"
@@ -310,7 +310,7 @@ function UjatScheduleNameField({ overlayKey, fallback }: { overlayKey: string; f
   const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(overlayKey, fallback)
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={scheduleName}
       onChange={event => setScheduleName(event.target.value)}
@@ -433,7 +433,7 @@ function UjatEventScheduleBlock({
             view={<ScheduleTextView text={viewRow.scheduleText} />}
             edit={
               mode === 'edit' ? (
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="range"
                   value={eventRange}
                   onChange={next =>

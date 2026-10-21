@@ -8,6 +8,7 @@ import {
   formatApiErrorAlertContent,
 } from '@/shared/lib/extract-api-error-message'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 const DEDUPE_MS = 2_000
@@ -54,6 +55,7 @@ function shouldSkipGlobalErrorAlert(
   if (!isGlobalErrorAlertEnabled()) return true
   if (config?.skipGlobalErrorAlert) return true
   if (error.__cmsGlobalErrorAlertShown) return true
+  if (isRequestCanceledError(error)) return true
 
   const status = error.response?.status
   const data = error.response?.data

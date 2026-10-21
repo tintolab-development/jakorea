@@ -1,4 +1,7 @@
-import { createConsentTemplateSeedDraft } from '@jakorea/form-schema/consent'
+import {
+  createConsentTemplateSeedDraft,
+  type PaymentStatementBasicInfoValues,
+} from '@jakorea/form-schema/consent'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { coerceApplicationFormDocument } from '@/features/program/lib/application-form-draft'
 import type { PortalConsentDocumentDetail } from '../api/consents'
@@ -77,8 +80,9 @@ function draftFromPortalConsentDocumentDetail(
   detail: PortalConsentDocumentDetail,
 ): WritingFormDraft | null {
   return (
-    parseWritingFormDraftFromUnknown(detail.content) ??
+    parseWritingFormDraftFromUnknown(detail.filledDocument?.schemaJson) ??
     parseWritingFormDraftFromUnknown(detail.schemaJson) ??
+    parseWritingFormDraftFromUnknown(detail.content) ??
     parseWritingFormDraftFromUnknown(detail)
   )
 }
@@ -103,4 +107,66 @@ export function resolveConsentPreviewDraft(
   }
 
   return null
+}
+
+const PAYMENT_BASIC_INFO_KEYS = [
+  'nameKo',
+  'nameEn',
+  'residentFront',
+  'residentBack',
+  'affiliation',
+  'noAffiliation',
+  'addressRoad',
+  'addressDetail',
+  'bankName',
+  'accountNumber',
+  'accountHolder',
+  'paymentPurpose',
+] as const
+
+function readPaymentBasicInfoRecord(
+  value: unknown,
+): Partial<PaymentStatementBasicInfoValues> | undefined {
+  if (!isRecord(value)) return undefined
+  const next: Partial<PaymentStatementBasicInfoValues> = {}
+  for (const key of PAYMENT_BASIC_INFO_KEYS) {
+    const raw = value[key]
+    if (key === 'noAffiliation') {
+      if (typeof raw === 'boolean') next.noAffiliation = raw
+      continue
+    }
+    if (typeof raw === 'string') next[key] = raw
+  }
+  return Object.keys(next).length > 0 ? next : undefined
+}
+
+function parseJsonRecord(value: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(value) as unknown
+    return isRecord(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+/** 제출 문서의 지급조서 기본정보. schema 표 셀이 아니라 filledDocument sidecar다. */
+export function readPaymentBasicInfoFromConsentDetail(
+  detail: PortalConsentDocumentDetail | null | undefined,
+): Partial<PaymentStatementBasicInfoValues> | undefined {
+  if (detail == null) return undefined
+  const fromFilled = readPaymentBasicInfoRecord(detail.filledDocument?.paymentBasicInfo)
+  if (fromFilled) return fromFilled
+
+  const payloads: unknown[] = [detail.schemaJson, detail.content]
+  for (const payload of payloads) {
+    const record = typeof payload === 'string' ? parseJsonRecord(payload) : payload
+    if (!isRecord(record)) continue
+    const nested = readPaymentBasicInfoRecord(record.paymentBasicInfo)
+    if (nested) return nested
+    const filled = isRecord(record.filledDocument)
+      ? readPaymentBasicInfoRecord(record.filledDocument.paymentBasicInfo)
+      : undefined
+    if (filled) return filled
+  }
+  return undefined
 }

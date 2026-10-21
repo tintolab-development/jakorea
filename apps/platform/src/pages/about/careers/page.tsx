@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CAREERS_LIST_RETURN_STATE_KEY,
-  CAREERS_PAGE_SIZE,
   CAREERS_TAB_ITEMS,
   FallbackImage,
   FeaturedStoryCarousel,
@@ -11,7 +10,6 @@ import {
   ThriveSection,
   buildCareersListPath,
   careerPostingDetailPath,
-  filterCareerJobs,
   readCareersListParams,
   rememberCareersListReturnPath,
   usePublicCareerGuide,
@@ -30,7 +28,13 @@ export function CareersPage() {
   const [params, setParams] = useState(readCareersListParams)
   const [draftQ, setDraftQ] = useState(() => readCareersListParams().q)
   const debouncedQ = useDebouncedValue(draftQ, SEARCH_DEBOUNCE_MS)
-  const { jobs } = usePublicCareerPostings()
+  const activeTab = TAB_ITEMS.some(item => item.key === params.tab) ? params.tab : 'openings'
+  const isTalentTab = activeTab === 'talent'
+  const postings = usePublicCareerPostings({
+    q: params.q,
+    page: params.page,
+    enabled: !isTalentTab,
+  })
   const { view } = usePublicCareerGuide()
   const thriveValues = view.thriveValues
   const featuredStories = view.featuredStories
@@ -71,18 +75,6 @@ export function CareersPage() {
       window.history.pushState(null, '', nextPath)
     }
   }
-
-  const filteredJobs = useMemo(() => filterCareerJobs(jobs, params), [jobs, params])
-
-  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / CAREERS_PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredJobs.slice(
-    (currentPage - 1) * CAREERS_PAGE_SIZE,
-    currentPage * CAREERS_PAGE_SIZE
-  )
-
-  const activeTab = TAB_ITEMS.some(item => item.key === params.tab) ? params.tab : 'openings'
-  const isTalentTab = activeTab === 'talent'
 
   return (
     <section className={styles.page}>
@@ -176,7 +168,7 @@ export function CareersPage() {
             <>
               <div className={styles.toolbar}>
                 <PFText as="span" typo="hd-sm" color="black" className={styles.count}>
-                  {`총 ${filteredJobs.length}건`}
+                  {postings.isPending ? null : `총 ${postings.totalCount}건`}
                 </PFText>
                 <div className={styles.search}>
                   <PFSearchInput
@@ -194,12 +186,12 @@ export function CareersPage() {
               </div>
 
               <div className={styles.list}>
-                {pageItems.length === 0 ? (
+                {postings.isPending ? null : postings.jobs.length === 0 ? (
                   <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
                     검색 결과가 없습니다.
                   </PFText>
                 ) : (
-                  pageItems.map(item => (
+                  postings.jobs.map(item => (
                     <JobListItemRow
                       key={item.id}
                       item={item}
@@ -215,11 +207,11 @@ export function CareersPage() {
                 )}
               </div>
 
-              {pageItems.length > 0 ? (
+              {!postings.isPending && postings.totalCount > 0 ? (
                 <div className={styles.pagination}>
                   <PFPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
+                    currentPage={params.page}
+                    totalPages={postings.totalPages}
                     onPageChange={page => updateParams({ page })}
                   />
                 </div>

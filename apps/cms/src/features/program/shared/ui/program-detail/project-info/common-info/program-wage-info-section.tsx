@@ -134,7 +134,7 @@ function companySchoolWageEdit(
         render={({ field }) => (
           <CmsNumericInput
             mode="currency"
-            inputSize="medium"
+            inputSize="small"
             placeholder="직접 입력"
             width={120}
             min={0}
@@ -386,7 +386,7 @@ export function ProgramWageInfoSection({
                     name="wagePaymentItemIds"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsSelect
+                      <CmsSelect inputSize="small"
                         mode="multiple"
                         withAllOption={false}
                         value={field.value ?? []}
@@ -432,7 +432,7 @@ export function ProgramWageInfoSection({
                       ? [...PROGRAM_WAGE_TYPE_OPTIONS, { value: current, label: current }]
                       : PROGRAM_WAGE_TYPE_OPTIONS
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       value={current || undefined}
                       options={options}
                       placeholder="강사비 유형 선택"
@@ -458,7 +458,7 @@ export function ProgramWageInfoSection({
                     name="wagePricingMeasureLabel"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsSelect
+                      <CmsSelect inputSize="small"
                         width={96}
                         style={{ flexShrink: 0 }}
                         withAllOption={false}
@@ -476,7 +476,7 @@ export function ProgramWageInfoSection({
                     name="wagePricingQuantity"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsNumericInput
+                      <CmsNumericInput inputSize="small"
                         mode="integer"
                         width={112}
                         style={{ flexShrink: 0 }}
@@ -498,7 +498,7 @@ export function ProgramWageInfoSection({
                       name="wagePricingCompareMode"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsRadio.Group
+                        <CmsRadio.Group size="medium"
                           value={field.value ?? 'per'}
                           options={WAGE_COMPARE_RADIO_OPTIONS}
                           onChange={e => {
@@ -528,7 +528,7 @@ export function ProgramWageInfoSection({
                   name="wagePricingBase"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsNumericInput
+                    <CmsNumericInput inputSize="small"
                       mode="currency"
                       value={field.value ?? ''}
                       onBlur={field.onBlur}
@@ -551,7 +551,7 @@ export function ProgramWageInfoSection({
                   name="wagePricingLongDistance"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsNumericInput
+                    <CmsNumericInput inputSize="small"
                       mode="currency"
                       value={field.value ?? ''}
                       onBlur={field.onBlur}

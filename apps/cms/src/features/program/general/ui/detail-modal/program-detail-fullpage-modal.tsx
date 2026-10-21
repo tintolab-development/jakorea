@@ -102,12 +102,18 @@ import {
   narrowProgramDetailPatchForCommonInfoSave,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  getGeneralRecruitmentRemoteUnavailableReason,
   programToRecruitmentTabEditValues,
   resolveGeneralProgramForRecruitmentEdit,
 } from '@/features/program/general/lib/general-program-recruitment-edit-seed'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { persistRecruitmentTabSave } from '@/features/program/shared/lib/persist-recruitment-row-save'
+import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/trained-teachers/api/hooks'
+import { getTrainedTeacherProgram } from '@/features/program/trained-teachers/api/service'
+import { reflectTrainedTeacherProgramSave } from '@/features/program/trained-teachers/api/detail-cache'
 import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teachers/ui/common-info/common-info-view'
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
@@ -329,6 +335,7 @@ export function ProgramDetailFullPageModal({
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
   // legacy Zustand: 상세 GET이 있으면 목록 행보다 우선 (빈 탭 고정 방지)
   const displayProgram = useMemo(() => {
+    if (externalError) return null
     const raw =
       onUpdateProgram && externalLoading
         ? null
@@ -340,22 +347,40 @@ export function ProgramDetailFullPageModal({
       return { ...raw, backendProgramType: 'COMPANY_SCHOOL' }
     }
     return raw
-  }, [detailProgram, program, onUpdateProgram, externalLoading, programVariant])
+  }, [detailProgram, externalError, program, onUpdateProgram, externalLoading, programVariant])
+  const strictRemoteRecruitment =
+    shouldUseTrainedTeacherProgramsRemoteApi() &&
+    (programVariant === 'trained-teachers' ||
+      (displayProgram != null && isTrainedTeachersDetailProgram(displayProgram)))
   const recruitmentEditProgram = useMemo(
-    () => (displayProgram ? resolveGeneralProgramForRecruitmentEdit(displayProgram) : null),
-    [displayProgram]
+    () =>
+      displayProgram
+        ? resolveGeneralProgramForRecruitmentEdit(displayProgram, {
+            strictRemote: strictRemoteRecruitment,
+          })
+        : null,
+    [displayProgram, strictRemoteRecruitment]
   )
   const mapParticipantRecruitmentEditValues = useCallback(
-    (p: Program) => programToRecruitmentTabEditValues(p, 'participant'),
-    []
+    (p: Program) =>
+      programToRecruitmentTabEditValues(p, 'participant', {
+        strictRemote: strictRemoteRecruitment,
+      }),
+    [strictRemoteRecruitment]
   )
   const mapInstructorRecruitmentEditValues = useCallback(
-    (p: Program) => programToRecruitmentTabEditValues(p, 'instructor'),
-    []
+    (p: Program) =>
+      programToRecruitmentTabEditValues(p, 'instructor', {
+        strictRemote: strictRemoteRecruitment,
+      }),
+    [strictRemoteRecruitment]
   )
   const mapVolunteerRecruitmentEditValues = useCallback(
-    (p: Program) => programToRecruitmentTabEditValues(p, 'volunteer'),
-    []
+    (p: Program) =>
+      programToRecruitmentTabEditValues(p, 'volunteer', {
+        strictRemote: strictRemoteRecruitment,
+      }),
+    [strictRemoteRecruitment]
   )
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {
@@ -369,6 +394,33 @@ export function ProgramDetailFullPageModal({
       return
     }
     await updateProgram(draft.id, patch)
+  }
+  const persistRecruitmentAudiencePatch = async (
+    audience: ProgramDetailRecruitmentAudience,
+    draft: Program,
+    patch: Partial<Program>
+  ) => {
+    const baseline = displayProgram ?? draft
+    const result = await persistRecruitmentTabSave({
+      baseline,
+      draft,
+      patch,
+      audience,
+      refetchProgram: strictRemoteRecruitment
+        ? getTrainedTeacherProgram
+        : fetchGeneralProgramRemoteById,
+      remoteResponsePriority: strictRemoteRecruitment,
+    })
+    if (result.mode === 'row') {
+      if (strictRemoteRecruitment) {
+        await reflectTrainedTeacherProgramSave(queryClient, {
+          programId: draft.id,
+          echoed: result.program,
+        })
+      }
+      return
+    }
+    await persistProgramPatch(draft, result.patch)
   }
   const isCompanySchoolDetail = useMemo(
     () =>
@@ -1430,6 +1482,7 @@ export function ProgramDetailFullPageModal({
       program: displayProgram ?? ({} as Program),
       validateSchema: commonInfoEditSchema,
       commonInfoPatchOnly: isCompanySchoolDetail || isTrainedTeachersDetail,
+      strictRemote: strictRemoteRecruitment,
       onSaveEdit:
         displayProgram
           ? async (draft, patch) => {
@@ -1551,11 +1604,12 @@ export function ProgramDetailFullPageModal({
       ? programTrainedTeachersRecruitmentSaveSchema
       : programParticipantRecruitmentSaveSchema,
     recruitmentAudience: 'participant',
+    strictRemote: strictRemoteRecruitment,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
             try {
-              await persistProgramPatch(draft, patch)
+              await persistRecruitmentAudiencePatch('participant', draft, patch)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               throw error
@@ -1585,11 +1639,12 @@ export function ProgramDetailFullPageModal({
     validateSchema: programInstructorRecruitmentSaveSchema,
     recruitmentAudience: 'instructor',
     recruitmentNotesField: 'instructorRecruitmentRemarks',
+    strictRemote: strictRemoteRecruitment,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
             try {
-              await persistProgramPatch(draft, patch)
+              await persistRecruitmentAudiencePatch('instructor', draft, patch)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               throw error
@@ -1625,12 +1680,16 @@ export function ProgramDetailFullPageModal({
       }
       if (activeTab === 'institutions') {
         if (isCompanySchoolRecruitmentInstructorTab) {
-          prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
+          prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor', {
+            strictRemote: strictRemoteRecruitment,
+          })
           instructorsResetToProgram()
           setEditMode('instructors')
           return
         }
-        prepareRecruitOperationalEditFromProgram(displayProgram, 'participant')
+        prepareRecruitOperationalEditFromProgram(displayProgram, 'participant', {
+          strictRemote: strictRemoteRecruitment,
+        })
         institutionsResetToProgram()
         setEditMode('institutions')
         return
@@ -1655,25 +1714,33 @@ export function ProgramDetailFullPageModal({
       return
     }
     if (isCompanySchoolRecruitmentInstructorTab) {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor', {
+        strictRemote: strictRemoteRecruitment,
+      })
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (activeTab === 'institutions') {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'participant')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'participant', {
+        strictRemote: strictRemoteRecruitment,
+      })
       institutionsResetToProgram()
       setEditMode('institutions')
       return
     }
     if (activeTab === 'instructors') {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor', {
+        strictRemote: strictRemoteRecruitment,
+      })
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (activeTab === 'volunteers') {
-      prepareRecruitOperationalEditFromProgram(displayProgram, 'volunteer')
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'volunteer', {
+        strictRemote: strictRemoteRecruitment,
+      })
       volunteersResetToProgram()
       setEditMode('volunteers')
     }
@@ -1709,11 +1776,12 @@ export function ProgramDetailFullPageModal({
     program: recruitmentEditProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
+    strictRemote: strictRemoteRecruitment,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
             try {
-              await persistProgramPatch(draft, patch)
+              await persistRecruitmentAudiencePatch('volunteer', draft, patch)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               throw error
@@ -1909,7 +1977,16 @@ export function ProgramDetailFullPageModal({
           {activeLnb === 'info' && isCompanySchoolRecruitmentInfoTab && (
             <GeneralProgramRecruitmentView
               program={recruitmentEditProgram ?? displayProgram}
+              remoteStrict={strictRemoteRecruitment}
               activeRecruitTab={activeCompanySchoolRecruitTab}
+              remoteUnavailableReason={
+                strictRemoteRecruitment && displayProgram
+                  ? getGeneralRecruitmentRemoteUnavailableReason(
+                      displayProgram,
+                      activeCompanySchoolRecruitTab === 'instructors' ? 'instructor' : 'participant'
+                    )
+                  : undefined
+              }
               onRecruitTabChange={handleCompanySchoolRecruitTabChange}
               showInstructorTab={!isTrainedTeachersDetail}
               showVolunteerTab={false}

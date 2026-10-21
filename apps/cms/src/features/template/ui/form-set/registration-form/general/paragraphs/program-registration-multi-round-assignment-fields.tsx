@@ -53,7 +53,7 @@ export function ProgramRegistrationMultiRoundAssignmentFields({
       edit={
         <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
           <CmsRadioGroup
-            size="large"
+            size="medium"
             value={value.enabled ? 'yes' : 'no'}
             onChange={e => {
               const enabled = e.target.value === 'yes'
@@ -63,11 +63,11 @@ export function ProgramRegistrationMultiRoundAssignmentFields({
               })
             }}
           >
-            <CmsRadio value="yes">있음</CmsRadio>
-            <CmsRadio value="no">없음</CmsRadio>
+            <CmsRadio size="medium" value="yes">있음</CmsRadio>
+            <CmsRadio size="medium" value="no">없음</CmsRadio>
           </CmsRadioGroup>
           <DetailInfoForm.InputsSeparator />
-          <ParagraphDatePicker
+          <ParagraphDatePicker inputSize="small"
             mode="single"
             presetMode="period"
             customizable={false}

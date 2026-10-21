@@ -1,7 +1,9 @@
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { OrganizationApplicationApprovePayload } from '@/features/program/general/api/applications-api-client'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'
+import type { TrainedTeacherOrganizationDecisionResponse } from './trained-teacher-organization-approve-payload'
 import {
   approveTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationRemote,
@@ -45,10 +47,11 @@ export async function getTrainedTeacherOrganizationApplication(
 /** TT 전용 approve — Primary 스코프 가드 포함 */
 export async function approveTrainedTeacherOrganizationApplication(
   programId: string,
-  applicationId: string
-): Promise<void> {
+  applicationId: string,
+  payload?: OrganizationApplicationApprovePayload
+): Promise<TrainedTeacherOrganizationDecisionResponse | undefined> {
   assertRemoteReady()
-  await approveTrainedTeacherOrganizationApplicationRemote(programId, applicationId)
+  return approveTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
 }
 
 export async function rejectTrainedTeacherOrganizationApplication(

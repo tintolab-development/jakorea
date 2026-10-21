@@ -14,6 +14,7 @@ import {
   getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { alertUjatVolunteerInterviewAssignSlotRequired } from '../applicant/guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -74,7 +75,8 @@ export function UjatVolunteerInterviewAssignModal({
   onCancel,
   onConfirm,
 }: UjatVolunteerInterviewAssignModalProps) {
-  const programDetail = useProgramDetail(open ? programId : undefined)
+  // 스케줄을 주입한 호출(일반 프로그램)은 UJAT 상세·지역 정원을 조회하지 않는다.
+  const programDetail = useProgramDetail(open && scheduleOverride == null ? programId : undefined)
   const publicHolidayDateKeys = useKoreanPublicHolidayDateKeys({
     from: programDetail.data?.interviewStartDate,
     to: programDetail.data?.interviewEndDate,
@@ -376,7 +378,7 @@ export function UjatVolunteerInterviewAssignModal({
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
                     <span className="permission-modal__manual-summary">
                       {' '}
-                      ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                     </span>
                   ) : null}
                 </CmsRadio>

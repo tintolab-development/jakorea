@@ -35,6 +35,8 @@ type EducationInProgressNoticePanelProps = {
   program: ProgramDetail
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  preferredEducationScheduleLines?: readonly string[]
+  alwaysShowPreferredSchedule?: boolean
   /** 진행중 「신청 정보」 팝업 — 교사·기관 신청 내용 탭과 동일 */
   applicationInfoBody?: ReactNode
   /** 봉사현황 기관 안내사항 등 — 안내 목록 위 슬롯 */
@@ -50,6 +52,8 @@ export function EducationInProgressNoticePanel({
   program,
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  preferredEducationScheduleLines,
+  alwaysShowPreferredSchedule,
   applicationInfoBody,
   leading,
   applicationType,
@@ -307,6 +311,8 @@ export function EducationInProgressNoticePanel({
         open={isApplicationInfoOpen}
         selfIntroMotivation={selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        preferredEducationScheduleLines={preferredEducationScheduleLines}
+        alwaysShowPreferredSchedule={alwaysShowPreferredSchedule}
         applicationBody={applicationInfoBody}
         onClose={() => setIsApplicationInfoOpen(false)}
       />

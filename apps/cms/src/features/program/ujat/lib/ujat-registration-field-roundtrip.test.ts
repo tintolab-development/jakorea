@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Program } from '@/types/domain'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { resolveUjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { resolveUjatWageInfoDisplay } from '@/features/program/ujat/lib/ujat-wage-info-display'
@@ -14,6 +15,7 @@ import {
   resolveUjatRecruitAnnouncementTitle,
   resolveUjatRecruitDisplayProgram,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import { resolveUjatVolunteerActivityTermDisplay } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { UJAT_DETAILED_PROGRAM_UJAT_LABEL } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 
@@ -121,6 +123,133 @@ describe('UJAT 등록 필드 → 상세 표시 누락 점검', () => {
     expect(volunteer.contactPhone).toBe('02-333-4444')
     expect(resolveUjatVolunteerActivityTermDisplay(program, 'h1')).toBe('7')
     expect(resolveUjatVolunteerActivityTermDisplay(program, 'h2')).toBe('8')
+  })
+
+  it('GET recruitments 기간·공고명이 overlay보다 우선한다', () => {
+    const overlayRange = { start: '2026-03-01T00:00:00.000Z', end: '2026-03-31T00:00:00.000Z' }
+    const rowStart = '2026-05-01T00:00:00.000Z'
+    const rowEnd = '2026-05-31T00:00:00.000Z'
+    const program = {
+      ...buildUjatProgramListRowFromRegistrationSnapshot({
+        id: 'ujat-row-ssot',
+        overlay: {
+          [IK.publicTitle]: 'overlay 기관 공고',
+          [IK.recruitRange]: overlayRange,
+          [IK.contact]: CONTACT,
+          [VK.publicTitle]: 'overlay 봉사자 공고',
+          [VK.recruitRangeH1]: overlayRange,
+        },
+      }),
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT' as const,
+          announcementTitle: '행 기관 공고',
+          startAt: rowStart,
+          endAt: rowEnd,
+          contactName: '행 문의처',
+        },
+        {
+          recruitmentType: 'VOLUNTEER' as const,
+          recruitTerm: 'FIRST_HALF' as const,
+          announcementTitle: '행 상반기 공고',
+          startAt: rowStart,
+          endAt: rowEnd,
+        },
+      ],
+    }
+    const institution = resolveUjatRecruitDisplayProgram(program, 'institution')
+    expect(institution.applicationStartDate).toBe(rowStart)
+    expect(institution.applicationEndDate).toBe(rowEnd)
+    expect(institution.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
+      '행 문의처'
+    )
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('행 기관 공고')
+    const volunteerH1 = resolveUjatRecruitDisplayProgram(program, 'volunteer_h1')
+    expect(volunteerH1.volunteerApplicationStartDate).toBe(rowStart)
+    expect(volunteerH1.volunteerApplicationEndDate).toBe(rowEnd)
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h1')).toBe('행 상반기 공고')
+    const institutionEdit = programToUjatRecruitTemplateFormValues(institution, 'institution')
+    expect(institutionEdit.applicationStartDate).toBe(rowStart)
+    expect(institutionEdit.applicationEndDate).toBe(rowEnd)
+    const volunteerEdit = programToUjatRecruitTemplateFormValues(volunteerH1, 'volunteer', 'h1')
+    expect(volunteerEdit.volunteerApplicationStartDate).toBe(rowStart)
+    expect(volunteerEdit.volunteerApplicationEndDate).toBe(rowEnd)
+  })
+
+  it('모집 fallback은 display 스냅샷이 아니라 draft 행을 유지한다', () => {
+    const displayRows = [
+      {
+        recruitmentType: 'PARTICIPANT' as const,
+        startAt: '2026-01-01T00:00:00.000Z',
+        endAt: '2026-01-31T00:00:00.000Z',
+      },
+    ]
+    const draftRows = [
+      {
+        recruitmentType: 'PARTICIPANT' as const,
+        startAt: '2026-03-01T00:00:00.000Z',
+        endAt: '2026-03-31T00:00:00.000Z',
+      },
+    ]
+    const draft = {
+      ...buildUjatProgramListRowFromRegistrationSnapshot({
+        id: 'ujat-fallback-rows',
+        overlay: FULL_OVERLAY,
+      }),
+      programRecruitments: draftRows,
+    }
+    const display = { ...draft, programRecruitments: displayRows }
+    const fallback = { ...draft, programRecruitments: draft.programRecruitments }
+    expect(fallback.programRecruitments).toEqual(draftRows)
+    expect(fallback.programRecruitments).not.toEqual(display.programRecruitments)
+  })
+
+  it('하반기 행이 없으면 startAt 순서로 상반기를 하반기로 쓰지 않는다', () => {
+    const program = {
+      ...buildUjatProgramListRowFromRegistrationSnapshot({
+        id: 'ujat-no-h2-guess',
+        overlay: { [VK.recruitRangeH2]: RANGE },
+      }),
+      programRecruitments: [
+        {
+          recruitmentType: 'VOLUNTEER' as const,
+          recruitTerm: 'FIRST_HALF' as const,
+          startAt: '2026-01-01T00:00:00.000Z',
+          endAt: '2026-01-31T00:00:00.000Z',
+        },
+      ],
+    }
+    const h2 = resolveUjatRecruitDisplayProgram(program, 'volunteer_h2')
+    expect(h2.volunteerApplicationStartDate).not.toBe('2026-01-01T00:00:00.000Z')
+  })
+
+  it('빈 공통정보·지급항목 []·KPI null/0 표시 규칙을 지킨다', () => {
+    const empty = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-empty-echo',
+      overlay: { [UJAT_WAGE_OVERLAY_PAYMENT_KEY]: [] },
+    })
+    empty.title = ''
+    empty.mainTitle = ''
+    empty.titleEn = ''
+    empty.businessArea = undefined
+    empty.generalCommonInfo = {
+      ...empty.generalCommonInfo,
+      kpi: {
+        finalParticipants: undefined,
+        instructorCount: undefined,
+        volunteerCount: undefined,
+        finalSchools: undefined,
+        finalClasses: 0,
+      } as unknown as NonNullable<Program['generalCommonInfo']>['kpi'],
+    }
+    const display = resolveUjatRegistrationBasicInfoDisplay(empty)
+    expect(display.repKo).toBe('-')
+    expect(display.repEn).toBe('-')
+    expect(display.programManagementName).toBe('-')
+    expect(display.businessField).toBe('-')
+    expect(resolveUjatWageInfoDisplay(empty).paymentItemsText).toBe('-')
+    expect(empty.generalCommonInfo?.kpi?.finalClasses).toBe(0)
+    expect(empty.generalCommonInfo?.kpi?.finalParticipants).toBeUndefined()
   })
 
   it('신청정보 overlay 키가 생성 스냅샷에 남는다', () => {

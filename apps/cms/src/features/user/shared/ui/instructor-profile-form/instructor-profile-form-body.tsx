@@ -83,7 +83,7 @@ function InstructorCareerRowEdit({
         <Form.Item name={[field.name, 'periodStart']} noStyle>
           <CmsDatePicker
             picker="month"
-            inputSize="medium"
+            inputSize="small"
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.careerPeriodStart}
             format="YYYY.MM"
             width={140}
@@ -95,7 +95,7 @@ function InstructorCareerRowEdit({
         <Form.Item name={[field.name, 'periodEnd']} noStyle>
           <CmsDatePicker
             picker="month"
-            inputSize="medium"
+            inputSize="small"
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.careerPeriodEnd}
             format="YYYY.MM"
             width={140}
@@ -108,14 +108,14 @@ function InstructorCareerRowEdit({
         <Form.Item name={[field.name, 'companyName']} noStyle>
           <CmsInput
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.companyName}
-            inputSize="medium"
+            inputSize="small"
             width={220}
           />
         </Form.Item>
         <Form.Item name={[field.name, 'roleName']} noStyle>
           <CmsInput
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.roleName}
-            inputSize="medium"
+            inputSize="small"
             width={160}
           />
         </Form.Item>
@@ -294,7 +294,7 @@ export function InstructorProfileFormBody({
           onSelect={handleSchoolSelect}
           allowedSchoolLevels={SCHOOL_SEARCH_NEIS_LEVELS}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
-          inputSize="medium"
+          inputSize="small"
           width="100%"
         />
       </Form.Item>
@@ -314,7 +314,7 @@ export function InstructorProfileFormBody({
     <Form.Item name="employmentStatus" style={FORM_ITEM_STYLE}>
       <CmsSelect
         placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.employmentStatus}
-        inputSize="medium"
+        inputSize="small"
         width="100%"
         options={EMPLOYMENT_STATUS_OPTIONS}
         withAllOption={false}
@@ -335,7 +335,7 @@ export function InstructorProfileFormBody({
           onSelect={handleSchoolSelect}
           allowedSchoolLevels={SCHOOL_SEARCH_NEIS_LEVELS}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
-          inputSize="medium"
+          inputSize="small"
           width={FORM_INPUTS_2_WIDTHS[0]}
         />
       </Form.Item>
@@ -352,7 +352,7 @@ export function InstructorProfileFormBody({
       <Form.Item name="employmentStatus" noStyle>
         <CmsSelect
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.employmentStatus}
-          inputSize="medium"
+          inputSize="small"
           width={FORM_INPUTS_2_WIDTHS[1]}
           options={EMPLOYMENT_STATUS_OPTIONS}
           withAllOption={false}
@@ -365,7 +365,7 @@ export function InstructorProfileFormBody({
       <Form.Item name="affiliationName" style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}>
         <CmsInput
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
-          inputSize="medium"
+          inputSize="small"
           width="100%"
           disabled={affiliationNone}
         />
@@ -391,7 +391,7 @@ export function InstructorProfileFormBody({
     <Form.Item name="instructorCareer" style={FORM_ITEM_STYLE}>
       <CmsInput
         placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
-        inputSize="medium"
+        inputSize="small"
         width="100%"
       />
     </Form.Item>
@@ -407,7 +407,7 @@ export function InstructorProfileFormBody({
             onConsentValuesCommit?.()
           }}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddress}
-          inputSize="medium"
+          inputSize="small"
           width="100%"
         />
       </Form.Item>
@@ -415,7 +415,7 @@ export function InstructorProfileFormBody({
       <Form.Item name="homeAddressDetail" noStyle>
         <CmsInput
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddressDetail}
-          inputSize="medium"
+          inputSize="small"
           width="100%"
         />
       </Form.Item>
@@ -428,7 +428,7 @@ export function InstructorProfileFormBody({
         <Form.Item name="bankName" noStyle>
           <CmsInput
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName}
-            inputSize="medium"
+            inputSize="small"
             width={120}
           />
         </Form.Item>
@@ -436,7 +436,7 @@ export function InstructorProfileFormBody({
           <CmsNumericInput
             mode="numericText"
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
-            inputSize="medium"
+            inputSize="small"
             width={isDetailEdit ? 160 : 240}
           />
         </Form.Item>
@@ -445,7 +445,7 @@ export function InstructorProfileFormBody({
       <Form.Item name="accountHolder" noStyle>
         <CmsInput
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder}
-          inputSize="medium"
+          inputSize="small"
           width={isDetailEdit ? 120 : 240}
         />
       </Form.Item>
@@ -454,7 +454,7 @@ export function InstructorProfileFormBody({
 
   const businessIncomeFieldEdit = (
     <Form.Item name="isBusinessIncome" noStyle>
-      <CmsRadioGroup options={BUSINESS_INCOME_OPTIONS} size="large" />
+      <CmsRadioGroup options={BUSINESS_INCOME_OPTIONS} size="medium" />
     </Form.Item>
   )
 
@@ -469,7 +469,7 @@ export function InstructorProfileFormBody({
             <Form.Item name="oneLineIntro" noStyle>
               <CmsInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.oneLineIntro}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             </Form.Item>
@@ -513,7 +513,7 @@ export function InstructorProfileFormBody({
             <Form.Item name="name" style={FORM_ITEM_STYLE}>
               <CmsInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             </Form.Item>
@@ -525,7 +525,7 @@ export function InstructorProfileFormBody({
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
               <Form.Item name="gender" noStyle>
-                <CmsRadioGroup options={[...GENDER_OPTIONS]} size="large" />
+                <CmsRadioGroup options={[...GENDER_OPTIONS]} size="medium" />
               </Form.Item>
               <DetailInfoForm.InputsSeparator />
               <Form.Item
@@ -537,7 +537,7 @@ export function InstructorProfileFormBody({
                 <CmsDateTextInput
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
                   maxLength={10}
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                 />
               </Form.Item>
@@ -553,7 +553,7 @@ export function InstructorProfileFormBody({
             <Form.Item name="contact" style={FORM_ITEM_STYLE}>
               <CmsPhoneInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             </Form.Item>
@@ -566,7 +566,7 @@ export function InstructorProfileFormBody({
             <Form.Item name="email" style={FORM_ITEM_STYLE}>
               <CmsInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.email}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             </Form.Item>
@@ -602,7 +602,7 @@ export function InstructorProfileFormBody({
             view="-"
             edit={
               <Form.Item name="memberType" noStyle>
-                <CmsRadioGroup options={[...MEMBER_TYPE_OPTIONS]} size="large" />
+                <CmsRadioGroup options={[...MEMBER_TYPE_OPTIONS]} size="medium" />
               </Form.Item>
             }
           />
@@ -738,7 +738,7 @@ export function InstructorProfileFormBody({
                       <CmsSelect
                         placeholder="강사비 등급을 선택하세요"
                         options={INSTRUCTOR_FEE_GRADE_OPTIONS}
-                        inputSize="large"
+                        inputSize="small"
                         width="100%"
                         allowClear
                       />
@@ -752,7 +752,7 @@ export function InstructorProfileFormBody({
                 edit={
                   <div className="instructor-register-modal__ja-grade-field">
                     <Form.Item name="jaEvaluationGrade" hidden noStyle>
-                      <CmsInput />
+                      <CmsInput inputSize="small" />
                     </Form.Item>
                     {jaEvaluationGradeFieldEdit}
                   </div>
@@ -787,7 +787,7 @@ export function InstructorProfileFormBody({
                       {/* 상세 수정: 필수 약관 변경 불가 (FE/BE 공통) */}
                       <CmsRadioGroup
                         options={CONSENT_RADIO_OPTIONS}
-                        size="large"
+                        size="medium"
                         disabled={isDetailEdit}
                       />
                     </Form.Item>
@@ -802,7 +802,7 @@ export function InstructorProfileFormBody({
                     <Form.Item name="consentPersonal" noStyle>
                       <CmsRadioGroup
                         options={CONSENT_RADIO_OPTIONS}
-                        size="large"
+                        size="medium"
                         disabled={isDetailEdit}
                       />
                     </Form.Item>
@@ -817,7 +817,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentMarketing" noStyle>
                       {/* CMS 강사 등록·상세 — 마케팅 미동의 고정 */}
-                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" disabled />
+                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="medium" disabled />
                     </Form.Item>
                   }
                 />
@@ -914,7 +914,7 @@ export function InstructorProfileFormBody({
                   view="-"
                   edit={
                     <Form.Item name="careerLevel" noStyle>
-                      <CmsRadioGroup options={CAREER_LEVEL_OPTIONS} size="large" />
+                      <CmsRadioGroup options={CAREER_LEVEL_OPTIONS} size="medium" />
                     </Form.Item>
                   }
                 />
@@ -975,7 +975,7 @@ export function InstructorProfileFormBody({
                                 <div className="instructor-register-modal__period">
                                   <Form.Item name={[field.name, 'periodStart']} noStyle>
                                     <CmsDatePicker
-                                      inputSize="medium"
+                                      inputSize="small"
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodStart}
                                       format="YYYY.MM.DD"
                                       width={140}
@@ -986,7 +986,7 @@ export function InstructorProfileFormBody({
                                   </span>
                                   <Form.Item name={[field.name, 'periodEnd']} noStyle>
                                     <CmsDatePicker
-                                      inputSize="medium"
+                                      inputSize="small"
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodEnd}
                                       format="YYYY.MM.DD"
                                       width={140}
@@ -998,14 +998,14 @@ export function InstructorProfileFormBody({
                                   <Form.Item name={[field.name, 'title']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaProgramName}
-                                      inputSize="medium"
+                                      inputSize="small"
                                       width={220}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'note']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaNote}
-                                      inputSize="medium"
+                                      inputSize="small"
                                       width={160}
                                     />
                                   </Form.Item>
@@ -1056,7 +1056,7 @@ export function InstructorProfileFormBody({
                                 <Form.Item name={[field.name, 'acquiredYear']} noStyle>
                                   <CmsDatePicker
                                     picker="year"
-                                    inputSize="medium"
+                                    inputSize="small"
                                     placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseYear}
                                     format="YYYY"
                                     width={140}
@@ -1067,14 +1067,14 @@ export function InstructorProfileFormBody({
                                   <Form.Item name={[field.name, 'title']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseTitle}
-                                      inputSize="medium"
+                                      inputSize="small"
                                       width={220}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'issuer']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
-                                      inputSize="medium"
+                                      inputSize="small"
                                       width={160}
                                     />
                                   </Form.Item>
@@ -1125,7 +1125,7 @@ export function InstructorProfileFormBody({
                                 <Form.Item name={[field.name, 'acquiredYear']} noStyle>
                                   <CmsDatePicker
                                     picker="year"
-                                    inputSize="medium"
+                                    inputSize="small"
                                     placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardYear}
                                     format="YYYY"
                                     width={140}
@@ -1136,14 +1136,14 @@ export function InstructorProfileFormBody({
                                   <Form.Item name={[field.name, 'title']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardTitle}
-                                      inputSize="medium"
+                                      inputSize="small"
                                       width={220}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'issuer']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
-                                      inputSize="medium"
+                                      inputSize="small"
                                       width={160}
                                     />
                                   </Form.Item>

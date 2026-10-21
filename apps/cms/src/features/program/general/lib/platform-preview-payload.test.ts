@@ -125,6 +125,34 @@ describe('buildGeneralProgramPortalPreview', () => {
     })
   })
 
+  it('keeps program education targets on instructor and volunteer preview', () => {
+    const program = makeProgram({
+      targetLevels: ['elementary'],
+      educationTargetDetail: '프로그램 컬럼 상세',
+      instructorTargets: ['adult'],
+      volunteerTargets: ['university'],
+      instructorApplicationStartDate: '2026-08-01',
+      instructorApplicationEndDate: '2026-08-15',
+      volunteerApplicationStartDate: '2026-08-16',
+      volunteerApplicationEndDate: '2026-08-20',
+      generalCommonInfo: {
+        instructorRecruitmentInfo: { recruitmentTarget: '성인' },
+        volunteerRecruitmentInfo: { recruitmentTarget: '대학(원)생' },
+        participantRecruitmentInfo: { educationTargetDetail: '초등학생 4~6학년' },
+      },
+    })
+
+    const instructor = buildGeneralProgramPortalPreview({ audience: 'instructors', program })
+    expect(instructor.educationTargets).toEqual(['elementary'])
+    expect(instructor.educationTargetDetail).toBe('초등학생 4~6학년')
+    expect(instructor.recruitmentTarget).toBe('성인')
+
+    const volunteer = buildGeneralProgramPortalPreview({ audience: 'volunteers', program })
+    expect(volunteer.educationTargets).toEqual(['elementary'])
+    expect(volunteer.educationTargetDetail).toBe('초등학생 4~6학년')
+    expect(volunteer.recruitmentTarget).toBe('대학(원)생')
+  })
+
   it('maps volunteer otherMatters from the volunteer row, not program otherNotes', () => {
     const detail = buildGeneralProgramPortalPreview({
       audience: 'volunteers',
@@ -190,5 +218,34 @@ describe('buildGeneralProgramPortalPreview', () => {
         endAt: '2026-10-02T12:00:00',
       },
     ])
+  })
+
+  it('미리보기 운영 기간은 모집 행 날짜를 쓰고 표시 문자열은 쓰지 않는다', () => {
+    const detail = buildGeneralProgramPortalPreview({
+      audience: 'institutions',
+      program: makeProgram({
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        programRecruitments: [
+          {
+            id: 186603,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+            operationStartDate: '2026-11-18',
+            operationEndDate: '2026-12-25',
+          },
+        ],
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            operationPeriodLabel: '2026-11-11 ~ 2026-12-25',
+          },
+        },
+      }),
+    })
+    expect(detail.businessStartDate).toBe('2026-01-01T00:00:00')
+    expect(detail.recruitments?.[0]).toMatchObject({
+      operationStartDate: '2026-11-18',
+      operationEndDate: '2026-12-25',
+    })
   })
 })

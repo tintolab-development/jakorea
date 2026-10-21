@@ -146,6 +146,8 @@ export interface SocialLoginMfaChallenge {
   challengeUuid: string
   mfaMethod?: string
   expiresAt?: string
+  /** true면 QR 등록, false면 기존 OTP만 입력. 로그인 응답의 QR/Secret은 쓰지 않는다. */
+  mfaSetupRequired?: boolean
   totpSecret?: string
   otpauthUri?: string
   qrDataUrl?: string
@@ -167,6 +169,7 @@ export type OAuthCallbackOutcome =
       challengeUuid: string
       mfaMethod?: string
       expiresAt?: string
+      mfaSetupRequired?: boolean
       totpSecret?: string
       otpauthUri?: string
       qrDataUrl?: string

@@ -38,7 +38,7 @@ const fullFreeText = PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS.reduce(
 )
 
 describe('buildVolunteerParticipantRegisterRequest', () => {
-  it('maps 동의서 제출 요청 and previous JA to register body', () => {
+  it('maps 있음(yes) and previous JA to register body', () => {
     const paragraphs = withJaExperience(agreeConsents(), JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes)
     const result = buildVolunteerParticipantRegisterRequest({
       memberId: 190084,
@@ -63,7 +63,7 @@ describe('buildVolunteerParticipantRegisterRequest', () => {
     expect(result.request.reason.length).toBeGreaterThanOrEqual(5)
   })
 
-  it('maps 동의서 미제출 without previousJaProgram', () => {
+  it('maps 없음(no) without previousJaProgram', () => {
     const paragraphs = withJaExperience(agreeConsents(), JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no)
     const result = buildVolunteerParticipantRegisterRequest({
       memberId: 1,

@@ -13,6 +13,8 @@ import {
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { customInstance } from '@/shared/api/orval-mutator'
+import { parseMemberConsentSummariesPayload } from '@/features/user/api/parse-member-consent-summaries-payload'
+import { resolveConsentSignedSignatureField } from '@/features/user/shared/lib/resolve-consent-signed-signature-field'
 import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas/schoolMemberDetailResponse'
 import type { AdminPreRegisterSchoolRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterSchoolRequest'
 import type {
@@ -23,6 +25,7 @@ import type {
   AdminPreRegisterInstructorRequest,
   AdminPrivacyUnmaskRequest,
   FilledDocumentResponse,
+  SignedConsentDocumentResponse,
   AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
@@ -77,6 +80,7 @@ import type { ListMemberCommentsParams } from '@/shared/api/generated/members/sc
 import type { AdminPermissionResponse } from '@/shared/api/generated/members/schemas/adminPermissionResponse'
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
+import type { MemberPortalConsentSummary } from '@/shared/api/generated/members/schemas/memberPortalConsentSummary'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
 import type { InstructorJaEvaluationInput } from '@/shared/api/generated/members/schemas/instructorJaEvaluationInput'
 import type { InstructorJaEvaluationResponse } from '@/shared/api/generated/members/schemas/instructorJaEvaluationResponse'
@@ -140,7 +144,9 @@ export async function bulkDeleteAdminsRemote(body: BulkDecisionRequest) {
 
 /** Swagger `bulkDeleteSchools` — `POST /api/admin/organizations/schools/bulk-delete` */
 export async function bulkDeleteSchoolsRemote(body: BulkDecisionRequest) {
-  return unwrapApiBody(await membersApi.bulkDeleteSchools(body))
+  const result = unwrapApiBody<MembersBulkActionResponse>(await membersApi.bulkDeleteSchools(body))
+  assertBulkActionSucceeded(result, '학교 일괄 삭제에 실패했습니다.')
+  return result
 }
 
 /** Swagger `deleteSchool` — `DELETE /api/admin/organizations/schools/{organizationId}` */
@@ -524,17 +530,144 @@ export async function fetchMemberConsentRecordsRemote(
   return Array.isArray(data) ? data : []
 }
 
+/** GET /api/admin/users/{memberId}/consents — Envelope 없이 ConsentSummary[] */
+export async function fetchMemberConsentSummariesRemote(
+  memberId: number,
+  signal?: AbortSignal
+): Promise<MemberPortalConsentSummary[]> {
+  const body = await customInstance<MemberPortalConsentSummary[] | { data?: unknown }>(
+    {
+      url: `/api/admin/users/${memberId}/consents`,
+      method: 'GET',
+      signal,
+    },
+    { skipGlobalErrorAlert: true }
+  )
+  return parseMemberConsentSummariesPayload(body)
+}
+
 /** POST 동의서 작성본 원문 — 민감정보, 쿼리 캐시에 넣지 말 것 */
 export async function fetchConsentFilledDocumentRemote(
   memberId: number,
   consentType: string,
-  body: AdminPrivacyUnmaskRequest
+  body: AdminPrivacyUnmaskRequest,
+  consentRecordId?: number
 ): Promise<FilledDocumentResponse> {
   return unwrapApiBody(
-    await membersApi.consentFilledDocument(memberId, consentType, body, undefined, {
-      skipGlobalErrorAlert: true,
-    })
+    await membersApi.consentFilledDocument(
+      memberId,
+      consentType,
+      body,
+      consentRecordId == null ? undefined : { consentRecordId },
+      { skipGlobalErrorAlert: true }
+    )
   )
+}
+
+function consentRecordQuery(consentRecordId?: number) {
+  return consentRecordId == null ? undefined : { consentRecordId }
+}
+
+function asDownloadBlob(payload: unknown): Blob | null {
+  if (payload instanceof Blob) return payload.size > 0 ? payload : null
+  const unwrapped = unwrapApiBody(payload)
+  if (unwrapped instanceof Blob) return unwrapped.size > 0 ? unwrapped : null
+  return null
+}
+
+function isUsableSignatureImageBlob(blob: Blob | null): blob is Blob {
+  if (blob == null || blob.size < 1) return false
+  const type = blob.type.toLowerCase()
+  if (type.includes('text/html') || type.includes('application/json')) return false
+  return true
+}
+
+/** POST 전자서명 스냅샷 메타 — 민감정보, 쿼리 캐시에 넣지 말 것 */
+export async function fetchConsentSignedDocumentRemote(
+  memberId: number,
+  consentType: string,
+  body: AdminPrivacyUnmaskRequest,
+  consentRecordId?: number
+): Promise<SignedConsentDocumentResponse> {
+  return unwrapApiBody(
+    await membersApi.signedConsentDocument(
+      memberId,
+      consentType,
+      body,
+      consentRecordQuery(consentRecordId),
+      { skipGlobalErrorAlert: true }
+    )
+  )
+}
+
+/** POST 전자서명 이미지 Blob — 실패 시 null (본문 보기를 막지 않음) */
+export async function fetchConsentSignedSignatureImageRemote(
+  memberId: number,
+  consentType: string,
+  fieldKey: string,
+  body: AdminPrivacyUnmaskRequest,
+  consentRecordId?: number
+): Promise<Blob | null> {
+  const payload = await membersApi.signedConsentSignatureImage(
+    memberId,
+    consentType,
+    fieldKey,
+    body,
+    consentRecordQuery(consentRecordId),
+    {
+      skipGlobalErrorAlert: true,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'image/png,image/jpeg,image/webp,image/*,*/*',
+      },
+    }
+  )
+  const blob = asDownloadBlob(payload)
+  return isUsableSignatureImageBlob(blob) ? blob : null
+}
+
+/** signed-document + 서명 이미지. content 실패 시 회원 서명 파일 민감 다운로드로 폴백 */
+export async function loadConsentSignedSignatureBlobRemote(input: {
+  memberId: number
+  consentType: string
+  reason: string
+  consentRecordId?: number
+}): Promise<Blob | null> {
+  let signed: SignedConsentDocumentResponse
+  try {
+    signed = await fetchConsentSignedDocumentRemote(
+      input.memberId,
+      input.consentType,
+      { reason: input.reason },
+      input.consentRecordId
+    )
+  } catch {
+    return null
+  }
+  const field = resolveConsentSignedSignatureField(signed.signatureFields)
+  if (field == null) return null
+  try {
+    const blob = await fetchConsentSignedSignatureImageRemote(
+      input.memberId,
+      input.consentType,
+      field.fieldKey,
+      { reason: input.reason },
+      input.consentRecordId
+    )
+    if (blob) return blob
+  } catch {
+    /* fileObjectId 폴백 */
+  }
+  if (field.signatureFileObjectId == null) return null
+  try {
+    const blob = await loadSensitiveAdminFileBlob({
+      fileObjectId: field.signatureFileObjectId,
+      reason: input.reason,
+    })
+    return isUsableSignatureImageBlob(blob) ? blob : null
+  } catch {
+    return null
+  }
 }
 
 function mimeFromEvidenceFileName(fileName: string | null | undefined): string | null {

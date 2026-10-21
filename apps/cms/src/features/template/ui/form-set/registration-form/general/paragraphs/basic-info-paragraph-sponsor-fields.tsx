@@ -433,7 +433,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               <CmsSelect
                 mode="multiple"
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="후원사를 선택하세요"
                 width={240}
                 options={sponsorOptions}
@@ -459,7 +459,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
             ) : (
               <CmsSelect
                 withAllOption={trainedTeachersDefaults}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="후원사를 선택하세요"
                 width={240}
                 options={sponsorOptions}
@@ -488,7 +488,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
             <CmsSelect
               mode="multiple"
               withAllOption={false}
-              inputSize="medium"
+              inputSize="small"
               placeholder="후원사 담당자를 선택하세요"
               width={240}
               showSearch
@@ -514,7 +514,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
             />
             <DetailInfoForm.InputsSeparator />
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width={220}
               placeholder="담당자 연락처"
               value={selectedManagerContactPhone}

@@ -18,7 +18,7 @@
 | 응답 성공 + 값 있음 | 매핑해서 노출 (기간 만료 행은 제외) | 덮어씀 |
 
 - 빈 객체 `{}`도 네트워크상 remote다. 목록은 비우고, 스칼라만 fallback이다.
-- 프로그램 카드는 CMS `GET /api/portal/programs?featuredOnHome=true&size=8` (`:8080`) 를 쓴다. Homepage `education.programs` 는 매핑하지 않는다. 요청 실패·빈 배열이면 섹션을 숨기고 mock 카탈로그를 되살리지 않는다. 계약: [public-program.md](./public-program.md).
+- 프로그램 카드는 CMS `GET /api/portal/programs?page=0&size=8&sort=LATEST` (`:8080`) 를 쓴다. Homepage `education.programs` 는 매핑하지 않는다. 요청 실패·빈 배열이면 섹션을 숨기고 mock 카탈로그를 되살리지 않는다. 계약: [public-program.md](./public-program.md).
 - 홈 섹션 제목만 public main `education.title` 이다.
 - `/programs` 목록·상세도 같은 Portal API. slug mock id는 쓰지 않는다.
 - 임팩트 스토리 서브카드 3건은 `GET /api/public/impact-story/stories` (`useHomeImpactSubStories`). 실패 시에만 impact-story mock. 대표 1건은 public main `featuredStory`. 계약: [public-impact-story.md](./public-impact-story.md).

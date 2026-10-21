@@ -12,6 +12,7 @@ import {
   getDefaultManualNotifyAt,
   getMinimumManualNotifyAt,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import '@/shared/components/permission-modal.css'
 import './approval-alarm-send-section.css'
 
@@ -111,7 +112,7 @@ export function ApprovalAlarmSendSection({
               {currentValue === 'manual' && currentManual != null ? (
                 <span className="permission-modal__manual-summary">
                   {' '}
-                  ({currentManual.format('YYYY. MM. DD HH:mm')})
+                  ({formatYmdHmWithKoreanWeekday(currentManual)})
                 </span>
               ) : null}
             </CmsRadio>

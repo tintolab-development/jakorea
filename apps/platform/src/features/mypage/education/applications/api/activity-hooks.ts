@@ -1,5 +1,11 @@
 import { useMemo } from 'react'
-import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
@@ -21,7 +27,10 @@ import {
   getEducationSchedulesQueryErrorCode,
   getEducationSchedulesQueryTraceId,
 } from '../../schedules/lib/schedules-query-error'
-import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
+import type {
+  EducationSettlementItem,
+  EducationSettlementStatus,
+} from '../../settlements/model/types'
 import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import {
   createApplicationNotice,
@@ -37,6 +46,7 @@ import {
   updateApplicationNoticeComment,
   upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
+  submitApplicationAbsenceReason,
   fetchExpenseReceipts,
   fetchPortalSurveyFormBinding,
   fetchSettlementApplications,
@@ -47,6 +57,7 @@ import {
   type PortalNoticeDetail,
   type PortalNoticeListItem,
   type PortalNoticeReactionState,
+  type PortalAbsenceReasonSubmissionInput,
   type PortalSettlementApplication,
   type PortalSurveySubmitBody,
 } from './activity-client'
@@ -59,11 +70,9 @@ const GC_MS = 10 * 60_000
 
 function isActivityQueryEnabled(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ): applicationType is ProgramApplicationType {
-  return Boolean(
-    isRemoteApiConfigured() && getAccessToken() && applicationType && applicationId,
-  )
+  return Boolean(isRemoteApiConfigured() && getAccessToken() && applicationType && applicationId)
 }
 
 function queryOptions() {
@@ -97,7 +106,7 @@ function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null
 }
 
 function mapNoticeAttachmentListItem(
-  item: PortalNoticeAttachmentListItem,
+  item: PortalNoticeAttachmentListItem
 ): EducationInProgressFile | null {
   if (item.attachmentId == null || item.postId == null) return null
   return {
@@ -114,7 +123,7 @@ function noticeCommentAuthorLabel(comment: PortalNoticeComment): string {
   return portalEducationNoticeActorLabel(
     comment.authorDisplayName,
     comment.authorType,
-    comment.mine,
+    comment.mine
   )
 }
 
@@ -169,7 +178,7 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
 
 function mapNoticeReactions(
   state: PortalNoticeReactionState | undefined,
-  postId: string,
+  postId: string
 ): {
   summary: EducationNoticeReactionSummary[]
   myReactionTypes: string[]
@@ -193,7 +202,7 @@ function mapNoticeReactions(
             authorName: portalEducationNoticeActorLabel(
               row.actorDisplayName,
               row.actorType,
-              row.mine,
+              row.mine
             ),
             emojiType,
             reactedAt: row.reactedAt ?? '',
@@ -242,7 +251,10 @@ function mapReceipt(item: PortalExpenseReceipt, index: number): EducationSettlem
   }
 }
 
-function mapSettlement(item: PortalSettlementApplication, index: number): EducationSettlementItem | null {
+function mapSettlement(
+  item: PortalSettlementApplication,
+  index: number
+): EducationSettlementItem | null {
   if (item.applicationId == null) return null
   const heldAt = item.submittedAt ?? item.createdAt ?? ''
   return {
@@ -258,13 +270,13 @@ function mapSettlement(item: PortalSettlementApplication, index: number): Educat
 
 export function useApplicationNoticesQuery(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.notices(
       applicationType ?? '',
-      applicationId ?? '',
+      applicationId ?? ''
     ),
     queryFn: ({ signal }) => fetchApplicationNotices(applicationType!, applicationId!, signal),
     enabled,
@@ -276,7 +288,7 @@ export function useApplicationNoticesQuery(
         const mapped = mapNotice(item)
         return mapped ? [mapped] : []
       }),
-    [query.data],
+    [query.data]
   )
   return {
     enabled,
@@ -289,7 +301,7 @@ export function useApplicationNoticesQuery(
 export function useApplicationNoticeDetailQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  postId: string | null,
+  postId: string | null
 ) {
   const queryClient = useQueryClient()
   const enabled = isActivityQueryEnabled(applicationType, applicationId) && Boolean(postId)
@@ -297,20 +309,20 @@ export function useApplicationNoticeDetailQuery(
     queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
       applicationType ?? '',
       applicationId ?? '',
-      postId ?? '',
+      postId ?? ''
     ),
     queryFn: async ({ signal }) => {
       const detail = await fetchApplicationNoticeDetail(
         applicationType!,
         applicationId!,
         postId!,
-        signal,
+        signal
       )
       // 상세 GET 이 읽음·조회수를 반영하므로 목록을 다시 받는다. 첨부 목록은 읽음과 무관하다.
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.notices(
           applicationType!,
-          applicationId!,
+          applicationId!
         ),
         exact: true,
       })
@@ -336,7 +348,7 @@ export function useApplicationNoticeFiles(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   notices: readonly EducationInProgressNotice[],
-  keyword = '',
+  keyword = ''
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const trimmedKeyword = keyword.trim()
@@ -344,15 +356,10 @@ export function useApplicationNoticeFiles(
     queryKey: platformQueryKeys.mypage.programApplications.noticeAttachments(
       applicationType ?? '',
       applicationId ?? '',
-      trimmedKeyword,
+      trimmedKeyword
     ),
     queryFn: ({ signal }) =>
-      fetchApplicationNoticeAttachments(
-        applicationType!,
-        applicationId!,
-        trimmedKeyword,
-        signal,
-      ),
+      fetchApplicationNoticeAttachments(applicationType!, applicationId!, trimmedKeyword, signal),
     enabled,
     ...queryOptions(),
     placeholderData: keepPreviousData,
@@ -361,14 +368,14 @@ export function useApplicationNoticeFiles(
 
   const fallbackPostIds = useMemo(
     () => notices.filter(notice => (notice.attachmentCount ?? 0) > 0).map(notice => notice.id),
-    [notices],
+    [notices]
   )
   const cachedDetails = useQueries({
     queries: fallbackPostIds.map(postId => ({
       queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
         applicationType ?? '',
         applicationId ?? '',
-        postId,
+        postId
       ),
       queryFn: ({ signal }: { signal: AbortSignal }) =>
         fetchApplicationNoticeDetail(applicationType!, applicationId!, postId, signal),
@@ -398,14 +405,14 @@ export function useApplicationNoticeFiles(
 export function useApplicationNoticeReactionsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  postId: string | null,
+  postId: string | null
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId) && Boolean(postId)
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.noticeReactions(
       applicationType ?? '',
       applicationId ?? '',
-      postId ?? '',
+      postId ?? ''
     ),
     queryFn: ({ signal }) =>
       fetchApplicationNoticeReactions(applicationType!, applicationId!, postId!, signal),
@@ -415,7 +422,7 @@ export function useApplicationNoticeReactionsQuery(
   })
   const reactions = useMemo(
     () => mapNoticeReactions(query.data, postId ?? ''),
-    [postId, query.data],
+    [postId, query.data]
   )
   return { enabled, ...reactions }
 }
@@ -431,7 +438,7 @@ export type CreateApplicationNoticeInput = {
 
 export function useCreateApplicationNoticeMutation(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -447,8 +454,8 @@ export function useCreateApplicationNoticeMutation(
                 uploadMemberPortalFile({
                   file,
                   filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
-                }),
-              ),
+                })
+              )
             )
           : []
 
@@ -467,7 +474,7 @@ export function useCreateApplicationNoticeMutation(
           applicationType,
           applicationId,
           String(postId),
-          fileObjectIds,
+          fileObjectIds
         )
       }
       return String(postId)
@@ -477,7 +484,7 @@ export function useCreateApplicationNoticeMutation(
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.notices(
           applicationType,
-          applicationId,
+          applicationId
         ),
         exact: true,
       })
@@ -496,7 +503,7 @@ export function useCreateApplicationNoticeMutation(
 /** 댓글 등록·수정·삭제 후 상세(댓글)와 목록(댓글 수)을 다시 받는다. */
 export function useApplicationNoticeCommentMutations(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ) {
   const queryClient = useQueryClient()
   const invalidate = (postId: string) => {
@@ -505,11 +512,14 @@ export function useApplicationNoticeCommentMutations(
       queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
         applicationType,
         applicationId,
-        postId,
+        postId
       ),
     })
     void queryClient.invalidateQueries({
-      queryKey: platformQueryKeys.mypage.programApplications.notices(applicationType, applicationId),
+      queryKey: platformQueryKeys.mypage.programApplications.notices(
+        applicationType,
+        applicationId
+      ),
       exact: true,
     })
   }
@@ -525,7 +535,7 @@ export function useApplicationNoticeCommentMutations(
         scope.applicationType,
         scope.applicationId,
         input.postId,
-        input.content,
+        input.content
       )
     },
     onSuccess: (_data, input) => invalidate(input.postId),
@@ -538,7 +548,7 @@ export function useApplicationNoticeCommentMutations(
         scope.applicationId,
         input.postId,
         input.commentId,
-        input.content,
+        input.content
       )
     },
     onSuccess: (_data, input) => invalidate(input.postId),
@@ -550,7 +560,7 @@ export function useApplicationNoticeCommentMutations(
         scope.applicationType,
         scope.applicationId,
         input.postId,
-        input.commentId,
+        input.commentId
       )
     },
     onSuccess: (_data, input) => invalidate(input.postId),
@@ -564,7 +574,7 @@ export function useApplicationNoticeCommentMutations(
  */
 export function useToggleApplicationNoticeReactionMutation(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -583,14 +593,16 @@ export function useToggleApplicationNoticeReactionMutation(
         applicationType,
         applicationId,
         input.postId,
-        target,
+        target
       )
-      for (const previous of (state.myReactions ?? []).filter(type => type.toUpperCase() !== target)) {
+      for (const previous of (state.myReactions ?? []).filter(
+        type => type.toUpperCase() !== target
+      )) {
         state = await deleteApplicationNoticeReaction(
           applicationType,
           applicationId,
           input.postId,
-          previous,
+          previous
         )
       }
       return state
@@ -601,14 +613,14 @@ export function useToggleApplicationNoticeReactionMutation(
         platformQueryKeys.mypage.programApplications.noticeReactions(
           applicationType,
           applicationId,
-          input.postId,
+          input.postId
         ),
-        state,
+        state
       )
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.notices(
           applicationType,
-          applicationId,
+          applicationId
         ),
         exact: true,
       })
@@ -619,21 +631,27 @@ export function useToggleApplicationNoticeReactionMutation(
 
 export function useApplicationSchedulesQuery(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.schedules(
       applicationType ?? '',
-      applicationId ?? '',
+      applicationId ?? ''
     ),
     queryFn: ({ signal }) => fetchApplicationSchedules(applicationType!, applicationId!, signal),
     enabled,
     ...queryOptions(),
   })
   const items = useMemo(
-    () => (query.data?.items ?? []).map((item, index) => mapPortalEducationSchedule(item, index)),
-    [query.data?.items],
+    () =>
+      (query.data?.items ?? []).map((item, index) =>
+        mapPortalEducationSchedule(item, index, {
+          educationStructure: query.data?.educationStructure,
+          sessionRound: query.data?.sessionRound,
+        }),
+      ),
+    [query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )
   return {
     enabled,
@@ -648,19 +666,66 @@ export function useApplicationSchedulesQuery(
   }
 }
 
+export function useSubmitApplicationAbsenceReason(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (
+      input: Omit<PortalAbsenceReasonSubmissionInput, 'applicationType' | 'applicationId'>
+    ) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('결석 사유 제출 범위가 올바르지 않습니다.')
+      }
+      return submitApplicationAbsenceReason({
+        ...input,
+        applicationType,
+        applicationId,
+      })
+    },
+    onSuccess: async () => {
+      if (!applicationType || !applicationId) return
+      await Promise.all([
+        // 신청 목록에도 출결·결석 상태 요약이 포함될 수 있으므로 목록 prefix를 갱신한다.
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.detail(
+            applicationType,
+            applicationId
+          ),
+          exact: true,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.schedules(
+            applicationType,
+            applicationId
+          ),
+          exact: true,
+        }),
+      ])
+    },
+    retry: false,
+  })
+}
+
 export function useApplicationFormsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  formType: 'SURVEY' | 'SATISFACTION',
+  formType: 'SURVEY' | 'SATISFACTION'
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.forms(
       applicationType ?? '',
       applicationId ?? '',
-      formType,
+      formType
     ),
-    queryFn: ({ signal }) => fetchApplicationForms(applicationType!, applicationId!, formType, signal),
+    queryFn: ({ signal }) =>
+      fetchApplicationForms(applicationType!, applicationId!, formType, signal),
     enabled,
     ...queryOptions(),
   })
@@ -670,7 +735,7 @@ export function useApplicationFormsQuery(
         const mapped = mapPortalFormListItem(item)
         return mapped ? [mapped] : []
       }),
-    [query.data],
+    [query.data]
   )
   return {
     enabled,
@@ -683,13 +748,13 @@ export function useApplicationFormsQuery(
 export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  programId: string | null | undefined,
+  programId: string | null | undefined
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const receipts = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.expenseReceipts(
       applicationType ?? '',
-      applicationId ?? '',
+      applicationId ?? ''
     ),
     queryFn: ({ signal }) => fetchExpenseReceipts(applicationType!, applicationId!, signal),
     enabled,
@@ -721,7 +786,7 @@ export function useApplicationSettlementsQuery(
 
 export function useApplicationSurveyFormQuery(
   programId: string | null | undefined,
-  bindingId: string | null | undefined,
+  bindingId: string | null | undefined
 ) {
   const numericProgramId = parsePortalProgramId(programId)
   const numericBindingId = parsePortalProgramId(bindingId)
@@ -757,7 +822,7 @@ export function useApplicationSurveyFormQuery(
 export function useSubmitEducationSurveyMutation(
   programId: string | null | undefined,
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined,
+  applicationId: string | null | undefined
 ) {
   const queryClient = useQueryClient()
   const numericProgramId = parsePortalProgramId(programId)
@@ -777,14 +842,14 @@ export function useSubmitEducationSurveyMutation(
         queryKey: platformQueryKeys.mypage.programApplications.forms(
           applicationType,
           applicationId,
-          'SURVEY',
+          'SURVEY'
         ),
       })
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.forms(
           applicationType,
           applicationId,
-          'SATISFACTION',
+          'SATISFACTION'
         ),
       })
       void queryClient.invalidateQueries({

@@ -13,16 +13,19 @@ import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/share
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { invalidateGeminiRecruitmentListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
-import { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
+import { useGeminiRecruitmentAddTemplateFlow } from '../../hooks/use-recruitment-add-template-flow'
 import {
   peekGeminiRecruitmentAddDraftOverwrite,
   persistGeminiRecruitmentAddDraft,
   removeGeminiRecruitmentAddDraft,
 } from '../../lib/recruitment/add-local-save'
+import { GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE } from '../../lib/recruitment/add-template'
 import { GeminiRecruitmentAddCloseConfirmModal } from './add-close-confirm-modal'
-import { GeminiRecruitmentAddForm } from './add-form'
 import { GeminiRecruitmentAddPreviewModal } from './add-preview-modal'
+import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
+import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/template/ui/modal/template-preview-modal.css'
 import './add-fullpage-modal.css'
@@ -47,7 +50,8 @@ export function GeminiRecruitmentAddFullpageModal({
     searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
   )
 
-  const form = useGeminiRecruitmentAddForm(open, { skipDraftRestore })
+  const form = useGeminiRecruitmentAddTemplateFlow(open, { skipDraftRestore })
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewSnapshot, setPreviewSnapshot] = useState<ReturnType<
@@ -61,6 +65,7 @@ export function GeminiRecruitmentAddFullpageModal({
 
   useEffect(() => {
     if (open) return
+    setTemplatePickerOpen(false)
     setOverwriteOpen(false)
     setOverwriteTitle('')
     setOverwriteSaving(false)
@@ -69,7 +74,7 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [open])
 
   const runDraftSave = useCallback(() => {
-    if (!form.hydrated) return
+    if (form.isDraftLoading) return
     const snapshot = form.buildSaveSnapshot()
     const ok = persistGeminiRecruitmentAddDraft(snapshot)
     if (!ok) {
@@ -84,7 +89,7 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [form, showAlert])
 
   const handleDraftSave = useCallback(() => {
-    if (!form.hydrated) return
+    if (form.isDraftLoading) return
     const existing = peekGeminiRecruitmentAddDraftOverwrite()
     if (existing != null) {
       setOverwriteTitle(existing.title)
@@ -92,7 +97,7 @@ export function GeminiRecruitmentAddFullpageModal({
       return
     }
     runDraftSave()
-  }, [form.hydrated, runDraftSave])
+  }, [form.isDraftLoading, runDraftSave])
 
   const handleOverwriteConfirm = useCallback(() => {
     setOverwriteSaving(true)
@@ -105,12 +110,18 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [runDraftSave])
 
   const handleRegister = useCallback(async () => {
-    if (!form.hydrated || !form.isRegisterReady) return
+    if (form.isDraftLoading || !form.isRegisterReady) return
     const snapshot = form.buildSaveSnapshot()
     const endOverlay = beginBlockingOverlay()
     try {
-      await geminiRecruitmentService.register(snapshot)
+      const created = await geminiRecruitmentService.register(snapshot)
       removeGeminiRecruitmentAddDraft()
+      if (created.id && created.detail) {
+        queryClient.setQueryData(
+          geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
+          created.detail
+        )
+      }
       invalidateGeminiRecruitmentListCaches(queryClient)
       setCompleteSuccessOpen(true)
     } catch {
@@ -142,7 +153,7 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [onClose])
 
   const handlePreview = useCallback(() => {
-    if (!form.hydrated) return
+    if (form.isDraftLoading) return
     setPreviewSnapshot(form.buildSaveSnapshot())
     setPreviewOpen(true)
   }, [form])
@@ -159,10 +170,32 @@ export function GeminiRecruitmentAddFullpageModal({
         registrationUserMode
         onPreview={handlePreview}
         onSave={handleDraftSave}
+        bodyLoading={form.isDraftLoading}
+        bodyHeaderBelow={
+          <RegistrationStepTemplateChrome
+            templateName={form.stepTemplateName}
+            isDefault={form.isDefaultStepTemplate}
+            category="application"
+            familyBaseTemplateCode={GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE}
+            pickerOpen={templatePickerOpen}
+            onOpenPicker={() => setTemplatePickerOpen(true)}
+            onClosePicker={() => setTemplatePickerOpen(false)}
+            onUseTemplate={row => {
+              void form.selectStepTemplate(row).then(() => setTemplatePickerOpen(false))
+            }}
+          />
+        }
         headerActionsLeading={
           <RegistrationDevAutofillButton onClick={() => form.applyDevAutofill()} />
         }
-        leftContent={<GeminiRecruitmentAddForm form={form} />}
+        leftContent={
+          <HideParagraphSelectionChromeContext.Provider
+            key={`${form.selectedTemplateCode}::${form.wizardDraftRevision}`}
+            value
+          >
+            {form.panels.leftContent}
+          </HideParagraphSelectionChromeContext.Provider>
+        }
         rightNavigation={null}
         footerAction={{
           label: '프로그램 등록 완료',

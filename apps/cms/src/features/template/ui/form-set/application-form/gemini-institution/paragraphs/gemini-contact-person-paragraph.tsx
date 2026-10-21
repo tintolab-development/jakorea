@@ -22,7 +22,7 @@ export function GeminiVisitingTrainingContactPersonParagraph() {
             label="직급"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 placeholder="직급을 입력해 주세요"
                 value={jobTitle}
@@ -35,7 +35,7 @@ export function GeminiVisitingTrainingContactPersonParagraph() {
             label="담당 과목"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 placeholder="담당 과목을 입력해 주세요"
                 value={subject}

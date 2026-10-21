@@ -12,6 +12,9 @@ export type GuardianSignupBridgePersistedState = {
   guardianConsentVersion?: string
   guardianRelation?: string
   niceChallengeNonce?: string
+  finalConsentToken?: string
+  finalConsentExpiresAt?: string
+  finalConsentIdempotencyKey?: string
 }
 
 export function readGuardianSignupBridgeState(): GuardianSignupBridgePersistedState | null {
@@ -83,4 +86,40 @@ export function getGuardianBridgePendingIdentitySession(): {
     identitySessionId: state.identitySessionId,
     nonce: state.niceChallengeNonce.trim(),
   }
+}
+
+export type GuardianFinalConsentChallengeState = {
+  token: string
+  idempotencyKey: string
+  expiresAt?: string
+}
+
+export function readGuardianFinalConsentChallenge(
+  nowMs: number = Date.now(),
+): GuardianFinalConsentChallengeState | null {
+  const state = readGuardianSignupBridgeState()
+  const token = state?.finalConsentToken?.trim()
+  const idempotencyKey = state?.finalConsentIdempotencyKey?.trim()
+  if (!state || !token || !idempotencyKey) return null
+
+  const expiresAt = state.finalConsentExpiresAt?.trim()
+  if (expiresAt) {
+    const expiresMs = Date.parse(expiresAt)
+    if (Number.isFinite(expiresMs) && expiresMs <= nowMs) {
+      return null
+    }
+  }
+
+  return { token, idempotencyKey, expiresAt: expiresAt || undefined }
+}
+
+export function writeGuardianFinalConsentChallenge(input: GuardianFinalConsentChallengeState) {
+  const prev = readGuardianSignupBridgeState()
+  if (!prev) return
+  writeGuardianSignupBridgeState({
+    ...prev,
+    finalConsentToken: input.token,
+    finalConsentIdempotencyKey: input.idempotencyKey,
+    finalConsentExpiresAt: input.expiresAt,
+  })
 }

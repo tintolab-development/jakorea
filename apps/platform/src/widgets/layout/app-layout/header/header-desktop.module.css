@@ -47,6 +47,26 @@
   filter: brightness(0) invert(1);
 }
 
+/* 메가메뉴가 열린 동안에는 투명/다크 히어로 헤더도 시안처럼 흰 헤더로 전환 */
+.headerNavOpen {
+  --header-text-color: var(--color-neutral-black);
+  --header-active-color: var(--color-primary-500);
+  --header-indicator-color: var(--color-border-focus);
+  --header-utility-color: var(--color-neutral-cool-600);
+  --header-icon-color: var(--color-neutral-black);
+  border-bottom-color: transparent;
+  background: var(--color-neutral-white);
+}
+
+.headerNavOpen .inner {
+  background: var(--color-neutral-white);
+}
+
+.headerNavOpen .logo,
+.headerNavOpen .actionIcon {
+  filter: none;
+}
+
 .inner {
   --header-logo-column: 195px;
   --header-auth-column: 152px;
@@ -78,6 +98,12 @@
 
   .navigationButton {
     padding-inline: var(--spacing-8);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .navigation {
+    gap: var(--spacing-16);
   }
 }
 
@@ -122,9 +148,21 @@
   left: calc(50% - 50vw - (var(--header-logo-column) - var(--header-auth-column)) / 2);
   width: 100vw;
   background: var(--color-neutral-white);
-  border-bottom: 1px solid var(--color-border-default);
+  box-shadow: 0 14px 20px rgba(35, 35, 35, 0.04);
   /* 글자 밖 흰 패널도 호버 영역으로 잡아 메뉴가 닫히지 않게 한다. */
   pointer-events: auto;
+}
+
+.navigationBackdrop {
+  position: fixed;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--color-neutral-white-60);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  pointer-events: none;
 }
 
 .menuColumn {
@@ -141,10 +179,18 @@
   height: var(--spacing-100);
   justify-content: center;
   align-items: center;
-  padding-inline: var(--spacing-12);
+  gap: 10px;
+  align-self: stretch;
+  padding-inline: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+@media (--bp-pc-full-up) {
+  .navigationButton {
+    width: 140px;
+  }
 }
 
 .navigationButtonLabel {
@@ -180,6 +226,7 @@
   padding: 0;
   flex-direction: column;
   align-items: center;
+  gap: var(--spacing-24);
   overflow: hidden;
   visibility: hidden;
   pointer-events: none;
@@ -198,22 +245,23 @@
 
 .menuItem {
   display: flex;
-  height: 60px;
-  padding: 10px var(--spacing-8);
+  height: 31px;
+  padding: 0;
   justify-content: center;
   align-items: center;
   gap: 10px;
   border: 0;
-  border-radius: var(--radius-8);
+  border-radius: 0;
   background: transparent;
-  color: var(--color-neutral-black);
+  color: var(--color-neutral-warm-700);
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .menuItem:hover:not(.menuItemDisabled) {
-  background: var(--color-element-hover);
+  background: transparent;
+  color: var(--color-primary-500);
 }
 
 .menuItemDisabled {
@@ -221,9 +269,24 @@
 }
 
 .menuItemLabel {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.menuItemLabel::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: transparent;
+}
+
+.menuItem:hover:not(.menuItemDisabled) .menuItemLabel::after {
+  background: var(--color-primary-500);
 }
 
 .menuItemExternalIcon {

@@ -233,7 +233,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
             <CmsInput
               value={d?.name ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name}
               aria-label="성명"
@@ -248,7 +248,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
             <span className="detail-info-form-inputs-wrapper-no-gap">
               <CmsRadioGroup
                 options={[...GENDER_OPTIONS]}
-                size="large"
+                size="medium"
                 value={genderRadioValue}
                 onChange={e => {
                   const v = e.target.value
@@ -265,7 +265,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   onValueChange={value =>
                     onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
                   }
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
                   maxLength={10}
@@ -306,7 +306,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   onChange={e =>
                     onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })
                   }
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
                   aria-label="소속"
@@ -328,7 +328,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                       affiliationNone: false,
                     })
                   }
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
                   aria-label="소속"
@@ -362,7 +362,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               onChange={e =>
                 onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })
               }
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
               aria-label="강사 경력"
@@ -401,7 +401,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 onChange={e =>
                   onMemberInfoDraftChange?.({ instructorBankName: e.target.value })
                 }
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName}
                 aria-label="은행명"
@@ -412,7 +412,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 onValueChange={next =>
                   onMemberInfoDraftChange?.({ instructorAccountNumber: next })
                 }
-                inputSize="medium"
+                inputSize="small"
                 width={160}
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
                 aria-label="계좌번호"
@@ -423,7 +423,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 onChange={e =>
                   onMemberInfoDraftChange?.({ instructorAccountHolder: e.target.value })
                 }
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder}
                 aria-label="예금주"
@@ -455,7 +455,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
           edit={
             <CmsRadioGroup
               options={BUSINESS_INCOME_OPTIONS}
-              size="large"
+              size="medium"
               value={businessIncomeRadioValue}
               onChange={e => {
                 const v = e.target.value
@@ -479,7 +479,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
             <CmsInput
               value={d?.bio ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ bio: e.target.value })}
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.oneLineIntro}
               aria-label="한 줄 소개"

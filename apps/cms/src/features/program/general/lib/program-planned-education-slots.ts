@@ -6,18 +6,33 @@ import {
   filterProgramSchedulesForNewEducationAssignment,
   mergeProgramScheduleCanonicalFields,
 } from '@/features/program/shared/lib/program-schedule-canonical'
-import { PROGRAM_SCHEDULE_ORIGIN_PROGRAM_DEFINED } from '@/features/program/shared/lib/program-schedule-origin'
+import { isPlannedProgramScheduleForLegacySchedulesList } from '@/features/program/shared/lib/program-schedule-origin'
 import type { ProgramEducationSlotResponse } from '@/shared/api/generated/dashboard/schemas/programEducationSlotResponse'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
+
+function readPositiveInt(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return undefined
+  return Math.trunc(value)
+}
+
+function readEducationSlotScheduleId(slot: ProgramEducationSlotResponse): number | undefined {
+  const raw = slot as ProgramEducationSlotResponse & { id?: number }
+  return readPositiveInt(raw.scheduleId) ?? readPositiveInt(raw.id)
+}
+
+function readEducationSlotScheduleName(slot: ProgramEducationSlotResponse): string | undefined {
+  const raw = slot as ProgramEducationSlotResponse & { scheduleName?: unknown }
+  if (typeof raw.scheduleName !== 'string') return undefined
+  const trimmed = raw.scheduleName.trim()
+  return trimmed || undefined
+}
 
 /** education-slots 응답 → 승인·OSA·설문에서 쓰는 최소 ProgramScheduleResponse 호환 뷰 */
 export function mapEducationSlotToAdminScheduleShape(
   slot: ProgramEducationSlotResponse
 ): AdminProgramScheduleResponse {
-  const scheduleId =
-    typeof slot.scheduleId === 'number' && Number.isFinite(slot.scheduleId) && slot.scheduleId > 0
-      ? Math.trunc(slot.scheduleId)
-      : undefined
+  const scheduleId = readEducationSlotScheduleId(slot)
+  const scheduleName = readEducationSlotScheduleName(slot)
   const base: ProgramScheduleResponse = {
     id: scheduleId,
     sessionNo: slot.sessionNo,
@@ -25,6 +40,7 @@ export function mapEducationSlotToAdminScheduleShape(
     endAt: slot.endAt,
     allDay: slot.allDay,
     scheduleOrigin: slot.scheduleOrigin,
+    ...(scheduleName ? { scheduleName } : {}),
   }
   return mergeProgramScheduleCanonicalFields({
     ...base,
@@ -34,8 +50,9 @@ export function mapEducationSlotToAdminScheduleShape(
   })
 }
 
+/** education-slots는 예정 슬롯 전용. origin 미지정·UNKNOWN은 예정으로 두고 materialized만 제외한다. */
 function isProgramDefinedEducationSlot(slot: ProgramEducationSlotResponse): boolean {
-  return slot.scheduleOrigin?.trim().toUpperCase() === PROGRAM_SCHEDULE_ORIGIN_PROGRAM_DEFINED
+  return isPlannedProgramScheduleForLegacySchedulesList(slot)
 }
 
 export function mapEducationSlotsToPlannedAdminSchedules(

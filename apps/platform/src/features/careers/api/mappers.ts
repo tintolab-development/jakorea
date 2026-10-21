@@ -38,6 +38,7 @@ import type {
   PublicCareerTalentEducationLevel,
   PublicCareerTalentJobInterest,
 } from './types'
+import { formatDisplayDate, formatDisplayDateRange } from '@/shared/lib/format-display-date'
 
 const CULTURE_CODE_TO_ID: Record<string, ThriveValueId> = {
   MAKE_AN_IMPACT: 'impact',
@@ -59,7 +60,7 @@ function singleLine(value: string | undefined | null): string {
 /** API `\n`이 있으면 그대로, 한 줄이면 fallback 시안 줄바꿈을 유지한다. */
 function resolvePreservedLines(
   raw: string | undefined | null,
-  fallbackLines: readonly string[],
+  fallbackLines: readonly string[]
 ): string[] {
   const lines = splitPreservedLines(raw)
     .map(line => line.trim())
@@ -71,17 +72,14 @@ function resolvePreservedLines(
   return lines
 }
 
-function resolveRemoteOrFallback(
-  remote: string | null | undefined,
-  fallback: string,
-): string {
+function resolveRemoteOrFallback(remote: string | null | undefined, fallback: string): string {
   const url = typeof remote === 'string' ? remote.trim() : ''
   return url || fallback
 }
 
 function mapCultureItem(
   item: PublicCareerCultureItem,
-  fallbackById: Map<ThriveValueId, ThriveValue>,
+  fallbackById: Map<ThriveValueId, ThriveValue>
 ): ThriveValue | null {
   const code = typeof item.code === 'string' ? item.code.trim() : ''
   const id = CULTURE_CODE_TO_ID[code]
@@ -106,7 +104,7 @@ function mapCultureItem(
 function mapInterview(
   item: PublicCareerInterview,
   fallbackByKey: Map<string, CareersFeaturedStory>,
-  defaultCover: string,
+  defaultCover: string
 ): CareersFeaturedStory | null {
   const storyKey = typeof item.storyKey === 'string' ? item.storyKey.trim() : ''
   if (!storyKey) return null
@@ -127,18 +125,16 @@ function mapInterview(
 
 export function mapPublicCareerGuide(
   response: PublicCareerGuideResponse,
-  fallback: CareersGuideView,
+  fallback: CareersGuideView
 ): CareersGuideView {
   const titleLines = splitPreservedLines(response.mainText).filter(Boolean)
   const descriptionKo = splitPreservedLines(response.subTextKo).filter(Boolean)
   const descriptionEn =
-    typeof response.subTextEn === 'string'
-      ? response.subTextEn.replace(/\n/g, ' ').trim()
-      : ''
+    typeof response.subTextEn === 'string' ? response.subTextEn.replace(/\n/g, ' ').trim() : ''
 
   const fallbackById = new Map(fallback.thriveValues.map(item => [item.id, item]))
   const cultureSorted = [...(response.cultureItems ?? [])].sort(
-    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
+    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
   )
   const thriveValues = cultureSorted
     .map(item => mapCultureItem(item, fallbackById))
@@ -147,7 +143,7 @@ export function mapPublicCareerGuide(
   const defaultCover = fallback.featuredStories[0]?.imageUrl ?? fallback.hero.imageUrl
   const fallbackByKey = new Map(fallback.featuredStories.map(item => [item.id, item]))
   const interviewSorted = [...(response.interviews ?? [])].sort(
-    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
+    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
   )
   const featuredStories = interviewSorted
     .map(item => mapInterview(item, fallbackByKey, defaultCover))
@@ -181,8 +177,6 @@ function mapPostingStatus(status: string | undefined): CareerJobStatus | null {
   return null
 }
 
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 /** YYYY-MM-DD → `2026년 05월 08일`. 타임존으로 하루 밀리지 않게 날짜만 쓴다. */
 export function formatCareerPublishedAtLabel(publishedOn: string | undefined | null): string {
   if (typeof publishedOn !== 'string') return ''
@@ -209,35 +203,25 @@ export function formatCareerPublishedAtDetailLabel(value: string | undefined | n
   return `${dateLabel} ${period} ${hours12}:${minutes}`
 }
 
-/** YYYY-MM-DD → `2026년 04월 03일(금)`. 잘못된 날짜는 빈 문자열. */
+/** YYYY-MM-DD → `2026년 4월 3일(금)`. 잘못된 날짜는 빈 문자열. */
 export function formatCareerDateWithWeekday(value: string | undefined | null): string {
   if (typeof value !== 'string') return ''
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
-  if (!match) return ''
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  const date = new Date(year, month - 1, day)
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return ''
-  }
-  const weekday = WEEKDAY_LABELS[date.getDay()]
-  return `${match[1]}년 ${match[2]}월 ${match[3]}일(${weekday})`
+  return formatDisplayDate(value)
 }
 
 /** 시작·종료가 둘 다 유효할 때만. 하나라도 없으면 빈 문자열. */
 export function formatCareerRecruitPeriodLabel(
   start: string | undefined | null,
-  end: string | undefined | null,
+  end: string | undefined | null
 ): string {
   const startLabel = formatCareerDateWithWeekday(start)
   const endLabel = formatCareerDateWithWeekday(end)
   if (!startLabel || !endLabel) return ''
-  return `${startLabel} ~ ${endLabel}`
+  return formatDisplayDateRange(start, end, { empty: '' })
 }
 
 export function mapPublicCareerPostingItem(
-  item: PublicCareerPostingItem,
+  item: PublicCareerPostingItem
 ): CareerJobListItem | null {
   const status = mapPostingStatus(item.status)
   if (!status || status === 'closed') return null
@@ -262,15 +246,13 @@ export function mapPublicCareerPostingItem(
 
 function postingKey(item: { id?: number; externalKey?: string }): string {
   const externalKey =
-    typeof item.externalKey === 'string' && item.externalKey.trim()
-      ? item.externalKey.trim()
-      : ''
+    typeof item.externalKey === 'string' && item.externalKey.trim() ? item.externalKey.trim() : ''
   if (externalKey) return externalKey
   return typeof item.id === 'number' && Number.isFinite(item.id) ? String(item.id) : ''
 }
 
 function mapPostingAttachment(
-  attachment: PublicCareerPostingAsset | null | undefined,
+  attachment: PublicCareerPostingAsset | null | undefined
 ): CareerPostingAttachment[] {
   if (!attachment) return []
   const name = singleLine(attachment.originalName)
@@ -290,7 +272,7 @@ function mapPostingAttachment(
 }
 
 export function mapPublicCareerPostingDetail(
-  item: PublicCareerPostingDetail,
+  item: PublicCareerPostingDetail
 ): CareerPostingDetail | null {
   const status = mapPostingStatus(item.status)
   if (!status || status === 'closed') return null
@@ -301,10 +283,8 @@ export function mapPublicCareerPostingDetail(
   const id = postingKey(item)
   if (!id) return null
 
-  const publishedOn =
-    typeof item.publishedOn === 'string' ? item.publishedOn.trim() : ''
-  const publishedAt =
-    typeof item.publishedAt === 'string' ? item.publishedAt.trim() : ''
+  const publishedOn = typeof item.publishedOn === 'string' ? item.publishedOn.trim() : ''
+  const publishedAt = typeof item.publishedAt === 'string' ? item.publishedAt.trim() : ''
   const publishSource = publishedOn || publishedAt
   const publishedAtLabel = formatCareerPublishedAtLabel(publishSource)
   if (!publishedAtLabel) return null
@@ -328,30 +308,14 @@ export function mapPublicCareerPostingDetail(
 }
 
 export function mapPublicCareerPostings(
-  response: PublicCareerPostingListResponse,
+  response: PublicCareerPostingListResponse
 ): CareerJobListItem[] {
-  const ranked = [...(response.items ?? [])].sort((a, b) => {
-    const dateA = typeof a.publishedOn === 'string' ? a.publishedOn.slice(0, 10) : ''
-    const dateB = typeof b.publishedOn === 'string' ? b.publishedOn.slice(0, 10) : ''
-    if (dateA !== dateB) return dateB.localeCompare(dateA)
-    const keyA =
-      (typeof a.externalKey === 'string' && a.externalKey) ||
-      (a.id != null ? String(a.id) : '')
-    const keyB =
-      (typeof b.externalKey === 'string' && b.externalKey) ||
-      (b.id != null ? String(b.id) : '')
-    return keyA.localeCompare(keyB)
-  })
-
-  return ranked
+  return (response.items ?? [])
     .map(mapPublicCareerPostingItem)
     .filter((row): row is CareerJobListItem => row != null)
 }
 
-const JOB_INTEREST_TO_API: Record<
-  CareersTalentJobInterest,
-  PublicCareerTalentJobInterest
-> = {
+const JOB_INTEREST_TO_API: Record<CareersTalentJobInterest, PublicCareerTalentJobInterest> = {
   managementPlanning: 'MANAGEMENT_PLANNING',
   prDesign: 'PR_DESIGN',
   accounting: 'ACCOUNTING',
@@ -385,7 +349,7 @@ function optionalTrimmed(value: string | undefined): string | undefined {
 /** 폼 값 → 공개 지원 POST body. privacyAgreed는 항상 true. */
 export function toPublicCareerTalentApplicationCreateRequest(
   values: CareersTalentApplySchemaValues,
-  attachmentAssetId?: number,
+  attachmentAssetId?: number
 ): PublicCareerTalentApplicationCreateRequest {
   return {
     jobInterest: JOB_INTEREST_TO_API[values.jobInterest],

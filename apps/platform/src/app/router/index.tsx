@@ -41,6 +41,7 @@ import {
   MypageEducationSettlementConfirmPage,
   MypageEducationSettlementWritePage,
   MypageEducationInstitutionGuidanceWritePage,
+  MypageEducationUjatProgressConfirmPage,
   MypageVolunteerPage,
   MypageVolunteerDetailPage,
   MypageLecturePage,
@@ -252,6 +253,14 @@ export const router = createBrowserRouter([
       {
         path: '/mypage/education/:applicationId/guidance/write',
         element: <MypageEducationInstitutionGuidanceWritePage />,
+      },
+      {
+        path: '/mypage/education/:applicationType/:applicationId/progress/confirm',
+        element: <MypageEducationUjatProgressConfirmPage />,
+      },
+      {
+        path: '/mypage/education/:applicationId/progress/confirm',
+        element: <MypageEducationUjatProgressConfirmPage />,
       },
       {
         path: '/mypage/education/:applicationId/settlement/confirm',

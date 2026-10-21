@@ -8,6 +8,7 @@ import styles from './scroll-reveal-youtube-video.module.css'
 export type ScrollRevealYoutubeVideoProps = {
   youtubeUrl: string
   title?: ReactNode
+  titleClassName?: string
   iframeTitle?: string
   animateOnce?: boolean
   className?: string
@@ -16,6 +17,7 @@ export type ScrollRevealYoutubeVideoProps = {
 export function ScrollRevealYoutubeVideo({
   youtubeUrl,
   title,
+  titleClassName,
   iframeTitle = 'YouTube video player',
   animateOnce = false,
   className,
@@ -28,7 +30,7 @@ export function ScrollRevealYoutubeVideo({
   const videoId = useMemo(() => extractYouTubeVideoId(youtubeUrl), [youtubeUrl])
   const embedSrc = useMemo(
     () => (videoId ? buildYouTubeNocookieEmbedSrc(videoId) : null),
-    [videoId],
+    [videoId]
   )
 
   const isInView = useIntersectionObserver(sectionRef, {
@@ -67,7 +69,12 @@ export function ScrollRevealYoutubeVideo({
   return (
     <section ref={sectionRef} className={sectionClassName} aria-label={iframeTitle}>
       {title ? (
-        <PFText as="h2" typo="hd-lg" color="black" className={styles.title}>
+        <PFText
+          as="h2"
+          typo="hd-lg"
+          color="black"
+          className={[styles.title, titleClassName].filter(Boolean).join(' ')}
+        >
           {title}
         </PFText>
       ) : null}

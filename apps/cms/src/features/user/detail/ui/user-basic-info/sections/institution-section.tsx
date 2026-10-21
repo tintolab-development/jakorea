@@ -29,7 +29,7 @@ export function InstitutionSection(ctx: BasicInfoSectionContext) {
             <CmsInput
               value={d?.schoolName ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ schoolName: e.target.value })}
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               aria-label="기관명"
             />

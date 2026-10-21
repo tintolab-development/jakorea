@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   educationScheduleRangeHasClock,
   formatEducationScheduleLineFromRange,
@@ -122,8 +123,6 @@ export function findEducationScheduleChangePeriodIssues(
   return issues
 }
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 export const EDUCATION_SCHEDULE_CHANGE_MODAL_TITLE = '교육 진행 일정 변경'
 export const EDUCATION_SCHEDULE_CHANGE_MODAL_DESCRIPTION =
   '일정 변경 시 같은 날짜에 교육 예정인 모든 기관의 일정도 함께 변경됩니다.'
@@ -139,17 +138,25 @@ export function parseEducationScheduleLineToChangeRange(
 }
 
 export function formatEducationScheduleLineForChangeModal(line: string): string {
-  const range = parseEducationScheduleLineToChangeRange(line)
-  if (!range) return line.trim() || '-'
+  const trimmed = line.trim()
+  if (!trimmed) return '-'
+  const direct = formatCmsScheduleDisplayLabel(trimmed)
+  if (direct !== trimmed) return direct
+  const range = parseEducationScheduleLineToChangeRange(trimmed)
+  if (!range) return trimmed
   const [start, end] = range
-  const dateLabel = `${start.format('YYYY.MM.DD')}(${WEEKDAY_KO[start.day()]})`
-  if (start.isSame(end, 'day')) {
-    if (!educationScheduleRangeHasClock(range)) return dateLabel
-    return `${dateLabel} ${start.format('H:mm')} ~ ${end.format('H:mm')}`
+  const startToken = start.format('YYYY-MM-DD')
+  const endToken = end.format('YYYY-MM-DD')
+  if (!educationScheduleRangeHasClock(range)) {
+    return formatCmsScheduleDisplayLabel(
+      start.isSame(end, 'day') ? startToken : `${startToken} ~ ${endToken}`
+    )
   }
-  const endDateLabel = `${end.format('YYYY.MM.DD')}(${WEEKDAY_KO[end.day()]})`
-  if (!educationScheduleRangeHasClock(range)) return `${dateLabel} ~ ${endDateLabel}`
-  return `${dateLabel} ${start.format('H:mm')} ~ ${endDateLabel} ${end.format('H:mm')}`
+  const startAt = `${startToken} ${start.format('HH:mm')}`
+  const endAt = start.isSame(end, 'day')
+    ? end.format('HH:mm')
+    : `${endToken} ${end.format('HH:mm')}`
+  return formatCmsScheduleDisplayLabel(`${startAt} ~ ${endAt}`)
 }
 
 export function applyDateToEducationScheduleLine(line: string, nextDate: Dayjs): string {

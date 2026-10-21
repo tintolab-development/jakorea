@@ -273,7 +273,7 @@ function FieldStack({
 
 export function InstitutionReadonlyInput({ value }: { value: string }) {
   return (
-    <CmsInput inputSize="medium" width="100%" value={value} disabled readOnly />
+    <CmsInput inputSize="small" width="100%" value={value} disabled readOnly />
   )
 }
 
@@ -290,7 +290,8 @@ export function InstitutionGradeSelectEdit({
     <FieldStack error={error}>
       <CmsSelect
         className="institution-basic-info__full-width-control"
-        inputSize="medium"
+        inputSize="small"
+        width="100%"
         withAllOption={false}
         placeholder="학년 선택"
         value={value || undefined}
@@ -323,7 +324,7 @@ export function InstitutionClassAndStudentCountEdit({
         style={inlineRowStyle}
       >
         <CmsSelect
-          inputSize="medium"
+          inputSize="small"
           withAllOption={false}
           disabled={classCountOptions.length === 0}
           placeholder="신청 학급 수"
@@ -335,7 +336,7 @@ export function InstitutionClassAndStudentCountEdit({
         <span style={nowrapSpanStyle}>개 학급</span>
         <DetailInfoForm.InputsSeparator />
         <CmsNumericInput
-          inputSize="medium"
+          inputSize="small"
           mode="integer"
           min={1}
           placeholder="총 학생 수"
@@ -361,7 +362,7 @@ export function InstitutionAddressDetailEdit({
   return (
     <FieldStack error={error}>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         placeholder="교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요"
         width="100%"
         value={value}
@@ -387,13 +388,13 @@ export function InstitutionEducationFormatRadios({
   return (
     <FieldStack error={error}>
       <CmsRadioGroup
-        size="large"
+        size="medium"
         value={resolved}
         onChange={event => onChange(String(event.target.value))}
         style={inlineChoiceStyle}
       >
         {INSTITUTION_EDUCATION_FORMAT_OPTIONS.map(option => (
-          <CmsRadio key={option.value} value={option.value}>
+          <CmsRadio size="medium" key={option.value} value={option.value}>
             {option.label}
           </CmsRadio>
         ))}
@@ -418,7 +419,7 @@ export function InstitutionMultilineEdit({
   return (
     <FieldStack error={error}>
       <CmsTextArea
-        inputSize="medium"
+        inputSize="small"
         rows={rows}
         width="100%"
         placeholder={placeholder}
@@ -441,7 +442,7 @@ export function InstitutionComputerInRoomEdit({
   return (
     <FieldStack error={error}>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         placeholder="컴퓨터·USB 등 안내를 입력해 주세요"
         width="100%"
         value={value}
@@ -468,7 +469,7 @@ export function InstitutionWaitingRoomEdit({
         className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
         style={inlineRowStyle}
       >
-        <CmsRadioGroup
+        <CmsRadioGroup size="medium"
           value={available}
           onChange={event => {
             const next = event.target.value === true || event.target.value === 'true'
@@ -479,12 +480,12 @@ export function InstitutionWaitingRoomEdit({
           }}
           style={inlineRadioGroupStyle}
         >
-          <CmsRadio value={true}>있음</CmsRadio>
-          <CmsRadio value={false}>없음</CmsRadio>
+          <CmsRadio size="medium" value={true}>있음</CmsRadio>
+          <CmsRadio size="medium" value={false}>없음</CmsRadio>
         </CmsRadioGroup>
         <DetailInfoForm.InputsSeparator />
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           placeholder="상세 위치를 입력해 주세요"
           width="100%"
           style={flexGrowInputStyle}
@@ -516,7 +517,7 @@ export function InstitutionMealEdit({
         className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
         style={inlineRowStyle}
       >
-        <CmsRadioGroup
+        <CmsRadioGroup size="medium"
           value={provided}
           onChange={event => {
             const next = event.target.value === true || event.target.value === 'true'
@@ -524,12 +525,12 @@ export function InstitutionMealEdit({
           }}
           style={inlineRadioGroupStyle}
         >
-          <CmsRadio value={true}>가능</CmsRadio>
-          <CmsRadio value={false}>불가</CmsRadio>
+          <CmsRadio size="medium" value={true}>가능</CmsRadio>
+          <CmsRadio size="medium" value={false}>불가</CmsRadio>
         </CmsRadioGroup>
         <DetailInfoForm.InputsSeparator />
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           placeholder="비고"
           width="100%"
           style={flexGrowInputStyle}
@@ -577,7 +578,7 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>담당 교사</span>
         {teacherOptions ? (
           <CmsSelect
-            inputSize="medium"
+            inputSize="small"
             width={140}
             withAllOption={false}
             loading={isTeacherOptionsLoading}
@@ -599,7 +600,7 @@ export function InstitutionTeacherEdit({
           />
         ) : (
           <CmsInput
-            inputSize="medium"
+            inputSize="small"
             width={140}
             placeholder="담당 교사명"
             value={name}
@@ -609,7 +610,7 @@ export function InstitutionTeacherEdit({
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>Tel</span>
         <CmsPhoneInput
-          inputSize="medium"
+          inputSize="small"
           width={170}
           placeholder="담당 교사의 내선 번호(직통 번호)"
           value={phone}
@@ -618,7 +619,7 @@ export function InstitutionTeacherEdit({
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>M</span>
         <CmsPhoneInput
-          inputSize="medium"
+          inputSize="small"
           width={160}
           placeholder="휴대폰"
           value={mobile}
@@ -627,7 +628,7 @@ export function InstitutionTeacherEdit({
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>E-mail</span>
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           width={180}
           placeholder="이메일"
           value={email}

@@ -1,7 +1,7 @@
 import type { PlatformMemberProfile } from '@/features/mypage/model/types'
 import type { ProgramDetail } from '@/features/program'
 import { resolveProgramApplyFormCase } from '@/features/program/lib/apply-form-case'
-import { readPreEducationNoticeRequiredFromRuntime } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
+import { resolveInstitutionPreEducationNoticeRequired } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
 import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import {
   isOrganizationEducationApplication,
@@ -28,14 +28,20 @@ function isTeacherOrganizationProgramContext(
   return isOrganizationEducationApplication(application, program)
 }
 
+type InstitutionGuidanceProgram = Pick<
+  ProgramDetail,
+  'programAudience' | 'programType' | 'registrationKind' | 'preEducationNoticeRequired'
+>
+
 export function shouldShowTeacherInstitutionGuidanceWrite(options: {
   isTeacher: boolean
   application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
-  program?: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'>
+  program?: InstitutionGuidanceProgram
   displayStatus: EducationDisplayStatus
 }): boolean {
   if (!options.isTeacher) return false
   if (!isTeacherOrganizationProgramContext(options.application, options.program)) return false
+  if (!resolveInstitutionPreEducationNoticeRequired(options.program)) return false
   return GUIDANCE_WRITE_DISPLAY_STATUSES.has(options.displayStatus)
 }
 
@@ -43,11 +49,12 @@ export function shouldShowTeacherInstitutionGuidanceWrite(options: {
 export function shouldShowTeacherInstitutionGuidanceEditOnApplicationTab(options: {
   isTeacher: boolean
   application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
-  program?: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'>
+  program?: InstitutionGuidanceProgram
   displayStatus: EducationDisplayStatus
 }): boolean {
   if (!options.isTeacher) return false
   if (!isTeacherOrganizationProgramContext(options.application, options.program)) return false
+  if (!resolveInstitutionPreEducationNoticeRequired(options.program)) return false
   return canShowEducationApplicationContent(options.displayStatus)
 }
 
@@ -55,11 +62,12 @@ export function shouldShowTeacherInstitutionGuidanceEditOnApplicationTab(options
 export function shouldShowTeacherInstitutionGuidanceEditLink(options: {
   isTeacher: boolean
   application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>
-  program?: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'>
+  program?: InstitutionGuidanceProgram
   displayStatus: EducationDisplayStatus
 }): boolean {
   if (!options.isTeacher) return false
   if (!isTeacherOrganizationProgramContext(options.application, options.program)) return false
+  if (!resolveInstitutionPreEducationNoticeRequired(options.program)) return false
   return (
     canShowEducationApplicationContent(options.displayStatus) ||
     GUIDANCE_WRITE_DISPLAY_STATUSES.has(options.displayStatus)
@@ -79,6 +87,7 @@ export function shouldShowTeacherInstitutionGuidanceOnApplicationTab(
         | 'applicationType'
         | 'participationMethod'
         | 'category'
+        | 'preEducationNoticeRequired'
       >
     | null
     | undefined,
@@ -95,13 +104,15 @@ export function shouldShowTeacherInstitutionGuidanceOnApplicationTab(
     applicationType: options?.application?.applicationType ?? program.applicationType,
   })
 
-  if (applyCase === 'institution-economy' || applyCase === 'institution-gemini') {
-    return true
-  }
-  if (applyCase === 'institution-general') {
-    const preEducation =
-      readPreEducationNoticeRequiredFromRuntime(options?.applicationFormRuntimeContext) ?? true
-    return preEducation
+  if (
+    applyCase === 'institution-economy' ||
+    applyCase === 'institution-gemini' ||
+    applyCase === 'institution-general'
+  ) {
+    return resolveInstitutionPreEducationNoticeRequired(
+      program,
+      options?.applicationFormRuntimeContext,
+    )
   }
   return false
 }
@@ -119,7 +130,7 @@ export function hasTeacherApplicationGuidanceContent(
 
 export function shouldShowTeacherInstitutionGuidanceWriteForProfile(
   profile: PlatformMemberProfile,
-  program: Pick<ProgramDetail, 'programAudience' | 'programType' | 'registrationKind'> | undefined,
+  program: InstitutionGuidanceProgram | undefined,
   displayStatus: EducationDisplayStatus,
   application?: Pick<EducationApplicationListItem, 'applicationType' | 'categoryLabel'>,
 ): boolean {

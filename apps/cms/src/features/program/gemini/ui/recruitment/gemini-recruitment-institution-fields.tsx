@@ -64,7 +64,7 @@ function InquiryContactColumn({
           {label}
         </span>
         <Deferred
-          inputSize="medium"
+          inputSize="small"
           width={240}
           placeholder={placeholder}
           value={value}
@@ -80,7 +80,7 @@ function InquiryContactColumn({
         {label}
       </span>
       <InputComponent
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder={placeholder}
         value={value}
@@ -156,7 +156,7 @@ export function GeminiRecruitmentInstitutionFields({
             isEdit ? (
               deferTextCommit ? (
                 <GeminiDeferredCmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="대표 프로그램명(국문)을 입력하세요"
                   value={values.title}
@@ -164,7 +164,7 @@ export function GeminiRecruitmentInstitutionFields({
                 />
               ) : (
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="대표 프로그램명(국문)을 입력하세요"
                   value={values.title}
@@ -184,7 +184,7 @@ export function GeminiRecruitmentInstitutionFields({
             isEdit ? (
               <CmsSelect
                 mode="multiple"
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 withAllOption={false}
                 placeholder="교육 대상을 선택하세요"
@@ -206,7 +206,7 @@ export function GeminiRecruitmentInstitutionFields({
             isEdit ? (
               deferTextCommit ? (
                 <GeminiDeferredCmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="상세 교육 대상을 입력하세요"
                   value={values.educationTargetDetail}
@@ -214,7 +214,7 @@ export function GeminiRecruitmentInstitutionFields({
                 />
               ) : (
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="상세 교육 대상을 입력하세요"
                   value={values.educationTargetDetail}
@@ -274,7 +274,7 @@ export function GeminiRecruitmentInstitutionFields({
             isEdit && onMinStudentCountChange ? (
               <div className={MAX_SUFFIX_CLASS}>
                 <CmsNumericInput
-                  inputSize="medium"
+                  inputSize="small"
                   mode="integer"
                   min={0}
                   placeholder="최소 수강 인원을 입력하세요"
@@ -310,7 +310,7 @@ export function GeminiRecruitmentInstitutionFields({
           edit={
             isEdit ? (
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={values.educationForm}
                 onChange={e =>
                   onChange({ educationForm: e.target.value as GeminiRecruitmentEducationForm })
@@ -318,7 +318,7 @@ export function GeminiRecruitmentInstitutionFields({
                 className={RECRUITMENT_RADIO_CLASS}
               >
                 {GEMINI_RECRUITMENT_EDUCATION_FORM_OPTIONS.map(option => (
-                  <CmsRadio key={option.value} value={option.value} size="large">
+                  <CmsRadio key={option.value} value={option.value} size="medium">
                     {option.label}
                   </CmsRadio>
                 ))}
@@ -390,7 +390,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <DetailInfoForm.InputsSeparator />
                 {deferTextCommit ? (
                   <GeminiDeferredCmsInput
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     style={{ flex: '1 1 0', minWidth: 0 }}
                     placeholder="비고란을 작성하세요"
@@ -400,7 +400,7 @@ export function GeminiRecruitmentInstitutionFields({
                   />
                 ) : (
                   <CmsInput
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     style={{ flex: '1 1 0', minWidth: 0 }}
                     placeholder="비고란을 작성하세요"

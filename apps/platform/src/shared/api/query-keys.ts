@@ -82,6 +82,12 @@ export const platformQueryKeys = {
     detail: (id: string) => [...platformQueryKeys.impactStory.all(), 'detail', id] as const,
   },
 
+  newsletter: {
+    all: () => [...platformQueryKeys.all, 'newsletter'] as const,
+    /** 내 구독 상태 — GET /api/portal/me/newsletter/subscription (Class F) */
+    me: () => [...platformQueryKeys.newsletter.all(), 'me'] as const,
+  },
+
   program: {
     all: () => [...platformQueryKeys.all, 'program'] as const,
     /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
@@ -111,7 +117,7 @@ export const platformQueryKeys = {
         params.page,
         params.size,
       ] as const,
-    /** 홈 캐러셀 — GET /api/portal/programs?featuredOnHome=true&size=8 (Class C) */
+    /** 홈 캐러셀 — GET /api/portal/programs?page=0&size=8&sort=LATEST (Class C) */
     homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
     /**
      * 공개 상세 — GET /api/portal/programs/{programId}
@@ -230,7 +236,10 @@ export const platformQueryKeys = {
     /** 공개 채용 안내 — GET /api/public/careers/guide (Class B, 싱글톤) */
     guide: () => [...platformQueryKeys.careers.all(), 'guide'] as const,
     /** 공개 채용공고 — GET /api/public/careers/postings (Class C, RECRUITING·RESULT) */
-    postings: () => [...platformQueryKeys.careers.all(), 'postings'] as const,
+    postings: (query: { q: string; page: number; size: number }) =>
+      [...platformQueryKeys.careers.all(), 'postings', query.q, query.page, query.size] as const,
+    /** 상세 인접글 — q 없이 size 100부터 이어 받는 공개 순서 */
+    postingsAdjacent: () => [...platformQueryKeys.careers.all(), 'postings', 'adjacent'] as const,
     /** 공개 채용공고 상세 — GET /api/public/careers/postings/{key} (Class D) */
     postingDetail: (id: string) =>
       [...platformQueryKeys.careers.all(), 'postings', 'detail', id] as const,
@@ -242,7 +251,15 @@ export const platformQueryKeys = {
     programIntro: (fieldCode: string) =>
       [...platformQueryKeys.education.all(), 'program-intro', fieldCode] as const,
     /** 공개 교재 목록 — GET /api/public/education/textbooks (Class C, items) */
-    textbooks: () => [...platformQueryKeys.education.all(), 'textbooks'] as const,
+    textbooks: (query: { fieldCode?: string; sort: string; page: number; size: number }) =>
+      [
+        ...platformQueryKeys.education.all(),
+        'textbooks',
+        query.fieldCode ?? 'all',
+        query.sort,
+        query.page,
+        query.size,
+      ] as const,
     /** 공개 교재 상세 — GET /api/public/education/textbooks/{id} (Class D) */
     textbookDetail: (id: string) =>
       [...platformQueryKeys.education.all(), 'textbooks', 'detail', id] as const,
@@ -349,6 +366,7 @@ export const platformQueryKeys = {
           params.page,
           params.size,
         ] as const,
+      listPrefix: () => [...platformQueryKeys.mypage.programApplications.all(), 'list'] as const,
       /** 내 신청 상세 — GET /api/portal/me/program-applications/{applicationType}/{applicationId} */
       detail: (applicationType: string, applicationId: string) =>
         [

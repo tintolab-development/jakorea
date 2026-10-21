@@ -195,7 +195,7 @@ function TextbookDetailFullPageModalInner({
                           prev ? { ...prev, textbookName: event.target.value } : prev
                         )
                       }
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                     />
                   }
@@ -212,7 +212,7 @@ function TextbookDetailFullPageModalInner({
                           prev ? { ...prev, textbookNameEn: event.target.value } : prev
                         )
                       }
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                     />
                   }
@@ -225,7 +225,7 @@ function TextbookDetailFullPageModalInner({
                   view={<span>{textbook.businessArea}</span>}
                   edit={
                     <CmsSelect
-                      inputSize="medium"
+                      inputSize="small"
                       value={editForm.businessArea}
                       onChange={value =>
                         setEditForm(prev =>
@@ -247,7 +247,7 @@ function TextbookDetailFullPageModalInner({
                   view={<span>{textbook.useStatus === 'USED' ? '사용' : '미사용'}</span>}
                   required
                   edit={
-                    <CmsRadio.Group
+                    <CmsRadio.Group size="medium"
                       className="textbook-detail-fullpage-modal__use-status-radio"
                       value={editForm.useStatus}
                       onChange={event =>
@@ -261,8 +261,8 @@ function TextbookDetailFullPageModalInner({
                         )
                       }
                     >
-                      <CmsRadio value="USED">사용</CmsRadio>
-                      <CmsRadio value="UNUSED">미사용</CmsRadio>
+                      <CmsRadio size="medium" value="USED">사용</CmsRadio>
+                      <CmsRadio size="medium" value="UNUSED">미사용</CmsRadio>
                     </CmsRadio.Group>
                   }
                 />

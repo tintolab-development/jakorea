@@ -34,11 +34,22 @@ export const UJAT_VOLUNTEER_GRADE_OPTIONS = [
   '2학년',
   '3학년',
   '4학년',
-  '휴학생',
+  '졸업',
+  '휴학',
   '졸업유예',
 ] as const
 
 export type UjatVolunteerGrade = (typeof UJAT_VOLUNTEER_GRADE_OPTIONS)[number]
+
+/** 목록·상세 GET 학년 라벨. 코드(1/leave)를 추측 변환하지 않는다. */
+export function mapUjatVolunteerGradeLabel(value: unknown): UjatVolunteerGrade | '' {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  if (!trimmed) return ''
+  if ((UJAT_VOLUNTEER_GRADE_OPTIONS as readonly string[]).includes(trimmed)) {
+    return trimmed as UjatVolunteerGrade
+  }
+  return ''
+}
 
 export type UjatVolunteerApplicationType = 'new' | 'ujat-graduate'
 
@@ -142,12 +153,9 @@ export const UJAT_ESSAY_COLUMN_MIN_WIDTHS: Record<UjatEssayColumnKey, number> = 
 export const UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER = '-'
 
 export function formatUjatVolunteerEssayCellValue(
-  applicationType: UjatVolunteerApplicationType,
+  _applicationType: UjatVolunteerApplicationType,
   value: string | undefined
 ): string {
-  if (applicationType === 'ujat-graduate') {
-    return UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER
-  }
   const trimmed = value?.trim()
   return trimmed ? trimmed : '-'
 }

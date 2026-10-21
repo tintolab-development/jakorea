@@ -5,6 +5,7 @@
 
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import { shouldIncludeInterviewStages } from './detail-case.ts'
 import {
   collectRuntimeHiddenAnswerKeys,
@@ -92,17 +93,67 @@ function resolveVolunteerDynamicQuestionEnabledForHidden(
  * - `true` → 면접 단락 노출(프로그램 플래그로 숨기지 않음)
  * - `undefined` → 프로그램 상세 플래그만 사용
  */
+function readRuntimeInterviewEnabled(runtimeContext: unknown): boolean | undefined {
+  if (!isRecord(runtimeContext) || typeof runtimeContext.interviewEnabled !== 'boolean') {
+    return undefined
+  }
+  return runtimeContext.interviewEnabled
+}
+
+function resolveVolunteerInterviewQuestionKey(input: {
+  formBinding?: unknown
+  runtimeContext?: unknown
+}): string {
+  const document = input.formBinding != null
+    ? coerceApplicationFormDocument(input.formBinding)
+    : input.runtimeContext != null
+      ? { runtimeContext: input.runtimeContext, paragraphs: [] as unknown[] }
+      : null
+  const paragraphs = document?.paragraphs
+  if (Array.isArray(paragraphs)) {
+    const found = paragraphs.find(
+      paragraph =>
+        isRecord(paragraph) &&
+        typeof paragraph.id === 'string' &&
+        isVolunteerInterviewScheduleParagraphId(paragraph.id),
+    )
+    if (isRecord(found) && typeof found.id === 'string') return found.id
+  }
+  return PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule
+}
+
 export function resolveVolunteerPortalInterviewEnabledForHidden(input: {
   formBinding?: unknown
   runtimeContext?: unknown
   program?: Parameters<typeof shouldIncludeInterviewStages>[1] | null
 }): boolean | undefined {
-  const interviewId = PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule
+  const document = input.formBinding != null
+    ? coerceApplicationFormDocument(input.formBinding)
+    : input.runtimeContext != null
+      ? { runtimeContext: input.runtimeContext, paragraphs: [] as unknown[] }
+      : null
+  const runtimeContext =
+    document?.runtimeContext ?? resolvePortalApplicationFormRuntimeContext(input.formBinding)
+  const interviewFlag = readRuntimeInterviewEnabled(runtimeContext)
+  const interviewId = resolveVolunteerInterviewQuestionKey(input)
+  const paragraphs = document?.paragraphs
+  if (Array.isArray(paragraphs)) {
+    const paragraph = paragraphs.find(
+      row => isRecord(row) && typeof row.id === 'string' && row.id === interviewId,
+    )
+    if (isRecord(paragraph) && (paragraph.runtimeHidden === true || paragraph.hidden === true)) {
+      return false
+    }
+  }
+  if (interviewFlag === false) return false
+  if (interviewFlag === true) return true
   return resolveVolunteerDynamicQuestionEnabledForHidden(
     input,
     interviewId,
-    paragraph => isVolunteerInterviewScheduleParagraphId(String((paragraph as { id?: string }).id ?? '')) &&
-      isDynamicVolunteerInterviewParagraph(paragraph),
+    paragraph =>
+      isVolunteerInterviewScheduleParagraphId(String((paragraph as { id?: string }).id ?? '')) &&
+      (isDynamicVolunteerInterviewParagraph(paragraph) ||
+        interviewId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule),
   )
 }
 

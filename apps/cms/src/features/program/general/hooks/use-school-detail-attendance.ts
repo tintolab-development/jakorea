@@ -2,8 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   fetchSchoolDetailAttendanceBundle,
@@ -12,6 +16,7 @@ import {
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { isParticipatingInstitutionStudentListApplicable } from '@/features/program/general/lib/participating-institution-detail-tabs'
 import {
   evaluateOrganizationAttendanceScopeReadiness,
   formatOrganizationAttendanceScopeBlockedDescription,
@@ -92,9 +97,13 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       : ''
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId || undefined)
   const applicationsRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+  const trainedTeacherAttendanceRemoteEnabled =
+    useIsTrainedTeachersProgramsSurface() && shouldUseTrainedTeacherProgramsRemoteApi()
+  const studentListApplicable = isParticipatingInstitutionStudentListApplicable(program)
   const remoteEnabled = Boolean(
-    progressRemoteEnabled &&
-      applicationsRemoteEnabled &&
+    (progressRemoteEnabled || trainedTeacherAttendanceRemoteEnabled) &&
+      (applicationsRemoteEnabled || trainedTeacherAttendanceRemoteEnabled) &&
+      studentListApplicable &&
       programId &&
       organizationApplicationId
   )
@@ -164,8 +173,9 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       program,
       rosterStudents: remoteQuery.data.rosterStudents,
       attendancesByScheduleId: remoteQuery.data.attendancesByScheduleId,
+      includeSessionsWithoutAttendance: trainedTeacherAttendanceRemoteEnabled,
     })
-  }, [program, remoteEnabled, remoteQuery.data, row])
+  }, [program, remoteEnabled, remoteQuery.data, row, trainedTeacherAttendanceRemoteEnabled])
 
   const educationScheduleOptions = useMemo(() => {
     // The program schedule list also contains institution-unassigned rows.
@@ -303,6 +313,7 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       await saveSchoolDetailAttendanceSessionRemote({
         programId,
         scheduleId,
+        organizationApplicationId,
         students: payload.students,
       })
     },

@@ -494,7 +494,7 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="성명" inputSize="medium" width="100%" />
+                    <CmsInput placeholder="성명" inputSize="small" width="100%" />
                   </Form.Item>
                 }
               />
@@ -506,7 +506,7 @@ export function AddUserIndividual({
                 edit={
                   <span className="detail-info-form-inputs-wrapper-no-gap">
                     <Form.Item name="gender" noStyle>
-                      <CmsRadioGroup options={GENDER_OPTIONS} size="large" />
+                      <CmsRadioGroup options={GENDER_OPTIONS} size="medium" />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item
@@ -518,7 +518,7 @@ export function AddUserIndividual({
                       <CmsDateTextInput
                         placeholder="생년월일 8자리"
                         maxLength={10}
-                        inputSize="medium"
+                        inputSize="small"
                         width="100%"
                       />
                     </Form.Item>
@@ -535,7 +535,7 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   <Form.Item name="schoolEnrollmentStatus" noStyle>
-                    <CmsRadioGroup options={SCHOOL_ENROLLMENT_OPTIONS} size="large" />
+                    <CmsRadioGroup options={SCHOOL_ENROLLMENT_OPTIONS} size="medium" />
                   </Form.Item>
                 }
               />
@@ -567,7 +567,7 @@ export function AddUserIndividual({
                             }
                             onSelect={handleSchoolSelect}
                             placeholder="소속 학교명"
-                            inputSize="medium"
+                            inputSize="small"
                             width="100%"
                           />
                         </Form.Item>
@@ -585,7 +585,7 @@ export function AddUserIndividual({
                         <CmsSelect
                           placeholder="학년"
                           withAllOption={false}
-                          inputSize="medium"
+                          inputSize="small"
                           width={120}
                           options={individualAffiliationGradeSelectOptions(allValues?.grade)}
                         />
@@ -599,7 +599,7 @@ export function AddUserIndividual({
                       >
                         <CmsInput
                           placeholder="소속 기관명"
-                          inputSize="medium"
+                          inputSize="small"
                           width="100%"
                           disabled={affiliationNone}
                         />
@@ -621,7 +621,7 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                    <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
+                    <CmsPhoneInput placeholder="연락처" inputSize="small" width="100%" />
                   </Form.Item>
                 }
               />
@@ -632,7 +632,7 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
+                    <CmsInput placeholder="이메일" inputSize="small" width="100%" />
                   </Form.Item>
                 }
               />
@@ -648,7 +648,7 @@ export function AddUserIndividual({
                 edit={
                   <Space.Compact style={{ width: '100%' }}>
                     <Form.Item name="address" noStyle>
-                      <AddressSearch
+                      <AddressSearch inputSize="small"
                         value={address}
                         onChange={nextAddress => form.setFieldValue('address', nextAddress)}
                         placeholder="건물명, 도로명 또는 지번"
@@ -656,7 +656,7 @@ export function AddUserIndividual({
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="detailAddress" noStyle>
-                      <CmsInput placeholder="상세 주소" inputSize="medium" width="100%" />
+                      <CmsInput placeholder="상세 주소" inputSize="small" width="100%" />
                     </Form.Item>
                   </Space.Compact>
                 }
@@ -671,7 +671,7 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   <Form.Item name="volunteerId" noStyle>
-                    <CmsInput placeholder="1365 ID" inputSize="medium" width={200} />
+                    <CmsInput placeholder="1365 ID" inputSize="small" width={200} />
                   </Form.Item>
                 }
               />
@@ -698,7 +698,7 @@ export function AddUserIndividual({
                     view="-"
                     edit={
                       <Form.Item name="consentTermsOfService" noStyle>
-                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="medium" />
                       </Form.Item>
                     }
                   />
@@ -708,7 +708,7 @@ export function AddUserIndividual({
                     view="-"
                     edit={
                       <Form.Item name="consentPersonalInfo" noStyle>
-                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="medium" />
                       </Form.Item>
                     }
                   />
@@ -722,7 +722,7 @@ export function AddUserIndividual({
                       <Form.Item name="consentMarketing" noStyle>
                         <CmsRadioGroup
                           options={CONSENT_RADIO_OPTIONS}
-                          size="large"
+                          size="medium"
                           disabled
                         />
                       </Form.Item>

@@ -130,7 +130,7 @@ function SemesterScheduleTableBlock({
             view={formatUjatEventRangeLabel(eventSeal)}
             edit={
               mode === 'edit' ? (
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="range"
                   value={range}
                   onChange={next =>

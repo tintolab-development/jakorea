@@ -3,15 +3,15 @@ import {
   buildTextbooksListPath,
   buildThemeSections,
   DetailModal,
-  filterAndSortTextbooks,
   ContentListItem,
+  readTextbookDetailIdFromLocation,
   readTextbooksListParams,
   TEXTBOOK_CATEGORY_TAB_ITEMS,
-  TEXTBOOKS_PAGE_SIZE,
   ThemeSection,
   TextbookSort,
-  usePublicTextbookCatalog,
   usePublicTextbookDetail,
+  usePublicTextbookDirectory,
+  usePublicTextbookList,
   type TextbookCategoryFilter,
   type TextbookSortKey,
   type TextbooksListParams,
@@ -21,17 +21,27 @@ import styles from './page.module.css'
 
 export function TextbooksPage() {
   const [params, setParams] = useState(readTextbooksListParams)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const { items: contents, isPending, isError, refetch } = usePublicTextbookCatalog()
-  const themeSections = useMemo(() => buildThemeSections(contents), [contents])
-  const selectedBase = useMemo(
-    () => (selectedId ? contents.find(item => item.id === selectedId) ?? null : null),
-    [contents, selectedId],
+  const [selectedId, setSelectedId] = useState<string | null>(readTextbookDetailIdFromLocation)
+  const directory = usePublicTextbookDirectory()
+  const list = usePublicTextbookList(params)
+  const themeSections = useMemo(() => buildThemeSections(directory.items), [directory.items])
+  const selectedBase = useMemo(() => {
+    if (!selectedId) return null
+    return (
+      list.items.find(item => item.id === selectedId) ??
+      directory.items.find(item => item.id === selectedId) ??
+      null
+    )
+  }, [directory.items, list.items, selectedId])
+  const { content: selectedContent, isPending: isDetailPending } = usePublicTextbookDetail(
+    selectedId,
+    selectedBase
   )
-  const { content: selectedContent } = usePublicTextbookDetail(selectedId, selectedBase)
 
   useEffect(() => {
-    const syncedPath = buildTextbooksListPath(params)
+    const syncedPath = buildTextbooksListPath(params, {
+      detailId: readTextbookDetailIdFromLocation(),
+    })
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (syncedPath !== currentPath) {
       window.history.replaceState(null, '', syncedPath)
@@ -39,42 +49,48 @@ export function TextbooksPage() {
 
     const onPopState = () => {
       setParams(readTextbooksListParams())
+      setSelectedId(readTextbookDetailIdFromLocation())
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-    // 마운트 시 URL ↔ 기본값(category=all, sort=latest) 동기화 + popstate만 구독
+    // 마운트 시 URL ↔ 기본값 동기화 + popstate만 구독 (id 포함)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount once
   }, [])
 
-  const updateParams = (next: Partial<TextbooksListParams>) => {
-    const merged = { ...params, ...next }
-    setParams(merged)
-    const nextPath = buildTextbooksListPath(merged)
+  const syncPath = (
+    nextParams: TextbooksListParams,
+    detailId: string | null,
+    mode: 'push' | 'replace'
+  ) => {
+    const nextPath = buildTextbooksListPath(nextParams, { detailId })
     const currentPath = `${window.location.pathname}${window.location.search}`
-    if (nextPath !== currentPath) {
+    if (nextPath === currentPath) return
+    if (mode === 'replace') {
+      window.history.replaceState(null, '', nextPath)
+    } else {
       window.history.pushState(null, '', nextPath)
     }
   }
 
-  const filteredContents = useMemo(
-    () => filterAndSortTextbooks(contents, params),
-    [contents, params]
-  )
+  const updateParams = (next: Partial<TextbooksListParams>) => {
+    const merged = { ...params, ...next }
+    setParams(merged)
+    syncPath(merged, selectedId, 'push')
+  }
 
-  const totalPages = Math.max(1, Math.ceil(filteredContents.length / TEXTBOOKS_PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredContents.slice(
-    (currentPage - 1) * TEXTBOOKS_PAGE_SIZE,
-    currentPage * TEXTBOOKS_PAGE_SIZE
-  )
+  const openDetail = (contentId: string) => {
+    setSelectedId(contentId)
+    syncPath(params, contentId, 'push')
+  }
+
+  const closeDetail = () => {
+    setSelectedId(null)
+    syncPath(params, null, 'push')
+  }
 
   const activeTab = TEXTBOOK_CATEGORY_TAB_ITEMS.some(item => item.key === params.category)
     ? params.category
     : 'all'
-
-  const openDetail = (contentId: string) => {
-    setSelectedId(contentId)
-  }
 
   return (
     <section className={styles.page}>
@@ -90,24 +106,24 @@ export function TextbooksPage() {
           </PFText>
         </header>
 
-        {isPending ? (
+        {directory.isPending ? (
           <PFLoadingSpinner centered label="교육 콘텐츠를 불러오는 중" />
-        ) : isError ? (
+        ) : directory.isError ? (
           <div className={styles.status}>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
               교육 콘텐츠를 불러오지 못했습니다.
             </PFText>
-            <PFButton variant="tertiary" size="large" onClick={refetch}>
+            <PFButton variant="tertiary" size="large" onClick={directory.refetch}>
               다시 시도
             </PFButton>
           </div>
         ) : (
-          <>
-        <div className={styles.directory}>
-          {themeSections.map(section => (
-            <ThemeSection key={section.key} section={section} onRowClick={openDetail} />
-          ))}
-        </div>
+          <div className={styles.directory}>
+            {themeSections.map(section => (
+              <ThemeSection key={section.key} section={section} onRowClick={openDetail} />
+            ))}
+          </div>
+        )}
 
         <div className={styles.catalog}>
           <div className={styles.tabs}>
@@ -124,7 +140,7 @@ export function TextbooksPage() {
 
           <div className={styles.toolbar}>
             <PFText as="p" typo="hd-sm" color="black" className={styles.count}>
-              총 {filteredContents.length}개
+              {list.isPending || list.isError ? null : `총 ${list.totalCount}개`}
             </PFText>
             <TextbookSort
               value={params.sort}
@@ -133,40 +149,54 @@ export function TextbooksPage() {
             />
           </div>
 
-          <div className={styles.list}>
-            {pageItems.length === 0 ? (
-              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-                검색 결과가 없습니다.
+          {list.isPending ? (
+            <PFLoadingSpinner centered label="교육 콘텐츠를 불러오는 중" />
+          ) : list.isError ? (
+            <div className={styles.status}>
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                교육 콘텐츠를 불러오지 못했습니다.
               </PFText>
-            ) : (
-              pageItems.map(item => (
-                <ContentListItem
-                  key={item.id}
-                  content={item}
-                  onClick={() => openDetail(item.id)}
-                />
-              ))
-            )}
-          </div>
-
-          {filteredContents.length > 0 ? (
-            <div className={styles.pagination}>
-              <PFPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={page => updateParams({ page })}
-              />
+              <PFButton variant="tertiary" size="large" onClick={list.refetch}>
+                다시 시도
+              </PFButton>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <div className={styles.list}>
+                {list.items.length === 0 ? (
+                  <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+                    검색 결과가 없습니다.
+                  </PFText>
+                ) : (
+                  list.items.map(item => (
+                    <ContentListItem
+                      key={item.id}
+                      content={item}
+                      onClick={() => openDetail(item.id)}
+                    />
+                  ))
+                )}
+              </div>
+
+              {list.totalCount > 0 ? (
+                <div className={styles.pagination}>
+                  <PFPagination
+                    currentPage={params.page}
+                    totalPages={list.totalPages}
+                    onPageChange={page => updateParams({ page })}
+                  />
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
-          </>
-        )}
       </div>
 
       <DetailModal
-        open={selectedId != null && selectedContent != null}
+        open={selectedId != null}
         content={selectedContent}
-        onClose={() => setSelectedId(null)}
+        loading={Boolean(selectedId) && isDetailPending && selectedContent == null}
+        onClose={closeDetail}
       />
     </section>
   )

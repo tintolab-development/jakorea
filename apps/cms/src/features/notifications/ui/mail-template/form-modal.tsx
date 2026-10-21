@@ -90,7 +90,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           view={templateName}
           edit={
             <CmsInput
-              inputSize="large"
+              inputSize="small"
               width="100%"
               allowClear={false}
               placeholder={MAIL_TEMPLATE_NAME_PLACEHOLDER}
@@ -121,7 +121,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           view={senderName}
           edit={
             <CmsInput
-              inputSize="large"
+              inputSize="small"
               width="100%"
               allowClear={false}
               readOnly={senderNameReadOnly}
@@ -146,7 +146,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           view={senderEmail}
           edit={
             <CmsSelect
-              inputSize="large"
+              inputSize="small"
               width="100%"
               withAllOption={false}
               loading={senderLoading}

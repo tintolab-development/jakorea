@@ -65,7 +65,6 @@ export function useFaqFormModal({
     open && isEdit && faq ? (faq.answer ?? '') : '',
     editorResetKey,
     {
-      height: '260px',
       placeholder: 'FAQ 내용을 입력하세요',
       fileUploadOwner,
     }

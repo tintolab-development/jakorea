@@ -13,7 +13,7 @@ function emptyBasicInfo(): ApplyTrainedTeachersBasicInfoValues {
     addressDetail: '',
     classCount: '',
     studentCount: '',
-    educationFormat: 'online',
+    educationFormat: '',
     educationPlace: 'inside',
     educationPlaceDetail: '',
     teacherName: '',

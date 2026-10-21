@@ -32,8 +32,8 @@ export function TeacherApplicationContent({
   }, [applicationId, content.guidance])
 
   const showGuidanceSection =
-    hasTeacherApplicationGuidanceContent(guidance) ||
-    (institutionGuidanceEnabled && showGuidanceWriteLink)
+    institutionGuidanceEnabled &&
+    (hasTeacherApplicationGuidanceContent(guidance) || showGuidanceWriteLink)
 
   return (
     <div className={styles.root}>

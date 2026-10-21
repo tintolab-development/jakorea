@@ -17,6 +17,7 @@ import {
   resolveStudentCertificateTemplateKey,
   resolveStudentCertificateTemplateName,
 } from '@/features/program/general/lib/student-certificate-template'
+import { CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS } from '@/features/template/lib/certificate-form-settings'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import '@/pages/templates/form-certificate-preview.css'
 
@@ -44,7 +45,7 @@ export function StudentCertificatePdfExportHost({
     templateCode: resolveStudentCertificateTemplateKey(context.certificateKind),
     fallbackTitleName: resolveStudentCertificateTemplateName(context.certificateKind),
     runtimeStringValues,
-    runtimeStringOverrideKeys: ['participantInfo'],
+    runtimeStringOverrideKeys: CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS,
   })
   const certificateType = resolveStudentCertificateTemplateKey(context.certificateKind)
   const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(

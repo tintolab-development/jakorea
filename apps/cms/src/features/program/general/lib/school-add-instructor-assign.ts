@@ -11,6 +11,7 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { InstructorAssignSessionOption } from './instructor-assign-session-options'
 
 export interface SchoolAddInstructorAssignOption {
@@ -34,15 +35,9 @@ function parseSessionDateKey(dateRaw: string): string | null {
 
 function formatScheduleDateLabel(dateRaw: string, dayOfWeek: string): string {
   const cleaned = dateRaw.trim()
-  const parts = cleaned.split(/[.\\/]/).filter(p => p.length > 0)
-  if (parts.length >= 3) {
-    const y = parseInt(parts[0]!, 10)
-    const yy = Number.isFinite(y) ? String(y).slice(-2) : parts[0]!.slice(-2)
-    const mm = parseInt(parts[1]!, 10)
-    const dd = parts[2]!.padStart(2, '0')
-    return `${yy}년 ${mm}월 ${dd}일(${dayOfWeek})`
-  }
-  return `${cleaned}(${dayOfWeek})`
+  const formatted = formatCmsScheduleDisplayLabel(cleaned)
+  if (formatted !== cleaned || /\([월화수목금토일]\)/u.test(formatted)) return formatted
+  return formatCmsScheduleDisplayLabel(`${cleaned}(${dayOfWeek})`)
 }
 
 function normalizeTimeRangeDisplay(timeRange: string): string {

@@ -433,10 +433,14 @@ export function useUjatProgramRegistrationFlow(
         })
       }
       // 탭/단계 전환은 React state만 유지. 세션 임시저장은 「임시 저장」버튼에서만.
+      // 인메모리 스냅샷은 탭 복원용으로 직전 단계 overlay·draft를 남긴다.
+      if (isParticipantStep) {
+        participantVm.flushSessionSnapshot()
+      }
       setActiveStep(key)
       options?.onStepChange?.(key)
     },
-    [activeStep, options, registrationVm.draft, showAlert]
+    [activeStep, isParticipantStep, options, participantVm, registrationVm.draft, showAlert]
   )
 
   const goToPhase = useCallback(

@@ -62,9 +62,9 @@ function ScheduleDetailRadioRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
-            <CmsRadioGroup size="large" value={value} onChange={handleChange}>
-              <CmsRadio value="common">일정 공통</CmsRadio>
-              <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+            <CmsRadioGroup size="medium" value={value} onChange={handleChange}>
+              <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+              <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
             </CmsRadioGroup>
             {value === 'common' && commonDetailEdit != null ? (
               <>
@@ -162,12 +162,12 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
             label="교육 진행 구조"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={programType}
                 onChange={e => onProgramTypeChange(e.target.value as ProgramRegistrationType)}
               >
-                <CmsRadio value="curriculum">커리큘럼형</CmsRadio>
-                <CmsRadio value="schedule">일정형</CmsRadio>
+                <CmsRadio size="medium" value="curriculum">커리큘럼형</CmsRadio>
+                <CmsRadio size="medium" value="schedule">일정형</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -176,14 +176,14 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
             label="수업 회차 유형"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={sessionRoundType}
                 onChange={e =>
                   onSessionRoundTypeChange(e.target.value as ProgramRegistrationSessionRoundType)
                 }
               >
-                <CmsRadio value="single">단일 회차</CmsRadio>
-                <CmsRadio value="multi">복수 회차</CmsRadio>
+                <CmsRadio size="medium" value="single">단일 회차</CmsRadio>
+                <CmsRadio size="medium" value="multi">복수 회차</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -201,7 +201,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
               onChange={onEducationFormScheduleDetailChange}
               commonDetailEdit={
                 <CmsSelect
-                  inputSize="medium"
+                  inputSize="small"
                   withAllOption={false}
                   placeholder="교육 형태"
                   width={160}
@@ -229,12 +229,12 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
                 fullRow
                 edit={
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={educationForm}
                     onChange={e => setEducationForm(String(e.target.value))}
                   >
                     {educationFormOptions.map(option => (
-                      <CmsRadio key={option.value} value={option.value}>
+                      <CmsRadio size="medium" key={option.value} value={option.value}>
                         {option.label}
                       </CmsRadio>
                     ))}

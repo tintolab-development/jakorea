@@ -40,6 +40,8 @@ import {
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   shouldShowDocumentPassBanner,
   TeacherApplicationContent,
+  UjatApplicationContent,
+  UjatScheduleBanner,
   TeacherEducationAssignmentAside,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -71,6 +73,13 @@ import {
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
+import {
+  resolveUjatScheduleBannerFromState,
+  sanitizeUjatParticipantBasicInfoFields,
+  shouldShowUjatScheduleBanner,
+  shouldUseUjatApplicationContent,
+} from '@/features/mypage/education/applications/lib/ujat-portal-banner'
+import { educationUjatProgressConfirmPath } from '@/features/mypage/education/applications/lib/guidance-path'
 import type { EducationApplicationListItem } from '@/features/mypage/education/applications/model/types'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -231,18 +240,23 @@ export function MypageEducationDetailPage() {
   )
 
   const teacherStudentDocumentTabsVisible = useMemo(() => {
-    if (!isTeacher) return undefined
-    if (!isTeacherOrgActivityDetail) return true
+    if (!isTeacher || !isTeacherOrgActivityDetail) return false
     return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
       policyQueryEnabled: true,
-      policyLoading: studentDocumentPolicyQuery.isLoading,
+      // 이 신청 건의 policy가 아직 없을 때만 탭을 숨깁니다.
+      // 업로드 취소 등으로 같은 키를 다시 조회할 때는 캐시를 유지해 탭·본문이 바뀌지 않게 합니다.
+      policyLoading: studentDocumentPolicyQuery.isPending,
+      policyError: studentDocumentPolicyQuery.isError,
     })
   }, [
     isTeacher,
     isTeacherOrgActivityDetail,
     studentDocumentPolicyQuery.data,
-    studentDocumentPolicyQuery.isLoading,
+    studentDocumentPolicyQuery.isError,
+    studentDocumentPolicyQuery.isPending,
   ])
+  const isStudentDocumentPolicyPending =
+    isTeacherOrgActivityDetail && studentDocumentPolicyQuery.isPending
 
   const activityTabOptions = useMemo(
     () =>
@@ -341,10 +355,11 @@ export function MypageEducationDetailPage() {
   }, [application, isTeacher, program])
 
   const applicationInfoBody = useMemo(() => {
+    if (!application || !program || !isTeacher) return undefined
+    if (shouldUseUjatApplicationContent(application.detailCase)) {
+      return <UjatApplicationContent content={application.ujatApplicationContent} />
+    }
     if (
-      !application ||
-      !program ||
-      !isTeacher ||
       !isOrganizationEducationApplication(application, program) ||
       !teacherApplicationContent
     ) {
@@ -371,6 +386,8 @@ export function MypageEducationDetailPage() {
     application,
     application?.applicationType,
     application?.id,
+    application?.detailCase,
+    application?.ujatApplicationContent,
     isTeacher,
     program,
     program?.educationForm,
@@ -464,10 +481,14 @@ export function MypageEducationDetailPage() {
   }, [])
 
   useEffect(() => {
+    if (isStudentDocumentPolicyPending) return
     if (isWithdrawnDuring) {
       const fallback = withdrawnDuringKeys[0] ?? 'schedule'
       if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
         setSection(fallback)
+        const nextPath = buildDetailPath(applicationId, fallback, application?.applicationType)
+        const currentPath = `${window.location.pathname}${window.location.search}`
+        if (nextPath !== currentPath) window.history.replaceState(null, '', nextPath)
       }
       return
     }
@@ -475,6 +496,9 @@ export function MypageEducationDetailPage() {
       const fallback = inProgressKeys[0] ?? 'notice'
       if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
         setSection(fallback)
+        const nextPath = buildDetailPath(applicationId, fallback, application?.applicationType)
+        const currentPath = `${window.location.pathname}${window.location.search}`
+        if (nextPath !== currentPath) window.history.replaceState(null, '', nextPath)
       }
       return
     }
@@ -483,11 +507,14 @@ export function MypageEducationDetailPage() {
     }
   }, [
     isActivityStatus,
+    isStudentDocumentPolicyPending,
     isProgramApplicationStatus,
     isWithdrawnDuring,
     section,
     inProgressKeys,
     withdrawnDuringKeys,
+    application?.applicationType,
+    applicationId,
   ])
 
   const handleBack = () => {
@@ -573,17 +600,36 @@ export function MypageEducationDetailPage() {
     )
   }
 
-  const showBanner = shouldShowDocumentPassBanner(application)
+  const ujatScheduleBanner = shouldShowUjatScheduleBanner(
+    application.detailCase,
+    application.ujatPortalBannerState,
+  )
+    ? resolveUjatScheduleBannerFromState(application.ujatPortalBannerState)
+    : null
+  const showBanner = !ujatScheduleBanner && shouldShowDocumentPassBanner(application)
+  const programForInfo = shouldUseUjatApplicationContent(application.detailCase)
+    ? {
+        ...program,
+        basicInfoFields: sanitizeUjatParticipantBasicInfoFields(
+          application.detailCase,
+          program.educationTargetDetailLabel,
+          program.basicInfoFields,
+        ),
+      }
+    : program
   const showCancelCta =
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const showTeacherAssignment =
     isTeacher && hasTeacherAssignmentAsideContent(application.teacherAssignment)
   const appliedSection = isAppliedSection(section) ? section : 'program'
-  const activitySection = isActivitySection(section)
-    ? section
-    : isWithdrawnDuring
-      ? (withdrawnDuringKeys[0] ?? 'schedule')
-      : (inProgressKeys[0] ?? 'notice')
+  const activitySection =
+    isActivitySection(section) &&
+    ((isWithdrawnDuring && withdrawnDuringKeys.includes(section)) ||
+      (isActivityStatus && inProgressKeys.includes(section)))
+      ? section
+      : isWithdrawnDuring
+        ? (withdrawnDuringKeys[0] ?? 'schedule')
+        : (inProgressKeys[0] ?? 'notice')
 
   const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
     preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
@@ -605,7 +651,9 @@ export function MypageEducationDetailPage() {
 
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      isTeacher && teacherApplicationContent ? (
+      shouldUseUjatApplicationContent(application.detailCase) ? (
+        <UjatApplicationContent content={application.ujatApplicationContent} />
+      ) : isTeacher && teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
           applicationType={application.applicationType}
@@ -654,6 +702,7 @@ export function MypageEducationDetailPage() {
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
           listTitle={EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL}
+          absenceReasonEnabled={!isOrganizationEducationApplication(application, program)}
         />
       )
     }
@@ -780,7 +829,22 @@ export function MypageEducationDetailPage() {
         }
       />
 
-      {showBanner ? (
+      {ujatScheduleBanner ? (
+        <UjatScheduleBanner
+          copy={ujatScheduleBanner}
+          onActivate={
+            ujatScheduleBanner.clickable
+              ? () =>
+                  navigate(
+                    educationUjatProgressConfirmPath(
+                      application.id,
+                      application.applicationType,
+                    ),
+                  )
+              : undefined
+          }
+        />
+      ) : showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 
@@ -798,7 +862,7 @@ export function MypageEducationDetailPage() {
 
           {appliedSection === 'program' ? (
             <ProgramInfoBody
-              program={program}
+              program={programForInfo}
               showPeriodSponsor
               showApplyCta={false}
               showCancelCta={showCancelCta}

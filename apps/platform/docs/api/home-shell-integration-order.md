@@ -9,7 +9,7 @@
 | 영역 | Platform | Admin / public | 이번 홈 연동 |
 |------|----------|----------------|--------------|
 | 홈 본문 (히어로·교육 제목·유튜브·실적·후원·소셜 레일) | `GET /api/public/main` | `/main/*` | **포함** |
-| 홈 프로그램 카드 | `GET /api/portal/programs?featuredOnHome=true&size=8` (CMS `:8080`) | CMS `featured_on_home` 시드 최대 8 | **포함** (Homepage `education.programs` 미사용) |
+| 홈 프로그램 카드 | `GET /api/portal/programs?page=0&size=8&sort=LATEST` (CMS `:8080`) | 최신순 최대 8 | **포함** (Homepage `education.programs` 미사용) |
 | 상단 띠배너 | `TopBannerStrip` | `/main/strip-banners` · `stripBanners[]` | **포함** (홈 전용) |
 | 팝업 | **UI 없음** | `/main/popups` · `popups[]` (동시 최대 4) | **제외** — DB 시드만 유지, 렌더하지 않음 |
 | GNB | `GET /api/public/site/gnb` + [`header-config.ts`](../../src/widgets/layout/app-layout/header/header-config.ts) fallback | `/site/gnb` · `GET /api/public/site/gnb` | **포함** |

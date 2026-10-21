@@ -231,7 +231,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
+                    <CmsInput placeholder="한글 성명" inputSize="small" width="100%" />
                   </Form.Item>
                 }
               />
@@ -243,7 +243,7 @@ export function AdminRegisterModal({
                 edit={
                   <span className="detail-info-form-inputs-wrapper-no-gap">
                     <Form.Item name="gender" noStyle>
-                      <CmsRadioGroup options={GENDER_OPTIONS} size="large" />
+                      <CmsRadioGroup options={GENDER_OPTIONS} size="medium" />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item
@@ -255,7 +255,7 @@ export function AdminRegisterModal({
                       <CmsDateTextInput
                         placeholder="생년월일 8자리"
                         maxLength={10}
-                        inputSize="medium"
+                        inputSize="small"
                         width="100%"
                       />
                     </Form.Item>
@@ -272,7 +272,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                    <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
+                    <CmsPhoneInput placeholder="연락처" inputSize="small" width="100%" />
                   </Form.Item>
                 }
               />
@@ -283,7 +283,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
+                    <CmsInput placeholder="이메일" inputSize="small" width="100%" />
                   </Form.Item>
                 }
               />
@@ -303,7 +303,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="consentTermsOfService" noStyle>
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" />
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
                   </Form.Item>
                 }
               />
@@ -313,7 +313,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="consentPersonalInfo" noStyle>
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" />
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
                   </Form.Item>
                 }
               />
@@ -325,7 +325,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="consentMarketing" noStyle>
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" disabled />
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" disabled />
                   </Form.Item>
                 }
               />
@@ -335,7 +335,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="consentMfaSetup" noStyle>
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" />
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
                   </Form.Item>
                 }
               />

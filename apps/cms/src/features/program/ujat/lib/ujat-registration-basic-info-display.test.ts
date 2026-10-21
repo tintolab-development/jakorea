@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getUjatProgramRegistrationOverlayRecord,
+  patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
@@ -9,7 +10,9 @@ import {
   resolveUjatRegistrationBasicInfoDisplay,
   resolveUjatSurveyMenuItems,
 } from './ujat-registration-basic-info-display'
+import { resolveUjatBusinessKpiDisplay } from './ujat-business-kpi-display'
 import {
+  UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SPONSOR_ALL_VALUE,
@@ -18,7 +21,9 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   buildUjatRegistrationBasicInfoOverlayFromProgram,
   reconcileUjatRegistrationOverlayFromApi,
+  buildUjatProgramDraftWithSessionOverlay,
   resyncUjatPersistOverlayFromProgram,
+  resyncUjatRegistrationOverlayFromProgram,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
 } from './ujat-registration-basic-info-overlay-sync'
 
@@ -63,7 +68,28 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     expect(display.programManagementName).toBe('기업가정신 스타트업 체험 운영')
     expect(display.publicProgramTitle).toBe('고등학생 기업가정신 캠프 참가자 모집')
     expect(display.businessField).toBe('경제금융')
-    expect(display.participantTypes).toBe('학교/기관, 봉사자')
+    expect(display.participantTypes).toBe('-')
+  })
+
+  it('빈 GET 공통정보는 FE 기본값 대신 - 이다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      title: '',
+      mainTitle: '',
+      titleEn: '',
+      ujatRegistrationOverlay: {},
+    })
+    expect(display.repKo).toBe('-')
+    expect(display.repEn).toBe('-')
+    expect(display.programManagementName).toBe('-')
+    expect(display.businessField).toBe('-')
+    expect(display.ipOwned).toBe('-')
+    expect(display.participantTypes).toBe('-')
+  })
+
+  it('신규 등록 빈 폼은 대표명 기본값을 유지한다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {})
+    expect(next.mainTitle).toBe(UJAT_BASIC_INFO_REP_KO_DEFAULT)
   })
 
   it('overlay 참여자 플래그가 없어도 상세에 학교/기관, 봉사자가 보인다', () => {
@@ -190,6 +216,20 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     expect(next.generalCommonInfo?.sponsorManagerContactIds).toBeUndefined()
     expect(next.generalCommonInfo?.sponsorManagerContactId).toBeUndefined()
     expect(next.generalCommonInfo?.sponsorManagerLine).toBe('미선택')
+  })
+
+  it('overlay 참여 유형 체크가 GET types보다 저장 패치에 우선한다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalParticipantTypes: ['school_institution', 'volunteer'],
+      },
+      {
+        'ujat.basicInfo.participant.organization': true,
+        'ujat.basicInfo.participant.volunteer': false,
+      }
+    )
+    expect(next.generalParticipantTypes).toEqual(['school_institution'])
   })
 
   it('후원사 담당자·설문 overlay를 generalCommonInfo·generalSurveyMenuKeys에 반영한다', () => {
@@ -351,5 +391,114 @@ describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
       school_satisfaction: true,
       lecture_evaluation: false,
     })
+  })
+
+  it('저장 후 LNB는 overlay 4종 체크만 2depth로 남긴다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {
+      'ujat.basicInfo.surveyItems': {
+        survey: false,
+        volunteer_satisfaction: true,
+        school_satisfaction: true,
+        lecture_evaluation: false,
+      },
+    })
+    expect(next.generalSurveyMenuKeys).toEqual([
+      'volunteer_satisfaction',
+      'school_satisfaction',
+    ])
+    expect(resolveUjatSurveyMenuItems(next).map(item => item.label)).toEqual([
+      '봉사단 만족도조사',
+      '학교 만족도조사',
+    ])
+  })
+
+  it('설문 0개면 LNB 항목이 비고, 1개여도 2depth 키는 유지한다', () => {
+    const none = applyUjatRegistrationOverlayToProgram(baseProgram(), {
+      'ujat.basicInfo.surveyItems': {
+        survey: false,
+        volunteer_satisfaction: false,
+        school_satisfaction: false,
+        lecture_evaluation: false,
+      },
+    })
+    expect(none.generalSurveyMenuKeys).toEqual([])
+    expect(resolveUjatSurveyMenuItems(none)).toEqual([])
+    const one = applyUjatRegistrationOverlayToProgram(baseProgram(), {
+      'ujat.basicInfo.surveyItems': {
+        survey: true,
+        volunteer_satisfaction: false,
+        school_satisfaction: false,
+        lecture_evaluation: false,
+      },
+    })
+    expect(resolveUjatSurveyMenuItems(one)).toEqual([
+      { key: 'survey-poll', label: '설문조사' },
+    ])
+  })
+})
+
+describe('UJAT 공통 저장 overlay/KPI roundtrip', () => {
+  beforeEach(() => {
+    resetUjatProgramRegistrationOverlay()
+  })
+
+  it('세션 extra 기본정보가 program-derived를 덮지 않고 저장 overlay에 남는다', () => {
+    const overlay = resyncUjatRegistrationOverlayFromProgram(
+      {
+        ...baseProgram(),
+        mainTitle: '서버 대표명',
+        title: '서버 관리명',
+      },
+      {
+        'ujat.basicInfo.repKo': '수정 대표명',
+        'ujat.basicInfo.programManagementName': '수정 관리명',
+      }
+    )
+    expect(overlay['ujat.basicInfo.repKo']).toBe('수정 대표명')
+    expect(overlay['ujat.basicInfo.programManagementName']).toBe('수정 관리명')
+  })
+
+  it('GET KPI가 비면 overlay 숫자를 지우지 않고 화면에 쓴다', () => {
+    const overlay = reconcileUjatRegistrationOverlayFromApi(
+      { kpi: { finalParticipants: undefined, volunteerCount: undefined } },
+      { 'ujat.kpi.participantCount': 12, 'ujat.kpi.volunteer': 4 }
+    )
+    expect(overlay['ujat.kpi.participantCount']).toBe(12)
+    expect(overlay['ujat.kpi.volunteer']).toBe(4)
+    const display = resolveUjatBusinessKpiDisplay({
+      ...baseProgram(),
+      generalCommonInfo: {
+        kpi: {
+          finalParticipants: undefined,
+          volunteerCount: undefined,
+          finalSchools: undefined,
+          finalClasses: undefined,
+        } as unknown as NonNullable<Program['generalCommonInfo']>['kpi'],
+      },
+      ujatRegistrationOverlay: overlay,
+    })
+    expect(display.finalParticipants).toBe(12)
+    expect(display.volunteerCount).toBe(4)
+  })
+
+  it('세션 overlay 설문 4종이 draft PATCH keys에 남는다', () => {
+    patchUjatProgramRegistrationOverlay({
+      'ujat.basicInfo.surveyItems': {
+        survey: true,
+        volunteer_satisfaction: false,
+        school_satisfaction: true,
+        lecture_evaluation: false,
+      },
+    })
+    const draft = buildUjatProgramDraftWithSessionOverlay({
+      ...baseProgram(),
+      backendProgramType: 'UJAT',
+      generalSurveyMenuKeys: ['satisfaction'],
+    })
+    expect(draft.generalSurveyMenuKeys).toEqual(['survey', 'school_satisfaction'])
+    expect(resolveUjatSurveyMenuItems(draft).map(item => item.key)).toEqual([
+      'survey-poll',
+      'survey-school-satisfaction',
+    ])
   })
 })

@@ -47,10 +47,12 @@ export async function processSocialLoginSessionReturn(
   const status = searchParams.get('status')?.trim().toUpperCase() ?? ''
 
   if (challengeUuid) {
+    const setupParam = searchParams.get('mfaSetupRequired')
     return {
       kind: 'mfa_required',
       challengeUuid,
       mfaMethod: searchParams.get('mfaMethod') ?? undefined,
+      mfaSetupRequired: setupParam === 'true' ? true : setupParam === 'false' ? false : undefined,
     }
   }
 
@@ -125,9 +127,7 @@ export async function processSocialLoginSessionReturn(
         challengeUuid: err.challenge.challengeUuid,
         mfaMethod: err.challenge.mfaMethod,
         expiresAt: err.challenge.expiresAt,
-        totpSecret: err.challenge.totpSecret,
-        otpauthUri: err.challenge.otpauthUri,
-        qrDataUrl: err.challenge.qrDataUrl,
+        mfaSetupRequired: err.challenge.mfaSetupRequired,
       }
     }
     if (isSocialAccountNotLinkedError(err)) {

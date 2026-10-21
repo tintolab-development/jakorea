@@ -31,7 +31,7 @@ const noScheduleId = mapPortalEducationSchedule(
   2,
 )
 assert.equal(noScheduleId.id, 'schedule-3-2')
-assert.equal(noScheduleId.title, '부산센터')
+assert.equal(noScheduleId.title, '-')
 assert.equal(noScheduleId.attendanceStatus, 'excused')
 assert.equal(noScheduleId.absenceReason, '예비군으로 인한 불참')
 
@@ -105,7 +105,53 @@ assert.equal(scheduleLabel.progressTimeLabel, '10:00 ~ 12:00')
 
 const titleFallback = mapPortalEducationSchedule({ startAt: '2026-01-01T00:00:00' }, 4)
 assert.equal(titleFallback.sessionNumber, 5)
-assert.equal(titleFallback.title, '5회차')
+assert.equal(titleFallback.title, '-')
+
+const curriculumSingleUnitName = mapPortalEducationSchedule(
+  {
+    sessionNo: 1,
+    title: '공통 교육 예정 2',
+    unitName: '필요와 욕구',
+    sessionLabel: '1차시',
+  },
+  0,
+  { educationStructure: 'CURRICULUM', sessionRound: 'SINGLE' },
+)
+assert.equal(curriculumSingleUnitName.title, '필요와 욕구')
+
+const curriculumMultiSession = mapPortalEducationSchedule(
+  {
+    sessionNo: 1,
+    title: '1',
+    sessionLabel: '1회차',
+  },
+  0,
+  { educationStructure: 'CURRICULUM', sessionRound: 'MULTI' },
+)
+assert.equal(curriculumMultiSession.title, '1차시')
+
+const scheduleNameOverSlotTitle = mapPortalEducationSchedule(
+  {
+    sessionNo: 1,
+    title: '공통 교육 예정 2',
+    scheduleName: '개회식',
+    scheduleLabel: '세부 일정 01',
+  },
+  0,
+  { educationStructure: 'SCHEDULE', sessionRound: 'SINGLE' },
+)
+assert.equal(scheduleNameOverSlotTitle.title, '개회식')
+
+const emptyCommonInfo = mapPortalEducationSchedule(
+  {
+    sessionNo: 2,
+    title: '공통 교육 예정 2',
+    locationName: '서울',
+  },
+  1,
+  { educationStructure: 'CURRICULUM', sessionRound: 'SINGLE' },
+)
+assert.equal(emptyCommonInfo.title, '-')
 
 const unregisteredSchedule = mapPortalEducationSchedule(
   {

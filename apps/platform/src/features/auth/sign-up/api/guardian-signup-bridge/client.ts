@@ -9,6 +9,7 @@ import type {
   GuardianChallengeCreateResponse,
   GuardianConsentRequest,
   GuardianConsentResponse,
+  GuardianFinalConsentChallengeResponse,
   GuardianNiceStartResponse,
   GuardianSignupStatusResponse,
   SignupIntentCreateRequest,
@@ -91,6 +92,21 @@ export async function postGuardianNiceStart(input: {
   }
 }
 
+export async function postGuardianFinalConsentChallenge(input: {
+  guardianSessionId: number
+  statusToken: string
+}) {
+  try {
+    return await postJson<GuardianFinalConsentChallengeResponse>(
+      guardianSignupBridgePaths.guardianFinalConsentChallenge(input.guardianSessionId),
+      undefined,
+      { [STATUS_TOKEN_HEADER]: input.statusToken },
+    )
+  } catch (error) {
+    rethrowSignupBridgeApiError(error, '최종 동의 인증을 발급할 수 없습니다.')
+  }
+}
+
 export async function getGuardianSignupStatus(input: {
   guardianSessionId: number
   statusToken: string
@@ -117,7 +133,7 @@ export async function pollGuardianSignupStatus(input: {
   let last: GuardianSignupStatusResponse | null = null
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     last = await getGuardianSignupStatus(input)
-    if (last.identityVerified === true) {
+    if (last.identityVerified === true || last.status?.trim().toUpperCase() === 'CONSENTED') {
       return last
     }
     if (attempt < maxAttempts - 1) {

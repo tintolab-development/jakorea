@@ -47,7 +47,7 @@ const WageGradeFeeField = memo(function WageGradeFeeField({
               min={0}
               max={row.max}
               allowNegative={false}
-              inputSize="medium"
+              inputSize="small"
               placeholder="직접 입력"
               width={120}
               value={value == null ? '' : String(value)}
@@ -110,7 +110,7 @@ const WagePaymentItemsField = memo(function WagePaymentItemsField() {
         validationKey="wage.paymentItemValues"
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
-            <CmsSelect
+            <CmsSelect inputSize="small"
               mode="multiple"
               withAllOption={false}
               value={paymentItemValues}

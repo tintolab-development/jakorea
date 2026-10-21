@@ -58,6 +58,7 @@ export function SchoolDetailUnassignConfirmModal({
       reasonPlaceholder="취소 사유를 입력해 주세요."
       reasonRequiredMessage="취소 사유를 입력해 주세요."
       notifyTimingOptions="two"
+      faultPartyRequired
       onCancel={onCancel}
       onConfirm={onConfirm}
     />

@@ -252,9 +252,9 @@ export const PROGRAM_PROGRESS_PHASE_LABELS: Record<ProgramProgressPhaseKey, stri
 
 /** UI `color` (디자인 토큰 + 폴백 hex) */
 export const PROGRAM_PROGRESS_PHASE_COLORS: Record<ProgramProgressPhaseKey, string> = {
-  scheduled: 'var(--color-green, #1E8C29)',
-  inProgress: 'var(--color-blue, #017EAF)',
-  completed: 'var(--default-BK, #3D3D3D)',
+  scheduled: 'var(--Status-green-main, #1E8C29)',
+  inProgress: 'var(--Status-blue-main, #017EAF)',
+  completed: 'var(--Netural-black, #3D3D3D)',
 }
 
 /**
@@ -267,9 +267,9 @@ export const PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS: Record<
   ProgramRecruitmentApplicationTextTone,
   string
 > = {
-  scheduled: 'var(--color-green, #1E8C29)',
-  recruiting: 'var(--color-blue, #017EAF)',
-  completed: 'var(--main-BK, #3D3D3D)',
+  scheduled: 'var(--Status-green-main, #1E8C29)',
+  recruiting: 'var(--Status-blue-main, #017EAF)',
+  completed: 'var(--Netural-black, #3D3D3D)',
 }
 
 /** 참여자·강사·봉사자·참여자&교육진행자 모집 예정 */
@@ -574,13 +574,13 @@ export const PROGRAM_ENROLLMENT_DISPLAY_ACCENT_COLORS: Record<
   ProgramEnrollmentDisplayStatus,
   string
 > = {
-  WAITING_RESULT: 'var(--color-orange, #f07917)',
-  DOCUMENT_PASS: 'var(--color-purple, #8457ce)',
-  EDUCATION_SCHEDULED: 'var(--color-green, #1e8c29)',
-  EDUCATION_IN_PROGRESS: 'var(--color-blue, #017eaf)',
-  PROGRAM_ENDED: '#374151',
-  INTERVIEW_FAILED: 'var(--main-BK, #3d3d3d)',
-  REJECTED: 'var(--color-red, #c32f4a)',
+  WAITING_RESULT: 'var(--Status-orange-main, #f07917)',
+  DOCUMENT_PASS: 'var(--Status-purple-main, #8457ce)',
+  EDUCATION_SCHEDULED: 'var(--Status-green-main, #1e8c29)',
+  EDUCATION_IN_PROGRESS: 'var(--Status-blue-main, #017eaf)',
+  PROGRAM_ENDED: 'var(--Netural-black, #3d3d3d)',
+  INTERVIEW_FAILED: 'var(--Netural-black, #3d3d3d)',
+  REJECTED: 'var(--Status-red-main, #c32f4a)',
 }
 
 /** UJAT 목록 5종 → 공통 7단계 배지 토큰 (일반 화면에서 UJAT Program이 넘어올 때 폴백) */

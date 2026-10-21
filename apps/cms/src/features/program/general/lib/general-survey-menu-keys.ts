@@ -102,7 +102,9 @@ export function resolveGeneralSurveyMenuKeys(input: {
   return []
 }
 
-export function resolveProgramSurveyMenuKeys(program: Pick<Program, 'generalSurveyMenuKeys' | 'registrationOverlay'>): GeneralProgramSurveyMenuKey[] {
+export function resolveProgramSurveyMenuKeys(
+  program: Pick<Program, 'generalSurveyMenuKeys' | 'registrationOverlay'>
+): GeneralProgramSurveyMenuKey[] {
   return resolveGeneralSurveyMenuKeys({
     keys: program.generalSurveyMenuKeys,
     overlay: program.registrationOverlay,

@@ -58,7 +58,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
 
   const universityField = isTemplateAuthoringMode ? (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width={240}
       placeholder="학교명을 입력해 보세요"
       icon={<SearchOutlined aria-hidden />}
@@ -67,7 +67,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
     />
   ) : (
     <UniversitySearch
-      inputSize="medium"
+      inputSize="small"
       width={240}
       placeholder="학교명을 입력해 보세요"
       value={universityName}
@@ -85,7 +85,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
               {universityField}
               <DetailInfoForm.InputsSeparator />
               <CmsSelect
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 withAllOption
                 placeholder="전체"
@@ -101,7 +101,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
           label="대학 전공"
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="복수전공이나 부전공이 있을 경우, 함께 기재해 주세요"
               value={major}
@@ -118,7 +118,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
-                inputSize="medium"
+                inputSize="small"
                 width={160}
                 withAllOption
                 placeholder="전체"
@@ -128,7 +128,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 style={{ flex: '1 1 0', minWidth: 0 }}
                 placeholder="직접 입력"
@@ -144,15 +144,15 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
           label="지원 형태"
           edit={
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={applicationType}
               onChange={e =>
                 onApplicationTypeChange(e.target.value as UjatProgramApplicationVolunteerType)
               }
               style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}
             >
-              <CmsRadio value="new">신규 봉사자</CmsRadio>
-              <CmsRadio value="ujat-graduate">UJAT 수료자 봉사자</CmsRadio>
+              <CmsRadio size="medium" value="new">신규 봉사자</CmsRadio>
+              <CmsRadio size="medium" value="ujat-graduate">UJAT 수료자 봉사자</CmsRadio>
             </CmsRadioGroup>
           }
           view="-"
@@ -176,7 +176,7 @@ export function UjatProgramApplicationVolunteer1365IdForm({ className }: { class
           label="1365 ID"
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="1365 ID"
               value={id1365}

@@ -8,6 +8,7 @@ import { ParagraphCard } from '@/features/form-template'
 import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFTextarea } from '@/shared/ui'
 import hostStyles from '../apply-form-field-host.module.css'
 import { institutionGuidanceParagraphHeading } from './institution-guidance-paragraph-heading'
+import { UJAT_INSTITUTION_GUIDANCE_FIELD_COPY } from './ujat-institution-guidance-fields'
 import styles from './apply-institution-guidance.module.css'
 
 export type ApplyInstitutionGuidanceAnswers = Record<InstitutionGuidanceFieldId, string>
@@ -46,6 +47,8 @@ type ApplyInstitutionGuidanceProps = {
   onChange: (next: ApplyInstitutionGuidanceAnswers) => void
   /** 마이페이지 안내사항 작성 — 항목별 ParagraphCard */
   layout?: 'stacked' | 'paragraphCards'
+  /** UJAT 기관 안내 — 시안 문구 overlay. 필드 ID는 일반 안내와 동일 */
+  variant?: 'general' | 'ujat'
 }
 
 function guidanceTextarea(
@@ -76,11 +79,16 @@ export function ApplyInstitutionGuidance({
   value,
   onChange,
   layout = 'stacked',
+  variant = 'general',
 }: ApplyInstitutionGuidanceProps) {
+  const fields = INSTITUTION_GUIDANCE_FIELDS.map(field =>
+    variant === 'ujat' ? { ...field, ...UJAT_INSTITUTION_GUIDANCE_FIELD_COPY[field.id] } : field,
+  )
+
   if (layout === 'paragraphCards') {
     return (
       <>
-        {INSTITUTION_GUIDANCE_FIELDS.map(field => (
+        {fields.map(field => (
           <ParagraphCard
             key={field.id}
             dataParagraphId={`institution-guidance-${field.id}`}
@@ -95,7 +103,7 @@ export function ApplyInstitutionGuidance({
 
   return (
     <div className={[styles.root, hostStyles.root, hostStyles.vertical].join(' ')}>
-      {INSTITUTION_GUIDANCE_FIELDS.map(field => (
+      {fields.map(field => (
         <PFFormFieldTable key={field.id}>
           <PFFormFieldRow type="single">
             <PFFormField

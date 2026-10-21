@@ -6,9 +6,11 @@ import type {
   HomeDonationCta,
   HomeMainFallback,
   HomeMainView,
+  HomePopup,
   HomeSocialLink,
   HomeStripBanner,
 } from './view.ts'
+import { MAX_HOME_POPUPS } from './view.ts'
 import type {
   HomeAchievementStat,
   HomeHeroSlide,
@@ -198,6 +200,34 @@ function mapPartnerRows(
   return [logos.slice(0, mid), logos.slice(mid)]
 }
 
+function mapPopups(remote: PublicMainResponse['popups']): readonly HomePopup[] {
+  const rows = [...(remote ?? [])].sort(
+    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
+  )
+  if (rows.length === 0) return []
+
+  return rows
+    .flatMap((row, index) => {
+      const imageUrl = readPublicImageUrl(row.imageUrl)
+      if (!imageUrl) return []
+      if (!isWithinDisplayPeriod(row.displayStartDate, row.displayEndDate)) return []
+
+      const link = readString(row.linkUrl)
+      const href = link ? parseHomeHref(link) : undefined
+
+      return [
+        {
+          id: row.id != null ? String(row.id) : `popup-${index}`,
+          imageUrl,
+          altText: readString(row.altText) ?? '',
+          href: href?.href,
+          external: href?.external,
+        },
+      ]
+    })
+    .slice(0, MAX_HOME_POPUPS)
+}
+
 function mapDonationCta(
   label: string | undefined,
   url: string | undefined,
@@ -229,6 +259,7 @@ export function createPendingHomeMainView(fallback: HomeMainFallback): HomeMainV
     programs: [],
     partnerRows: [],
     socialLinks: [],
+    popups: [],
   }
 }
 
@@ -278,5 +309,6 @@ export function mergePublicMainWithFallback(
       donationCta2,
     ),
     socialLinks: mapSocialLinks(remote.socialLinks, fallback.socialLinks),
+    popups: mapPopups(remote.popups),
   }
 }

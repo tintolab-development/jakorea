@@ -10,11 +10,15 @@ export function ApplicantPreferredScheduleDetailSection({
   emptyMessage = '등록된 교육 일정이 없습니다.',
   sessions,
   bridge,
+  detailScheduleTimeSpan,
+  curriculumSessionLabels,
 }: {
   title?: string
   emptyMessage?: string
   sessions: readonly ParticipatingSchoolSession[]
   bridge?: InstitutionApplicationProgramBridge | null
+  detailScheduleTimeSpan?: string | null
+  curriculumSessionLabels?: readonly string[] | null
 }) {
   return (
     <DetailInfoForm title={title} mode="view">
@@ -29,7 +33,15 @@ export function ApplicantPreferredScheduleDetailSection({
               label={formatInstitutionApplicationScheduleRowLabel(index + 1, bridge)}
               fullRow
               readOnlyDisplay
-              view={<GeneralDetailSessionLine session={session} bridge={bridge} />}
+              view={
+                <GeneralDetailSessionLine
+                  session={session}
+                  bridge={bridge}
+                  detailScheduleTimeSpan={detailScheduleTimeSpan}
+                  curriculumSessionLabels={curriculumSessionLabels}
+                  preferFormOptionLabel
+                />
+              }
             />
           </DetailInfoForm.Row>
         ))

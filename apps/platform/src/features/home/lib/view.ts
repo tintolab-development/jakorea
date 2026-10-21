@@ -27,6 +27,17 @@ export type HomeDonationCta = {
   external: boolean
 }
 
+/** Admin 메인 팝업 관리 → GET /api/public/main popups. 동시 노출 상한은 Admin MAX_ACTIVE_POPUPS 와 같다. */
+export const MAX_HOME_POPUPS = 4
+
+export type HomePopup = {
+  id: string
+  imageUrl: string
+  altText: string
+  href?: string
+  external?: boolean
+}
+
 /** 홈 프로그램 카드. 신청 카탈로그(`/programs`) 상세 스키마와 분리한다. */
 export type HomeProgramCard = {
   id: string
@@ -59,6 +70,7 @@ export type HomeMainView = {
   donationCta1: HomeDonationCta
   donationCta2: HomeDonationCta
   socialLinks: readonly HomeSocialLink[]
+  popups: readonly HomePopup[]
 }
 
 export type HomeMainFallback = Omit<HomeMainView, 'source' | 'featuredStory'> & {

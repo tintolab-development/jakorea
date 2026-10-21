@@ -111,7 +111,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
             view={applicationDetail.addressDetail || '-'}
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={addressDetailDraft}
                 placeholder="상세 주소를 입력해 주세요"

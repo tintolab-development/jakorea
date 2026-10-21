@@ -20,6 +20,9 @@ import {
   getInstitutionApplicationSessionsTableSlice,
   shouldShowInstitutionApplicationSessionsColumn,
 } from '@/features/program/general/lib/institution-application-session-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from './applicants-detail-session-format'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 
@@ -58,7 +61,7 @@ function formatCompanySchoolPreferredSchedule(sessions: ApplicantSchoolRow['sess
   )
   const dateLabel = [first.date, first.dayOfWeek ? `(${first.dayOfWeek})` : ''].join('')
   const timeLabel = startTime && endTime ? `${startTime} ~ ${endTime}` : (first.timeRange ?? '-')
-  return `${dateLabel} ${timeLabel} | ${totalSessions}차시`
+  return formatCmsScheduleDisplayLabel(`${dateLabel} ${timeLabel} | ${totalSessions}차시`)
 }
 
 export function useInstitutionApplicantColumns(params: {
@@ -74,6 +77,9 @@ export function useInstitutionApplicantColumns(params: {
   setOpenApprovalDropdownId: (id: string | null) => void
   preset?: InstitutionColumnPreset
   programBridge?: InstitutionApplicationProgramBridge | null
+  detailScheduleTimeSpan?: string | null
+  curriculumSessionLabels?: readonly string[] | null
+  educationScheduleLines?: readonly string[] | null
 }): ColumnsType<ApplicantSchoolRow> {
   const {
     setSelectedItem,
@@ -84,10 +90,21 @@ export function useInstitutionApplicantColumns(params: {
     setOpenApprovalDropdownId,
     preset = 'legacy',
     programBridge = null,
+    detailScheduleTimeSpan = null,
+    curriculumSessionLabels = null,
+    educationScheduleLines = null,
   } = params
   const isGeneralDetail = preset === 'general-detail'
   const isCompanySchool = preset === 'company-school'
+  const scheduleLines =
+    educationScheduleLines ?? programBridge?.educationScheduleLines ?? []
+  const hasScheduleMultiLines =
+    isGeneralDetail &&
+    programBridge?.educationStructure === 'schedule' &&
+    programBridge.sessionRound === 'multi' &&
+    scheduleLines.length > 0
   const showSessionsColumn =
+    hasScheduleMultiLines ||
     (!isGeneralDetail && !isCompanySchool) ||
     programBridge == null ||
     shouldShowInstitutionApplicationSessionsColumn(programBridge)
@@ -310,7 +327,16 @@ export function useInstitutionApplicantColumns(params: {
             : 'applicant-details__td-sessions',
         }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
-          const sessions = record.sessions ?? []
+          const sessions = isGeneralDetail
+            ? prepareGeneralEducationScheduleSessions(
+                record.sessions ?? [],
+                generalEducationScheduleShapeFromBridge(programBridge),
+                {
+                  detailScheduleTimeSpan,
+                  educationScheduleLines: scheduleLines,
+                }
+              )
+            : (record.sessions ?? [])
           if (sessions.length === 0) return '-'
           const { displaySessions, restCount } = getInstitutionApplicationSessionsTableSlice(sessions)
           return (
@@ -319,7 +345,13 @@ export function useInstitutionApplicantColumns(params: {
                 if (isGeneralDetail) {
                   return (
                     <div key={s.round} className="applicant-details__session-line">
-                      <GeneralDetailSessionLine session={s} bridge={programBridge} />
+                      <GeneralDetailSessionLine
+                        session={s}
+                        bridge={programBridge}
+                        detailScheduleTimeSpan={detailScheduleTimeSpan}
+                        curriculumSessionLabels={curriculumSessionLabels}
+                        preferFormOptionLabel
+                      />
                     </div>
                   )
                 }
@@ -423,12 +455,16 @@ export function useInstitutionApplicantColumns(params: {
     },
     [
       approvalStatusKeys,
+      curriculumSessionLabels,
+      educationScheduleLines,
       getSessionLineParts,
       handleInstitutionApprovalStatusChange,
       isCompanySchool,
+      detailScheduleTimeSpan,
       isGeneralDetail,
       openApprovalDropdownId,
       programBridge,
+      scheduleLines,
       setSelectedItem,
       showSessionsColumn,
     ]

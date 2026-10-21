@@ -16,6 +16,7 @@ import {
   createNoticeRemote,
   deleteNoticeCategoryRemote,
   deleteNoticeRemote,
+  bulkDeleteNoticesRemote,
   fetchNoticeCategoriesRemote,
   fetchNoticeRemote,
   fetchNoticesRemote,
@@ -175,9 +176,8 @@ export async function deleteNotice(id: string): Promise<void> {
 }
 
 export async function deleteNotices(ids: string[]): Promise<void> {
-  for (const id of ids) {
-    await deleteNotice(id)
-  }
+  assertNoticesRemoteReady()
+  await bulkDeleteNoticesRemote(ids)
 }
 
 export async function getNoticeCategories(): Promise<CategoryRow[]> {

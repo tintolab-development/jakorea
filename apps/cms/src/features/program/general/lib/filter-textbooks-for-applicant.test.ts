@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
+import { buildTextbookMatchesParamsFromProgram } from '@/features/textbook/api/textbook-program-catalog'
 import {
   filterTextbooksForApplicant,
   filterTextbooksForIndividualApplicant,
@@ -96,6 +97,47 @@ describe('filterTextbooksForApplicant', () => {
     ])
     expect(rows.map(row => row.id).sort()).toEqual(['1', '2'])
   })
+
+  it('성인과 중학생이면 중학교 교재를 포함하고 다른 학교급은 뺀다', () => {
+    const program = {
+      businessArea: '기업가정신',
+      targetLevels: ['adult', 'middle'],
+    } as Program
+    const rows = filterTextbooksForApplicant(program, '1학년', [
+      makeTextbook({
+        id: 'middle',
+        businessArea: '기업가정신',
+        educationTarget: '중학교',
+        grade: '전학년',
+        textbookName: '중학 교재',
+      }),
+      makeTextbook({
+        id: 'elementary',
+        businessArea: '기업가정신',
+        educationTarget: '초등학교',
+        grade: '전학년',
+        textbookName: '초등 교재',
+      }),
+    ])
+    expect(rows.map(row => row.id)).toEqual(['middle'])
+  })
+
+  it('교재 교육대상이 중학생 라벨이어도 중학교로 매칭한다', () => {
+    const program = {
+      businessArea: '기업가정신',
+      targetLevels: ['성인', '중학생'],
+    } as unknown as Program
+    const rows = filterTextbooksForApplicant(program, '2학년', [
+      makeTextbook({
+        id: 'middle',
+        businessArea: '기업가정신',
+        educationTarget: '중학생' as TextbookRow['educationTarget'],
+        grade: '전학년',
+        textbookName: '중학 교재',
+      }),
+    ])
+    expect(rows.map(row => row.id)).toEqual(['middle'])
+  })
 })
 
 describe('filterTextbooksForIndividualApplicant', () => {
@@ -123,6 +165,34 @@ describe('resolveProgramEducationTargets', () => {
         targetLevels: ['elementary', 'high'],
       } as Program)
     ).toEqual(['초등학교', '고등학교'])
+  })
+
+  it('성인은 건너뛰고 중학생은 중학교로 둔다', () => {
+    expect(
+      resolveProgramEducationTargets({
+        targetLevels: ['adult', '중학생'],
+      } as Program)
+    ).toEqual(['중학교'])
+  })
+})
+
+describe('buildTextbookMatchesParamsFromProgram', () => {
+  it('성인·중학생은 중학교 교재만 조회한다', () => {
+    expect(
+      buildTextbookMatchesParamsFromProgram({
+        businessArea: '기업가정신',
+        targetLevels: ['adult', 'middle'],
+      } as Program).educationTarget
+    ).toBe('중학교')
+  })
+
+  it('교재 대상이 둘 이상이면 educationTarget을 비워 합집합을 받는다', () => {
+    expect(
+      buildTextbookMatchesParamsFromProgram({
+        businessArea: '기업가정신',
+        targetLevels: ['elementary', 'middle'],
+      } as Program).educationTarget
+    ).toBeUndefined()
   })
 })
 

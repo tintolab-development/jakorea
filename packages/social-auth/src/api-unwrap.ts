@@ -29,16 +29,7 @@ export function readSocialLoginMfaChallenge(payload: unknown): SocialLoginMfaCha
     challengeUuid,
     mfaMethod: readOptionalString(o.mfaMethod),
     expiresAt: readOptionalString(o.expiresAt),
-    totpSecret:
-      readOptionalString(o.totpSecret) ??
-      readOptionalString(o.secretKey) ??
-      readOptionalString(o.secret),
-    otpauthUri: readOptionalString(o.otpauthUri),
-    qrDataUrl:
-      readOptionalString(o.qrDataUrl) ??
-      readOptionalString(o.qrCodeDataUrl) ??
-      readOptionalString(o.qrCodeUrl) ??
-      readOptionalString(o.qrCode),
+    mfaSetupRequired: typeof o.mfaSetupRequired === 'boolean' ? o.mfaSetupRequired : undefined,
   }
 }
 

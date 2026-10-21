@@ -6,13 +6,17 @@ import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/
 import { buildSurveyPollScheduleSelectOptionsForProgram } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
 
+/**
+ * 설문 대상 일정 — `GET .../education-slots` only.
+ * `/schedules` fallback 없음 (기간 창 오연결 방지).
+ */
 export function useProgramSurveyScheduleOptions(
   program: Program | null | undefined,
   enabled: boolean
 ) {
   const programId = program?.id != null ? String(program.id) : undefined
   const query = useQuery({
-    queryKey: generalProgramQueryKeys.educationSlots(programId ?? ''),
+    queryKey: [...generalProgramQueryKeys.educationSlots(programId ?? ''), 'survey-poll'] as const,
     queryFn: () => fetchProgramPlannedEducationSlots(programId!),
     enabled: enabled && programId != null && programId.trim() !== '',
   })

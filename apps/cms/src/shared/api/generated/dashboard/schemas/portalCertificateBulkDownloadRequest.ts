@@ -5,12 +5,18 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { PortalCertificateBulkDownloadRequestCertificateType } from './portalCertificateBulkDownloadRequestCertificateType';
 
+/**
+ * 기관 신청서에 속한 학생 roster의 기존 수료증 ZIP 다운로드 요청입니다.
+ */
 export interface PortalCertificateBulkDownloadRequest {
   /**
-     * @minItems 0
+     * 현재 기관 신청서에 속한 학생 roster ID 목록입니다. 최대 100개까지 요청할 수 있습니다.
+     * @minItems 1
      * @maxItems 100
      */
   rosterIds: number[];
-  certificateType: string;
+  /** 수료증 유형입니다. 현재 COMPLETION만 지원합니다. */
+  certificateType: PortalCertificateBulkDownloadRequestCertificateType;
 }

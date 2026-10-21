@@ -176,12 +176,14 @@ export function resolveUjatVolunteerActivityTermFromOverlay(
   return overlayString(overlay, key)?.trim() || undefined
 }
 
-/** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. */
+/** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. GET 행이 있으면 기간·문의처·면접은 덮지 않는다. */
 export function applyUjatRecruitVolunteerOverlayOntoProgram(
   program: Program,
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  options?: { preferOverlay?: boolean }
 ): Program {
   if (Object.keys(overlay).length === 0) return program
+  const preferOverlay = options?.preferOverlay !== false
   const programRange = readRangeSeal(overlay, KEYS.programRange)
   const recruitRange = readRangeSeal(overlay, KEYS.recruitRange)
   const recruitRangeH1 = readRangeSeal(overlay, KEYS.recruitRangeH1) ?? recruitRange
@@ -203,30 +205,35 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     ...program,
     mainTitle: program.mainTitle,
     title: program.title,
-    startDate: programRange?.start?.trim() ? programRange.start : program.startDate,
-    endDate: programRange?.end?.trim() ? programRange.end : program.endDate,
+    startDate:
+      preferOverlay && programRange?.start?.trim() ? programRange.start : program.startDate,
+    endDate: preferOverlay && programRange?.end?.trim() ? programRange.end : program.endDate,
     volunteerTarget: volunteerTargets?.join(', ') ?? program.volunteerTarget,
     volunteerTargets: volunteerTargets ?? program.volunteerTargets,
     volunteerTargetDetail:
       overlayString(overlay, KEYS.targetDetail) ?? program.volunteerTargetDetail,
-    volunteerApplicationStartDate: recruitRangeH1?.start?.trim()
-      ? recruitRangeH1.start
-      : program.volunteerApplicationStartDate,
-    volunteerApplicationEndDate: recruitRangeH1?.end?.trim()
-      ? recruitRangeH1.end
-      : program.volunteerApplicationEndDate,
+    volunteerApplicationStartDate:
+      preferOverlay && recruitRangeH1?.start?.trim()
+        ? recruitRangeH1.start
+        : program.volunteerApplicationStartDate,
+    volunteerApplicationEndDate:
+      preferOverlay && recruitRangeH1?.end?.trim()
+        ? recruitRangeH1.end
+        : program.volunteerApplicationEndDate,
     documentPassAnnouncementDate: docAnnounce?.date?.trim()
       ? docAnnounce.date
       : program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod: docAnnounce?.method?.trim()
       ? docAnnounce.method
       : program.documentPassAnnouncementMethod,
-    interviewStartDate: interviewRange?.start?.trim()
-      ? interviewRange.start
-      : program.interviewStartDate,
-    interviewEndDate: interviewRange?.end?.trim()
-      ? interviewRange.end
-      : program.interviewEndDate,
+    interviewStartDate:
+      preferOverlay && interviewRange?.start?.trim()
+        ? interviewRange.start
+        : program.interviewStartDate,
+    interviewEndDate:
+      preferOverlay && interviewRange?.end?.trim()
+        ? interviewRange.end
+        : program.interviewEndDate,
     interviewMethod:
       overlayString(overlay, KEYS.interviewMethod) ?? program.interviewMethod,
     finalPassAnnouncementDate: finalAnnounce?.date?.trim()
@@ -235,9 +242,12 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     finalPassAnnouncementMethod: finalAnnounce?.method?.trim()
       ? finalAnnounce.method
       : program.finalPassAnnouncementMethod,
-    managerName: contact?.name?.trim() ? contact.name : program.managerName,
-    contactPhone: contact?.phone?.trim() ? contact.phone : program.contactPhone,
-    contactEmail: contact?.email?.trim() ? contact.email : program.contactEmail,
+    managerName:
+      preferOverlay && contact?.name?.trim() ? contact.name : program.managerName,
+    contactPhone:
+      preferOverlay && contact?.phone?.trim() ? contact.phone : program.contactPhone,
+    contactEmail:
+      preferOverlay && contact?.email?.trim() ? contact.email : program.contactEmail,
     otherNotes: notes ?? program.otherNotes,
     description: overlayString(overlay, KEYS.description) ?? program.description,
     recruitmentGuide:
@@ -251,11 +261,11 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
       applyRoundOverlay(
         program.rounds,
         0,
-        recruitRangeH1,
+        preferOverlay ? recruitRangeH1 : undefined,
         overlayString(overlay, KEYS.activityTermH1)
       ),
       1,
-      recruitRangeH2,
+      preferOverlay ? recruitRangeH2 : undefined,
       overlayString(overlay, KEYS.activityTermH2)
     ),
     generalCommonInfo: {
@@ -267,7 +277,7 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
             ? announcementPublished
             : program.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished,
         contactOrganizationName:
-          contact?.name?.trim() ||
+          (preferOverlay ? contact?.name?.trim() : undefined) ||
           program.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName,
         noticeExposureTiming: (() => {
           const raw = typeof noticeExposure === 'string' ? noticeExposure : undefined

@@ -27,12 +27,12 @@ export function TrainedTeachersEducationJournalSettingsRow() {
           fullRow
           edit={
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={educationJournalEnabled}
               onChange={e => setEducationJournalEnabled(e.target.value as 'yes' | 'no')}
             >
-              <CmsRadio value="yes">있음</CmsRadio>
-              <CmsRadio value="no">없음</CmsRadio>
+              <CmsRadio size="medium" value="yes">있음</CmsRadio>
+              <CmsRadio size="medium" value="no">없음</CmsRadio>
             </CmsRadioGroup>
           }
           view="-"

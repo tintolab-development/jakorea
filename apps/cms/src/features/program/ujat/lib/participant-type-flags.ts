@@ -25,17 +25,47 @@ function overlayHasParticipantKey(overlay: Record<string, unknown>): boolean {
   return Object.values(PARTICIPANT_OVERLAY_KEYS).some(key => typeof overlay[key] === 'boolean')
 }
 
-function flagsFromOverlay(overlay: Record<string, unknown>): UjatParticipantTypeFlags {
+/** 공통정보 저장 — overlay 체크를 `generalParticipantTypes`에 그대로 실는다. GET types보다 overlay가 우선. */
+export function ujatParticipantFlagsFromOverlaySave(
+  overlay: Record<string, unknown> | undefined
+): UjatParticipantTypeFlags | null {
+  if (!overlay || !overlayHasParticipantKey(overlay)) return null
+  return flagsFromOverlay(overlay, false)
+}
+
+function emptyFlags(): UjatParticipantTypeFlags {
+  return {
+    individual: false,
+    organization: false,
+    teacher: false,
+    volunteer: false,
+  }
+}
+
+function ujatDefaultFlags(): UjatParticipantTypeFlags {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
   return {
-    individual: overlayBoolean(overlay, PARTICIPANT_OVERLAY_KEYS.individual, defaults.participantIndividual),
+    individual: defaults.participantIndividual,
+    organization: defaults.participantOrganization,
+    teacher: defaults.participantTeacher,
+    volunteer: defaults.participantVolunteer,
+  }
+}
+
+function flagsFromOverlay(
+  overlay: Record<string, unknown>,
+  fillDefaults: boolean
+): UjatParticipantTypeFlags {
+  const fallback = fillDefaults ? ujatDefaultFlags() : emptyFlags()
+  return {
+    individual: overlayBoolean(overlay, PARTICIPANT_OVERLAY_KEYS.individual, fallback.individual),
     organization: overlayBoolean(
       overlay,
       PARTICIPANT_OVERLAY_KEYS.organization,
-      defaults.participantOrganization
+      fallback.organization
     ),
-    teacher: overlayBoolean(overlay, PARTICIPANT_OVERLAY_KEYS.teacher, defaults.participantTeacher),
-    volunteer: overlayBoolean(overlay, PARTICIPANT_OVERLAY_KEYS.volunteer, defaults.participantVolunteer),
+    teacher: overlayBoolean(overlay, PARTICIPANT_OVERLAY_KEYS.teacher, fallback.teacher),
+    volunteer: overlayBoolean(overlay, PARTICIPANT_OVERLAY_KEYS.volunteer, fallback.volunteer),
   }
 }
 
@@ -73,34 +103,26 @@ function flagsHaveSelection(flags: UjatParticipantTypeFlags): boolean {
   return flags.individual || flags.organization || flags.teacher || flags.volunteer
 }
 
-function ujatDefaultFlags(): UjatParticipantTypeFlags {
-  const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
-  return {
-    individual: defaults.participantIndividual,
-    organization: defaults.participantOrganization,
-    teacher: defaults.participantTeacher,
-    volunteer: defaults.participantVolunteer,
-  }
-}
-
-/** 프로그램 유형 → overlay 선택값 → 모집 row → UJAT 기본(학교/기관·봉사자) */
+/** 프로그램 유형 → overlay 선택값 → 모집 row. FE 기본값은 신규 등록 폼(`fillDefaults`)만. */
 export function resolveUjatParticipantTypeFlags(
   program: Program,
-  overlayInput?: Record<string, unknown>
+  overlayInput?: Record<string, unknown>,
+  options?: { fillDefaults?: boolean }
 ): UjatParticipantTypeFlags {
+  const fillDefaults = options?.fillDefaults === true
   const fromTypes = flagsFromProgramTypes(program)
   if (fromTypes && flagsHaveSelection(fromTypes)) return fromTypes
 
   const overlay = overlayInput ?? program.ujatRegistrationOverlay ?? {}
   if (overlayHasParticipantKey(overlay)) {
-    const fromOverlay = flagsFromOverlay(overlay)
+    const fromOverlay = flagsFromOverlay(overlay, fillDefaults)
     if (flagsHaveSelection(fromOverlay)) return fromOverlay
   }
 
   const fromRecruitments = flagsFromRecruitments(program)
   if (fromRecruitments) return fromRecruitments
 
-  return ujatDefaultFlags()
+  return fillDefaults ? ujatDefaultFlags() : emptyFlags()
 }
 
 export function ujatParticipantTypeLabels(flags: UjatParticipantTypeFlags): string {

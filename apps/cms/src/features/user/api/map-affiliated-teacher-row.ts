@@ -2,6 +2,7 @@ import type { SchoolAffiliatedTeacherRow as ApiSchoolAffiliatedTeacherRow } from
 import type { SchoolAffiliatedTeacherResponse } from '@/shared/api/generated/members/schemas/schoolAffiliatedTeacherResponse'
 import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
 
 type AffiliatedTeacherApiRow = ApiSchoolAffiliatedTeacherRow | SchoolAffiliatedTeacherResponse
 
@@ -14,10 +15,7 @@ function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
 }
 
 function resolveTeacherMemberId(row: AffiliatedTeacherApiRow): number | undefined {
-  if (typeof row.memberId === 'number' && Number.isFinite(row.memberId)) {
-    return row.memberId
-  }
-  return undefined
+  return coercePositiveInt(row.memberId)
 }
 
 export function mapAffiliatedTeacherRow(row: AffiliatedTeacherApiRow): SchoolAffiliatedTeacherRow {
@@ -52,4 +50,15 @@ export function mapAffiliatedTeacherRows(
 ): SchoolAffiliatedTeacherRow[] {
   if (!rows?.length) return []
   return rows.map(mapAffiliatedTeacherRow)
+}
+
+/** 소속 교사 선택 탈퇴 — uuid 또는 memberId 중 하나로 회원 삭제 식별자를 만든다. */
+export function resolveAffiliatedTeacherWithdrawTarget(row: {
+  linkedUserId?: string
+  teacherMemberId?: number
+}): { userId: string; memberId?: number } | null {
+  const memberId = coercePositiveInt(row.teacherMemberId)
+  const userId = row.linkedUserId?.trim() || (memberId != null ? String(memberId) : '')
+  if (!userId) return null
+  return { userId, ...(memberId != null ? { memberId } : {}) }
 }

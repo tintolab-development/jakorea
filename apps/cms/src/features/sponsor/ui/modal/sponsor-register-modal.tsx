@@ -154,7 +154,7 @@ export function SponsorRegisterModal({
                 value={form.nameDisplayKo}
                 onChange={e => setField('nameDisplayKo', e.target.value)}
                 placeholder="후원사명(국문)을 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             }
@@ -168,7 +168,7 @@ export function SponsorRegisterModal({
                 value={form.nameDisplayEn}
                 onChange={e => setField('nameDisplayEn', e.target.value)}
                 placeholder="후원사명(영문)을 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             }
@@ -201,7 +201,7 @@ export function SponsorRegisterModal({
                 value={form.businessNumber}
                 onChange={e => setField('businessNumber', e.target.value)}
                 placeholder="사업자번호를 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             }
@@ -213,7 +213,7 @@ export function SponsorRegisterModal({
             required
             view={noopView}
             edit={
-              <CmsDatePicker
+              <CmsDatePicker inputSize="small"
                 value={form.sponsorshipStartDate ? dayjs(form.sponsorshipStartDate) : null}
                 onChange={date =>
                   setField(
@@ -258,7 +258,7 @@ export function SponsorRegisterModal({
                 value={form.executives}
                 onChange={e => setField('executives', e.target.value)}
                 placeholder="대표이사명을 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             }
@@ -275,7 +275,7 @@ export function SponsorRegisterModal({
                   value={form.district}
                   onChange={next => setField('district', next)}
                   onSelect={() => setField('detailAddress', '')}
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                 />
                 <DetailInfoForm.InputsSeparator />
@@ -283,7 +283,7 @@ export function SponsorRegisterModal({
                   value={form.detailAddress}
                   onChange={e => setField('detailAddress', e.target.value)}
                   placeholder="상세 주소"
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                 />
               </Space.Compact>
@@ -300,7 +300,7 @@ export function SponsorRegisterModal({
                 value={form.homepageUrl}
                 onChange={e => setField('homepageUrl', e.target.value)}
                 placeholder="홈페이지 주소를 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             }
@@ -355,7 +355,7 @@ export function SponsorRegisterModal({
                 value={form.securityMemo}
                 onChange={e => setField('securityMemo', e.target.value)}
                 placeholder="비고를 입력하세요"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
               />
             }

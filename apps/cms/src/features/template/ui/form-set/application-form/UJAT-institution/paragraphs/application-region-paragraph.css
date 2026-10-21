@@ -1,0 +1,25 @@
+/* 신청 지역 — Figma 4082:105915 `btn / radio` 가로 나열 */
+.application-region-paragraph {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 12px;
+}
+
+.application-region-paragraph--display-only {
+  pointer-events: none;
+}
+
+.application-region-paragraph .app-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+}
+
+.application-region-paragraph .multiple-choice-row {
+  padding: 0;
+  margin: 0;
+  gap: 8px;
+}

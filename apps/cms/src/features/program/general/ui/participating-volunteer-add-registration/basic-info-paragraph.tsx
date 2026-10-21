@@ -18,7 +18,7 @@ export function ParticipatingVolunteerAddRegistrationBasicInfoParagraph(
             fullRow
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 placeholder="1365 ID"
                 value={values.id1365}

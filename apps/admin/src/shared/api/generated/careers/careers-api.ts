@@ -15,7 +15,6 @@ import type {
   CareerPostingAttachmentPrepareRequest,
   CareerPostingCreateRequest,
   CareerPostingPublicDetail,
-  CareerPostingPublicListResponse,
   CareerPostingUpdateRequest,
   CareerPostingVisibilityRequest,
   CareerTalentApplicationAttachmentDownloadResponse,
@@ -28,6 +27,7 @@ import type {
   ConfirmResponse,
   List12Params,
   List15Params,
+  PageResponseCareerPostingPublicItem,
   PageResponseCareerTalentApplicationListItem,
   PrepareRequest,
   PrepareResponse,
@@ -194,8 +194,8 @@ const detailHead2 = (
 
 const list12 = (
     params?: List12Params,
- options?: SecondParameter<typeof customInstance<CareerPostingPublicListResponse>>,) => {
-      return customInstance<CareerPostingPublicListResponse>(
+ options?: SecondParameter<typeof customInstance<PageResponseCareerPostingPublicItem>>,) => {
+      return customInstance<PageResponseCareerPostingPublicItem>(
       {url: `/api/public/careers/postings`, method: 'GET',
         params
     },

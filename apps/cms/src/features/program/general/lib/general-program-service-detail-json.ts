@@ -393,7 +393,12 @@ export function withVolunteerInterviewSchedulePeriod(
 
 export function serializeGeneralProgramServiceDetailJson(
   program: Program,
-  options?: { omitRecruitmentWindow?: boolean; omitUnchangedWageOverlay?: boolean }
+  options?: {
+    omitRecruitmentWindow?: boolean
+    omitUnchangedWageOverlay?: boolean
+    /** 루트 모집 창 날짜는 빼되, nested `*RecruitmentInfo`는 남긴다. */
+    keepNestedRecruitmentInfo?: boolean
+  }
 ): string | undefined {
   const isIndividual = isGeneralIndividualProgram(program)
   const withAudienceRule = isIndividual
@@ -405,7 +410,7 @@ export function serializeGeneralProgramServiceDetailJson(
       ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
       : withAudienceRule
   const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
-    options?.omitRecruitmentWindow
+    options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
       ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
       : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
   )

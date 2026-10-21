@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
+  generalParticipantTypesFromUjatFlags,
   resolveUjatParticipantTypeFlags,
+  ujatParticipantFlagsFromOverlaySave,
   ujatParticipantTypeLabels,
 } from './participant-type-flags'
 
@@ -56,9 +58,22 @@ describe('resolveUjatParticipantTypeFlags', () => {
     expect(ujatParticipantTypeLabels(flags)).toBe('학교/기관, 봉사자')
   })
 
-  it('유형·overlay가 없으면 UJAT 기본(학교/기관, 봉사자)이다', () => {
-    expect(ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program()))).toBe(
-      '학교/기관, 봉사자'
-    )
+  it('유형·overlay가 없으면 조회는 빈 값이다', () => {
+    expect(ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program()))).toBe('-')
+  })
+
+  it('신규 등록 폼만 학교/기관·봉사자 기본값을 쓴다', () => {
+    expect(
+      ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program(), undefined, { fillDefaults: true }))
+    ).toBe('학교/기관, 봉사자')
+  })
+
+  it('overlay 저장 체크는 GET types와 달라도 types에 반영한다', () => {
+    const flags = ujatParticipantFlagsFromOverlaySave({
+      'ujat.basicInfo.participant.organization': true,
+      'ujat.basicInfo.participant.volunteer': false,
+    })
+    expect(flags).not.toBeNull()
+    expect(generalParticipantTypesFromUjatFlags(flags!)).toEqual(['school_institution'])
   })
 })

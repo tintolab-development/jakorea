@@ -197,7 +197,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             validationKey="recruit.individual.programRangeSeal"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={programAnchor}
@@ -232,7 +232,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             edit={
               <CmsSelect
                 mode="multiple"
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 withAllOption={false}
                 placeholder="교육 대상을 선택하세요"
@@ -248,7 +248,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             validationKey="recruit.individual.targetLevelDetail"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 placeholder="상세 교육 대상을 입력하세요"
                 value={targetLevelDetail}

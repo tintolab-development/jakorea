@@ -43,7 +43,7 @@ export function VolunteerPreviousJaProgramParagraph() {
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 style={{ flex: '3 1 0', minWidth: 0 }}
                 placeholder="진행년도"
@@ -52,7 +52,7 @@ export function VolunteerPreviousJaProgramParagraph() {
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 style={{ flex: '7 1 0', minWidth: 0 }}
                 placeholder="프로그램명"

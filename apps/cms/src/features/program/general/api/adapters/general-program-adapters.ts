@@ -12,7 +12,6 @@ import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
-import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramUpdateRequestRoundsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestRoundsItem'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
@@ -61,6 +60,7 @@ import {
   hydrateGeneralRecruitmentInfoFromRows,
   type RecruitmentCopyAudience,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
@@ -335,11 +335,6 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
         }
       : {}),
     backendProgramType: dto.programType,
-    featuredOnHome: dto.featuredOnHome === true,
-    homeDisplayOrder:
-      typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
-        ? dto.homeDisplayOrder
-        : null,
   })
 }
 
@@ -507,20 +502,17 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
       : {}),
     backendProgramType: dto.programType,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
-    featuredOnHome: dto.featuredOnHome === true,
-    homeDisplayOrder:
-      typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
-        ? dto.homeDisplayOrder
-        : null,
   })
 
-  return hydrateGeneralRecruitmentInfoFromRows(
-    applyResolvedAnnouncementTitle(
-      applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-      {
-        serviceDetailJson: dto.serviceDetailJson,
-        overlay: serviceDetail.registrationOverlay,
-      }
+  return hydrateRecruitmentWindowsOntoProgram(
+    hydrateGeneralRecruitmentInfoFromRows(
+      applyResolvedAnnouncementTitle(
+        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+        {
+          serviceDetailJson: dto.serviceDetailJson,
+          overlay: serviceDetail.registrationOverlay,
+        }
+      )
     )
   )
 }
@@ -857,7 +849,6 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     merged: program,
     existing: program,
   })
-  applyPortalHomeFeaturedToRequest(body, program, 'full')
   return body
 }
 
@@ -993,7 +984,10 @@ function mapProgramPatchFieldsToRequest(
     includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment
       ? (mapGeneralProgramRecruitmentsToRequest({
           ...merged,
-          programRecruitments: existing.programRecruitments,
+          // 운영 기간은 폼이 갱신한 행을 쓴다. 행이 없으면 기존 id·날짜를 유지한다.
+          programRecruitments: has('programRecruitments')
+            ? merged.programRecruitments
+            : existing.programRecruitments,
         })?.filter(row => {
           const type = recruitmentTypeOf(row.recruitmentType)
           if (type === 'PARTICIPANT') return includeParticipantRecruitment
@@ -1157,7 +1151,6 @@ function mapProgramPatchFieldsToRequest(
     existing,
     patch,
   })
-  applyPortalHomeFeaturedToRequest(body, merged, 'patch', patch)
 
   return body
 }

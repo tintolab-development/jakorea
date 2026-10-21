@@ -12,7 +12,14 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  hasRecruitmentWindows,
+  operationPeriodLabelFromWindow,
+  pickAudienceRecruitmentWindow,
+  recruitmentPeriodLabelFromWindow,
+} from '@/features/program/shared/lib/hydrate-recruitment-windows'
 
 type InstructorRecruitmentInfoLoose = NonNullable<
   NonNullable<Program['generalCommonInfo']>['instructorRecruitmentInfo']
@@ -67,6 +74,8 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
 ): GeneralProgramInstructorRecruitmentDisplay {
   const common = program.generalCommonInfo
   const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
+  const row = pickAudienceRecruitmentWindow(program, 'instructor')
+  const useRow = hasRecruitmentWindows(program)
   const lifecycle = resolveInstructorRecruitmentLifecycle(program)
 
   const finalAnnouncement = resolveAnnouncement({
@@ -82,17 +91,37 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
       info?.announcementPublishedLabel,
       labelBool(info?.announcementPublished, '게시', '미게시')
     ),
-    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
+    operationPeriodLabel: pickDisplayString(
+      operationPeriodLabelFromWindow(row),
+      audienceOperationPeriodLabelFromRecruitmentRow(program, 'instructor'),
+      useRow ? undefined : info?.operationPeriodLabel
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     instructorTargetLabel: pickDisplayString(info?.recruitmentTarget),
     instructorTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
-    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
+    recruitmentPeriodLabel: pickDisplayString(
+      recruitmentPeriodLabelFromWindow(row),
+      useRow ? undefined : info?.recruitmentPeriodLabel
+    ),
     finalPassAnnouncementDate: finalAnnouncement.date,
     finalPassAnnouncementMethod: finalAnnouncement.method,
-    contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
-    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
-    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
+    contactOrganizationName: pickDisplayString(
+      row?.contactName,
+      useRow ? undefined : info?.contactOrganizationName
+    ),
+    contactPhone: pickDisplayString(
+      row?.contactPhone,
+      useRow ? undefined : info?.inquiryTel,
+      useRow ? undefined : info?.tel,
+      useRow ? undefined : info?.contactPhone
+    ),
+    contactEmail: pickDisplayString(
+      row?.contactEmail,
+      useRow ? undefined : info?.inquiryEmail,
+      useRow ? undefined : info?.email,
+      useRow ? undefined : info?.contactEmail
+    ),
     notes: pickDisplayString(resolveRecruitmentRemarks(program, 'instructor')),
   }
 }

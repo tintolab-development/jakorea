@@ -3,6 +3,8 @@ import { mapApplicantSchoolToParticipatingSchool } from './education-journals-se
 import { getSchoolDetailByRow } from '@/features/program/general/lib/school-detail'
 import {
   mapPreferredScheduleBlocks,
+  mapPreferredScheduleBlocksToSessions,
+  mapProgramSchedulesToPreferredScheduleBlocks,
   mapTrainedTeacherOrganizationApplicationToRow,
 } from './organization-applications-adapters'
 
@@ -30,9 +32,74 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.teacherName).toBe('김교사')
     expect(row.classCount).toBe(3)
     expect(row.studentCount).toBe(90)
+    expect(row.applicationStatus).toBe('APPROVED')
     expect(row.approvalStatus).toBe('approved')
     expect(row.desiredEducationPeriod).toBe('3월 희망')
     expect(row.preferredScheduleBlocks).toEqual([])
+  })
+
+  it('maps detail gradeBlocks as-is and keeps explicit null', () => {
+    const gradeBlocks = [{ gradeLabel: null, classCount: 1, classes: [{ classNo: '4학년 1반' }] }]
+    expect(
+      mapTrainedTeacherOrganizationApplicationToRow({ applicationId: 1, gradeBlocks }, 0, 'p1')
+        .gradeBlocks
+    ).toEqual(gradeBlocks)
+    expect(
+      mapTrainedTeacherOrganizationApplicationToRow({ applicationId: 1, gradeBlocks: null }, 0, 'p1')
+        .gradeBlocks
+    ).toBeNull()
+    expect(
+      'gradeBlocks' in mapTrainedTeacherOrganizationApplicationToRow({ applicationId: 1 }, 0, 'p1')
+    ).toBe(false)
+  })
+
+  it('maps detail educationSchedules to attendance sessions instead of preferred blocks', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1,
+        preferredScheduleBlocks: [
+          { date: '2026-06-01', sessionCount: 1, sessionTimes: [], scheduleId: 900 },
+        ],
+        educationSchedules: [
+          {
+            scheduleId: 501,
+            round: 2,
+            label: '2회차',
+            startAt: '2026-06-05T09:00:00',
+            endAt: '2026-06-05T10:00:00',
+          },
+          { scheduleId: 0, round: 3 },
+          {
+            scheduleId: 502,
+            round: null,
+            startAt: '2026-11-06T15:00:00Z',
+            endAt: '2026-11-06T16:30:00Z',
+          },
+        ],
+      },
+      0,
+      'p1'
+    )
+    expect(row.educationScheduleSessions).toEqual([
+      expect.objectContaining({
+        round: 2,
+        date: '2026.06.05',
+        dayOfWeek: '금',
+        timeRange: '09:00~10:00',
+        resolvedScheduleId: 501,
+        educationScheduleLabel: '2회차',
+      }),
+      expect.objectContaining({
+        date: '2026.11.07',
+        dayOfWeek: '토',
+        timeRange: '00:00~01:30',
+        resolvedScheduleId: 502,
+      }),
+    ])
+    expect(
+      'educationScheduleSessions' in
+        mapTrainedTeacherOrganizationApplicationToRow({ applicationId: 1 }, 0, 'p1')
+    ).toBe(false)
   })
 
   it('maps teacherMemberId for privacy unmask', () => {
@@ -122,6 +189,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
         format: '',
         classNum: '1교시',
         timeRange: '10:00~11:00',
+        resolvedScheduleId: null,
       },
       {
         round: 2,
@@ -131,6 +199,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
         format: '',
         classNum: '2교시',
         timeRange: '11:00~12:00',
+        resolvedScheduleId: null,
       },
     ])
   })
@@ -232,6 +301,63 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.availableActions).toContain('RESEND_NOTIFICATION')
     expect(row.approvalNotificationSentAt).toBeTruthy()
   })
+
+  it('preserves the matched program schedule id for attendance API queries', () => {
+    const sessions = mapPreferredScheduleBlocksToSessions([
+      {
+        preferenceRank: 1,
+        date: '2026-07-09',
+        dayOfWeek: '목',
+        sessionCount: 1,
+        scheduleId: 9876,
+        sessionTimes: [
+          {
+            sessionIndex: 1,
+            classPeriod: '1교시',
+            timeRange: '09:00 ~ 10:00',
+          },
+        ],
+      },
+    ])
+
+    expect(sessions?.[0]?.resolvedScheduleId).toBe(9876)
+  })
+})
+
+describe('mapProgramSchedulesToPreferredScheduleBlocks', () => {
+  it('uses program detail ACTIVE schedules even when application preferences are empty', () => {
+    const blocks = mapProgramSchedulesToPreferredScheduleBlocks([
+      {
+        id: 2,
+        sessionNo: 2,
+        startAt: '2026-04-20T09:50:00+09:00',
+        endAt: '2026-04-20T10:30:00+09:00',
+        scheduleStatus: 'ACTIVE',
+      },
+      {
+        id: 1,
+        sessionNo: 1,
+        startAt: '2026-04-20T09:00:00+09:00',
+        endAt: '2026-04-20T09:40:00+09:00',
+        scheduleStatus: 'ACTIVE',
+      },
+      {
+        id: 3,
+        sessionNo: 3,
+        startAt: '2026-04-21T09:00:00+09:00',
+        endAt: '2026-04-21T09:40:00+09:00',
+        scheduleStatus: 'CANCELLED',
+      },
+    ])
+
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0]).toMatchObject({
+      date: '2026-04-20',
+      dayOfWeek: '월',
+      sessionCount: 2,
+    })
+    expect(blocks[0]?.sessionTimes.map(session => session.sessionIndex)).toEqual([1, 2])
+  })
 })
 
 describe('mapApplicantSchoolToParticipatingSchool basic info', () => {
@@ -250,6 +376,7 @@ describe('mapApplicantSchoolToParticipatingSchool basic info', () => {
       '186010'
     )
     const participating = mapApplicantSchoolToParticipatingSchool(applicant, 0)
+    expect(participating.organizationApplicationId).toBe('1691187')
     const detail = getSchoolDetailByRow(participating)
     expect(detail.addressDetail).toBe('3층 교무실')
     expect(detail.educationFormat).toBe('오프라인')
@@ -320,6 +447,7 @@ describe('mapPreferredScheduleBlocks', () => {
         format: '',
         classNum: '1교시',
         timeRange: '10:00~11:00',
+        resolvedScheduleId: null,
       },
     ])
   })

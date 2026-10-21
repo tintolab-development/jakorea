@@ -1,10 +1,12 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
+import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { type ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
@@ -16,16 +18,19 @@ import {
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
-import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
-import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import {
-  applyCombinedClassLeadTeacherToApplicantRows,
-  type CombinedClassLeadTeacherCandidate,
-} from '@/features/program/general/lib/combined-class-lead-teacher'
-import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
-import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+  isCombinedClassNonLeadMember,
+  resolveCombinedClassMergeViewState,
+} from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { buildCombinedClassLeadTeacherCandidatesFromApplicants } from '@/features/program/general/lib/combined-class-lead-teacher'
+import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
+import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
+import { useCombinedClassProcess } from '@/features/program/general/hooks/use-combined-class-process'
 import {
   buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import {
@@ -90,6 +95,13 @@ export type ApplicantType =
   | 'individual-applications'
 
 export type ApplicantDetailVariant = 'legacy' | 'general'
+
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+
+const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
+
+const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
 const DETAIL_TAB_PARAM = 'detailTab'
 
@@ -741,117 +753,147 @@ export function ApplicantsDetailContents({
     )
   }, [institutionData, institutionList, mergeGroupsQuery.data])
 
-  const handleSaveInstitutionCombinedClass = useCallback(
-    async (params: {
-      combinedClassApplication: '신청' | '미신청'
-      combinedClassPartnerApplicantIds: string[]
-    }) => {
-      if (!programId || !institutionData || !mergeGroupsAllowed) return
-      await saveOrganizationCombinedClassRemote({
-        programId,
-        programType: program?.backendProgramType,
-        leadRow: institutionData,
-        allRows: institutionList,
-        combinedClassApplication: params.combinedClassApplication,
-        partnerRowIds: params.combinedClassPartnerApplicantIds,
-        existingMergeGroups: mergeGroupsQuery.data,
-      })
-      await queryClient.invalidateQueries({
-        queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
-      })
-    },
-    [
-      institutionData,
-      institutionList,
-      mergeGroupsAllowed,
-      mergeGroupsQuery.data,
-      program,
-      programId,
-      queryClient,
-    ]
-  )
-
-  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
-    memberRowIds: string[]
-    candidates: CombinedClassLeadTeacherCandidate[]
-  } | null>(null)
-  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
+  const institutionWithMerge = useMemo(() => {
+    if (!institutionData) return null
+    return {
+      ...institutionData,
+      detail: applyCombinedClassMergeToApplicantDetail(
+        institutionData.detail,
+        mergeGroupsQuery.data,
+        institutionData,
+        institutionList
+      ),
+    }
+  }, [institutionData, institutionList, mergeGroupsQuery.data])
 
   const institutionDetailEdit = useApplicantInstitutionDetailEdit({
-    institution: isGeneralDetail && isInstitution ? institutionData : null,
+    institution: isGeneralDetail && isInstitution ? institutionWithMerge : null,
     program,
     institutionList,
     onSaved: rows => {
       onInstitutionDetailSaved?.(rows)
     },
-    onSaveCombinedClass:
-      mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
-        ? handleSaveInstitutionCombinedClass
-        : undefined,
-    combinedClassReadOnly: institutionMergeView?.isLead === false,
-    onCombinedClassApplied: params => {
-      setCombinedClassLeadTeacherModal(params)
-    },
+    combinedClassReadOnly: isCombinedClassNonLeadMember(institutionMergeView),
   })
 
-  const combinedClassModals = (
-    <>
-      <InstitutionCombinedClassLeadTeacherModal
-        open={combinedClassLeadTeacherModal != null}
-        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
-        onCancel={() => setCombinedClassLeadTeacherModal(null)}
-        onConfirm={candidate => {
-          if (!combinedClassLeadTeacherModal || !programId || !institutionData) return
-          const leadTeacherMemberId = candidate.teacherMemberId
-          if (leadTeacherMemberId == null || !Number.isFinite(leadTeacherMemberId)) {
-            void showAlert({
-              title: '처리 실패',
-              content: '담당 교사 회원 ID가 없어 지정할 수 없습니다.',
-            })
-            return
-          }
-          void (async () => {
-            try {
-              await saveOrganizationCombinedClassRemote({
-                programId,
-                programType: program?.backendProgramType,
-                leadRow: institutionData,
-                allRows: institutionList,
-                combinedClassApplication: '신청',
-                partnerRowIds: combinedClassLeadTeacherModal.memberRowIds.filter(
-                  id => id !== institutionData.id
-                ),
-                existingMergeGroups: mergeGroupsQuery.data,
-                leadTeacherMemberId,
+  const combinedClassProcess = useCombinedClassProcess({
+    active:
+      isGeneralDetail &&
+      isInstitution &&
+      institutionDetailEdit.isEditing &&
+      institutionDetailEdit.isCombinedClassProgramEligible &&
+      !institutionDetailEdit.combinedClassReadOnly,
+    resetKey: institutionData?.id ?? '',
+    schoolName: institutionData?.schoolName ?? '',
+    leadGrade: institutionData?.educationGrade ?? '',
+    committedApplication:
+      institutionMergeView?.combinedClassApplication === '신청' ? '신청' : '미신청',
+    committedPartnerIds: institutionMergeView?.combinedClassPartnerIds ?? [],
+    partnerOptions: institutionDetailEdit.sameSchoolGradeOptions,
+    applySelection: next => {
+      institutionDetailEdit.updateDraft({
+        combinedClassApplication: next.application,
+        combinedClassPartnerApplicantIds: next.partnerIds,
+      })
+    },
+    buildCandidates: partnerIds => {
+      if (!institutionData) return []
+      return buildCombinedClassLeadTeacherCandidatesFromApplicants(
+        institutionData,
+        institutionList.filter(row => partnerIds.includes(row.id))
+      )
+    },
+    onProcess: async ({ partnerIds, leadTeacherMemberId }) => {
+      if (!programId || !institutionData || !mergeGroupsAllowed) return false
+      if (!shouldUseOrganizationMergeGroupsRemoteApi()) {
+        notifyProgramApiUnavailable('general-org-merge-groups', '일반 프로그램 · 기관 합반 신청')
+        return false
+      }
+      try {
+        const saved = await saveOrganizationCombinedClassRemote({
+          programId,
+          programType: program?.backendProgramType,
+          leadRow: institutionData,
+          allRows: institutionList,
+          combinedClassApplication: '신청',
+          partnerRowIds: partnerIds,
+          existingMergeGroups: mergeGroupsQuery.data,
+          leadTeacherMemberId,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        return saved?.id ?? true
+      } catch (error) {
+        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+        void showAlert({
+          title: '처리 실패',
+          content: axios.isAxiosError(error)
+            ? resolveOrganizationMergeErrorMessage(responseData, {
+                httpStatus,
+                fallback: '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
               })
-              await queryClient.invalidateQueries({
-                queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+            : error instanceof Error && error.message.trim()
+              ? error.message
+              : '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        await queryClient.invalidateQueries({
+          queryKey: [...generalApplicationsQueryKeys.all, 'organization', programId],
+        })
+        institutionDetailEdit.updateDraft({
+          combinedClassApplication: '신청',
+          combinedClassPartnerApplicantIds: retainMatchingCombinedClassPartnerIds(
+            institutionData,
+            institutionList,
+            partnerIds
+          ),
+        })
+        return false
+      }
+    },
+    onCancelMerge: async mergeGroupId => {
+      if (!programId || !institutionData || !mergeGroupsAllowed) return false
+      if (!shouldUseOrganizationMergeGroupsRemoteApi()) {
+        notifyProgramApiUnavailable('general-org-merge-groups', '일반 프로그램 · 합반 취소')
+        return false
+      }
+      try {
+        await saveOrganizationCombinedClassRemote({
+          programId,
+          programType: program?.backendProgramType,
+          leadRow: institutionData,
+          allRows: institutionList,
+          combinedClassApplication: '미신청',
+          partnerRowIds: [],
+          existingMergeGroups: mergeGroupsQuery.data,
+          mergeGroupId,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+        })
+        return true
+      } catch (error) {
+        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+        void showAlert({
+          title: '처리 실패',
+          content: axios.isAxiosError(error)
+            ? resolveOrganizationMergeErrorMessage(responseData, {
+                httpStatus,
+                fallback: '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
               })
-              onInstitutionDetailSaved?.(
-                applyCombinedClassLeadTeacherToApplicantRows(
-                  institutionList,
-                  combinedClassLeadTeacherModal.memberRowIds,
-                  candidate
-                )
-              )
-              setCombinedClassLeadTeacherModal(null)
-              setCombinedClassCompleteLabel(candidate.label)
-            } catch {
-              void showAlert({
-                title: '처리 실패',
-                content: '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
-              })
-            }
-          })()
-        }}
-      />
-      <InstitutionCombinedClassCompleteModal
-        open={combinedClassCompleteLabel != null}
-        teacherLabel={combinedClassCompleteLabel ?? ''}
-        onClose={() => setCombinedClassCompleteLabel(null)}
-      />
-    </>
-  )
+            : error instanceof Error && error.message.trim()
+              ? error.message
+              : '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
+        })
+        return false
+      }
+    },
+  })
 
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
@@ -927,11 +969,16 @@ export function ApplicantsDetailContents({
     saveApplicant: onSaveIndividualDetail,
   })
 
+  const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
+  const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
+
   /* eslint-disable react-hooks/set-state-in-effect -- 개인 신청자 변경 시 코멘트·평가 UI 초기화 */
   useEffect(() => {
     setIsIndividualAdminCommentModalOpen(false)
     setIndividualAdminCommentDraft('')
     setOpenManagerDropdown(null)
+    setEditUnmaskConfirmOpen(false)
+    setEditUnmaskConfirmLoading(false)
   }, [applicantId, individualData?.adminComment])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -1276,6 +1323,7 @@ export function ApplicantsDetailContents({
 
   const {
     personalInfoRevealed,
+    revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
@@ -1320,6 +1368,33 @@ export function ApplicantsDetailContents({
     controlMode: 'headerStickyNoop',
   })
 
+  const requestStartIndividualEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      individualDetailEdit.enterEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [individualDetailEdit.enterEdit, personalInfoRevealed])
+
+  const closeEditUnmaskConfirm = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmOpen(false)
+  }, [editUnmaskConfirmLoading])
+
+  const confirmEditUnmaskAndStartEdit = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmLoading(true)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+      .then(result => {
+        if (!result.ok) return
+        setEditUnmaskConfirmOpen(false)
+        individualDetailEdit.enterEdit()
+      })
+      .finally(() => {
+        setEditUnmaskConfirmLoading(false)
+      })
+  }, [editUnmaskConfirmLoading, individualDetailEdit.enterEdit, revealWithReason])
+
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({
       applicantId,
@@ -1346,11 +1421,15 @@ export function ApplicantsDetailContents({
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
       onEnterInstitutionEdit: institutionDetailEdit.enterEdit,
       onSaveInstitutionEdit: () => {
-        void institutionDetailEdit.saveEdit()
+        void institutionDetailEdit.saveEdit().then(result => {
+          if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
+            combinedClassProcess.openGradeRequiredAlert()
+          }
+        })
       },
       isGeneralIndividualEditEnabled,
       isEditingIndividualDetail: individualDetailEdit.isEditing,
-      onEnterIndividualEdit: individualDetailEdit.enterEdit,
+      onEnterIndividualEdit: requestStartIndividualEdit,
       onSaveIndividualEdit: () => {
         individualDetailEdit.saveEdit()
       },
@@ -1391,9 +1470,10 @@ export function ApplicantsDetailContents({
     institutionDetailEdit.enterEdit,
     institutionDetailEdit.isEditing,
     institutionDetailEdit.saveEdit,
-    individualDetailEdit.enterEdit,
+    combinedClassProcess.openGradeRequiredAlert,
     individualDetailEdit.isEditing,
     individualDetailEdit.saveEdit,
+    requestStartIndividualEdit,
     instructorDetailEdit.enterEdit,
     instructorDetailEdit.isEditing,
     instructorDetailEdit.saveEdit,
@@ -1450,7 +1530,36 @@ export function ApplicantsDetailContents({
           maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
           mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
           draft={institutionDetailEdit.draft ?? undefined}
-          onDraftChange={institutionDetailEdit.updateDraft}
+          onDraftChange={partial => {
+            const keys = Object.keys(partial)
+            const isCombinedClassOnly = keys.every(
+              key =>
+                key === 'combinedClassApplication' || key === 'combinedClassPartnerApplicantIds'
+            )
+            if (
+              isCombinedClassOnly &&
+              partial.combinedClassApplication != null &&
+              partial.combinedClassPartnerApplicantIds != null
+            ) {
+              combinedClassProcess.onApplicationChange(
+                partial.combinedClassApplication,
+                partial.combinedClassPartnerApplicantIds
+              )
+              return
+            }
+            if (
+              isCombinedClassOnly &&
+              keys.length === 1 &&
+              partial.combinedClassPartnerApplicantIds != null
+            ) {
+              combinedClassProcess.onPartnerIdsChange(
+                partial.combinedClassPartnerApplicantIds,
+                institutionDetailEdit.draft?.combinedClassApplication ?? '미신청'
+              )
+              return
+            }
+            institutionDetailEdit.updateDraft(partial)
+          }}
           sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
           classCountOptions={institutionDetailEdit.classCountOptions}
           teacherOptions={institutionDetailEdit.teacherOptions}
@@ -1462,6 +1571,9 @@ export function ApplicantsDetailContents({
           }
           combinedClassReadOnly={institutionDetailEdit.combinedClassReadOnly}
           hideCombinedClass={isCombinedClassHidden}
+          textbookOptions={institutionDetailEdit.textbookOptions}
+          textbookDisplayLabel={institutionDetailEdit.textbookDisplayLabel}
+          isTextbookCatalogLoading={institutionDetailEdit.isTextbookCatalogLoading}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
           isAdminCommentEditing={false}
@@ -1484,6 +1596,9 @@ export function ApplicantsDetailContents({
     institutionDetailEdit.isEditing,
     institutionDetailEdit.draft,
     institutionDetailEdit.updateDraft,
+    institutionDetailEdit.draft?.combinedClassApplication,
+    combinedClassProcess.onApplicationChange,
+    combinedClassProcess.onPartnerIdsChange,
     institutionDetailEdit.textbookOptions,
     institutionDetailEdit.textbookDisplayLabel,
     institutionDetailEdit.isTextbookCatalogLoading,
@@ -1652,7 +1767,7 @@ export function ApplicantsDetailContents({
         </div>
         {personalInfoRevealModal}
         {adminCommentModals}
-        {combinedClassModals}
+        {combinedClassProcess.modals}
       </div>
     )
   }
@@ -1678,7 +1793,7 @@ export function ApplicantsDetailContents({
           onAdminCommentDraftChange={() => {}}
         />
         {adminCommentModals}
-        {combinedClassModals}
+        {combinedClassProcess.modals}
       </>
     )
   }
@@ -1691,8 +1806,21 @@ export function ApplicantsDetailContents({
         ) : null}
         <div className="applicant-contents__panel">{tabPanel}</div>
         {personalInfoRevealModal}
+        {isIndividual ? (
+          <ConfirmModal
+            open={editUnmaskConfirmOpen}
+            title="정보 수정 안내"
+            content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+            confirmText="정보 수정"
+            cancelText="취소"
+            onConfirm={confirmEditUnmaskAndStartEdit}
+            onCancel={closeEditUnmaskConfirm}
+            confirmLoading={editUnmaskConfirmLoading}
+            zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+          />
+        ) : null}
         {adminCommentModals}
-        {combinedClassModals}
+        {combinedClassProcess.modals}
       </div>
     )
   }

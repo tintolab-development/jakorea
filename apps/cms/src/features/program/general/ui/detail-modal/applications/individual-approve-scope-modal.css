@@ -1,0 +1,26 @@
+.individual-approve-scope-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.individual-approve-scope-modal__section-label {
+  margin: 0;
+  color: #262626;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card--rejected,
+.institution-approve-modal .institution-approve-modal__schedule-card--rejected:hover,
+.institution-approve-modal .institution-approve-modal__schedule-card--rejected:focus,
+.institution-approve-modal .institution-approve-modal__schedule-card--rejected:disabled {
+  border-color: #cf1322;
+}
+
+.institution-approve-modal
+  .institution-approve-modal__schedule-card--rejected
+  .institution-approve-modal__schedule-card-title {
+  color: #cf1322;
+}

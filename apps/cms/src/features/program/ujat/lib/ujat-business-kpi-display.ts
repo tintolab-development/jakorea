@@ -1,8 +1,5 @@
 import type { Program } from '@/types/domain'
-import {
-  createUjatRegistrationBasicInfoOverlayDefaults,
-} from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
-import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { resolveUjatParticipantTypeFlags } from '@/features/program/ujat/lib/participant-type-flags'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 
 export type UjatBusinessKpiDisplay = {
@@ -13,17 +10,20 @@ export type UjatBusinessKpiDisplay = {
   hasVolunteerRecruitment: boolean
 }
 
-function overlayBoolean(overlay: Record<string, unknown>, key: string, fallback: boolean): boolean {
+function overlayBoolean(overlay: Record<string, unknown>, key: string): boolean | undefined {
   const v = overlay[key]
-  return typeof v === 'boolean' ? v : fallback
+  return typeof v === 'boolean' ? v : undefined
 }
 
 export function resolveUjatHasVolunteerRecruitment(
-  overlayInput?: Record<string, unknown>
+  overlayInput?: Record<string, unknown>,
+  program?: Program
 ): boolean {
-  const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
-  const overlay = overlayInput ?? resolveUjatRegistrationBasicInfoOverlay()
-  return overlayBoolean(overlay, 'ujat.basicInfo.participant.volunteer', defaults.participantVolunteer)
+  const overlay = overlayInput ?? (program ? readUjatRegistrationOverlayFromProgram(program) : {})
+  const fromOverlay = overlayBoolean(overlay, 'ujat.basicInfo.participant.volunteer')
+  if (fromOverlay != null) return fromOverlay
+  if (program) return resolveUjatParticipantTypeFlags(program, overlay).volunteer
+  return false
 }
 
 export function resolveUjatBusinessKpiDisplay(
@@ -34,18 +34,22 @@ export function resolveUjatBusinessKpiDisplay(
   const kpiNumber = (value: unknown): number | null => {
     return typeof value === 'number' && Number.isFinite(value) ? value : null
   }
-  const overlay = resolveUjatRegistrationBasicInfoOverlay({
+  const overlay = {
     ...readUjatRegistrationOverlayFromProgram(program),
     ...overlayInput,
-  })
+  }
+  const overlayNumber = (key: string): number | null => {
+    const value = overlay[key]
+    return typeof value === 'number' && Number.isFinite(value) ? value : null
+  }
   return {
-    // 상세 응답 최상위 KPI를 adapter가 generalCommonInfo.kpi에 복사한다.
-    // 목록/세션 오버레이/기본값을 fallback으로 사용하지 않는다.
-    finalParticipants: kpiNumber(kpi?.finalParticipants),
-    volunteerCount: kpiNumber(kpi?.volunteerCount),
-    finalSchools: kpiNumber(kpi?.finalSchools),
-    finalClasses: kpiNumber(kpi?.finalClasses),
-    hasVolunteerRecruitment: resolveUjatHasVolunteerRecruitment(overlay),
+    // 상세 응답 KPI가 있으면 그 값. PATCH echo가 비우면 overlay `ujat.kpi.*`를 표시한다.
+    finalParticipants:
+      kpiNumber(kpi?.finalParticipants) ?? overlayNumber('ujat.kpi.participantCount'),
+    volunteerCount: kpiNumber(kpi?.volunteerCount) ?? overlayNumber('ujat.kpi.volunteer'),
+    finalSchools: kpiNumber(kpi?.finalSchools) ?? overlayNumber('ujat.kpi.dispatchedSchool'),
+    finalClasses: kpiNumber(kpi?.finalClasses) ?? overlayNumber('ujat.kpi.dispatchedClass'),
+    hasVolunteerRecruitment: resolveUjatHasVolunteerRecruitment(overlay, program),
   }
 }
 

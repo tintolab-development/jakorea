@@ -10,6 +10,7 @@ import {
   ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE,
   isAdminLoginApprovalPendingResponse,
 } from '@/features/auth/errors/admin-login-approval-pending-error'
+import { parseAdminMfaChallenge } from '@/features/auth/lib/admin-mfa-contract'
 import type {
   AdminLoginRequestBody,
   AdminMfaChallengeResponse,
@@ -51,31 +52,7 @@ function parseLoginError(
 }
 
 function unwrapChallengeResponse(payload: unknown): AdminMfaChallengeResponse | null {
-  if (!payload || typeof payload !== 'object') return null
-  const o = payload as Record<string, unknown>
-  if (o.success === true && o.data && typeof o.data === 'object') {
-    return unwrapChallengeResponse(o.data)
-  }
-
-  const challengeUuid = o.challengeUuid
-  const mfaMethod = o.mfaMethod
-  const expiresAt = o.expiresAt
-  if (typeof challengeUuid !== 'string' || typeof mfaMethod !== 'string' || typeof expiresAt !== 'string') {
-    return null
-  }
-
-  const readOptionalString = (value: unknown): string | undefined =>
-    typeof value === 'string' && value.trim() ? value.trim() : undefined
-
-  return {
-    requiresMfa: typeof o.requiresMfa === 'boolean' ? o.requiresMfa : undefined,
-    challengeUuid,
-    mfaMethod,
-    expiresAt,
-    totpSecret: readOptionalString(o.totpSecret) ?? readOptionalString(o.secret),
-    otpauthUri: readOptionalString(o.otpauthUri),
-    qrDataUrl: readOptionalString(o.qrDataUrl) ?? readOptionalString(o.qrCode),
-  }
+  return parseAdminMfaChallenge(payload)
 }
 
 /**

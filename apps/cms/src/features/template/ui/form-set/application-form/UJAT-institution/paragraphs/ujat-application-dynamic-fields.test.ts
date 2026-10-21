@@ -52,9 +52,38 @@ describe('UJAT 기관 신청 동적 필드', () => {
       'h2:2026-09-18',
     ])
     expect(options.every(option => option.display.includes('금'))).toBe(true)
+    expect(options.map(option => option.display)).toEqual([
+      '26년 4월 3일(금)',
+      '26년 4월 17일(금)',
+      '26년 9월 4일(금)',
+      '26년 9월 18일(금)',
+    ])
+  })
+
+  it('상·하반기 입력 순서와 무관하게 금요일을 날짜순 한 목록으로 노출한다', () => {
+    const h1 = ujatHalfScheduleOverlayKeys('h1')
+    const h2 = ujatHalfScheduleOverlayKeys('h2')
+    const options = buildProgramLinkedScheduleOptions({
+      [h1.eventRange]: { start: '2026-10-02T00:00:00.000Z', end: '2026-10-09T00:00:00.000Z' },
+      [h2.eventRange]: { start: '2026-04-03T00:00:00.000Z', end: '2026-04-10T00:00:00.000Z' },
+    })
+    expect(options.map(option => option.id)).toEqual([
+      'h2:2026-04-03',
+      'h2:2026-04-10',
+      'h1:2026-10-02',
+      'h1:2026-10-09',
+    ])
   })
 
   it('연동 기간이 없으면 템플릿 mock 날짜를 대체하지 않는다', () => {
     expect(buildProgramLinkedScheduleOptions({})).toEqual([])
+  })
+
+  it('연동 후보 id는 반기 접두를 쓰고 mock 금요일 id와 섞이지 않는다', () => {
+    const h1 = ujatHalfScheduleOverlayKeys('h1')
+    const options = buildProgramLinkedScheduleOptions({
+      [h1.eventRange]: { start: '2026-04-03T00:00:00.000Z', end: '2026-04-03T00:00:00.000Z' },
+    })
+    expect(options).toEqual([{ id: 'h1:2026-04-03', display: '26년 4월 3일(금)' }])
   })
 })

@@ -8,14 +8,25 @@ import {
   watchNiceAuthPopupClosed,
   type IdentityMessage,
 } from '@jakorea/identity-verification'
-import { postGuardianNiceStart } from '@/features/auth/sign-up/api/guardian-signup-bridge/client'
+import {
+  getGuardianSignupStatus,
+  postGuardianNiceStart,
+} from '@/features/auth/sign-up/api/guardian-signup-bridge/client'
+import { resolveGuardianNiceStartAfterConflict } from '@/features/auth/sign-up/lib/guardian/complete-guardian-after-nice'
+import {
+  isGuardianBridgeConflict,
+  resolveGuardianBridgeError,
+} from '@/features/auth/sign-up/lib/guardian/guardian-bridge-errors'
+import {
+  createGuardianNiceIdempotencyKey,
+  shouldSkipGuardianNiceStart,
+} from '@/features/auth/sign-up/lib/guardian/guardian-bridge-status'
 import {
   GUARDIAN_IDENTITY_COMPLETION_PREFIX,
   getGuardianBridgePendingIdentitySession,
   readGuardianSignupBridgeState,
   setGuardianBridgePendingIdentitySession,
 } from '@/features/auth/sign-up/lib/guardian-signup-bridge-storage'
-import { getSignupApiErrorMessage } from '@/features/auth/sign-up/lib/helpers'
 
 type GuardianBridgeVerifySuccess = {
   identitySessionId: number
@@ -40,6 +51,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
   const popupRef = useRef<Window | null>(null)
   const stopWatchPopupRef = useRef<(() => void) | null>(null)
   const completingRef = useRef(false)
+  const verifyingRef = useRef(false)
   const lastSessionIdRef = useRef<number | null>(null)
   const onSuccessRef = useRef(options.onSuccess)
   onSuccessRef.current = options.onSuccess
@@ -60,6 +72,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
       if (data.type === 'IDENTITY_CANCELLED') {
         cleanupPopupWatch()
         completingRef.current = false
+        verifyingRef.current = false
         setIsVerifying(false)
         return
       }
@@ -67,6 +80,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
       if (data.type === 'IDENTITY_FAILED') {
         cleanupPopupWatch()
         completingRef.current = false
+        verifyingRef.current = false
         setIsVerifying(false)
         setErrorMessage(
           typeof data.message === 'string' && data.message.trim()
@@ -84,6 +98,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
 
       completingRef.current = true
       cleanupPopupWatch()
+      verifyingRef.current = false
       setIsVerifying(false)
       setErrorMessage(null)
       onSuccessRef.current({ identitySessionId: sessionId })
@@ -121,7 +136,19 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
 
   useEffect(() => () => cleanupPopupWatch(), [cleanupPopupWatch])
 
+  const finishWithoutPopup = useCallback(
+    (identitySessionId: number) => {
+      verifyingRef.current = false
+      setIsVerifying(false)
+      setErrorMessage(null)
+      onSuccessRef.current({ identitySessionId })
+    },
+    [],
+  )
+
   const verify = useCallback(async () => {
+    if (verifyingRef.current) return
+
     setErrorMessage(null)
     completingRef.current = false
 
@@ -131,15 +158,57 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
       return
     }
 
+    verifyingRef.current = true
     setIsVerifying(true)
     let popup: Window | null = null
 
     try {
-      popup = openNiceAuthPopupWindow()
-      const start = await postGuardianNiceStart({
+      const status = await getGuardianSignupStatus({
         guardianSessionId: bridge.guardianSessionId,
         statusToken: bridge.guardianStatusToken,
       })
+
+      const pendingIdentitySessionId =
+        getGuardianBridgePendingIdentitySession()?.identitySessionId ??
+        bridge.identitySessionId ??
+        lastSessionIdRef.current ??
+        0
+
+      if (shouldSkipGuardianNiceStart(status)) {
+        finishWithoutPopup(pendingIdentitySessionId > 0 ? pendingIdentitySessionId : 1)
+        return
+      }
+
+      popup = openNiceAuthPopupWindow()
+
+      let start
+      try {
+        start = await postGuardianNiceStart({
+          guardianSessionId: bridge.guardianSessionId,
+          statusToken: bridge.guardianStatusToken,
+          idempotencyKey: createGuardianNiceIdempotencyKey(bridge.guardianSessionId),
+        })
+      } catch (error) {
+        if (!isGuardianBridgeConflict(error)) {
+          throw error
+        }
+        const afterConflict = await getGuardianSignupStatus({
+          guardianSessionId: bridge.guardianSessionId,
+          statusToken: bridge.guardianStatusToken,
+        })
+        const resolved = resolveGuardianNiceStartAfterConflict({
+          status: afterConflict,
+          identitySessionId: pendingIdentitySessionId,
+        })
+        if (resolved.kind === 'skip_to_success') {
+          popup?.close()
+          cleanupPopupWatch()
+          finishWithoutPopup(resolved.identitySessionId)
+          return
+        }
+        throw error
+      }
+
       const identitySessionId = start.sessionId
       const authUrl = start.authUrl?.trim()
       if (identitySessionId == null || !authUrl) {
@@ -160,21 +229,24 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
             applyMessageRef.current(completion)
             return
           }
+          verifyingRef.current = false
           setIsVerifying(false)
         }, POPUP_CLOSE_COMPLETION_GRACE_MS)
       })
     } catch (error) {
       cleanupPopupWatch()
+      verifyingRef.current = false
       setIsVerifying(false)
       if (error instanceof NiceAuthPopupBlockedError) {
         setErrorMessage(error.message)
         return
       }
       setErrorMessage(
-        getSignupApiErrorMessage(error, '보호자 본인인증을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.'),
+        resolveGuardianBridgeError(error).message ||
+          '보호자 본인인증을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.',
       )
     }
-  }, [cleanupPopupWatch])
+  }, [cleanupPopupWatch, finishWithoutPopup])
 
   return { verify, isVerifying, errorMessage }
 }

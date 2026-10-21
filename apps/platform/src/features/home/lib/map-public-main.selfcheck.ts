@@ -55,6 +55,7 @@ const fallback: HomeMainFallback = {
       iconUrl: '/ig.svg',
     },
   ],
+  popups: [],
 }
 
 assert.equal(parseHomeHref('/programs').external, false)
@@ -68,6 +69,7 @@ assert.equal(empty.heroes.length, 0)
 assert.equal(empty.strips.length, 0)
 assert.equal(empty.partnerRows.length, 0)
 assert.equal(empty.socialLinks.length, 0)
+assert.equal(empty.popups.length, 0)
 assert.equal(empty.educationTitle, fallback.educationTitle)
 assert.equal(empty.programs.length, 0)
 
@@ -81,12 +83,14 @@ assert.equal(emptyLists.strips.length, 0)
 assert.equal(emptyLists.partnerRows.length, 0)
 assert.equal(emptyLists.socialLinks.length, 0)
 assert.equal(emptyLists.programs.length, 0)
+assert.equal(emptyLists.popups.length, 0)
 
 const pending = createPendingHomeMainView(fallback)
 assert.equal(pending.source, 'pending')
 assert.equal(pending.strips.length, 0)
 assert.equal(pending.heroes.length, 0)
 assert.equal(pending.programs.length, 0)
+assert.equal(pending.popups.length, 0)
 assert.equal(pending.educationTitle, fallback.educationTitle)
 
 const merged = mergePublicMainWithFallback(
@@ -186,6 +190,49 @@ const featuredEmptyImage = mergePublicMainWithFallback(
   featuredFallback,
 )
 assert.equal(featuredEmptyImage.featuredStory?.imageUrl, '/card-minjae.png')
+
+const mappedPopups = mergePublicMainWithFallback(
+  {
+    popups: [
+      {
+        id: 2,
+        displayOrder: 2,
+        imageUrl: 'https://cdn.example/popup-b.png',
+        altText: '두번째',
+        linkUrl: 'https://www.jakorea.org/about',
+      },
+      {
+        id: 1,
+        displayOrder: 1,
+        imageUrl: 'https://cdn.example/popup-a.png',
+        altText: '첫번째',
+        displayStartDate: '2020-01-01',
+        displayEndDate: '2099-12-31',
+        linkUrl: 'https://example.com/report',
+      },
+      {
+        id: 3,
+        displayOrder: 3,
+        imageUrl: '',
+        altText: '이미지 없음',
+      },
+      {
+        id: 4,
+        displayOrder: 4,
+        imageUrl: 'https://cdn.example/expired.png',
+        displayStartDate: '2020-01-01',
+        displayEndDate: '2020-12-31',
+      },
+    ],
+  },
+  fallback,
+)
+assert.equal(mappedPopups.popups.length, 2)
+assert.equal(mappedPopups.popups[0]?.id, '1')
+assert.equal(mappedPopups.popups[0]?.href, 'https://example.com/report')
+assert.equal(mappedPopups.popups[0]?.external, true)
+assert.equal(mappedPopups.popups[1]?.href, '/about')
+assert.equal(mappedPopups.popups[1]?.external, false)
 
 const expiredOnly = mergePublicMainWithFallback(
   {

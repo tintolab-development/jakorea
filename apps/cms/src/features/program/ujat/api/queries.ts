@@ -142,7 +142,8 @@ export function useUpdateProgram() {
           program,
           variables.program,
           variables.patch
-        )
+        ),
+        { refetch: false }
       )
       invalidateUjatProgramListCaches(queryClient)
     },

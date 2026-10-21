@@ -102,7 +102,7 @@ export function StudentsPanelStepRoster({
             type="button"
             size="large"
             variant="tertiary"
-            disabled={isImporting}
+            disabled={isImporting || Boolean(uploadBlockedMessage)}
             onClick={handlePickExcel}
           >
             <span className={styles.buttonInner}>
@@ -128,6 +128,12 @@ export function StudentsPanelStepRoster({
           />
         </PFButton>
       </div>
+
+      {uploadBlockedMessage ? (
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          {uploadBlockedMessage}
+        </PFText>
+      ) : null}
 
       <input
         ref={fileInputRef}

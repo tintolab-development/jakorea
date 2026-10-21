@@ -151,7 +151,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
             <CmsInput
               value={d?.name ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="한글 성명"
               aria-label="성명"
@@ -169,7 +169,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                 onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
                 options={GENDER_EDIT_OPTIONS}
                 placeholder="성별"
-                inputSize="medium"
+                inputSize="small"
                 width={120}
               />
               <CmsDateTextInput
@@ -177,7 +177,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                 onValueChange={value =>
                   onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
                 }
-                inputSize="medium"
+                inputSize="small"
                 width={160}
                 placeholder="YYYY-MM-DD"
                 maxLength={10}
@@ -206,7 +206,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           edit={
             <CmsRadioGroup
               options={[...INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS]}
-              size="large"
+              size="medium"
               value={d?.schoolEnrollmentStatus || 'enrolled'}
               onChange={event =>
                 handleEnrollmentStatusChange(event.target.value as 'enrolled' | 'not_enrolled')
@@ -239,7 +239,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                   }
                   onSelect={handleSchoolSelect}
                   placeholder="학교명"
-                  inputSize="medium"
+                  inputSize="small"
                   width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
                 />
                 <DetailInfoForm.InputsSeparator />
@@ -250,7 +250,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                     onMemberInfoDraftChange?.({ affiliationGrade: v != null ? String(v) : '' })
                   }
                   options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
-                  inputSize="medium"
+                  inputSize="small"
                   width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
                   aria-label="소속 학년"
                 />
@@ -260,7 +260,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                 placeholder="소속"
                 value={d?.affiliationInstitution ?? ''}
                 onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 aria-label="소속"
               />
@@ -303,7 +303,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
               placeholder="1365 ID"
               value={d?.id1365 ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               aria-label="1365 ID"
             />

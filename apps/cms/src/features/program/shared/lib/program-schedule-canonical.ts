@@ -116,22 +116,29 @@ function parseScheduleDateTime(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function isMultiDayAllDayPeriodWindow(schedule: unknown): boolean {
+/**
+ * 프로그램 교육 가능 기간 창(다일 all-day).
+ * sessionNo가 있어도 기간 창이면 수업일·설문 SCHEDULE 후보가 아니다.
+ */
+export function isMultiDayAllDayPeriodWindowForSurvey(schedule: unknown): boolean {
   if (schedule == null || typeof schedule !== 'object') return false
   const raw = schedule as {
     allDay?: unknown
-    sessionNo?: unknown
     startAt?: unknown
     startDate?: unknown
     endAt?: unknown
     endDate?: unknown
   }
   if (raw.allDay !== true) return false
-  if (raw.sessionNo != null) return false
   const start = parseScheduleDateTime(raw.startAt ?? raw.startDate)
   const end = parseScheduleDateTime(raw.endAt ?? raw.endDate)
   if (start == null || end == null) return false
   return end - start > 24 * 60 * 60 * 1000
+}
+
+/** @deprecated use {@link isMultiDayAllDayPeriodWindowForSurvey} */
+function isMultiDayAllDayPeriodWindow(schedule: unknown): boolean {
+  return isMultiDayAllDayPeriodWindowForSurvey(schedule)
 }
 
 /**

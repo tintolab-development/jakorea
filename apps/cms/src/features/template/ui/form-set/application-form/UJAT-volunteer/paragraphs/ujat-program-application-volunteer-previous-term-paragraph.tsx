@@ -45,7 +45,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsNumericInput
                 mode="numericText"
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 placeholder="활동 기수"
                 value={term}
@@ -53,7 +53,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 placeholder="활동 년도"
                 value={year}

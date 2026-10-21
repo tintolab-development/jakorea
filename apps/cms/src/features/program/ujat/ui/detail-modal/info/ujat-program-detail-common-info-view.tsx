@@ -17,7 +17,6 @@ import { UjatEducationScheduleSettingsProgramView } from './ujat-education-sched
 import { UjatRegionCapacityProgramView } from './ujat-region-capacity-program-view'
 import { UjatBasicInfoReadonlyView } from './ujat-basic-info-readonly-view'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
-import { ProgramPortalHomeFeaturedFields } from '@/features/program/shared/ui/program-detail/portal-home-featured-fields'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
@@ -66,12 +65,6 @@ function UjatBasicInfoRegistrationAuditRow({
           }
         />
       </DetailInfoForm.Row>
-      <ProgramPortalHomeFeaturedFields
-        isEdit={Boolean(isEditMode && infoForm)}
-        featuredOnHome={program.featuredOnHome === true}
-        homeDisplayOrder={program.homeDisplayOrder}
-        control={isEditMode ? infoForm?.control : undefined}
-      />
     </DetailInfoForm>
   )
 }

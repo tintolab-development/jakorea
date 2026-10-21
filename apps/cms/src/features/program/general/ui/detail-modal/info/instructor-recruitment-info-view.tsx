@@ -108,7 +108,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     name="instructorProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker
+                      <ParagraphDatePicker inputSize="small"
                         mode="range"
                         value={[
                           toDayjs(field.value as string | Date | undefined),
@@ -160,7 +160,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     render={({ field }) => (
                       <CmsSelect
                         mode="multiple"
-                        inputSize="medium"
+                        inputSize="small"
                         width={240}
                         withAllOption={false}
                         value={field.value ?? []}
@@ -188,7 +188,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         {...field}
                         value={field.value ?? ''}
                         placeholder="상세 모집 대상을 입력하세요"
-                        inputSize="medium"
+                        inputSize="small"
                         width="100%"
                         className="program-detail-info-tab__district-input"
                       />
@@ -210,7 +210,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     name="instructorApplicationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker
+                      <ParagraphDatePicker inputSize="small"
                         mode="range"
                         value={[
                           toDayjs(field.value as string | Date | undefined),
@@ -250,7 +250,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                       name="finalPassAnnouncementDate"
                       control={form.control}
                       render={({ field }) => (
-                        <ParagraphDatePicker
+                        <ParagraphDatePicker inputSize="small"
                           mode="single"
                           presetMode="date"
                           customizable={false}
@@ -270,7 +270,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                           {...field}
                           value={field.value ?? ''}
                           placeholder="발표 방법 안내"
-                          inputSize="medium"
+                          inputSize="small"
                           width="100%"
                           className="program-detail-info-tab__result-method-input"
                         />
@@ -312,7 +312,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="담당 문의처"
-                            inputSize="medium"
+                            inputSize="small"
                             className="program-detail-info-tab__contact-name-input"
                           />
                         )}
@@ -332,7 +332,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 전화번호"
-                            inputSize="medium"
+                            inputSize="small"
                             className="program-detail-info-tab__contact-phone-input"
                           />
                         )}
@@ -352,7 +352,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 이메일"
-                            inputSize="medium"
+                            inputSize="small"
                             className="program-detail-info-tab__contact-email-input"
                           />
                         )}
@@ -380,7 +380,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         {...field}
                         value={field.value ?? ''}
                         placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-                        inputSize="medium"
+                        inputSize="small"
                         width="100%"
                         className="program-detail-info-tab__notes-input"
                       />

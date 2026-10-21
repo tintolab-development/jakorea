@@ -32,6 +32,7 @@ import {
 } from '@/shared/lib/extract-api-error-message'
 import { resolveProgramDetailSaveApiFormField } from '@/features/program/shared/lib/program-detail-save-api-error'
 import { applyAudienceProgramOperationToRecruitmentWindows } from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import { omitRecruitmentTabScheduleFields } from '@/features/program/shared/lib/persist-recruitment-row-save'
 import {
   applyRecruitmentDetailInfoFields,
   type ProgramDetailRecruitmentAudience,
@@ -62,6 +63,8 @@ export interface UseProgramDetailInfoSaveOptions {
   recruitmentAudience?: ProgramDetailRecruitmentAudience
   /** 모집 비고 폼 필드. 기본: 참여자 remarks · 강사 instructorRecruitmentRemarks(일반) / otherNotes · 봉사자 oneLineIntroduction */
   recruitmentNotesField?: ProgramDetailRecruitmentNotesField
+  /** 교육받은 교사 원격 모드: 브라우저 overlay를 저장 payload의 source로 사용하지 않음 */
+  strictRemote?: boolean
 }
 
 export type ProgramDetailInfoSaveExtraCommon = Partial<
@@ -77,6 +80,7 @@ export function useProgramDetailInfoSave({
   commonInfoPatchOnly = false,
   recruitmentAudience,
   recruitmentNotesField,
+  strictRemote = false,
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
   const saveFailureRef = useRef<'validation' | 'api' | null>(null)
@@ -240,6 +244,7 @@ export function useProgramDetailInfoSave({
             remotePatch,
             values,
             audience: recruitmentAudience,
+            strictRemote,
           })
 
           if (recruitmentAudience === 'volunteer') {
@@ -266,6 +271,9 @@ export function useProgramDetailInfoSave({
               mergedRegistrationOverlay
             ),
           }
+        }
+        if (recruitmentAudience) {
+          remotePatch = omitRecruitmentTabScheduleFields(remotePatch)
         }
         if (commonInfoPatchOnly) {
           remotePatch = narrowProgramDetailPatchForCommonInfoSave(remotePatch)
@@ -311,6 +319,7 @@ export function useProgramDetailInfoSave({
       onSaveEdit,
       recruitmentAudience,
       recruitmentNotesField,
+      strictRemote,
       validateSchema,
     ]
   )

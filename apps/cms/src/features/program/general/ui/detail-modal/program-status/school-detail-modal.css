@@ -347,9 +347,12 @@
   display: none !important;
 }
 
-/* 본문·헤더 셀: 높이 60px 고정(antd .ant-table-cell 기본 패딩·line-height 보정) */
+/* 본문·헤더 셀: 높이 60px 고정(antd .ant-table-cell 기본 패딩·line-height 보정). empty·measure 제외 — 호버 시 empty CSS와 특이도 충돌로 높이 shift 방지 */
 .school-detail-modal__student-table .ant-table-thead > tr > th.ant-table-cell,
-.school-detail-modal__student-table .ant-table-tbody > tr > td.ant-table-cell {
+.school-detail-modal__student-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell {
   box-sizing: border-box !important;
   height: 60px !important;
   min-height: 60px !important;

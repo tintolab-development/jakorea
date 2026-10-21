@@ -37,7 +37,7 @@ export function ApplicantAdminCommentSection({
             className="applicant-admin-comment-section__input"
             value={draftValue}
             onChange={event => onDraftChange(event.target.value)}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             placeholder="관리자 코멘트를 입력하세요"
             aria-label="관리자 코멘트"

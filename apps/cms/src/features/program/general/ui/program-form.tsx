@@ -28,6 +28,7 @@ import { programService } from '@/entities/program/api/program-service'
 import type { FormFieldDef } from '@/types/form-template'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
+import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
 import { FormFieldEditor } from './form-field-editor'
 import dayjs from 'dayjs'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
@@ -320,6 +321,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
               onChange={date =>
                 setValue('startDate', date ? date.toISOString() : '', { shouldValidate: true })
               }
+              format={formatAppDatepickerDisplay}
               style={{ width: '100%' }}
             />
           </Form.Item>
@@ -335,6 +337,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
               onChange={date =>
                 setValue('endDate', date ? date.toISOString() : '', { shouldValidate: true })
               }
+              format={formatAppDatepickerDisplay}
               style={{ width: '100%' }}
             />
           </Form.Item>
@@ -648,6 +651,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                       shouldValidate: true,
                     })
                   }}
+                  format={formatAppDatepickerDisplay}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -669,6 +673,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                       shouldValidate: true,
                     })
                   }}
+                  format={formatAppDatepickerDisplay}
                   style={{ width: '100%' }}
                 />
               </Form.Item>

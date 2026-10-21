@@ -150,7 +150,11 @@ function TrainedTeachersProgramPageContent() {
   const detailData = detailQuery.data ?? null
   const detailProgram =
     detailData ??
-    (programIdFromUrl ? ({ id: programIdFromUrl } as Program) : selectedProgramForFullPageModal)
+    (remoteEnabled
+      ? null
+      : programIdFromUrl
+        ? ({ id: programIdFromUrl } as Program)
+        : selectedProgramForFullPageModal)
 
   useEffect(() => {
     setSelectedRowKeys([])

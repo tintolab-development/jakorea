@@ -111,7 +111,7 @@ function YearRangeFields({
       <Form.Item name={admitName} noStyle>
         <CmsDatePicker
           picker="year"
-          inputSize="medium"
+          inputSize="small"
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.admitYear}
           format="YYYY"
           width={140}
@@ -123,7 +123,7 @@ function YearRangeFields({
       <Form.Item name={gradName} noStyle>
         <CmsDatePicker
           picker="year"
-          inputSize="medium"
+          inputSize="small"
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.gradYear}
           format="YYYY"
           width={140}
@@ -150,7 +150,7 @@ function SchoolNameField({
         value={value}
         onChange={next => form.setFieldValue(name, next)}
         placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.educationSchoolName}
-        inputSize="medium"
+        inputSize="small"
         width={width}
         allowedSchoolLevels={['고등학교']}
       />
@@ -176,7 +176,7 @@ function UniversityNameField({
         value={value}
         onChange={next => form.setFieldValue(name, next)}
         placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.universityName}
-        inputSize="medium"
+        inputSize="small"
         width={width}
         defaultSch1={defaultSch1}
       />
@@ -265,7 +265,7 @@ export function InstructorRegisterEducationSection() {
               <Form.Item name="eduSchoolType" noStyle>
                 <CmsSelect
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.eduSchoolType}
-                  inputSize="medium"
+                  inputSize="small"
                   width={160}
                   options={EDU_SCHOOL_TYPE_OPTIONS}
                   withAllOption={false}
@@ -276,7 +276,7 @@ export function InstructorRegisterEducationSection() {
               <Form.Item name="eduStatus" noStyle>
                 <CmsSelect
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.eduStatus}
-                  inputSize="medium"
+                  inputSize="small"
                   width={120}
                   options={EDU_STATUS_OPTIONS}
                   withAllOption={false}
@@ -312,7 +312,7 @@ export function InstructorRegisterEducationSection() {
                   ])
                 }}
               >
-                <CmsCheckbox.Group checkboxSize="large" options={detailCheckboxOptions} />
+                <CmsCheckbox.Group checkboxSize="medium" options={detailCheckboxOptions} />
               </Form.Item>
             }
           />
@@ -375,7 +375,7 @@ export function InstructorRegisterEducationSection() {
                               defaultSch1={CAREER_NET_UNIV_SCH1.college}
                             />
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="medium" width={160} />
+                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="small" width={160} />
                             </Form.Item>
                             {index === 0 ? (
                               <CmsCircleAddButton
@@ -432,7 +432,7 @@ export function InstructorRegisterEducationSection() {
                               defaultSch1={CAREER_NET_UNIV_SCH1.university4}
                             />
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="medium" width={160} />
+                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="small" width={160} />
                             </Form.Item>
                             {index === 0 ? (
                               <CmsCircleAddButton
@@ -485,7 +485,7 @@ export function InstructorRegisterEducationSection() {
                             <Form.Item name={[field.name, 'degree']} noStyle>
                               <CmsSelect
                                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.degree}
-                                inputSize="medium"
+                                inputSize="small"
                                 width={120}
                                 options={DEGREE_OPTIONS}
                                 withAllOption={false}
@@ -496,7 +496,7 @@ export function InstructorRegisterEducationSection() {
                           <div className="instructor-register-education__school-major">
                             <UniversityNameField name={[field.name, 'schoolName']} width={180} />
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="medium" width={140} />
+                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="small" width={140} />
                             </Form.Item>
                             {index === 0 ? (
                               <CmsCircleAddButton

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useInstructorApplySessionCacheOnLeave } from '@/features/mypage/instructor-apply/lib/use-instructor-apply-session-cache-on-leave'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
@@ -27,6 +28,7 @@ import {
 import { PFAlertModal, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 
 export function MypageInstructorApplyPage() {
+  useInstructorApplySessionCacheOnLeave()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const reapplyFromQuery = searchParams.get(INSTRUCTOR_APPLY_REAPPLY_QUERY) === '1'
@@ -85,7 +87,7 @@ export function MypageInstructorApplyPage() {
         title={
           isPendingReview ? (
             <InstructorApplyPendingTitle />
-          ) : isRejected && !reapplyAfterReject ? (
+          ) : isRejected ? (
             <InstructorApplyRejectedTitle />
           ) : (
             '강사 신청'
@@ -119,13 +121,15 @@ export function MypageInstructorApplyPage() {
               )
             }}
           />
-        ) : remoteSession && !canSubmit ? (
+        ) : remoteSession && !canSubmit && !reapplyAfterReject ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             {statusMessage}
           </PFText>
         ) : (
           <InstructorApplyForm
             lockedBasic={lockedBasic}
+            seedFromSubmittedRequest={reapplyAfterReject}
+            rejectedSummary={reapplyAfterReject ? currentRequestQuery.data : undefined}
             onSubmitSuccess={() => setSuccessOpen(true)}
           />
         )}

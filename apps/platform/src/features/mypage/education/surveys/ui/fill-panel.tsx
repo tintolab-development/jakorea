@@ -97,7 +97,6 @@ export function EducationSurveyFillPanel({
   applicationType,
   applicationId,
   programId,
-  pendingSurveyCount,
 }: EducationSurveyFillPanelProps) {
   const remoteForms = useApplicationFormsQuery(
     applicationType,
@@ -340,12 +339,7 @@ export function EducationSurveyFillPanel({
     )
   }
   if (remoteForms.enabled && surveyList.length === 0) {
-    return (
-      <EducationSurveyEmptyPanel
-        kind={kind}
-        pendingMismatchHint={kind === 'survey' && (pendingSurveyCount ?? 0) > 0}
-      />
-    )
+    return <EducationSurveyEmptyPanel kind={kind} />
   }
   // 실패 시 seed 양식이 대신 보이면 CMS 양식과 다른 설문을 제출하게 된다.
   if (remoteFormQuery.isError) {

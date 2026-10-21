@@ -30,7 +30,14 @@ import {
   type IndividualApplicantScreeningStage,
 } from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
-import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
+import {
+  prepareGeneralEducationScheduleSessions,
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveParticipatingInstitutionScheduleRowLabel,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { getProgramProgressDisplayStatus } from '@/shared/constants/status'
 import { ParticipatingProgressScheduleValue } from '@/features/program/general/ui/detail-modal/program-status/participating-progress-schedule-row'
@@ -61,6 +68,7 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 import '@/features/user/detail/ui/instructor-resume/resume.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
+import './institution-basic-info.css'
 
 export interface ApplicantGeneralIndividualBasicInfoProps {
   applicant: GeneralIndividualApplicantRow
@@ -82,6 +90,9 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   onTeamRoleChange?: (
     teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
   ) => void | Promise<void>
+  /** 진행 현황 참여자 상세 — education-scope 배정 일정만 (미전달 시 participant sessions) */
+  progressScheduleSessions?: ParticipatingSchoolSession[]
+  progressScheduleSessionsLoading?: boolean
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -302,26 +313,56 @@ const TEAM_MEMBER_COUNT_OPTIONS = [
 function IndividualApplicantProgressScheduleSection({
   program,
   sessions,
+  loading = false,
 }: {
   program: Program
   sessions: readonly ParticipatingSchoolSession[]
+  loading?: boolean
 }) {
+  const bridge = resolveInstitutionApplicationProgramBridge(program)
+  const scheduleShape = generalEducationScheduleShapeFromBridge(bridge)
+  const curriculumSessionLabels = readCurriculumSessionLabels(program)
+  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
+    program.generalCommonInfo?.scheduleDetails
+  )
+  const displaySessions = prepareGeneralEducationScheduleSessions(
+    sessions,
+    scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
+    {
+      detailScheduleTimeSpan,
+      educationScheduleLines:
+        sessions.length === 0 ? readProgramEducationScheduleLines(program) : [],
+    }
+  )
+  const shape = scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
   return (
     <DetailInfoForm title="교육 진행 일정" mode="view">
-      {sessions.length === 0 ? (
+      {loading ? (
+        <DetailInfoForm.Row type="custom">
+          <p className="general-volunteer-applicant-detail__empty-schedule">
+            교육 일정을 확인하는 중입니다.
+          </p>
+        </DetailInfoForm.Row>
+      ) : displaySessions.length === 0 ? (
         <DetailInfoForm.Row type="custom">
           <p className="general-volunteer-applicant-detail__empty-schedule">
             등록된 교육 일정이 없습니다.
           </p>
         </DetailInfoForm.Row>
       ) : (
-        sessions.map((session, index) => (
+        displaySessions.map((session, index) => (
           <DetailInfoForm.Row type="single" key={`${session.round}-${session.date}-${index}`}>
             <DetailInfoForm.Field
               label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
               fullRow
               readOnlyDisplay
-              view={<ParticipatingProgressScheduleValue session={session} />}
+              view={
+                <ParticipatingProgressScheduleValue
+                  session={session}
+                  shape={shape}
+                  detailScheduleTimeSpan={detailScheduleTimeSpan}
+                />
+              }
             />
           </DetailInfoForm.Row>
         ))
@@ -364,6 +405,8 @@ export function ApplicantGeneralIndividualBasicInfo({
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
   onTeamRoleChange,
+  progressScheduleSessions,
+  progressScheduleSessionsLoading = false,
 }: ApplicantGeneralIndividualBasicInfoProps) {
   const detail = applicant.detail
   const isProgressContext = detailContext === 'progress'
@@ -399,7 +442,18 @@ export function ApplicantGeneralIndividualBasicInfo({
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
-  const sessions = applicant.sessions ?? []
+  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
+    program?.generalCommonInfo?.scheduleDetails
+  )
+  const curriculumSessionLabels = readCurriculumSessionLabels(program)
+  const sessions = prepareGeneralEducationScheduleSessions(
+    applicant.sessions ?? [],
+    generalEducationScheduleShapeFromBridge(institutionApplicationBridge),
+    {
+      detailScheduleTimeSpan,
+      educationScheduleLines: readProgramEducationScheduleLines(program),
+    }
+  )
 
   const nameCell = renderIndividualApplicantNameWithHistoryBadges({
     applicantName: applicant.applicantName,
@@ -473,12 +527,15 @@ export function ApplicantGeneralIndividualBasicInfo({
 
   const textbookEditCell =
     isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack">
+      <div
+        className="institution-basic-info__field-stack institution-basic-info__textbook-select-only"
+      >
         <CmsSelect
           className="institution-basic-info__full-width-control"
-          inputSize="large"
+          inputSize="small"
           placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
           loading={isTextbookCatalogLoading}
+          withAllOption={false}
           value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
           options={(textbookOptions.length > 0
             ? textbookOptions
@@ -523,7 +580,7 @@ export function ApplicantGeneralIndividualBasicInfo({
     isEditMode && draft && onDraftChange ? (
       <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
         <CmsInput
-          inputSize="large"
+          inputSize="small"
           width="100%"
           style={{ flex: '1 1 0', minWidth: 0 }}
           value={draft.teamName}
@@ -531,7 +588,7 @@ export function ApplicantGeneralIndividualBasicInfo({
         />
         <DetailInfoForm.InputsSeparator />
         <CmsSelect
-          inputSize="large"
+          inputSize="small"
           width={140}
           value={draft.teamMemberCountSelect}
           options={TEAM_MEMBER_COUNT_OPTIONS.map(option => ({
@@ -553,7 +610,7 @@ export function ApplicantGeneralIndividualBasicInfo({
           <>
             <DetailInfoForm.InputsSeparator />
             <CmsNumericInput
-              inputSize="large"
+              inputSize="small"
               mode="integer"
               min={1}
               width="100%"
@@ -616,12 +673,18 @@ export function ApplicantGeneralIndividualBasicInfo({
     <ApplicantPreferredScheduleDetailSection
       sessions={sessions}
       bridge={institutionApplicationBridge}
+      detailScheduleTimeSpan={detailScheduleTimeSpan}
+      curriculumSessionLabels={curriculumSessionLabels}
     />
   ) : null
 
   const progressScheduleSection =
     showProgressScheduleSection && program ? (
-      <IndividualApplicantProgressScheduleSection program={program} sessions={sessions} />
+      <IndividualApplicantProgressScheduleSection
+        program={program}
+        sessions={progressScheduleSessions ?? applicant.sessions ?? []}
+        loading={progressScheduleSessionsLoading}
+      />
     ) : null
 
   const programProgressStatusCell =

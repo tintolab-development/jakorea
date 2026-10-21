@@ -64,7 +64,9 @@
 
 .table-filter-group__grid-cell.table-filter-group__grid-cell--pair-field:not(
     .table-filter-group__grid-cell--address-region
-  ):not(.table-filter-group__grid-cell--pct-width):not(.table-filter-group__grid-cell--explicit-width) {
+  ):not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  ) {
   width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
   min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
   max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
@@ -74,13 +76,16 @@
     .table-filter-group__grid-cell--pct-width
   ):not(.table-filter-group__grid-cell--explicit-width) {
   width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   min-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   max-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
 }
 
@@ -154,17 +159,6 @@
   width: 100%;
 }
 
-/* 필터 영역 조회 — 시안 160×40 (CmsButton medium) */
-.table-filter-group__fields-shell .table-filter-group__search-button.cms-button.cms-button--h40 {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  box-sizing: border-box;
-}
-
 .table-filter-group__fields-inner.ant-row {
   width: 100%;
   min-width: 0;
@@ -182,11 +176,10 @@
   width: auto;
 }
 
-.table-filter-group__fields-inner.ant-row > .ant-col:not(.table-filter-group__col--radio):not(
-    .table-filter-group__col--explicit-width
-  ):not(.table-filter-group__col--pct-width):not(.table-filter-group__col--pair-field):not(
-    :has(.cms-datepicker--range-split)
-  ) {
+.table-filter-group__fields-inner.ant-row
+  > .ant-col:not(.table-filter-group__col--radio):not(.table-filter-group__col--explicit-width):not(
+    .table-filter-group__col--pct-width
+  ):not(.table-filter-group__col--pair-field):not(:has(.cms-datepicker--range-split)) {
   min-width: var(--table-filter-field-min-width, 240px);
   max-width: var(--table-filter-field-max-width, 260px);
 }
@@ -204,17 +197,19 @@
     .table-filter-group__col--explicit-width
   ) {
   min-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   max-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
 }
 
 .table-filter-group__fields-inner.ant-row
-  > .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width):has(
-    .cms-datepicker--range-split
-  ) {
+  > .ant-col:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--explicit-width
+  ):has(.cms-datepicker--range-split) {
   min-width: calc(
     2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
@@ -251,7 +246,8 @@
   align-items: stretch;
   gap: var(--filter-label-control-gap, 6px);
   min-height: calc(
-    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 40px)
+    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) +
+      var(--filter-control-height, 40px)
   );
   box-sizing: border-box;
 }
@@ -282,7 +278,9 @@
   max-width: var(--table-filter-field-max-width, 260px);
 }
 
-.table-filter-group__fields-inner .ant-col.table-filter-group__col--radio .table-filter-group__field {
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--radio
+  .table-filter-group__field {
   min-width: 0;
   width: max-content;
   max-width: none;
@@ -316,20 +314,24 @@
 .table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--address-region
   .table-filter-group__field {
   min-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   max-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
 }
 
 .table-filter-group__fields-inner
   .ant-col.table-filter-group__col--pct-width:has(.cms-datepicker--range-split)
   .table-filter-group__field,
-.table-filter-group__grid-cell--pct-width:has(.cms-datepicker--range-split) .table-filter-group__field {
+.table-filter-group__grid-cell--pct-width:has(.cms-datepicker--range-split)
+  .table-filter-group__field {
   min-width: calc(
     2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
@@ -352,9 +354,9 @@
   )
   .table-filter-group__field,
 .table-filter-group__fields-inner
-  .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width):has(
-    .cms-datepicker--range-split
-  )
+  .ant-col:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--explicit-width
+  ):has(.cms-datepicker--range-split)
   .table-filter-group__field {
   width: 100%;
   max-width: 100%;
@@ -395,11 +397,19 @@
   max-width: 100% !important;
 }
 
-.table-filter-group__fields-inner .table-filter-group__field--select:has(.table-filter-group__select-pair-selects),
-.table-filter-group__grid-cell .table-filter-group__field--select:has(.table-filter-group__select-pair-selects) {
-  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)) !important;
-  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)) !important;
-  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)) !important;
+.table-filter-group__fields-inner
+  .table-filter-group__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell
+  .table-filter-group__field--select:has(.table-filter-group__select-pair-selects) {
+  min-width: calc(
+    2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)
+  ) !important;
+  width: calc(
+    2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)
+  ) !important;
+  max-width: calc(
+    2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)
+  ) !important;
 }
 
 .table-filter-group__fields-inner
@@ -452,8 +462,14 @@
   > .ant-select {
   flex: 0 0 var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
   width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
-  min-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
-  max-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  min-width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-control-max-width, 260px)
+  ) !important;
+  max-width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-control-max-width, 260px)
+  ) !important;
 }
 
 .table-filter-group__fields-inner
@@ -508,9 +524,18 @@
   > .ant-select {
   flex: 0 0
     var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
-  width: var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
-  min-width: var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
-  max-width: var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
+  width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-address-region-segment-width, 114.75px)
+  ) !important;
+  min-width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-address-region-segment-width, 114.75px)
+  ) !important;
+  max-width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-address-region-segment-width, 114.75px)
+  ) !important;
 }
 
 .table-filter-group__fields-inner
@@ -542,13 +567,16 @@
 .table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--address-region
   .table-filter-group__address-region-selects {
   width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   min-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   max-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   gap: var(--filter-field-gap, 12px);
 }
@@ -828,13 +856,16 @@
 .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width)
   .table-filter-group__field--select:has(.table-filter-group__address-region-selects) {
   min-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   ) !important;
   width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   ) !important;
   max-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   ) !important;
 }
 
@@ -856,13 +887,16 @@
   )
   .table-filter-group__address-region-selects {
   width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   min-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
   max-width: calc(
-    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
   );
 }
 
@@ -925,7 +959,9 @@
 }
 
 .table-filter-group__fields-container--multi-row-responsive
-  .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill) {
+  .table-filter-group__fields-grid-row--responsive:not(
+    .table-filter-group__fields-grid-row--merged-auto-fill
+  ) {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -1110,17 +1146,23 @@
 
 @container tfg-multi-row (min-width: 560px) {
   .table-filter-group__fields-container--multi-row-responsive
-    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='4'] {
+    .table-filter-group__fields-grid-row--responsive:not(
+      .table-filter-group__fields-grid-row--merged-auto-fill
+    )[data-filter-row-items='4'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .table-filter-group__fields-container--multi-row-responsive
-    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3'] {
+    .table-filter-group__fields-grid-row--responsive:not(
+      .table-filter-group__fields-grid-row--merged-auto-fill
+    )[data-filter-row-items='3'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .table-filter-group__fields-container--multi-row-responsive
-    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3']
+    .table-filter-group__fields-grid-row--responsive:not(
+      .table-filter-group__fields-grid-row--merged-auto-fill
+    )[data-filter-row-items='3']
     .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
     grid-column: 1 / -1;
   }
@@ -1128,17 +1170,23 @@
 
 @container tfg-multi-row (min-width: 1080px) {
   .table-filter-group__fields-container--multi-row-responsive
-    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='4'] {
+    .table-filter-group__fields-grid-row--responsive:not(
+      .table-filter-group__fields-grid-row--merged-auto-fill
+    )[data-filter-row-items='4'] {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .table-filter-group__fields-container--multi-row-responsive
-    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3'] {
+    .table-filter-group__fields-grid-row--responsive:not(
+      .table-filter-group__fields-grid-row--merged-auto-fill
+    )[data-filter-row-items='3'] {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
   }
 
   .table-filter-group__fields-container--multi-row-responsive
-    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3']
+    .table-filter-group__fields-grid-row--responsive:not(
+      .table-filter-group__fields-grid-row--merged-auto-fill
+    )[data-filter-row-items='3']
     .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
     grid-column: auto;
   }

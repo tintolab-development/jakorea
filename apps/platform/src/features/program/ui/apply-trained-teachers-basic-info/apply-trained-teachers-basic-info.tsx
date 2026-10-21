@@ -13,6 +13,23 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import styles from './apply-trained-teachers-basic-info.module.css'
+import { normalizePortalEducationFormat } from './apply-trained-teachers-basic-info-answers'
+import type {
+  ApplyTrainedTeachersBasicInfoValues,
+  PortalEducationFormat,
+} from './apply-trained-teachers-basic-info-answers'
+
+export {
+  basicInfoAnswerFromValues,
+  basicInfoValuesFromDraftAnswer,
+  emptyTrainedTeachersBasicInfo,
+  normalizePortalEducationFormat,
+} from './apply-trained-teachers-basic-info-answers'
+export type {
+  ApplyTrainedTeachersBasicInfoValues,
+  BasicInfoAnswerFromValuesOptions,
+  PortalEducationFormat,
+} from './apply-trained-teachers-basic-info-answers'
 
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
@@ -25,33 +42,13 @@ const EDUCATION_FORMAT_OPTIONS = [
   { value: 'online', label: '온라인' },
   { value: 'offline', label: '오프라인' },
   { value: 'hybrid', label: '온/오프라인' },
-] as const
+] as const satisfies ReadonlyArray<{ value: PortalEducationFormat; label: string }>
 
 const EDUCATION_PLACE_OPTIONS = [
   { value: 'inside', label: '기관 안' },
   { value: 'outside', label: '기관 밖' },
   { value: 'custom', label: '기타(직접입력)' },
 ] as const
-
-/** CMS `application.trainedTeachers.basicInfo.*` 와 동일 키로 answers 제출 */
-export type ApplyTrainedTeachersBasicInfoValues = {
-  schoolName: string
-  /** 기관 소재지 표시 (프로필 자동) */
-  regionLabel: string
-  applicationGrade: string
-  addressDetail: string
-  classCount: string
-  studentCount: string
-  educationFormat: string
-  educationPlace: string
-  educationPlaceDetail: string
-  teacherName: string
-  teacherTel: string
-  teacherMobile: string
-  teacherEmail: string
-  applicationReason: string
-  otherRequests: string
-}
 
 export type ApplyTrainedTeachersBasicInfoProfile = {
   schoolName?: string
@@ -70,6 +67,8 @@ type ApplyTrainedTeachersBasicInfoProps = {
   teacherMobileEmailLocked?: boolean
   /** 프로그램 교육 형태가 참여자 선택일 때만 희망 교육 형태 노출 (CMS와 동일) */
   showPreferredEducationForm?: boolean
+  /** educationFormat 서버 검증 실패 시 라디오 그룹 오류 상태 */
+  educationFormatError?: boolean
   /** 교육받은 교사·1사1교만. 일반 기관 신청 폼에는 없음 */
   showEducationPlace?: boolean
   maxClassCount?: number
@@ -92,14 +91,21 @@ function RadioGroup({
   value,
   options,
   onChange,
+  invalid = false,
 }: {
   name: string
   value: string
   options: ReadonlyArray<{ value: string; label: string }>
   onChange: (next: string) => void
+  invalid?: boolean
 }) {
   return (
-    <div className={styles.radioGroup} role="radiogroup" aria-label={name}>
+    <div
+      className={styles.radioGroup}
+      role="radiogroup"
+      aria-label={name}
+      aria-invalid={invalid || undefined}
+    >
       {options.map(option => (
         <label key={option.value} className={styles.radioOption}>
           <input
@@ -132,6 +138,7 @@ export function ApplyTrainedTeachersBasicInfo({
   schoolNameLocked = false,
   teacherMobileEmailLocked = false,
   showPreferredEducationForm = false,
+  educationFormatError = false,
   showEducationPlace = true,
   maxClassCount = DEFAULT_MAX_CLASS_COUNT,
   profile,
@@ -240,10 +247,16 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFFormField label="희망 교육 형태">
             <RadioGroup
               name="tt-education-format"
-              value={value.educationFormat || 'online'}
+              value={value.educationFormat}
               options={EDUCATION_FORMAT_OPTIONS}
-              onChange={next => patch({ educationFormat: next })}
+              invalid={educationFormatError}
+              onChange={next => patch({ educationFormat: normalizePortalEducationFormat(next) })}
             />
+            {educationFormatError ? (
+              <PFText as="span" typo="bd-sm-rg" color="error" role="alert">
+                희망 교육 형태를 다시 확인해 주세요.
+              </PFText>
+            ) : null}
           </PFFormField>
         ) : null}
       </PFFormFieldRow>
@@ -412,26 +425,6 @@ export function ApplyTrainedTeachersBasicInfo({
   )
 }
 
-export function emptyTrainedTeachersBasicInfo(): ApplyTrainedTeachersBasicInfoValues {
-  return {
-    schoolName: '',
-    regionLabel: '',
-    applicationGrade: '',
-    addressDetail: '',
-    classCount: '',
-    studentCount: '',
-    educationFormat: 'online',
-    educationPlace: 'inside',
-    educationPlaceDetail: '',
-    teacherName: '',
-    teacherTel: '',
-    teacherMobile: '',
-    teacherEmail: '',
-    applicationReason: '',
-    otherRequests: '',
-  }
-}
-
 export function findIncompleteTrainedTeachersBasicInfoMessage(
   values: ApplyTrainedTeachersBasicInfoValues,
 ): string | null {
@@ -445,117 +438,4 @@ export function findIncompleteTrainedTeachersBasicInfoMessage(
   if (!Number.isFinite(studentCount) || studentCount < 1) return '총 학생 수를 입력해 주세요.'
   if (!values.applicationReason.trim()) return '신청 사유를 입력해 주세요.'
   return null
-}
-
-export type BasicInfoAnswerFromValuesOptions = {
-  /** 프로그램 `educationForm === participant_choice` 일 때만 희망 교육 형태·장소를 보낸다. */
-  includePreferredEducationFields?: boolean
-}
-
-export function basicInfoAnswerFromValues(
-  values: ApplyTrainedTeachersBasicInfoValues,
-  options?: BasicInfoAnswerFromValuesOptions,
-): Record<string, unknown> | null {
-  const schoolName = values.schoolName.trim()
-  if (!schoolName) return null
-  const classCount = Number.parseInt(values.classCount, 10)
-  const studentCount = Number.parseInt(values.studentCount, 10)
-  const applicationGrade = values.applicationGrade.trim()
-  const addressDetail = values.addressDetail.trim()
-  const regionLabel = values.regionLabel.trim()
-  const includePreferredEducation = options?.includePreferredEducationFields === true
-
-  return {
-    schoolName,
-    ...(regionLabel ? { regionLabel, organizationRegion: regionLabel } : {}),
-    ...(applicationGrade ? { applicationGrade, educationGrade: applicationGrade } : {}),
-    ...(addressDetail ? { addressDetail, detailAddress: addressDetail } : {}),
-    ...(Number.isFinite(classCount) && classCount > 0 ? { classCount } : {}),
-    ...(Number.isFinite(studentCount) && studentCount > 0
-      ? { studentCount, totalStudents: studentCount }
-      : {}),
-    ...(includePreferredEducation && values.educationFormat.trim()
-      ? { educationFormat: values.educationFormat.trim() }
-      : {}),
-    ...(includePreferredEducation && values.educationPlace.trim()
-      ? { educationPlace: values.educationPlace.trim() }
-      : {}),
-    ...(includePreferredEducation && values.educationPlaceDetail.trim()
-      ? { educationPlaceDetail: values.educationPlaceDetail.trim() }
-      : {}),
-    ...(values.teacherName.trim() ? { teacherName: values.teacherName.trim() } : {}),
-    ...(values.teacherTel.trim()
-      ? { teacherTel: formatKoreanPhoneNumber(values.teacherTel.trim()) }
-      : {}),
-    ...(values.teacherMobile.trim()
-      ? { teacherMobile: formatKoreanPhoneNumber(values.teacherMobile.trim()) }
-      : {}),
-    ...(values.teacherEmail.trim() ? { teacherEmail: values.teacherEmail.trim() } : {}),
-    ...(values.applicationReason.trim()
-      ? { applicationReason: values.applicationReason.trim() }
-      : {}),
-    ...(values.otherRequests.trim() ? { otherRequests: values.otherRequests.trim() } : {}),
-  }
-}
-
-function readStringField(row: Record<string, unknown>, ...keys: string[]): string {
-  for (const key of keys) {
-    const raw = row[key]
-    if (typeof raw === 'string' && raw.trim()) return raw.trim()
-    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
-  }
-  return ''
-}
-
-export function basicInfoValuesFromDraftAnswer(
-  answer: unknown,
-): ApplyTrainedTeachersBasicInfoValues | null {
-  if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return null
-  const row = answer as Record<string, unknown>
-  const schoolName = readStringField(row, 'schoolName')
-  const applicationGrade = readStringField(row, 'applicationGrade', 'educationGrade')
-  const regionLabel = readStringField(row, 'regionLabel', 'organizationRegion')
-  const addressDetail = readStringField(row, 'addressDetail', 'detailAddress')
-  const classCount = readStringField(row, 'classCount')
-  const studentCount = readStringField(row, 'studentCount', 'totalStudents')
-  const educationFormat = readStringField(row, 'educationFormat') || 'online'
-  const educationPlace = readStringField(row, 'educationPlace') || 'inside'
-  const educationPlaceDetail = readStringField(row, 'educationPlaceDetail')
-  const teacherName = readStringField(row, 'teacherName')
-  const teacherTel = formatKoreanPhoneNumber(readStringField(row, 'teacherTel'))
-  const teacherMobile = formatKoreanPhoneNumber(readStringField(row, 'teacherMobile'))
-  const teacherEmail = readStringField(row, 'teacherEmail')
-  const applicationReason = readStringField(row, 'applicationReason')
-  const otherRequests = readStringField(row, 'otherRequests')
-
-  if (
-    !schoolName &&
-    !applicationGrade &&
-    !addressDetail &&
-    !classCount &&
-    !studentCount &&
-    !applicationReason &&
-    !otherRequests
-  ) {
-    return null
-  }
-
-  return {
-    ...emptyTrainedTeachersBasicInfo(),
-    schoolName,
-    regionLabel,
-    applicationGrade,
-    addressDetail,
-    classCount,
-    studentCount,
-    educationFormat,
-    educationPlace,
-    educationPlaceDetail,
-    teacherName,
-    teacherTel,
-    teacherMobile,
-    teacherEmail,
-    applicationReason,
-    otherRequests,
-  }
 }

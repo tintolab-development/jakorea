@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import {
   resolveInstructorPortalAvailableScheduleEnabledForHidden,
   resolveVolunteerPortalActivityScheduleEnabledForHidden,
@@ -125,6 +126,41 @@ assert.equal(
     },
   }),
   true,
+)
+
+const ujatInterviewId = UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule
+assert.equal(
+  resolveVolunteerPortalInterviewEnabledForHidden({
+    formBinding: {
+      runtimeContext: { interviewEnabled: false },
+      paragraphs: [{ id: ujatInterviewId, items: [{ id: 'slot-1', label: 'slot' }] }],
+    },
+  }),
+  false,
+)
+assert.equal(
+  resolveVolunteerPortalInterviewEnabledForHidden({
+    formBinding: {
+      runtimeContext: { interviewEnabled: true },
+      paragraphs: [
+        {
+          id: ujatInterviewId,
+          runtimeInputMode: 'dynamic_interview_slots',
+          items: [{ id: 'slot-1', label: 'slot' }],
+        },
+      ],
+    },
+  }),
+  true,
+)
+assert.equal(
+  resolveVolunteerPortalInterviewEnabledForHidden({
+    formBinding: {
+      runtimeContext: { interviewEnabled: true },
+      paragraphs: [{ id: ujatInterviewId, runtimeHidden: true }],
+    },
+  }),
+  false,
 )
 
 console.log('portal-volunteer-interview-visibility.selfcheck: ok')

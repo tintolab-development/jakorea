@@ -59,7 +59,7 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
                     <CmsInput
                       {...field}
                       value={value}
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                       placeholder={placeholder}
                       className={textareaClassName}
@@ -69,7 +69,7 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
                     <CmsTextArea
                       {...field}
                       value={value}
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                       rows={rows}
                       placeholder={placeholder}

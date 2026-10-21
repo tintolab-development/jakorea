@@ -93,7 +93,7 @@ function SenderNameField({ seed, epoch, onChange, readOnly = false }: SenderName
   }, [epoch, seed])
   return (
     <CmsInput
-      inputSize="large"
+      inputSize="small"
       width="100%"
       allowClear={false}
       readOnly={readOnly}
@@ -612,7 +612,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         edit={
                           remote && senderEmailOptions.length > 0 ? (
                             <CmsSelect
-                              inputSize="large"
+                              inputSize="small"
                               width="100%"
                               withAllOption={false}
                               placeholder="발신 메일을 선택하세요"
@@ -626,7 +626,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             />
                           ) : (
                             <CmsInput
-                              inputSize="large"
+                              inputSize="small"
                               width="100%"
                               allowClear={false}
                               placeholder="발신 메일을 입력하세요"
@@ -719,7 +719,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                               view={contextVariableValues[key] ?? ''}
                               edit={
                                 <CmsInput
-                                  inputSize="large"
+                                  inputSize="small"
                                   width="100%"
                                   placeholder={`${key} 값 입력`}
                                   value={contextVariableValues[key] ?? ''}

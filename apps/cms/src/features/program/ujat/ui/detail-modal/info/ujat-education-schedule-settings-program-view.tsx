@@ -93,7 +93,7 @@ export function UjatEducationScheduleSettingsProgramView({
   h1Display?: UjatEducationScheduleSettingsSemesterDisplay
   h2Display?: UjatEducationScheduleSettingsSemesterDisplay
 }) {
-  const overlay = program.ujatRegistrationOverlay
+  const overlay = program.ujatRegistrationOverlay ?? {}
   const h1Display =
     h1DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplay('h1', overlay)
   const h2Display =

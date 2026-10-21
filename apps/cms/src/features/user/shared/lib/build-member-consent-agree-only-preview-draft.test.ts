@@ -49,10 +49,11 @@ describe('shouldFetchSubmittedConsentDocument', () => {
 })
 
 describe('shouldAttemptSubmittedConsentDocumentFetch', () => {
-  it('메타 없이 documentAgreed면 제출본 API를 시도한다', () => {
-    expect(shouldAttemptSubmittedConsentDocumentFetch({}, { documentAgreed: true })).toBe(true)
+  it('실제 제출 메타가 있을 때만 제출본 API를 시도한다', () => {
     expect(shouldAttemptSubmittedConsentDocumentFetch({}, { documentAgreed: false })).toBe(false)
     expect(shouldAttemptSubmittedConsentDocumentFetch({ formResponseId: 3 })).toBe(true)
+    expect(shouldAttemptSubmittedConsentDocumentFetch({ consentRecordId: 42 })).toBe(true)
+    expect(shouldAttemptSubmittedConsentDocumentFetch({}, { documentAgreed: true })).toBe(false)
   })
 })
 

@@ -24,15 +24,20 @@ import type {
 } from '@/features/sponsor/model/sponsor-management.types'
 import {
   applyCreatedToMatchingArrayLists,
-  applyDeletedToArrayLists,
   applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
+import {
+  applyDeletedSponsorsToLists,
+  cancelSponsorListQueries,
+  discardDeletedSponsorCaches,
+  invalidateSponsorListCaches,
+} from '@/features/sponsor/lib/query-cache'
 import dayjs from 'dayjs'
 import { isSponsorSponsorshipStatus } from '@/features/sponsor/model/sponsorship-status'
 
 function rowId(row: SponsorManagementRow): string {
-  return row.id
+  return String(row.id ?? '')
 }
 
 function detailToListRow(detail: SponsorManagementDetailView): SponsorManagementRow {
@@ -144,25 +149,26 @@ export function useSponsorMutations() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteSponsor,
-    onSuccess: (_data, id) => {
-      queryClient.removeQueries({ queryKey: dataManagementQueryKeys.sponsors.detail(id) })
-      applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
-      void queryClient.invalidateQueries({ queryKey: listsKey })
-      patchSponsorOptionsList(queryClient, old => old.filter(row => row.id !== id))
+    onSuccess: async (_data, id) => {
+      await cancelSponsorListQueries(queryClient)
+      discardDeletedSponsorCaches(queryClient, id)
+      applyDeletedSponsorsToLists(queryClient, id)
+      await invalidateSponsorListCaches(queryClient)
     },
+    retry: false,
   })
 
   const bulkDeleteMutation = useMutation({
     mutationFn: deleteSponsors,
-    onSuccess: (_data, ids) => {
-      const idSet = new Set(ids)
+    onSuccess: async (_data, ids) => {
+      await cancelSponsorListQueries(queryClient)
       for (const id of ids) {
-        queryClient.removeQueries({ queryKey: dataManagementQueryKeys.sponsors.detail(id) })
-        applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
+        discardDeletedSponsorCaches(queryClient, id)
       }
-      void queryClient.invalidateQueries({ queryKey: listsKey })
-      patchSponsorOptionsList(queryClient, old => old.filter(row => !idSet.has(row.id)))
+      applyDeletedSponsorsToLists(queryClient, ids)
+      await invalidateSponsorListCaches(queryClient)
     },
+    retry: false,
   })
 
   const deleteProgramHistoriesMutation = useMutation({

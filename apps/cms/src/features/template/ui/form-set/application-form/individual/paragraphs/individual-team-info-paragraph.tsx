@@ -48,7 +48,7 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
           fullRow
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="팀 명을 입력하세요"
               value={teamName}
@@ -65,7 +65,7 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
-                inputSize="medium"
+                inputSize="small"
                 width={140}
                 withAllOption={false}
                 placeholder="인원 수"
@@ -77,7 +77,7 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
                 <>
                   <DetailInfoForm.InputsSeparator />
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     mode="integer"
                     width="100%"
                     style={{ flex: '1 1 160px', minWidth: 140 }}
@@ -95,13 +95,13 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
           label="팀 내 역할"
           edit={
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={teamRole}
               onChange={event => setTeamRole(event.target.value)}
               style={inlineChoiceStyle}
             >
               {TEAM_ROLE_OPTIONS.map(option => (
-                <CmsRadio key={option.value} value={option.value}>
+                <CmsRadio size="medium" key={option.value} value={option.value}>
                   {option.label}
                 </CmsRadio>
               ))}

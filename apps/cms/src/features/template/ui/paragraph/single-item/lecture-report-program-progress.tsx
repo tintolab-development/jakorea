@@ -8,6 +8,7 @@ import type { LectureReportProgramProgressParagraph } from '@/features/template/
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
 import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
 import './lecture-report-program-progress.css'
 
 dayjs.extend(customParseFormat)
@@ -188,7 +189,7 @@ export function LectureReportProgramProgress({
                   styles={verticalTablePickerPopupStyles}
                   getPopupContainer={verticalTableFieldPopupContainer}
                   value={toDayjsDate(paragraph.educationDate)}
-                  format="YYYY-MM-DD"
+                  format={formatAppDatepickerDisplay}
                   placeholder="교육 진행일"
                   disabled={autofillLocked}
                 />

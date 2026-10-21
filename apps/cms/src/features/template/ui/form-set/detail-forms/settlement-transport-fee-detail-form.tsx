@@ -55,7 +55,7 @@ function SuffixInput({
     <div className="detail-info-form-inputs-wrapper-no-gap settlement-transport-fee-detail-form__suffix-row">
       <CmsInput
         disabled
-        inputSize="medium"
+        inputSize="small"
         placeholder={placeholder}
         value={value}
         width={width}

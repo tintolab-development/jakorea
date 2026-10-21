@@ -38,20 +38,20 @@
 .school-detail-fullpage-view__assignment-status {
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }
 
 .school-detail-fullpage-view__assignment-status--waiting {
-  color: var(--color-blue, #017eaf);
+  color: var(--Status-green-main, #1e8c29);
 }
 
 .school-detail-fullpage-view__assignment-status--cancelled {
-  color: var(--color-red, #c32f4a);
+  color: var(--Status-red-main, #c32f4a);
 }
 
 .school-detail-fullpage-view__assignment-status--assigned {
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Netural-black, #3d3d3d);
 }

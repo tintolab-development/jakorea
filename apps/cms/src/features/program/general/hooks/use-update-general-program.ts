@@ -33,7 +33,8 @@ export function useUpdateGeneralProgram() {
           updated,
           variables.program,
           variables.patch
-        )
+        ),
+        { refetch: false }
       )
       invalidateGeneralProgramListCaches(queryClient)
       void queryClient.invalidateQueries({

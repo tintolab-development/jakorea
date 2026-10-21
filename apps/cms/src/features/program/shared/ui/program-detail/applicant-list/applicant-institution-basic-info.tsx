@@ -13,6 +13,7 @@ import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { FileSelectField } from '@/shared/ui/file-select-field'
@@ -376,7 +377,12 @@ export function ApplicantInstitutionBasicInfo({
 
 function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
   const isNotPlanned = session.status === 'not_planned' || !session.date
-  const datePart = `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
+  const dateSource = session.date.trim()
+  const direct = formatCmsScheduleDisplayLabel(dateSource)
+  const datePart =
+    direct !== dateSource || /\([월화수목금토일]\)/u.test(direct)
+      ? direct
+      : formatCmsScheduleDisplayLabel(`${dateSource}(${session.dayOfWeek})`)
   const durationFormat = `${session.duration} (${session.format})`
   const periodTime = `${session.classNum} (${session.timeRange.replace('~', ' ~ ')})`
 

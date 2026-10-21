@@ -5,7 +5,7 @@
 
 import type { GeminiRecruitmentAddFormSnapshot } from '../lib/recruitment/add-local-save'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import type { GeminiRecruitmentRow } from '../model/recruitment/types'
+import type { GeminiRecruitmentDetail } from '../model/recruitment/detail-types'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './visiting-training/capabilities'
 import {
   createGeminiRecruitment,
@@ -16,7 +16,9 @@ const REMOTE_ONLY_MESSAGE =
   'Gemini 찾아가는 연수는 Admin visiting-training API를 사용하세요. mock 카탈로그는 제거되었습니다.'
 
 export const geminiRecruitmentService = {
-  async register(snapshot: GeminiRecruitmentAddFormSnapshot): Promise<GeminiRecruitmentRow | { id: string }> {
+  async register(
+    snapshot: GeminiRecruitmentAddFormSnapshot
+  ): Promise<{ id: string; detail: GeminiRecruitmentDetail | null }> {
     if (shouldUseGeminiVisitingTrainingRemoteApi()) {
       return createGeminiRecruitment(snapshot)
     }

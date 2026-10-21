@@ -64,6 +64,10 @@ import {
   registrationProgramTypeForTemplateCode,
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
+  EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
+} from '@/features/program/general/lib/registration-required-fields'
 import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
@@ -647,6 +651,18 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
+      if (
+        shouldCheckRequired &&
+        nextPhase !== 'program' &&
+        isProgramStep &&
+        registrationVm.hasCurriculumMultiDateScheduleCountMismatch()
+      ) {
+        showAlert({
+          title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
+          content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
+        })
+        return
+      }
       /** 모집→신청 필수 검사는 일반·1사1교만 — 교육받은 교사는 프로그램 단계 검사만 적용 */
       if (
         shouldCheckRequired &&
@@ -746,6 +762,13 @@ export function useGeneralProgramRegistrationFlow(
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+      if (isProgramStep && registrationVm.hasCurriculumMultiDateScheduleCountMismatch()) {
+        showAlert({
+          title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
+          content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
         })
         return
       }

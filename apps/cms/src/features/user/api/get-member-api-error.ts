@@ -14,6 +14,12 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
     '미재학 상태에서는 학교 소속을 선택할 수 없습니다.',
   INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED:
     'JA 강사 등급 정책이 설정되지 않았습니다. 관리자에게 문의해 주세요.',
+  INSTRUCTOR_APPROVAL_FEE_GRADE_UNSUPPORTED:
+    '지원하지 않는 강사비 등급입니다. 1급·2급·3급 중에서 선택해 주세요.',
+  INSTRUCTOR_FEE_GRADE_UNSUPPORTED:
+    '지원하지 않는 강사비 등급입니다. 1급·2급·3급 중에서 선택해 주세요.',
+  CMS_INSTRUCTOR_FEE_GRADE_UNSUPPORTED:
+    '지원하지 않는 강사비 등급입니다. 1급·2급·3급 중에서 선택해 주세요.',
   /** 강사 권한 박탈·승인 취소 — 진행/배정 중 프로그램이 있으면 BE 409 */
   INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM:
     '참여 중인 프로그램이 있어 권한을 취소할 수 없습니다.',
@@ -29,6 +35,9 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
     }
 
     const code = extractApiErrorCode(axiosErr.response?.data)
+    if (code === 'PORTRAIT_CONSENT_CONTENT_UNAVAILABLE') {
+      return '초상권 동의 상태는 유지되지만 보존 정책 또는 작성 내용 부재로 제출 작성본을 조회할 수 없습니다.'
+    }
     const mapped = code ? MEMBER_ERROR_CODE_MESSAGES[code] : undefined
     if (mapped) {
       const serverMessage = extractApiErrorMessage(axiosErr.response?.data, {

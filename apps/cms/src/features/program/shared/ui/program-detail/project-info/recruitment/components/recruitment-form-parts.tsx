@@ -56,7 +56,7 @@ export function DateRangeEdit({
                 : false
 
           return (
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               presetMode="period"
               value={start ?? null}

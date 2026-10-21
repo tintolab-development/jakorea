@@ -47,7 +47,7 @@
 }
 
 .badgeContainer {
-  width: 73px;
+  min-width: 73px;
   flex-shrink: 0;
 }
 

@@ -70,7 +70,7 @@ export function UjatScheduleConfirmRevisionRequestModal({
             fullRow
             edit={
               <CmsTextArea
-                inputSize="large"
+                inputSize="small"
                 width="100%"
                 rows={4}
                 value={message}

@@ -61,29 +61,31 @@ describe('ja-grade-evaluation-score', () => {
     expect(validateJaGradeEvaluationDraft(draft).valid).toBe(false)
   })
 
-  it('고정 점수에서 누적 감점을 차감해 최종 등급을 계산한다', () => {
+  it('고정 점수에서 항목별 2회당 감점을 차감해 최종 등급을 계산한다', () => {
     const draft = draftWithSelections(['ja-scale-5', 'ja-scale-5', 'ja-scale-5', 'ja-scale-4'])
     const result = calculateJaGradeEvaluationFromDraft(draft, {
       scheduleChangeCount: 2,
-      lateReportCount: 1,
+      lateReportCount: 3,
     })
 
     expect(result.fixedTotal).toBe(95)
-    expect(calculateJaGradePenalty(2, 1)).toEqual({ penaltyEventCount: 3, penalty: 15 })
-    expect(result.penalty).toBe(15)
-    expect(result.totalScore).toBe(80)
-    expect(result.grade).toBe('B')
+    expect(calculateJaGradePenalty(2, 3)).toEqual({ penaltyEventCount: 2, penalty: 10 })
+    expect(calculateJaGradePenalty(1, 1)).toEqual({ penaltyEventCount: 0, penalty: 0 })
+    expect(result.penalty).toBe(10)
+    expect(result.totalScore).toBe(85)
+    expect(result.grade).toBe('A')
   })
 
-  it('감점 후 0점 미만으로 내려가지 않는다', () => {
+  it('감점 후 총점은 음수일 수 있고 등급은 D다', () => {
     const draft = draftWithSelections(['ja-scale-1', 'ja-scale-1', 'ja-scale-1', 'ja-scale-1'])
     const result = calculateJaGradeEvaluationFromDraft(draft, {
-      scheduleChangeCount: 5,
-      lateReportCount: 5,
+      scheduleChangeCount: 6,
+      lateReportCount: 6,
     })
 
     expect(result.fixedTotal).toBe(20)
-    expect(result.totalScore).toBe(0)
+    expect(result.penalty).toBe(30)
+    expect(result.totalScore).toBe(-10)
     expect(result.grade).toBe('D')
   })
 })

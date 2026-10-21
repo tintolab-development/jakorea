@@ -94,7 +94,7 @@ function UjatOverlayTextField({
       validationKey={validationKey}
       edit={
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           value={value}
           onChange={event => setValue(event.target.value)}
           placeholder={placeholder}
@@ -411,7 +411,7 @@ export function UjatBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="세부 프로그램명을 선택하세요"
                   width="100%"
                   options={detailedProgramOptions}
@@ -432,7 +432,7 @@ export function UjatBasicInfoParagraph({
             validationKey="basicInfo.operationRangeSeal"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={operationAnchorDate}
@@ -467,16 +467,16 @@ export function UjatBasicInfoParagraph({
             validationKey="basicInfo.audience"
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox checkboxSize="large" checked={individualChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={individualChecked} disabled>
                   {participantTypeLabel('individual')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked={organizationChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={organizationChecked} disabled>
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked={teacherChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={teacherChecked} disabled>
                   {participantTypeLabel('teacher_instructor')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked={volunteerChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={volunteerChecked} disabled>
                   {participantTypeLabel('volunteer')}
                 </CmsCheckbox>
               </div>
@@ -490,7 +490,7 @@ export function UjatBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="사업 분야를 선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
@@ -510,7 +510,7 @@ export function UjatBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="후원사를 선택하세요"
                   width={240}
                   options={sponsorOptions}
@@ -537,7 +537,7 @@ export function UjatBasicInfoParagraph({
                 <CmsSelect
                   mode="multiple"
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}
                   showSearch
@@ -554,7 +554,7 @@ export function UjatBasicInfoParagraph({
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width={220}
                   placeholder="담당자 연락처"
                   value={selectedSponsorContactPhone}
@@ -576,7 +576,7 @@ export function UjatBasicInfoParagraph({
                 {UJAT_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
                   <CmsCheckbox
                     key={id}
-                    checkboxSize="large"
+                    checkboxSize="medium"
                     checked={surveyItems[id]}
                     onChange={toggleSurveyItem(id)}
                   >
@@ -596,7 +596,7 @@ export function UjatBasicInfoParagraph({
             edit={
               <CmsSelect
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="교육 과정을 선택하세요"
                 width={240}
                 options={educationCourseSelectOptions}
@@ -612,7 +612,7 @@ export function UjatBasicInfoParagraph({
             edit={
               <CmsSelect
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
                 value={ipOwned}
@@ -629,7 +629,7 @@ export function UjatBasicInfoParagraph({
             edit={
               <CmsSelect
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 width={240}
                 options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
                 value={courseDeliveredBy}
@@ -643,12 +643,12 @@ export function UjatBasicInfoParagraph({
             validationKey="basicInfo.partnerInvolvement"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={partnerInvolvement}
                 onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
               >
-                <CmsRadio value="yes">Yes</CmsRadio>
-                <CmsRadio value="no">No</CmsRadio>
+                <CmsRadio size="medium" value="yes">Yes</CmsRadio>
+                <CmsRadio size="medium" value="no">No</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -662,7 +662,7 @@ export function UjatBasicInfoParagraph({
             edit={
               <CmsSelect
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="IPS 유형을 선택하세요"
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}

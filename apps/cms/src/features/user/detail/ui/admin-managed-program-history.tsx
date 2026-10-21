@@ -35,7 +35,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import {
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
@@ -431,6 +431,7 @@ export function AdminManagedProgramHistory({
         <MemberDetailMockDataBanner message="adminAccountId 또는 memberId가 없어 담당 프로그램 이력 API를 호출할 수 없습니다." />
       ) : null}
       <FilterTableLayout
+        className="admin-managed-program-history"
         hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
@@ -478,6 +479,7 @@ export function AdminManagedProgramHistory({
             scroll={{ x: 'max-content' }}
             pagination={false}
             className="cms-data-table cms-data-table--fluid"
+            size={TABLE_CONFIG.size}
             onRow={adminManagedProgramTableOnRow}
           />
         </Spin>

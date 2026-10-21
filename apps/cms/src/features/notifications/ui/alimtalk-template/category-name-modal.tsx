@@ -82,7 +82,7 @@ export function CategoryNameModal({
               readOnlyDisplay
               view={
                 <CmsInput
-                  inputSize="large"
+                  inputSize="small"
                   width="100%"
                   value={view.parentName}
                   disabled
@@ -97,7 +97,7 @@ export function CategoryNameModal({
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="small"
                 width="100%"
                 value={name}
                 placeholder="카테고리명을 입력해 주세요"

@@ -2,7 +2,11 @@ import { queryOptions, useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isHomepageApiConfigured } from '@/shared/lib/api-remote-env'
-import { getQueryRetryHttpStatus, queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
+import {
+  getQueryRetryHttpStatus,
+  queryRetryDelay,
+  shouldRetryQuery,
+} from '@/shared/lib/query-retry'
 import type { CareersGuideView } from '../model/guide-view'
 import type {
   CareerJobListItem,
@@ -10,6 +14,7 @@ import type {
   CareerPostingDetailStatus,
 } from '../model/types'
 import { getAdjacentCareerPostings, type AdjacentCareerPostings } from '../lib/adjacent'
+import { CAREERS_PAGE_SIZE } from '../lib/constants'
 import { createFallbackCareersGuideView } from '../lib/fallback-guide'
 import type { CareersTalentApplySchemaValues } from '../lib/validate-talent-apply-form'
 import {
@@ -17,6 +22,7 @@ import {
   fetchPublicCareerGuide,
   fetchPublicCareerPostingDetail,
   fetchPublicCareerPostings,
+  fetchPublicCareerPostingsForAdjacent,
   uploadCareerTalentApplicationAttachment,
 } from './client'
 import {
@@ -74,10 +80,32 @@ export function publicCareerGuideQueryOptions() {
   })
 }
 
-export function publicCareerPostingsQueryOptions() {
+export function publicCareerPostingsQueryOptions(query: { q: string; page: number; size: number }) {
+  const q = query.q.trim()
   return queryOptions({
-    queryKey: platformQueryKeys.careers.postings(),
-    queryFn: ({ signal }) => fetchPublicCareerPostings(signal),
+    queryKey: platformQueryKeys.careers.postings({ q, page: query.page, size: query.size }),
+    queryFn: ({ signal }) =>
+      fetchPublicCareerPostings(
+        {
+          ...(q ? { q } : {}),
+          page: query.page,
+          size: query.size,
+        },
+        signal
+      ),
+    staleTime: POSTINGS_STALE_MS,
+    gcTime: POSTINGS_GC_MS,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+}
+
+export function publicCareerPostingsAdjacentQueryOptions() {
+  return queryOptions({
+    queryKey: platformQueryKeys.careers.postingsAdjacent(),
+    queryFn: ({ signal }) => fetchPublicCareerPostingsForAdjacent(signal),
     staleTime: POSTINGS_STALE_MS,
     gcTime: POSTINGS_GC_MS,
     refetchOnWindowFocus: false,
@@ -114,29 +142,67 @@ export function usePublicCareerGuide(): {
   }
 }
 
-export function usePublicCareerPostings(): {
+export function usePublicCareerPostings(params: {
+  q: string
+  /** 1-based */
+  page: number
+  enabled?: boolean
+}): {
   jobs: readonly CareerJobListItem[]
+  totalCount: number
+  totalPages: number
   isRemoteEnabled: boolean
   isPending: boolean
   isError: boolean
 } {
   const remote = isHomepageApiConfigured()
+  const q = params.q.trim()
+  const page = Math.max(params.page, 1) - 1
   const query = useQuery({
-    ...publicCareerPostingsQueryOptions(),
-    enabled: remote,
+    ...publicCareerPostingsQueryOptions({ q, page, size: CAREERS_PAGE_SIZE }),
+    enabled: remote && params.enabled !== false,
   })
 
-  const jobs = useMemo(() => {
-    if (!remote || query.isError || !query.data) return []
-    return mapPublicCareerPostings(query.data)
-  }, [query.data, query.isError, remote])
-
-  return {
-    jobs,
-    isRemoteEnabled: remote,
-    isPending: remote && query.isPending,
-    isError: query.isError,
-  }
+  return useMemo(() => {
+    if (!remote || params.enabled === false) {
+      return {
+        jobs: [],
+        totalCount: 0,
+        totalPages: 0,
+        isRemoteEnabled: remote,
+        isPending: false,
+        isError: false,
+      }
+    }
+    if (query.isPending) {
+      return {
+        jobs: [],
+        totalCount: 0,
+        totalPages: 0,
+        isRemoteEnabled: true,
+        isPending: true,
+        isError: false,
+      }
+    }
+    if (query.isError || !query.data) {
+      return {
+        jobs: [],
+        totalCount: 0,
+        totalPages: 0,
+        isRemoteEnabled: true,
+        isPending: false,
+        isError: query.isError,
+      }
+    }
+    return {
+      jobs: mapPublicCareerPostings(query.data),
+      totalCount: query.data.totalCount ?? 0,
+      totalPages: query.data.totalPages ?? 0,
+      isRemoteEnabled: true,
+      isPending: false,
+      isError: false,
+    }
+  }, [params.enabled, query.data, query.isError, query.isPending, remote])
 }
 
 export function useCareerPostingDetail(id: string | null): CareerPostingDetailQuery {
@@ -156,7 +222,7 @@ export function useCareerPostingDetail(id: string | null): CareerPostingDetailQu
   })
 
   const listQuery = useQuery({
-    ...publicCareerPostingsQueryOptions(),
+    ...publicCareerPostingsAdjacentQueryOptions(),
     enabled: remote,
   })
 
@@ -264,7 +330,7 @@ export function useCreatePublicCareerTalentApplication() {
         attachmentAssetId = await uploadCareerTalentApplicationAttachment(input.attachmentFile)
       }
       return createPublicCareerTalentApplication(
-        toPublicCareerTalentApplicationCreateRequest(input.values, attachmentAssetId),
+        toPublicCareerTalentApplicationCreateRequest(input.values, attachmentAssetId)
       )
     },
     retry: false,

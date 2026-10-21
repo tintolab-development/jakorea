@@ -16,6 +16,7 @@ import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
+import { formatScheduleColumnTitle } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 
 function mapOrgRowToProgressInstitution(
@@ -30,9 +31,11 @@ function mapOrgRowToProgressInstitution(
   for (const grade of row.gradeClassCounts) {
     const key = grade.gradeLabel as (typeof UJAT_EDU_PROGRESS_INSTITUTION_GRADE_LABELS)[number]
     if (key in gradeClassCounts) {
-      gradeClassCounts[key] = grade.classCount
+      gradeClassCounts[key] = grade.classCount ?? 0
     }
   }
+
+  const educationScheduleIsoDates = [...row.sessionIsoDates].sort()
 
   return {
     id: row.id,
@@ -43,8 +46,10 @@ function mapOrgRowToProgressInstitution(
     educationRegion: row.regionKey
       ? getUjatEducationRegionLabel(row.regionKey, row.regionKey)
       : '-',
-    educationScheduleDisplay: '-',
-    educationScheduleIsoDates: [],
+    educationScheduleDisplay: educationScheduleIsoDates.length
+      ? educationScheduleIsoDates.map(formatScheduleColumnTitle).join(', ')
+      : '-',
+    educationScheduleIsoDates,
     gradeClassCounts,
     totalEducationClassCount: row.totalClassCount,
     teacherName: row.teacherName,

@@ -2,6 +2,7 @@
  * 참여 기관 회차 일정 → 강사 추가 배정 모달「교육 배정일 선택」태그 옵션
  */
 
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 
@@ -25,15 +26,9 @@ export interface InstructorAssignSessionOption {
 
 function formatScheduleDateLabel(dateRaw: string, dayOfWeek: string): string {
   const cleaned = dateRaw.trim()
-  const parts = cleaned.split(/[.\\/]/).filter(p => p.length > 0)
-  if (parts.length >= 3) {
-    const y = parseInt(parts[0]!, 10)
-    const yy = Number.isFinite(y) ? String(y).slice(-2) : parts[0]!.slice(-2)
-    const mm = parseInt(parts[1]!, 10)
-    const dd = parts[2]!.padStart(2, '0')
-    return `${yy}년 ${mm}월 ${dd}일(${dayOfWeek})`
-  }
-  return `${cleaned}(${dayOfWeek})`
+  const formatted = formatCmsScheduleDisplayLabel(cleaned)
+  if (formatted !== cleaned || /\([월화수목금토일]\)/u.test(formatted)) return formatted
+  return formatCmsScheduleDisplayLabel(`${cleaned}(${dayOfWeek})`)
 }
 
 function normalizeTimeRangeDisplay(s: string): string {
@@ -47,19 +42,57 @@ function normalizeTimeRangeDisplay(s: string): string {
   return parts.join(' ~ ')
 }
 
+function isTimeOnlyScheduleLabel(value: string): boolean {
+  const compact = value.trim().replace(/\s*~\s*/g, '~')
+  const [start, end] = compact.split('~')
+  if (!start || !end) return false
+  return /^\d{1,2}:\d{2}$/.test(start.trim()) && /^\d{1,2}:\d{2}$/.test(end.trim())
+}
+
+/** 참여 학교 회차 일정 → 배정 모달 날짜·시간 라벨 */
+export function resolveInstructorAssignSessionDisplayLabels(
+  session: ParticipatingSchoolSession
+): { dateLabel: string; timeLabel: string; scheduleLabel: string } {
+  const timeRange = normalizeTimeRangeDisplay(session.timeRange)
+  const dateRaw = session.date.trim()
+
+  if (!dateRaw) {
+    return {
+      dateLabel: '',
+      timeLabel: timeRange,
+      scheduleLabel: timeRange,
+    }
+  }
+
+  if (isTimeOnlyScheduleLabel(dateRaw)) {
+    const time = normalizeTimeRangeDisplay(dateRaw)
+    return {
+      dateLabel: '',
+      timeLabel: time,
+      scheduleLabel: time,
+    }
+  }
+
+  const dateLabel = formatScheduleDateLabel(dateRaw, session.dayOfWeek)
+  return {
+    dateLabel,
+    timeLabel: timeRange,
+    scheduleLabel: `${dateLabel} ${timeRange}`,
+  }
+}
+
 /** 참여 학교 회차 → 배정일 태그 (완료 회차는 비활성) */
 export function mapParticipatingSessionsToInstructorAssignOptions(
   sessions: ParticipatingSchoolSession[] | undefined | null
 ): InstructorAssignSessionOption[] {
   if (!sessions?.length) return []
   return sessions.map(s => {
-    const dateLabel = formatScheduleDateLabel(s.date, s.dayOfWeek)
-    const timeRange = normalizeTimeRangeDisplay(s.timeRange)
+    const { dateLabel, timeLabel, scheduleLabel } = resolveInstructorAssignSessionDisplayLabels(s)
     return {
       id: `session-${s.round}-${s.date}-${s.timeRange}`,
-      dateLabel,
-      timeLabel: timeRange,
-      scheduleLabel: `${dateLabel} ${timeRange}`,
+      dateLabel: dateLabel || undefined,
+      timeLabel,
+      scheduleLabel,
       sessionRoundLabel: `${s.round}차시`,
       capacityLabel: '0명',
       disabled:

@@ -42,6 +42,13 @@ export const GNB_MENU_ROUTES = {
 
 export type GnbMenuCode = keyof typeof GNB_MENU_ROUTES
 
+/** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 메뉴 표기. */
+export const GNB_DESIGN_LABEL_OVERRIDES: Partial<Record<GnbMenuCode, string>> = {
+  EDU_ENTREPRENEURSHIP: '기업가정신',
+  EDU_DIGITAL_LITERACY: '디지털리터러시',
+  EDU_MATERIAL: '교재',
+}
+
 const KNOWN_GROUP_CODES = [
   'JA_KOREA',
   'IMPACT_STORY',
@@ -85,9 +92,17 @@ export const gnbFallbackGroups = [
     children: [
       { menuCode: 'EDU_CAREER', label: '진로취업', href: '/education/career' },
       { menuCode: 'EDU_ECONOMY', label: '경제금융', href: '/education/finance' },
-      { menuCode: 'EDU_ENTREPRENEURSHIP', label: '기업가 정신', href: '/education/entrepreneurship' },
-      { menuCode: 'EDU_DIGITAL_LITERACY', label: '디지털 리터러시', href: '/education/digital-literacy' },
-      { menuCode: 'EDU_MATERIAL', label: '교재 소개', href: '/education/textbooks' },
+      {
+        menuCode: 'EDU_ENTREPRENEURSHIP',
+        label: '기업가정신',
+        href: '/education/entrepreneurship',
+      },
+      {
+        menuCode: 'EDU_DIGITAL_LITERACY',
+        label: '디지털리터러시',
+        href: '/education/digital-literacy',
+      },
+      { menuCode: 'EDU_MATERIAL', label: '교재', href: '/education/textbooks' },
     ],
   },
   {

@@ -17,6 +17,9 @@ export const memberQueryKeys = {
   instructorProfile: (memberId: number) =>
     [...memberQueryKeys.all, 'instructorProfile', memberId] as const,
   consentRecords: (memberId: number) => [...memberQueryKeys.all, 'consentRecords', memberId] as const,
+  /** Portal과 동일 집계 — 회원 현재 유효 동의 상태 */
+  consentSummaries: (memberId: number) =>
+    [...memberQueryKeys.all, 'consentSummaries', memberId] as const,
   externalIdentifiers: (memberId: number) =>
     [...memberQueryKeys.all, 'externalIdentifiers', memberId] as const,
   instructorSettlements: (memberId: number) =>

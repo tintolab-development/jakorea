@@ -4,6 +4,7 @@ import {
   readUjatSurveyItems,
   resolveUjatSurveyItemsText,
   ujatGeneralSurveyMenuKeysFromOverlay,
+  resolveUjatPersistedSurveyMenuKeysForSave,
   ujatSurveyItemsFromProgramKeys,
   UJAT_REGISTRATION_SURVEY_ITEM_IDS,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
@@ -112,6 +113,22 @@ describe('ujatSurveyItemsFromProgramKeys / ujatGeneralSurveyMenuKeysFromOverlay'
 
   it('overlay에 surveyItems 키가 없으면 envelope 변환을 하지 않는다', () => {
     expect(ujatGeneralSurveyMenuKeysFromOverlay({})).toBeUndefined()
+  })
+
+  it('저장 키는 overlay 4종을 쓰고 satisfaction으로 접지 않는다', () => {
+    expect(
+      resolveUjatPersistedSurveyMenuKeysForSave(
+        {
+          'ujat.basicInfo.surveyItems': {
+            survey: false,
+            volunteer_satisfaction: true,
+            school_satisfaction: true,
+            lecture_evaluation: false,
+          },
+        },
+        ['survey', 'satisfaction', 'lecture_evaluation']
+      )
+    ).toEqual(['volunteer_satisfaction', 'school_satisfaction'])
   })
 })
 

@@ -5,12 +5,21 @@ import {
   statusMatchesListVisibility,
   visibilityFromListQueryKey,
 } from '@/features/posts/lib/list-visibility'
+import {
+  applyCreatedToMatchingArrayLists,
+  applyDeletedIdsToArrayLists,
+  applyUpdatedToMatchingArrayLists,
+  invalidateArrayLists,
+} from '@/shared/lib/query-list-cache'
 
-function isNoticeListCache(value: unknown): value is Notice[] {
-  return Array.isArray(value)
+function noticeRowId(notice: Notice): string {
+  return String(notice.id ?? '')
 }
 
-function noticeMatchesList(notice: Notice, queryKey: readonly unknown[]): boolean {
+function noticeMatchesList(
+  queryKey: readonly unknown[],
+  notice: Notice
+): boolean {
   return statusMatchesListVisibility(
     notice.status,
     visibilityFromListQueryKey(queryKey, 'an_vis')
@@ -18,44 +27,33 @@ function noticeMatchesList(notice: Notice, queryKey: readonly unknown[]): boolea
 }
 
 export function applyCreatedNoticeToLists(queryClient: QueryClient, created: Notice): void {
-  if (!created.id) return
-  for (const [queryKey, old] of queryClient.getQueriesData<Notice[]>({
-    queryKey: postsQueryKeys.notices.lists(),
-  })) {
-    if (!isNoticeListCache(old) || !noticeMatchesList(created, queryKey)) continue
-    if (old.some(row => row.id === created.id)) continue
-    queryClient.setQueryData<Notice[]>(queryKey, [created, ...old])
-  }
+  applyCreatedToMatchingArrayLists(
+    queryClient,
+    postsQueryKeys.notices.lists(),
+    created,
+    noticeRowId,
+    noticeMatchesList
+  )
 }
 
 export function applyUpdatedNoticeToLists(queryClient: QueryClient, updated: Notice): void {
-  if (!updated.id) return
-  for (const [queryKey, old] of queryClient.getQueriesData<Notice[]>({
-    queryKey: postsQueryKeys.notices.lists(),
-  })) {
-    if (!isNoticeListCache(old)) continue
-    const matches = noticeMatchesList(updated, queryKey)
-    const found = old.some(row => row.id === updated.id)
-    if (matches) {
-      queryClient.setQueryData<Notice[]>(queryKey, found
-        ? old.map(row => (row.id === updated.id ? updated : row))
-        : [updated, ...old])
-      continue
-    }
-    if (found) {
-      queryClient.setQueryData<Notice[]>(queryKey, old.filter(row => row.id !== updated.id))
-    }
-  }
+  applyUpdatedToMatchingArrayLists(
+    queryClient,
+    postsQueryKeys.notices.lists(),
+    updated,
+    noticeRowId,
+    noticeMatchesList
+  )
 }
 
-export function applyDeletedNoticeToLists(queryClient: QueryClient, id: string): void {
-  if (!id) return
-  queryClient.setQueriesData<Notice[]>({ queryKey: postsQueryKeys.notices.lists() }, old => {
-    if (!isNoticeListCache(old)) return old
-    return old.filter(row => row.id !== id)
-  })
+export function applyDeletedNoticeToLists(
+  queryClient: QueryClient,
+  id: string | readonly string[]
+): void {
+  const ids = (Array.isArray(id) ? id : [id]).map(String)
+  applyDeletedIdsToArrayLists(queryClient, postsQueryKeys.notices.lists(), ids, noticeRowId)
 }
 
 export async function invalidateNoticeLists(queryClient: QueryClient): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: postsQueryKeys.notices.lists() })
+  await invalidateArrayLists(queryClient, postsQueryKeys.notices.lists())
 }

@@ -33,6 +33,64 @@ export const GENERAL_INTERVIEW_TOTAL_SCORE_MIN = 1
 export const GENERAL_INTERVIEW_TOTAL_SCORE_MAX = 10
 /** 담당자 A·B 각각. 두 점수의 합이 총합 상한(10)을 넘지 않도록 5로 둔다. */
 export const GENERAL_INTERVIEW_MANAGER_SCORE_MAX = 5
+/** 면접 평가 UI 셀렉트 — 1~5 (BE 일반 프로그램은 0~5 허용, UI는 1~5 + 미평가) */
+export const GENERAL_INTERVIEW_MANAGER_SCORE_MIN = 1
+
+export const GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE =
+  '__general_interview_manager_score_unevaluated__'
+
+export const GENERAL_INTERVIEW_MANAGER_SCORE_SELECT_OPTIONS: ReadonlyArray<{
+  label: string
+  value: string
+}> = [
+  { label: '1', value: '1' },
+  { label: '2', value: '2' },
+  { label: '3', value: '3' },
+  { label: '4', value: '4' },
+  { label: '5', value: '5' },
+  {
+    label: '미평가',
+    value: GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE,
+  },
+]
+
+export function normalizeGeneralInterviewManagerScore(
+  score: number | null | undefined
+): number | null {
+  if (score == null || !Number.isFinite(score)) return null
+  const next = Math.trunc(score)
+  if (next < GENERAL_INTERVIEW_MANAGER_SCORE_MIN || next > GENERAL_INTERVIEW_MANAGER_SCORE_MAX) {
+    return null
+  }
+  return next
+}
+
+export function generalInterviewManagerScoreToSelectValue(
+  score: number | null | undefined
+): string {
+  const normalized = normalizeGeneralInterviewManagerScore(score)
+  if (normalized == null) return GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE
+  return String(normalized)
+}
+
+export function generalInterviewManagerScoreFromSelectValue(
+  value: string | undefined | null
+): number | null {
+  if (!value || value === GENERAL_INTERVIEW_MANAGER_SCORE_UNEVALUATED_SELECT_VALUE) return null
+  return normalizeGeneralInterviewManagerScore(Number(value))
+}
+
+export function formatGeneralInterviewManagerScoreDisplay(
+  score: number | null | undefined
+): string {
+  if (score == null || !Number.isFinite(score)) return '미평가'
+  const next = Math.trunc(score)
+  if (next === 0) return '0'
+  if (next >= GENERAL_INTERVIEW_MANAGER_SCORE_MIN && next <= GENERAL_INTERVIEW_MANAGER_SCORE_MAX) {
+    return String(next)
+  }
+  return '미평가'
+}
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 

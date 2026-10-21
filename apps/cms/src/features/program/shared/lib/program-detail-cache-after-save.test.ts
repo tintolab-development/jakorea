@@ -18,7 +18,7 @@ describe('programDetailCacheAfterSave', () => {
         venueDetail: '구 상세',
         announcementTitle: '구 공고',
       },
-    } as Program
+    } as unknown as Program
 
     const next = programDetailCacheAfterSave('186018', echoed, {
       title: '새 제목',
@@ -61,6 +61,68 @@ describe('programDetailCacheAfterSave', () => {
     })
 
     expect(next.ujatRegistrationOverlay?.['ujat.basicInfo.repKo']).toBe('패치')
+  })
+
+  it('keeps survey menu keys and registration overlay when the echo omits them', () => {
+    const echoed = {
+      id: '186009',
+      title: 'TT',
+      generalSurveyMenuKeys: ['survey'],
+    } as unknown as Program
+    const draft = {
+      id: '186009',
+      title: 'TT',
+      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+      registrationOverlay: {
+        'trainedTeachersRegistration.basicInfo.surveyItems': {
+          survey: true,
+          satisfaction: true,
+          lecture_evaluation: true,
+        },
+      },
+    } as unknown as Program
+
+    const next = programDetailCacheFromSave('186009', echoed, draft, {
+      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+      registrationOverlay: draft.registrationOverlay,
+    })
+
+    expect(next.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+    expect(
+      (
+        next.registrationOverlay?.['trainedTeachersRegistration.basicInfo.surveyItems'] as Record<
+          string,
+          boolean
+        >
+      )?.satisfaction
+    ).toBe(true)
+  })
+
+  it('does not invalidate detail when refetch is false', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    const key = ['cms', 'trained-teachers', 'detail', '1'] as const
+    queryClient.setQueryData(key, { id: '1', title: '구' } as Program)
+    let fetched = 0
+    queryClient.setQueryDefaults(key, {
+      queryFn: async () => {
+        fetched += 1
+        return { id: '1', title: 'refetch' } as Program
+      },
+    })
+
+    await syncOpenProgramDetailCache(
+      queryClient,
+      key,
+      { id: '1', title: '저장됨', generalSurveyMenuKeys: ['satisfaction'] } as Program,
+      { refetch: false }
+    )
+
+    expect(queryClient.getQueryData<Program>(key)?.title).toBe('저장됨')
+    expect(queryClient.getQueryData<Program>(key)?.generalSurveyMenuKeys).toEqual(['satisfaction'])
+    expect(fetched).toBe(0)
+    queryClient.clear()
   })
 
   it('cancels an in-flight detail fetch so it cannot overwrite the saved cache', async () => {

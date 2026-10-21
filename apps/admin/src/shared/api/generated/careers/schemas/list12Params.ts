@@ -8,4 +8,6 @@
 
 export type List12Params = {
 q?: string;
+page?: number;
+size?: number;
 };

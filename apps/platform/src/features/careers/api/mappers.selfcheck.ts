@@ -277,11 +277,12 @@ const postingSample: PublicCareerPostingListResponse = {
 
 const jobs = mapPublicCareerPostings(postingSample)
 assert.equal(jobs.length, 3)
-assert.equal(jobs[0]?.id, 'job-1')
+assert.equal(jobs[0]?.id, 'job-2')
 assert.equal(jobs[0]?.status, 'recruiting')
 assert.equal(jobs[0]?.statusLabel, '모집중')
-assert.equal(jobs[0]?.publishedAtLabel, '2026년 05월 08일')
-assert.equal(jobs[1]?.id, 'job-2')
+assert.equal(jobs[0]?.publishedAtLabel, '2026년 04월 22일')
+assert.equal(jobs[1]?.id, 'job-1')
+assert.equal(jobs[1]?.publishedAtLabel, '2026년 05월 08일')
 assert.equal(jobs[2]?.id, 'job-3')
 assert.equal(jobs[2]?.statusLabel, '결과발표')
 assert.ok(jobs.every(job => job.status !== 'closed'))
@@ -295,7 +296,7 @@ assert.equal(
 )
 assert.equal(
   formatCareerRecruitPeriodLabel('2026-04-03', '2026-11-20'),
-  '2026년 04월 03일(금) ~ 2026년 11월 20일(금)',
+  '2026년 4월 3일(금) ~ 2026년 11월 20일(금)',
 )
 assert.equal(formatCareerRecruitPeriodLabel('2026-04-03', undefined), '')
 
@@ -322,7 +323,7 @@ const detail = mapPublicCareerPostingDetail(detailSample)
 assert.equal(detail?.id, 'job-1')
 assert.equal(detail?.statusLabel, '모집중')
 assert.equal(detail?.publishedAtDetailLabel, '2026년 05월 08일')
-assert.equal(detail?.recruitPeriodLabel, '2026년 04월 03일(금) ~ 2026년 11월 20일(금)')
+assert.equal(detail?.recruitPeriodLabel, '2026년 4월 3일(금) ~ 2026년 11월 20일(금)')
 assert.equal(detail?.viewCount, 1232)
 assert.equal(detail?.content, '<p>본문</p>')
 assert.equal(detail?.attachments.length, 1)

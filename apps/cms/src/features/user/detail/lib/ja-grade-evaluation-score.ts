@@ -1,5 +1,5 @@
 import {
-  JA_GRADE_PENALTY_PER_EVENT,
+  JA_GRADE_PENALTY_PER_PAIR,
   JA_GRADE_SCALE_QUESTION_IDS,
 } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
 import type {
@@ -31,7 +31,7 @@ export function resolveScaleTypeScore(paragraph: ScaleTypeParagraph): number | n
   return (index + 1) * 5
 }
 
-/** 행정 감점 반영 후 totalScore 밴드: A 85~100 / B 60~84 / C 50~59 / D 0~49 (localOnly 미리보기용. remote는 서버 SSOT) */
+/** 행정 감점 반영 후 totalScore 밴드: A 85~100 / B 60~84 / C 50~59 / D 50점 미만(음수 포함). localOnly 미리보기용. remote는 서버 SSOT */
 export function resolveJaEvaluationLetterGrade(totalScore: number): JaEvaluationLetterGrade {
   if (totalScore >= 85) return 'A'
   if (totalScore >= 60) return 'B'
@@ -39,14 +39,21 @@ export function resolveJaEvaluationLetterGrade(totalScore: number): JaEvaluation
   return 'D'
 }
 
+function jaGradePairPenalty(eventCount: number): number {
+  return Math.floor(Math.max(0, eventCount) / 2) * JA_GRADE_PENALTY_PER_PAIR
+}
+
 export function calculateJaGradePenalty(scheduleChangeCount: number, lateReportCount: number): {
   penaltyEventCount: number
   penalty: number
 } {
-  const penaltyEventCount = Math.max(0, scheduleChangeCount) + Math.max(0, lateReportCount)
+  const cancellationPenalty = jaGradePairPenalty(scheduleChangeCount)
+  const lateReportPenalty = jaGradePairPenalty(lateReportCount)
   return {
-    penaltyEventCount,
-    penalty: penaltyEventCount * JA_GRADE_PENALTY_PER_EVENT,
+    penaltyEventCount:
+      Math.floor(Math.max(0, scheduleChangeCount) / 2) +
+      Math.floor(Math.max(0, lateReportCount) / 2),
+    penalty: cancellationPenalty + lateReportPenalty,
   }
 }
 
@@ -92,7 +99,7 @@ export function calculateJaGradeEvaluationFromDraft(
     options?.scheduleChangeCount ?? 0,
     options?.lateReportCount ?? 0
   )
-  const totalScore = Math.max(0, fixedTotal - penalty)
+  const totalScore = fixedTotal - penalty
   const grade = resolveJaEvaluationLetterGrade(totalScore)
 
   return {

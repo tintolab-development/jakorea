@@ -39,7 +39,7 @@ function PreferenceScheduleFields({
             placeholder="희망 교육 날짜를 선택하세요"
             value={row.date}
             onChange={next => onPatch({ date: next })}
-            inputSize="medium"
+            inputSize="small"
             width={240}
             className="gemini-preferred-schedule-paragraph__date-picker"
             style={{ flex: '0 0 240px', width: 240, gap: 6 }}
@@ -51,7 +51,7 @@ function PreferenceScheduleFields({
         label="희망 교육 시간"
         edit={
           <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap gemini-preferred-schedule-paragraph__time-inputs">
-            <ParagraphTimePicker
+            <ParagraphTimePicker inputSize="small"
               value={row.start}
               onChange={next => onPatch({ start: next, end: next == null ? null : row.end })}
               placeholder="수업 시작"
@@ -59,7 +59,7 @@ function PreferenceScheduleFields({
               showEndTimeToggle={false}
             />
             <span className="gemini-preferred-schedule-paragraph__tilde">~</span>
-            <ParagraphTimePicker
+            <ParagraphTimePicker inputSize="small"
               value={row.end}
               onChange={next => onPatch({ end: next })}
               placeholder="수업 종료"

@@ -24,7 +24,7 @@ export function GeneralParticipantAudienceCheckboxGroup({
   return (
     <>
       <CmsCheckbox
-        checkboxSize="large"
+        checkboxSize="medium"
         checked={individual}
         disabled={disabled}
         onChange={event => onIndividualChange(event.target.checked)}
@@ -32,7 +32,7 @@ export function GeneralParticipantAudienceCheckboxGroup({
         {participantAudienceLabel('individual')}
       </CmsCheckbox>
       <CmsCheckbox
-        checkboxSize="large"
+        checkboxSize="medium"
         checked={organization}
         disabled={disabled}
         onChange={event => onOrganizationChange(event.target.checked)}

@@ -271,7 +271,7 @@ function ProgramDetailTextAreaField({
                           <CmsInput
                             {...field}
                             value={value}
-                            inputSize="medium"
+                            inputSize="small"
                             width="100%"
                             placeholder={placeholder}
                             className="text-area-field-row__field"
@@ -281,7 +281,7 @@ function ProgramDetailTextAreaField({
                           <CmsTextArea
                             {...field}
                             value={value}
-                            inputSize="medium"
+                            inputSize="small"
                             width="100%"
                             rows={rows}
                             placeholder={placeholder}

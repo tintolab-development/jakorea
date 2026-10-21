@@ -32,7 +32,7 @@ export function InstitutionGuidanceFieldCard({
         <CmsTextArea
           id={controlId}
           aria-labelledby={labelId}
-          inputSize="medium"
+          inputSize="small"
           width="100%"
           rows={1}
           expandableFromSingleRow

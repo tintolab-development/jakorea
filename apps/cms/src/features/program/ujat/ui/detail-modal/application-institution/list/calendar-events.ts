@@ -22,7 +22,7 @@ function formatGradeSummaries(row: UjatInstitutionApplicationRow): {
   calendarGradeSummary: string
 } {
   const gradeDetail = row.gradeClassCounts
-    .map(g => `${g.gradeLabel} ${g.classCount}학급`)
+    .map(g => `${g.gradeLabel} / ${g.classCount == null ? '-' : g.classCount}`)
     .join(', ')
   const calendarTotalClassSummary = `총 ${row.totalClassCount}개 학급`
   return {

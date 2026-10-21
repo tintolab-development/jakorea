@@ -66,7 +66,7 @@ export type UjatVolunteerMockProfile = {
   scheduleChangeCancelCount: number
   adminComment: string
   assignmentStatus: UjatEducationProgressVolunteerAssignmentStatus
-  totalAssignmentDays: number | null
+  totalAssignedDays: number | null
   documentScreeningStatus: UjatDocumentScreeningStatus
   managerAEvaluation: UjatManagerEvaluation
   managerBEvaluation: UjatManagerEvaluation

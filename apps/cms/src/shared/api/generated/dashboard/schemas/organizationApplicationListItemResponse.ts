@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationListGradeBlock } from './organizationApplicationListGradeBlock';
 import type { OrganizationApplicationListItemResponsePreviousYearParticipation } from './organizationApplicationListItemResponsePreviousYearParticipation';
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
 import type { OrganizationApplicationListItemResponseScheduleConfirmStatus } from './organizationApplicationListItemResponseScheduleConfirmStatus';
@@ -43,8 +44,9 @@ export interface OrganizationApplicationListItemResponse {
   grade?: string | null;
   regionSido?: string;
   regionSigungu?: string;
+  /** 임시 배정·승인 후 확정 진행일. startAt만 교육 진행 일정 열에 사용. 없으면 []. 희망일(preferredEducationSchedules)과 혼용 금지. null 아님 */
   sessions?: Session[];
-  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 일정 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
+  /** 신청 희망 교육일. 목록 희망일 열 O/- SSOT는 각 startAt의 Asia/Seoul 달력일. 배열(없으면 []). null 아님. sessions[]·grade·regionSido·프로그램 일정으로 채우지 않음. scheduleId가 null이어도 startAt이 있으면 O. */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   mergeGroupId?: number;
   mergeStatus?: string;
@@ -61,4 +63,6 @@ export interface OrganizationApplicationListItemResponse {
   assignedInstructorCount?: number | null;
   /** 운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null */
   operatingStudentCount?: number | null;
+  /** 다학년 학급. 배열이면 학년마다 한 줄. null이면 grade + requestedClassCount 한 줄. 빈 배열과 null을 구분. classes 없음 */
+  gradeBlocks?: OrganizationApplicationListGradeBlock[] | null;
 }

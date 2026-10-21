@@ -86,25 +86,41 @@ export async function fetchScheduleAttendancesRemote(
   return body.items ?? []
 }
 
+type ProgramAttendancesBulkScope = {
+  /** 지정 시 해당 기관 신청 참여자 출결만 조회 */
+  organizationApplicationId?: string | number | null
+}
+
+function resolveAttendanceOrganizationApplicationId(scope?: ProgramAttendancesBulkScope): number | null {
+  const id = Number(scope?.organizationApplicationId)
+  return Number.isSafeInteger(id) && id > 0 ? id : null
+}
+
 function buildProgramAttendancesBulkUrl(
   programId: string,
-  normalized: ReturnType<typeof normalizeBulkAttendanceScheduleIds>
+  normalized: ReturnType<typeof normalizeBulkAttendanceScheduleIds>,
+  scope?: ProgramAttendancesBulkScope
 ): string {
   const base = `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/attendances`
-  if (normalized.kind !== 'filtered') {
-    return base
-  }
   const search = new URLSearchParams()
-  for (const scheduleId of normalized.scheduleIds) {
-    search.append('scheduleIds', String(scheduleId))
+  if (normalized.kind === 'filtered') {
+    for (const scheduleId of normalized.scheduleIds) {
+      search.append('scheduleIds', String(scheduleId))
+    }
   }
-  return `${base}?${search.toString()}`
+  const organizationApplicationId = resolveAttendanceOrganizationApplicationId(scope)
+  if (organizationApplicationId != null) {
+    search.append('organizationApplicationId', String(organizationApplicationId))
+  }
+  const query = search.toString()
+  return query ? `${base}?${query}` : base
 }
 
 /** GET /api/admin/program-execution/programs/{programId}/attendances */
 export async function fetchProgramAttendancesBulkRemote(
   programId: string,
-  scheduleIds?: BulkAttendanceScheduleIdsInput
+  scheduleIds?: BulkAttendanceScheduleIdsInput,
+  scope?: ProgramAttendancesBulkScope
 ): Promise<AttendanceItemResponse[]> {
   const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
   if (normalized.kind === 'empty') {
@@ -112,7 +128,7 @@ export async function fetchProgramAttendancesBulkRemote(
   }
   const body = await unwrapApiBody<AttendanceItemResponse[] | { items?: AttendanceItemResponse[] }>(
     await customInstance({
-      url: buildProgramAttendancesBulkUrl(programId, normalized),
+      url: buildProgramAttendancesBulkUrl(programId, normalized, scope),
       method: 'GET',
     })
   )
@@ -123,19 +139,22 @@ export async function fetchProgramAttendancesBulkRemote(
 export async function fetchAttendancesByScheduleIdsRemote(
   programId: string,
   scheduleIds: BulkAttendanceScheduleIdsInput,
-  options: { includeEmptyScheduleKeys?: boolean } = {}
+  options: { includeEmptyScheduleKeys?: boolean } & ProgramAttendancesBulkScope = {}
 ): Promise<Record<string, AttendanceItemResponse[]>> {
   const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
   if (normalized.kind === 'empty') {
     return {}
   }
-  const inFlightKey = `${attendancesByScheduleIdsInFlightKey(programId, normalized)}:${options.includeEmptyScheduleKeys ? 'include-empty' : 'assigned-only'}`
+  const organizationApplicationId = resolveAttendanceOrganizationApplicationId(options)
+  const inFlightKey = `${attendancesByScheduleIdsInFlightKey(programId, normalized)}:${options.includeEmptyScheduleKeys ? 'include-empty' : 'assigned-only'}:org-${organizationApplicationId ?? 'all'}`
   const existing = inFlightAttendancesByScheduleIds.get(inFlightKey)
   if (existing) {
     return existing
   }
   const promise = (async () => {
-    const items = await fetchProgramAttendancesBulkRemote(programId, scheduleIds)
+    const items = await fetchProgramAttendancesBulkRemote(programId, scheduleIds, {
+      organizationApplicationId,
+    })
     const grouped = groupAttendancesByScheduleId(items)
     // The general institution attendance flow treats the attendance response
     // as the source of truth for schedules that are actually assigned. Do not

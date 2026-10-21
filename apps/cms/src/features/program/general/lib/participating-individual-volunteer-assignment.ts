@@ -9,6 +9,7 @@ import {
   getApprovedInstitutionLectureScheduleSlots,
   type InstructorLectureAssignSlot,
 } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { formatVolunteerAssignmentScheduleLine } from '@/features/program/general/lib/participating-school-session-display'
 import { formatIndividualInstructorLectureLocation } from '@/features/program/general/lib/participating-individual-instructor-assignment-display'
 import type {
@@ -81,11 +82,7 @@ export function resolveVolunteerAssignmentDistanceCellLabel(
 }
 
 function formatHopeDate(dateKey: string): string {
-  const weekday = ['일', '월', '화', '수', '목', '금', '토'][
-    new Date(`${dateKey}T12:00:00`).getDay()
-  ]
-  const [y, m, d] = dateKey.split('-')
-  return `${y!.slice(-2)}.${m}.${d}(${weekday})`
+  return formatCmsScheduleDisplayLabel(dateKey)
 }
 
 function sessionFromDef(def: {

@@ -10,4 +10,6 @@ import type { AttendanceItemRequest } from './attendanceItemRequest';
 export interface AttendanceBulkUpsertRequest {
   scheduleId?: number;
   attendances?: AttendanceItemRequest[];
+  /** 선택. 지정하면 해당 프로그램의 기관 신청이어야 하며(아니면 404 ORGANIZATION_APPLICATION_NOT_FOUND), 모든 participantId가 그 신청의 기관 참여자 또는 학생명단 참여자여야 합니다(아니면 400 ATTENDANCE_PARTICIPANT_ORGANIZATION_APPLICATION_MISMATCH). 생략하면 프로그램 소속만 검증합니다. */
+  organizationApplicationId?: number | null;
 }

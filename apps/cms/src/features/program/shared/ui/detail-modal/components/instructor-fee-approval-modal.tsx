@@ -17,6 +17,7 @@ import type { InstructorApplicationFeePolicyContext } from '@/features/program/g
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsFieldFrame } from '@/shared/ui/cms-field'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -24,6 +25,7 @@ import {
   getDefaultManualNotifyAt,
   getMinimumManualNotifyAt,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
@@ -84,7 +86,7 @@ export function InstructorFeeApprovalModal({
   useEffect(() => {
     if (!open || !feePolicyError) return
     document
-      .getElementById('instructor-fee-approval-fee-policy')
+      .querySelector('.instructor-fee-approval-modal__field')
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [open, feePolicyError])
 
@@ -124,11 +126,14 @@ export function InstructorFeeApprovalModal({
         }
       >
         <div ref={modalContentRef} className="instructor-fee-approval-modal__content">
-          <div
+          <CmsFieldFrame
+            size="medium"
+            label="강사비 책정 방식"
+            required
+            labelClassName="cms-input__label"
+            requiredClassName="cms-input__required"
             className="instructor-fee-approval-modal__field"
-            id="instructor-fee-approval-fee-policy"
           >
-            <span className="instructor-fee-approval-modal__label">강사비 책정 방식</span>
             <CmsRadio.Group
               className="instructor-fee-approval-modal__radio-group"
               size="large"
@@ -162,8 +167,8 @@ export function InstructorFeeApprovalModal({
             {showAmountFields ? (
               <div className="instructor-fee-approval-modal__amount-row">
                 <CmsSelect
-                  className="instructor-fee-approval-modal__measure-select"
                   inputSize="large"
+                  width={150}
                   withAllOption={false}
                   placeholder="지급 기준"
                   value={lectureFeeMeasure || undefined}
@@ -190,10 +195,16 @@ export function InstructorFeeApprovalModal({
                 {feePolicyError}
               </span>
             ) : null}
-          </div>
+          </CmsFieldFrame>
 
-          <div className="instructor-fee-approval-modal__field">
-            <span className="instructor-fee-approval-modal__label">알림 발송</span>
+          <CmsFieldFrame
+            size="medium"
+            label="알림 발송"
+            required
+            labelClassName="cms-input__label"
+            requiredClassName="cms-input__required"
+            className="instructor-fee-approval-modal__field"
+          >
             <CmsRadio.Group
               className="instructor-fee-approval-modal__radio-group"
               size="large"
@@ -219,7 +230,7 @@ export function InstructorFeeApprovalModal({
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
                     <span className="instructor-fee-approval-modal__manual-summary">
                       {' '}
-                      ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                     </span>
                   ) : null}
                 </CmsRadio>
@@ -230,7 +241,7 @@ export function InstructorFeeApprovalModal({
                 {notifyError}
               </span>
             ) : null}
-          </div>
+          </CmsFieldFrame>
         </div>
       </ContentModal>
 

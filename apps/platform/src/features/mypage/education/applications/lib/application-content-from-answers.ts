@@ -11,6 +11,14 @@ import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/parag
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
+import { expandEducationScheduleChoiceSlots } from '@jakorea/form-schema/program-application'
+import {
+  formatDisplayDate,
+  formatDisplayDateTime,
+  formatDisplayDateTimeRange,
+  formatDisplayClockLabel,
+  normalizeScheduleDisplayLabel,
+} from '@/shared/lib/format-display-date'
 
 const SELF_INTRO_ANSWER_KEYS = [
   PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro,
@@ -38,8 +46,6 @@ const VOLUNTEER_FREE_TEXT_KEYS = [
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
 ] as const
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
@@ -83,49 +89,10 @@ function parseVolunteerFreeTextIntro(raw: unknown): string | undefined {
   return undefined
 }
 
-function formatKoreanDateTimeParts(date: Date): {
-  dateLabel: string
-  timeLabel: string
-} | null {
-  if (Number.isNaN(date.getTime())) return null
-  const parts = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(date)
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find(part => part.type === type)?.value ?? ''
-  const year = value('year')
-  const month = value('month')
-  const day = value('day')
-  const weekdayRaw = value('weekday').replace('요일', '')
-  const weekday = WEEKDAY_KO.includes(weekdayRaw as (typeof WEEKDAY_KO)[number])
-    ? weekdayRaw
-    : weekdayRaw
-  const hour = value('hour')
-  const minute = value('minute')
-  if (!year || !month || !day) return null
-  const hourNum = Number(hour)
-  const hourLabel = Number.isFinite(hourNum) ? String(hourNum).padStart(2, '0') : hour
-  return {
-    dateLabel: `${year}년 ${month}월 ${day}일(${weekday})`,
-    timeLabel: minute === '00' ? `${hourLabel}시` : `${hourLabel}:${minute}`,
-  }
-}
-
-/** 서류 합격 배너용 — Notion: YYYY년 MM월 DD일(요일) 00시 */
+/** 서류 합격 배너용 — `2026년 3월 15일(일) 09:00` */
 export function formatInterviewAtLabel(startAt: string | null | undefined): string | undefined {
   if (!startAt?.trim()) return undefined
-  const date = new Date(startAt)
-  const parts = formatKoreanDateTimeParts(date)
-  if (!parts) return undefined
-  /** Figma 배너 본문: `2026년 03월 15일, 09시` */
-  return `${parts.dateLabel}, ${parts.timeLabel}`
+  return formatDisplayDateTime(startAt) || undefined
 }
 
 function formatPreferredScheduleBlock(block: Record<string, unknown>): string | undefined {
@@ -152,15 +119,16 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
     readTrimmedString(block.endTime)
   const timeRange =
     readTrimmedString(first?.timeRange) ||
-    (startTime && endTime ? `${startTime.replace(/^0/, '')} ~ ${endTime.replace(/^0/, '')}` : undefined)
+    (startTime && endTime
+      ? `${formatDisplayClockLabel(startTime)} ~ ${formatDisplayClockLabel(endTime)}`
+      : undefined)
 
-  const asDate = new Date(dateRaw.includes('T') ? dateRaw : `${dateRaw}T00:00:00+09:00`)
-  const dateParts = formatKoreanDateTimeParts(asDate)
-  if (dateParts && timeRange) {
-    return `${dateParts.dateLabel} ${timeRange}`
+  const dateLabel = formatDisplayDate(dateRaw.includes('T') ? dateRaw : dateRaw)
+  if (dateLabel && timeRange) {
+    return normalizeScheduleDisplayLabel(`${dateLabel} ${timeRange}`)
   }
-  if (dateParts) return dateParts.dateLabel
-  return timeRange ? `${dateRaw} ${timeRange}` : dateRaw
+  if (dateLabel) return dateLabel
+  return timeRange ? normalizeScheduleDisplayLabel(`${dateRaw} ${timeRange}`) : dateRaw
 }
 
 /**
@@ -180,6 +148,91 @@ export function isOpaqueScheduleOptionToken(value: string): boolean {
   if (/^interview-slot:/i.test(trimmed)) return true
   if (/^\d{4,}$/.test(trimmed)) return true
   return false
+}
+
+function displayScheduleText(raw: string): string {
+  return raw
+    .split('\n')
+    .map(line => {
+      const trimmed = line.trim()
+      if (!trimmed || isOpaqueScheduleOptionToken(trimmed)) return trimmed
+      return normalizeScheduleDisplayLabel(trimmed)
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
+const CLOCK_RE = /(\d{1,2}):(\d{2})/g
+const DATE_DOT_RE = /(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/g
+const DATE_ISO_RE = /(\d{4})-(\d{2})-(\d{2})/g
+const DATE_KO_RE = /(\d{2,4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/g
+
+function pad2(value: number | string): string {
+  return String(value).padStart(2, '0')
+}
+
+function dateKeysFromText(text: string): string[] {
+  const keys: string[] = []
+  const push = (yearRaw: string, month: string, day: string) => {
+    const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw
+    keys.push(`${year}-${pad2(month)}-${pad2(day)}`)
+  }
+  for (const match of text.matchAll(DATE_DOT_RE)) {
+    push(match[1] ?? '', match[2] ?? '', match[3] ?? '')
+  }
+  for (const match of text.matchAll(DATE_ISO_RE)) {
+    push(match[1] ?? '', match[2] ?? '', match[3] ?? '')
+  }
+  for (const match of text.matchAll(DATE_KO_RE)) {
+    push(match[1] ?? '', match[2] ?? '', match[3] ?? '')
+  }
+  return [...new Set(keys)]
+}
+
+function clocksFromText(text: string): string[] {
+  return [...text.matchAll(CLOCK_RE)].map(
+    match => `${pad2(match[1] ?? '0')}:${match[2] ?? '00'}`,
+  )
+}
+
+/**
+ * 날짜만 저장된 희망 일정을 신청 폼 고정 선택지(교육 진행 예정일) 문구로 되돌린다.
+ * 시각이 있거나 날짜가 둘 이상이면 저장 문구를 유지한다.
+ */
+function resolveFormOptionLabelForStoredLine(
+  storedLine: string,
+  lines: readonly string[] | undefined,
+): string | undefined {
+  const trimmed = storedLine.trim()
+  if (!trimmed || clocksFromText(trimmed).length > 0) return undefined
+  const storedDates = dateKeysFromText(trimmed)
+  if (storedDates.length !== 1) return undefined
+  const storedDate = storedDates[0]
+  const slots = expandEducationScheduleChoiceSlots(lines)
+    .map(slot => slot.trim())
+    .filter(Boolean)
+  if (slots.length === 0) return undefined
+  const sameDate = slots.filter(slot => dateKeysFromText(slot)[0] === storedDate)
+  if (sameDate.length !== 1) return undefined
+  const slot = sameDate[0]
+  if (!slot) return undefined
+  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, lines))
+}
+
+function mapStoredScheduleLabelToFormOptions(
+  stored: string,
+  lines: readonly string[] | undefined,
+): string {
+  return stored
+    .split('\n')
+    .map(line => {
+      const trimmed = line.trim()
+      if (!trimmed) return ''
+      if (isOpaqueScheduleOptionToken(trimmed)) return trimmed
+      return resolveFormOptionLabelForStoredLine(trimmed, lines) ?? displayScheduleText(trimmed)
+    })
+    .filter(Boolean)
+    .join('\n')
 }
 
 function flattenAnswerStrings(raw: unknown): string[] {
@@ -284,8 +337,12 @@ export function collectPreferredScheduleOptionValues(
   for (const key of PREFERRED_SCHEDULE_ANSWER_KEYS) {
     if (key === 'preferredScheduleBlocks' || !(key in answers)) continue
     const row = asRecord(answers[key])
-    if (row && Array.isArray(row.selectedSlotIds)) {
-      for (const id of row.selectedSlotIds) {
+    const selectedIds = [
+      ...(Array.isArray(row?.selectedSlotIds) ? row.selectedSlotIds : []),
+      ...(Array.isArray(row?.selectedOptionIds) ? row.selectedOptionIds : []),
+    ]
+    if (selectedIds.length > 0) {
+      for (const id of selectedIds) {
         const token = readTrimmedString(id)
         if (!token || !isOpaqueScheduleOptionToken(token) || seen.has(token)) continue
         seen.add(token)
@@ -317,19 +374,7 @@ export type PreferredScheduleProgramLookup = {
   }>
 }
 
-function formatClockHm(date: Date): string {
-  const parts = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(date)
-  const hour = parts.find(part => part.type === 'hour')?.value ?? '0'
-  const minute = parts.find(part => part.type === 'minute')?.value ?? '00'
-  return `${Number(hour)}:${minute}`
-}
-
-/** 시안형: `2026년 04월 20일(월) 9:30 ~ 12:20` (+ 선택적 일정명) */
+/** 시안형: `2026년 4월 20일(월) 09:30 ~ 12:20` (+ 선택적 일정명) */
 function formatScheduleRangeLabel(input: {
   startAt?: string
   endAt?: string
@@ -338,27 +383,45 @@ function formatScheduleRangeLabel(input: {
 }): string | undefined {
   const ready = readTrimmedString(input.dateLabel)
   if (ready && !isOpaqueScheduleOptionToken(ready)) {
+    const normalized = normalizeScheduleDisplayLabel(ready)
     const name = readTrimmedString(input.scheduleName)
-    return name && !ready.includes(name) ? `${ready} | ${name}` : ready
+    return name && !normalized.includes(name) ? `${normalized} | ${name}` : normalized
   }
   if (!input.startAt?.trim()) {
     return readTrimmedString(input.scheduleName)
   }
-  const start = new Date(input.startAt)
-  const startParts = formatKoreanDateTimeParts(start)
-  if (!startParts) return readTrimmedString(input.scheduleName)
-
-  let label = startParts.dateLabel
-  if (input.endAt?.trim()) {
-    const end = new Date(input.endAt)
-    if (!Number.isNaN(end.getTime())) {
-      label = `${startParts.dateLabel} ${formatClockHm(start)} ~ ${formatClockHm(end)}`
-    }
-  } else {
-    label = `${startParts.dateLabel} ${formatClockHm(start)}`
-  }
+  const range = input.endAt?.trim()
+    ? formatDisplayDateTimeRange(input.startAt, input.endAt)
+    : formatDisplayDateTime(input.startAt)
+  if (!range) return readTrimmedString(input.scheduleName)
   const name = readTrimmedString(input.scheduleName)
-  return name ? `${label} | ${name}` : label
+  return name ? `${range} | ${name}` : range
+}
+
+const FIXED_SCHEDULE_SESSION_SUFFIX_RE = /\|\s*\d+\s*차시\s*$/
+
+function withSourceSessionSuffix(
+  slot: string,
+  lines: readonly string[] | undefined,
+): string {
+  if (FIXED_SCHEDULE_SESSION_SUFFIX_RE.test(slot)) return slot
+  const suffix = (lines ?? [])
+    .map(line => line.trim().match(FIXED_SCHEDULE_SESSION_SUFFIX_RE)?.[0])
+    .find((value): value is string => Boolean(value))
+  return suffix ? `${slot} ${suffix}` : slot
+}
+
+/**
+ * 신청 폼 `line:N`과 동일하게 예정일 줄을 `|` 슬롯으로 펼친 뒤 인덱스를 본다.
+ * 한 줄에 날짜가 두 개인 날짜지정 선택지를 원본 배열 인덱스로 찾으면 `line:1`이 빠진다.
+ */
+function resolveEducationScheduleLineLabel(
+  index: number,
+  lines: readonly string[] | undefined,
+): string | undefined {
+  const slot = expandEducationScheduleChoiceSlots(lines)[index]?.trim()
+  if (!slot) return undefined
+  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, lines))
 }
 
 function resolveOneScheduleOptionToken(
@@ -368,32 +431,27 @@ function resolveOneScheduleOptionToken(
   const lineMatch = token.trim().match(/^line:(\d+)$/i)
   if (lineMatch) {
     const index = Number(lineMatch[1])
-    const line = lookup.educationScheduleLines?.[index]?.trim()
-    return line || undefined
+    return resolveEducationScheduleLineLabel(index, lookup.educationScheduleLines)
   }
   const trimmed = token.trim()
-  const educationPeriodMatch = trimmed.match(
+  /** `schedule:123` · `schedule:123:organization-application:9` · `schedule:123:education-period:0` */
+  const scheduleMatch = trimmed.match(
     /^schedule:(\d+)(?::organization-application:\d+)?(?::education-period:(\d+))?$/i,
   )
-  if (educationPeriodMatch?.[3] != null) {
-    const scheduleId = Number(educationPeriodMatch[1])
-    const periodIndex = Number(educationPeriodMatch[3])
-    if (!Number.isFinite(scheduleId) || !Number.isFinite(periodIndex)) return undefined
-    const hit = lookup.schedules?.find(
-      row =>
-        row.scheduleId === scheduleId &&
-        (row.educationPeriodIndex == null || row.educationPeriodIndex === periodIndex),
-    )
-    const periodLabel = readTrimmedString(hit?.periodLabel)
-    if (periodLabel) return periodLabel
-    return undefined
-  }
-  const scheduleMatch = trimmed.match(/^schedule:(\d+)(?::organization-application:\d+)?$/i)
   const bareId = /^\d{4,}$/.test(trimmed) ? Number(trimmed) : null
   const scheduleId = scheduleMatch ? Number(scheduleMatch[1]) : bareId
   if (scheduleId == null || !Number.isFinite(scheduleId)) return undefined
-  const hit = lookup.schedules?.find(row => row.scheduleId === scheduleId)
+
+  const periodRaw = scheduleMatch?.[2]
+  const periodIndex = periodRaw != null ? Number(periodRaw) : undefined
+  const hit = lookup.schedules?.find(row => {
+    if (row.scheduleId !== scheduleId) return false
+    if (periodIndex == null || !Number.isFinite(periodIndex)) return true
+    return row.educationPeriodIndex == null || row.educationPeriodIndex === periodIndex
+  })
   if (!hit) return undefined
+  const periodLabel = readTrimmedString(hit.periodLabel)
+  if (periodLabel) return normalizeScheduleDisplayLabel(periodLabel)
   return formatScheduleRangeLabel(hit)
 }
 
@@ -419,6 +477,7 @@ export function resolvePreferredScheduleLabelsFromAnswers(input: {
     return optionValues
       .map(value => resolveOneScheduleOptionToken(value, lookup))
       .filter((value): value is string => Boolean(value))
+      .map(displayScheduleText)
   }
   const fallback = resolvePreferredEducationScheduleLabelFromAnswers(input.answers ?? undefined)
   if (!fallback) return []
@@ -426,6 +485,7 @@ export function resolvePreferredScheduleLabelsFromAnswers(input: {
     .split('\n')
     .map(line => line.trim())
     .filter(line => line && !isOpaqueScheduleOptionToken(line))
+    .map(displayScheduleText)
 }
 
 export function resolvePreferredEducationScheduleDisplayLabel(input: {
@@ -435,7 +495,9 @@ export function resolvePreferredEducationScheduleDisplayLabel(input: {
   schedules?: PreferredScheduleProgramLookup['schedules']
 }): string | undefined {
   const stored = input.preferredEducationScheduleLabel?.trim()
-  if (stored && !isOpaqueScheduleOptionToken(stored)) return stored
+  if (stored && !isOpaqueScheduleOptionToken(stored)) {
+    return mapStoredScheduleLabelToFormOptions(stored, input.educationScheduleLines) || undefined
+  }
 
   const optionValues =
     input.preferredScheduleOptionValues && input.preferredScheduleOptionValues.length > 0
@@ -474,7 +536,7 @@ export function resolvePreferredEducationScheduleLabelFromAnswers(
   for (const key of PREFERRED_SCHEDULE_ANSWER_KEYS) {
     if (!(key in answers)) continue
     const label = formatPreferredScheduleAnswer(answers[key])
-    if (label) return label
+    if (label) return displayScheduleText(label)
   }
   return undefined
 }

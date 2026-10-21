@@ -1,0 +1,29 @@
+.list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  line-height: 1;
+  list-style: none;
+}
+
+.list > li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: 14px;
+  color: var(--color-neutral-cool-600, #667278);
+  opacity: 0.6;
+}
+
+.list > li::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+  transform: translateY(-50%);
+}

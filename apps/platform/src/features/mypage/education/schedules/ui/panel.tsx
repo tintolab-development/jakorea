@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
 import { PFButton, PFText } from '@/shared/ui'
+import {
+  canSubmitEducationAbsenceReason,
+  resolveEducationScheduleProgressStatus,
+} from '../lib/schedule-rules'
 import { resolveEducationScheduleEmptyMessage } from '../lib/scope-status'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
@@ -9,6 +13,7 @@ import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/d
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SCHEDULE_PAGE_SIZE, type EducationScheduleItem } from '../model/types'
 import { EducationScheduleRow } from './row'
+import { EducationAbsenceReasonModal } from './absence-reason-modal'
 import styles from './panel.module.css'
 
 type EducationSchedulePanelProps = {
@@ -19,6 +24,8 @@ type EducationSchedulePanelProps = {
   listTitle?: string
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  /** 결석 사유 제출 버튼·모달·사유 텍스트 노출 (교육받은 교사 신청 건은 false) */
+  absenceReasonEnabled?: boolean
 }
 
 /**
@@ -26,21 +33,21 @@ type EducationSchedulePanelProps = {
  * mock 로그인 세션에서만 mock 시드. 프로그램 상세 일정은 사용하지 않는다.
  */
 export function EducationSchedulePanel({
-  programId,
   lastParticipatedSession,
   listTitle = '교육일정',
   applicationType,
   applicationId,
+  absenceReasonEnabled = true,
 }: EducationSchedulePanelProps) {
   const [page, setPage] = useState(1)
+  const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
+  const [absenceReasonOpenKey, setAbsenceReasonOpenKey] = useState(0)
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
 
   const allItems = useMemo(() => {
-    const items: EducationScheduleItem[] = remoteSchedules.enabled
-      ? remoteSchedules.items
-      : []
+    const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
-  }, [lastParticipatedSession, programId, remoteSchedules.enabled, remoteSchedules.items])
+  }, [lastParticipatedSession, remoteSchedules.enabled, remoteSchedules.items])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SCHEDULE_PAGE_SIZE))
@@ -50,6 +57,19 @@ export function EducationSchedulePanel({
     const start = (currentPage - 1) * EDUCATION_SCHEDULE_PAGE_SIZE
     return allItems.slice(start, start + EDUCATION_SCHEDULE_PAGE_SIZE)
   }, [allItems, currentPage])
+
+  const absenceReasonItems = useMemo(
+    () =>
+      allItems.filter(
+        item =>
+          item.scheduleId != null &&
+          canSubmitEducationAbsenceReason(
+            resolveEducationScheduleProgressStatus(item.heldAt),
+            item.attendanceStatus
+          )
+      ),
+    [allItems]
+  )
 
   if (remoteSchedules.isLoading) {
     return <EducationSessionListSkeleton statusMessage={`${listTitle}을 불러오는 중입니다.`} />
@@ -89,17 +109,43 @@ export function EducationSchedulePanel({
       : '등록된 교육일정이 없어요.'
 
   return (
-    <EducationSessionList
-      title={listTitle}
-      totalCount={totalElements}
-      currentPage={currentPage}
-      totalPages={totalPages}
-      onPageChange={setPage}
-      emptyMessage={emptyMessage}
-    >
-      {pageItems.map((item: EducationScheduleItem) => (
-        <EducationScheduleRow key={item.id} item={item} />
-      ))}
-    </EducationSessionList>
+    <>
+      <EducationSessionList
+        title={listTitle}
+        totalCount={totalElements}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        emptyMessage={emptyMessage}
+        alwaysShowPagination
+      >
+        {pageItems.map((item: EducationScheduleItem) => (
+          <EducationScheduleRow
+            key={item.id}
+            item={item}
+            showAbsenceReason={absenceReasonEnabled}
+            onAbsenceReasonSubmit={
+              absenceReasonEnabled
+                ? selectedItem => {
+                    setAbsenceReasonScheduleId(selectedItem.scheduleId ?? null)
+                    setAbsenceReasonOpenKey(key => key + 1)
+                  }
+                : undefined
+            }
+          />
+        ))}
+      </EducationSessionList>
+      {absenceReasonEnabled ? (
+        <EducationAbsenceReasonModal
+          key={absenceReasonOpenKey}
+          open={absenceReasonScheduleId !== null}
+          items={absenceReasonItems}
+          initialScheduleId={absenceReasonScheduleId}
+          applicationType={applicationType}
+          applicationId={applicationId}
+          onClose={() => setAbsenceReasonScheduleId(null)}
+        />
+      ) : null}
+    </>
   )
 }

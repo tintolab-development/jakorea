@@ -418,7 +418,7 @@ function VolunteerInterviewScheduleBlock({
               validationKey={exceptionDateValidationKey}
               fullRow
               edit={
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="date"
                   value={normalizedExceptionDate}
@@ -451,7 +451,7 @@ function VolunteerInterviewScheduleBlock({
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <ParagraphTimePicker
+                <ParagraphTimePicker inputSize="small"
                   value={normalizedInterviewTime}
                   onChange={setInterviewTime}
                   onTimeRangeChange={setInterviewTimeRange}
@@ -461,13 +461,13 @@ function VolunteerInterviewScheduleBlock({
                   endTimeAlwaysOn
                 />
                 <DetailInfoForm.InputsSeparator />
-                <CmsRadioGroup
+                <CmsRadioGroup size="medium"
                   value={timeUnit}
                   onChange={event => setTimeUnit(String(event.target.value) as InterviewTimeUnit)}
                 >
-                  <CmsRadio value="15">15분 단위</CmsRadio>
-                  <CmsRadio value="30">30분 단위</CmsRadio>
-                  <CmsRadio value="60">1시간 단위</CmsRadio>
+                  <CmsRadio size="medium" value="15">15분 단위</CmsRadio>
+                  <CmsRadio size="medium" value="30">30분 단위</CmsRadio>
+                  <CmsRadio size="medium" value="60">1시간 단위</CmsRadio>
                 </CmsRadioGroup>
               </div>
             }

@@ -44,6 +44,7 @@ import {
 } from '@/features/user/detail/lib/teacher-detail-url-context'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import './user-detail-modal.css'
+import './user-detail-fullpage-modal.css'
 
 export type {
   UserDetailLnbKey,
@@ -186,6 +187,7 @@ export function UserDetailFullPageModal({
         ? actions.patchAdminPermissionVariantFromDetailView
         : undefined,
       onTeacherEmploymentStatusChange: actions.patchTeacherEmploymentStatus,
+      onAffiliatedTeachersChanged: actions.refreshSchoolAfterAffiliatedTeachersChanged,
       onOpenInstructorPermissionRevoke: actions.openInstructorPermissionRevoke,
       onCloseInstructorPermissionRevoke: actions.closeInstructorPermissionRevoke,
       onConfirmInstructorPermissionRevoke: actions.confirmInstructorPermissionRevoke,
@@ -220,6 +222,7 @@ export function UserDetailFullPageModal({
     actions.updateBasicInfoDraft,
     actions.patchAdminPermissionVariantFromDetailView,
     actions.patchTeacherEmploymentStatus,
+    actions.refreshSchoolAfterAffiliatedTeachersChanged,
     actions.openInstructorPermissionRevoke,
     actions.closeInstructorPermissionRevoke,
     actions.confirmInstructorPermissionRevoke,

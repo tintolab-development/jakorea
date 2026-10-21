@@ -5,12 +5,6 @@
   margin-top: 16px;
 }
 
-.institution-approve-modal__schedule-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--cms-color-text-primary, #1a1a1a);
-}
-
 .institution-approve-modal__schedule-chips {
   display: flex;
   flex-wrap: wrap;
@@ -25,9 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
   border-radius: 8px;
-  background: var(--cms-color-fill-quaternary, #f5f5f5);
 }
 
 .institution-approve-modal__assigned-tags {
@@ -53,4 +45,123 @@
 
 .institution-approve-modal__notice--warn {
   color: var(--cms-color-error, #cf1322);
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-cards {
+  display: flex;
+  flex-direction: column;
+  width: 540px;
+  box-sizing: border-box;
+  display: flex;
+  padding: 16px;
+  flex-direction: column;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: var(--Radius-12, 12px);
+  border: 1px solid var(--Border-default, #e0e0e0);
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card,
+.institution-approve-modal .institution-approve-modal__schedule-card:hover,
+.institution-approve-modal .institution-approve-modal__schedule-card:focus,
+.institution-approve-modal .institution-approve-modal__schedule-card:disabled {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 100px;
+  padding: var(--Spacing-10, 10px) var(--Spacing-16, 16px);
+  justify-content: center;
+  gap: 2px;
+  align-self: stretch;
+  border-radius: var(--Radius-8, 8px);
+  border: 1px solid var(--Border-alpha-16, rgba(61, 61, 61, 0.16));
+  background: var(--White, #fff);
+  color: var(--Netural-black, #3d3d3d);
+  min-height: 62px;
+  text-align: left;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 125%; /* 17.5px */
+  opacity: 0.8;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card--selected,
+.institution-approve-modal .institution-approve-modal__schedule-card--selected:hover,
+.institution-approve-modal .institution-approve-modal__schedule-card--selected:focus,
+.institution-approve-modal .institution-approve-modal__schedule-card--selected:disabled {
+  border-color: #00a0af;
+  background: #e7f6f8;
+  color: #00a0af;
+  opacity: 1;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card:not(:disabled) {
+  cursor: pointer;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card--readonly,
+.institution-approve-modal .institution-approve-modal__schedule-card--readonly:disabled {
+  cursor: default;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card-title {
+  color: #262626;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.institution-approve-modal
+  .institution-approve-modal__schedule-card--selected
+  .institution-approve-modal__schedule-card-title {
+  color: #00a0af;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card-detail,
+.institution-approve-modal .institution-approve-modal__schedule-card-note,
+.institution-approve-modal .institution-approve-modal__schedule-card-status {
+  color: #8c8c8c;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.institution-approve-modal .institution-approve-modal__schedule-card-status {
+  color: #00a0af;
+}
+
+.institution-approve-modal__assignment-hint {
+  margin: 0;
+  color: #8c8c8c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.institution-approve-modal__assignment-hint::before {
+  content: '•';
+  margin-right: 6px;
+}
+
+.institution-approve-modal__assigned-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.institution-approve-modal__assigned-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.institution-approve-modal__assigned-empty {
+  color: #8c8c8c;
+  font-size: 13px;
+  line-height: 1.5;
 }

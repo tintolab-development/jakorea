@@ -8,6 +8,7 @@ import { userProgramsEnrollmentStubTableConfig } from '../user-programs-stub-tab
 import { createProgramHistoryColumns } from '../detail-info/user-detail-program-history-columns'
 import type { RendererProps } from '../user-programs-view-renderer'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { TABLE_CONFIG } from '@/shared/constants/table'
 
 export function EnrollmentTableView(props: RendererProps) {
   const {
@@ -70,6 +71,7 @@ export function EnrollmentTableView(props: RendererProps) {
         ) : enrollmentTableRows.length > 0 ? (
           <CmsDataTable
             className="cms-data-table"
+            size={TABLE_CONFIG.size}
             columns={programHistoryColumns}
             dataSource={enrollmentTableRows}
             rowKey="id"

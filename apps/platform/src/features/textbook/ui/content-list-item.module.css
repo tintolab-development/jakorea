@@ -22,7 +22,7 @@
   flex-shrink: 0;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--radius-12, 12px);
 }
 
 .thumbnailWrapNoImage {
@@ -37,7 +37,8 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  border-radius: var(--radius-12, 12px);
+  object-fit: cover;
   object-position: 50% 50%;
 }
 

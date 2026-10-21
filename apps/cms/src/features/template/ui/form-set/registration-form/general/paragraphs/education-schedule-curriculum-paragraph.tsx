@@ -83,7 +83,7 @@ function ScheduleEventNameInput({
   )
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       placeholder={placeholder}
       width="100%"
       style={{ minWidth: 0, flex: '1 1 0' }}
@@ -112,7 +112,7 @@ function SchedulePreEducationNameInput({ fallback }: { fallback: string }) {
   )
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       value={preEducationName}
       placeholder="행사 일정명을 작성하세요"
       width="100%"
@@ -156,7 +156,7 @@ function ScheduleDetailAssignmentInputs({
   return (
     <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
       <CmsRadioGroup
-        size="large"
+        size="medium"
         value={value.enabled ? 'yes' : 'no'}
         onChange={e => {
           const enabled = e.target.value === 'yes'
@@ -166,11 +166,11 @@ function ScheduleDetailAssignmentInputs({
           })
         }}
       >
-        <CmsRadio value="yes">있음</CmsRadio>
-        <CmsRadio value="no">없음</CmsRadio>
+        <CmsRadio size="medium" value="yes">있음</CmsRadio>
+        <CmsRadio size="medium" value="no">없음</CmsRadio>
       </CmsRadioGroup>
       <DetailInfoForm.InputsSeparator />
-      <ParagraphDatePicker
+      <ParagraphDatePicker inputSize="small"
         mode="single"
         presetMode="period"
         customizable={false}
@@ -226,7 +226,7 @@ function ScheduleCurriculumGroupTimeRow({
     <div className="program-registration-schedule-curriculum__time-group">
       {showGroupLabel ? `그룹 ${groupLetter}` : null}
       <div className="program-registration-schedule-curriculum__time-group-control">
-        <ParagraphTimePicker
+        <ParagraphTimePicker inputSize="small"
           endTimeAlwaysOn
           placeholder="시간 선택"
           width={200}
@@ -535,12 +535,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       fullRow={options?.fullRow}
       edit={
         <CmsRadioGroup
-          size="large"
+          size="medium"
           value={educationFormForDetail(detailIndex)}
           onChange={onEducationFormRadioChange(detailIndex)}
         >
           {perScheduleEducationFormOptions.map(opt => (
-            <CmsRadio key={opt.value} value={opt.value}>
+            <CmsRadio size="medium" key={opt.value} value={opt.value}>
               {opt.label}
             </CmsRadio>
           ))}
@@ -556,12 +556,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       fullRow={options?.fullRow}
       edit={
         <CmsRadioGroup
-          size="large"
+          size="medium"
           value={participationForDetail(detailIndex)}
           onChange={onParticipationRadioChange(detailIndex)}
         >
-          <CmsRadio value="individual">개인</CmsRadio>
-          <CmsRadio value="team">팀</CmsRadio>
+          <CmsRadio size="medium" value="individual">개인</CmsRadio>
+          <CmsRadio size="medium" value="team">팀</CmsRadio>
         </CmsRadioGroup>
       }
       view="-"
@@ -797,12 +797,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
             label="참여 방식"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={participationForDetail(detailIndex)}
                 onChange={onParticipationRadioChange(detailIndex)}
               >
-                <CmsRadio value="individual">개인</CmsRadio>
-                <CmsRadio value="team">팀</CmsRadio>
+                <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                <CmsRadio size="medium" value="team">팀</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -818,12 +818,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
             label="참여 방식"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={participationForDetail(detailIndex)}
                 onChange={onParticipationRadioChange(detailIndex)}
               >
-                <CmsRadio value="individual">개인</CmsRadio>
-                <CmsRadio value="team">팀</CmsRadio>
+                <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                <CmsRadio size="medium" value="team">팀</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -844,12 +844,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               label="참여 방식"
               edit={
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={participationForDetail(detailIndex)}
                   onChange={onParticipationRadioChange(detailIndex)}
                 >
-                  <CmsRadio value="individual">개인</CmsRadio>
-                  <CmsRadio value="team">팀</CmsRadio>
+                  <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                  <CmsRadio size="medium" value="team">팀</CmsRadio>
                 </CmsRadioGroup>
               }
               view="-"
@@ -866,12 +866,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               label="참여 방식"
               edit={
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={participationForDetail(detailIndex)}
                   onChange={onParticipationRadioChange(detailIndex)}
                 >
-                  <CmsRadio value="individual">개인</CmsRadio>
-                  <CmsRadio value="team">팀</CmsRadio>
+                  <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                  <CmsRadio size="medium" value="team">팀</CmsRadio>
                 </CmsRadioGroup>
               }
               view="-"

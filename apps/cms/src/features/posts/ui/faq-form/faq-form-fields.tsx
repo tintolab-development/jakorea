@@ -23,11 +23,13 @@ function FaqAnswerEditor({
   onChange?: (value: string) => void
 }) {
   return (
-    <RichTextEditor
-      editor={editor}
-      minHeight={editorMinHeight}
-      fileUploadOwner={fileUploadOwner}
-    />
+    <div className="faq-form-modal__editor-host">
+      <RichTextEditor
+        editor={editor}
+        minHeight={editorMinHeight}
+        fileUploadOwner={fileUploadOwner}
+      />
+    </div>
   )
 }
 

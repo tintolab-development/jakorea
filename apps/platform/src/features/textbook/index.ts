@@ -17,10 +17,14 @@ export {
   TEXTBOOK_SORT_OPTIONS,
   TEXTBOOK_THEME_ITEMS,
 } from './lib/constants'
-export { buildTextbooksListPath, readTextbooksListParams } from './lib/list-params'
+export {
+  TEXTBOOK_DETAIL_ID_PARAM,
+  buildTextbooksListPath,
+  readTextbookDetailIdFromLocation,
+  readTextbooksListParams,
+} from './lib/list-params'
 export { isTextbooksPath } from './lib/routes'
-export { filterAndSortTextbooks, filterTextbooksByCategory } from './lib/filter-textbooks'
-export { usePublicTextbookCatalog, usePublicTextbookDetail } from './api/hooks'
+export { usePublicTextbookDetail, usePublicTextbookDirectory, usePublicTextbookList } from './api/hooks'
 export { buildThemeSections } from './api/mappers'
 export { DirectoryListItem } from './ui/directory-list-item'
 export { ThemeSection } from './ui/theme-section'

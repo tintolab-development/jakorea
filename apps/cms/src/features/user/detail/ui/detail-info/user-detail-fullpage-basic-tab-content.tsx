@@ -25,7 +25,10 @@ import {
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMemberConsentRecordsQuery } from '@/features/user/api/hooks/use-member-detail-query'
+import {
+  useMemberConsentRecordsQuery,
+  useMemberConsentSummariesQuery,
+} from '@/features/user/api/hooks/use-member-detail-query'
 import {
   useAffiliatedTeachersQuery,
   useMemberCommentsQuery,
@@ -51,6 +54,7 @@ import {
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { deleteUser } from '@/entities/user/api/user-service'
+import { resolveAffiliatedTeacherWithdrawTarget } from '@/features/user/api/map-affiliated-teacher-row'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { buildMemberWithdrawMessageLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
@@ -139,22 +143,33 @@ export function UserDetailFullpageBasicTabContent({
   const loadMemberAdminComments =
     membersRemote && canShowAdminCommentForTarget && adminCommentResource != null
 
-  /** 작성본 메타는 consent-records에만 있음 — 관리자 계정은 상세 termsAgreements만 사용 */
-  const shouldLoadConsentRecords = shouldFetchMemberConsentRecords({
+  /** 현재 동의 Summary + 작성본 메타(records) — 관리자 계정은 상세 termsAgreements만 사용 */
+  const shouldLoadMemberCurrentConsents = shouldFetchMemberConsentRecords({
     role: user.role,
     memberId: user.memberId,
-    showConsentAgreement: loadMemberSubresources && basicTab.showConsentAgreement,
+    showConsentAgreement: basicTab.showConsentAgreement,
   })
 
+  const consentSummariesQuery = useMemberConsentSummariesQuery(
+    user.memberId,
+    membersRemote && shouldLoadMemberCurrentConsents,
+    { manualFetch: membersRemote }
+  )
   const consentQuery = useMemberConsentRecordsQuery(
     user.memberId,
-    membersRemote && shouldLoadConsentRecords,
+    membersRemote && shouldLoadMemberCurrentConsents,
     { manualFetch: membersRemote }
   )
   const consentRecords = consentQuery.data ?? []
-  /** 비활성 쿼리(manualFetch·memberId 없음)의 isPending을 로딩으로 보면 스피너가 멈추지 않음 */
+  const consentSummariesError = Boolean(
+    membersRemote && shouldLoadMemberCurrentConsents && consentSummariesQuery.isError
+  )
   const consentLoading = Boolean(
-    membersRemote && shouldLoadConsentRecords && !consentQuery.isFetched
+    membersRemote &&
+      shouldLoadMemberCurrentConsents &&
+      (consentSummariesQuery.isPending ||
+        consentSummariesQuery.isFetching ||
+        !consentSummariesQuery.isSuccess)
   )
 
   const { data: commentsData } = useMemberCommentsQuery(
@@ -242,13 +257,18 @@ export function UserDetailFullpageBasicTabContent({
       if (affiliatedTeacherWithdrawTargets.length === 0) return
       setAffiliatedTeacherWithdrawLoading(true)
       try {
+        let withdrawn = 0
         for (const row of affiliatedTeacherWithdrawTargets) {
-          const userId = row.linkedUserId?.trim()
-          if (!userId) continue
-          await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
-            memberId: row.teacherMemberId,
+          const target = resolveAffiliatedTeacherWithdrawTarget(row)
+          if (!target) continue
+          await deleteUser(target.userId, 'CMS 관리자 회원 탈퇴', {
+            memberId: target.memberId,
             withdrawConfirmationText,
           })
+          withdrawn += 1
+        }
+        if (withdrawn === 0) {
+          throw new Error('탈퇴 처리할 교사 회원 식별자가 없습니다.')
         }
         if (user.memberId != null) {
           await queryClient.invalidateQueries({
@@ -325,9 +345,22 @@ export function UserDetailFullpageBasicTabContent({
       consentViewVariant === 'permission_instructor'
         ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
         : CONSENT_PRESET_SCHEMA[consentPreset]
-    const detailTerms = user.termsAgreements
+
+    if (user.role === 'ADMIN') {
+      return applyMemberConsentToSchema(baseSchema, {
+        termsAgreements: user.termsAgreements,
+      })
+    }
+
+    if (!shouldLoadMemberCurrentConsents) return undefined
+
+    if (consentLoading || consentSummariesError) return undefined
+
+    const summaries = consentSummariesQuery.data
+    if (summaries === undefined) return undefined
+
     return applyMemberConsentToSchema(baseSchema, {
-      termsAgreements: detailTerms,
+      consentSummaries: summaries,
       consentRecords,
     })
   }, [
@@ -336,6 +369,10 @@ export function UserDetailFullpageBasicTabContent({
     consentViewVariant,
     consentPreset,
     consentRecords,
+    consentLoading,
+    consentSummariesError,
+    consentSummariesQuery.data,
+    user.role,
     user.termsAgreements,
   ])
 
@@ -436,6 +473,9 @@ export function UserDetailFullpageBasicTabContent({
         scheduleChangeCount={scheduleChangeCount}
         onEmploymentStatusChange={membersRemote ? onEmploymentStatusChange : undefined}
       />
+      {basicTab.showConsentAgreement && consentSummariesError ? (
+        <MemberDetailMockDataBanner message="약관·동의 현재 상태 조회에 실패했습니다. 동의 여부를 표시하지 않습니다. 잠시 후 다시 시도해 주세요." />
+      ) : null}
       {basicTab.showConsentAgreement ? (
         <UserConsentAgreementSection
           preset={consentPreset}

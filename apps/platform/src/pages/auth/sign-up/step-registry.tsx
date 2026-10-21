@@ -4,7 +4,6 @@ import { BirthStep } from './steps/birth'
 import { ConfirmationStep } from './steps/confirmation'
 import { EmailStep } from './steps/email'
 import { GuardianAgreementStep } from './steps/guardian-agreement'
-import { GuardianFinalConsentStep } from './steps/guardian-final-consent-step'
 import { GuardianConsentStep } from './steps/guardian-consent'
 import { GuardianIdentityStep } from './steps/guardian-identity'
 import { GuardianProfileStep } from './steps/guardian-profile-step'
@@ -42,23 +41,13 @@ const Step3: SignUpStepComponent = ({ signUp }) => {
   )
 }
 
-const Step4: SignUpStepComponent = ({ signUp }) =>
-  signUp.guardian.isUnderAgeSignup ? (
-    <GuardianFinalConsentStep signUp={signUp} />
-  ) : (
-    <EmailStep signUp={signUp} />
-  )
+const Step4: SignUpStepComponent = ({ signUp }) => <EmailStep signUp={signUp} />
 
-const Step5: SignUpStepComponent = ({ signUp }) =>
-  signUp.guardian.isUnderAgeSignup ? (
-    <EmailStep signUp={signUp} />
-  ) : (
-    <PasswordStep signUp={signUp} />
-  )
+const Step5: SignUpStepComponent = ({ signUp }) => <PasswordStep signUp={signUp} />
 
 const Step6: SignUpStepComponent = ({ signUp }) => {
   if (signUp.guardian.isUnderAgeSignup) {
-    return <PasswordStep signUp={signUp} />
+    return <MinorProfileStep signUp={signUp} />
   }
 
   if (signUp.memberType.selected === 'teacher') {
@@ -68,14 +57,7 @@ const Step6: SignUpStepComponent = ({ signUp }) => {
   return <ProfileStep signUp={signUp} />
 }
 
-const Step7: SignUpStepComponent = ({ signUp }) =>
-  signUp.guardian.isUnderAgeSignup ? (
-    <MinorProfileStep signUp={signUp} />
-  ) : (
-    <ConfirmationStep signUp={signUp} />
-  )
-
-const Step8: SignUpStepComponent = ({ signUp }) => <ConfirmationStep signUp={signUp} />
+const Step7: SignUpStepComponent = ({ signUp }) => <ConfirmationStep signUp={signUp} />
 
 export const STEP_COMPONENTS = {
   1: MemberTypeStep,
@@ -85,5 +67,4 @@ export const STEP_COMPONENTS = {
   5: Step5,
   6: Step6,
   7: Step7,
-  8: Step8,
 } as const satisfies Record<SignUpStepNumber, SignUpStepComponent>

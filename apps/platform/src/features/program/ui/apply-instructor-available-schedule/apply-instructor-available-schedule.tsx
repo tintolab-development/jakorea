@@ -1,4 +1,10 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import {
+  formatDisplayClockLabel,
+  formatDisplayDate,
+  isScheduleDateLikeText,
+  parseScheduleDisplayLabel,
+} from '@/shared/lib/format-display-date'
 import { PFDatePickerCalendar } from '@/shared/ui/pf-date-input'
 import {
   PFFormField,
@@ -93,9 +99,7 @@ function readScheduleRegion(
 }
 
 function formatScheduleClockTime(hhmm: string): string {
-  const match = hhmm.match(/^(\d{1,2}):(\d{2})$/)
-  if (!match) return hhmm
-  return `${match[1]!.padStart(2, '0')}:${match[2]}`
+  return formatDisplayClockLabel(hhmm)
 }
 
 function buildScheduleTimeRangeLabel(
@@ -154,10 +158,6 @@ function joinScheduleCardLine(parts: readonly string[]): string {
     .join(' | ')
 }
 
-function isScheduleDateLikeText(value: string): boolean {
-  return /^\d{2,4}년\s*\d{1,2}월\s*\d{1,2}일/.test(value.trim())
-}
-
 function isTimeRangeLikeText(value: string): boolean {
   return /\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2}/.test(value.trim())
 }
@@ -183,50 +183,8 @@ function splitPipeLabel(label: string): { head: string; tail: string } {
   return { head: '', tail: '' }
 }
 
-const KOREAN_SCHEDULE_LINE_RE =
-  /^(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일(?:\([^)]*\))?(?:\s+(.*))?$/
-
-const SCHEDULE_SESSION_SUFFIX_RE = /\s*\|\s*((?:\d+\s*차시|\d+\s*회차|사전\s*교육).*?)\s*$/i
-
-type ParsedKoreanScheduleLabel = {
-  dateKey?: string
-  timeRange?: string
-  sessionLabel?: string
-}
-
-function parseKoreanEducationScheduleLabel(raw: string): ParsedKoreanScheduleLabel {
-  let text = raw.trim()
-  if (!text) return {}
-
-  let sessionLabel = ''
-  const sessionSuffix = text.match(SCHEDULE_SESSION_SUFFIX_RE)
-  if (sessionSuffix) {
-    sessionLabel = sessionSuffix[1]!.trim()
-    text = text.slice(0, sessionSuffix.index).trim()
-  }
-
-  const scheduleMatch = text.match(KOREAN_SCHEDULE_LINE_RE)
-  if (!scheduleMatch) {
-    return sessionLabel ? { sessionLabel } : {}
-  }
-
-  const yearRaw = scheduleMatch[1]!
-  const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw
-  const month = scheduleMatch[2]!.padStart(2, '0')
-  const day = scheduleMatch[3]!.padStart(2, '0')
-  const tail = (scheduleMatch[4] ?? '').trim()
-  const timeMatch = tail.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
-  const timeRange = timeMatch
-    ? `${formatScheduleClockTime(timeMatch[1]!)} ~ ${formatScheduleClockTime(timeMatch[2]!)}`
-    : tail && !isScheduleDateLikeText(tail)
-      ? tail
-      : undefined
-
-  return {
-    dateKey: `${year}-${month}-${day}`,
-    timeRange,
-    sessionLabel: sessionLabel || undefined,
-  }
+function parseKoreanEducationScheduleLabel(raw: string) {
+  return parseScheduleDisplayLabel(raw)
 }
 
 function sanitizeScheduleSessionLabel(value: string): string {
@@ -308,12 +266,7 @@ function extractClockTimeRangeForSummary(timeRange: string): string {
 }
 
 function formatScheduleSummaryDateLabel(dateKey: string): string {
-  const [yearRaw, monthRaw, dayRaw] = dateKey.split('-')
-  const year = Number(yearRaw)
-  const month = Number(monthRaw)
-  const day = Number(dayRaw)
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return ''
-  return `${year}년 ${month}월 ${day}일`
+  return formatDisplayDate(dateKey)
 }
 
 function readSchoolNameForScheduleSummary(slot: ApplyInstructorScheduleSlot): string {
@@ -352,14 +305,14 @@ function resolveScheduleSummaryDateKey(slot: ApplyInstructorScheduleSlot): strin
 }
 
 /**
- * 하단 「강의 진행 가능일」 — `강서초등학교 : 2026년 3월 9일 (09:20 ~ 12:00)`
+ * 하단 「강의 진행 가능일」 — `강서초등학교 : 2026년 3월 9일(월) 09:20 ~ 12:00`
  * (면접 등 기관명 없으면 `3차시 : …` 형태)
  */
 export function formatApplyScheduleSummarySegment(slot: ApplyInstructorScheduleSlot): string {
   const dateKey = resolveScheduleSummaryDateKey(slot)
   const datePart = dateKey ? formatScheduleSummaryDateLabel(dateKey) : ''
   const timePart = extractClockTimeRangeForSummary(readTimeRangeForScheduleSummary(slot))
-  const timeSuffix = timePart ? ` (${timePart})` : ''
+  const timeSuffix = timePart ? ` ${timePart}` : ''
 
   const school = readSchoolNameForScheduleSummary(slot)
   if (school && datePart) {
@@ -647,7 +600,7 @@ export function ApplyInstructorAvailableSchedule({
   copy = INSTRUCTOR_SCHEDULE_COPY,
 }: ApplyInstructorAvailableScheduleProps) {
   const selected = slots.filter(slot => value.selectedSlotIds.includes(slot.id))
-  const showCalendar = slots.every(slot => slot.dateKey != null)
+  const showCalendar = slots.length > 0 && slots.every(slot => slot.dateKey != null)
   const anchorDateKey = firstSlotDateKey(slots)
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(anchorDateKey)
 

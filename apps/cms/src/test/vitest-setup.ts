@@ -28,3 +28,10 @@ if (storageBroken) {
   vi.stubGlobal('localStorage', createMemoryStorage())
   vi.stubGlobal('sessionStorage', createMemoryStorage())
 }
+
+// pdfjs-dist@6 requires global Iterator (Node 22+). Vitest often runs on Node 20.
+vi.mock('pdfjs-dist', () => ({
+  AnnotationMode: { DISABLE: 0 },
+  getDocument: vi.fn(() => ({ promise: Promise.resolve(null) })),
+  GlobalWorkerOptions: { workerSrc: '' },
+}))

@@ -466,6 +466,19 @@ export interface ProgramRecruitmentWindow {
   applicationFormBindingId?: number | null
 }
 
+/** 프로그램 상세 `schedules[]` — 교육받은 교사 교육 진행 일정의 원격 SSOT */
+export interface ProgramSchedule {
+  id?: string | number | null
+  sessionNo?: number | null
+  scheduleName?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  startDate?: string | null
+  endDate?: string | null
+  scheduleStatus?: string | null
+  scheduleOrigin?: string | null
+}
+
 export interface Program {
   id: UUID
   sponsorId: UUID
@@ -614,6 +627,8 @@ export interface Program {
    * 신청양식 잠금은 유형별 `startAt`, 모집정보 잠금은 유형별 `operationStartDate`.
    */
   programRecruitments?: ProgramRecruitmentWindow[]
+  /** 교육받은 교사 프로그램 상세 `schedules[]` 중 ACTIVE 일정 */
+  schedules?: ProgramSchedule[]
   /** 모집 탭 표시용 program에만 설정. 첨부·대표 이미지를 이 모집 행에 저장한다. */
   activeRecruitmentId?: number
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
@@ -644,10 +659,6 @@ export interface Program {
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */
   startTime?: string
   endTime?: string
-  /** Platform 홈 캐러셀 노출 (`program.featured_on_home`). 모집 행이 아니라 프로그램 단위. */
-  featuredOnHome?: boolean
-  /** 홈 캐러셀 정렬. 1 이상. 미노출이면 null */
-  homeDisplayOrder?: number | null
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */

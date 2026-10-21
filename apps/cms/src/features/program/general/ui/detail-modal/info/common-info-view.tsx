@@ -77,7 +77,6 @@ import {
   resolveGeneralProgramScheduleDetailsForView,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
-import { ProgramPortalHomeFeaturedFields } from '@/features/program/shared/ui/program-detail/portal-home-featured-fields'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
@@ -212,12 +211,12 @@ function ParticipationMethodRadioGroup({
 }) {
   return (
     <CmsRadioGroup
-      size="large"
+      size="medium"
       value={value ?? 'individual'}
       onChange={e => onChange(e.target.value)}
     >
-      <CmsRadio value="individual">개인</CmsRadio>
-      <CmsRadio value="team">팀</CmsRadio>
+      <CmsRadio size="medium" value="individual">개인</CmsRadio>
+      <CmsRadio size="medium" value="team">팀</CmsRadio>
     </CmsRadioGroup>
   )
 }
@@ -595,12 +594,6 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
-        <ProgramPortalHomeFeaturedFields
-          isEdit={isFormEdit}
-          featuredOnHome={program.featuredOnHome === true}
-          homeDisplayOrder={program.homeDisplayOrder}
-          control={isFormEdit ? editForm.control : undefined}
-        />
       </DetailInfoForm>
       <DetailInfoForm
         title="기본 정보"
@@ -617,7 +610,7 @@ function BasicInfoSection({
                 name="mainTitle"
                 control={editForm.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsInput inputSize="small"
                     {...field}
                     value={field.value ?? ''}
                     placeholder="대표 프로그램명을 입력하세요"
@@ -636,7 +629,7 @@ function BasicInfoSection({
                 name="titleEn"
                 control={editForm.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsInput inputSize="small"
                     {...field}
                     value={field.value ?? ''}
                     placeholder="대표 프로그램명(영문)을 입력하세요"
@@ -656,7 +649,7 @@ function BasicInfoSection({
                 name="announcementTitle"
                 control={editForm.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsInput inputSize="small"
                     {...field}
                     value={field.value ?? ''}
                     placeholder="모집 시 노출될 프로그램명을 입력하세요"
@@ -678,7 +671,7 @@ function BasicInfoSection({
                   <div className="detail-info-form-inputs-wrapper-no-gap">
                     <CmsSelect
                       withAllOption={false}
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder="세부 프로그램명을 선택하세요"
                       width="100%"
                       options={detailedProgramOptions}
@@ -717,7 +710,7 @@ function BasicInfoSection({
 
                   return (
                     <div className="detail-info-form-inputs-wrapper-no-gap">
-                      <ParagraphDatePicker
+                      <ParagraphDatePicker inputSize="small"
                         mode="single"
                         presetMode="period"
                         value={start ?? dayjs()}
@@ -781,7 +774,7 @@ function BasicInfoSection({
                       control={editForm.control}
                       render={({ field }) => (
                         <CmsCheckbox
-                          checkboxSize="large"
+                          checkboxSize="medium"
                           checked={Boolean(field.value)}
                           onChange={event => field.onChange(event.target.checked)}
                         >
@@ -804,7 +797,7 @@ function BasicInfoSection({
                 render={({ field, fieldState }) => {
                   const hasValue = Boolean(String(field.value ?? '').trim())
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       withAllOption={false}
                       placeholder="사업 분야를 선택하세요"
                       width="100%"
@@ -834,7 +827,7 @@ function BasicInfoSection({
                 render={({ field, fieldState }) => {
                   const hasValue = Array.isArray(field.value) && field.value.length > 0
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       mode="multiple"
                       withAllOption={false}
                       placeholder="후원사를 선택하세요"
@@ -870,7 +863,7 @@ function BasicInfoSection({
                     selected.length > 0 &&
                     selected.every(id => managerOptions.some(option => option.value === id))
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       mode="multiple"
                       placeholder="후원사 담당자를 선택하세요"
                       width="100%"
@@ -915,10 +908,10 @@ function BasicInfoSection({
                   name="venueKind"
                   control={editForm.control}
                   render={({ field }) => (
-                    <CmsRadioGroup size="large" value={field.value} onChange={e => field.onChange(e.target.value)}>
-                      <CmsRadio value="inside">기관 안</CmsRadio>
-                      <CmsRadio value="outside">기관 밖</CmsRadio>
-                      <CmsRadio value="other">기타(직접입력)</CmsRadio>
+                    <CmsRadioGroup size="medium" value={field.value} onChange={e => field.onChange(e.target.value)}>
+                      <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
+                      <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
+                      <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -927,7 +920,7 @@ function BasicInfoSection({
                   name="venueDetail"
                   control={editForm.control}
                   render={({ field }) => (
-                    <CmsInput
+                    <CmsInput inputSize="small"
                       {...field}
                       value={field.value ?? ''}
                       placeholder="교육이 진행될 상세 장소를 입력해 주세요"
@@ -954,7 +947,7 @@ function BasicInfoSection({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsCheckbox
-                        checkboxSize="large"
+                        checkboxSize="medium"
                         checked={Boolean(field.value)}
                         onChange={e => field.onChange(e.target.checked)}
                       >
@@ -988,7 +981,7 @@ function BasicInfoSection({
                 render={({ field, fieldState }) => {
                   const hasValue = Boolean(String(field.value ?? '').trim())
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       withAllOption={false}
                       placeholder="교육 과정을 선택하세요"
                       width="100%"
@@ -1016,7 +1009,7 @@ function BasicInfoSection({
                 render={({ field, fieldState }) => {
                   const hasValue = Boolean(String(field.value ?? '').trim())
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       withAllOption={false}
                       placeholder="IP Owned를 선택하세요"
                       width="100%"
@@ -1046,7 +1039,7 @@ function BasicInfoSection({
                 render={({ field, fieldState }) => {
                   const hasValue = Boolean(String(field.value ?? '').trim())
                   return (
-                    <CmsSelect
+                    <CmsSelect inputSize="small"
                       withAllOption={false}
                       placeholder="Course Delivered By를 선택하세요"
                       width="100%"
@@ -1078,12 +1071,12 @@ function BasicInfoSection({
                 control={editForm.control}
                 render={({ field }) => (
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={field.value}
                     onChange={e => field.onChange(e.target.value as 'yes' | 'no')}
                   >
-                    <CmsRadio value="yes">Yes</CmsRadio>
-                    <CmsRadio value="no">No</CmsRadio>
+                    <CmsRadio size="medium" value="yes">Yes</CmsRadio>
+                    <CmsRadio size="medium" value="no">No</CmsRadio>
                   </CmsRadioGroup>
                 )}
               />
@@ -1166,7 +1159,7 @@ function KpiSection({
                     onValueChange={value =>
                       field.onChange(value === '' ? undefined : Number(value))
                     }
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                   />
@@ -1209,7 +1202,7 @@ function KpiSection({
                         onValueChange={value =>
                           field.onChange(value === '' ? undefined : Number(value))
                         }
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="목표값 입력"
                         width={120}
                       />
@@ -1233,7 +1226,7 @@ function KpiSection({
                         onValueChange={value =>
                           field.onChange(value === '' ? undefined : Number(value))
                         }
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="목표값 입력"
                         width={120}
                       />
@@ -1253,7 +1246,7 @@ function KpiSection({
             edit={
               <CmsInput
                 disabled
-                inputSize="medium"
+                inputSize="small"
                 placeholder="해당 없음"
                 width={120}
                 value=""
@@ -1266,7 +1259,7 @@ function KpiSection({
             edit={
               <CmsInput
                 disabled
-                inputSize="medium"
+                inputSize="small"
                 placeholder="해당 없음"
                 width={120}
                 value=""
@@ -1378,7 +1371,7 @@ function WageSection({
                         min={0}
                         max={max}
                         allowNegative={false}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="직접 입력"
                         width={120}
                         value={field.value ?? ''}
@@ -1404,7 +1397,7 @@ function WageSection({
                 name="wagePaymentItemIds"
                 control={editForm.control}
                 render={({ field }) => (
-                  <CmsSelect
+                  <CmsSelect inputSize="small"
                     mode="multiple"
                     withAllOption={false}
                     value={field.value ?? []}
@@ -1490,7 +1483,7 @@ function TypeSettingsScheduleDetailRow({
               control={editForm.control}
               render={({ field }) => (
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={field.value ?? 'common'}
                   onChange={e => {
                     field.onChange(e.target.value)
@@ -1500,8 +1493,8 @@ function TypeSettingsScheduleDetailRow({
                     )
                   }}
                 >
-                  <CmsRadio value="common">일정 공통</CmsRadio>
-                  <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+                  <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+                  <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
                 </CmsRadioGroup>
               )}
             />
@@ -1550,7 +1543,7 @@ function TypeSettingsIpsRow({
               control={editForm.control}
               render={({ field }) => (
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={field.value}
                   onChange={e => {
                     field.onChange(e.target.value)
@@ -1560,8 +1553,8 @@ function TypeSettingsIpsRow({
                     )
                   }}
                 >
-                  <CmsRadio value="common">일정 공통</CmsRadio>
-                  <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+                  <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+                  <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
                 </CmsRadioGroup>
               )}
             />
@@ -1732,7 +1725,7 @@ function TypeSettingsSection({
                 control={editForm.control}
                 render={({ field }) => (
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={field.value}
                     onChange={e => {
                       const next = e.target.value as 'curriculum' | 'schedule'
@@ -1746,8 +1739,8 @@ function TypeSettingsSection({
                       }
                     }}
                   >
-                    <CmsRadio value="curriculum">커리큘럼형</CmsRadio>
-                    <CmsRadio value="schedule">일정형</CmsRadio>
+                    <CmsRadio size="medium" value="curriculum">커리큘럼형</CmsRadio>
+                    <CmsRadio size="medium" value="schedule">일정형</CmsRadio>
                   </CmsRadioGroup>
                 )}
               />
@@ -1762,7 +1755,7 @@ function TypeSettingsSection({
                 control={editForm.control}
                 render={({ field }) => (
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={field.value}
                     onChange={e => {
                       const next = e.target.value as 'single' | 'multi'
@@ -1776,8 +1769,8 @@ function TypeSettingsSection({
                       }
                     }}
                   >
-                    <CmsRadio value="single">단일 회차</CmsRadio>
-                    <CmsRadio value="multi">복수 회차</CmsRadio>
+                    <CmsRadio size="medium" value="single">단일 회차</CmsRadio>
+                    <CmsRadio size="medium" value="multi">복수 회차</CmsRadio>
                   </CmsRadioGroup>
                 )}
               />
@@ -1803,12 +1796,12 @@ function TypeSettingsSection({
                   control={editForm.control}
                   render={({ field }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={field.value ?? 'online'}
                       onChange={e => field.onChange(e.target.value)}
                     >
                       {educationFormOptions.map(opt => (
-                        <CmsRadio key={opt.value} value={opt.value}>
+                        <CmsRadio size="medium" key={opt.value} value={opt.value}>
                           {opt.label}
                         </CmsRadio>
                       ))}
@@ -1827,12 +1820,12 @@ function TypeSettingsSection({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsRadioGroup
-                        size="large"
+                        size="medium"
                         value={field.value ?? 'individual'}
                         onChange={e => field.onChange(e.target.value)}
                       >
-                        <CmsRadio value="individual">개인</CmsRadio>
-                        <CmsRadio value="team">팀</CmsRadio>
+                        <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                        <CmsRadio size="medium" value="team">팀</CmsRadio>
                       </CmsRadioGroup>
                     )}
                   />
@@ -1887,7 +1880,7 @@ function TypeSettingsSection({
                   control={editForm.control}
                   render={({ field }) => (
                     <CmsSelect
-                      inputSize="medium"
+                      inputSize="small"
                       withAllOption={false}
                       placeholder="교육 형태"
                       width={160}
@@ -1914,7 +1907,7 @@ function TypeSettingsSection({
                   control={editForm.control}
                   render={({ field }) => (
                     <CmsSelect
-                      inputSize="medium"
+                      inputSize="small"
                       withAllOption={false}
                       placeholder="교육 형태"
                       width={160}
@@ -1942,7 +1935,7 @@ function TypeSettingsSection({
                   control={editForm.control}
                   render={({ field }) => (
                     <CmsSelect
-                      inputSize="medium"
+                      inputSize="small"
                       withAllOption={false}
                       placeholder="참여 방식"
                       width={160}
@@ -2056,7 +2049,7 @@ function MultiRoundCurriculumSessionForm({
             control={editForm.control}
             render={({ field }) => (
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={field.value ? 'yes' : 'no'}
                 onChange={e => {
                   const enabled = e.target.value === 'yes'
@@ -2066,8 +2059,8 @@ function MultiRoundCurriculumSessionForm({
                   }
                 }}
               >
-                <CmsRadio value="yes">있음</CmsRadio>
-                <CmsRadio value="no">없음</CmsRadio>
+                <CmsRadio size="medium" value="yes">있음</CmsRadio>
+                <CmsRadio size="medium" value="no">없음</CmsRadio>
               </CmsRadioGroup>
             )}
           />
@@ -2078,7 +2071,7 @@ function MultiRoundCurriculumSessionForm({
             render={({ field: periodField }) => {
               const appliedRange = parseEducationScheduleLineToRange(periodField.value)
               return (
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   customizable={false}
@@ -2132,7 +2125,7 @@ function MultiRoundCurriculumSessionForm({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsSelect
-                        inputSize="medium"
+                        inputSize="small"
                         withAllOption={false}
                         placeholder="진행 차시"
                         width={144}
@@ -2150,7 +2143,7 @@ function MultiRoundCurriculumSessionForm({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="교육 내용을 작성하세요"
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
@@ -2175,12 +2168,12 @@ function MultiRoundCurriculumSessionForm({
                           control={editForm.control}
                           render={({ field }) => (
                             <CmsRadioGroup
-                              size="large"
+                              size="medium"
                               value={field.value ?? 'online'}
                               onChange={e => field.onChange(e.target.value)}
                             >
                               {educationFormOptions.map(opt => (
-                                <CmsRadio key={opt.value} value={opt.value}>
+                                <CmsRadio size="medium" key={opt.value} value={opt.value}>
                                   {opt.label}
                                 </CmsRadio>
                               ))}
@@ -2233,12 +2226,12 @@ function MultiRoundCurriculumSessionForm({
                           control={editForm.control}
                           render={({ field }) => (
                             <CmsRadioGroup
-                              size="large"
+                              size="medium"
                               value={field.value ?? 'online'}
                               onChange={e => field.onChange(e.target.value)}
                             >
                               {educationFormOptions.map(opt => (
-                                <CmsRadio key={opt.value} value={opt.value}>
+                                <CmsRadio size="medium" key={opt.value} value={opt.value}>
                                   {opt.label}
                                 </CmsRadio>
                               ))}
@@ -2303,12 +2296,12 @@ function MultiRoundCurriculumSessionForm({
                           control={editForm.control}
                           render={({ field: radioField }) => (
                             <CmsRadioGroup
-                              size="large"
+                              size="medium"
                               value={radioField.value ?? 'online'}
                               onChange={e => radioField.onChange(e.target.value)}
                             >
                               {educationFormOptions.map(opt => (
-                                <CmsRadio key={opt.value} value={opt.value}>
+                                <CmsRadio size="medium" key={opt.value} value={opt.value}>
                                   {opt.label}
                                 </CmsRadio>
                               ))}
@@ -2452,7 +2445,7 @@ function SingleRoundCurriculumSessionForm({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="단원명을 입력하세요"
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
@@ -2467,7 +2460,7 @@ function SingleRoundCurriculumSessionForm({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="교육 내용을 작성하세요"
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
@@ -2562,7 +2555,7 @@ function CurriculumPreEducationEventEditBlock({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="행사 일정명을 작성하세요"
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
@@ -3257,12 +3250,12 @@ function ScheduleEventPerScheduleExtraEditRows({
           control={editForm.control}
           render={({ field }) => (
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={field.value ?? 'online'}
               onChange={e => field.onChange(e.target.value)}
             >
               {perScheduleEducationFormOptions.map(opt => (
-                <CmsRadio key={opt.value} value={opt.value}>
+                <CmsRadio size="medium" key={opt.value} value={opt.value}>
                   {opt.label}
                 </CmsRadio>
               ))}
@@ -3324,7 +3317,7 @@ function ScheduleEventPerScheduleExtraEditRows({
             control={editForm.control}
             render={({ field }) => (
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={field.value ? 'yes' : 'no'}
                 onChange={e => {
                   const enabled = e.target.value === 'yes'
@@ -3334,8 +3327,8 @@ function ScheduleEventPerScheduleExtraEditRows({
                   }
                 }}
               >
-                <CmsRadio value="yes">있음</CmsRadio>
-                <CmsRadio value="no">없음</CmsRadio>
+                <CmsRadio size="medium" value="yes">있음</CmsRadio>
+                <CmsRadio size="medium" value="no">없음</CmsRadio>
               </CmsRadioGroup>
             )}
           />
@@ -3346,7 +3339,7 @@ function ScheduleEventPerScheduleExtraEditRows({
             render={({ field: periodField }) => {
               const appliedRange = parseEducationScheduleLineToRange(periodField.value)
               return (
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   customizable={false}
@@ -3396,12 +3389,12 @@ function ScheduleEventPerScheduleExtraEditRows({
                   control={editForm.control}
                   render={({ field: radioField }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={radioField.value ?? 'individual'}
                       onChange={e => radioField.onChange(e.target.value)}
                     >
-                      <CmsRadio value="individual">개인</CmsRadio>
-                      <CmsRadio value="team">팀</CmsRadio>
+                      <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                      <CmsRadio size="medium" value="team">팀</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -3482,7 +3475,7 @@ function ScheduleEventDetailEditBlock({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder="행사 일정명을 작성하세요"
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
@@ -3621,7 +3614,7 @@ function ScheduleDetailEditBlock({
                     const start = scheduleTimeStringToDayjs(field.value?.startTime)
                     const end = scheduleTimeStringToDayjs(field.value?.endTime)
                     return (
-                    <ParagraphTimePicker
+                    <ParagraphTimePicker inputSize="small"
                       endTimeAlwaysOn
                       placeholder="시간 선택"
                       width={200}
@@ -3662,7 +3655,7 @@ function ScheduleDetailEditBlock({
         control={editForm.control}
         render={({ field }) => (
           <CmsRadioGroup
-            size="large"
+            size="medium"
             value={field.value ? 'yes' : 'no'}
             onChange={e => {
               const enabled = e.target.value === 'yes'
@@ -3672,8 +3665,8 @@ function ScheduleDetailEditBlock({
               }
             }}
           >
-            <CmsRadio value="yes">있음</CmsRadio>
-            <CmsRadio value="no">없음</CmsRadio>
+            <CmsRadio size="medium" value="yes">있음</CmsRadio>
+            <CmsRadio size="medium" value="no">없음</CmsRadio>
           </CmsRadioGroup>
         )}
       />
@@ -3684,7 +3677,7 @@ function ScheduleDetailEditBlock({
         render={({ field: periodField }) => {
           const appliedRange = parseEducationScheduleLineToRange(periodField.value)
           return (
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               presetMode="period"
               customizable={false}
@@ -3717,12 +3710,12 @@ function ScheduleDetailEditBlock({
           control={editForm.control}
           render={({ field }) => (
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={field.value ?? 'online'}
               onChange={e => field.onChange(e.target.value)}
             >
               {perScheduleEducationFormOptions.map(opt => (
-                <CmsRadio key={opt.value} value={opt.value}>
+                <CmsRadio size="medium" key={opt.value} value={opt.value}>
                   {opt.label}
                 </CmsRadio>
               ))}
@@ -3840,12 +3833,12 @@ function ScheduleDetailEditBlock({
                   control={editForm.control}
                   render={({ field }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={field.value ?? 'individual'}
                       onChange={e => field.onChange(e.target.value)}
                     >
-                      <CmsRadio value="individual">개인</CmsRadio>
-                      <CmsRadio value="team">팀</CmsRadio>
+                      <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                      <CmsRadio size="medium" value="team">팀</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -3867,12 +3860,12 @@ function ScheduleDetailEditBlock({
                   control={editForm.control}
                   render={({ field }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={field.value ?? 'individual'}
                       onChange={e => field.onChange(e.target.value)}
                     >
-                      <CmsRadio value="individual">개인</CmsRadio>
-                      <CmsRadio value="team">팀</CmsRadio>
+                      <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                      <CmsRadio size="medium" value="team">팀</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -3899,12 +3892,12 @@ function ScheduleDetailEditBlock({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsRadioGroup
-                        size="large"
+                        size="medium"
                         value={field.value ?? 'individual'}
                         onChange={e => field.onChange(e.target.value)}
                       >
-                        <CmsRadio value="individual">개인</CmsRadio>
-                        <CmsRadio value="team">팀</CmsRadio>
+                        <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                        <CmsRadio size="medium" value="team">팀</CmsRadio>
                       </CmsRadioGroup>
                     )}
                   />
@@ -3927,12 +3920,12 @@ function ScheduleDetailEditBlock({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsRadioGroup
-                        size="large"
+                        size="medium"
                         value={field.value ?? 'individual'}
                         onChange={e => field.onChange(e.target.value)}
                       >
-                        <CmsRadio value="individual">개인</CmsRadio>
-                        <CmsRadio value="team">팀</CmsRadio>
+                        <CmsRadio size="medium" value="individual">개인</CmsRadio>
+                        <CmsRadio size="medium" value="team">팀</CmsRadio>
                       </CmsRadioGroup>
                     )}
                   />
@@ -3973,7 +3966,7 @@ function ScheduleDetailEditBlock({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        inputSize="medium"
+                        inputSize="small"
                         placeholder={
                           groupCount > 1
                             ? '세부 일정명을 작성하세요'
@@ -4630,7 +4623,7 @@ function ScheduleSettingsEditFields({
                 control={form.control}
                 render={({ field }) => (
                   <CmsRadioGroup
-                    size="large"
+                    size="medium"
                     value={lockDateMode ? 'date' : (field.value ?? 'date')}
                     onChange={e => {
                       const next = e.target.value as 'date' | 'period'
@@ -4647,8 +4640,8 @@ function ScheduleSettingsEditFields({
                       field.onChange(next)
                     }}
                   >
-                    <CmsRadio value="date">날짜 지정</CmsRadio>
-                    <CmsRadio value="period" disabled={lockDateMode}>
+                    <CmsRadio size="medium" value="date">날짜 지정</CmsRadio>
+                    <CmsRadio size="medium" value="period" disabled={lockDateMode}>
                       기간 지정
                     </CmsRadio>
                   </CmsRadioGroup>
@@ -4661,7 +4654,7 @@ function ScheduleSettingsEditFields({
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
           edit={
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               customizable={false}
               showPeriodToggle={false}

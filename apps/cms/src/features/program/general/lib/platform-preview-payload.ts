@@ -32,6 +32,7 @@ import {
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
+import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveRecruitmentOtherMatters } from '@/features/program/shared/lib/recruitment-row-copy'
 import {
   formatInstructorTargetsLabel,
@@ -97,15 +98,30 @@ function portalCategoriesFor(
   return [isIndividualAudience(program) ? 'YOUTH_YOUNG' : 'ORGANIZATION']
 }
 
+function operationDatesFor(
+  program: Program,
+  audience: ProgramPreviewAudience
+): Pick<PortalRecruitment, 'operationStartDate' | 'operationEndDate'> {
+  const recruitAudience =
+    audience === 'instructors' ? 'instructor' : audience === 'volunteers' ? 'volunteer' : 'participant'
+  const range = resolveAudienceProgramOperationIsoRange(program, recruitAudience)
+  return {
+    operationStartDate: range.start,
+    operationEndDate: range.end,
+  }
+}
+
 function buildRecruitment(
   program: Program,
   audience: ProgramPreviewAudience,
   info: RecruitmentInfo
 ): PortalRecruitment {
+  const operationDates = operationDatesFor(program, audience)
   if (audience === 'instructors') {
     return {
       recruitmentType: 'INSTRUCTOR',
       targetType: 'TEACHER',
+      ...operationDates,
       startAt: toPortalDateTime(program.instructorApplicationStartDate ?? program.applicationStartDate),
       endAt: toPortalDateTime(program.instructorApplicationEndDate ?? program.applicationEndDate),
       interviewEnabled: false,
@@ -116,6 +132,7 @@ function buildRecruitment(
     return {
       recruitmentType: 'VOLUNTEER',
       targetType: 'COLLEGE_STUDENT',
+      ...operationDates,
       startAt: toPortalDateTime(program.volunteerApplicationStartDate ?? program.applicationStartDate),
       endAt: toPortalDateTime(program.volunteerApplicationEndDate ?? program.applicationEndDate),
       interviewEnabled:
@@ -137,6 +154,7 @@ function buildRecruitment(
   return {
     recruitmentType: 'PARTICIPANT',
     targetType: isIndividualAudience(program) ? 'INDIVIDUAL' : 'ORGANIZATION',
+    ...operationDates,
     startAt: toPortalDateTime(program.applicationStartDate),
     endAt: toPortalDateTime(program.applicationEndDate),
     preEducationNoticeRequired:
@@ -194,7 +212,8 @@ export function buildProgramPortalPreviewDetail(
   const { program, sponsorName, audience, programType, portalCategories } = input
   const common = program.generalCommonInfo
   const info = recruitmentInfoFor(program, audience)
-  const targetLevels = audience === 'institutions' ? resolveProgramTargetLevels(program) : []
+  const participantRecruitment = common?.participantRecruitmentInfo
+  const targetLevels = resolveProgramTargetLevels(program)
 
   return {
     programId: toPortalProgramId(program.id),
@@ -238,11 +257,11 @@ export function buildProgramPortalPreviewDetail(
           ),
     remarks: info.notesNotApplicable ? undefined : firstTrimmed(info.remarks, program.remarks),
     applicationMethod: firstTrimmed(info.applicationMethod, program.applicationMethod) ?? null,
-    educationTargets: audience === 'institutions' && targetLevels.length > 0 ? targetLevels : undefined,
-    educationTargetDetail:
-      audience === 'institutions'
-        ? firstTrimmed(info.educationTargetDetail, program.educationTargetDetail)
-        : undefined,
+    educationTargets: targetLevels.length > 0 ? targetLevels : undefined,
+    educationTargetDetail: firstTrimmed(
+      participantRecruitment?.educationTargetDetail,
+      program.educationTargetDetail,
+    ),
     recruitmentTarget:
       audience === 'volunteers'
         ? firstTrimmed(

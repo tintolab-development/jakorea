@@ -113,7 +113,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   <CmsNumericInput
                     mode="integer"
                     min={0}
-                    inputSize="large"
+                    inputSize="small"
                     width="100%"
                     placeholder="예상 최대 학급 수를 입력하세요"
                     value={maxClassesPerDay}
@@ -132,7 +132,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   <CmsNumericInput
                     mode="integer"
                     min={0}
-                    inputSize="large"
+                    inputSize="small"
                     width="100%"
                     placeholder="예상 봉사단 인원을 입력하세요"
                     value={estimation[firstSemester.key].expectedVolunteerCount}
@@ -166,7 +166,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   <CmsNumericInput
                     mode="integer"
                     min={0}
-                    inputSize="large"
+                    inputSize="small"
                     width="100%"
                     placeholder="예상 봉사단 인원을 입력하세요"
                     value={estimation[secondSemester.key].expectedVolunteerCount}

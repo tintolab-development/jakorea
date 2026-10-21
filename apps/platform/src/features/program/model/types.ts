@@ -78,8 +78,9 @@ export type ProgramSession = {
   educationFormLabel?: string
   /** 공통 참여 방식이 없을 때 차시 행 값 */
   participationMethodLabel?: string
-  /** 공통 IPS가 없을 때 차시 행 값 */
-  ipsTypeSummary?: string
+  /** 차시별 과제 설정 여부 */
+  assignmentEnabled?: boolean
+  /** 차시별 과제 기간 */
   assignmentPeriod?: string
 }
 
@@ -99,7 +100,9 @@ export type ProgramEventSchedule = {
   blockKind?: ProgramScheduleBlockKind
   educationFormLabel?: string
   participationMethodLabel?: string
-  ipsTypeSummary?: string
+  /** 일정별 과제 설정 여부 */
+  assignmentEnabled?: boolean
+  /** 일정별 과제 기간 */
   assignmentPeriod?: string
 }
 
@@ -219,6 +222,8 @@ export type ProgramDetail = ProgramListItem & {
   sessionRound: ProgramSessionRound
   /** 날짜 지정 / 기간 지정 — 신청 폼 진행 희망 교육 일정 UI */
   educationScheduleMode: ProgramEducationScheduleMode
+  /** 기간 지정 — 서버가 계산한 교육 운영 기간. 없으면 기간형 일정을 임의로 만들지 않는다. */
+  educationScheduleRange?: { start: string | null; end: string | null } | null
   /** 등록된 교육 진행 예정일 (신청 폼 체크박스 선택지) */
   educationScheduleLines: string[]
   /** 기간 지정 지망 상한. 없으면 1 */

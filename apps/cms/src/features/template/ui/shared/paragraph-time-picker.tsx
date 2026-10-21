@@ -269,6 +269,7 @@ export function ParagraphTimePicker({
         onEndTimeOnChange={setEndTimeOn}
         onEndTimeToggleOn={handleEndTimeToggleOn}
         onApply={handleApply}
+        inputSize={inputSize}
       />
     </>
   )

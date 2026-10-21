@@ -34,6 +34,8 @@ export type ActivityWithdrawScheduleModalProps = {
   confirming?: boolean
   /** TT 기관 활동 포기처럼 귀책 주체를 반드시 선택해야 하는 경우 */
   faultPartyRequired?: boolean
+  /** 강사 participant 활동 포기 시 JA 감점 안내 */
+  faultPartyHint?: string
   reasonMinLength?: number
   reasonMaxLength?: number
 }
@@ -45,6 +47,7 @@ export function ActivityWithdrawScheduleModal({
   onConfirm,
   confirming = false,
   faultPartyRequired = false,
+  faultPartyHint,
   reasonMinLength = APPLICATION_GIVE_UP_REASON_MIN_LENGTH,
   reasonMaxLength = APPLICATION_GIVE_UP_REASON_MAX_LENGTH,
 }: ActivityWithdrawScheduleModalProps) {
@@ -183,6 +186,9 @@ export function ActivityWithdrawScheduleModal({
             <Radio value={FaultParty.USER}>사용자 귀책</Radio>
             <Radio value={FaultParty.ADMIN}>관리자 귀책</Radio>
           </Radio.Group>
+          {faultPartyHint ? (
+            <p className="activity-withdraw-schedule-modal__hint">{faultPartyHint}</p>
+          ) : null}
           {faultPartyError ? (
             <span className="activity-withdraw-schedule-modal__error" role="alert">
               {faultPartyError}

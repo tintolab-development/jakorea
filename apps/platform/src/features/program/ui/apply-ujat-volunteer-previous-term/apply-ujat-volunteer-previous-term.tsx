@@ -1,5 +1,7 @@
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import {
+  PFFormControlCluster,
+  PFFormControlSuffix,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
@@ -77,32 +79,38 @@ export function ApplyUjatVolunteerPreviousTerm({
         <PFFormField label="이전 활동 기수 및 년도" fullWidth labelWidth="wide">
           <PFFormInlineRow>
             <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                inputMode="numeric"
-                placeholder="활동 기수"
-                value={value.activityTerm}
-                onValueChange={next =>
-                  onChange({ ...value, activityTerm: next.replace(/[^\d]/g, '') })
-                }
-              />
+              <PFFormControlCluster>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  inputMode="numeric"
+                  placeholder="활동 기수"
+                  value={value.activityTerm}
+                  onValueChange={next =>
+                    onChange({ ...value, activityTerm: next.replace(/[^\d]/g, '') })
+                  }
+                />
+                <PFFormControlSuffix>기</PFFormControlSuffix>
+              </PFFormControlCluster>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="활동 년도"
-                value={value.activityYear}
-                onValueChange={next =>
-                  onChange({ ...value, activityYear: next.replace(/[^\d]/g, '') })
-                }
-              />
+              <PFFormControlCluster>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="활동 년도"
+                  value={value.activityYear}
+                  onValueChange={next =>
+                    onChange({ ...value, activityYear: next.replace(/[^\d]/g, '') })
+                  }
+                />
+                <PFFormControlSuffix>년</PFFormControlSuffix>
+              </PFFormControlCluster>
             </PFFormInlineSegment>
           </PFFormInlineRow>
         </PFFormField>

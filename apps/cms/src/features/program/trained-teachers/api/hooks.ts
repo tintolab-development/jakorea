@@ -9,7 +9,6 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
-import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { shouldRetryTrainedTeacherQuery } from './errors'
@@ -27,15 +26,10 @@ import {
   updateTrainedTeacherProgramInfoDetail,
   type TrainedTeacherProgramsRemoteListPage,
 } from './service'
+import { type TrainedTeachersCommonInfoSavePayload } from './info-detail-adapters'
 import {
-  applyTrainedTeacherInfoDetailSaveToCache,
-  type TrainedTeachersCommonInfoSavePayload,
-} from './info-detail-adapters'
-import {
-  programDetailCacheFromSave,
-  syncOpenProgramDetailCache,
-} from '@/features/program/shared/lib/program-detail-cache-after-save'
-import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
+  reflectTrainedTeacherProgramSave,
+} from './detail-cache'
 
 function filtersKey(filters: TrainedTeacherListFilters, remoteEnabled: boolean): string {
   return JSON.stringify({ source: remoteEnabled ? 'remote' : 'mock', ...filters })
@@ -146,20 +140,9 @@ export function useUpdateTrainedTeacherProgram() {
     }) => updateTrainedTeacherProgram(programId, program, patch),
     retry: false,
     onSuccess: async (program, variables) => {
-      const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
-      await syncOpenProgramDetailCache(
-        queryClient,
-        detailKey,
-        programDetailCacheFromSave(
-          variables.programId,
-          program,
-          variables.program,
-          variables.patch
-        )
-      )
-      invalidateTrainedTeacherListCaches(queryClient)
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(variables.programId),
+      await reflectTrainedTeacherProgramSave(queryClient, {
+        programId: variables.programId,
+        echoed: program,
       })
     },
   })
@@ -214,28 +197,10 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
     }) => updateTrainedTeacherProgramInfoDetail(programId, payload),
     retry: false,
     onSuccess: async (program, variables) => {
-      const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
-      await queryClient.cancelQueries({ queryKey: detailKey })
-      const previous = queryClient.getQueryData<Program>(detailKey)
-      const merged = applyTrainedTeacherInfoDetailSaveToCache(
-        previous,
-        program,
-        variables.programId,
-        variables.payload.commonInfo
-      )
-      const previousBusinessArea = resolveStoredBusinessArea(previous?.businessArea)
-      const nextBusinessArea = resolveStoredBusinessArea(merged.businessArea)
-      queryClient.setQueryData(
-        detailKey,
-        previousBusinessArea && previousBusinessArea !== nextBusinessArea
-          ? { ...merged, businessArea: previousBusinessArea }
-          : merged
-      )
-      invalidateTrainedTeacherListCaches(queryClient)
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(variables.programId),
+      await reflectTrainedTeacherProgramSave(queryClient, {
+        programId: variables.programId,
+        echoed: program,
       })
-      await queryClient.invalidateQueries({ queryKey: detailKey })
     },
   })
 }

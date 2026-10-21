@@ -4,7 +4,7 @@ export type AgreementKey = 'service' | 'privacy' | 'teacherInfo' | 'marketing' |
 export type EmailCheckStatus = 'idle' | 'success' | 'error'
 export type SchoolStatus = 'enrolled' | 'none'
 export type EmploymentStatus = 'employed' | 'on-leave'
-export type SignUpStepNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+export type SignUpStepNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 export type MemberTypeOption = {
   type: MemberType

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { EducationScheduleItem } from '../model/types'
 import {
   canSubmitEducationAbsenceReason,
@@ -15,25 +14,33 @@ import {
   EducationSessionStatusMark,
 } from '../../shared'
 import { EducationScheduleAssignmentBlock } from './assignment-block'
-import { PFAlertModal, PFButton, PFStateBadge, PFText } from '@/shared/ui'
+import { PFButton, PFStateBadge, PFText } from '@/shared/ui'
 
 type EducationScheduleRowProps = {
   item: EducationScheduleItem
+  onAbsenceReasonSubmit?: (item: EducationScheduleItem) => void
+  /** 결석 사유 텍스트 노출 (교육받은 교사 신청 건은 false) */
+  showAbsenceReason?: boolean
 }
 
-export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
-  const [comingSoonOpen, setComingSoonOpen] = useState(false)
+export function EducationScheduleRow({
+  item,
+  onAbsenceReasonSubmit,
+  showAbsenceReason = true,
+}: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
   const heldLabel = resolveEducationScheduleDateLabel(item)
   const showAssignment = shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
-    hasOperationalSchedule && canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
+    onAbsenceReasonSubmit != null &&
+    hasOperationalSchedule &&
+    canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
   const attendance = hasOperationalSchedule ? item.attendanceStatus : null
   const rowLabel = item.sessionLabel?.trim() || item.scheduleLabel?.trim()
-  const subtitle =
-    rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title
-  const absenceReason = hasOperationalSchedule ? item.absenceReason?.trim() : undefined
+  const subtitle = rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title
+  const absenceReason =
+    showAbsenceReason && hasOperationalSchedule ? item.absenceReason?.trim() : undefined
 
   return (
     <>
@@ -57,7 +64,7 @@ export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
                   type="button"
                   variant="secondary"
                   size="large"
-                  onClick={() => setComingSoonOpen(true)}
+                  onClick={() => onAbsenceReasonSubmit(item)}
                 >
                   결석 사유 제출하기
                 </PFButton>
@@ -100,12 +107,6 @@ export function EducationScheduleRow({ item }: EducationScheduleRowProps) {
           <EducationScheduleAssignmentBlock assignment={item.assignment} />
         ) : null}
       </EducationSessionCard>
-
-      <PFAlertModal
-        open={comingSoonOpen}
-        title="준비 중"
-        onConfirm={() => setComingSoonOpen(false)}
-      />
     </>
   )
 }

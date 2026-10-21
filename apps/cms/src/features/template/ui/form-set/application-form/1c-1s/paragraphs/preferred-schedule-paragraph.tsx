@@ -58,7 +58,7 @@ function ScheduleDateAndSessionRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               presetMode="date"
               customizable={false}
@@ -72,7 +72,7 @@ function ScheduleDateAndSessionRow({
             />
             <DetailInfoForm.InputsSeparator />
             <CmsSelect
-              inputSize="medium"
+              inputSize="small"
               width={120}
               withAllOption={false}
               placeholder="희망 차시"
@@ -116,7 +116,7 @@ function ScheduleTimeRow({
             style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
           >
             <CmsNumericInput
-              inputSize="medium"
+              inputSize="small"
               width={120}
               placeholder="수업 진행 교시"
               value={classPeriod ?? ''}
@@ -133,7 +133,7 @@ function ScheduleTimeRow({
             />
             <span>교시</span>
             <DetailInfoForm.InputsSeparator />
-            <ParagraphTimePicker
+            <ParagraphTimePicker inputSize="small"
               value={start}
               onTimeRangeChange={range => onPatch({ classPeriod, start: range[0], end: range[1] })}
               placeholder="시간을 선택해 주세요"

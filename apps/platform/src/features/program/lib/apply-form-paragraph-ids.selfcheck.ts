@@ -4,6 +4,7 @@ import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragr
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import {
   isApplicationBasicInfoParagraphId,
   isApplicationGuidanceParagraphId,
@@ -16,6 +17,11 @@ import {
   isDynamicVolunteerInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
+  isUjatInstitutionBasicInfoParagraphId,
+  isUjatInstitutionClassTimeParagraphId,
+  isUjatInstitutionGradeInfoParagraphId,
+  isUjatInstitutionPreferredScheduleParagraphId,
+  isUjatSubmitConfirmationParagraphId,
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from './apply-form-paragraph-ids.ts'
@@ -153,6 +159,37 @@ assert.equal(
     runtimeHidden: true,
   }),
   false,
+)
+
+assert.equal(
+  isUjatInstitutionBasicInfoParagraphId(UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo),
+  true,
+)
+assert.equal(
+  isApplicationBasicInfoParagraphId(UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo),
+  false,
+)
+assert.equal(
+  isUjatInstitutionGradeInfoParagraphId(
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
+  ),
+  true,
+)
+assert.equal(
+  isUjatInstitutionClassTimeParagraphId(UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime),
+  true,
+)
+assert.equal(
+  isUjatInstitutionPreferredScheduleParagraphId(
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
+  ),
+  true,
+)
+assert.equal(
+  isUjatSubmitConfirmationParagraphId(
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation,
+  ),
+  true,
 )
 
 console.log('apply-form-paragraph-ids.selfcheck: ok')

@@ -36,7 +36,7 @@ const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 
 
 /** 교육받은 교사 프로그램 참여자 신청 폼 — 기본 정보 */
 export function TrainedTeachersProgramApplicationBasicInfoParagraph({
-  isTemplateAuthoringMode: _isTemplateAuthoringMode = false,
+  isTemplateAuthoringMode = false,
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
@@ -48,7 +48,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       ),
     [bridge.maxClassCount]
   )
-  const showPreferredEducationForm = shouldShowInstitutionApplicationPreferredEducationForm(bridge)
+  const showPreferredEducationForm =
+    isTemplateAuthoringMode || shouldShowInstitutionApplicationPreferredEducationForm(bridge)
 
   const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.applicationGrade',
@@ -108,7 +109,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
   /** 로그인·소속 기관 자동 반영 — 값 없으면 placeholder (샘플 학교명 금지) */
   const autoFilledInstitutionName = (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value=""
       placeholder="로그인 교사의 소속 학교"
@@ -119,7 +120,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
 
   const autoFilledInstitutionAddress = (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value=""
       placeholder="기관 등록 주소"
@@ -132,7 +133,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
     <div className="detail-info-form-inputs-wrapper-no-gap">
       <span className="mr-6">담당 교사</span>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width={120}
         value=""
         placeholder="교사명"
@@ -142,7 +143,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">Tel</span>
       <CmsPhoneInput
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder="담당 교사의 내선 번호(직통 번호)"
         value={teacherTel}
@@ -151,7 +152,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">M</span>
       <CmsPhoneInput
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder="담당 교사의 휴대폰 번호"
         value={teacherMobile}
@@ -160,7 +161,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">E-mail</span>
       <CmsInput
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder="담당 교사의 이메일"
         value={teacherEmail}
@@ -181,7 +182,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           label="신청 학년"
           edit={
             <CmsSelect
-              inputSize="medium"
+              inputSize="small"
               width={140}
               withAllOption={false}
               placeholder="학년 선택"
@@ -204,7 +205,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           label="상세 주소"
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               placeholder="교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요"
               width="100%"
               value={detailAddress}
@@ -222,7 +223,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 withAllOption={false}
                 placeholder="신청 학급"
@@ -233,7 +234,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
               <span>개 학급</span>
               <DetailInfoForm.InputsSeparator />
               <CmsNumericInput
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 mode="integer"
                 placeholder="총 학생 수"
@@ -250,13 +251,13 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
             label="희망 교육 형태"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={educationFormat}
                 onChange={event => setEducationFormat(event.target.value)}
                 style={inlineChoiceStyle}
               >
                 {EDUCATION_FORMAT_OPTIONS.map(option => (
-                  <CmsRadio key={option.value} value={option.value}>
+                  <CmsRadio size="medium" key={option.value} value={option.value}>
                     {option.label}
                   </CmsRadio>
                 ))}
@@ -282,20 +283,20 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
               style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
             >
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={educationPlace}
                 onChange={event => setEducationPlace(event.target.value)}
                 style={inlineChoiceStyle}
               >
                 {EDUCATION_PLACE_OPTIONS.map(option => (
-                  <CmsRadio key={option.value} value={option.value}>
+                  <CmsRadio size="medium" key={option.value} value={option.value}>
                     {option.label}
                   </CmsRadio>
                 ))}
               </CmsRadioGroup>
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 placeholder="교육이 진행될 상세 장소를 입력해 주세요"
                 width="100%"
                 style={{ flex: '1 1 280px', minWidth: 180 }}
@@ -318,7 +319,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           fullRow
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               placeholder="신청 사유를 입력해 주세요."
               width="100%"
               value={applicationReason}
@@ -335,7 +336,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           fullRow
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               placeholder="기타 요청사항을 입력해 주세요."
               width="100%"
               value={otherRequests}

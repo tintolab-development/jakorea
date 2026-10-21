@@ -13,9 +13,11 @@ export interface MemberPortalConsentDocumentCreateRequest {
      */
   consentType: string;
   /**
+     * Optional. Omit both target fields for member-wide PORTRAIT_RIGHTS; the server binds the authenticated member. PROGRAM plus targetId preserves program-scoped consent.
      * @minLength 0
      * @maxLength 100
      */
   targetType?: string;
+  /** Optional with targetType. For MEMBER scope, must equal the authenticated member ID; for PROGRAM scope, the member must be a participant. */
   targetId?: number;
 }

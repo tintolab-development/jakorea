@@ -41,6 +41,11 @@ import {
   educationScheduleDetailCardLabel,
   formatEducationScheduleLineForDetailCard,
 } from './education-schedule-detail-display.ts'
+import {
+  formatDisplayDate,
+  formatDisplayDateRange,
+  normalizeScheduleDisplayLabel,
+} from '../../../shared/lib/format-display-date.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -83,8 +88,6 @@ const RECRUITING_LIFECYCLES = new Set<CmsLifecycleStatus>([
   'participant_instructor_recruiting',
 ])
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 function toDate(value: string | undefined): Date | null {
   if (!value?.trim()) return null
   const date = new Date(value)
@@ -98,36 +101,12 @@ function formatYmd(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-/** 2026.04.03(금) 형태 */
-function formatDateLabel(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const w = WEEKDAY_KO[date.getDay()]
-  return `${y}.${m}.${d}(${w})`
-}
-
-/** 모집 기간 라벨 — 항상 YYYY.MM.DD – YYYY.MM.DD (동일 연도라도 종료 연도 생략 안 함 → 목록 우측 너비 고정) */
 function formatRecruitmentRangeLabel(start: Date | null, end: Date | null): string {
-  if (!start && !end) return '-'
-  if (start && !end) return formatYmdCompact(start)
-  if (!start && end) return formatYmdCompact(end)
-  if (!start || !end) return '-'
-  return `${formatYmdCompact(start)} – ${formatYmdCompact(end)}`
-}
-
-function formatYmdCompact(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
+  return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
 function formatOperatingPeriodLabel(start: Date | null, end: Date | null): string {
-  if (!start && !end) return '-'
-  if (start && end) return `${formatDateLabel(start)} – ${formatDateLabel(end)}`
-  if (start) return formatDateLabel(start)
-  return end ? formatDateLabel(end) : '-'
+  return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
 /**
@@ -313,8 +292,7 @@ function formatOptionalDateRange(startIso: string | undefined, endIso: string | 
 }
 
 function formatOptionalDate(iso: string | undefined): string {
-  const date = toDate(iso)
-  return date ? formatDateLabel(date) : '-'
+  return formatDisplayDate(iso ?? '') || '-'
 }
 
 /**
@@ -526,6 +504,7 @@ function mapEducationScheduleLines(program: CmsProgramLike): string[] {
   return (program.generalCommonInfo?.educationScheduleLines ?? [])
     .map(line => line.trim())
     .filter(line => line && !isUnavailableScheduleLine(line))
+    .map(line => normalizeScheduleDisplayLabel(line))
 }
 
 function mapMaxSessionsPerDay(program: CmsProgramLike): number | undefined {
@@ -563,7 +542,7 @@ function mapEducationSchedules(
   if (ujatRows?.length && (detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant')) {
     return ujatRows.map(row => ({
       label: row.label.trim(),
-      value: row.value.trim(),
+      value: normalizeScheduleDisplayLabel(row.value.trim()),
     }))
   }
 
@@ -589,7 +568,9 @@ function mapEducationSchedules(
         if (colon > 0 && colon < 24) {
           const label = line.slice(0, colon).trim()
           const value = line.slice(colon + 1).trim()
-          if (label && value) return { label, value }
+          if (label && value) {
+            return { label, value: formatEducationScheduleLineForDetailCard(value, scheduleMode) }
+          }
         }
       }
       return {

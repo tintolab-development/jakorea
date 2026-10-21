@@ -128,6 +128,13 @@ export async function create(input: CreateInput): Promise<Program> {
   )
 }
 
+/** 모집 행 저장 뒤 overlay만 남긴다. 날짜 키가 있으면 recruitments를 다시 써서 행을 덮는다. */
+export async function persistRecruitmentOverlaySnapshot(program: Program): Promise<void> {
+  await update(program.id, program, {
+    ujatRegistrationOverlay: program.ujatRegistrationOverlay,
+  })
+}
+
 export async function update(
   programId: string,
   program: Program,
