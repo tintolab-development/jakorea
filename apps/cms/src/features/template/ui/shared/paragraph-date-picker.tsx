@@ -17,6 +17,7 @@ import {
   findNextEnabledDate,
   toValidDayjsOrNull,
 } from '@/shared/components/date-time-picker-shared'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import './paragraph-date-picker.css'
@@ -261,9 +262,8 @@ function isFullWidthPicker(width: number | string | undefined): boolean {
 }
 
 function formatDualPeriodCellText(d: Dayjs, withTime: boolean): string {
-  const date = formatAppDatepickerDisplay(d)
-  if (withTime) return `${date} (${formatTriggerClock(d)})`
-  return date
+  if (withTime) return formatYmdHmWithKoreanWeekday(d)
+  return formatAppDatepickerDisplay(d)
 }
 
 interface ParagraphDatePickerSingleInnerProps {

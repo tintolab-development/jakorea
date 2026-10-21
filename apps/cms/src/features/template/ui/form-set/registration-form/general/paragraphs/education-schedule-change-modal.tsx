@@ -77,7 +77,6 @@ export function EducationScheduleChangeModal({
                     inputSize="small"
                     value={changedDates[index] ?? null}
                     placeholder="변경 일정을 선택해 주세요"
-                    format="YYYY.MM.DD"
                     style={{ width: '100%' }}
                     onChange={date =>
                       setChangedDates(prev => ({

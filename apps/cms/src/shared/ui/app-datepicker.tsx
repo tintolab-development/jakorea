@@ -22,7 +22,10 @@ import {
   applySplitDateRangeEndChange,
   applySplitDateRangeStartChange,
 } from '@/shared/lib/split-date-range-on-change'
-import { formatYmdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
+import {
+  formatYmdHmWithKoreanWeekday,
+  formatYmdWithKoreanWeekday,
+} from '@/shared/lib/format-date-korean-weekday'
 import './app-datepicker.css'
 
 /** DatePicker ref 공개 형태(선언 파일에 rc-picker 경로가 새지 않도록 명시) */
@@ -43,10 +46,10 @@ export function formatAppDatepickerDisplay(value: Dayjs | null | undefined): str
   return formatYmdWithKoreanWeekday(value)
 }
 
-/** 날짜+시분초: YYYY. MM. DD(요일) HH:mm:ss */
+/** 날짜+시분: YYYY. MM. DD(요일) HH:mm */
 export function formatAppDatepickerDateTimeDisplay(value: Dayjs | null | undefined): string {
   if (value == null) return ''
-  return `${formatAppDatepickerDisplay(value)} ${value.format('HH:mm:ss')}`
+  return formatYmdHmWithKoreanWeekday(value)
 }
 
 /** 기간 필터 등: 요일 없이 YYYY. MM. DD (시안과 동일) */

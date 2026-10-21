@@ -25,6 +25,7 @@ import {
   getDefaultManualNotifyAt,
   getMinimumManualNotifyAt,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
@@ -229,7 +230,7 @@ export function InstructorFeeApprovalModal({
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
                     <span className="instructor-fee-approval-modal__manual-summary">
                       {' '}
-                      ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                     </span>
                   ) : null}
                 </CmsRadio>

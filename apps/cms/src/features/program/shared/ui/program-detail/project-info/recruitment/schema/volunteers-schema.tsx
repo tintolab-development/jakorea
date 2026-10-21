@@ -163,7 +163,6 @@ export function createVolunteersSchema({
                       <CmsDatePicker inputSize="small"
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                        format="YYYY. MM. DD"
                         className="program-detail-info-tab__date-picker"
                       />
                     )}
@@ -210,7 +209,6 @@ export function createVolunteersSchema({
                         width={'30%'}
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                        format="YYYY. MM. DD"
                       />
                     )}
                   />
@@ -223,7 +221,6 @@ export function createVolunteersSchema({
                         width={'30%'}
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                        format="YYYY. MM. DD"
                       />
                     )}
                   />
@@ -263,7 +260,6 @@ export function createVolunteersSchema({
                       <CmsDatePicker inputSize="small"
                         value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                        format="YYYY. MM. DD"
                       />
                     )}
                   />

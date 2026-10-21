@@ -35,6 +35,7 @@ import { PortraitAffiliationBody } from '@/features/template/ui/paragraph/table/
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
 import { useHideParagraphSelectionChrome } from '@/features/template/context/paragraph-selection-chrome-context'
 import '@/features/template/ui/form-editor/form-editor.css'
+import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { DividerVertical } from '@/shared/components/divider-vertical'
@@ -440,7 +441,7 @@ export function VerticalTableParagraphBody({
           value={toDayjs('date', cell)}
           onChange={d => setCell(rowIdx, stageIdx, fromDayjs('date', d))}
           onOpenChange={notifyPickerRowFocused(rowIdx)}
-          format="YYYY-MM-DD"
+          format={formatAppDatepickerDisplay}
           placeholder={datePlaceholder}
         />
         <div className="form-editor-vertical-table__dt-divider-wrap">

@@ -41,7 +41,9 @@ describe('normalizeWritingFormDraftFromApi', () => {
         ) {
           return paragraph
         }
-        const { systemFieldKeys: _systemFieldKeys, ...legacyParagraph } = paragraph
+        const { systemFieldKeys: _systemFieldKeys, ...legacyParagraph } = paragraph as typeof paragraph & {
+          systemFieldKeys?: string[]
+        }
         return legacyParagraph
       }),
     }

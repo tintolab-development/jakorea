@@ -10,6 +10,7 @@ import {
   getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { alertGeneralVolunteerInterview2BulkPassTypeRequired } from './general-volunteer-applicant-guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -169,7 +170,7 @@ export function GeneralVolunteerInterview2BulkPassModal({
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
                     <span className="general-volunteer-interview2-bulk-pass-modal__manual-summary">
                       {' '}
-                      ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                     </span>
                   ) : null}
                 </CmsRadio>

@@ -10,6 +10,7 @@ import {
   getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { alertUjatVolunteerInterview2BulkPassTypeRequired } from '../applicant/guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -162,7 +163,7 @@ export function UjatVolunteerInterview2BulkPassModal({
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
                     <span className="ujat-volunteer-interview2-bulk-pass-modal__manual-summary">
                       {' '}
-                      ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                     </span>
                   ) : null}
                 </CmsRadio>

@@ -11,6 +11,7 @@ import {
   getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
+import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import {
   INSTRUCTOR_JA_FAULT_PARTY_HINT,
   INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE,
@@ -348,7 +349,7 @@ export function PermissionModal({
                     {notifyTiming === 'manual' && manualNotifyAt != null ? (
                       <span className="permission-modal__manual-summary">
                         {' '}
-                        ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                        ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                       </span>
                     ) : null}
                   </CmsRadio>
@@ -404,7 +405,7 @@ export function PermissionModal({
                     {notifyTiming === 'manual' && manualNotifyAt != null ? (
                       <span className="permission-modal__manual-summary">
                         {' '}
-                        ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                        ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
                       </span>
                     ) : null}
                   </CmsRadio>

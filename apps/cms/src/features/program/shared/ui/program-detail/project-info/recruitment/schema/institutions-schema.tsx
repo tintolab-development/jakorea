@@ -166,7 +166,6 @@ export function createInstitutionsSchema({
                       <CmsDatePicker inputSize="small"
                         value={toDayjs(field.value)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                        format="YYYY. MM. DD"
                         className="program-detail-info-tab__date-picker"
                       />
                     )}
