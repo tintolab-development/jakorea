@@ -28,6 +28,7 @@ export function UserDetailLayout({
     <DetailFullPageModal
       open={open}
       onClose={onClose}
+      className="user-detail-fullpage-modal"
       title={title}
       headerTrailing={headerTrailing}
       sidebar={sidebar}
