@@ -122,6 +122,9 @@ export function usePublicFaqsQuery() {
       const mapped = mapFaq(item, index)
       return mapped ? [mapped] : []
     }),
+    refetch: () => {
+      void query.refetch()
+    },
   }
 }
 

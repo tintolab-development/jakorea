@@ -61,7 +61,10 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
     setExpandedId(null)
   }
 
-  const handleFilterReset = () => {
+  const handleRefresh = () => {
+    if (remoteFaqs.enabled) {
+      remoteFaqs.refetch()
+    }
     onParamsChange({ category: '전체', page: 1 })
     setExpandedId(null)
   }
@@ -69,7 +72,7 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
   return (
     <div className={styles.root}>
       <div className={styles.filters}>
-        <FilterBar onReset={handleFilterReset}>
+        <FilterBar onReset={handleRefresh} resetAriaLabel="새로고침">
           <PFSearchFilter
             label="카테고리"
             options={categoryOptions}
