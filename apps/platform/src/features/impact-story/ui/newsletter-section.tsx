@@ -1,7 +1,12 @@
 import { useId, useState, type FormEvent } from 'react'
 import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
 import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
+import {
+  getNewsletterSubscribeResultCopy,
+  resolveNewsletterSubscribeUi,
+} from '../api/newsletter-result'
 import { useNewsletterSubscribeMutation } from '../api/use-newsletter-subscribe'
 import { NewsletterSubscribeModal } from './newsletter-subscribe-modal'
 import { NewsletterSuccessModal } from './newsletter-success-modal'
@@ -17,11 +22,13 @@ export function NewsletterSection() {
   const [agreed, setAgreed] = useState(false)
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [subscribeResult, setSubscribeResult] = useState<NewsletterSubscribeResponse | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const showSuccess = () => {
+  const showSuccess = (result?: NewsletterSubscribeResponse | null) => {
     setIsSubscribeOpen(false)
     setErrorMessage('')
+    setSubscribeResult(result ?? null)
     setIsSuccessOpen(true)
   }
 
@@ -41,11 +48,19 @@ export function NewsletterSection() {
     }
 
     try {
-      await subscribeMutation.mutateAsync({ name: trimmedName, email: trimmedEmail })
+      const result = await subscribeMutation.mutateAsync({
+        name: trimmedName,
+        email: trimmedEmail,
+      })
       setName('')
       setEmail('')
       setAgreed(false)
-      showSuccess()
+      const ui = resolveNewsletterSubscribeUi(result.status)
+      if (ui === 'confirm-email' || ui === 'complete') {
+        showSuccess(result)
+        return
+      }
+      setErrorMessage(getNewsletterSubscribeResultCopy(result).description)
     } catch (error) {
       setErrorMessage(getNewsletterSubscribeErrorMessage(error))
     }
@@ -156,7 +171,14 @@ export function NewsletterSection() {
         onSuccess={showSuccess}
       />
 
-      <NewsletterSuccessModal open={isSuccessOpen} onConfirm={() => setIsSuccessOpen(false)} />
+      <NewsletterSuccessModal
+        open={isSuccessOpen}
+        result={subscribeResult}
+        onConfirm={() => {
+          setIsSuccessOpen(false)
+          setSubscribeResult(null)
+        }}
+      />
 
       <PFAlertModal
         open={Boolean(errorMessage)}

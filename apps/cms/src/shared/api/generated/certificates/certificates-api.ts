@@ -78,7 +78,7 @@ const logDownload = (
 
 /**
  * ### 이 API가 하는 일
- * - 인증서 고유번호 멱등 발급
+ * - 인증서 고유번호 발급
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `POST /api/admin/certificates/issues/serial`
@@ -117,7 +117,7 @@ const logDownload = (
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
  * - 검토 메모: 2026-09-02 certificate document serial handoff
- * @summary 인증서 고유번호 멱등 발급
+ * @summary 인증서 고유번호 발급
  */
 const allocateCertificateSerial = (
     certificateSerialAllocateRequest: CertificateSerialAllocateRequest,

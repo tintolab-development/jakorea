@@ -905,7 +905,7 @@
           },
           "traceId": {
             "type": "string",
-            "description": "서버 로그 추적용 ID",
+            "description": "5xx 등 서버 오류의 로그 추적용 ID. 4xx 클라이언트 오류 본문에는 넣지 않습니다.",
             "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f",
             "nullable": true
           },

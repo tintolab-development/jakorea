@@ -87,32 +87,14 @@ import { ParticipatingParticipantSettlementSection } from './participating-parti
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  getParticipantDetailTabKeys,
+  getParticipantDetailTabLabel,
+  normalizeParticipantDetailTab,
+  type ParticipantDetailTabKey,
+} from '@/features/program/general/lib/participating-individual-detail-tabs'
 import './school-detail-fullpage-view.css'
 import './participating-participant-fullpage-view.css'
-
-export const PARTICIPANT_DETAIL_TAB_KEYS = [
-  'application',
-  'attendance',
-  'assignments',
-  'settlement',
-] as const
-export type ParticipantDetailTabKey = (typeof PARTICIPANT_DETAIL_TAB_KEYS)[number]
-
-export function normalizeParticipantDetailTab(
-  tab: string | null | undefined
-): ParticipantDetailTabKey {
-  if (tab && (PARTICIPANT_DETAIL_TAB_KEYS as readonly string[]).includes(tab)) {
-    return tab as ParticipantDetailTabKey
-  }
-  return 'application'
-}
-
-const TAB_LABELS: Record<ParticipantDetailTabKey, string> = {
-  application: '신청 정보',
-  attendance: '출석 관리',
-  assignments: '과제 관리',
-  settlement: '정산 현황',
-}
 
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
 
@@ -157,6 +139,8 @@ export function ParticipatingParticipantFullpageView({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const availableTabKeys = useMemo(() => getParticipantDetailTabKeys(program), [program])
+  const visibleActiveTab = availableTabKeys.includes(activeTab) ? activeTab : 'application'
 
   const enrichedParticipant = useParticipatingIndividualApplicationDetailEnrichment(
     initialParticipant
@@ -402,7 +386,7 @@ export function ParticipatingParticipantFullpageView({
   }, [initialParticipant.id, baseParticipant.adminComment])
 
   const setActiveTab = (key: string) => {
-    onTabChange?.(normalizeParticipantDetailTab(key))
+    onTabChange?.(normalizeParticipantDetailTab(key, program))
   }
 
   const handleRequestActivityWithdraw = useCallback(() => {
@@ -659,14 +643,14 @@ export function ParticipatingParticipantFullpageView({
     <div className="participating-participant-fullpage-view school-detail-fullpage-view">
       <CmsTextTabs
         className="school-detail-fullpage-view__tabs-row"
-        activeKey={activeTab}
+        activeKey={visibleActiveTab}
         onChange={setActiveTab}
-        items={PARTICIPANT_DETAIL_TAB_KEYS.map(key => ({
+        items={availableTabKeys.map(key => ({
           key,
-          label: TAB_LABELS[key],
+          label: getParticipantDetailTabLabel(key),
         }))}
         trailing={
-          activeTab === 'application' ? (
+          visibleActiveTab === 'application' ? (
             <>
               <CmsButton
                 variant="delete"
@@ -721,7 +705,7 @@ export function ParticipatingParticipantFullpageView({
                 onClick={openPersonalInfoRevealConfirm}
               />
             </>
-          ) : activeTab === 'attendance' ? (
+          ) : visibleActiveTab === 'attendance' ? (
             <>
               <CmsButton
                 variant="secondary"
@@ -735,7 +719,7 @@ export function ParticipatingParticipantFullpageView({
                 onClick={() => attendanceSectionRef.current?.exportExcel()}
               />
             </>
-          ) : activeTab === 'assignments' ? (
+          ) : visibleActiveTab === 'assignments' ? (
             <>
               {submissionTeamApplicable ? (
                 <CmsButton
@@ -764,7 +748,7 @@ export function ParticipatingParticipantFullpageView({
       />
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
-        {activeTab === 'application' ? (
+        {visibleActiveTab === 'application' ? (
           <div className="program-detail-fullpage-modal__info-tab">
             <div className="program-detail-fullpage-modal__info-tab-block participating-participant-fullpage-view__section-block">
               <ApplicantGeneralIndividualBasicInfo
@@ -790,7 +774,7 @@ export function ParticipatingParticipantFullpageView({
               />
             </div>
           </div>
-        ) : activeTab === 'attendance' ? (
+        ) : visibleActiveTab === 'attendance' ? (
           <div
             className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab"
             aria-label="출석 관리"
@@ -803,7 +787,7 @@ export function ParticipatingParticipantFullpageView({
               assignedSessionsLoading={progressScheduleSessionsLoading}
             />
           </div>
-        ) : activeTab === 'assignments' ? (
+        ) : visibleActiveTab === 'assignments' ? (
           <div
             className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab"
             aria-label="과제 관리"
@@ -815,7 +799,7 @@ export function ParticipatingParticipantFullpageView({
               onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
             />
           </div>
-        ) : activeTab === 'settlement' ? (
+        ) : visibleActiveTab === 'settlement' ? (
           <div
             className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab"
             aria-label="정산 현황"

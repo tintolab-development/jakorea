@@ -1,6 +1,7 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { isRemoteApiConfigured } from '@/shared/lib'
+import { parseNewsletterSubscribeResponse } from './newsletter-parse'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
@@ -29,7 +30,7 @@ function unwrapEnvelope<T>(payload: unknown): T {
   return payload as T
 }
 
-/** POST SubscribeRequest */
+/** OpenAPI NewsletterSubscribeRequest */
 export type NewsletterSubscribeRequest = {
   email: string
   name: string
@@ -38,9 +39,12 @@ export type NewsletterSubscribeRequest = {
   consentVersion: string
 }
 
-/** 202 SubscribeResponse */
+/** OpenAPI NewsletterSubscribeResponse.status */
+export type NewsletterSubscribeStatus = 'PENDING' | 'SUBSCRIBED' | 'FAILED' | 'SKIPPED_LOCAL'
+
+/** 202 NewsletterSubscribeResponse — 래핑 없이 { status, message } */
 export type NewsletterSubscribeResponse = {
-  status?: string
+  status?: NewsletterSubscribeStatus | string
   message?: string
 }
 
@@ -75,6 +79,8 @@ function toRequest(
   }
 }
 
+export { parseNewsletterSubscribeResponse }
+
 /** POST /api/portal/public/newsletter/subscriptions — 비회원 포함 공개 구독 */
 export async function subscribeNewsletter(
   input: NewsletterSubscribeInput,
@@ -89,6 +95,5 @@ export async function subscribeNewsletter(
     toRequest(input, consentVersion),
     SKIP_AUTH,
   )
-  const unwrapped = unwrapEnvelope<NewsletterSubscribeResponse | null>(data)
-  return unwrapped ?? {}
+  return parseNewsletterSubscribeResponse(data)
 }

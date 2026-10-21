@@ -29,8 +29,8 @@ export interface MemberPortalProgramSummary {
   educationFormLabel?: string | null;
   /** TRAINED_TEACHER의 교육일지 설정값. 대상 외 프로그램이나 detail row 없음, OFF는 false입니다. */
   educationJournalEnabled?: boolean;
-  /** 활성 SURVEY·QUESTIONNAIRE·LECTURE_EVALUATION 바인딩이 하나 이상인지 나타냅니다. */
+  /** CMS 공통정보 generalSurveyMenuKeys에 survey가 있는지. form-binding·일정 매핑·shareActive·작성 기간과 무관. 강의평가(lecture_evaluation)만으로는 true가 되지 않습니다. 없으면 false. */
   surveyConfigured?: boolean;
-  /** 활성 SATISFACTION 계열 바인딩이 하나 이상인지 나타냅니다. TRAINED_TEACHER는 교사 대상 활성 SATISFACTION만 true입니다. */
+  /** CMS 공통정보 generalSurveyMenuKeys에 satisfaction이 있는지. 레거시 student_satisfaction·teacher_satisfaction·volunteer_satisfaction·school_satisfaction도 satisfaction으로 봅니다. TRAINED_TEACHER 특수 분기 없음. form-binding과 무관. 없으면 false. */
   satisfactionConfigured?: boolean;
 }

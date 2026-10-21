@@ -7,7 +7,7 @@ import { withAuthenticatedPage } from '../../../helpers/with-authenticated-page'
 /**
  * 일반 프로그램 상세 — 진행 현황
  *
- * Phase 3: 기관/개인 분기 · 출석·과제·게시글 · 중첩 상세 탭(행 있을 때).
+ * Phase 3: 기관/개인 분기 · 회차별 출석·과제·게시글 · 중첩 상세 탭(행 있을 때).
  */
 test.describe('일반 프로그램 진행 현황', () => {
   let programId = ''
@@ -172,7 +172,7 @@ test.describe('일반 프로그램 진행 Phase3 기관', () => {
 })
 
 test.describe('일반 프로그램 진행 Phase3 개인', () => {
-  test('3.4~3.7) CASE-03 — 참여자·출석·과제·게시글', async ({ page }) => {
+  test('3.4~3.6) CASE-03 개인 단일 회차 — 참여자·출석·게시글', async ({ page }) => {
     test.setTimeout(240_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)
@@ -197,7 +197,6 @@ test.describe('일반 프로그램 진행 Phase3 개인', () => {
 
     for (const [tab, label] of [
       ['progress_attendance', '출석 관리'],
-      ['progress_assignments', '과제 관리'],
       ['progress_posts', '게시글'],
     ] as const) {
       const child = detail.lnbChildByLabel(label)
@@ -241,7 +240,7 @@ test.describe('일반 프로그램 진행 Phase3 개인', () => {
     await detail.clickInDetailContent(row)
     await detail.expectContentSettled()
 
-    for (const tabLabel of ['신청', '출석', '과제'] as const) {
+    for (const tabLabel of ['신청', '출석'] as const) {
       const tab = page.getByRole('tab', { name: new RegExp(tabLabel) }).first()
       if (!(await tab.isVisible().catch(() => false))) continue
       await detail.clickInDetailContent(tab)

@@ -98,4 +98,13 @@ describe('applyUjatVolunteerProjection', () => {
     expect(next.homeAddress).toBe('서울특별시')
     expect(next.essayIntro).toBe('상세 서술형')
   })
+
+  it('homeAddress가 null이면 sido만 쓰고 sigungu로 채우지 않는다', () => {
+    const next = applyUjatVolunteerApplicationDetail(row, null, {
+      homeAddress: null,
+      homeAddressSido: '서울특별시',
+      homeAddressSigungu: '강남구',
+    })
+    expect(next.homeAddress).toBe('서울특별시')
+  })
 })

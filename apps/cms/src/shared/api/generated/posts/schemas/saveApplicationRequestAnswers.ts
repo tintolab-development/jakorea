@@ -7,6 +7,6 @@
  */
 
 /**
- * 문단 답. 키는 schemaJson.paragraphs에 저장된 질문 키이며 추출 순서는 questionKey, fieldKey, key, name, id 입니다. 작성 양식은 문단 id를 그 키로 저장합니다. 값은 문자열, 문자열 배열, 또는 객체입니다.
+ * 문단 답. 키는 schemaJson.paragraphs에 저장된 질문 키이며 추출 순서는 questionKey, fieldKey, key, name, id 입니다. 작성 양식은 문단 id를 그 키로 저장합니다. 값은 문자열, 문자열 배열, 또는 객체입니다. 기관 신청 기본정보 객체의 educationFormat은 참여자 선택 교육 형태에서만 online|offline|hybrid를 허용하며 없으면 기본값을 넣지 않습니다.
  */
 export type SaveApplicationRequestAnswers = {[key: string]: unknown};

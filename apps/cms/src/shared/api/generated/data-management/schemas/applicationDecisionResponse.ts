@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ApplicationDecisionResponseScheduleAssignmentStatus } from './applicationDecisionResponseScheduleAssignmentStatus';
 
 export interface ApplicationDecisionResponse {
   applicationId?: number;
@@ -14,4 +15,6 @@ export interface ApplicationDecisionResponse {
   participantId?: number;
   notificationEventId?: number;
   availableActions?: string[];
+  /** 기관 승인 후 일정 배정 상태. ASSIGNED는 active OSA가 있고, UNASSIGNED는 APPROVED이지만 OSA가 없습니다. 기관 승인 외 결정에서는 null입니다. */
+  scheduleAssignmentStatus?: ApplicationDecisionResponseScheduleAssignmentStatus;
 }
