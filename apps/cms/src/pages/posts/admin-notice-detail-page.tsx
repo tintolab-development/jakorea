@@ -191,7 +191,7 @@ export function AdminNoticeDetailPage() {
             </div>
           ) : null}
           <div className="admin-notice-detail-page__body">
-            <RichTextViewer content={notice.content} />
+            <RichTextViewer content={notice.content} maxHeight="100%" />
           </div>
         </div>
         <div className="admin-notice-detail-page__actions">
