@@ -79,7 +79,10 @@ describe('student-roster-revision', () => {
 
   it('FE-REV-08: student add commit includes expectedRevisionNo and full rows', () => {
     const baseline = [rosterRow('1'), rosterRow('2')]
-    const commit = [...baseline, rosterRow('new')]
+    const commit = [
+      ...baseline,
+      { ...rosterRow('new'), contact: '010-2222-3333', email: 'new@example.com' },
+    ]
     const result = validateStudentRosterCommit({
       remoteEnabled: true,
       baselineRows: baseline,
@@ -93,6 +96,7 @@ describe('student-roster-revision', () => {
       expectedRevisionNo: 5,
       rows: commit.map(row => ({
         studentName: row.name,
+        gender: 'male',
         birthDate: '2015-01-01',
         grade: '3학년',
         className: '1반',
@@ -120,5 +124,45 @@ describe('student-roster-revision', () => {
     expect(parseStudentRosterRevisionNo(-1)).toBeNull()
     expect(parseStudentRosterRevisionNo(1.5)).toBeNull()
     expect(parseStudentRosterRevisionNo(Number.NaN)).toBeNull()
+  })
+
+  it('allows existing roster rows without phone/email and requires them on new rows', () => {
+    const existing = rosterRow('12')
+    const existingOk = validateStudentRosterCommit({
+      remoteEnabled: true,
+      baselineRows: [existing],
+      commitRows: [existing],
+      totalCount: 1,
+      expectedRevisionNo: 1,
+    })
+    expect(existingOk.ok).toBe(true)
+
+    const newRow: SchoolDetailStudentRow = {
+      id: 'new-student',
+      no: 2,
+      name: '신규학생',
+      gradeClass: '2반',
+    }
+    const missingContact = validateStudentRosterCommit({
+      remoteEnabled: true,
+      baselineRows: [existing],
+      commitRows: [existing, newRow],
+      totalCount: 1,
+      expectedRevisionNo: 1,
+    })
+    expect(missingContact.ok).toBe(false)
+    if (!missingContact.ok) expect(missingContact.code).toBe('NEW_ROW_CONTACT_REQUIRED')
+
+    const withContact = validateStudentRosterCommit({
+      remoteEnabled: true,
+      baselineRows: [existing],
+      commitRows: [
+        existing,
+        { ...newRow, contact: '010-2222-3333', email: 'new@example.com' },
+      ],
+      totalCount: 1,
+      expectedRevisionNo: 1,
+    })
+    expect(withContact.ok).toBe(true)
   })
 })

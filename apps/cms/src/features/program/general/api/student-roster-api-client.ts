@@ -7,8 +7,10 @@
 
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import type { OrganizationStudentRosterImportRequest } from '@/features/program/general/api/student-roster-commit-types'
-import type { StudentRosterCommitRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterCommitRequest'
+import type {
+  OrganizationStudentRosterImportRequest,
+  OrganizationStudentRosterManualCommitRequest,
+} from '@/features/program/general/api/student-roster-commit-types'
 import type { StudentRosterResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterResponse'
 
 function rosterUrl(applicationId: string | number): string {
@@ -30,7 +32,7 @@ export async function fetchOrganizationStudentRosterRemote(
 /** PUT — 관리자 수동 편집 전체 교체 (`expectedRevisionNo`, `rows`만 전송) */
 export async function commitOrganizationStudentRosterRemote(
   applicationId: string | number,
-  body: StudentRosterCommitRequest
+  body: OrganizationStudentRosterManualCommitRequest
 ): Promise<StudentRosterResponse> {
   return unwrapApiBody<StudentRosterResponse>(
     await customInstance({

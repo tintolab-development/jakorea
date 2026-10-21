@@ -112,7 +112,7 @@ export function EducationScheduleChangeModal({
                 label={rowLabel ? `${rowLabel} 변경 일정` : `변경 일정 ${order}`}
                 view="-"
                 edit={
-                  <ParagraphDatePicker
+                  <ParagraphDatePicker inputSize="small"
                     key={`${open}-${index}-${line}`}
                     mode="single"
                     presetMode={isPeriodMode ? 'period' : 'schedule'}

@@ -52,6 +52,28 @@ describe('gemini visiting-training adapters', () => {
     expect(row.organizationApplicationCount).toBe(0)
   })
 
+  it('목록 GET은 모집기간을 business 기간으로 채우지 않는다', () => {
+    const row = mapGeminiRecruitmentItemToRow(
+      asOpenApiFixture<GeminiRecruitmentItem>({
+        programId: 8,
+        programType: 'GEMINI_TRAINING',
+        nameKo: '',
+        businessStartDate: '2026-01-01',
+        businessEndDate: '2026-12-31',
+        applicationStartDate: null,
+        applicationEndDate: null,
+        trainingRequestStartDate: null,
+        trainingRequestEndDate: null,
+      }),
+      0
+    )
+    expect(row.title).toBe('-')
+    expect(row.applicationPeriodStart).toBe('')
+    expect(row.applicationPeriodEnd).toBe('')
+    expect(row.trainingRequestPeriodStart).toBe('')
+    expect(row.trainingRequestPeriodEnd).toBe('')
+  })
+
   it('maps application counts used to block recruitment delete', () => {
     const row = mapGeminiRecruitmentItemToRow(
       {
@@ -201,6 +223,35 @@ describe('gemini visiting-training adapters', () => {
     expect(detail.educationForm).toBe('online')
   })
 
+  it('상세 GET은 summary·business 기간·현재시각으로 빈 값을 메우지 않는다', () => {
+    const detail = mapGeminiRecruitmentDetailToDetail({
+      programId: 3,
+      nameKo: '',
+      summary: '목록용 요약',
+      description: '',
+      businessStartDate: '2026-01-01',
+      businessEndDate: '2026-12-31',
+      applicationStartDate: undefined,
+      applicationEndDate: undefined,
+      trainingRequestStartDate: undefined,
+      trainingRequestEndDate: undefined,
+      otherMatters: undefined,
+      educationForm: 'online',
+      targetLevels: [],
+      attachmentFileNames: [],
+    })
+    expect(detail.title).toBe('-')
+    expect(detail.programDescription).toBe('')
+    expect(detail.applicationPeriodStart).toBe('')
+    expect(detail.applicationPeriodEnd).toBe('')
+    expect(detail.trainingRequestPeriodStart).toBe('')
+    expect(detail.trainingRequestPeriodEnd).toBe('')
+    expect(detail.createdAt).toBe('-')
+    expect(detail.updatedAt).toBe('-')
+    expect(detail.minStudentCount).toBe(0)
+    expect(detail.notesNotApplicable).toBe(true)
+  })
+
   it('maps approved list — 미매칭은 확정일/lastPreferredDate를 trainingDate로 위장하지 않는다', () => {
     const unmatched = mapGeminiRecruitmentItemToApprovedRow(
       {
@@ -284,6 +335,8 @@ describe('gemini visiting-training adapters', () => {
     expect(create.recruitmentTargetDetail).toBe('중학생')
     expect(create.applicationMethod).toBe('온라인 신청')
     expect(create.draftStatus).toBe('PUBLISHED')
+    expect(create.totalParticipants).toBe(15)
+    expect(create).not.toHaveProperty('minimumParticipantCount')
     expect(
       mapGeminiRecruitmentSnapshotToCreateRequest({
         title: '공고',

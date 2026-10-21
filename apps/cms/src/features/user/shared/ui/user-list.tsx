@@ -48,7 +48,7 @@ interface UserListProps {
   onView?: (user: Row) => void
   onDelete?: (user: Row) => void
   selectedRowKeys?: React.Key[]
-  onSelectionChange?: (keys: React.Key[]) => void
+  onSelectionChange?: (keys: React.Key[], rows: Row[]) => void
   pagination?: boolean
   /** 회원 목록 — 가입일 내림차순 기준 No. 역순 (맨 아래 = 1) */
   totalCount?: number
@@ -452,7 +452,8 @@ export function UserList({
           ? {
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
               selectedRowKeys,
-              onChange: keys => onSelectionChange(keys as string[]),
+              preserveSelectedRowKeys: true,
+              onChange: (keys, rows) => onSelectionChange(keys, rows),
             }
           : undefined
       }

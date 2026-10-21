@@ -9,7 +9,7 @@ import type {
 
 export const MIN_GENERAL_MEMBER_AGE = 14
 export const SIGN_UP_TOTAL_STEPS = 7
-export const SIGN_UP_UNDER_AGE_TOTAL_STEPS = 8
+export const SIGN_UP_UNDER_AGE_TOTAL_STEPS = 7
 
 export const SIGN_IN_PATH = '/auth/sign-in'
 export const SIGN_UP_COMPLETE_PATH = '/auth/sign-up/complete'

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { detailEditValuesToProgramPatch } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { Program } from '@/types/domain'
-import { resolveAudienceProgramOperationIsoRange } from './general-program-recruitment-operation-period'
+import {
+  applyAudienceProgramOperationToRecruitmentWindows,
+  audienceOperationPeriodLabelFromRecruitmentRow,
+  resolveAudienceProgramOperationIsoRange,
+  toOperationCalendarDate,
+} from './general-program-recruitment-operation-period'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
   return {
@@ -56,5 +61,67 @@ describe('general-program-recruitment-operation-period', () => {
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toBe(
       '2026. 03. 01 ~ 2026. 03. 31'
     )
+  })
+
+  it('KST 자정 ISO는 달력일로 맞추고, 표시 라벨은 모집 행 날짜를 쓴다', () => {
+    expect(toOperationCalendarDate('2026-11-30T15:00:00.000Z')).toBe('2026-12-01')
+    expect(toOperationCalendarDate('2026-11-18')).toBe('2026-11-18')
+
+    const program = baseProgram({
+      programRecruitments: [
+        {
+          id: 186603,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          operationStartDate: '2026-11-18',
+          operationEndDate: '2026-12-25',
+        },
+      ],
+    })
+    expect(audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant')).toContain(
+      '2026. 11. 18'
+    )
+    expect(audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant')).not.toContain(
+      '03. 01'
+    )
+  })
+
+  it('참여기관 운영 기간은 기존 행 id를 유지한 채 달력일로 반영한다', () => {
+    const existing = baseProgram({
+      programRecruitments: [
+        {
+          id: 186603,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          targetType: 'ORGANIZATION',
+          operationStartDate: '2026-11-18',
+          operationEndDate: '2026-12-25',
+        },
+        {
+          id: 186604,
+          recruitmentType: 'INSTRUCTOR',
+          operationStartDate: '2026-08-01',
+          operationEndDate: '2026-08-31',
+        },
+      ],
+    })
+    const next = applyAudienceProgramOperationToRecruitmentWindows(
+      existing,
+      {
+        participantProgramOperationStartDate: '2026-11-30T15:00:00.000Z',
+        participantProgramOperationEndDate: '2027-01-14T15:00:00.000Z',
+      } as import('@/features/program/shared/model/program-detail-edit-schema').ProgramDetailEditFormValues,
+      'participant'
+    )
+    expect(next.programRecruitments?.[0]).toMatchObject({
+      id: 186603,
+      operationStartDate: '2026-12-01',
+      operationEndDate: '2027-01-15',
+    })
+    expect(next.programRecruitments?.[1]).toMatchObject({
+      id: 186604,
+      operationStartDate: '2026-08-01',
+      operationEndDate: '2026-08-31',
+    })
   })
 })

@@ -66,14 +66,14 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <>
-                      <CmsRadioGroup
+                      <CmsRadioGroup size="medium"
                         value={
                           isUjatVolunteerNoticeExposureValue(field.value) ? field.value : undefined
                         }
                         onChange={e => field.onChange(String(e.target.value))}
                       >
                         {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-                          <CmsRadio key={o.value} value={o.value}>
+                          <CmsRadio size="medium" key={o.value} value={o.value}>
                             {o.label}
                           </CmsRadio>
                         ))}
@@ -104,7 +104,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   <CmsInput
                     {...field}
                     value={field.value ?? ''}
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     placeholder="공고용 프로그램명을 입력하세요"
                   />
@@ -117,7 +117,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
             label="활동 기수"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={activityTermLabel}
                 disabled
@@ -161,7 +161,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   <CmsSelect
                     mode="multiple"
                     withAllOption={false}
-                    inputSize="medium"
+                    inputSize="small"
                     width={240}
                     value={normalizeRecruitmentTargetSelectValues(
                       field.value?.length
@@ -189,7 +189,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   <CmsInput
                     {...field}
                     value={field.value ?? ''}
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     placeholder="모집 대상 상세를 입력하세요"
                   />
@@ -248,7 +248,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   control={form.control}
                   render={({ field }) => (
                     <CmsSelect
-                      inputSize="medium"
+                      inputSize="small"
                       style={{ flex: '1 1 0', minWidth: 0 }}
                       placeholder="면접 유형"
                       value={field.value ?? undefined}
@@ -334,7 +334,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   <CmsInput
                     {...field}
                     value={field.value ?? ''}
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                     placeholder="비고란을 작성하세요 (없으면 -로 입력)"
                   />

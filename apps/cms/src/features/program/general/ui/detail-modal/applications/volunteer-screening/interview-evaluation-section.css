@@ -9,7 +9,10 @@
 
 .general-volunteer-applicant-interview-evaluation__form
   .detail-info-form__field-content--edit
-  > .cms-input {
+  > .cms-input,
+.general-volunteer-applicant-interview-evaluation__form
+  .detail-info-form__field-content--edit
+  > .cms-select {
   display: block;
   width: 100% !important;
   max-width: 100% !important;
@@ -21,7 +24,11 @@
 .general-volunteer-applicant-interview-evaluation__form
   .detail-info-form__field-content--edit
   > .cms-input
-  .cms-input__control {
+  .cms-input__control,
+.general-volunteer-applicant-interview-evaluation__form
+  .detail-info-form__field-content--edit
+  > .cms-select
+  .ant-select {
   width: 100% !important;
   min-width: 0;
 }

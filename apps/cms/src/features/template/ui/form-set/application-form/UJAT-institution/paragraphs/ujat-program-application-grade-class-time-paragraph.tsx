@@ -53,7 +53,7 @@ function PeriodTimeFields({
       label={periodLabel}
       edit={
         <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap ujat-program-application-grade-class-time-paragraph__period-inputs">
-          <ParagraphTimePicker
+          <ParagraphTimePicker inputSize="small"
             value={start?.isValid() ? start : null}
             onChange={value =>
               onPeriodChange(blockKey, periodId, {
@@ -64,7 +64,7 @@ function PeriodTimeFields({
             width={168}
           />
           <span className="ujat-program-application-grade-class-time-paragraph__tilde">~</span>
-          <ParagraphTimePicker
+          <ParagraphTimePicker inputSize="small"
             value={end?.isValid() ? end : null}
             onChange={value =>
               onPeriodChange(blockKey, periodId, {

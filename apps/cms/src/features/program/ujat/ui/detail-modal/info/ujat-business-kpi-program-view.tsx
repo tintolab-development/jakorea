@@ -5,7 +5,6 @@ import {
   resolveUjatBusinessKpiDisplay,
   UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE,
 } from '@/features/program/ujat/lib/ujat-business-kpi-display'
-import { createUjatRegistrationBasicInfoOverlayDefaults } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
@@ -41,10 +40,9 @@ export function UjatBusinessKpiProgramView({
   const display = resolveUjatBusinessKpiDisplay(program)
   const isFormEdit = isEdit && form != null
   const formMode = isFormEdit ? 'edit' : 'view'
-  const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
   const [participantVolunteer] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.participant.volunteer',
-    defaults.participantVolunteer
+    display.hasVolunteerRecruitment
   )
   const hasVolunteerRecruitment = isFormEdit ? participantVolunteer : display.hasVolunteerRecruitment
 
@@ -76,7 +74,7 @@ export function UjatBusinessKpiProgramView({
                 control={form.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                     mode="integer"
@@ -116,7 +114,7 @@ export function UjatBusinessKpiProgramView({
                   <span className="detail-info-form--text">강사</span>
                   <CmsInput
                     disabled
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder={UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE}
                     width={120}
                     value=""
@@ -131,7 +129,7 @@ export function UjatBusinessKpiProgramView({
                       control={form.control}
                       render={({ field }) => (
                         <CmsNumericInput
-                          inputSize="medium"
+                          inputSize="small"
                           placeholder="목표값 입력"
                           width={120}
                           mode="integer"
@@ -145,7 +143,7 @@ export function UjatBusinessKpiProgramView({
                   ) : (
                     <CmsInput
                       disabled
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder={UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE}
                       width={120}
                       value=""
@@ -168,7 +166,7 @@ export function UjatBusinessKpiProgramView({
                 control={form.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                     mode="integer"
@@ -192,7 +190,7 @@ export function UjatBusinessKpiProgramView({
                 control={form.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    inputSize="medium"
+                    inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
                     mode="integer"

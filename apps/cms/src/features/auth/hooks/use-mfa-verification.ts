@@ -9,6 +9,7 @@ import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service'
+import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { OTP_LENGTH, OTP_POLICY, clampMfaFailedAttempts, isAdminLocalTestMfa } from '@/shared/constants/mfa-policy'
 import { unknownErrorText } from '@/shared/utils/error-handler'
 import type { TotpProvisioning } from '@/types/mfa'
@@ -25,6 +26,9 @@ interface UseMfaVerificationResult {
   provisioning: TotpProvisioning | null
   provisioningLoading: boolean
   provisioningError: string | null
+  /** 첫 등록일 때만 QR을 보여 준다. 기등록 계정은 OTP만 받는다. */
+  showQrSetup: boolean
+  verifyNotice: string | null
   isLocalTestMfa: boolean
   failedAttempts: number
   isLocked: boolean
@@ -50,6 +54,8 @@ export function useMfaVerification({
   const [provisioning, setProvisioning] = useState<TotpProvisioning | null>(null)
   const [provisioningLoading, setProvisioningLoading] = useState(false)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
+  const [forceOtpOnly, setForceOtpOnly] = useState(false)
+  const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
   const [remoteVerifying, setRemoteVerifying] = useState(false)
   const [remoteFailedAttempts, setRemoteFailedAttempts] = useState(0)
   const [remoteIsLocked, setRemoteIsLocked] = useState(false)
@@ -75,11 +81,9 @@ export function useMfaVerification({
   )
 
   const isRemoteMfa = Boolean(mfaState?.challengeUuid)
-  const isLocalTestMfa =
-    isRemoteMfa &&
-    isAdminLocalTestMfa(mfaState?.mfaMethod) &&
-    !provisioning &&
-    !provisioningLoading
+  const isLocalTestMfa = isRemoteMfa && isAdminLocalTestMfa(mfaState?.mfaMethod)
+  const showQrSetup =
+    isRemoteMfa && mfaState?.mfaSetupRequired === true && !isLocalTestMfa && !forceOtpOnly
   const displayFailedAttempts = isRemoteMfa ? remoteFailedAttempts : failedAttempts
   const displayIsLocked = isRemoteMfa ? remoteIsLocked : isLocked
   const displayLockUntil = isRemoteMfa ? remoteLockUntil : lockUntil
@@ -135,45 +139,47 @@ export function useMfaVerification({
   }, [remoteIsLocked, remoteLockUntil, clearOtpInput, resetRemoteLockState])
 
   const refreshProvisioning = useCallback(async () => {
-    if (!user?.email) return
+    if (!showQrSetup || !user?.email || !mfaState?.challengeUuid) return
 
     setProvisioningLoading(true)
     setProvisioningError(null)
     try {
-      const p = await getTotpProvisioning(user.email, {
-        challengeUuid: mfaState?.challengeUuid,
-        mfaMethod: mfaState?.mfaMethod,
-        totpSecret: mfaState?.totpSecret,
-        otpauthUri: mfaState?.otpauthUri,
-        qrDataUrl: mfaState?.qrDataUrl,
+      const next = await getTotpProvisioning(user.email, {
+        challengeUuid: mfaState.challengeUuid,
+        mfaMethod: mfaState.mfaMethod,
       })
-      setProvisioning(p)
+      if (!next?.qrDataUrl && !next?.manualSecret) {
+        setProvisioning(null)
+        setProvisioningError('QR 정보를 불러오지 못했습니다.')
+        return
+      }
+      setProvisioning(next)
     } catch (e: unknown) {
-      const err = unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.')
-      setProvisioningError(err)
+      if (e instanceof AdminMfaApiError && e.code === 'MFA_ALREADY_ENROLLED') {
+        setForceOtpOnly(true)
+        setProvisioning(null)
+        setProvisioningError(null)
+        return
+      }
+      setProvisioningError(unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.'))
       setProvisioning(null)
     } finally {
       setProvisioningLoading(false)
     }
-  }, [
-    user?.email,
-    mfaState?.challengeUuid,
-    mfaState?.mfaMethod,
-    mfaState?.totpSecret,
-    mfaState?.otpauthUri,
-    mfaState?.qrDataUrl,
-  ])
+  }, [showQrSetup, user?.email, mfaState?.challengeUuid, mfaState?.mfaMethod])
 
   useEffect(() => {
-    if (open && user?.email) {
+    if (open && showQrSetup) {
       void refreshProvisioning()
     }
     if (!open) {
       setProvisioning(null)
       setProvisioningError(null)
+      setForceOtpOnly(false)
+      setVerifyNotice(null)
       resetRemoteLockState()
     }
-  }, [open, user?.email, refreshProvisioning, resetRemoteLockState])
+  }, [open, showQrSetup, refreshProvisioning, resetRemoteLockState])
 
   useEffect(() => {
     if (!open) {
@@ -231,20 +237,33 @@ export function useMfaVerification({
 
               if (response.verified && response.tokens) {
                 resetRemoteLockState()
+                setVerifyNotice(null)
                 completeAdminAuth(response.tokens)
                 runOnForm(formInstance => formInstance.resetFields())
                 setOtpCode('')
                 return
               }
 
-              // BE ACCOUNT_LOCKED(5회째): 입력 중단·횟수 증가 UI 중단
               if (response.isLocked || response.errorCode === 'ACCOUNT_LOCKED') {
                 applyRemoteAccountLock()
+                setVerifyNotice(response.detail)
                 clearOtpInput()
                 return
               }
 
-              // MFA_VERIFICATION_FAILED (1~4): 로컬 카운트 클램프 후 계속 입력
+              if (
+                response.errorCode === 'MFA_CHALLENGE_INVALID' ||
+                response.errorCode === 'MFA_CHALLENGE_EXPIRED' ||
+                response.errorCode === 'MFA_NOT_CONFIGURED' ||
+                response.errorCode === 'MFA_RATE_LIMITED' ||
+                response.errorCode === 'VALIDATION_ERROR'
+              ) {
+                setVerifyNotice(response.detail)
+                clearOtpInput()
+                return
+              }
+
+              setVerifyNotice(response.detail)
               registerRemoteFailure()
             } catch {
               registerRemoteFailure()
@@ -299,6 +318,7 @@ export function useMfaVerification({
   const onOtpCodeChange = useCallback(
     (value: string) => {
       setOtpCode(value)
+      if (value) setVerifyNotice(null)
       if (
         value.length === OTP_LENGTH &&
         !displayIsLocked &&
@@ -345,6 +365,8 @@ export function useMfaVerification({
     provisioning,
     provisioningLoading,
     provisioningError,
+    showQrSetup,
+    verifyNotice,
     isLocalTestMfa,
     failedAttempts: clampMfaFailedAttempts(displayFailedAttempts),
     isLocked: displayIsLocked,

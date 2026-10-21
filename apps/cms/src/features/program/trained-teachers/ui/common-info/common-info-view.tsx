@@ -380,12 +380,12 @@ function TrainedTeachersTypeSettingsSection({
                   control={form.control}
                   render={({ field }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={field.value ?? watchedStructure}
                       onChange={e => field.onChange(e.target.value)}
                     >
-                      <CmsRadio value="curriculum">커리큘럼형</CmsRadio>
-                      <CmsRadio value="schedule">일정형</CmsRadio>
+                      <CmsRadio size="medium" value="curriculum">커리큘럼형</CmsRadio>
+                      <CmsRadio size="medium" value="schedule">일정형</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -402,12 +402,12 @@ function TrainedTeachersTypeSettingsSection({
                   control={form.control}
                   render={({ field }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={field.value ?? watchedRound}
                       onChange={e => field.onChange(e.target.value)}
                     >
-                      <CmsRadio value="single">단일 회차</CmsRadio>
-                      <CmsRadio value="multi">복수 회차</CmsRadio>
+                      <CmsRadio size="medium" value="single">단일 회차</CmsRadio>
+                      <CmsRadio size="medium" value="multi">복수 회차</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -435,12 +435,12 @@ function TrainedTeachersTypeSettingsSection({
                       control={form.control}
                       render={({ field }) => (
                         <CmsRadioGroup
-                          size="large"
+                          size="medium"
                           value={field.value ?? 'common'}
                           onChange={e => field.onChange(e.target.value)}
                         >
-                          <CmsRadio value="common">일정 공통</CmsRadio>
-                          <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+                          <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+                          <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
                         </CmsRadioGroup>
                       )}
                     />
@@ -452,7 +452,7 @@ function TrainedTeachersTypeSettingsSection({
                           control={form.control}
                           render={({ field }) => (
                             <CmsSelect
-                              inputSize="medium"
+                              inputSize="small"
                               withAllOption={false}
                               placeholder="교육 형태"
                               width={160}
@@ -487,12 +487,12 @@ function TrainedTeachersTypeSettingsSection({
                       control={form.control}
                       render={({ field }) => (
                         <CmsRadioGroup
-                          size="large"
+                          size="medium"
                           value={field.value ?? 'common'}
                           onChange={e => field.onChange(e.target.value)}
                         >
-                          <CmsRadio value="common">일정 공통</CmsRadio>
-                          <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+                          <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+                          <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
                         </CmsRadioGroup>
                       )}
                     />
@@ -537,12 +537,12 @@ function TrainedTeachersTypeSettingsSection({
                     control={form.control}
                     render={({ field }) => (
                       <CmsRadioGroup
-                        size="large"
+                        size="medium"
                         value={field.value || undefined}
                         onChange={e => field.onChange(String(e.target.value))}
                       >
                         {educationFormOptions.map(option => (
-                          <CmsRadio key={option.value} value={option.value}>
+                          <CmsRadio size="medium" key={option.value} value={option.value}>
                             {option.label}
                           </CmsRadio>
                         ))}
@@ -564,12 +564,12 @@ function TrainedTeachersTypeSettingsSection({
                       control={form.control}
                       render={({ field }) => (
                         <CmsRadioGroup
-                          size="large"
+                          size="medium"
                           value={field.value ?? 'common'}
                           onChange={e => field.onChange(e.target.value)}
                         >
-                          <CmsRadio value="common">일정 공통</CmsRadio>
-                          <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+                          <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
+                          <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
                         </CmsRadioGroup>
                       )}
                     />
@@ -648,12 +648,12 @@ function EducationJournalBlock({
           edit={
             isFormEdit ? (
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={enabled ? 'yes' : 'no'}
                 onChange={e => onChange?.(e.target.value === 'yes')}
               >
-                <CmsRadio value="yes">있음</CmsRadio>
-                <CmsRadio value="no">없음</CmsRadio>
+                <CmsRadio size="medium" value="yes">있음</CmsRadio>
+                <CmsRadio size="medium" value="no">없음</CmsRadio>
               </CmsRadioGroup>
             ) : undefined
           }
@@ -744,7 +744,7 @@ function SingleRoundSessionBlock({
                 isFormEdit ? (
                   <div className="detail-info-form-inputs-wrapper">
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder="단원명을 입력하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
@@ -753,7 +753,7 @@ function SingleRoundSessionBlock({
                     />
                     <DetailInfoForm.InputsSeparator />
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder="교육 내용을 작성하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
@@ -795,7 +795,7 @@ function AssignmentSettingEdit({
   return (
     <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
       <CmsRadioGroup
-        size="large"
+        size="medium"
         value={assignmentEnabled ? 'yes' : 'no'}
         onChange={e => {
           const enabled = e.target.value === 'yes'
@@ -806,11 +806,11 @@ function AssignmentSettingEdit({
           )
         }}
       >
-        <CmsRadio value="yes">있음</CmsRadio>
-        <CmsRadio value="no">없음</CmsRadio>
+        <CmsRadio size="medium" value="yes">있음</CmsRadio>
+        <CmsRadio size="medium" value="no">없음</CmsRadio>
       </CmsRadioGroup>
       <DetailInfoForm.InputsSeparator />
-      <ParagraphDatePicker
+      <ParagraphDatePicker inputSize="small"
         mode="single"
         presetMode="period"
         customizable={false}
@@ -891,7 +891,7 @@ function MultiRoundSessionBlock({
                 isFormEdit ? (
                   <div className="detail-info-form-inputs-wrapper">
                     <CmsSelect
-                      inputSize="medium"
+                      inputSize="small"
                       withAllOption={false}
                       placeholder="진행 차시"
                       width={144}
@@ -901,7 +901,7 @@ function MultiRoundSessionBlock({
                     />
                     <DetailInfoForm.InputsSeparator />
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder="교육 내용을 작성하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
@@ -1111,7 +1111,7 @@ function ProgressGroupTimeField({
 }) {
   const range = useMemo(() => parseProgressTimeRange(value), [value])
   return (
-    <ParagraphTimePicker
+    <ParagraphTimePicker inputSize="small"
       endTimeAlwaysOn
       placeholder="시간 선택"
       width={200}
@@ -1176,7 +1176,7 @@ function ScheduleDetailBlock({
                 edit={
                   isFormEdit ? (
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder="일정명을 작성하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
@@ -1306,7 +1306,7 @@ function ScheduleEventBlock({
                 edit={
                   isFormEdit ? (
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       placeholder="행사 일정명을 작성하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
@@ -1327,7 +1327,7 @@ function ScheduleEventBlock({
                 edit={
                   isFormEdit ? (
                     // 일정형 복수 행사 일정 — 기간 토글 비노출(presetMode date) + 시간 토글 고정
-                    <ParagraphDatePicker
+                    <ParagraphDatePicker inputSize="small"
                       mode="single"
                       presetMode="date"
                       customizable={false}
@@ -1665,7 +1665,7 @@ function TrainedTeachersScheduleSettingsSection({
                   control={form.control}
                   render={({ field }) => (
                     <CmsRadioGroup
-                      size="large"
+                      size="medium"
                       value={field.value ?? 'date'}
                       onChange={e => {
                         const next = e.target.value as 'date' | 'period'
@@ -1681,8 +1681,8 @@ function TrainedTeachersScheduleSettingsSection({
                         field.onChange(next)
                       }}
                     >
-                      <CmsRadio value="date">날짜 지정</CmsRadio>
-                      <CmsRadio value="period">기간 지정</CmsRadio>
+                      <CmsRadio size="medium" value="date">날짜 지정</CmsRadio>
+                      <CmsRadio size="medium" value="period">기간 지정</CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -1693,7 +1693,7 @@ function TrainedTeachersScheduleSettingsSection({
               label="교육 진행 일정 선택"
               edit={
                 scheduleMode === 'date' ? (
-                  <ParagraphDatePicker
+                  <ParagraphDatePicker inputSize="small"
                     mode="single"
                     presetMode="schedule"
                     customizable={false}
@@ -1713,7 +1713,7 @@ function TrainedTeachersScheduleSettingsSection({
                     width={240}
                   />
                 ) : (
-                  <ParagraphDatePicker
+                  <ParagraphDatePicker inputSize="small"
                     mode="single"
                     presetMode="period"
                     customizable={false}
@@ -1807,6 +1807,8 @@ export function TrainedTeachersCommonInfoView({
     educatedTeachers: number | undefined
     /** programs PATCH 직후 GET echo 가 늦을 때 사업 분야 즉시 표시 */
     businessArea?: string
+    generalSurveyMenuKeys?: Program['generalSurveyMenuKeys']
+    registrationOverlay?: Program['registrationOverlay']
   } | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -1824,6 +1826,12 @@ export function TrainedTeachersCommonInfoView({
               : {}),
             educatedTeachers: savedOverride.educatedTeachers ?? program.educatedTeachers,
             generalCommonInfo: commonInfo,
+            ...(savedOverride.generalSurveyMenuKeys !== undefined
+              ? { generalSurveyMenuKeys: savedOverride.generalSurveyMenuKeys }
+              : {}),
+            ...(savedOverride.registrationOverlay !== undefined
+              ? { registrationOverlay: savedOverride.registrationOverlay }
+              : {}),
           }
         : program,
     [program, savedOverride, commonInfo]
@@ -2048,35 +2056,30 @@ export function TrainedTeachersCommonInfoView({
             finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
           }
 
-          if (needsInfoDetailPatch) {
-            if (onPersist) {
-              // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
-              await onPersist({
-                commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
-              })
-              setSavedOverride({
-                educatedTeachers: draft.kpiEducatedTeachers,
-                ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
-                commonInfo: {
-                  ...commonInfoPayload,
-                  kpi: kpiOverride,
-                },
-              })
-            } else {
-              setSavedOverride({
-                educatedTeachers: draft.kpiEducatedTeachers,
-                businessArea: savedBusinessArea,
-                commonInfo: {
-                  ...commonInfoPayload,
-                  kpi: kpiOverride,
-                },
-              })
-            }
+          const surveyOverride = {
+            ...(formPatch?.generalSurveyMenuKeys !== undefined
+              ? { generalSurveyMenuKeys: formPatch.generalSurveyMenuKeys }
+              : {}),
+            ...(formPatch?.registrationOverlay !== undefined
+              ? { registrationOverlay: formPatch.registrationOverlay }
+              : {}),
+          }
+
+          if (needsInfoDetailPatch && onPersist) {
+            // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
+            await onPersist({
+              commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
+            })
+          }
+          if (onBeforePersist || onPersist) {
+            // remote: 부모 detail 쿼리(저장 직후 GET)가 SSOT.
+            // savedOverride로 FE 값을 얹으면 서버 미반영인데 저장된 것처럼 보이다가 재진입 시 롤백된다.
+            setSavedOverride(null)
           } else {
-            // programs PATCH 만으로 KPI·사업분야 저장 — 재조회 전 화면 즉시 반영
             setSavedOverride({
               educatedTeachers: draft.kpiEducatedTeachers,
               ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
+              ...surveyOverride,
               commonInfo: {
                 ...commonInfoPayload,
                 kpi: kpiOverride,
@@ -2168,20 +2171,18 @@ export function TrainedTeachersCommonInfoView({
         <TrainedTeachersCurriculumSection
           sessionRound={sessionRound}
           commonInfo={{
-            ...((commonInfo.curriculumSessions?.length ?? 0) > 0
-              ? commonInfo
-              : {
-                  ...commonInfo,
-                  curriculumSessions: [emptyCurriculumSession(sessionRound)],
-                }),
+            ...commonInfo,
+            ...(isEditMode && (commonInfo.curriculumSessions?.length ?? 0) === 0
+              ? { curriculumSessions: [emptyCurriculumSession(sessionRound)] }
+              : {}),
             ipsScheduleDetail:
-              (isEditMode && form
-                ? form.watch('ipsScheduleDetail')
-                : commonInfo.ipsScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('ipsScheduleDetail') ?? 'common')
+                : commonInfo.ipsScheduleDetail,
             educationFormScheduleDetail:
-              (isEditMode && form
-                ? form.watch('educationFormScheduleDetail')
-                : commonInfo.educationFormScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('educationFormScheduleDetail') ?? 'common')
+                : commonInfo.educationFormScheduleDetail,
           }}
           isEditMode={isEditMode}
           draft={draft}
@@ -2191,20 +2192,18 @@ export function TrainedTeachersCommonInfoView({
         <TrainedTeachersScheduleSection
           sessionRound={sessionRound}
           commonInfo={{
-            ...((commonInfo.scheduleDetails?.length ?? 0) > 0
-              ? commonInfo
-              : {
-                  ...commonInfo,
-                  scheduleDetails: [emptyScheduleDetail(sessionRound)],
-                }),
+            ...commonInfo,
+            ...(isEditMode && (commonInfo.scheduleDetails?.length ?? 0) === 0
+              ? { scheduleDetails: [emptyScheduleDetail(sessionRound)] }
+              : {}),
             ipsScheduleDetail:
-              (isEditMode && form
-                ? form.watch('ipsScheduleDetail')
-                : commonInfo.ipsScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('ipsScheduleDetail') ?? 'common')
+                : commonInfo.ipsScheduleDetail,
             educationFormScheduleDetail:
-              (isEditMode && form
-                ? form.watch('educationFormScheduleDetail')
-                : commonInfo.educationFormScheduleDetail) ?? 'common',
+              isEditMode && form
+                ? (form.watch('educationFormScheduleDetail') ?? 'common')
+                : commonInfo.educationFormScheduleDetail,
           }}
           isEditMode={isEditMode}
           draft={draft}

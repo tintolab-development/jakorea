@@ -28,7 +28,7 @@ describe('education-schedule-change', () => {
 
   it('조회 줄을 변경 모달 표기로 맞춘다', () => {
     expect(formatEducationScheduleLineForChangeModal('26년 4월 20일(월) 9:30 ~ 12:20')).toBe(
-      '2026.04.20(월) 9:30 ~ 12:20'
+      '2026. 04. 20(월) 09:30 ~ 12:20'
     )
   })
 

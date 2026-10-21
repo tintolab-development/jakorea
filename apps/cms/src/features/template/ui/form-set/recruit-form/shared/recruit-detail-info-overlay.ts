@@ -19,6 +19,7 @@ export const RECRUIT_DETAIL_INFO_OVERLAY_PREFIX = {
   trainedTeachers: 'trainedTeachersRecruit.detailInfo',
   ujatInstitution: 'ujatRecruit.detailInfo',
   volunteer: 'recruitVolunteer.detailInfo',
+  gemini: 'geminiRecruit.detailInfo',
 } as const
 
 const UJAT_VOLUNTEER_RECRUIT_GENERAL_STORE_PREFIXES = [
@@ -39,11 +40,18 @@ export function pickUjatVolunteerRecruitGeneralStoreSidecar(
 }
 
 export function restoreUjatVolunteerRecruitGeneralStoreSidecar(
-  overlay: Record<string, unknown> | undefined
+  overlay: Record<string, unknown> | undefined,
+  options?: { forceEmptyLive?: boolean }
 ): void {
   if (overlay == null) return
   const sidecar = pickUjatVolunteerRecruitGeneralStoreSidecar(overlay)
-  const patch = overlayEntriesAbsentFromLive(sidecar, getGeneralRecruitOverlayRecord())
+  if (Object.keys(sidecar).length === 0) return
+  const live = getGeneralRecruitOverlayRecord()
+  const liveSidecar = pickUjatVolunteerRecruitGeneralStoreSidecar(live)
+  const patch =
+    options?.forceEmptyLive === true && Object.keys(liveSidecar).length === 0
+      ? sidecar
+      : overlayEntriesAbsentFromLive(sidecar, live)
   if (Object.keys(patch).length === 0) return
   patchGeneralRecruitOverlay(patch)
 }
@@ -91,6 +99,8 @@ export function recruitDetailInfoOverlayPrefixForCatalogId(
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
     case 'recruitment-ujat-volunteer':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer
+    case 'recruitment-gemini-visiting-training':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini
     default:
       return null
   }
@@ -111,6 +121,8 @@ export function recruitDetailInfoOverlayPrefixForEditorVariant(
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
     case 'ujat-recruit-volunteer':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer
+    case 'gemini-recruit':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini
     default:
       return null
   }
@@ -170,12 +182,17 @@ export function mergeRecruitDetailInfoFromGeneralStore(
 
 export function restoreRecruitDetailInfoIntoGeneralStore(
   overlay: Record<string, unknown> | undefined,
-  prefix: string | null
+  prefix: string | null,
+  options?: { forceEmptyLive?: boolean }
 ): void {
   if (overlay == null || prefix == null) return
   const detail = pickOverlayKeysByPrefix(overlay, prefix)
   if (Object.keys(detail).length === 0) return
-  const patch = overlayEntriesAbsentFromLive(detail, pickRecruitDetailInfoFromGeneralStore(prefix))
+  const liveDetail = pickRecruitDetailInfoFromGeneralStore(prefix)
+  const patch =
+    options?.forceEmptyLive === true && Object.keys(liveDetail).length === 0
+      ? detail
+      : overlayEntriesAbsentFromLive(detail, liveDetail)
   if (Object.keys(patch).length === 0) return
   patchGeneralRecruitOverlay(patch)
 }

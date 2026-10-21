@@ -58,7 +58,40 @@ export type PortalProgramApplicationListItem = {
   pendingSurveyCount?: number
   certificateAvailable?: boolean
   availableActions?: string[]
-  supplement?: unknown
+  /**
+   * OpenAPI `ProgramApplicationSupplement`.
+   * UJAT 기관 일정협의 배너는 `supplement.ujat.portalBannerState`만 SSOT.
+   */
+  supplement?: PortalProgramApplicationSupplement | null
+}
+
+/** OpenAPI `UjatApplicationSupplementPortalBannerState` */
+export const UJAT_PORTAL_BANNER_STATES = {
+  NONE: 'NONE',
+  ACTION_REQUIRED: 'ACTION_REQUIRED',
+  ADMIN_REVIEW: 'ADMIN_REVIEW',
+  REVISION_REQUIRED: 'REVISION_REQUIRED',
+  FINAL_APPROVED: 'FINAL_APPROVED',
+  REJECTED: 'REJECTED',
+} as const
+
+export type UjatPortalBannerState =
+  (typeof UJAT_PORTAL_BANNER_STATES)[keyof typeof UJAT_PORTAL_BANNER_STATES]
+
+/** OpenAPI `UjatApplicationSupplement` — 포털 배너는 `portalBannerState`만 사용 */
+export type PortalUjatApplicationSupplement = {
+  temporaryAssignmentStatus?: string
+  institutionConfirmationStatus?: string
+  institutionConfirmedAt?: string
+  assignmentLockedAt?: string
+  assignmentRevision?: number
+  assignmentLocked?: boolean
+  portalBannerState?: UjatPortalBannerState | string
+}
+
+/** OpenAPI `ProgramApplicationSupplement` */
+export type PortalProgramApplicationSupplement = {
+  ujat?: PortalUjatApplicationSupplement
 }
 
 export type PortalProgramApplicationListPage = {
@@ -79,7 +112,11 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   formBindingId?: number
   templateVersionId?: number
   formResponseStatus?: string
-  /** 없으면 BE `{}` */
+  /**
+   * 문단 id → 제출 답변. 없으면 BE `{}`.
+   * MEMBER_SELF 상세의 기본정보(`*seed-basic-info`) `teacherTel` / `teacherMobile` /
+   * `teacherEmail`은 마스킹되지 않은 원문 string (CMS admin 마스킹과 별개).
+   */
   answers?: Record<string, unknown>
   /** 관리자 배정 2차 면접 — 미배정 `null` */
   assignedInterviewStartAt?: string | null

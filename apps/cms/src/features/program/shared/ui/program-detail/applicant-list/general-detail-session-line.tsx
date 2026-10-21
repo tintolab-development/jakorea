@@ -4,12 +4,7 @@
  */
 
 import {
-  ProgramDetailTdDivider,
-  ProgramDetailTdSegmentWrap,
-} from '@/features/program/shared/ui/program-detail-td-divider'
-import {
-  enrichGeneralDetailScheduleLineLabel,
-  getSessionLineParts,
+  formatGeneralDetailSessionLine,
   type ApplicantSessionLineInput,
 } from './applicants-detail-session-format'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -18,37 +13,25 @@ import './general-detail-session-line.css'
 export function GeneralDetailSessionLine({
   session,
   bridge,
+  detailScheduleTimeSpan,
+  curriculumSessionLabels,
+  preferFormOptionLabel = false,
 }: {
   session: ApplicantSessionLineInput
   bridge?: InstitutionApplicationProgramBridge | null
+  detailScheduleTimeSpan?: string | null
+  curriculumSessionLabels?: readonly string[] | null
+  preferFormOptionLabel?: boolean
 }) {
-  const scheduleLabel = session.scheduleLabel?.trim()
-  if (scheduleLabel) {
-    return (
-      <div className="general-detail-session-line">
-        <span>{enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge)}</span>
-      </div>
-    )
-  }
-
-  const { datePart, durationPart, periodPart } = getSessionLineParts(session, 'general-detail', bridge)
-  const schedulePart = `${datePart} ${durationPart}`
-
-  if (!periodPart) {
-    return (
-      <div className="general-detail-session-line">
-        <span>{enrichGeneralDetailScheduleLineLabel(schedulePart, bridge)}</span>
-      </div>
-    )
-  }
-
+  const line = formatGeneralDetailSessionLine(session, bridge, {
+    detailScheduleTimeSpan,
+    curriculumSessionLabels,
+    preferFormOptionLabel,
+  })
+  if (!line) return <>-</>
   return (
     <div className="general-detail-session-line">
-      <ProgramDetailTdSegmentWrap>
-        <span>{schedulePart}</span>
-        <ProgramDetailTdDivider />
-        <span>{periodPart}</span>
-      </ProgramDetailTdSegmentWrap>
+      <span>{line}</span>
     </div>
   )
 }

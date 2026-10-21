@@ -30,9 +30,9 @@ const PROGRAM_PROGRESS_UI_BUCKET_LABELS: Record<ProgramProgressUiBucket, string>
 }
 
 const PROGRAM_PROGRESS_UI_BUCKET_COLORS: Record<ProgramProgressUiBucket, string> = {
-  SCHEDULED: 'var(--color-green, #1E8C29)',
-  IN_PROGRESS: 'var(--color-blue, #017EAF)',
-  COMPLETED: 'var(--default-BK, #3D3D3D)',
+  SCHEDULED: 'var(--Status-green-main, #1E8C29)',
+  IN_PROGRESS: 'var(--Status-blue-main, #017EAF)',
+  COMPLETED: 'var(--Netural-black, #3D3D3D)',
 }
 
 /**

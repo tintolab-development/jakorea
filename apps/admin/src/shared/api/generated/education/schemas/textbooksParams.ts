@@ -5,13 +5,28 @@
  * Filtered for Homepage Admin education Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { TextbooksSort } from './textbooksSort';
 
 export type TextbooksParams = {
-businessFieldCode?: string;
 /**
+ * Business field code. Omit or blank for every enabled field. CAREER_EMPLOYMENT, ECONOMICS_FINANCE, ENTREPRENEURSHIP, DIGITAL_LITERACY. Any other code is 400.
+ */
+fieldCode?: string;
+/**
+ * Education target id. Omit to ignore target.
  * @exclusiveMinimum 0
  */
 targetId?: number;
+/**
+ * Public textbook list sort. Omit or use LATEST for createdAt DESC, id DESC. NAME orders textbookName ASC with PostgreSQL collation ko-KR-x-icu, then id ASC.
+ */
+sort?: TextbooksSort;
+/**
+ * 0-based page index. Default 0.
+ */
 page?: number;
+/**
+ * Page size. Default 20. Minimum 1, maximum 100. Platform list uses 10.
+ */
 size?: number;
 };

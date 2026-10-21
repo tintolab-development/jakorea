@@ -8,11 +8,12 @@ export type StudentGradeClassSelectOption = {
   gradeLabel?: string
 }
 
-/** API `classes[].classNo` → roster `className` (`1`, `1반` 등) */
+/** API `classes[].classNo` → roster `className` (`1`, `1반`, `4학년 1반` 등) */
 export function normalizeClassNameFromClassNo(classNo?: string | null): string | null {
   const trimmed = (classNo ?? '').trim()
   if (!trimmed) return null
   if (/^\d+반$/.test(trimmed)) return trimmed
+  if (trimmed.includes('학년')) return trimmed
   const match = trimmed.match(/^(\d+)/)
   if (match) {
     const parsed = Number.parseInt(match[1], 10)

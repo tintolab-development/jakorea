@@ -226,10 +226,9 @@ export async function rejectGeminiInstructorApplication(
 
 export async function createGeminiRecruitment(
   snapshot: GeminiRecruitmentAddFormSnapshot
-): Promise<{ id: string }> {
+): Promise<{ id: string; detail: GeminiRecruitmentDetail | null }> {
   assertRemoteReady()
   const request = mapGeminiRecruitmentSnapshotToCreateRequest(snapshot)
-  console.log('[program registration create] 등록 완료', request)
   const created = await createGeminiRecruitmentRemote(request)
   const id = String(created.id ?? '')
   const thumbnailFileObjectId = snapshot.thumbnailFileObjectId
@@ -243,7 +242,15 @@ export async function createGeminiRecruitment(
       throw error
     }
   }
-  return { id }
+  let detail: GeminiRecruitmentDetail | null = null
+  if (id) {
+    try {
+      detail = await getGeminiRecruitmentDetail(id)
+    } catch {
+      detail = null
+    }
+  }
+  return { id, detail }
 }
 
 export async function updateGeminiRecruitment(

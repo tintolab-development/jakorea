@@ -44,19 +44,23 @@ export function useFaqMutations() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteFaq,
-    onSuccess: (_data, id) => {
+    onSuccess: async (_data, id) => {
+      await queryClient.cancelQueries({ queryKey: postsQueryKeys.faqs.lists() })
       discardDeletedDetailQuery(queryClient, postsQueryKeys.faqs.detail(id))
       applyDeletedFaqToLists(queryClient, id)
+      await invalidateFaqLists(queryClient)
     },
   })
 
   const bulkDeleteMutation = useMutation({
     mutationFn: deleteFaqs,
-    onSuccess: (_data, ids) => {
+    onSuccess: async (_data, ids) => {
+      await queryClient.cancelQueries({ queryKey: postsQueryKeys.faqs.lists() })
       for (const id of ids) {
         discardDeletedDetailQuery(queryClient, postsQueryKeys.faqs.detail(id))
-        applyDeletedFaqToLists(queryClient, id)
       }
+      applyDeletedFaqToLists(queryClient, ids)
+      await invalidateFaqLists(queryClient)
     },
   })
 

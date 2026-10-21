@@ -6,10 +6,10 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { Tabs, Input } from 'antd'
+import { Tabs } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsInput, CmsRadio, CmsTextArea } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -56,7 +56,6 @@ import { EditableStatusBadge } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import './school-detail-modal.css'
 
-const { TextArea } = Input
 const TAB_BASIC = 'basic'
 const TAB_STUDENTS = 'students'
 const TAB_POSTS = 'posts'
@@ -329,7 +328,7 @@ export function SchoolDetailModal({
                   control={instructorControl}
                   name={`instructors.${index}.role`}
                   render={({ field }) => (
-                    <CmsRadio.Group
+                    <CmsRadio.Group size="medium"
                       {...field}
                       options={[
                         { label: INSTRUCTOR_ROLE_LABELS.lead, value: 'lead' },
@@ -362,7 +361,7 @@ export function SchoolDetailModal({
                   control={instructorControl}
                   name={`instructors.${index}.instructorName`}
                   render={({ field }) => (
-                    <Input {...field} size="small" className="school-detail-modal__cell-input" />
+                    <CmsInput {...field} inputSize="small" className="school-detail-modal__cell-input" />
                   )}
                 />
               ),
@@ -377,7 +376,7 @@ export function SchoolDetailModal({
                   control={instructorControl}
                   name={`instructors.${index}.contact`}
                   render={({ field }) => (
-                    <Input {...field} size="small" className="school-detail-modal__cell-input" />
+                    <CmsInput {...field} inputSize="small" className="school-detail-modal__cell-input" />
                   )}
                 />
               ),
@@ -392,7 +391,7 @@ export function SchoolDetailModal({
                   control={instructorControl}
                   name={`instructors.${index}.email`}
                   render={({ field }) => (
-                    <Input {...field} size="small" className="school-detail-modal__cell-input" />
+                    <CmsInput {...field} inputSize="small" className="school-detail-modal__cell-input" />
                   )}
                 />
               ),
@@ -530,7 +529,7 @@ export function SchoolDetailModal({
                       name="venue"
                       control={basicControl}
                       render={({ field }) => (
-                        <Input {...field} className="school-detail-modal__form-input" allowClear />
+                        <CmsInput inputSize="small" {...field} className="school-detail-modal__form-input" allowClear />
                       )}
                     />
                   }
@@ -552,7 +551,7 @@ export function SchoolDetailModal({
                               role="radiogroup"
                               aria-label="대기실 여부 및 위치"
                             >
-                              <CmsRadio.Group
+                              <CmsRadio.Group size="medium"
                                 {...radioField}
                                 onChange={e => radioField.onChange(e.target.value)}
                                 options={[
@@ -563,7 +562,7 @@ export function SchoolDetailModal({
                               {radioField.value ? (
                                 <>
                                   <span className="school-detail-modal__divider-v" aria-hidden />
-                                  <Input
+                                  <CmsInput inputSize="small"
                                     {...locField}
                                     placeholder="위치 입력"
                                     className="school-detail-modal__form-input school-detail-modal__form-input--flex"
@@ -598,7 +597,7 @@ export function SchoolDetailModal({
                               role="radiogroup"
                               aria-label="식사 제공 여부 및 안내"
                             >
-                              <CmsRadio.Group
+                              <CmsRadio.Group size="medium"
                                 {...radioField}
                                 onChange={e => radioField.onChange(e.target.value)}
                                 options={[
@@ -609,7 +608,7 @@ export function SchoolDetailModal({
                               {radioField.value ? (
                                 <>
                                   <span className="school-detail-modal__divider-v" aria-hidden />
-                                  <TextArea
+                                  <CmsTextArea inputSize="small"
                                     {...noticeField}
                                     placeholder="식사 안내 문구"
                                     rows={1}
@@ -639,7 +638,7 @@ export function SchoolDetailModal({
                           name="teacherName"
                           control={basicControl}
                           render={({ field }) => (
-                            <Input
+                            <CmsInput inputSize="small"
                               {...field}
                               className="school-detail-modal__form-input"
                               allowClear
@@ -654,7 +653,7 @@ export function SchoolDetailModal({
                           name="teacherPhone"
                           control={basicControl}
                           render={({ field }) => (
-                            <Input
+                            <CmsInput inputSize="small"
                               {...field}
                               className="school-detail-modal__form-input"
                               allowClear
@@ -669,7 +668,7 @@ export function SchoolDetailModal({
                           name="teacherEmail"
                           control={basicControl}
                           render={({ field }) => (
-                            <Input
+                            <CmsInput inputSize="small"
                               {...field}
                               className="school-detail-modal__form-input"
                               allowClear
@@ -698,7 +697,7 @@ export function SchoolDetailModal({
                         name="textbookStatus"
                         control={basicControl}
                         render={({ field }) => (
-                          <CmsRadio.Group
+                          <CmsRadio.Group size="medium"
                             {...field}
                             options={textbookStatusOptions}
                             onChange={e => field.onChange(e.target.value)}

@@ -6,6 +6,11 @@ export type FlatDecisionNotifyTiming = {
   scheduledAt: string
 }
 
+export type TrainedTeacherApproveNotifyTiming = {
+  timing: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT'
+  scheduledAt?: string
+}
+
 export type NestedDecisionNotification = {
   notification: {
     timing: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT'
@@ -43,6 +48,17 @@ export function toOrganizationApproveNotifyTiming(
 ): { timing: 'IMMEDIATE' | 'SCHEDULED'; scheduledAt?: string } {
   const scheduled = toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
   return scheduled ?? { timing: 'IMMEDIATE' }
+}
+
+/** TT 기관 승인 — 발표일 알림을 평탄 approval payload로 그대로 전달한다. */
+export function toTrainedTeacherApproveNotifyTiming(
+  notifyTiming?: PermissionModalNotifyTiming | string | null,
+  manualNotifyAt?: Dayjs | null
+): TrainedTeacherApproveNotifyTiming {
+  const scheduled = toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
+  if (scheduled) return scheduled
+  if (notifyTiming === 'on_announcement') return { timing: 'ON_ANNOUNCEMENT' }
+  return { timing: 'IMMEDIATE' }
 }
 
 /** 기관·봉사자 취소 — 중첩 notification. CUSTOM은 SCHEDULED로 변환한다. */

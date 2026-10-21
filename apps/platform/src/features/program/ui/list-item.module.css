@@ -56,14 +56,45 @@
 
 .recruitment {
   display: flex;
+  min-width: 0;
   flex: 0 0 auto;
-  width: 15.5rem;
-  min-width: 15.5rem;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-4);
-  white-space: nowrap;
   text-align: left;
+}
+
+.asideScheduleGroup {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-60);
+}
+
+.asideDivider {
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+
+.recruitmentDate {
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.recruitmentPeriodPart {
+  white-space: nowrap;
+}
+
+.recruitmentPeriodSeparator {
+  white-space: pre;
+}
+
+.arrow {
+  flex-shrink: 0;
 }
 
 /* 모바일 — 카드 본문 하단 모집기간 (PC는 aside) */
@@ -144,11 +175,61 @@
 }
 
 @media (--bp-pc-up) {
+  .card {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+    gap: 0;
+  }
+
+  .thumbnailWrap {
+    grid-column: 1;
+  }
+
+  .cardContent {
+    grid-column: 2;
+    min-width: min(100%, 16rem);
+    margin-left: var(--spacing-40);
+    margin-right: var(--spacing-60);
+  }
+
   .contentColumn {
     gap: var(--spacing-20);
   }
 
   .bottomBlock {
     gap: var(--spacing-12);
+  }
+
+  .asideDesktop {
+    display: grid;
+    grid-column: 3 / -1;
+    grid-template-columns: subgrid;
+    align-self: center;
+    align-items: center;
+    gap: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .asideDivider {
+    grid-column: 1;
+    align-self: stretch;
+    margin-right: var(--spacing-32);
+  }
+
+  .asideScheduleGroup {
+    display: contents;
+  }
+
+  .recruitment {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .arrow {
+    grid-column: 3;
+    margin-left: var(--spacing-60);
   }
 }

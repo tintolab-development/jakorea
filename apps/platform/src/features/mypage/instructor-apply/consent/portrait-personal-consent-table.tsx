@@ -20,9 +20,11 @@ import styles from './consent-form.module.css'
 export function PlatformPortraitPersonalConsentTable({
   paragraph,
   onUpdateParagraph,
+  readOnly = false,
 }: {
   paragraph: VerticalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
+  readOnly?: boolean
 }) {
   const nameRaw = paragraph.rows[0]?.cells[0] ?? ''
   const affiliationRaw = paragraph.rows[0]?.cells[1] ?? ''
@@ -64,14 +66,18 @@ export function PlatformPortraitPersonalConsentTable({
                     성명
                   </div>
                   <div className="form-template-vertical-table__td" role="gridcell">
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      value={name}
-                      placeholder="한글 성명"
-                      aria-label="성명"
-                      onValueChange={patchName}
-                    />
+                    {readOnly ? (
+                      <span className={styles.cellText}>{name.trim() || '-'}</span>
+                    ) : (
+                      <PFTextInput
+                        variant="formPage"
+                        size="large"
+                        value={name}
+                        placeholder="한글 성명"
+                        aria-label="성명"
+                        onValueChange={patchName}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="form-template-vertical-table__stage">
@@ -79,6 +85,11 @@ export function PlatformPortraitPersonalConsentTable({
                     소속
                   </div>
                   <div className="form-template-vertical-table__td" role="gridcell">
+                    {readOnly ? (
+                      <span className={styles.cellText}>
+                        {noAffiliation ? PORTRAIT_NO_AFFILIATION : affiliation.trim() || '-'}
+                      </span>
+                    ) : (
                     <PFFormControlCluster className={styles.portraitAffiliationRow}>
                       <PFTextInput
                         variant="formPage"
@@ -102,6 +113,7 @@ export function PlatformPortraitPersonalConsentTable({
                         {PORTRAIT_NO_AFFILIATION}
                       </PFCheckbox>
                     </PFFormControlCluster>
+                    )}
                   </div>
                 </div>
               </div>
@@ -136,7 +148,7 @@ export function PlatformPortraitPersonalConsentTable({
         <PortraitVerticalTableMobileBody
           paragraph={paragraph}
           onUpdateParagraph={onUpdateParagraph}
-          editableFirstRow
+          editableFirstRow={!readOnly}
         />
       </div>
 

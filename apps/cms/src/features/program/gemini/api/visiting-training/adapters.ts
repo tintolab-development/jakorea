@@ -54,16 +54,6 @@ function trimmedOrEmpty(value: string | null | undefined): string {
   return value?.trim() ?? ''
 }
 
-function firstNonEmptyDate(
-  ...candidates: Array<string | null | undefined>
-): string {
-  for (const candidate of candidates) {
-    const trimmed = candidate?.trim()
-    if (trimmed) return trimmed
-  }
-  return ''
-}
-
 /** BE: online|offline|hybrid|null. Gemini UI 셀렉트는 online|offline만 — hybrid·기타는 offline으로 표시(정책: UI 미지원). */
 function mapEducationForm(
   value: string | null | undefined
@@ -223,6 +213,8 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     educationForm: persist.educationForm,
     targetLevels,
     ...(targetLevel ? { targetLevel } : {}),
+    // GET SSOT는 GeminiRecruitmentDetailResponse.minimumParticipantCount.
+    // ProgramCreateRequest에 동명 필드가 없어 BE가 totalParticipants로 매핑한다.
     totalParticipants: persist.minStudentCount ?? undefined,
     managerName: contactName,
     contactName,
@@ -358,25 +350,14 @@ export function mapGeminiRecruitmentItemToRow(
   dto: GeminiRecruitmentItem,
   index: number
 ): GeminiRecruitmentRow {
-  const applicationPeriodStart = firstNonEmptyDate(
-    dto.applicationStartDate,
-    dto.businessStartDate
-  )
-  const applicationPeriodEnd = firstNonEmptyDate(
-    dto.applicationEndDate,
-    dto.businessEndDate
-  )
-  // 연수 요청 기간은 기관 모집/business와 합치지 않는다.
-  const trainingRequestPeriodStart = trimmedOrEmpty(dto.trainingRequestStartDate)
-  const trainingRequestPeriodEnd = trimmedOrEmpty(dto.trainingRequestEndDate)
   return {
     id: toId(dto.programId),
     displayNo: index + 1,
-    title: dto.nameKo?.trim() || '제목 없음',
-    applicationPeriodStart,
-    applicationPeriodEnd,
-    trainingRequestPeriodStart,
-    trainingRequestPeriodEnd,
+    title: dto.nameKo?.trim() || '-',
+    applicationPeriodStart: trimmedOrEmpty(dto.applicationStartDate),
+    applicationPeriodEnd: trimmedOrEmpty(dto.applicationEndDate),
+    trainingRequestPeriodStart: trimmedOrEmpty(dto.trainingRequestStartDate),
+    trainingRequestPeriodEnd: trimmedOrEmpty(dto.trainingRequestEndDate),
     isDraft: isDraftStatus(dto.draftStatus ?? undefined),
     organizationApplicationCount: dto.organizationApplicationCount ?? 0,
     approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount ?? 0,
@@ -406,33 +387,27 @@ export function mapGeminiRecruitmentDetailToDetail(
       },
       0
     )
-  const applicationPeriodStart = firstNonEmptyDate(
-    dto.applicationStartDate,
-    dto.businessStartDate,
-    row.applicationPeriodStart
-  )
-  const applicationPeriodEnd = firstNonEmptyDate(
-    dto.applicationEndDate,
-    dto.businessEndDate,
-    row.applicationPeriodEnd
-  )
-  // 연수 요청 기간은 기관 모집/business와 합치지 않는다 (BE handoff).
+  const applicationPeriodStart = trimmedOrEmpty(dto.applicationStartDate)
+  const applicationPeriodEnd = trimmedOrEmpty(dto.applicationEndDate)
   const trainingRequestPeriodStart = trimmedOrEmpty(dto.trainingRequestStartDate)
   const trainingRequestPeriodEnd = trimmedOrEmpty(dto.trainingRequestEndDate)
   const otherMatters = dto.otherMatters?.trim() || null
   const notesNotApplicable = otherMatters == null
-  const now = new Date().toISOString()
+  const minStudentCount =
+    typeof dto.minimumParticipantCount === 'number' && Number.isFinite(dto.minimumParticipantCount)
+      ? dto.minimumParticipantCount
+      : 0
   return {
     ...row,
-    title: dto.nameKo?.trim() || row.title,
+    title: dto.nameKo?.trim() || '-',
     applicationPeriodStart,
     applicationPeriodEnd,
     trainingRequestPeriodStart,
     trainingRequestPeriodEnd,
     isDraft: isDraftStatus(dto.draftStatus) || row.isDraft,
-    createdAt: dto.createdAt?.trim() || now,
+    createdAt: dto.createdAt?.trim() || '-',
     createdByName: dto.createdByName?.trim() || '-',
-    updatedAt: dto.updatedAt?.trim() || now,
+    updatedAt: dto.updatedAt?.trim() || '-',
     updatedByName: dto.updatedByName?.trim() || '-',
     announcementPublished: isDraftStatus(dto.draftStatus) ? 'unpublished' : 'published',
     educationTargetLevels: wireGeminiTargetLevels(
@@ -440,7 +415,7 @@ export function mapGeminiRecruitmentDetailToDetail(
       dto.recruitmentTargetDetail ?? undefined
     ).targetLevels,
     educationTargetDetail: trimmedOrEmpty(dto.recruitmentTargetDetail),
-    minStudentCount: dto.minimumParticipantCount ?? 0,
+    minStudentCount,
     educationForm: mapEducationForm(dto.educationForm),
     educationStructure: resolveGeminiEducationStructureFromDetail(dto.educationStructure),
     inquiryContactName: trimmedOrEmpty(dto.contactName),
@@ -449,7 +424,7 @@ export function mapGeminiRecruitmentDetailToDetail(
     notesNotApplicable,
     notes: notesNotApplicable ? '' : otherMatters,
     thumbnailFileName: dto.thumbnailFileName?.trim() || null,
-    programDescription: trimmedOrEmpty(dto.description) || trimmedOrEmpty(dto.summary),
+    programDescription: trimmedOrEmpty(dto.description),
     recruitmentGuide: trimmedOrEmpty(dto.recruitmentGuide),
     applicationMethod: trimmedOrEmpty(dto.applicationMethod),
     learningSupportContent: trimmedOrEmpty(dto.learningSupportContent),

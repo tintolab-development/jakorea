@@ -7,6 +7,8 @@ type VolunteerNoticePanelProps = {
   program: ProgramDetail
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  preferredEducationScheduleLines?: readonly string[]
+  alwaysShowPreferredSchedule?: boolean
   lastParticipatedSession?: number
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
@@ -16,6 +18,8 @@ export function VolunteerNoticePanel({
   program,
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  preferredEducationScheduleLines,
+  alwaysShowPreferredSchedule,
   lastParticipatedSession,
   applicationType,
   applicationId,
@@ -27,6 +31,8 @@ export function VolunteerNoticePanel({
       program={program}
       selfIntroMotivation={selfIntroMotivation}
       preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+      preferredEducationScheduleLines={preferredEducationScheduleLines}
+      alwaysShowPreferredSchedule={alwaysShowPreferredSchedule}
       applicationType={applicationType}
       applicationId={applicationId}
       leading={

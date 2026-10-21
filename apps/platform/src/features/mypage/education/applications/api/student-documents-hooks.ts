@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -6,6 +6,9 @@ import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import type { ProgramApplicationType } from './types'
 import {
+  cancelOrganizationPortraitConsent,
+  commitOrganizationStudentRoster,
+  downloadOrganizationStudentCertificates,
   downloadOrganizationPortraitConsentTemplate,
   downloadOrganizationStudentRosterTemplate,
   fetchOrganizationPortraitConsent,
@@ -14,11 +17,22 @@ import {
   importOrganizationStudentRoster,
   submitOrganizationPortraitConsent,
 } from './student-documents-client'
+import type {
+  PortalOrganizationPortraitConsent,
+  PortalStudentRosterCommitRequest,
+  PortalStudentRosterResponse,
+} from './student-documents-types'
+import { readStudentDocumentsErrorCode } from '../lib/student-documents-errors'
 import {
   PORTAL_FILE_PURPOSE_PORTRAIT_CONSENT,
   PORTAL_FILE_PURPOSE_STUDENT_ROSTER,
 } from './student-documents-types'
+import type { PortraitConsentTemplateDownloadProgress } from '../lib/student-documents-template-download'
 import { resolveOrganizationApplicationId } from '../lib/resolve-organization-application-id'
+import {
+  STUDENT_ROSTER_ALLOWED_FILE_TYPES,
+  STUDENT_ROSTER_UPLOAD_MAX_BYTES,
+} from '../lib/student-roster-upload-policy'
 
 const STALE_MS = 30_000
 const GC_MS = 10 * 60_000
@@ -78,6 +92,67 @@ function queryOptions() {
     retry: shouldRetryQuery,
     retryDelay: queryRetryDelay,
   } as const
+}
+
+async function invalidateStudentDocumentDependents(
+  queryClient: ReturnType<typeof useQueryClient>,
+  input: {
+    applicationId: string
+    applicationType?: ProgramApplicationType | null
+    programId?: number | null
+  },
+): Promise<void> {
+  const tasks = [
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.organizationApplications.studentRoster(
+        input.applicationId,
+      ),
+      exact: true,
+    }),
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.organizationApplications.studentDocumentsPolicy(
+        input.applicationId,
+      ),
+      exact: true,
+    }),
+    // 신청 목록의 학생명단 제출 상태 요약이 바뀔 수 있습니다.
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+    }),
+  ]
+
+  if (input.applicationType) {
+    tasks.push(
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.detail(
+          input.applicationType,
+          input.applicationId,
+        ),
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.schedules(
+          input.applicationType,
+          input.applicationId,
+        ),
+        exact: true,
+      }),
+    )
+  }
+
+  if (input.programId != null) {
+    tasks.push(
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.educationJournals(
+          String(input.programId),
+          input.applicationId,
+        ),
+        exact: true,
+      }),
+    )
+  }
+
+  await Promise.all(tasks)
 }
 
 export function useOrganizationStudentRosterQuery(
@@ -140,7 +215,10 @@ export function useOrganizationPortraitConsentQuery(
   })
 }
 
-export function useImportOrganizationStudentRosterMutation(applicationId: string) {
+export function useImportOrganizationStudentRosterMutation(
+  applicationId: string,
+  applicationType?: ProgramApplicationType | null,
+) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -149,21 +227,63 @@ export function useImportOrganizationStudentRosterMutation(applicationId: string
       const fileObjectId = await uploadMemberPortalFile({
         file,
         filePurpose: PORTAL_FILE_PURPOSE_STUDENT_ROSTER,
+        policy: {
+          maxBytes: STUDENT_ROSTER_UPLOAD_MAX_BYTES,
+          allowedFileTypes: STUDENT_ROSTER_ALLOWED_FILE_TYPES,
+        },
       })
       return importOrganizationStudentRoster(orgApplicationId, fileObjectId)
     },
-    onSuccess: (data, _file, _ctx) => {
+    onSuccess: async (data, _file, _ctx) => {
       const orgApplicationId = resolveOrganizationApplicationId(applicationId)
       if (!orgApplicationId) return
       queryClient.setQueryData(
         platformQueryKeys.mypage.organizationApplications.studentRoster(orgApplicationId),
         data,
       )
+      await invalidateStudentDocumentDependents(queryClient, {
+        applicationId: orgApplicationId,
+        applicationType,
+        programId: data.programId,
+      })
     },
+    retry: false,
   })
 }
 
-export function useSubmitOrganizationPortraitConsentMutation(applicationId: string) {
+/** 수동 편집 화면에서만 사용합니다. maskedPhone/maskedEmail 응답을 이 요청에 재사용하지 않습니다. */
+export function useCommitOrganizationStudentRosterMutation(
+  applicationId: string,
+  applicationType?: ProgramApplicationType | null,
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: PortalStudentRosterCommitRequest): Promise<PortalStudentRosterResponse> => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
+      return commitOrganizationStudentRoster(orgApplicationId, request)
+    },
+    onSuccess: async (data, _request) => {
+      const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+      if (!orgApplicationId) return
+      queryClient.setQueryData(
+        platformQueryKeys.mypage.organizationApplications.studentRoster(orgApplicationId),
+        data,
+      )
+      await invalidateStudentDocumentDependents(queryClient, {
+        applicationId: orgApplicationId,
+        applicationType,
+        programId: data.programId,
+      })
+    },
+    retry: false,
+  })
+}
+
+export function useSubmitOrganizationPortraitConsentMutation(
+  applicationId: string,
+  applicationType?: ProgramApplicationType | null,
+) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -175,14 +295,106 @@ export function useSubmitOrganizationPortraitConsentMutation(applicationId: stri
       })
       return submitOrganizationPortraitConsent(orgApplicationId, fileObjectId)
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       const orgApplicationId = resolveOrganizationApplicationId(applicationId)
       if (!orgApplicationId) return
       queryClient.setQueryData(
         platformQueryKeys.mypage.organizationApplications.portraitConsent(orgApplicationId),
         data,
       )
+      await invalidateStudentDocumentDependents(queryClient, {
+        applicationId: orgApplicationId,
+        applicationType,
+        programId: data.programId,
+      })
     },
+    retry: false,
+  })
+}
+
+type PortraitConsentCacheInput = {
+  applicationId: string
+  applicationType?: ProgramApplicationType | null
+  programId?: number | null
+}
+
+/** 서버 취소 성공(204) 또는 이미 없음(404) 이후에만 호출합니다. */
+export async function applyPortraitConsentCancelled(
+  queryClient: QueryClient,
+  input: PortraitConsentCacheInput,
+): Promise<void> {
+  const portraitConsentKey = platformQueryKeys.mypage.organizationApplications.portraitConsent(
+    input.applicationId,
+  )
+  await queryClient.cancelQueries({ queryKey: portraitConsentKey, exact: true })
+  queryClient.setQueryData(portraitConsentKey, null)
+  await invalidateStudentDocumentDependents(queryClient, input)
+}
+
+export async function applyPortraitConsentCancelError(
+  queryClient: QueryClient,
+  error: unknown,
+  input: PortraitConsentCacheInput,
+): Promise<void> {
+  const code = readStudentDocumentsErrorCode(error)
+  const keys = platformQueryKeys.mypage.organizationApplications
+  if (code === 'PORTRAIT_CONSENT_NOT_FOUND') {
+    await applyPortraitConsentCancelled(queryClient, input)
+    return
+  }
+  if (code === 'PORTRAIT_CONSENT_REVISION_CONFLICT') {
+    await queryClient.invalidateQueries({
+      queryKey: keys.portraitConsent(input.applicationId),
+      exact: true,
+    })
+    return
+  }
+  if (code === 'PORTRAIT_CONSENT_DEADLINE_PASSED' || code === 'PORTRAIT_CONSENT_ALREADY_APPROVED') {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: keys.studentDocumentsPolicy(input.applicationId),
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: keys.portraitConsent(input.applicationId),
+        exact: true,
+      }),
+    ])
+  }
+}
+
+export function useCancelOrganizationPortraitConsentMutation(
+  applicationId: string,
+  applicationType?: ProgramApplicationType | null,
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (consent: PortalOrganizationPortraitConsent) => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
+      return cancelOrganizationPortraitConsent(orgApplicationId, {
+        expectedRevisionNo: consent.revisionNo,
+      })
+    },
+    onSuccess: async (_data, consent) => {
+      const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+      if (!orgApplicationId) return
+      await applyPortraitConsentCancelled(queryClient, {
+        applicationId: orgApplicationId,
+        applicationType,
+        programId: consent.programId,
+      })
+    },
+    onError: async (error, consent) => {
+      const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+      if (!orgApplicationId) return
+      await applyPortraitConsentCancelError(queryClient, error, {
+        applicationId: orgApplicationId,
+        applicationType,
+        programId: consent.programId,
+      })
+    },
+    retry: false,
   })
 }
 
@@ -195,11 +407,25 @@ export function useDownloadStudentRosterTemplateMutation(applicationId: string) 
   })
 }
 
-export function useDownloadPortraitConsentTemplateMutation(applicationId: string) {
+export function useDownloadOrganizationStudentCertificatesMutation(applicationId: string) {
+  return useMutation({
+    mutationFn: (rosterIds: readonly number[]) => {
+      const orgApplicationId = requireOrganizationApplicationId(applicationId)
+      return downloadOrganizationStudentCertificates(orgApplicationId, rosterIds)
+    },
+    retry: false,
+  })
+}
+
+export function useDownloadPortraitConsentTemplateMutation(
+  applicationId: string,
+  options?: { onProgress?: (progress: PortraitConsentTemplateDownloadProgress) => void },
+) {
   return useMutation({
     mutationFn: () => {
       const orgApplicationId = requireOrganizationApplicationId(applicationId)
-      return downloadOrganizationPortraitConsentTemplate(orgApplicationId)
+      return downloadOrganizationPortraitConsentTemplate(orgApplicationId, options?.onProgress)
     },
+    retry: false,
   })
 }

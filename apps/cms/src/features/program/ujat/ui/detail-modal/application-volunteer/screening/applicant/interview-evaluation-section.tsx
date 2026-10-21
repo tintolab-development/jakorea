@@ -146,7 +146,7 @@ export const InterviewEvaluationSection = forwardRef<
                 min={1}
                 max={MANAGER_SCORE_MAX}
                 precision={0}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={managerAScore == null ? '' : String(managerAScore)}
                 onValueChange={value => setManagerAScore(clampManagerScore(value))}
@@ -163,7 +163,7 @@ export const InterviewEvaluationSection = forwardRef<
                 min={1}
                 max={MANAGER_SCORE_MAX}
                 precision={0}
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={managerBScore == null ? '' : String(managerBScore)}
                 onValueChange={value => setManagerBScore(clampManagerScore(value))}
@@ -178,7 +178,7 @@ export const InterviewEvaluationSection = forwardRef<
             label="비고"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={remark}
                 onChange={e => setRemark(e.target.value)}

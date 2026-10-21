@@ -9,9 +9,7 @@ import type { Dayjs } from 'dayjs'
 import { Spin } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui'
 import { participatingInstructorsFilterFields } from '@/features/program/general/lib/participating-instructors-filter-fields'
 import type { ColumnsType } from 'antd/es/table'
@@ -73,7 +71,11 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '../../../../shared/ui/program-schedule-colors'
-import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  ButtonCalendarIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -330,7 +332,10 @@ export function ParticipatingInstructorsSection({
       return
     }
     if (selectedCount > 1) {
-      showAlert({ title: '안내', content: ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE })
+      showAlert({
+        title: '안내',
+        content: ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
+      })
       return
     }
 
@@ -412,8 +417,7 @@ export function ParticipatingInstructorsSection({
   }, [instructorsForCalendarDate, effectiveCalendarSelectedSchools])
 
   const instructorCalendarEvents = useMemo(
-    () =>
-      buildParticipatingInstructorCalendarEvents(schoolRows, filteredInstructors),
+    () => buildParticipatingInstructorCalendarEvents(schoolRows, filteredInstructors),
     [filteredInstructors, schoolRows]
   )
 
@@ -557,9 +561,7 @@ export function ParticipatingInstructorsSection({
           )
           if (label === '-') return '-'
           return (
-            <span className="participating-instructors-section__ellipsis-cell-inner">
-              {label}
-            </span>
+            <span className="participating-instructors-section__ellipsis-cell-inner">{label}</span>
           )
         },
       },
@@ -693,7 +695,6 @@ export function ParticipatingInstructorsSection({
           <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
               variant="secondary"
-              style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
@@ -702,7 +703,6 @@ export function ParticipatingInstructorsSection({
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
@@ -711,7 +711,6 @@ export function ParticipatingInstructorsSection({
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
@@ -720,7 +719,6 @@ export function ParticipatingInstructorsSection({
             )}
             <FilterTableToolbarButton
               variant="primary"
-              width={160}
               onClick={() => {
                 if (!isRemoteDataSource) {
                   notifyProgramApiUnavailable(
@@ -731,7 +729,6 @@ export function ParticipatingInstructorsSection({
                 }
                 setAddInstructorModalOpen(true)
               }}
-              className="participating-instructors-section__btn-add-instructor"
             >
               강사 등록
             </FilterTableToolbarButton>

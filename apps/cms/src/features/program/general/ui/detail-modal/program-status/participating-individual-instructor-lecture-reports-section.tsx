@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
@@ -185,7 +186,8 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
         key: 'educationScheduleLabel',
         align: 'center',
         width: 360,
-        render: (label: string) => renderProgramDetailPipeSeparated(label),
+        render: (label: string) =>
+          renderProgramDetailPipeSeparated(label ? formatCmsScheduleDisplayLabel(label) : label),
       },
       {
         title: '강의보고서 제출 기간',
@@ -193,6 +195,8 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
         key: 'submissionPeriodLabel',
         align: 'center',
         width: 280,
+        render: (value: string | undefined) =>
+          value?.trim() ? formatCmsScheduleDisplayLabel(value) : '-',
       },
       {
         title: '강의 진행 여부',

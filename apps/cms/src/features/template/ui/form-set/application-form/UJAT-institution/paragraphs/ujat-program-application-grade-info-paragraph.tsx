@@ -1,6 +1,7 @@
 import { Fragment, useMemo } from 'react'
 import './ujat-program-application-grade-info-paragraph.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -96,7 +97,7 @@ function GradeApplicationBlock({
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 withAllOption={false}
                 placeholder="신청 학년"
@@ -106,7 +107,7 @@ function GradeApplicationBlock({
               />
               <DetailInfoForm.InputsSeparator />
               <CmsNumericInput
-                inputSize="medium"
+                inputSize="small"
                 width={120}
                 placeholder="총 학급 수"
                 mode="integer"
@@ -135,7 +136,7 @@ function GradeApplicationBlock({
                   <Fragment key={i}>
                     {i > 0 ? <DetailInfoForm.InputsSeparator /> : null}
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       width={80}
                       placeholder="학급"
                       value={classNoByIndex[i] ?? ''}
@@ -150,7 +151,7 @@ function GradeApplicationBlock({
                     />
                     <span>반</span>
                     <CmsInput
-                      inputSize="medium"
+                      inputSize="small"
                       width={80}
                       placeholder="학생 수"
                       value={studentCountByIndex[i] ?? ''}
@@ -193,7 +194,7 @@ export function UjatProgramApplicationGradeInfoParagraph({
   const ids = applicationGradeBlockIds.length > 0 ? applicationGradeBlockIds : ['ujat-grade-solo']
 
   return (
-    <>
+    <div className="program-registration-paragraph">
       {ids.map((blockKey, blockIndex) => (
         <div key={blockKey} className="ujat-program-application-grade-info-paragraph__block">
           <div className="ujat-program-application-grade-info-paragraph__block-body">
@@ -220,6 +221,6 @@ export function UjatProgramApplicationGradeInfoParagraph({
           ) : null}
         </div>
       ))}
-    </>
+    </div>
   )
 }

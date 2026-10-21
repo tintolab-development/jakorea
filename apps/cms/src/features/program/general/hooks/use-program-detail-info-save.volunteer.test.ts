@@ -64,6 +64,18 @@ describe('volunteer recruitment detail save merge', () => {
     expect(merged?.recruitmentTargetDetail).toBe('변경 상세')
   })
 
+  it('봉사자 탭 patch는 rounds를 넣지 않는다', () => {
+    const program = baseProgram()
+    const values = programToRecruitmentTabEditValues(program, 'volunteer') as ProgramDetailEditFormValues
+    const patch = detailEditValuesToProgramPatch(
+      { ...values, volunteerApplicationEndDate: '2026-10-31T14:59:59.999Z' },
+      program,
+      { recruitmentAudience: 'volunteer' }
+    )
+    expect(patch.rounds).toBeUndefined()
+    expect(patch.volunteerApplicationEndDate).toBe('2026-10-31T14:59:59.999Z')
+  })
+
   it('resync 후 registration overlay에 폼 volunteerTargets가 반영된다', () => {
     const program = baseProgram()
     const values = programToRecruitmentTabEditValues(program, 'volunteer') as ProgramDetailEditFormValues

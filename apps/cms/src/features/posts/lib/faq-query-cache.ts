@@ -5,12 +5,18 @@ import {
   statusMatchesListVisibility,
   visibilityFromListQueryKey,
 } from '@/features/posts/lib/list-visibility'
+import {
+  applyCreatedToMatchingArrayLists,
+  applyDeletedIdsToArrayLists,
+  applyUpdatedToMatchingArrayLists,
+  invalidateArrayLists,
+} from '@/shared/lib/query-list-cache'
 
-function isFaqListCache(value: unknown): value is AdminFaq[] {
-  return Array.isArray(value)
+function faqRowId(faq: AdminFaq): string {
+  return String(faq.id ?? '')
 }
 
-function faqMatchesList(faq: AdminFaq, queryKey: readonly unknown[]): boolean {
+function faqMatchesList(queryKey: readonly unknown[], faq: AdminFaq): boolean {
   return statusMatchesListVisibility(
     faq.status,
     visibilityFromListQueryKey(queryKey, 'af_vis')
@@ -18,44 +24,33 @@ function faqMatchesList(faq: AdminFaq, queryKey: readonly unknown[]): boolean {
 }
 
 export function applyCreatedFaqToLists(queryClient: QueryClient, created: AdminFaq): void {
-  if (!created.id) return
-  for (const [queryKey, old] of queryClient.getQueriesData<AdminFaq[]>({
-    queryKey: postsQueryKeys.faqs.lists(),
-  })) {
-    if (!isFaqListCache(old) || !faqMatchesList(created, queryKey)) continue
-    if (old.some(row => row.id === created.id)) continue
-    queryClient.setQueryData<AdminFaq[]>(queryKey, [created, ...old])
-  }
+  applyCreatedToMatchingArrayLists(
+    queryClient,
+    postsQueryKeys.faqs.lists(),
+    created,
+    faqRowId,
+    faqMatchesList
+  )
 }
 
 export function applyUpdatedFaqToLists(queryClient: QueryClient, updated: AdminFaq): void {
-  if (!updated.id) return
-  for (const [queryKey, old] of queryClient.getQueriesData<AdminFaq[]>({
-    queryKey: postsQueryKeys.faqs.lists(),
-  })) {
-    if (!isFaqListCache(old)) continue
-    const matches = faqMatchesList(updated, queryKey)
-    const found = old.some(row => row.id === updated.id)
-    if (matches) {
-      queryClient.setQueryData<AdminFaq[]>(queryKey, found
-        ? old.map(row => (row.id === updated.id ? updated : row))
-        : [updated, ...old])
-      continue
-    }
-    if (found) {
-      queryClient.setQueryData<AdminFaq[]>(queryKey, old.filter(row => row.id !== updated.id))
-    }
-  }
+  applyUpdatedToMatchingArrayLists(
+    queryClient,
+    postsQueryKeys.faqs.lists(),
+    updated,
+    faqRowId,
+    faqMatchesList
+  )
 }
 
-export function applyDeletedFaqToLists(queryClient: QueryClient, id: string): void {
-  if (!id) return
-  queryClient.setQueriesData<AdminFaq[]>({ queryKey: postsQueryKeys.faqs.lists() }, old => {
-    if (!isFaqListCache(old)) return old
-    return old.filter(row => row.id !== id)
-  })
+export function applyDeletedFaqToLists(
+  queryClient: QueryClient,
+  id: string | readonly string[]
+): void {
+  const ids = (Array.isArray(id) ? id : [id]).map(String)
+  applyDeletedIdsToArrayLists(queryClient, postsQueryKeys.faqs.lists(), ids, faqRowId)
 }
 
 export async function invalidateFaqLists(queryClient: QueryClient): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: postsQueryKeys.faqs.lists() })
+  await invalidateArrayLists(queryClient, postsQueryKeys.faqs.lists())
 }

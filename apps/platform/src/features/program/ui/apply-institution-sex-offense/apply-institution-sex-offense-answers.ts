@@ -68,6 +68,22 @@ export function shouldShowSexOffenseInquiry(
   return values.submissionRequest === 'request'
 }
 
+export function findIncompleteUjatSexOffenseWriteMessage(
+  values: ApplyInstitutionSexOffenseValues,
+): string | null {
+  if (values.inquiryMethod !== 'ja_system' && values.inquiryMethod !== 'criminal_record_site') {
+    return '성범죄 경력조회 동의서 조회 방식을 선택해 주세요.'
+  }
+  if (values.siteSubmission !== 'online' && values.siteSubmission !== 'direct') {
+    return '사이트 제출 방식을 선택해 주세요.'
+  }
+  if (values.siteSubmission === 'online') {
+    if (!values.institutionId.trim()) return '성범죄 경력조회 기관 아이디를 입력해 주세요.'
+    if (!values.verificationNumber.trim()) return '성범죄 경력조회 검증번호를 입력해 주세요.'
+  }
+  return null
+}
+
 export function findIncompleteSexOffenseMessage(
   values: ApplyInstitutionSexOffenseValues,
 ): string | null {
@@ -93,8 +109,12 @@ export function sexOffenseSubmissionAnswerFromValues(
 export function sexOffenseInquiryAnswerFromValues(
   values: ApplyInstitutionSexOffenseValues,
 ): Record<string, unknown> {
+  const inquiryMethod =
+    values.inquiryMethod === 'ja_system' || values.inquiryMethod === 'criminal_record_site'
+      ? values.inquiryMethod
+      : FIXED_INQUIRY_METHOD
   return {
-    inquiryMethod: FIXED_INQUIRY_METHOD,
+    inquiryMethod,
     siteSubmission: values.siteSubmission,
     institutionId: values.institutionId.trim(),
     verificationNumber: values.verificationNumber.trim(),
@@ -122,10 +142,14 @@ export function sexOffenseValuesFromDraftAnswers(
       : inq?.siteSubmission === 'online'
         ? 'online'
         : ''
+  const inquiryMethod =
+    inq?.inquiryMethod === 'ja_system' || inq?.inquiryMethod === 'criminal_record_site'
+      ? inq.inquiryMethod
+      : FIXED_INQUIRY_METHOD
   return {
     ...empty,
     submissionRequest: 'request',
-    inquiryMethod: FIXED_INQUIRY_METHOD,
+    inquiryMethod,
     siteSubmission,
     institutionId: typeof inq?.institutionId === 'string' ? inq.institutionId : '',
     verificationNumber:

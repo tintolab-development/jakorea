@@ -1,9 +1,7 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import {
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
@@ -199,7 +197,6 @@ export function DocPassedSection({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              style={{ minWidth: 180 }}
               icon={<ButtonCalendarIcon />}
               onClick={handleViewCalendar}
             >
@@ -209,7 +206,6 @@ export function DocPassedSection({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              style={{ minWidth: 180 }}
               icon={<ButtonListIcon />}
               onClick={handleViewList}
             >

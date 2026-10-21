@@ -120,6 +120,7 @@ export function useUjatVolunteerDocScreeningColumns({
         fixed: 'left',
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
         onCell: () => ({ className: CENTER_CELL_CLASS }),
+        render: (value: string) => value?.trim() || '-',
       },
       {
         title: '희망 교육 활동 지역',
@@ -131,6 +132,7 @@ export function useUjatVolunteerDocScreeningColumns({
         fixed: 'left',
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
         onCell: () => ({ className: CENTER_CELL_CLASS }),
+        render: (value: string) => value?.trim() || '-',
       },
     ]
 

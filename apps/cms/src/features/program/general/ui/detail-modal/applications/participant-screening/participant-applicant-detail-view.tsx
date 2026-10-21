@@ -11,7 +11,7 @@ import {
   type GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
 import {
-  approveGeneralIndividualApplication,
+  approveGeneralIndividualApplicationWithEducationScope,
   rejectGeneralIndividualApplication,
   submitGeneralIndividualDocumentResult,
   cancelGeneralIndividualApplicationApproval,
@@ -30,6 +30,14 @@ import {
   screeningDocPassedDetailTitle,
   screeningInterview2DetailTitle,
 } from '@/features/program/general/lib/screening-subject-kind'
+import {
+  formatIndividualApprovalScopeErrorMessage,
+  invalidateIndividualApprovalScopeQueries,
+  isEducationScopeRevisionConflict,
+  isRejectedEducationScheduleSelectionError,
+  parseRejectedEducationScheduleIds,
+} from '@/features/program/general/lib/individual-approval-education-scope'
+import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
 import {
   ParticipantApproveModal,
   ParticipantCancelApprovalModal,
@@ -684,15 +692,95 @@ export function GeneralParticipantApplicantDetailView({
           }
         }}
       />
+      <IndividualApproveScopeModal
+        open={screeningStage !== 'doc1' && approveTarget != null}
+        participantName={approveTarget?.name ?? applicant.applicantName}
+        programId={program.id}
+        program={program}
+        preferredEducationSchedules={applicant.preferredEducationSchedules}
+        confirmLoading={decisionBusy}
+        onCancel={() => {
+          if (decisionBusy) return
+          setApproveTarget(null)
+        }}
+        onConfirm={payload => {
+          if (!approveTarget || decisionBusy) return Promise.resolve()
+          const run = async () => {
+            if (!useRemote) {
+              void showAlert({
+                title: '승인 불가',
+                content: '개인 프로그램 승인 API를 사용할 수 없습니다.',
+              })
+              return
+            }
+            setDecisionBusy(true)
+            try {
+              const response = await approveGeneralIndividualApplicationWithEducationScope(
+                applicant.id,
+                {
+                  confirmedScheduleIds: payload.confirmedScheduleIds,
+                  expectedScopeRevision: payload.expectedScopeRevision,
+                  reason: payload.reason,
+                }
+              )
+              await invalidateIndividualApprovalScopeQueries(queryClient, {
+                programId: program.id,
+                applicationIds: [applicant.id],
+                participantIds:
+                  response.decision?.participantId != null
+                    ? [response.decision.participantId]
+                    : [],
+              })
+              if (response.decision?.toStatus && response.decision.toStatus !== 'APPROVED') {
+                void showAlert({
+                  title: '승인 결과 확인',
+                  content: `신청 상태가 ${response.decision.toStatus}로 변경되었습니다.`,
+                })
+                return
+              }
+              syncApplicant(
+                patchGeneralIndividualApplicantForApprovalStatus(applicant, 'approved', {
+                  notifyTiming: payload.notifyTiming,
+                  manualNotifyAt: payload.manualNotifyAt ?? undefined,
+                })
+              )
+              setApproveTarget(null)
+              void showAlert({
+                title: '승인 완료',
+                content: '승인되었습니다.',
+              })
+            } catch (error) {
+              await invalidateIndividualApprovalScopeQueries(queryClient, {
+                programId: program.id,
+                applicationIds: [applicant.id],
+              })
+              const message = formatIndividualApprovalScopeErrorMessage(error)
+              void showAlert({
+                title: isEducationScopeRevisionConflict(error) ? '교육 일정 갱신' : '처리 실패',
+                content: isEducationScopeRevisionConflict(error)
+                  ? `${message}\n최신 교육 일정을 다시 불러왔습니다. 선택을 확인한 뒤 다시 승인해 주세요.`
+                  : message,
+              })
+              if (isRejectedEducationScheduleSelectionError(error)) {
+                const rejectedScheduleIds = parseRejectedEducationScheduleIds(error)
+                if (rejectedScheduleIds.length > 0) return { rejectedScheduleIds }
+              }
+            } finally {
+              setDecisionBusy(false)
+            }
+          }
+          return run()
+        }}
+      />
       <ParticipantApproveModal
-        open={approveTarget != null}
+        open={screeningStage === 'doc1' && approveTarget != null}
         participantName={approveTarget?.name ?? ''}
         onCancel={() => {
           if (decisionBusy) return
           setApproveTarget(null)
         }}
         onConfirm={payload => {
-          if (!approveTarget || decisionBusy) return
+          if (!approveTarget || decisionBusy || screeningStage !== 'doc1') return
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -701,11 +789,7 @@ export function GeneralParticipantApplicantDetailView({
             if (useRemote) {
               setDecisionBusy(true)
               try {
-                if (screeningStage === 'doc1') {
-                  await submitGeneralIndividualDocumentResult(applicant.id, { result: 'PASS' })
-                } else {
-                  await approveGeneralIndividualApplication(applicant.id)
-                }
+                await submitGeneralIndividualDocumentResult(applicant.id, { result: 'PASS' })
                 await invalidateIndividualApplications()
               } catch (error) {
                 notifyDecisionFailure(error)
@@ -713,22 +797,12 @@ export function GeneralParticipantApplicantDetailView({
               } finally {
                 setDecisionBusy(false)
               }
-            } else {
-              updateGeneralIndividualApplicantApprovalStatus(applicant.id, 'approved', notifyOptions)
             }
-            const patched =
-              screeningStage === 'doc1'
-                ? {
-                    ...applicant,
-                    documentScreeningStatus: 'pass' as const,
-                    approvalNotifyTiming: notifyOptions.notifyTiming,
-                  }
-                : patchGeneralIndividualApplicantForApprovalStatus(
-                    applicant,
-                    'approved',
-                    notifyOptions
-                  )
-            syncApplicant(patched)
+            syncApplicant({
+              ...applicant,
+              documentScreeningStatus: 'pass' as const,
+              approvalNotifyTiming: notifyOptions.notifyTiming,
+            })
             setApproveTarget(null)
             showApplicationApprovalCompletedAlert()
           }

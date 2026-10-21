@@ -15,6 +15,8 @@ import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/
 export type PreferredEducationSchedule = PreferredEducationScheduleResponse & {
   label?: string | null
   unresolvedReason?: 'AMBIGUOUS_SCHEDULE_MATCH' | 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' | null
+  /** TT 기관 신청 상세의 서버 일정 매칭 상태. 일반 기관 응답에는 없을 수 있음. */
+  scheduleStatus?: 'MATCHED' | 'UNMATCHED' | 'INACTIVE_OR_DELETED' | string | null
 }
 
 /** GET individual-applications list item + P1 assigned interview enrich */

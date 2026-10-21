@@ -16,6 +16,8 @@ import {
   readPortalRecruitmentFocus,
   resolveProgramApplyFormCase,
   shouldShowIndividualTeamInfoParagraph,
+  isVolunteerApplyFormCase,
+  isUjatInstitutionApplyFormCase,
   useProgramApplicationForm,
   useProgramDetail,
   useSubmitProgramApplication,
@@ -54,6 +56,12 @@ import {
 } from '@/features/program/lib/application-form-draft'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import {
+  hasEducationFormatSystemField,
+  isEducationFormatErrorField,
+  readPreferredEducationFormChoice,
+  shouldShowPreferredEducationForm,
+} from '@/features/program/lib/application-education-format-policy'
+import {
   isApplicationBasicInfoParagraphId,
   isApplicationGuidanceParagraphId,
   isApplicationPreferredScheduleParagraphId,
@@ -70,6 +78,11 @@ import {
   isVolunteerActivityScheduleParagraphId,
   isVolunteerFreeTextItemsParagraphId,
   isVolunteerPreviousJaProgramParagraphId,
+  isUjatInstitutionBasicInfoParagraphId,
+  isUjatInstitutionClassTimeParagraphId,
+  isUjatInstitutionGradeInfoParagraphId,
+  isUjatInstitutionPreferredScheduleParagraphId,
+  isUjatSubmitConfirmationParagraphId,
   isUjatVolunteerBasicInfoParagraphId,
   isUjatVolunteerFreeTextItemsParagraphId,
   isUjatVolunteerPreviousTermParagraphId,
@@ -93,11 +106,11 @@ import {
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
   buildEnabledDatesFromEducationScheduleLines,
-  buildTrainedTeachersFixedScheduleOptions,
   mergeApplyScheduleVisibilityFields,
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideRuntime,
   isRuntimeScheduleNotConfigured,
+  isTrainedTeachersOrganizationPeriodDateRequests,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
@@ -112,14 +125,14 @@ import {
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
   resolveApplyPreferredScheduleMaxBlocks,
-  resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyPreferredScheduleSessionSelect,
   shouldShowApplySchedulePeriodDateOnlyPreferred,
 } from '@/features/program/lib/apply-form-schedule'
 import {
+  capFixedScheduleSelectedIds,
   preferredScheduleBlocksFromDraftAnswers,
-  toFixedScheduleOptionAnswerValue,
+  selectedFixedScheduleIdsFromDraftAnswer,
   toPortalPreferredScheduleBlocks,
   toPreferredScheduleAnswerValue,
   findIncompletePreferredScheduleMessage,
@@ -159,6 +172,8 @@ import {
 import {
   ApplyInstitutionSexOffenseInquiry,
   ApplyInstitutionSexOffenseSubmission,
+  ApplyInstitutionSexOffenseUjatWrite,
+  findIncompleteUjatSexOffenseWriteMessage,
   emptyInstitutionSexOffense,
   findIncompleteSexOffenseMessage,
   sexOffenseInquiryAnswerFromValues,
@@ -229,16 +244,83 @@ import {
   ujatVolunteerPreviousTermValuesFromDraftAnswer,
   type ApplyUjatVolunteerPreviousTermValues,
 } from '@/features/program/ui/apply-ujat-volunteer-previous-term/apply-ujat-volunteer-previous-term'
+import {
+  ApplyUjatInstitutionBasicInfo,
+  emptyUjatInstitutionBasicInfo,
+  fillUjatInstitutionBasicInfoFromProfile,
+  findIncompleteUjatInstitutionBasicInfoMessage,
+  ujatInstitutionBasicInfoAnswerFromValues,
+  ujatInstitutionBasicInfoValuesFromDraftAnswer,
+  type ApplyUjatInstitutionBasicInfoValues,
+} from '@/features/program/ui/apply-ujat-institution-basic-info/apply-ujat-institution-basic-info'
+import {
+  ApplyUjatInstitutionGradeInfo,
+  appendUjatInstitutionGradeBlock,
+  emptyUjatInstitutionGradeBlocks,
+  findIncompleteUjatInstitutionGradeInfoMessage,
+  ujatInstitutionGradeAnswerFromValues,
+  ujatInstitutionGradeValuesFromDraftAnswer,
+  type ApplyUjatGradeBlock,
+} from '@/features/program/ui/apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
+import {
+  ApplyUjatInstitutionClassTime,
+  appendUjatInstitutionClassTimeBlock,
+  emptyUjatInstitutionClassTimeBlocks,
+  findIncompleteUjatInstitutionClassTimeMessage,
+  ujatInstitutionClassTimeAnswerFromValues,
+  ujatInstitutionClassTimeValuesFromDraftAnswer,
+  type ApplyUjatClassTimeBlock,
+} from '@/features/program/ui/apply-ujat-institution-class-time/apply-ujat-institution-class-time'
+import {
+  ApplyUjatInstitutionPreferredSchedule,
+  findIncompleteUjatInstitutionPreferredScheduleMessage,
+  ujatInstitutionPreferredScheduleAnswerFromValues,
+  ujatInstitutionPreferredScheduleValuesFromDraftAnswer,
+} from '@/features/program/ui/apply-ujat-institution-preferred-schedule/apply-ujat-institution-preferred-schedule'
+import {
+  ApplyUjatInstitutionSubmitConfirmation,
+  isUjatSubmitConfirmationChecked,
+  readUjatSubmitConfirmationItem,
+} from '@/features/program/ui/apply-ujat-institution-submit-confirmation/apply-ujat-institution-submit-confirmation'
+import { preparePortalUjatApplicationDraft } from '@/features/program/lib/ujat-application-fill-placeholders'
+import { readUjatPreferredEducationScheduleOptions } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
-import { PFAlertModal, PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFCheckbox,
+  PFText,
+  PFTextarea,
+  PFTextInput,
+} from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
+}
+
+function ScheduleChoiceLabel({ label }: { label: string }) {
+  const parts = label.split(/\s*\|\s*/).filter(part => part.length > 0)
+  if (parts.length < 2) return label
+
+  return (
+    <span className={styles.scheduleChoiceLabel}>
+      {parts.map((part, index) => (
+        <span key={`${part}-${index}`} className={styles.scheduleChoiceSegment}>
+          {part}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+function TrainedTeacherScheduleChoiceLabel({ label }: { label: string }) {
+  const separatorIndex = label.indexOf('|')
+  return separatorIndex >= 0 ? label.slice(0, separatorIndex).trim() : label
 }
 
 function findDraftParagraph(
@@ -304,23 +386,21 @@ export function ProgramApplyPage() {
     status === 'ready'
   const applicationFormQuery = useProgramApplicationForm(
     remoteApplyEnabled && !program?.recruitmentSelectionAmbiguous ? programId : null,
-    focus
-      ? {
-          recruitmentId: focus.recruitmentIds?.[0],
-          recruitmentIds: focus.recruitmentIds,
-          applicationTypes: focus.applicationTypes,
-        }
-      : null
+    {
+      recruitmentId: focus?.recruitmentIds?.[0],
+      recruitmentIds: focus?.recruitmentIds,
+      applicationTypes: focus?.applicationTypes,
+      programType: program?.programType,
+    }
   )
   const submitMutation = useSubmitProgramApplication(numericProgramId)
   const profileQuery = usePortalProfileQuery({ enabled: remoteApplyEnabled })
-  const applicationSelection = focus
-    ? {
-        recruitmentId: focus.recruitmentIds?.[0],
-        recruitmentIds: focus.recruitmentIds,
-        applicationTypes: focus.applicationTypes,
-      }
-    : null
+  const applicationSelection = {
+    recruitmentId: focus?.recruitmentIds?.[0],
+    recruitmentIds: focus?.recruitmentIds,
+    applicationTypes: focus?.applicationTypes,
+    programType: program?.programType,
+  }
   const { gateModal, setGateModal, closeGateModal, readGateModalForOptions } = useProgramApplyGate(
     programId,
     applicationSelection
@@ -394,6 +474,9 @@ export function ProgramApplyPage() {
   const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
     createEmptyPreferredBlock(),
   ])
+  const [trainedTeachersFixedSelectedIds, setTrainedTeachersFixedSelectedIds] = useState<string[]>(
+    []
+  )
   const [basicInfo, setBasicInfo] = useState<ApplyTrainedTeachersBasicInfoValues>(
     emptyTrainedTeachersBasicInfo
   )
@@ -425,6 +508,15 @@ export function ProgramApplyPage() {
     useState<ApplyUjatVolunteerBasicInfoValues>(emptyUjatVolunteerBasicInfo)
   const [ujatVolunteerPreviousTerm, setUjatVolunteerPreviousTerm] =
     useState<ApplyUjatVolunteerPreviousTermValues>(emptyUjatVolunteerPreviousTerm)
+  const [ujatInstitutionBasicInfo, setUjatInstitutionBasicInfo] =
+    useState<ApplyUjatInstitutionBasicInfoValues>(emptyUjatInstitutionBasicInfo)
+  const [ujatInstitutionGradeBlocks, setUjatInstitutionGradeBlocks] = useState<
+    ApplyUjatGradeBlock[]
+  >(emptyUjatInstitutionGradeBlocks)
+  const [ujatInstitutionClassTimeBlocks, setUjatInstitutionClassTimeBlocks] = useState<
+    ApplyUjatClassTimeBlock[]
+  >(emptyUjatInstitutionClassTimeBlocks)
+  const [ujatPreferredScheduleIds, setUjatPreferredScheduleIds] = useState<string[]>([])
   const [submitAlert, setSubmitAlert] = useState<{
     description: string
     promptSettingsGrade?: boolean
@@ -457,12 +549,36 @@ export function ProgramApplyPage() {
   const profileTeacherName = profileDefaults.teacherName
   const profileTeacherMobile = profileDefaults.teacherMobile
   const profileTeacherEmail = profileDefaults.teacherEmail
-  const showPreferredEducationForm = program?.educationForm === 'participant_choice'
   const remoteForm = applicationFormQuery.bundle?.form
   const applicationFormDocument = useMemo(
     () => coerceApplicationFormDocument(remoteForm),
     [remoteForm]
   )
+  const applicationFormRuntimeContext = applicationFormDocument?.runtimeContext
+  const ujatPreferredScheduleOptions = useMemo(
+    () =>
+      readUjatPreferredEducationScheduleOptions({
+        runtimeContext: applicationFormRuntimeContext,
+      }),
+    [applicationFormRuntimeContext],
+  )
+  const serverPreferredEducationFormChoice = readPreferredEducationFormChoice(
+    applicationFormRuntimeContext,
+  )
+  const hasEducationFormatField = hasEducationFormatSystemField(applicationFormDocument)
+  const showPreferredEducationForm = shouldShowPreferredEducationForm({
+    formDocument: applicationFormDocument,
+    runtimeContext: applicationFormRuntimeContext,
+    legacyEducationForm: program?.educationForm,
+  })
+
+  useEffect(() => {
+    if (serverPreferredEducationFormChoice === true && !hasEducationFormatField) {
+      console.warn(
+        '[portal-application-form] runtimeContext.showEducationFormChoice=true but educationFormat metadata is missing',
+      )
+    }
+  }, [hasEducationFormatField, serverPreferredEducationFormChoice])
   const educationScheduleLinesForApply = useMemo(
     () =>
       readEducationScheduleLinesForApplicationForm(
@@ -522,13 +638,22 @@ export function ProgramApplyPage() {
   )
   const trainedTeachersScheduleInputMode = useMemo(
     () =>
-      readApplyScheduleInputMode(applicationFormDocument?.runtimeContext),
-    [applicationFormDocument]
+      readApplyScheduleInputMode(
+        applicationFormDocument?.runtimeContext,
+        trainedTeachersScheduleParagraph
+      ),
+    [applicationFormDocument, trainedTeachersScheduleParagraph]
   )
   const useTrainedTeachersOperatingPeriod =
-    program?.programType?.trim().toUpperCase() === 'TRAINED_TEACHER' &&
-    program?.educationScheduleMode === 'period' &&
-    trainedTeachersScheduleInputMode === 'date_time_requests'
+    showTrainedTeachersApply &&
+    trainedTeachersScheduleInputMode === 'date_time_requests' &&
+    (isTrainedTeachersOrganizationPeriodDateRequests(
+      applicationFormDocument?.runtimeContext,
+      trainedTeachersScheduleParagraph
+    ) ||
+      // 구 runtime에 programType/flavor가 없을 때: 기간형 + 기관 신청만 동일 경로
+      (applicationScheduleVisibility.educationScheduleMode === 'period' &&
+        (focusedApplicationType === 'ORGANIZATION' || applyCase === 'trained-teachers')))
   const trainedTeachersRuntimeFixedScheduleChoices = useMemo(
     () =>
       readRuntimeFixedScheduleChoiceItems(
@@ -594,21 +719,22 @@ export function ProgramApplyPage() {
   const trainedTeachersScheduleParagraphForcedHidden =
     trainedTeachersScheduleVisibility.educationStructure === 'schedule' &&
     trainedTeachersScheduleVisibility.sessionRound === 'multi'
+  const isTrainedTeachersFixedScheduleOptions =
+    showTrainedTeachersApply &&
+    program != null &&
+    trainedTeachersScheduleInputMode === 'fixed_schedule_options' &&
+    !trainedTeachersScheduleParagraphForcedHidden
   const showTrainedTeachersPreferredSchedule =
     showTrainedTeachersApply &&
     program != null &&
-    (trainedTeachersScheduleInputMode === 'fixed_schedule_options'
-      ? !trainedTeachersScheduleParagraphForcedHidden &&
-        (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 0
-      : shouldShowApplyPreferredSchedule(trainedTeachersScheduleVisibility))
+    !isTrainedTeachersFixedScheduleOptions &&
+    (trainedTeachersScheduleInputMode === 'date_time_requests' ||
+      trainedTeachersScheduleInputMode == null) &&
+    shouldShowApplyPreferredSchedule(trainedTeachersScheduleVisibility)
   const showPreferredScheduleInput =
     showTrainedTeachersPreferredSchedule ||
     showGeneralPreferredSchedule ||
     showEconomyPreferredSchedule
-  const applicationFormRuntimeContext = useMemo(
-    () => coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-    [remoteForm]
-  )
   const institutionPreferredSessionSelect = useMemo(() => {
     if (!program || !showGeneralPreferredSchedule) {
       return { show: false, options: [] as { value: string; label: string }[] }
@@ -635,18 +761,8 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
-    if (trainedTeachersScheduleInputMode === 'fixed_schedule_options') {
-      return resolveApplyPreferredScheduleMaxBlocksFromFixedOptions(
-        trainedTeachersRuntimeFixedScheduleChoices
-      )
-    }
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
-  }, [
-    applicationFormRuntimeContext,
-    program,
-    trainedTeachersRuntimeFixedScheduleChoices,
-    trainedTeachersScheduleInputMode,
-  ])
+  }, [applicationFormRuntimeContext, program])
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
@@ -657,58 +773,55 @@ export function ProgramApplyPage() {
   const trainedTeachersEnabledDates = useMemo(() => {
     if (
       !showTrainedTeachersPreferredSchedule ||
-      program?.educationScheduleMode === 'period' ||
-      trainedTeachersScheduleInputMode === 'fixed_schedule_options'
+      applicationScheduleVisibility.educationScheduleMode === 'period'
     ) {
       return null
     }
     return buildEnabledDatesFromEducationScheduleLines(educationScheduleLinesForApply)
   }, [
+    applicationScheduleVisibility.educationScheduleMode,
     educationScheduleLinesForApply,
-    program?.educationScheduleMode,
     showTrainedTeachersPreferredSchedule,
-    trainedTeachersScheduleInputMode,
   ])
   const trainedTeachersScheduleDateBounds = useMemo(() => {
     if (!useTrainedTeachersOperatingPeriod) {
       return { minScheduleDate: null, maxScheduleDate: null }
     }
-    return resolveRuntimeScheduleDateBounds(applicationFormRuntimeContext)
-  }, [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod])
+    return resolveRuntimeScheduleDateBounds(
+      applicationFormRuntimeContext,
+      trainedTeachersScheduleParagraph
+    )
+  }, [
+    applicationFormRuntimeContext,
+    trainedTeachersScheduleParagraph,
+    useTrainedTeachersOperatingPeriod,
+  ])
   const trainedTeachersScheduleEnabledDates = useMemo(() => {
     if (!useTrainedTeachersOperatingPeriod) return null
-    return resolveRuntimeScheduleEnabledDates(applicationFormRuntimeContext, true)
-  }, [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod])
+    return resolveRuntimeScheduleEnabledDates(
+      applicationFormRuntimeContext,
+      true,
+      trainedTeachersScheduleParagraph
+    )
+  }, [
+    applicationFormRuntimeContext,
+    trainedTeachersScheduleParagraph,
+    useTrainedTeachersOperatingPeriod,
+  ])
   const trainedTeachersScheduleNotConfigured = useMemo(
     () =>
       useTrainedTeachersOperatingPeriod &&
-      isRuntimeScheduleNotConfigured(applicationFormRuntimeContext),
-    [applicationFormRuntimeContext, useTrainedTeachersOperatingPeriod]
+      isRuntimeScheduleNotConfigured(
+        applicationFormRuntimeContext,
+        trainedTeachersScheduleParagraph
+      ),
+    [
+      applicationFormRuntimeContext,
+      trainedTeachersScheduleParagraph,
+      useTrainedTeachersOperatingPeriod,
+    ]
   )
-  const trainedTeachersFixedScheduleOptions = useMemo(() => {
-    if (!showTrainedTeachersPreferredSchedule || program?.educationScheduleMode === 'period') {
-      return []
-    }
-    if (trainedTeachersScheduleInputMode === 'fixed_schedule_options') {
-      if (trainedTeachersRuntimeFixedScheduleChoices == null) return []
-      return trainedTeachersRuntimeFixedScheduleChoices.map(choice => ({
-        value: choice.id,
-        label: choice.label,
-        date: '',
-        classPeriod: '',
-        startTime: '',
-        endTime: '',
-      }))
-    }
-    const fallbackOptions = buildTrainedTeachersFixedScheduleOptions(educationScheduleLinesForApply)
-    return fallbackOptions
-  }, [
-    educationScheduleLinesForApply,
-    program?.educationScheduleMode,
-    showTrainedTeachersPreferredSchedule,
-    trainedTeachersRuntimeFixedScheduleChoices,
-    trainedTeachersScheduleInputMode,
-  ])
+  const trainedTeachersFixedScheduleChoiceItems = trainedTeachersRuntimeFixedScheduleChoices ?? []
   const applicationRecruitmentLimits = useMemo(
     () => readApplicationScheduleRecruitmentLimitsFromRuntime(applicationFormRuntimeContext),
     [applicationFormRuntimeContext]
@@ -744,7 +857,7 @@ export function ProgramApplyPage() {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
     const found = paragraphs.find(
-      applyCase === 'individual-volunteer'
+      isVolunteerApplyFormCase(applyCase)
         ? isDynamicVolunteerInterviewParagraph
         : isDynamicIndividualInterviewParagraph
     )
@@ -841,13 +954,20 @@ export function ProgramApplyPage() {
             ...program,
             applicationType: focusedApplicationType,
           })
-          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(remoteDraft, {
-            applyCase: applyCaseForDraft,
-            program,
-            runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-          })
+          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(
+            preparePortalUjatApplicationDraft(
+              remoteDraft,
+              new Date(),
+              coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+            ),
+            {
+              applyCase: applyCaseForDraft,
+              program,
+              runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+            }
+          )
           const bindingMergedDraft =
-            applyCaseForDraft === 'individual-volunteer' || applyCaseForDraft === 'instructor'
+            isVolunteerApplyFormCase(applyCaseForDraft) || applyCaseForDraft === 'instructor'
               ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
               : programLinkedDraft
           setDraft(
@@ -888,6 +1008,18 @@ export function ProgramApplyPage() {
                     resolveApplyPreferredScheduleInitialBlockCount(program)
                   )
                 : [createEmptyPreferredBlock()])
+          )
+          setTrainedTeachersFixedSelectedIds(
+            selectedFixedScheduleIdsFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                preferredParagraph ??
+                  findDraftParagraph(
+                    remoteDraft,
+                    id => id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+                  )
+              )
+            )
           )
           const basicParagraph = findDraftParagraph(
             programLinkedDraft,
@@ -986,6 +1118,41 @@ export function ProgramApplyPage() {
               )
             ) ?? emptyUjatVolunteerPreviousTerm()
           )
+          setUjatInstitutionBasicInfo(
+            fillUjatInstitutionBasicInfoFromProfile(
+              ujatInstitutionBasicInfoValuesFromDraftAnswer(
+                draftAnswerForParagraph(
+                  draftAnswers,
+                  findDraftParagraph(remoteDraft, isUjatInstitutionBasicInfoParagraphId)
+                )
+              ) ?? emptyUjatInstitutionBasicInfo(),
+              profileDefaults
+            )
+          )
+          setUjatInstitutionGradeBlocks(
+            ujatInstitutionGradeValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isUjatInstitutionGradeInfoParagraphId)
+              )
+            ) ?? emptyUjatInstitutionGradeBlocks()
+          )
+          setUjatInstitutionClassTimeBlocks(
+            ujatInstitutionClassTimeValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isUjatInstitutionClassTimeParagraphId)
+              )
+            ) ?? emptyUjatInstitutionClassTimeBlocks()
+          )
+          setUjatPreferredScheduleIds(
+            ujatInstitutionPreferredScheduleValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isUjatInstitutionPreferredScheduleParagraphId)
+              )
+            ) ?? []
+          )
           return
         }
         /** 원격 양식은 왔는데 문서를 못 읽으면 카탈로그 시드로 바꾸지 않는다. */
@@ -1031,6 +1198,12 @@ export function ProgramApplyPage() {
       setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
       setUjatVolunteerBasicInfo(emptyUjatVolunteerBasicInfo())
       setUjatVolunteerPreviousTerm(emptyUjatVolunteerPreviousTerm())
+      setUjatInstitutionBasicInfo(
+        fillUjatInstitutionBasicInfoFromProfile(emptyUjatInstitutionBasicInfo(), profileDefaults)
+      )
+      setUjatInstitutionGradeBlocks(emptyUjatInstitutionGradeBlocks())
+      setUjatInstitutionClassTimeBlocks(emptyUjatInstitutionClassTimeBlocks())
+      setUjatPreferredScheduleIds([])
       return
     }
 
@@ -1038,10 +1211,12 @@ export function ProgramApplyPage() {
     if (hydratedFormKeyRef.current === mockKey) return
     hydratedFormKeyRef.current = mockKey
     setDraft(
-      buildApplyFormSeedDraft({
-        ...program,
-        applicationType: focusedApplicationType,
-      })
+      preparePortalUjatApplicationDraft(
+        buildApplyFormSeedDraft({
+          ...program,
+          applicationType: focusedApplicationType,
+        })
+      )
     )
     setPreferredBlocks([createEmptyPreferredBlock()])
     setBasicInfo(emptyTrainedTeachersBasicInfo())
@@ -1057,6 +1232,10 @@ export function ProgramApplyPage() {
     setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
     setUjatVolunteerBasicInfo(emptyUjatVolunteerBasicInfo())
     setUjatVolunteerPreviousTerm(emptyUjatVolunteerPreviousTerm())
+    setUjatInstitutionBasicInfo(emptyUjatInstitutionBasicInfo())
+    setUjatInstitutionGradeBlocks(emptyUjatInstitutionGradeBlocks())
+    setUjatInstitutionClassTimeBlocks(emptyUjatInstitutionClassTimeBlocks())
+    setUjatPreferredScheduleIds([])
   }, [
     program,
     programId,
@@ -1072,6 +1251,9 @@ export function ProgramApplyPage() {
 
   useEffect(() => {
     setBasicInfo(prev => fillTrainedTeachersBasicInfoFromProfile(prev, profileDefaults))
+    setUjatInstitutionBasicInfo(prev =>
+      fillUjatInstitutionBasicInfoFromProfile(prev, profileDefaults)
+    )
   }, [profileDefaults])
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
@@ -1116,6 +1298,7 @@ export function ProgramApplyPage() {
             teacherMobileEmailLocked={shouldLockTeacherMobileEmailOnBasicInfo(paragraph.id)}
             answerKeyPlaceholders
             showPreferredEducationForm={showPreferredEducationForm}
+            educationFormatError={isEducationFormatErrorField(submitErrorField)}
             maxClassCount={applicationRecruitmentLimits.maxClassCount}
             showEducationPlace={shouldShowEducationPlaceOnBasicInfo(paragraph.id)}
             profile={{
@@ -1134,14 +1317,26 @@ export function ProgramApplyPage() {
       }
 
       if (isApplicationGuidanceParagraphId(paragraph.id)) {
-        return <ApplyInstitutionGuidance value={guidanceAnswers} onChange={setGuidanceAnswers} />
+        return (
+          <ApplyInstitutionGuidance
+            value={guidanceAnswers}
+            onChange={setGuidanceAnswers}
+            variant={isUjatInstitutionApplyFormCase(applyCase) ? 'ujat' : 'general'}
+          />
+        )
       }
 
       if (isApplicationSexOffenseSubmissionParagraphId(paragraph.id)) {
+        if (isUjatInstitutionApplyFormCase(applyCase)) {
+          return (
+            <ApplyInstitutionSexOffenseUjatWrite value={sexOffense} onChange={setSexOffense} />
+          )
+        }
         return <ApplyInstitutionSexOffenseSubmission value={sexOffense} onChange={setSexOffense} />
       }
 
       if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
+        if (isUjatInstitutionApplyFormCase(applyCase)) return <></>
         return <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
       }
 
@@ -1179,6 +1374,74 @@ export function ProgramApplyPage() {
       if (isAnyVolunteerFreeTextItemsParagraphId(paragraph.id)) {
         return (
           <ApplyVolunteerFreeTextItems value={volunteerFreeText} onChange={setVolunteerFreeText} />
+        )
+      }
+
+      if (isUjatInstitutionBasicInfoParagraphId(paragraph.id)) {
+        return (
+          <ApplyUjatInstitutionBasicInfo
+            value={ujatInstitutionBasicInfo}
+            onChange={setUjatInstitutionBasicInfo}
+            schoolNameLocked={profileSchoolLocked}
+            profile={{
+              schoolName: profileSchool,
+              regionLabel: profileRegionLabel,
+              teacherName: profileTeacherName,
+              teacherMobile: profileTeacherMobile,
+              teacherEmail: profileTeacherEmail,
+            }}
+          />
+        )
+      }
+
+      if (isUjatInstitutionGradeInfoParagraphId(paragraph.id)) {
+        return (
+          <ApplyUjatInstitutionGradeInfo
+            value={ujatInstitutionGradeBlocks}
+            onChange={setUjatInstitutionGradeBlocks}
+          />
+        )
+      }
+
+      if (isUjatInstitutionClassTimeParagraphId(paragraph.id)) {
+        return (
+          <ApplyUjatInstitutionClassTime
+            value={ujatInstitutionClassTimeBlocks}
+            onChange={setUjatInstitutionClassTimeBlocks}
+            gradeBlocks={ujatInstitutionGradeBlocks}
+          />
+        )
+      }
+
+      if (isUjatInstitutionPreferredScheduleParagraphId(paragraph.id)) {
+        return (
+          <ApplyUjatInstitutionPreferredSchedule
+            options={ujatPreferredScheduleOptions}
+            selectedIds={ujatPreferredScheduleIds}
+            onChange={setUjatPreferredScheduleIds}
+          />
+        )
+      }
+
+      if (isUjatSubmitConfirmationParagraphId(paragraph.id)) {
+        const item = readUjatSubmitConfirmationItem(paragraph)
+        if (!item) return undefined
+        return (
+          <ApplyUjatInstitutionSubmitConfirmation
+            label={item.label}
+            checked={isUjatSubmitConfirmationChecked(paragraph)}
+            onCheckedChange={checked => {
+              updateParagraph(paragraph.id, current => {
+                if (current.kind !== 'single_item' || current.variant !== 'multiple_choice') {
+                  return current
+                }
+                return {
+                  ...current,
+                  selectedPreviewSingleId: checked ? item.id : null,
+                }
+              })
+            }}
+          />
         )
       }
 
@@ -1248,6 +1511,62 @@ export function ProgramApplyPage() {
         (showTrainedTeachersPreferredSchedule &&
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
 
+      if (
+        isTrainedTeachersFixedScheduleOptions &&
+        paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+      ) {
+        const choiceItems = trainedTeachersFixedScheduleChoiceItems
+        if (choiceItems.length === 0) {
+          return (
+            <PFText as="p" typo="bd-md-md" color="neutral-cool-600">
+              선택 가능한 교육 일정이 없습니다.
+            </PFText>
+          )
+        }
+        const maxCount = applicationRecruitmentLimits.maxScheduleCount
+        return (
+          <div className={styles.scheduleChoiceBlock}>
+            <PFText
+              as="p"
+              typo="bd-md-rg"
+              color="neutral-cool-500"
+              className={styles.scheduleChoiceDescription}
+            >
+              진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.
+            </PFText>
+            <div className={styles.multipleChoice}>
+              {choiceItems.map(item => {
+                const checked = trainedTeachersFixedSelectedIds.includes(item.id)
+                const atCap =
+                  maxCount != null &&
+                  maxCount >= 1 &&
+                  trainedTeachersFixedSelectedIds.length >= maxCount &&
+                  !checked
+                return (
+                  <PFCheckbox
+                    key={item.id}
+                    className={styles.multipleChoiceItem}
+                    size="large"
+                    checked={checked}
+                    disabled={atCap}
+                    onCheckedChange={nextChecked => {
+                      setTrainedTeachersFixedSelectedIds(prev => {
+                        const next = nextChecked
+                          ? capFixedScheduleSelectedIds([...prev, item.id], maxCount)
+                          : prev.filter(id => id !== item.id)
+                        return next
+                      })
+                    }}
+                  >
+                    <TrainedTeacherScheduleChoiceLabel label={item.label} />
+                  </PFCheckbox>
+                )
+              })}
+            </div>
+          </div>
+        )
+      }
+
       if (isPreferredScheduleSlot && showPreferredScheduleInput) {
         const useInstitutionScheduleBounds =
           showGeneralPreferredSchedule && isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
@@ -1280,9 +1599,6 @@ export function ProgramApplyPage() {
                   : null
             }
             disabled={trainedTeachersScheduleNotConfigured}
-            fixedScheduleOptions={
-              showTrainedTeachersApply ? trainedTeachersFixedScheduleOptions : undefined
-            }
             showSessionSelect={
               showGeneralPreferredSchedule && institutionPreferredSessionSelect.show
             }
@@ -1371,7 +1687,11 @@ export function ProgramApplyPage() {
                   })
                 }}
               >
-                {item.label}
+                {isApplyScheduleChoiceParagraphId(paragraph.id) ? (
+                  <ScheduleChoiceLabel label={item.label} />
+                ) : (
+                  item.label
+                )}
               </PFCheckbox>
             ))}
           </div>
@@ -1481,6 +1801,11 @@ export function ProgramApplyPage() {
       volunteerActivitySlots,
       ujatVolunteerBasicInfo,
       ujatVolunteerPreviousTerm,
+      ujatInstitutionBasicInfo,
+      ujatInstitutionGradeBlocks,
+      ujatInstitutionClassTimeBlocks,
+      ujatPreferredScheduleIds,
+      ujatPreferredScheduleOptions,
       applyCase,
       showTrainedTeachersApply,
       useTrainedTeachersOperatingPeriod,
@@ -1495,7 +1820,9 @@ export function ProgramApplyPage() {
       trainedTeachersScheduleEnabledDates,
       trainedTeachersScheduleNotConfigured,
       trainedTeachersDateOnlyPreferred,
-      trainedTeachersFixedScheduleOptions,
+      isTrainedTeachersFixedScheduleOptions,
+      trainedTeachersFixedScheduleChoiceItems,
+      trainedTeachersFixedSelectedIds,
       applicationRecruitmentLimits,
       applicationFormDocument,
       institutionRuntimeFixedScheduleChoices,
@@ -1518,6 +1845,26 @@ export function ProgramApplyPage() {
         (showGeneralPreferredSchedule && isApplyScheduleChoiceParagraphId(paragraph.id)) ||
         (showTrainedTeachersPreferredSchedule &&
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+
+      if (isUjatInstitutionGradeInfoParagraphId(paragraph.id)) {
+        return (
+          <ApplyPreferredScheduleAddButton
+            onClick={() => setUjatInstitutionGradeBlocks(appendUjatInstitutionGradeBlock)}
+          >
+            신청 학년 추가
+          </ApplyPreferredScheduleAddButton>
+        )
+      }
+
+      if (isUjatInstitutionClassTimeParagraphId(paragraph.id)) {
+        return (
+          <ApplyPreferredScheduleAddButton
+            onClick={() => setUjatInstitutionClassTimeBlocks(appendUjatInstitutionClassTimeBlock)}
+          >
+            수업 진행 시간 추가
+          </ApplyPreferredScheduleAddButton>
+        )
+      }
 
       if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
 
@@ -1585,7 +1932,7 @@ export function ProgramApplyPage() {
         paragraphs: displayDraft?.paragraphs ?? [],
         showSexOffenseConsentInquiryParagraph: shouldShowSexOffenseInquiry(sexOffense),
         volunteerInterviewEnabled:
-          applyCase === 'individual-volunteer'
+          isVolunteerApplyFormCase(applyCase)
             ? resolveVolunteerPortalInterviewEnabledForHidden({
                 formBinding: remoteForm,
               })
@@ -1604,15 +1951,7 @@ export function ProgramApplyPage() {
             : undefined,
       })
     )
-    const showTrainedTeachersRuntimeScheduleSelection =
-      applyCase === 'trained-teachers' &&
-      applicationScheduleVisibility.educationStructure === 'curriculum' &&
-      applicationScheduleVisibility.sessionRound === 'single' &&
-      applicationScheduleVisibility.educationScheduleMode === 'date' &&
-      trainedTeachersScheduleInputMode === 'fixed_schedule_options' &&
-      (trainedTeachersRuntimeFixedScheduleChoices?.length ?? 0) > 1 &&
-      !trainedTeachersScheduleRuntimeHidden
-    if (showTrainedTeachersRuntimeScheduleSelection) {
+    if (isTrainedTeachersFixedScheduleOptions && !trainedTeachersScheduleRuntimeHidden) {
       hidden.delete(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
     }
     if (usesOsaAvailableSchedule) {
@@ -1621,6 +1960,13 @@ export function ProgramApplyPage() {
       }
       if (applyCase === 'individual-volunteer' && volunteerActivitySlots.length === 0) {
         hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule)
+      }
+    }
+    if (displayDraft && isUjatInstitutionApplyFormCase(applyCase)) {
+      for (const paragraph of displayDraft.paragraphs) {
+        if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
+          hidden.add(paragraph.id)
+        }
       }
     }
     if (displayDraft) {
@@ -1667,8 +2013,7 @@ export function ProgramApplyPage() {
     runtimeConditionalQuestions,
     runtimeHiddenAnswerKeys,
     sexOffense,
-    trainedTeachersRuntimeFixedScheduleChoices,
-    trainedTeachersScheduleInputMode,
+    isTrainedTeachersFixedScheduleOptions,
     trainedTeachersScheduleRuntimeHidden,
     ujatVolunteerBasicInfo.applicationType,
     usesOsaAvailableSchedule,
@@ -1782,44 +2127,50 @@ export function ProgramApplyPage() {
         })
         return
       }
-      const trainedTeachersFixedScheduleValues =
-        trainedTeachersRuntimeFixedScheduleChoices?.map(choice => choice.id) ?? []
-      const trainedTeachersSingleFixedScheduleValue =
-        isTrainedTeachersFixedScheduleTarget &&
-        !trainedTeachersScheduleRuntimeHidden &&
-        hiddenParagraphIds.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) &&
-        trainedTeachersFixedScheduleValues.length === 1
-          ? trainedTeachersFixedScheduleValues[0]
-          : undefined
-      if (
-        isTrainedTeachersFixedScheduleTarget &&
-        hiddenParagraphIds.has(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule) &&
-        !trainedTeachersScheduleRuntimeHidden &&
-        trainedTeachersSingleFixedScheduleValue == null
-      ) {
-        setSubmitAlert({
-          description: '신청 가능한 교육 일정을 선택할 수 없습니다. 잠시 후 다시 시도해 주세요.',
-        })
-        return
-      }
+      const allowedTrainedTeachersFixedIds = new Set(
+        trainedTeachersFixedScheduleChoiceItems.map(choice => choice.id)
+      )
       const trainedTeachersFixedScheduleAnswer =
         isTrainedTeachersFixedScheduleTarget &&
         !trainedTeachersScheduleRuntimeHidden &&
         trainedTeachersScheduleAnswerKey
-          ? trainedTeachersSingleFixedScheduleValue != null
-            ? [trainedTeachersSingleFixedScheduleValue]
-            : toFixedScheduleOptionAnswerValue(preferredBlocks)
+          ? capFixedScheduleSelectedIds(
+              trainedTeachersFixedSelectedIds.filter(id => allowedTrainedTeachersFixedIds.has(id)),
+              applicationRecruitmentLimits.maxScheduleCount
+            )
           : null
       if (
         isTrainedTeachersFixedScheduleTarget &&
         !trainedTeachersScheduleRuntimeHidden &&
-        !trainedTeachersFixedScheduleAnswer
+        trainedTeachersFixedScheduleChoiceItems.length === 0
+      ) {
+        setSubmitAlert({
+          description: '선택 가능한 교육 일정이 없습니다.',
+        })
+        return
+      }
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        (trainedTeachersFixedScheduleAnswer == null ||
+          trainedTeachersFixedScheduleAnswer.length === 0)
       ) {
         setSubmitAlert({ description: '신청 가능한 교육 일정을 선택해 주세요.' })
         return
       }
-      const preferredScheduleBlocks =
-        showPreferredScheduleInput && !isTrainedTeachersFixedScheduleTarget
+      const preferredScheduleBlocks = isUjatInstitutionApplyFormCase(applyCase)
+        ? toPortalPreferredScheduleBlocks(
+            ujatPreferredScheduleOptions
+              .filter(option => ujatPreferredScheduleIds.includes(option.id))
+              .map(option => ({
+                date: option.date,
+                classPeriod: '',
+                startTime: '',
+                endTime: '',
+              })),
+            { dateFieldsOnly: true }
+          )
+        : showPreferredScheduleInput && !isTrainedTeachersFixedScheduleTarget
           ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
       if (showPreferredScheduleInput) {
@@ -1841,7 +2192,8 @@ export function ProgramApplyPage() {
             useTrainedTeachersOperatingPeriod &&
             hasPreferredScheduleDateOutsideRuntime(
               preferredBlocks,
-              applicationFormRuntimeContext
+              applicationFormRuntimeContext,
+              trainedTeachersScheduleParagraph
             )
           ) {
             setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
@@ -1902,9 +2254,13 @@ export function ProgramApplyPage() {
         }
       }
       const basicParagraph = findDraftParagraph(displayDraft, isApplicationBasicInfoParagraphId)
+      const existingBasicAnswer = basicParagraph
+        ? draftAnswerForParagraph(remoteForm?.draftAnswers, basicParagraph)
+        : undefined
       const basicAnswer = basicParagraph
         ? basicInfoAnswerFromValues(basicInfo, {
             includePreferredEducationFields: showPreferredEducationForm,
+            existingAnswer: existingBasicAnswer,
           })
         : null
       if (basicParagraph) {
@@ -1946,7 +2302,12 @@ export function ProgramApplyPage() {
         isApplicationSexOffenseSubmissionParagraphId
       )
       if (sexOffenseParagraph) {
-        const sexOffenseError = findIncompleteSexOffenseMessage(sexOffense)
+        const sexOffenseError = isUjatInstitutionApplyFormCase(applyCase)
+          ? findIncompleteUjatSexOffenseWriteMessage({
+              ...sexOffense,
+              submissionRequest: sexOffense.submissionRequest || 'request',
+            })
+          : findIncompleteSexOffenseMessage(sexOffense)
         if (sexOffenseError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
@@ -2069,6 +2430,54 @@ export function ProgramApplyPage() {
         const previousTermError =
           findIncompleteUjatVolunteerPreviousTermMessage(ujatVolunteerPreviousTerm)
         if (previousTermError) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const ujatInstitutionBasicParagraph = visibleDraftParagraph(
+        isUjatInstitutionBasicInfoParagraphId
+      )
+      if (ujatInstitutionBasicParagraph && isRequiredParagraph(ujatInstitutionBasicParagraph)) {
+        if (findIncompleteUjatInstitutionBasicInfoMessage(ujatInstitutionBasicInfo)) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const ujatGradeParagraph = visibleDraftParagraph(isUjatInstitutionGradeInfoParagraphId)
+      if (ujatGradeParagraph && isRequiredParagraph(ujatGradeParagraph)) {
+        if (findIncompleteUjatInstitutionGradeInfoMessage(ujatInstitutionGradeBlocks)) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const ujatClassTimeParagraph = visibleDraftParagraph(isUjatInstitutionClassTimeParagraphId)
+      if (ujatClassTimeParagraph && isRequiredParagraph(ujatClassTimeParagraph)) {
+        if (
+          findIncompleteUjatInstitutionClassTimeMessage(
+            ujatInstitutionClassTimeBlocks,
+            ujatInstitutionGradeBlocks
+          )
+        ) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const ujatPreferredParagraph = visibleDraftParagraph(
+        isUjatInstitutionPreferredScheduleParagraphId
+      )
+      if (ujatPreferredParagraph && isRequiredParagraph(ujatPreferredParagraph)) {
+        const preferredError = findIncompleteUjatInstitutionPreferredScheduleMessage(
+          ujatPreferredScheduleIds,
+          ujatPreferredScheduleOptions
+        )
+        if (preferredError) {
+          setSubmitAlert({ description: preferredError })
+          return
+        }
+      }
+      const ujatConfirmParagraph = visibleDraftParagraph(isUjatSubmitConfirmationParagraphId)
+      if (ujatConfirmParagraph && isRequiredParagraph(ujatConfirmParagraph)) {
+        if (!isUjatSubmitConfirmationChecked(ujatConfirmParagraph)) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
@@ -2205,6 +2614,28 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(ujatPreviousTermParagraph)] =
           ujatVolunteerPreviousTermAnswerFromValues(ujatVolunteerPreviousTerm)
       }
+      if (ujatInstitutionBasicParagraph) {
+        overrides[resolveApplicationAnswerKey(ujatInstitutionBasicParagraph)] =
+          ujatInstitutionBasicInfoAnswerFromValues(ujatInstitutionBasicInfo)
+      }
+      if (ujatGradeParagraph) {
+        overrides[resolveApplicationAnswerKey(ujatGradeParagraph)] =
+          ujatInstitutionGradeAnswerFromValues(ujatInstitutionGradeBlocks)
+      }
+      if (ujatClassTimeParagraph) {
+        overrides[resolveApplicationAnswerKey(ujatClassTimeParagraph)] =
+          ujatInstitutionClassTimeAnswerFromValues(
+            ujatInstitutionClassTimeBlocks,
+            ujatInstitutionGradeBlocks
+          )
+      }
+      if (ujatPreferredParagraph) {
+        overrides[resolveApplicationAnswerKey(ujatPreferredParagraph)] =
+          ujatInstitutionPreferredScheduleAnswerFromValues(
+            ujatPreferredScheduleIds,
+            ujatPreferredScheduleOptions
+          )
+      }
       const inquiryParagraph = findDraftParagraph(
         displayDraft,
         isApplicationSexOffenseInquiryParagraphId
@@ -2248,8 +2679,7 @@ export function ProgramApplyPage() {
         }
         if (
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule &&
-          hiddenParagraphIds.has(paragraph.id) &&
-          trainedTeachersSingleFixedScheduleValue == null
+          hiddenParagraphIds.has(paragraph.id)
         ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
@@ -2272,7 +2702,8 @@ export function ProgramApplyPage() {
         if (
           hiddenParagraphIds.has(paragraph.id) &&
           (isInstructorAvailableScheduleParagraphId(paragraph.id) ||
-            isVolunteerActivityScheduleParagraphId(paragraph.id))
+            isVolunteerActivityScheduleParagraphId(paragraph.id) ||
+            isVolunteerInterviewScheduleParagraphId(paragraph.id))
         ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
@@ -2290,8 +2721,23 @@ export function ProgramApplyPage() {
         )
       )
 
-      const classCount = Number.parseInt(basicInfo.classCount, 10)
-      const studentCount = Number.parseInt(basicInfo.studentCount, 10)
+      const classCount = isUjatInstitutionApplyFormCase(applyCase)
+        ? ujatInstitutionGradeBlocks.reduce(
+            (sum, block) => sum + (Number.parseInt(block.classCountInput, 10) || 0),
+            0
+          )
+        : Number.parseInt(basicInfo.classCount, 10)
+      const studentCount = isUjatInstitutionApplyFormCase(applyCase)
+        ? ujatInstitutionGradeBlocks.reduce((sum, block) => {
+            return (
+              sum +
+              Object.values(block.studentCountByIndex).reduce(
+                (inner, raw) => inner + (Number.parseInt(raw, 10) || 0),
+                0
+              )
+            )
+          }, 0)
+        : Number.parseInt(basicInfo.studentCount, 10)
 
       const submitBody = {
         recruitmentId: bundle.option.recruitmentId,

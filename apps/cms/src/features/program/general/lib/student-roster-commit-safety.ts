@@ -4,7 +4,7 @@
 
 import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
 import { validateStudentRosterExpectedRevisionNo } from '@/features/program/general/lib/student-roster-revision'
-import type { StudentRosterCommitRequest } from '@/shared/api/generated/dashboard/schemas/studentRosterCommitRequest'
+import type { OrganizationStudentRosterManualCommitRequest } from '@/features/program/general/api/student-roster-commit-types'
 
 export const STUDENT_ROSTER_PUT_MAX_ROWS = 500
 
@@ -17,6 +17,20 @@ export type StudentRosterCommitValidationCode =
   | 'DUPLICATE_ROSTER_ID'
   | 'MISSING_EXISTING_ROSTER_ROW'
   | 'ROW_COUNT_MISMATCH'
+  | 'NEW_ROW_CONTACT_REQUIRED'
+
+function isLikelyMaskedPii(value?: string | null): boolean {
+  if (!value) return false
+  return /[*•]/.test(value)
+}
+
+export function studentRosterRowHasCommitContact(
+  row: Pick<SchoolDetailStudentRow, 'contact' | 'email'>
+): boolean {
+  const phone = row.contact?.trim()
+  const email = row.email?.trim()
+  return Boolean(phone && !isLikelyMaskedPii(phone) && email && !isLikelyMaskedPii(email))
+}
 
 export type StudentRosterCommitValidationResult =
   | { ok: true }
@@ -131,6 +145,18 @@ export function validateStudentRosterCommit(input: {
     }
   }
 
+  for (let index = 0; index < commitRows.length; index += 1) {
+    const row = commitRows[index]
+    if (row == null) continue
+    if (parsePositiveRosterId(row.id) != null) continue
+    if (studentRosterRowHasCommitContact(row)) continue
+    return {
+      ok: false,
+      code: 'NEW_ROW_CONTACT_REQUIRED',
+      message: `신규 학생은 연락처와 이메일이 필요합니다. (${index + 1}행)`,
+    }
+  }
+
   return { ok: true }
 }
 
@@ -190,9 +216,9 @@ export function validateStudentRosterEditEntry(input: {
 
 /** 수동 편집 PUT body — 조회 응답의 `sourceFileObjectId`는 포함하지 않음 (import API 전용) */
 export function buildStudentRosterCommitRequestBody(input: {
-  rows: StudentRosterCommitRequest['rows']
+  rows: OrganizationStudentRosterManualCommitRequest['rows']
   expectedRevisionNo: number
-}): StudentRosterCommitRequest {
+}): OrganizationStudentRosterManualCommitRequest {
   return {
     rows: input.rows,
     expectedRevisionNo: input.expectedRevisionNo,

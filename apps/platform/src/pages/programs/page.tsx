@@ -10,6 +10,7 @@ import {
   programDetailPath,
   programListEntryKey,
   ProgramListItemRow,
+  ProgramListSkeleton,
   ProgramSort,
   readProgramsListParams,
   usePortalProgramsList,
@@ -24,7 +25,6 @@ import {
 import { useDebouncedValue, useSearchFilters } from '@/shared/hooks'
 import {
   PFPagination,
-  PFLoadingSpinner,
   PFSearchDateFilter,
   PFSearchFilter,
   PFSearchInput,
@@ -32,6 +32,7 @@ import {
   PFText,
 } from '@/shared/ui'
 import jaArrowUrl from '@/shared/assets/brand/ja-arrow.svg'
+import { SkeletonBlock } from '@/shared/ui/skeleton-block'
 import { SearchListLayout } from '@/widgets/search-list-layout'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
@@ -176,19 +177,27 @@ export function ProgramsPage() {
           </>
         }
         onFilterReset={reset}
-        toolbarTitle={`총 ${totalCount}개 프로그램`}
+        toolbarTitle={
+          isPending ? (
+            <SkeletonBlock className={styles.toolbarTitleBone} />
+          ) : (
+            `총 ${totalCount}개 프로그램`
+          )
+        }
         sort={<ProgramSort {...bindSort('sort')} />}
         pagination={
-          <PFPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={page => updateParams({ page })}
-          />
+          isPending ? null : (
+            <PFPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={page => updateParams({ page })}
+            />
+          )
         }
       >
         <div className={styles.list}>
           {isPending ? (
-            <PFLoadingSpinner centered label="프로그램을 불러오는 중" />
+            <ProgramListSkeleton />
           ) : isError ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
               프로그램을 불러오지 못했습니다.

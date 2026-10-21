@@ -17,6 +17,7 @@ import {
   createFaqRemote,
   deleteFaqCategoryRemote,
   deleteFaqRemote,
+  bulkDeleteFaqsRemote,
   fetchFaqCategoriesRemote,
   fetchFaqRemote,
   fetchFaqsRemote,
@@ -127,9 +128,8 @@ export async function deleteFaq(id: string): Promise<void> {
 }
 
 export async function deleteFaqs(ids: string[]): Promise<void> {
-  for (const id of ids) {
-    await deleteFaq(id)
-  }
+  assertFaqsRemoteReady()
+  await bulkDeleteFaqsRemote(ids)
 }
 
 export async function getFaqCategories(): Promise<CategoryRow[]> {

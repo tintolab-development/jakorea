@@ -109,6 +109,8 @@ export function parseCertificateFormSettings(
 export const INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE = 'document-4' as const
 /** 프로그램 실발급 — 봉사 활동 인증서 */
 export const VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE = 'document-5' as const
+/** 실발급 시 템플릿 위에 덮을 참여자 정보 키 — 렌더마다 새 배열을 만들지 말 것 */
+export const CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS = ['participantInfo'] as const
 
 export function mergeCertificateRuntimeStringValues(
   templateValues: Record<string, string>,

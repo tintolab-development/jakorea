@@ -4,6 +4,7 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -18,7 +19,10 @@ import { isCombinedClassProgramEligible } from '@/features/program/general/lib/c
 import { InstitutionCombinedClassEditCell } from './institution-combined-class-edit-cell'
 import type {
   SameSchoolGradeOption,
+  TextbookSelectOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   formatInstitutionApplicationGradeDisplay,
   type InstitutionAffiliatedTeacherOption,
@@ -42,7 +46,14 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import { institutionHopeScheduleEmptyMessage } from '@/features/program/general/lib/institution-hope-schedule-empty-message'
-import { readOrganizationApplicationHopeSessionsForDisplay } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { resolveOrganizationApplicationHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  prepareGeneralEducationScheduleSessions,
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
+import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -95,6 +106,9 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   isCombinedClassApplyRadioDisabled?: boolean
   combinedClassReadOnly?: boolean
   hideCombinedClass?: boolean
+  textbookOptions?: TextbookSelectOption[]
+  textbookDisplayLabel?: string
+  isTextbookCatalogLoading?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
   program?: Program | null
@@ -230,6 +244,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
   isCombinedClassApplyRadioDisabled = true,
   combinedClassReadOnly = false,
   hideCombinedClass = false,
+  textbookOptions = [],
+  textbookDisplayLabel,
+  isTextbookCatalogLoading = false,
   validationErrors,
   onResendNotificationClick,
   program = null,
@@ -245,14 +262,16 @@ export function ApplicantGeneralInstitutionBasicInfo({
     : null
   const combinedClassProgramEligible =
     isCombinedClassProgramEligibleProp ?? isCombinedClassProgramEligible(program)
-  const showScheduleSection = shouldShowInstitutionApplicationDetailScheduleSection(
-    institutionApplicationBridge,
-    institution
+  const detailScheduleTimeSpan = useMemo(
+    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
+    [program]
   )
+  const curriculumSessionLabels = useMemo(() => readCurriculumSessionLabels(program), [program])
+  const educationScheduleLines = useMemo(() => readProgramEducationScheduleLines(program), [program])
   const showGuidanceSection =
     institutionApplicationBridge == null ||
     shouldShowInstitutionApplicationGuidanceParagraph(institutionApplicationBridge)
-  /** 합반 신청 — 승인 완료 시 노출. 교재명은 프로그램 진행 현황(참여 기관 상세)에서만 */
+  /** 합반 신청 — 승인 완료 시 노출 */
   const showCombinedClass = institution.approvalStatus === 'approved' && !hideCombinedClass
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
@@ -297,16 +316,102 @@ export function ApplicantGeneralInstitutionBasicInfo({
       buildTeacherInfoCell(institution, detail)
     )
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
-  const sessions = useMemo(
-    () =>
-      readOrganizationApplicationHopeSessionsForDisplay(
-        institution,
-        program?.backendProgramType
-      ),
-    [institution, program?.backendProgramType]
-  )
+  const useStoredRequestedHopeSchedules = !isCompanySchoolProgram(program)
+  const requestedHopeSchedulesQuery = useQuery({
+    ...organizationRequestedSchedulesQueryOptions(institution.id),
+    enabled: useStoredRequestedHopeSchedules && institution.id.trim().length > 0,
+  })
+  const sessions = useMemo(() => {
+    const preferred = institution.preferredEducationSchedules ?? []
+    const fromHope = useStoredRequestedHopeSchedules
+      ? resolveOrganizationApplicationHopeSessions(
+          {
+            programType: program?.backendProgramType?.trim() || 'GENERAL_ORGANIZATION',
+            availableActions: [],
+            sessions: [],
+            preferredEducationSchedules: [],
+          },
+          preferred,
+          requestedHopeSchedulesQuery.data
+        )
+      : (institution.sessions ?? [])
+    return prepareGeneralEducationScheduleSessions(
+      fromHope,
+      institutionApplicationBridge
+        ? {
+            educationStructure: institutionApplicationBridge.educationStructure,
+            sessionRound: institutionApplicationBridge.sessionRound,
+            educationScheduleMode: institutionApplicationBridge.educationScheduleMode,
+            curriculumSessionCount: institutionApplicationBridge.curriculumChartSessionCount,
+            curriculumSessionLabels,
+          }
+        : null,
+      { detailScheduleTimeSpan, educationScheduleLines }
+    )
+  }, [
+    curriculumSessionLabels,
+    detailScheduleTimeSpan,
+    educationScheduleLines,
+    institution,
+    institutionApplicationBridge,
+    program?.backendProgramType,
+    requestedHopeSchedulesQuery.data,
+    useStoredRequestedHopeSchedules,
+  ])
+  const showScheduleSection =
+    sessions.length > 0 ||
+    shouldShowInstitutionApplicationDetailScheduleSection(institutionApplicationBridge, institution)
 
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
+
+  const textbookSelectOptions =
+    textbookOptions.length > 0
+      ? textbookOptions
+      : [
+          {
+            value: TEXTBOOK_NOT_USED_OPTION_VALUE,
+            label: '해당 없음',
+            textbookName: '해당 없음',
+          },
+        ]
+  const textbookViewValue = textbookDisplayLabel?.trim() || '해당 없음'
+  const textbookEditCell =
+    isEditMode && draft && onDraftChange ? (
+      <div className="institution-basic-info__field-stack institution-basic-info__textbook-select-only">
+        <CmsSelect
+          className="institution-basic-info__full-width-control"
+          inputSize="small"
+          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
+          loading={isTextbookCatalogLoading}
+          withAllOption={false}
+          value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
+          options={textbookSelectOptions.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            const selected = textbookSelectOptions.find(option => option.value === value)
+            const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
+            onDraftChange({
+              textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
+              textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
+            })
+          }}
+          error={Boolean(validationErrors?.textbookId || validationErrors?.textbookName)}
+          message={validationErrors?.textbookId ?? validationErrors?.textbookName}
+        />
+      </div>
+    ) : undefined
+
+  const textbookField = (
+    <DetailInfoForm.Field
+      label="교재명"
+      fullRow={!showCombinedClass}
+      readOnlyDisplay={!isEditMode}
+      view={textbookViewValue}
+      edit={textbookEditCell}
+    />
+  )
 
   const addressDetailValue =
     isEditMode && draft && onDraftChange ? (
@@ -432,16 +537,18 @@ export function ApplicantGeneralInstitutionBasicInfo({
             />
           </DetailInfoForm.Row>
           {showCombinedClass ? (
-            <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Row type="double">
+              {textbookField}
               <DetailInfoForm.Field
                 label="합반 신청 여부"
-                fullRow
                 readOnlyDisplay={!isEditMode || combinedClassReadOnly}
                 view={combinedClassViewValue}
                 edit={combinedClassEditValue}
               />
             </DetailInfoForm.Row>
-          ) : null}
+          ) : (
+            <DetailInfoForm.Row type="single">{textbookField}</DetailInfoForm.Row>
+          )}
         </DetailInfoForm>
         <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
           <DetailInfoForm.Row type="double">
@@ -586,6 +693,8 @@ export function ApplicantGeneralInstitutionBasicInfo({
         <ApplicantPreferredScheduleDetailSection
           sessions={sessions}
           bridge={institutionApplicationBridge}
+          detailScheduleTimeSpan={detailScheduleTimeSpan}
+          curriculumSessionLabels={curriculumSessionLabels}
           emptyMessage={institutionHopeScheduleEmptyMessage(institution)}
         />
       ) : null}

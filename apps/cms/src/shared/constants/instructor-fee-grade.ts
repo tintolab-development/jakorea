@@ -8,6 +8,7 @@
  * | 3등급     | GRADE_3  | 3급 강사비  |
  *
  * 회원 프로필 `defaultFeeGrade`는 레벨 숫자(`1`·`2`·`3`)로도 오므로 표시 변환 시 함께 허용한다.
+ * 특강(`SPECIAL`)은 강사 회원 강사비 등급이 아니다. 프로그램 지급 방식(`SPECIAL_LECTURE`)만 사용한다.
  */
 
 export const INSTRUCTOR_FEE_GRADE_CODES = ['GRADE_1', 'GRADE_2', 'GRADE_3'] as const

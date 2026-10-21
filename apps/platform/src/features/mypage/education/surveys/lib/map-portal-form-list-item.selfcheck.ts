@@ -38,6 +38,17 @@ assert.equal(submitted?.status, 'submitted')
 assert.equal(mapPortalFormListItem({ id: 1, status: 'COMPLETED' })?.status, 'submitted')
 assert.equal(mapPortalFormListItem({ id: 2, status: 'DONE' })?.status, 'submitted')
 
+const schedule = mapPortalFormListItem({
+  bindingId: 188865,
+  title: '행사 설문',
+  targetScope: 'SCHEDULE',
+  targetScopeId: 187156,
+  status: 'NOT_SUBMITTED',
+})
+assert.equal(schedule?.id, '188865')
+assert.equal(schedule?.targetScope, 'SCHEDULE')
+assert.equal(schedule?.targetScopeId, 187156)
+
 const noDates = mapPortalFormListItem({ bindingId: 3, status: 'NOT_SUBMITTED' })
 assert.ok(noDates)
 assert.equal(noDates!.startAt, undefined)

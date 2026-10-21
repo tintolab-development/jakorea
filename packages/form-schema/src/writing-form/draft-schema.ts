@@ -534,6 +534,8 @@ export function normalizeTableBottomConsent(raw: unknown): TableBottomConsent | 
 export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'horizontal_table'
+  /** 시스템 기본정보 단락이 수집하는 고정 답변 필드 키(예: educationFormat) */
+  systemFieldKeys?: string[]
   /** `text`: `dataRows`만 사용. `field`: `columnFields`·`fieldDataRows` 사용 */
   tableFlavor: HorizontalTableFlavor
   columnHeaders: string[]

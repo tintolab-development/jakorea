@@ -1,20 +1,22 @@
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import {
   isOpaqueScheduleOptionToken,
   resolvePreferredScheduleLabelsFromAnswers,
   type PreferredScheduleProgramLookup,
 } from './application-content-from-answers'
+import {
+  isScheduleDateLikeText,
+  normalizeScheduleDisplayLabel,
+} from '@/shared/lib/format-display-date'
 
-const INSTRUCTOR_SCHEDULE_ANSWER_KEYS = [
+/** 강사 「강의 진행 가능일」·봉사 「봉사 활동 가능 일정」 등 슬롯 피커 제출 형식 */
+const SLOT_PICKER_SCHEDULE_ANSWER_KEYS = [
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
 ] as const
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-const APPLY_SUMMARY_SEGMENT_RE =
-  /^(.+?)\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*\(([^)]+)\)\s*$/
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
@@ -27,35 +29,19 @@ function readTrimmedString(value: unknown): string | undefined {
   return trimmed || undefined
 }
 
-function weekdayKoFromDateKey(dateKey: string): string {
-  const [year, month, day] = dateKey.split('-').map(part => Number(part))
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return ''
-  const utc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
-  const weekday = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Seoul',
-    weekday: 'short',
-  }).format(utc)
-  const ko = WEEKDAY_KO.find(w => weekday.startsWith(w.slice(0, 1)))
-  if (ko) return ko
-  const map: Record<string, string> = { Sun: '일', Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토' }
-  return map[weekday] ?? ''
-}
-
-/** 신청 양식 summary — `강서초등학교 : 2026년 3월 9일 (09:30 ~ 12:00)` */
+/** 신청 양식 summary — `강서초등학교 : 2026년 3월 9일 (09:30 ~ 12:00)` → `2026년 3월 9일(월) 09:30 ~ 12:00 | 강서초등학교` */
 export function convertApplyScheduleSummarySegmentToMypageLine(segment: string): string {
   const trimmed = segment.trim()
   if (!trimmed) return ''
-  const match = trimmed.match(APPLY_SUMMARY_SEGMENT_RE)
-  if (!match) return trimmed
-  const school = match[1]!.trim()
-  const year = match[2]!
-  const month = match[3]!.padStart(2, '0')
-  const day = match[4]!.padStart(2, '0')
-  const time = match[5]!.trim()
-  const dateKey = `${year}-${month}-${day}`
-  const weekday = weekdayKoFromDateKey(dateKey)
-  const weekdayPart = weekday ? `(${weekday})` : ''
-  return `${year}년 ${month}월 ${day}일${weekdayPart} ${time} | ${school}`
+  const colon = trimmed.indexOf(':')
+  if (colon > 0) {
+    const school = trimmed.slice(0, colon).trim()
+    const rest = trimmed.slice(colon + 1).trim()
+    if (school && isScheduleDateLikeText(rest)) {
+      return `${normalizeScheduleDisplayLabel(rest)} | ${school}`
+    }
+  }
+  return normalizeScheduleDisplayLabel(trimmed)
 }
 
 function splitSummarySegments(summary: string): string[] {
@@ -65,18 +51,28 @@ function splitSummarySegments(summary: string): string[] {
     .filter(Boolean)
 }
 
-function readInstructorScheduleAnswerRow(
+function readSlotIdList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map(item => readTrimmedString(item))
+    .filter((value): value is string => Boolean(value))
+}
+
+function readSlotPickerScheduleAnswerRow(
   answers: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> | null {
   if (!answers) return null
-  for (const key of INSTRUCTOR_SCHEDULE_ANSWER_KEYS) {
-    const row = asRecord(answers[key])
+  for (const key of SLOT_PICKER_SCHEDULE_ANSWER_KEYS) {
+    const raw = answers[key]
+    const row = asRecord(raw)
     if (row) return row
+    const ids = readSlotIdList(raw)
+    if (ids.length > 0) return { selectedSlotIds: ids }
   }
   return null
 }
 
-function linesFromInstructorScheduleAnswerRow(row: Record<string, unknown>): string[] {
+function linesFromSlotPickerScheduleAnswerRow(row: Record<string, unknown>): string[] {
   const summary = readTrimmedString(row.summary)
   if (summary) {
     return splitSummarySegments(summary)
@@ -99,11 +95,11 @@ function linesFromInstructorScheduleAnswerRow(row: Record<string, unknown>): str
 function readSelectedSlotIdsFromAnswers(
   answers: Record<string, unknown> | null | undefined,
 ): string[] {
-  const row = readInstructorScheduleAnswerRow(answers)
-  if (!row || !Array.isArray(row.selectedSlotIds)) return []
-  return row.selectedSlotIds
-    .map(item => readTrimmedString(item))
-    .filter((value): value is string => Boolean(value))
+  const row = readSlotPickerScheduleAnswerRow(answers)
+  if (!row) return []
+  const fromSelected = readSlotIdList(row.selectedSlotIds)
+  if (fromSelected.length > 0) return fromSelected
+  return readSlotIdList(row.selectedOptionIds)
 }
 
 /**
@@ -116,9 +112,9 @@ export function resolveInstructorAvailableScheduleLines(input: {
   preferredScheduleOptionValues?: readonly string[]
   program?: PreferredScheduleProgramLookup
 }): string[] {
-  const row = readInstructorScheduleAnswerRow(input.answers ?? undefined)
+  const row = readSlotPickerScheduleAnswerRow(input.answers ?? undefined)
   if (row) {
-    const fromRow = linesFromInstructorScheduleAnswerRow(row)
+    const fromRow = linesFromSlotPickerScheduleAnswerRow(row)
     if (fromRow.length > 0) return fromRow
   }
 

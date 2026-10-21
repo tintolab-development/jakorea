@@ -45,7 +45,7 @@ function mapApplicantToProgressRow(
     regionLabel: getUjatEducationRegionLabel(regionKey, regionKey),
     mobile: applicant.contact,
     email: applicant.email,
-    totalAssignmentDays: null,
+    totalAssignedDays: typeof applicant.totalAssignedDays === 'number' ? applicant.totalAssignedDays : null,
     assignmentStatus: withdrawn
       ? 'activity_abandoned'
       : completed

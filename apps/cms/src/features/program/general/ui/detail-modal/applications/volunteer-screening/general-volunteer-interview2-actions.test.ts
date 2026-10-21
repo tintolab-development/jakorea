@@ -97,6 +97,17 @@ describe('general-volunteer-interview2-actions', () => {
     expect(onOpenBulkPass).not.toHaveBeenCalled()
   })
 
+  it('opens single pass when one completed row is selected', () => {
+    requestGeneralVolunteerInterview2BulkPass({
+      selectedIds: ['1'],
+      selectedRows: [completedRow],
+      onOpenSinglePass,
+      onOpenBulkPass,
+    })
+    expect(onOpenSinglePass).toHaveBeenCalledTimes(1)
+    expect(onOpenBulkPass).not.toHaveBeenCalled()
+  })
+
   it('opens bulk pass when selection includes completed rows without a final result', () => {
     requestGeneralVolunteerInterview2BulkPass({
       selectedIds: ['1', '2'],
@@ -132,6 +143,17 @@ describe('general-volunteer-interview2-actions', () => {
       buildInterview2ProcessedSelectionAlert('volunteer')
     )
     expect(onOpenBulkPass).not.toHaveBeenCalled()
+  })
+
+  it('opens single fail when one completed row is selected', () => {
+    requestGeneralVolunteerInterview2BulkFail({
+      selectedIds: ['1'],
+      selectedRows: [completedRow],
+      onOpenSingleFail,
+      onOpenBulkFail,
+    })
+    expect(onOpenSingleFail).toHaveBeenCalledTimes(1)
+    expect(onOpenBulkFail).not.toHaveBeenCalled()
   })
 
   it('blocks bulk fail for single already-failed row', () => {

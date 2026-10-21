@@ -13,6 +13,7 @@ import type {
   TalentDonationIntroData,
 } from '@/entities/talent-donation-intro/model/types'
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
+import { getJAKoreaHomepageAdminAPIImpactStorySubset } from '@/shared/api/generated/impact-story/impact-story-api'
 import type { TalentSponsorshipAdminResponse } from '@/shared/api/generated/sponsorship/schemas/talentSponsorshipAdminResponse'
 import type { TalentSponsorshipBannerResponse } from '@/shared/api/generated/sponsorship/schemas/talentSponsorshipBannerResponse'
 import type { TalentSponsorshipBannerUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/talentSponsorshipBannerUpdateRequest'
@@ -23,6 +24,8 @@ import type { TalentSponsorshipInterviewUpdateRequest } from '@/shared/api/gener
 
 const HOW_IDS: readonly HowItemId[] = [1, 2, 3]
 const INTERVIEW_IDS: readonly InterviewSlotId[] = ['interview_01', 'interview_02']
+
+type InterviewStoryDisplay = Pick<InterviewSlot, 'linkedStoryTitle' | 'thumbnailUrl'>
 
 async function resolveAssetImage(
   assetId: number | null | undefined,
@@ -53,6 +56,7 @@ function mapHowItem(row: TalentSponsorshipHowItemResponse | undefined, id: HowIt
 function mapInterview(
   row: TalentSponsorshipInterviewResponse | undefined,
   id: InterviewSlotId,
+  storyDisplay?: InterviewStoryDisplay,
 ): InterviewSlot {
   const linked =
     typeof row?.linkedStoryId === 'number' && Number.isFinite(row.linkedStoryId)
@@ -64,9 +68,33 @@ function mapInterview(
     subText: row?.subText ?? '',
     buttonLabel: row?.buttonLabel ?? '',
     linkedStoryId: linked,
-    linkedStoryTitle: '',
-    thumbnailUrl: '',
+    linkedStoryTitle: storyDisplay?.linkedStoryTitle ?? '',
+    thumbnailUrl: storyDisplay?.thumbnailUrl ?? '',
     version: row?.version ?? 0,
+  }
+}
+
+async function resolveInterviewStoryDisplay(
+  linkedStoryId: string | null,
+): Promise<InterviewStoryDisplay> {
+  if (!linkedStoryId) {
+    return { linkedStoryTitle: '', thumbnailUrl: '' }
+  }
+
+  const numericId = Number(linkedStoryId)
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    return { linkedStoryTitle: '', thumbnailUrl: '' }
+  }
+
+  try {
+    const story = await getJAKoreaHomepageAdminAPIImpactStorySubset().detail1(numericId)
+    return {
+      linkedStoryTitle: story.title?.trim() ?? '',
+      thumbnailUrl: story.attachment?.publicUrl?.trim() ?? '',
+    }
+  } catch {
+    // 게시글 상세 조회가 실패해도 인터뷰 본문과 연결 ID는 유지한다.
+    return { linkedStoryTitle: '', thumbnailUrl: '' }
   }
 }
 
@@ -90,6 +118,13 @@ export async function mapTalentAdminToDomain(
       )
       .map(item => [item.id as InterviewSlotId, item]),
   )
+  const interviews = await Promise.all(
+    INTERVIEW_IDS.map(async id => {
+      const interview = mapInterview(interviewById.get(id), id)
+      const storyDisplay = await resolveInterviewStoryDisplay(interview.linkedStoryId)
+      return { ...interview, ...storyDisplay }
+    }),
+  )
 
   return {
     banner: {
@@ -102,7 +137,7 @@ export async function mapTalentAdminToDomain(
       version: bannerRow?.version ?? 0,
     },
     howItems: HOW_IDS.map(id => mapHowItem(howById.get(id), id)),
-    interviews: INTERVIEW_IDS.map(id => mapInterview(interviewById.get(id), id)),
+    interviews,
     updatedAt: row.updatedAt ?? new Date().toISOString(),
   }
 }

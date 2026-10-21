@@ -160,7 +160,7 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
         variant="borderless"
         className={pickerCn}
         format={resolvedFormat}
-        showTime={showTime === true ? { format: 'HH:mm:ss' } : showTime}
+        showTime={showTime === true ? { format: 'HH:mm' } : showTime}
         prefix={
           prefix ?? (
             <CmsPickerPrefixIcon>

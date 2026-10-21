@@ -60,6 +60,12 @@ export function mapPortalFormListItemToSurveyEntry(
     endAt: item.submissionEndAt?.slice(0, 10),
     createdAt: item.submissionStartAt,
     templateVersionId: item.templateVersionId,
+    targetScope: item.targetScope?.trim() || undefined,
+    targetScopeId:
+      typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
+        ? Math.trunc(item.targetScopeId)
+        : undefined,
+    required: item.required,
     form: item.form,
     formResponseId,
     answers: item.answers,

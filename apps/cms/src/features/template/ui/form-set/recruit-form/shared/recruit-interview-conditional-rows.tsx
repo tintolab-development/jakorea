@@ -48,7 +48,7 @@ export function RecruitInterviewConditionalRows({
             validationKey={`${validationKeyPrefix}.recruitRangeSeal`}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={state.recruitAnchor}
@@ -76,7 +76,7 @@ export function RecruitInterviewConditionalRows({
             ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="date"
                   value={state.docDeadlineDate}
@@ -86,7 +86,7 @@ export function RecruitInterviewConditionalRows({
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   style={{ flex: '1 1 0', minWidth: 0 }}
                   placeholder="발표 방법 안내"
@@ -108,7 +108,7 @@ export function RecruitInterviewConditionalRows({
             ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={state.interviewAnchor}
@@ -125,7 +125,7 @@ export function RecruitInterviewConditionalRows({
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsSelect
-                  inputSize="medium"
+                  inputSize="small"
                   width={140}
                   placeholder="면접 유형"
                   options={INTERVIEW_METHOD_OPTIONS}
@@ -145,7 +145,7 @@ export function RecruitInterviewConditionalRows({
             ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="date"
                   value={state.finalAnnounceDate}
@@ -155,7 +155,7 @@ export function RecruitInterviewConditionalRows({
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   style={{ flex: '1 1 0', minWidth: 0 }}
                   placeholder="발표 방법 안내"
@@ -178,7 +178,7 @@ export function RecruitInterviewConditionalRows({
         validationKey={`${validationKeyPrefix}.recruitRangeSeal`}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               presetMode="period"
               value={state.recruitAnchor}
@@ -206,7 +206,7 @@ export function RecruitInterviewConditionalRows({
         ]}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-            <ParagraphDatePicker
+            <ParagraphDatePicker inputSize="small"
               mode="single"
               presetMode="date"
               value={state.finalAnnounceDate}
@@ -216,7 +216,7 @@ export function RecruitInterviewConditionalRows({
             />
             <DetailInfoForm.InputsSeparator />
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               style={{ flex: '1 1 0', minWidth: 0 }}
               placeholder="발표 방법 안내"

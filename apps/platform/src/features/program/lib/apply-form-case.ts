@@ -11,12 +11,14 @@
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
 
-/** 신청 폼 케이스 (+ 강사 · Gemini 강사 · 교육받은 교사) */
+/** 신청 폼 케이스 (+ 강사 · Gemini 강사 · 교육받은 교사 · UJAT) */
 export type ProgramApplyFormCase =
   | 'individual-general'
   | 'individual-team'
   | 'individual-volunteer'
+  | 'ujat-volunteer'
   | 'institution-general'
+  | 'institution-ujat'
   | 'institution-economy'
   | 'institution-gemini'
   | 'instructor'
@@ -27,7 +29,9 @@ export type ProgramApplyFormCase =
 export type ProgramApplicationTemplateCode =
   | 'application-participant-individual'
   | 'application-volunteer'
+  | 'application-ujat-volunteer'
   | 'application-participant-school'
+  | 'application-ujat-school'
   | 'application-economy'
   | 'application-gemini-visiting-training-school'
   | 'application-instructor'
@@ -52,6 +56,7 @@ export const PROGRAM_APPLY_FORM_CASE_SSOT_IDS = {
   individualGeneral: 'general-prog-type-ind-curriculum-single',
   individualTeam: 'general-prog-type-ind-curriculum-multi',
   individualVolunteer: PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer,
+  institutionUjat: PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant,
   institutionGeneral: 'general-prog-type-org-curriculum-single',
   institutionEconomy: 'economy-prog-001',
   institutionGemini: PROGRAM_DETAIL_CASE_SSOT_IDS.gemini,
@@ -66,7 +71,9 @@ const APPLY_CASE_TO_TEMPLATE_CODE: Record<
   'individual-general': 'application-participant-individual',
   'individual-team': 'application-participant-individual',
   'individual-volunteer': 'application-volunteer',
+  'ujat-volunteer': 'application-ujat-volunteer',
   'institution-general': 'application-participant-school',
+  'institution-ujat': 'application-ujat-school',
   'institution-economy': 'application-economy',
   'institution-gemini': 'application-gemini-visiting-training-school',
   instructor: 'application-instructor',
@@ -77,13 +84,13 @@ const APPLY_CASE_TO_TEMPLATE_CODE: Record<
 const SSOT_ID_TO_APPLY_CASE: Record<string, ProgramApplyFormCase> = {
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.individualGeneral]: 'individual-general',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.individualTeam]: 'individual-team',
-  [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.individualVolunteer]: 'individual-volunteer',
+  [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.individualVolunteer]: 'ujat-volunteer',
+  [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionUjat]: 'institution-ujat',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionGeneral]: 'institution-general',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionEconomy]: 'institution-economy',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionGemini]: 'institution-gemini',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.instructorGemini]: 'instructor-gemini',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.trainedTeachers]: 'trained-teachers',
-  [PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant]: 'institution-general',
 }
 
 function isEconomyProgramId(id: string): boolean {
@@ -108,6 +115,15 @@ function isGeminiProgram(program: ProgramApplyFormCaseInput): boolean {
   )
 }
 
+function isUjatProgram(program: ProgramApplyFormCaseInput): boolean {
+  if (program.detailCase === 'ujat-participant' || program.detailCase === 'ujat-volunteer') {
+    return true
+  }
+  if (program.registrationKind === 'ujat') return true
+  const type = (program.programType ?? '').trim().toUpperCase()
+  return type === 'UJAT' || type === 'UJAT_PROGRAM'
+}
+
 function isTrainedTeachersProgram(program: ProgramApplyFormCaseInput): boolean {
   if (program.registrationKind === 'trainedTeachers') return true
   if ((program.programType ?? '').trim().toUpperCase() === 'TRAINED_TEACHER') return true
@@ -128,8 +144,11 @@ export function resolveProgramApplyFormCase(
   if (byId) return byId
 
   const applicationType = program.applicationType?.trim().toUpperCase()
-  if (applicationType === 'VOLUNTEER') return 'individual-volunteer'
+  if (applicationType === 'VOLUNTEER') {
+    return isUjatProgram(program) ? 'ujat-volunteer' : 'individual-volunteer'
+  }
   if (applicationType === 'INSTRUCTOR') {
+    if (isUjatProgram(program)) return 'ujat-volunteer'
     return isGeminiProgram(program) ? 'instructor-gemini' : 'instructor'
   }
   if (applicationType === 'INDIVIDUAL') {
@@ -138,6 +157,7 @@ export function resolveProgramApplyFormCase(
   if (applicationType === 'ORGANIZATION') {
     if (isTrainedTeachersProgram(program)) return 'trained-teachers'
     if (isGeminiProgram(program)) return 'institution-gemini'
+    if (isUjatProgram(program)) return 'institution-ujat'
     if (isEconomyProgramId(program.id)) return 'institution-economy'
     return 'institution-general'
   }
@@ -147,12 +167,14 @@ export function resolveProgramApplyFormCase(
   }
 
   const detailCase = program.detailCase
+  if (detailCase === 'volunteer') {
+    return 'individual-volunteer'
+  }
   if (
-    detailCase === 'volunteer' ||
     detailCase === 'ujat-volunteer' ||
     program.id === PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer
   ) {
-    return 'individual-volunteer'
+    return 'ujat-volunteer'
   }
 
   if (isGeminiInstructorProgramId(program.id) || (detailCase === 'instructor' && isGeminiProgramId(program.id))) {
@@ -175,7 +197,7 @@ export function resolveProgramApplyFormCase(
     detailCase === 'ujat-participant' ||
     program.id === PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant
   ) {
-    return 'institution-general'
+    return 'institution-ujat'
   }
 
   if (program.category === 'instructor') {
@@ -211,4 +233,16 @@ export function shouldShowIndividualTeamInfoParagraph(
   applyCase: ProgramApplyFormCase
 ): boolean {
   return applyCase === 'individual-team'
+}
+
+export function isVolunteerApplyFormCase(
+  applyCase: ProgramApplyFormCase | null | undefined
+): boolean {
+  return applyCase === 'individual-volunteer' || applyCase === 'ujat-volunteer'
+}
+
+export function isUjatInstitutionApplyFormCase(
+  applyCase: ProgramApplyFormCase | null | undefined
+): boolean {
+  return applyCase === 'institution-ujat'
 }

@@ -72,7 +72,7 @@ function PreferenceScheduleFields({
     <DetailInfoForm.Field
       label="희망 교육일"
       edit={
-        <ParagraphDatePicker
+        <ParagraphDatePicker inputSize="small"
           mode="single"
           presetMode="date"
           customizable={false}
@@ -107,7 +107,7 @@ function PreferenceScheduleFields({
               {showSessionSelect && !dateOnlyPreferred ? (
                 <>
                   <CmsSelect
-                    inputSize="medium"
+                    inputSize="small"
                     width={120}
                     withAllOption={false}
                     placeholder="희망 차시"
@@ -121,7 +121,7 @@ function PreferenceScheduleFields({
                   <DetailInfoForm.InputsSeparator />
                 </>
               ) : null}
-              <ParagraphTimePicker
+              <ParagraphTimePicker inputSize="small"
                 value={block.start}
                 onChange={next => onPatch({ start: next, end: next == null ? null : block.end })}
                 placeholder="수업 시작"
@@ -130,7 +130,7 @@ function PreferenceScheduleFields({
                 disabled={timeInputsDisabled}
               />
               <span className="institution-preferred-schedule-paragraph__tilde">~</span>
-              <ParagraphTimePicker
+              <ParagraphTimePicker inputSize="small"
                 value={block.end}
                 onChange={next => onPatch({ end: next })}
                 placeholder="수업 종료"

@@ -113,7 +113,20 @@ export function pickRecruitmentCopyRow(
   }
   const type =
     audience === 'participant' ? 'PARTICIPANT' : audience === 'instructor' ? 'INSTRUCTOR' : 'VOLUNTEER'
-  return rows.find(row => (row.recruitmentType ?? '').toUpperCase() === type)
+  const byRecruitmentType = rows.find(
+    row => (row.recruitmentType ?? '').toUpperCase() === type
+  )
+  if (byRecruitmentType) return byRecruitmentType
+  if (audience === 'volunteer') {
+    return rows.find(row => (row.applicationType ?? '').toUpperCase() === 'VOLUNTEER')
+  }
+  if (audience === 'instructor') {
+    return rows.find(row => (row.applicationType ?? '').toUpperCase() === 'INSTRUCTOR')
+  }
+  return rows.find(row => {
+    const applicationType = (row.applicationType ?? '').toUpperCase()
+    return applicationType === 'ORGANIZATION' || applicationType === 'INDIVIDUAL'
+  })
 }
 
 export function writeRecruitmentRowCopy(

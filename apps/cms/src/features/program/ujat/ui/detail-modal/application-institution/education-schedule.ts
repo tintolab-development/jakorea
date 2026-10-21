@@ -71,9 +71,9 @@ export function formatUjatInstitutionFridayDisplay(isoDate: string): string {
 }
 
 export function sumGradeClassCounts(
-  gradeClassCounts: ReadonlyArray<{ classCount: number }>
+  gradeClassCounts: ReadonlyArray<{ classCount: number | null }>
 ): number {
-  return gradeClassCounts.reduce((sum, g) => sum + g.classCount, 0)
+  return gradeClassCounts.reduce((sum, g) => sum + (g.classCount ?? 0), 0)
 }
 
 export function buildEmptyScheduleSlots(): Record<string, 'O' | '-'> {

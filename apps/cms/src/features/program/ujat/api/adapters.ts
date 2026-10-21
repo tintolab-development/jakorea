@@ -10,7 +10,6 @@ import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/das
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
-import { applyPortalHomeFeaturedToRequest } from '@/features/program/shared/lib/program-portal-home-featured'
 import type {
   Program,
   ProgramCategory,
@@ -21,11 +20,11 @@ import type {
   GeneralProgramCommonInfoExtension,
 } from '@/types/domain'
 import type { Status } from '@/types/index'
-import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 import {
   mapPeriodStatusToLifecycle,
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
+import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -42,6 +41,7 @@ import {
 import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib/program-create-service-detail-json'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
   isProgramOperationStartLocked,
@@ -55,7 +55,17 @@ import {
 import {
   resolveUjatRecruitAnnouncementTitle,
   resolveUjatRecruitDisplayProgram,
+  type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { pickUjatRecruitVolunteerOverlay } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import {
+  hasVolunteerHalfOverlayKeys,
+  type UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import {
+  UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
+  UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
+} from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import {
   normalizeProgramBusinessAreaValue,
   resolvePersistedProgramTargetLevels,
@@ -106,11 +116,6 @@ function idOf(value: string | number | undefined): string {
   return value == null ? '' : String(value)
 }
 
-function overlayText(overlay: Record<string, unknown>, key: string): string | undefined {
-  const value = overlay[key]
-  return typeof value === 'string' ? value.trim() || undefined : undefined
-}
-
 function recordOf(value: unknown): Record<string, unknown> | null {
   return value != null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -133,6 +138,7 @@ function numberStringOf(value: unknown): string | undefined {
 
 function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unknown> {
   const root = recordOf(value)
+  if (!root) return {}
   const result: UjatRegionCapacityBySemesterState = { h1: {}, h2: {} }
   const semesters = [
     ['h1', root?.FIRST_HALF] as const,
@@ -156,8 +162,7 @@ function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unkn
     }
   }
 
-  // 상세 serviceDetailJson의 지역 정원을 canonical source로 사용한다.
-  // 값이 없으면 이전 registration.overlay 정원을 재사용하지 않도록 빈 상태를 반환한다.
+  if (Object.keys(result.h1).length === 0 && Object.keys(result.h2).length === 0) return {}
   return { [UJAT_REGION_CAPACITY_OVERLAY_KEY]: result }
 }
 
@@ -211,7 +216,18 @@ function overlayFromPrimarySemesterCalendars(value: unknown): Record<string, unk
 }
 
 function dateValue(value: Date | string | undefined): string | undefined {
-  return value instanceof Date ? value.toISOString() : value
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value !== 'string') return undefined
+  return value.trim() ? value : undefined
+}
+
+/** GET echo — 빈 title을 대표명·시드 문구로 채우지 않는다. */
+function echoProgramManagementTitle(
+  title: string | null | undefined,
+  nameKo?: string | null
+): string {
+  if (typeof title === 'string') return title
+  return typeof nameKo === 'string' ? nameKo : ''
 }
 
 function parsedMillis(value: string | undefined): number | undefined {
@@ -296,8 +312,6 @@ function recruitmentRow(input: {
  * BE `STRUCTURED_RECRUITMENTS_GENERAL_ONLY` 가 UJAT를 거절하면 서버에서 허용해야 한다.
  */
 export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRecruitmentRequest[] {
-  const operationStartDate = dateValue(program.startDate)
-  const operationEndDate = dateValue(program.endDate)
   const institutionStart = dateValue(program.applicationStartDate)
   const institutionEnd = dateValue(program.applicationEndDate)
   const volunteers = (program.programRecruitments ?? [])
@@ -310,19 +324,25 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
     })
   const h1 =
     volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
-    volunteers.find(row => row.recruitTerm == null)
-  const volunteerStart = dateValue(
-    program.volunteerApplicationStartDate ?? program.applicationStartDate
-  )
-  const volunteerEnd = dateValue(program.volunteerApplicationEndDate ?? program.applicationEndDate)
+    (volunteers.every(row => row.recruitTerm == null) ? volunteers[0] : undefined)
+  const volunteerStart = dateValue(h1?.startAt ?? program.volunteerApplicationStartDate)
+  const volunteerEnd = dateValue(h1?.endAt ?? program.volunteerApplicationEndDate)
   const rows = [
     recruitmentRow({
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
       targetType: 'ORGANIZATION',
       startAt: institutionStart,
       endAt: institutionEnd,
-      operationStartDate,
-      operationEndDate,
+      operationStartDate: dateValue(
+        program.programRecruitments?.find(
+          row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+        )?.operationStartDate ?? undefined
+      ),
+      operationEndDate: dateValue(
+        program.programRecruitments?.find(
+          row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+        )?.operationEndDate ?? undefined
+      ),
       maxCount: program.participatingSchoolCount ?? program.approvedStudentCount,
     }),
     recruitmentRow({
@@ -330,8 +350,8 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       targetType: 'COLLEGE_STUDENT',
       startAt: volunteerStart,
       endAt: volunteerEnd,
-      operationStartDate,
-      operationEndDate,
+      operationStartDate: dateValue(h1?.operationStartDate ?? undefined),
+      operationEndDate: dateValue(h1?.operationEndDate ?? undefined),
       maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
       recruitTerm: ProgramRecruitmentRequestRecruitTerm.FIRST_HALF,
       ...(h1?.id != null ? { id: h1.id } : {}),
@@ -391,20 +411,76 @@ export function buildUjatNewVolunteerHalfRowRequests(
     }))
 }
 
-/** 생성 시 기관·봉사자(상반기) 탭 문구와 담당자를 각 행에 담는다. */
+function ujatVolunteerHalfRecruitRange(
+  program: Program,
+  half: UjatVolunteerRecruitHalf
+): { startAt?: string; endAt?: string } {
+  const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
+  const key =
+    half === 'h1'
+      ? UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.recruitRangeH1
+      : UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.recruitRangeH2
+  const seal = recordOf(overlay[key])
+  const startAt = stringOf(seal?.start) ?? undefined
+  const endAt = stringOf(seal?.end) ?? undefined
+  return { ...(startAt ? { startAt } : {}), ...(endAt ? { endAt } : {}) }
+}
+
+/**
+ * 하반기 봉사자 모집 행. 등록 위저드는 하반기를 별도 반기 키로만 저장하므로
+ * 하반기 입력이 있을 때 `SECOND_HALF` 행을 따로 만든다. 상반기 값으로 채우지 않는다.
+ */
+function withUjatCreateSecondHalfVolunteerRow(
+  rows: ProgramRecruitmentRequest[] | undefined,
+  program: Program
+): ProgramRecruitmentRequest[] | undefined {
+  if (rows == null) return rows
+  if (rows.some(row => row.recruitTerm === ProgramRecruitmentRequestRecruitTerm.SECOND_HALF)) {
+    return rows
+  }
+  const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
+  const range = ujatVolunteerHalfRecruitRange(program, 'h2')
+  if (!hasVolunteerHalfOverlayKeys(overlay, 'h2') && !range.startAt && !range.endAt) return rows
+  return [
+    ...rows,
+    {
+      ...recruitmentRow({
+        recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+        targetType: 'COLLEGE_STUDENT',
+        ...range,
+        maxCount: program.ujatSecondHalfVolunteerCount,
+        recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
+        interviewEnabled: true,
+      }),
+      applicationType: 'VOLUNTEER',
+    },
+  ]
+}
+
+/** 생성 시 기관·상반기·하반기 봉사자 탭 문구·담당자·면접 기간을 각 행의 반기 값으로 담는다. */
 function withUjatCreateRowCopy(
   rows: ProgramRecruitmentRequest[] | undefined,
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
   return rows?.map(row => {
-    const kind =
-      row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
-        ? 'volunteer_h1'
-        : 'institution'
+    const kind: UjatRecruitDisplayKind =
+      row.recruitmentType !== ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
+        ? 'institution'
+        : row.recruitTerm === ProgramRecruitmentRequestRecruitTerm.SECOND_HALF
+          ? 'volunteer_h2'
+          : 'volunteer_h1'
     const display = resolveUjatRecruitDisplayProgram(program, kind)
     const publicTitle = resolveUjatRecruitAnnouncementTitle(display, kind)
+    const { interviewStartAt: _start, interviewEndAt: _end, ...rowWithoutInterview } = row
+    const programRangeKey =
+      kind === 'institution'
+        ? UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRange
+        : UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.programRange
+    const programRange = recordOf((program.ujatRegistrationOverlay ?? {})[programRangeKey])
+    const operationStartDate = dateValue(programRange?.start as string | undefined) ?? row.operationStartDate
+    const operationEndDate = dateValue(programRange?.end as string | undefined) ?? row.operationEndDate
     return {
-      ...row,
+      ...(kind === 'institution' ? row : rowWithoutInterview),
       announcementTitle: publicTitle !== '-' ? publicTitle : undefined,
       programDescription: display.description || undefined,
       recruitmentGuide: display.recruitmentGuide || undefined,
@@ -412,10 +488,12 @@ function withUjatCreateRowCopy(
       learningSupportContent: display.learningSupportContent || undefined,
       additionalContentHtml: display.additionalContentHtml || undefined,
       remarks: display.otherNotes || undefined,
-      contactName: display.managerName || program.managerName || undefined,
-      contactPhone: display.contactPhone || program.contactPhone || undefined,
-      contactEmail: display.contactEmail || program.contactEmail || undefined,
-      ...(kind === 'volunteer_h1' ? ujatVolunteerInterviewFields(program) : {}),
+      contactName: display.managerName || undefined,
+      contactPhone: display.contactPhone || undefined,
+      contactEmail: display.contactEmail || undefined,
+      ...(operationStartDate ? { operationStartDate } : {}),
+      ...(operationEndDate ? { operationEndDate } : {}),
+      ...(kind === 'institution' ? {} : ujatVolunteerInterviewFields(display)),
     }
   })
 }
@@ -480,17 +558,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   }
   const fromJson = parseServiceDetail(dtoExt.serviceDetailJson)
   const registrationOverlay = parseRegistrationOverlay(dtoExt.serviceDetailJson)
-  const title =
-    overlayText(registrationOverlay, 'ujat.basicInfo.programManagementName') ||
-    dto.title?.trim() ||
-    dto.nameKo?.trim() ||
-    overlayText(registrationOverlay, 'ujat.basicInfo.repKo') ||
-    dto.mainTitle?.trim() ||
-    '제목 없음'
-  const mainTitle =
-    dto.mainTitle?.trim() ||
-    overlayText(registrationOverlay, 'ujat.basicInfo.repKo') ||
-    title
+  const title = echoProgramManagementTitle(dto.title, dto.nameKo)
+  const mainTitle = typeof dto.mainTitle === 'string' ? dto.mainTitle : ''
   const ujatProgressStatus = resolveUjatProgressStatus({
     ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
     periodStatus: dto.periodStatus,
@@ -507,6 +576,7 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   return baseProgram({
     id,
     title,
+    backendProgramType: dto.programType ?? 'UJAT',
     mainTitle,
     titleEn: dto.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(dto),
@@ -607,18 +677,11 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       kpi: responseKpi,
     }
   )
-  const title =
-    dto.title?.trim() ||
-    dtoExt.nameKo?.trim() ||
-    overlayText(overlay, 'ujat.basicInfo.programManagementName') ||
-    overlayText(overlay, 'ujat.basicInfo.repKo') ||
-    dto.mainTitle?.trim() ||
-    '제목 없음'
+  const title = echoProgramManagementTitle(dto.title, dtoExt.nameKo)
   const periodStatus = dtoExt.periodStatus
   const ujatProgressStatus = resolveUjatProgressStatus({
     ujatProgressStatus: details.ujatProgressStatus,
     periodStatus,
-    primaryFallback: resolveUjatPrimaryProgressById(id),
   })
   const lifecycleStatus =
     (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
@@ -647,10 +710,10 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ...details,
       generalCommonInfo,
       id,
-      sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
+      backendProgramType: dto.programType ?? 'UJAT',
+      sponsorId: dto.sponsorId?.trim() || '',
       title,
-      mainTitle:
-        dto.mainTitle?.trim() || overlayText(overlay, 'ujat.basicInfo.repKo') || title,
+      mainTitle: typeof dto.mainTitle === 'string' ? dto.mainTitle : '',
       type: (dto.type as ProgramType | undefined) ?? 'offline',
       format: (dto.format as ProgramFormat | undefined) ?? 'course',
       category: (dto.category as ProgramCategory | undefined) ?? 'school',
@@ -736,11 +799,6 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
             : undefined,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
-      featuredOnHome: dto.featuredOnHome === true,
-      homeDisplayOrder:
-        typeof dto.homeDisplayOrder === 'number' && dto.homeDisplayOrder >= 1
-          ? dto.homeDisplayOrder
-          : null,
     }),
     ujatRegistrationOverlay: overlay,
   },
@@ -750,8 +808,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     }
   )
   const withInterview = hydrateUjatVolunteerInterviewFromRecruitmentRows(mapped)
+  const withRows = hydrateRecruitmentWindowsOntoProgram(withInterview)
   return {
-    ...withInterview,
+    ...withRows,
     generalParticipantTypes: generalParticipantTypesFromUjatFlags(
       resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
     ),
@@ -897,7 +956,7 @@ function coreRequest(
     // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
-    mainTitle: program.mainTitle ?? program.title,
+    mainTitle: program.mainTitle,
     textbookName: program.textbookName,
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
@@ -958,7 +1017,6 @@ function coreRequest(
     merged: program,
     existing: program,
   })
-  applyPortalHomeFeaturedToRequest(body, program, 'full')
   return body
 }
 
@@ -1128,7 +1186,6 @@ function patchRequest(
     existing,
     patch,
   })
-  applyPortalHomeFeaturedToRequest(body, merged, 'patch', patch)
   return body
 }
 
@@ -1154,7 +1211,10 @@ export function toCreateRequest(
     programType: 'UJAT',
     serviceDetailJson: serviceDetailJson ?? undefined,
     ...coreWithoutDetail,
-    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments ?? undefined, copySource),
+    recruitments: withUjatCreateRowCopy(
+      withUjatCreateSecondHalfVolunteerRow(coreWithoutDetail.recruitments ?? undefined, copySource),
+      copySource
+    ),
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     autoApplyDefaultFormBindings: true,

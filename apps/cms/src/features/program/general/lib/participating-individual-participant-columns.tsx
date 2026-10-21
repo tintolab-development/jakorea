@@ -8,6 +8,9 @@ import {
 } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
 
 const PARTICIPANT_NAME_COL_WIDTH = 120
@@ -25,10 +28,21 @@ export const PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X =
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH
 
 export function useParticipatingIndividualParticipantColumns(
-  programBridge?: InstitutionApplicationProgramBridge | null
+  programBridge?: InstitutionApplicationProgramBridge | null,
+  scheduleDisplay?: {
+    detailScheduleTimeSpan?: string | null
+    curriculumSessionLabels?: readonly string[] | null
+    educationScheduleLines?: readonly string[] | null
+  } | null
 ): ColumnsType<ParticipatingIndividualParticipantRow> {
+  const hasScheduleMultiLines =
+    programBridge?.educationStructure === 'schedule' &&
+    programBridge.sessionRound === 'multi' &&
+    (scheduleDisplay?.educationScheduleLines?.length ?? 0) > 0
   const showSessionsColumn =
-    programBridge == null || shouldShowInstitutionApplicationSessionsColumn(programBridge)
+    hasScheduleMultiLines ||
+    programBridge == null ||
+    shouldShowInstitutionApplicationSessionsColumn(programBridge)
 
   return useMemo(() => {
     const columns: ColumnsType<ParticipatingIndividualParticipantRow> = [
@@ -62,6 +76,7 @@ export function useParticipatingIndividualParticipantColumns(
         key: 'educationGrade',
         width: GRADE_COL_WIDTH,
         align: 'center',
+        render: (value: string | undefined) => value?.trim() || '-',
       },
       {
         title: '자택 주소지',
@@ -82,7 +97,14 @@ export function useParticipatingIndividualParticipantColumns(
         }),
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingIndividualParticipantRow) => {
-          const sessions = record.sessions ?? []
+          const assignedSessions = resolveParticipatingProgressAssignedSessions(record.sessions)
+          const sessions = prepareGeneralEducationScheduleSessions(
+            assignedSessions,
+            generalEducationScheduleShapeFromBridge(programBridge),
+            {
+              detailScheduleTimeSpan: scheduleDisplay?.detailScheduleTimeSpan,
+            }
+          )
           if (sessions.length === 0) return '-'
           const { displaySessions, restCount } =
             getInstitutionApplicationSessionsTableSlice(sessions)
@@ -93,7 +115,12 @@ export function useParticipatingIndividualParticipantColumns(
                   key={`${session.round}-${session.date}-${index}`}
                   className="participating-institutions-section__session-line"
                 >
-                  <GeneralDetailSessionLine session={session} bridge={programBridge} />
+                  <GeneralDetailSessionLine
+                    session={session}
+                    bridge={programBridge}
+                    detailScheduleTimeSpan={scheduleDisplay?.detailScheduleTimeSpan}
+                    curriculumSessionLabels={scheduleDisplay?.curriculumSessionLabels}
+                  />
                 </div>
               ))}
               {restCount > 0 && (
@@ -108,5 +135,5 @@ export function useParticipatingIndividualParticipantColumns(
     ]
 
     return showSessionsColumn ? columns : columns.filter(column => column.key !== 'sessions')
-  }, [programBridge, showSessionsColumn])
+  }, [programBridge, scheduleDisplay, showSessionsColumn])
 }

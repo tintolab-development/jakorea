@@ -106,9 +106,28 @@ export type PortalConsentDocumentDetail = {
   consentType?: string
   title?: string
   contentFormat?: string
+  /** 성범죄 업로드 파일 URL·data URL */
   content?: string
   schemaJson?: unknown
   renderStatus?: string
+  /** 문서 서명·제출 시각 */
+  signedAt?: string
+  signedFileObjectId?: number
+  signatureFields?: Array<{
+    fieldKey?: string
+    signed?: boolean
+    signatureFileObjectId?: number
+    signedAt?: string
+  }>
+  evidenceFileObjectId?: number
+  evidenceOriginalFileName?: string
+  filledDocument?: {
+    templateCode?: string
+    schemaJson?: unknown
+    paymentBasicInfo?: Record<string, unknown>
+    evidenceFileObjectId?: number
+    evidenceOriginalFileName?: string
+  } | null
 }
 
 export async function fetchPortalConsentDocument(

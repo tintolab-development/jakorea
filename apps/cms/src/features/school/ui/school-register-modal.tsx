@@ -211,7 +211,7 @@ export function SchoolRegisterModal({
                     }
                     onSelect={handleSchoolSelect}
                     placeholder="기관명"
-                    inputSize="medium"
+                    inputSize="small"
                     width="100%"
                   />
                 </Form.Item>
@@ -231,7 +231,7 @@ export function SchoolRegisterModal({
                       readOnly
                       disabled
                       placeholder="건물명, 도로명 또는 지번"
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                     />
                   </Form.Item>
@@ -239,7 +239,7 @@ export function SchoolRegisterModal({
                   <Form.Item name="detailAddress" noStyle>
                     <CmsInput
                       placeholder="상세 주소"
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                       disabled={!roadAddress.trim()}
                     />

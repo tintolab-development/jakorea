@@ -36,6 +36,9 @@ describe('recruit detail info overlay persist', () => {
     expect(recruitDetailInfoOverlayPrefixForCatalogId('recruitment-economy-copy-1')).toBe(
       'economyRecruit.detailInfo'
     )
+    expect(
+      recruitDetailInfoOverlayPrefixForCatalogId('recruitment-gemini-visiting-training-custom-2')
+    ).toBe('geminiRecruit.detailInfo')
   })
 
   it('picks only the detailInfo prefix', () => {
@@ -153,6 +156,22 @@ describe('recruit detail info overlay persist', () => {
       'recruitVolunteer.h1.detailInfo.attachmentFileNames': ['상반기.pdf'],
       'recruitVolunteer.h2.detailInfo.attachmentFileNames': ['하반기.pdf'],
     })
+  })
+
+  it('UJAT 봉사자 sidecar는 live가 비면 저장본을 강제 복원한다', () => {
+    restoreUjatVolunteerRecruitGeneralStoreSidecar(
+      {
+        'recruitVolunteer.h1.detailInfo.additionalContentHtml': '<p>상반기 상세</p>',
+        'recruit.volunteer.h1.interview.slots': [{ id: 'slot-1' }],
+      },
+      { forceEmptyLive: true }
+    )
+    expect(getGeneralRecruitOverlayRecord()['recruitVolunteer.h1.detailInfo.additionalContentHtml']).toBe(
+      '<p>상반기 상세</p>'
+    )
+    expect(getGeneralRecruitOverlayRecord()['recruit.volunteer.h1.interview.slots']).toEqual([
+      { id: 'slot-1' },
+    ])
   })
 
   it('UJAT 봉사자 반기 첨부 복원은 편집 중인 파일명을 유지한다', () => {

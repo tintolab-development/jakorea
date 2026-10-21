@@ -21,7 +21,7 @@ export function GeminiVisitingTrainingTrainingInfoParagraph() {
               <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
                 <span>총</span>
                 <CmsNumericInput
-                  inputSize="medium"
+                  inputSize="small"
                   width={120}
                   mode="integer"
                   placeholder="학생 수"

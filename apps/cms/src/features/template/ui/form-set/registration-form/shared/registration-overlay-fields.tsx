@@ -25,7 +25,7 @@ function ProgramRegistrationOverlayTextFieldInner({
       validationKey={validationKey}
       edit={
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           placeholder={placeholder}
           width="100%"
           value={value}
@@ -70,7 +70,7 @@ function ProgramRegistrationOverlaySelectFieldInner({
       edit={
         <div className="detail-info-form-inputs-wrapper-no-gap">
           <CmsSelect
-            inputSize="medium"
+            inputSize="small"
             withAllOption={withAllOption}
             placeholder={placeholder}
             width={width}

@@ -85,7 +85,7 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
               >
                 <CmsInput
                   className="sms-send-fullpage__subject-field"
-                  inputSize="large"
+                  inputSize="small"
                   width="100%"
                   allowClear={false}
                   maxLength={1000}
@@ -117,7 +117,7 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
             <div className="sms-send-fullpage__body-field">
               <SmsVariableTextField value={bodyText} multiline onValueChange={commitBody}>
                 <CmsTextArea
-                  inputSize="large"
+                  inputSize="small"
                   width="100%"
                   rows={12}
                   placeholder="내용을 작성하세요"

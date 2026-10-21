@@ -181,7 +181,7 @@
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
-  text-align: left;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, sans-serif;
@@ -196,14 +196,14 @@
 .program-detail-info-tab__lifecycle-status-text--instructor-recruitment-planned,
 .program-detail-info-tab__lifecycle-status-text--volunteer-recruitment-planned,
 .program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-planned {
-  color: #e44970;
+  color: var(--Status-green-main, #1e8c29);
 }
 
 .program-detail-info-tab__lifecycle-status-text--recruiting-students,
 .program-detail-info-tab__lifecycle-status-text--recruiting-instructors,
 .program-detail-info-tab__lifecycle-status-text--recruiting-volunteers,
 .program-detail-info-tab__lifecycle-status-text--participant-instructor-recruiting {
-  color: #017eaf;
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .program-detail-info-tab__lifecycle-status-text--matching-completed,
@@ -212,7 +212,7 @@
 .program-detail-info-tab__lifecycle-status-text--education-completed,
 .program-detail-info-tab__lifecycle-status-text--document-processing-completed,
 .program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-completed {
-  color: #464646;
+  color: var(--Netural-black, #3d3d3d);
 }
 
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */

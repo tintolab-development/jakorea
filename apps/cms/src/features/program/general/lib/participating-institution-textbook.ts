@@ -2,26 +2,30 @@ import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import { listTextbooksFromStore } from '@/features/textbook/api/textbook-service'
 import type { Program } from '@/types/domain'
 import { isGeneralProgramScheduleType } from '@/features/program/general/model/common-info-edit-schema'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   dedupeTextbooksByName,
-  filterTextbooksForApplicant,
+  filterTextbooksForIndividualApplicant,
   resolveIndividualTextbookOptionLabel,
   resolveProgramEducationTargets,
+  textbookMatchesProgramEducationTargets,
 } from '@/features/program/general/lib/filter-textbooks-for-applicant'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 
 function listUsedTextbooksForProgram(program: Program, catalog?: TextbookRow[]): TextbookRow[] {
-  // undefined = 아직 원격 미도착 → sync store 폴백. [] = 로드 완료·교재 없음.
-  if (catalog !== undefined) return catalog
   const educationTargets = resolveProgramEducationTargets(program)
+  // undefined = 아직 원격 미도착 → sync store 폴백. [] = 로드 완료·교재 없음.
+  // 원격 카탈로그는 교육 대상이 여러 개면 대상 조건을 빼고 받으므로, 여기서 합집합으로 다시 거른다.
+  if (catalog !== undefined) {
+    return catalog.filter(row =>
+      textbookMatchesProgramEducationTargets(row.educationTarget, educationTargets)
+    )
+  }
   return listTextbooksFromStore().filter(row => {
     if (row.useStatus !== 'USED') return false
     if (program.businessArea && row.businessArea !== program.businessArea) return false
-    if (educationTargets.length > 0 && !educationTargets.includes(row.educationTarget)) {
-      return false
-    }
-    return true
+    return textbookMatchesProgramEducationTargets(row.educationTarget, educationTargets)
   })
 }
 
@@ -36,12 +40,53 @@ export function programUsesTextbook(program: Program, catalog?: TextbookRow[]): 
   return programHasTextbookCatalog(program, catalog)
 }
 
-/** 합반 수정: 사업 분야·교육 대상 동일, 교재 학년만 다른 옵션 */
+const textbookNotUsedSelectOption: TextbookSelectOption = {
+  value: TEXTBOOK_NOT_USED_OPTION_VALUE,
+  label: '해당 없음',
+  textbookName: '해당 없음',
+}
+
+/**
+ * 참여 기관 수정 셀렉트를 열 수 있는지.
+ * 일정형도 연다. 조건에 맞는 교재가 없어도 「해당 없음」은 남긴다.
+ */
+export function programOffersParticipatingTextbookSelect(
+  _program: Program,
+  _options?: { isCompanySchool?: boolean }
+): boolean {
+  return true
+}
+
+/** 매칭 교재가 없어도 맨 앞에 「해당 없음」을 둔다 */
+export function ensureTextbookNotUsedSelectOption(
+  options: TextbookSelectOption[]
+): TextbookSelectOption[] {
+  if (options.some(option => option.value === TEXTBOOK_NOT_USED_OPTION_VALUE)) return options
+  return [textbookNotUsedSelectOption, ...options]
+}
+
+/** 참여 기관 교재 셀렉트 — 같은 사업분야의 사용 중 교재. 교육 대상·학년은 거르지 않는다. */
+export function filterTextbooksByProgramBusinessArea(
+  program: Program,
+  catalog?: TextbookRow[]
+): TextbookRow[] {
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea)
+  const source = catalog ?? listTextbooksFromStore()
+  return dedupeTextbooksByName(
+    source.filter(row => {
+      if (catalog === undefined && row.useStatus !== 'USED') return false
+      if (!businessArea) return false
+      return normalizeProgramBusinessAreaValue(row.businessArea) === businessArea
+    })
+  )
+}
+
+/** 합반 수정 셀렉트도 참여 기관과 같이 사업분야만 본다. */
 export function filterTextbooksForCombinedClassEdit(
   program: Program,
   catalog?: TextbookRow[]
 ): TextbookRow[] {
-  return dedupeTextbooksByName(listUsedTextbooksForProgram(program, catalog))
+  return filterTextbooksByProgramBusinessArea(program, catalog)
 }
 
 /**
@@ -54,67 +99,38 @@ export function buildCombinedClassTextbookSelectOptions(
 ): TextbookSelectOption[] {
   const rows = filterTextbooksForCombinedClassEdit(program, catalog)
 
-  return [
-    {
-      value: TEXTBOOK_NOT_USED_OPTION_VALUE,
-      label: '해당 없음',
-      textbookName: '해당 없음',
-    },
-    ...rows.map(row => ({
+  return ensureTextbookNotUsedSelectOption(
+    rows.map(row => ({
       value: row.id,
       label: resolveIndividualTextbookOptionLabel(row),
       textbookName: row.textbookName,
-    })),
-  ]
+    }))
+  )
 }
 
 /**
  * 진행 현황 참여 기관 교재 셀렉.
- * 1) 사업분야+교육대상+신청학년 matches (전학년 교재 포함)
- * 2) 학년 매칭이 비면 사업분야(+교육대상) 프로그램 교재로 폴백
- * 프로그램 교재 배정 목록은 신청 교재의 허용 목록으로 사용하지 않는다.
+ * 프로그램 사업 분야 + 신청 학년이 포함되는 사용 중 교재. 라벨은 `교재명 educationTarget`.
  */
 export function buildParticipatingInstitutionTextbookSelectOptions(params: {
   program: Program
-  educationGrade: string
-  gradeCatalog?: TextbookRow[]
-  programCatalog?: TextbookRow[]
+  educationGrade?: string
+  catalog?: TextbookRow[]
 }): TextbookSelectOption[] {
-  const notUsed: TextbookSelectOption = {
-    value: TEXTBOOK_NOT_USED_OPTION_VALUE,
-    label: '해당 없음',
-    textbookName: '해당 없음',
-  }
-  const { program, educationGrade, gradeCatalog, programCatalog } = params
+  if (params.catalog === undefined) return [textbookNotUsedSelectOption]
 
-  if (gradeCatalog === undefined && programCatalog === undefined) {
-    return [notUsed]
-  }
+  const grade = params.educationGrade?.trim() ?? ''
+  const rows = grade
+    ? filterTextbooksForIndividualApplicant(params.program, grade, params.catalog)
+    : []
 
-  const grade = educationGrade.trim()
-  let rows: TextbookRow[] = []
-  if (grade && gradeCatalog !== undefined) {
-    rows = filterTextbooksForApplicant(program, grade, gradeCatalog)
-  }
-  if (rows.length === 0) {
-    const fallbackSource =
-      programCatalog !== undefined
-        ? programCatalog
-        : gradeCatalog !== undefined
-          ? gradeCatalog
-          : undefined
-    if (fallbackSource === undefined) return [notUsed]
-    rows = filterTextbooksForCombinedClassEdit(program, fallbackSource)
-  }
-
-  return [
-    notUsed,
-    ...dedupeTextbooksByName(rows).map(row => ({
+  return ensureTextbookNotUsedSelectOption(
+    rows.map(row => ({
       value: row.id,
       label: resolveIndividualTextbookOptionLabel(row),
       textbookName: row.textbookName,
-    })),
-  ]
+    }))
+  )
 }
 
 /** 선택 교재의 학년 라벨 (실적 취합·표시용) */

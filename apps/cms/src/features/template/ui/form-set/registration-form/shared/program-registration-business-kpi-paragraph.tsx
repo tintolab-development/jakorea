@@ -60,7 +60,7 @@ function KpiCountInput({
       min={0}
       allowNegative={false}
       disabled={disabled}
-      inputSize="medium"
+      inputSize="small"
       placeholder={placeholder ?? '목표값 입력'}
       value={value == null ? '' : String(value)}
       onValueChange={raw => {

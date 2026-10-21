@@ -53,9 +53,3 @@
   justify-content: center;
   margin-top: var(--spacing-100);
 }
-
-.empty {
-  margin: 0;
-  padding-block: var(--spacing-40);
-  text-align: center;
-}

@@ -64,6 +64,17 @@ describe('general-volunteer-document-screening-actions', () => {
     )
   })
 
+  it('opens single approve when one pending row is selected', () => {
+    requestGeneralVolunteerDocumentBulkApprove({
+      selectedIds: ['1'],
+      selectedDocumentStatuses: ['pending'],
+      onOpenSingleApprove,
+      onOpenBulkApprove,
+    })
+    expect(onOpenSingleApprove).toHaveBeenCalledTimes(1)
+    expect(onOpenBulkApprove).not.toHaveBeenCalled()
+  })
+
   it('opens bulk approve only for pending rows', () => {
     requestGeneralVolunteerDocumentBulkApprove({
       selectedIds: ['1', '2'],
@@ -86,6 +97,17 @@ describe('general-volunteer-document-screening-actions', () => {
       buildApplicationProcessedSelectionAlert('volunteer')
     )
     expect(onOpenSingleReject).not.toHaveBeenCalled()
+  })
+
+  it('opens single reject when one pending row is selected', () => {
+    requestGeneralVolunteerDocumentBulkReject({
+      selectedIds: ['1'],
+      selectedDocumentStatuses: ['pending'],
+      onOpenSingleReject,
+      onOpenBulkReject,
+    })
+    expect(onOpenSingleReject).toHaveBeenCalledTimes(1)
+    expect(onOpenBulkReject).not.toHaveBeenCalled()
   })
 
   it('shows empty selection alert for reject', () => {

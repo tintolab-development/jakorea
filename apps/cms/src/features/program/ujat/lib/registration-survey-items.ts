@@ -143,3 +143,14 @@ export function ujatGeneralSurveyMenuKeysFromOverlay(
   )
   return ujatPersistedSurveyMenuKeysFromItems(items)
 }
+
+/** 공통정보 저장 — overlay 4종 우선, 없으면 기존 키를 4종으로 정규화. `satisfaction`으로 접지 않음. */
+export function resolveUjatPersistedSurveyMenuKeysForSave(
+  overlay: Record<string, unknown> | undefined,
+  existingKeys: readonly string[] | undefined
+): UjatPersistedSurveyMenuKey[] | undefined {
+  const fromOverlay = overlay ? ujatGeneralSurveyMenuKeysFromOverlay(overlay) : undefined
+  if (fromOverlay) return fromOverlay
+  if (existingKeys) return normalizeUjatSurveyMenuKeys(existingKeys)
+  return undefined
+}

@@ -5,7 +5,9 @@
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   getVolunteerApplicationFormHiddenParagraphIds,
+  isApplicationScheduleParagraphForcedHidden,
   mergeApplicationScheduleVisibilityInput,
+  readApplicationScheduleInputMode,
   readEducationScheduleLinesForApplicationForm,
   shouldShowApplicationScheduleParagraphResolved,
 } from '@jakorea/form-schema/program-application'
@@ -15,7 +17,8 @@ import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/parag
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import type { WritingFormParagraph } from '@jakorea/form-schema/writing-form'
-import type { ProgramApplyFormCase } from './apply-form-case.ts'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
+import { isVolunteerApplyFormCase, type ProgramApplyFormCase } from './apply-form-case.ts'
 import { shouldShowIndividualTeamInfoParagraph } from './apply-form-case.ts'
 import type { ProgramDetail } from '../model/types.ts'
 import { isApplyScheduleChoiceParagraphId } from './apply-form-schedule.ts'
@@ -36,6 +39,22 @@ export function readPreEducationNoticeRequiredFromRuntime(runtime: unknown): boo
     if (typeof fromAudience === 'boolean') return fromAudience
   }
   return null
+}
+
+/**
+ * 기관 신청 화면 전용.
+ * form runtime이 있으면 그 값이 정본이다. 없으면 기관 참여자 모집 상세 값.
+ * 둘 다 없으면 레거시 작성(true). 강사·봉사자 신청에는 호출하지 않는다.
+ */
+export function resolveInstitutionPreEducationNoticeRequired(
+  program: { preEducationNoticeRequired?: boolean | null } | null | undefined,
+  runtimeContext?: unknown,
+): boolean {
+  return (
+    readPreEducationNoticeRequiredFromRuntime(runtimeContext) ??
+    program?.preEducationNoticeRequired ??
+    true
+  )
 }
 
 export type ResolvePortalApplicationHiddenParagraphIdsInput = {
@@ -60,7 +79,9 @@ export function resolvePortalApplicationHiddenParagraphIds(
   const { applyCase, program, runtimeContext, paragraphs } = input
 
   const scheduleParagraphRaw = paragraphs.find(paragraph =>
-    isApplyScheduleChoiceParagraphId(paragraph.id)
+    applyCase === 'trained-teachers'
+      ? paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+      : isApplyScheduleChoiceParagraphId(paragraph.id)
   )
   const scheduleLines = readEducationScheduleLinesForApplicationForm(
     runtimeContext,
@@ -98,29 +119,42 @@ export function resolvePortalApplicationHiddenParagraphIds(
     }
   }
 
-  if (applyCase === 'institution-general') {
-    const preEducation =
-      readPreEducationNoticeRequiredFromRuntime(runtimeContext) ??
-      program?.preEducationNoticeRequired ??
-      true
-    const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
-      ...scheduleVisibility,
-      preEducationNoticeRequired: preEducation,
-      showSexOffenseConsentInquiryParagraph:
-        input.showSexOffenseConsentInquiryParagraph ?? true,
-    })
-    institutionHidden?.forEach(id => hidden.add(id))
+  if (applyCase === 'institution-general' || applyCase === 'institution-economy') {
+    const preEducation = resolveInstitutionPreEducationNoticeRequired(program, runtimeContext)
+    if (applyCase === 'institution-general') {
+      const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
+        ...scheduleVisibility,
+        preEducationNoticeRequired: preEducation,
+        showSexOffenseConsentInquiryParagraph:
+          input.showSexOffenseConsentInquiryParagraph ?? true,
+      })
+      institutionHidden?.forEach(id => hidden.add(id))
+    } else if (preEducation === false) {
+      hidden.add(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance)
+    }
   }
 
-  if (
-    applyCase === 'trained-teachers' &&
-    !shouldShowApplicationScheduleParagraphResolved({
-      ...scheduleVisibility,
+  if (applyCase === 'trained-teachers') {
+    const trainedScheduleParagraph = paragraphs.find(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+    )
+    const trainedScheduleMode = readApplicationScheduleInputMode(
       runtimeContext,
-      scheduleParagraphRaw,
-    })
-  ) {
-    hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+      trainedScheduleParagraph
+    )
+    if (isApplicationScheduleParagraphForcedHidden(scheduleVisibility)) {
+      hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+    } else if (trainedScheduleMode !== 'fixed_schedule_options') {
+      if (
+        !shouldShowApplicationScheduleParagraphResolved({
+          ...scheduleVisibility,
+          runtimeContext,
+          scheduleParagraphRaw: trainedScheduleParagraph,
+        })
+      ) {
+        hidden.add(PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+      }
+    }
   }
 
   if (
@@ -138,7 +172,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
     hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
   }
 
-  if (applyCase === 'individual-volunteer') {
+  if (isVolunteerApplyFormCase(applyCase)) {
     const volunteerParagraphs = input.volunteerJaExperienceParagraph
       ? paragraphs.map(p =>
           p.id === input.volunteerJaExperienceParagraph!.id
@@ -151,8 +185,11 @@ export function resolvePortalApplicationHiddenParagraphIds(
       isTemplateAuthoringMode: false,
     })
     volunteerHidden?.forEach(id => hidden.add(id))
-    if (input.volunteerActivityScheduleEnabled === false) {
+    if (applyCase === 'individual-volunteer' && input.volunteerActivityScheduleEnabled === false) {
       hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule)
+    }
+    if (applyCase === 'ujat-volunteer' && input.volunteerInterviewEnabled === false) {
+      hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule)
     }
   }
 

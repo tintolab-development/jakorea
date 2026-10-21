@@ -3,6 +3,7 @@
  * @/features/program/general/model/individual-applicant에서 이전 (Phase 2).
  */
 
+import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipatingSchoolSession, TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { ApplicantApprovalStatusKey, ApplicantSchoolApprovalNotifyOptions, ApplicantSchoolApprovalNotifyTiming } from '@/features/program/shared/model/applicant-institution'
 import { resolveApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
@@ -66,6 +67,8 @@ export interface GeneralIndividualApplicantRow {
   homeAddress: string
   approvalStatus: ApplicantApprovalStatusKey
   programId?: string
+  /** 신청 희망 일정 원본. 배정 ID는 scheduleId가 있는 항목만 사용한다. */
+  preferredEducationSchedules?: PreferredEducationSchedule[]
   sessions?: ParticipatingSchoolSession[]
   detail?: GeneralIndividualApplicantDetail
   participationRejectionReason?: string

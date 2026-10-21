@@ -1,21 +1,16 @@
-import type { Program } from '@/types/domain'
+import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 import {
   applyUjatRecruitInstitutionOverlayOntoProgram,
-  applyUjatRecruitInstitutionTemplateDefaults,
   buildUjatRecruitInstitutionOverlayFromDetailEditValues,
   pickUjatRecruitInstitutionOverlay,
   UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
   applyUjatRecruitVolunteerOverlayOntoProgram,
-  applyUjatRecruitVolunteerTemplateDefaults,
   pickUjatRecruitVolunteerOverlay,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import {
-  loadUjatRecruitInstitutionTemplateSave,
-  loadUjatRecruitVolunteerTemplateSave,
-} from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import {
   blankUjatVolunteerRecruitProgramFields,
   buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues,
@@ -33,6 +28,76 @@ import {
 } from '@/features/program/shared/lib/recruitment-row-copy'
 
 export type UjatRecruitDisplayKind = 'institution' | 'volunteer' | 'volunteer_h1' | 'volunteer_h2'
+
+function nonemptyField(value: string | null | undefined): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/** UJAT GET — 봉사 반기는 recruitTerm만. startAt 정렬로 h1/h2를 추측하지 않는다. */
+export function pickUjatVolunteerRecruitmentRow(
+  program: Program,
+  half: UjatVolunteerRecruitHalf
+): ProgramRecruitmentWindow | undefined {
+  const term = half === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
+  return (program.programRecruitments ?? []).find(
+    row =>
+      (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' && row.recruitTerm === term
+  )
+}
+
+function applyUjatRecruitmentRowCanonicalFields(
+  program: Program,
+  row: ProgramRecruitmentWindow | undefined,
+  options?: { volunteerHalf?: boolean }
+): Program {
+  if (!row) return program
+  const opStart = nonemptyField(row.operationStartDate)
+  const opEnd = nonemptyField(row.operationEndDate)
+  const interviewStart = nonemptyField(row.interviewStartAt)
+  const interviewEnd = nonemptyField(row.interviewEndAt)
+  const contactName = nonemptyField(row.contactName)
+  const contactPhone = nonemptyField(row.contactPhone)
+  const contactEmail = nonemptyField(row.contactEmail)
+  const startAt = nonemptyField(row.startAt)
+  const endAt = nonemptyField(row.endAt)
+  const volunteerInfo = {
+    ...(program.generalCommonInfo?.volunteerRecruitmentInfo ?? {}),
+    ...(contactName ? { contactOrganizationName: contactName, contactName } : { contactOrganizationName: '', contactName: '' }),
+    ...(contactPhone ? { inquiryTel: contactPhone, contactPhone } : { inquiryTel: '', contactPhone: '' }),
+    ...(contactEmail ? { inquiryEmail: contactEmail, contactEmail } : { inquiryEmail: '', contactEmail: '' }),
+    ...(interviewStart ? { interviewStartDate: interviewStart } : { interviewStartDate: '' }),
+    ...(interviewEnd ? { interviewEndDate: interviewEnd } : { interviewEndDate: '' }),
+  }
+  const participantInfo = {
+    ...(program.generalCommonInfo?.participantRecruitmentInfo ?? {}),
+    ...(contactName ? { contactOrganizationName: contactName, contactName } : { contactOrganizationName: '', contactName: '' }),
+    ...(contactPhone ? { inquiryTel: contactPhone, contactPhone } : { inquiryTel: '', contactPhone: '' }),
+    ...(contactEmail ? { inquiryEmail: contactEmail, contactEmail } : { inquiryEmail: '', contactEmail: '' }),
+  }
+  return {
+    ...program,
+    startDate: opStart ?? '',
+    endDate: opEnd ?? '',
+    interviewStartDate: interviewStart ?? '',
+    interviewEndDate: interviewEnd ?? '',
+    managerName: contactName ?? '',
+    contactName: contactName ?? '',
+    contactPhone: contactPhone ?? '',
+    contactEmail: contactEmail ?? '',
+    ...(options?.volunteerHalf
+      ? {
+          volunteerApplicationStartDate: startAt ?? '',
+          volunteerApplicationEndDate: endAt ?? '',
+        }
+      : {}),
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      ...(options?.volunteerHalf
+        ? { volunteerRecruitmentInfo: volunteerInfo }
+        : { participantRecruitmentInfo: participantInfo }),
+    },
+  }
+}
 
 export function volunteerHalfFromRecruitDisplayKind(
   kind: UjatRecruitDisplayKind
@@ -72,52 +137,69 @@ function compactOverlay(record: Record<string, unknown>): Record<string, unknown
 }
 
 function mergedInstitutionOverlay(program: Program): Record<string, unknown> {
-  return compactOverlay({
-    ...(loadUjatRecruitInstitutionTemplateSave()?.overlay ?? {}),
-    ...pickUjatRecruitInstitutionOverlay(program.ujatRegistrationOverlay ?? {}),
-  })
+  return compactOverlay(pickUjatRecruitInstitutionOverlay(program.ujatRegistrationOverlay ?? {}))
 }
 
 function mergedVolunteerOverlay(program: Program): Record<string, unknown> {
-  return compactOverlay({
-    ...(loadUjatRecruitVolunteerTemplateSave()?.overlay ?? {}),
-    ...pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {}),
-  })
+  return compactOverlay(pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {}))
 }
 
-/** 모집 탭 전용 — kind가 있으면 해당 overlay만 적용. 공통정보 displayProgram에는 쓰지 않는다. */
+/** 모집 탭 전용 — GET 행이 있으면 기간·문의처·면접은 행 SSOT. 위저드(행 없음)는 overlay. */
 export function resolveUjatRecruitDisplayProgram(
   program: Program,
   kind?: UjatRecruitDisplayKind
 ): Program {
+  const fromRows = hydrateRecruitmentWindowsOntoProgram(program)
   if (kind === 'institution') {
-    return applyRecruitmentRowCopy(
-      applyUjatRecruitInstitutionOverlayOntoProgram(program, mergedInstitutionOverlay(program)),
-      'participant'
+    const row = pickRecruitmentCopyRow(fromRows, 'participant')
+    return applyUjatRecruitmentRowCanonicalFields(
+      hydrateRecruitmentWindowsOntoProgram(
+        applyRecruitmentRowCopy(
+          applyUjatRecruitInstitutionOverlayOntoProgram(
+            fromRows,
+            mergedInstitutionOverlay(program),
+            { preferOverlay: row == null }
+          ),
+          'participant'
+        )
+      ),
+      row
     )
   }
   if (kind === 'volunteer' || kind === 'volunteer_h1' || kind === 'volunteer_h2') {
     const half = volunteerHalfFromRecruitDisplayKind(kind)
     const overlay = mergedVolunteerOverlay(program)
     if (half == null) {
-      return applyRecruitmentRowCopy(
-        applyUjatRecruitVolunteerOverlayOntoProgram(program, overlay),
-        'volunteer'
+      const row = pickRecruitmentCopyRow(fromRows, 'volunteer')
+      return applyUjatRecruitmentRowCanonicalFields(
+        hydrateRecruitmentWindowsOntoProgram(
+          applyRecruitmentRowCopy(
+            applyUjatRecruitVolunteerOverlayOntoProgram(fromRows, overlay, {
+              preferOverlay: row == null,
+            }),
+            'volunteer'
+          )
+        ),
+        row,
+        { volunteerHalf: true }
       )
     }
-    return applyRecruitmentRowCopy(
-      applyUjatRecruitVolunteerOverlayOntoProgram(
-        blankUjatVolunteerRecruitProgramFields(program),
-        resolveVolunteerOverlayForHalf(overlay, half)
+    const row = pickUjatVolunteerRecruitmentRow(fromRows, half)
+    return applyUjatRecruitmentRowCanonicalFields(
+      applyRecruitmentRowCopy(
+        applyUjatRecruitVolunteerOverlayOntoProgram(
+          blankUjatVolunteerRecruitProgramFields(fromRows),
+          resolveVolunteerOverlayForHalf(overlay, half),
+          { preferOverlay: row == null }
+        ),
+        'volunteer',
+        half
       ),
-      'volunteer',
-      half
+      row,
+      { volunteerHalf: true }
     )
   }
-  return applyUjatRecruitVolunteerTemplateDefaults(
-    applyUjatRecruitInstitutionTemplateDefaults(program),
-    pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
-  )
+  return fromRows
 }
 
 function volunteerHalfPeriod(
@@ -148,19 +230,24 @@ function rowAnnouncementTitle(
 ): string | undefined {
   const audience = kind === 'institution' ? 'participant' : 'volunteer'
   const half = volunteerHalfFromRecruitDisplayKind(kind) ?? undefined
-  const title = pickRecruitmentCopyRow(program, audience, half)?.announcementTitle
+  const title =
+    (audience === 'volunteer' && half
+      ? pickUjatVolunteerRecruitmentRow(program, half)
+      : pickRecruitmentCopyRow(program, audience, half)
+    )?.announcementTitle
   return typeof title === 'string' && title.trim() ? title.trim() : undefined
 }
 
-/** 공고용 프로그램명 — 모집 overlay, 없으면 해당 모집 행. 공통정보와 공유하지 않는다. */
+/** 공고용 프로그램명 — GET 행 우선, 없으면 모집 overlay. 공통정보와 공유하지 않는다. */
 export function resolveUjatRecruitAnnouncementTitle(
   program: Program,
   kind: UjatRecruitDisplayKind
 ): string {
+  const fromRow = rowAnnouncementTitle(program, kind)
   if (kind === 'institution') {
     return (
+      fromRow ||
       overlayString(mergedInstitutionOverlay(program), UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle) ||
-      rowAnnouncementTitle(program, kind) ||
       '-'
     )
   }
@@ -168,14 +255,14 @@ export function resolveUjatRecruitAnnouncementTitle(
   const half = volunteerHalfFromRecruitDisplayKind(kind)
   if (half) {
     return (
+      fromRow ||
       overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) ||
-      rowAnnouncementTitle(program, kind) ||
       '-'
     )
   }
   return (
+    fromRow ||
     overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) ||
-    rowAnnouncementTitle(program, kind) ||
     '-'
   )
 }
@@ -242,7 +329,7 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
     ? writeRecruitmentRowCopy(args.existing, audience, rowCopy, half ?? undefined)
     : undefined
   const programRecruitments =
-    rowCopy && half === 'h2' && !pickRecruitmentCopyRow(args.existing, 'volunteer', 'h2')
+    rowCopy && half === 'h2' && !pickUjatVolunteerRecruitmentRow(args.existing, 'h2')
       ? [
           ...(writtenRows ?? args.existing.programRecruitments ?? []),
           {

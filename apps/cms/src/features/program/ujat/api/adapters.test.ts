@@ -212,10 +212,7 @@ describe('UJAT program adapters', () => {
       serviceDetailJson: updated.serviceDetailJson ?? undefined,
     })
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
-    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
-      h1: {},
-      h2: {},
-    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual(capacity)
   })
 
   it('부분 수정에 ips와 후원 담당자 sponsors를 싣고 재조회한다', () => {
@@ -362,7 +359,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repEn']).toBe(
       'Local Spending and Saving'
     )
-    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBeUndefined()
+    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
   })
 
   it('기본 semesterCalendars의 교육일정을 등록 화면 overlay로 매핑한다', () => {
@@ -454,6 +451,43 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
       finalSchools: 30,
       finalClasses: 30,
     })
+  })
+
+  it('빈 title·null KPI는 대표명·시드로 채우지 않고 extras 없으면 overlay 정원을 유지한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: '',
+      mainTitle: null,
+      titleEn: null,
+      businessArea: null,
+      totalParticipants: null,
+      finalClasses: 0,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      serviceDetailJson: JSON.stringify({
+        registration: {
+          overlay: {
+            'ujat.capacity.byRegion': {
+              h1: { 서울: { classCount: '3', volunteerCount: '6' } },
+            },
+            'ujat.wage.paymentItemValues': [],
+          },
+        },
+      }),
+    } as unknown as Parameters<typeof fromDetail>[0])
+    expect(mapped.title).toBe('')
+    expect(mapped.mainTitle).toBe('')
+    expect(mapped.titleEn == null || mapped.titleEn === '').toBe(true)
+    expect(mapped.totalParticipants == null).toBe(true)
+    expect(mapped.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: undefined,
+      finalClasses: 0,
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
+      h1: { 서울: { classCount: '3', volunteerCount: '6' } },
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.wage.paymentItemValues']).toEqual([])
   })
 
   it('등록 overlay 모집 공고명·설명을 create body와 상세 매핑에 남긴다', () => {
@@ -865,5 +899,123 @@ describe('buildUjatNewVolunteerHalfRowRequests', () => {
       existing
     )
     expect(rows).toHaveLength(0)
+  })
+})
+
+describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 등록 위저드 overlay)', () => {
+  const H1_RECRUIT = { start: '2027-01-10T15:00:00.000Z', end: '2027-01-28T15:00:00.000Z' }
+  const H1_INTERVIEW = { start: '2027-02-04T15:00:00.000Z', end: '2027-02-06T15:00:00.000Z' }
+  const H2_RECRUIT = { start: '2027-07-11T15:00:00.000Z', end: '2027-07-29T15:00:00.000Z' }
+  const H2_INTERVIEW = { start: '2027-08-05T15:00:00.000Z', end: '2027-08-07T15:00:00.000Z' }
+
+  /** 위저드 모집 탭이 저장하는 반기 키 형태 그대로 */
+  function wizardOverlay(options: { h2?: boolean; h1Interview?: boolean } = {}) {
+    const h2 = options.h2 ?? true
+    return {
+      'ujat.basicInfo.programManagementName': '2027 UJAT 수동 등록',
+      'ujat.basicInfo.operationRangeSeal': {
+        start: '2027-02-28T15:00:00.000Z',
+        end: '2027-12-31T14:59:59.999Z',
+      },
+      'ujat.recruit.institution.announcementPublished': true,
+      'ujat.recruit.institution.publicTitle': '2027 UJAT 참여 학교 모집',
+      'ujat.recruit.institution.recruitRange': {
+        start: '2027-01-03T15:00:00.000Z',
+        end: '2027-02-11T15:00:00.000Z',
+      },
+      'ujat.recruit.volunteer.h1.announcementPublished': true,
+      'ujat.recruit.volunteer.h1.publicTitle': '2027 UJAT 상반기 봉사자 모집',
+      ...(options.h1Interview === false
+        ? {}
+        : { 'ujat.recruit.volunteer.h1.interviewRange': H1_INTERVIEW }),
+      'ujat.recruit.volunteer.h1.recruitRange': H1_RECRUIT,
+      ...(h2
+        ? {
+            'ujat.recruit.volunteer.h2.announcementPublished': true,
+            'ujat.recruit.volunteer.h2.publicTitle': '2027 UJAT 하반기 봉사자 모집',
+            'ujat.recruit.volunteer.h2.noticeExposure': 'one-week-before',
+            'ujat.recruit.volunteer.h2.interviewRange': H2_INTERVIEW,
+            'ujat.recruit.volunteer.h2.recruitRange': H2_RECRUIT,
+          }
+        : {}),
+    }
+  }
+
+  function create(overlay: Record<string, unknown>) {
+    const pending = buildUjatProgramListRowFromRegistrationSnapshot({ id: 'ujat-pending-manual', overlay })
+    return toCreateRequest(pending, { draft, overlay })
+  }
+
+  it('기관·H1·H2 행을 각각 만들고 반기별 모집·면접 기간을 해당 행에만 싣는다', () => {
+    const rows = create(wizardOverlay()).recruitments ?? []
+    expect(rows.map(row => [row.recruitmentType, row.recruitTerm ?? null])).toEqual([
+      ['PARTICIPANT', null],
+      ['VOLUNTEER', 'FIRST_HALF'],
+      ['VOLUNTEER', 'SECOND_HALF'],
+    ])
+    const h1 = rows[1]
+    const h2 = rows[2]
+    expect(h1).toMatchObject({
+      status: 'ACTIVE',
+      applicationType: 'VOLUNTEER',
+      targetType: 'COLLEGE_STUDENT',
+      interviewEnabled: true,
+      startAt: H1_RECRUIT.start,
+      endAt: H1_RECRUIT.end,
+      interviewStartAt: H1_INTERVIEW.start,
+      interviewEndAt: H1_INTERVIEW.end,
+      announcementTitle: '2027 UJAT 상반기 봉사자 모집',
+    })
+    expect(h2).toMatchObject({
+      status: 'ACTIVE',
+      applicationType: 'VOLUNTEER',
+      targetType: 'COLLEGE_STUDENT',
+      interviewEnabled: true,
+      startAt: H2_RECRUIT.start,
+      endAt: H2_RECRUIT.end,
+      interviewStartAt: H2_INTERVIEW.start,
+      interviewEndAt: H2_INTERVIEW.end,
+      announcementTitle: '2027 UJAT 하반기 봉사자 모집',
+    })
+    expect(h2).not.toHaveProperty('id')
+  })
+
+  it('기관 모집 행은 기존 계약(면접 필드 없음·recruitTerm 없음)을 유지한다', () => {
+    const institution = create(wizardOverlay()).recruitments?.[0]
+    expect(institution).toMatchObject({
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      applicationType: 'ORGANIZATION',
+      status: 'ACTIVE',
+      startAt: '2027-01-03T15:00:00.000Z',
+      endAt: '2027-02-11T15:00:00.000Z',
+      announcementTitle: '2027 UJAT 참여 학교 모집',
+    })
+    expect(institution).not.toHaveProperty('recruitTerm')
+    expect(institution).not.toHaveProperty('interviewEnabled')
+    expect(institution).not.toHaveProperty('interviewStartAt')
+    expect(institution).not.toHaveProperty('interviewEndAt')
+  })
+
+  it('하반기 입력이 없으면 H2 행을 만들지 않고 상반기 값을 복사하지 않는다', () => {
+    const rows = create(wizardOverlay({ h2: false })).recruitments ?? []
+    expect(rows.map(row => row.recruitTerm ?? null)).toEqual([null, 'FIRST_HALF'])
+  })
+
+  it('H1 면접 기간이 없으면 다른 반기·레거시 공용 키 값으로 채우지 않는다', () => {
+    const rows =
+      create({
+        ...wizardOverlay({ h1Interview: false }),
+        'ujat.recruit.volunteer.interviewRange': {
+          start: '2026-01-01T00:00:00.000Z',
+          end: '2026-01-02T00:00:00.000Z',
+        },
+      }).recruitments ?? []
+    const h1 = rows.find(row => row.recruitTerm === 'FIRST_HALF')
+    expect(h1).toMatchObject({ interviewEnabled: true })
+    expect(h1).not.toHaveProperty('interviewStartAt')
+    expect(h1).not.toHaveProperty('interviewEndAt')
+    const h2 = rows.find(row => row.recruitTerm === 'SECOND_HALF')
+    expect(h2?.interviewStartAt).toBe(H2_INTERVIEW.start)
   })
 })

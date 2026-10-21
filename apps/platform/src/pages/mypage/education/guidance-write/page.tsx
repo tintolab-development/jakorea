@@ -5,7 +5,10 @@ import {
   EducationInstitutionGuidanceWriteForm,
   resolveTeacherInstitutionGuidanceInitialState,
 } from '@/features/mypage/education/applications/ui/institution-guidance-write-form'
-import { educationInstitutionGuidanceApplicationTabPath } from '@/features/mypage/education/applications/lib/guidance-path'
+import {
+  educationInstitutionGuidanceApplicationTabPath,
+  educationUjatProgressConfirmPath,
+} from '@/features/mypage/education/applications/lib/guidance-path'
 import {
   mapInstitutionGuidanceFromApplicationAnswers,
   teacherInstitutionGuidanceFormStateFromTeacherContent,
@@ -18,7 +21,13 @@ import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import {
+  resolveUjatScheduleBannerFromState,
+  shouldUseUjatApplicationContent,
+} from '@/features/mypage/education/applications/lib/ujat-portal-banner'
+import { hasInstitutionGuidanceDraftContent } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
 import { PFFormPage, PFText } from '@/shared/ui'
+import writeFormStyles from '@/features/mypage/education/applications/ui/institution-guidance-write-form.module.css'
 
 export function MypageEducationInstitutionGuidanceWritePage() {
   const navigate = useNavigate()
@@ -61,11 +70,29 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     return mapInstitutionGuidanceFromApplicationAnswers(undefined, guidanceDetailCase)
   }, [application, guidanceDetailCase])
 
-  const backPath = educationInstitutionGuidanceApplicationTabPath(
-    applicationId,
-    application?.applicationType ?? applicationType,
-  )
-  const pageTitle = '안내사항 수정하기'
+  const isUjat = shouldUseUjatApplicationContent(guidanceDetailCase)
+  const backPath = isUjat
+    ? educationUjatProgressConfirmPath(
+        applicationId,
+        application?.applicationType ?? applicationType,
+      )
+    : educationInstitutionGuidanceApplicationTabPath(
+        applicationId,
+        application?.applicationType ?? applicationType,
+      )
+  const hasDraft = hasInstitutionGuidanceDraftContent(initialState.guidance)
+  const isEdit = isUjat
+    ? application?.ujatPortalBannerState === 'REVISION_REQUIRED'
+    : true
+  const pageTitle = isUjat
+    ? isEdit
+      ? '안내사항 수정하기'
+      : '안내사항 작성하기'
+    : '안내사항 수정하기'
+  const revisionCopy =
+    isUjat && application?.ujatPortalBannerState === 'REVISION_REQUIRED'
+      ? resolveUjatScheduleBannerFromState(application.ujatPortalBannerState)
+      : null
 
   if (!isTeacher) {
     return (
@@ -76,6 +103,20 @@ export function MypageEducationInstitutionGuidanceWritePage() {
       >
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           교사 회원만 안내사항을 작성할 수 있습니다.
+        </PFText>
+      </PFFormPage>
+    )
+  }
+
+  if (program?.preEducationNoticeRequired === false) {
+    return (
+      <PFFormPage
+        aria-label="안내사항"
+        back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+        title="안내사항"
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          사전 안내 사항 작성이 해당없는 프로그램입니다.
         </PFText>
       </PFFormPage>
     )
@@ -102,12 +143,34 @@ export function MypageEducationInstitutionGuidanceWritePage() {
       aria-label={pageTitle}
       back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
       title={pageTitle}
+      step={isUjat ? '2 / 2' : undefined}
+      programSummary={
+        program
+          ? {
+              title: program.title,
+              period: program.applicationPeriodLabel,
+            }
+          : undefined
+      }
     >
+      {revisionCopy ? (
+        <div className={writeFormStyles.revisionNotice}>
+          <PFText as="p" typo="hl-sm" color="primary-500" className={writeFormStyles.revisionTitle}>
+            {revisionCopy.title}
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="black" className={writeFormStyles.revisionBody}>
+            {revisionCopy.body}
+          </PFText>
+        </div>
+      ) : null}
       <EducationInstitutionGuidanceWriteForm
         applicationId={applicationId}
         applicationType={applicationType}
         detailCase={guidanceDetailCase}
         initialState={resolvedInitial}
+        variant={isUjat ? 'ujat' : 'general'}
+        isEdit={isUjat ? isEdit : hasDraft}
+        submitPeriodLabel={program?.applicationPeriodLabel}
         portalPatchContext={{
           formResponseId: application.formResponseId,
           formResponseStatus: application.formResponseStatus,

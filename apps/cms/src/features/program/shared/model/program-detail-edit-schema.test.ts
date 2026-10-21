@@ -7,6 +7,7 @@ import {
   programDetailCompanySchoolCommonInfoEditSchema,
   programDetailEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
+  programDetailUjatCommonInfoEditSchema,
   programToDetailEditValues,
   volunteerDocumentInterviewNestedPatch,
 } from './program-detail-edit-schema'
@@ -135,6 +136,36 @@ describe('programDetailCompanySchoolCommonInfoEditSchema', () => {
     }
 
     expect(programDetailCompanySchoolCommonInfoEditSchema.safeParse(values).success).toBe(true)
+    expect(programDetailEditSchema.safeParse(values).success).toBe(false)
+  })
+})
+
+describe('programDetailUjatCommonInfoEditSchema', () => {
+  it('UJAT 공통정보 탭에 없는 모집 필수값이 비어도 저장 검증을 통과한다', () => {
+    const values = {
+      ...programToDetailEditValues({
+        ...program,
+        backendProgramType: 'UJAT',
+        managerName: undefined,
+        description: undefined,
+        learningSupportContent: undefined,
+        applicationStartDate: undefined,
+        applicationEndDate: undefined,
+        resultAnnouncementDate: undefined,
+        resultAnnouncementMethod: undefined,
+      } as unknown as Program),
+      managerName: '',
+      description: '',
+      learningSupportContent: '',
+      applicationStartDate: '',
+      applicationEndDate: '',
+      resultAnnouncementDate: '',
+      resultAnnouncementMethod: '',
+      sponsorId: '163384',
+      sponsorManagementIds: ['163384'],
+    }
+
+    expect(programDetailUjatCommonInfoEditSchema.safeParse(values).success).toBe(true)
     expect(programDetailEditSchema.safeParse(values).success).toBe(false)
   })
 })
@@ -392,7 +423,7 @@ describe('program detail title edit fields', () => {
     }
     const patch = detailEditValuesToProgramPatch(values, existing)
     expect(patch.title).toBe('수정 공고명')
-    expect(patch.textbookName).toBe('수정 세부명')
+    expect(patch.textbookName).toBe('기존 세부명')
     expect(patch.generalCommonInfo?.announcementTitle).toBe('수정 공고명')
     expect(patch.generalCommonInfo?.detailedProgramName).toBe('수정 세부명')
   })
@@ -788,5 +819,50 @@ describe('trained teachers recruitment edit round-trip', () => {
     expect(display.contactOrganizationName).toBe('수정문의처')
     expect(display.notes).toBe('수정된 비고')
     expect(draft.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors).toBe(0)
+  })
+})
+
+describe('detailEditValuesToProgramPatch — UJAT 설문 4종', () => {
+  it('UJAT는 overlay 4종을 유지하고 satisfaction으로 접지 않는다', () => {
+    const existing = {
+      ...program,
+      backendProgramType: 'UJAT',
+      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.surveyItems': {
+          survey: true,
+          volunteer_satisfaction: true,
+          school_satisfaction: false,
+          lecture_evaluation: false,
+        },
+        'ujat.basicInfo.participant.organization': true,
+        'ujat.basicInfo.participant.volunteer': false,
+      },
+    } as Program
+    const values = {
+      ...programToDetailEditValues(existing),
+      surveySurvey: true,
+      surveySatisfaction: true,
+      surveyLectureEvaluation: true,
+    }
+    const patch = detailEditValuesToProgramPatch(values, existing)
+    expect(patch.generalSurveyMenuKeys).toEqual(['survey', 'volunteer_satisfaction'])
+    expect(patch.generalParticipantTypes).toEqual(['school_institution'])
+  })
+
+  it('일반 프로그램은 설문 3종 satisfaction을 유지한다', () => {
+    const existing = {
+      ...program,
+      backendProgramType: 'GENERAL_ORGANIZATION',
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    } as Program
+    const values = {
+      ...programToDetailEditValues(existing),
+      surveySurvey: true,
+      surveySatisfaction: true,
+      surveyLectureEvaluation: false,
+    }
+    const patch = detailEditValuesToProgramPatch(values, existing)
+    expect(patch.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction'])
   })
 })

@@ -89,7 +89,7 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
     expect(program.generalCommonInfo?.announcementTitle).toBeUndefined()
     expect(program.generalCommonInfo?.kpi).toEqual({
       finalParticipants: 61,
-      instructorCount: 0,
+      instructorCount: undefined,
       volunteerCount: 16,
       finalSchools: 3,
       finalClasses: 10,

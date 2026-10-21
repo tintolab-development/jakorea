@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { resolveEmployeeVolunteerSessionRows } from './employee-volunteer-session-rows'
+import {
+  resolveEmployeeVolunteerSessionRows,
+  resolveEmployeeVolunteerSessionRowsForInstitution,
+} from './employee-volunteer-session-rows'
 import type { Program } from '@/types/domain'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
   return {
@@ -163,5 +167,70 @@ describe('resolveEmployeeVolunteerSessionRows', () => {
     )
 
     expect(rows.map(row => row.label)).toEqual(['사전교육', '오리엔테이션'])
+  })
+})
+
+describe('resolveEmployeeVolunteerSessionRowsForInstitution', () => {
+  const school = {
+    id: 'school-1',
+    schoolName: '테스트초',
+  } as ParticipatingSchoolRow
+
+  it('단일 회차 프로그램 진행 행에 기관 배정 일정 라벨을 노출한다', () => {
+    const program = baseProgram({
+      generalProgramSessionRound: 'single',
+      generalProgramEducationStructure: 'schedule',
+    })
+    const rows = resolveEmployeeVolunteerSessionRowsForInstitution(program, {
+      ...school,
+      sessions: [
+        {
+          round: 1,
+          date: '2026.03.01',
+          dayOfWeek: '일',
+          duration: '2',
+          format: '오프라인',
+          classNum: '1',
+          timeRange: '10:00~12:00',
+          educationScheduleLabel: '2026. 03. 01(일) 10:00 ~ 12:00',
+        },
+      ],
+    })
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.id).toBe('program_progress')
+    expect(rows[0]?.label).toBe('2026. 03. 01(일) 10:00 ~ 12:00')
+  })
+
+  it('기관 복수 커리큘럼은 N회차 교육 라벨을 유지한다', () => {
+    const program = baseProgram({
+      generalProgramAudience: 'organization',
+      generalProgramSessionRound: 'multi',
+      generalProgramEducationStructure: 'curriculum',
+      generalCommonInfo: {
+        scheduleCurriculumPreEducation: true,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1', description: '' },
+          { sessionLabel: '2회차', title: '2', description: '' },
+        ],
+      },
+    })
+    const rows = resolveEmployeeVolunteerSessionRowsForInstitution(program, {
+      ...school,
+      sessions: [
+        {
+          round: 1,
+          date: '2026.03.01',
+          dayOfWeek: '일',
+          duration: '2',
+          format: '오프라인',
+          classNum: '1',
+          timeRange: '10:00~12:00',
+          educationScheduleLabel: '기관별 1회차 일정',
+        },
+      ],
+    })
+
+    expect(rows.map(row => row.label)).toEqual(['사전교육', '1회차 교육', '2회차 교육'])
   })
 })

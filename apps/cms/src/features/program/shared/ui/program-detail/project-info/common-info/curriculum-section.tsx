@@ -219,7 +219,7 @@ export function CurriculumSection({
                       control={form.control}
                       render={({ field }) => (
                         <CmsInput
-                          inputSize="medium"
+                          inputSize="small"
                           placeholder="단원명을 입력하세요"
                           width="100%"
                           value={field.value ?? row.unitName}
@@ -240,7 +240,7 @@ export function CurriculumSection({
                       control={form.control}
                       render={({ field }) => (
                         <CmsInput
-                          inputSize="medium"
+                          inputSize="small"
                           placeholder="교육 내용을 작성하세요"
                           width="100%"
                           value={field.value ?? row.content}
@@ -289,13 +289,13 @@ export function CurriculumSection({
                 edit={
                   isFormEdit ? (
                     <div className="detail-info-form-inputs-wrapper">
-                      <CmsRadio.Group
+                      <CmsRadio.Group size="medium"
                         value={round.deliveryType ?? 'offline'}
                         options={ROUND_DELIVERY_OPTIONS}
                         onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
                       />
                       <DetailInfoForm.InputsSeparator />
-                      <CmsInput
+                      <CmsInput inputSize="small"
                         value={duration}
                         onChange={e =>
                           updateRoundCurriculum(roundIndex, e.target.value, description)
@@ -303,7 +303,7 @@ export function CurriculumSection({
                         placeholder="1시간"
                       />
                       <DetailInfoForm.InputsSeparator />
-                      <CmsInput
+                      <CmsInput inputSize="small"
                         value={description}
                         onChange={e => updateRoundCurriculum(roundIndex, duration, e.target.value)}
                         placeholder="비고"
@@ -369,7 +369,7 @@ export function EducationScheduleSettingsSection({
           view={<EducationSchedulePreviewLines lines={lines} />}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="period"
                 customizable={false}

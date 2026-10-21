@@ -58,8 +58,9 @@ function resolveStatusField(
 }
 
 function formatSchoolEnrollmentStatus(grade: UjatVolunteerApplicantRow['grade']): string {
-  if (grade === '휴학생') return '휴학 중'
+  if (grade === '휴학') return '휴학 중'
   if (grade === '졸업유예') return '졸업유예'
+  if (grade === '졸업') return '졸업'
   return '재학 중'
 }
 
@@ -147,7 +148,11 @@ export function ApplicantBasicInfo({
           <DetailInfoForm.Field label="이메일" readOnlyDisplay view={emailDisplay} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="자택 주소지" readOnlyDisplay view="-" />
+          <DetailInfoForm.Field
+            label="자택 주소지"
+            readOnlyDisplay
+            view={applicant.homeAddress.trim() || '-'}
+          />
           <DetailInfoForm.Field label="1365 ID" readOnlyDisplay view={id1365Display} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

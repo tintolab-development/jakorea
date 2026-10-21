@@ -112,6 +112,19 @@
   line-height: 150%;
 }
 
+.activity-withdraw-schedule-modal__required {
+  margin-left: 2px;
+  color: #d92d20;
+}
+
+.activity-withdraw-schedule-modal__hint {
+  margin: 0;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .activity-withdraw-schedule-modal__error {
   color: #d92d20;
   font-size: 12px;

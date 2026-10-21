@@ -1,10 +1,17 @@
-/* admin-notice-detail-page.css 와 동일 스펙 — 클래스 접두어만 FAQ용으로 치환 */
+/* admin-notice-detail-page.css 와 동일 스펙 — 클래스 접두어만 FAQ용으로 치환
+ * 카드 804px 고정 min-height는 layout-content(헤더 64 + padding 32×2)보다
+ * 커져 하단 카드·버튼이 잘리므로, 남은 뷰포트 높이에 맞춘다. */
 .admin-faq-detail-page {
   --notice-detail-card-max-w: 1200px;
   --notice-detail-card-design-h: 804px;
+  --faq-detail-page-height: calc(
+    100dvh - 64px - var(--cms-layout-content-padding-top, 32px) - 32px
+  );
   box-sizing: border-box;
   width: 100%;
-  min-height: 100%;
+  height: var(--faq-detail-page-height);
+  max-height: var(--faq-detail-page-height);
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -31,15 +38,11 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 24px;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   align-self: stretch;
   width: 100%;
-  /* 카드 실제 너비(최대 1200px) 기준 1200:804 비율 — 본문이 더 길면 카드 높이는 그에 맞게 증가 */
-  min-height: clamp(
-    280px,
-    calc(100cqw * var(--notice-detail-card-design-h) / var(--notice-detail-card-max-w)),
-    var(--notice-detail-card-design-h)
-  );
+  min-height: 0;
+  overflow: hidden;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
@@ -225,8 +228,21 @@
   margin: 0;
   width: 100%;
   min-width: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 패키지 기본 max-height: 403px 를 풀어 흰 카드 하단까지 스크롤 */
+.admin-faq-detail-page__body .rich-text-viewer {
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .admin-faq-detail-page__actions {

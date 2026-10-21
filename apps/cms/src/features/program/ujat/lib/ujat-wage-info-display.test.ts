@@ -25,13 +25,12 @@ describe('UJAT 지급 항목 — 명시적 빈값', () => {
     expect(resolveUjatPaymentItemIdsFromProgram(programWith(overlay), overlay)).toEqual([])
   })
 
-  it('overlay 키가 없을 때만 기본 지급 항목을 쓴다', () => {
+  it('overlay 키가 없을 때 신규 폼은 기본 지급 항목, 상세 조회는 빈 값이다', () => {
     expect(readUjatWagePaymentItemValuesFromOverlay({})).toEqual([
       ...UJAT_DEFAULT_PAYMENT_ITEM_VALUES,
     ])
-    expect(resolveUjatPaymentItemIdsFromProgram(programWith({}))).toEqual([
-      ...UJAT_DEFAULT_PAYMENT_ITEM_VALUES,
-    ])
+    expect(readUjatWagePaymentItemValuesFromOverlay({}, { fillDefaults: false })).toEqual([])
+    expect(resolveUjatPaymentItemIdsFromProgram(programWith({}))).toEqual([])
   })
 
   it('프로그램 라벨이 있어도 overlay []가 우선한다', () => {

@@ -1,8 +1,13 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getProgramTextbookCatalog } from '@/features/textbook/api/admin-textbooks-service'
+import {
+  getParticipatingInstitutionTextbookCatalog,
+  getProgramTextbookCatalog,
+} from '@/features/textbook/api/admin-textbooks-service'
 import {
   listMockTextbookCatalogForProgram,
+  listMockTextbooksByBusinessArea,
+  serializeParticipatingInstitutionTextbookCatalogKey,
   serializeProgramTextbookCatalogKey,
 } from '@/features/textbook/api/textbook-program-catalog'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
@@ -12,19 +17,33 @@ import type { Program } from '@/types/domain'
 
 export function useProgramTextbookCatalog(
   program: Program | null | undefined,
-  educationGrade?: string
+  educationGrade?: string,
+  options?: { businessAreaOnly?: boolean }
 ) {
+  const businessAreaOnly = options?.businessAreaOnly === true
   const remoteEnabled = useDataManagementRemoteEnabled('textbooks', program != null)
-  const catalogKey = program ? serializeProgramTextbookCatalogKey(program, educationGrade) : ''
+  const catalogKey = !program
+    ? ''
+    : businessAreaOnly
+      ? serializeParticipatingInstitutionTextbookCatalogKey(program)
+      : serializeProgramTextbookCatalogKey(program, educationGrade)
 
   const mockCatalog = useMemo(
-    () => (program ? listMockTextbookCatalogForProgram(program, educationGrade) : []),
-    [educationGrade, program]
+    () =>
+      !program
+        ? []
+        : businessAreaOnly
+          ? listMockTextbooksByBusinessArea(program)
+          : listMockTextbookCatalogForProgram(program, educationGrade),
+    [businessAreaOnly, educationGrade, program]
   )
 
   const query = useQuery({
     queryKey: dataManagementQueryKeys.textbooks.matches(catalogKey),
-    queryFn: () => getProgramTextbookCatalog(program!, educationGrade),
+    queryFn: () =>
+      businessAreaOnly
+        ? getParticipatingInstitutionTextbookCatalog(program!)
+        : getProgramTextbookCatalog(program!, educationGrade),
     enabled: remoteEnabled && program != null,
     staleTime: 60_000,
     retry: false,

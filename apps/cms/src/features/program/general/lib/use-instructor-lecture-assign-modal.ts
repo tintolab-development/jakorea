@@ -10,11 +10,7 @@ import {
   hydrateOrganizationApplicationSchedules,
 } from '@/features/program/general/api/admin-applications-service'
 import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
-import {
-  generalApplicationsQueryKeys,
-  generalProgramProgressQueryKeys,
-} from '@/features/program/general/api/general-applications-query-keys'
-import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   buildIndividualLectureAssignSlotsFromScheduleSlots,
   getApplicantPreferredDateKeys,
@@ -59,6 +55,26 @@ async function fetchApprovedOrganizationApplicationsForLectureAssign(
 }
 
 export type InstructorLectureAssignModalVariant = 'organization' | 'individual'
+
+/** 기관 배정은 캘린더+당일 기관 카드가 기본. 슬롯 목록은 개인이거나 승인 기관이 없을 때만. */
+export function resolveInstructorLectureAssignLayout(params: {
+  isIndividual: boolean
+  organizationRemoteEnabled: boolean
+  organizationApplicationsSuccess: boolean
+  approvedOrganizationCount: number
+  instructorDetailReady: boolean
+}): { showNoApprovedOrganizationBanner: boolean; useSlotListLayout: boolean } {
+  const showNoApprovedOrganizationBanner =
+    !params.isIndividual &&
+    params.organizationRemoteEnabled &&
+    params.organizationApplicationsSuccess &&
+    params.approvedOrganizationCount === 0 &&
+    params.instructorDetailReady
+  return {
+    showNoApprovedOrganizationBanner,
+    useSlotListLayout: params.isIndividual || showNoApprovedOrganizationBanner,
+  }
+}
 
 export type InstructorLectureAssignConfirmPayload = {
   assignments: InstructorLectureAssignItem[]
@@ -105,14 +121,6 @@ export function useInstructorLectureAssignModal(params: {
   const organizationApplicationsQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.instructorLectureAssignInstitutions(programId),
     queryFn: () => fetchApprovedOrganizationApplicationsForLectureAssign(programId, queryClient),
-    enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
-    staleTime: 30_000,
-    retry: false,
-  })
-
-  const instructorAssignmentBoardQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
-    queryFn: () => fetchGeneralInstructorAssignmentBoard(programId),
     enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
     staleTime: 30_000,
     retry: false,
@@ -205,6 +213,15 @@ export function useInstructorLectureAssignModal(params: {
 
   const useAvailableScheduleSlotsUi = useRemoteInstructorDetail && instructorDetailQuery.isSuccess
 
+  const { showNoApprovedOrganizationBanner, useSlotListLayout } =
+    resolveInstructorLectureAssignLayout({
+      isIndividual,
+      organizationRemoteEnabled,
+      organizationApplicationsSuccess: organizationApplicationsQuery.isSuccess,
+      approvedOrganizationCount: organizationApplicationsQuery.data?.length ?? 0,
+      instructorDetailReady: useAvailableScheduleSlotsUi,
+    })
+
   const legacyIndividualSlots = useMemo(() => {
     if (!isIndividual || !individualProgram || useRemoteInstructorDetail) return []
     return getIndividualLectureAssignSlots(
@@ -216,13 +233,14 @@ export function useInstructorLectureAssignModal(params: {
   }, [isIndividual, individualProgram, useRemoteInstructorDetail, instructor, allInstructors])
 
   const availableSlots = useMemo(() => {
-    if (useAvailableScheduleSlotsUi) return detailScheduleSlots
-    if (isIndividual) return legacyIndividualSlots
+    if (useSlotListLayout) {
+      return useAvailableScheduleSlotsUi ? detailScheduleSlots : legacyIndividualSlots
+    }
     return slotsForDay
   }, [
+    useSlotListLayout,
     useAvailableScheduleSlotsUi,
     detailScheduleSlots,
-    isIndividual,
     legacyIndividualSlots,
     slotsForDay,
   ])
@@ -243,7 +261,7 @@ export function useInstructorLectureAssignModal(params: {
   })
 
   const singleRemoteSlot =
-    useAvailableScheduleSlotsUi && detailScheduleSlots.length === 1
+    useSlotListLayout && useAvailableScheduleSlotsUi && detailScheduleSlots.length === 1
       ? detailScheduleSlots[0]
       : undefined
 
@@ -272,36 +290,19 @@ export function useInstructorLectureAssignModal(params: {
       setAssignedItems(prev => {
         if (prev.some(item => item.slotKey === slot.key)) return prev
         const usePeriodStyleItem =
-          isIndividual || useAvailableScheduleSlotsUi || Boolean(slot.label?.trim())
+          isIndividual || useSlotListLayout || Boolean(slot.label?.trim())
         const nextItem = usePeriodStyleItem
           ? toIndividualLectureAssignItem(slot)
           : toLectureAssignItem(slot)
-        return [...prev, { ...nextItem, scheduleLead: prev.length === 0 }]
+        return [...prev, nextItem]
       })
     },
-    [isIndividual, useAvailableScheduleSlotsUi]
+    [isIndividual, useSlotListLayout]
   )
 
   const handleRemoveAssignment = useCallback((slotKey: string) => {
     setAssignedItems(prev => prev.filter(item => item.slotKey !== slotKey))
   }, [])
-
-  const handleToggleScheduleLead = useCallback((slotKey: string, scheduleLead: boolean) => {
-    setAssignedItems(prev =>
-      prev.map(item => (item.slotKey === slotKey ? { ...item, scheduleLead } : item))
-    )
-  }, [])
-
-  const existingLeadScheduleIds = useMemo(() => {
-    const ids = new Set<number>()
-    for (const assignment of instructorAssignmentBoardQuery.data?.assignments ?? []) {
-      if (assignment.scheduleLead !== true || assignment.scheduleId == null) continue
-      const status = assignment.assignmentStatus?.toUpperCase()
-      if (status === 'CANCELLED' || status === 'CANCELED' || status === 'INACTIVE') continue
-      ids.add(assignment.scheduleId)
-    }
-    return ids
-  }, [instructorAssignmentBoardQuery.data?.assignments])
 
   const canConfirm = assignedItems.length > 0
 
@@ -310,21 +311,11 @@ export function useInstructorLectureAssignModal(params: {
       ? '배정 가능한 기관·일정을 불러오는 중입니다.'
       : '이 날짜에 배정 가능한 기관이 없습니다.'
 
-  const approvedOrganizationCount = organizationApplicationsQuery.data?.length ?? 0
-  const showNoApprovedOrganizationBanner =
-    !isIndividual &&
-    organizationRemoteEnabled &&
-    organizationApplicationsQuery.isSuccess &&
-    approvedOrganizationCount === 0 &&
-    useAvailableScheduleSlotsUi
-
-  const useSlotListLayout = isIndividual || useAvailableScheduleSlotsUi
-
-  const slotsEmptyText = useAvailableScheduleSlotsUi
-    ? scheduleSlotsEmptyText
-    : isIndividual
-      ? '등록된 교육 일정이 없습니다.'
-      : organizationSlotsEmptyText
+  const slotsEmptyText = useSlotListLayout
+    ? useAvailableScheduleSlotsUi
+      ? scheduleSlotsEmptyText
+      : '등록된 교육 일정이 없습니다.'
+    : organizationSlotsEmptyText
 
   return {
     variant,
@@ -350,9 +341,6 @@ export function useInstructorLectureAssignModal(params: {
     handleSelectDate,
     handleAddSlot,
     handleRemoveAssignment,
-    handleToggleScheduleLead,
-    existingLeadScheduleIds,
-    existingLeadQueryReady: instructorAssignmentBoardQuery.isSuccess,
     canConfirm,
   }
 }

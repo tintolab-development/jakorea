@@ -114,6 +114,20 @@
   line-height: 150%;
 }
 
+.participating-instructor-activity-withdraw-modal__hint {
+  margin: 8px 0 0;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.participating-instructor-activity-withdraw-modal__error {
+  color: #d92d20;
+  font-size: 12px;
+  line-height: 150%;
+}
+
 .participating-instructor-activity-withdraw-modal__footer {
   display: flex;
   width: 100%;

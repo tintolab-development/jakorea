@@ -136,6 +136,10 @@ export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPL
 
   const safeIndex = index % total
   const activeSlide = slides[safeIndex]!
+  const titleLines = activeSlide.titleLines
+    .flatMap(line => line.split(/\r?\n/))
+    .map(line => line.trim())
+    .filter(Boolean)
   const paintIndexes = [
     ...new Set(
       [outgoingIndex, safeIndex].filter((value): value is number => value != null && value < total),
@@ -164,8 +168,8 @@ export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPL
         <div className={styles.copy}>
           <p className={styles.eyebrow}>{activeSlide.eyebrow}</p>
           <h1 className={styles.title}>
-            {activeSlide.titleLines.map(line => (
-              <span className={styles.titleLine} key={line}>
+            {titleLines.map((line, lineIndex) => (
+              <span className={styles.titleLine} key={`${line}-${lineIndex}`}>
                 {line}
               </span>
             ))}

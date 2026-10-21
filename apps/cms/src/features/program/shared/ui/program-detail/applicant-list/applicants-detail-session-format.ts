@@ -13,7 +13,12 @@ export type ApplicantSessionLineInput = {
 import { appendCurriculumSingleDateFixedScheduleSessionSuffix } from '@jakorea/form-schema/program-application'
 import type { SessionLinePreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { formatHopeScheduleFormOptionLine } from '@/features/program/general/lib/hope-schedule-form-option'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
+import {
+  formatGeneralEducationScheduleLine,
+  type GeneralEducationScheduleShape,
+} from '@/features/program/general/lib/participating-school-session-display'
 
 /** 신청 폼 고정 일정 선택지와 동일 — 커리큘럼·단일·날짜 `예정일 | N차시` */
 export function enrichGeneralDetailScheduleLineLabel(
@@ -63,16 +68,36 @@ export function getSessionLineParts(
   return { datePart, durationPart, periodPart, preset }
 }
 
-/** 일반 상세 목록 — `2026. 01. 09(금) 09:20 ~ 11:20 | 1차시` 한 줄 표기 */
+export function generalEducationScheduleShapeFromBridge(
+  bridge?: InstitutionApplicationProgramBridge | null
+): GeneralEducationScheduleShape | null {
+  if (!bridge) return null
+  return {
+    educationStructure: bridge.educationStructure,
+    sessionRound: bridge.sessionRound,
+    educationScheduleMode: bridge.educationScheduleMode,
+    curriculumSessionCount: bridge.curriculumChartSessionCount,
+  }
+}
+
+/** 일반 상세 목록 — `preferFormOptionLabel`이면 폼 선택지 문구, 아니면 진행 화면과 같은 한 줄 */
 export function formatGeneralDetailSessionLine(
   s: ApplicantSessionLineInput,
-  bridge?: InstitutionApplicationProgramBridge | null
-): string {
-  const scheduleLabel = s.scheduleLabel?.trim()
-  if (scheduleLabel) return enrichGeneralDetailScheduleLineLabel(scheduleLabel, bridge)
-  const { datePart, durationPart, periodPart } = getSessionLineParts(s, 'general-detail', bridge)
-  if (!periodPart) {
-    return enrichGeneralDetailScheduleLineLabel(`${datePart} ${durationPart}`, bridge)
+  bridge?: InstitutionApplicationProgramBridge | null,
+  options?: {
+    detailScheduleTimeSpan?: string | null
+    curriculumSessionLabels?: readonly string[] | null
+    preferFormOptionLabel?: boolean
   }
-  return `${datePart} ${durationPart} | ${periodPart}`
+): string {
+  if (options?.preferFormOptionLabel) {
+    const formOptionLine = formatHopeScheduleFormOptionLine(s, bridge)
+    if (formOptionLine) return formOptionLine
+  }
+  const shape = generalEducationScheduleShapeFromBridge(bridge)
+  return formatGeneralEducationScheduleLine(
+    s,
+    shape ? { ...shape, curriculumSessionLabels: options?.curriculumSessionLabels } : null,
+    options
+  )
 }

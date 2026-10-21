@@ -36,6 +36,7 @@ export function UserDetailFullpageTabPanels() {
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
     onTeacherEmploymentStatusChange,
+    onAffiliatedTeachersChanged,
     onPermissionResendNotification,
     onOpenJaGradeEvaluation,
     scheduleChangeCount,
@@ -67,6 +68,7 @@ export function UserDetailFullpageTabPanels() {
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
           onEmploymentStatusChange={onTeacherEmploymentStatusChange}
+          onAffiliatedTeachersChanged={onAffiliatedTeachersChanged}
           onPermissionResendNotification={onPermissionResendNotification}
           onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
           scheduleChangeCount={scheduleChangeCount}

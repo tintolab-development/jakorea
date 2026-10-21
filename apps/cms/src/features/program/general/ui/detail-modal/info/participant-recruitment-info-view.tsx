@@ -95,7 +95,7 @@ function NumberWithSuffixEdit({
       render={({ field }) => (
         <div className={MAX_SUFFIX_CLASS}>
           <CmsNumericInput
-            inputSize="medium"
+            inputSize="small"
             mode="integer"
             min={0}
             placeholder={placeholder}
@@ -216,7 +216,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             render={({ field }) => (
               <CmsRadio.Group
                 {...field}
-                size="large"
+                size="medium"
                 value={field.value ?? undefined}
                 onChange={e => field.onChange(e.target.value)}
                 options={NEED_OR_NOT_OPTIONS}
@@ -240,7 +240,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             name="applicationStartDate"
             control={form.control}
             render={({ field }) => (
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="range"
                 value={[
                   toDayjs(field.value as string | Date | undefined),
@@ -285,7 +285,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               name="resultAnnouncementDate"
               control={form.control}
               render={({ field }) => (
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="date"
                   customizable={false}
@@ -305,7 +305,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   {...field}
                   value={field.value ?? ''}
                   placeholder="발표 방법 안내"
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   className="program-detail-info-tab__result-method-input"
                 />
@@ -372,7 +372,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       render={({ field }) => (
                         <CmsRadio.Group
                           {...field}
-                          size="large"
+                          size="medium"
                           value={field.value ?? undefined}
                           onChange={e => field.onChange(e.target.value)}
                           options={NEED_OR_NOT_OPTIONS}
@@ -489,7 +489,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     name="participantProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker
+                      <ParagraphDatePicker inputSize="small"
                         mode="range"
                         value={[
                           toDayjs(field.value as string | Date | undefined),
@@ -543,7 +543,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     render={({ field }) => (
                       <CmsSelect
                         mode="multiple"
-                        inputSize="medium"
+                        inputSize="small"
                         width={240}
                         withAllOption={false}
                         value={field.value ?? []}
@@ -571,7 +571,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         {...field}
                         value={field.value ?? ''}
                         placeholder="상세 교육 대상을 입력하세요"
-                        inputSize="medium"
+                        inputSize="small"
                         width="100%"
                         className="program-detail-info-tab__district-input"
                       />
@@ -624,7 +624,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="담당 문의처"
-                            inputSize="medium"
+                            inputSize="small"
                             className="program-detail-info-tab__contact-name-input"
                           />
                         )}
@@ -644,7 +644,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 전화번호"
-                            inputSize="medium"
+                            inputSize="small"
                             className="program-detail-info-tab__contact-phone-input"
                           />
                         )}
@@ -664,7 +664,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 이메일"
-                            inputSize="medium"
+                            inputSize="small"
                             className="program-detail-info-tab__contact-email-input"
                           />
                         )}
@@ -718,7 +718,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                               'not_applicable'
                             }
                             placeholder="비고란을 작성하세요"
-                            inputSize="medium"
+                            inputSize="small"
                             width="100%"
                             style={{ flex: '1 1 0', minWidth: 0 }}
                             className="program-detail-info-tab__notes-input"
@@ -735,7 +735,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                           {...field}
                           value={field.value ?? ''}
                           placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-                          inputSize="medium"
+                          inputSize="small"
                           width="100%"
                           className="program-detail-info-tab__notes-input"
                         />

@@ -4,9 +4,8 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveGeneralProgramLocalById } from '@/features/program/general/lib/general-program-local-cache'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { Program } from '@/types/domain'
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 export type InstructorLectureAssignSlot = {
   key: string
@@ -36,8 +35,6 @@ export type InstructorLectureAssignItem = {
   tagLabel: string
   scheduleId?: number
   organizationApplicationId?: number | null
-  /** 승인 API에 전달할 일정별 리드 강사 여부 */
-  scheduleLead?: boolean
 }
 
 /** 개인 프로그램 강의 배정 — 기관 ID 대체값 */
@@ -187,20 +184,11 @@ function mergeSlot(
 }
 
 export function formatLectureAssignDateLabel(date: Dayjs): string {
-  const y = date.year() % 100
-  const m = date.month() + 1
-  const d = date.date()
-  const weekday = WEEKDAY_KO[date.day()]
-  return `${y}년 ${m}월 ${d}일(${weekday})`
+  return formatCmsScheduleDisplayLabel(date.format('YYYY-MM-DD'))
 }
 
 export function formatLectureAssignTagLabel(date: Dayjs, schoolName: string): string {
-  const y = date.year() % 100
-  const m = date.month() + 1
-  const d = date.date()
-  const weekday = WEEKDAY_KO[date.day()]
-  const shortSchool = schoolName.replace(/초등학교$/, '초').replace(/중학교$/, '중')
-  return `${y}년 ${m}월 ${d}일(${weekday}) ${shortSchool}`
+  return `${formatLectureAssignDateLabel(date)} ${schoolName}`
 }
 
 /** 승인된 기관 신청의 희망 교육 일정만 슬롯으로 변환 (강사 신청 — 강의 진행 가능 일정) */
@@ -394,13 +382,12 @@ export function parseScheduleIdFromSlotKey(slotKey: string): number | null {
 export type InstructorApplicationApprovalAssignmentInput = {
   scheduleId: number
   organizationApplicationId?: number
-  scheduleLead: boolean
 }
 
 export function mapLectureAssignItemsToApprovalAssignments(
   assignments: InstructorLectureAssignItem[]
 ): InstructorApplicationApprovalAssignmentInput[] {
-  return assignments.flatMap((assignment, index) => {
+  return assignments.flatMap(assignment => {
     const scheduleId = assignment.scheduleId ?? parseScheduleIdFromSlotKey(assignment.slotKey)
     if (scheduleId == null || scheduleId < 1) return []
     const orgFromItem = assignment.organizationApplicationId
@@ -418,7 +405,6 @@ export function mapLectureAssignItemsToApprovalAssignments(
       {
         scheduleId,
         ...(organizationApplicationId != null ? { organizationApplicationId } : {}),
-        scheduleLead: assignment.scheduleLead ?? index === 0,
       },
     ]
   })

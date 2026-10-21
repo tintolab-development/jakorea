@@ -157,7 +157,12 @@ export function applyRecruitmentDetailInfoFields(
     ...audiencePatch
   } = patch
 
-  const programRecruitments = writeRecruitmentRowCopy(existing, audience, {
+  // 운영 기간처럼 앞에서 갱신한 행 필드는 문구 복사 때 기존 행으로 되돌리지 않는다.
+  const recruitmentSource =
+    patch.programRecruitments != null
+      ? { ...existing, programRecruitments: patch.programRecruitments }
+      : existing
+  const programRecruitments = writeRecruitmentRowCopy(recruitmentSource, audience, {
     ...(fields.announcementTitle !== undefined
       ? { announcementTitle: fields.announcementTitle.trim() || null }
       : {}),

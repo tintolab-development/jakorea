@@ -12,36 +12,33 @@ export interface AdminLoginRequestBody {
   password: string
 }
 
-/** POST /api/admin/auth/login 200 */
+/** POST /api/admin/auth/login 200. QR/Secret은 포함하지 않는다. */
 export interface AdminMfaChallengeResponse {
   requiresMfa?: boolean
   challengeUuid: string
   mfaMethod: string
   expiresAt: string
-  /** 최초 TOTP 등록 시 백엔드가 challenge에 함께 내려줄 수 있음 (OpenAPI 미반영 필드 허용) */
-  totpSecret?: string
-  otpauthUri?: string
-  qrDataUrl?: string
+  /** true면 QR 등록, false면 기존 OTP만 입력 */
+  mfaSetupRequired?: boolean
 }
 
-/** POST /api/admin/auth/mfa/enrollment */
+/** POST /api/admin/auth/mfa/enrollment — Secret은 서버가 만든다. */
 export interface AdminMfaSetupRequestBody {
+  challengeUuid: string
   mfaMethod: string
-  enabled: boolean
-  totpSecret?: string
-  backupCodesHashJson?: string
-  /** 로그인 직후 challenge 기반 등록 시 전달 (OpenAPI 미반영 필드 허용) */
-  challengeUuid?: string
+  qrSize?: number
 }
 
-/** POST /api/admin/auth/mfa/enrollment 200 — 문서 외 provisioning 필드 허용 */
+/** POST /api/admin/auth/mfa/enrollment 200 */
 export interface AdminMfaSetupResult {
+  adminAccountId?: number
   adminId?: number
   mfaMethod?: string
   enabled?: boolean
   message?: string
-  totpSecret?: string
-  otpauthUri?: string
+  mfaSetupRequired?: boolean
+  /** 화면 메모리에만 둔다. 저장소·로그에 남기지 않는다. */
+  manualEntryKey?: string
   qrDataUrl?: string
 }
 

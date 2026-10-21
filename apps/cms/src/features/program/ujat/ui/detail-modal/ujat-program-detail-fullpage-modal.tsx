@@ -16,13 +16,16 @@ import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
-import { seedOperationalRecruitOverlaysFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { handleError } from '@/shared/utils/error-handler'
-import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programDetailUjatCommonInfoEditSchema,
+  programToDetailEditValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import {
   applyUjatRecruitAnnouncementTitleToDraft,
   resolveUjatRecruitDisplayProgram,
+  volunteerHalfFromRecruitDisplayKind,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
@@ -90,6 +93,15 @@ import { hydrateUjatRecruitTemplatesForProgram } from '@/features/program/ujat/l
 import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
+import { queryKeys as ujatProgramQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { detail as fetchUjatProgramRemoteById } from '@/features/program/ujat/api/service'
+import {
+  omitRecruitmentTabScheduleFields,
+  persistRecruitmentTabSave,
+} from '@/features/program/shared/lib/persist-recruitment-row-save'
+import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { persistRecruitmentOverlaySnapshot } from '@/features/program/ujat/api/service'
+import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import {
   replaceUjatRegionCapacitiesRemote,
   type UjatRegionCapacityUpsert,
@@ -1250,17 +1262,32 @@ export function UjatProgramDetailFullPageModal({
   const infoForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInfo,
+    schema: programDetailUjatCommonInfoEditSchema,
     holdValuesWhileEditing: true,
   })
-  const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
-    useProgramDetailInfoSave({
+  const {
+    triggerSave: infoTriggerSave,
+    resetToProgram: infoResetToProgram,
+    takeSaveFailure: takeInfoSaveFailure,
+  } = useProgramDetailInfoSave({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
+      validateSchema: programDetailUjatCommonInfoEditSchema,
       onSaveEdit:
         displayProgram && updateProgram
           ? async (draft, patch) => {
               try {
                 const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+                const commonPatch: Partial<Program> = {
+                  ...patch,
+                  ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
+                  generalSurveyMenuKeys: draftWithOverlay.generalSurveyMenuKeys,
+                  generalParticipantTypes: draftWithOverlay.generalParticipantTypes,
+                  generalCommonInfo: draftWithOverlay.generalCommonInfo,
+                  mainTitle: draftWithOverlay.mainTitle,
+                  titleEn: draftWithOverlay.titleEn,
+                  title: draftWithOverlay.title,
+                }
                 if (
                   shouldUseRemoteApi() &&
                   displayProgram &&
@@ -1274,7 +1301,7 @@ export function UjatProgramDetailFullPageModal({
                   )
                 }
                 if (onUpdateProgram) {
-                  await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
+                  await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, commonPatch)
                 } else {
                   await updateProgram(draftWithOverlay.id, draftWithOverlay)
                 }
@@ -1284,6 +1311,7 @@ export function UjatProgramDetailFullPageModal({
                 setSearchParams(next, { replace: true })
               } catch (error) {
                 handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+                throw error
               }
             }
           : undefined,
@@ -1352,11 +1380,26 @@ export function UjatProgramDetailFullPageModal({
       if (ok) {
         detailRequiredHighlight.clear()
         setEditMode(null)
+        return
+      }
+      if (takeInfoSaveFailure() === 'validation') {
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
       }
     } finally {
       endOverlay()
     }
-  }, [detailRequiredHighlight, displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
+  }, [
+    detailRequiredHighlight,
+    displayProgram,
+    infoForm,
+    infoTriggerSave,
+    setEditMode,
+    showAlert,
+    takeInfoSaveFailure,
+  ])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
@@ -1410,21 +1453,36 @@ export function UjatProgramDetailFullPageModal({
                 kind: 'institution',
                 values: institutionsForm.getValues(),
               })
-              const remotePatch = {
-                ...patch,
+              const { registrationOverlay: _omitRegistrationOverlay, ...recruitPatch } = patch
+              const remotePatch = omitRecruitmentTabScheduleFields({
+                ...recruitPatch,
                 ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
                 generalCommonInfo: draftWithOverlay.generalCommonInfo,
                 programRecruitments: draftWithOverlay.programRecruitments,
-              }
-              if (onUpdateProgram) {
-                await onUpdateProgram(
-                  draftWithOverlay.id,
-                  {
-                    ...draftWithOverlay,
-                    programRecruitments: displayProgram.programRecruitments,
-                  },
-                  remotePatch
+              })
+              const result = await persistRecruitmentTabSave({
+                baseline: displayProgram,
+                draft: draftWithOverlay,
+                patch: remotePatch,
+                audience: 'participant',
+                refetchProgram: async id => {
+                  const next = await fetchUjatProgramRemoteById(id)
+                  if (!next) throw new Error('UJAT 프로그램 상세를 다시 불러오지 못했습니다.')
+                  return next
+                },
+                beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
+              })
+              if (result.mode === 'row') {
+                const scope = shouldUseRemoteApi() ? 'remote' : 'local'
+                await syncOpenProgramDetailCache(
+                  queryClient,
+                  ujatProgramQueryKeys.detail(scope, result.program.id),
+                  result.program,
+                  { refetch: false }
                 )
+                invalidateUjatProgramListCaches(queryClient)
+              } else if (onUpdateProgram) {
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, result.patch)
               } else {
                 await updateProgram(draftWithOverlay.id, draftWithOverlay)
               }
@@ -1495,8 +1553,9 @@ export function UjatProgramDetailFullPageModal({
                 kind: volunteerRecruitKindRef.current,
                 values,
               })
-              const remotePatch = {
-                ...patch,
+              const { registrationOverlay: _omitRegistrationOverlay, ...recruitPatch } = patch
+              const remotePatch = omitRecruitmentTabScheduleFields({
+                ...recruitPatch,
                 ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
                 generalCommonInfo: draftWithOverlay.generalCommonInfo,
                 startDate: draftWithOverlay.startDate,
@@ -1521,18 +1580,34 @@ export function UjatProgramDetailFullPageModal({
                 recruitmentGuide: draftWithOverlay.recruitmentGuide,
                 applicationMethod: draftWithOverlay.applicationMethod,
                 additionalContentHtml: draftWithOverlay.additionalContentHtml,
-                rounds: draftWithOverlay.rounds,
                 programRecruitments: draftWithOverlay.programRecruitments,
-              }
-              if (onUpdateProgram) {
-                await onUpdateProgram(
-                  draftWithOverlay.id,
-                  {
-                    ...draftWithOverlay,
-                    programRecruitments: displayProgram.programRecruitments,
-                  },
-                  remotePatch
+              })
+              const volunteerHalf =
+                volunteerHalfFromRecruitDisplayKind(volunteerRecruitKindRef.current) ?? undefined
+              const result = await persistRecruitmentTabSave({
+                baseline: displayProgram,
+                draft: draftWithOverlay,
+                patch: remotePatch,
+                audience: 'volunteer',
+                volunteerHalf,
+                refetchProgram: async id => {
+                  const next = await fetchUjatProgramRemoteById(id)
+                  if (!next) throw new Error('UJAT 프로그램 상세를 다시 불러오지 못했습니다.')
+                  return next
+                },
+                beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
+              })
+              if (result.mode === 'row') {
+                const scope = shouldUseRemoteApi() ? 'remote' : 'local'
+                await syncOpenProgramDetailCache(
+                  queryClient,
+                  ujatProgramQueryKeys.detail(scope, result.program.id),
+                  result.program,
+                  { refetch: false }
                 )
+                invalidateUjatProgramListCaches(queryClient)
+              } else if (onUpdateProgram) {
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, result.patch)
               } else {
                 await updateProgram(draftWithOverlay.id, draftWithOverlay)
               }
@@ -1638,7 +1713,7 @@ export function UjatProgramDetailFullPageModal({
       })
       return
     }
-    seedOperationalRecruitOverlaysFromProgram(displayProgram)
+    void hydrateUjatRecruitTemplatesForProgram(displayProgram)
     if (activeRecruitTab === 'recruit_participant') {
       institutionsResetToProgram()
     } else {

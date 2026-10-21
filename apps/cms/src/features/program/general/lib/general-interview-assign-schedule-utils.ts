@@ -146,35 +146,58 @@ function buildParsedInterviewSchedule(
   }
 }
 
-/** remote interview-slots 를 프로그램 스케줄에 합친다(가능일·불가일 SSOT는 프로그램 유지). */
+/**
+ * remote interview-slots 가 있으면 그 날짜·시간이 배정 가능 슬롯이다.
+ * 프로그램 문구의 주말·불가일·공통 시간대는 이 슬롯을 지우지 않는다.
+ */
 export function mergeRemoteSlotsIntoProgramSchedule(
   programSchedule: ParsedInterviewSchedule,
   remoteSchedule: ParsedInterviewSchedule
 ): ParsedInterviewSchedule {
   if (remoteSchedule.clickableDateKeys.size === 0) return programSchedule
 
-  const slotsByDateKey = new Map(programSchedule.slotsByDateKey)
-  for (const [dateKey, remoteSlots] of remoteSchedule.slotsByDateKey) {
-    if (!programSchedule.clickableDateKeys.has(dateKey)) continue
-    const daySlots = [...(slotsByDateKey.get(dateKey) ?? [])]
-    for (const slot of remoteSlots) {
-      if (daySlots.some(existing => existing.key === slot.key)) continue
-      daySlots.push(slot)
-    }
-    slotsByDateKey.set(dateKey, daySlots)
-  }
+  const rangeStart = programSchedule.rangeStart.isBefore(remoteSchedule.rangeStart, 'day')
+    ? programSchedule.rangeStart
+    : remoteSchedule.rangeStart
+  const rangeEnd = programSchedule.rangeEnd.isAfter(remoteSchedule.rangeEnd, 'day')
+    ? programSchedule.rangeEnd
+    : remoteSchedule.rangeEnd
+  const clickableDateKeys = new Set(remoteSchedule.clickableDateKeys)
 
   return {
     ...programSchedule,
-    slotsByDateKey,
+    slotsByDateKey: new Map(remoteSchedule.slotsByDateKey),
+    clickableDateKeys,
+    disabledDate: (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD')),
+    rangeStart,
+    rangeEnd,
+    scheduleMonth: remoteSchedule.scheduleMonth,
   }
 }
 
+function formatInstantInSeoul(iso: string): string | null {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return null
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(part => part.type === type)?.value ?? ''
+  const hour = value('hour')
+  const minute = value('minute')
+  if (!/^\d{2}$/.test(hour) || !/^\d{2}$/.test(minute)) return null
+  return `${hour}:${minute}`
+}
+
+/** interview-slots `startAt`/`endAt` → 신청 가능 일정과 같은 한국 시간 `HH:mm ~ HH:mm` */
 function timeRangeFromIso(startAt: string, endAt: string): string | null {
-  const start = dayjs(startAt)
-  const end = dayjs(endAt)
-  if (!start.isValid() || !end.isValid()) return null
-  return normalizeTimeRangeKey(`${start.format('HH:mm')} ~ ${end.format('HH:mm')}`)
+  const start = formatInstantInSeoul(startAt)
+  const end = formatInstantInSeoul(endAt)
+  if (!start || !end) return null
+  return normalizeTimeRangeKey(`${start} ~ ${end}`)
 }
 
 /**
@@ -191,9 +214,11 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
   let maxDate: Dayjs | null = null
 
   for (const slot of slots) {
-    const dateKey = dayjs(slot.slotDate).isValid()
-      ? dayjs(slot.slotDate).format('YYYY-MM-DD')
-      : slot.slotDate
+    const dateKey = /^\d{4}-\d{2}-\d{2}$/.test(slot.slotDate)
+      ? slot.slotDate
+      : dayjs(slot.slotDate).isValid()
+        ? dayjs(slot.slotDate).format('YYYY-MM-DD')
+        : slot.slotDate
     const timeRange = timeRangeFromIso(slot.startAt, slot.endAt)
     if (!timeRange || !dateKey) continue
 

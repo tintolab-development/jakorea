@@ -38,7 +38,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                 <CmsInput
                   {...field}
                   value={field.value ?? ''}
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="프로그램명을 입력하세요"
                 />
@@ -81,7 +81,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
               render={({ field }) => (
                 <CmsSelect
                   mode="multiple"
-                  inputSize="medium"
+                  inputSize="small"
                   width={240}
                   withAllOption={false}
                   value={field.value ?? []}
@@ -104,7 +104,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                 <CmsInput
                   {...field}
                   value={field.value ?? ''}
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="상세 교육 대상을 입력하세요"
                 />
@@ -192,7 +192,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                 <CmsInput
                   {...field}
                   value={field.value ?? ''}
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder="비고란을 작성하세요 (없으면 -로 입력)"
                 />

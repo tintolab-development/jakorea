@@ -5,6 +5,43 @@ import path from 'path'
 import { e2eErrorLogMockApiPlugin } from './vite-plugins/e2e-error-log-mock-api'
 import { e2eTestLogMockApiPlugin } from './vite-plugins/e2e-test-log-mock-api'
 import { platformPreviewBundlePlugin } from './vite-plugins/platform-preview-bundle'
+import type { ProxyOptions } from 'vite'
+
+const IDENTITY_VERIFICATION_API_PREFIX = '/api/auth/verification-sessions'
+
+function normalizeProxyTarget(url: string): string {
+  return url.replace(/\/$/, '')
+}
+
+function configureNgrokProxyHeaders(
+  proxy: { on: (event: 'proxyReq', handler: (proxyReq: { setHeader: (name: string, value: string) => void }) => void) => void },
+  targetUrl: string,
+  ngrokSkipEnv: string | undefined
+) {
+  proxy.on('proxyReq', proxyReq => {
+    const skip = ngrokSkipEnv?.trim()
+    const isNgrokTarget = /ngrok/i.test(targetUrl)
+    if (skip || isNgrokTarget) {
+      proxyReq.setHeader('ngrok-skip-browser-warning', skip || '69420')
+    }
+  })
+}
+
+function createDevApiProxy(
+  targetUrl: string,
+  env: Record<string, string>,
+  options?: { ws?: boolean }
+): ProxyOptions {
+  return {
+    target: normalizeProxyTarget(targetUrl),
+    changeOrigin: true,
+    secure: false,
+    ws: options?.ws ?? false,
+    configure(proxy) {
+      configureNgrokProxyHeaders(proxy, targetUrl, env.VITE_NGROK_SKIP_BROWSER_WARNING)
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,6 +51,29 @@ export default defineConfig(({ mode }) => {
     env.VITE_API_SERVER?.trim() ||
     env.VITE_DEV_PROXY_TARGET?.trim() ||
     env.VITE_NGROK_SERVER?.trim()
+
+  const identityVerificationProxyCandidate =
+    env.VITE_IDENTITY_VERIFICATION_API_SERVER?.trim() || env.VITE_NGROK_SERVER?.trim()
+  const identityVerificationProxyTarget =
+    proxyTarget &&
+    identityVerificationProxyCandidate &&
+    normalizeProxyTarget(identityVerificationProxyCandidate) !== normalizeProxyTarget(proxyTarget)
+      ? identityVerificationProxyCandidate
+      : undefined
+
+  const devProxy: Record<string, ProxyOptions> | undefined = proxyTarget
+    ? {
+        ...(identityVerificationProxyTarget
+          ? {
+              [IDENTITY_VERIFICATION_API_PREFIX]: createDevApiProxy(
+                identityVerificationProxyTarget,
+                env
+              ),
+            }
+          : {}),
+        '/api': createDevApiProxy(proxyTarget, env, { ws: true }),
+      }
+    : undefined
 
   return {
     plugins: [
@@ -45,26 +105,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 3000,
-      proxy: proxyTarget
-        ? {
-            '/api': {
-              target: proxyTarget.replace(/\/$/, ''),
-              changeOrigin: true,
-              secure: false,
-              ws: true,
-              configure(proxy) {
-                proxy.on('proxyReq', proxyReq => {
-                  const skip = env.VITE_NGROK_SKIP_BROWSER_WARNING?.trim()
-                  /** ngrok 무료 호스트 — 안내 페이지·403 방지 (Postman 과 유사하게 최소 헤더: Origin 은 브라우저 기본값 유지) */
-                  const isNgrokTarget = /ngrok/i.test(proxyTarget)
-                  if (skip || isNgrokTarget) {
-                    proxyReq.setHeader('ngrok-skip-browser-warning', skip || '69420')
-                  }
-                })
-              },
-            },
-          }
-        : undefined,
+      proxy: devProxy,
     },
     build: {
       rollupOptions: {
@@ -131,7 +172,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
-      include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.mjs'],
       passWithNoTests: true,
       setupFiles: ['src/test/vitest-setup.ts'],
     },

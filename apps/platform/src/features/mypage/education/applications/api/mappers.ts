@@ -1,4 +1,5 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
+import { formatDisplayDateRange } from '@/shared/lib/format-display-date'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import {
   formatInterviewAtLabel,
@@ -7,6 +8,8 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
+import { readUjatPortalBannerState } from '../lib/ujat-portal-banner'
+import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
@@ -178,23 +181,8 @@ function mapCategoryLabel(
   return '일반'
 }
 
-function formatDate(value: string | null | undefined): string | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
-}
-
 function formatDateRange(start: string | null | undefined, end: string | null | undefined): string {
-  const startLabel = formatDate(start)
-  const endLabel = formatDate(end)
-  if (startLabel && endLabel) return `${startLabel} – ${endLabel}`
-  if (startLabel) return startLabel
-  if (endLabel) return endLabel
-  return '-'
+  return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
 function mapRecruitmentStatus(displayStatus: EducationDisplayStatus): RecruitmentStatus {
@@ -212,6 +200,7 @@ export function mapPortalProgramApplicationListItem(
   const detailCase = mapDetailCase(applicationType, row.programGroup)
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
+  const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
 
   return {
     id: String(row.applicationId),
@@ -232,6 +221,7 @@ export function mapPortalProgramApplicationListItem(
     ...(row.pendingSurveyCount != null && row.pendingSurveyCount > 0
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
+    ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
   }
 }
 
@@ -273,6 +263,27 @@ function resolveInterviewFields(
   }
 }
 
+function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(raw)
+      return normalizeApplicationAnswers(parsed)
+    } catch {
+      return {}
+    }
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const record = raw as Record<string, unknown>
+  const nested = record.answers
+  if (nested && typeof nested === 'object' && !Array.isArray(nested) && !('documentId' in nested)) {
+    const nestedRecord = nested as Record<string, unknown>
+    if (Object.keys(nestedRecord).some(key => key.includes('-seed-') || key.includes('schedule'))) {
+      return nestedRecord
+    }
+  }
+  return record
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
 ): EducationApplicationListItem | null {
@@ -312,7 +323,7 @@ export function mapPortalProgramApplicationDetail(
   )
   if (recruitmentLabel !== '-') mapped.recruitmentPeriodLabel = recruitmentLabel
 
-  const answers = detail.answers ?? {}
+  const answers = normalizeApplicationAnswers(detail.answers)
   const fromAnswers = resolveApplicationContentFromAnswers(answers)
   const preferredFromBlocks = resolvePreferredEducationScheduleLabelFromAnswers({
     preferredScheduleBlocks: detail.preferredScheduleBlocks ?? [],
@@ -374,6 +385,14 @@ export function mapPortalProgramApplicationDetail(
       },
       nestedProgram,
     )
+  }
+
+  if (mapped.detailCase === 'ujat-participant') {
+    const ujatContent = buildUjatApplicationContentFromPortal({
+      answers,
+      preferredScheduleBlocks: detail.preferredScheduleBlocks,
+    })
+    if (ujatContent) mapped.ujatApplicationContent = ujatContent
   }
 
   return mapped

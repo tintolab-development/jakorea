@@ -13,7 +13,7 @@ import calendarGrayUrl from '@/shared/assets/icons/calendar-gray.svg'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
 import {
-  formatDisplayDate,
+  formatDateInputDisplay,
   formatDisplayYear,
   formatDisplayYearMonth,
   isIsoDateWithinInputBounds,
@@ -171,7 +171,7 @@ function hasValidValue(value: string, picker: PFDateInputPicker): boolean {
 function formatTriggerDisplay(value: string, picker: PFDateInputPicker): string {
   if (picker === 'year') return formatDisplayYear(value)
   if (picker === 'month') return formatDisplayYearMonth(value)
-  return formatDisplayDate(value)
+  return formatDateInputDisplay(value)
 }
 
 export function PFDateInput({

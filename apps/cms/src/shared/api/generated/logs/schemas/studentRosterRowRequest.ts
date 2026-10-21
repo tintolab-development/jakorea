@@ -19,29 +19,33 @@ export interface StudentRosterRowRequest {
      * @minLength 0
      * @maxLength 30
      */
-  gender?: string;
+  gender: string;
   birthDate: string;
   /**
+     * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
      * @minLength 0
      * @maxLength 30
      */
-  grade: string;
+  grade?: string | null;
   /**
      * @minLength 0
      * @maxLength 50
      */
   className: string;
   /**
+     * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
      * @minimum 1
      * @maximum 999
      */
-  studentNo: number;
-  phone?: string;
+  studentNo?: number | null;
+  /** 신규 행은 필수. 기존 활성 행(rosterId 또는 이름·생년월일·학년·반·번호 일치)은 생략하거나 빈 문자열이면 저장된 암호화 연락처를 유지합니다. 값을 보내면 하이픈 전화번호 형식을 검사합니다. */
+  phone?: string | null;
   /**
+     * 신규 행은 필수. 기존 활성 행은 생략하거나 빈 문자열이면 저장된 암호화 이메일을 유지합니다. 값을 보내면 이메일 형식을 검사합니다.
      * @minLength 0
      * @maxLength 255
      */
-  email?: string;
+  email?: string | null;
   /**
      * @minLength 0
      * @maxLength 200

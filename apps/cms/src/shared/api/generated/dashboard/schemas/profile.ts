@@ -15,4 +15,10 @@ export interface Profile {
   email?: string;
   external1365Id?: string;
   privacyState?: string;
+  /** MASKED GET: 시/도만. 판별 불가면 null. unmask: 원문(기본+상세). 기관 주소로 채우지 않음 */
+  homeAddress?: string | null;
+  /** 시/도 또는 null */
+  homeAddressSido?: string | null;
+  /** MASKED GET은 항상 null. unmask 시 원문 또는 null */
+  homeAddressSigungu?: string | null;
 }

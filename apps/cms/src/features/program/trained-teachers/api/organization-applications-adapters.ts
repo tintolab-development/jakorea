@@ -10,7 +10,9 @@ import {
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
+import type { TrainedTeacherOrganizationEducationSchedule } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationEducationSchedule'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
+import type { ProgramSchedule } from '@/types/domain'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 
@@ -59,8 +61,147 @@ export function mapPreferredScheduleBlocksToSessions(
       format: '',
       classNum: firstTime?.classPeriod || '',
       timeRange,
+      resolvedScheduleId:
+        typeof block.scheduleId === 'number' &&
+        Number.isFinite(block.scheduleId) &&
+        block.scheduleId > 0
+          ? Math.trunc(block.scheduleId)
+          : null,
     }
   })
+}
+
+function dateFromProgramSchedule(schedule: ProgramSchedule): string {
+  const raw = schedule.startDate?.trim() || schedule.startAt?.slice(0, 10) || ''
+  return raw.slice(0, 10)
+}
+
+function dayOfWeekFromIsoDate(date: string): string {
+  const parsed = new Date(`${date}T00:00:00+09:00`)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return ['일', '월', '화', '수', '목', '금', '토'][parsed.getDay()] ?? ''
+}
+
+function timeFromDateTime(value: string | null | undefined): string {
+  const raw = value?.trim() ?? ''
+  if (!raw) return ''
+  const time = raw.includes('T') ? raw.split('T')[1] : raw.split(' ')[1]
+  return time?.slice(0, 5) ?? ''
+}
+
+function numericScheduleId(value: string | number | null | undefined): number | null {
+  if (typeof value === 'number' && Number.isSafeInteger(value)) return value
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value)
+    return Number.isSafeInteger(parsed) ? parsed : null
+  }
+  return null
+}
+
+const KST_DATE_TIME_FORMAT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+/** ISO date-time → KST `YYYY-MM-DD` / `HH:mm`. 오프셋 없는 값은 이미 KST로 본다. */
+function kstDateTimeParts(value: string | null | undefined): { date: string; time: string } | null {
+  const raw = value?.trim() ?? ''
+  if (!raw) return null
+  if (!/(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(raw)) {
+    const [date = '', time = ''] = raw.split(/[T ]/)
+    return { date: date.slice(0, 10), time: time.slice(0, 5) }
+  }
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return null
+  const parts = Object.fromEntries(
+    KST_DATE_TIME_FORMAT.formatToParts(parsed).map(part => [part.type, part.value])
+  )
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`,
+  }
+}
+
+/**
+ * TT 상세 `educationSchedules[]`(기관 실제 진행 일정) → 출석 세션.
+ * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 대체하지 않는다.
+ */
+export function mapTrainedTeacherEducationSchedulesToSessions(
+  schedules: ReadonlyArray<TrainedTeacherOrganizationEducationSchedule> | null | undefined
+): ParticipatingSchoolSession[] {
+  return (schedules ?? [])
+    .filter(
+      schedule =>
+        typeof schedule.scheduleId === 'number' &&
+        Number.isSafeInteger(schedule.scheduleId) &&
+        schedule.scheduleId > 0
+    )
+    .map((schedule, index) => {
+      const start = kstDateTimeParts(schedule.startAt)
+      const end = kstDateTimeParts(schedule.endAt)
+      const isoDate = start?.date ?? ''
+      const startTime = start?.time ?? ''
+      const endTime = end?.time ?? ''
+      return {
+        round: schedule.round ?? index + 1,
+        date: isoDate ? formatPreferredScheduleDateForSession(isoDate) : '',
+        dayOfWeek: isoDate ? dayOfWeekFromIsoDate(isoDate) : '',
+        duration: '1차시',
+        format: '',
+        classNum: '',
+        timeRange: startTime && endTime ? `${startTime}~${endTime}` : startTime || endTime,
+        resolvedScheduleId: schedule.scheduleId,
+        ...(schedule.label?.trim() ? { educationScheduleLabel: schedule.label.trim() } : {}),
+      }
+    })
+}
+
+/** 프로그램 상세 schedules[] → 교육 진행 일정 표시용 block. 신청 희망 일정은 사용하지 않는다. */
+export function mapProgramSchedulesToPreferredScheduleBlocks(
+  schedules: ReadonlyArray<ProgramSchedule> | undefined
+): ApplicantPreferredScheduleBlock[] {
+  const activeSchedules = (schedules ?? [])
+    .filter(schedule => schedule.scheduleStatus === 'ACTIVE')
+    .filter(schedule => dateFromProgramSchedule(schedule) !== '')
+    .sort((a, b) => String(a.startAt ?? '').localeCompare(String(b.startAt ?? '')))
+
+  const grouped = new Map<string, ProgramSchedule[]>()
+  for (const schedule of activeSchedules) {
+    const date = dateFromProgramSchedule(schedule)
+    const current = grouped.get(date) ?? []
+    current.push(schedule)
+    grouped.set(date, current)
+  }
+
+  return [...grouped.entries()].map(([date, dateSchedules], index) => ({
+    preferenceRank: index + 1,
+    date,
+    dayOfWeek: dayOfWeekFromIsoDate(date),
+    sessionCount: dateSchedules.length,
+    sessionTimes: dateSchedules.map((schedule, sessionIndex) => {
+      const sessionNo = schedule.sessionNo ?? sessionIndex + 1
+      const startTime = timeFromDateTime(schedule.startAt)
+      const endTime = timeFromDateTime(schedule.endAt)
+      return {
+        sessionIndex: sessionNo,
+        classPeriod: `${sessionNo}차시`,
+        timeRange: startTime && endTime ? `${startTime} ~ ${endTime}` : startTime || endTime || '-',
+        ...(startTime ? { startTime } : {}),
+        ...(endTime ? { endTime } : {}),
+      }
+    }),
+    scheduleId: numericScheduleId(dateSchedules[0]?.id),
+    startAt: dateSchedules[0]?.startAt ?? null,
+    endAt: dateSchedules[dateSchedules.length - 1]?.endAt ?? null,
+    round: dateSchedules[0]?.sessionNo ?? null,
+    label: dateSchedules[0]?.scheduleName ?? null,
+    scheduleStatus: 'ACTIVE',
+  }))
 }
 
 /** BE DTO는 OpenAPI 축소본보다 runtime 필드가 더 있을 수 있음 — 기존 투영 유지 */
@@ -162,6 +303,18 @@ export function mapPreferredScheduleBlocks(
         dayOfWeek: block.dayOfWeek?.trim() || '',
         sessionCount: Math.max(sessionCount, sessionTimes.length, 1),
         sessionTimes,
+        scheduleId:
+          typeof block.scheduleId === 'number' && Number.isFinite(block.scheduleId)
+            ? Math.trunc(block.scheduleId)
+            : null,
+        startAt: block.startAt?.trim() || null,
+        endAt: block.endAt?.trim() || null,
+        round:
+          typeof block.round === 'number' && Number.isFinite(block.round)
+            ? Math.trunc(block.round)
+            : null,
+        label: block.label?.trim() || null,
+        scheduleStatus: block.scheduleStatus?.trim() || null,
       }
     })
     .filter((block): block is ApplicantPreferredScheduleBlock => block != null)
@@ -219,6 +372,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   }
   return {
     id: toId(dto.applicationId),
+    applicationStatus: dto.applicationStatus?.trim() || undefined,
     no: index + 1,
     schoolName,
     region,
@@ -234,6 +388,10 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     programId: toId(dto.programId) || programId,
     desiredEducationPeriod: memo || undefined,
     preferredScheduleBlocks,
+    ...('gradeBlocks' in dto ? { gradeBlocks: dto.gradeBlocks ?? null } : {}),
+    ...('educationSchedules' in dto
+      ? { educationScheduleSessions: mapTrainedTeacherEducationSchedulesToSessions(dto.educationSchedules) }
+      : {}),
     ...(sessions?.length ? { sessions } : {}),
     educationTarget,
     lectureRound,

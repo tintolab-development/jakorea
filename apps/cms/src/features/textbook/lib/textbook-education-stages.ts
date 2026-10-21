@@ -175,6 +175,18 @@ export function resolveSelectedGradeLabels(
     return selected
   }
 
+  const parts = raw
+    .split(/\s*[,、]\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  if (parts.length > 1) {
+    for (const part of parts) {
+      const single = normalizeGradeToken(stageKey, part)
+      if (single && options.includes(single as (typeof options)[number])) selected.add(single)
+    }
+    if (selected.size > 0) return selected
+  }
+
   const rangeMatch = raw.match(
     /^(?:GRADE[_-]?)?(\d)(?:학년)?\s*[-~～〜]\s*(?:GRADE[_-]?)?(\d)(?:학년)?$/i
   )
@@ -332,6 +344,20 @@ export function normalizeEducationStages(
   })
 }
 
+/** 상세 체크 학년 → 목록 대상 학년. 해당 단계 학년이 모두 선택된 때만 전학년 */
+export function formatSelectedGradeSummary(
+  stageKey: TextbookEducationStageKey,
+  selectedGrades: string[]
+): string {
+  const options = getStageOptionLabels(stageKey)
+  const ordered = options.filter(label => selectedGrades.includes(label))
+  const labels = ordered.length > 0 ? ordered : selectedGrades.filter(Boolean)
+  if (labels.length === 0) return getStageAllLabel(stageKey)
+  if (options.length > 0 && labels.length === options.length) return getStageAllLabel(stageKey)
+  if (labels.length === 1) return labels[0] ?? getStageAllLabel(stageKey)
+  return labels.join(', ')
+}
+
 export function summarizeEducationStages(stages: TextbookEducationStage[]): {
   educationTarget: TextbookEducationTarget
   grade: string
@@ -354,21 +380,13 @@ export function summarizeEducationStages(stages: TextbookEducationStage[]): {
   if (selectedStage.key === 'kindergarten') {
     return {
       educationTarget: '유아',
-      grade:
-        selectedGrades.length === 1 ? selectedGrades[0] : '전학년',
+      grade: selectedGrades.length === 1 ? (selectedGrades[0] ?? '전학년') : '전학년',
     }
   }
 
-  const grade =
-    selectedGrades.length === 1 && selectedStage.selected === false
-      ? selectedGrades[0]
-      : selectedStage.selected || selectedGrades.length >= 2
-        ? '전학년'
-        : selectedGrades[0] ?? '전학년'
-
   return {
     educationTarget: mapStageKeyToEducationTarget(selectedStage.key),
-    grade,
+    grade: formatSelectedGradeSummary(selectedStage.key, selectedGrades),
   }
 }
 

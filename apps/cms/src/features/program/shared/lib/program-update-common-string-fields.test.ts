@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
+  applyParticipantRecruitmentColumnsFromResponse,
   applyProgramMissingCommonStringFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
@@ -143,5 +144,19 @@ describe('program-update-common-string-fields', () => {
         })
       )
     ).toBe('모집상세')
+  })
+
+  it('참여자 모집 행이 있으면 빈 프로그램 remarks가 nested 비고를 지우지 않는다', () => {
+    const next = applyParticipantRecruitmentColumnsFromResponse(
+      baseProgram({
+        programRecruitments: [{ id: 1, recruitmentType: 'PARTICIPANT' }],
+        generalCommonInfo: {
+          participantRecruitmentInfo: { remarks: '저장한 비고', applicationMethod: '온라인' },
+        },
+      }),
+      { remarks: null, applicationMethod: null }
+    )
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('저장한 비고')
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.applicationMethod).toBeUndefined()
   })
 })

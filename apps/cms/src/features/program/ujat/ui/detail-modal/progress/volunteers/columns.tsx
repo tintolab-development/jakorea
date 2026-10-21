@@ -16,7 +16,7 @@ const COL = {
   status: 120,
 } as const
 
-function formatTotalAssignmentDays(days: number | null): string {
+function formatTotalAssignedDays(days: number | null): string {
   return days == null ? '-' : String(days)
 }
 
@@ -80,11 +80,11 @@ export function useUjatEducationProgressVolunteerColumns(): ColumnsType<UjatEduc
       },
       {
         title: '총 교육 배정일 수',
-        dataIndex: 'totalAssignmentDays',
-        key: 'totalAssignmentDays',
+        dataIndex: 'totalAssignedDays',
+        key: 'totalAssignedDays',
         width: COL.totalDays,
         align: 'center',
-        render: (days: number | null) => formatTotalAssignmentDays(days),
+        render: (days: number | null) => formatTotalAssignedDays(days),
       },
       {
         title: '교육 배정 현황',

@@ -221,7 +221,7 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalParticipants"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsNumericInput
+                        <CmsNumericInput inputSize="small"
                           width={'50%'}
                           mode="integer"
                           min={0}
@@ -250,7 +250,7 @@ export function ProgramKpiTargetSection({
                         name="kpiInstructorCount"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsNumericInput
+                          <CmsNumericInput inputSize="small"
                             width={120}
                             mode="integer"
                             min={0}
@@ -271,7 +271,7 @@ export function ProgramKpiTargetSection({
                           name="kpiVolunteerCount"
                           control={form.control}
                           render={({ field }) => (
-                            <CmsNumericInput
+                            <CmsNumericInput inputSize="small"
                               width={120}
                               mode="integer"
                               min={0}
@@ -284,7 +284,7 @@ export function ProgramKpiTargetSection({
                           )}
                         />
                       ) : (
-                        <CmsInput width={120} value="해당 없음" disabled />
+                        <CmsInput inputSize="small" width={120} value="해당 없음" disabled />
                       )}
                     </div>
                   </div>
@@ -305,7 +305,7 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalSchools"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsNumericInput
+                        <CmsNumericInput inputSize="small"
                           width={'50%'}
                           mode="integer"
                           min={0}
@@ -332,7 +332,7 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalClasses"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsNumericInput
+                        <CmsNumericInput inputSize="small"
                           width={'50%'}
                           mode="integer"
                           min={0}

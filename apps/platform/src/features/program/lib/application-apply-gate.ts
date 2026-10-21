@@ -12,12 +12,17 @@ import type { PortalApplicationBlockedReason } from '../api/application-types'
 
 export type ProgramApplyGateModalKind = 'not-eligible' | 'already-applied'
 
-/** Figma 「신청 대상이 아닙니다」 — 모집 대상·회원 유형·소속·강사 승인 */
+/**
+ * Figma 「신청 대상이 아닙니다」 — 모집 대상·회원 유형·소속·강사 승인.
+ * 폼 조회 403은 canApply 없이 code만 오므로, 이 사유는 canApply 생략이어도 모달이다.
+ */
 const NOT_ELIGIBLE_BLOCKED_REASONS = new Set<PortalApplicationBlockedReason>([
   'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH',
   'COLLEGE_STUDENT_REQUIRED',
   'ORGANIZATION_MEMBERSHIP_REQUIRED',
+  'ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED',
   'APPROVED_INSTRUCTOR_REQUIRED',
+  'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED',
   'MEMBER_NOT_ACTIVE',
   'APPLICATION_TYPE_NOT_ALLOWED',
 ])
@@ -55,16 +60,19 @@ export function isPortalApplicationBlockedReason(
  * 상세·신청 진입 게이트.
  * - `proceed`: 신청서 라우트로 이동 (모집 전/마감·정원·양식 미설정 등은 신청서 배너)
  * - `not-eligible` | `already-applied`: 모달, 이동 없음
+ *
+ * 대상 불일치 403은 application-options의 canApply 없이 code만 올 수 있다.
+ * canApply가 true가 아니면 그 사유는 신청서 본문 문구 대신 모달로 처리한다.
  */
 export function resolveProgramApplyGateModal(
   canApply: boolean | undefined,
   blockedReason: string | null | undefined,
 ): ProgramApplyGateModalKind | 'proceed' {
-  if (canApply !== false) return 'proceed'
+  if (canApply === true) return 'proceed'
   const key = normalizePortalApplicationBlockedReason(blockedReason)
-  if (!key) return 'proceed'
   if (key === 'ALREADY_APPLIED') return 'already-applied'
-  if (NOT_ELIGIBLE_BLOCKED_REASONS.has(key)) return 'not-eligible'
+  if (key && NOT_ELIGIBLE_BLOCKED_REASONS.has(key)) return 'not-eligible'
+  if (canApply !== false || !key) return 'proceed'
   if (PROCEED_TO_APPLY_PAGE_REASONS.has(key)) return 'proceed'
   return 'proceed'
 }

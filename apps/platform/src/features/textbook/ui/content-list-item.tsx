@@ -1,6 +1,9 @@
 import type { KeyboardEvent } from 'react'
-import type { TextbookContent } from '../model/types'
+import type { TextbookContent, TextbookTag } from '../model/types'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
+import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
+import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
+import badgeTargetIconUrl from '../image/icon/badge-target.svg'
 import searchIconUrl from '../image/icon/search.svg'
 import styles from './content-list-item.module.css'
 
@@ -9,10 +12,19 @@ type ContentListItemProps = {
   onClick: () => void
 }
 
+/** Figma Badge_Category Icon — target=school, category=docs, skill=star */
+const TAG_ICON_SRC: Record<NonNullable<TextbookTag['icon']>, string> = {
+  target: badgeTargetIconUrl,
+  category: badgeCategoryIconUrl,
+  skill: badgeSkillIconUrl,
+}
+
 export function ContentListItem({ content, onClick }: ContentListItemProps) {
   const hasThumbnailImage = Boolean(content.thumbnailUrl?.trim())
   const compositions = content.compositions?.filter(item => item.trim()) ?? []
   const hasComposition = compositions.length > 0
+  const listTags: TextbookTag[] =
+    content.modalTags.length > 0 ? content.modalTags : content.tags.map(label => ({ label }))
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -45,7 +57,7 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
             {content.title}
           </PFText>
-          <PFText as="p" typo="bd-md-md" color="neutral-warm-600" className={styles.description}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
             {content.description}
           </PFText>
           {hasComposition ? (
@@ -76,11 +88,27 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           ) : null}
         </div>
 
-        {content.tags.length > 0 ? (
+        {listTags.length > 0 ? (
           <div className={styles.tags}>
-            {content.tags.map(tag => (
-              <PFCategoryBadge key={tag} size="small" variant="secondary">
-                {tag}
+            {listTags.map(tag => (
+              <PFCategoryBadge
+                key={tag.label}
+                size="large"
+                variant="secondary"
+                iconVariant="secondary"
+                icon={
+                  tag.icon ? (
+                    <img
+                      src={TAG_ICON_SRC[tag.icon]}
+                      alt=""
+                      width={20}
+                      height={20}
+                      aria-hidden="true"
+                    />
+                  ) : undefined
+                }
+              >
+                {tag.label}
               </PFCategoryBadge>
             ))}
           </div>
@@ -89,7 +117,12 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
 
       <div className={styles.aside}>
         <div className={styles.session}>
-          <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600" className={styles.sessionLabel}>
+          <PFText
+            as="span"
+            typo="bd-sm-rg"
+            color="neutral-cool-600"
+            className={styles.sessionLabel}
+          >
             교육 차시
           </PFText>
           <div className={styles.sessionBody}>
@@ -110,13 +143,7 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           </div>
         </div>
         <span className={styles.searchButton} aria-hidden="true">
-          <img
-            className={styles.searchIcon}
-            src={searchIconUrl}
-            alt=""
-            width={24}
-            height={24}
-          />
+          <img className={styles.searchIcon} src={searchIconUrl} alt="" width={24} height={24} />
         </span>
       </div>
     </div>

@@ -94,6 +94,7 @@ import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
+import { resolveSelectedListUsers } from '@/features/user/api/resolve-selected-list-users'
 import {
   mergeListUserWithFetchedDetail,
   patchMemberListPagesWithFetchedDetail,
@@ -295,6 +296,7 @@ export function UserListPage() {
 
   // 테이블 행 선택 (일괄 삭제용)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [selectedRowsSnapshot, setSelectedRowsSnapshot] = useState<UserListRow[]>([])
   // 일괄 삭제 대상 (여러 명 선택 시)
   const [bulkDeleteUsers, setBulkDeleteUsers] = useState<Omit<User, 'password'>[] | null>(null)
   const [adminPermissionChangingUserId, setAdminPermissionChangingUserId] = useState<string | null>(
@@ -1085,7 +1087,8 @@ export function UserListPage() {
       setDeleteModalOpen(false)
       setDeletingUser(null)
       setBulkDeleteUsers(null)
-      setSelectedRowKeys(prev => prev.filter(key => !toDelete.some(u => u.id === key)))
+      setSelectedRowKeys(prev => prev.filter(key => !toDelete.some(u => String(u.id) === String(key))))
+      setSelectedRowsSnapshot(prev => prev.filter(u => !toDelete.some(d => d.id === u.id)))
       invalidateList()
       showDeleteCompletedAlert()
     } catch (error) {
@@ -1112,7 +1115,8 @@ export function UserListPage() {
           reason: 'CMS 관리자 회원 탈퇴',
           withdrawConfirmationText,
         })
-        setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
+        setSelectedRowKeys(prev => prev.filter(key => String(key) !== String(u.id)))
+        setSelectedRowsSnapshot(prev => prev.filter(row => row.id !== u.id))
         invalidateList()
         flushUserDetailModal()
         showDeleteCompletedAlert()
@@ -1237,7 +1241,11 @@ export function UserListPage() {
             <FilterTableToolbarButton
               variant="delete"
               onClick={() => {
-                const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
+                const toDelete = resolveSelectedListUsers(
+                  listUsers,
+                  selectedRowKeys,
+                  selectedRowsSnapshot
+                )
                 if (toDelete.length === 0) {
                   showAlert({
                     title: '항목 선택 안내',
@@ -1317,7 +1325,16 @@ export function UserListPage() {
           onAdminPermissionChange={handleAdminPermissionChange}
           adminPermissionChangeLoadingUserId={adminPermissionChangingUserId}
           selectedRowKeys={selectedRowKeys}
-          onSelectionChange={setSelectedRowKeys}
+          onSelectionChange={(keys, rows) => {
+            setSelectedRowKeys(keys)
+            setSelectedRowsSnapshot(prev => {
+              const byId = new Map(prev.map(row => [String(row.id), row]))
+              for (const row of rows) byId.set(String(row.id), row)
+              return keys
+                .map(key => byId.get(String(key)))
+                .filter((row): row is UserListRow => row != null)
+            })
+          }}
           pagination={false}
         />
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />

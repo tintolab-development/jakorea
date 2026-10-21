@@ -23,8 +23,11 @@ import {
   resolveApplyPreferredScheduleMaxBlocks,
   resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   hasMissingRequiredBottomConsent,
+  areTrainedTeachersScheduleRuntimeFieldsInSync,
   hasPreferredScheduleDateOutsideRuntime,
+  isDateInAllowedSchedulePeriods,
   isRuntimeScheduleNotConfigured,
+  isTrainedTeachersOrganizationPeriodDateRequests,
   readRuntimeScheduleConfig,
   resolveRuntimeScheduleDateBounds,
   resolveRuntimeScheduleEnabledDates,
@@ -36,8 +39,11 @@ import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import {
+  capFixedScheduleSelectedIds,
   findIncompletePreferredScheduleMessage,
+  selectedFixedScheduleIdsFromDraftAnswer,
   toFixedScheduleOptionAnswerValue,
+  toPortalPreferredScheduleBlocks,
 } from './preferred-schedule-blocks.ts'
 
 function testUniqueCalendarDays() {
@@ -282,6 +288,228 @@ function testTrainedTeacherPeriodDateBounds() {
   assert.equal(resolveRuntimeScheduleEnabledDates(unconfiguredRuntime, true)?.size, 0)
   assert.equal(hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-10' }], unconfiguredRuntime), true)
 
+  const emptyPeriodsWithBounds = {
+    scheduleInputMode: 'date_time_requests',
+    allowedSchedulePeriods: [],
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  }
+  assert.equal(isRuntimeScheduleNotConfigured(emptyPeriodsWithBounds), true)
+  assert.equal(resolveRuntimeScheduleEnabledDates(emptyPeriodsWithBounds, true)?.size, 0)
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-05' }], emptyPeriodsWithBounds),
+    true
+  )
+
+  const trainedTeacherPeriodRuntime = {
+    programType: 'TRAINED_TEACHER',
+    applicationFlavor: 'ORGANIZATION',
+    educationStructure: 'SCHEDULE',
+    sessionRound: 'SINGLE',
+    scheduleMode: 'PERIOD',
+    scheduleInputMode: 'date_time_requests',
+    scheduleOptions: [],
+    allowedSchedulePeriods: [{ startDate: '2026-11-05', endDate: '2026-11-11' }],
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+    maxScheduleCount: 3,
+    maxSessionsPerDay: null,
+  }
+  const trainedTeacherPeriodParagraph = {
+    id: 'program-application-trained-teachers-seed-preferred-schedule',
+    runtimeInputMode: 'date_time_requests',
+    runtimeAllowedSchedulePeriods: [{ startDate: '2026-11-05', endDate: '2026-11-11' }],
+    runtimeMinDate: '2026-11-05',
+    runtimeMaxDate: '2026-11-11',
+  }
+  assert.equal(
+    isTrainedTeachersOrganizationPeriodDateRequests(trainedTeacherPeriodRuntime),
+    true
+  )
+  assert.equal(
+    areTrainedTeachersScheduleRuntimeFieldsInSync(
+      trainedTeacherPeriodRuntime,
+      trainedTeacherPeriodParagraph
+    ),
+    true
+  )
+  assert.equal(isRuntimeScheduleNotConfigured(trainedTeacherPeriodRuntime), false)
+  assert.equal(
+    isRuntimeScheduleNotConfigured(trainedTeacherPeriodRuntime, trainedTeacherPeriodParagraph),
+    false
+  )
+  const trainedTeacherEnabledDates = resolveRuntimeScheduleEnabledDates(
+    trainedTeacherPeriodRuntime,
+    true,
+    trainedTeacherPeriodParagraph
+  )
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-05'), true)
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-11'), true)
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-04'), false)
+  assert.equal(trainedTeacherEnabledDates?.has('2026-11-12'), false)
+
+  const discontinuousPeriods = [
+    { startDate: '2026-11-05', endDate: '2026-11-07' },
+    { startDate: '2026-11-10', endDate: '2026-11-11' },
+  ]
+  const discontinuousRuntime = {
+    ...trainedTeacherPeriodRuntime,
+    allowedSchedulePeriods: discontinuousPeriods,
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  }
+  const discontinuousEnabled = resolveRuntimeScheduleEnabledDates(discontinuousRuntime, true)
+  assert.equal(discontinuousEnabled?.has('2026-11-05'), true)
+  assert.equal(discontinuousEnabled?.has('2026-11-07'), true)
+  assert.equal(discontinuousEnabled?.has('2026-11-08'), false)
+  assert.equal(discontinuousEnabled?.has('2026-11-09'), false)
+  assert.equal(discontinuousEnabled?.has('2026-11-10'), true)
+  assert.equal(discontinuousEnabled?.has('2026-11-11'), true)
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-08', discontinuousPeriods),
+    false
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-08' }], discontinuousRuntime),
+    true
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime([{ date: '2026-11-06' }], discontinuousRuntime),
+    false
+  )
+
+  const mismatchedParagraph = {
+    ...trainedTeacherPeriodParagraph,
+    runtimeAllowedSchedulePeriods: [{ startDate: '2026-11-01', endDate: '2026-11-02' }],
+  }
+  assert.equal(
+    areTrainedTeachersScheduleRuntimeFieldsInSync(
+      trainedTeacherPeriodRuntime,
+      mismatchedParagraph
+    ),
+    false
+  )
+
+  const emptyPeriodsFailClosed = {
+    programType: 'TRAINED_TEACHER',
+    applicationFlavor: 'ORGANIZATION',
+    scheduleMode: 'PERIOD',
+    scheduleInputMode: 'date_time_requests',
+    scheduleOptions: [],
+    allowedSchedulePeriods: [],
+    minScheduleDate: null,
+    maxScheduleDate: null,
+  }
+  assert.equal(
+    isTrainedTeachersOrganizationPeriodDateRequests(emptyPeriodsFailClosed),
+    true
+  )
+  assert.equal(isRuntimeScheduleNotConfigured(emptyPeriodsFailClosed), true)
+  assert.equal(resolveRuntimeScheduleEnabledDates(emptyPeriodsFailClosed, true)?.size, 0)
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-05', trainedTeacherPeriodRuntime.allowedSchedulePeriods),
+    true
+  )
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-11', trainedTeacherPeriodRuntime.allowedSchedulePeriods),
+    true
+  )
+  assert.equal(
+    isDateInAllowedSchedulePeriods('2026-11-04', trainedTeacherPeriodRuntime.allowedSchedulePeriods),
+    false
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime(
+      [{ date: '2026-11-05' }],
+      trainedTeacherPeriodRuntime,
+      trainedTeacherPeriodParagraph
+    ),
+    false
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideRuntime(
+      [{ date: '2026-11-12' }],
+      trainedTeacherPeriodRuntime,
+      trainedTeacherPeriodParagraph
+    ),
+    true
+  )
+  assert.deepEqual(resolveRuntimeScheduleDateBounds(trainedTeacherPeriodRuntime), {
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  })
+  assert.equal(
+    readRuntimeScheduleConfig(trainedTeacherPeriodRuntime).scheduleInputMode,
+    'date_time_requests'
+  )
+  assert.deepEqual(trainedTeacherPeriodRuntime.scheduleOptions, [])
+
+  const paragraphOnlyPeriods = {
+    scheduleInputMode: 'date_time_requests',
+  }
+  assert.equal(isRuntimeScheduleNotConfigured(paragraphOnlyPeriods), true)
+  assert.equal(
+    isRuntimeScheduleNotConfigured(paragraphOnlyPeriods, trainedTeacherPeriodParagraph),
+    false
+  )
+  assert.equal(
+    resolveRuntimeScheduleEnabledDates(paragraphOnlyPeriods, true, trainedTeacherPeriodParagraph)?.has(
+      '2026-11-05'
+    ),
+    true
+  )
+
+  const runtimeFilledParagraphEmpty = {
+    scheduleInputMode: 'date_time_requests',
+    allowedSchedulePeriods: [{ startDate: '2026-11-05', endDate: '2026-11-11' }],
+    minScheduleDate: '2026-11-05',
+    maxScheduleDate: '2026-11-11',
+  }
+  const emptyParagraph = {
+    runtimeInputMode: 'date_time_requests',
+    runtimeAllowedSchedulePeriods: [],
+    runtimeMinDate: null,
+    runtimeMaxDate: null,
+  }
+  assert.equal(
+    isRuntimeScheduleNotConfigured(runtimeFilledParagraphEmpty, emptyParagraph),
+    false
+  )
+  assert.equal(
+    resolveRuntimeScheduleEnabledDates(
+      runtimeFilledParagraphEmpty,
+      true,
+      emptyParagraph
+    )?.has('2026-11-05'),
+    true
+  )
+
+  const dateModeRuntime = {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleMode: 'DATE',
+    scheduleOptions: [],
+    allowedSchedulePeriods: [],
+    minScheduleDate: null,
+    maxScheduleDate: null,
+  }
+  assert.equal(isRuntimeScheduleNotConfigured(dateModeRuntime), false)
+  assert.equal(resolveRuntimeScheduleEnabledDates(dateModeRuntime, true)?.size ?? 0, 0)
+
+  assert.deepEqual(
+    toPortalPreferredScheduleBlocks(
+      [{ date: '2026-11-05', classPeriod: '', startTime: '', endTime: '' }],
+      { dateOnly: true }
+    ).map(({ date, sessionTimes }) => ({ date, sessionTimes })),
+    [{ date: '2026-11-05', sessionTimes: [] }]
+  )
+  assert.deepEqual(
+    toPortalPreferredScheduleBlocks(
+      [{ date: '2026-04-03', classPeriod: '1교시', startTime: '09:00', endTime: '10:00' }],
+      { dateFieldsOnly: true }
+    ),
+    [{ preferenceRank: 1, date: '2026-04-03' }]
+  )
+
   const consentDraft = {
     schemaVersion: 1,
     formSettings: {},
@@ -439,19 +667,44 @@ const runtimeFixedItems = readRuntimeFixedScheduleChoiceItems(
   { items: [] }
 )
 assert.deepEqual(runtimeFixedItems, [{ id: 'schedule:187123', label: '교육 일정' }])
-assert.equal(
+assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
     { items: [] }
   ),
-  null
+  [{ id: 'schedule:187123', label: '187123' }]
 )
-assert.equal(
+assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
     { items: [] }
   ),
-  null
+  []
+)
+assert.deepEqual(
+  readRuntimeFixedScheduleChoiceItems(
+    {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [
+        {
+          id: '201',
+          value: '201',
+          label: '2026-11-02 10:00~12:00',
+          startAt: '2026-11-02T01:00:00.000Z',
+          endAt: '2026-11-02T03:00:00.000Z',
+        },
+        {
+          id: '202',
+          value: '202',
+          label: '2026-11-09 13:30~16:00',
+          startAt: '2026-11-09T04:30:00.000Z',
+          endAt: '2026-11-09T07:00:00.000Z',
+        },
+      ],
+    },
+    { items: [{ id: 'line:0', label: 'stale seed' }] }
+  )?.map(item => item.id),
+  ['201', '202']
 )
 assert.equal(
   readRuntimeFixedScheduleChoiceItems(
@@ -468,6 +721,10 @@ assert.deepEqual(
   ]),
   ['schedule:187123', 'schedule:187124']
 )
+assert.deepEqual(capFixedScheduleSelectedIds(['201', '202'], null), ['201', '202'])
+assert.deepEqual(capFixedScheduleSelectedIds(['201', '202'], 1), ['201'])
+assert.deepEqual(selectedFixedScheduleIdsFromDraftAnswer(['201', '201', '202']), ['201', '202'])
+assert.deepEqual(selectedFixedScheduleIdsFromDraftAnswer([{ date: '2026-11-02' }]), [])
 
 const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
   ['line:1'],

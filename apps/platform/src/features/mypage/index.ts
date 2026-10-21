@@ -122,6 +122,8 @@ export {
   getEducationSurveyTabAvailability,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
+  UjatScheduleBanner,
+  UjatApplicationContent,
 } from './education'
 export {
   formatMypageScheduleBarLabel,

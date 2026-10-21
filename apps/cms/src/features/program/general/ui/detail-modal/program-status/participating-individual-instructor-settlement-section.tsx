@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
@@ -124,7 +125,8 @@ export function ParticipatingIndividualInstructorSettlementSection({
         key: 'educationScheduleLabel',
         align: 'center',
         width: 400,
-        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
+        render: (value: string | undefined) =>
+          renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
       },
       {
         title: '강의 진행 여부',

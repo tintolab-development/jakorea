@@ -47,7 +47,7 @@ export function UjatRecruitInquiryContactField({
         {label}
       </span>
       <InputComponent
-        inputSize="medium"
+        inputSize="small"
         width={240}
         placeholder={placeholder}
         value={value ?? ''}
@@ -107,7 +107,7 @@ export function UjatRecruitFormPeriodDatePicker({
   )
   const emit = (d: Dayjs | null) => toIso(d, clearToUndefined)
   return (
-    <ParagraphDatePicker
+    <ParagraphDatePicker inputSize="small"
       mode="single"
       presetMode="period"
       value={anchor}
@@ -154,7 +154,7 @@ export function UjatRecruitFormSingleDatePicker({
       name={name}
       control={form.control}
       render={({ field }) => (
-        <ParagraphDatePicker
+        <ParagraphDatePicker inputSize="small"
           mode="single"
           presetMode="date"
           style={style}
@@ -203,7 +203,7 @@ export function UjatRecruitFormDateMethodRow({
           <CmsInput
             {...field}
             value={(field.value as string | undefined) ?? ''}
-            inputSize="medium"
+            inputSize="small"
             width={160}
             className="program-detail-info-tab__result-method-input"
             placeholder={methodPlaceholder}
@@ -252,7 +252,7 @@ export function UjatRecruitFormInterviewPeriodRow({
         control={form.control}
         render={({ field }) => (
           <CmsSelect
-            inputSize="medium"
+            inputSize="small"
             width={160}
             className="program-detail-info-tab__select--interview-method"
             placeholder={methodPlaceholder}
@@ -303,7 +303,7 @@ export function UjatRecruitVolunteerNotesField({
             {...field}
             value={field.value ?? ''}
             disabled={notApplicable}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
             placeholder="비고란을 작성하세요"
@@ -351,7 +351,7 @@ export function UjatRecruitParticipantNotesField({
             {...field}
             value={field.value ?? ''}
             disabled={notApplicable}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
             placeholder="비고란을 작성하세요"

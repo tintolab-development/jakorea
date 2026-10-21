@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { DatePicker, TimePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { HorizontalTableColumnField } from '@/features/template/model/writing-form-draft.schema'
+import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
 
 /** 우측 패널·캔버스와 동일 — `placeholder`가 비어 있을 때만 모드별 기본 */
 export function dateTimeFieldPlaceholder(
@@ -59,7 +60,7 @@ export function FormEditorDateTimeFieldPreview({
       {...common}
       rootClassName="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
       className="form-editor-horizontal-table__field-date"
-      format="YYYY-MM-DD"
+      format={formatAppDatepickerDisplay}
     />
   )
 }

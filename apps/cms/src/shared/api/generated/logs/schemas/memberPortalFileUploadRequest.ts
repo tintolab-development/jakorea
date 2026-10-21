@@ -5,13 +5,15 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberPortalFileUploadRequestFilePurpose } from './memberPortalFileUploadRequestFilePurpose';
 
 export interface MemberPortalFileUploadRequest {
   /**
+     * 파일 용도. PORTRAIT_CONSENT는 학생 초상권 동의서이며 PDF/JPG/JPEG/PNG/WEBP/DOCX, 파일당 20MB입니다. ABSENCE_EVIDENCE는 결석 사유 증빙이며 JPG/JPEG/PNG, 파일당 20MB입니다.
      * @minLength 0
      * @maxLength 80
      */
-  filePurpose: string;
+  filePurpose: MemberPortalFileUploadRequestFilePurpose;
   /**
      * @minLength 0
      * @maxLength 255

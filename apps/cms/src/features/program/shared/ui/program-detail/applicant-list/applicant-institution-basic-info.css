@@ -50,6 +50,37 @@
   font-weight: 700;
 }
 
+.applicant-institution-basic-info__schedule-preference-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applicant-institution-basic-info__schedule-preference {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.applicant-institution-basic-info__schedule-preference-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.applicant-institution-basic-info__schedule-preference-title > span {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--default-BK, #3d3d3d);
+  flex-shrink: 0;
+}
+
 .applicant-institution-basic-info__manager-comment {
   display: flex;
   flex-direction: column;

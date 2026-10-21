@@ -57,8 +57,12 @@ export function ProgramDetailPage() {
           portalTab: focus?.portalTab,
           applicationTypes: program.focusedApplicationTypes,
           recruitmentIds: program.focusedRecruitmentIds,
+          programType: program.programType,
         }
-      : focus
+      : {
+          ...focus,
+          programType: program?.programType,
+        }
   const { gateModal, closeGateModal, isChecking, runApplyGate } = useProgramApplyGate(
     programId,
     applySelection,

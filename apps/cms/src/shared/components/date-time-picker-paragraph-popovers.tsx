@@ -12,6 +12,7 @@ import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
+import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import './date-time-picker-modal.css'
 
 const EMPTY_SCHEDULES = new Set<string>()
@@ -70,6 +71,8 @@ export type ParagraphDatePickerPopoverProps = {
   onApply: () => void
   onPeriodToggleOn?: (draft: Dayjs, nextEnd: Dayjs) => void
   onTimeToggleOn?: (ctx: { isRange: boolean; rangeStart: Dayjs; draft: Dayjs }) => void
+  /** 트리거와 같은 입력 크기. 상세 폼은 small, 그 외 기본 medium */
+  inputSize?: CmsControlSize
 }
 
 export function ParagraphDatePickerPopover({
@@ -117,6 +120,7 @@ export function ParagraphDatePickerPopover({
   onApply,
   onPeriodToggleOn,
   onTimeToggleOn,
+  inputSize = 'medium',
 }: ParagraphDatePickerPopoverProps) {
   const { popoverRef, popoverStyle } = useDateTimePickerPopoverLayer({
     open,
@@ -196,7 +200,7 @@ export function ParagraphDatePickerPopover({
                         rangeFocus === 'start' && 'date-time-picker-popover__input--active'
                       )}
                       width="100%"
-                      inputSize="medium"
+                      inputSize={inputSize}
                       readOnly
                       allowClear={false}
                       tabIndex={-1}
@@ -205,6 +209,7 @@ export function ParagraphDatePickerPopover({
                     />
                     {timeOn ? (
                       <DateTimePickerTimeInlineSelects
+                        inputSize={inputSize}
                         hour={startHour}
                         minute={startMinute}
                         onHourChange={onStartHourChange}
@@ -252,7 +257,7 @@ export function ParagraphDatePickerPopover({
                           'date-time-picker-popover__input--active'
                       )}
                       width="100%"
-                      inputSize="medium"
+                      inputSize={inputSize}
                       readOnly
                       disabled={disabled || rangeEndDateDisabled}
                       allowClear={false}
@@ -271,6 +276,7 @@ export function ParagraphDatePickerPopover({
                         }}
                       >
                         <DateTimePickerTimeInlineSelects
+                        inputSize={inputSize}
                           hour={endHour}
                           minute={endMinute}
                           onHourChange={onEndHourChange}
@@ -291,7 +297,7 @@ export function ParagraphDatePickerPopover({
                 <CmsInput
                   className="date-time-picker-popover__input date-time-picker-popover__input--active"
                   width="100%"
-                  inputSize="medium"
+                  inputSize={inputSize}
                   readOnly
                   allowClear={false}
                   tabIndex={-1}
@@ -304,6 +310,7 @@ export function ParagraphDatePickerPopover({
                 >
                   <span className="date-time-picker-popover__field-label">시작 시간</span>
                   <DateTimePickerTimeInlineSelects
+                        inputSize={inputSize}
                     hour={startHour}
                     minute={startMinute}
                     onHourChange={onStartHourChange}
@@ -321,6 +328,7 @@ export function ParagraphDatePickerPopover({
                 >
                   <span className="date-time-picker-popover__field-label">종료 시간</span>
                   <DateTimePickerTimeInlineSelects
+                        inputSize={inputSize}
                     hour={endHour}
                     minute={endMinute}
                     onHourChange={onEndHourChange}
@@ -338,7 +346,7 @@ export function ParagraphDatePickerPopover({
                 <CmsInput
                   className="date-time-picker-popover__input date-time-picker-popover__input--active"
                   width="100%"
-                  inputSize="medium"
+                  inputSize={inputSize}
                   readOnly
                   allowClear={false}
                   tabIndex={-1}
@@ -346,6 +354,7 @@ export function ParagraphDatePickerPopover({
                   aria-label="선택한 날짜"
                 />
                 <DateTimePickerTimeInlineSelects
+                        inputSize={inputSize}
                   hour={singleHour}
                   minute={singleMinute}
                   onHourChange={onSingleHourChange}
@@ -360,7 +369,7 @@ export function ParagraphDatePickerPopover({
               <CmsInput
                 className="date-time-picker-popover__input date-time-picker-popover__input--active"
                 width="100%"
-                inputSize="medium"
+                inputSize={inputSize}
                 readOnly
                 allowClear={false}
                 tabIndex={-1}
@@ -457,6 +466,7 @@ export type ParagraphTimePickerPopoverProps = {
   onEndTimeOnChange: (next: boolean) => void
   onEndTimeToggleOn?: () => void
   onApply: () => void
+  inputSize?: CmsControlSize
 }
 
 export function ParagraphTimePickerPopover({
@@ -483,6 +493,7 @@ export function ParagraphTimePickerPopover({
   onEndTimeOnChange,
   onEndTimeToggleOn,
   onApply,
+  inputSize = 'medium',
 }: ParagraphTimePickerPopoverProps) {
   const { popoverRef, popoverStyle } = useDateTimePickerPopoverLayer({
     open,
@@ -502,6 +513,7 @@ export function ParagraphTimePickerPopover({
     setM: (v: string) => void
   ) => (
     <DateTimePickerTimeInlineSelects
+                        inputSize={inputSize}
       hour={h}
       minute={m}
       onHourChange={setH}

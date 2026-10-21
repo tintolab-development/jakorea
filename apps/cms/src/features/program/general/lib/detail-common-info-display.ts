@@ -23,7 +23,6 @@ import {
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
-import { isTrainedTeachersProgram } from '@/features/program/general/lib/survey-audience'
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
   GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
@@ -573,9 +572,7 @@ export function formatGeneralParticipantTypesSummary(program: Program): string {
 }
 
 export function formatGeneralSurveyItemsSummary(program: Program): string {
-  const keys = resolveProgramSurveyMenuKeys(program).filter(
-    key => key !== 'satisfaction' || !isTrainedTeachersProgram(program)
-  )
+  const keys = resolveProgramSurveyMenuKeys(program)
   if (keys.length === 0) return '-'
   return keys.map(key => PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[key]).join(', ')
 }

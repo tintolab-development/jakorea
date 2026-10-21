@@ -15,13 +15,13 @@ export function UjatEducationProgressVolunteerActivityTermSection() {
           required
           edit={
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={half}
               onChange={e => setHalf(e.target.value as 'h1' | 'h2')}
               style={{ display: 'flex', gap: 20 }}
             >
-              <CmsRadio value="h1">상반기</CmsRadio>
-              <CmsRadio value="h2">하반기</CmsRadio>
+              <CmsRadio size="medium" value="h1">상반기</CmsRadio>
+              <CmsRadio size="medium" value="h2">하반기</CmsRadio>
             </CmsRadioGroup>
           }
           view="-"
@@ -32,7 +32,7 @@ export function UjatEducationProgressVolunteerActivityTermSection() {
           edit={
             <CmsNumericInput
               mode="numericText"
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="숫자만 기재"
               value={cohort}

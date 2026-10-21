@@ -43,6 +43,13 @@ export function isDocumentScreeningPendingForBulkSelect(
   return status === 'pending'
 }
 
+/** 기관·참여자 신청 — 2건 이상 선택 승인은 교육 일정 배정 때문에 불가 */
+export const BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT = {
+  title: '일괄 승인 불가 안내',
+  content:
+    '프로그램 신청 승인은 한 건씩 가능합니다.\n건별로 승인하여 교육 일정을 배정해 주세요.',
+} as const
+
 /** 승인/반려 목록 — 이미 처리된 행 포함 시 AlertModal */
 export function buildApplicationProcessedSelectionAlert(noun: ApplicationBulkSubjectNoun): {
   title: string

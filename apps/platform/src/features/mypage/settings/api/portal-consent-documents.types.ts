@@ -61,4 +61,6 @@ export type PortalSignatureProfileResponse = {
   signatureProfileId?: number
   signatureType?: string
   fileObjectId?: number
+  displayName?: string
+  fontStyleCode?: string
 }

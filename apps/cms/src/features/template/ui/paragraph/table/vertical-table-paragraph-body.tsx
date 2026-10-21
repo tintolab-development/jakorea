@@ -35,6 +35,7 @@ import { PortraitAffiliationBody } from '@/features/template/ui/paragraph/table/
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
 import { useHideParagraphSelectionChrome } from '@/features/template/context/paragraph-selection-chrome-context'
 import '@/features/template/ui/form-editor/form-editor.css'
+import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { DividerVertical } from '@/shared/components/divider-vertical'
@@ -440,7 +441,7 @@ export function VerticalTableParagraphBody({
           value={toDayjs('date', cell)}
           onChange={d => setCell(rowIdx, stageIdx, fromDayjs('date', d))}
           onOpenChange={notifyPickerRowFocused(rowIdx)}
-          format="YYYY-MM-DD"
+          format={formatAppDatepickerDisplay}
           placeholder={datePlaceholder}
         />
         <div className="form-editor-vertical-table__dt-divider-wrap">
@@ -666,7 +667,7 @@ export function VerticalTableParagraphBody({
             >
               <CmsRadioGroup
                 className="form-editor-horizontal-table__field-radios"
-                size="large"
+                size="medium"
                 value={cell.trim() !== '' ? cell : undefined}
                 onChange={(e: RadioChangeEvent) => {
                   setCell(rowIdx, stageIdx, e.target.value)
@@ -676,7 +677,7 @@ export function VerticalTableParagraphBody({
                 }}
               >
                 {choiceOpts.map((o, i) => (
-                  <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
+                  <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="medium" value={o}>
                     {o}
                   </CmsRadio>
                 ))}
@@ -697,7 +698,7 @@ export function VerticalTableParagraphBody({
                   return (
                     <CmsCheckbox
                       key={`${rowIdx}-${stageIdx}-${i}`}
-                      checkboxSize="large"
+                      checkboxSize="medium"
                       className="form-editor-horizontal-table__field-check-label"
                       checked={checked}
                       disabled={!rowBodyEditMode}
@@ -843,7 +844,7 @@ export function VerticalTableParagraphBody({
         {p.showBottomConsent ? (
           <CmsRadioGroup
             className="form-editor-table-bottom-consent"
-            size="large"
+            size="medium"
             value={resolveTableBottomConsentRadioValue(
               consentFillMode ? paragraph.bottomConsent : p.bottomConsent,
               {

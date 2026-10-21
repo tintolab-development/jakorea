@@ -43,7 +43,6 @@ function compactParams(query: PortalProgramListQuery): Record<string, string | n
   if (query.operatingFrom) params.operatingFrom = query.operatingFrom
   if (query.operatingTo) params.operatingTo = query.operatingTo
   if (query.sort) params.sort = query.sort
-  if (query.featuredOnHome === true) params.featuredOnHome = 'true'
   return params
 }
 

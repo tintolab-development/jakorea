@@ -3,6 +3,7 @@ import {
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
+  mapStoredPeriodRequestedSchedulesToHopeSessions,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
   buildHopeEducationSessionsFromPreferred,
@@ -33,7 +34,10 @@ import {
 } from '@/features/program/general/api/program-progress-api-client'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
-import { fetchOrganizationApplicationsRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  fetchOrganizationApplicationRequestedSchedulesRemote,
+  fetchOrganizationApplicationsRemote,
+} from '@/features/program/general/api/applications-api-client'
 import { readOrganizationApplicationPreferredEducationSchedules } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -182,6 +186,35 @@ function attachPreferredEducationSchedulesToParticipatingSchools(
   })
 }
 
+/** 기간형 원본 희망은 requested-schedules다. preferred 건수와 달라도 그 행을 희망 일정으로 쓴다. */
+async function overlayStoredPeriodRequestedHopeSessions(
+  programId: string,
+  rows: ParticipatingSchoolRow[]
+): Promise<ParticipatingSchoolRow[]> {
+  const normalizedProgramId = programId.trim()
+  return Promise.all(
+    rows.map(async row => {
+      const applicationId = row.organizationApplicationId?.trim()
+      if (!applicationId) return row
+      if (row.programId != null && String(row.programId).trim() !== normalizedProgramId) {
+        return row
+      }
+      try {
+        const requested = await fetchOrganizationApplicationRequestedSchedulesRemote(applicationId)
+        const hopeEducationSessions = mapStoredPeriodRequestedSchedulesToHopeSessions(requested)
+        if (hopeEducationSessions.length === 0) return row
+        return {
+          ...row,
+          hopeEducationSessions,
+          lectureRound: String(hopeEducationSessions.length),
+        }
+      } catch {
+        return row
+      }
+    })
+  )
+}
+
 export async function fetchGeneralParticipatingInstitutionsPage(
   programId: string,
   pageParam = 0
@@ -194,16 +227,19 @@ export async function fetchGeneralParticipatingInstitutionsPage(
   })
   const preferredByApplicationId =
     await fetchOrganizationPreferredEducationSchedulesByApplicationId(programId)
-  const rows = attachPreferredEducationSchedulesToParticipatingSchools(
+  const rows = await overlayStoredPeriodRequestedHopeSessions(
     programId,
-    (page.items ?? []).map((item, index) =>
-      mapParticipantToParticipatingSchoolRow(
-        item,
-        pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
-        programId
-      )
-    ),
-    preferredByApplicationId
+    attachPreferredEducationSchedulesToParticipatingSchools(
+      programId,
+      (page.items ?? []).map((item, index) =>
+        mapParticipantToParticipatingSchoolRow(
+          item,
+          pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+          programId
+        )
+      ),
+      preferredByApplicationId
+    )
   )
   return resolveProgressListPage(rows, page, pageParam)
 }

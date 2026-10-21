@@ -127,9 +127,13 @@ import {
   deleteMemberApplicationHistoryRemote,
   bulkDeleteProgramHistoryRemote,
   bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote,
+  fetchSchoolOrganizationRemote,
 } from '@/features/user/api/members-api-client'
 import { parseSchoolOrganizationEnrollmentRowId } from '@/features/user/api/map-school-organization-program-enrollment-history'
-import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
+import {
+  mapSchoolOrganizationToUser,
+  parseOrganizationIdFromUserId,
+} from '@/features/user/api/map-school-organization-to-user'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
 import {
   bulkIssueCertificatesRemote,
@@ -853,6 +857,35 @@ export function useUserDetailController({
     [navigate, prepareLeaveMemberDetailForProgramNavigation, queryClient]
   )
 
+  const refreshSchoolAfterAffiliatedTeachersChanged = useCallback(async () => {
+    if (!displayUser || displayUser.role !== 'SCHOOL') return
+    const organizationId =
+      displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id)
+    if (organizationId == null) return
+    await queryClient.invalidateQueries({
+      queryKey: memberQueryKeys.detailResource('org', organizationId),
+    })
+    await queryClient.invalidateQueries({
+      queryKey: memberQueryKeys.schoolTeachers(organizationId),
+    })
+    await queryClient.invalidateQueries({ queryKey: memberQueryKeys.schoolsListAll() })
+    if (displayUser.memberId != null) {
+      await queryClient.invalidateQueries({
+        queryKey: memberQueryKeys.affiliatedTeachers(displayUser.memberId),
+      })
+    }
+    try {
+      const next = mapSchoolOrganizationToUser(
+        await fetchSchoolOrganizationRemote(organizationId)
+      )
+      onMemberBasicInfoSaved?.(mergeListUserWithFetchedDetail(displayUser, next), {
+        skipListInvalidate: true,
+      })
+    } catch (error) {
+      handleError(error, { defaultMessage: '소속 교사 변경 후 학교 정보를 갱신하지 못했습니다.' })
+    }
+  }, [displayUser, onMemberBasicInfoSaved, queryClient])
+
   const openWithdrawConfirm = useCallback(() => {
     if (displayUser?.role === 'SCHOOL' && institutionHasRegisteredTeachers(displayUser)) {
       setInstitutionDeleteBlockedOpen(true)
@@ -1287,6 +1320,9 @@ export function useUserDetailController({
         if (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja') {
           void queryClient.invalidateQueries({
             queryKey: memberQueryKeys.consentRecords(displayUser.memberId),
+          })
+          void queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.consentSummaries(displayUser.memberId),
           })
         }
       }
@@ -1729,6 +1765,7 @@ export function useUserDetailController({
       updateBasicInfoDraft,
       patchAdminPermissionVariantFromDetailView,
       patchTeacherEmploymentStatus,
+      refreshSchoolAfterAffiliatedTeachersChanged,
       openInstructorPermissionRevoke,
       closeInstructorPermissionRevoke,
       confirmInstructorPermissionRevoke,

@@ -54,6 +54,7 @@ export function deleteGeminiRecruitmentRows(ids: string[]): void {
   setRows(rows.filter(row => !idSet.has(row.id)))
 }
 
+/** remote 등록 경로에서 호출하지 않는다. mock 카탈로그는 제거됨. */
 export function registerGeminiRecruitmentFromSnapshot(
   snapshot: GeminiRecruitmentAddFormSnapshot
 ): GeminiRecruitmentRow {

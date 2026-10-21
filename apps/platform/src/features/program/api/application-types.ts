@@ -14,7 +14,9 @@ export type PortalApplicationBlockedReason =
   | 'APPLICATION_TYPE_NOT_ALLOWED'
   | 'MEMBER_NOT_ACTIVE'
   | 'ORGANIZATION_MEMBERSHIP_REQUIRED'
+  | 'ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED'
   | 'APPROVED_INSTRUCTOR_REQUIRED'
+  | 'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED'
   | 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'
   | 'COLLEGE_STUDENT_REQUIRED'
   | 'ALREADY_APPLIED'
@@ -45,6 +47,20 @@ export type PortalApplicationOption = {
   /** canApply=true 이면 필드 자체를 omit (null 아님) */
   blockedReason?: PortalApplicationBlockedReason
   existingApplication?: PortalExistingApplication | null
+}
+
+export type UjatPreferredEducationDateOption = {
+  id: string
+  date: string
+  label: string
+}
+
+export type PortalFormRuntimeContext = {
+  interviewEnabled?: boolean
+  ujatPreferredEducationDateOptions?: UjatPreferredEducationDateOption[]
+  activityTerm?: string | null
+  ujatActivityTerm?: string | null
+  [key: string]: unknown
 }
 
 export type PortalApplicationFormResponse = {

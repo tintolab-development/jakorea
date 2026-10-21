@@ -8,6 +8,12 @@ import {
   type ApplyInstitutionGuidanceAnswers,
 } from '@/features/program/ui/apply-institution-guidance/apply-institution-guidance'
 import {
+  emptyUjatInstitutionGuidanceExtras,
+  mergeUjatGuidanceExtrasIntoAnswer,
+  ujatGuidanceExtrasFromDraftAnswer,
+  type ApplyUjatInstitutionGuidanceExtras,
+} from '@/features/program/ui/apply-institution-guidance/ujat-institution-guidance-fields'
+import {
   emptyInstitutionSexOffense,
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
@@ -20,6 +26,7 @@ import type { EducationTeacherApplicationGuidance } from '../model/types'
 export type TeacherInstitutionGuidanceFormState = {
   guidance: ApplyInstitutionGuidanceAnswers
   sexOffense: ApplyInstitutionSexOffenseValues
+  ujatExtras?: ApplyUjatInstitutionGuidanceExtras
 }
 
 type InstitutionGuidanceParagraphIds = {
@@ -64,8 +71,10 @@ export function mapInstitutionGuidanceFromApplicationAnswers(
     guidanceValuesFromDraftAnswer(guidanceRaw) ?? emptyInstitutionGuidanceAnswers()
   const sexOffense =
     sexOffenseValuesFromDraftAnswers(submissionRaw, inquiryRaw) ?? emptyInstitutionSexOffense()
+  const ujatExtras =
+    detailCase === 'ujat-participant' ? ujatGuidanceExtrasFromDraftAnswer(guidanceRaw) : undefined
 
-  return { guidance, sexOffense }
+  return { guidance, sexOffense, ujatExtras }
 }
 
 export function buildInstitutionGuidanceAnswerPatch(
@@ -73,8 +82,12 @@ export function buildInstitutionGuidanceAnswerPatch(
   detailCase: ProgramDetailCase | undefined,
 ): Record<string, unknown> {
   const ids = resolveInstitutionGuidanceParagraphIds(detailCase)
+  const guidanceAnswer = guidanceAnswerFromValues(state.guidance)
   const patch: Record<string, unknown> = {
-    [ids.guidance]: guidanceAnswerFromValues(state.guidance),
+    [ids.guidance]:
+      detailCase === 'ujat-participant' && state.ujatExtras
+        ? mergeUjatGuidanceExtrasIntoAnswer(guidanceAnswer, state.ujatExtras)
+        : guidanceAnswer,
     [ids.sexOffenseSubmission]: sexOffenseSubmissionAnswerFromValues(state.sexOffense),
   }
   if (shouldShowSexOffenseInquiry(state.sexOffense)) {
@@ -141,5 +154,6 @@ export function teacherInstitutionGuidanceFormStateFromTeacherContent(
       'other-notes': guidance.otherNotes,
     },
     sexOffense,
+    ujatExtras: emptyUjatInstitutionGuidanceExtras(),
   }
 }

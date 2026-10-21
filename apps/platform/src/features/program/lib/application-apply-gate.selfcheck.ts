@@ -10,6 +10,23 @@ assert.equal(
   resolveProgramApplyGateModal(false, 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'),
   'not-eligible',
 )
+assert.equal(
+  resolveProgramApplyGateModal(undefined, 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'),
+  'not-eligible',
+)
+assert.equal(
+  resolveProgramApplyGateModal(undefined, 'ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED'),
+  'not-eligible',
+)
+assert.equal(
+  resolveProgramApplyGateModal(undefined, 'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED'),
+  'not-eligible',
+)
+assert.equal(
+  resolveProgramApplyGateModal(true, 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'),
+  'proceed',
+)
+assert.equal(resolveProgramApplyGateModal(undefined, 'RECRUITMENT_CLOSED'), 'proceed')
 assert.equal(resolveProgramApplyGateModal(false, 'COLLEGE_STUDENT_REQUIRED'), 'not-eligible')
 assert.equal(resolveProgramApplyGateModal(false, 'APPROVED_INSTRUCTOR_REQUIRED'), 'not-eligible')
 assert.equal(resolveProgramApplyGateModal(false, 'ALREADY_APPLIED'), 'already-applied')
@@ -23,6 +40,10 @@ assert.equal(
 
 assert.equal(
   shouldHideApplyPageBlockedBanner(false, 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'),
+  true,
+)
+assert.equal(
+  shouldHideApplyPageBlockedBanner(undefined, 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'),
   true,
 )
 assert.equal(shouldHideApplyPageBlockedBanner(false, 'RECRUITMENT_CLOSED'), false)

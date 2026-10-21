@@ -1,4 +1,5 @@
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
+import { UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 
 export type UjatApplicationInstitutionEditorState = {
   ujatGradeApplicationBlockIds: string[]
@@ -33,6 +34,30 @@ export function buildParticipantApplicationEditorState(args: {
   }
 
   return Object.keys(editorState).length > 0 ? editorState : undefined
+}
+
+function readOverlayRecordKeys(value: unknown): string[] {
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) return []
+  return Object.keys(value).filter(key => key.trim() !== '')
+}
+
+/** overlay에 남은 학년·교시 표 키를 복원한다. 없으면 UUID를 새로 만들지 않도록 null. */
+export function ujatApplicationInstitutionBlockIdsFromOverlay(
+  overlay: Record<string, unknown> | undefined
+): { gradeIds: string[]; classTimeIds: string[] } | null {
+  if (overlay == null) return null
+  const gradeIds = readOverlayRecordKeys(
+    overlay[UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.gradeDetailByBlock]
+  )
+  const classTimeIds = readOverlayRecordKeys(
+    overlay[UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.classTimePeriodsByBlock] ??
+      overlay[UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.classTimeCheckedByBlock]
+  )
+  if (gradeIds.length === 0 && classTimeIds.length === 0) return null
+  return {
+    gradeIds: gradeIds.length > 0 ? gradeIds : classTimeIds,
+    classTimeIds: classTimeIds.length > 0 ? classTimeIds : gradeIds,
+  }
 }
 
 function readStringArray(value: unknown): string[] | null {

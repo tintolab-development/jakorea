@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { shiftEducationScheduleLineToDate } from '@/features/template/lib/format-education-schedule-line'
 import './education-schedule-change-modal.css'
 
@@ -63,16 +64,19 @@ export function EducationScheduleChangeModal({
         <DetailInfoForm title="교육 진행 일정 변경" hideHeader mode="edit">
           {lines.map((line, index) => (
             <DetailInfoForm.Row key={`${line}-${index}`} type="double">
-              <DetailInfoForm.Field label="기존 일정" readOnlyDisplay view={line} />
+              <DetailInfoForm.Field
+                label="기존 일정"
+                readOnlyDisplay
+                view={formatCmsScheduleDisplayLabel(line)}
+              />
               <DetailInfoForm.Field
                 label="변경 일정"
                 view="-"
                 edit={
                   <CmsDatePicker
-                    inputSize="medium"
+                    inputSize="small"
                     value={changedDates[index] ?? null}
                     placeholder="변경 일정을 선택해 주세요"
-                    format="YYYY.MM.DD"
                     style={{ width: '100%' }}
                     onChange={date =>
                       setChangedDates(prev => ({

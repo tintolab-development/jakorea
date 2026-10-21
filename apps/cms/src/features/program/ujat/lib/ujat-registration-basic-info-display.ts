@@ -42,6 +42,7 @@ import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/u
 import {
   generalParticipantTypesFromUjatFlags,
   resolveUjatParticipantTypeFlags,
+  ujatParticipantFlagsFromOverlaySave,
   ujatParticipantTypeLabels,
 } from '@/features/program/ujat/lib/participant-type-flags'
 
@@ -63,7 +64,7 @@ function readOperationRangeSeal(overlay: Record<string, unknown>): OperationRang
   return v as OperationRangeSeal
 }
 
-/** 상세 SSOT — 프로그램 overlay 4종, 없으면 저장된 키. 세션 overlay는 둘 다 없을 때만. */
+/** 상세 SSOT — 프로그램 overlay 4종, 없으면 저장된 키. 조회는 세션 overlay를 쓰지 않는다. */
 export function resolveUjatSurveyItemFlags(program?: Program): Record<UjatSurveyRowId, boolean> {
   const programOverlay = program ? readUjatRegistrationOverlayFromProgram(program) : {}
   const fromProgram = programOverlay['ujat.basicInfo.surveyItems']
@@ -73,9 +74,11 @@ export function resolveUjatSurveyItemFlags(program?: Program): Record<UjatSurvey
   if (program?.generalSurveyMenuKeys) {
     return ujatSurveyItemsFromProgramKeys(program.generalSurveyMenuKeys)
   }
-  const sessionItems = getUjatProgramRegistrationOverlayRecord()['ujat.basicInfo.surveyItems']
-  if (sessionItems != null && typeof sessionItems === 'object') {
-    return readUjatSurveyItems(sessionItems, createUjatSurveyItemsDefault(false))
+  if (program == null) {
+    const sessionItems = getUjatProgramRegistrationOverlayRecord()['ujat.basicInfo.surveyItems']
+    if (sessionItems != null && typeof sessionItems === 'object') {
+      return readUjatSurveyItems(sessionItems, createUjatSurveyItemsDefault(false))
+    }
   }
   return createUjatSurveyItemsDefault(false)
 }
@@ -88,7 +91,8 @@ function optionLabel(
   return options.find(o => o.value === value)?.label ?? value
 }
 
-function resolveDetailedProgramName(detailedProgramId: string): string {
+function resolveDetailedProgramName(detailedProgramId: string | undefined): string {
+  if (!detailedProgramId?.trim()) return '-'
   if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return '해당없음'
   if (detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE) return UJAT_DETAILED_PROGRAM_UJAT_LABEL
   return '-'
@@ -181,31 +185,33 @@ export type UjatRegistrationBasicInfoDisplay = {
 }
 
 export function resolveUjatRegistrationBasicInfoOverlay(
-  overlayInput?: Record<string, unknown>
+  overlayInput?: Record<string, unknown>,
+  options?: { includeSession?: boolean }
 ): Record<string, unknown> {
-  // 프로그램 상세 세션 overlay (PATCH 반영 전 편집 중). localStorage 템플릿 키는 사용하지 않음.
-  const session = getUjatProgramRegistrationOverlayRecord()
+  const includeSession = options?.includeSession ?? overlayInput == null
+  const session = includeSession ? getUjatProgramRegistrationOverlayRecord() : {}
   return { ...session, ...overlayInput }
 }
 
-/** 폼 양식 등록 양식 기본 정보 — overlay(저장본·기본값) 기준 표시 모델 */
+/** 등록된 상세 조회 — GET·프로그램 overlay만. 빈 값은 '-'. 세션·FE 기본값으로 채우지 않는다. */
 export function resolveUjatRegistrationBasicInfoDisplay(
   program: Program,
   sponsorName?: string,
   overlayInput?: Record<string, unknown>,
   sponsors: readonly SponsorManagementRow[] = []
 ): UjatRegistrationBasicInfoDisplay {
-  const defaults = createUjatRegistrationBasicInfoOverlayDefaults(sponsors)
-  const overlay = resolveUjatRegistrationBasicInfoOverlay({
+  const overlay = {
     ...readUjatRegistrationOverlayFromProgram(program),
     ...overlayInput,
-  })
+  }
 
-  const repKo = overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || defaults.repKo
-  const repEn = overlayString(overlay, 'ujat.basicInfo.repEn')?.trim() || defaults.repEn
+  const repKo =
+    overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || program.mainTitle?.trim() || '-'
+  const repEn = overlayString(overlay, 'ujat.basicInfo.repEn')?.trim() || program.titleEn?.trim() || '-'
   const programManagementName =
     overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
-    defaults.programManagementName
+    program.title?.trim() ||
+    '-'
   const publicProgramTitle =
     resolvePublicProgramTitle({
       announcementTitle: program.generalCommonInfo?.announcementTitle,
@@ -216,16 +222,12 @@ export function resolveUjatRegistrationBasicInfoDisplay(
         overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
         program.title,
     }) || '-'
-  const detailedProgramId =
-    overlayString(overlay, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
-  const businessField =
-    overlayString(overlay, 'ujat.basicInfo.businessField') ?? defaults.businessField
-  const sponsorId = overlayString(overlay, 'ujat.basicInfo.sponsorId') ?? defaults.sponsorId
-  const ipOwned = overlayString(overlay, 'ujat.basicInfo.ipOwned') ?? defaults.ipOwned
-  const courseDeliveredBy =
-    overlayString(overlay, 'ujat.basicInfo.courseDeliveredBy') ?? defaults.courseDeliveredBy
-  const ipsCategory =
-    overlayString(overlay, 'ujat.basicInfo.ipsCategory') ?? defaults.ipsCategory
+  const detailedProgramId = overlayString(overlay, 'ujat.basicInfo.detailedProgramId')
+  const businessField = overlayString(overlay, 'ujat.basicInfo.businessField')
+  const sponsorId = overlayString(overlay, 'ujat.basicInfo.sponsorId') ?? program.sponsorId
+  const ipOwned = overlayString(overlay, 'ujat.basicInfo.ipOwned')
+  const courseDeliveredBy = overlayString(overlay, 'ujat.basicInfo.courseDeliveredBy')
+  const ipsCategory = overlayString(overlay, 'ujat.basicInfo.ipsCategory')
   const educationCourseValue =
     overlayString(overlay, 'ujat.basicInfo.educationCourse')?.trim() ||
     program.educationProcess?.trim() ||
@@ -234,9 +236,7 @@ export function resolveUjatRegistrationBasicInfoDisplay(
   const partnerInvolvement =
     partnerInvolvementRaw === 'yes' || partnerInvolvementRaw === 'no'
       ? partnerInvolvementRaw
-      : partnerInvolvementRaw === ''
-        ? ''
-        : defaults.partnerInvolvement
+      : ''
 
   const operationSeal = readOperationRangeSeal(overlay)
   const surveyItems = resolveUjatSurveyItemFlags(program)
@@ -290,27 +290,43 @@ export function applyUjatRegistrationOverlayToProgram(
   options?: {
     /** 상세 수정 저장 — overlay에 KPI 키가 있으면 빈 값을 지움(0)으로 본다. 표시용 병합에서는 끈다. */
     kpiClearedAsZero?: boolean
+    /** 등록 위저드 생성 페이로드. 상세 조회는 false — FE 기본값으로 GET을 채우지 않는다. */
+    fillDefaults?: boolean
   }
 ): Program {
-  const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
+  const fillDefaults = options?.fillDefaults !== false
+  const defaults = fillDefaults ? createUjatRegistrationBasicInfoOverlayDefaults() : null
   const seal = readOperationRangeSeal(overlayInput)
 
-  const repKo = overlayString(overlayInput, 'ujat.basicInfo.repKo')?.trim() || defaults.repKo
-  const repEn = overlayString(overlayInput, 'ujat.basicInfo.repEn')?.trim() || defaults.repEn
+  const repKo =
+    overlayString(overlayInput, 'ujat.basicInfo.repKo')?.trim() ||
+    (fillDefaults ? defaults!.repKo : program.mainTitle)
+  const repEn =
+    overlayString(overlayInput, 'ujat.basicInfo.repEn')?.trim() ||
+    (fillDefaults ? defaults!.repEn : program.titleEn)
   const title =
     overlayString(overlayInput, 'ujat.basicInfo.programManagementName')?.trim() ||
-    defaults.programManagementName
+    (fillDefaults ? defaults!.programManagementName : program.title)
   const businessArea = normalizeProgramBusinessAreaValue(
-    overlayString(overlayInput, 'ujat.basicInfo.businessField') ?? defaults.businessField
+    overlayString(overlayInput, 'ujat.basicInfo.businessField') ??
+      (fillDefaults ? defaults!.businessField : program.businessArea)
   )
-  const sponsorRaw = overlayString(overlayInput, 'ujat.basicInfo.sponsorId') ?? defaults.sponsorId
+  const sponsorRaw =
+    overlayString(overlayInput, 'ujat.basicInfo.sponsorId') ??
+    (fillDefaults ? defaults!.sponsorId : program.sponsorId)
   const sponsorId = sponsorRaw && sponsorRaw !== UJAT_SPONSOR_ALL_VALUE ? sponsorRaw : program.sponsorId
-  const ipOwned = overlayString(overlayInput, 'ujat.basicInfo.ipOwned') ?? defaults.ipOwned
+  const ipOwned =
+    overlayString(overlayInput, 'ujat.basicInfo.ipOwned') ??
+    (fillDefaults ? defaults!.ipOwned : undefined)
   const courseDeliveredBy =
-    overlayString(overlayInput, 'ujat.basicInfo.courseDeliveredBy') ?? defaults.courseDeliveredBy
+    overlayString(overlayInput, 'ujat.basicInfo.courseDeliveredBy') ??
+    (fillDefaults ? defaults!.courseDeliveredBy : undefined)
   const educationCourse =
-    overlayString(overlayInput, 'ujat.basicInfo.educationCourse') ?? defaults.educationCourse
-  const ipsRaw = overlayString(overlayInput, 'ujat.basicInfo.ipsCategory') ?? defaults.ipsCategory
+    overlayString(overlayInput, 'ujat.basicInfo.educationCourse') ??
+    (fillDefaults ? defaults!.educationCourse : program.educationProcess)
+  const ipsRaw =
+    overlayString(overlayInput, 'ujat.basicInfo.ipsCategory') ??
+    (fillDefaults ? defaults!.ipsCategory : undefined)
   const ips =
     ipsRaw === 'inspire' ? 'Inspire' : ipsRaw === 'succeed' ? 'Succeed' : ipsRaw === 'prepare' ? 'Prepare' : program.ips
   const partnerRaw = overlayString(overlayInput, 'ujat.basicInfo.partnerInvolvement')
@@ -335,13 +351,16 @@ export function applyUjatRegistrationOverlayToProgram(
           : program.courseDeliveredBy
 
   const detailedProgramId =
-    overlayString(overlayInput, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
+    overlayString(overlayInput, 'ujat.basicInfo.detailedProgramId') ??
+    (fillDefaults ? defaults!.detailedProgramId : program.detailedProgramId)
   // 버그 수정: id만 저장되고 name은 화면표시용으로만 파생되어 실제 Program 객체(요청 페이로드)에는
   // 세부 프로그램명이 전혀 실리지 않았다 — id·name을 항상 짝지어 Program에 반영한다
   // (다른 프로그램 유형과 동일한 detailedProgramId + generalCommonInfo.detailedProgramName 계약).
   const detailedProgramName =
     overlayString(overlayInput, 'ujat.basicInfo.detailedProgramName')?.trim() ||
-    resolveDetailedProgramName(detailedProgramId)
+    (fillDefaults
+      ? resolveDetailedProgramName(detailedProgramId)
+      : program.generalCommonInfo?.detailedProgramName)
   const teamDivision =
     detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
       ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
@@ -349,7 +368,9 @@ export function applyUjatRegistrationOverlayToProgram(
         ? undefined
         : program.teamDivision
 
-  const paymentItemIds = readUjatWagePaymentItemValuesFromOverlay(overlayInput)
+  const paymentItemIds = readUjatWagePaymentItemValuesFromOverlay(overlayInput, {
+    fillDefaults,
+  })
   const paymentItemsLabel = ujatPaymentItemLabelsFromIds(paymentItemIds)
   const deductionItemsLabel = resolveUjatWageDeductionLabel(paymentItemIds)
   const announcementTitle = program.generalCommonInfo?.announcementTitle?.trim()
@@ -368,15 +389,20 @@ export function applyUjatRegistrationOverlayToProgram(
     (persistedSurveyMenuKeys as Program['generalSurveyMenuKeys'] | undefined) ??
     program.generalSurveyMenuKeys
   const prevKpi = program.generalCommonInfo?.kpi
-  const kpiNumber = (key: string, fallback: number | undefined): number => {
+  const kpiNumber = (key: string, fallback: number | undefined): number | undefined => {
     const value = overlayNullableNumber(overlayInput, key)
     if (value != null) return value
     if (options?.kpiClearedAsZero && Object.prototype.hasOwnProperty.call(overlayInput, key)) {
       return 0
     }
-    return fallback ?? 0
+    if (fillDefaults) return fallback ?? 0
+    return fallback
   }
-  const participantFlags = resolveUjatParticipantTypeFlags(program, overlayInput)
+  const participantFlags =
+    ujatParticipantFlagsFromOverlaySave(overlayInput) ??
+    resolveUjatParticipantTypeFlags(program, overlayInput, {
+      fillDefaults,
+    })
 
   return {
     ...program,
@@ -413,7 +439,7 @@ export function applyUjatRegistrationOverlayToProgram(
         volunteerCount: kpiNumber('ujat.kpi.volunteer', prevKpi?.volunteerCount),
         finalSchools: kpiNumber('ujat.kpi.dispatchedSchool', prevKpi?.finalSchools),
         finalClasses: kpiNumber('ujat.kpi.dispatchedClass', prevKpi?.finalClasses),
-      },
+      } as unknown as NonNullable<Program['generalCommonInfo']>['kpi'],
     },
   }
 }
@@ -433,9 +459,7 @@ export function resolveUjatAnnouncementTitle(program: Program): string {
 }
 
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {
-  const overlay = resolveUjatRegistrationBasicInfoOverlay(
-    readUjatRegistrationOverlayFromProgram(program)
-  )
+  const overlay = readUjatRegistrationOverlayFromProgram(program)
   if (Object.keys(overlay).length === 0) return program
-  return applyUjatRegistrationOverlayToProgram(program, overlay)
+  return applyUjatRegistrationOverlayToProgram(program, overlay, { fillDefaults: false })
 }

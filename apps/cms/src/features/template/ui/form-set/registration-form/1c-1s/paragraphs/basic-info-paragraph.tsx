@@ -103,7 +103,7 @@ function EconomyOverlayTextField({
       validationKey={validationKey}
       edit={
         <CmsInput
-          inputSize="medium"
+          inputSize="small"
           placeholder={placeholder}
           width="100%"
           value={value}
@@ -375,7 +375,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="세부 프로그램명을 선택하세요"
                   width="100%"
                   options={detailedProgramOptions}
@@ -394,7 +394,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             validationKey="basicInfo.operationRangeSeal"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
-                <ParagraphDatePicker
+                <ParagraphDatePicker inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={operationAnchorDate}
@@ -428,18 +428,18 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="참여자 유형"
             validationKey="basicInfo.audience"
             edit={
-              <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--large">
-                <CmsCheckbox checkboxSize="large" checked={false} disabled>
+              <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium">
+                <CmsCheckbox checkboxSize="medium" checked={false} disabled>
                   개인
                 </CmsCheckbox>
                 {/* 1사1교 — 학교/기관·강사 고정 (해제 불가) */}
-                <CmsCheckbox checkboxSize="large" checked disabled>
+                <CmsCheckbox checkboxSize="medium" checked disabled>
                   학교/기관
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked disabled>
+                <CmsCheckbox checkboxSize="medium" checked disabled>
                   강사
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked={false} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={false} disabled>
                   봉사자
                 </CmsCheckbox>
               </div>
@@ -453,7 +453,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="사업 분야를 선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
@@ -473,7 +473,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="후원사를 선택하세요"
                   width={240}
                   options={sponsorOptions}
@@ -498,7 +498,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   mode="multiple"
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}
                   showSearch
@@ -515,7 +515,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width={220}
                   placeholder="담당자 연락처"
                   value={selectedManagerContactPhone}
@@ -537,7 +537,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
                   <CmsCheckbox
                     key={id}
-                    checkboxSize="large"
+                    checkboxSize="medium"
                     checked={surveyItems[id]}
                     onChange={toggleSurveyItem(id)}
                   >
@@ -560,7 +560,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="교육 과정을 선택하세요"
                   width={240}
                   options={educationCourseSelectOptions}
@@ -578,7 +578,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="전체"
                   width={240}
                   options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
@@ -598,7 +598,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  inputSize="medium"
+                  inputSize="small"
                   placeholder="전체"
                   width={240}
                   options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
@@ -614,12 +614,12 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             validationKey="basicInfo.partnerInvolvement"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={partnerInvolvement}
                 onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
               >
-                <CmsRadio value="yes">Yes</CmsRadio>
-                <CmsRadio value="no">No</CmsRadio>
+                <CmsRadio size="medium" value="yes">Yes</CmsRadio>
+                <CmsRadio size="medium" value="no">No</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -633,7 +633,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <CmsSelect
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 placeholder="IPS 유형을 선택하세요"
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}

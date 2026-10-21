@@ -79,7 +79,7 @@ export type PublicSponsorResponse = {
   displayOrder?: number
 }
 
-/** public 계약에 포함. Platform 홈은 팝업 UI가 없어 소비하지 않는다. */
+/** Admin 메인 팝업 관리 공개 계약. 홈 팝업 오버레이가 소비한다. */
 export type PublicPopupResponse = {
   id?: number
   displayOrder?: number

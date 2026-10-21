@@ -60,7 +60,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           view={templateName}
           edit={
             <CmsInput
-              inputSize="large"
+              inputSize="small"
               width="100%"
               allowClear={false}
               placeholder={SMS_TEMPLATE_NAME_PLACEHOLDER}
@@ -90,7 +90,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           view={senderPhone}
           edit={
             <CmsSelect
-              inputSize="large"
+              inputSize="small"
               width="100%"
               withAllOption={false}
               loading={senderLoading}
@@ -337,15 +337,15 @@ export function FormModal({
                           fullRow
                           view={form.messageType}
                           edit={
-                            <CmsRadio.Group
+                            <CmsRadio.Group size="medium"
                               value={form.messageType}
                               onChange={event =>
                                 form.handleMessageTypeChange(String(event.target.value))
                               }
                             >
-                              <CmsRadio value="SMS">SMS</CmsRadio>
-                              <CmsRadio value="LMS">LMS</CmsRadio>
-                              <CmsRadio value="MMS">MMS</CmsRadio>
+                              <CmsRadio size="medium" value="SMS">SMS</CmsRadio>
+                              <CmsRadio size="medium" value="LMS">LMS</CmsRadio>
+                              <CmsRadio size="medium" value="MMS">MMS</CmsRadio>
                             </CmsRadio.Group>
                           }
                         />
@@ -366,7 +366,7 @@ export function FormModal({
                                 >
                                   <CmsInput
                                     ref={form.subjectInputRef}
-                                    inputSize="large"
+                                    inputSize="small"
                                     width="100%"
                                     allowClear={false}
                                     maxLength={form.subjectMaxLength}
@@ -403,7 +403,7 @@ export function FormModal({
                               >
                                 <CmsTextArea
                                   ref={form.bodyTextRef}
-                                  inputSize="large"
+                                  inputSize="small"
                                   width="100%"
                                   rows={8}
                                   placeholder="내용을 작성하세요"

@@ -167,6 +167,10 @@ const toggle4 = (
       options);
     }
 
+/**
+ * Returns enabled textbooks whose business field is enabled and whose name is not blank. fieldCode, targetId, sort, page, and size apply together before the page window. totalCount and totalPages are the filtered totals, not the current page length. page is 0-based (default 0). size defaults to 20, Platform uses 10, and size must be 1..100. A page at or past totalPages returns empty items with the same totalCount and totalPages. sort defaults to LATEST (createdAt DESC, id DESC). sort=NAME orders textbookName ASC with PostgreSQL collation ko-KR-x-icu, then id ASC. Any other sort value is 400 BAD_REQUEST. fieldCode must be CAREER_EMPLOYMENT, ECONOMICS_FINANCE, ENTREPRENEURSHIP, or DIGITAL_LITERACY. Any other code is 400 VALIDATION_ERROR.
+ * @summary List published education textbooks
+ */
 const textbooks = (
     params?: TextbooksParams,
  options?: SecondParameter<typeof customInstance<PageResponsePublicTextbookListItem>>,) => {

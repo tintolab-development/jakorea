@@ -2,6 +2,7 @@
  * 참여 강사 상세 — 교육 배정 현황 탭 (일반 프로그램 · 개인) mock
  */
 
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import {
@@ -26,26 +27,15 @@ import type {
 import type { Program } from '@/types/domain'
 
 function slotToHopeSchedule(slot: InstructorLectureAssignSlot): WaitingInstructorHopeSchedule {
-  const datePart = slot.dateKey.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_, y, m, d) => {
-    const date = `${y.slice(-2)}.${m}.${d}`
-    const weekday = ['일', '월', '화', '수', '목', '금', '토'][
-      new Date(`${y}-${m}-${d}T12:00:00`).getDay()
-    ]
-    return `${date}(${weekday})`
-  })
   return {
-    hopeDate: datePart,
+    hopeDate: formatCmsScheduleDisplayLabel(slot.dateKey),
     hopeTime: slot.timeRange,
     hopeSession: slot.sessionLabel,
   }
 }
 
 function formatHopeDate(dateKey: string): string {
-  const weekday = ['일', '월', '화', '수', '목', '금', '토'][
-    new Date(`${dateKey}T12:00:00`).getDay()
-  ]
-  const [y, m, d] = dateKey.split('-')
-  return `${y!.slice(-2)}.${m}.${d}(${weekday})`
+  return formatCmsScheduleDisplayLabel(dateKey)
 }
 
 export function buildOccupiedHopeSlotKeys(

@@ -61,8 +61,12 @@ export async function deleteSponsorRemote(id: string): Promise<void> {
 
 export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
   await forEachBulkIdChunk(ids, async chunk => {
+    const numericIds = chunk.map(id => Number(id))
+    if (numericIds.some(id => !Number.isSafeInteger(id) || id < 1)) {
+      throw new Error('삭제할 후원사 ID가 올바르지 않습니다.')
+    }
     const result = unwrapApiBody<BulkActionResponse>(
-      await getDataManagementSubsetApi().bulkDeleteSponsors({ ids: toBulkNumericIds(chunk) })
+      await getDataManagementSubsetApi().bulkDeleteSponsors({ ids: numericIds })
     )
     assertBulkDeleteSucceeded(result, '후원사 일괄 삭제에 실패했습니다.')
   })

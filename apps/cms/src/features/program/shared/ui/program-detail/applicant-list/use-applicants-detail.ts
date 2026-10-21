@@ -28,6 +28,13 @@ import { formatApplicationStatusConflictMessage } from '@/features/program/share
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  describeApprovedEducationScope,
+  formatIndividualApprovalScopeErrorMessage,
+  invalidateIndividualApprovalScopeQueries,
+  isEducationScopeRevisionConflict,
+} from '@/features/program/general/lib/individual-approval-education-scope'
+import type { BulkFailure } from '@/shared/api/generated/dashboard/schemas/bulkFailure'
 import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
@@ -101,6 +108,11 @@ import type {
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  readCurriculumSessionLabels,
+  readProgramEducationScheduleLines,
+  resolveScheduleDetailTimeSpan,
+} from '@/features/program/general/lib/participating-school-session-display'
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
 import {
   toFlatDecisionNotifyTiming,
@@ -110,9 +122,13 @@ import type {
   OrganizationApplicationApprovePayload,
   OrganizationDecisionNotifyRequest,
 } from '@/features/program/general/api/applications-api-client'
-import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
+import {
+  formatOrganizationApplicationApproveErrorMessage,
+  organizationApprovalRefreshTargets,
+} from '@/features/program/general/lib/organization-application-approve-slots'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -217,6 +233,15 @@ export function useApplicantsDetail({
     () => (program ? resolveInstitutionApplicationProgramBridge(program) : null),
     [program]
   )
+  const detailScheduleTimeSpan = useMemo(
+    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
+    [program]
+  )
+  const curriculumSessionLabels = useMemo(() => readCurriculumSessionLabels(program), [program])
+  const educationScheduleLines = useMemo(
+    () => readProgramEducationScheduleLines(program),
+    [program]
+  )
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -247,7 +272,10 @@ export function useApplicantsDetail({
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
     menu,
-    usesProgramInstitutionApplications,
+    // 교육받은 교사는 전용 endpoint가 기관 신청 목록의 유일한 원천이다.
+    // 일반 기관 신청 endpoint를 동시에 호출하면 응답 경합으로 목록이 덮어써질 수 있다.
+    usesProgramInstitutionApplications:
+      isTrainedTeachersSurface ? false : usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
     setInstitutionList,
@@ -258,6 +286,7 @@ export function useApplicantsDetail({
     programId,
     enabled:
       isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications,
+    clearWhenDisabled: isTrainedTeachersSurface,
     listFilters: appliedFilters,
     setInstitutionList,
   })
@@ -339,6 +368,9 @@ export function useApplicantsDetail({
     ): Promise<'ok' | 'error' | 'skipped'> => {
       if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
       try {
+        const approvalResponses: Array<{
+          scheduleAssignmentStatus?: string | null
+        } | null | undefined> = []
         const numericIds = ids.map(id => Number(id))
         const generalRemote = !isTrainedTeachersSurface ? applicationsRemote : null
         const canBulk =
@@ -370,6 +402,11 @@ export function useApplicantsDetail({
                 approvePayload ?? (notify ? { ...notify } : notify)
               if (generalRemote && body) {
                 await generalRemote.approveOrganization(id, body)
+              } else if (isTrainedTeachersSurface) {
+                const response = await institutionApplicationsRemote.approveOrganization(id, body)
+                if (response != null && typeof response === 'object') {
+                  approvalResponses.push(response)
+                }
               } else {
                 await institutionApplicationsRemote.approveOrganization(id)
               }
@@ -387,33 +424,88 @@ export function useApplicantsDetail({
         }
         await institutionApplicationsRemote.invalidateApplications()
         if (decision === 'approve') {
+          const refresh = programId
+            ? organizationApprovalRefreshTargets(programId, ids)
+            : null
+          const scheduleSelectionRequested =
+            (approvePayload?.slots?.length ?? 0) > 0 ||
+            approvePayload?.selectedScheduleId != null ||
+            (typeof approvePayload?.requestedScheduleId === 'number' &&
+              approvePayload.requestedScheduleId > 0) ||
+            (typeof approvePayload?.preferredScheduleRank === 'number' &&
+              approvePayload.preferredScheduleRank > 0)
+          const scheduleAssigned = approvalResponses.some(
+            response => response?.scheduleAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
+          )
           if (programId) {
             await queryClient.invalidateQueries({
               queryKey: generalProgramQueryKeys.formBindings(programId),
             })
             await invalidateProgramAdminSchedulesQuery(queryClient, programId)
           }
-          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
+          if (scheduleSelectionRequested || scheduleAssigned) {
             await queryClient.invalidateQueries({
               queryKey: generalProgramProgressQueryKeys.all,
             })
-            for (const id of ids) {
+          }
+          for (let index = 0; index < ids.length; index += 1) {
+            const applicationId = ids[index] ?? ''
+            await queryClient.invalidateQueries({
+              queryKey:
+                refresh?.organizationDetails[index] ??
+                generalApplicationsQueryKeys.organizationDetail(applicationId),
+            })
+            if (isTrainedTeachersSurface && programId) {
               await queryClient.invalidateQueries({
-                queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+                queryKey: trainedTeacherQueryKeys.organizationApplication(
+                  programId,
+                  applicationId
+                ),
               })
             }
-          }
-          if (approvePayload?.slots?.length || approvePayload?.selectedScheduleId != null) {
             await queryClient.invalidateQueries({
-              queryKey: [
-                ...generalProgramProgressQueryKeys.all,
-                'organization-schedule-assignments',
-              ],
+              queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(applicationId),
             })
+          }
+          if (refresh) {
+            for (const queryKey of refresh.organizationScheduleAssignments) {
+              await queryClient.invalidateQueries({ queryKey })
+            }
+            if (scheduleSelectionRequested || scheduleAssigned) {
+              await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
+            }
           }
         }
         return 'ok'
       } catch (error) {
+        const errorCode = getApiErrorCode(error)
+        if (
+          [
+            'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_INVALID',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_NOT_SUPPORTED',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_PERIOD_REQUIRED',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_OUTSIDE_PERIOD',
+          ].includes(errorCode ?? '')
+        ) {
+          for (const id of ids) {
+            queryClient.setQueryData(
+              generalApplicationsQueryKeys.organizationApproveSelectionReset(id),
+              Date.now()
+            )
+            void queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(id),
+            })
+            void queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationDetail(id),
+            })
+            if (isTrainedTeachersSurface && programId) {
+              void queryClient.invalidateQueries({
+                queryKey: trainedTeacherQueryKeys.organizationApplication(programId, id),
+              })
+            }
+          }
+        }
         notifyRemoteDecisionFailure(error)
         return 'error'
       }
@@ -538,15 +630,17 @@ export function useApplicantsDetail({
           } else {
             await applicationsRemote.submitIndividualDocumentResult(ids[0], payload)
           }
+        } else if (decision === 'approve') {
+          showAlert({
+            title: '승인 불가',
+            content: '개인 프로그램 승인은 교육 일정을 선택한 뒤 진행해 주세요.',
+          })
+          return 'error'
         } else {
           for (const id of ids) {
-            if (decision === 'approve') {
-              await applicationsRemote.approveIndividual(id)
-            } else {
-              await applicationsRemote.rejectIndividual(id, {
-                reason: reason?.trim() || '반려',
-              })
-            }
+            await applicationsRemote.rejectIndividual(id, {
+              reason: reason?.trim() || '반려',
+            })
           }
         }
         await applicationsRemote.invalidateIndividualApplications()
@@ -557,6 +651,112 @@ export function useApplicantsDetail({
       }
     },
     [applicationsRemote, individualScreeningStage, notifyRemoteDecisionFailure, showAlert]
+  )
+
+  const applyRemoteIndividualScopeApproval = useCallback(
+    async (input: {
+      reason: string
+      targets: Array<{
+        applicationId: string
+        confirmedScheduleIds: number[]
+        expectedScopeRevision?: number
+      }>
+    }): Promise<
+      | { status: 'skipped' }
+      | { status: 'error'; error?: unknown }
+      | {
+          status: 'ok'
+          scheduleIds: number[]
+          serverAddedScheduleIds: number[]
+          markApprovedIds: string[]
+        }
+      | { status: 'partial'; successIds: number[]; failures: BulkFailure[] }
+    > => {
+      if (!applicationsRemote.individualRemoteEnabled || !programId) return { status: 'skipped' }
+      const applicationIds = input.targets.map(target => target.applicationId)
+      const refresh = async (participantIds?: Array<string | number | null | undefined>) => {
+        await invalidateIndividualApprovalScopeQueries(queryClient, {
+          programId,
+          applicationIds,
+          participantIds,
+        })
+      }
+      try {
+        if (input.targets.length === 1) {
+          const target = input.targets[0]
+          const response = await applicationsRemote.approveIndividualWithEducationScope(
+            target.applicationId,
+            {
+              confirmedScheduleIds: target.confirmedScheduleIds,
+              expectedScopeRevision: target.expectedScopeRevision ?? 0,
+              reason: input.reason,
+            }
+          )
+          const described = describeApprovedEducationScope({
+            requestedScheduleIds: target.confirmedScheduleIds,
+            responseScheduleIds: response.educationScope?.scheduleIds,
+          })
+          await refresh(
+            response.decision?.participantId != null ? [response.decision.participantId] : []
+          )
+          if (response.decision?.toStatus && response.decision.toStatus !== 'APPROVED') {
+            showAlert({
+              title: '승인 결과 확인',
+              content: `신청 상태가 ${response.decision.toStatus}로 변경되었습니다.`,
+            })
+            return { status: 'error' }
+          }
+          return {
+            status: 'ok',
+            scheduleIds: described.scheduleIds,
+            serverAddedScheduleIds: described.serverAddedScheduleIds,
+            markApprovedIds:
+              response.decision?.toStatus === 'APPROVED' ? [target.applicationId] : [],
+          }
+        }
+        const response = await applicationsRemote.bulkApproveIndividualWithEducationScope({
+          reason: input.reason,
+          targets: input.targets.map(target => ({
+            applicationId: Number(target.applicationId),
+            confirmedScheduleIds: target.confirmedScheduleIds,
+            expectedScopeRevision: target.expectedScopeRevision ?? 0,
+          })),
+        })
+        const successIds = response.successIds ?? []
+        const failures = response.failures ?? []
+        await refresh()
+        if ((response.failureCount ?? failures.length) > 0) {
+          const lines = failures.map(failure => {
+            const code = failure.code?.trim()
+            const message = failure.message?.trim() || '처리하지 못했습니다.'
+            const id = failure.id != null ? `${failure.id}: ` : ''
+            return `${id}${message}${code ? ` (${code})` : ''}`
+          })
+          showAlert({
+            title: '일부 승인 실패',
+            content: [`성공 ${successIds.length}건`, ...lines].join('\n'),
+          })
+          return { status: 'partial', successIds, failures }
+        }
+        return {
+          status: 'ok',
+          scheduleIds: [],
+          serverAddedScheduleIds: [],
+          markApprovedIds: successIds.map(String),
+        }
+      } catch (error) {
+        await refresh()
+        const message = formatIndividualApprovalScopeErrorMessage(error)
+        showAlert({
+          title: isEducationScopeRevisionConflict(error) ? '교육 일정 갱신' : '처리 실패',
+          content: isEducationScopeRevisionConflict(error)
+            ? `${message}\n최신 교육 일정을 다시 불러왔습니다. 선택을 확인한 뒤 다시 승인해 주세요.`
+            : message,
+        })
+        return { status: 'error', error }
+      }
+    },
+    [applicationsRemote, programId, queryClient, showAlert]
   )
 
   const rawTableData = useMemo((): ApplicantListRow[] => {
@@ -846,7 +1046,7 @@ export function useApplicantsDetail({
 
   useEffect(() => {
     if (viewMode !== 'calendar' || !programId) return
-    if (menu === 'institutions' && usesProgramInstitutionApplications) {
+    if (!isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications) {
       void queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.organizationList(programId),
       })
@@ -861,6 +1061,7 @@ export function useApplicantsDetail({
     }
   }, [
     instructorColumnPreset,
+    isTrainedTeachersSurface,
     menu,
     programId,
     queryClient,
@@ -881,6 +1082,7 @@ export function useApplicantsDetail({
       menu === 'instructors' && instructorColumnPreset === 'general-detail'
     if (
       (menu !== 'institutions' && !hydrateForInstructorCalendar) ||
+      isTrainedTeachersSurface ||
       !usesProgramInstitutionApplications ||
       viewMode !== 'calendar' ||
       !programId ||
@@ -927,6 +1129,7 @@ export function useApplicantsDetail({
     institutionScheduleHydrationSignature,
     institutionList.length,
     instructorColumnPreset,
+    isTrainedTeachersSurface,
     menu,
     programId,
     queryClient,
@@ -1033,6 +1236,9 @@ export function useApplicantsDetail({
     setOpenApprovalDropdownId,
     preset: institutionColumnPreset,
     programBridge: institutionApplicationBridge,
+    detailScheduleTimeSpan,
+    curriculumSessionLabels,
+    educationScheduleLines,
   })
 
   const instructorColumnsLegacy = useInstructorApplicantColumns({
@@ -1052,7 +1258,12 @@ export function useApplicantsDetail({
       ? instructorColumnsGeneral
       : instructorColumnsLegacy
 
-  const individualColumns = useGeneralIndividualApplicantColumns(institutionApplicationBridge)
+  const individualColumns = useGeneralIndividualApplicantColumns(
+    institutionApplicationBridge,
+    detailScheduleTimeSpan,
+    curriculumSessionLabels,
+    educationScheduleLines
+  )
 
   const handleBulkReject = async () => {
     if (selectedRowKeys.length === 0) {
@@ -1439,7 +1650,8 @@ export function useApplicantsDetail({
   const handleCancelApprovalInstructor = async (
     id: string,
     reason = '승인 취소',
-    notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
+    notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest,
+    faultParty?: 'USER' | 'ADMIN'
   ) => {
     if (!applicationsRemote.instructorRemoteEnabled) {
       notifyProgramApiUnavailable(
@@ -1449,7 +1661,7 @@ export function useApplicantsDetail({
       return false
     }
     try {
-      await applicationsRemote.cancelInstructorApproval(id, reason, notification)
+      await applicationsRemote.cancelInstructorApproval(id, reason, notification, faultParty)
       await applicationsRemote.invalidateApplications()
       return true
     } catch (error) {
@@ -1728,6 +1940,7 @@ export function useApplicantsDetail({
     confirmBulkParticipantReject,
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
+    applyRemoteIndividualScopeApproval,
     applyRemoteIndividualCancelApproval,
     applyRemoteIndividualCancelRejection,
     applyRemoteInstructorDecision,
@@ -1741,6 +1954,9 @@ export function useApplicantsDetail({
     organizationNotificationResendRemoteEnabled: isTrainedTeachersSurface
       ? trainedTeacherApplicationsRemote.remoteEnabled
       : applicationsRemote.remoteEnabled,
+    applicationsError: isTrainedTeachersSurface
+      ? trainedTeacherApplicationsRemote.applicationsError
+      : null,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,

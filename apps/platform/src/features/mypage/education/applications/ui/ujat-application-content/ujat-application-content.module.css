@@ -1,0 +1,75 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.section + .section:not(.sectionAfterDivider) {
+  margin-top: var(--spacing-32);
+}
+
+.sectionAfterDivider {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-60);
+  padding-top: var(--spacing-16);
+  border-top: 2px solid var(--color-border-focus);
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.dateCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.dateCardTitle {
+  margin: 0;
+}
+
+.fieldValue {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.blockList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.block {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.blockIndex,
+.joinedValue {
+  margin: 0;
+}

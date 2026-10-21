@@ -12,7 +12,10 @@ import type {
   InstitutionType,
   Program,
 } from '@/types/domain'
-import type { SponsorContactRow, SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import type {
+  SponsorContactRow,
+  SponsorManagementRow,
+} from '@/features/sponsor/model/sponsor-management.types'
 import {
   resolveGeneralProgramCommonInfo,
   resolveScheduleTypeDetailedProgramNameFromDetails,
@@ -36,7 +39,6 @@ import {
 import {
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
-  isTrainedTeachersProgram,
 } from '@/features/program/general/lib/survey-audience'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
@@ -70,10 +72,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { findEducationScheduleLinesOutsideOperationRange } from '@/features/program/shared/lib/education-schedule-change'
-import {
-  portalHomeFeaturedFormValues,
-  portalHomeFeaturedProgramPatch,
-} from '@/features/program/shared/lib/program-portal-home-featured'
 
 const curriculumSessionSchema = z.object({
   sessionLabel: z.string(),
@@ -192,8 +190,6 @@ export const generalProgramCommonInfoEditSchema = z
     scheduleCurriculumPreEducation: z.boolean(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
     educationScheduleLines: z.array(z.string()),
-    featuredOnHome: z.boolean(),
-    homeDisplayOrder: z.string(),
   })
   .merge(participantTypeSchema)
   .superRefine((data, ctx) => {
@@ -311,7 +307,10 @@ export const generalProgramCommonInfoEditSchema = z
       })
     }
 
-    if (data.ipsScheduleDetail === 'common' && isIpsTypeIncomplete(data.ipsCategory, data.ipsDetail)) {
+    if (
+      data.ipsScheduleDetail === 'common' &&
+      isIpsTypeIncomplete(data.ipsCategory, data.ipsDetail)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'IPS Type을 선택해주세요',
@@ -361,11 +360,7 @@ export const generalProgramCommonInfoEditSchema = z
             path: ['curriculumSessions', index, 'scheduleDate'],
           })
         }
-        if (
-          educationFormDetail === 'perSchedule' &&
-          !isPre &&
-          isBlankText(session.educationForm)
-        ) {
+        if (educationFormDetail === 'perSchedule' && !isPre && isBlankText(session.educationForm)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: '교육 형태를 선택해주세요',
@@ -425,8 +420,7 @@ export const generalProgramCommonInfoEditSchema = z
             path: ['scheduleDetails', index, 'name'],
           })
         }
-        const useEventDate =
-          data.sessionRound === 'multi' && educationFormDetail === 'perSchedule'
+        const useEventDate = data.sessionRound === 'multi' && educationFormDetail === 'perSchedule'
         if (useEventDate || isPre || detail.blockKind === 'event') {
           if (isBlankText(detail.scheduleDate)) {
             ctx.addIssue({
@@ -528,17 +522,6 @@ export const generalProgramCommonInfoEditSchema = z
           code: z.ZodIssueCode.custom,
           message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
           path: ['educationScheduleLines'],
-        })
-      }
-    }
-
-    if (data.featuredOnHome) {
-      const order = Number(data.homeDisplayOrder)
-      if (!Number.isInteger(order) || order < 1) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '홈 노출 순서는 1 이상 정수로 입력해주세요',
-          path: ['homeDisplayOrder'],
         })
       }
     }
@@ -962,9 +945,7 @@ export function formatSponsorManagerDisplayLine(input: {
   position?: string | null
   phone?: string | null
 }): string {
-  return [formatSponsorManagerPersonLabel(input), input.phone?.trim()]
-    .filter(Boolean)
-    .join(' | ')
+  return [formatSponsorManagerPersonLabel(input), input.phone?.trim()].filter(Boolean).join(' | ')
 }
 
 /**
@@ -974,7 +955,10 @@ export function formatSponsorManagerDisplayLine(input: {
 export function resolveSponsorManagerViewLine(input: {
   storedLine?: string | null
   sponsors: ReadonlyArray<{ id: string; name: string }>
-  contactsBySponsorId: Record<string, ReadonlyArray<{ name: string; position?: string | null; phone?: string | null }>>
+  contactsBySponsorId: Record<
+    string,
+    ReadonlyArray<{ name: string; position?: string | null; phone?: string | null }>
+  >
 }): string {
   const stored = input.storedLine?.trim() ?? ''
   if (!stored || stored === '-') return stored || '-'
@@ -1026,7 +1010,10 @@ export function resolveSponsorManagementIds(
   if (commonInfo.sponsorManagementId) return [commonInfo.sponsorManagementId]
   const displayName = commonInfo.sponsorDisplayName?.trim()
   if (displayName) {
-    const names = displayName.split(',').map(name => name.trim()).filter(Boolean)
+    const names = displayName
+      .split(',')
+      .map(name => name.trim())
+      .filter(Boolean)
     const ids = names
       .map(name => findSponsorByName(sponsors, name)?.id)
       .filter((id): id is string => Boolean(id))
@@ -1073,7 +1060,9 @@ function resolveManagerFromFormValues(
   return { manager, sponsorManagementId, contactRefs: refs }
 }
 
-function participantFlagsFromProgram(program: Program): Pick<
+function participantFlagsFromProgram(
+  program: Program
+): Pick<
   GeneralProgramCommonInfoEditFormValues,
   | 'participantIndividual'
   | 'participantOrganization'
@@ -1101,7 +1090,9 @@ function participantFlagsFromProgram(program: Program): Pick<
   }
 }
 
-function surveyFlagsFromProgram(program: Program): Pick<
+function surveyFlagsFromProgram(
+  program: Program
+): Pick<
   GeneralProgramCommonInfoEditFormValues,
   'surveySurvey' | 'surveySatisfaction' | 'surveyLectureEvaluation'
 > {
@@ -1287,7 +1278,10 @@ export function resolveScheduleDetailScheduleDateLabelForView(input: {
 }): string | undefined {
   const fromRow = input.scheduleDateLabel?.trim()
   if (fromRow) return fromRow
-  const dates = readOverlayIndexRecord<string | null>(input.overlay, SCHEDULE_DATE_BY_DETAIL_ISO_KEY)
+  const dates = readOverlayIndexRecord<string | null>(
+    input.overlay,
+    SCHEDULE_DATE_BY_DETAIL_ISO_KEY
+  )
   return formatScheduleDateLabelFromIso(dates[input.overlayIndex])
 }
 
@@ -1303,8 +1297,8 @@ export function overlayIpsIndexForScheduleDetail(
   return (
     details
       .slice(0, index)
-      .filter(d => inferScheduleDetailBlockKind(d.scheduleLabel ?? '') !== 'preEducation')
-      .length + 1
+      .filter(d => inferScheduleDetailBlockKind(d.scheduleLabel ?? '') !== 'preEducation').length +
+    1
   )
 }
 
@@ -1357,8 +1351,9 @@ export function persistScheduleEducationFormByDetailOverlay(
   let changed = false
   scheduleDetails.forEach((detail, index) => {
     if (!detail.educationFormLabel?.trim()) return
-    current[overlayIpsIndexForScheduleDetail(scheduleDetails, index)] =
-      educationFormValueFromLabel(detail.educationFormLabel)
+    current[overlayIpsIndexForScheduleDetail(scheduleDetails, index)] = educationFormValueFromLabel(
+      detail.educationFormLabel
+    )
     changed = true
   })
   if (!changed) return overlay
@@ -1398,8 +1393,9 @@ function parseIpsTypeSummary(summary: string | undefined): {
   const categoryLabel = parts[1]?.trim() ?? ''
   const detailLabel = parts[2]?.trim() ?? ''
 
-  const ipsScheduleDetail: 'common' | 'perSchedule' =
-    scheduleLabel.includes('별') ? 'perSchedule' : 'common'
+  const ipsScheduleDetail: 'common' | 'perSchedule' = scheduleLabel.includes('별')
+    ? 'perSchedule'
+    : 'common'
 
   let ipsCategory: ProgramRegistrationIpsCategory | '' = ''
   if (/inspire/i.test(categoryLabel)) ipsCategory = 'inspire'
@@ -1410,13 +1406,11 @@ function parseIpsTypeSummary(summary: string | undefined): {
   if (ipsCategory === 'succeed') {
     ipsDetail =
       PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS.find(o => o.label === detailLabel)
-        ?.value ??
-      (detailLabel.includes('해당') ? 'none' : '')
+        ?.value ?? (detailLabel.includes('해당') ? 'none' : '')
   } else if (ipsCategory === 'inspire') {
     ipsDetail =
       PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS.find(o => o.label === detailLabel)
-        ?.value ??
-      (detailLabel.includes('해당') ? 'none' : '')
+        ?.value ?? (detailLabel.includes('해당') ? 'none' : '')
   } else if (ipsCategory === 'prepare') {
     ipsDetail = 'none'
   }
@@ -1487,7 +1481,9 @@ function buildIpsTypeSummary(
   return `${scheduleLabel} | ${categoryLabel} | ${detailLabel}`
 }
 
-function resolveTypeSettingsFromProgram(program: Program): Pick<
+function resolveTypeSettingsFromProgram(
+  program: Program
+): Pick<
   GeneralProgramCommonInfoEditFormValues,
   | 'educationStructure'
   | 'sessionRound'
@@ -1515,7 +1511,8 @@ function resolveTypeSettingsFromProgram(program: Program): Pick<
     educationForm: educationFormValueFromLabel(commonInfo.educationFormLabel ?? undefined),
     educationFormScheduleDetail:
       commonInfo.educationFormScheduleDetail ??
-      (commonInfo.educationFormLabel && !commonInfo.curriculumSessions?.some(s => s.educationFormLabel)
+      (commonInfo.educationFormLabel &&
+      !commonInfo.curriculumSessions?.some(s => s.educationFormLabel)
         ? 'common'
         : commonInfo.curriculumSessions?.some(s => s.educationFormLabel)
           ? 'perSchedule'
@@ -1528,7 +1525,9 @@ function resolveTypeSettingsFromProgram(program: Program): Pick<
   }
 }
 
-function resolveKpiFromProgram(program: Program): Pick<
+function resolveKpiFromProgram(
+  program: Program
+): Pick<
   GeneralProgramCommonInfoEditFormValues,
   | 'kpiFinalParticipants'
   | 'kpiInstructorCount'
@@ -1543,12 +1542,16 @@ function resolveKpiFromProgram(program: Program): Pick<
     kpiFinalParticipants: kpi?.finalParticipants ?? program.approvedStudentCount ?? 0,
     kpiInstructorCount: kpi?.instructorCount ?? program.instructors ?? 0,
     kpiVolunteerCount: kpi?.volunteerCount ?? program.generalVolunteers ?? 0,
-    kpiFinalSchools: isIndividual ? 0 : (kpi?.finalSchools ?? program.participatingSchoolCount ?? 0),
+    kpiFinalSchools: isIndividual
+      ? 0
+      : (kpi?.finalSchools ?? program.participatingSchoolCount ?? 0),
     kpiFinalClasses: isIndividual ? 0 : (kpi?.finalClasses ?? 0),
   }
 }
 
-function resolveWageFromProgram(program: Program): Pick<
+function resolveWageFromProgram(
+  program: Program
+): Pick<
   GeneralProgramCommonInfoEditFormValues,
   | 'wageGrade1Amount'
   | 'wageGrade2Amount'
@@ -1653,7 +1656,6 @@ export function programToGeneralCommonInfoEditValues(
       ? 'date'
       : (commonInfo.educationScheduleMode ?? 'date'),
     educationScheduleLines: [...(commonInfo.educationScheduleLines ?? [])],
-    ...portalHomeFeaturedFormValues(program),
   }
 }
 
@@ -1669,12 +1671,11 @@ function participantTypesFromFlags(
 }
 
 function surveyKeysFromFlags(
-  values: GeneralProgramCommonInfoEditFormValues,
-  program?: Program
+  values: GeneralProgramCommonInfoEditFormValues
 ): GeneralProgramSurveyMenuKey[] {
   const keys: GeneralProgramSurveyMenuKey[] = []
   if (values.surveySurvey) keys.push('survey')
-  if (values.surveySatisfaction && (!program || !isTrainedTeachersProgram(program))) {
+  if (values.surveySatisfaction) {
     keys.push('satisfaction')
   }
   if (values.surveyLectureEvaluation) keys.push('lecture_evaluation')
@@ -1729,8 +1730,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     id: values.sponsorManagerContactId,
   })
   const sponsorContactUnselectedOnly =
-    selectedContactIds.length > 0 &&
-    selectedContactIds.every(id => isSponsorContactUnselected(id))
+    selectedContactIds.length > 0 && selectedContactIds.every(id => isSponsorContactUnselected(id))
   const participantTypes = participantTypesFromFlags(values)
   const primaryCategory =
     participantTypes.includes('individual') && !participantTypes.includes('school_institution')
@@ -1774,8 +1774,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
 
   const programCategory =
     ipsCategory === 'succeed'
-      ? (PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS.find(o => o.value === values.ipsDetail)
-          ?.label ?? existing.programCategory)
+      ? (PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS.find(
+          o => o.value === values.ipsDetail
+        )?.label ?? existing.programCategory)
       : existing.programCategory
 
   const programChannel =
@@ -1823,158 +1824,135 @@ export function generalCommonInfoEditValuesToProgramPatch(
 
   const representativeTitleKo = values.mainTitle.trim()
   const generalCommonInfoForPatch = {
-      ...existingCommonWithoutRecruitment(existing.generalCommonInfo),
-      announcementTitle: values.announcementTitle.trim(),
-      detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
-      sponsorDisplayName:
-        sponsorRows.map(row => row.name).join(', ') || existingCommon.sponsorDisplayName,
-      sponsorManagementId: values.sponsorManagementIds[0] ?? existingCommon.sponsorManagementId,
-      sponsorManagementIds: values.sponsorManagementIds,
-      sponsorManagerContactIds: normalizeSponsorManagerContactIds({
-        ids: values.sponsorManagerContactIds,
-        id: values.sponsorManagerContactId,
-      }),
-      sponsorManagerContactId: normalizeSponsorManagerContactIds({
-        ids: values.sponsorManagerContactIds,
-        id: values.sponsorManagerContactId,
-      })[0],
-      sponsorManagerLine: managerLine,
-      venueKind: values.venueKind,
-      venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
-      educationFormLabel:
-        values.educationFormScheduleDetail === 'common'
-          ? educationFormLabelFromValue(educationForm)
-          : undefined,
-      educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
-      participationScheduleDetail: values.participationScheduleDetail ?? 'common',
-      participationMethod: values.participantOrganization
+    ...existingCommonWithoutRecruitment(existing.generalCommonInfo),
+    announcementTitle: values.announcementTitle.trim(),
+    detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
+    sponsorDisplayName:
+      sponsorRows.map(row => row.name).join(', ') || existingCommon.sponsorDisplayName,
+    sponsorManagementId: values.sponsorManagementIds[0] ?? existingCommon.sponsorManagementId,
+    sponsorManagementIds: values.sponsorManagementIds,
+    sponsorManagerContactIds: normalizeSponsorManagerContactIds({
+      ids: values.sponsorManagerContactIds,
+      id: values.sponsorManagerContactId,
+    }),
+    sponsorManagerContactId: normalizeSponsorManagerContactIds({
+      ids: values.sponsorManagerContactIds,
+      id: values.sponsorManagerContactId,
+    })[0],
+    sponsorManagerLine: managerLine,
+    venueKind: values.venueKind,
+    venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
+    educationFormLabel:
+      values.educationFormScheduleDetail === 'common'
+        ? educationFormLabelFromValue(educationForm)
+        : undefined,
+    educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
+    participationScheduleDetail: values.participationScheduleDetail ?? 'common',
+    participationMethod: values.participantOrganization
+      ? undefined
+      : values.participationScheduleDetail === 'perSchedule'
         ? undefined
-        : values.participationScheduleDetail === 'perSchedule'
-          ? undefined
-          : (values.participationMethod ?? existingCommon.participationMethod ?? 'individual'),
-      ipsScheduleDetail: values.ipsScheduleDetail,
-      ipsTypeSummary: buildIpsTypeSummary(
-        values.ipsScheduleDetail,
-        ipsCategory,
-        values.ipsDetail
-      ),
-      curriculumSessions:
-        values.educationStructure === 'schedule'
-          ? []
-          : values.curriculumSessions.map(s => {
-        const isPreEducation = isPreEducationCurriculumSession(s)
-        if (isPreEducation) {
-          return {
-            sessionLabel: '사전 교육',
-            title: s.title.trim() || '사전 교육',
-            description: '',
-            scheduleDateLabel: s.scheduleDate?.trim() || undefined,
-            assignmentEnabled: false,
-            assignmentPeriod: undefined,
-            educationFormLabel: s.educationForm
-              ? educationFormLabelFromValue(s.educationForm)
-              : undefined,
-            ipsTypeSummary:
-              values.ipsScheduleDetail === 'perSchedule'
-                ? buildSessionIpsTypeSummary('prepare', 'none')
-                : undefined,
-          }
-        }
-        return {
-          sessionLabel: s.sessionLabel,
-          title: s.title,
-          description: s.description,
-          assignmentEnabled:
-            values.participantOrganization || values.sessionRound === 'single'
-              ? false
-              : (s.assignmentEnabled ?? false),
-          assignmentPeriod:
-            values.participantOrganization || values.sessionRound === 'single'
-              ? undefined
-              : s.assignmentPeriod,
-          educationFormLabel:
-            values.educationFormScheduleDetail === 'perSchedule' && s.educationForm
-              ? educationFormLabelFromValue(s.educationForm)
-              : undefined,
-          participationMethodLabel:
-            !values.participantOrganization &&
-            values.participationScheduleDetail === 'perSchedule' &&
-            s.participationMethod
-              ? participationMethodLabelFromValue(s.participationMethod)
-              : undefined,
-          ipsTypeSummary:
-            values.ipsScheduleDetail === 'perSchedule' && s.ipsCategory
-              ? buildSessionIpsTypeSummary(
-                  s.ipsCategory as ProgramRegistrationIpsCategory,
-                  s.ipsDetail
-                )
-              : values.ipsScheduleDetail === 'perSchedule'
-                ? buildSessionIpsTypeSummary('prepare', 'none')
-                : undefined,
-        }
-      }),
-      scheduleCurriculumPreEducation: values.scheduleCurriculumPreEducation ?? false,
-      scheduleDetails:
-        values.educationStructure === 'schedule'
-          ? (relabeledScheduleDetails ?? []).map(d => {
-              const row = {
-                scheduleLabel: d.scheduleLabel,
-                name: d.name.trim(),
-              }
-              if (
-                d.blockKind === 'preEducation' ||
-                inferScheduleDetailBlockKind(d.scheduleLabel) === 'preEducation'
-              ) {
-                return {
-                  ...row,
-                  scheduleLabel: '사전 교육',
-                  name: d.name.trim() || '사전 교육',
-                  scheduleDateLabel: d.scheduleDate?.trim() || undefined,
-                  assignmentEnabled: false,
-                  assignmentPeriod: undefined,
-                  educationFormLabel: d.educationForm
-                    ? educationFormLabelFromValue(d.educationForm)
+        : (values.participationMethod ?? existingCommon.participationMethod ?? 'individual'),
+    ipsScheduleDetail: values.ipsScheduleDetail,
+    ipsTypeSummary: buildIpsTypeSummary(values.ipsScheduleDetail, ipsCategory, values.ipsDetail),
+    curriculumSessions:
+      values.educationStructure === 'schedule'
+        ? []
+        : values.curriculumSessions.map(s => {
+            const isPreEducation = isPreEducationCurriculumSession(s)
+            if (isPreEducation) {
+              return {
+                sessionLabel: '사전 교육',
+                title: s.title.trim() || '사전 교육',
+                description: '',
+                scheduleDateLabel: s.scheduleDate?.trim() || undefined,
+                assignmentEnabled: false,
+                assignmentPeriod: undefined,
+                educationFormLabel: s.educationForm
+                  ? educationFormLabelFromValue(s.educationForm)
+                  : undefined,
+                ipsTypeSummary:
+                  values.ipsScheduleDetail === 'perSchedule'
+                    ? buildSessionIpsTypeSummary('prepare', 'none')
                     : undefined,
-                  ipsTypeSummary:
-                    values.ipsScheduleDetail === 'perSchedule'
-                      ? buildSessionIpsTypeSummary('prepare', 'none')
-                      : undefined,
-                }
               }
-              if (d.blockKind === 'event' || inferScheduleDetailBlockKind(d.scheduleLabel) === 'event') {
-                return {
-                  ...row,
-                  scheduleDateLabel: d.scheduleDate?.trim() || undefined,
-                  assignmentEnabled:
-                    values.participantOrganization || values.sessionRound === 'single'
-                      ? false
-                      : d.assignmentEnabled,
-                  assignmentPeriod:
-                    values.participantOrganization || values.sessionRound === 'single'
-                      ? undefined
-                      : d.assignmentPeriod?.trim() || undefined,
-                  educationFormLabel:
-                    values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
-                      ? educationFormLabelFromValue(d.educationForm)
-                      : undefined,
-                  participationMethodLabel:
-                    !values.participantOrganization &&
-                    values.participationScheduleDetail === 'perSchedule' &&
-                    d.participationMethod
-                      ? participationMethodLabelFromValue(d.participationMethod)
-                      : undefined,
-                  ipsTypeSummary:
-                    values.ipsScheduleDetail === 'perSchedule' && d.ipsCategory
-                      ? buildSessionIpsTypeSummary(
-                          d.ipsCategory as ProgramRegistrationIpsCategory,
-                          d.ipsDetail
-                        )
-                      : undefined,
-                }
-              }
+            }
+            return {
+              sessionLabel: s.sessionLabel,
+              title: s.title,
+              description: s.description,
+              assignmentEnabled:
+                values.participantOrganization || values.sessionRound === 'single'
+                  ? false
+                  : (s.assignmentEnabled ?? false),
+              assignmentPeriod:
+                values.participantOrganization || values.sessionRound === 'single'
+                  ? undefined
+                  : s.assignmentPeriod,
+              educationFormLabel:
+                values.educationFormScheduleDetail === 'perSchedule' && s.educationForm
+                  ? educationFormLabelFromValue(s.educationForm)
+                  : undefined,
+              participationMethodLabel:
+                !values.participantOrganization &&
+                values.participationScheduleDetail === 'perSchedule' &&
+                s.participationMethod
+                  ? participationMethodLabelFromValue(s.participationMethod)
+                  : undefined,
+              ipsTypeSummary:
+                values.ipsScheduleDetail === 'perSchedule' && s.ipsCategory
+                  ? buildSessionIpsTypeSummary(
+                      s.ipsCategory as ProgramRegistrationIpsCategory,
+                      s.ipsDetail
+                    )
+                  : values.ipsScheduleDetail === 'perSchedule'
+                    ? buildSessionIpsTypeSummary('prepare', 'none')
+                    : undefined,
+            }
+          }),
+    scheduleCurriculumPreEducation: values.scheduleCurriculumPreEducation ?? false,
+    scheduleDetails:
+      values.educationStructure === 'schedule'
+        ? (relabeledScheduleDetails ?? []).map(d => {
+            const row = {
+              scheduleLabel: d.scheduleLabel,
+              name: d.name.trim(),
+            }
+            if (
+              d.blockKind === 'preEducation' ||
+              inferScheduleDetailBlockKind(d.scheduleLabel) === 'preEducation'
+            ) {
               return {
                 ...row,
-                progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
+                scheduleLabel: '사전 교육',
+                name: d.name.trim() || '사전 교육',
+                scheduleDateLabel: d.scheduleDate?.trim() || undefined,
+                assignmentEnabled: false,
+                assignmentPeriod: undefined,
+                educationFormLabel: d.educationForm
+                  ? educationFormLabelFromValue(d.educationForm)
+                  : undefined,
+                ipsTypeSummary:
+                  values.ipsScheduleDetail === 'perSchedule'
+                    ? buildSessionIpsTypeSummary('prepare', 'none')
+                    : undefined,
+              }
+            }
+            if (
+              d.blockKind === 'event' ||
+              inferScheduleDetailBlockKind(d.scheduleLabel) === 'event'
+            ) {
+              return {
+                ...row,
+                scheduleDateLabel: d.scheduleDate?.trim() || undefined,
+                assignmentEnabled:
+                  values.participantOrganization || values.sessionRound === 'single'
+                    ? false
+                    : d.assignmentEnabled,
+                assignmentPeriod:
+                  values.participantOrganization || values.sessionRound === 'single'
+                    ? undefined
+                    : d.assignmentPeriod?.trim() || undefined,
                 educationFormLabel:
                   values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
                     ? educationFormLabelFromValue(d.educationForm)
@@ -1993,25 +1971,47 @@ export function generalCommonInfoEditValuesToProgramPatch(
                       )
                     : undefined,
               }
-            })
-          : [],
-      educationScheduleMode: shouldDisableEducationSchedulePeriodMode({
-        participantOrganization: values.participantOrganization,
-        sessionRound: values.sessionRound,
-      })
-        ? 'date'
-        : values.educationScheduleMode,
-      educationScheduleLines: [...values.educationScheduleLines],
-      wageGradeRows,
-      paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds, paymentItemOptions),
-      deductionItems: resolveProgramWageDeductionLabel(values.wagePaymentItemIds),
-      kpi: {
-        finalParticipants: values.kpiFinalParticipants ?? existingCommon.kpi?.finalParticipants ?? 0,
-        instructorCount: values.kpiInstructorCount ?? existingCommon.kpi?.instructorCount ?? 0,
-        volunteerCount: values.kpiVolunteerCount ?? existingCommon.kpi?.volunteerCount ?? 0,
-        finalSchools: kpiFinalSchools,
-        finalClasses: kpiFinalClasses,
-      },
+            }
+            return {
+              ...row,
+              progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
+              educationFormLabel:
+                values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
+                  ? educationFormLabelFromValue(d.educationForm)
+                  : undefined,
+              participationMethodLabel:
+                !values.participantOrganization &&
+                values.participationScheduleDetail === 'perSchedule' &&
+                d.participationMethod
+                  ? participationMethodLabelFromValue(d.participationMethod)
+                  : undefined,
+              ipsTypeSummary:
+                values.ipsScheduleDetail === 'perSchedule' && d.ipsCategory
+                  ? buildSessionIpsTypeSummary(
+                      d.ipsCategory as ProgramRegistrationIpsCategory,
+                      d.ipsDetail
+                    )
+                  : undefined,
+            }
+          })
+        : [],
+    educationScheduleMode: shouldDisableEducationSchedulePeriodMode({
+      participantOrganization: values.participantOrganization,
+      sessionRound: values.sessionRound,
+    })
+      ? 'date'
+      : values.educationScheduleMode,
+    educationScheduleLines: [...values.educationScheduleLines],
+    wageGradeRows,
+    paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds, paymentItemOptions),
+    deductionItems: resolveProgramWageDeductionLabel(values.wagePaymentItemIds),
+    kpi: {
+      finalParticipants: values.kpiFinalParticipants ?? existingCommon.kpi?.finalParticipants ?? 0,
+      instructorCount: values.kpiInstructorCount ?? existingCommon.kpi?.instructorCount ?? 0,
+      volunteerCount: values.kpiVolunteerCount ?? existingCommon.kpi?.volunteerCount ?? 0,
+      finalSchools: kpiFinalSchools,
+      finalClasses: kpiFinalClasses,
+    },
   }
 
   const generalCommonInfo = isScheduleType
@@ -2027,7 +2027,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     businessArea: businessAreaToProgramValue(values.businessArea),
     category: primaryCategory,
     generalParticipantTypes: participantTypes,
-    generalSurveyMenuKeys: surveyKeysFromFlags(values, existing),
+    generalSurveyMenuKeys: surveyKeysFromFlags(values),
     institutionType: institutionTypeFromVenueKind(values.venueKind),
     venue: values.venueKind === 'other' ? values.venueDetail?.trim() || undefined : undefined,
     detailedProgramId: isScheduleType
@@ -2053,7 +2053,6 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalProgramEducationStructure: values.educationStructure,
     generalProgramSessionRound: values.sessionRound,
     /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
-    ...portalHomeFeaturedProgramPatch(values),
     sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
     // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
@@ -2093,11 +2092,9 @@ export type GeneralSurveyEditFieldConfig = (typeof GENERAL_SURVEY_EDIT_FIELDS)[n
 
 export function getGeneralSurveyEditFieldsForAudience(
   _isIndividualTarget: boolean,
-  program?: Program
+  _program?: Program
 ): GeneralSurveyEditFieldConfig[] {
-  return GENERAL_SURVEY_EDIT_FIELDS.filter(
-    field => field.id !== 'satisfaction' || !program || !isTrainedTeachersProgram(program)
-  ).map(field => ({
+  return GENERAL_SURVEY_EDIT_FIELDS.map(field => ({
     ...field,
     label: PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[field.id],
   }))

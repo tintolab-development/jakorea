@@ -21,8 +21,10 @@ import {
 import {
   buildTextbookMatchesParamsForApplicant,
   buildIndividualTextbookMatchesParams,
+  buildParticipatingInstitutionTextbookMatchesParams,
   listMockTextbookCatalogForProgram,
   listMockTextbookCatalogForIndividualApplicant,
+  listMockTextbooksByBusinessArea,
 } from '@/features/textbook/api/textbook-program-catalog'
 import type { TextbookCreateInput, TextbookRow } from '@/features/textbook/model/textbook.types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -88,6 +90,16 @@ export async function getTextbookMatches(params: MatchesParams = {}): Promise<Te
   assertTextbooksRemoteReady()
   const dtos = await fetchTextbookMatchesRemote(params)
   return dtos.map(mapTextbookMatchResponse)
+}
+
+export async function getParticipatingInstitutionTextbookCatalog(
+  program: Program
+): Promise<TextbookRow[]> {
+  const params = buildParticipatingInstitutionTextbookMatchesParams(program)
+  if (shouldUseTextbooksRemoteApi()) {
+    return getTextbookMatches(params)
+  }
+  return listMockTextbooksByBusinessArea(program)
 }
 
 export async function getProgramTextbookCatalog(

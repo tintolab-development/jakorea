@@ -11,6 +11,8 @@ type EducationSessionListProps = {
   emptyMessage: string
   children: ReactNode
   paginationAriaLabel?: string
+  /** 1페이지뿐이어도 페이지네이션 노출 (기본: 2페이지 이상일 때만) */
+  alwaysShowPagination?: boolean
 }
 
 export function EducationSessionList({
@@ -22,7 +24,10 @@ export function EducationSessionList({
   emptyMessage,
   children,
   paginationAriaLabel,
+  alwaysShowPagination = false,
 }: EducationSessionListProps) {
+  const showPagination = alwaysShowPagination || totalPages > 1
+
   if (totalCount === 0) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
@@ -44,7 +49,7 @@ export function EducationSessionList({
 
       <div className={styles.list}>{children}</div>
 
-      {totalPages > 1 ? (
+      {showPagination ? (
         <div className={styles.pagination}>
           <PFPagination
             currentPage={currentPage}

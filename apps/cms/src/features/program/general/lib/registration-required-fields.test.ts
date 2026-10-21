@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import {
   describeIncompleteGeneralProgramRegistrationRequiredFields,
+  hasCurriculumMultiDateScheduleCountMismatch,
   hasIncompleteGeneralProgramRegistrationRequiredFields,
   type GeneralProgramRegistrationRequiredFieldContext,
 } from './registration-required-fields'
@@ -867,4 +868,85 @@ describe('유형 매트릭스 — UI 기본값 overlay 미기록은 typeSettings
       }
     }
   }
+})
+
+describe('hasCurriculumMultiDateScheduleCountMismatch', () => {
+  const multiDateCtx = ctx({
+    programType: 'curriculum',
+    sessionRoundType: 'multi',
+    educationScheduleMode: 'date',
+    curriculumSessionCount: 3,
+  })
+
+  it('회차 3 / 예정일 2줄이면 불일치이다', () => {
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        filledOverlay({
+          'generalRegistration.educationScheduleSettings.scheduleLines': [
+            '26년 4월 20일(월) 09:30 ~ 12:20',
+            '26년 4월 27일(월) 13:00 ~ 15:50',
+          ],
+        }),
+        multiDateCtx
+      )
+    ).toBe(true)
+  })
+
+  it('회차 3 / 예정일 3줄이면 일치이다', () => {
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        filledOverlay({
+          'generalRegistration.educationScheduleSettings.scheduleLines': [
+            '26년 4월 20일(월) 09:30 ~ 12:20',
+            '26년 4월 27일(월) 13:00 ~ 15:50',
+            '26년 5월 4일(월) 09:30 ~ 12:20',
+          ],
+        }),
+        multiDateCtx
+      )
+    ).toBe(false)
+  })
+
+  it('단일 회차·기간 지정·일정형은 검사하지 않는다', () => {
+    const lines = filledOverlay({
+      'generalRegistration.educationScheduleSettings.scheduleLines': [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+    })
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        lines,
+        ctx({ programType: 'curriculum', sessionRoundType: 'single', educationScheduleMode: 'date' })
+      )
+    ).toBe(false)
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        lines,
+        ctx({
+          programType: 'curriculum',
+          sessionRoundType: 'multi',
+          educationScheduleMode: 'period',
+          curriculumSessionCount: 3,
+        })
+      )
+    ).toBe(false)
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        lines,
+        ctx({ programType: 'schedule', sessionRoundType: 'multi', educationScheduleMode: 'date' })
+      )
+    ).toBe(false)
+  })
+
+  it('예정일이 비어 있으면 필수 검사 영역이므로 불일치로 보지 않는다', () => {
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        filledOverlay({
+          'generalRegistration.educationScheduleSettings.scheduleLines': ['', '   '],
+        }),
+        multiDateCtx
+      )
+    ).toBe(false)
+  })
 })

@@ -1,5 +1,8 @@
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { formatParticipatingSchoolSessionLine } from '@/features/program/general/lib/participating-school-session-display'
+import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 
 /** 임직원 자원봉사자 등록 모달 — 일정 행 식별자 */
@@ -127,4 +130,72 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
   }
 
   return rows
+}
+
+function isPreEducationParticipatingSession(session: ParticipatingSchoolSession): boolean {
+  const educationLabel = session.educationScheduleLabel?.trim() ?? ''
+  const scheduleLabel = session.scheduleLabel?.trim() ?? ''
+  return educationLabel.includes('사전') || scheduleLabel.includes('사전')
+}
+
+function participatingSessionDisplayLabel(session: ParticipatingSchoolSession): string {
+  const educationLabel = session.educationScheduleLabel?.trim()
+  if (educationLabel) return educationLabel
+  return formatParticipatingSchoolSessionLine(session)
+}
+
+/**
+ * 기관 프로그램 — 선택 기관의 배정 일정으로 모달 행 라벨을 보강한다.
+ * - 단일 회차 `프로그램 진행`: 해당 기관 배정 일정 표시(없으면 프로그램 공통 라벨 유지)
+ * - 기관 + 복수 + 커리큘럼 `N회차 교육` 라벨은 스펙상 유지
+ * - 그 외 회차 행: 배정 일정의 educationScheduleLabel·일정 문자열이 있으면 우선
+ */
+export function resolveEmployeeVolunteerSessionRowsForInstitution(
+  program: Program,
+  school: ParticipatingSchoolRow | undefined
+): EmployeeVolunteerSessionRow[] {
+  const baseRows = resolveEmployeeVolunteerSessionRows(program)
+  if (!school) return baseRows
+
+  const assigned = resolveParticipatingProgressAssignedSessions(school.sessions ?? [])
+  if (assigned.length === 0) return baseRows
+
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const { educationStructure, sessionRound, audience } = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+  const useRoundIndexLabels = shouldUseRoundIndexLabelsForOrganizationCurriculum(
+    audience,
+    sessionRound,
+    educationStructure
+  )
+
+  return baseRows.map(row => {
+    if (useRoundIndexLabels && row.round != null && !row.isPreEducation) {
+      return row
+    }
+
+    if (row.id === 'pre_education') {
+      const preSession = assigned.find(isPreEducationParticipatingSession)
+      if (!preSession) return row
+      return { ...row, label: participatingSessionDisplayLabel(preSession) }
+    }
+
+    if (row.id === 'program_progress') {
+      const session = assigned.find(s => !isPreEducationParticipatingSession(s)) ?? assigned[0]
+      if (!session) return row
+      return { ...row, label: participatingSessionDisplayLabel(session) }
+    }
+
+    if (row.round != null) {
+      const session = assigned.find(s => s.round === row.round)
+      if (!session) return row
+      return { ...row, label: participatingSessionDisplayLabel(session) }
+    }
+
+    return row
+  })
 }

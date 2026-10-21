@@ -75,7 +75,11 @@ function renderClass(classDisplay: UjatVolunteerClassDisplay) {
     return <span className="ujat-volunteer-assignment-table__dash">-</span>
   }
   if (classDisplay.kind === 'withdrawn') {
-    return <span className="cms-data-table__cell-accent--danger">활동 포기</span>
+    return (
+      <span className="ujat-volunteer-education-progress-text ujat-volunteer-education-progress-text--withdrawn">
+        활동 포기
+      </span>
+    )
   }
   return classDisplay.label
 }
@@ -99,15 +103,20 @@ function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
     )
   }
   if (attendance.kind === 'absence') {
-    return '결석'
+    return <ProgramAttendanceStatusText kind="absent" label="결석" />
   }
-  return '출석'
+  return <ProgramAttendanceStatusText kind="present" label="출석" />
 }
 
 function renderEducationProgress(status: UjatVolunteerAssignmentProgressRow['educationProgress']) {
   if (status === 'dash') return <span className="ujat-volunteer-assignment-table__dash">-</span>
-  if (status === 'completed') return '교육 완료'
-  return '교육 예정'
+  const tone = status === 'completed' ? 'completed' : 'scheduled'
+  const label = status === 'completed' ? '교육 완료' : '교육 예정'
+  return (
+    <span className={`ujat-volunteer-education-progress-text ujat-volunteer-education-progress-text--${tone}`}>
+      {label}
+    </span>
+  )
 }
 
 export function UjatEducationProgressVolunteerAssignmentTable({

@@ -86,11 +86,9 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
   const sponsorId =
     sponsorRaw && sponsorRaw !== SPONSOR_ALL_VALUE ? sponsorRaw : resolveDefaultSponsorId()
 
-  const repKo =
-    overlayString(args.overlay, 'ujat.basicInfo.repKo')?.trim() || '대학생경제교육봉사단'
+  const repKo = overlayString(args.overlay, 'ujat.basicInfo.repKo')?.trim() || ''
   const programManagementName =
-    overlayString(args.overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
-    `${dayjs().year()}년 JA Korea 초등 경제교육 대상 학교 및 대학생경제교육봉사단 모집`
+    overlayString(args.overlay, 'ujat.basicInfo.programManagementName')?.trim() || ''
 
   const title = programManagementName
 
@@ -99,15 +97,11 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
     | undefined
     | null
 
-  let startDate: string
-  let endDate: string
+  let startDate = ''
+  let endDate = ''
   if (seal?.start && seal?.end) {
     startDate = dayjs(seal.start).startOf('day').toISOString()
     endDate = dayjs(seal.end).endOf('day').toISOString()
-  } else {
-    const y = dayjs().year()
-    startDate = `${y}-01-01T00:00:00.000Z`
-    endDate = `${y}-12-31T23:59:59.999Z`
   }
 
   const id = args.id
@@ -157,7 +151,9 @@ function applyUjatRegistrationCreateOverlaysToProgram(
   program: Program,
   overlay: Record<string, unknown>
 ): Program {
-  const withRegistration = applyUjatRegistrationOverlayToProgram(program, overlay)
+  const withRegistration = applyUjatRegistrationOverlayToProgram(program, overlay, {
+    fillDefaults: false,
+  })
   const withInstitution = applyUjatRecruitInstitutionOverlayOntoProgram(
     withRegistration,
     pickUjatRecruitInstitutionOverlay(overlay)

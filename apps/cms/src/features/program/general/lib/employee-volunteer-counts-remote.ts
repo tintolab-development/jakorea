@@ -1,4 +1,5 @@
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import type { EmployeeVolunteerCountEntryResponse } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountEntryResponse'
 import type { EmployeeVolunteerCountReplaceRequest } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest'
 import type {
@@ -14,6 +15,28 @@ export class EmployeeVolunteerScheduleMappingError extends Error {
     super(message)
     this.name = 'EmployeeVolunteerScheduleMappingError'
   }
+}
+
+/** GET /programs/{id}/schedules — dashboard `scheduleId` 필드로 정규화 */
+export function mapAdminProgramSchedulesToDashboardShape(
+  schedules: ReadonlyArray<
+    Pick<
+      ProgramScheduleResponse,
+      'id' | 'sessionNo' | 'scheduleName' | 'startAt' | 'endAt' | 'allDay' | 'scheduleStatus'
+    >
+  >
+): DashboardProgramScheduleResponse[] {
+  return schedules
+    .filter(s => typeof s.id === 'number' && Number.isFinite(s.id) && s.id > 0)
+    .map(s => ({
+      scheduleId: s.id,
+      sessionNo: s.sessionNo,
+      scheduleName: s.scheduleName,
+      startAt: s.startAt,
+      endAt: s.endAt,
+      allDay: s.allDay,
+      scheduleStatus: s.scheduleStatus as DashboardProgramScheduleResponse['scheduleStatus'],
+    }))
 }
 
 function sortedSchedules(

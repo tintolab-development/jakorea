@@ -103,6 +103,13 @@ export function mergePublicTextbookDetail(
   }
 }
 
+/** 딥링크 등 목록 row 없이 상세만 있을 때 */
+export function mapPublicTextbookDetail(detail: PublicTextbookDetail): TextbookContent | null {
+  const base = mapPublicTextbookListItem(detail)
+  if (!base) return null
+  return mergePublicTextbookDetail(base, detail)
+}
+
 export function buildThemeSections(items: TextbookContent[]): TextbookThemeSection[] {
   return TEXTBOOK_THEME_ITEMS.flatMap(theme => {
     const rows = items.filter(item => item.theme === theme.key)

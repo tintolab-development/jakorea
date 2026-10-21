@@ -4,10 +4,8 @@ import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/program-detail-info-constants'
-import {
-  hasRecruitmentCopy,
-  pickRecruitmentCopyRow,
-} from '@/features/program/shared/lib/recruitment-row-copy'
+import { hasRecruitmentCopy, pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
+import { pickUjatVolunteerRecruitmentRow } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
   buildUjatRecruitInstitutionOverlayFromDetailEditValues,
   pickUjatRecruitInstitutionOverlay,
@@ -207,11 +205,16 @@ export function programToUjatRecruitTemplateFormValues(
           },
           volunteerHalf ?? 'h1'
         )
+  const volunteerRow =
+    kind === 'volunteer'
+      ? pickUjatVolunteerRecruitmentRow(program, volunteerHalf ?? 'h1')
+      : undefined
   const values = programToDetailEditValues(
     kind === 'volunteer'
       ? applyUjatRecruitVolunteerOverlayOntoProgram(
           blankUjatVolunteerRecruitProgramFields(program),
-          overlay
+          overlay,
+          { preferOverlay: volunteerRow == null }
         )
       : program
   )
@@ -277,26 +280,37 @@ export function programToUjatRecruitTemplateFormValues(
   } else if (!next.volunteerTargets?.length) {
     // 반기 overlay에 모집 대상 키가 없을 때만. 저장된 배열(빈 배열 포함)은 덮지 않는다.
     // 템플릿 변경으로 스토어를 비운 뒤에는 대학생·성인 시드를 다시 넣지 않는다.
-    if (!isOperationalSeedDefaultSuppressed('ujat-recruit-volunteer', VOLUNTEER_KEYS.volunteerTargets)) {
+    // GET 행이 있는 상세는 FE 기본 대상으로 채우지 않는다.
+    if (
+      volunteerRow == null &&
+      !isOperationalSeedDefaultSuppressed('ujat-recruit-volunteer', VOLUNTEER_KEYS.volunteerTargets)
+    ) {
       next.volunteerTargets = ['university', 'adult']
     }
   } else {
     next.volunteerTargets = normalizeVolunteerTargetList(next.volunteerTargets)
   }
   const programRange = readOverlayRange(overlay, VOLUNTEER_KEYS.programRange)
-  if (!next.startDate && programRange?.start?.trim()) next.startDate = programRange.start
-  if (!next.endDate && programRange?.end?.trim()) next.endDate = programRange.end
   const recruitRange =
     readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRange) ??
     readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRangeH1) ??
     readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRangeH2)
-  if (!next.volunteerApplicationStartDate && recruitRange?.start?.trim()) {
-    next.volunteerApplicationStartDate = recruitRange.start
-  }
-  if (!next.volunteerApplicationEndDate && recruitRange?.end?.trim()) {
-    next.volunteerApplicationEndDate = recruitRange.end
+  if (volunteerRow == null) {
+    if (!next.startDate && programRange?.start?.trim()) next.startDate = programRange.start
+    if (!next.endDate && programRange?.end?.trim()) next.endDate = programRange.end
+    if (!next.volunteerApplicationStartDate && recruitRange?.start?.trim()) {
+      next.volunteerApplicationStartDate = recruitRange.start
+    }
+    if (!next.volunteerApplicationEndDate && recruitRange?.end?.trim()) {
+      next.volunteerApplicationEndDate = recruitRange.end
+    }
   }
   return applyUjatRecruitmentRowCopyToForm(next, program, 'volunteer', volunteerHalf)
+}
+
+function nonemptyRowText(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
 }
 
 function applyUjatRecruitmentRowCopyToForm(
@@ -305,47 +319,69 @@ function applyUjatRecruitmentRowCopyToForm(
   kind: 'institution' | 'volunteer',
   volunteerHalf?: UjatVolunteerRecruitHalf
 ): ProgramDetailEditFormValues {
-  const row = pickRecruitmentCopyRow(
-    program,
-    kind === 'institution' ? 'participant' : 'volunteer',
-    kind === 'volunteer' ? (volunteerHalf ?? 'h1') : undefined
-  )
+  const row =
+    kind === 'volunteer'
+      ? pickUjatVolunteerRecruitmentRow(program, volunteerHalf ?? 'h1')
+      : pickRecruitmentCopyRow(program, 'participant')
   if (!row) return values
-  const contactName =
+  const announcementTitle = nonemptyRowText(row.announcementTitle)
+  const applicationMethod = nonemptyRowText(row.applicationMethod)
+  const contactName = nonemptyRowText(row.contactName)
+  const contactPhone = nonemptyRowText(row.contactPhone)
+  const contactEmail = nonemptyRowText(row.contactEmail)
+  const startAt = nonemptyRowText(row.startAt)
+  const endAt = nonemptyRowText(row.endAt)
+  const operationStart = nonemptyRowText(row.operationStartDate)
+  const operationEnd = nonemptyRowText(row.operationEndDate)
+  const interviewStart = nonemptyRowText(row.interviewStartAt)
+  const interviewEnd = nonemptyRowText(row.interviewEndAt)
+  const contactNameField =
     kind === 'institution'
-      ? { recruitmentContactOrganizationName: row.contactName?.trim() ?? '' }
-      : { volunteerRecruitmentContactOrganizationName: row.contactName?.trim() ?? '' }
+      ? { recruitmentContactOrganizationName: contactName ?? '' }
+      : { volunteerRecruitmentContactOrganizationName: contactName ?? '' }
   const halfPeriod =
     kind === 'volunteer'
       ? {
-          ...(row.startAt ? { volunteerApplicationStartDate: row.startAt } : {}),
-          ...(row.endAt ? { volunteerApplicationEndDate: row.endAt } : {}),
+          ...(startAt ? { volunteerApplicationStartDate: startAt } : {}),
+          ...(endAt ? { volunteerApplicationEndDate: endAt } : {}),
         }
-      : volunteerHalf !== 'h2' && row.startAt
+      : volunteerHalf !== 'h2' && startAt
         ? {
-            applicationStartDate: row.startAt,
-            ...(row.endAt ? { applicationEndDate: row.endAt } : {}),
+            applicationStartDate: startAt,
+            ...(endAt ? { applicationEndDate: endAt } : {}),
           }
         : {}
   return {
     ...values,
-    ...(row.announcementTitle != null
-      ? { announcementTitle: row.announcementTitle.trim() }
-      : {}),
-    ...(row.applicationMethod != null
-      ? { applicationMethod: row.applicationMethod.trim() }
-      : {}),
-    ...(row.contactName != null ? contactName : {}),
-    ...(row.contactPhone != null ? { contactPhone: row.contactPhone.trim() } : {}),
-    ...(row.contactEmail != null ? { contactEmail: row.contactEmail.trim() } : {}),
+    ...(announcementTitle != null ? { announcementTitle } : {}),
+    ...(applicationMethod != null ? { applicationMethod } : {}),
+    ...(contactName != null ? contactNameField : {}),
+    ...(contactPhone != null ? { contactPhone } : {}),
+    ...(contactEmail != null ? { contactEmail } : {}),
     ...halfPeriod,
+    startDate: operationStart ?? '',
+    endDate: operationEnd ?? '',
+    ...(kind === 'volunteer'
+      ? {
+          interviewStartDate: interviewStart ?? '',
+          interviewEndDate: interviewEnd ?? '',
+        }
+      : {}),
     ...(hasRecruitmentCopy(row)
       ? {
-          description: row.programDescription?.trim() ?? '',
-          recruitmentGuide: row.recruitmentGuide?.trim() ?? '',
-          learningSupportContent: row.learningSupportContent?.trim() ?? '',
-          additionalContentHtml: row.additionalContentHtml?.trim() ?? '',
-          oneLineIntroduction: row.remarks?.trim() ?? '',
+          ...(nonemptyRowText(row.programDescription)
+            ? { description: row.programDescription!.trim() }
+            : {}),
+          ...(nonemptyRowText(row.recruitmentGuide)
+            ? { recruitmentGuide: row.recruitmentGuide!.trim() }
+            : {}),
+          ...(nonemptyRowText(row.learningSupportContent)
+            ? { learningSupportContent: row.learningSupportContent!.trim() }
+            : {}),
+          ...(nonemptyRowText(row.additionalContentHtml)
+            ? { additionalContentHtml: row.additionalContentHtml!.trim() }
+            : {}),
+          ...(nonemptyRowText(row.remarks) ? { oneLineIntroduction: row.remarks!.trim() } : {}),
         }
       : {}),
   }

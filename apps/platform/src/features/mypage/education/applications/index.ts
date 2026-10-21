@@ -13,6 +13,10 @@ export type {
   EducationTeacherApplicationInstitution,
   EducationTeacherDeliveryStatus,
   EducationTeacherPreferredSchedule,
+  EducationUjatApplicationContent,
+  EducationUjatApplicationInstitution,
+  EducationUjatClassTimeBlock,
+  EducationUjatGradeBlock,
   EducationWithdrawalPhase,
 } from './model/types'
 export {
@@ -114,6 +118,9 @@ export type {
   TeacherTextbookInfoCardProps,
 } from './ui/teacher-assignment'
 export { DocumentPassBanner, shouldShowDocumentPassBanner } from './ui/document-pass-banner'
+export { UjatScheduleBanner } from './ui/ujat-schedule-banner'
+export { UjatApplicationContent } from './ui/ujat-application-content'
+export type { UjatApplicationContentProps } from './ui/ujat-application-content'
 export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,
@@ -125,6 +132,7 @@ export {
   isOrganizationStudentDocumentsQueryEnabled,
   useDownloadPortraitConsentTemplateMutation,
   useDownloadStudentRosterTemplateMutation,
+  useCommitOrganizationStudentRosterMutation,
   useImportOrganizationStudentRosterMutation,
   useOrganizationPortraitConsentQuery,
   useOrganizationStudentDocumentPolicyQuery,

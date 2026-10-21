@@ -74,9 +74,7 @@ export function LoginSocialCompletePage() {
             challengeUuid: outcome.challengeUuid,
             mfaMethod: outcome.mfaMethod,
             expiresAt: outcome.expiresAt,
-            totpSecret: outcome.totpSecret,
-            otpauthUri: outcome.otpauthUri,
-            qrDataUrl: outcome.qrDataUrl,
+            mfaSetupRequired: outcome.mfaSetupRequired,
           })
           navigate('/login', { replace: true })
           return

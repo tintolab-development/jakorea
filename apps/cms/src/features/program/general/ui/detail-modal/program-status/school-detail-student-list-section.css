@@ -59,7 +59,15 @@
   overflow-x: auto;
 }
 
-.school-detail-student-list-section__table-wrap .school-detail-modal__student-table .ant-table-cell {
+.school-detail-student-list-section__table-wrap
+  .school-detail-modal__student-table
+  .ant-table-thead
+  .ant-table-cell,
+.school-detail-student-list-section__table-wrap
+  .school-detail-modal__student-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  .ant-table-cell {
   white-space: nowrap;
 }
 
@@ -79,7 +87,10 @@
 }
 
 .school-detail-modal__student-table--edit .ant-table-thead > tr > th.ant-table-cell,
-.school-detail-modal__student-table--edit .ant-table-tbody > tr > td.ant-table-cell {
+.school-detail-modal__student-table--edit
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell {
   height: auto !important;
   min-height: 52px !important;
   max-height: none !important;

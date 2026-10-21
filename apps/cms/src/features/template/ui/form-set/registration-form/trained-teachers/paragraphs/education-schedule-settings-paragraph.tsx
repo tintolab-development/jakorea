@@ -144,7 +144,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
           label="교육 진행 일정 유형"
           edit={
             <CmsRadioGroup
-              size="large"
+              size="medium"
               value={educationScheduleMode}
               onChange={e => {
                 const next = e.target.value as ProgramRegistrationEducationScheduleMode
@@ -156,8 +156,8 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 onEducationScheduleModeChange(next)
               }}
             >
-              <CmsRadio value="date">날짜 지정</CmsRadio>
-              <CmsRadio value="period">기간 지정</CmsRadio>
+              <CmsRadio size="medium" value="date">날짜 지정</CmsRadio>
+              <CmsRadio size="medium" value="period">기간 지정</CmsRadio>
             </CmsRadioGroup>
           }
           view="-"
@@ -170,7 +170,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
           ]}
           edit={
             educationScheduleMode === 'date' ? (
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="schedule"
                 customizable={false}
@@ -187,7 +187,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 disabledDate={disableOutsideOperation}
               />
             ) : (
-              <ParagraphDatePicker
+              <ParagraphDatePicker inputSize="small"
                 mode="single"
                 presetMode="period"
                 customizable={false}

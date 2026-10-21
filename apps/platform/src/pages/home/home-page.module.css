@@ -45,6 +45,18 @@
   .youtubeReveal.youtubeReveal iframe {
     width: var(--reveal-mask-width);
   }
+
+  .youtubeReveal.youtubeReveal .youtubeTitle {
+    gap: 0;
+    padding-inline: 0;
+    color: var(--color-neutral-black, #3d3d3d);
+    font-family: var(--font-family-base);
+    font-size: 60px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 130%;
+    letter-spacing: -1.2px;
+  }
 }
 
 /*

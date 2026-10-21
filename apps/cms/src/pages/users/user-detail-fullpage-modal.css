@@ -1,0 +1,129 @@
+/**
+ * 회원 상세 풀페이지 — 프로그램 참여이력(하위 LNB) 테이블
+ * TealHeaderModal + detail-fullpage-modal 안에서 antd Table CSS-in-js가
+ * cms-data-table 행 높이·패딩을 덮을 때 filter-table-layout 체인으로 재확정한다.
+ * (후원사 상세: sponsor-detail-full-page-modal.css 와 동일 의도)
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  box-sizing: border-box !important;
+  min-height: 52px !important;
+  height: 52px !important;
+  padding: 10px 16px !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  vertical-align: middle !important;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar) {
+  font-weight: 700 !important;
+  padding: 12px 20px !important;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.ant-table-selection-column,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.ant-table-selection-column,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.ant-table-selection-column,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.ant-table-selection-column {
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
+  max-width: var(--table-selection-column-width, 80px) !important;
+  padding: 12px 4px 12px 8px !important;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.cms-table-col--no,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .user-detail-fullpage-modal__programs
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.cms-table-col--no,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.cms-table-col--no,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.cms-table-col--no {
+  width: var(--table-no-column-width, 80px) !important;
+  min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
+}

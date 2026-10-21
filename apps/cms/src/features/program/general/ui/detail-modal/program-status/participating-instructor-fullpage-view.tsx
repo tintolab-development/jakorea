@@ -30,6 +30,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -78,6 +79,7 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   mapParticipatingSessionsToInstructorAssignOptions,
@@ -146,7 +148,7 @@ function renderEducationScheduleLines(lines: string[]) {
   if (lines.length === 0) return <>-</>
   const total = lines.length
   const showCount = total <= 3 ? total : 2
-  const displayLines = lines.slice(0, showCount)
+  const displayLines = lines.slice(0, showCount).map(line => formatCmsScheduleDisplayLabel(line))
   const restCount = total - showCount
   return (
     <div className="participating-institutions-section__sessions-cell">
@@ -792,8 +794,15 @@ export function ParticipatingInstructorFullpageView({
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedSchoolKeys.length === 0) return
+      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
       const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
       const removedSchoolNames = selectedRows.map(r => r.schoolName)
+      const cancelBody = toInstructorAssignmentCancelRequest({
+        reason: payload.reason,
+        notifyTiming: payload.notifyTiming,
+        manualNotifyAt: payload.manualNotifyAt,
+        faultParty: payload.faultParty,
+      })
 
       if (institutionAssignment.remoteEnabled) {
         try {
@@ -805,7 +814,7 @@ export function ParticipatingInstructorFullpageView({
                   ? [row.assignmentId]
                   : []
             for (const assignmentId of ids) {
-              await cancelInstructorAssignmentRemote(assignmentId)
+              await cancelInstructorAssignmentRemote(assignmentId, cancelBody)
             }
           }
           await institutionAssignment.invalidate()
@@ -1087,7 +1096,7 @@ export function ParticipatingInstructorFullpageView({
             : undefined
           await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, {
             reason,
-            faultParty: 'ADMIN',
+            faultParty: payload.faultParty,
             stopScheduleId:
               stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
                 ? stopScheduleIdNum

@@ -1,10 +1,7 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import {
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
-  FilterTableToolbarButton,
-} from '@/shared/ui'
+import { CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import type {
   GeneralVolunteerApplicantRow,
@@ -40,7 +37,8 @@ import { mapVolunteerScreeningRowToParticipant } from '@/features/program/genera
 import { useGeneralVolunteerInterview2 } from './use-interview2'
 import { useGeneralInterviewEvaluationAccess } from '@/features/program/general/hooks/use-interview-evaluation-access'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { ApplicationGiveUpReasonModal } from '@/features/program/shared/ui/application-give-up-reason-modal'
+import { GeneralVolunteerScreeningActivityWithdrawModal } from './general-volunteer-screening-activity-withdraw-modal'
+import { GeneralVolunteerScreeningActivityWithdrawCompleteModal } from './general-volunteer-screening-activity-withdraw-complete-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { isGeneralVolunteerInterview2SelectableForResult } from './general-volunteer-interview2-actions'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -103,6 +101,10 @@ export function GeneralVolunteerInterview2Section({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    withdrawSubmitting,
+    activityWithdrawScheduleOptions,
+    withdrawCompleteVolunteerName,
+    closeWithdrawCompleteModal,
     requestInterview2Pass,
     requestInterview2Fail,
     cancelPassVolunteer,
@@ -119,7 +121,7 @@ export function GeneralVolunteerInterview2Section({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useGeneralVolunteerInterview2({ programId, subjectKind })
+  } = useGeneralVolunteerInterview2({ programId, program, subjectKind })
   const evaluationAccess = useGeneralInterviewEvaluationAccess(programId)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
@@ -197,11 +199,21 @@ export function GeneralVolunteerInterview2Section({
   )
 
   const withdrawConfirmModal = (
-    <ApplicationGiveUpReasonModal
-      open={withdrawTarget != null}
-      onCancel={cancelWithdrawActivity}
-      onConfirm={confirmWithdrawActivity}
-    />
+    <>
+      <GeneralVolunteerScreeningActivityWithdrawModal
+        open={withdrawTarget != null}
+        volunteerName={withdrawTarget?.name ?? ''}
+        scheduleOptions={activityWithdrawScheduleOptions}
+        confirming={withdrawSubmitting}
+        onCancel={cancelWithdrawActivity}
+        onConfirm={confirmWithdrawActivity}
+      />
+      <GeneralVolunteerScreeningActivityWithdrawCompleteModal
+        open={withdrawCompleteVolunteerName != null}
+        volunteerName={withdrawCompleteVolunteerName ?? ''}
+        onClose={closeWithdrawCompleteModal}
+      />
+    </>
   )
 
   const bulkPassModal = (
@@ -392,7 +404,6 @@ export function GeneralVolunteerInterview2Section({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar}
               >
@@ -402,7 +413,6 @@ export function GeneralVolunteerInterview2Section({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleViewList}
               >

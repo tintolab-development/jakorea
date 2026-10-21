@@ -191,18 +191,27 @@ export function AddStudentModal({
             <Controller
               name="gradeClass"
               control={control}
-              render={({ field }) => (
-                <CmsSelect
-                  {...field}
-                  value={field.value || undefined}
-                  inputSize="medium"
-                  width="100%"
-                  withAllOption={false}
-                  placeholder="학급을 선택하세요"
-                  options={gradeClassOptions}
-                  disabled={gradeClassOptions.length === 0}
-                />
-              )}
+              render={({ field }) =>
+                gradeClassOptions.length > 0 ? (
+                  <CmsSelect
+                    {...field}
+                    value={field.value || undefined}
+                    inputSize="medium"
+                    width="100%"
+                    withAllOption={false}
+                    placeholder="학급을 선택하세요"
+                    options={gradeClassOptions}
+                  />
+                ) : (
+                  <CmsInput
+                    {...field}
+                    value={field.value ?? ''}
+                    inputSize="medium"
+                    width="100%"
+                    placeholder="학급을 입력하세요 (예: 1반)"
+                  />
+                )
+              }
             />
             {errors.gradeClass && (
               <span className="add-student-modal__error">
@@ -212,7 +221,12 @@ export function AddStudentModal({
           </div>
 
           <div className="add-student-modal__field">
-            <label className="add-student-modal__label">연락처</label>
+            <label className="add-student-modal__label">
+              연락처{' '}
+              <span className="add-student-modal__required" aria-hidden>
+                *
+              </span>
+            </label>
             <Controller
               name="contact"
               control={control}
@@ -234,7 +248,12 @@ export function AddStudentModal({
           </div>
 
           <div className="add-student-modal__field">
-            <label className="add-student-modal__label">이메일</label>
+            <label className="add-student-modal__label">
+              이메일{' '}
+              <span className="add-student-modal__required" aria-hidden>
+                *
+              </span>
+            </label>
             <Controller
               name="email"
               control={control}

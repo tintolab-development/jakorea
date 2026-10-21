@@ -11,6 +11,7 @@ import { CmsButton } from '@/shared/ui'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { isFutureNotificationTime } from '@/shared/lib/notification-schedule'
+import { formatAppDatepickerDateTimeDisplay } from '@/shared/ui/app-datepicker'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   PaymentOrderRejectNotificationType,
@@ -155,7 +156,7 @@ export function PaymentOrderPaymentRejectionModal({
                 showTime={{ format: 'HH:mm' }}
                 value={scheduledAt}
                 onChange={d => d && setScheduledAt(d)}
-                format="YYYY. MM. DD HH:mm"
+                format={formatAppDatepickerDateTimeDisplay}
                 suffixIcon={<CalendarOutlined />}
                 allowClear={false}
                 inputReadOnly

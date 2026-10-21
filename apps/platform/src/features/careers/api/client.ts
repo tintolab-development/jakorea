@@ -1,8 +1,10 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import type {
   PublicCareerGuideResponse,
   PublicCareerPostingDetail,
+  PublicCareerPostingListQuery,
   PublicCareerPostingListResponse,
   PublicCareerTalentApplicationCreateRequest,
   PublicCareerTalentApplicationCreateResponse,
@@ -63,7 +65,7 @@ function assertAttachmentAllowed(file: File): string {
 
 /** GET /api/public/careers/guide — 인증 불필요 */
 export async function fetchPublicCareerGuide(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PublicCareerGuideResponse> {
   const { data } = await axiosClient.get<unknown>('/api/public/careers/guide', {
     ...SKIP_AUTH,
@@ -72,15 +74,80 @@ export async function fetchPublicCareerGuide(
   return unwrapEnvelope<PublicCareerGuideResponse>(data)
 }
 
-/** GET /api/public/careers/postings — 인증 불필요. RECRUITING·RESULT만. */
+const CAREER_POSTINGS_PATH = '/api/public/careers/postings'
+const ADJACENT_POSTINGS_PAGE_SIZE = 100
+
+function emptyCareerPostingPage(
+  query: PublicCareerPostingListQuery
+): PublicCareerPostingListResponse {
+  return {
+    items: [],
+    totalCount: 0,
+    page: query.page,
+    size: query.size,
+    totalPages: 0,
+  }
+}
+
+/** GET /api/public/careers/postings — 인증 불필요. RECRUITING·RESULT만. 탭 쿼리 없음. */
 export async function fetchPublicCareerPostings(
-  signal?: AbortSignal,
+  query: PublicCareerPostingListQuery,
+  signal?: AbortSignal
 ): Promise<PublicCareerPostingListResponse> {
-  const { data } = await axiosClient.get<unknown>('/api/public/careers/postings', {
+  const q = query.q?.trim()
+  const { data } = await axiosClient.get<unknown>(CAREER_POSTINGS_PATH, {
     ...SKIP_AUTH,
     signal,
+    params: {
+      ...(q ? { q } : {}),
+      page: query.page,
+      size: query.size,
+    },
   })
-  return unwrapEnvelope<PublicCareerPostingListResponse>(data)
+  const unwrapped = unwrapEnvelope<PublicCareerPostingListResponse>(data)
+  if (!unwrapped || typeof unwrapped !== 'object') {
+    return emptyCareerPostingPage(query)
+  }
+  return {
+    items: Array.isArray(unwrapped.items) ? unwrapped.items : [],
+    totalCount: unwrapped.totalCount ?? 0,
+    page: unwrapped.page ?? query.page,
+    size: unwrapped.size ?? query.size,
+    totalPages: unwrapped.totalPages ?? 0,
+  }
+}
+
+/**
+ * 상세 인접글용. q 없이 page=0&size=100부터 totalCount까지 이어 받는다.
+ * 목록 화면 쿼리(size=10)와 공유하지 않는다.
+ */
+export async function fetchPublicCareerPostingsForAdjacent(
+  signal?: AbortSignal
+): Promise<PublicCareerPostingListResponse> {
+  const first = await fetchPublicCareerPostings(
+    { page: 0, size: ADJACENT_POSTINGS_PAGE_SIZE },
+    signal
+  )
+  const items = [...(first.items ?? [])]
+  const totalCount = first.totalCount ?? items.length
+  let page = 1
+  while (items.length < totalCount) {
+    const next = await fetchPublicCareerPostings(
+      { page, size: ADJACENT_POSTINGS_PAGE_SIZE },
+      signal
+    )
+    const batch = next.items ?? []
+    if (batch.length === 0) break
+    items.push(...batch)
+    page += 1
+  }
+  return {
+    items,
+    totalCount,
+    page: 0,
+    size: ADJACENT_POSTINGS_PAGE_SIZE,
+    totalPages: first.totalPages,
+  }
 }
 
 /**
@@ -89,14 +156,14 @@ export async function fetchPublicCareerPostings(
  */
 export async function fetchPublicCareerPostingDetail(
   key: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PublicCareerPostingDetail> {
   const { data } = await axiosClient.get<unknown>(
     `/api/public/careers/postings/${encodeURIComponent(key)}`,
     {
       ...SKIP_AUTH,
       signal,
-    },
+    }
   )
   return unwrapEnvelope<PublicCareerPostingDetail>(data)
 }
@@ -110,7 +177,7 @@ async function prepareCareerTalentAttachment(file: File): Promise<PrepareRespons
       contentType,
       sizeBytes: file.size,
     },
-    SKIP_AUTH,
+    SKIP_AUTH
   )
   return unwrapEnvelope<PrepareResponse>(data)
 }
@@ -118,12 +185,12 @@ async function prepareCareerTalentAttachment(file: File): Promise<PrepareRespons
 async function confirmCareerTalentAttachment(
   assetId: number,
   version: number,
-  uploadToken: string,
+  uploadToken: string
 ): Promise<void> {
   await axiosClient.post(
     `/api/public/careers/talent-applications/attachments/${assetId}/confirm`,
     { version, uploadToken },
-    SKIP_AUTH,
+    SKIP_AUTH
   )
 }
 
@@ -133,6 +200,13 @@ async function confirmCareerTalentAttachment(
  */
 export async function uploadCareerTalentApplicationAttachment(file: File): Promise<number> {
   const contentType = assertAttachmentAllowed(file)
+  return withFileUploadOverlay(() => uploadPreparedCareerTalentAttachment(file, contentType))
+}
+
+async function uploadPreparedCareerTalentAttachment(
+  file: File,
+  contentType: string,
+): Promise<number> {
   const prepared = await prepareCareerTalentAttachment(file)
   const assetId = prepared.assetId
   const version = prepared.version
@@ -158,12 +232,12 @@ export async function uploadCareerTalentApplicationAttachment(file: File): Promi
 
 /** POST /api/public/careers/talent-applications — 인증 불필요 */
 export async function createPublicCareerTalentApplication(
-  body: PublicCareerTalentApplicationCreateRequest,
+  body: PublicCareerTalentApplicationCreateRequest
 ): Promise<PublicCareerTalentApplicationCreateResponse> {
   const { data } = await axiosClient.post<unknown>(
     '/api/public/careers/talent-applications',
     body,
-    SKIP_AUTH,
+    SKIP_AUTH
   )
   return unwrapEnvelope<PublicCareerTalentApplicationCreateResponse>(data)
 }

@@ -70,6 +70,53 @@ describe('textbook education stage mapping', () => {
     ])
   })
 
+  it('일부 학년만 선택된 목록 대상 학년은 상세 체크와 같다', () => {
+    const row = mapTextbookResponse({
+      id: '1',
+      businessArea: '기업가정신',
+      educationTarget: '초등학교',
+      grade: '전학년',
+      educationStages: [{ stage: 'elementary', grades: ['1', '2', '3', '4'] }],
+      textbookName: '초등 부분 학년',
+      useStatus: 'USED',
+    })
+    expect(row.educationTarget).toBe('초등학교')
+    expect(row.grade).toBe('1학년, 2학년, 3학년, 4학년')
+    const el = row.educationStages.find(s => s.key === 'elementary')!
+    expect(el.selected).toBe(false)
+    expect(el.grades?.filter(g => g.selected).map(g => g.label)).toEqual([
+      '1학년',
+      '2학년',
+      '3학년',
+      '4학년',
+    ])
+  })
+
+  it('초등 학년이 모두 선택된 경우에만 전학년이다', () => {
+    const row = mapTextbookResponse({
+      id: '1',
+      businessArea: '기업가정신',
+      educationTarget: '초등학교',
+      grade: '1학년',
+      educationStages: [{ stage: 'elementary', grades: ['1', '2', '3', '4', '5', '6'] }],
+      textbookName: '초등 전학년',
+      useStatus: 'USED',
+    })
+    expect(row.grade).toBe('전학년')
+  })
+
+  it('쉼표로 이어진 학년 요약도 같은 체크로 복원한다', () => {
+    const stages = buildEducationStages('초등학교', '1학년, 2학년, 3학년, 4학년')
+    const el = stages.find(s => s.key === 'elementary')!
+    expect(el.selected).toBe(false)
+    expect(el.grades?.filter(g => g.selected).map(g => g.label)).toEqual([
+      '1학년',
+      '2학년',
+      '3학년',
+      '4학년',
+    ])
+  })
+
   it('empty educationTarget/grade leaves all unchecked', () => {
     const row = mapTextbookResponse({
       id: '1',

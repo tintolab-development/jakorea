@@ -11,6 +11,7 @@ import {
   fetchIndividualMemberDetailRemote,
   fetchInstructorMemberDetailRemote,
   fetchMemberConsentRecordsRemote,
+  fetchMemberConsentSummariesRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchSchoolMemberDetailRemote,
@@ -265,6 +266,36 @@ export function useMemberConsentRecordsQuery(
 ) {
   return useQuery({
     ...memberConsentRecordsQueryOptions(memberId ?? 0),
+    enabled: options?.manualFetch
+      ? false
+      : Boolean(enabled && memberId != null && isMembersRemoteEnabled()),
+  })
+}
+
+export function memberConsentSummariesQueryOptions(memberId: number) {
+  return queryOptions({
+    queryKey: memberQueryKeys.consentSummaries(memberId),
+    staleTime: 30_000,
+    queryFn: ({ signal }) => fetchMemberConsentSummariesRemote(memberId, signal),
+  })
+}
+
+export async function fetchMemberConsentSummariesQuery(
+  queryClient: QueryClient,
+  memberId: number
+) {
+  const query = memberConsentSummariesQueryOptions(memberId)
+  await queryClient.invalidateQueries({ queryKey: query.queryKey, refetchType: 'none' })
+  return queryClient.fetchQuery(query)
+}
+
+export function useMemberConsentSummariesQuery(
+  memberId: number | undefined,
+  enabled = true,
+  options?: { manualFetch?: boolean }
+) {
+  return useQuery({
+    ...memberConsentSummariesQueryOptions(memberId ?? 0),
     enabled: options?.manualFetch
       ? false
       : Boolean(enabled && memberId != null && isMembersRemoteEnabled()),

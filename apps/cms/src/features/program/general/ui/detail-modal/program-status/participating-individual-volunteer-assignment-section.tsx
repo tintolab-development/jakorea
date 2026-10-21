@@ -16,6 +16,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
@@ -55,7 +56,7 @@ function renderScheduleCell(label: string) {
   return (
     <div className="participating-institutions-section__sessions-cell">
       <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(label)}
+        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(label))}
       </div>
     </div>
   )

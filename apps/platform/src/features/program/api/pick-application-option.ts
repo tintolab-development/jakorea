@@ -5,6 +5,23 @@ export type ProgramApplicationSelection = {
   recruitmentId?: number
   recruitmentIds?: number[]
   applicationTypes?: string[]
+  programType?: string | null
+}
+
+function isUjatProgramType(programType: string | null | undefined): boolean {
+  const type = (programType ?? '').trim().toUpperCase()
+  return type === 'UJAT' || type === 'UJAT_PROGRAM'
+}
+
+/** UJAT는 교육진행자를 VOLUNTEER만 쓴다. INSTRUCTOR 행이 와도 그리지 않는다. */
+export function filterPortalApplicationOptionsForProgram(
+  options: readonly PortalApplicationOption[],
+  programType?: string | null,
+): PortalApplicationOption[] {
+  if (!isUjatProgramType(programType)) return [...options]
+  return options.filter(
+    row => (row.applicationType ?? '').trim().toUpperCase() !== 'INSTRUCTOR',
+  )
 }
 
 function hasRecruitmentIdentity(row: PortalApplicationOption): boolean {
@@ -61,7 +78,10 @@ export function pickApplicationOption(
   options: PortalApplicationOption[],
   selection?: ProgramApplicationSelection | null,
 ): PortalApplicationOption | null {
-  const identifiable = options.filter(hasRecruitmentIdentity)
+  const identifiable = filterPortalApplicationOptionsForProgram(
+    options,
+    selection?.programType,
+  ).filter(hasRecruitmentIdentity)
   if (identifiable.length === 0) return null
 
   const applicationTypes = normalizeApplicationTypes(selection)

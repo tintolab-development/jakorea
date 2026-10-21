@@ -29,12 +29,10 @@ export function PFDataTable<T>({
   minWidth = DEFAULT_MIN_WIDTH,
   className,
 }: PFDataTableProps<T>) {
-  if (rows.length === 0) {
-    return emptyMessage ? (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-        {emptyMessage}
-      </PFText>
-    ) : null
+  const isEmpty = rows.length === 0
+
+  if (isEmpty && !emptyMessage) {
+    return null
   }
 
   return (
@@ -52,17 +50,27 @@ export function PFDataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {rows.map(row => (
-            <tr key={rowKey(row)}>
-              {columns.map(column => (
-                <td key={column.key} className={column.align === 'left' ? styles.left : undefined}>
-                  <PFText as="span" typo="bd-md-md" color="black">
-                    {column.render(row)}
-                  </PFText>
-                </td>
-              ))}
+          {isEmpty ? (
+            <tr>
+              <td className={styles.emptyCell} colSpan={columns.length}>
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                  {emptyMessage}
+                </PFText>
+              </td>
             </tr>
-          ))}
+          ) : (
+            rows.map(row => (
+              <tr key={rowKey(row)}>
+                {columns.map(column => (
+                  <td key={column.key} className={column.align === 'left' ? styles.left : undefined}>
+                    <PFText as="span" typo="bd-md-md" color="black">
+                      {column.render(row)}
+                    </PFText>
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

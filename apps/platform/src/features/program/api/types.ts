@@ -57,8 +57,6 @@ export type PortalProgramListItem = {
   thumbnailFileObjectId?: number
   educationTarget?: string
   educationTargets?: string[]
-  featuredOnHome?: boolean
-  homeDisplayOrder?: number
 }
 
 export type PortalProgramListPage = {
@@ -80,7 +78,6 @@ export type PortalProgramListQuery = {
   operatingFrom?: string
   operatingTo?: string
   sort?: string
-  featuredOnHome?: boolean
   page: number
   size: number
 }

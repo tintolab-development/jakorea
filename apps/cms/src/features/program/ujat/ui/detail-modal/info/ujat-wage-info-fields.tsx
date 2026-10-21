@@ -65,7 +65,7 @@ export function UjatWageInfoFields({
         edit={
           mode === 'edit' ? (
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsSelect
+              <CmsSelect inputSize="small"
                 mode="multiple"
                 withAllOption={false}
                 value={editPaymentIds}

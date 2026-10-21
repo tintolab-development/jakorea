@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
+  formatGeneralEducationScheduleLine,
   formatParticipatingSchoolSessionLine,
   formatVolunteerAssignmentScheduleLine,
+  prepareGeneralEducationScheduleSessions,
   resolveParticipatingInstitutionScheduleRowLabel,
+  resolveScheduleDetailTimeSpan,
 } from './participating-school-session-display'
 import type { Program } from '@/types/domain'
 
@@ -34,15 +37,136 @@ function baseSession(overrides: Partial<ParticipatingSchoolSession> = {}): Parti
   }
 }
 
-describe('formatParticipatingSchoolSessionLine', () => {
-  it('scheduleLabel이 있으면 날짜 포맷 대신 그 문자열을 쓴다', () => {
+describe('formatGeneralEducationScheduleLine', () => {
+  const dated = baseSession({
+    date: '2026.04.21',
+    dayOfWeek: '화',
+    timeRange: '09:30~12:20',
+    scheduleLabel: '2026. 04. 21(화) | 1지망',
+  })
+
+  it('커리큘럼·복수·날짜는 공통정보 시각과 차시를 붙인다', () => {
     expect(
-      formatParticipatingSchoolSessionLine(
-        baseSession({
-          scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
-        })
+      formatGeneralEducationScheduleLine(
+        baseSession({ scheduleLabel: '26년 4월 20일(월) 09:30 ~ 12:20', round: 2 }),
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'multi',
+          educationScheduleMode: 'date',
+          curriculumSessionLabels: ['1차시', '2차시'],
+        }
       )
-    ).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+    ).toBe('2026. 04. 20(월) 09:30 ~ 12:20 | 2차시')
+  })
+
+  it('커리큘럼·복수·기간은 신청 시각과 희망 차시를 붙인다', () => {
+    expect(
+      formatGeneralEducationScheduleLine(
+        baseSession({
+          date: '2026.04.21',
+          dayOfWeek: '화',
+          classNum: '3차시',
+          scheduleLabel: '2026. 04. 21(화) | 1지망',
+        }),
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'multi',
+          educationScheduleMode: 'period',
+        }
+      )
+    ).toBe('2026. 04. 21(화) 09:20 ~ 11:20 | 3차시')
+  })
+
+  it('커리큘럼·단일·기간은 신청 시각과 프로그램 차시를 붙인다', () => {
+    expect(
+      formatGeneralEducationScheduleLine(dated, {
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+        curriculumSessionCount: 3,
+      })
+    ).toBe('2026. 04. 21(화) 09:30 ~ 12:20 | 3차시')
+  })
+
+  it('커리큘럼·단일·날짜는 공통정보 시각과 차시를 붙인다', () => {
+    expect(
+      formatGeneralEducationScheduleLine(
+        baseSession({ scheduleLabel: '26년 4월 20일(월) 09:30 ~ 12:20' }),
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'single',
+          educationScheduleMode: 'date',
+          curriculumSessionCount: 3,
+        }
+      )
+    ).toBe('2026. 04. 20(월) 09:30 ~ 12:20 | 3차시')
+  })
+
+  it('일정·복수는 일정별 날짜·시간만 보여 준다', () => {
+    expect(
+      formatGeneralEducationScheduleLine(
+        baseSession({ scheduleLabel: '26년 11월 2일(월) 10:00 ~ 12:00 | 2회차' }),
+        { educationStructure: 'schedule', sessionRound: 'multi', educationScheduleMode: 'date' }
+      )
+    ).toBe('2026. 11. 02(월) 10:00 ~ 12:00')
+  })
+
+  it('일정·단일·기간은 희망일에 세부 일정 첫 시작~마지막 종료를 붙인다', () => {
+    const span = resolveScheduleDetailTimeSpan([
+      { progressTimeSummary: '09:30 ~ 09:40' },
+      { progressTimeSummary: '13:00 ~ 13:10' },
+    ])
+    expect(span).toBe('09:30 ~ 13:10')
+    const line = formatGeneralEducationScheduleLine(dated, {
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+    }, { detailScheduleTimeSpan: span })
+    expect(line).toBe('2026. 04. 21(화) 09:30 ~ 13:10')
+    expect(line.includes('지망')).toBe(false)
+  })
+
+  it('일정·단일·날짜는 공통정보 시각만 보여 준다', () => {
+    expect(
+      formatGeneralEducationScheduleLine(
+        baseSession({ scheduleLabel: '26년 4월 20일(월) 09:30 ~ 12:20 | 1지망' }),
+        { educationStructure: 'schedule', sessionRound: 'single', educationScheduleMode: 'date' }
+      )
+    ).toBe('2026. 04. 20(월) 09:30 ~ 12:20')
+  })
+
+  it('일정·복수는 교육 진행 일정 줄을, 일정·단일·기간은 날짜당 한 줄을 쓴다', () => {
+    expect(
+      prepareGeneralEducationScheduleSessions([], {
+        educationStructure: 'schedule',
+        sessionRound: 'multi',
+      }, {
+        educationScheduleLines: ['26년 11월 2일(월) 10:00 ~ 12:00'],
+      }).map(session => session.scheduleLabel)
+    ).toEqual(['26년 11월 2일(월) 10:00 ~ 12:00'])
+
+    const collapsed = prepareGeneralEducationScheduleSessions(
+      [dated, { ...dated, round: 2 }],
+      {
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+      },
+      { detailScheduleTimeSpan: '09:30 ~ 13:10' }
+    )
+    expect(collapsed).toHaveLength(1)
+    expect(collapsed[0]?.scheduleLabel).toBeUndefined()
+    expect(collapsed[0]?.timeRange).toBe('09:30 ~ 13:10')
+  })
+})
+
+describe('formatParticipatingSchoolSessionLine', () => {
+  it('scheduleLabel은 화면에서만 2026. 10. 26(월) 형식으로 바꾼다', () => {
+    const session = baseSession({
+      scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
+    })
+    expect(formatParticipatingSchoolSessionLine(session)).toBe('2026. 10. 26(월) 10:00 ~ 12:00')
+    expect(session.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
   })
 })
 

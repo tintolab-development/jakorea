@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
 import type { AttendanceItemRequest } from '@/shared/api/generated/dashboard/schemas/attendanceItemRequest'
@@ -113,21 +114,38 @@ function formatScheduleHeader(schedule: DashboardProgramScheduleResponse, index:
   const round = schedule.sessionNo ?? index + 1
   const start = schedule.startAt ? dayjs(schedule.startAt) : null
   const end = schedule.endAt ? dayjs(schedule.endAt) : null
+  const isAllDay =
+    start?.isValid() === true &&
+    end?.isValid() === true &&
+    start.format('HH:mm') === '00:00' &&
+    end.format('HH:mm') === '00:00'
   const dateLabel =
-    start?.isValid() === true ? start.format('YYYY.MM.DD') : (schedule.scheduleName ?? `${round}회차`)
-  const timeLabel =
-    start?.isValid() === true && end?.isValid() === true
-      ? `${start.format('HH:mm')}~${end.format('HH:mm')}`
-      : ''
+    start?.isValid() === true
+      ? formatCmsScheduleDisplayLabel(
+          isAllDay || end?.isValid() !== true
+            ? start.format('YYYY-MM-DD')
+            : end.isSame(start, 'day')
+              ? `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('HH:mm')}`
+              : `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('YYYY-MM-DD HH:mm')}`
+        )
+      : (schedule.scheduleName ?? `${round}회차`)
+  const periodLabel =
+    start?.isValid() === true
+      ? formatCmsScheduleDisplayLabel(
+          end?.isValid() === true && !start.isSame(end, 'day')
+            ? `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
+            : start.format('YYYY-MM-DD')
+        )
+      : dateLabel
   const filterValue = String(schedule.scheduleId ?? round)
-  const filterLabel = `${round}회차 · ${dateLabel}${timeLabel ? ` ${timeLabel}` : ''}`
+  const filterLabel = `${round}회차 · ${dateLabel}`
   return {
     round,
     filterValue,
     filterLabel,
     headerTitle: `${round}회차 출석`,
     headerScheduleSummary: filterLabel,
-    headerPeriodRangeLabel: dateLabel,
+    headerPeriodRangeLabel: periodLabel,
     headerPrefix: `${round}회차`,
   }
 }

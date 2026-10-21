@@ -312,7 +312,7 @@ export function SchoolDetailAddInstructorAssignModal({
       <ContentModal
         open={open}
         onCancel={handleCancel}
-        title="강사 배정 안내"
+        title="강사 추가 배정 안내"
         width={MODAL_WIDTH}
         footer={footer}
         className="school-detail-add-instructor-assign-modal"

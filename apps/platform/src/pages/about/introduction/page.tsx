@@ -12,7 +12,7 @@ export function IntroductionPage() {
 
   if (isPending) {
     return (
-      <div className={styles.page}>
+      <div className={[styles.page, styles.pageFill].join(' ')}>
         <PFLoadingSpinner centered label="기관소개 정보를 불러오는 중" />
       </div>
     )

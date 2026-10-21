@@ -137,6 +137,9 @@ function createEconomyPlaceholderTable(
     requiredMark: true,
     paragraphTitle: title,
     paragraphDescription,
+    ...(id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+      ? { systemFieldKeys: ['educationFormat'] }
+      : {}),
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -271,6 +274,16 @@ export function migrateProgramApplicationFormEconomyParagraphs(
   const paragraphs = draft.paragraphs.map(paragraph => {
     if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
       return paragraph
+    }
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo &&
+      !paragraph.systemFieldKeys?.includes('educationFormat')
+    ) {
+      changed = true
+      return {
+        ...paragraph,
+        systemFieldKeys: [...(paragraph.systemFieldKeys ?? []), 'educationFormat'],
+      }
     }
     if (paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.personalInfoCollection) {
       let next = patchHorizontalTableTextCell(paragraph, 0, 1, PERSONAL_INFO_PURPOSE_CELL)

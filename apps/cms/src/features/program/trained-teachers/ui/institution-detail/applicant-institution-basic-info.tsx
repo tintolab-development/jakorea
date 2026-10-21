@@ -32,6 +32,8 @@ import {
 import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { TrainedTeachersPreferredScheduleDetailSection } from './preferred-schedule-detail-section'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
@@ -52,6 +54,9 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
   isTeacherOptionsLoading?: boolean
+  textbookOptions?: Array<{ value: string; label: string; textbookName: string }>
+  textbookDisplayLabel?: string
+  isTextbookCatalogLoading?: boolean
   showEducationFormatField?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
@@ -131,6 +136,9 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   classCountOptions = [],
   teacherOptions = [],
   isTeacherOptionsLoading = false,
+  textbookOptions = [],
+  textbookDisplayLabel,
+  isTextbookCatalogLoading = false,
   showEducationFormatField = false,
   validationErrors,
   onResendNotificationClick,
@@ -220,6 +228,39 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
       '-'
     )
 
+  const textbookViewValue =
+    (textbookDisplayLabel?.trim() && textbookDisplayLabel.trim() !== '해당 없음'
+      ? textbookDisplayLabel.trim()
+      : institution.textbookName?.trim()) || '미정'
+
+  const textbookEditValue =
+    isEditMode && draft && onDraftChange ? (
+      <div className="institution-basic-info__field-stack">
+        <CmsSelect
+          className="institution-basic-info__full-width-control"
+          inputSize="small"
+          placeholder="교재명 선택"
+          withAllOption={false}
+          loading={isTextbookCatalogLoading}
+          value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
+          options={textbookOptions.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            const selected = textbookOptions.find(option => option.value === value)
+            const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
+            onDraftChange({
+              textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
+              textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
+            })
+          }}
+          error={Boolean(validationErrors?.textbookId || validationErrors?.textbookName)}
+          message={validationErrors?.textbookId ?? validationErrors?.textbookName}
+        />
+      </div>
+    ) : null
+
   const schoolNameValue =
     isEditMode && draft ? (
       <InstitutionReadonlyInput value={institution.schoolName ?? ''} />
@@ -275,6 +316,10 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
                       onResendNotificationClick={onResendNotificationClick}
                     />
                   }
+                />
+                <InstitutionApplicationTableRowFullWidth
+                  label="교재명"
+                  value={textbookEditValue ?? textbookViewValue}
                 />
               </tbody>
             </table>

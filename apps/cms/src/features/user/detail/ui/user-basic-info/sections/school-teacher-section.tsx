@@ -154,7 +154,7 @@ export function SchoolTeacherProfileSection(ctx: BasicInfoSectionContext) {
             <CmsInput
               value={d?.name ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               placeholder="한글 성명"
               aria-label="성명"
@@ -173,7 +173,7 @@ export function SchoolTeacherProfileSection(ctx: BasicInfoSectionContext) {
                 options={GENDER_EDIT_OPTIONS}
                 placeholder="성별"
                 withAllOption={false}
-                inputSize="medium"
+                inputSize="small"
                 width={120}
               />
               <CmsDateTextInput
@@ -181,7 +181,7 @@ export function SchoolTeacherProfileSection(ctx: BasicInfoSectionContext) {
                 onValueChange={value =>
                   onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
                 }
-                inputSize="medium"
+                inputSize="small"
                 width={160}
                 placeholder="YYYY-MM-DD"
                 maxLength={10}
@@ -230,7 +230,7 @@ export function SchoolTeacherProfileSection(ctx: BasicInfoSectionContext) {
               }
               onSelect={handleSchoolSelect}
               placeholder="소속 학교"
-              inputSize="medium"
+              inputSize="small"
               width="100%"
             />
           }

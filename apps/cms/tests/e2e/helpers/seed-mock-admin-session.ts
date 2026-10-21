@@ -8,7 +8,7 @@ const MOCK_ADMIN_USER_ID = 'mock-md-admin-171601'
  * `로그인하기` 버튼은 mode=api 고정이라 BE 자격 불일치 시 setup 이 실패한다.
  */
 export async function seedMockAdminSession(page: Page) {
-  await page.goto('/login')
+  await page.goto('/login', { waitUntil: 'commit' })
   await page.evaluate(userId => {
     const token = `mock-jwt-token-${userId}-${Date.now()}`
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
@@ -30,5 +30,5 @@ export async function seedMockAdminSession(page: Page) {
     localStorage.setItem('auth_user', JSON.stringify(user))
   }, MOCK_ADMIN_USER_ID)
 
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'commit' })
 }

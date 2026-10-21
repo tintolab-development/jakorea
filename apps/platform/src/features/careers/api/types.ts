@@ -38,8 +38,19 @@ export type PublicCareerPostingItem = {
   publishedOn?: string
 }
 
+export type PublicCareerPostingListQuery = {
+  q?: string
+  /** 0-based */
+  page: number
+  size: number
+}
+
 export type PublicCareerPostingListResponse = {
   items?: PublicCareerPostingItem[]
+  totalCount?: number
+  page?: number
+  size?: number
+  totalPages?: number
 }
 
 /**

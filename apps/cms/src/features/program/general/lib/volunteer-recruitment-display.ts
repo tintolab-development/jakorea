@@ -13,7 +13,14 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  hasRecruitmentWindows,
+  operationPeriodLabelFromWindow,
+  pickAudienceRecruitmentWindow,
+  recruitmentPeriodLabelFromWindow,
+} from '@/features/program/shared/lib/hydrate-recruitment-windows'
 
 type VolunteerRecruitmentInfoLoose = NonNullable<
   NonNullable<Program['generalCommonInfo']>['volunteerRecruitmentInfo']
@@ -93,12 +100,18 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
 ): GeneralProgramVolunteerRecruitmentDisplay {
   const common = program.generalCommonInfo
   const info = common?.volunteerRecruitmentInfo as VolunteerRecruitmentInfoLoose | undefined
+  const row = pickAudienceRecruitmentWindow(program, 'volunteer')
+  const useRow = hasRecruitmentWindows(program)
   const lifecycle = resolveVolunteerRecruitmentLifecycle(program)
 
-  const interviewEnabled =
-    info?.volunteerInterviewEnabled ??
-    info?.generalVolunteerInterviewEnabled ??
-    program.generalVolunteerInterviewEnabled
+  const interviewEnabled = useRow
+    ? (row?.interviewEnabled ??
+      info?.volunteerInterviewEnabled ??
+      info?.generalVolunteerInterviewEnabled ??
+      program.generalVolunteerInterviewEnabled)
+    : (info?.volunteerInterviewEnabled ??
+      info?.generalVolunteerInterviewEnabled ??
+      program.generalVolunteerInterviewEnabled)
 
   const finalAnnouncement = resolveAnnouncement({
     labels: [info?.finalAnnouncementLabel, info?.resultAnnouncementLabel],
@@ -124,24 +137,48 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
       info?.volunteerInterviewEnabledLabel,
       labelBool(interviewEnabled, '면접 있음', '면접 없음')
     ),
-    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
+    operationPeriodLabel: pickDisplayString(
+      operationPeriodLabelFromWindow(row),
+      audienceOperationPeriodLabelFromRecruitmentRow(program, 'volunteer'),
+      useRow ? undefined : info?.operationPeriodLabel
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     volunteerTargetLabel: pickDisplayString(info?.recruitmentTarget),
     volunteerTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
-    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
+    recruitmentPeriodLabel: pickDisplayString(
+      recruitmentPeriodLabelFromWindow(row),
+      useRow ? undefined : info?.recruitmentPeriodLabel
+    ),
     documentPassAnnouncementDate:
       info?.documentPassAnnouncementDate ?? program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod:
       documentPassAnnouncementMethod === '-' ? undefined : documentPassAnnouncementMethod,
-    interviewStartDate: info?.interviewStartDate ?? program.interviewStartDate,
-    interviewEndDate: info?.interviewEndDate ?? program.interviewEndDate,
+    interviewStartDate: useRow
+      ? row?.interviewStartAt ?? undefined
+      : (info?.interviewStartDate ?? program.interviewStartDate),
+    interviewEndDate: useRow
+      ? row?.interviewEndAt ?? undefined
+      : (info?.interviewEndDate ?? program.interviewEndDate),
     interviewMethod: interviewMethod === '-' ? undefined : interviewMethod,
     finalPassAnnouncementDate: finalAnnouncement.date,
     finalPassAnnouncementMethod: finalAnnouncement.method,
-    contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
-    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
-    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
+    contactOrganizationName: pickDisplayString(
+      row?.contactName,
+      useRow ? undefined : info?.contactOrganizationName
+    ),
+    contactPhone: pickDisplayString(
+      row?.contactPhone,
+      useRow ? undefined : info?.inquiryTel,
+      useRow ? undefined : info?.tel,
+      useRow ? undefined : info?.contactPhone
+    ),
+    contactEmail: pickDisplayString(
+      row?.contactEmail,
+      useRow ? undefined : info?.inquiryEmail,
+      useRow ? undefined : info?.email,
+      useRow ? undefined : info?.contactEmail
+    ),
     notes: info?.notesNotApplicable
       ? '-'
       : pickDisplayString(resolveRecruitmentRemarks(program, 'volunteer')),

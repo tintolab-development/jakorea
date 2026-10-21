@@ -67,9 +67,7 @@ interface AuthState {
     challengeUuid: string
     mfaMethod?: string
     expiresAt?: string
-    totpSecret?: string
-    otpauthUri?: string
-    qrDataUrl?: string
+    mfaSetupRequired?: boolean
   }) => void
   clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
@@ -336,9 +334,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           challengeUuid: input.challengeUuid,
           mfaMethod: input.mfaMethod,
           challengeExpiresAt: input.expiresAt,
-          totpSecret: input.totpSecret,
-          otpauthUri: input.otpauthUri,
-          qrDataUrl: input.qrDataUrl,
+          mfaSetupRequired: input.mfaSetupRequired,
         },
       })
     },

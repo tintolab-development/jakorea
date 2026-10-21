@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
 import {
   createDefaultParticipantRowVisibility,
@@ -8,10 +8,10 @@ import {
   TEMPLATE_FIELD_ORG_LOGO,
   TEMPLATE_FIELD_ORG_LOGO_02,
 } from '@/features/template/ui/template-management/template-custom-fields-form'
+import { useObjectUrlFromFile } from '@/shared/hooks/use-object-url-from-file'
 
 /** 인증서 상세 진입 시 좌측·우측 기본 포커스 */
 const INITIAL_ACTIVE_FIELD_NAME = TEMPLATE_FIELD_CERTIFICATE_BACKGROUND
-import { useObjectUrlFromFile } from '@/shared/hooks/use-object-url-from-file'
 
 export type CertificateModalInitialHydration = {
   logoUploadResults?: Record<string, FileUploadResult>
@@ -55,38 +55,40 @@ export function useFormTemplateCertificateModalState(
     createDefaultParticipantRowVisibility()
   )
 
-  // 진입 시 수료증 배경 선택 · 닫을 때만 해제 (hydration 재실행으로 포커스 뺏지 않음)
+  const initialsRef = useRef({
+    stringValues: resolvedInitialStringValues,
+    hydration: initialHydration,
+  })
+  initialsRef.current = {
+    stringValues: resolvedInitialStringValues,
+    hydration: initialHydration,
+  }
+  const hydrationReady = initialHydration != null
+
+  // 열림·템플릿 hydration 도착 시에만 시드. 객체 identity 변경으로 재실행하지 않음.
   useEffect(() => {
-    if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- default focus on dialog open
-      setActiveFieldName(INITIAL_ACTIVE_FIELD_NAME)
+    const { stringValues, hydration } = initialsRef.current
+    if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when dialog closes
+      setActiveFieldName(null)
+      setOrgLogoFile(null)
+      setOrgLogo02File(null)
+      setCertificateBackgroundFile(null)
+      setChairmanSealFile(null)
+      setLogoUploadResults({})
+      setStringPreviewValues({ ...stringValues })
+      setParticipantRowVisibility(createDefaultParticipantRowVisibility())
       return
     }
-    setActiveFieldName(null)
-  }, [open])
 
-  useEffect(() => {
-    if (open) {
-      // 모달이 열릴 때 행별 기본값을 좌측 미리보기 상태에도 반영
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- apply row defaults when dialog opens
-      setStringPreviewValues({ ...resolvedInitialStringValues })
-      setLogoUploadResults(initialHydration?.logoUploadResults ?? {})
-      setParticipantRowVisibility(
-        initialHydration?.participantRowVisibility ?? createDefaultParticipantRowVisibility()
-      )
-      return
-    }
-
-    // 모달 닫힘 시 미리보기·폼 상태 초기화
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when dialog closes
-    setOrgLogoFile(null)
-    setOrgLogo02File(null)
-    setCertificateBackgroundFile(null)
-    setChairmanSealFile(null)
-    setLogoUploadResults({})
-    setStringPreviewValues({ ...resolvedInitialStringValues })
-    setParticipantRowVisibility(createDefaultParticipantRowVisibility())
-  }, [open, resolvedInitialStringValues, initialHydration])
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- seed on open / hydration
+    setActiveFieldName(INITIAL_ACTIVE_FIELD_NAME)
+    setStringPreviewValues({ ...stringValues })
+    setLogoUploadResults(hydration?.logoUploadResults ?? {})
+    setParticipantRowVisibility(
+      hydration?.participantRowVisibility ?? createDefaultParticipantRowVisibility()
+    )
+  }, [open, hydrationReady])
 
   return {
     orgLogoFile,

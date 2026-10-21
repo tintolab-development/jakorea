@@ -42,6 +42,12 @@ import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 
 type RememberedBinding = { templateId: number; templateVersionId: number }
 
+export type ApplicationFormLoadSource = {
+  templateVersionId?: number
+  preferLocalDraft: boolean
+  unavailableReason?: string
+}
+
 const rememberedByProgram = new Map<string, Map<string, RememberedBinding>>()
 const inflightByProgram = new Map<string, Promise<void>>()
 const FORM_BINDINGS_STALE_MS = 30_000
@@ -617,13 +623,21 @@ export async function saveMutableProgramFormVersion(args: {
 /** catalog binding → program-scoped copy (양식 수정 모달·저장 SSOT) */
 export async function ensureProgramScopedOperationalBinding(
   program: Program,
-  templateCode: string
-): Promise<{ templateVersionId?: number; preferLocalDraft: boolean }> {
+  templateCode: string,
+  options?: { strictRemote?: boolean }
+): Promise<ApplicationFormLoadSource> {
+  const strictRemote = options?.strictRemote === true
   if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) {
-    return { preferLocalDraft: true }
+    return strictRemote
+      ? { preferLocalDraft: false, unavailableReason: '원격 신청 양식 API가 활성화되지 않았습니다.' }
+      : { preferLocalDraft: true }
   }
   const spec = getOperationalFormSpec(templateCode)
-  if (spec == null) return { preferLocalDraft: true }
+  if (spec == null) {
+    return strictRemote
+      ? { preferLocalDraft: false, unavailableReason: '신청 양식 계약을 찾을 수 없습니다.' }
+      : { preferLocalDraft: true }
+  }
   if (
     isProgramFormBindingWriteLocked(
       program,
@@ -639,6 +653,7 @@ export async function ensureProgramScopedOperationalBinding(
       templateCode,
       bindings,
       catalogTemplateId: catalog?.templateId,
+      strictRemote,
     })
   }
 
@@ -650,8 +665,12 @@ export async function ensureProgramScopedOperationalBinding(
     templateCode,
     bindings,
     catalogTemplateId: catalog?.templateId,
+    strictRemote,
   })
-  if (!initial.preferLocalDraft) return initial
+  if (!strictRemote && (!initial.preferLocalDraft || initial.unavailableReason)) return initial
+  // 원격 SSOT 모드에서는 binding이 없을 때 카탈로그를 복제해 화면을 채우지 않는다.
+  // 유효한 binding version이 있을 때만 읽고, 수정 저장 시 copy/rebind를 수행한다.
+  if (strictRemote) return initial
 
   const local = await loadOperationalFormDraftForProgram(program, templateCode)
   if (local?.draft != null && catalog != null) {
@@ -679,6 +698,7 @@ export async function ensureProgramScopedOperationalBinding(
     templateCode,
     bindings: nextBindings,
     catalogTemplateId: catalog?.templateId,
+    strictRemote,
   })
 }
 
@@ -688,30 +708,44 @@ export function resolveApplicationFormLoadSource(args: {
   bindings: readonly ProgramFormBindingResponse[]
   catalogTemplateId?: number
   program?: Program
-}): { templateVersionId?: number; preferLocalDraft: boolean } {
+  strictRemote?: boolean
+}): ApplicationFormLoadSource {
+  const strictRemote = args.strictRemote === true
   const spec = getOperationalFormSpec(args.templateCode)
   const rowScoped =
     args.program != null &&
     spec != null &&
     recruitmentApplicationBindingScope(args.program, spec.formType) != null
-  if (!rowScoped) {
+  if (!rowScoped && !strictRemote) {
     const remembered = getRememberedProgramOperationalFormBinding(args.programId, args.templateCode)
     if (remembered?.templateVersionId != null) {
       return { templateVersionId: remembered.templateVersionId, preferLocalDraft: false }
     }
   }
-  if (spec == null) return { preferLocalDraft: true }
+  if (spec == null) {
+    return strictRemote
+      ? { preferLocalDraft: false, unavailableReason: '신청 양식 계약을 찾을 수 없습니다.' }
+      : { preferLocalDraft: true }
+  }
   if (rowScoped && args.program != null) {
     const row = resolveRowApplicationBinding(args.program, args.bindings, spec)
     if (row.kind !== 'binding' || row.binding.templateVersionId == null) {
-      return { preferLocalDraft: true }
+      return strictRemote
+        ? { preferLocalDraft: false, unavailableReason: '신청 양식 바인딩이 없습니다.' }
+        : { preferLocalDraft: true }
     }
     return { templateVersionId: row.binding.templateVersionId, preferLocalDraft: false }
   }
   const binding = pickOperationalFormBinding(args.bindings, {
     ...spec,
-    catalogTemplateId: args.catalogTemplateId,
+    // strict remote에서는 catalog 여부와 무관하게 API가 반환한 binding version을 사용한다.
+    catalogTemplateId: strictRemote ? undefined : args.catalogTemplateId,
   })
+  if (strictRemote) {
+    return binding?.templateVersionId != null
+      ? { templateVersionId: binding.templateVersionId, preferLocalDraft: false }
+      : { preferLocalDraft: false, unavailableReason: '신청 양식 바인딩이 없습니다.' }
+  }
   if (
     binding?.templateVersionId != null &&
     (binding.templateId == null ||

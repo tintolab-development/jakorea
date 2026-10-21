@@ -27,7 +27,7 @@ export function UjatHalfEducationScheduleProgramView({
 }) {
   const display =
     displayInput ??
-    resolveUjatHalfEducationScheduleDisplay(half, program.ujatRegistrationOverlay)
+    resolveUjatHalfEducationScheduleDisplay(half, program.ujatRegistrationOverlay ?? {})
   const mode = isEdit ? 'edit' : 'view'
   const sectionMeta =
     half === 'h1'

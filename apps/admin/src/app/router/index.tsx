@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
 import { LoginPage } from '@/pages/auth/login-page'
-import { AuthPlaceholderPage } from '@/pages/auth/auth-placeholder-page'
+import { CmsAuthRedirect } from '@/features/auth/ui/cms-auth-redirect'
 import { BiPage } from '@/pages/ja-korea/bi/page'
 import { DirectionsPage } from '@/pages/ja-korea/directions/page'
 import { HistoryAwardsCertsPage } from '@/pages/ja-korea/history-awards-certs/page'
@@ -111,30 +111,15 @@ export const router = createBrowserRouter([
   },
   {
     path: '/find-email',
-    element: (
-      <AuthPlaceholderPage
-        title="이메일 찾기"
-        description="이메일 찾기 화면은 이후 Phase에서 CMS Auth 플로우와 동일하게 연동합니다."
-      />
-    ),
+    element: <CmsAuthRedirect to="/find-email" />,
   },
   {
     path: '/find-password',
-    element: (
-      <AuthPlaceholderPage
-        title="비밀번호 찾기"
-        description="비밀번호 찾기 화면은 이후 Phase에서 CMS Auth 플로우와 동일하게 연동합니다."
-      />
-    ),
+    element: <CmsAuthRedirect to="/find-password" />,
   },
   {
     path: '/register',
-    element: (
-      <AuthPlaceholderPage
-        title="회원가입"
-        description="관리자 회원가입 화면은 이후 Phase에서 CMS 가입 위저드와 동일하게 연동합니다."
-      />
-    ),
+    element: <CmsAuthRedirect to="/register" />,
   },
   {
     path: '/design-system',

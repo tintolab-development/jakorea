@@ -25,12 +25,12 @@ export function GeminiInstructorOfficialDocumentParagraph() {
             label="공문 필요 여부"
             edit={
               <CmsRadioGroup
-                size="large"
+                size="medium"
                 value={need}
                 onChange={e => setNeed(e.target.value as OfficialNeed)}
               >
-                <CmsRadio value="needed">필요</CmsRadio>
-                <CmsRadio value="not_needed">필요 없음</CmsRadio>
+                <CmsRadio size="medium" value="needed">필요</CmsRadio>
+                <CmsRadio size="medium" value="not_needed">필요 없음</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -42,7 +42,7 @@ export function GeminiInstructorOfficialDocumentParagraph() {
             fullRow
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 placeholder="공문에 필요한 정보를 작성해 주세요."
                 width="100%"
                 value={detail}

@@ -9,14 +9,16 @@ const MODAL_WIDTH = 600
 
 export type InstitutionCombinedClassCompleteModalProps = {
   open: boolean
-  teacherLabel: string
+  leadGrade: string
+  partnerGrade: string
   onClose: () => void
   zIndex?: number
 }
 
 export function InstitutionCombinedClassCompleteModal({
   open,
-  teacherLabel,
+  leadGrade,
+  partnerGrade,
   onClose,
   zIndex,
 }: InstitutionCombinedClassCompleteModalProps) {
@@ -27,7 +29,7 @@ export function InstitutionCombinedClassCompleteModal({
       title={COMBINED_CLASS_COMPLETE_MODAL_TITLE}
       width={MODAL_WIDTH}
       zIndex={zIndex}
-      description={buildCombinedClassCompleteDescription(teacherLabel)}
+      description={buildCombinedClassCompleteDescription({ leadGrade, partnerGrade })}
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           확인

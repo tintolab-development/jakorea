@@ -129,7 +129,7 @@ export function RegionAttendanceManagerModal({
                   view={selections[item.columnId] ?? '-'}
                   edit={
                     <CmsSelect
-                      inputSize="large"
+                      inputSize="small"
                       width="100%"
                       withAllOption={false}
                       placeholder={

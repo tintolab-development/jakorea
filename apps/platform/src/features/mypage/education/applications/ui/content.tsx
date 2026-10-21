@@ -6,6 +6,10 @@ import styles from './content.module.css'
 type EducationApplicationContentProps = {
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 해석된 희망 일정 줄. 있으면 `preferredEducationScheduleLabel`보다 우선 */
+  preferredEducationScheduleLines?: readonly string[]
+  /** 봉사현황 등 — 일정 미기재 시에도 「진행 희망 교육 일정」 카드 노출 (`-`) */
+  alwaysShowPreferredSchedule?: boolean
   /** 강사 프로그램 신청 — `강의 진행 가능일` (성범죄 등 다른 신청 정보는 제외) */
   instructorAvailableScheduleLines?: readonly string[]
 }
@@ -22,16 +26,22 @@ function resolvePreferredScheduleLines(label: string | undefined): string[] {
 export function EducationApplicationContent({
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  preferredEducationScheduleLines,
+  alwaysShowPreferredSchedule = false,
   instructorAvailableScheduleLines,
 }: EducationApplicationContentProps) {
   const intro = selfIntroMotivation?.trim() ?? ''
   const instructorLines = instructorAvailableScheduleLines ?? []
   const scheduleLines = instructorLines.length > 0
     ? []
-    : resolvePreferredScheduleLines(preferredEducationScheduleLabel)
+    : preferredEducationScheduleLines && preferredEducationScheduleLines.length > 0
+      ? [...preferredEducationScheduleLines]
+      : resolvePreferredScheduleLines(preferredEducationScheduleLabel)
+  const displayScheduleLines =
+    alwaysShowPreferredSchedule && scheduleLines.length === 0 ? ['-'] : scheduleLines
   const hasIntro = intro.length > 0
   const hasInstructorSchedule = instructorLines.length > 0
-  const hasSchedule = scheduleLines.length > 0
+  const hasSchedule = alwaysShowPreferredSchedule || displayScheduleLines.length > 0
 
   if (!hasIntro && !hasSchedule && !hasInstructorSchedule) {
     return (
@@ -60,7 +70,7 @@ export function EducationApplicationContent({
 
       {hasSchedule ? (
         <div className={styles.scheduleList}>
-          {scheduleLines.map((line, index) => {
+          {displayScheduleLines.map((line, index) => {
             return (
               <section
                 key={`preferred-schedule-${index + 1}`}

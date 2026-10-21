@@ -5,7 +5,9 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GradeBlock } from './gradeBlock';
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { TrainedTeacherOrganizationEducationSchedule } from './trainedTeacherOrganizationEducationSchedule';
 
 export interface TrainedTeacherOrganizationApplicationDetailResponse {
   applicationId?: number;
@@ -64,4 +66,8 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   teacherEmail?: string | null;
   /** 신청 당시 지정된 교재 id. 없으면 null. */
   textbookId?: number | null;
+  /** 기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. */
+  educationSchedules?: TrainedTeacherOrganizationEducationSchedule[];
+  /** CMS 학생 명단 학급 Select SSOT. 공통 기관 신청 상세 gradeBlocks와 같은 형식이며 활성 학생 명단의 grade/className으로 묶습니다. 명단이 없으면 신청 학년(requested_grade)과 requestedClassCount만 담은 블록 1개(classes=[])이고, 둘 다 없으면 null. classes가 []이면 classCount로 반 목록을 만들지 않습니다. */
+  gradeBlocks?: GradeBlock[] | null;
 }

@@ -203,7 +203,7 @@ export function AdminBasicInfoSection({
                 <span>{user.name ?? '-'}</span>
               ) : (
                 <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
+                  <CmsInput placeholder="한글 성명" inputSize="small" width="100%" />
                 </Form.Item>
               )
             }
@@ -231,7 +231,7 @@ export function AdminBasicInfoSection({
                     <CmsDateTextInput
                       placeholder="YYYY.MM.DD"
                       maxLength={10}
-                      inputSize="medium"
+                      inputSize="small"
                       width="100%"
                     />
                   </Form.Item>
@@ -252,7 +252,7 @@ export function AdminBasicInfoSection({
                 <span>{user.phone ?? '-'}</span>
               ) : (
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder="연락처" inputSize="small" width="100%" />
                 </Form.Item>
               )
             }
@@ -267,7 +267,7 @@ export function AdminBasicInfoSection({
                 <span>{user.email ?? '-'}</span>
               ) : (
                 <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
+                  <CmsInput placeholder="이메일" inputSize="small" width="100%" />
                 </Form.Item>
               )
             }

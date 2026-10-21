@@ -53,11 +53,20 @@ import { ApplicantCalendarView } from './applicant-calendar-view'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
 import { GeneralParticipantApplicantDetailView } from '@/features/program/general/ui/detail-modal/applications/participant-screening/participant-applicant-detail-view'
+import {
+  IndividualApproveScopeModal,
+  IndividualBulkApproveScopeModal,
+} from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
+import {
+  isRejectedEducationScheduleSelectionError,
+  parseRejectedEducationScheduleIds,
+} from '@/features/program/general/lib/individual-approval-education-scope'
 import type { ApplicantDetailMeta } from './use-applicants-detail'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
 import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
 import {
+  BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT,
   buildApplicationProcessedSelectionAlert,
   isApplicationApprovalPendingForBulkSelect,
 } from '@/features/program/general/lib/application-processed-selection-alert'
@@ -80,9 +89,11 @@ import { mapLectureAssignItemsToApprovalAssignments } from '@/features/program/g
 import {
   toFlatDecisionNotifyTiming,
   toOrganizationApproveNotifyTiming,
+  toTrainedTeacherApproveNotifyTiming,
   toNestedDecisionNotification,
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
+import { mergeOrganizationApplicationApproveBody } from '@/features/program/general/lib/organization-application-approve-slots'
 import { patchInstructorForCancelApproval } from '@/features/program/general/lib/instructor-cancel-approval'
 import {
   patchInstructorForCancelRejection,
@@ -106,7 +117,13 @@ import { fetchOrganizationApplicationDetailRemote } from '@/features/program/gen
 import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { resolveInstitutionCancelApprovalNotificationResult } from '@/features/program/general/lib/institution-cancel-approval'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { fetchTrainedTeacherOrganizationApplicationRemote } from '@/features/program/trained-teachers/api/organization-applications-client'
+import { mapTrainedTeacherOrganizationApplicationToRow } from '@/features/program/trained-teachers/api/organization-applications-adapters'
+import { buildTrainedTeacherApproveRequest } from '@/features/program/trained-teachers/api/trained-teacher-organization-approve-payload'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
 import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
@@ -192,6 +209,7 @@ export function ApplicantList({
     confirmBulkParticipantReject,
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
+    applyRemoteIndividualScopeApproval,
     applyRemoteIndividualCancelApproval,
     applyRemoteIndividualCancelRejection,
     applyRemoteInstructorDecision,
@@ -215,6 +233,7 @@ export function ApplicantList({
     tableData,
     columns,
     tableScrollX,
+    applicationsError,
     applicationsLoading,
     hasNextPage,
     isFetchingNextPage,
@@ -283,7 +302,24 @@ export function ApplicantList({
   )
   const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
   const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
-  const requiresGeneralOrganizationApproveSlots = isGeneralOrganizationProgram(program)
+  const isTrainedTeacherProgram = isTrainedTeachersDetailProgram(program)
+  const requiresInstitutionApproveScheduleAssignment =
+    isGeneralOrganizationProgram(program) || isTrainedTeacherProgram
+  const institutionApproveTypeFields = useMemo(
+    () =>
+      resolveEffectiveGeneralProgramTypeFields({
+        generalProgramAudience: program?.generalProgramAudience,
+        generalProgramEducationStructure: program?.generalProgramEducationStructure,
+        generalProgramSessionRound: program?.generalProgramSessionRound,
+        curriculumSessions: program?.generalCommonInfo?.curriculumSessions,
+        registrationOverlay: program?.registrationOverlay,
+      }),
+    [program]
+  )
+  const institutionApproveScheduleMeta = useMemo(
+    () => resolveInstitutionApplicationProgramBridge(program),
+    [program]
+  )
   const institutionApproveTargetId = institutionApproveTarget?.id ?? null
   /** 목록/상세 row 참조가 바뀌어도 id가 같으면 effect를 다시 돌리지 않는다 (무한 fetch 방지). */
   const institutionApproveHydrationKey = useMemo(() => {
@@ -302,7 +338,7 @@ export function ApplicantList({
   }, [institutionApproveTargetId, institutionList, selectedItem])
 
   useEffect(() => {
-    if (!institutionApproveTargetId || !requiresGeneralOrganizationApproveSlots) {
+    if (!institutionApproveTargetId || !requiresInstitutionApproveScheduleAssignment) {
       setInstitutionApproveRow(null)
       setInstitutionApproveHydrating(false)
       return
@@ -329,17 +365,36 @@ export function ApplicantList({
     void (async () => {
       try {
         // 승인 모달은 목록 스냅샷이 아니라 기관 신청 상세 응답을 정본으로 사용한다.
-        const detail = await queryClient.fetchQuery({
-          queryKey: generalApplicationsQueryKeys.organizationDetail(sourceRow.id),
-          queryFn: () => fetchOrganizationApplicationDetailRemote(sourceRow.id),
-          staleTime: 0,
-        })
-        const canonicalRow = mapOrganizationApplicationDetailToApplicantSchoolRow(detail, sourceRow)
-        const [hydrated] = await hydrateOrganizationApplicationSchedules(
-          [canonicalRow],
-          queryClient,
-          { applicationIds: [canonicalRow.id] }
-        )
+        // 교육받은 교사는 전용 상세 API의 preferredScheduleBlocks를 그대로 사용하고,
+        // 일반 기관만 기존 requested-schedules hydration을 추가한다.
+        let hydrated: ApplicantSchoolRow
+        if (isTrainedTeacherProgram) {
+          const detail = await fetchTrainedTeacherOrganizationApplicationRemote(
+            programId!,
+            sourceRow.id
+          )
+          hydrated = mapTrainedTeacherOrganizationApplicationToRow(
+            detail,
+            Math.max(0, sourceRow.no - 1),
+            programId!
+          )
+        } else {
+          const detail = await queryClient.fetchQuery({
+            queryKey: generalApplicationsQueryKeys.organizationDetail(sourceRow.id),
+            queryFn: () => fetchOrganizationApplicationDetailRemote(sourceRow.id),
+            staleTime: 0,
+          })
+          const canonicalRow = mapOrganizationApplicationDetailToApplicantSchoolRow(
+            detail,
+            sourceRow
+          )
+          const [generalHydrated] = await hydrateOrganizationApplicationSchedules(
+            [canonicalRow],
+            queryClient,
+            { applicationIds: [canonicalRow.id] }
+          )
+          hydrated = generalHydrated ?? canonicalRow
+        }
         if (cancelled) return
         setInstitutionApproveRow(hydrated)
         setInstitutionList(prev => prev.map(row => (row.id === hydrated.id ? hydrated : row)))
@@ -361,15 +416,18 @@ export function ApplicantList({
     institutionApproveTargetId,
     institutionApproveHydrationKey,
     queryClient,
-    requiresGeneralOrganizationApproveSlots,
+    isTrainedTeacherProgram,
+    programId,
+    requiresInstitutionApproveScheduleAssignment,
   ])
 
   const institutionApproveScheduleConfig = useMemo(() => {
-    if (!requiresGeneralOrganizationApproveSlots || !institutionApproveRow) return null
+    if (!requiresInstitutionApproveScheduleAssignment || !institutionApproveRow) return null
     return {
       preferredEducationSchedules: institutionApproveRow.preferredEducationSchedules,
+      preferredScheduleBlocks: institutionApproveRow.preferredScheduleBlocks,
     }
-  }, [institutionApproveRow, requiresGeneralOrganizationApproveSlots])
+  }, [institutionApproveRow, requiresInstitutionApproveScheduleAssignment])
 
   const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
     id: string
@@ -397,6 +455,8 @@ export function ApplicantList({
     id: string
     name: string
   } | null>(null)
+  const [participantScopeBulkOpen, setParticipantScopeBulkOpen] = useState(false)
+  const [individualScopeSubmitting, setIndividualScopeSubmitting] = useState(false)
   const [participantRejectTarget, setParticipantRejectTarget] = useState<{
     id: string
     name: string
@@ -423,10 +483,14 @@ export function ApplicantList({
   const useGeneralInstitutionActionModal =
     menu === 'institutions' &&
     (institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school')
+  const useInstitutionApproveActionModal =
+    useGeneralInstitutionActionModal || (menu === 'institutions' && isTrainedTeacherProgram)
   const useGeneralInstitutionCalendarVariant = useGeneralInstitutionActionModal
 
   const useGeneralParticipantActionModal =
     menu === 'individual-applications' && detailVariant === 'general'
+  const requiresIndividualApprovalScope =
+    useGeneralParticipantActionModal && program != null && isGeneralIndividualProgram(program)
 
   const lockBulkCheckboxToPending =
     useGeneralInstitutionActionModal ||
@@ -637,6 +701,22 @@ export function ApplicantList({
     return instructorList.find(row => row.id === id) ?? null
   }, [selectedRowKeys, instructorList])
 
+  const openInstructorSingleApprove = useCallback(
+    (row: ApplicantInstructorRow) => {
+      if (useInstructorAssignFlow) {
+        setInstructorApprovalTarget({ id: row.id, name: row.instructorName, step: 'assign' })
+        return
+      }
+      setInstructorApprovalTarget({
+        id: row.id,
+        name: row.instructorName,
+        step: 'fee',
+        assignments: [],
+      })
+    },
+    [setInstructorApprovalTarget, useInstructorAssignFlow]
+  )
+
   const firstSelectedInstitutionName = useMemo(() => {
     const id = selectedRowKeys[0]
     if (id == null) return ''
@@ -654,6 +734,84 @@ export function ApplicantList({
     if (id == null) return ''
     return individualList.find(row => row.id === String(id))?.applicantName ?? ''
   }, [individualList, selectedRowKeys])
+
+  const participantApproveRow = useMemo(() => {
+    if (!participantApproveTarget) return null
+    return (
+      individualList.find(row => row.id === participantApproveTarget.id) ??
+      (selectedItem &&
+      'applicantName' in selectedItem &&
+      selectedItem.id === participantApproveTarget.id
+        ? (selectedItem as GeneralIndividualApplicantRow)
+        : null)
+    )
+  }, [individualList, participantApproveTarget, selectedItem])
+
+  const participantScopeBulkApplicants = useMemo(
+    () =>
+      individualList
+        .filter(row => selectedRowKeys.map(String).includes(row.id))
+        .map(row => ({
+          id: row.id,
+          name: row.applicantName,
+          preferredEducationSchedules: row.preferredEducationSchedules,
+        })),
+    [individualList, selectedRowKeys]
+  )
+
+  const submitIndividualScopeApproval = useCallback(
+    async (input: {
+      reason: string
+      targets: Array<{ applicationId: string; confirmedScheduleIds: number[] }>
+    }): Promise<{ rejectedScheduleIds?: number[] } | void> => {
+      setIndividualScopeSubmitting(true)
+      try {
+        const result = await applyRemoteIndividualScopeApproval(input)
+        if (result.status === 'skipped') {
+          notifyProgramApiUnavailable(
+            'general-individual-approval-scope',
+            '일반 개인 프로그램 · 참여자 승인'
+          )
+          return
+        }
+        if (result.status === 'error') {
+          if (!isRejectedEducationScheduleSelectionError(result.error)) return
+          const rejectedScheduleIds = parseRejectedEducationScheduleIds(result.error)
+          return rejectedScheduleIds.length > 0 ? { rejectedScheduleIds } : undefined
+        }
+        const successIds =
+          result.status === 'partial' ? result.successIds.map(String) : result.markApprovedIds
+        if (successIds.length > 0) {
+          setIndividualList(prev =>
+            prev.map(row =>
+              successIds.includes(row.id)
+                ? patchGeneralIndividualApplicantForApprovalStatus(row, 'approved')
+                : row
+            )
+          )
+        }
+        if (result.status === 'partial') {
+          const failedIds = new Set(
+            result.failures.map(failure => (failure.id == null ? '' : String(failure.id)))
+          )
+          setSelectedRowKeys(prev => prev.filter(key => failedIds.has(String(key))))
+          setParticipantScopeBulkOpen(false)
+          setParticipantApproveTarget(null)
+          return
+        }
+        setSelectedRowKeys([])
+        setParticipantApproveTarget(null)
+        setParticipantScopeBulkOpen(false)
+        showAlert({
+          title: '승인 완료',
+          content: '승인되었습니다.',
+        })
+      } finally {
+        setIndividualScopeSubmitting(false)
+      }
+    },
+    [applyRemoteIndividualScopeApproval, setIndividualList, setSelectedRowKeys, showAlert]
+  )
 
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
@@ -697,10 +855,14 @@ export function ApplicantList({
       return
     }
     if (blockProcessedBulkSelection()) return
-    if (useGeneralInstitutionActionModal) {
+    if (useInstitutionApproveActionModal) {
       const single = resolveSingleSelectedInstitution()
       if (single) {
         setInstitutionApproveTarget({ id: single.id, name: single.schoolName })
+        return
+      }
+      if (institutionColumnPreset === 'general-detail' || isTrainedTeacherProgram) {
+        showAlert(BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT)
         return
       }
       setInstitutionBulkApproveOpen(true)
@@ -712,10 +874,19 @@ export function ApplicantList({
         setParticipantApproveTarget({ id: single.id, name: single.applicantName })
         return
       }
-      setParticipantBulkApproveOpen(true)
+      if (requiresIndividualApprovalScope) {
+        setParticipantScopeBulkOpen(true)
+        return
+      }
+      showAlert(BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT)
       return
     }
     if (useGeneralInstructorBulkActionModal) {
+      const single = resolveSingleSelectedInstructor()
+      if (single) {
+        openInstructorSingleApprove(single)
+        return
+      }
       setInstructorBulkApproveOpen(true)
       return
     }
@@ -894,7 +1065,7 @@ export function ApplicantList({
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
             const row = selectedItem
-            if (row && 'schoolName' in row && row.id === id && useGeneralInstitutionActionModal) {
+            if (row && 'schoolName' in row && row.id === id && useInstitutionApproveActionModal) {
               setInstitutionApproveTarget({ id, name: row.schoolName })
               return
             }
@@ -1063,16 +1234,7 @@ export function ApplicantList({
           onApprove={id => {
             const row = selectedItem
             if (row && 'instructorName' in row && row.id === id) {
-              if (useInstructorAssignFlow) {
-                setInstructorApprovalTarget({ id, name: row.instructorName, step: 'assign' })
-              } else {
-                setInstructorApprovalTarget({
-                  id,
-                  name: row.instructorName,
-                  step: 'fee',
-                  assignments: [],
-                })
-              }
+              openInstructorSingleApprove(row)
             }
           }}
           onReject={id => {
@@ -1179,10 +1341,24 @@ export function ApplicantList({
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
         scheduleConfig={
-          requiresGeneralOrganizationApproveSlots ? institutionApproveScheduleConfig : null
+          requiresInstitutionApproveScheduleAssignment ? institutionApproveScheduleConfig : null
         }
         programId={programId}
         organizationApplicationId={institutionApproveTarget?.id}
+        educationScheduleMode={
+          program?.generalCommonInfo?.educationScheduleMode === 'period' ? 'period' : 'date'
+        }
+        isTrainedTeacherProgram={isTrainedTeacherProgram}
+        applicationStatus={institutionApproveRow?.applicationStatus}
+        sessionRound={institutionApproveTypeFields.sessionRound}
+        maxScheduleCount={
+          program?.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount ?? null
+        }
+        educationStructure={institutionApproveTypeFields.educationStructure}
+        curriculumChartSessionCount={institutionApproveScheduleMeta.curriculumChartSessionCount}
+        curriculumSessions={program?.generalCommonInfo?.curriculumSessions}
+        sessionsPerRound={institutionApproveScheduleMeta.sessionsPerRound}
+        educationRoundCount={institutionApproveScheduleMeta.educationRoundCount}
         confirmLoading={institutionApproveHydrating || institutionApproveSubmitting}
         onCancel={() => {
           setInstitutionApproveTarget(null)
@@ -1195,26 +1371,38 @@ export function ApplicantList({
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
-          const notify = toOrganizationApproveNotifyTiming(
-            payload.notifyTiming,
-            payload.manualNotifyAt
-          )
+          const notify = isTrainedTeacherProgram
+            ? toTrainedTeacherApproveNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+            : toOrganizationApproveNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
           const run = async () => {
             setInstitutionApproveSubmitting(true)
             try {
-              const approvePayload = requiresGeneralOrganizationApproveSlots
-                ? {
-                    ...notify,
-                    ...(payload.selectedScheduleId != null
-                      ? { selectedScheduleId: payload.selectedScheduleId }
-                      : {}),
-                  }
+              const approvePayload = requiresInstitutionApproveScheduleAssignment
+                ? isTrainedTeacherProgram
+                  ? buildTrainedTeacherApproveRequest({
+                      timing: notify?.timing,
+                      scheduledAt: notify?.scheduledAt,
+                      preferredScheduleRank: payload.preferredScheduleRank,
+                      selectedScheduleId: payload.selectedScheduleId,
+                      selectedScheduleIds: payload.slots?.map(slot => slot.scheduleId),
+                    })
+                  : mergeOrganizationApplicationApproveBody({
+                      timing: notify?.timing,
+                      scheduledAt: notify?.scheduledAt,
+                      requestedScheduleId: payload.requestedScheduleId,
+                      selectedScheduleId: payload.selectedScheduleId,
+                      slots: payload.slots,
+                    })
                 : notify
+              const remoteNotify =
+                isTrainedTeacherProgram && approvePayload == null && notify?.timing === 'IMMEDIATE'
+                  ? undefined
+                  : notify
               const remote = await applyRemoteInstitutionDecision(
                 [id],
                 'approve',
                 undefined,
-                notify,
+                remoteNotify,
                 approvePayload
               )
               if (remote === 'error') return
@@ -1386,8 +1574,49 @@ export function ApplicantList({
           })()
         }}
       />
+      <IndividualApproveScopeModal
+        open={requiresIndividualApprovalScope && participantApproveTarget != null}
+        participantName={participantApproveTarget?.name ?? ''}
+        programId={programId}
+        program={program}
+        preferredEducationSchedules={participantApproveRow?.preferredEducationSchedules}
+        confirmLoading={individualScopeSubmitting}
+        onCancel={() => {
+          if (individualScopeSubmitting) return
+          setParticipantApproveTarget(null)
+        }}
+        onConfirm={payload => {
+          if (!participantApproveTarget) return
+          return submitIndividualScopeApproval({
+            reason: payload.reason,
+            targets: [
+              {
+                applicationId: participantApproveTarget.id,
+                confirmedScheduleIds: payload.confirmedScheduleIds,
+              },
+            ],
+          })
+        }}
+      />
+      <IndividualBulkApproveScopeModal
+        open={requiresIndividualApprovalScope && participantScopeBulkOpen}
+        applicants={participantScopeBulkApplicants}
+        programId={programId}
+        program={program}
+        confirmLoading={individualScopeSubmitting}
+        onCancel={() => {
+          if (individualScopeSubmitting) return
+          setParticipantScopeBulkOpen(false)
+        }}
+        onConfirm={payload =>
+          submitIndividualScopeApproval({
+            reason: payload.reason,
+            targets: payload.targets,
+          })
+        }
+      />
       <ParticipantApproveModal
-        open={participantApproveTarget != null}
+        open={!requiresIndividualApprovalScope && participantApproveTarget != null}
         participantName={participantApproveTarget?.name ?? ''}
         onCancel={() => setParticipantApproveTarget(null)}
         onConfirm={payload => {
@@ -1693,7 +1922,8 @@ export function ApplicantList({
                 toInstructorApplicationNotificationRequest(
                   payload.notifyTiming,
                   payload.manualNotifyAt
-                )
+                ),
+                payload.faultParty
               )
               if (!success) return
               setInstructorCancelApprovalTarget(null)
@@ -1888,6 +2118,7 @@ export function ApplicantList({
       />
       <InstructorBulkApproveModal
         open={instructorBulkApproveOpen}
+        subjectName={firstSelectedInstructorName}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkApproveOpen(false)}
         onConfirm={payload => {
@@ -2114,6 +2345,11 @@ export function ApplicantList({
               data: tableData,
             }}
           >
+            {applicationsError ? (
+              <div className="applicant-details__remote-error" role="alert">
+                원격 신청 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+              </div>
+            ) : null}
             {displayViewMode === 'table' ? (
               <div
                 ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}

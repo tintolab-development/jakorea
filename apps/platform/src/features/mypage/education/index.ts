@@ -77,6 +77,8 @@ export {
   TeacherTextbookInfoCard,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
+  UjatScheduleBanner,
+  UjatApplicationContent,
 } from './applications'
 export type {
   EducationInProgressFile,

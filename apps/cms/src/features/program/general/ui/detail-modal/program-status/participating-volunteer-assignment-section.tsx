@@ -22,6 +22,7 @@ import {
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
@@ -56,7 +57,7 @@ function renderVolunteerScheduleLines(lines: string[]) {
           key={`${line}-${index}`}
           className="participating-institutions-section__session-line"
         >
-          {renderProgramDetailPipeSeparated(line)}
+          {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
         </div>
       ))}
       {restCount > 0 ? (
@@ -72,7 +73,7 @@ function renderHopeScheduleLine(line: string) {
   return (
     <div className="participating-institutions-section__sessions-cell">
       <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(line)}
+        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
       </div>
     </div>
   )

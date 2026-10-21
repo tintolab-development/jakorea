@@ -259,7 +259,8 @@ export function MemberConsentCrimeModal({
           <div className="crime-consent-doc-modal__toolbar">
             <div className="crime-consent-doc-modal__notice-wrap">
               <p className="crime-consent-doc-modal__notice">
-                동의서 문서를 업로드한 후 제출해 주세요. 제출까지 완료되어야 동의된 것으로 간주됩니다.
+                동의서 문서를 업로드한 후 제출해 주세요. 제출까지 완료되어야 동의된 것으로
+                간주됩니다.
               </p>
             </div>
             <div className="crime-consent-doc-modal__actions member-consent-crime-modal__actions">
@@ -276,7 +277,6 @@ export function MemberConsentCrimeModal({
                 size="medium"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
-                className="crime-consent-doc-modal__download-btn"
                 disabled={isSubmitting}
               >
                 문서 다운로드

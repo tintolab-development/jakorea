@@ -14,14 +14,18 @@ import type {
 import {
   computeGeneralInterviewTotalScore,
   formatGeneralAssignedInterviewScheduleDisplay,
-  GENERAL_INTERVIEW_MANAGER_SCORE_MAX,
+  formatGeneralInterviewManagerScoreDisplay,
+  GENERAL_INTERVIEW_MANAGER_SCORE_SELECT_OPTIONS,
+  generalInterviewManagerScoreFromSelectValue,
+  generalInterviewManagerScoreToSelectValue,
+  normalizeGeneralInterviewManagerScore,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import './interview-evaluation-section.css'
 
-const SCORE_PLACEHOLDER = '점수를 입력해 주세요'
+const SCORE_PLACEHOLDER = '점수를 선택해 주세요'
 
 type SlotEditable = { a: boolean; b: boolean }
 
@@ -44,20 +48,33 @@ export function resolveInterviewEvaluationSlotEditable(
   return { a: !filledA, b: !filledB }
 }
 
-function formatScoreValue(score: number | null | undefined): string {
-  return score != null ? String(score) : '-'
-}
-
 function formatTotalScoreDisplay(totalScore: number | null): ReactNode {
   if (totalScore == null) return '-'
   return <span className="general-volunteer-interview2__score-value">{totalScore}</span>
 }
 
-function clampManagerScore(value: string): number | null {
-  if (value === '') return null
-  const next = Number(value)
-  if (!Number.isFinite(next)) return null
-  return Math.min(GENERAL_INTERVIEW_MANAGER_SCORE_MAX, Math.max(0, Math.trunc(next)))
+type ManagerScoreSelectProps = {
+  value: number | null
+  disabled: boolean
+  onChange: (score: number | null) => void
+}
+
+function ManagerScoreSelect({ value, disabled, onChange }: ManagerScoreSelectProps) {
+  return (
+    <CmsSelect
+      inputSize="small"
+      width="100%"
+      withAllOption={false}
+      allowClear={false}
+      disabled={disabled}
+      placeholder={SCORE_PLACEHOLDER}
+      value={generalInterviewManagerScoreToSelectValue(value)}
+      options={[...GENERAL_INTERVIEW_MANAGER_SCORE_SELECT_OPTIONS]}
+      onChange={next =>
+        onChange(generalInterviewManagerScoreFromSelectValue(next as string | undefined))
+      }
+    />
+  )
 }
 
 export type GeneralVolunteerApplicantInterviewEvaluationSectionHandle = {
@@ -85,12 +102,8 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
   const [remark, setRemark] = useState('')
 
   useEffect(() => {
-    setManagerAScore(
-      clampManagerScore(applicant.managerAScore == null ? '' : String(applicant.managerAScore))
-    )
-    setManagerBScore(
-      clampManagerScore(applicant.managerBScore == null ? '' : String(applicant.managerBScore))
-    )
+    setManagerAScore(normalizeGeneralInterviewManagerScore(applicant.managerAScore))
+    setManagerBScore(normalizeGeneralInterviewManagerScore(applicant.managerBScore))
     setRemark(applicant.interviewEvaluationRemark ?? '')
   }, [
     applicant.id,
@@ -126,22 +139,6 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
       submit: async () => {
         const nextA = editable.a ? managerAScore : null
         const nextB = editable.b ? managerBScore : null
-
-        if (!editable.a && !editable.b) {
-          cmsAlertModal.show({
-            title: '면접 평가 안내',
-            content: '입력할 수 있는 담당자 점수가 없습니다.',
-          })
-          return false
-        }
-
-        if (nextA == null && nextB == null) {
-          cmsAlertModal.show({
-            title: '면접 평가 안내',
-            content: '담당자 점수를 입력해 주세요.',
-          })
-          return false
-        }
 
         if (!canFillBothSlots && nextA != null && nextB != null) {
           cmsAlertModal.show({
@@ -184,38 +181,28 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
           <DetailInfoForm.Field
             label="담당자 A 점수"
             edit={
-              <CmsNumericInput
-                mode="integer"
-                min={0}
-                max={GENERAL_INTERVIEW_MANAGER_SCORE_MAX}
-                precision={0}
-                inputSize="medium"
-                width="100%"
+              <ManagerScoreSelect
                 disabled={!editable.a}
-                value={managerAScore == null ? '' : String(managerAScore)}
-                onValueChange={value => setManagerAScore(clampManagerScore(value))}
-                placeholder={SCORE_PLACEHOLDER}
+                value={managerAScore}
+                onChange={setManagerAScore}
               />
             }
-            view={formatScoreValue(isEditing ? managerAScore : applicant.managerAScore)}
+            view={formatGeneralInterviewManagerScoreDisplay(
+              isEditing ? managerAScore : applicant.managerAScore
+            )}
           />
           <DetailInfoForm.Field
             label="담당자 B 점수"
             edit={
-              <CmsNumericInput
-                mode="integer"
-                min={0}
-                max={GENERAL_INTERVIEW_MANAGER_SCORE_MAX}
-                precision={0}
-                inputSize="medium"
-                width="100%"
+              <ManagerScoreSelect
                 disabled={!editable.b}
-                value={managerBScore == null ? '' : String(managerBScore)}
-                onValueChange={value => setManagerBScore(clampManagerScore(value))}
-                placeholder={SCORE_PLACEHOLDER}
+                value={managerBScore}
+                onChange={setManagerBScore}
               />
             }
-            view={formatScoreValue(isEditing ? managerBScore : applicant.managerBScore)}
+            view={formatGeneralInterviewManagerScoreDisplay(
+              isEditing ? managerBScore : applicant.managerBScore
+            )}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
@@ -223,7 +210,7 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
             label="비고"
             edit={
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={remark}
                 onChange={e => setRemark(e.target.value)}

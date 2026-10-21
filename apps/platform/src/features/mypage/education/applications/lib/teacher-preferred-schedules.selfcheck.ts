@@ -59,6 +59,18 @@ const unmatchedLegacyLine = resolveTeacherPreferredSchedules({
 assert.equal(unmatchedLegacyLine[0]!.value, 'line:0')
 assert.equal(unmatchedLegacyLine[0]!.scheduleStatus, 'UNMATCHED')
 
+const pipedLineCards = resolveTeacherPreferredSchedules({
+  preferredScheduleOptionValues: ['line:1'],
+  program: {
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20 | 26년 4월 27일(일) 13:00 ~ 15:50',
+    ],
+    eventSchedules: [],
+  },
+})
+assert.equal(pipedLineCards.length, 1)
+assert.equal(pipedLineCards[0]!.value, '2026년 4월 27일(월) 13:00 ~ 15:50')
+
 const inactiveBlock = resolveTeacherPreferredSchedules({
   preferredScheduleBlocks: [
     {

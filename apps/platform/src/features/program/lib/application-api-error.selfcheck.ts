@@ -54,6 +54,7 @@ assert.equal(
 const contractErrorCases = [
   ['FORM_ANSWER_REQUIRED', '필수 입력값을 입력해 주세요.'],
   ['FORM_ANSWER_TYPE_INVALID', '입력 형식이 올바르지 않습니다.'],
+  ['INVALID_REQUESTED_EDUCATION_FORMAT', '희망 교육 형태를 다시 확인해 주세요.'],
   ['FORM_OPTION_NOT_ALLOWED', '선택한 값은 사용할 수 없습니다.'],
   ['FORM_ANSWER_NOT_ALLOWED', '현재 제출할 수 없는 양식 항목입니다.'],
   ['RUNTIME_FORM_FIELD_NOT_ALLOWED', '현재 제출할 수 없는 양식 항목입니다.'],
@@ -77,6 +78,10 @@ const contractErrorCases = [
   [
     'PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY',
     '하루 희망 차시 수가 모집 상한을 초과했습니다.',
+  ],
+  [
+    'PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED',
+    '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
   ],
   [
     'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED',
@@ -119,6 +124,17 @@ assert.equal(
     },
   }),
   '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
+)
+assert.equal(
+  getApiErrorMessageFromBody({
+    message: '입력값 또는 요청 조건을 확인해 주세요.',
+    error: {
+      code: 'PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED',
+      message: '입력값 또는 요청 조건을 확인해 주세요.',
+      field: 'preferredScheduleBlocks',
+    },
+  }),
+  '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
 )
 assert.equal(
   getProgramApplicationApiErrorMessage(axiosErr(affiliationBody)),

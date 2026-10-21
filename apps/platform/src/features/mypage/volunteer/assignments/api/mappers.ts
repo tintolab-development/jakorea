@@ -7,6 +7,7 @@ import type {
   VolunteerWaitingScheduleRow,
 } from '../model/types'
 import { formatVolunteerDistanceKm } from '../lib/format-distance'
+import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
 import { isScheduleLineWithinLastSession } from '../lib/status'
 import type {
   PortalVolunteerAssignedItem,
@@ -27,10 +28,10 @@ function mapStatus(value: string | undefined): VolunteerAssignmentStatus | null 
 
 function readScheduleLines(item: PortalVolunteerAssignedItem): string[] {
   if (Array.isArray(item.scheduleLines) && item.scheduleLines.length > 0) {
-    return item.scheduleLines.map(line => line.trim()).filter(Boolean)
+    return item.scheduleLines.map(line => normalizeScheduleDisplayLabel(line.trim())).filter(Boolean)
   }
   const single = item.scheduleLine?.trim()
-  return single ? [single] : []
+  return single ? [normalizeScheduleDisplayLabel(single)] : []
 }
 
 function filterAssignedLines(lines: string[], lastSession?: number): string[] {

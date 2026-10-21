@@ -9,7 +9,12 @@ import {
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
-import { applyRecruitmentAdditionalContentHtml } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
+import { applyAudienceProgramOperationToRecruitmentWindows } from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import {
+  applyRecruitmentAdditionalContentHtml,
+  applyRecruitmentDetailInfoFields,
+} from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { Program } from '@/types/domain'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 
@@ -84,12 +89,12 @@ describe('general-program-adapters', () => {
   })
 
   it('normalizes Korean targetLevel labels from list API', () => {
-    expect(
-      mapAdminProgramListItemToProgram({ id: 1, targetLevel: '중학생' }).targetLevel
-    ).toBe('middle')
-    expect(
-      mapAdminProgramListItemToProgram({ id: 2, targetLevel: '대학생' }).targetLevel
-    ).toBe('university')
+    expect(mapAdminProgramListItemToProgram({ id: 1, targetLevel: '중학생' }).targetLevel).toBe(
+      'middle'
+    )
+    expect(mapAdminProgramListItemToProgram({ id: 2, targetLevel: '대학생' }).targetLevel).toBe(
+      'university'
+    )
   })
 
   it('maps API list item to Program domain', () => {
@@ -252,7 +257,9 @@ describe('general-program-adapters', () => {
     expect(cleared.remarks).toBeUndefined()
     expect(cleared.generalCommonInfo?.participantRecruitmentInfo?.applicationMethod).toBeUndefined()
     expect(cleared.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBeUndefined()
-    expect(cleared.generalCommonInfo?.instructorRecruitmentInfo?.applicationMethod).toBe('강사 지원')
+    expect(cleared.generalCommonInfo?.instructorRecruitmentInfo?.applicationMethod).toBe(
+      '강사 지원'
+    )
   })
 
   it('mapGeneralApiProgramTypeToAudience covers GENERAL_* values', () => {
@@ -363,9 +370,10 @@ describe('general-program-adapters', () => {
 
   it('maps Program to create request with core fields', () => {
     const request = mapGeneralProgramToCreateRequest(sampleProgram)
-    const create = request as import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
-      applicationTargetMode?: string
-    }
+    const create =
+      request as import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
+        applicationTargetMode?: string
+      }
 
     expect(create.title).toBe('테스트 프로그램')
     expect(create.type).toBe('offline')
@@ -389,41 +397,32 @@ describe('general-program-adapters', () => {
     expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1' }])
   })
 
-  it('maps featuredOnHome and homeDisplayOrder on create and omits them on unrelated PATCH', () => {
-    const create = mapGeneralProgramToCreateRequest({
-      ...sampleProgram,
-      featuredOnHome: true,
-      homeDisplayOrder: 2,
-    })
-    expect(create.featuredOnHome).toBe(true)
-    expect(create.homeDisplayOrder).toBe(2)
+  it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
+    const create = mapGeneralProgramToCreateRequest(sampleProgram) as unknown as Record<
+      string,
+      unknown
+    >
+    expect(create.featuredOnHome).toBeUndefined()
+    expect(create.homeDisplayOrder).toBeUndefined()
 
     const patch = mapGeneralProgramToUpdateRequest(
-      { ...sampleProgram, featuredOnHome: true, homeDisplayOrder: 2 },
+      sampleProgram,
       { title: '제목만' },
       sampleProgram
-    )
+    ) as unknown as Record<string, unknown>
     expect(patch.featuredOnHome).toBeUndefined()
     expect(patch.homeDisplayOrder).toBeUndefined()
-
-    const featuredPatch = mapGeneralProgramToUpdateRequest(
-      { ...sampleProgram, featuredOnHome: false, homeDisplayOrder: null },
-      { featuredOnHome: false, homeDisplayOrder: null },
-      sampleProgram
-    )
-    expect(featuredPatch.featuredOnHome).toBe(false)
-    expect(featuredPatch.homeDisplayOrder).toBeNull()
   })
 
-  it('hydrates featuredOnHome from admin GET', () => {
+  it('does not hydrate featuredOnHome from admin GET', () => {
     const program = mapAdminProgramDetailToProgram({
       id: '186095',
       title: '1사 1교 프로그램 [ 1번 ]',
       featuredOnHome: true,
       homeDisplayOrder: 1,
-    })
-    expect(program.featuredOnHome).toBe(true)
-    expect(program.homeDisplayOrder).toBe(1)
+    } as unknown as ProgramResponse)
+    expect(program).not.toHaveProperty('featuredOnHome')
+    expect(program).not.toHaveProperty('homeDisplayOrder')
   })
 
   it('maps multi sponsor manager contact refs into create sponsors[]', () => {
@@ -976,15 +975,22 @@ describe('general-program-adapters', () => {
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       studentListRequired?: string
       registration?: { overlay?: Record<string, unknown> }
-      generalCommonInfo?: { paymentItems?: string; participantRecruitmentInfo?: { studentListRequired?: string } }
+      generalCommonInfo?: {
+        paymentItems?: string
+        participantRecruitmentInfo?: { studentListRequired?: string }
+      }
     }
     expect(detail.studentListRequired).toBe('required')
     expect(detail.generalCommonInfo?.participantRecruitmentInfo?.studentListRequired).toBe(
       'required'
     )
     expect(detail.generalCommonInfo?.paymentItems).toBeUndefined()
-    expect(detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemValues']).toBeUndefined()
-    expect(detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemLabels']).toBeUndefined()
+    expect(
+      detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemValues']
+    ).toBeUndefined()
+    expect(
+      detail.registration?.overlay?.['generalRegistration.wageInfo.paymentItemLabels']
+    ).toBeUndefined()
     expect(request.serviceDetailJson).not.toContain('숙박비')
   })
 
@@ -1027,11 +1033,7 @@ describe('general-program-adapters', () => {
         paymentItems: '강사 교통비, 숙박비',
       },
     }
-    const request = mapGeneralProgramToUpdateRequest(
-      { ...existing, ...patch },
-      patch,
-      existing
-    )
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing)
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       generalCommonInfo?: { paymentItems?: string }
     }
@@ -1203,6 +1205,94 @@ describe('general-program-adapters', () => {
     expect(otherOnly.remarks).toBeUndefined()
     expect(otherOnly.otherMatters).toBe('기타만')
     expect(otherOnly.applicationMethod).toBeUndefined()
+  })
+
+  it('참여기관 운영 기간 수정은 기존 모집 행에만 반영하고 사업 기간은 바꾸지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      id: '186251',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      applicationStartDate: '2026-10-01',
+      applicationEndDate: '2026-10-31',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      rounds: [],
+      programRecruitments: [
+        {
+          id: 186603,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          targetType: 'ORGANIZATION',
+          operationStartDate: '2026-11-18',
+          operationEndDate: '2026-12-25',
+          startAt: '2026-10-01',
+          endAt: '2026-10-31',
+        },
+      ],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          operationPeriodLabel: '2026-11-11 ~ 2026-12-25',
+        },
+      },
+      registrationOverlay: {
+        'recruit.programRangeSeal': { start: '2026-11-11', end: '2026-12-25' },
+        'recruit.individual.programRangeSeal': { start: '2026-11-11', end: '2026-12-25' },
+      },
+    }
+    const operationPatch = applyAudienceProgramOperationToRecruitmentWindows(
+      existing,
+      {
+        participantProgramOperationStartDate: '2026-11-30T15:00:00.000Z',
+        participantProgramOperationEndDate: '2027-01-14T15:00:00.000Z',
+      } as ProgramDetailEditFormValues,
+      'participant'
+    )
+    const patch = applyRecruitmentDetailInfoFields(
+      {
+        applicationStartDate: existing.applicationStartDate,
+        applicationEndDate: existing.applicationEndDate,
+        description: '기관 모집 설명',
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            operationPeriodLabel: '2026. 12. 01 (화) ~ 2027. 01. 15 (금)',
+          },
+        },
+        ...operationPatch,
+      },
+      existing,
+      'participant',
+      { description: '기관 모집 설명' }
+    )
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing)
+    const participantRows = request.recruitments?.filter(
+      row => row.recruitmentType === 'PARTICIPANT'
+    )
+
+    expect(participantRows).toEqual([
+      expect.objectContaining({
+        id: 186603,
+        operationStartDate: '2026-12-01',
+        operationEndDate: '2027-01-15',
+      }),
+    ])
+    expect(request.businessStartDate).toBeUndefined()
+    expect(request.businessEndDate).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
+
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: {
+        participantRecruitmentInfo?: { operationPeriodLabel?: string }
+      }
+      registration?: { overlay?: Record<string, { start?: string; end?: string } | unknown> }
+    }
+    expect(detail.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toContain(
+      '2026. 12. 01'
+    )
+    expect(detail.registration?.overlay?.['recruit.programRangeSeal']).toMatchObject({
+      start: '2026-12-01',
+      end: '2027-01-15',
+    })
   })
 
   it('지원 방법·비고를 비우면 clearFields에만 싣는다', () => {

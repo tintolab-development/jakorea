@@ -21,6 +21,7 @@ export type PFAlertModalProps = {
   /** description 아래·확인 버튼 위 추가 컨텐츠 (예: 비밀번호 입력) */
   children?: ReactNode
   className?: string
+  backdropClassName?: string
   ariaLabelledBy?: string
   ariaDescribedBy?: string
 }
@@ -37,6 +38,7 @@ export function PFAlertModal({
   confirmDisabled = false,
   children,
   className,
+  backdropClassName,
   ariaLabelledBy,
   ariaDescribedBy,
 }: PFAlertModalProps) {
@@ -87,7 +89,7 @@ export function PFAlertModal({
   if (!open) return null
 
   return createPortal(
-    <div className={styles.backdrop}>
+    <div className={[styles.backdrop, backdropClassName].filter(Boolean).join(' ')}>
       <div
         ref={panelRef}
         role="alertdialog"

@@ -55,6 +55,7 @@ import {
   SPONSOR_DETAIL_RETURN_TO_PARAM,
   sanitizeInternalReturnTo,
 } from '@/features/sponsor/lib/sponsor-detail-page-url'
+import { resolveSelectedSponsorRows } from '@/features/sponsor/lib/resolve-selected-rows'
 
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
@@ -134,6 +135,7 @@ export default function SponsorPage() {
     context: EMPTY_TABLE_PAGE_CONTEXT })
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [selectedRowsSnapshot, setSelectedRowsSnapshot] = useState<SponsorManagementRow[]>([])
   const [bulkSponsorDeleteModalOpen, setBulkSponsorDeleteModalOpen] = useState(false)
   const [bulkSponsorDeleteBlockedOpen, setBulkSponsorDeleteBlockedOpen] = useState(false)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
@@ -176,12 +178,13 @@ export default function SponsorPage() {
   const handleDeleteSponsor = useCallback(
     async (sponsorId: string) => {
       if (!canWrite) return
-      const row = rows.find(r => r.id === sponsorId)
+      const row = rows.find(r => String(r.id) === String(sponsorId))
       const displayName = row?.name?.trim() ?? ''
       try {
-        await deleteMutation.mutateAsync(sponsorId)
+        await deleteMutation.mutateAsync(String(sponsorId))
         closeSponsorDetail()
-        setSelectedRowKeys(prev => prev.filter(key => String(key) !== sponsorId))
+        setSelectedRowKeys(prev => prev.filter(key => String(key) !== String(sponsorId)))
+        setSelectedRowsSnapshot(prev => prev.filter(item => String(item.id) !== String(sponsorId)))
         setActionResultTitle(buildDeleteCompletedTitle('후원사'))
         setActionResultMessage(buildDeleteCompletedMessageSingle(displayName, '후원사'))
         setActionResultModalOpen(true)
@@ -195,10 +198,10 @@ export default function SponsorPage() {
     [canWrite, closeSponsorDetail, deleteMutation, rows]
   )
 
-  const selectedSponsors = useMemo(() => {
-    const keySet = new Set(selectedRowKeys.map(k => String(k)))
-    return rows.filter(r => keySet.has(r.id))
-  }, [rows, selectedRowKeys])
+  const selectedSponsors = useMemo(
+    () => resolveSelectedSponsorRows(rows, selectedRowKeys, selectedRowsSnapshot),
+    [rows, selectedRowKeys, selectedRowsSnapshot]
+  )
 
   const bulkSponsorDeleteNames = useMemo(
     () => selectedSponsors.map(sponsor => sponsor.name ?? ''),
@@ -231,11 +234,19 @@ export default function SponsorPage() {
       setBulkSponsorDeleteBlockedOpen(true)
       return
     }
-    const ids = new Set(selectedSponsors.map(s => s.id))
-    const n = selectedSponsors.length
+    const ids = [...new Set(selectedSponsors.map(s => String(s.id)))]
+    const n = ids.length
+    if (n === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     try {
-      await bulkDeleteMutation.mutateAsync([...ids])
+      await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
+      setSelectedRowsSnapshot([])
       setBulkSponsorDeleteModalOpen(false)
       setActionResultTitle(buildDeleteCompletedTitle('후원사'))
       if (n === 1) {
@@ -246,7 +257,7 @@ export default function SponsorPage() {
         setActionResultMessage(buildDeleteCompletedMessageBulk(n, '개의 후원사'))
       }
       setActionResultModalOpen(true)
-      if (sponsorIdFromUrl && ids.has(sponsorIdFromUrl)) {
+      if (sponsorIdFromUrl && ids.includes(String(sponsorIdFromUrl))) {
         closeSponsorDetail()
       }
     } catch (error) {
@@ -255,7 +266,7 @@ export default function SponsorPage() {
         getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
       )
     }
-  }, [bulkDeleteMutation, closeSponsorDetail, selectedSponsors, sponsorIdFromUrl])
+  }, [bulkDeleteMutation, closeSponsorDetail, selectedSponsors, showAlert, sponsorIdFromUrl])
 
   const updateSponsorshipStatus = useCallback(
     async (row: SponsorManagementRow, next: SponsorSponsorshipStatus) => {
@@ -478,8 +489,18 @@ export default function SponsorPage() {
               ? {
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                   selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false }
+                  onChange: (keys, selectedRows) => {
+                    const nextKeys = keys.map(k => String(k))
+                    setSelectedRowKeys(nextKeys)
+                    setSelectedRowsSnapshot(prev => {
+                      const byId = new Map(prev.map(row => [String(row.id), row]))
+                      for (const row of selectedRows) byId.set(String(row.id), row)
+                      return nextKeys
+                        .map(key => byId.get(String(key)))
+                        .filter((row): row is SponsorManagementRow => row != null)
+                    })
+                  },
+                  preserveSelectedRowKeys: true }
               : undefined
           }
         />

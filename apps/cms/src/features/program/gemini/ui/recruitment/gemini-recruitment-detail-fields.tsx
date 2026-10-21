@@ -237,7 +237,7 @@ export function GeminiRecruitmentDetailFields({
             isEdit ? (
               deferTextCommit ? (
                 <GeminiDeferredCmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder={programDescription.placeholder}
                   value={values.programDescription}
@@ -245,7 +245,7 @@ export function GeminiRecruitmentDetailFields({
                 />
               ) : (
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   placeholder={programDescription.placeholder}
                   value={values.programDescription}

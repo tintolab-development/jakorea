@@ -7,6 +7,7 @@ import type { UjatJournalEducationInfoParagraph } from '@/features/template/mode
 import { UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS } from '@/features/template/model/writing-form-draft.schema'
 import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
 import {
   UserInfoPreviewTable,
   type UserInfoPreviewTableSkin,
@@ -217,7 +218,7 @@ export function UjatJournalEducationInfo({
                   getPopupContainer={verticalTableFieldPopupContainer}
                   value={toDayjsDate(paragraph.prepDate)}
                   onChange={d => !fieldsLocked && patch({ prepDate: fromDayjsDate(d) })}
-                  format="YYYY-MM-DD"
+                  format={formatAppDatepickerDisplay}
                   placeholder="수업 준비일"
                   disabled={fieldsLocked}
                 />
@@ -252,7 +253,7 @@ export function UjatJournalEducationInfo({
                   getPopupContainer={verticalTableFieldPopupContainer}
                   value={toDayjsDate(paragraph.sessionDate)}
                   onChange={d => !fieldsLocked && patch({ sessionDate: fromDayjsDate(d) })}
-                  format="YYYY-MM-DD"
+                  format={formatAppDatepickerDisplay}
                   placeholder="수업 진행일"
                   disabled={fieldsLocked}
                 />

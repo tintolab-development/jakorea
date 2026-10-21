@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type {
   GeneralAssignmentSubmissionFileDto,
   GeneralAssignmentSubmissionListResponse,
@@ -29,35 +30,57 @@ function formatDateLabel(value: string | null | undefined, pattern: string): str
 }
 
 function formatPeriodLabel(start?: string | null, end?: string | null): string {
-  const startLabel = formatDateLabel(start, 'YYYY.MM.DD')
-  const endLabel = formatDateLabel(end, 'YYYY.MM.DD')
-  if (startLabel && endLabel) return `${startLabel} ~ ${endLabel}`
-  return startLabel || endLabel || '-'
+  const startDay = start?.trim() ? dayjs(start) : null
+  const endDay = end?.trim() ? dayjs(end) : null
+  if (startDay?.isValid() && endDay?.isValid()) {
+    return formatCmsScheduleDisplayLabel(
+      `${startDay.format('YYYY-MM-DD')} ~ ${endDay.format('YYYY-MM-DD')}`
+    )
+  }
+  const startLabel = formatDateLabel(start, 'YYYY-MM-DD')
+  const endLabel = formatDateLabel(end, 'YYYY-MM-DD')
+  if (startLabel && endLabel) {
+    return formatCmsScheduleDisplayLabel(`${startLabel} ~ ${endLabel}`)
+  }
+  const single = startLabel || endLabel
+  return single ? formatCmsScheduleDisplayLabel(single) : '-'
 }
 
 function formatScheduleHeader(schedule: GeneralAssignmentSubmissionScheduleDto, index: number) {
   const round = schedule.sessionNo ?? index + 1
   const start = schedule.startAt ? dayjs(schedule.startAt) : null
   const end = schedule.endAt ? dayjs(schedule.endAt) : null
-  const dateLabel =
-    start?.isValid() === true
-      ? start.format('YYYY.MM.DD')
-      : (schedule.scheduleName ?? `${round}회차`)
   const hasTimeRange = start?.isValid() === true && end?.isValid() === true
   // 응답에 종일 여부가 없어 시작·종료가 모두 자정이면 종일 회차로 보고 시간을 생략한다.
   const isAllDay =
     hasTimeRange && start.format('HH:mm') === '00:00' && end.format('HH:mm') === '00:00'
-  const timeLabel =
-    hasTimeRange && !isAllDay ? `${start.format('HH:mm')}~${end.format('HH:mm')}` : ''
+  const dateLabel =
+    start?.isValid() === true
+      ? formatCmsScheduleDisplayLabel(
+          isAllDay || end?.isValid() !== true
+            ? start.format('YYYY-MM-DD')
+            : end.isSame(start, 'day')
+              ? `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('HH:mm')}`
+              : `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('YYYY-MM-DD HH:mm')}`
+        )
+      : (schedule.scheduleName ?? `${round}회차`)
+  const periodLabel =
+    start?.isValid() === true
+      ? formatCmsScheduleDisplayLabel(
+          end?.isValid() === true && !start.isSame(end, 'day')
+            ? `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
+            : start.format('YYYY-MM-DD')
+        )
+      : dateLabel
   const filterValue = String(schedule.scheduleId ?? round)
-  const filterLabel = `${round}회차 · ${dateLabel}${timeLabel ? ` ${timeLabel}` : ''}`
+  const filterLabel = `${round}회차 · ${dateLabel}`
   return {
     round,
     filterValue,
     filterLabel,
     headerTitle: `${round}회차 과제`,
     headerScheduleSummary: filterLabel,
-    headerPeriodRangeLabel: dateLabel,
+    headerPeriodRangeLabel: periodLabel,
     assignmentPeriodLabel: formatPeriodLabel(
       schedule.assignmentPeriodStart,
       schedule.assignmentPeriodEnd

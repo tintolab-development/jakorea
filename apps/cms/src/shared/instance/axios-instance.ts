@@ -22,6 +22,7 @@ import {
 } from '@/features/auth/lib/parse-auth-token-response'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { showGlobalApiErrorAlert } from '@/shared/lib/show-global-api-error-alert'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import axios, {
@@ -314,7 +315,9 @@ axiosClient.interceptors.response.use(
     const { response, config } = error
 
     if (!response || !config) {
-      showGlobalApiErrorAlert(error, config as RetryableRequest | undefined)
+      if (!isRequestCanceledError(error)) {
+        showGlobalApiErrorAlert(error, config as RetryableRequest | undefined)
+      }
       return Promise.reject(error)
     }
 

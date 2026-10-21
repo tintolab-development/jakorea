@@ -52,6 +52,7 @@ import {
   getGeneralProgramApiErrorMessage,
   getProgramFormBindingErrorMessage,
 } from '@/features/program/general/api/get-general-program-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { listGeneralProgramSurveyCacheInvalidationQueryKeys } from '@/features/program/general/lib/general-program-survey-cache-invalidation'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -459,7 +460,9 @@ export function useGeneralProgramFormBindings(programId: string | undefined) {
     bindings: query.data ?? [],
     classified,
     loading: remoteEnabled ? query.isFetching || query.isLoading : false,
-    isRemoteDataSource: remoteEnabled && !query.isError,
+    error: query.error,
+    isSuccess: query.isSuccess,
+    isRemoteDataSource: remoteEnabled && query.isSuccess && !query.isError,
   }
 }
 
@@ -704,6 +707,7 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
               targetScope: payload.targetScope,
             }
           ),
+          field: getApiErrorField(error),
         }
       }
     },

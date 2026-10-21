@@ -24,6 +24,7 @@ import {
   mapMaterialAssignmentStatusToTextbookStatus,
   mapTextbookDeliveryStatusToBadge,
   mapTextbookStatusKeyToDeliveryStatus,
+  mapPreferredEducationSchedulesToSessions,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationListSessionsToConfirmedSessions,
   mapOrganizationApplicationToApplicantSchoolRow,
@@ -474,6 +475,19 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.timeRange).toContain('~')
   })
 
+  it('does not render 00:00 for a date-only preferred schedule', () => {
+    const sessions = mapPreferredEducationSchedulesToSessions([
+      {
+        label: '26년 11월 2일(월)',
+        startAt: '2026-11-02T00:00:00+09:00',
+        endAt: '2026-11-02T00:00:00+09:00',
+      },
+    ])
+    expect(sessions[0]?.timeRange).toBe('-')
+    expect(sessions[0]?.duration).toBe('-')
+    expect(sessions[0]?.scheduleLabel).toBe('26년 11월 2일(월)')
+  })
+
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
     const active = mapParticipantToParticipatingSchoolRow(
       {
@@ -651,6 +665,7 @@ describe('general-applications-adapters', () => {
         memberId: 9102,
         memberName: '김참여자',
         sourceApplicationId: 88001,
+        organizationName: '강서고등학교',
         grade: '고등학교 2학년',
         regionSido: '서울특별시',
         regionSigungu: '강서구',
@@ -673,6 +688,7 @@ describe('general-applications-adapters', () => {
     expect(individual.id).toBe('1691701')
     expect(individual.individualApplicationId).toBe('88001')
     expect(individual.memberId).toBe('9102')
+    expect(individual.affiliation).toBe('강서고등학교')
     expect(individual.educationGrade).toBe('고등학교 2학년')
     expect(individual.homeAddress).toBe('서울특별시 강서구')
     expect(individual.sessions).toHaveLength(1)
@@ -779,6 +795,31 @@ describe('general-applications-adapters', () => {
     expect(withProfile.detail?.gender).toBe('남성')
     expect(legacyGender.detail?.birthDate).toBeUndefined()
     expect(legacyGender.detail?.gender).toBe('X')
+  })
+
+  it('hides participating individual grade unless affiliation is a K-12 school', () => {
+    const university = mapParticipantToParticipatingIndividualRow(
+      participantListItemFixture({
+        participantId: 1691801,
+        memberName: '대학생',
+        organizationName: '한국대학교',
+        grade: '2학년',
+      }),
+      0,
+      '168001'
+    )
+    const unattached = mapParticipantToParticipatingIndividualRow(
+      participantListItemFixture({
+        participantId: 1691802,
+        memberName: '미소속',
+        grade: '고등학교 2학년',
+      }),
+      1,
+      '168001'
+    )
+
+    expect(university.educationGrade).toBe('')
+    expect(unattached.educationGrade).toBe('')
   })
 
   it('maps additive survey view keys when present', () => {
@@ -948,6 +989,23 @@ describe('general-applications-adapters', () => {
 
     expect(row.affiliationOrganizationId).toBeUndefined()
     expect(row.affiliation).toBe('서울초등학교')
+  })
+
+  it('keeps affiliation empty when BE has no affiliationName', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 57,
+        programId: 5001,
+        memberName: '소속없는참여자',
+        affiliationName: '',
+        affiliationOrganizationId: null,
+        applicationStatus: 'WAITING_REVIEW',
+      } as never,
+      0,
+      '5001'
+    )
+
+    expect(row.affiliation).toBe('')
   })
 
   it('maps instructor application list item to applicant row', () => {
@@ -1189,6 +1247,21 @@ describe('general-applications-adapters', () => {
     expect(row.affiliation).toBe('오리엔테이션 초등학교')
   })
 
+  it('hides list grade when affiliation is not an elementary, middle, or high school', () => {
+    expect(
+      readIndividualApplicationListGrade({
+        affiliationName: '한국대학교',
+        applicationGrade: '2학년',
+      } as Parameters<typeof mapIndividualApplicationToApplicantRow>[0])
+    ).toBe('')
+    expect(
+      readIndividualApplicationListGrade({
+        affiliationName: 'JA강사단',
+        applicationGrade: '3학년',
+      } as Parameters<typeof mapIndividualApplicationToApplicantRow>[0])
+    ).toBe('')
+  })
+
   it('keeps list affiliation and grade when detail profile fields are empty', () => {
     const row = mapIndividualApplicationDetailToApplicantRow(
       {
@@ -1199,7 +1272,7 @@ describe('general-applications-adapters', () => {
         id: '1',
         no: 1,
         applicantName: '김참여',
-        affiliation: '목록 소속 학교',
+        affiliation: '목록 소속 초등학교',
         educationGrade: '4학년',
         homeAddress: '서울특별시 강서구',
         approvalStatus: 'pending',
@@ -1207,9 +1280,29 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.applicantName).toBe('김*자')
-    expect(row.affiliation).toBe('목록 소속 학교')
+    expect(row.affiliation).toBe('목록 소속 초등학교')
     expect(row.educationGrade).toBe('4학년')
     expect(row.homeAddress).toBe('서울특별시 강서구')
+  })
+
+  it('clears detail grade when affiliation is not a K-12 school', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 2,
+        profile: { name: '대학생', affiliationSchool: '한국대학교', affiliationGrade: '2학년' },
+      } as never,
+      {
+        id: '2',
+        no: 1,
+        applicantName: '대학생',
+        affiliation: '한국대학교',
+        educationGrade: '2학년',
+        homeAddress: '',
+        approvalStatus: 'pending',
+      }
+    )
+
+    expect(row.educationGrade).toBe('')
   })
 
   it('maps individual application list item with screening fields', () => {
@@ -1268,7 +1361,7 @@ describe('general-applications-adapters', () => {
     expect(row.affiliationOrganizationId).toBe(8802)
     expect(row.applicantName).toBe('김참여자')
     expect(row.affiliation).toBe('한국대학교')
-    expect(row.educationGrade).toBe('2학년')
+    expect(row.educationGrade).toBe('')
     expect(row.homeAddress).toBe('서울특별시 강남구')
     expect(row.adminComment).toBe('신청 정보 재확인 필요')
     expect(row.sessions).toEqual([

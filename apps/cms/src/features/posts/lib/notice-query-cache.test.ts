@@ -1,6 +1,7 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, type InfiniteData } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import type { Notice } from '@/features/posts/model/notice'
+import type { PostsListPage } from '@/features/posts/api/posts-list-page'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import {
   applyCreatedNoticeToLists,
@@ -85,5 +86,40 @@ describe('notice-query-cache', () => {
     applyDeletedNoticeToLists(queryClient, '2')
 
     expect(queryClient.getQueryData<Notice[]>(listKey)?.map(row => row.id)).toEqual(['1'])
+  })
+
+  it('removes deleted notices from infinite list pages and decrements totalElements', () => {
+    const queryClient = new QueryClient()
+    const listKey = postsQueryKeys.notices.list('')
+    const cached: InfiniteData<PostsListPage<Notice>> = {
+      pages: [
+        {
+          items: [notice({ id: '1', title: '유지' }), notice({ id: '2', title: '삭제' })],
+          page: 0,
+          size: 20,
+          totalElements: 3,
+          totalPages: 1,
+          hasNext: false,
+        },
+        {
+          items: [notice({ id: '3', title: '다음페이지' })],
+          page: 1,
+          size: 20,
+          totalElements: 3,
+          totalPages: 1,
+          hasNext: false,
+        },
+      ],
+      pageParams: [0, 1],
+    }
+    queryClient.setQueryData(listKey, cached)
+
+    applyDeletedNoticeToLists(queryClient, ['2', '3'])
+
+    const next = queryClient.getQueryData<InfiniteData<PostsListPage<Notice>>>(listKey)
+    expect(next?.pages[0]?.items.map(row => row.id)).toEqual(['1'])
+    expect(next?.pages[0]?.totalElements).toBe(1)
+    expect(next?.pages[1]?.items.map(row => row.id)).toEqual([])
+    expect(next?.pages[1]?.totalElements).toBe(1)
   })
 })

@@ -12,12 +12,13 @@ import styles from './instructor-apply-cta.module.css'
 export function InstructorApplyCta() {
   const requestQuery = useCurrentInstructorRoleRequestQuery()
   const isRejected = isInstructorRoleRequestRejected(requestQuery.data)
-  const applyTo = instructorApplyPath({ reapply: isRejected })
+  const reviewTo = instructorApplyPath()
+  const reapplyTo = instructorApplyPath({ reapply: true })
 
   if (isRejected) {
     return (
       <div className={styles.rejectedStack}>
-        <Link className={styles.cta} to={applyTo}>
+        <Link className={styles.cta} to={reapplyTo}>
           <img
             className={styles.icon}
             src={instructorApplyIllustrationUrl}
@@ -35,7 +36,7 @@ export function InstructorApplyCta() {
         </Link>
         <Link
           className={styles.rejectedNotice}
-          to={applyTo}
+          to={reviewTo}
           aria-label="신청이 반려되었어요. 반려 사유를 확인해 보세요."
         >
           <span className={styles.rejectedNoticeIcon} aria-hidden="true" />
@@ -59,7 +60,7 @@ export function InstructorApplyCta() {
   }
 
   return (
-    <Link className={styles.cta} to={applyTo}>
+    <Link className={styles.cta} to={reviewTo}>
       <img className={styles.icon} src={instructorApplyIllustrationUrl} alt="" aria-hidden="true" />
       <span className={styles.copy}>
         <PFText as="span" typo="bd-lg-sb" color="white" className={styles.title}>

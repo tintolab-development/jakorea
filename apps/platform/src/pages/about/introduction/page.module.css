@@ -7,6 +7,19 @@
   overflow: visible;
 }
 
+/* 로딩 시 히어로 첫 폴드와 같은 높이를 잡아 푸터 점프·스피너 상단 붙음을 막는다 */
+.pageFill {
+  flex: 1 1 auto;
+  min-height: calc(100svh - var(--app-header-height));
+}
+
+@media (--bp-pc-up) {
+  .pageFill {
+    /* PC는 투명 헤더가 main 위에 겹치므로 뷰포트 전체 높이를 쓴다 */
+    min-height: 100svh;
+  }
+}
+
 .status {
   display: flex;
   flex-direction: column;

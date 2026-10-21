@@ -226,8 +226,8 @@ export class CompanySchoolEditPage {
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', EDIT_IPS_TYPE)
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
-    await fillByPlaceholderIfVisible(this.page, '단원명을 입력하세요', EDIT_CURRICULUM_UNIT)
-    await fillByPlaceholderIfVisible(this.page, '교육 내용을 작성하세요', EDIT_CURRICULUM_CONTENT)
+    await fillByPlaceholderIfVisible(this.page, '단원명을 입력해 주세요', EDIT_CURRICULUM_UNIT)
+    await fillByPlaceholderIfVisible(this.page, '교육 내용을 작성해 주세요', EDIT_CURRICULUM_CONTENT)
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', EDIT_KPI_VALUE)

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   toFlatDecisionNotifyTiming,
   toOrganizationApproveNotifyTiming,
+  toTrainedTeacherApproveNotifyTiming,
   toInterviewAssignNotifyFields,
   toNestedDecisionNotification,
   toScreeningNotifyFields,
@@ -35,6 +36,21 @@ describe('toOrganizationApproveNotifyTiming', () => {
 
   it('예약 승인에는 SCHEDULED와 scheduledAt을 보낸다', () => {
     expect(toOrganizationApproveNotifyTiming('manual', scheduled)).toEqual({
+      timing: 'SCHEDULED',
+      scheduledAt: scheduled.toISOString(),
+    })
+  })
+})
+
+describe('toTrainedTeacherApproveNotifyTiming', () => {
+  it('발표일 알림을 ON_ANNOUNCEMENT로 전달한다', () => {
+    expect(toTrainedTeacherApproveNotifyTiming('on_announcement')).toEqual({
+      timing: 'ON_ANNOUNCEMENT',
+    })
+  })
+
+  it('직접 설정은 SCHEDULED로 전달한다', () => {
+    expect(toTrainedTeacherApproveNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
       scheduledAt: scheduled.toISOString(),
     })
