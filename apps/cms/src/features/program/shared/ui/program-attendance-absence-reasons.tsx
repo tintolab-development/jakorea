@@ -1,4 +1,6 @@
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AttachmentDownloadIcon } from '@/shared/ui'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 
 export type ProgramAttendanceAbsenceReasonItem = {
   id: string
@@ -17,59 +19,56 @@ export interface ProgramAttendanceAbsenceReasonsProps {
   onFileDownload?: (item: ProgramAttendanceAbsenceReasonItem) => void
 }
 
+function renderEvidenceCell(
+  item: ProgramAttendanceAbsenceReasonItem,
+  onFileDownload?: (item: ProgramAttendanceAbsenceReasonItem) => void
+) {
+  if (!item.fileName) {
+    return <span className="program-attendance-absence-reasons__dash">-</span>
+  }
+  return (
+    <button
+      type="button"
+      className="program-attendance-absence-reasons__file"
+      onClick={() => onFileDownload?.(item)}
+    >
+      <AttachmentDownloadIcon className="program-attendance-absence-reasons__file-icon" />
+      <span className="program-attendance-absence-reasons__file-name">{item.fileName}</span>
+    </button>
+  )
+}
+
 export function ProgramAttendanceAbsenceReasons({
   reasons,
   emptyMessage = DEFAULT_EMPTY_MESSAGE,
   onFileDownload,
 }: ProgramAttendanceAbsenceReasonsProps) {
-  return (
-    <section className="program-detail-fullpage-modal__info-tab-block program-attendance-absence-reasons">
-      <div className="table-header-title--wrapper">
-        <span className="table-title" style={{ marginBottom: 10 }}>
-          불참 사유
-        </span>
-      </div>
-      {reasons.length > 0 ? (
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-attendance-absence-reasons__table">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              {reasons.map(item => (
-                <tr key={item.id}>
-                  <th scope="row">{item.dateLabel}</th>
-                  <td>{item.reason}</td>
-                  <th scope="row">증빙 서류</th>
-                  <td>
-                    {item.fileName ? (
-                      <button
-                        type="button"
-                        className="program-attendance-absence-reasons__file"
-                        onClick={() => onFileDownload?.(item)}
-                      >
-                        <AttachmentDownloadIcon className="program-attendance-absence-reasons__file-icon" />
-                        <span className="program-attendance-absence-reasons__file-name">
-                          {item.fileName}
-                        </span>
-                      </button>
-                    ) : (
-                      <span className="program-attendance-absence-reasons__dash">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
+  if (reasons.length === 0) {
+    return (
+      <DetailInfoForm title="불참 사유" mode="view">
         <p className="program-attendance-absence-reasons__empty" role="status">
           {emptyMessage}
         </p>
-      )}
-    </section>
+      </DetailInfoForm>
+    )
+  }
+
+  return (
+    <DetailInfoForm title="불참 사유" mode="view">
+      {reasons.map(item => (
+        <DetailInfoForm.Row type="double" key={item.id}>
+          <DetailInfoForm.Field
+            label={item.dateLabel}
+            view={item.reason?.trim() || '-'}
+            readOnlyDisplay
+          />
+          <DetailInfoForm.Field
+            label="증빙 서류"
+            view={renderEvidenceCell(item, onFileDownload)}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      ))}
+    </DetailInfoForm>
   )
 }

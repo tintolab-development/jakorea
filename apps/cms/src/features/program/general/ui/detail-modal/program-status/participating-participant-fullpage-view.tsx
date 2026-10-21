@@ -806,7 +806,7 @@ export function ParticipatingParticipantFullpageView({
           >
             <ParticipatingParticipantSettlementSection
               program={program}
-              participantId={mergedParticipant.id}
+              participant={mergedParticipant}
             />
           </div>
         ) : null}

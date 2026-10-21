@@ -36,6 +36,7 @@ import {
 import {
   APPLICATION_ACTION_CANCEL_FINAL_FAIL,
   APPLICATION_ACTION_CANCEL_FINAL_PASS,
+  canCancelParticipantApplicationRejection,
   canPerformApplicationAction,
   hasExplicitApplicationAction,
 } from '@/features/program/shared/lib/application-available-actions'
@@ -545,7 +546,7 @@ function resolveApplicantHeaderItems(params: {
     }
     if (
       onCancelReject &&
-      canPerformApplicationAction(individualAvailableActions, 'CANCEL_REJECTION')
+      canCancelParticipantApplicationRejection(individualAvailableActions)
     ) {
       items.push(headerBtnCancelReject(applicantId, onCancelReject))
     }
