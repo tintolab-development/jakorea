@@ -1274,7 +1274,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
     id: toId(dto.id) || base.id,
     memberId: toId(dto.memberId) || undefined,
     applicantName: profile?.name?.trim() || base.applicantName || '',
-    availableActions: dto.availableActions ?? [],
+    availableActions: dto.availableActions ?? base.availableActions,
     privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,

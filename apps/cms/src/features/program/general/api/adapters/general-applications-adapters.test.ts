@@ -1285,6 +1285,29 @@ describe('general-applications-adapters', () => {
     expect(row.homeAddress).toBe('서울특별시 강서구')
   })
 
+  it('keeps list availableActions when detail omits the field', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 3,
+        applicationStatus: 'REJECTED',
+        profile: { name: '김반려' },
+      } as never,
+      {
+        id: '3',
+        no: 1,
+        applicantName: '김반려',
+        affiliation: '',
+        educationGrade: '',
+        homeAddress: '',
+        approvalStatus: 'rejected',
+        availableActions: ['VIEW', 'CANCEL_REJECTION'],
+      }
+    )
+
+    expect(row.approvalStatus).toBe('rejected')
+    expect(row.availableActions).toEqual(['VIEW', 'CANCEL_REJECTION'])
+  })
+
   it('clears detail grade when affiliation is not a K-12 school', () => {
     const row = mapIndividualApplicationDetailToApplicantRow(
       {
