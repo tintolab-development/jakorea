@@ -5,7 +5,7 @@ import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
 import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
 import {
   getNewsletterSubscribeResultCopy,
-  isNewsletterSubscribeAccepted,
+  resolveNewsletterSubscribeUi,
 } from '../api/newsletter-result'
 import { useNewsletterSubscribeMutation } from '../api/use-newsletter-subscribe'
 import { NewsletterSubscribeModal } from './newsletter-subscribe-modal'
@@ -55,7 +55,8 @@ export function NewsletterSection() {
       setName('')
       setEmail('')
       setAgreed(false)
-      if (isNewsletterSubscribeAccepted(result.status)) {
+      const ui = resolveNewsletterSubscribeUi(result.status)
+      if (ui === 'confirm-email' || ui === 'complete') {
         showSuccess(result)
         return
       }
