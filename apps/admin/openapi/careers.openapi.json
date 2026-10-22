@@ -5143,7 +5143,8 @@
             "type": "integer",
             "format": "int32",
             "maximum": 2200,
-            "minimum": 1900
+            "minimum": 1900,
+            "nullable": true
           },
           "version": {
             "type": "integer",
@@ -5175,16 +5176,25 @@
           },
           "year": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "coverImageUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "version": {
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "id",
+          "displayOrder",
+          "storyKey",
+          "title",
+          "version"
+        ]
       },
       "CareerGuideCultureItemUpdate": {
         "type": "object",
@@ -6559,7 +6569,8 @@
             "type": "integer",
             "format": "int32",
             "maximum": 2200,
-            "minimum": 1900
+            "minimum": 1900,
+            "nullable": true
           }
         },
         "required": [
@@ -8710,10 +8721,12 @@
           },
           "year": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "coverImageUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -10372,7 +10385,8 @@
           },
           "bannerAssetId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "bannerImageUrl": {
             "type": "string"

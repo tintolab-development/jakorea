@@ -10,6 +10,6 @@ export interface CareerInterviewResponse {
   displayOrder?: number;
   storyKey?: string;
   title?: string;
-  year?: number;
-  coverImageUrl?: string;
+  year?: number | null;
+  coverImageUrl?: string | null;
 }

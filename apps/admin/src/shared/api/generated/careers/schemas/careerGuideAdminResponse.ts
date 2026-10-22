@@ -12,7 +12,7 @@ export interface CareerGuideAdminResponse {
   mainText?: string;
   subTextKo?: string;
   subTextEn?: string;
-  bannerAssetId?: number;
+  bannerAssetId?: number | null;
   bannerImageUrl?: string;
   cultureItems?: CareerGuideAdminCultureItemResponse[];
   interviews?: CareerGuideAdminInterviewResponse[];

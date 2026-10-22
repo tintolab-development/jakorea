@@ -7,11 +7,11 @@
  */
 
 export interface CareerGuideAdminInterviewResponse {
-  id?: number;
-  displayOrder?: number;
-  storyKey?: string;
-  title?: string;
-  year?: number;
-  coverImageUrl?: string;
-  version?: number;
+  id: number;
+  displayOrder: number;
+  storyKey: string;
+  title: string;
+  year?: number | null;
+  coverImageUrl?: string | null;
+  version: number;
 }

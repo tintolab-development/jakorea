@@ -21,6 +21,6 @@ export interface CareerGuideInterviewUpdateRequest {
      * @minimum 1900
      * @maximum 2200
      */
-  year?: number;
+  year?: number | null;
   version: number;
 }
