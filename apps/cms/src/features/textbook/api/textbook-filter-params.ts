@@ -12,6 +12,12 @@ export type TextbookListFilters = {
 
 export const TEXTBOOK_LIST_PAGE_SIZE = DATA_MANAGEMENT_LIST_PAGE_SIZE
 
+/** 목록 API에 `grade` 쿼리를 보낼지 — 빈 값·레거시 ALL은 미전송 */
+export function isTextbookGradeFilterActive(grade: string): boolean {
+  const normalized = grade.trim()
+  return normalized.length > 0 && normalized !== 'ALL'
+}
+
 export function textbooksParamsFromFilters(
   filters: TextbookListFilters,
   page = 0
@@ -24,7 +30,7 @@ export function textbooksParamsFromFilters(
 
   if (filters.businessArea !== 'ALL') params.businessArea = filters.businessArea
   if (filters.educationTarget !== 'ALL') params.educationTarget = filters.educationTarget
-  if (filters.grade !== 'ALL') params.grade = filters.grade
+  if (isTextbookGradeFilterActive(filters.grade)) params.grade = filters.grade.trim()
 
   const textbookName = filters.textbookName.trim()
   if (textbookName) params.textbookName = textbookName

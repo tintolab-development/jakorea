@@ -42,6 +42,16 @@ export class TextbookManagementPage {
     await this.page.goto('/textbook')
   }
 
+  private async expectAndDismissCompletedAlert(title: string, body?: string) {
+    const done = this.page.getByRole('dialog').filter({ hasText: title })
+    await expect(done).toBeVisible({ timeout: 15_000 })
+    if (body) {
+      await expect(done.getByText(body, { exact: true })).toBeVisible()
+    }
+    await done.getByRole('button', { name: '확인' }).click()
+    await expect(done).toBeHidden({ timeout: 10_000 })
+  }
+
   async expectListShell() {
     await expectAuthenticatedShell(this.page)
     await expect(this.page.getByRole('menuitem', { name: '교재 관리' })).toBeVisible()
@@ -261,6 +271,7 @@ export class TextbookManagementPage {
       throw new Error(`교재 등록 API 실패: HTTP ${createResponse.status()} ${body.slice(0, 400)}`)
     }
     await expect(modal).toBeHidden({ timeout: 15_000 })
+    await this.expectAndDismissCompletedAlert('등록 완료')
   }
 
   async expectInList(name: string) {
@@ -295,6 +306,7 @@ export class TextbookManagementPage {
       throw new Error(`교재 수정 API 실패: HTTP ${patch.status()} ${body.slice(0, 400)}`)
     }
     await expect(dialog.getByRole('button', { name: '정보 수정' })).toBeVisible({ timeout: 15_000 })
+    await this.expectAndDismissCompletedAlert('수정 완료')
     await this.closeDetail()
   }
 
@@ -318,6 +330,7 @@ export class TextbookManagementPage {
       throw new Error(`교재 삭제 API 실패: HTTP ${deleteResponse.status()} ${body.slice(0, 400)}`)
     }
     await expect(guide).toBeHidden({ timeout: 15_000 })
+    await this.expectAndDismissCompletedAlert('삭제 완료')
   }
 
   async openKitModal() {

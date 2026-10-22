@@ -4,7 +4,11 @@ import {
   deleteTextbooks,
   updateTextbook,
 } from '@/features/textbook/api/admin-textbooks-service'
-import type { TextbookListFilters } from '@/features/textbook/api/textbook-filter-params'
+import {
+  isTextbookGradeFilterActive,
+  type TextbookListFilters,
+} from '@/features/textbook/api/textbook-filter-params'
+import { parseEducationTargetLabels } from '@/features/textbook/lib/textbook-education-stages'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import {
@@ -33,10 +37,18 @@ function textbookMatchesListFilter(queryKey: readonly unknown[], row: TextbookRo
   if (!filters) return true
   if (filters.useStatus !== row.useStatus) return false
   if (filters.businessArea !== 'ALL' && filters.businessArea !== row.businessArea) return false
-  if (filters.educationTarget !== 'ALL' && filters.educationTarget !== row.educationTarget) {
+  if (filters.educationTarget !== 'ALL') {
+    const rowTargets = parseEducationTargetLabels(row.educationTarget)
+    if (!rowTargets.some(target => target === filters.educationTarget)) {
+      return false
+    }
+  }
+  if (
+    isTextbookGradeFilterActive(filters.grade) &&
+    filters.grade.trim() !== row.grade
+  ) {
     return false
   }
-  if (filters.grade !== 'ALL' && filters.grade !== row.grade) return false
   const nameQ = filters.textbookName.trim()
   if (nameQ && !row.textbookName.includes(nameQ)) return false
   return true
