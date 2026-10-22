@@ -32,6 +32,10 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID?: string
   readonly VITE_KAKAO_CLIENT_ID?: string
   readonly VITE_PLATFORM_NAVER_CLIENT_ID?: string
+  /** Vite 빌드 시각 (Asia/Seoul) */
+  readonly VITE_APP_BUILD_AT?: string
+  /** Vercel/GitHub 커밋 SHA 앞 7자 */
+  readonly VITE_APP_GIT_SHA?: string
 }
 
 interface ImportMeta {
