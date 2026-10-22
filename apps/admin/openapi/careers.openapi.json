@@ -155,6 +155,29 @@
         }
       }
     },
+    "/api/admin/careers/guide/interviews/bulk-delete": {
+      "post": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "bulkDeleteCareerGuideInterviews",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/admin/careers/guide/culture-items": {
       "put": {
         "tags": [

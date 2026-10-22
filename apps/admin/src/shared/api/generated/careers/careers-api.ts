@@ -13,6 +13,7 @@ import type {
   CareerGuideBannerResponse,
   CareerGuideBannerUpdateRequest,
   CareerGuideCultureItemsUpdateRequest,
+  BulkDeleteRequest,
   CareerGuideInterviewCreateRequest,
   CareerGuideInterviewDeleteRequest,
   CareerGuideInterviewUpdateRequest,
@@ -90,6 +91,17 @@ const deleteCareerGuideInterview = (
       {url: `/api/admin/careers/guide/interviews/${id}`, method: 'DELETE',
       headers: {'Content-Type': 'application/json', },
       data: careerGuideInterviewDeleteRequest
+    },
+      options);
+    }
+
+const bulkDeleteCareerGuideInterviews = (
+    bulkDeleteRequest: BulkDeleteRequest,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/careers/guide/interviews/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkDeleteRequest
     },
       options);
     }
@@ -324,11 +336,12 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
+return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,bulkDeleteCareerGuideInterviews,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
 export type DeleteCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['deleteCareerGuideInterview']>>>
+export type BulkDeleteCareerGuideInterviewsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['bulkDeleteCareerGuideInterviews']>>>
 export type UpdateCareerGuideCultureItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideCultureItems']>>>
 export type UpdateCareerGuideBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideBanner']>>>
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create2']>>>
