@@ -1,6 +1,7 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
+import { resolveHomepagePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 import type {
   PublicCareerGuideResponse,
   PublicCareerPostingDetail,
@@ -221,7 +222,11 @@ async function uploadPreparedCareerTalentAttachment(
     headers['Content-Type'] = contentType
   }
 
-  const uploadRes = await fetch(uploadUrl, { method, headers, body: file })
+  const uploadRes = await fetch(resolveHomepagePresignedUploadUrl(uploadUrl), {
+    method,
+    headers,
+    body: file,
+  })
   if (!uploadRes.ok) {
     throw new Error(`첨부 업로드에 실패했습니다. (${uploadRes.status})`)
   }

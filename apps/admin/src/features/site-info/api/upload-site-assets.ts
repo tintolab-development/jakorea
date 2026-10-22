@@ -4,6 +4,7 @@
 
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
 import type { UploadPrepareRequestPurpose } from '@/shared/api/generated/assets/schemas/uploadPrepareRequestPurpose'
+import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 type PrepareRuntime = {
   assetId?: number
@@ -43,7 +44,7 @@ async function uploadSiteAsset(file: File, purpose: SiteAssetPurpose): Promise<n
     headers['Content-Type'] = file.type || 'application/octet-stream'
   }
 
-  const uploadRes = await fetch(uploadUrl, {
+  const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {
     method,
     headers,
     body: file,
