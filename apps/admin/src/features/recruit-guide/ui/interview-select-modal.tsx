@@ -60,6 +60,7 @@ type Props = {
 export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect }: Props) {
   const [pendingYear, setPendingYear] = useState('')
   const [pendingTitle, setPendingTitle] = useState('')
+  const [pendingStoryId, setPendingStoryId] = useState(selectedStoryId ?? '')
   const [applied, setApplied] = useState<Applied>({ year: '', title: '', page: 0 })
 
   const filter = useMemo<ImpactStoryListFilter>(
@@ -88,6 +89,7 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
 
   const handleSelect = useCallback(
     (story: ImpactStory) => {
+      setPendingStoryId(story.id)
       onSelect({
         storyId: story.id,
         title: story.title,
@@ -180,7 +182,7 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
             columns={columns}
             pagination={false}
             rowClassName={record =>
-              record.id === selectedStoryId
+              record.id === pendingStoryId
                 ? 'recruit-guide-interview-modal__row--selected'
                 : ''
             }
