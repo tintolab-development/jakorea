@@ -12,10 +12,8 @@ import {
   EducationDetailBack,
   EducationDetailHeader,
   EducationSettlementPanel,
-  EducationSurveyEmptyPanel,
-  EducationSurveyFillPanel,
+  EducationSurveySection,
   DocumentPassBanner,
-  getEducationSurveyTabAvailability,
   isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
@@ -129,11 +127,36 @@ export function MypageVolunteerDetailPage() {
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
+  const programRequest = useMemo(() => {
+    if (!application || application.programId.trim() === '') return null
+    if (application.recruitmentId == null || application.recruitmentId <= 0) return null
+    if (!application.applicationType) return null
+
+    const applicationType = application.applicationType.trim().toUpperCase()
+    return {
+      programId: application.programId,
+      focus: {
+        applicationTypes: [applicationType],
+        recruitmentIds: [application.recruitmentId],
+      },
+    }
+  }, [application])
   const remoteProgramQuery = useProgramDetail(
-    application?.programId ?? null,
-    { fresh: true },
+    programRequest?.programId ?? null,
+    { fresh: true, focus: programRequest?.focus ?? null },
   )
-  const program = remoteProgramQuery.program
+  const remoteProgram = remoteProgramQuery.program
+  const program = useMemo(() => {
+    if (!remoteProgram) return undefined
+    const applicationProgram = application?.programConfig
+    if (!applicationProgram) return remoteProgram
+    return {
+      ...remoteProgram,
+      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+      satisfactionConfigured:
+        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+    }
+  }, [application?.programConfig, remoteProgram])
   const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
@@ -400,47 +423,40 @@ export function MypageVolunteerDetailPage() {
       )
     }
     if (active === 'survey') {
-      const surveyAvailability = getEducationSurveyTabAvailability({
-        displayStatus: application.displayStatus,
-        withdrawalPhase: application.withdrawalPhase,
-        configured: program.surveyConfigured,
-      })
-      if (remoteDetailEnabled || surveyAvailability === 'active') {
-        return (
-          <EducationSurveyFillPanel
-            kind="survey"
-            programTitle={program.title}
-            educationScheduleLines={program.educationScheduleLines}
-            educationTargetLabel={program.educationTargetDetailLabel}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            programId={program.id}
-          />
-        )
-      }
-      return <EducationSurveyEmptyPanel kind="survey" />
+      return (
+        <EducationSurveySection
+          kind="survey"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
+          configured={program.surveyConfigured}
+          remoteDetailEnabled={remoteDetailEnabled}
+          programTitle={program.title}
+          educationScheduleLines={program.educationScheduleLines}
+          educationTargetLabel={program.educationTargetDetailLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          programId={program.id}
+          pendingSurveyCount={application.pendingSurveyCount}
+        />
+      )
     }
     if (active === 'satisfaction') {
-      const satisfactionAvailability = getEducationSurveyTabAvailability({
-        displayStatus: application.displayStatus,
-        withdrawalPhase: application.withdrawalPhase,
-        configured: program.satisfactionConfigured,
-      })
-      if (remoteDetailEnabled || satisfactionAvailability === 'active') {
-        return (
-          <EducationSurveyFillPanel
-            kind="satisfaction"
-            satisfactionAudience="student"
-            programTitle={program.title}
-            educationScheduleLines={program.educationScheduleLines}
-            educationTargetLabel={program.educationTargetDetailLabel}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            programId={program.id}
-          />
-        )
-      }
-      return <EducationSurveyEmptyPanel kind="satisfaction" />
+      return (
+        <EducationSurveySection
+          kind="satisfaction"
+          satisfactionAudience="student"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
+          configured={program.satisfactionConfigured}
+          remoteDetailEnabled={remoteDetailEnabled}
+          programTitle={program.title}
+          educationScheduleLines={program.educationScheduleLines}
+          educationTargetLabel={program.educationTargetDetailLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          programId={program.id}
+        />
+      )
     }
     if (active === 'settlement') {
       return (
@@ -466,7 +482,7 @@ export function MypageVolunteerDetailPage() {
       <EducationDetailBack label="봉사현황" onClick={handleBack} />
 
       <EducationDetailHeader
-        title={program.title}
+        title={application.title}
         displayStatus={application.displayStatus}
         educationTargetLabel={program.educationTargetLabel}
         educationForm={program.educationForm}
