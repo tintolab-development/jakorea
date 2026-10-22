@@ -6,6 +6,7 @@ import {
 import type { SettlementFrontendCalculationDetailResponse } from '@/shared/api/generated/settlement/schemas'
 
 import type { SettlementFrontendItemResponse } from '@/shared/api/generated/settlement/schemas'
+import { formatNumberDisplay } from '@/shared/utils'
 
 /** 지급조서 items[] 노출 순서 — BE v2 SSOT */
 const SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER = [
@@ -59,7 +60,7 @@ export function formatLectureSessionLabel(sessionOrdinal?: number): string {
 
 export function formatWonAmountDisplay(amount?: number | null): string {
   if (amount == null) return '-'
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 export function parseSessionProgressDisplay(

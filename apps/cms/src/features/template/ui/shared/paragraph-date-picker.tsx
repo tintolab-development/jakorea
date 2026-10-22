@@ -12,6 +12,7 @@ import {
   buildTimeFrom24Hour,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import {
   dayjsTimeParts,
   findNextEnabledDate,
@@ -487,7 +488,9 @@ function ParagraphDatePickerSingleInner({
       appliedSurfaceRange[1]?.isValid()
     ) {
       setSurfaceRange([appliedSurfaceRange[0], appliedSurfaceRange[1]])
-      const withTime = Boolean(appliedSurfaceWithTime)
+      const withTime =
+        Boolean(appliedSurfaceWithTime) &&
+        dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1])
       setSurfaceAppliedWithTime(withTime)
       setSurfacePeriodOn(
         resolveSchedulePeriodOnFromStoredRange(
@@ -597,29 +600,42 @@ function ParagraphDatePickerSingleInner({
       setRangeStart(surfaceRange![0])
       setRangeEnd(surfaceRange![1])
       setRangeFocus('start')
-      const ta = dayjsTimeParts(surfaceRange![0])
-      const tb = dayjsTimeParts(surfaceRange![1])
-      setStartHour(ta.h)
-      setStartMinute(ta.m)
-      setEndHour(tb.h)
-      setEndMinute(tb.m)
-      setTimeOn(surfaceAppliedWithTime)
+      const restoredWithTime =
+        surfaceAppliedWithTime &&
+        dateRangeUsesClockTime(surfaceRange![0], surfaceRange![1])
+      if (restoredWithTime) {
+        const ta = dayjsTimeParts(surfaceRange![0])
+        const tb = dayjsTimeParts(surfaceRange![1])
+        setStartHour(ta.h)
+        setStartMinute(ta.m)
+        setEndHour(tb.h)
+        setEndMinute(tb.m)
+      } else {
+        setStartHour('9')
+        setStartMinute('0')
+        setEndHour('10')
+        setEndMinute('0')
+      }
+      setTimeOn(restoredWithTime)
     } else if (initialRange) {
       setRangeStart(initialRange[0])
       setRangeEnd(initialRange[1])
       setRangeFocus('start')
-      const ta = dayjsTimeParts(initialRange[0])
-      const tb = dayjsTimeParts(initialRange[1])
-      setStartHour(ta.h)
-      setStartMinute(ta.m)
-      setEndHour(tb.h)
-      setEndMinute(tb.m)
-      setTimeOn(
-        initialRange[0].hour() !== 0 ||
-          initialRange[0].minute() !== 0 ||
-          initialRange[1].hour() !== 0 ||
-          initialRange[1].minute() !== 0
-      )
+      const restoredWithTime = dateRangeUsesClockTime(initialRange[0], initialRange[1])
+      if (restoredWithTime) {
+        const ta = dayjsTimeParts(initialRange[0])
+        const tb = dayjsTimeParts(initialRange[1])
+        setStartHour(ta.h)
+        setStartMinute(ta.m)
+        setEndHour(tb.h)
+        setEndMinute(tb.m)
+      } else {
+        setStartHour('9')
+        setStartMinute('0')
+        setEndHour('10')
+        setEndMinute('0')
+      }
+      setTimeOn(restoredWithTime)
 
       if (customizable) {
         /* period/time already false above */
@@ -661,7 +677,8 @@ function ParagraphDatePickerSingleInner({
     if (
       presetMode === 'schedule' &&
       !useSurface &&
-      !(initialRange != null && initialRange[0].isSame(initialRange[1], 'day'))
+      !(initialRange != null && initialRange[0].isSame(initialRange[1], 'day')) &&
+      (initialRange == null || dateRangeUsesClockTime(initialRange[0], initialRange[1]))
     ) {
       const tEnd = dayjsTimeParts((initialRange?.[0] ?? d).add(1, 'hour'))
       setStartHour(tSingle.h)

@@ -13,10 +13,7 @@ import {
   hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
 import { INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS } from '@jakorea/domain/instructor/consent'
-import {
-  isBirthDateInputIncomplete,
-  isValidBirthDateFormValue,
-} from '@/shared/ui/date-text-input'
+import { isBirthDateInputIncomplete, isValidBirthDateFormValue } from '@/shared/ui/date-text-input'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
@@ -51,8 +48,7 @@ const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
   { key: 'consentPersonal', label: '개인정보 수집·이용 동의' },
 ] as const
 
-const CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE =
-  '성범죄 경력조회 동의서 파일을 첨부해 주세요.'
+const CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE = '성범죄 경력조회 동의서 파일을 첨부해 주세요.'
 
 export interface InstructorRegisterModalProps {
   open: boolean
@@ -210,7 +206,7 @@ export function InstructorRegisterModal({
       open={open}
       onCancel={onClose}
       title="강사 신규 등록"
-      width={1400}
+      width={1200}
       className="instructor-register-modal"
       footer={
         <>

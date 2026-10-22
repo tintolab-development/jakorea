@@ -8,7 +8,7 @@ import type { AffiliatedTeacherLinkTarget, SchoolAffiliatedTeacherRow, SchoolTea
 import { CmsButton } from '@/shared/ui'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
-import { formatDateSpaced } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -27,6 +27,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import './school-affiliated-teachers-section.css'
 
 export interface SchoolAffiliatedTeachersSectionProps {
@@ -177,7 +178,7 @@ export function SchoolAffiliatedTeachersSection({
         key: 'joinedAt',
         width: TABLE_COLUMN_WIDTHS.date,
         align: 'center',
-        render: (d: Row['joinedAt']) => formatDateSpaced(d),
+        render: (d: Row['joinedAt']) => formatDateDot(d),
       },
     ],
     [
@@ -187,6 +188,14 @@ export function SchoolAffiliatedTeachersSection({
       personalInfoRevealed,
       roleCode,
     ]
+  )
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
   )
 
   const handleWithdraw = () => {
@@ -228,9 +237,9 @@ export function SchoolAffiliatedTeachersSection({
       </header>
       <DetailInfoForm title="소속 교사 목록" hideHeader className="school-affiliated-teachers-section__form">
         <DetailInfoForm.Row type="custom">
-          <div className="school-affiliated-teachers-section__body">
+          <div ref={tableWrapRef} className="school-affiliated-teachers-section__body cms-data-table-fit-scroll-wrap">
             <CmsDataTable
-              className="cms-data-table cms-data-table--fluid school-affiliated-teachers-section__table"
+              className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll school-affiliated-teachers-section__table"
               rowSelection={{
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
@@ -244,7 +253,7 @@ export function SchoolAffiliatedTeachersSection({
               pagination={false}
               size={TABLE_CONFIG.size}
               bordered={TABLE_CONFIG.bordered}
-              scroll={TABLE_CONFIG.scroll}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               rowKey="id"
               onRow={record => {
                 const selectable = isSchoolAffiliatedTeacherRowSelectable(record.employmentStatus)

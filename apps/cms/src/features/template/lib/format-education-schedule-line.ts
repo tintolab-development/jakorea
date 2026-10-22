@@ -1,34 +1,26 @@
 import dayjs, { type Dayjs } from 'dayjs'
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 export type EducationScheduleGroupTimeSlot = {
   startTime?: string
   endTime?: string
 }
 
-/** 교육 진행 예정일 한 줄 표기 (예: `26년 4월 20일(월) 9:30 ~ 12:20`) */
+/** 교육 진행 예정일 한 줄 표기 (예: `2026.04.20(월) 09:30 ~ 12:20`) */
 export function formatEducationScheduleLineFromRange([start, end]: [Dayjs, Dayjs]): string {
-  const formatDatePart = (d: Dayjs) => {
-    const yy = d.year() % 100
-    return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
-  }
-
-  const startPart = formatDatePart(start)
+  const startPart = formatDateDotWithWeekday(start)
+  const hasTime = dateRangeUsesClockTime(start, end)
   if (start.isSame(end, 'day')) {
-    const hasTime =
-      !(start.hour() === 0 && start.minute() === 0 && end.hour() === 0 && end.minute() === 0)
     if (hasTime) {
-      return `${startPart} ${start.format('H:mm')} ~ ${end.format('H:mm')}`
+      return `${startPart} ${start.format('HH:mm')} ~ ${end.format('HH:mm')}`
     }
     return startPart
   }
 
-  const endPart = formatDatePart(end)
-  const startHasTime = start.hour() !== 0 || start.minute() !== 0
-  const endHasTime = end.hour() !== 0 || end.minute() !== 0
-  if (startHasTime || endHasTime) {
-    return `${startPart} ${start.format('H:mm')} ~ ${endPart} ${end.format('H:mm')}`
+  const endPart = formatDateDotWithWeekday(end)
+  if (hasTime) {
+    return `${startPart} ${start.format('HH:mm')} ~ ${endPart} ${end.format('HH:mm')}`
   }
   return `${startPart} ~ ${endPart}`
 }
@@ -115,15 +107,22 @@ export function buildEducationScheduleLinesFromDateAndGroupTimes(
 }
 
 const SCHEDULE_DATE_PART_RE = /^(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일/
+const DOTTED_SCHEDULE_DATE_PART_RE = /^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/
 
 function parseScheduleDatePartToken(part: string): Dayjs | null {
   const withoutWeekday = part.replace(/\([^)]*\)/g, '').trim()
   const dateOnly = withoutWeekday.replace(/\s+\d{1,2}:\d{2}.*$/, '').trim()
-  const match = dateOnly.match(SCHEDULE_DATE_PART_RE)
-  if (!match) return null
-  const yy = Number(match[1])
-  const year = 2000 + yy
-  const parsed = dayjs(`${year}-${match[2]}-${match[3]}`)
+  const korean = dateOnly.match(SCHEDULE_DATE_PART_RE)
+  if (korean) {
+    const year = 2000 + Number(korean[1])
+    const parsed = dayjs(`${year}-${korean[2]}-${korean[3]}`)
+    return parsed.isValid() ? parsed : null
+  }
+  const dotted = dateOnly.match(DOTTED_SCHEDULE_DATE_PART_RE)
+  if (!dotted) return null
+  const parsed = dayjs(
+    `${dotted[1]}-${String(dotted[2]).padStart(2, '0')}-${String(dotted[3]).padStart(2, '0')}`
+  )
   return parsed.isValid() ? parsed : null
 }
 
@@ -138,7 +137,7 @@ function applyScheduleClock(date: Dayjs, token: string): Dayjs {
   return clock ?? date.startOf('day')
 }
 
-/** `26년 4월 20일(월) 9:30 ~ 12:20` 등 → Dayjs 구간 (피커 표면·시간 복원용) */
+/** `2026.04.20(월) 09:30 ~ 12:20` 및 구 `26년 4월 20일(월)` 표기 → Dayjs 구간 */
 export function parseEducationScheduleLineToRange(line: string | undefined): [Dayjs, Dayjs] | null {
   const trimmed = line?.trim()
   if (!trimmed) return null
@@ -179,8 +178,7 @@ export function normalizeEducationSchedulePeriodLineDateOnly(line: string): stri
 }
 
 export function educationScheduleRangeHasClock(range: [Dayjs, Dayjs]): boolean {
-  const [start, end] = range
-  return start.hour() !== 0 || start.minute() !== 0 || end.hour() !== 0 || end.minute() !== 0
+  return dateRangeUsesClockTime(range[0], range[1])
 }
 
 /** 아직 시작하지 않은 예정일만 true. 지난 날·당일 시작 후·기간 진행 중은 false. */
@@ -204,7 +202,7 @@ export function educationScheduleAppliedSurfaceRange(
   return range
 }
 
-/** Overlay ISO 또는 `26년 4월 20일…` 표기 줄 → 피커 구간 */
+/** Overlay ISO 또는 교육 일정 표시 줄 → 피커 구간 */
 export function parseStoredEducationScheduleRange(
   raw: string | null | undefined
 ): [Dayjs, Dayjs] | null {

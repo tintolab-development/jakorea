@@ -32,7 +32,7 @@ const instructorStatement = (
   blocks: [
     {
       institutionName: '진월초등학교',
-      lectureDateDisplay: '2026. 08. 15(토)',
+      lectureDateDisplay: '2026.08.15(토)',
       lectureSessionDisplay: '3차시',
       lines: [
         {
@@ -103,7 +103,7 @@ describe('지급조서 발급 바인딩 — mock 샘플 금지', () => {
       blocks: [
         {
           institutionName: '서울중학교',
-          lectureDateDisplay: '2026. 08. 15(토)',
+          lectureDateDisplay: '2026.08.15(토)',
           lectureSessionDisplay: '2 ~ 3차시',
           lines: [],
         },

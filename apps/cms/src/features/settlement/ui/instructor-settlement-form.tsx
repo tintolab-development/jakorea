@@ -46,7 +46,8 @@ export function InstructorSettlementForm({
   settlement,
   onSubmit,
   onCancel,
-  loading }: InstructorSettlementFormProps) {
+  loading,
+}: InstructorSettlementFormProps) {
   const { user } = useAuthStore()
   const instructorId = user?.instructorId || user?.id
   const [receiptFiles, setReceiptFiles] = useState<File[]>([])
@@ -57,7 +58,8 @@ export function InstructorSettlementForm({
     formState: { errors },
     setValue,
     watch,
-    control } = useForm<SettlementFormData>({
+    control,
+  } = useForm<SettlementFormData>({
     resolver: zodResolver(settlementSchema),
     defaultValues: (() => {
       if (settlement) {
@@ -70,17 +72,21 @@ export function InstructorSettlementForm({
           period: settlement.period,
           items: settlement.items,
           status,
-          notes: settlement.notes || '' }
+          notes: settlement.notes || '',
+        }
       }
       return {
         items: [{ type: 'instructor_fee', description: '강사비', amount: 0 }],
         status: 'pending' as const,
-        instructorId: instructorId || '' }
-    })() })
+        instructorId: instructorId || '',
+      }
+    })(),
+  })
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'items' })
+    name: 'items',
+  })
 
   const selectedProgramId = watch('programId')
 
@@ -100,7 +106,7 @@ export function InstructorSettlementForm({
     return []
   }, [selectedProgramId, instructorId])
 
-  const onFormSubmit: SubmitHandler<SettlementFormData> = async (data) => {
+  const onFormSubmit: SubmitHandler<SettlementFormData> = async data => {
     // 강사 ID 자동 설정
     if (!data.instructorId && instructorId) {
       data.instructorId = instructorId
@@ -123,13 +129,7 @@ export function InstructorSettlementForm({
   const totalAmount = calculateSettlementTotal(watch('items') || [])
 
   if (!instructorId) {
-    return (
-      <Alert
-        description="정산을 제출하려면 로그인이 필요합니다."
-        type="warning"
-        showIcon
-      />
-    )
+    return <Alert description="정산을 제출하려면 로그인이 필요합니다." type="warning" showIcon />
   }
 
   return (
@@ -213,7 +213,13 @@ export function InstructorSettlementForm({
           format="YYYY-MM-DD"
           locale={locale}
           placeholder="기간을 선택하세요"
-          value={watch('period') ? (watch('period').includes('-') && watch('period').split('-').length === 2 ? dayjs(watch('period') + '-01') : dayjs(watch('period'))) : null}
+          value={
+            watch('period')
+              ? watch('period').includes('-') && watch('period').split('-').length === 2
+                ? dayjs(watch('period') + '-01')
+                : dayjs(watch('period'))
+              : null
+          }
           onChange={(date: Dayjs | null) => {
             if (date) {
               setValue('period', date.format('YYYY-MM-DD'))
@@ -255,7 +261,8 @@ export function InstructorSettlementForm({
                       </Option>
                     ))}
                   </Select>
-                ) },
+                ),
+              },
               {
                 title: '설명',
                 dataIndex: 'description',
@@ -266,7 +273,8 @@ export function InstructorSettlementForm({
                     onChange={e => setValue(`items.${index}.description`, e.target.value)}
                     placeholder="항목 설명"
                   />
-                ) },
+                ),
+              },
               {
                 title: '금액',
                 dataIndex: 'amount',
@@ -298,7 +306,8 @@ export function InstructorSettlementForm({
                       )}
                     />
                   )
-                } },
+                },
+              },
               {
                 title: '작업',
                 key: 'action',
@@ -311,7 +320,8 @@ export function InstructorSettlementForm({
                     onClick={() => remove(index)}
                     disabled={fields.length === 1}
                   />
-                ) },
+                ),
+              },
             ]}
             rowKey={(_record, index) => `item-${index}`}
             summary={() => (
@@ -362,7 +372,7 @@ export function InstructorSettlementForm({
       </Form.Item>
 
       <Form.Item label="비고">
-        <TextArea {...register('notes')} rows={3} placeholder="비고를 입력하세요" />
+        <TextArea {...register('notes')} rows={3} placeholder="비고를 입력해 주세요" />
       </Form.Item>
 
       <Form.Item>
@@ -378,4 +388,3 @@ export function InstructorSettlementForm({
     </Form>
   )
 }
-

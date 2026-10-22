@@ -76,4 +76,21 @@ describe('invalidateQueriesForMemberManagementNavigation', () => {
       queryClient.getQueryState(memberQueryKeys.adminPermissions.roles())?.isInvalidated
     ).toBe(true)
   })
+
+  it('프로그램 담당자 권한 설정 경로는 정적 권한표이므로 회원 쿼리를 invalidate하지 않는다', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(memberQueryKeys.adminPermissions.roles(), [])
+    queryClient.setQueryData(memberQueryKeys.list('all'), { pages: [], pageParams: [] })
+
+    invalidateQueriesForMemberManagementNavigation(
+      queryClient,
+      '/admin/settings/program-manager-permissions?role=owner'
+    )
+    await Promise.resolve()
+
+    expect(
+      queryClient.getQueryState(memberQueryKeys.adminPermissions.roles())?.isInvalidated
+    ).toBeFalsy()
+    expect(queryClient.getQueryState(memberQueryKeys.list('all'))?.isInvalidated).toBeFalsy()
+  })
 })

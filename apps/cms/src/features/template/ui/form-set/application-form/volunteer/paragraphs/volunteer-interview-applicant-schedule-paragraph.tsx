@@ -18,6 +18,7 @@ import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 import './volunteer-interview-applicant-schedule-paragraph.css'
 
 type SelectedSlot = {
@@ -36,9 +37,7 @@ function extractSlotStartTime(label: string): string {
 }
 
 function formatDateSummaryLabel(dateKey: string): string {
-  const d = dayjs(dateKey)
-  const yShort = d.year() % 100
-  return `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
+  return formatKoreanYearMonthDayWithWeekday(dayjs(dateKey)) || dateKey
 }
 
 /** overlay는 JSON 왕복 시 Dayjs → ISO string이 되므로 저장도 ISO로 통일 */

@@ -46,7 +46,7 @@ const testSections: SettlementItemSettingSection[] = [
   },
 ]
 
-describe('filterProgramWagePaymentItemOptionsForPayees', () => {
+describe('filterProgramWagePaymentItemOptionsForPayees — 지급 실행 자격 (프로그램 설정 UI에서는 사용하지 않음)', () => {
   const paymentSection = testSections.find(s => s.kind === 'payment')
   const options = (paymentSection?.items ?? []).map(item => ({
     value: item.id,

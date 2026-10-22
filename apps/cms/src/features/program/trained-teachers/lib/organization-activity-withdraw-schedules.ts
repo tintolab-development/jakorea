@@ -10,7 +10,7 @@ function formatScheduleDateTime(iso?: string): string {
   if (!trimmed) return ''
   const date = new Date(trimmed)
   if (Number.isNaN(date.getTime())) return trimmed
-  return `${date.getFullYear()}. ${pad2(date.getMonth() + 1)}. ${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`
+  return `${date.getFullYear()}.${pad2(date.getMonth() + 1)}.${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`
 }
 
 export function formatTrainedTeacherProgramScheduleOptionLabel(

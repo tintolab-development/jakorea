@@ -28,7 +28,7 @@ describe('resolvePaymentStatementIssuanceDocumentParagraphBodyOptions', () => {
         blocks: [
           {
             institutionName: '진월초등학교',
-            lectureDateDisplay: '2026. 08. 15(토)',
+            lectureDateDisplay: '2026.08.15(토)',
             lectureSessionDisplay: '3차시',
             lines: [],
           },

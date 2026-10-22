@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { formatCmsScheduleKoreanDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './education-schedule-preview-lines.css'
 
@@ -42,7 +42,7 @@ export function EducationSchedulePreviewLines({
   return (
     <div className="education-schedule-preview-lines">
       {lines.map((line, index) => {
-        const displayLine = formatCmsScheduleDisplayLabel(line)
+        const displayLine = formatCmsScheduleKoreanDisplayLabel(line)
         return (
           <Fragment key={`${line}-${index}`}>
             {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}

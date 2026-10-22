@@ -17,7 +17,7 @@ import {
   subscribeUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
-import { formatShortYearMdWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
+import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 
 /** 템플릿 편집(authoring) — 교육 진행 희망일 값 영역 */
 const AUTHORING_PREFERRED_DATES_HINT = '관리자가 선택한 진행 가능일이 노출됩니다.'
@@ -72,10 +72,10 @@ const MOCK_FRIDAY_SCHEDULE_OPTIONS: readonly { id: string; display: string }[] =
     [2026, 11, 27],
   ]
   for (const [y, m, d] of fridays) {
-    const yy = String(y).slice(-2)
+    const cursor = dayjs(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
     rows.push({
       id: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-      display: `${yy}년 ${m}월 ${d}일(금)`,
+      display: formatKoreanYearMonthDayWithWeekday(cursor),
     })
   }
   return rows
@@ -116,7 +116,7 @@ export function buildProgramLinkedScheduleOptions(
       options.push({
         id: `${half}:${dateKey}`,
         dateKey,
-        display: formatShortYearMdWithKoreanWeekday(cursor),
+        display: formatKoreanYearMonthDayWithWeekday(cursor),
       })
     }
   }

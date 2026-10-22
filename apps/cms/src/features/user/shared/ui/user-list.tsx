@@ -4,6 +4,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/general/ui/program-list.css'
 import './admin-permission-tag.css'
@@ -426,13 +427,22 @@ export function UserList({
     ]
   )
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: onSelectionChange != null,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
+
   return (
+    <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
     <CmsDataTable
-      className="cms-data-table user-list-table"
+      className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll user-list-table"
       columns={columns}
       dataSource={data}
       loading={loading}
-      scroll={{ x: 'max-content' }}
+      scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
       rowKey="id"
       onRow={
         onView
@@ -466,5 +476,6 @@ export function UserList({
           : false
       }
     />
+    </div>
   )
 }
