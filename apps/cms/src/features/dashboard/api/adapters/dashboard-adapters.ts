@@ -310,7 +310,12 @@ export function recruitmentItemMatchesWidgetProgramType(
   const param = normalizeRecruitmentProgramType(widgetProgramTypeParam)
   if (!param) return true
   if (item === param) return true
-  if (param === 'general' && item.includes('general')) return true
+  if (
+    param === 'general' &&
+    (item.includes('general') || item === 'trained_teachers' || item.includes('trained_teacher'))
+  ) {
+    return true
+  }
   if (
     param === 'company_school' &&
     (item.includes('company_school') || item.includes('one_company'))

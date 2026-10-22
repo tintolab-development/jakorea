@@ -142,6 +142,9 @@
         "requiredMark": true,
         "paragraphTitle": "기본 정보",
         "paragraphDescription": "",
+        "systemFieldKeys": [
+          "educationFormat"
+        ],
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

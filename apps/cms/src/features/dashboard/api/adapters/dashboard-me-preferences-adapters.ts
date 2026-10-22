@@ -5,6 +5,11 @@ import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashb
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
 import { parseAssignedProgramTypes } from '@/features/dashboard/model/program-schedule-keys'
 import {
+  normalizeShortcutVisibilityFromServer,
+  restrictShortcutVisibilityToCatalog,
+} from '@/features/dashboard/model/dashboard-shortcut-contract'
+import {
+  normalizeShortcutVisibilityForSave,
   useDashboardSettingsStore,
 } from '@/features/dashboard/model/dashboard-settings-store'
 import {
@@ -73,8 +78,10 @@ export function buildMeDashboardPreferencesRequest(
       widgetWidths: layout.widthByRole[layoutRole] ?? {},
     },
     settings: {
-      /** remote 저장 시 서버 값을 그대로 보냄 (FE settingsDisabled normalize 미적용) */
-      shortcutVisibility: settings.shortcutEnabled,
+      shortcutVisibility: normalizeShortcutVisibilityForSave(
+        settings.shortcutEnabled,
+        settings.shortcutCatalogKeys
+      ),
       widgetProgramFilters: settings.widgetProgramIds,
       inquiryRowRead: settings.inquiryNotificationReadProgramKeys,
     },
@@ -94,20 +101,25 @@ export function applyMeDashboardPreferencesResponse(
 
   const settings = dto.settings
   if (settings) {
-    useDashboardSettingsStore.setState(state => ({
-      /** remote preferences는 서버 boolean을 그대로 반영 (FE disabled 강제 OFF 없음) */
-      shortcutEnabled: {
-        ...state.shortcutEnabled,
-        ...asBooleanRecord(settings.shortcutVisibility),
-      },
-      widgetProgramIds: settings.widgetProgramFilters
-        ? asStringArrayRecord(settings.widgetProgramFilters)
-        : state.widgetProgramIds,
-      inquiryNotificationReadProgramKeys: {
-        ...state.inquiryNotificationReadProgramKeys,
-        ...asBooleanRecord(settings.inquiryRowRead),
-      },
-    }))
+    const serverShortcutVisibility = asBooleanRecord(settings.shortcutVisibility)
+    useDashboardSettingsStore.setState(state => {
+      const normalized = normalizeShortcutVisibilityFromServer(serverShortcutVisibility)
+      const catalogKeys = state.shortcutCatalogKeys
+      const shortcutEnabled =
+        catalogKeys != null && catalogKeys.length > 0
+          ? restrictShortcutVisibilityToCatalog(normalized, catalogKeys)
+          : normalized
+      return {
+        shortcutEnabled,
+        widgetProgramIds: settings.widgetProgramFilters
+          ? asStringArrayRecord(settings.widgetProgramFilters)
+          : state.widgetProgramIds,
+        inquiryNotificationReadProgramKeys: {
+          ...state.inquiryNotificationReadProgramKeys,
+          ...asBooleanRecord(settings.inquiryRowRead),
+        },
+      }
+    })
   }
 
   const layout = dto.layout

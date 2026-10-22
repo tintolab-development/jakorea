@@ -10,6 +10,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ProgramScheduleKind } from '@/features/dashboard/model/program-schedule-keys'
+import {
+  buildShortcutVisibilityForSave,
+  isDashboardShortcutSettingsDisabled,
+  normalizeShortcutVisibilityFromServer,
+} from '@/features/dashboard/model/dashboard-shortcut-contract'
 
 /** 대시보드 홈(임시 미구현 라우트 대체) */
 export const DASHBOARD_HOME_PATH = '/'
@@ -27,11 +32,10 @@ export interface ShortcutItemDef {
   defaultEnabled?: boolean
 }
 
-export const isShortcutItemEnabled = (shortcutEnabled: Record<string, boolean>, id: string): boolean =>
-  shortcutEnabled[id] !== false
+export { isShortcutItemEnabled } from '@/features/dashboard/model/dashboard-shortcut-contract'
 
 export const isShortcutSettingsDisabled = (id: string): boolean =>
-  SHORTCUT_ITEMS.some(item => item.id === id && item.settingsDisabled === true)
+  isDashboardShortcutSettingsDisabled(id)
 
 /** 바로가기 항목: id, label, path (대시보드 설정·메뉴 바로가기 위젯 공통) — 미구현 경로는 DASHBOARD_HOME_PATH */
 export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
@@ -40,14 +44,23 @@ export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
   { id: 'programs-ujat', label: 'UJAT 프로그램', path: '/programs/ujat', defaultEnabled: false },
   {
     id: 'programs-gemini',
-    label: '제미나이 프로그램',
+    label: 'Gemini 프로그램',
     path: '/programs/gemini/visiting-training',
     defaultEnabled: false,
   },
   { id: 'users-all', label: '전체 회원 관리', path: '/users/list?kind=all' },
-  { id: 'users-school', label: '학교(교사) 회원', path: '/users/list?kind=institutions' },
+  {
+    id: 'users-school',
+    label: '학교(교사) 회원 관리',
+    path: '/users/list?kind=institutions',
+  },
   { id: 'users-instructor', label: '강사 회원 관리', path: '/users/list?kind=instructors' },
-  { id: 'users-admin', label: '관리자 관리', path: '/users/list?kind=admins', defaultEnabled: false },
+  {
+    id: 'users-admin',
+    label: '관리자 회원 관리',
+    path: '/users/list?kind=admins',
+    defaultEnabled: false,
+  },
   {
     id: 'permission-requests',
     label: '회원 권한 승인',
@@ -64,7 +77,7 @@ export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
   {
     id: 'program-permission-settings',
     label: '프로그램 권한 설정',
-    path: '/admin/settings/program-permissions',
+    path: '/admin/settings/program-manager-permissions',
     settingsDisabled: true,
     defaultEnabled: false,
   },
@@ -84,7 +97,7 @@ export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
   { id: 'template-management', label: '템플릿 관리', path: '/templates/form-management' },
   { id: 'notices', label: '공지사항', path: '/admin/posts/notices' },
   { id: 'faq', label: 'FAQ', path: '/admin/posts/faq' },
-  { id: 'inquiries', label: '문의사항', path: '/admin/posts/inquiries' },
+  { id: 'inquiries', label: '문의내역', path: '/admin/posts/inquiries' },
   { id: 'sponsors', label: '후원사 관리', path: '/sponsors' },
   { id: 'textbooks', label: '교재 관리', path: '/textbook', defaultEnabled: false },
   { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs', defaultEnabled: false },
@@ -96,7 +109,7 @@ export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
   { id: 'performance', label: '실적 관리', path: '/education-records' },
   {
     id: 'member-login-history',
-    label: '회원 로그인 이력',
+    label: 'CMS 로그인 이력',
     path: '/logs/member-login-history',
     settingsDisabled: true,
     defaultEnabled: false,
@@ -136,7 +149,7 @@ export function buildDefaultShortcutEnabled(): Record<string, boolean> {
   )
 }
 
-/** settingsDisabled 항목은 항상 false로 고정 */
+/** mock·오프라인 전용 — remote는 API preferences 정본 */
 export function normalizeShortcutEnabled(
   shortcutEnabled: Record<string, boolean>
 ): Record<string, boolean> {
@@ -149,6 +162,39 @@ export function normalizeShortcutEnabled(
     }
   }
   return next
+}
+
+/** PUT payload용 — catalogKeys 없으면 disabled 6만 정규화 */
+export function normalizeShortcutVisibilityForSave(
+  shortcutEnabled: Record<string, boolean>,
+  catalogKeys: readonly string[] | null
+): Record<string, boolean> {
+  if (catalogKeys != null && catalogKeys.length > 0) {
+    return buildShortcutVisibilityForSave(shortcutEnabled, catalogKeys)
+  }
+  return normalizeShortcutVisibilityFromServer(shortcutEnabled)
+}
+
+export const DASHBOARD_SETTINGS_STORAGE_KEY = 'dashboard-settings'
+
+type PersistedDashboardSettingsSlice = {
+  shortcutBadgeCounts?: Record<string, number>
+  widgetProgramIds?: Record<string, string[]>
+  inquiryNotificationReadProgramKeys?: Record<string, boolean>
+}
+
+function normalizePersistedDashboardSettingsSlice(
+  slice: PersistedDashboardSettingsSlice
+): {
+  shortcutBadgeCounts: Record<string, number>
+  widgetProgramIds: Record<string, string[]>
+  inquiryNotificationReadProgramKeys: Record<string, boolean>
+} {
+  return {
+    shortcutBadgeCounts: slice.shortcutBadgeCounts ?? {},
+    widgetProgramIds: slice.widgetProgramIds ?? {},
+    inquiryNotificationReadProgramKeys: slice.inquiryNotificationReadProgramKeys ?? {},
+  }
 }
 
 /** 위젯별 프로그램 설정용 위젯 키 (7개: 일정 4 + 기타) */
@@ -167,8 +213,10 @@ export type WidgetProgramKey = (typeof WIDGET_PROGRAM_KEYS)[number]['key']
 const defaultShortcutEnabled: Record<string, boolean> = buildDefaultShortcutEnabled()
 
 export interface DashboardSettingsState {
-  /** 바로가기 아이콘 노출 여부 (id -> boolean) */
+  /** 바로가기 아이콘 노출 여부 (id -> boolean) — remote는 API preferences 정본, persist 제외 */
   shortcutEnabled: Record<string, boolean>
+  /** 마지막 shortcuts API의 useYn=true shortcutKey 순서 (persist 제외) */
+  shortcutCatalogKeys: string[] | null
   /** 바로가기 항목별 읽음 처리(0)만 저장. 미설정 키는 getMenuShortcutBadgeCounts() 집계를 표시 */
   shortcutBadgeCounts: Record<string, number>
   /** 위젯별 선택된 프로그램 id 목록 (위젯 key -> programId[]) */
@@ -194,12 +242,12 @@ export interface DashboardSettingsState {
   setAssignedProgramTypes: (kinds: ProgramScheduleKind[] | null) => void
 }
 
-const STORAGE_KEY = 'dashboard-settings'
 
 export const useDashboardSettingsStore = create<DashboardSettingsState>()(
   persist(
     (set, get) => ({
       shortcutEnabled: defaultShortcutEnabled,
+      shortcutCatalogKeys: null,
       shortcutBadgeCounts: {},
       widgetProgramIds: {},
 
@@ -261,20 +309,17 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
       },
     }),
     {
-      name: STORAGE_KEY,
-      version: 3,
+      name: DASHBOARD_SETTINGS_STORAGE_KEY,
+      version: 5,
       migrate: (persistedState, version) => {
-        const p = persistedState as {
+        const p = persistedState as PersistedDashboardSettingsSlice & {
           shortcutEnabled?: Record<string, boolean>
-          shortcutBadgeCounts?: Record<string, number>
-          widgetProgramIds?: Record<string, string[]>
-          inquiryNotificationReadProgramKeys?: Record<string, boolean>
         }
         if (version === 0) {
-          return {
+          return normalizePersistedDashboardSettingsSlice({
             ...p,
             shortcutBadgeCounts: {},
-          }
+          })
         }
         if (version < 2 && p.widgetProgramIds?.['program-schedule-economy-widget']) {
           const next = { ...p.widgetProgramIds }
@@ -283,20 +328,10 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
           delete next['program-schedule-economy-widget']
           p.widgetProgramIds = next
         }
-        if (version < 3) {
-          return {
-            ...p,
-            shortcutEnabled: buildDefaultShortcutEnabled(),
-          }
-        }
-        return {
-          ...p,
-          shortcutEnabled: normalizeShortcutEnabled(p.shortcutEnabled ?? {}),
-        }
+        return normalizePersistedDashboardSettingsSlice(p)
       },
-      /** 액션은 직렬화 제외 — 상태 필드만 저장 */
+      /** shortcutVisibility는 API 정본 — localStorage에 저장하지 않음 */
       partialize: state => ({
-        shortcutEnabled: state.shortcutEnabled,
         shortcutBadgeCounts: state.shortcutBadgeCounts,
         widgetProgramIds: state.widgetProgramIds,
         inquiryNotificationReadProgramKeys: state.inquiryNotificationReadProgramKeys,

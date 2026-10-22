@@ -27,6 +27,7 @@ export { useProgramInquiryStatusList } from './hooks/use-program-inquiry-status-
 export { useDashboardProgramSchedules } from './hooks/use-dashboard-program-schedules'
 export { useDashboardProgramOptions } from './hooks/use-dashboard-program-options'
 export { useDashboardShortcuts } from './hooks/use-dashboard-shortcuts'
+export { useSyncDashboardShortcutCatalog } from './hooks/use-sync-dashboard-shortcut-catalog'
 export { useDashboardShortcutBadges } from './hooks/use-dashboard-shortcut-badges'
 export { useAdminNotifications } from './hooks/use-admin-notifications'
 export { useDashboardLogAlerts } from './hooks/use-dashboard-log-alerts'
