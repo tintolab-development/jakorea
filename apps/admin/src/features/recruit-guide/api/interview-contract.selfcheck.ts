@@ -65,7 +65,7 @@ assert.ok(!('storyKey' in updatePayload))
 assert.ok(!('impactStoryId' in updatePayload))
 assert.deepEqual(Object.keys(deletePayload), ['version'])
 
-function axiosError(code: string, field?: string, traceId?: string) {
+function axiosError(code: string, field?: string) {
   return new axios.AxiosError(
     'request failed',
     undefined,
@@ -74,9 +74,9 @@ function axiosError(code: string, field?: string, traceId?: string) {
     {
       status: 409,
       statusText: 'Conflict',
-      headers: {},
+      headers: { 'x-trace-id': 'trace-9' },
       config: { headers: {} } as never,
-      data: { code, message: 'server-fallback', field: field ?? null, traceId },
+      data: { code, message: 'server-fallback', field: field ?? null },
     }
   )
 }
@@ -120,6 +120,22 @@ const highId = mapInterview({
 })
 assert.equal(highId.id, '10')
 assert.equal(highId.imageUrl, 'https://example.test/story.png')
+
+const emptyCover = mapInterview({
+  id: 11,
+  impactStoryId: 2,
+  storyKey: 'impact-story-2',
+  displayOrder: 4,
+  title: '첨부 없는 스토리',
+  year: null,
+  coverImageUrl: null,
+  impactStory: { id: 2, imageUrl: null },
+  linkStatus: 'LINKED',
+  version: 1,
+})
+assert.equal(emptyCover.displayOrder, 4)
+assert.equal(emptyCover.publishedYear, null)
+assert.equal(emptyCover.imageUrl, undefined)
 
 const sorted = [highId, mapped].sort((a, b) => a.displayOrder - b.displayOrder)
 assert.deepEqual(
@@ -169,9 +185,16 @@ assert.equal(
   recruitGuideSaveFailureAlert(axiosError('VALIDATION_ERROR', 'title'), 'fallback').content,
   '인터뷰 제목을 확인해 주세요.'
 )
-assert.match(
-  recruitGuideSaveFailureAlert(axiosError('FORBIDDEN', undefined, 'trace-9'), 'fallback').content,
-  /추적번호: trace-9/
+assert.equal(
+  recruitGuideSaveFailureAlert(
+    axiosError('CAREER_GUIDE_INTERVIEW_DUPLICATE', 'impactStoryId'),
+    'fallback'
+  ).content,
+  '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
+)
+assert.doesNotMatch(
+  recruitGuideSaveFailureAlert(axiosError('FORBIDDEN'), 'fallback').content,
+  /추적번호/
 )
 assert.equal(isRecruitGuideVersionConflict(axiosError('VERSION_CONFLICT')), true)
 assert.equal(isRecruitGuideVersionConflict(axiosError('CAREER_GUIDE_INTERVIEW_VERSION_CONFLICT')), true)
@@ -189,6 +212,7 @@ const openapiSrc = readFileSync(
 )
 const editModalSrc = readFileSync(resolve(here, '../ui/interview-edit-modal.tsx'), 'utf8')
 const selectModalSrc = readFileSync(resolve(here, '../ui/interview-select-modal.tsx'), 'utf8')
+const alertSrc = readFileSync(resolve(here, '../lib/save-failure-alert.ts'), 'utf8')
 const hooksSrc = readFileSync(resolve(here, 'hooks.ts'), 'utf8')
 const sectionSrc = readFileSync(resolve(here, '../ui/interview-section.tsx'), 'utf8')
 
@@ -222,8 +246,11 @@ assert.match(editModalSrc, /onSubmit\(\{ title: normalizedTitle, publishedYear \
 assert.doesNotMatch(editModalSrc, /impactStoryId:/)
 assert.doesNotMatch(editModalSrc, /storyKey:/)
 assert.match(selectModalSrc, /impactStoryId,/)
+assert.match(selectModalSrc, /publishedYear: null/)
 assert.match(selectModalSrc, /visibility: 'public'/)
 assert.match(selectModalSrc, /isHomepageVisible\(story\)/)
+assert.doesNotMatch(alertSrc, /추적번호/)
+assert.doesNotMatch(alertSrc, /traceId/)
 assert.match(hooksSrc, /await refresh\(\)/)
 assert.match(hooksSrc, /isRecruitGuideVersionConflict\(error\)/)
 assert.match(sectionSrc, /record\.displayOrder/)
