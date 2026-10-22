@@ -3,7 +3,7 @@
  * (알림 API 연동 전: mock 알림 UI · 유저는 auth store)
  */
 
-import { Layout, Space, Typography, Dropdown, message } from 'antd'
+import { Layout, Space, Typography, Dropdown } from 'antd'
 import { BellOutlined, BellFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -78,16 +78,8 @@ export function MainHeader() {
     )
   }
 
-  const handleAccountMenuAction = (action: 'profile' | 'notification' | 'logout') => {
+  const handleLogout = () => {
     setAccountDropdownOpen(false)
-    if (action === 'profile') {
-      message.info('정보 수정은 이후 Phase에서 연동합니다.')
-      return
-    }
-    if (action === 'notification') {
-      message.info('알림 설정은 이후 Phase에서 연동합니다.')
-      return
-    }
     logout()
     navigate('/login', { replace: true })
   }
@@ -167,21 +159,7 @@ export function MainHeader() {
                     <button
                       type="button"
                       className="main-header-account-dropdown-item"
-                      onClick={() => handleAccountMenuAction('profile')}
-                    >
-                      정보 수정
-                    </button>
-                    <button
-                      type="button"
-                      className="main-header-account-dropdown-item"
-                      onClick={() => handleAccountMenuAction('notification')}
-                    >
-                      알림 설정
-                    </button>
-                    <button
-                      type="button"
-                      className="main-header-account-dropdown-item"
-                      onClick={() => handleAccountMenuAction('logout')}
+                      onClick={handleLogout}
                     >
                       로그아웃
                     </button>
