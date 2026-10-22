@@ -175,7 +175,7 @@ export function readRecruitDetailMediaFromOverlay(
 }
 
 /**
- * 프로그램 생성 직후 — staging 업로드 파일을 실제 programId 에 연결.
+ * 프로그램 생성 직후 — ownerId=null draft 파일을 실제 programId 에 연결.
  * 첨부는 PUT /programs/{id}/attachments (포털 GENERAL 첨부 SSOT).
  * 실패하면 호출부가 방금 만든 프로그램을 삭제하고 등록을 완료하지 않는다.
  */
