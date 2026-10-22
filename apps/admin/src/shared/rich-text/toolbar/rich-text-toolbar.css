@@ -195,3 +195,8 @@
   opacity: 0;
   pointer-events: none;
 }
+
+.rich-text-toolbar__file-menu-label {
+  display: block;
+  cursor: pointer;
+}

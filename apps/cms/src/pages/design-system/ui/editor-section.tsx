@@ -72,7 +72,7 @@ export function EditorSection() {
         </p>
         <div className="ds-editor-demo">
           {editor ? (
-            <RichTextEditor editor={editor} minHeight="220px" />
+            <RichTextEditor editor={editor} minHeight="220px" allowLocalImageDataUrl />
           ) : (
             <p className="ds-note">에디터 로딩 중…</p>
           )}
