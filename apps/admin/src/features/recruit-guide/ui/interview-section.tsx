@@ -5,11 +5,7 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type {
-  InterviewItem,
-  InterviewSaveItem,
-  InterviewUpdateInput,
-} from '@/entities/recruit-guide/model/types'
+import type { InterviewItem, InterviewSaveItem } from '@/entities/recruit-guide/model/types'
 import {
   useAddRecruitInterview,
   useRemoveRecruitInterviews,
@@ -18,7 +14,6 @@ import {
 import { MAX_RECRUIT_INTERVIEWS } from '@/features/recruit-guide/api/store'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
 import { InterviewSelectModal } from '@/features/recruit-guide/ui/interview-select-modal'
-import { InterviewEditModal } from '@/features/recruit-guide/ui/interview-edit-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
@@ -92,37 +87,26 @@ export function InterviewSectionCard({ items }: Props) {
   const handleSelectStory = useCallback(
     async (input: InterviewSaveItem) => {
       try {
-        if (picker?.type !== 'add') return
-        await addMutation.mutateAsync(input)
+        if (picker?.type === 'add') {
+          await addMutation.mutateAsync(input)
+        } else if (picker?.type === 'edit') {
+          await replaceMutation.mutateAsync({ id: picker.item.id, input })
+        } else {
+          return
+        }
         setPicker(null)
       } catch (err) {
         showAlert(
           recruitGuideSaveFailureAlert(
             err,
-            '직무 인터뷰 저장에 실패했습니다. 다시 시도해 주세요.'
+            picker?.type === 'edit'
+              ? '직무 인터뷰 수정에 실패했습니다. 다시 시도해 주세요.'
+              : '직무 인터뷰 저장에 실패했습니다. 다시 시도해 주세요.'
           )
         )
       }
     },
-    [addMutation, picker, showAlert]
-  )
-
-  const handleEditSubmit = useCallback(
-    async (input: InterviewUpdateInput) => {
-      if (picker?.type !== 'edit') return
-      try {
-        await replaceMutation.mutateAsync({ id: picker.item.id, input })
-        setPicker(null)
-      } catch (err) {
-        showAlert(
-          recruitGuideSaveFailureAlert(
-            err,
-            '직무 인터뷰 수정에 실패했습니다. 다시 시도해 주세요.'
-          )
-        )
-      }
-    },
-    [picker, replaceMutation, showAlert]
+    [addMutation, picker, replaceMutation, showAlert]
   )
 
   const handleDeleteClick = useCallback(() => {
@@ -203,23 +187,18 @@ export function InterviewSectionCard({ items }: Props) {
       />
 
       <InterviewSelectModal
-        key={picker?.type === 'add' ? 'add' : 'closed'}
-        open={picker?.type === 'add'}
-        confirmLoading={addMutation.isPending}
+        key={
+          picker?.type === 'edit'
+            ? `edit-${picker.item.id}`
+            : picker?.type === 'add'
+              ? 'add'
+              : 'closed'
+        }
+        open={picker != null}
+        confirmLoading={pickerLoading}
         onCancel={() => setPicker(null)}
         onSelect={item => {
           void handleSelectStory(item)
-        }}
-      />
-
-      <InterviewEditModal
-        key={picker?.type === 'edit' ? `${picker.item.id}-${picker.item.version}` : 'closed'}
-        open={picker?.type === 'edit'}
-        item={picker?.type === 'edit' ? picker.item : null}
-        confirmLoading={replaceMutation.isPending}
-        onCancel={() => setPicker(null)}
-        onSubmit={input => {
-          void handleEditSubmit(input)
         }}
       />
 

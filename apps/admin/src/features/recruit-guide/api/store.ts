@@ -9,7 +9,6 @@ import type {
   CultureSaveItem,
   InterviewItem,
   InterviewSaveItem,
-  InterviewUpdateInput,
   RecruitGuideBanner,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
@@ -396,10 +395,16 @@ export function addInterview(input: InterviewSaveItem, options?: MutateOptions):
 
 export function replaceInterview(
   id: string,
-  input: InterviewUpdateInput,
+  input: InterviewSaveItem,
   options?: MutateOptions,
 ): RecruitGuideData {
   const current = options?.base ?? readRecruitGuide()
+  if (!Number.isInteger(input.impactStoryId) || input.impactStoryId <= 0) {
+    throw new Error('INTERVIEW_IMPACT_STORY_ID_INVALID')
+  }
+  if (current.interviews.some(row => row.id !== id && row.impactStoryId === input.impactStoryId)) {
+    throw new Error('INTERVIEW_DUPLICATE')
+  }
 
   let found = false
   const interviews = current.interviews.map(row => {
@@ -407,8 +412,12 @@ export function replaceInterview(
     found = true
     return {
       ...row,
+      impactStoryId: input.impactStoryId,
       title: input.title.trim(),
-      publishedYear: input.publishedYear,
+      publishedYear:
+        row.impactStoryId === input.impactStoryId && input.publishedYear == null
+          ? row.publishedYear
+          : input.publishedYear,
       version: row.version + 1,
     }
   })

@@ -13,7 +13,7 @@ import axios from 'axios'
 import type { CareerGuideInterviewCreateRequest } from '@/shared/api/generated/careers/schemas/careerGuideInterviewCreateRequest.ts'
 import type { CareerGuideInterviewDeleteRequest } from '@/shared/api/generated/careers/schemas/careerGuideInterviewDeleteRequest.ts'
 import type { CareerGuideInterviewUpdateRequest } from '@/shared/api/generated/careers/schemas/careerGuideInterviewUpdateRequest.ts'
-import type { InterviewSaveItem, InterviewUpdateInput } from '@/entities/recruit-guide/model/types.ts'
+import type { InterviewSaveItem } from '@/entities/recruit-guide/model/types.ts'
 import { mapInterview } from './map-interview.ts'
 import {
   isRecruitGuideVersionConflict,
@@ -31,12 +31,10 @@ const _createKeys: ExactKeys<CareerGuideInterviewCreateRequest, 'impactStoryId' 
 const _updateKeys: ExactKeys<CareerGuideInterviewUpdateRequest, 'title' | 'year' | 'version'> = true
 const _deleteKeys: ExactKeys<CareerGuideInterviewDeleteRequest, 'version'> = true
 const _saveKeys: ExactKeys<InterviewSaveItem, 'impactStoryId' | 'title' | 'publishedYear'> = true
-const _editKeys: ExactKeys<InterviewUpdateInput, 'title' | 'publishedYear'> = true
 void _createKeys
 void _updateKeys
 void _deleteKeys
 void _saveKeys
-void _editKeys
 
 const createPayload = {
   impactStoryId: 7,
@@ -65,7 +63,7 @@ assert.ok(!('storyKey' in updatePayload))
 assert.ok(!('impactStoryId' in updatePayload))
 assert.deepEqual(Object.keys(deletePayload), ['version'])
 
-function axiosError(code: string, field?: string) {
+function axiosError(code: string, field?: string, message = 'server-fallback') {
   return new axios.AxiosError(
     'request failed',
     undefined,
@@ -76,7 +74,7 @@ function axiosError(code: string, field?: string) {
       statusText: 'Conflict',
       headers: { 'x-trace-id': 'trace-9' },
       config: { headers: {} } as never,
-      data: { code, message: 'server-fallback', field: field ?? null },
+      data: { code, message, field: field ?? null },
     }
   )
 }
@@ -155,10 +153,7 @@ assert.throws(
 
 const errorCases: Array<[string, string]> = [
   ['CAREER_GUIDE_INTERVIEW_LIMIT_EXCEEDED', '직무 인터뷰는 최대 9개까지 등록할 수 있습니다.'],
-  [
-    'CAREER_GUIDE_INTERVIEW_DUPLICATE',
-    '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.',
-  ],
+  ['CAREER_GUIDE_INTERVIEW_DUPLICATE', 'server-fallback'],
   ['CAREER_GUIDE_INTERVIEW_IMPACT_STORY_NOT_FOUND', '선택한 임팩트 스토리를 찾을 수 없습니다.'],
   ['CAREER_GUIDE_INTERVIEW_IMPACT_STORY_NOT_PUBLIC', '공개된 임팩트 스토리만 등록할 수 있습니다.'],
   ['CAREER_GUIDE_INTERVIEW_NOT_FOUND', '직무 인터뷰를 찾을 수 없습니다.'],
@@ -187,10 +182,25 @@ assert.equal(
 )
 assert.equal(
   recruitGuideSaveFailureAlert(
-    axiosError('CAREER_GUIDE_INTERVIEW_DUPLICATE', 'impactStoryId'),
+    axiosError(
+      'CAREER_GUIDE_INTERVIEW_DUPLICATE',
+      'impactStoryId',
+      '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
+    ),
     'fallback'
   ).content,
   '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
+)
+assert.doesNotMatch(
+  recruitGuideSaveFailureAlert(
+    axiosError(
+      'CAREER_GUIDE_INTERVIEW_DUPLICATE',
+      'impactStoryId',
+      '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
+    ),
+    'fallback'
+  ).content,
+  /추적번호/
 )
 assert.doesNotMatch(
   recruitGuideSaveFailureAlert(axiosError('FORBIDDEN'), 'fallback').content,
@@ -210,7 +220,6 @@ const openapiSrc = readFileSync(
   resolve(here, '../../../../openapi/careers.openapi.json'),
   'utf8'
 )
-const editModalSrc = readFileSync(resolve(here, '../ui/interview-edit-modal.tsx'), 'utf8')
 const selectModalSrc = readFileSync(resolve(here, '../ui/interview-select-modal.tsx'), 'utf8')
 const alertSrc = readFileSync(resolve(here, '../lib/save-failure-alert.ts'), 'utf8')
 const hooksSrc = readFileSync(resolve(here, 'hooks.ts'), 'utf8')
@@ -225,6 +234,10 @@ assert.match(
   apiSrc,
   /url: `\/api\/admin\/careers\/guide\/interviews\/\$\{id\}`, method: 'DELETE'/
 )
+assert.match(
+  apiSrc,
+  /url: `\/api\/admin\/careers\/guide\/interviews\/bulk-delete`, method: 'POST'/
+)
 assert.match(apiSrc, /data: careerGuideInterviewDeleteRequest/)
 assert.match(apiSrc, /data: careerGuideInterviewCreateRequest/)
 assert.match(apiSrc, /data: careerGuideInterviewUpdateRequest/)
@@ -232,19 +245,26 @@ assert.match(apiSrc, /data: careerGuideInterviewUpdateRequest/)
 assert.match(serviceSrc, /createCareerGuideInterview\(\{[\s\S]*impactStoryId:/)
 assert.match(serviceSrc, /year: interviewYear\(input\.publishedYear\)/)
 assert.match(serviceSrc, /deleteCareerGuideInterview\(numericId, \{ version: current\.version \}\)/)
+assert.match(serviceSrc, /bulkDeleteCareerGuideInterviews\(\{ items \}\)/)
+assert.doesNotMatch(
+  serviceSrc,
+  /for \(const id of ids\) \{[\s\S]*deleteCareerGuideInterview/
+)
 assert.match(serviceSrc, /return getRecruitGuideService\(\)/)
+assert.match(serviceSrc, /current\.impactStoryId === input\.impactStoryId/)
 assert.doesNotMatch(serviceSrc, /createCareerGuideInterview\([\s\S]*storyKey/)
 assert.doesNotMatch(serviceSrc, /updateCareerGuideInterview\([\s\S]*storyKey/)
-assert.doesNotMatch(serviceSrc, /updateCareerGuideInterview\([\s\S]*impactStoryId/)
+assert.doesNotMatch(
+  serviceSrc,
+  /updateCareerGuideInterview\(\s*numericId,\s*\{[^}]*impactStoryId/
+)
 assert.doesNotMatch(serviceSrc, /numericId > MAX_RECRUIT_INTERVIEWS/)
 assert.doesNotMatch(serviceSrc, /persist:\s*false/)
 
 assert.match(openapiSrc, /"CareerGuideInterviewCreateRequest"/)
 assert.match(openapiSrc, /"CareerGuideInterviewUpdateRequest"/)
 assert.match(openapiSrc, /"CareerGuideInterviewDeleteRequest"/)
-assert.match(editModalSrc, /onSubmit\(\{ title: normalizedTitle, publishedYear \}\)/)
-assert.doesNotMatch(editModalSrc, /impactStoryId:/)
-assert.doesNotMatch(editModalSrc, /storyKey:/)
+assert.match(openapiSrc, /\/api\/admin\/careers\/guide\/interviews\/bulk-delete/)
 assert.match(selectModalSrc, /impactStoryId,/)
 assert.match(selectModalSrc, /publishedYear: null/)
 assert.match(selectModalSrc, /visibility: 'public'/)
@@ -253,8 +273,13 @@ assert.doesNotMatch(alertSrc, /추적번호/)
 assert.doesNotMatch(alertSrc, /traceId/)
 assert.match(hooksSrc, /await refresh\(\)/)
 assert.match(hooksSrc, /isRecruitGuideVersionConflict\(error\)/)
+assert.match(hooksSrc, /useRemoveRecruitInterviews[\s\S]*onSuccess: data => \{\s*setCache\(data\)/)
+assert.match(hooksSrc, /useRemoveRecruitInterviews[\s\S]*onError: async \(\) => \{\s*await refresh\(\)/)
 assert.match(sectionSrc, /record\.displayOrder/)
 assert.match(sectionSrc, /atLimit \? null/)
 assert.match(sectionSrc, /rowKey="id"/)
+assert.match(sectionSrc, /open=\{picker != null\}/)
+assert.match(sectionSrc, /picker\?\.type === 'edit'/)
+assert.doesNotMatch(sectionSrc, /InterviewEditModal/)
 
 console.log('interview-contract.selfcheck ok')

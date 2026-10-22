@@ -2,7 +2,6 @@ import type {
   BannerSaveInput,
   CultureSaveItem,
   InterviewSaveItem,
-  InterviewUpdateInput,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api'
@@ -181,7 +180,7 @@ export async function addInterviewService(
 
 export async function replaceInterviewService(
   id: string,
-  input: InterviewUpdateInput,
+  input: InterviewSaveItem,
   cached?: RecruitGuideData,
 ): Promise<RecruitGuideData> {
   if (shouldUseRecruitGuideRemoteApi()) {
@@ -192,12 +191,27 @@ export async function replaceInterviewService(
     }
     const current = prev.interviews.find(item => item.id === id)
     if (!current) throw new Error('INTERVIEW_NOT_FOUND')
-    const response = await careersApi().updateCareerGuideInterview(numericId, {
-      title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
+    if (!Number.isInteger(input.impactStoryId) || input.impactStoryId <= 0) {
+      throw new Error('INTERVIEW_IMPACT_STORY_ID_INVALID')
+    }
+    const title = requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300)
+    if (current.impactStoryId === input.impactStoryId) {
+      const response = await careersApi().updateCareerGuideInterview(numericId, {
+        title,
+        year: interviewYear(
+          input.publishedYear != null ? input.publishedYear : current.publishedYear
+        ),
+        version: current.version,
+      })
+      return mergeInterviewResponse(prev, response)
+    }
+    await careersApi().deleteCareerGuideInterview(numericId, { version: current.version })
+    await careersApi().createCareerGuideInterview({
+      impactStoryId: input.impactStoryId,
+      title,
       year: interviewYear(input.publishedYear),
-      version: current.version,
     })
-    return mergeInterviewResponse(prev, response)
+    return getRecruitGuideService()
   }
   return replaceInterviewLocal(id, input)
 }
@@ -209,6 +223,8 @@ export async function removeInterviewsService(
   if (shouldUseRecruitGuideRemoteApi()) {
     const prev = await resolvePrev(cached)
     if (ids.length === 0) throw new Error('INTERVIEW_NONE_SELECTED')
+    const seen = new Set<number>()
+    const items: { id: number; version: number }[] = []
     for (const id of ids) {
       const numericId = Number(id)
       const current = prev.interviews.find(item => item.id === id)
@@ -216,8 +232,12 @@ export async function removeInterviewsService(
         throw new Error('INTERVIEW_ID_INVALID')
       }
       if (!current) throw new Error('INTERVIEW_NOT_FOUND')
-      await careersApi().deleteCareerGuideInterview(numericId, { version: current.version })
+      if (seen.has(numericId)) throw new Error('VALIDATION_ERROR')
+      seen.add(numericId)
+      items.push({ id: numericId, version: current.version })
     }
+    if (items.length > 9) throw new Error('VALIDATION_ERROR')
+    await careersApi().bulkDeleteCareerGuideInterviews({ items })
     return getRecruitGuideService()
   }
   return removeInterviewsLocal(ids)

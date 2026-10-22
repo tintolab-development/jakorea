@@ -3,7 +3,6 @@ import type {
   BannerSaveInput,
   CultureSaveItem,
   InterviewSaveItem,
-  InterviewUpdateInput,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
 import { isRecruitGuideVersionConflict } from '../lib/save-failure-alert'
@@ -89,7 +88,7 @@ export function useAddRecruitInterview() {
 export function useReplaceRecruitInterview() {
   const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (payload: { id: string; input: InterviewUpdateInput }) =>
+    mutationFn: (payload: { id: string; input: InterviewSaveItem }) =>
       replaceInterviewService(payload.id, payload.input, getCached()),
     retry: false,
     onSuccess: async data => {
@@ -107,12 +106,11 @@ export function useRemoveRecruitInterviews() {
   return useMutation({
     mutationFn: (ids: string[]) => removeInterviewsService(ids, getCached()),
     retry: false,
-    onSuccess: async data => {
+    onSuccess: data => {
       setCache(data)
-      await refresh()
     },
-    onError: async error => {
-      if (isRecruitGuideVersionConflict(error)) await refresh()
+    onError: async () => {
+      await refresh()
     },
   })
 }

@@ -83,8 +83,3 @@ export type InterviewSaveItem = {
   title: string
   publishedYear: number | null
 }
-
-export type InterviewUpdateInput = {
-  title: string
-  publishedYear: number | null
-}

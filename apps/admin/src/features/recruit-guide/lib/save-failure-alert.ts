@@ -99,7 +99,9 @@ function mapRecruitGuideSaveFailureAlert(
   if (code === 'INTERVIEW_DUPLICATE' || code === 'CAREER_GUIDE_INTERVIEW_DUPLICATE') {
     return {
       title: '중복 게시글',
-      content: '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.',
+      content:
+        readApiErrorMessage(error) ||
+        '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.',
     }
   }
   if (code === 'INTERVIEW_LIMIT_EXCEEDED' || code === 'CAREER_GUIDE_INTERVIEW_LIMIT_EXCEEDED') {
