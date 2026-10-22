@@ -56,7 +56,7 @@ export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Prom
   if (cached && isPreviewableImageBlob(cached)) {
     return URL.createObjectURL(cached)
   }
-  const blob = await loadAdminFileBlob(fileObjectId)
+  const blob = await loadAdminFileBlob(fileObjectId, { skipGlobalErrorAlert: true })
   if (!isPreviewableImageBlob(blob)) {
     throw new Error('대표 이미지를 불러오지 못했습니다.')
   }

@@ -410,6 +410,7 @@ export function RecruitDetailInfoParagraph({
             const uploaded = await uploadAdminFileMaybeMock({
               file: image,
               owner: programThumbnailOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID),
+              waitUntilAvailable: true,
             })
             rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
             patchGeneralRecruitOverlay({
@@ -492,7 +493,11 @@ export function RecruitDetailInfoParagraph({
           try {
             for (let index = 0; index < files.length; index += 1) {
               try {
-                const uploaded = await uploadAdminFileMaybeMock({ file: files[index], owner })
+                const uploaded = await uploadAdminFileMaybeMock({
+                  file: files[index],
+                  owner,
+                  waitUntilAvailable: true,
+                })
                 uploadedIds.push(uploaded.fileObjectId)
               } catch {
                 failedIndexes.add(index)

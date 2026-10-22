@@ -40,7 +40,7 @@ describe('loadProgramThumbnailPreviewUrl', () => {
     const url = await loadProgramThumbnailPreviewUrl(7)
     expect(url.startsWith('blob:')).toBe(true)
     expect(loadAdminFileBlob).toHaveBeenCalledTimes(1)
-    expect(loadAdminFileBlob).toHaveBeenCalledWith(7)
+    expect(loadAdminFileBlob).toHaveBeenCalledWith(7, { skipGlobalErrorAlert: true })
   })
 
   it('download 실패를 content 404 fallback으로 가리지 않는다', async () => {
