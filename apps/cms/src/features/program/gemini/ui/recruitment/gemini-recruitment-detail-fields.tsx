@@ -11,16 +11,19 @@ import { formatOptionalText } from '../../lib/recruitment/format-recruitment-fie
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import {
-  ADMIN_FILE_PURPOSE,
   parseFileObjectId,
-  programFileOwner,
   programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
-import { programThumbnailOwner } from '@/features/program/shared/api/program-attachments'
+import {
+  programDetailAttachmentOwner,
+  programThumbnailOwner,
+} from '@/features/program/shared/api/program-attachments'
 import {
   fetchProgramThumbnail,
+  forgetProgramThumbnailPreviewBlob,
   loadProgramThumbnailPreviewUrl,
+  rememberProgramThumbnailPreviewBlob,
 } from '@/features/program/shared/api/program-thumbnail'
 import { FILE_SELECT_TOTAL_SIZE_GUIDE_LINE } from '@/shared/ui/file-select-field-limits'
 import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
@@ -32,9 +35,6 @@ import { GeminiRecruitmentRichTextEditor } from './gemini-recruitment-rich-text-
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './gemini-recruitment-detail-fields.css'
-
-/** 등록 중(programId 없음) 썸네일 임시 업로드 owner — 등록 직후 PUT /programs/{id}/thumbnail 로 연결 */
-const GEMINI_THUMBNAIL_STAGING_PROGRAM_OWNER_ID = 1
 
 const THUMBNAIL_GUIDE_LINES = [
   FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
@@ -157,8 +157,9 @@ export function GeminiRecruitmentDetailFields({
       try {
         const uploaded = await uploadAdminFileMaybeMock({
           file,
-          owner: programThumbnailOwner(programNumericId ?? GEMINI_THUMBNAIL_STAGING_PROGRAM_OWNER_ID),
+          owner: programThumbnailOwner(programNumericId),
         })
+        rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file)
         onChange({ thumbnailFileName: file.name, thumbnailFileObjectId: uploaded.fileObjectId })
       } catch {
         setThumbObjectUrl(prev => {
@@ -178,12 +179,13 @@ export function GeminiRecruitmentDetailFields({
   )
 
   const handleRemoveThumbnail = useCallback(() => {
+    forgetProgramThumbnailPreviewBlob(values.thumbnailFileObjectId)
     onChange?.({ thumbnailFileName: null, thumbnailFileObjectId: null })
     setThumbObjectUrl(prev => {
       revokeBlobUrl(prev)
       return null
     })
-  }, [onChange])
+  }, [onChange, values.thumbnailFileObjectId])
 
   useEffect(
     () => () => {
@@ -308,7 +310,7 @@ export function GeminiRecruitmentDetailFields({
                       ...files.map(file => file.name),
                     ],
                   })
-                  const owner = programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT)
+                  const owner = programDetailAttachmentOwner(programNumericId)
                   void (async () => {
                     for (const file of files) {
                       await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)

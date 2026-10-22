@@ -26,7 +26,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   isEphemeralThumbPreviewUrl,
-  RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
+  RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID,
   recruitDetailAttachmentFileNamesKey,
   recruitDetailAttachmentFileObjectIdsKey,
   recruitDetailThumbContentUrlKey,
@@ -36,7 +36,11 @@ import {
   resolveRecruitDetailThumbFileObjectId,
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
-import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
+import {
+  forgetProgramThumbnailPreviewBlob,
+  loadProgramThumbnailPreviewUrl,
+  rememberProgramThumbnailPreviewBlob,
+} from '@/features/program/shared/api/program-thumbnail'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
   contentUrlForFileObjectId,
@@ -405,8 +409,9 @@ export function RecruitDetailInfoParagraph({
           try {
             const uploaded = await uploadAdminFileMaybeMock({
               file: image,
-              owner: programThumbnailOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID),
+              owner: programThumbnailOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID),
             })
+            rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
@@ -450,12 +455,14 @@ export function RecruitDetailInfoParagraph({
     })
     setThumbFileName(null)
     setPersistedThumbObjectUrl(null)
+    forgetProgramThumbnailPreviewBlob(resolvedThumbFileObjectId)
     patchGeneralRecruitOverlay({
       [thumbFileObjectIdKey]: null,
       [thumbContentUrlKey]: null,
       [thumbObjectUrlKey]: null,
     })
   }, [
+    resolvedThumbFileObjectId,
     revokeThumb,
     setPersistedThumbObjectUrl,
     setThumbFileName,
@@ -479,7 +486,7 @@ export function RecruitDetailInfoParagraph({
       setUploadingAttachments(true)
       trackRecruitDetailMediaUpload(
         (async () => {
-          const owner = programDetailAttachmentOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID)
+          const owner = programDetailAttachmentOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID)
           const uploadedIds: number[] = []
           const failedIndexes = new Set<number>()
           try {

@@ -14,8 +14,11 @@ import type { Program } from '@/types/domain'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 
-/** 등록 전 업로드용 임시 PROGRAM ownerId (상세 수정의 `?? 1` 과 동일 관례) */
-export const RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID = 1
+/**
+ * 등록 전 썸네일·첨부 prepare owner.
+ * 프로그램이 아직 없으므로 `ownerId`는 null. 가짜 programId(1)를 쓰지 않는다.
+ */
+export const RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID = null
 
 let pendingRecruitDetailMediaUploads: Promise<unknown> = Promise.resolve()
 
