@@ -4140,6 +4140,7 @@
         "properties": {
           "fileObjectIds": {
             "type": "array",
+            "description": "전체 교체 대상 파일 ID. 입력 순서가 displayOrder가 되며 중복 ID는 첫 등장 순서만 유지한다. []는 전체 삭제다.",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -14361,10 +14362,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -24853,6 +24854,10 @@
           "inUse": {
             "type": "boolean"
           },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -24862,6 +24867,23 @@
             "format": "date-time"
           }
         }
+      },
+      "DetailedProgramBulkIdsRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "ids"
+        ]
       },
       "NoticeRequest": {
         "type": "object",
@@ -29266,6 +29288,86 @@
           "fileSize": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "DetailedProgramUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "nameKo": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DetailedProgramBulkUpdateItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nameKo": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DetailedProgramBulkUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailedProgramBulkUpdateItem"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ApiResponseListDetailedProgramResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "array",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "items": {
+              "$ref": "#/components/schemas/DetailedProgramResponse"
+            },
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
           }
         }
       },

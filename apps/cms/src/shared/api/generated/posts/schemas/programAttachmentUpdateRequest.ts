@@ -7,5 +7,6 @@
  */
 
 export interface ProgramAttachmentUpdateRequest {
+  /** 전체 교체 대상 파일 ID. 입력 순서가 displayOrder가 되며 중복 ID는 첫 등장 순서만 유지한다. []는 전체 삭제다. */
   fileObjectIds: number[];
 }

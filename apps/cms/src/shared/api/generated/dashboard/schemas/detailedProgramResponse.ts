@@ -15,6 +15,7 @@ export interface DetailedProgramResponse {
   createdByAdminId?: number;
   createdByName?: string;
   inUse?: boolean;
+  version?: number;
   createdAt?: string;
   updatedAt?: string;
 }
