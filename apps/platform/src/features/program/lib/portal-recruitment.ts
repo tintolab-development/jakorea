@@ -143,8 +143,17 @@ export function selectRecruitmentsForFocus(
   const exactId = requestedIds.length === 1 ? requestedIds[0] : undefined
 
   if (exactId != null) {
-    const rows = all.filter(row => row.recruitmentId === exactId)
     const requested = upperList(focus.applicationTypes)
+    const rows = all.filter(row => {
+      if (row.recruitmentId !== exactId) return false
+      if (requested.length === 0) return true
+
+      // 신청 상세에서 전달한 모집 유형은 모집행의 명시적인
+      // applicationTypes와 일치할 때만 확정한다. recruitmentType으로
+      // 유형을 추정하면 다른 모집행의 정보를 잘못 표시할 수 있다.
+      const listedTypes = upperList(row.applicationTypes)
+      return requested.every(type => listedTypes.includes(type))
+    })
     const fromRows = upperList(rows.flatMap(rowApplicationTypes))
     const applicationTypes =
       requested.length > 0 ? fromRows.filter(code => requested.includes(code)) : fromRows

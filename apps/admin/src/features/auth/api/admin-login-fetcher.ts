@@ -76,6 +76,7 @@ function unwrapChallengeResponse(payload: unknown): AdminMfaChallengeResponse | 
     challengeUuid,
     mfaMethod,
     expiresAt,
+    mfaSetupRequired: typeof o.mfaSetupRequired === 'boolean' ? o.mfaSetupRequired : undefined,
     totpSecret: readOptionalString(o.totpSecret) ?? readOptionalString(o.secret),
     otpauthUri: readOptionalString(o.otpauthUri),
     qrDataUrl: readOptionalString(o.qrDataUrl) ?? readOptionalString(o.qrCode),

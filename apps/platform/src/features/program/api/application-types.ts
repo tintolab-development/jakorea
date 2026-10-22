@@ -90,6 +90,8 @@ export type PortalPreferredScheduleSessionTime = {
 export type PortalPreferredScheduleBlock = {
   preferenceRank?: number
   date?: string
+  /** OpenAPI `PreferredScheduleBlock.dayOfWeek` — 표시는 `date`에서 파생. */
+  dayOfWeek?: string
   dateText?: string
   sessionCount?: number
   session?: string

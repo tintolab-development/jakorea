@@ -5,6 +5,7 @@
 
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api'
 import type { ConfirmRequest } from '@/shared/api/generated/careers/schemas/confirmRequest'
+import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 type PrepareRuntime = {
   assetId?: number
@@ -57,7 +58,7 @@ export async function uploadRecruitPostingAttachmentAsset(file: File): Promise<n
     headers['Content-Type'] = resolveContentType(file)
   }
 
-  const uploadRes = await fetch(uploadUrl, {
+  const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {
     method,
     headers,
     body: file,

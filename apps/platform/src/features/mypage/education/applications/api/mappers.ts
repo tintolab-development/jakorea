@@ -194,7 +194,8 @@ export function mapPortalProgramApplicationListItem(
   row: PortalProgramApplicationListItem,
 ): EducationApplicationListItem | null {
   const applicationType = readApplicationType(row.applicationType)
-  if (!applicationType || row.applicationId == null || row.programId == null) return null
+  const title = row.programTitle?.trim()
+  if (!applicationType || row.applicationId == null || row.programId == null || !title) return null
 
   const displayStatus = resolvePortalDisplayStatus(row)
   const detailCase = mapDetailCase(applicationType, row.programGroup)
@@ -208,7 +209,7 @@ export function mapPortalProgramApplicationListItem(
     programId: String(row.programId),
     recruitmentId: row.recruitmentId,
     categoryLabel: mapCategoryLabel(applicationType, row.programGroup),
-    title: row.programTitle?.trim() || '프로그램',
+    title,
     recruitmentPeriodLabel: formatDateRange(row.recruitmentStartAt, row.recruitmentEndAt),
     operatingPeriodLabel: formatDateRange(row.educationStartAt, row.educationEndAt),
     recruitmentStatus: mapRecruitmentStatus(displayStatus),
@@ -293,10 +294,11 @@ export function mapPortalProgramApplicationDetail(
     displayStatus:
       detail.displayStatus ??
       Object.entries(DISPLAY_STATUS_FROM_API).find(([, status]) => status === displayStatus)?.[0],
-    programTitle: detail.programTitle ?? detail.program?.title,
-    programId: detail.programId ?? detail.program?.programId,
-    programType: detail.programType ?? detail.program?.programType,
-    programGroup: detail.programGroup ?? detail.program?.programGroup,
+    // 상세 화면의 식별값·제목은 신청 상세 응답의 루트 필드만 사용한다.
+    // nested program 값으로 보정하면 다른 모집행 또는 오래된 projection이
+    // 화면에 섞일 수 있다.
+    programType: detail.programType,
+    programGroup: detail.programGroup,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
     educationStartAt: detail.educationStartAt ?? detail.program?.educationStartAt,
     educationEndAt: detail.educationEndAt ?? detail.program?.educationEndAt,

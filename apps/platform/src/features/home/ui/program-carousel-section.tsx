@@ -104,7 +104,7 @@ function EducationTitle({ title }: { title: string }) {
       <h2 className={styles.title}>
         새로운 배움이
         <br className={styles.titleBreak} />
-        기다리고 있어요
+        {' '}기다리고 있어요
       </h2>
     )
   }

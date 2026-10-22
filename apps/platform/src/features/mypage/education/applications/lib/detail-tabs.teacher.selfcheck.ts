@@ -5,6 +5,7 @@ import {
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveVolunteerActivityDetailCase,
 } from './detail-tabs.ts'
 import { hasTeacherAssignmentAsideContent } from '../model/types.ts'
@@ -151,6 +152,18 @@ const teacherInstructorProgramCase = buildTeacherInProgressDetailTabItems({
 assert.equal(
   teacherInstructorProgramCase.find(item => item.key === 'schedule')?.label,
   '교육 일정',
+)
+
+const ujatTeacher = buildTeacherInProgressDetailTabItems({
+  detailCase: 'ujat-participant',
+  scheduleTabLabel: UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
+  surveyConfigured: true,
+  satisfactionConfigured: true,
+  teacherStudentDocumentTabsVisible: false,
+})
+assert.deepEqual(
+  ujatTeacher.map(item => item.label),
+  ['안내사항', '봉사자 배정 현황', '설문조사', '만족도조사'],
 )
 
 console.log('detail-tabs.teacher.selfcheck: ok')

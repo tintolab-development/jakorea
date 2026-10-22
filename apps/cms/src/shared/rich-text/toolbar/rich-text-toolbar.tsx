@@ -2,7 +2,7 @@ import '@jakorea/rich-text/extension-types'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
 import type { MenuProps } from 'antd'
-import { useCallback, useMemo, useRef, type ChangeEvent } from 'react'
+import { useCallback, useId, useMemo, useRef, type ChangeEvent } from 'react'
 import {
   insertEmoji,
   insertHorizontalRule,
@@ -62,6 +62,8 @@ export type RichTextToolbarProps = {
   editor: Editor | null
   /** 본문 이미지 업로드 owner. 신규는 ownerId null */
   fileUploadOwner?: AdminFileUploadOwner | null
+  /** owner가 없는 공통/디자인 시스템 에디터에서만 세션 한정 data URL 삽입 허용 */
+  allowLocalImageDataUrl?: boolean
 }
 
 const EMPTY_TOOLBAR_STATE = {
@@ -121,8 +123,13 @@ function getActiveTextAlign(editor: Editor): TextAlignValue {
  * Figma 스펙 커스텀 툴바 — 드롭다운 + B/I/U/S·목록·삽입(이미지·YouTube 등).
  * 이미지 선택 시 `tiptap-extension-resize-image`가 크기·좌/중/우 정렬 UI를 표시한다.
  */
-export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProps) {
+export function RichTextToolbar({
+  editor,
+  fileUploadOwner,
+  allowLocalImageDataUrl = false,
+}: RichTextToolbarProps) {
   const imageFileInputRef = useRef<HTMLInputElement>(null)
+  const imageFileInputId = useId()
   const state =
     useEditorState({
       editor,
@@ -288,8 +295,15 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
       },
       {
         key: 'image-file',
-        label: '이미지 (파일)',
-        onClick: () => imageFileInputRef.current?.click(),
+        // Dropdown 메뉴의 onClick 안에서 input.click()/showPicker()를
+        // 호출하면 브라우저에 따라 사용자 제스처가 끊겨 파일 선택창이
+        // 열리지 않는다. native label 연결로 메뉴 클릭을 file input에
+        // 전달하면 Chrome/Safari의 파일 선택창 정책에도 안전하다.
+        label: (
+          <label htmlFor={imageFileInputId} className="rich-text-toolbar__file-menu-label">
+            이미지 (파일)
+          </label>
+        ),
       },
       {
         key: 'youtube',
@@ -311,7 +325,7 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
         onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
     ],
-    [run]
+    [imageFileInputId, run]
   )
 
   const handleImageFileChange = useCallback(
@@ -319,7 +333,10 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
       const file = event.target.files?.[0]
       event.target.value = ''
       if (!file || !editor) return
-      if (shouldInsertRichTextImageLocally(fileUploadOwner)) {
+      if (
+        fileUploadOwner == null &&
+        (allowLocalImageDataUrl || shouldInsertRichTextImageLocally(fileUploadOwner))
+      ) {
         insertImageFromFile(editor, file)
         return
       }
@@ -331,7 +348,7 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
         resolveRichTextInlineImageSrc(file, fileUploadOwner)
       )
     },
-    [editor, fileUploadOwner]
+    [allowLocalImageDataUrl, editor, fileUploadOwner]
   )
 
   if (!editor) return null
@@ -340,6 +357,7 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
     <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
       <input
         ref={imageFileInputRef}
+        id={imageFileInputId}
         type="file"
         accept={RICH_TEXT_IMAGE_ACCEPT}
         className="rich-text-toolbar__file-input"

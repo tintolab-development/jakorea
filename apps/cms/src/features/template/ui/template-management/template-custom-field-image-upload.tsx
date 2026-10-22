@@ -1,4 +1,5 @@
 import type { ChangeEvent, RefObject } from 'react'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { CmsButton } from '@/shared/ui'
 
 export interface TemplateCustomFieldImageUploadProps {
@@ -43,7 +44,7 @@ export function TemplateCustomFieldImageUpload({
           className="template-custom-fields-form__logo-file-btn"
           loading={uploading}
           disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => openFilePicker(fileInputRef.current)}
           aria-label={`${fieldLabel} 파일 선택`}
         >
           파일 변경

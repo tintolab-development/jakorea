@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { getTotpProvisioning, verifyTotp } from '@/entities/auth/api/mfa-service'
 import {
   OTP_LENGTH,
@@ -28,6 +29,8 @@ interface UseMfaVerificationResult {
   provisioning: TotpProvisioning | null
   provisioningLoading: boolean
   provisioningError: string | null
+  /** 첫 등록일 때만 QR을 보여 주고, 기등록 계정은 OTP만 받는다. */
+  showQrSetup: boolean
   isLocalTestMfa: boolean
   failedAttempts: number
   isLocked: boolean
@@ -56,6 +59,7 @@ export function useMfaVerification({
   const [provisioning, setProvisioning] = useState<TotpProvisioning | null>(null)
   const [provisioningLoading, setProvisioningLoading] = useState(false)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
+  const [forceOtpOnly, setForceOtpOnly] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [failedAttempts, setFailedAttempts] = useState(0)
   const [isLocked, setIsLocked] = useState(false)
@@ -84,6 +88,11 @@ export function useMfaVerification({
     isAdminLocalTestMfa(mfaState?.mfaMethod) &&
     !provisioning &&
     !provisioningLoading
+  const showQrSetup =
+    Boolean(mfaState?.challengeUuid) &&
+    mfaState?.mfaSetupRequired !== false &&
+    !isLocalTestMfa &&
+    !forceOtpOnly
 
   const clearOtpInput = useCallback(() => {
     runOnForm(formInstance => {
@@ -136,7 +145,7 @@ export function useMfaVerification({
   }, [isLocked, lockUntil, clearOtpInput, resetLockState])
 
   const refreshProvisioning = useCallback(async () => {
-    if (!user?.email) return
+    if (!showQrSetup || !user?.email) return
 
     setProvisioningLoading(true)
     setProvisioningError(null)
@@ -150,6 +159,12 @@ export function useMfaVerification({
       })
       setProvisioning(p)
     } catch (e: unknown) {
+      if (e instanceof AdminMfaApiError && e.code === 'MFA_ALREADY_ENROLLED') {
+        setForceOtpOnly(true)
+        setProvisioning(null)
+        setProvisioningError(null)
+        return
+      }
       setProvisioningError(unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.'))
       setProvisioning(null)
     } finally {
@@ -157,6 +172,7 @@ export function useMfaVerification({
     }
   }, [
     user?.email,
+    showQrSetup,
     mfaState?.challengeUuid,
     mfaState?.mfaMethod,
     mfaState?.totpSecret,
@@ -171,9 +187,10 @@ export function useMfaVerification({
     if (!open) {
       setProvisioning(null)
       setProvisioningError(null)
+      setForceOtpOnly(false)
       resetLockState()
     }
-  }, [open, user?.email, refreshProvisioning, resetLockState])
+  }, [open, showQrSetup, user?.email, refreshProvisioning, resetLockState])
 
   useEffect(() => {
     if (!open) {
@@ -320,6 +337,7 @@ export function useMfaVerification({
     provisioning,
     provisioningLoading,
     provisioningError,
+    showQrSetup,
     isLocalTestMfa,
     failedAttempts: clampMfaFailedAttempts(failedAttempts),
     isLocked,

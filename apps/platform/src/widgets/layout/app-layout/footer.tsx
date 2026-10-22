@@ -4,9 +4,6 @@ import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { useSiteFooter, type SiteFooterPartner } from '@/features/site-shell'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
-import facebookIconUrl from '@/shared/assets/icons/sns-facebook.svg'
-import instagramIconUrl from '@/shared/assets/icons/sns-instagram.svg'
-import youtubeIconUrl from '@/shared/assets/icons/sns-youtube.svg'
 import ministryLogoUrl from './image/logo/footer-logo-1.svg'
 import taxLogoUrl from './image/logo/footer-logo-2.svg'
 import rightsLogoUrl from './image/logo/footer-logo-3.svg'
@@ -30,12 +27,6 @@ const relatedSites = [
 
 const RELATED_SITES_SCROLL_THUMB_HEIGHT = 24
 const RELATED_SITES_SCROLLBAR_INSET = 8
-
-const socialLinks = [
-  { label: 'JA Korea 유튜브', iconUrl: youtubeIconUrl },
-  { label: 'JA Korea 인스타그램', iconUrl: instagramIconUrl },
-  { label: 'JA Korea 페이스북', iconUrl: facebookIconUrl },
-] as const
 
 const copyrightYear = new Date().getFullYear()
 
@@ -290,22 +281,24 @@ export function Footer() {
           <div className={styles.infoArea}>
             <p className={styles.address}>{footer.addressLine}</p>
 
-            <p className={styles.companyInfoLine}>
-              <span className={styles.infoDetail}>우편번호 : {footer.postalCode}</span>
-              <span className={styles.infoDetail}>대표 : {footer.representativeName}</span>
-              <span className={styles.infoDetail}>
-                사업자번호 : {footer.businessRegistrationNumber}
-              </span>
-            </p>
+            <div className={styles.companyInfoMobile}>
+              <p className={styles.companyInfoLine}>
+                <span className={styles.infoDetail}>우편번호 : {footer.postalCode}</span>
+                <span className={styles.infoDetail}>대표 : {footer.representativeName}</span>
+                <span className={styles.infoDetail}>
+                  사업자번호 : {footer.businessRegistrationNumber}
+                </span>
+              </p>
 
-            <p className={styles.companyInfoLine}>
-              <span className={styles.infoDetail}>대표전화 : {footer.phone}</span>
-              <span className={styles.infoDetail}>팩스 : {footer.fax}</span>
-            </p>
+              <p className={styles.companyInfoLine}>
+                <span className={styles.infoDetail}>대표전화 : {footer.phone}</span>
+                <span className={styles.infoDetail}>팩스 : {footer.fax}</span>
+              </p>
 
-            <p className={[styles.infoDetail, styles.companyInfoEmailOnly].join(' ')}>
-              이메일 : {footer.email}
-            </p>
+              <p className={[styles.infoDetail, styles.companyInfoEmailOnly].join(' ')}>
+                이메일 : {footer.email}
+              </p>
+            </div>
 
             <p className={styles.companyInfoLineDesktop}>
               <span className={styles.infoDetail}>우편번호 : {footer.postalCode}</span>
@@ -316,6 +309,9 @@ export function Footer() {
               <span className={styles.infoDetail}>대표전화 : {footer.phone}</span>
               <span className={styles.infoDetail}>팩스 : {footer.fax}</span>
               <span className={styles.infoDetail}>이메일 : {footer.email}</span>
+              <span className={[styles.infoDetail, styles.copyright].join(' ')}>
+                ©JA Korea, {copyrightYear}
+              </span>
             </p>
           </div>
 
@@ -323,13 +319,6 @@ export function Footer() {
             <p className={[styles.infoDetail, styles.copyright].join(' ')}>
               ©JA Korea, {copyrightYear}
             </p>
-            <div className={styles.socialLinks}>
-              {socialLinks.map(({ label, iconUrl }) => (
-                <a className={styles.socialLink} href="/" aria-label={label} key={label}>
-                  <img src={iconUrl} alt="" aria-hidden="true" />
-                </a>
-              ))}
-            </div>
           </div>
         </div>
       </div>

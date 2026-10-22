@@ -432,6 +432,14 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /** UJAT 기관 봉사자 배정 현황 — GET .../class-assignments */
+      classAssignments: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'class-assignments',
+          applicationType,
+          applicationId,
+        ] as const,
       /** 설문·만족도 — GET .../forms (Class C) */
       forms: (applicationType: string, applicationId: string, formType: string) =>
         [

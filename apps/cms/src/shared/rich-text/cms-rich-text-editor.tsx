@@ -15,6 +15,8 @@ type CmsRichTextEditorProps = Omit<RichTextEditorProps, 'toolbar'> & {
   toolbar?: RichTextEditorProps['toolbar']
   /** 본문 이미지 업로드 owner. 신규는 ownerId null */
   fileUploadOwner?: AdminFileUploadOwner | null
+  /** owner가 없는 공통/디자인 시스템 에디터에서만 세션 한정 data URL 삽입 허용 */
+  allowLocalImageDataUrl?: boolean
 }
 
 /** CMS Rich Text 에디터 — Ant Design 툴바 기본 포함 */
@@ -24,12 +26,17 @@ export function CmsRichTextEditor({
   toolbar,
   className,
   fileUploadOwner,
+  allowLocalImageDataUrl = false,
   ...rest
 }: CmsRichTextEditorProps) {
   const toolbarNode =
     toolbar ??
     (showToolbar ? (
-      <RichTextToolbar editor={editor} fileUploadOwner={fileUploadOwner} />
+      <RichTextToolbar
+        editor={editor}
+        fileUploadOwner={fileUploadOwner}
+        allowLocalImageDataUrl={allowLocalImageDataUrl}
+      />
     ) : null)
 
   return (
