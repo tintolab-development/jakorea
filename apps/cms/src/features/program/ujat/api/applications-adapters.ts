@@ -25,6 +25,7 @@ import type {
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -366,11 +367,7 @@ function mapInterviewAvailability(
     if (!startAt?.trim()) continue
     const start = new Date(startAt)
     if (Number.isNaN(start.getTime())) continue
-    const y = String(start.getFullYear()).slice(-2)
-    const m = String(start.getMonth() + 1).padStart(2, '0')
-    const d = String(start.getDate()).padStart(2, '0')
-    const weekday = start.toLocaleDateString('ko-KR', { weekday: 'short' })
-    const dateLabel = `${y}. ${m}. ${d}(${weekday})`
+    const dateLabel = formatDateDotWithWeekday(start)
     const hh = String(start.getHours()).padStart(2, '0')
     const mm = String(start.getMinutes()).padStart(2, '0')
     let timeRange = `${hh}:${mm}`

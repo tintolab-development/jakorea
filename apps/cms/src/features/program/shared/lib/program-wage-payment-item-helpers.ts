@@ -25,6 +25,7 @@ const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
   활동비: '참여자 활동비',
   '교통비(일사일교)': '강사 교통비',
   '숙박비(일사일교)': '숙박비 (1사1교)',
+  장거리교통비: '장거리 교통비',
 }
 
 const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
@@ -173,6 +174,10 @@ export function findProgramPaymentItemIdByLabel(label: string): string | undefin
  * - 찾지 못한 id는 제거한다(재선택 유도).
  * - 실제 목록을 아직 모르면(응답 전) 판정하지 않고 그대로 둔다.
  */
+function isLegacyMockPaymentItemId(id: string): boolean {
+  return Object.prototype.hasOwnProperty.call(LEGACY_MOCK_PAYMENT_ITEM_ID_TO_LABEL, id)
+}
+
 export function normalizeProgramPaymentItemIds(ids: readonly unknown[]): string[] {
   const tokens = ids.map(id => String(id ?? '').trim()).filter(Boolean)
   if (!isPaymentItemCatalogReady()) return tokens
@@ -185,6 +190,9 @@ export function normalizeProgramPaymentItemIds(ids: readonly unknown[]): string[
     } else {
       const legacyLabel = legacyMockPaymentItemLabel(id)
       next = legacyLabel ? findProgramPaymentItemIdByLabel(legacyLabel) : undefined
+      if (!next && !isLegacyMockPaymentItemId(id)) {
+        next = id
+      }
     }
     if (next && !out.includes(next)) out.push(next)
   }
@@ -320,12 +328,13 @@ export function resolveProgramPaymentItemIdsFromLabels(
       const exact = options.find(o => compactPaymentLabel(String(o.label)) === target)
       if (exact) return exact.value
       // 「숙박비 (1사1교)」가 「숙박비」에 먼저 걸리지 않도록 가장 긴 항목명을 고른다
-      return options
+      const longest = options
         .filter(o => {
           const label = compactPaymentLabel(String(o.label))
           return label.length > 0 && target.includes(label)
         })
         .sort((a, b) => String(b.label).length - String(a.label).length)[0]?.value
+      return longest ?? token
     })
     .filter((v, index, all): v is string => Boolean(v) && all.indexOf(v) === index)
 }

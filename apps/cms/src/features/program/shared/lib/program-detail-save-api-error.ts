@@ -1,4 +1,4 @@
-/** BE BAD_REQUEST — 학생·참여자 프로그램 숙박비 금지 */
+/** BE BAD_REQUEST — 레거시 숙박비 설정 거부 메시지. 설정 단계 제한은 제거됐으나 필드 매핑은 유지한다. */
 export const PROGRAM_LODGING_PAYMENT_ITEMS_MESSAGE_SNIPPET = '숙박비 지급 항목'
 
 export function isProgramLodgingPaymentItemsBadRequestMessage(message: string): boolean {

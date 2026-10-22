@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   isoDateFromScheduleInstant,
   type ProgramScheduleListItem,
@@ -58,16 +59,16 @@ export function listFridayIsoDatesInPeriod(startDate: string, endDate: string): 
 export function formatScheduleColumnTitle(isoDate: string): string {
   const d = dayjs(isoDate)
   if (!d.isValid()) return isoDate
-  return `${d.month() + 1}월 ${d.date()}일`
+  const label = formatDateDot(d)
+  return label === '-' ? isoDate : label
 }
 
-/** 교육 진행 희망일 등 표시용 — `26년 4월 24일(금)` */
+/** 교육 진행 희망일 등 표시용 — `2026.04.24(금)` */
 export function formatUjatInstitutionFridayDisplay(isoDate: string): string {
   const d = dayjs(isoDate)
   if (!d.isValid()) return isoDate
-  const yy = String(d.year()).slice(-2)
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${weekdays[d.day()]})`
+  const label = formatDateDotWithWeekday(d)
+  return label === '-' ? isoDate : label
 }
 
 export function sumGradeClassCounts(

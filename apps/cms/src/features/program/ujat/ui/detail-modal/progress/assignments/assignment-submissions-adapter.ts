@@ -7,6 +7,7 @@ import type {
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 import { formatAssignmentDateLabel } from './assignment-display'
+import { formatDateDot } from '@/shared/utils/date'
 import type {
   UjatAssignmentReportState,
   UjatAssignmentReportStatus,
@@ -21,7 +22,7 @@ const SEOUL_YMD_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 })
 
-/** ISO 시각 또는 `YYYY-MM-DD` → Asia/Seoul `YY. MM. DD` */
+/** ISO 시각 또는 `YYYY-MM-DD` → Asia/Seoul `YYYY.MM.DD` */
 export function formatAssignmentShortDate(value: string | null | undefined): string | undefined {
   const raw = value?.trim()
   if (!raw) return undefined
@@ -33,7 +34,7 @@ export function formatAssignmentShortDate(value: string | null | undefined): str
   }
   const [y, m, d] = ymd.split('-')
   if (!y || !m || !d) return undefined
-  return `${y.slice(2)}. ${m}. ${d}`
+  return formatDateDot(`${y}-${m}-${d}`)
 }
 
 function formatPeriodLabel(period: UjatAssignmentDatePeriodDto | null | undefined): string {

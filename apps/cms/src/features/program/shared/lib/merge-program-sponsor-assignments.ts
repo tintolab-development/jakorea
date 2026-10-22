@@ -63,12 +63,27 @@ export function mergeProgramSponsorAssignments(
   const sponsorManagerContactIds: string[] = []
   const sponsorManagerContactNames: Record<string, string> = {}
   for (const row of valid) {
-    const contactId = row.sponsorContactId != null ? String(row.sponsorContactId).trim() : ''
-    if (!contactId) continue
-    const ref = encodeSponsorManagerContactRef(String(row.sponsorId).trim(), contactId)
-    if (!sponsorManagerContactIds.includes(ref)) sponsorManagerContactIds.push(ref)
-    const contactName = row.sponsorContactName?.trim()
-    if (contactName) sponsorManagerContactNames[ref] = contactName
+    const sponsorId = String(row.sponsorId).trim()
+    const nestedContacts =
+      row.sponsorContacts?.map(contact => ({
+        id: contact.sponsorContactId != null ? String(contact.sponsorContactId).trim() : '',
+        name: contact.sponsorContactName?.trim() ?? '',
+      })) ?? []
+    const contacts =
+      nestedContacts.length > 0
+        ? nestedContacts
+        : [
+            {
+              id: row.sponsorContactId != null ? String(row.sponsorContactId).trim() : '',
+              name: row.sponsorContactName?.trim() ?? '',
+            },
+          ]
+    for (const contact of contacts) {
+      if (!contact.id) continue
+      const ref = encodeSponsorManagerContactRef(sponsorId, contact.id)
+      if (!sponsorManagerContactIds.includes(ref)) sponsorManagerContactIds.push(ref)
+      if (contact.name) sponsorManagerContactNames[ref] = contact.name
+    }
   }
   const hasContact = sponsorManagerContactIds.length > 0
   const managerName = hasContact

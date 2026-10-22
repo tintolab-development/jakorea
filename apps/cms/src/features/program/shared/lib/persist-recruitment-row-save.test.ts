@@ -268,7 +268,7 @@ describe('persist-recruitment-row-save', () => {
           participantRecruitmentInfo: {
             recruitmentTarget: '고등학생',
             remarks: '수정된 비고',
-            finalAnnouncementLabel: '2026. 12. 01. | 홈페이지',
+            finalAnnouncementLabel: '2026.12.01. | 홈페이지',
           },
         },
       },
@@ -306,7 +306,7 @@ describe('persist-recruitment-row-save', () => {
           instructorRecruitmentInfo: {
             recruitmentTarget: '현직 강사',
             remarks: '수정된 비고',
-            finalAnnouncementLabel: '2026. 12. 02. | 문자',
+            finalAnnouncementLabel: '2026.12.02. | 문자',
           },
         },
       },

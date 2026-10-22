@@ -65,6 +65,10 @@ describe('company-school adapters', () => {
     expect(request.businessEndDate).toBe(program.endDate)
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
+    expect(request.paymentItems).toEqual([
+      { itemType: 'TRANSPORTATION', useYn: true },
+      { itemType: 'LODGING', useYn: true },
+    ])
   })
 
   it('create 요청에 참여 기관 모집 비고를 remarks로 싣는다', () => {
@@ -162,9 +166,6 @@ describe('company-school adapters', () => {
           },
         },
       }),
-      settlementPolicy: {
-        paymentItems: [{ itemType: 'TRANSPORTATION', useYn: true }],
-      },
     } as ProgramResponse)
 
     expect(mapped.title).toBe('수정테스트용 1사1교')
@@ -172,6 +173,26 @@ describe('company-school adapters', () => {
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('1사1교 경제금융교육')
     expect(typeof mapped.generalCommonInfo?.paymentItems).toBe('string')
     expect(mapped.generalCommonInfo?.paymentItems).toContain('p-166202')
+  })
+
+  it('settlementPolicy.paymentItems가 있으면 JSON 라벨보다 구조화 항목을 우선한다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186016',
+      title: '수정테스트용 1사1교',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            paymentItems: ['p-166202', 'p-166204'],
+          },
+        },
+      }),
+      settlementPolicy: {
+        paymentItems: [{ itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비')
   })
 
   it('상세 응답의 businessField alias도 사업 분야로 읽는다', () => {
@@ -193,7 +214,7 @@ describe('company-school adapters', () => {
         program: {
           generalCommonInfo: {
             educationScheduleMode: 'period',
-            educationScheduleLines: ['2026. 11. 22 ~ 2026. 12. 23'],
+            educationScheduleLines: ['2026.11.22 ~ 2026.12.23'],
           },
         },
       }),
@@ -237,7 +258,7 @@ describe('company-school adapters', () => {
     } as ProgramResponse)
 
     expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('120,000원')
-    expect(mapped.generalCommonInfo?.paymentItems).toBe('p-166201, p-166202')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비')
   })
 
   it('186014처럼 object serviceDetailJson + 루트 generalCommonInfo(임금 없음)여도 program 쪽 임금을 쓴다', () => {
@@ -283,8 +304,7 @@ describe('company-school adapters', () => {
 
     expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('170,000원')
     expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('30,000원')
-    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비(일사일교), 숙박비(일사일교)')
-    expect(mapped.generalCommonInfo?.paymentItems).not.toContain('LONG_DISTANCE')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비, 장거리 교통비, 숙박비')
     expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).not.toContain('500,000')
   })
 
@@ -323,7 +343,46 @@ describe('company-school adapters', () => {
     } as ProgramResponse)
 
     expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('170,000원')
-    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비(일사일교), 숙박비(일사일교)')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비, 장거리 교통비, 숙박비')
+  })
+
+  it('Create는 숙박비·장거리 교통비를 paymentItems로 보낸다', () => {
+    const request = mapCompanySchoolToCreateRequest({
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        paymentItems: '숙박비, 장거리 교통비, 식사비',
+      },
+    })
+    expect(request.paymentItems).toEqual([
+      { itemType: 'LODGING', useYn: true },
+      { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+      { itemType: 'MEAL', useYn: true },
+    ])
+  })
+
+  it('지급 항목 외 PATCH는 상위 paymentItems를 omit한다', () => {
+    const request = mapCompanySchoolToUpdateRequest(program, { title: '제목만' })
+    expect(request).not.toHaveProperty('paymentItems')
+  })
+
+  it('전체 지급 항목 해제는 paymentItems: []를 보낸다', () => {
+    const request = mapCompanySchoolToUpdateRequest(program, {
+      generalCommonInfo: { paymentItems: '해당없음' },
+    })
+    expect(request.paymentItems).toEqual([])
+  })
+
+  it('settlementPolicy.paymentItems []는 JSON overlay 지급 항목을 덮어 빈 상태로 둔다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186014',
+      title: '기업가정신 스타트업 체험',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: { paymentItems: '숙박비(일사일교)' },
+      }),
+      settlementPolicy: { paymentItems: [] },
+    } as ProgramResponse)
+    expect(mapped.generalCommonInfo?.paymentItems).toBeUndefined()
   })
 
   it('round-trips school, instructor, wage and payment details without volunteers', () => {
@@ -448,7 +507,7 @@ describe('company-school adapters', () => {
       generalCommonInfo: {
         ...program.generalCommonInfo,
         participantRecruitmentInfo: {
-          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          recruitmentPeriodLabel: '2026.10.03 ~ 2026.10.07',
           contactOrganizationName: '담당자',
         },
         instructorRecruitmentInfo: {
@@ -574,7 +633,7 @@ describe('company-school adapters', () => {
       generalCommonInfo: {
         ...program.generalCommonInfo,
         participantRecruitmentInfo: {
-          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          recruitmentPeriodLabel: '2026.10.03 ~ 2026.10.07',
           preEducationNoticeRequired: true,
         },
       },

@@ -16,10 +16,12 @@
 
 .writing-template-select-modal__hint {
   margin: 0;
-  color: rgba(61, 61, 61, 0.72);
-  font-size: 13px;
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .writing-template-select-modal__search {
@@ -201,9 +203,9 @@
   white-space: nowrap;
 }
 
-.writing-template-select-modal__action-btn--preview.cms-button.ant-btn:not(
-    :disabled
-  ):not(.ant-btn-disabled) {
+.writing-template-select-modal__action-btn--preview.cms-button.ant-btn:not(:disabled):not(
+    .ant-btn-disabled
+  ) {
   color: var(--main-BK, #3d3d3d) !important;
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
   background: var(--default-WT, #fff) !important;
@@ -214,12 +216,8 @@
   ) {
   color: var(--color-mint-01, #01a1af) !important;
   border: 1px solid var(--color-mint-01, #01a1af) !important;
-  background: linear-gradient(
-      0deg,
-      rgba(1, 161, 175, 0.06) 0%,
-      rgba(1, 161, 175, 0.06) 100%
-    ),
-    #fff !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
 }
 
 .writing-template-select-modal__pagination {

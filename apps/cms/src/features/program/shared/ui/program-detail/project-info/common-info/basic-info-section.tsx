@@ -13,6 +13,7 @@ import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import { Controller } from 'react-hook-form'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
@@ -292,10 +293,6 @@ function optionLabel(
 ): string {
   if (!value) return '-'
   return options.find(option => option.value === value)?.label ?? value
-}
-
-function dateRangeUsesClockTime(range: [Dayjs, Dayjs]): boolean {
-  return range.some(d => d.hour() !== 0 || d.minute() !== 0 || d.second() !== 0)
 }
 
 export function BasicInfoSection({
@@ -725,7 +722,7 @@ export function BasicInfoSection({
                     const end = toDayjs(commonInfoForm.watch('endDate'))
                     const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
                     const operationRangeWithTime =
-                      operationRange != null ? dateRangeUsesClockTime(operationRange) : false
+                      operationRange != null ? dateRangeUsesClockTime(operationRange[0], operationRange[1]) : false
 
                     return (
                       <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -1311,7 +1308,7 @@ export function BasicInfoSection({
                 const end = toDayjs(commonInfoForm.watch('endDate'))
                 const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
                 const operationRangeWithTime =
-                  operationRange != null ? dateRangeUsesClockTime(operationRange) : false
+                  operationRange != null ? dateRangeUsesClockTime(operationRange[0], operationRange[1]) : false
 
                 return (
                   <div className="detail-info-form-inputs-wrapper-no-gap">

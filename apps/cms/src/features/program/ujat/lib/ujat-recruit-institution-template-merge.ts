@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import { formatDateDot, formatDateRangeDot } from '@/shared/utils/date'
 import type { Program } from '@/types/domain'
 import type { DateValue } from '@/types'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -308,7 +308,9 @@ export function formatUjatRecruitInstitutionTemplatePreviewDates(
 ): string | undefined {
   if (!start && !end) return undefined
   if (start && end) {
-    return `${dayjs(start).format('YYYY. MM. DD')} ~ ${dayjs(end).format('YYYY. MM. DD')}`
+    const range = formatDateRangeDot(start, end)
+    return range === '-' ? undefined : range
   }
-  return start ? dayjs(start).format('YYYY. MM. DD') : end ? dayjs(end).format('YYYY. MM. DD') : undefined
+  const single = formatDateDot(start ?? end)
+  return single === '-' ? undefined : single
 }

@@ -31,6 +31,7 @@ const AREA_CODES = new Set([
 const DATE_FORMATS = [
   'YYYY-MM-DD',
   'YYYY-M-D',
+  'YYYY.MM.DD',
   'YYYY.M.D',
   'YYYY. M. D',
   'YYYY/M/D',

@@ -14,8 +14,8 @@ describe('ujat education schedule change lines', () => {
 
     const line = ujatEventRangeToScheduleLine(seal)
 
-    expect(line).toContain('26년 4월 3일')
-    expect(line).toContain('26년 6월 19일')
+    expect(line).toContain('2026.04.03')
+    expect(line).toContain('2026.06.19')
     const restored = ujatScheduleLineToEventRange(line)
     expect(dayjs(restored.start).isSame(start, 'day')).toBe(true)
     expect(dayjs(restored.end).isSame(end, 'day')).toBe(true)
