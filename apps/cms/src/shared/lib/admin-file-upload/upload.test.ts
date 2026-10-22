@@ -4,6 +4,7 @@ import {
   copyRequiredHeaders,
   createUploadRequest,
   getFileStatus,
+  resolvePresignedUploadUrl,
   uploadAdminFile,
   uploadToS3,
   waitUntilFileAvailable,
@@ -81,12 +82,22 @@ describe('admin file upload', () => {
     ).rejects.toThrow('Presigned URL CORS')
   })
 
-  it('uploadToS3는 상대 경로 uploadUrl을 거부한다', async () => {
+  it('상대 경로 uploadUrl은 현재 origin 기준으로 해석한다', () => {
+    expect(resolvePresignedUploadUrl('/api/admin/files/uploads/raw/key?signature=test')).toBe(
+      'http://localhost/api/admin/files/uploads/raw/key?signature=test'
+    )
+  })
+
+  it('uploadToS3는 로컬 상대 경로 signed URL에도 PUT한다', async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 200 } as Response)
     const file = new File(['pdf'], 'form.pdf', { type: 'application/pdf' })
-    await expect(
-      uploadToS3('/prod/quarantine/key', file, { 'Content-Type': 'application/pdf' })
-    ).rejects.toThrow('Presigned upload URL이 올바르지 않습니다.')
-    expect(fetch).not.toHaveBeenCalled()
+    await uploadToS3('/api/admin/files/uploads/raw/key', file, {
+      'Content-Type': 'application/pdf',
+    })
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost/api/admin/files/uploads/raw/key',
+      expect.objectContaining({ method: 'PUT' })
+    )
   })
 
   it('uploadToS3는 파일 MIME과 서명 Content-Type이 다르면 body type을 맞춘다', async () => {
