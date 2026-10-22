@@ -443,7 +443,7 @@ export function ReportListPanel({ kind }: Props) {
 
         <div className="rd-list__table-scroll">
           <Table<TransparencyReport>
-            className="cms-data-table rd-list__table"
+            className={`cms-data-table cms-data-table--hoverable rd-list__table rd-list__table--${kind}`}
             rowKey="id"
             loading={listQuery.isLoading}
             dataSource={rows}
