@@ -17,19 +17,12 @@ function recruitGuideErrorCode(error: unknown): string {
   return readApiErrorCode(error) ?? (error instanceof Error ? error.message : '')
 }
 
-function readErrorMeta(error: unknown): { field?: string; traceId?: string } {
-  if (!error || typeof error !== 'object') return {}
+function readErrorField(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined
   const data = (error as { response?: { data?: unknown } }).response?.data
-  if (!data || typeof data !== 'object') return {}
-  const record = data as { field?: unknown; traceId?: unknown }
-  return {
-    field:
-      typeof record.field === 'string' && record.field.trim() ? record.field.trim() : undefined,
-    traceId:
-      typeof record.traceId === 'string' && record.traceId.trim()
-        ? record.traceId.trim()
-        : undefined,
-  }
+  if (!data || typeof data !== 'object') return undefined
+  const field = (data as { field?: unknown }).field
+  return typeof field === 'string' && field.trim() ? field.trim() : undefined
 }
 
 export function isRecruitGuideVersionConflict(error: unknown): boolean {
@@ -47,7 +40,7 @@ function mapRecruitGuideSaveFailureAlert(
   fallbackContent: string
 ): { title: string; content: string } {
   const code = recruitGuideErrorCode(error)
-  const { field } = readErrorMeta(error)
+  const field = readErrorField(error)
 
   if (code === 'BANNER_IMAGE_REQUIRED') {
     return { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' }
@@ -184,8 +177,5 @@ export function recruitGuideSaveFailureAlert(
   error: unknown,
   fallbackContent: string
 ): { title: string; content: string } {
-  const alert = mapRecruitGuideSaveFailureAlert(error, fallbackContent)
-  const { traceId } = readErrorMeta(error)
-  if (!traceId) return alert
-  return { ...alert, content: `${alert.content}\n추적번호: ${traceId}` }
+  return mapRecruitGuideSaveFailureAlert(error, fallbackContent)
 }
