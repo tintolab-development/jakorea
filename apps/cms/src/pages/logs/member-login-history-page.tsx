@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { exportMemberLoginLogs, getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import {
+  exportMemberLoginLogs,
+  getLogsApiErrorMessage,
+} from '@/features/logs/api/admin-logs-service'
 import { memberLoginLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useMemberLoginHistoryQuery } from '@/features/logs/hooks/use-member-login-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
@@ -47,17 +50,13 @@ export default function MemberLoginHistoryPage() {
     fetchNextPage,
   } = useMemberLoginHistoryQuery(searchParams)
 
-  const { pendingFilters, handleFilterChange, applySearch, tableData,
-    hasActiveFilters,
-  } = useTablePage(
-    memberLoginHistoryTablePageConfig,
-    {
+  const { pendingFilters, handleFilterChange, applySearch, tableData, hasActiveFilters } =
+    useTablePage(memberLoginHistoryTablePageConfig, {
       data: rows,
       searchParams,
       setSearchParams,
       context: EMPTY_TABLE_PAGE_CONTEXT,
-    }
-  )
+    })
 
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
@@ -121,7 +120,7 @@ export default function MemberLoginHistoryPage() {
     } catch (error) {
       showAlert({
         title: '안내',
-        content: getLogsApiErrorMessage(error, '회원 로그인 이력 다운로드에 실패했습니다.'),
+        content: getLogsApiErrorMessage(error, '관리자 로그인 이력 다운로드에 실패했습니다.'),
       })
     } finally {
       setIsExporting(false)
@@ -140,7 +139,7 @@ export default function MemberLoginHistoryPage() {
       }}
       onFilterChange={handleFilterChange}
       onSearch={applySearch}
-      title="회원 로그인 이력"
+      title="관리자 로그인 이력"
       description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
       onExcelDownload={exportExcel}
@@ -150,7 +149,7 @@ export default function MemberLoginHistoryPage() {
         <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
       ) : isError ? (
         <LogsQueryError
-          message={getLogsApiErrorMessage(error, '회원 로그인 이력을 불러오지 못했습니다.')}
+          message={getLogsApiErrorMessage(error, '관리자 로그인 이력을 불러오지 못했습니다.')}
         />
       ) : (
         <>

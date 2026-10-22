@@ -8,6 +8,7 @@ import {
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
   exportMemberLoginHistoryRemote,
+  exportPrivacyAccessLogsRemote,
   fetchFileAccessLogsRemote,
   fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
@@ -16,6 +17,7 @@ import {
 } from '@/features/logs/api/logs-api-client'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member-login-excel'
+import { buildPersonalInfoAccessHistoryExcelFilename } from '@/features/logs/lib/personal-info-access-excel'
 import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { BugIssueLog } from '@/types/bug-issue-log'
@@ -56,6 +58,28 @@ export async function getPersonalInfoAccessLogsPage(
   return mapPersonalInfoAccessLogListPageResponse(dto)
 }
 
+export async function exportPersonalInfoAccessLogs(
+  filters: Record<string, string> = {}
+): Promise<void> {
+  assertLogsRemoteApiReady()
+  const blob = await exportPrivacyAccessLogsRemote(filters)
+  if (blob.type.includes('json')) {
+    const text = await blob.text()
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: { message?: string } }
+      throw new Error(
+        parsed.error?.message ?? parsed.message ?? '개인정보 조회 이력 다운로드에 실패했습니다.'
+      )
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'Unexpected end of JSON input') {
+        throw error
+      }
+      throw new Error('개인정보 조회 이력 다운로드에 실패했습니다.')
+    }
+  }
+  await downloadBlob(blob, `${buildPersonalInfoAccessHistoryExcelFilename()}.xlsx`)
+}
+
 export async function getMemberLoginLogsPage(
   filters: Record<string, string> = {},
   page = 0,
@@ -77,12 +101,12 @@ export async function exportMemberLoginLogs(
     const text = await blob.text()
     try {
       const parsed = JSON.parse(text) as { message?: string; error?: { message?: string } }
-      throw new Error(parsed.error?.message ?? parsed.message ?? '회원 로그인 이력 다운로드에 실패했습니다.')
+      throw new Error(parsed.error?.message ?? parsed.message ?? '관리자 로그인 이력 다운로드에 실패했습니다.')
     } catch (error) {
       if (error instanceof Error && error.message !== 'Unexpected end of JSON input') {
         throw error
       }
-      throw new Error('회원 로그인 이력 다운로드에 실패했습니다.')
+      throw new Error('관리자 로그인 이력 다운로드에 실패했습니다.')
     }
   }
   await downloadBlob(blob, `${buildMemberLoginHistoryExcelFilename()}.xlsx`)

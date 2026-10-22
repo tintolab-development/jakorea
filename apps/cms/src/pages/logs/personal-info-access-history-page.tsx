@@ -1,8 +1,12 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import {
+  exportPersonalInfoAccessLogs,
+  getLogsApiErrorMessage,
+} from '@/features/logs/api/admin-logs-service'
+import { personalInfoAccessLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { usePersonalInfoAccessHistoryQuery } from '@/features/logs/hooks/use-personal-info-access-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { personalInfoAccessHistoryFilterFields } from '@/features/logs/model/personal-info-access-history-filter-fields'
@@ -15,6 +19,7 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { useCmsAlert } from '@/shared/ui'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -118,12 +123,32 @@ export default function PersonalInfoAccessHistoryPage() {
     [totalElements]
   )
 
+  const { showAlert } = useCmsAlert()
+  const [isExporting, setIsExporting] = useState(false)
+  const exportExcel = useCallback(async () => {
+    if (!remoteEnabled || isExporting) return
+    setIsExporting(true)
+    try {
+      await exportPersonalInfoAccessLogs(
+        personalInfoAccessLogsParamsFromSearchParams(searchParams)
+      )
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getLogsApiErrorMessage(error, '개인정보 조회 이력 다운로드에 실패했습니다.'),
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }, [isExporting, remoteEnabled, searchParams, showAlert])
+
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
       bordered={false}
       fields={personalInfoAccessHistoryFilterFields}
       filters={{
+        targetName: pendingFilters.targetName,
         accessPurpose: pendingFilters.accessPurpose,
         accessorName: pendingFilters.accessorName,
         dateRange: pendingFilters.dateRange,
@@ -133,10 +158,8 @@ export default function PersonalInfoAccessHistoryPage() {
       title="개인정보 조회 이력"
       description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
-      excelExport={{
-        columns,
-        data: tableData,
-      }}
+      onExcelDownload={exportExcel}
+      excelDownloadLoading={isExporting}
     >
       {!remoteEnabled ? (
         <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
