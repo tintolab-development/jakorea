@@ -9,10 +9,7 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import {
-  NotificationDropdown,
-  type HeaderNotification,
-} from './notification-dropdown'
+import { NotificationDropdown, type HeaderNotification } from './notification-dropdown'
 import './main-header.css'
 
 const { Header: AntHeader } = Layout
@@ -58,24 +55,15 @@ export function MainHeader() {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
 
-  const categoryName = useMemo(
-    () => getCategoryNameByPath(location.pathname),
-    [location.pathname]
-  )
+  const categoryName = useMemo(() => getCategoryNameByPath(location.pathname), [location.pathname])
 
-  const unreadCount = useMemo(
-    () => notifications.filter(n => !n.read).length,
-    [notifications]
-  )
+  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications])
 
-  const roleLabel =
-    user?.adminLevel === 'MASTER' || !user?.adminLevel ? '최고관리자' : '관리자'
+  const roleLabel = user?.adminLevel === 'MASTER' || !user?.adminLevel ? '최고관리자' : '관리자'
   const displayName = user?.name?.trim() || user?.email || '관리자'
 
   const handleNotificationClick = (notification: HeaderNotification) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === notification.id ? { ...n, read: true } : n))
-    )
+    setNotifications(prev => prev.map(n => (n.id === notification.id ? { ...n, read: true } : n)))
   }
 
   const handleAccountMenuAction = (action: 'profile' | 'notification' | 'logout') => {
