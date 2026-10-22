@@ -142,7 +142,7 @@ export class DetailedProgramManagementPage {
     await nameInput.fill(this.uniqueNameUpdated)
 
     const patchPromise = this.page.waitForResponse(
-      res => isAdminMutation(res, 'PATCH', /\/api\/admin\/detailed-programs\/[^/]+\/?$/),
+      res => isAdminMutation(res, 'PATCH', /\/api\/admin\/detailed-programs\/bulk-update\/?$/),
       { timeout: 60_000 }
     )
     await this.page.getByRole('button', { name: '정보 수정' }).click()
@@ -151,6 +151,10 @@ export class DetailedProgramManagementPage {
       const body = await patch.text().catch(() => '')
       throw new Error(`세부 프로그램 수정 API 실패: HTTP ${patch.status()} ${body.slice(0, 400)}`)
     }
+    const done = this.page.getByRole('dialog').filter({ hasText: '수정 완료' })
+    await expect(done).toBeVisible({ timeout: 15_000 })
+    await done.getByRole('button', { name: '확인' }).click()
+    await expect(done).toBeHidden({ timeout: 10_000 })
     await expect(this.page.getByRole('button', { name: '정보 수정' })).toBeVisible({
       timeout: 15_000,
     })
@@ -164,7 +168,7 @@ export class DetailedProgramManagementPage {
     await this.search()
     await selectRowCheckbox(this.page, name)
     await this.page.getByRole('button', { name: '항목 삭제' }).click()
-    const guide = this.page.getByRole('dialog').filter({ hasText: '세부 프로그램 삭제' })
+    const guide = this.page.getByRole('dialog').filter({ hasText: '세부 프로그램 삭제 안내' })
     await expect(guide).toBeVisible()
     await expect(guide.getByText('해당 세부 프로그램을 삭제하시겠습니까?')).toBeVisible()
     await expect(guide.getByText('삭제된 정보는 되돌릴 수 없습니다.')).toBeVisible()
@@ -180,6 +184,12 @@ export class DetailedProgramManagementPage {
       throw new Error(
         `세부 프로그램 삭제 API 실패: HTTP ${deleteResponse.status()} ${body.slice(0, 400)}`
       )
+    }
+    if (deleteResponse.ok()) {
+      const done = this.page.getByRole('dialog').filter({ hasText: '삭제 완료' })
+      await expect(done).toBeVisible({ timeout: 15_000 })
+      await done.getByRole('button', { name: '확인' }).click()
+      await expect(done).toBeHidden({ timeout: 10_000 })
     }
     return deleteResponse
   }
