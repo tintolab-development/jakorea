@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { formatDateDot } from '@/shared/utils'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import {
   CmsButton,
   DeleteGuideModal,
@@ -188,7 +189,7 @@ export function GeminiPerformanceList() {
 
   const handleAddReportClick = useCallback(() => {
     if (!canWrite) return
-    fileInputRef.current?.click()
+    openFilePicker(fileInputRef.current)
   }, [canWrite])
 
   const clearPendingImport = useCallback(() => {

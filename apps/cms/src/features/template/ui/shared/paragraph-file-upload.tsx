@@ -1,4 +1,5 @@
 import { useRef, type ChangeEvent, type CSSProperties } from 'react'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
   FileAttachmentEmpty,
@@ -137,7 +138,7 @@ export function ParagraphFileUpload({
           aria-disabled={interactionLocked || undefined}
           onClick={() => {
             if (interactionLocked) return
-            inputRef.current?.click()
+            openFilePicker(inputRef.current)
           }}
         >
           {buttonLabel}

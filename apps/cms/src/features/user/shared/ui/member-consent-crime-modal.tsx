@@ -22,6 +22,7 @@ import type { MemberConsentCrimeDraftSnapshot } from '@/features/user/shared/lib
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import {
   CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
   CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
@@ -99,7 +100,7 @@ export function MemberConsentCrimeModal({
   }, [open, savedSnapshot])
 
   const handlePickDocument = useCallback(() => {
-    fileInputRef.current?.click()
+    openFilePicker(fileInputRef.current)
   }, [])
 
   const handleFileChange = useCallback(

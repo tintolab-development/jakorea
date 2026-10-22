@@ -8,6 +8,7 @@
 
 import { useEffect, useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
@@ -143,7 +144,7 @@ export function FileSelectField({
           variant="secondary"
           size="h32"
           disabled={fieldDisabled}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => openFilePicker(inputRef.current)}
         >
           {buttonLabel}
         </CmsButton>
