@@ -25,8 +25,12 @@ import {
   useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
+  persistRecruitDetailDraftMediaFromOverlay,
+  recruitDetailDraftMediaRestorePatch,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session'
+import {
   isEphemeralThumbPreviewUrl,
-  RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
+  RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID,
   recruitDetailAttachmentFileNamesKey,
   recruitDetailAttachmentFileObjectIdsKey,
   recruitDetailThumbContentUrlKey,
@@ -36,7 +40,11 @@ import {
   resolveRecruitDetailThumbFileObjectId,
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
-import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
+import {
+  forgetProgramThumbnailPreviewBlob,
+  loadProgramThumbnailPreviewUrl,
+  rememberProgramThumbnailPreviewBlob,
+} from '@/features/program/shared/api/program-thumbnail'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
   contentUrlForFileObjectId,
@@ -345,6 +353,12 @@ export function RecruitDetailInfoParagraph({
   }, [])
 
   useEffect(() => {
+    const patch = recruitDetailDraftMediaRestorePatch(overlayScope, overlayKeyPrefix)
+    if (patch == null) return
+    patchGeneralRecruitOverlay(patch)
+  }, [overlayKeyPrefix, overlayScope])
+
+  useEffect(() => {
     if (!isEphemeralThumbPreviewUrl(persistedThumbObjectUrl)) return
     setPersistedThumbObjectUrl(null)
   }, [persistedThumbObjectUrl, setPersistedThumbObjectUrl])
@@ -405,19 +419,23 @@ export function RecruitDetailInfoParagraph({
           try {
             const uploaded = await uploadAdminFileMaybeMock({
               file: image,
-              owner: programThumbnailOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID),
+              owner: programThumbnailOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID),
+              waitUntilAvailable: true,
             })
+            rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
               [thumbObjectUrlKey]: null,
             })
+            persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } catch {
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
               [thumbObjectUrlKey]: null,
             })
+            persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
             setLivePreviewUrl(prev => {
               revokeThumb(prev)
               return null
@@ -433,6 +451,8 @@ export function RecruitDetailInfoParagraph({
       revokeThumb,
       setPersistedThumbObjectUrl,
       setThumbFileName,
+      overlayKeyPrefix,
+      overlayScope,
       thumbContentUrlKey,
       thumbFileObjectIdKey,
       thumbObjectUrlKey,
@@ -450,12 +470,17 @@ export function RecruitDetailInfoParagraph({
     })
     setThumbFileName(null)
     setPersistedThumbObjectUrl(null)
+    forgetProgramThumbnailPreviewBlob(resolvedThumbFileObjectId)
     patchGeneralRecruitOverlay({
       [thumbFileObjectIdKey]: null,
       [thumbContentUrlKey]: null,
       [thumbObjectUrlKey]: null,
     })
+    persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
   }, [
+    overlayKeyPrefix,
+    overlayScope,
+    resolvedThumbFileObjectId,
     revokeThumb,
     setPersistedThumbObjectUrl,
     setThumbFileName,
@@ -479,13 +504,17 @@ export function RecruitDetailInfoParagraph({
       setUploadingAttachments(true)
       trackRecruitDetailMediaUpload(
         (async () => {
-          const owner = programDetailAttachmentOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID)
+          const owner = programDetailAttachmentOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID)
           const uploadedIds: number[] = []
           const failedIndexes = new Set<number>()
           try {
             for (let index = 0; index < files.length; index += 1) {
               try {
-                const uploaded = await uploadAdminFileMaybeMock({ file: files[index], owner })
+                const uploaded = await uploadAdminFileMaybeMock({
+                  file: files[index],
+                  owner,
+                  waitUntilAvailable: true,
+                })
                 uploadedIds.push(uploaded.fileObjectId)
               } catch {
                 failedIndexes.add(index)
@@ -503,18 +532,22 @@ export function RecruitDetailInfoParagraph({
                 return next
               })
             }
-            if (uploadedIds.length === 0) return
+            if (uploadedIds.length === 0) {
+              persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
+              return
+            }
             updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev => [
               ...(prev ?? []),
               ...uploadedIds,
             ])
+            persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } finally {
             setUploadingAttachments(false)
           }
         })()
       )
     },
-    [attachmentFileNamesKey, attachmentFileObjectIdsKey]
+    [attachmentFileNamesKey, attachmentFileObjectIdsKey, overlayKeyPrefix, overlayScope]
   )
 
   const handleRemoveAttachment = useCallback(
@@ -525,8 +558,9 @@ export function RecruitDetailInfoParagraph({
       updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev =>
         (prev ?? []).filter((_, i) => i !== index)
       )
+      persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
     },
-    [attachmentFileNamesKey, attachmentFileObjectIdsKey]
+    [attachmentFileNamesKey, attachmentFileObjectIdsKey, overlayKeyPrefix, overlayScope]
   )
 
   const thumbnailPreviewUrl = livePreviewUrl ?? storedPreviewUrl

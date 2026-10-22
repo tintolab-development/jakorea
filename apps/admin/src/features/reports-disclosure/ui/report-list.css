@@ -14,12 +14,12 @@
 }
 
 /*
- * 행 높이: 썸네일 때문에 54px 고정 불가.
+ * 행 높이: 썸네일 패딩 16×2 + 래퍼 높이.
+ * 연차 112.927 → 145 / 회계감사 77.66 → 110
  *
- * Ant Design은 hover 시 셀에 `ant-table-cell-row-hover` 클래스를 추가한다.
- * 공통 테이블의 기본 padding이 이 클래스가 붙은 셀에도 적용되면
- * 썸네일 셀의 padding(0 → 10px 16px)이 바뀌어 행 전체가 밀린다.
- * 일반 셀·hover 셀·cell-row-hover 셀의 레이아웃 값을 모두 고정한다.
+ * Ant Design은 hover 시 셀에 `ant-table-cell-row-hover`를 셀마다 붙인다.
+ * padding/height가 기본·hover에서 달라지면 행이 밀리고, 호버 마스크가 잘린다.
+ * 일반·:hover·cell-row-hover 레이아웃 값을 동일하게 고정한다.
  */
 .rd-list__table.cms-data-table .ant-table-tbody > tr.ant-table-row {
   transition: none !important;
@@ -38,12 +38,68 @@
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.ant-table-cell-row-hover {
   box-sizing: border-box !important;
-  height: auto !important;
-  min-height: 54px !important;
-  max-height: none !important;
   padding: 10px 16px !important;
   vertical-align: middle !important;
+  overflow: hidden;
   transition: none !important;
+}
+
+.rd-list__table--annual.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.rd-list__table--annual.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td,
+.rd-list__table--annual.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
+  height: 145px !important;
+  min-height: 145px !important;
+  max-height: 145px !important;
+}
+
+.rd-list__table--audit.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.rd-list__table--audit.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td,
+.rd-list__table--audit.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
+  height: 110px !important;
+  min-height: 110px !important;
+  max-height: 110px !important;
+}
+
+/* 선택 열: 공통 10×16 패딩이 체크 열 12×8을 덮지 않게 */
+.rd-list__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-selection-column,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-selection-column,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.ant-table-selection-column,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-selection-column.ant-table-cell-row-hover {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  padding: 12px 4px 12px 8px !important;
+  box-sizing: border-box !important;
 }
 
 /* 썸네일 열: 셀 패딩 제거 후 시안 영역 padding 사용 (hover 포함) */
@@ -62,11 +118,32 @@
   > td.rd-list__thumb-col.ant-table-cell-row-hover {
   box-sizing: border-box !important;
   padding: 0 !important;
-  height: auto !important;
-  min-height: 54px !important;
-  max-height: none !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  white-space: normal !important;
   vertical-align: middle !important;
   transition: none !important;
+}
+
+.rd-list__table--audit.cms-data-table .ant-table-thead > tr > th.rd-list__thumb-col,
+.rd-list__table--audit.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col,
+.rd-list__table--audit.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.rd-list__thumb-col,
+.rd-list__table--audit.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col.ant-table-cell-row-hover {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
 }
 
 /**
@@ -77,12 +154,13 @@
 .rd-list__thumb-cell {
   display: flex;
   box-sizing: border-box;
+  width: 100%;
+  height: 100%;
   padding: 16px 20px;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  align-self: stretch;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .rd-list__thumb-cell--a4 {
@@ -123,9 +201,11 @@
 
 .rd-list__thumb.ant-image,
 .rd-list__thumb-wrap .ant-image {
+  position: relative;
   width: 100%;
   height: 100%;
   display: block;
+  overflow: hidden;
 }
 
 .rd-list__thumb-wrap .ant-image-img,
@@ -136,10 +216,24 @@
   display: block;
 }
 
-/* Image preview mask — absolute (레이아웃 점유 X) */
+/* 호버 마스크: 레이아웃 점유 없이 래퍼를 덮고, 좁은 연차(80px)에서도 문구가 잘리지 않게 */
 .rd-list__thumb-wrap .ant-image-mask {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
 }
 
 .rd-list__file-link {

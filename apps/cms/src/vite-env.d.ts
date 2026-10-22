@@ -46,6 +46,10 @@ interface ImportMetaEnv {
   readonly VITE_CAREER_NET_API_KEY?: string
   /** @deprecated 오타 호환 — `VITE_CAREER_NET_API_KEY` 사용 권장 */
   readonly VITE_CAREEAR_NET_API_KEY?: string
+  /** Vite 빌드 시각 (Asia/Seoul) */
+  readonly VITE_APP_BUILD_AT?: string
+  /** Vercel/GitHub 커밋 SHA 앞 7자 */
+  readonly VITE_APP_GIT_SHA?: string
 }
 
 interface ImportMeta {

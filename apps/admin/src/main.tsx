@@ -10,6 +10,10 @@ import { CmsAlertModalProvider } from '@/shared/ui/cms-alert-modal-provider'
 import { router } from './app/router'
 import './index.css'
 
+console.info(
+  `[Admin] 배포 빌드 ${import.meta.env.VITE_APP_BUILD_AT ?? 'unknown'} (${import.meta.env.VITE_APP_GIT_SHA || 'local'} / ${import.meta.env.MODE})`
+)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>

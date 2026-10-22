@@ -189,6 +189,47 @@ describe('admin file upload', () => {
     })
   })
 
+  it.each([
+    ['PROGRAM_THUMBNAIL', 'thumb.png', 'image/png'],
+    ['PROGRAM_DETAIL_ATTACHMENT', 'guide.pdf', 'application/pdf'],
+  ] as const)('createUploadRequest는 등록 draft %s 의 ownerId null을 그대로 보낸다', async (
+    filePurpose,
+    originalFileName,
+    contentType
+  ) => {
+    vi.mocked(customInstance).mockResolvedValue(
+      wrapData({
+        fileObjectId: '303',
+        uploadUrl: 'https://s3.example/upload',
+        method: 'PUT',
+        requiredHeaders: { 'Content-Type': contentType },
+        confirmPath: '/api/admin/files/303/confirm',
+      })
+    )
+
+    await createUploadRequest({
+      owner: {
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        ownerId: null,
+        filePurpose,
+      },
+      originalFileName,
+      contentType,
+      fileSize: 4096,
+      checksumSha256: 'SHA256_VALUE',
+    })
+
+    const config = vi.mocked(customInstance).mock.calls.at(-1)?.[0]
+    expect(config?.data).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: null,
+      filePurpose,
+    })
+    expect(config?.data).not.toMatchObject({ ownerId: 1 })
+  })
+
   it('confirmUpload는 최초 요청과 같은 fileSize·checksum·contentType을 보낸다', async () => {
     vi.mocked(customInstance).mockResolvedValue(
       wrapData({

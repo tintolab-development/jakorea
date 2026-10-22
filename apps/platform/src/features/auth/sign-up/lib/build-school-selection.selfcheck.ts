@@ -1,16 +1,7 @@
 import assert from 'node:assert/strict'
-import { buildSchoolSelection } from './build-school-selection.ts'
-import { resolveNeisEducationOfficeCode } from './resolve-neis-education-office-code.ts'
+import { resolveSignupSchoolAttachment } from './signup-school-attachment.ts'
 
-assert.equal(
-  resolveNeisEducationOfficeCode({
-    educationOfficeCode: 'B10',
-    externalSchoolCode: '7581089',
-  }),
-  'B10',
-)
-
-const selection = buildSchoolSelection({
+const selection = resolveSignupSchoolAttachment({
   schoolName: '심원초등학교',
   schoolNeisCode: '7581089',
   schoolEducationOfficeCode: 'B10',
@@ -18,8 +9,24 @@ const selection = buildSchoolSelection({
   source: 'neis',
 })
 
-assert.equal(selection?.provider, 'NEIS')
-assert.equal(selection?.externalSchoolCode, '7581089')
-assert.equal(selection?.educationOfficeCode, 'B10')
+assert.equal(selection.schoolSelection?.provider, 'NEIS')
+assert.equal(selection.schoolSelection?.externalSchoolCode, '7581089')
+assert.equal(selection.schoolSelection?.educationOfficeCode, 'B10')
+
+const careerNet = resolveSignupSchoolAttachment({
+  schoolName: '서울과학기술대학교',
+  schoolNeisCode: '991122',
+  source: 'careerNet',
+})
+assert.equal(careerNet.schoolSelection?.provider, 'CAREER_NET')
+assert.equal(careerNet.schoolSelection?.externalSchoolCode, '991122')
+
+assert.equal(
+  resolveSignupSchoolAttachment({
+    schoolName: '코드없는대학',
+    source: 'careerNet',
+  }).schoolSelection,
+  undefined,
+)
 
 console.log('build-school-selection.selfcheck: ok')

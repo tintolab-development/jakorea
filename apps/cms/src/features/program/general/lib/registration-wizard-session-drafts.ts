@@ -1,3 +1,4 @@
+import { clearAllRecruitDetailDraftMedia } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session'
 import type { OperationalFormFlushOverride } from '@/features/program/general/lib/prepare-registration-create-form-bindings'
 import { isRecruitmentOrApplicationWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
@@ -66,6 +67,7 @@ export function subscribeRegistrationWizardApplicationDraft(
 
 export function clearRegistrationWizardSessionDrafts(): void {
   sessionDrafts.clear()
+  clearAllRecruitDetailDraftMedia()
 }
 
 export function peekRegistrationWizardSessionDrafts(): ReadonlyArray<{

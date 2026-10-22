@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import type { Plugin, ProxyOptions } from 'vite'
+import { viteAppBuildDefine } from '../../scripts/vite-app-build-define'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
 
@@ -102,10 +103,6 @@ export default defineConfig(({ mode }) => {
     ...(isProgramPreviewBuild
       ? {
           base: '/platform-preview/',
-          // 미리보기는 CMS가 보낸 데이터만 쓴다 — 원격 API 비활성(헤더·푸터 fallback)
-          define: Object.fromEntries(
-            PLATFORM_PREVIEW_DISABLED_ENV_KEYS.map(key => [`import.meta.env.${key}`, '""']),
-          ),
           build: {
             outDir: 'dist-preview',
             emptyOutDir: true,
@@ -120,6 +117,15 @@ export default defineConfig(({ mode }) => {
           },
         }
       : {}),
+    define: {
+      ...viteAppBuildDefine(),
+      // 미리보기는 CMS가 보낸 데이터만 쓴다 — 원격 API 비활성(헤더·푸터 fallback)
+      ...(isProgramPreviewBuild
+        ? Object.fromEntries(
+            PLATFORM_PREVIEW_DISABLED_ENV_KEYS.map(key => [`import.meta.env.${key}`, '""']),
+          )
+        : {}),
+    },
     plugins: [
       react(),
       ...(isProgramPreviewBuild ? [dropUnreferencedAssetsPlugin()] : []),

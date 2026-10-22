@@ -1,6 +1,6 @@
 /**
  * 모집 상세 정보(썸네일·첨부) overlay 키·생성 후 프로그램 바인딩.
- * 등록 중에는 staging owner 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
+ * 등록 중에는 ownerId=null draft 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
  */
 
 import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
@@ -14,8 +14,11 @@ import type { Program } from '@/types/domain'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 
-/** 등록 전 업로드용 임시 PROGRAM ownerId (상세 수정의 `?? 1` 과 동일 관례) */
-export const RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID = 1
+/**
+ * 등록 전 썸네일·첨부 prepare owner.
+ * 프로그램이 아직 없으므로 `ownerId`는 null. 가짜 programId(1)를 쓰지 않는다.
+ */
+export const RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID = null
 
 let pendingRecruitDetailMediaUploads: Promise<unknown> = Promise.resolve()
 
@@ -172,7 +175,7 @@ export function readRecruitDetailMediaFromOverlay(
 }
 
 /**
- * 프로그램 생성 직후 — staging 업로드 파일을 실제 programId 에 연결.
+ * 프로그램 생성 직후 — ownerId=null draft 파일을 실제 programId 에 연결.
  * 첨부는 PUT /programs/{id}/attachments (포털 GENERAL 첨부 SSOT).
  * 실패하면 호출부가 방금 만든 프로그램을 삭제하고 등록을 완료하지 않는다.
  */

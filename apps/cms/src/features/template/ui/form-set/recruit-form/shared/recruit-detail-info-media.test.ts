@@ -8,6 +8,11 @@ vi.mock('@/features/program/shared/api/program-attachments', () => ({
   putProgramAttachments: vi.fn().mockResolvedValue([]),
 }))
 
+vi.mock('@/features/program/shared/api/program-recruitment-rows', () => ({
+  putProgramRecruitmentThumbnail: vi.fn().mockResolvedValue({}),
+  putProgramRecruitmentAttachments: vi.fn().mockResolvedValue([]),
+}))
+
 vi.mock('@/shared/lib/admin-file-upload', async importOriginal => {
   const actual = await importOriginal<typeof import('@/shared/lib/admin-file-upload')>()
   return {
@@ -20,8 +25,13 @@ vi.mock('@/shared/lib/admin-file-upload', async importOriginal => {
 })
 
 import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
+import {
+  putProgramRecruitmentAttachments,
+  putProgramRecruitmentThumbnail,
+} from '@/features/program/shared/api/program-recruitment-rows'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import {
+  bindGeneralRecruitDetailMediaToRows,
   bindRecruitDetailMediaAfterProgramCreate,
   isEphemeralThumbPreviewUrl,
   readRecruitDetailMediaFromOverlay,
@@ -114,5 +124,51 @@ describe('bindRecruitDetailMediaAfterProgramCreate', () => {
     })
     expect(putProgramThumbnail).toHaveBeenCalledWith(186005, 42)
     expect(putProgramAttachments).toHaveBeenCalledWith(186005, [101, 102])
+  })
+})
+
+describe('bindGeneralRecruitDetailMediaToRows', () => {
+  beforeEach(() => {
+    vi.mocked(putProgramThumbnail).mockClear()
+    vi.mocked(putProgramAttachments).mockClear()
+    vi.mocked(putProgramRecruitmentThumbnail).mockClear()
+    vi.mocked(putProgramRecruitmentAttachments).mockClear()
+  })
+
+  it('참여자·강사 모집 행에 draft fileObjectId를 각각 PUT 한다', async () => {
+    await bindGeneralRecruitDetailMediaToRows(
+      {
+        id: '186100',
+        programRecruitments: [
+          { id: 11, recruitmentType: 'PARTICIPANT' },
+          { id: 22, recruitmentType: 'INSTRUCTOR' },
+        ],
+      },
+      {
+        'recruit.detailInfo.thumbFileObjectId': 301,
+        'recruit.detailInfo.attachmentFileObjectIds': [401],
+        'recruitInstructor.detailInfo.thumbFileObjectId': 302,
+        'recruitInstructor.detailInfo.attachmentFileObjectIds': [402, 403],
+      }
+    )
+    expect(putProgramRecruitmentThumbnail).toHaveBeenCalledWith(186100, 11, 301)
+    expect(putProgramRecruitmentAttachments).toHaveBeenCalledWith(186100, 11, [401])
+    expect(putProgramRecruitmentThumbnail).toHaveBeenCalledWith(186100, 22, 302)
+    expect(putProgramRecruitmentAttachments).toHaveBeenCalledWith(186100, 22, [402, 403])
+    expect(putProgramThumbnail).not.toHaveBeenCalled()
+    expect(putProgramAttachments).not.toHaveBeenCalled()
+  })
+
+  it('모집 행 id가 없으면 프로그램 단위 PUT으로 바인딩한다', async () => {
+    await bindGeneralRecruitDetailMediaToRows(
+      { id: '186101', programRecruitments: [] },
+      {
+        'recruit.detailInfo.thumbFileObjectId': 88,
+        'recruit.detailInfo.attachmentFileObjectIds': [99],
+      }
+    )
+    expect(putProgramThumbnail).toHaveBeenCalledWith(186101, 88)
+    expect(putProgramAttachments).toHaveBeenCalledWith(186101, [99])
+    expect(putProgramRecruitmentThumbnail).not.toHaveBeenCalled()
   })
 })

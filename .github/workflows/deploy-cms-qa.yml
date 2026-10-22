@@ -61,6 +61,7 @@ jobs:
           VITE_JUSO_ADDRESS_API_URL: https://business.juso.go.kr/addrlink/addrLinkApi.do
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+          VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
         run: pnpm --filter cms build
 
       - name: Verify build output

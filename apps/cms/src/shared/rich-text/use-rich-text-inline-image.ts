@@ -45,7 +45,9 @@ export function useHydrateRichTextInlineImages(editor: Editor | null, resetKey?:
 
       for (const target of targets) {
         try {
-          const blob = await loadAdminFileBlob(target.fileObjectId)
+          const blob = await loadAdminFileBlob(target.fileObjectId, {
+            skipGlobalErrorAlert: true,
+          })
           if (cancelled || editor.isDestroyed) return
           if (blob.size < 1 || blob.type === 'application/json') continue
           const previewSrc = URL.createObjectURL(blob)

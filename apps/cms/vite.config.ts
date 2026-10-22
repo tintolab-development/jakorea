@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { viteAppBuildDefine } from '../../scripts/vite-app-build-define'
 import { e2eErrorLogMockApiPlugin } from './vite-plugins/e2e-error-log-mock-api'
 import { e2eTestLogMockApiPlugin } from './vite-plugins/e2e-test-log-mock-api'
 import { platformPreviewBundlePlugin } from './vite-plugins/platform-preview-bundle'
@@ -76,6 +77,7 @@ export default defineConfig(({ mode }) => {
     : undefined
 
   return {
+    define: viteAppBuildDefine(),
     plugins: [
       react(),
       e2eErrorLogMockApiPlugin(),
