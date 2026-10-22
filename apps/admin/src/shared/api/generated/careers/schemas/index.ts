@@ -48,6 +48,7 @@ export * from './careerGuideInterviewCreateRequest';
 export * from './careerGuideInterviewDeleteRequest';
 export * from './careerGuideInterviewUpdateRequest';
 export * from './careerGuideResponse';
+export * from './careerInterviewImpactStoryResponse';
 export * from './careerInterviewResponse';
 export * from './careerPostingAdminDetail';
 export * from './careerPostingAdminDetailStatus';

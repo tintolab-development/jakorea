@@ -5,13 +5,17 @@
  * Filtered for Homepage Admin careers Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { CareerInterviewImpactStoryResponse } from './careerInterviewImpactStoryResponse';
 
 export interface CareerGuideAdminInterviewResponse {
-  id: number;
-  displayOrder: number;
-  storyKey: string;
-  title: string;
+  id?: number;
+  impactStoryId?: number | null;
+  storyKey?: string;
+  displayOrder?: number;
+  title?: string;
   year?: number | null;
   coverImageUrl?: string | null;
-  version: number;
+  impactStory?: CareerInterviewImpactStoryResponse | null;
+  linkStatus?: string;
+  version?: number;
 }

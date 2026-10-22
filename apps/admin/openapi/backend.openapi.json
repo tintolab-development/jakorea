@@ -10032,6 +10032,12 @@
           "timestamp": {
             "type": "string",
             "format": "date-time"
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -13163,11 +13169,6 @@
       "CareerGuideInterviewUpdateRequest": {
         "type": "object",
         "properties": {
-          "storyKey": {
-            "type": "string",
-            "maxLength": 80,
-            "minLength": 1
-          },
           "title": {
             "type": "string",
             "maxLength": 300,
@@ -13186,7 +13187,6 @@
           }
         },
         "required": [
-          "storyKey",
           "title",
           "version"
         ]
@@ -13198,37 +13198,80 @@
             "type": "integer",
             "format": "int32"
           },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
+          "impactStoryId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           },
           "storyKey": {
             "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
           },
           "title": {
             "type": "string"
           },
           "year": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
           },
           "coverImageUrl": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "impactStory": {
+            "type": "null",
+            "$ref": "#/components/schemas/CareerInterviewImpactStoryResponse"
+          },
+          "linkStatus": {
+            "type": "string"
           },
           "version": {
             "type": "integer",
             "format": "int64"
           }
-        },
-        "required": [
-          "id",
-          "displayOrder",
-          "storyKey",
-          "title",
-          "version"
-        ]
+        }
+      },
+      "CareerInterviewImpactStoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "publishAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "imageUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isPublished": {
+            "type": "boolean"
+          }
+        }
       },
       "CareerGuideCultureItemUpdate": {
         "type": "object",
@@ -14593,10 +14636,9 @@
       "CareerGuideInterviewCreateRequest": {
         "type": "object",
         "properties": {
-          "storyKey": {
-            "type": "string",
-            "maxLength": 80,
-            "minLength": 1
+          "impactStoryId": {
+            "type": "integer",
+            "format": "int64"
           },
           "title": {
             "type": "string",
@@ -14612,7 +14654,7 @@
           }
         },
         "required": [
-          "storyKey",
+          "impactStoryId",
           "title"
         ]
       },
@@ -16751,24 +16793,43 @@
       "CareerInterviewResponse": {
         "type": "object",
         "properties": {
-          "displayOrder": {
+          "id": {
             "type": "integer",
             "format": "int32"
           },
+          "impactStoryId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
           "storyKey": {
             "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
           },
           "title": {
             "type": "string"
           },
           "year": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
           },
           "coverImageUrl": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "impactStory": {
+            "type": "null",
+            "$ref": "#/components/schemas/CareerInterviewImpactStoryResponse"
           }
         }
       },
@@ -18437,8 +18498,7 @@
           },
           "bannerAssetId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "bannerImageUrl": {
             "type": "string"

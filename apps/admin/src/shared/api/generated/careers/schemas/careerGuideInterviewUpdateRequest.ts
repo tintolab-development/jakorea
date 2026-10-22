@@ -9,11 +9,6 @@
 export interface CareerGuideInterviewUpdateRequest {
   /**
      * @minLength 1
-     * @maxLength 80
-     */
-  storyKey: string;
-  /**
-     * @minLength 1
      * @maxLength 300
      */
   title: string;

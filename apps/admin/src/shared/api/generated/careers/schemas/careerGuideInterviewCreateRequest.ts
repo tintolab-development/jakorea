@@ -7,11 +7,7 @@
  */
 
 export interface CareerGuideInterviewCreateRequest {
-  /**
-     * @minLength 1
-     * @maxLength 80
-     */
-  storyKey: string;
+  impactStoryId: number;
   /**
      * @minLength 1
      * @maxLength 300
