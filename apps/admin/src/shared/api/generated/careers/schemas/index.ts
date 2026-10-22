@@ -44,6 +44,8 @@ export * from './careerGuideBannerResponse';
 export * from './careerGuideBannerUpdateRequest';
 export * from './careerGuideCultureItemsUpdateRequest';
 export * from './careerGuideCultureItemUpdate';
+export * from './careerGuideInterviewCreateRequest';
+export * from './careerGuideInterviewDeleteRequest';
 export * from './careerGuideInterviewUpdateRequest';
 export * from './careerGuideResponse';
 export * from './careerInterviewResponse';

@@ -11,7 +11,7 @@ export interface CareerGuideAdminInterviewResponse {
   displayOrder?: number;
   storyKey?: string;
   title?: string;
-  year?: number | null;
+  year?: number;
   coverImageUrl?: string;
   version?: number;
 }

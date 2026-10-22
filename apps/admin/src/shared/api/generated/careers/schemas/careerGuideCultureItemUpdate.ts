@@ -7,7 +7,6 @@
  */
 
 export interface CareerGuideCultureItemUpdate {
-  /** @minimum 1 */
   id: number;
   /**
      * @minLength 1
@@ -19,6 +18,5 @@ export interface CareerGuideCultureItemUpdate {
      * @maxLength 2000
      */
   description: string;
-  /** @minimum 0 */
   version: number;
 }

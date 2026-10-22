@@ -2901,6 +2901,142 @@
         }
       }
     },
+    "/api/admin/careers/guide/interviews/{id}": {
+      "put": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "updateCareerGuideInterview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerGuideInterviewUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerGuideAdminInterviewResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "deleteCareerGuideInterview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerGuideInterviewDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/admin/careers/guide/culture-items": {
+      "put": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "updateCareerGuideCultureItems",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerGuideCultureItemsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CareerGuideAdminCultureItemResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/guide/banner": {
+      "put": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "updateCareerGuideBanner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerGuideBannerUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerGuideBannerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/sponsorship/talent-applications": {
       "post": {
         "tags": [
@@ -5413,6 +5549,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/UploadPrepareResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/guide/interviews": {
+      "post": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "createCareerGuideInterview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerGuideInterviewCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerGuideAdminInterviewResponse"
                 }
               }
             }
@@ -8744,230 +8910,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerGuideAdminResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/guide/banner": {
-      "put": {
-        "tags": [
-          "career-guide-admin-controller"
-        ],
-        "operationId": "updateCareerGuideBanner",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CareerGuideBannerUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerGuideBannerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "VALIDATION_ERROR or FILE_VALIDATION_ERROR",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "FORBIDDEN",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "CAREER_GUIDE_NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "VERSION_CONFLICT",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/guide/culture-items": {
-      "put": {
-        "tags": [
-          "career-guide-admin-controller"
-        ],
-        "operationId": "updateCareerGuideCultureItems",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CareerGuideCultureItemsUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CareerGuideAdminCultureItemResponse"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_CAREER_GUIDE_CULTURE_ITEMS or VALIDATION_ERROR",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "FORBIDDEN",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "CAREER_GUIDE_NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "VERSION_CONFLICT",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/guide/interviews/{slotId}": {
-      "put": {
-        "tags": [
-          "career-guide-admin-controller"
-        ],
-        "operationId": "updateCareerGuideInterview",
-        "parameters": [
-          {
-            "name": "slotId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CareerGuideInterviewUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerGuideAdminInterviewResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_CAREER_GUIDE_INTERVIEW_SLOT or VALIDATION_ERROR",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "FORBIDDEN",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "CAREER_GUIDE_NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "VERSION_CONFLICT",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -13218,6 +13160,202 @@
           }
         }
       },
+      "CareerGuideInterviewUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "storyKey": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2200,
+            "minimum": 1900
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "storyKey",
+          "title",
+          "version"
+        ]
+      },
+      "CareerGuideAdminInterviewResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "storyKey": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CareerGuideCultureItemUpdate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "description",
+          "id",
+          "title",
+          "version"
+        ]
+      },
+      "CareerGuideCultureItemsUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerGuideCultureItemUpdate"
+            },
+            "maxItems": 4,
+            "minItems": 4
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CareerGuideAdminCultureItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CareerGuideBannerUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "imageAssetId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "mainText": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1
+          },
+          "subTextKo": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          },
+          "subTextEn": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "mainText",
+          "subTextEn",
+          "subTextKo",
+          "version"
+        ]
+      },
+      "CareerGuideBannerResponse": {
+        "type": "object",
+        "properties": {
+          "mainText": {
+            "type": "string"
+          },
+          "subTextKo": {
+            "type": "string"
+          },
+          "subTextEn": {
+            "type": "string"
+          },
+          "imageAssetId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "TalentApplicationCreateRequest": {
         "type": "object",
         "properties": {
@@ -14441,6 +14579,31 @@
             "format": "date-time"
           }
         }
+      },
+      "CareerGuideInterviewCreateRequest": {
+        "type": "object",
+        "properties": {
+          "storyKey": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2200,
+            "minimum": 1900
+          }
+        },
+        "required": [
+          "storyKey",
+          "title"
+        ]
       },
       "UploadPrepareRequest": {
         "type": "object",
@@ -18261,8 +18424,7 @@
           },
           "bannerAssetId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "bannerImageUrl": {
             "type": "string"
@@ -18285,200 +18447,6 @@
           }
         }
       },
-      "CareerGuideAdminCultureItemResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "code": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "CareerGuideAdminInterviewResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "storyKey": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "year": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "coverImageUrl": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "CareerGuideBannerResponse": {
-        "type": "object",
-        "properties": {
-          "mainText": {
-            "type": "string"
-          },
-          "subTextKo": {
-            "type": "string"
-          },
-          "subTextEn": {
-            "type": "string"
-          },
-          "imageAssetId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "CareerGuideBannerUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "imageAssetId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "mainText": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 1
-          },
-          "subTextKo": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 1
-          },
-          "subTextEn": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 1
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "imageAssetId",
-          "mainText",
-          "subTextKo",
-          "subTextEn",
-          "version"
-        ]
-      },
-      "CareerGuideCultureItemUpdate": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 1
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 1
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 1
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "description",
-          "version"
-        ]
-      },
-      "CareerGuideCultureItemsUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "minItems": 4,
-            "maxItems": 4,
-            "items": {
-              "$ref": "#/components/schemas/CareerGuideCultureItemUpdate"
-            }
-          }
-        },
-        "required": [
-          "items"
-        ]
-      },
-      "CareerGuideInterviewUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "maxLength": 300,
-            "minLength": 1
-          },
-          "year": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 1900,
-            "maximum": 2200,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "title",
-          "year",
-          "version"
-        ]
-      },
       "DownloadResponse": {
         "type": "object",
         "properties": {
@@ -18493,6 +18461,18 @@
             "format": "date-time"
           }
         }
+      },
+      "CareerGuideInterviewDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "version"
+        ]
       }
     },
     "securitySchemes": {

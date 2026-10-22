@@ -9,6 +9,11 @@
 export interface CareerGuideInterviewUpdateRequest {
   /**
      * @minLength 1
+     * @maxLength 80
+     */
+  storyKey: string;
+  /**
+     * @minLength 1
      * @maxLength 300
      */
   title: string;
@@ -16,7 +21,6 @@ export interface CareerGuideInterviewUpdateRequest {
      * @minimum 1900
      * @maximum 2200
      */
-  year: number | null;
-  /** @minimum 0 */
+  year?: number;
   version: number;
 }

@@ -7,7 +7,7 @@
  */
 
 export interface CareerGuideBannerUpdateRequest {
-  imageAssetId: number | null;
+  imageAssetId?: number | null;
   /**
      * @minLength 1
      * @maxLength 1000
@@ -23,6 +23,5 @@ export interface CareerGuideBannerUpdateRequest {
      * @maxLength 2000
      */
   subTextEn: string;
-  /** @minimum 0 */
   version: number;
 }
