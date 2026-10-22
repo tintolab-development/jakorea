@@ -43,6 +43,7 @@ export interface MfaState {
   lockUntil: string | null
   challengeUuid?: string
   mfaMethod?: string
+  mfaSetupRequired?: boolean
   challengeExpiresAt?: string
   totpSecret?: string
   otpauthUri?: string

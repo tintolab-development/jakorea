@@ -22,7 +22,7 @@ import {
 const oauthConfig = {
   clientIds: {
     kakao: import.meta.env.VITE_KAKAO_CLIENT_ID as string | undefined,
-    naver: import.meta.env.VITE_NAVER_CLIENT_ID as string | undefined,
+    naver: import.meta.env.VITE_PLATFORM_NAVER_CLIENT_ID as string | undefined,
     google: import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined,
   },
   resolveOrigin: resolveOAuthRedirectOrigin,

@@ -13,6 +13,10 @@ import { TemplateWritingPreviewProvider } from '@/features/template/context/temp
 import { router } from './app/router'
 import './index.css'
 
+console.info(
+  `[CMS] 배포 빌드 ${import.meta.env.VITE_APP_BUILD_AT ?? 'unknown'} (${import.meta.env.VITE_APP_GIT_SHA || 'local'} / ${import.meta.env.MODE})`
+)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>

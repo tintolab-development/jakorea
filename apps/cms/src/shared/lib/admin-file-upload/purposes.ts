@@ -63,6 +63,39 @@ export function buildAdminFileOwner(
   }
 }
 
+/**
+ * OpenAPI `FileUploadPrepareRequest.ownerId` — upload-first draft null 허용 조합.
+ * CONTENT/NOTICE + NOTICE_ATTACHMENT|NOTICE_INLINE_IMAGE,
+ * CONTENT/FAQ + FAQ_INLINE_IMAGE,
+ * PROGRAM_CONTENT/PROGRAM + PROGRAM_THUMBNAIL|PROGRAM_DETAIL_ATTACHMENT|PROGRAM_INLINE_IMAGE
+ */
+export function adminFileUploadAllowsNullOwnerId(owner: Pick<
+  AdminFileUploadOwner,
+  'ownerDomain' | 'ownerType' | 'filePurpose'
+>): boolean {
+  const domain = owner.ownerDomain
+  const type = owner.ownerType
+  const purpose = owner.filePurpose
+  if (
+    domain === 'CONTENT' &&
+    type === 'NOTICE' &&
+    (purpose === ADMIN_FILE_PURPOSE.NOTICE_ATTACHMENT ||
+      purpose === ADMIN_FILE_PURPOSE.NOTICE_INLINE_IMAGE)
+  ) {
+    return true
+  }
+  if (domain === 'CONTENT' && type === 'FAQ' && purpose === ADMIN_FILE_PURPOSE.FAQ_INLINE_IMAGE) {
+    return true
+  }
+  return (
+    domain === 'PROGRAM_CONTENT' &&
+    type === 'PROGRAM' &&
+    (purpose === ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL ||
+      purpose === ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT ||
+      purpose === ADMIN_FILE_PURPOSE.PROGRAM_INLINE_IMAGE)
+  )
+}
+
 const XLSX_STANDARD_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 

@@ -23,9 +23,12 @@ function unwrapApiBody<T>(payload: unknown): T {
   return payload as T
 }
 
-/** 프로그램 상세 첨부·썸네일 업로드 owner (BE: PROGRAM_CONTENT / PROGRAM / {programId}) */
+/**
+ * 프로그램 상세 첨부·썸네일 업로드 owner (BE: PROGRAM_CONTENT / PROGRAM / {programId}).
+ * 등록 전은 OpenAPI upload-first draft — `ownerId: null`. 임시 프로그램 id를 넣지 않는다.
+ */
 export function programContentFileOwner(
-  programId: number,
+  programId: number | null,
   filePurpose: AdminFilePurpose
 ): AdminFileUploadOwner {
   return {
@@ -36,11 +39,11 @@ export function programContentFileOwner(
   }
 }
 
-export function programDetailAttachmentOwner(programId: number): AdminFileUploadOwner {
+export function programDetailAttachmentOwner(programId: number | null): AdminFileUploadOwner {
   return programContentFileOwner(programId, ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT)
 }
 
-export function programThumbnailOwner(programId: number): AdminFileUploadOwner {
+export function programThumbnailOwner(programId: number | null): AdminFileUploadOwner {
   return programContentFileOwner(programId, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL)
 }
 

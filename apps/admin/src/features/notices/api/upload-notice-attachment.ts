@@ -3,6 +3,7 @@
  */
 
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
+import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 type PrepareRuntime = {
   assetId?: number
@@ -37,7 +38,7 @@ export async function uploadNoticeAttachmentAsset(file: File): Promise<number> {
     headers['Content-Type'] = file.type || 'application/octet-stream'
   }
 
-  const uploadRes = await fetch(uploadUrl, {
+  const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {
     method,
     headers,
     body: file,

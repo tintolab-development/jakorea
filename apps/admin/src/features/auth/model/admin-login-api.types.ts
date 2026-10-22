@@ -12,6 +12,8 @@ export interface AdminMfaChallengeResponse {
   challengeUuid: string
   mfaMethod: string
   expiresAt: string
+  /** true면 QR 등록, false면 기존 인증 앱 코드만 입력 */
+  mfaSetupRequired?: boolean
   totpSecret?: string
   otpauthUri?: string
   qrDataUrl?: string

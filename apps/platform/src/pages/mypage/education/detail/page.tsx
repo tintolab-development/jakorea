@@ -22,10 +22,8 @@ import {
   EducationJournalPanel,
   EducationSettlementPanel,
   EducationStudentsPanel,
-  EducationSurveyEmptyPanel,
-  EducationSurveyFillPanel,
+  EducationSurveySection,
   DocumentPassBanner,
-  getEducationSurveyTabAvailability,
   hasTeacherMypageProfile,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
@@ -38,10 +36,12 @@ import {
   resolveEducationListBackPath,
   volunteerApplicationDetailPath,
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   shouldShowDocumentPassBanner,
   TeacherApplicationContent,
   UjatApplicationContent,
   UjatScheduleBanner,
+  UjatVolunteerAssignmentPanel,
   TeacherEducationAssignmentAside,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -185,8 +185,8 @@ export function MypageEducationDetailPage() {
   )
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
   const programDetailFocus = useMemo(
-    () => resolveEducationApplicationProgramFocus(application),
-    [application],
+    () => resolveEducationApplicationProgramFocus(application, resolvedApplicationType),
+    [application, resolvedApplicationType],
   )
   const remoteProgramQuery = useProgramDetail(
     application?.programId ?? null,
@@ -231,6 +231,9 @@ export function MypageEducationDetailPage() {
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
 
+  const isUjatParticipant =
+    application?.detailCase === 'ujat-participant' || program?.detailCase === 'ujat-participant'
+
   const isTeacherOrgActivityDetail =
     isTeacher &&
     Boolean(application && program) &&
@@ -241,11 +244,11 @@ export function MypageEducationDetailPage() {
     routeApplicationType ?? application?.applicationType ?? null,
     applicationId,
     { organizationProgram: program?.programAudience === 'organization' },
-    { enabled: isTeacherOrgActivityDetail },
+    { enabled: isTeacherOrgActivityDetail && !isUjatParticipant },
   )
 
   const teacherStudentDocumentTabsVisible = useMemo(() => {
-    if (!isTeacher || !isTeacherOrgActivityDetail) return false
+    if (!isTeacher || !isTeacherOrgActivityDetail || isUjatParticipant) return false
     return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
       policyQueryEnabled: true,
       // 이 신청 건의 policy가 아직 없을 때만 탭을 숨깁니다.
@@ -256,12 +259,13 @@ export function MypageEducationDetailPage() {
   }, [
     isTeacher,
     isTeacherOrgActivityDetail,
+    isUjatParticipant,
     studentDocumentPolicyQuery.data,
     studentDocumentPolicyQuery.isError,
     studentDocumentPolicyQuery.isPending,
   ])
   const isStudentDocumentPolicyPending =
-    isTeacherOrgActivityDetail && studentDocumentPolicyQuery.isPending
+    isTeacherOrgActivityDetail && !isUjatParticipant && studentDocumentPolicyQuery.isPending
 
   const activityTabOptions = useMemo(
     () =>
@@ -269,7 +273,9 @@ export function MypageEducationDetailPage() {
         ? {
             detailCase: program.detailCase,
             programType: program.programType,
-            scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+            scheduleTabLabel: isUjatParticipant
+              ? UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL
+              : EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
             educationJournalEnabled:
@@ -281,7 +287,7 @@ export function MypageEducationDetailPage() {
               : {}),
           }
         : null,
-    [isTeacher, program, teacherStudentDocumentTabsVisible],
+    [isTeacher, isUjatParticipant, program, teacherStudentDocumentTabsVisible],
   )
 
   const inProgressTabItems = useMemo(() => {
@@ -706,6 +712,14 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'schedule') {
+      if (isUjatParticipant) {
+        return (
+          <UjatVolunteerAssignmentPanel
+            applicationType={routeApplicationType ?? application.applicationType ?? null}
+            applicationId={application.id}
+          />
+        )
+      }
       return (
         <EducationSchedulePanel
           programId={program.id}
@@ -746,51 +760,43 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'survey') {
-      const surveyAvailability = getEducationSurveyTabAvailability({
-        displayStatus: application.displayStatus,
-        withdrawalPhase: application.withdrawalPhase,
-        configured: program.surveyConfigured,
-      })
-      if (remoteDetailEnabled || surveyAvailability === 'active') {
-        return (
-          <EducationSurveyFillPanel
-            kind="survey"
-            programTitle={program.title}
-            educationScheduleLines={program.educationScheduleLines}
-            educationTargetLabel={program.educationTargetDetailLabel}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            programId={program.id}
-            pendingSurveyCount={application.pendingSurveyCount}
-          />
-        )
-      }
-      return <EducationSurveyEmptyPanel kind="survey" />
+      return (
+        <EducationSurveySection
+          kind="survey"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
+          configured={program.surveyConfigured}
+          remoteDetailEnabled={remoteDetailEnabled}
+          programTitle={program.title}
+          educationScheduleLines={program.educationScheduleLines}
+          educationTargetLabel={program.educationTargetDetailLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          programId={program.id}
+          pendingSurveyCount={application.pendingSurveyCount}
+        />
+      )
     }
     if (active === 'satisfaction') {
       if (program.programType?.toUpperCase() === 'TRAINED_TEACHER') {
         return null
       }
-      const satisfactionAvailability = getEducationSurveyTabAvailability({
-        displayStatus: application.displayStatus,
-        withdrawalPhase: application.withdrawalPhase,
-        configured: program.satisfactionConfigured,
-      })
-      if (remoteDetailEnabled || satisfactionAvailability === 'active') {
-        return (
-          <EducationSurveyFillPanel
-            kind="satisfaction"
-            satisfactionAudience="student"
-            programTitle={program.title}
-            educationScheduleLines={program.educationScheduleLines}
-            educationTargetLabel={program.educationTargetDetailLabel}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            programId={program.id}
-          />
-        )
-      }
-      return <EducationSurveyEmptyPanel kind="satisfaction" />
+      return (
+        <EducationSurveySection
+          kind="satisfaction"
+          satisfactionAudience="student"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
+          configured={program.satisfactionConfigured}
+          remoteDetailEnabled={remoteDetailEnabled}
+          programTitle={program.title}
+          educationScheduleLines={program.educationScheduleLines}
+          educationTargetLabel={program.educationTargetDetailLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          programId={program.id}
+        />
+      )
     }
     if (active === 'settlement') {
       if (isTeacher) {

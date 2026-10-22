@@ -1,11 +1,75 @@
 import { describe, expect, it } from 'vitest'
-import { resolveUploadContentType } from '@/shared/lib/admin-file-upload/purposes'
+import {
+  ADMIN_FILE_PURPOSE,
+  adminFileUploadAllowsNullOwnerId,
+  resolveUploadContentType,
+} from '@/shared/lib/admin-file-upload/purposes'
 
 const XLSX_STANDARD = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 function uploadFile(name: string, type: string): File {
   return new File(['xlsx-bytes'], name, { type })
 }
+
+describe('adminFileUploadAllowsNullOwnerId', () => {
+  it('프로그램 등록 draft purpose는 PROGRAM_CONTENT/PROGRAM + ownerId null을 허용한다', () => {
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        filePurpose: ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL,
+      })
+    ).toBe(true)
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        filePurpose: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
+      })
+    ).toBe(true)
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        filePurpose: ADMIN_FILE_PURPOSE.PROGRAM_INLINE_IMAGE,
+      })
+    ).toBe(true)
+  })
+
+  it('공지·FAQ draft purpose만 CONTENT 도메인에서 null을 허용한다', () => {
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'CONTENT',
+        ownerType: 'NOTICE',
+        filePurpose: ADMIN_FILE_PURPOSE.NOTICE_ATTACHMENT,
+      })
+    ).toBe(true)
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'CONTENT',
+        ownerType: 'FAQ',
+        filePurpose: ADMIN_FILE_PURPOSE.FAQ_INLINE_IMAGE,
+      })
+    ).toBe(true)
+  })
+
+  it('그 외 purpose는 ownerId를 요구한다', () => {
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'PROGRAM',
+        ownerType: 'APPLICATION',
+        filePurpose: ADMIN_FILE_PURPOSE.STUDENT_ROSTER,
+      })
+    ).toBe(false)
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        filePurpose: ADMIN_FILE_PURPOSE.PROGRAM_POST_INLINE_IMAGE,
+      })
+    ).toBe(false)
+  })
+})
 
 describe('resolveUploadContentType', () => {
   it('xlsx + application/haansoftxlsx 는 표준 MIME으로 보낸다', () => {

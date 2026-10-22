@@ -72,6 +72,7 @@ import {
   peekUjatApplicationVolunteerOverlayRecord,
   replaceUjatApplicationVolunteerOverlayForScope,
   resetUjatApplicationVolunteerOverlayForScope,
+  stripUjatApplicationVolunteerProgramOnlyFields,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
   peekUjatRecruitInstitutionOverlayRecord,
@@ -507,7 +508,9 @@ function overlayRecordForKind(
   if (kind === 'program-registration') {
     return { ...peekProgramRegistrationOverlayRecord(catalogTemplateId) }
   }
-  return { ...peekUjatApplicationVolunteerOverlayRecord(catalogTemplateId) }
+  return stripUjatApplicationVolunteerProgramOnlyFields(
+    peekUjatApplicationVolunteerOverlayRecord(catalogTemplateId)
+  )
 }
 
 export function collectOperationalOverlayForCatalogId(

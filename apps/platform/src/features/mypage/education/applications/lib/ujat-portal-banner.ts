@@ -1,7 +1,8 @@
-import type {
-  PortalProgramApplicationSupplement,
-  UjatPortalBannerState,
-} from '../api/types'
+import {
+  UJAT_PORTAL_BANNER_STATES,
+  type PortalProgramApplicationSupplement,
+  type UjatPortalBannerState,
+} from '../api/types.ts'
 
 export type UjatScheduleBannerVariant = 'action' | 'review' | 'revision'
 
@@ -12,14 +13,7 @@ export type UjatScheduleBannerCopy = {
   clickable: boolean
 }
 
-const BANNER_STATES = new Set<string>([
-  'NONE',
-  'ACTION_REQUIRED',
-  'ADMIN_REVIEW',
-  'REVISION_REQUIRED',
-  'FINAL_APPROVED',
-  'REJECTED',
-])
+const BANNER_STATES = new Set<string>(Object.values(UJAT_PORTAL_BANNER_STATES))
 
 const BANNER_COPY: Record<UjatScheduleBannerVariant, Omit<UjatScheduleBannerCopy, 'variant'>> = {
   action: {

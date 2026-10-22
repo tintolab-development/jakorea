@@ -22,6 +22,8 @@ import type { MemberConsentCrimeDraftSnapshot } from '@/features/user/shared/lib
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
+import '@/shared/ui/file-upload-picker.css'
 import {
   CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
   CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
@@ -99,7 +101,7 @@ export function MemberConsentCrimeModal({
   }, [open, savedSnapshot])
 
   const handlePickDocument = useCallback(() => {
-    fileInputRef.current?.click()
+    openFilePicker(fileInputRef.current)
   }, [])
 
   const handleFileChange = useCallback(
@@ -281,14 +283,26 @@ export function MemberConsentCrimeModal({
               >
                 문서 다운로드
               </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="medium"
-                onClick={handlePickDocument}
-                disabled={isSubmitting}
-              >
-                문서 업로드
-              </CmsButton>
+              <span className="file-upload-picker">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={CRIME_CONSENT_UPLOAD_ACCEPT}
+                  className="file-upload-picker__input"
+                  disabled={isSubmitting}
+                  onChange={handleFileChange}
+                  aria-label="동의서 문서 파일 선택"
+                />
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  tabIndex={isSubmitting ? undefined : -1}
+                  onClick={handlePickDocument}
+                  disabled={isSubmitting}
+                >
+                  문서 업로드
+                </CmsButton>
+              </span>
               <CmsButton
                 variant="primary"
                 size="medium"
@@ -301,15 +315,6 @@ export function MemberConsentCrimeModal({
               </CmsButton>
             </div>
           </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={CRIME_CONSENT_UPLOAD_ACCEPT}
-            className="crime-consent-doc-modal__visually-hidden-file"
-            onChange={handleFileChange}
-            aria-label="동의서 문서 파일 선택"
-          />
 
           {isSubmitting ? (
             <div className="member-consent-crime-modal__uploading">

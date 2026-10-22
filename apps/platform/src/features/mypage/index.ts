@@ -88,6 +88,7 @@ export {
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
@@ -119,11 +120,13 @@ export {
   EducationSettlementWriteForm,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
+  EducationSurveySection,
   getEducationSurveyTabAvailability,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
   UjatScheduleBanner,
   UjatApplicationContent,
+  UjatVolunteerAssignmentPanel,
 } from './education'
 export {
   formatMypageScheduleBarLabel,

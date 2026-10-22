@@ -78,10 +78,10 @@
 
 @media (--bp-pc-up) {
   .title {
-    font-size: 38px;
+    font-size: 44px;
     font-weight: 700;
-    line-height: 144%;
-    letter-spacing: -0.76px;
+    line-height: 63px;
+    letter-spacing: -0.88px;
   }
 
   .titleBreak {
@@ -189,6 +189,26 @@
     padding-right: 0;
     overflow: hidden;
     scroll-snap-type: none;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .content {
+    padding-inline: 0;
+  }
+
+  .header {
+    padding-inline: max(
+      var(--spacing-80),
+      calc((100% - var(--content-shell-max-width)) / 2)
+    );
+  }
+
+  .viewport {
+    padding-left: max(
+      var(--spacing-80),
+      calc((100% - var(--content-shell-max-width)) / 2)
+    );
   }
 }
 

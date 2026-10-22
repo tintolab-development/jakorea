@@ -14,9 +14,6 @@
   align-items: flex-start;
 }
 
-.paragraph-file-upload__input {
-  display: none;
-}
 
 .paragraph-file-upload--locked {
   pointer-events: none;

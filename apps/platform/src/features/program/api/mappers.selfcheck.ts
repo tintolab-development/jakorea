@@ -924,6 +924,115 @@ assert.equal(youthClosed.recruitmentSelectionAmbiguous, undefined)
 assert.equal(youthClosed.recruitmentPhases.length, 1)
 assert.equal(youthClosed.recruitmentPhases[0]?.label, '봉사자 모집 기간')
 
+const focusedVolunteerRecruitment = mapPortalProgramDetail(
+  {
+    programId: 186290,
+    programType: 'UJAT',
+    title: '프로그램 공통 제목',
+    recruitments: [
+      {
+        recruitmentId: 186672,
+        recruitmentType: 'PARTICIPANT',
+        applicationTypes: ['ORGANIZATION'],
+        startAt: '2026-01-01T00:00:00Z',
+        endAt: '2026-01-31T00:00:00Z',
+        recruitmentGuide: '기관 모집 안내',
+      },
+      {
+        recruitmentId: 186674,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+        startAt: '2026-07-11T15:00:00Z',
+        endAt: '2026-12-31T15:00:00Z',
+        recruitmentGuide: '하반기 봉사자 신청서를 검토합니다.',
+        interviewEnabled: true,
+        interviewStartAt: '2026-08-05T15:00:00Z',
+        interviewEndAt: '2026-12-31T15:00:00Z',
+      },
+      {
+        recruitmentId: 186673,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+        startAt: '2026-01-01T15:00:00Z',
+        endAt: '2026-06-30T15:00:00Z',
+        recruitmentGuide: '상반기 봉사자 신청서입니다.',
+      },
+    ],
+  },
+  { recruitmentIds: [186674], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(focusedVolunteerRecruitment)
+assert.deepEqual(focusedVolunteerRecruitment.focusedRecruitmentIds, [186674])
+assert.equal(focusedVolunteerRecruitment.applicationType, 'VOLUNTEER')
+assert.equal(
+  focusedVolunteerRecruitment.recruitmentPhases[0]?.value,
+  '2026년 7월 12일 ~ 2027년 1월 1일',
+)
+assert.equal(
+  focusedVolunteerRecruitment.extraSections.find(section => section.title === '모집 안내')?.body,
+  '하반기 봉사자 신청서를 검토합니다.',
+)
+
+const mismatchedFocusedRecruitment = mapPortalProgramDetail(
+  {
+    programId: 186290,
+    programType: 'UJAT',
+    title: '프로그램 공통 제목',
+    recruitments: [
+      {
+        recruitmentId: 186674,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['ORGANIZATION'],
+        recruitmentGuide: '다른 신청 유형 안내',
+      },
+    ],
+  },
+  { recruitmentIds: [186674], applicationTypes: ['VOLUNTEER'] },
+)
+assert.equal(mismatchedFocusedRecruitment, null)
+
+const missingFocusedRecruitment = mapPortalProgramDetail(
+  {
+    programId: 186290,
+    programType: 'UJAT',
+    title: '프로그램 공통 제목',
+    recruitments: [
+      {
+        recruitmentId: 186673,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { recruitmentIds: [186674], applicationTypes: ['VOLUNTEER'] },
+)
+assert.equal(missingFocusedRecruitment, null)
+
+const recruitmentWithoutDates = mapPortalProgramDetail({
+  programId: 182224,
+  title: '일정 미설정 봉사 프로그램',
+  programType: 'GENERAL_INDIVIDUAL',
+  recruitments: [
+    {
+      recruitmentType: 'VOLUNTEER',
+      applicationTypes: ['VOLUNTEER'],
+    },
+  ],
+})
+assert.ok(recruitmentWithoutDates)
+assert.deepEqual(recruitmentWithoutDates.recruitmentPhases, [])
+assert.deepEqual(recruitmentWithoutDates.educationSchedules, [])
+
+const scheduleWithoutDetails = mapPortalProgramDetail({
+  programId: 182225,
+  title: '일정 내용 없음 프로그램',
+  programType: 'GENERAL_INDIVIDUAL',
+  schedules: [{}],
+})
+assert.ok(scheduleWithoutDetails)
+assert.deepEqual(scheduleWithoutDetails.eventSchedules, [])
+assert.deepEqual(scheduleWithoutDetails.educationSchedules, [])
+
 const bothIndividual = mapPortalProgramDetail(
   {
     programId: 186010,
@@ -1491,6 +1600,7 @@ const instructorScopedNoInterviewSchedule = mapPortalProgramDetail(
       {
         recruitmentId: 186143,
         recruitmentType: 'INSTRUCTOR',
+        applicationTypes: ['INSTRUCTOR'],
       },
     ],
   },

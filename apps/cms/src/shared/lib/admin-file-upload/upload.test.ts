@@ -4,6 +4,7 @@ import {
   copyRequiredHeaders,
   createUploadRequest,
   getFileStatus,
+  resolvePresignedUploadUrl,
   uploadAdminFile,
   uploadToS3,
   waitUntilFileAvailable,
@@ -81,12 +82,22 @@ describe('admin file upload', () => {
     ).rejects.toThrow('Presigned URL CORS')
   })
 
-  it('uploadToS3는 상대 경로 uploadUrl을 거부한다', async () => {
+  it('상대 경로 uploadUrl은 현재 origin 기준으로 해석한다', () => {
+    expect(resolvePresignedUploadUrl('/api/admin/files/uploads/raw/key?signature=test')).toBe(
+      'http://localhost/api/admin/files/uploads/raw/key?signature=test'
+    )
+  })
+
+  it('uploadToS3는 로컬 상대 경로 signed URL에도 PUT한다', async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 200 } as Response)
     const file = new File(['pdf'], 'form.pdf', { type: 'application/pdf' })
-    await expect(
-      uploadToS3('/prod/quarantine/key', file, { 'Content-Type': 'application/pdf' })
-    ).rejects.toThrow('Presigned upload URL이 올바르지 않습니다.')
-    expect(fetch).not.toHaveBeenCalled()
+    await uploadToS3('/api/admin/files/uploads/raw/key', file, {
+      'Content-Type': 'application/pdf',
+    })
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost/api/admin/files/uploads/raw/key',
+      expect.objectContaining({ method: 'PUT' })
+    )
   })
 
   it('uploadToS3는 파일 MIME과 서명 Content-Type이 다르면 body type을 맞춘다', async () => {
@@ -176,6 +187,65 @@ describe('admin file upload', () => {
       ownerId: null,
       filePurpose: 'PROGRAM_INLINE_IMAGE',
     })
+  })
+
+  it.each([
+    ['PROGRAM_THUMBNAIL', 'thumb.png', 'image/png'],
+    ['PROGRAM_DETAIL_ATTACHMENT', 'guide.pdf', 'application/pdf'],
+  ] as const)('createUploadRequest는 등록 draft %s 의 ownerId null을 그대로 보낸다', async (
+    filePurpose,
+    originalFileName,
+    contentType
+  ) => {
+    vi.mocked(customInstance).mockResolvedValue(
+      wrapData({
+        fileObjectId: '303',
+        uploadUrl: 'https://s3.example/upload',
+        method: 'PUT',
+        requiredHeaders: { 'Content-Type': contentType },
+        confirmPath: '/api/admin/files/303/confirm',
+      })
+    )
+
+    await createUploadRequest({
+      owner: {
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        ownerId: null,
+        filePurpose,
+      },
+      originalFileName,
+      contentType,
+      fileSize: 4096,
+      checksumSha256: 'SHA256_VALUE',
+    })
+
+    const config = vi.mocked(customInstance).mock.calls.at(-1)?.[0]
+    expect(config?.data).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: null,
+      filePurpose,
+    })
+    expect(config?.data).not.toMatchObject({ ownerId: 1 })
+  })
+
+  it('createUploadRequest는 draft 허용 밖 purpose의 ownerId null을 보내지 않는다', async () => {
+    await expect(
+      createUploadRequest({
+        owner: {
+          ownerDomain: 'PROGRAM',
+          ownerType: 'APPLICATION',
+          ownerId: null,
+          filePurpose: 'STUDENT_ROSTER',
+        },
+        originalFileName: 'roster.xlsx',
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileSize: 1024,
+        checksumSha256: 'SHA256_VALUE',
+      })
+    ).rejects.toThrow('파일 소유 리소스 ID가 필요합니다.')
+    expect(customInstance).not.toHaveBeenCalled()
   })
 
   it('confirmUpload는 최초 요청과 같은 fileSize·checksum·contentType을 보낸다', async () => {

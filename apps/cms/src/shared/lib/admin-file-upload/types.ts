@@ -4,7 +4,10 @@ import type { FileUploadUrlResponse } from '@/shared/api/generated/members/schem
 export type AdminFileUploadOwner = {
   ownerDomain: string
   ownerType: string
-  /** 신규 작성은 엔티티 id가 없으므로 null. 0·임시 id는 쓰지 않는다. */
+  /**
+   * 신규 작성은 엔티티 id가 없으므로 null. 0·임시 id는 쓰지 않는다.
+   * null은 OpenAPI upload-first draft 허용 조합만 보낸다.
+   */
   ownerId: number | null
   /** 파일 업무 목적 — privacy/retention/download 정책은 서버가 이 값으로 결정 */
   filePurpose: string

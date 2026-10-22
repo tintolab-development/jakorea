@@ -147,9 +147,14 @@ export function resolveEducationApplicationProgramFocus(
     | Pick<EducationApplicationListItem, 'recruitmentId' | 'applicationType'>
     | null
     | undefined,
+  fallbackApplicationType?: string | null,
 ): PortalRecruitmentFocus | null {
   if (!application) return null
-  const applicationType = application.applicationType?.trim().toUpperCase()
+  const applicationType = (
+    application.applicationType?.trim() ||
+    fallbackApplicationType?.trim() ||
+    ''
+  ).toUpperCase()
   const recruitmentId = application.recruitmentId
   const recruitmentIds =
     recruitmentId != null && Number.isSafeInteger(recruitmentId) && recruitmentId > 0

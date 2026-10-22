@@ -11,6 +11,8 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { formatDateDot } from '@/shared/utils'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
+import '@/shared/ui/file-upload-picker.css'
 import {
   CmsButton,
   DeleteGuideModal,
@@ -188,7 +190,7 @@ export function GeminiPerformanceList() {
 
   const handleAddReportClick = useCallback(() => {
     if (!canWrite) return
-    fileInputRef.current?.click()
+    openFilePicker(fileInputRef.current)
   }, [canWrite])
 
   const clearPendingImport = useCallback(() => {
@@ -400,13 +402,6 @@ export function GeminiPerformanceList() {
 
   return (
     <div className="program-list-page">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls"
-        hidden
-        onChange={event => void handleFileChange(event)}
-      />
 
       {remoteEnabled && isError ? (
         <Alert
@@ -464,9 +459,25 @@ export function GeminiPerformanceList() {
               </FilterTableToolbarButton>
             ) : null}
             <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
-            <FilterTableToolbarButton variant="primary" onClick={handleAddReportClick}>
-              연수 보고서 등록
-            </FilterTableToolbarButton>
+            <span className="file-upload-picker">
+              {canWrite ? (
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="file-upload-picker__input"
+                  aria-label="연수 보고서 등록"
+                  onChange={event => void handleFileChange(event)}
+                />
+              ) : null}
+              <FilterTableToolbarButton
+                variant="primary"
+                tabIndex={canWrite ? -1 : undefined}
+                onClick={handleAddReportClick}
+              >
+                연수 보고서 등록
+              </FilterTableToolbarButton>
+            </span>
           </>
         }
         hideExcelDownload

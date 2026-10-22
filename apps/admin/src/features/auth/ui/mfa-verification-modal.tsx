@@ -25,6 +25,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     provisioning,
     provisioningLoading,
     provisioningError,
+    showQrSetup,
     isLocalTestMfa,
     failedAttempts,
     isLocked,
@@ -65,7 +66,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
       }}
     >
       <div className="mfa-verification-modal__body">
-        <MfaModalHeader isLocalTest={isLocalTestMfa} />
+        <MfaModalHeader isLocalTest={isLocalTestMfa} showQrSetup={showQrSetup} />
 
         {lockMessage && (
           <Alert
@@ -94,7 +95,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
           />
         )}
 
-        {!isLocalTestMfa && (
+        {showQrSetup && (
           <div className="mfa-verification-modal__qr">
             {provisioningLoading ? (
               <Spin tip="QR 코드 생성 중…" />

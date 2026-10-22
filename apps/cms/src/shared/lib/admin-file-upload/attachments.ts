@@ -98,12 +98,18 @@ export async function deleteFileObject(fileObjectId: number): Promise<void> {
   })
 }
 
-export async function getFileDownload(fileObjectId: number): Promise<FileDownloadResolveResponse> {
+export async function getFileDownload(
+  fileObjectId: number,
+  options?: { skipGlobalErrorAlert?: boolean }
+): Promise<FileDownloadResolveResponse> {
   return unwrapApiBody<FileDownloadResolveResponse>(
-    await customInstance<FileDownloadResolveResponse>({
-      url: `/api/admin/files/${fileObjectId}/download`,
-      method: 'GET',
-    })
+    await customInstance<FileDownloadResolveResponse>(
+      {
+        url: `/api/admin/files/${fileObjectId}/download`,
+        method: 'GET',
+      },
+      options?.skipGlobalErrorAlert === true ? { skipGlobalErrorAlert: true } : undefined
+    )
   )
 }
 
@@ -240,8 +246,11 @@ export async function loadSensitiveAdminFileBlob(input: {
 }
 
 /** 인증이 필요한 파일을 img에 넣지 않고 blob으로 미리본다. */
-export async function loadAdminFileBlob(fileObjectId: number): Promise<Blob> {
-  const resolved = await getFileDownload(fileObjectId)
+export async function loadAdminFileBlob(
+  fileObjectId: number,
+  options?: { skipGlobalErrorAlert?: boolean }
+): Promise<Blob> {
+  const resolved = await getFileDownload(fileObjectId, options)
   const downloadUrl = resolved.downloadUrl?.trim()
   if (!downloadUrl) {
     throw new Error('첨부파일 다운로드 URL을 받지 못했습니다.')

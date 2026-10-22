@@ -1,10 +1,4 @@
-import {
-  getFileContentPath,
-  getFileDownload,
-  loadAdminFileBlob,
-  toSameOriginApiPath,
-} from '@/shared/lib/admin-file-upload/attachments'
-import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { loadAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
 import customInstance from '@/shared/api/orval-mutator'
 
 export type ProgramThumbnailResponse = {
@@ -39,37 +33,35 @@ function isPreviewableImageBlob(blob: Blob): boolean {
   return blob.size > 0 && blob.type !== 'application/json'
 }
 
-/** img에 넣을 주소. 바이트를 받으면 blob, 아니면 서명된 downloadUrl. `/content`는 img src로 쓰지 않는다. */
+/** 등록 위저드 단계 이동 시 같은 세션에서 다시 받지 않도록 File/Blob을 기억한다. */
+const thumbnailPreviewBlobs = new Map<number, Blob>()
+
+export function rememberProgramThumbnailPreviewBlob(fileObjectId: number, blob: Blob): void {
+  if (fileObjectId < 1 || blob.size < 1) return
+  thumbnailPreviewBlobs.set(fileObjectId, blob)
+}
+
+export function forgetProgramThumbnailPreviewBlob(fileObjectId: number | null | undefined): void {
+  if (fileObjectId == null || fileObjectId < 1) return
+  thumbnailPreviewBlobs.delete(fileObjectId)
+}
+
+export function resetProgramThumbnailPreviewBlobsForTests(): void {
+  thumbnailPreviewBlobs.clear()
+}
+
+/** img에 넣을 주소. `/content` fallback은 이 purpose에서 404라 쓰지 않는다. */
 export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Promise<string> {
-  try {
-    const blob = await loadAdminFileBlob(fileObjectId)
-    if (isPreviewableImageBlob(blob)) {
-      return URL.createObjectURL(blob)
-    }
-  } catch {
-    /* 인증된 /content 조회로 재시도 */
+  const cached = thumbnailPreviewBlobs.get(fileObjectId)
+  if (cached && isPreviewableImageBlob(cached)) {
+    return URL.createObjectURL(cached)
   }
-  try {
-    const blob = await customInstance<Blob>(
-      {
-        url: getFileContentPath(fileObjectId),
-        method: 'GET',
-        responseType: 'blob',
-      },
-      { skipGlobalErrorAlert: true }
-    )
-    if (isPreviewableImageBlob(blob)) {
-      return URL.createObjectURL(blob)
-    }
-  } catch {
-    /* 서명 주소로 표시 */
+  const blob = await loadAdminFileBlob(fileObjectId, { skipGlobalErrorAlert: true })
+  if (!isPreviewableImageBlob(blob)) {
+    throw new Error('대표 이미지를 불러오지 못했습니다.')
   }
-  const resolved = await getFileDownload(fileObjectId)
-  const downloadUrl = resolved.downloadUrl?.trim()
-  if (!downloadUrl) {
-    throw new Error('대표 이미지 주소를 받지 못했습니다.')
-  }
-  return toSameOriginApiPath(downloadUrl, getApiBaseUrl()) ?? downloadUrl
+  thumbnailPreviewBlobs.set(fileObjectId, blob)
+  return URL.createObjectURL(blob)
 }
 
 /** PUT /api/admin/programs/{programId}/thumbnail — null 이면 대표 이미지를 지운다 */

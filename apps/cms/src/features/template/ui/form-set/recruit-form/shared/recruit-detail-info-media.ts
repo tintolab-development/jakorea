@@ -1,6 +1,7 @@
 /**
  * 모집 상세 정보(썸네일·첨부) overlay 키·생성 후 프로그램 바인딩.
- * 등록 중에는 staging owner 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
+ * 등록 중에는 ownerId=null draft(PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT)로 업로드하고,
+ * 생성 직후 실제 programId 에 연결한다.
  */
 
 import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
@@ -14,8 +15,11 @@ import type { Program } from '@/types/domain'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 
-/** 등록 전 업로드용 임시 PROGRAM ownerId (상세 수정의 `?? 1` 과 동일 관례) */
-export const RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID = 1
+/**
+ * 등록 전 썸네일·첨부 prepare owner.
+ * 프로그램이 아직 없으므로 `ownerId`는 null. 가짜 programId(1)를 쓰지 않는다.
+ */
+export const RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID = null
 
 let pendingRecruitDetailMediaUploads: Promise<unknown> = Promise.resolve()
 
@@ -172,7 +176,7 @@ export function readRecruitDetailMediaFromOverlay(
 }
 
 /**
- * 프로그램 생성 직후 — staging 업로드 파일을 실제 programId 에 연결.
+ * 프로그램 생성 직후 — ownerId=null draft 파일을 실제 programId 에 연결.
  * 첨부는 PUT /programs/{id}/attachments (포털 GENERAL 첨부 SSOT).
  * 실패하면 호출부가 방금 만든 프로그램을 삭제하고 등록을 완료하지 않는다.
  */
@@ -198,6 +202,24 @@ const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
   INSTRUCTOR: 'recruitInstructor.detailInfo',
   VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
 }
+
+const UJAT_ROW_DETAIL_INFO_BINDINGS = [
+  {
+    recruitmentType: 'PARTICIPANT',
+    applicationType: 'ORGANIZATION',
+    prefix: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution,
+  },
+  {
+    recruitmentType: 'VOLUNTEER',
+    recruitTerm: 'FIRST_HALF',
+    prefix: 'recruitVolunteer.h1.detailInfo',
+  },
+  {
+    recruitmentType: 'VOLUNTEER',
+    recruitTerm: 'SECOND_HALF',
+    prefix: 'recruitVolunteer.h2.detailInfo',
+  },
+] as const
 
 /**
  * 일반 프로그램 생성 직후 — 모집 양식별 썸네일·첨부를 해당 모집 행에 연결한다.
@@ -225,6 +247,50 @@ export async function bindGeneralRecruitDetailMediaToRows(
     const attachmentIds = media.attachmentFileObjectIds ?? []
     if (attachmentIds.length > 0) {
       await putProgramRecruitmentAttachments(numericId, row.id!, attachmentIds)
+    }
+  }
+}
+
+/**
+ * UJAT 프로그램 생성 직후 — 기관·봉사자 상반기·하반기 미디어를 각 모집 행에 연결한다.
+ * 봉사자 행은 날짜 정렬이 아니라 `recruitTerm`을 SSOT로 사용한다.
+ */
+export async function bindUjatRecruitDetailMediaToRows(
+  created: Pick<Program, 'id' | 'programRecruitments'>,
+  overlay: Record<string, unknown>
+): Promise<void> {
+  const numericId = parseFileObjectId(created.id)
+  if (numericId == null) return
+
+  const rows = (created.programRecruitments ?? []).filter(row => row.id != null)
+  for (const binding of UJAT_ROW_DETAIL_INFO_BINDINGS) {
+    const media = readRecruitDetailMediaFromOverlay(overlay, [binding.prefix])
+    const hasMedia =
+      media.thumbFileObjectId != null || (media.attachmentFileObjectIds?.length ?? 0) > 0
+    if (!hasMedia) continue
+
+    const row = rows.find(candidate => {
+      if ((candidate.recruitmentType ?? '').toUpperCase() !== binding.recruitmentType) {
+        return false
+      }
+      if (
+        'applicationType' in binding &&
+        (candidate.applicationType ?? '').toUpperCase() !== binding.applicationType
+      ) {
+        return false
+      }
+      return !('recruitTerm' in binding) || candidate.recruitTerm === binding.recruitTerm
+    })
+    if (row?.id == null) {
+      throw new Error(`UJAT 모집 행을 찾을 수 없어 미디어를 연결할 수 없습니다: ${binding.prefix}`)
+    }
+
+    if (media.thumbFileObjectId != null) {
+      await putProgramRecruitmentThumbnail(numericId, row.id, media.thumbFileObjectId)
+    }
+    const attachmentIds = media.attachmentFileObjectIds ?? []
+    if (attachmentIds.length > 0) {
+      await putProgramRecruitmentAttachments(numericId, row.id, attachmentIds)
     }
   }
 }

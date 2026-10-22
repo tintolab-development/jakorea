@@ -10,6 +10,10 @@ import {
   buildUjatProgramListRowFromRegistrationSnapshot,
   collectUjatRegistrationCreateOverlay,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  awaitRecruitDetailMediaUploads,
+  bindUjatRecruitDetailMediaToRows,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldUseRemoteApi } from './capabilities'
@@ -114,18 +118,28 @@ export async function detail(programId: string): Promise<Program | null> {
 
 export async function create(input: CreateInput): Promise<Program> {
   assertRemoteReady()
+  await awaitRecruitDetailMediaUploads()
   const overlay = collectUjatRegistrationCreateOverlay(input.overlay)
   const pending = buildUjatProgramListRowFromRegistrationSnapshot({
     id: `ujat-pending-${input.idempotencyKey}`,
     overlay,
   })
-  return fromDetail(
+  const created = fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
       toCreateRequest(pending, { draft: input.draft, overlay }),
       input.preparedFormBindings
     )
   )
+  try {
+    await bindUjatRecruitDetailMediaToRows(created, overlay)
+    return created
+  } catch (error) {
+    await deleteAdminProgramRemote(created.id).catch(rollbackError => {
+      console.error('[ujat registration] rollback created program failed', created.id, rollbackError)
+    })
+    throw error
+  }
 }
 
 /** 모집 행 저장 뒤 overlay만 남긴다. 날짜 키가 있으면 recruitments를 다시 써서 행을 덮는다. */

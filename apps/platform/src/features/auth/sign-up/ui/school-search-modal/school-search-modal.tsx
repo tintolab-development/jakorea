@@ -18,9 +18,13 @@ import {
   getResultDisplayName,
   getResultKey,
   getResultLocation,
-  toCareerNetDisplayName,
   type SchoolSearchResultItem,
 } from './school-search-sort'
+import {
+  mapSearchResultToSelectedSchool,
+  SCHOOL_SELECTION_INCOMPLETE_MESSAGE,
+  type SelectedSchool,
+} from './map-selected-school'
 import styles from './school-search-modal.module.css'
 
 const SCHOOL_SEARCH_PAGE_SIZE = 10
@@ -66,17 +70,7 @@ function resolveSearchMode(effectiveSchoolLevel: string): {
   return { searchNeis: true, searchCareerNet: false }
 }
 
-export type SelectedSchool = {
-  name: string
-  organizationId?: number
-  /** NEIS 학교 코드 — CMS와 동일 출처 */
-  neisCode?: string
-  /** NEIS 교육청 코드 (`ATPT_OFCDC_SC_CODE`) */
-  educationOfficeCode?: string
-  /** NEIS 소재지 도로명 주소 — 확인 화면 소속/학교 표시용 */
-  address?: string
-  source?: 'neis' | 'careerNet'
-}
+export type { SelectedSchool }
 
 type SchoolSearchModalProps = {
   open: boolean
@@ -119,6 +113,7 @@ export function SchoolSearchModal({
   const [hasSearched, setHasSearched] = useState(false)
   const [keywordRequired, setKeywordRequired] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectError, setSelectError] = useState('')
 
   const effectiveSchoolLevel = lockedSchoolLevel || schoolLevel
   const { searchNeis: shouldSearchNeis, searchCareerNet: shouldSearchCareerNet } =
@@ -227,6 +222,7 @@ export function SchoolSearchModal({
     setHasSearched(false)
     setKeywordRequired(false)
     setCurrentPage(1)
+    setSelectError('')
     resetResults()
     onClose()
   }, [lockedSchoolLevel, onClose, resetResults])
@@ -234,6 +230,7 @@ export function SchoolSearchModal({
   const handleSchoolLevelChange = (value: string) => {
     setSchoolLevel(value)
     setHasSearched(false)
+    setSelectError('')
     setCurrentPage(1)
     resetResults()
   }
@@ -242,6 +239,7 @@ export function SchoolSearchModal({
     setSido(value)
     setSigungu('')
     setHasSearched(false)
+    setSelectError('')
     setCurrentPage(1)
     resetResults()
   }
@@ -255,6 +253,7 @@ export function SchoolSearchModal({
     }
 
     setKeywordRequired(false)
+    setSelectError('')
     setHasSearched(true)
     setCurrentPage(1)
     if (shouldSearchNeis) {
@@ -280,29 +279,14 @@ export function SchoolSearchModal({
   }
 
   const handleSelectResult = (result: SchoolSearchResultItem) => {
-    if (result.source === 'neis') {
-      const school = result.item
-      if (!school.schulNm) return
-
-      onSelect({
-        name: school.schulNm,
-        neisCode: school.sdSchulCode || undefined,
-        educationOfficeCode: school.atptOfcdcScCode || undefined,
-        address: school.orgRdnma?.trim() || undefined,
-        source: 'neis',
-      })
-    } else {
-      const university = result.item
-      const name = toCareerNetDisplayName(university)
-      if (!name) return
-
-      onSelect({
-        name,
-        address: getResultLocation(result) !== '-' ? getResultLocation(result) : undefined,
-        source: 'careerNet',
-      })
+    const selected = mapSearchResultToSelectedSchool(result)
+    if (!selected) {
+      setSelectError(SCHOOL_SELECTION_INCOMPLETE_MESSAGE)
+      return
     }
 
+    setSelectError('')
+    onSelect(selected)
     handleClose()
   }
 
@@ -412,6 +396,13 @@ export function SchoolSearchModal({
               >
                 검색 중입니다.
               </PFText>
+            ) : null}
+            {selectError ? (
+              <div className={styles.schoolResultNotice}>
+                <PFText typo="bd-md-sb" color="error">
+                  {selectError}
+                </PFText>
+              </div>
             ) : null}
             {combinedError ? (
               <div className={styles.schoolResultNotice}>

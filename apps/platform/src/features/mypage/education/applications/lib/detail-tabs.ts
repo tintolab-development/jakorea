@@ -18,6 +18,9 @@ export type EducationDetailTabItem = {
 /** 교육현황 상세 — 일정 탭·패널 제목 SSOT (`detailCase`와 무관) */
 export const EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL = '교육 일정'
 
+/** UJAT 기관(교사) 진행중 — 일정 탭 대신 학급·봉사자 배정 표 */
+export const UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL = '봉사자 배정 현황'
+
 /**
  * 교육 일정 탭 라벨.
  * - 봉사: 배정현황
@@ -30,8 +33,9 @@ export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase):
     case 'volunteer':
       return '배정현황'
     case 'ujat-volunteer':
-    case 'ujat-participant':
       return '배정 및 출결 현황'
+    case 'ujat-participant':
+      return UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL
     case 'instructor':
       return '강의 일정'
     default:

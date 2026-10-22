@@ -542,14 +542,14 @@ function visibleSchedules(schedules: PortalSchedule[] | undefined): PortalSchedu
   return (schedules ?? []).filter(row => row.publiclyVisible !== false)
 }
 
-function scheduleTitle(schedule: PortalSchedule, index: number): string {
+function scheduleTitle(schedule: PortalSchedule): string {
   const kind = readString(schedule.scheduleKind)?.toUpperCase()
   const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
   const term = readString(schedule.term)?.toUpperCase()
   const termLabel = term ? TERM_LABEL[term] : undefined
   const name = readString(schedule.scheduleName)
   const parts = [kindLabel, termLabel, name].filter((value): value is string => Boolean(value))
-  return parts.join(' ') || `교육 일정 ${index + 1}`
+  return parts.join(' ')
 }
 
 function mapSessions(curricula: PortalCurriculum[] | undefined) {
@@ -563,14 +563,22 @@ function mapSessions(curricula: PortalCurriculum[] | undefined) {
 }
 
 function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
-  return visibleSchedules(schedules).map((schedule, index) => ({
-    scheduleLabel: `일정 ${schedule.sessionNo ?? index + 1}`,
-    name: scheduleTitle(schedule, index),
-    dateLabel: formatRange(toDate(schedule.startAt), toDate(schedule.endAt)),
-    ...(schedule.scheduleId != null ? { scheduleId: schedule.scheduleId } : {}),
-    ...(readString(schedule.startAt) ? { startAt: readString(schedule.startAt)! } : {}),
-    ...(readString(schedule.endAt) ? { endAt: readString(schedule.endAt)! } : {}),
-  }))
+  return visibleSchedules(schedules).flatMap((schedule, index) => {
+    const name = scheduleTitle(schedule)
+    const dateLabel = formatRange(toDate(schedule.startAt), toDate(schedule.endAt))
+    if (!name && dateLabel === '-') return []
+
+    return [
+      {
+        scheduleLabel: `일정 ${schedule.sessionNo ?? index + 1}`,
+        name,
+        dateLabel,
+        ...(schedule.scheduleId != null ? { scheduleId: schedule.scheduleId } : {}),
+        ...(readString(schedule.startAt) ? { startAt: readString(schedule.startAt)! } : {}),
+        ...(readString(schedule.endAt) ? { endAt: readString(schedule.endAt)! } : {}),
+      },
+    ]
+  })
 }
 
 function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
@@ -607,12 +615,16 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
         ? `${roleTag} 모집 기간`
         : recruitmentTypeLabel(row.recruitmentType)
 
-    const phases: ProgramLabeledValue[] = [
-      {
-        label: periodLabel,
-        value: formatCompactRange(toDate(row.startAt), toDate(row.endAt)),
-      },
-    ]
+    const recruitmentStart = toDate(row.startAt)
+    const recruitmentEnd = toDate(row.endAt)
+    const phases: ProgramLabeledValue[] = recruitmentStart || recruitmentEnd
+      ? [
+          {
+            label: periodLabel,
+            value: formatCompactRange(recruitmentStart, recruitmentEnd),
+          },
+        ]
+      : []
     const interviewOff = row.interviewEnabled === false
     const hasInterviewDates = Boolean(
       readString(row.documentPassAnnouncementAt ?? undefined) ||
@@ -823,7 +835,7 @@ function mapPortalScheduleDetails(
   rows: EducationProgressRowVisibility
 ): ProgramEventSchedule[] {
   if (structure !== 'schedule') return []
-  return (details ?? []).map(detail => {
+  return (details ?? []).flatMap(detail => {
     const rawScheduleLabel = detail.scheduleLabel?.trim() ?? ''
     const scheduleLabel =
       isMultiSessionRound(sessionRound)
@@ -851,18 +863,32 @@ function mapPortalScheduleDetails(
     const assignmentPeriod = rows.showAssignmentPeriod
       ? optionalText(detail.assignmentPeriod)
       : undefined
-    return {
-      scheduleLabel,
-      name: detail.name ?? '',
-      dateLabel,
-      ...(detail.blockKind ? { blockKind: detail.blockKind } : {}),
-      ...(educationFormLabel ? { educationFormLabel } : {}),
-      ...(participationMethodLabel ? { participationMethodLabel } : {}),
-      ...(detail.assignmentEnabled !== undefined
-        ? { assignmentEnabled: detail.assignmentEnabled }
-        : {}),
-      ...(assignmentPeriod ? { assignmentPeriod } : {}),
+    const name = detail.name?.trim() ?? ''
+    if (
+      !name &&
+      !dateLabel &&
+      !educationFormLabel &&
+      !participationMethodLabel &&
+      !assignmentPeriod &&
+      detail.assignmentEnabled === undefined
+    ) {
+      return []
     }
+
+    return [
+      {
+        scheduleLabel,
+        name,
+        dateLabel,
+        ...(detail.blockKind ? { blockKind: detail.blockKind } : {}),
+        ...(educationFormLabel ? { educationFormLabel } : {}),
+        ...(participationMethodLabel ? { participationMethodLabel } : {}),
+        ...(detail.assignmentEnabled !== undefined
+          ? { assignmentEnabled: detail.assignmentEnabled }
+          : {}),
+        ...(assignmentPeriod ? { assignmentPeriod } : {}),
+      },
+    ]
   })
 }
 
@@ -911,9 +937,9 @@ function mapPortalEducationScheduleCards(
     if (!rangeLabel) return []
     return [{ label: educationScheduleDetailCardLabel(0, 1), value: rangeLabel }]
   }
-  const lines = educationScheduleLines.map(line =>
-    formatEducationScheduleLineForDetailCard(line, mode)
-  )
+  const lines = educationScheduleLines
+    .map(line => formatEducationScheduleLineForDetailCard(line, mode))
+    .filter(value => value.trim().length > 0 && value !== '-')
   return lines.map((value, index) => ({
     label: educationScheduleDetailCardLabel(index, lines.length),
     value,
@@ -1097,6 +1123,14 @@ export function mapPortalProgramDetail(
   if (programId == null || !title) return null
 
   const selected = focus ? selectRecruitmentsForFocus(remote.recruitments, focus) : null
+  const hasExactRecruitmentFocus = Boolean(
+    focus?.recruitmentIds?.filter(id => Number.isSafeInteger(id) && id > 0).length === 1,
+  )
+  if (hasExactRecruitmentFocus && (!selected || selected.ambiguous || selected.rows.length !== 1)) {
+    // 신청 상세가 지정한 모집행을 확인하지 못한 경우 다른 모집행이나
+    // 프로그램 최상위 값을 대표값으로 사용하지 않는다.
+    return null
+  }
   const recruitmentResolved = selected != null && !selected.ambiguous && selected.rows.length === 1
   const recruitmentRows = recruitmentResolved
     ? selected.rows
@@ -1362,10 +1396,19 @@ export function mapPortalProgramDetail(
     ),
     educationSchedules: usesEducationProgressFields
       ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
-      : eventSchedules.map((item, index) => ({
-          label: educationScheduleDetailCardLabel(index, eventSchedules.length),
-          value: `${item.name} · ${item.dateLabel}`,
-        })),
+      : eventSchedules.flatMap((item, index) => {
+          const name = item.name.trim()
+          const dateLabel =
+            item.dateLabel.trim() && item.dateLabel !== '-' ? item.dateLabel.trim() : ''
+          const value = [name, dateLabel].filter(Boolean).join(' · ')
+          if (!value) return []
+          return [
+            {
+              label: educationScheduleDetailCardLabel(index, eventSchedules.length),
+              value,
+            },
+          ]
+        }),
     ...(volunteerInterviewSchedule ? { volunteerInterviewSchedule } : {}),
     extraSections,
     contactValue: contactValue(

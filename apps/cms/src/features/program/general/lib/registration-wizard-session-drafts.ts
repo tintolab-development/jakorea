@@ -1,6 +1,8 @@
+import { clearAllRecruitDetailDraftMedia } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session'
 import type { OperationalFormFlushOverride } from '@/features/program/general/lib/prepare-registration-create-form-bindings'
 import { isRecruitmentOrApplicationWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { stripUjatApplicationVolunteerProgramOnlyFields } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 /**
  * 등록 위저드에서 탭을 떠난 모집·신청 양식 draft.
@@ -66,6 +68,7 @@ export function subscribeRegistrationWizardApplicationDraft(
 
 export function clearRegistrationWizardSessionDrafts(): void {
   sessionDrafts.clear()
+  clearAllRecruitDetailDraftMedia()
 }
 
 export function peekRegistrationWizardSessionDrafts(): ReadonlyArray<{
@@ -78,7 +81,14 @@ export function peekRegistrationWizardSessionDrafts(): ReadonlyArray<{
     templateCode: entry.templateCode,
     draft: entry.draft,
     ...(entry.editorState != null ? { editorState: entry.editorState } : {}),
-    ...(entry.overlay != null ? { overlay: entry.overlay } : {}),
+    ...(entry.overlay != null
+      ? {
+          overlay:
+            entry.templateCode === 'application-ujat-volunteer'
+              ? stripUjatApplicationVolunteerProgramOnlyFields(entry.overlay)
+              : entry.overlay,
+        }
+      : {}),
   }))
 }
 
@@ -93,7 +103,11 @@ export function flushApplicationOperationalOverrides(args: {
   }
 
   return [...sessionDrafts.values()].map(entry => {
-    const overlay = args.overlayForTemplateCode?.(entry.templateCode) ?? entry.overlay
+    const rawOverlay = args.overlayForTemplateCode?.(entry.templateCode) ?? entry.overlay
+    const overlay =
+      rawOverlay != null && entry.templateCode === 'application-ujat-volunteer'
+        ? stripUjatApplicationVolunteerProgramOnlyFields(rawOverlay)
+        : rawOverlay
     const hasOverlay = overlay != null && Object.keys(overlay).length > 0
     return {
       templateCode: entry.templateCode,

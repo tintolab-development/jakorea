@@ -41,7 +41,7 @@ export async function uploadAdminFileMaybeMock(input: {
 }
 
 export function programFileOwner(
-  programId: number,
+  programId: number | null,
   filePurpose: AdminFilePurpose
 ): AdminFileUploadOwner {
   // BE ProgramAttachmentService / ProgramThumbnailService 는 PROGRAM_CONTENT/PROGRAM 만 허용.

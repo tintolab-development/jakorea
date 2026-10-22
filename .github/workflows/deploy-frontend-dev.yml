@@ -132,6 +132,7 @@ jobs:
           VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+          VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
         run: pnpm --filter cms build
 
       - name: Verify CMS build output
@@ -147,6 +148,7 @@ jobs:
           VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+          VITE_PLATFORM_NAVER_CLIENT_ID: ${{ secrets.VITE_PLATFORM_NAVER_CLIENT_ID }}
         run: pnpm --filter platform build
 
       - name: Verify Platform build output

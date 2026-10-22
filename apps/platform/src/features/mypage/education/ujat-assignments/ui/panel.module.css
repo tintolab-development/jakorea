@@ -1,0 +1,154 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.notice {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-8) var(--spacing-12);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-cool-50);
+}
+
+.noticeIcon {
+  display: block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.noticeText {
+  margin: 0;
+}
+
+.sections {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-60);
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  padding: 0 var(--spacing-8);
+  flex-wrap: wrap;
+}
+
+.meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.date {
+  margin: 0;
+}
+
+.metaGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  flex-wrap: wrap;
+}
+
+.manager {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.managerLabel,
+.managerName,
+.classCount {
+  margin: 0;
+}
+
+.tableWrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+}
+
+.table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  min-height: 54px;
+  padding: var(--spacing-12) var(--spacing-20);
+  border-right: 1px solid var(--Color-border-light, rgba(61, 61, 61, 0.1));
+  border-bottom: 1px solid var(--Color-border-light, rgba(61, 61, 61, 0.1));
+  vertical-align: middle;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.table th {
+  background: var(--color-neutral-cool-80, #eef3f4);
+}
+
+.table th:last-child,
+.table td:last-child {
+  border-right: none;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gradeCol {
+  width: 130px;
+}
+
+.classCol {
+  width: 130px;
+}
+
+.gradeCell {
+  background: var(--color-neutral-cool-80, #eef3f4);
+}
+
+.cellText {
+  margin: 0;
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--spacing-40);
+  text-align: center;
+}
+
+.status {
+  margin: 0;
+}

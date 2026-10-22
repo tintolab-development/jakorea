@@ -36,6 +36,25 @@ export function getUjatApplicationVolunteerOverlayRecord(): Record<string, unkno
   return store.getRecord()
 }
 
+/**
+ * 수료증 파일은 지원자별 런타임 응답이다.
+ * 관리자 프로그램 생성용 form binding/serviceDetail overlay에는 넣지 않는다.
+ */
+export function getUjatApplicationVolunteerProgramOverlayRecord(): Record<string, unknown> {
+  const record = getUjatApplicationVolunteerOverlayRecord()
+  const next = { ...record }
+  delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+  return next
+}
+
+export function stripUjatApplicationVolunteerProgramOnlyFields(
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  const next = { ...record }
+  delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+  return next
+}
+
 export function peekUjatApplicationVolunteerOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {

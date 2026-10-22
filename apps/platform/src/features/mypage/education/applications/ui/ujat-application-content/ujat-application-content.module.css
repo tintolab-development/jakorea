@@ -6,6 +6,11 @@
   gap: 0;
 }
 
+.empty {
+  margin: 0;
+  padding-block: var(--spacing-40);
+}
+
 .section {
   display: flex;
   width: 100%;
@@ -14,7 +19,7 @@
 }
 
 .section + .section:not(.sectionAfterDivider) {
-  margin-top: var(--spacing-32);
+  margin-top: var(--spacing-60);
 }
 
 .sectionAfterDivider {
@@ -58,7 +63,7 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-24);
+  gap: var(--spacing-32);
 }
 
 .block {
@@ -69,7 +74,14 @@
   gap: var(--spacing-8);
 }
 
-.blockIndex,
-.joinedValue {
+.blockIndex {
   margin: 0;
+}
+
+.periodPair {
+  display: inline-flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-16);
 }

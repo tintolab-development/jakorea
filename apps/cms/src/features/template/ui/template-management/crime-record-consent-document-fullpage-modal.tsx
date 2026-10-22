@@ -14,6 +14,8 @@ import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-man
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
+import '@/shared/ui/file-upload-picker.css'
 import { CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './crime-record-consent-document-fullpage-modal.css'
@@ -38,7 +40,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handlePickDocument = useCallback(() => {
-    fileInputRef.current?.click()
+    openFilePicker(fileInputRef.current)
   }, [])
 
   const handleFileChange = useCallback(
@@ -133,20 +135,25 @@ export function CrimeRecordConsentDocumentFullpageModal({
               >
                 문서 다운로드
               </CmsButton>
-              <CmsButton variant="primary" onClick={handlePickDocument}>
-                문서 변경
-              </CmsButton>
+              <span className="file-upload-picker">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={CRIME_CONSENT_UPLOAD_ACCEPT}
+                  className="file-upload-picker__input"
+                  onChange={handleFileChange}
+                  aria-label="동의서 문서 파일 선택"
+                />
+                <CmsButton
+                  variant="primary"
+                  tabIndex={-1}
+                  onClick={handlePickDocument}
+                >
+                  문서 변경
+                </CmsButton>
+              </span>
             </div>
           </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={CRIME_CONSENT_UPLOAD_ACCEPT}
-            className="crime-consent-doc-modal__visually-hidden-file"
-            onChange={handleFileChange}
-            aria-label="동의서 문서 파일 선택"
-          />
 
           <div className="crime-consent-doc-modal__a4-outer">
             <CrimeConsentDocumentPreview

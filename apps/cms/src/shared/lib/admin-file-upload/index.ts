@@ -2,6 +2,7 @@ export { createSha256 } from '@/shared/lib/admin-file-upload/create-sha256'
 export {
   ADMIN_FILE_OWNER,
   ADMIN_FILE_PURPOSE,
+  adminFileUploadAllowsNullOwnerId,
   buildAdminFileOwner,
   resolveUploadContentType,
 } from '@/shared/lib/admin-file-upload/purposes'

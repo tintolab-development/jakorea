@@ -4,7 +4,11 @@ import type { FileUploadPrepareRequest } from '@/shared/api/generated/members/sc
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { createSha256 } from '@/shared/lib/admin-file-upload/create-sha256'
-import { resolveUploadContentType } from '@/shared/lib/admin-file-upload/purposes'
+import {
+  adminFileUploadAllowsNullOwnerId,
+  resolveUploadContentType,
+} from '@/shared/lib/admin-file-upload/purposes'
+import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import type {
   ConfirmUploadInput,
@@ -113,12 +117,9 @@ export async function uploadToS3(
   requiredHeaders: Record<string, string> | undefined,
   method?: string
 ): Promise<void> {
-  const trimmedUrl = uploadUrl.trim()
-  if (!trimmedUrl) {
+  const resolvedUrl = resolvePresignedUploadUrl(uploadUrl)
+  if (!resolvedUrl) {
     throw new Error('파일 업로드 URL을 받지 못했습니다.')
-  }
-  if (!/^https?:\/\//i.test(trimmedUrl)) {
-    throw new Error('Presigned upload URL이 올바르지 않습니다.')
   }
 
   const headers = copyRequiredHeaders(requiredHeaders)
@@ -126,7 +127,7 @@ export async function uploadToS3(
 
   let response: Response
   try {
-    response = await fetch(trimmedUrl, {
+    response = await fetch(resolvedUrl, {
       method: (method?.trim() || 'PUT').toUpperCase(),
       headers,
       body,
@@ -145,9 +146,33 @@ export async function uploadToS3(
   }
 }
 
+/**
+ * 로컬 signed-storage는 Vite 프록시를 거칠 수 있도록 상대 경로를 반환한다.
+ * 배포 환경에서 같은 응답이 내려와도 API base origin을 기준으로 해석하고,
+ * 개발 환경에서는 빈 base URL을 사용해 현재 프론트 origin(Vite proxy)을 유지한다.
+ */
+export function resolvePresignedUploadUrl(uploadUrl: string): string {
+  const trimmed = uploadUrl.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+
+  const baseOrigin =
+    getApiBaseUrl() ||
+    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+  try {
+    return new URL(trimmed, `${baseOrigin.replace(/\/$/, '')}/`).toString()
+  } catch {
+    throw new Error('Presigned upload URL이 올바르지 않습니다.')
+  }
+}
+
 export async function createUploadRequest(
   input: CreateUploadRequestInput
 ): Promise<PreparedUpload> {
+  if (input.owner.ownerId == null && !adminFileUploadAllowsNullOwnerId(input.owner)) {
+    throw new Error('파일 소유 리소스 ID가 필요합니다.')
+  }
+
   const body: Omit<FileUploadPrepareRequest, 'ownerId'> & { ownerId: number | null } = {
     ownerDomain: input.owner.ownerDomain,
     ownerType: input.owner.ownerType,

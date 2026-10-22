@@ -11,6 +11,10 @@ import {
 } from 'react'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
+type UjatProgramApplicationVolunteerBodyOptions = NonNullable<
+  RenderFormParagraphBodyOptions['ujatProgramApplicationFormVolunteer']
+>
+
 const INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS: RenderFormParagraphBodyOptions = {
   structureLockedParagraphIds: new Set<string>(),
   structureLockedAuthoringChoicePreview: true,
@@ -1897,7 +1901,7 @@ export function useProgramParticipantApplicationEditor(
     return getUjatVolunteerRound(linkedProgram, half)?.curriculum?.trim() || undefined
   }, [variant, linkedProgram, editorOptions?.ujatRecruitParagraphProps?.volunteerHalf])
 
-  const ujatProgramApplicationFormVolunteerOptions = useMemo(
+  const ujatProgramApplicationFormVolunteerOptions = useMemo<UjatProgramApplicationVolunteerBodyOptions>(
     () =>
       variant === 'ujat-application-volunteer'
         ? {
@@ -1905,6 +1909,7 @@ export function useProgramParticipantApplicationEditor(
             applicationType: ujatVolunteerApplicationType,
             onApplicationTypeChange: setUjatVolunteerApplicationType,
             isTemplateAuthoringMode: !programLinkedPreview,
+            ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
             recruitCohortLabel: ujatVolunteerRecruitCohortLabel,
           }
         : {
