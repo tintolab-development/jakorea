@@ -21,7 +21,9 @@ const CERTIFICATE_GUIDE_LINES = [
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 이전 UJAT 활동 기수 */
-export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
+export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
+  programLinkedPreview?: boolean
+}) {
   const [term, setTerm] = useUjatApplicationVolunteerOverlayKv<string>(
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm,
     ''
@@ -34,6 +36,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames,
     []
   )
+  const fileUploadDisabled = props?.programLinkedPreview === true
 
   return (
     <DetailInfoForm title="이전 UJAT 활동 기수" hideHeader mode="edit">
@@ -73,22 +76,31 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
             <ParagraphFileUpload
               accept={CERTIFICATE_ACCEPT}
               multiple
+              disabled={fileUploadDisabled}
               guideLines={CERTIFICATE_GUIDE_LINES}
-              fileNames={fileNames}
-              onFilesChange={files => {
-                setFileNames([...fileNames, ...files.map(file => file.name)])
-                const owner = buildAdminFileOwner(
-                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
-                  1,
-                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
-                )
-                void (async () => {
-                  for (const file of files) {
-                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
-                  }
-                })()
-              }}
-              onRemoveFile={index => setFileNames(fileNames.filter((_, i) => i !== index))}
+              fileNames={fileUploadDisabled ? undefined : fileNames}
+              onFilesChange={
+                fileUploadDisabled
+                  ? undefined
+                  : files => {
+                      setFileNames([...fileNames, ...files.map(file => file.name)])
+                      const owner = buildAdminFileOwner(
+                        ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
+                        1,
+                        ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+                      )
+                      void (async () => {
+                        for (const file of files) {
+                          await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                        }
+                      })()
+                    }
+              }
+              onRemoveFile={
+                fileUploadDisabled
+                  ? undefined
+                  : index => setFileNames(fileNames.filter((_, i) => i !== index))
+              }
             />
           }
           view="-"

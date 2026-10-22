@@ -15,6 +15,8 @@ export type UjatProgramApplicationVolunteerBodyOptions = {
   applicationType: UjatProgramApplicationVolunteerType
   onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
   isTemplateAuthoringMode?: boolean
+  /** 등록 위저드 linked preview — 지원자 파일을 관리자 프로그램 데이터로 업로드하지 않는다. */
+  programLinkedPreview?: boolean
   /** 사용자 작성 모드 — 제출 확인 MC `N기` 치환용(모집 폼 활동 기수) */
   recruitCohortLabel?: string
 }
@@ -38,7 +40,11 @@ export function renderUjatProgramApplicationFormVolunteerParagraphBody(
       if (options.isTemplateAuthoringMode !== true && options.applicationType === 'new') {
         return null
       }
-      return <UjatProgramApplicationVolunteerPreviousTermParagraph />
+      return (
+        <UjatProgramApplicationVolunteerPreviousTermParagraph
+          programLinkedPreview={options.programLinkedPreview === true}
+        />
+      )
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion:
       return <UjatProgramApplicationVolunteerPreferredRegionParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience:
