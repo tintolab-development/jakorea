@@ -7,6 +7,7 @@ import {
   applyCreatedNoticeToLists,
   applyDeletedNoticeToLists,
   applyUpdatedNoticeToLists,
+  invalidateNoticeDetail,
 } from './notice-query-cache'
 
 function notice(partial: Partial<Notice> & Pick<Notice, 'id' | 'title'>): Notice {
@@ -63,6 +64,16 @@ describe('notice-query-cache', () => {
     applyUpdatedNoticeToLists(queryClient, notice({ id: '1', title: '수정' }))
 
     expect(queryClient.getQueryData<Notice[]>(listKey)?.[0]?.title).toBe('수정')
+  })
+
+  it('invalidates the exact detail query so attachment metadata is refetched after save', async () => {
+    const queryClient = new QueryClient()
+    const detailKey = postsQueryKeys.notices.detail('1')
+    queryClient.setQueryData(detailKey, notice({ id: '1', title: '첨부 공지' }))
+
+    await invalidateNoticeDetail(queryClient, '1')
+
+    expect(queryClient.getQueryState(detailKey)?.isInvalidated).toBe(true)
   })
 
   it('removes a notice from a visibility list when status no longer matches', () => {
