@@ -6,9 +6,22 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 관리자 본인 탈퇴 요청. 본인 확인의 정본은 currentPassword이며 confirmationText는 구 클라이언트 호환용으로만 유지됩니다.
+ */
 export interface AdminSelfWithdrawalRequest {
-  /** @minLength 1 */
-  confirmationText: string;
+  /**
+     * 현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.
+     * @minLength 0
+     * @maxLength 200
+     */
+  currentPassword: string;
+  /**
+     * 선택. 무시됩니다. 구 클라이언트가 보내던 확인 문구 호환용.
+     * @minLength 0
+     * @maxLength 30
+     */
+  confirmationText?: string | null;
   /**
      * @minLength 0
      * @maxLength 500

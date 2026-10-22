@@ -8,7 +8,7 @@
 import type { SessionProgressScheduleStatus } from './sessionProgressScheduleStatus';
 
 /**
- * 참여 일정. 기관 참여자는 해당 기관에 실제 배정된 프로그램 일정만 반환한다. 신청 희망 일정은 실제 배정 일정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 기관에 배정되지 않은 프로그램 일정과 미확정 희망 일정은 출석 상세·회차 집계에서 제외한다. null은 반환하지 않는다.
+ * 참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.
  */
 export interface SessionProgress {
   /** 실제 반환 대상 program_schedule id. 값이 없으면 null */
@@ -17,7 +17,7 @@ export interface SessionProgress {
   requestedScheduleId?: number | null;
   /** 출석/배정 mutation에 쓰는 실제 program_schedule id. 값이 없으면 null */
   resolvedScheduleId?: number | null;
-  /** 미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다 */
+  /** 미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관·개인 목록 sessions에서는 미확정 희망 일정을 반환하지 않는다 */
   scheduleUnresolved?: boolean | null;
   /** 프로그램 일정 회차. 확정된 희망 일정은 preference_order */
   sessionNo?: number | null;

@@ -51,6 +51,7 @@ export interface ParticipantListItemResponse {
   assignedOrganizationNames?: string[];
   lectureReportSubmitted?: boolean;
   external1365Id?: string;
+  /** 참여 일정. 기관·개인 모두 해당 참여자 실제 배정 일정만. INDIVIDUAL은 education-scope 확정 일정만이며 프로그램 전체 예정일이 아니다. 없으면 []. null은 반환하지 않는다. */
   sessions?: SessionProgress[];
   assignmentInstructors?: AssignmentInstructor[];
   mergeGroupId?: number;
