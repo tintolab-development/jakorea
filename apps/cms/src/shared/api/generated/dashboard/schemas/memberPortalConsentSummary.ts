@@ -27,4 +27,6 @@ export interface MemberPortalConsentSummary {
   policyUpdated?: boolean;
   consentStatus?: string;
   programEligible?: boolean;
+  /** 4종 서약/동의의 마이페이지 노출 이력. 해당 4종은 항상 true/false이며, 그 외 유형에는 포함하지 않습니다. */
+  listed?: boolean | null;
 }

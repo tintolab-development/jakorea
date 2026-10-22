@@ -93,29 +93,30 @@ export function PFFormFileAttach({
   return (
     <div className={[styles.fileAttach, className].filter(Boolean).join(' ')}>
       {hideTrigger ? null : (
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="file"
-          accept={accept}
-          className={styles.fileAttachInput}
-          aria-label={ariaLabel ?? buttonLabel}
-          disabled={busy}
-          onChange={handleChange}
-        />
-      )}
-      {hideTrigger ? null : (
-        <PFButton
-          type="button"
-          variant={buttonVariant}
-          size={buttonSize}
-          width={buttonFullWidth ? '100%' : undefined}
-          className={styles.fileAttachTrigger}
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? uploadingLabel : buttonLabel}
-        </PFButton>
+        <span className={styles.fileAttachPicker}>
+          <input
+            ref={inputRef}
+            id={inputId}
+            type="file"
+            accept={accept}
+            className={styles.fileAttachInput}
+            aria-label={ariaLabel ?? buttonLabel}
+            disabled={busy}
+            onChange={handleChange}
+          />
+          <PFButton
+            type="button"
+            variant={buttonVariant}
+            size={buttonSize}
+            width={buttonFullWidth ? '100%' : undefined}
+            className={styles.fileAttachTrigger}
+            disabled={busy}
+            tabIndex={busy ? undefined : -1}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? uploadingLabel : buttonLabel}
+          </PFButton>
+        </span>
       )}
       {name ? (
         <span className={styles.fileAttachChip}>

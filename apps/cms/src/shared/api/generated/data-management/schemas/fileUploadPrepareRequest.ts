@@ -23,7 +23,7 @@ export interface FileUploadPrepareRequest {
      */
   ownerType: string;
   /**
-     * 파일 소유 리소스 ID. upload-first draft는 CONTENT/NOTICE의 NOTICE_ATTACHMENT 또는 NOTICE_INLINE_IMAGE, CONTENT/FAQ의 FAQ_INLINE_IMAGE일 때 null 허용
+     * 파일 소유 리소스 ID. upload-first draft는 CONTENT/NOTICE의 NOTICE_ATTACHMENT 또는 NOTICE_INLINE_IMAGE, CONTENT/FAQ의 FAQ_INLINE_IMAGE, PROGRAM_CONTENT/PROGRAM의 PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT·PROGRAM_INLINE_IMAGE일 때 null 허용
      * @minimum 1
      */
   ownerId?: number;

@@ -133,18 +133,6 @@ export function FileSelectField({
         .filter(Boolean)
         .join(' ')}
     >
-      {!disabled && (
-        <input
-          ref={inputRef}
-          type="file"
-          multiple={multiple}
-          accept={accept}
-          className="file-select-field__input"
-          aria-label={buttonLabel}
-          onChange={handleChange}
-        />
-      )}
-
       {showNames ? (
         <div className="file-select-field__names">
           {uploading ? (
@@ -174,15 +162,29 @@ export function FileSelectField({
       ) : null}
 
       <div className="file-select-field__actions">
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="medium"
-          disabled={disabled}
-          onClick={() => openFilePicker(inputRef.current)}
-        >
-          {buttonLabel}
-        </CmsButton>
+        <span className="file-upload-picker">
+          {!disabled ? (
+            <input
+              ref={inputRef}
+              type="file"
+              multiple={multiple}
+              accept={accept}
+              className="file-upload-picker__input"
+              aria-label={buttonLabel}
+              onChange={handleChange}
+            />
+          ) : null}
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            disabled={disabled}
+            tabIndex={disabled ? undefined : -1}
+            onClick={() => openFilePicker(inputRef.current)}
+          >
+            {buttonLabel}
+          </CmsButton>
+        </span>
         {guideLines && guideLines.length > 0 ? (
           <div className="file-select-field__guide">
             {guideLines.map((line, i) => (

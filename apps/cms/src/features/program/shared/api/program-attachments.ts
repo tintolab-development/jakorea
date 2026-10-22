@@ -25,7 +25,7 @@ function unwrapApiBody<T>(payload: unknown): T {
 
 /**
  * 프로그램 상세 첨부·썸네일 업로드 owner (BE: PROGRAM_CONTENT / PROGRAM / {programId}).
- * 등록 전(프로그램·모집 행 id 없음)은 `ownerId: null`. 임시 프로그램 id를 넣지 않는다.
+ * 등록 전은 OpenAPI upload-first draft — `ownerId: null`. 임시 프로그램 id를 넣지 않는다.
  */
 export function programContentFileOwner(
   programId: number | null,

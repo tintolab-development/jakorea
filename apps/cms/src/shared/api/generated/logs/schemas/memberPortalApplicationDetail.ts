@@ -37,9 +37,9 @@ export interface MemberPortalApplicationDetail {
   formBindingId?: number;
   templateVersionId?: number;
   formResponseStatus?: string;
-  /** 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. 없으면 빈 객체 {}. */
+  /** 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. UJAT 학교 신청 키는 ujat-program-application-institution-seed-basic-info, -grade-application-info, -grade-class-time, -preferred-education-schedule입니다. 없는 문단은 만들지 않으며 없으면 빈 객체 {}. */
   answers?: MemberPortalApplicationDetailAnswers;
-  /** 희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 answers 투영. 없으면 []. */
+  /** 희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 UJAT/TRAINED_TEACHER answers 투영. UJAT는 date-only이며 프로그램 운영일로 대체하지 않습니다. 없으면 []. */
   preferredScheduleBlocks?: PreferredScheduleBlock[];
   /** 관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null. */
   assignedInterviewStartAt?: string | null;

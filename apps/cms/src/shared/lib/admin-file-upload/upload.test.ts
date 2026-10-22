@@ -230,6 +230,24 @@ describe('admin file upload', () => {
     expect(config?.data).not.toMatchObject({ ownerId: 1 })
   })
 
+  it('createUploadRequest는 draft 허용 밖 purpose의 ownerId null을 보내지 않는다', async () => {
+    await expect(
+      createUploadRequest({
+        owner: {
+          ownerDomain: 'PROGRAM',
+          ownerType: 'APPLICATION',
+          ownerId: null,
+          filePurpose: 'STUDENT_ROSTER',
+        },
+        originalFileName: 'roster.xlsx',
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileSize: 1024,
+        checksumSha256: 'SHA256_VALUE',
+      })
+    ).rejects.toThrow('파일 소유 리소스 ID가 필요합니다.')
+    expect(customInstance).not.toHaveBeenCalled()
+  })
+
   it('confirmUpload는 최초 요청과 같은 fileSize·checksum·contentType을 보낸다', async () => {
     vi.mocked(customInstance).mockResolvedValue(
       wrapData({

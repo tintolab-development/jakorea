@@ -76,7 +76,7 @@ export function shouldInsertRichTextImageLocally(
 
 /**
  * 인라인 이미지 upload-first.
- * 신규 공지·FAQ는 ownerId null 로 prepare 한다 (첨부 NOTICE_ATTACHMENT 와 동일).
+ * 신규 공지·FAQ·프로그램 상세(PROGRAM_INLINE_IMAGE)는 ownerId null 로 prepare 한다.
  */
 export async function resolveRichTextInlineImageSrc(
   file: File,

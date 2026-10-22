@@ -97,18 +97,6 @@ export function ParagraphFileUpload({
         .join(' ')}
       style={style}
     >
-      {!interactionLocked ? (
-        <input
-          ref={inputRef}
-          type="file"
-          className="paragraph-file-upload__input"
-          accept={accept}
-          multiple={multiple}
-          aria-label={buttonLabel}
-          onChange={handleChange}
-        />
-      ) : null}
-
       {hasFiles ? (
         <div className="file-attachment-list paragraph-file-upload__files">
           {fileNames!.map((name, index) => (
@@ -131,18 +119,32 @@ export function ParagraphFileUpload({
       )}
 
       <div className="file-upload-actions paragraph-file-upload__content">
-        <CmsButton
-          variant="secondary"
-          size="h32"
-          type="button"
-          aria-disabled={interactionLocked || undefined}
-          onClick={() => {
-            if (interactionLocked) return
-            openFilePicker(inputRef.current)
-          }}
-        >
-          {buttonLabel}
-        </CmsButton>
+        <span className="file-upload-picker">
+          {!interactionLocked ? (
+            <input
+              ref={inputRef}
+              type="file"
+              className="file-upload-picker__input"
+              accept={accept}
+              multiple={multiple}
+              aria-label={buttonLabel}
+              onChange={handleChange}
+            />
+          ) : null}
+          <CmsButton
+            variant="secondary"
+            size="h32"
+            type="button"
+            aria-disabled={interactionLocked || undefined}
+            tabIndex={interactionLocked ? undefined : -1}
+            onClick={() => {
+              if (interactionLocked) return
+              openFilePicker(inputRef.current)
+            }}
+          >
+            {buttonLabel}
+          </CmsButton>
+        </span>
         <FileUploadGuide lines={guideLines} className="paragraph-file-upload__guide" />
       </div>
     </div>

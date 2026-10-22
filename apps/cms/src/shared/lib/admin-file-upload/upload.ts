@@ -4,7 +4,10 @@ import type { FileUploadPrepareRequest } from '@/shared/api/generated/members/sc
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { createSha256 } from '@/shared/lib/admin-file-upload/create-sha256'
-import { resolveUploadContentType } from '@/shared/lib/admin-file-upload/purposes'
+import {
+  adminFileUploadAllowsNullOwnerId,
+  resolveUploadContentType,
+} from '@/shared/lib/admin-file-upload/purposes'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import type {
@@ -166,6 +169,10 @@ export function resolvePresignedUploadUrl(uploadUrl: string): string {
 export async function createUploadRequest(
   input: CreateUploadRequestInput
 ): Promise<PreparedUpload> {
+  if (input.owner.ownerId == null && !adminFileUploadAllowsNullOwnerId(input.owner)) {
+    throw new Error('파일 소유 리소스 ID가 필요합니다.')
+  }
+
   const body: Omit<FileUploadPrepareRequest, 'ownerId'> & { ownerId: number | null } = {
     ownerDomain: input.owner.ownerDomain,
     ownerType: input.owner.ownerType,
