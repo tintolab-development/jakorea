@@ -10,14 +10,15 @@ import {
   mapCareerGuideAdminToDomain,
   mergeBannerResponse,
   mergeCultureItemsResponse,
-  mergeInterviewResponse,
 } from './mappers'
 import { uploadCareerHeroImageAsset } from './upload-career-hero-image'
 import {
+  addInterview as addInterviewLocal,
   readRecruitGuide,
+  removeInterviews as removeInterviewsLocal,
+  replaceInterview as replaceInterviewLocal,
   saveBanner as saveBannerLocal,
   saveCulture as saveCultureLocal,
-  updateInterview as updateInterviewLocal,
 } from './store'
 
 const CULTURE_ID: Record<CultureSaveItem['id'], number> = {
@@ -149,33 +150,36 @@ export async function saveCultureService(
   return mergeCultureItemsResponse(prev, rows)
 }
 
-export async function updateInterviewService(
-  slotId: string | number,
+export async function addInterviewService(
   input: InterviewSaveItem,
-  cached?: RecruitGuideData
+  cached?: RecruitGuideData,
 ): Promise<RecruitGuideData> {
-  const numericSlotId = Number(slotId)
-  if (numericSlotId !== 1 && numericSlotId !== 2 && numericSlotId !== 3) {
-    throw new Error('INTERVIEW_SLOT_INVALID')
+  if (shouldUseRecruitGuideRemoteApi()) {
+    const prev = await resolvePrev(cached)
+    return addInterviewLocal(input, { base: prev, persist: false })
   }
-  if (!shouldUseRecruitGuideRemoteApi()) {
-    return updateInterviewLocal(numericSlotId, input)
+  return addInterviewLocal(input)
+}
+
+export async function replaceInterviewService(
+  id: string,
+  input: InterviewSaveItem,
+  cached?: RecruitGuideData,
+): Promise<RecruitGuideData> {
+  if (shouldUseRecruitGuideRemoteApi()) {
+    const prev = await resolvePrev(cached)
+    return replaceInterviewLocal(id, input, { base: prev, persist: false })
   }
-  const title = requiredText(
-    input.title,
-    'INTERVIEW_TITLE_REQUIRED',
-    'INTERVIEW_TITLE_TOO_LONG',
-    300
-  )
-  const year = input.publishedYear
-  if (year !== null && (!Number.isInteger(year) || year < 1900 || year > 2200)) {
-    throw new Error('INTERVIEW_YEAR_INVALID')
+  return replaceInterviewLocal(id, input)
+}
+
+export async function removeInterviewsService(
+  ids: string[],
+  cached?: RecruitGuideData,
+): Promise<RecruitGuideData> {
+  if (shouldUseRecruitGuideRemoteApi()) {
+    const prev = await resolvePrev(cached)
+    return removeInterviewsLocal(ids, { base: prev, persist: false })
   }
-  const prev = await resolvePrev(cached)
-  const row = await careersApi().updateCareerGuideInterview(numericSlotId, {
-    title,
-    year,
-    version: input.version,
-  })
-  return mergeInterviewResponse(prev, row)
+  return removeInterviewsLocal(ids)
 }

@@ -8,10 +8,12 @@ import type {
 import { shouldUseRecruitGuideRemoteApi } from './capabilities'
 import { recruitGuideQueryKeys } from './query-keys'
 import {
+  addInterviewService,
   getRecruitGuideService,
+  removeInterviewsService,
+  replaceInterviewService,
   saveBannerService,
   saveCultureService,
-  updateInterviewService,
 } from './service'
 
 function source(): 'remote' | 'local' {
@@ -67,15 +69,30 @@ export function useSaveRecruitCulture() {
   })
 }
 
-export function useUpdateRecruitInterview() {
-  const { getCached, setCache, refresh } = useGuideCacheHelpers()
+export function useAddRecruitInterview() {
+  const { getCached, setCache } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (payload: { slotId: number; input: InterviewSaveItem }) =>
-      updateInterviewService(payload.slotId, payload.input, getCached()),
+    mutationFn: (input: InterviewSaveItem) => addInterviewService(input, getCached()),
     retry: false,
-    onSuccess: async data => {
-      setCache(data)
-      await refresh()
-    },
+    onSuccess: data => setCache(data),
+  })
+}
+
+export function useReplaceRecruitInterview() {
+  const { getCached, setCache } = useGuideCacheHelpers()
+  return useMutation({
+    mutationFn: (payload: { id: string; input: InterviewSaveItem }) =>
+      replaceInterviewService(payload.id, payload.input, getCached()),
+    retry: false,
+    onSuccess: data => setCache(data),
+  })
+}
+
+export function useRemoveRecruitInterviews() {
+  const { getCached, setCache } = useGuideCacheHelpers()
+  return useMutation({
+    mutationFn: (ids: string[]) => removeInterviewsService(ids, getCached()),
+    retry: false,
+    onSuccess: data => setCache(data),
   })
 }

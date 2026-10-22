@@ -27,14 +27,11 @@ export type CultureItem = {
 }
 
 export type InterviewItem = {
-  /** 서버 고정 인터뷰 슬롯 ID (1~3) */
-  id: 1 | 2 | 3
-  /** 서버가 관리하는 연결 스토리 키 — 수정 불가 */
-  storyKey: string
+  id: string
+  storyId: string
   title: string
-  publishedYear: number | null
-  version: number
-  /** Platform 직무 인터뷰 커버 */
+  publishedYear: number
+  /** Platform 직무 인터뷰 커버. 목록 표에는 제목만 보인다. */
   imageUrl?: string
 }
 
@@ -64,7 +61,7 @@ export type CultureSaveItem = {
 }
 
 export type InterviewSaveItem = {
+  storyId: string
   title: string
-  publishedYear: number | null
-  version: number
+  publishedYear: number
 }

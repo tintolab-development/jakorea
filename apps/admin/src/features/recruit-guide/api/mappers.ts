@@ -89,18 +89,14 @@ function mapCultureItem(row: CareerGuideAdminCultureItemResponse): CultureItem |
 }
 
 function mapInterview(row: CareerGuideAdminInterviewResponse): InterviewItem | null {
-  // 고정 3슬롯의 구버전 조회 응답에는 id가 없고 서버 displayOrder만 있다.
-  // 배열 index가 아닌 서버가 내려준 displayOrder를 호환 식별자로 사용한다.
   const id = row.id ?? row.displayOrder
-  const storyKey = row.storyKey?.trim()
-  if (id !== 1 && id !== 2 && id !== 3) return null
-  if (!storyKey) return null
+  const storyId = row.storyKey?.trim()
+  if (id == null || !storyId) return null
   return {
-    id,
-    storyKey,
+    id: String(id),
+    storyId,
     title: row.title ?? '',
-    publishedYear: row.year ?? null,
-    version: row.version ?? 0,
+    publishedYear: row.year ?? 2026,
     imageUrl: row.coverImageUrl || undefined,
   }
 }
@@ -121,10 +117,6 @@ export async function mapCareerGuideAdminToDomain(
   if (cultureItems.length !== 4 || new Set(cultureItems.map(item => item.apiId)).size !== 4) {
     throw new Error('CAREER_GUIDE_CULTURE_RESPONSE_INVALID')
   }
-  if (interviews.length !== 3 || new Set(interviews.map(item => item.id)).size !== 3) {
-    throw new Error('CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID')
-  }
-
   const banner = await resolveBannerImage(row.bannerAssetId, row.bannerImageUrl ?? '')
 
   return {
@@ -190,22 +182,6 @@ export function mergeCultureItemsResponse(
   return {
     ...current,
     cultureItems,
-    updatedAt: new Date().toISOString(),
-  }
-}
-
-export function mergeInterviewResponse(
-  current: RecruitGuideData,
-  row: CareerGuideAdminInterviewResponse
-): RecruitGuideData {
-  const interview = mapInterview(row)
-  if (!interview) throw new Error('CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID')
-  const interviews = current.interviews.map(item =>
-    item.id === interview.id ? { ...item, ...interview } : item
-  )
-  return {
-    ...current,
-    interviews,
     updatedAt: new Date().toISOString(),
   }
 }
