@@ -9,7 +9,7 @@ import type {
 import { toApiSignupPhone } from '../../lib/helpers/to-api-phone'
 import { parseBirthDate } from '../../lib/utils'
 import { buildTermsAgreementsFromCatalog } from './map-terms-agreements'
-import { buildSchoolSelection } from '../../lib/build-school-selection'
+import { resolveSignupSchoolAttachment } from '../../lib/signup-school-attachment'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { attachPortraitFilledDocumentToTermsAgreements } from '../../lib/map-portrait-consent-filled-document'
 import type {
@@ -138,18 +138,17 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
     // NEIS 선택 학교명·학년. CMS PK가 있으면 organizationId, 없으면 schoolSelection.
     member.schoolName = input.schoolName.trim() || undefined
     member.grade = input.grade.trim() || undefined
-    if (input.schoolOrganizationId != null) {
-      member.schoolOrganizationId = input.schoolOrganizationId
-    } else {
-      member.schoolSelection = buildSchoolSelection({
+    Object.assign(
+      member,
+      resolveSignupSchoolAttachment({
         schoolName: input.schoolName,
+        schoolOrganizationId: input.schoolOrganizationId,
         schoolNeisCode: input.schoolNeisCode,
         schoolEducationOfficeCode: input.schoolEducationOfficeCode,
         schoolAddress: input.schoolAddress,
-        regionSido: input.regionSido,
         source: input.schoolSource,
-      })
-    }
+      }),
+    )
   }
 
   if (input.selectedType === 'general' && input.schoolStatus === 'none') {
@@ -174,18 +173,17 @@ export function mapSignUpToTeacherRequest(
   const member = buildMember(input)
   member.schoolName = schoolName
 
-  if (input.schoolOrganizationId != null) {
-    member.schoolOrganizationId = input.schoolOrganizationId
-  } else {
-    member.schoolSelection = buildSchoolSelection({
+  Object.assign(
+    member,
+    resolveSignupSchoolAttachment({
       schoolName: input.schoolName,
+      schoolOrganizationId: input.schoolOrganizationId,
       schoolNeisCode: input.schoolNeisCode,
       schoolEducationOfficeCode: input.schoolEducationOfficeCode,
       schoolAddress: input.schoolAddress,
-      regionSido: input.regionSido,
       source: input.schoolSource,
-    })
-  }
+    }),
+  )
 
   return {
     teacher: {

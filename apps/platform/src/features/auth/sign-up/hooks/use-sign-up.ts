@@ -65,7 +65,11 @@ import {
   startAdminRegisteredFlowFromSignUp,
 } from '@/features/auth/admin-registered'
 import { getPasswordDerived } from '../lib/password/password.logic'
-import { isMinorMemberNameValid, isProfileStepValid } from '../lib/profile/profile.logic'
+import {
+  hasValidSchoolReference,
+  isMinorMemberNameValid,
+  isProfileStepValid,
+} from '../lib/profile/profile.logic'
 import { isTeacherProfileValid } from '../lib/profile/teacher-profile.logic'
 import { isGuardianProfileValid } from '../lib/guardian/guardian-profile.logic'
 import {
@@ -79,6 +83,7 @@ import { resolvePortalSchoolOrganizationId } from '../lib/resolve-portal-school-
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import type { SelectedAddress } from '../ui/address-search-modal'
 import type { SelectedSchool } from '../ui/school-search-modal'
+import { SCHOOL_SELECTION_INCOMPLETE_MESSAGE } from '../ui/school-search-modal/map-selected-school'
 import {
   getEmailAvailability,
   postGeneralSignup,
@@ -534,9 +539,14 @@ export function useSignUp() {
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
   const isStepSixValid =
     selectedType === 'teacher'
-      ? isTeacherProfileValid(schoolName, employmentStatus)
-      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade) &&
-        (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
+      ? isTeacherProfileValid(schoolName, employmentStatus, {
+          schoolOrganizationId,
+          schoolNeisCode,
+        })
+      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade, {
+          schoolOrganizationId,
+          schoolNeisCode,
+        }) && (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
   const isGuardianProfileValidState = isGuardianProfileValid({
     name: guardianVerifiedName,
     phone: guardianVerifiedPhone,
@@ -1079,6 +1089,8 @@ export function useSignUp() {
       setSchoolName('')
       setSchoolAddress('')
       setSchoolNeisCode(null)
+      setSchoolEducationOfficeCode(null)
+      setSchoolSource(null)
       setSchoolOrganizationId(null)
       setGrade('')
     } else {
@@ -1209,6 +1221,15 @@ export function useSignUp() {
 
     if (selectedType === 'teacher' && !schoolName.trim()) {
       setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
+      return
+    }
+
+    if (
+      (selectedType === 'teacher' ||
+        (selectedType === 'general' && schoolStatus === 'enrolled')) &&
+      !hasValidSchoolReference({ schoolOrganizationId, schoolNeisCode })
+    ) {
+      setSubmitMessage(SCHOOL_SELECTION_INCOMPLETE_MESSAGE)
       return
     }
 

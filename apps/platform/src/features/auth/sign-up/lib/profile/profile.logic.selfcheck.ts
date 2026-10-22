@@ -17,6 +17,14 @@ assert.equal(
 assert.equal(isProfileStepValid('서울시', '', 'none', '', ''), false)
 assert.equal(isProfileStepValid('서울시', '101호', 'none', '', ''), true)
 assert.equal(isProfileStepValid('서울시', '101호', 'enrolled', '', '1학년'), false)
-assert.equal(isProfileStepValid('서울시', '101호', 'enrolled', '○○고', '1학년'), true)
+assert.equal(isProfileStepValid('서울시', '101호', 'enrolled', '○○고', '1학년'), false)
+assert.equal(
+  isProfileStepValid('서울시', '101호', 'enrolled', '○○고', '1학년', { schoolNeisCode: '7581089' }),
+  true,
+)
+assert.equal(
+  isProfileStepValid('서울시', '101호', 'enrolled', '○○고', '1학년', { schoolOrganizationId: 12 }),
+  true,
+)
 
 console.log('profile.logic.selfcheck: ok')
