@@ -1,5 +1,4 @@
-import { memo, useCallback, useState } from 'react'
-import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
+import { memo, useCallback } from 'react'
 import {
   normalizeProgramPaymentItemSelection,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
@@ -71,21 +70,11 @@ const WageGradeFeeField = memo(function WageGradeFeeField({
 })
 
 const WagePaymentItemsField = memo(function WagePaymentItemsField() {
-  const { onSelectOpenChange } = useRegistrationCatalogReady()
-  const [catalogEnabled, setCatalogEnabled] = useState(false)
-  const enableCatalog = useCallback(
-    (open: boolean) => {
-      onSelectOpenChange(open)
-      if (open) setCatalogEnabled(true)
-    },
-    [onSelectOpenChange]
-  )
-
   const [paymentItemValues, setPaymentItemValues] = useProgramRegistrationOverlayKv<string[]>(
     'generalRegistration.wageInfo.paymentItemValues',
     []
   )
-  const paymentCatalog = useProgramWagePaymentItemOptionsState(catalogEnabled)
+  const paymentCatalog = useProgramWagePaymentItemOptionsState()
   const paymentItemOptions = paymentCatalog.options
   const applyPaymentItemIds = useCallback(
     (ids: string[]) => {
@@ -122,7 +111,6 @@ const WagePaymentItemsField = memo(function WagePaymentItemsField() {
               options={paymentItemOptions}
               disabled={!paymentCatalog.ready}
               placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
-              onOpenChange={enableCatalog}
               style={{ width: '100%', minWidth: 0 }}
             />
           </div>

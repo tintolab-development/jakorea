@@ -1,5 +1,6 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
+import { resolvePortalPublicFileImageUrl } from '@/shared/lib/resolve-portal-public-file-image-url'
 import styles from './media-list-row.module.css'
 
 type MediaListRowProps = {
@@ -27,7 +28,8 @@ export function MediaListRow({
   interactive = false,
   onClick,
 }: MediaListRowProps) {
-  const hasThumbnailImage = Boolean(thumbnailUrl?.trim())
+  const imageSrc = resolvePortalPublicFileImageUrl(thumbnailUrl)
+  const hasThumbnailImage = Boolean(imageSrc)
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!interactive || !onClick) {
@@ -67,7 +69,7 @@ export function MediaListRow({
           .join(' ')}
       >
         {hasThumbnailImage ? (
-          <img className={styles.thumbnail} src={thumbnailUrl} alt="" />
+          <img className={styles.thumbnail} src={imageSrc} alt="" />
         ) : (
           <img
             className={styles.thumbnailPlaceholderLogo}

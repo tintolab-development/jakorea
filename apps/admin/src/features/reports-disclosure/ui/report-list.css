@@ -15,23 +15,58 @@
 
 /*
  * 행 높이: 썸네일 때문에 54px 고정 불가.
- * cms-data-table 의 `tr:hover > td { height: 54px; padding… }` 가 호버 시
- * 썸네일 셀 패딩(0→10/16)을 덮어 shift 하므로 hover 규칙도 동일 재정의.
+ *
+ * Ant Design은 hover 시 셀에 `ant-table-cell-row-hover` 클래스를 추가한다.
+ * 공통 테이블의 기본 padding이 이 클래스가 붙은 셀에도 적용되면
+ * 썸네일 셀의 padding(0 → 10px 16px)이 바뀌어 행 전체가 밀린다.
+ * 일반 셀·hover 셀·cell-row-hover 셀의 레이아웃 값을 모두 고정한다.
  */
-.rd-list__table.cms-data-table .ant-table-tbody > tr > td,
-.rd-list__table.cms-data-table .ant-table-tbody > tr:hover > td {
+.rd-list__table.cms-data-table .ant-table-tbody > tr.ant-table-row {
+  transition: none !important;
+}
+
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
   height: auto !important;
-  min-height: 54px;
+  min-height: 54px !important;
+  max-height: none !important;
+  padding: 10px 16px !important;
   vertical-align: middle !important;
+  transition: none !important;
 }
 
 /* 썸네일 열: 셀 패딩 제거 후 시안 영역 padding 사용 (hover 포함) */
 .rd-list__table.cms-data-table .ant-table-thead > tr > th.rd-list__thumb-col,
-.rd-list__table.cms-data-table .ant-table-tbody > tr > td.rd-list__thumb-col,
-.rd-list__table.cms-data-table .ant-table-tbody > tr:hover > td.rd-list__thumb-col {
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td.rd-list__thumb-col,
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
   padding: 0 !important;
   height: auto !important;
+  min-height: 54px !important;
+  max-height: none !important;
   vertical-align: middle !important;
+  transition: none !important;
 }
 
 /**
