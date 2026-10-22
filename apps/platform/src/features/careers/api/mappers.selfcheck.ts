@@ -237,6 +237,49 @@ const nullBanner = mapPublicCareerGuide(
 assert.equal(nullBanner.hero.imageUrl, fallback.hero.imageUrl)
 assert.equal(nullBanner.featuredStories[0]?.imageUrl, fallback.featuredStories[0]?.imageUrl)
 
+const linkedOne = mapPublicCareerGuide(
+  {
+    ...sample,
+    interviews: [
+      {
+        id: 13,
+        impactStoryId: 7,
+        storyKey: 'impact-story-7',
+        displayOrder: 2,
+        title: '연례 후원자 보고회 하이라이트',
+        year: 2026,
+        coverImageUrl: null,
+        impactStory: {
+          id: 7,
+          categoryName: '뉴스레터',
+          title: '연례 후원자 보고회 하이라이트',
+          publishAt: '2026-01-07T12:00:00Z',
+          imageUrl: null,
+          isPublished: true,
+        },
+      },
+    ],
+  },
+  fallback,
+)
+assert.equal(linkedOne.featuredStories.length, 1)
+assert.equal(linkedOne.featuredStories[0]?.id, '7')
+assert.equal(linkedOne.featuredStories[0]?.categoryLabel, '뉴스레터')
+assert.equal(linkedOne.featuredStories[0]?.publishedAtLabel, '2026년 01월 07일')
+
+const emptyInterviews = mapPublicCareerGuide({ ...sample, interviews: [] }, fallback)
+assert.equal(emptyInterviews.featuredStories.length, 0)
+
+const yearOnly = mapPublicCareerGuide(
+  {
+    ...sample,
+    interviews: [{ impactStoryId: 10, title: '제목만', year: 2024 }],
+  },
+  fallback,
+)
+assert.equal(yearOnly.featuredStories[0]?.id, '10')
+assert.equal(yearOnly.featuredStories[0]?.publishedAtLabel, '2024년')
+
 console.log('careers mapPublicCareerGuide selfcheck: ok')
 
 assert.equal(formatCareerPublishedAtLabel('2026-05-08'), '2026년 05월 08일')

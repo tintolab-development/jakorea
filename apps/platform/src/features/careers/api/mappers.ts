@@ -3,8 +3,9 @@
  *
  * mainText·subTextKo·culture title/description 개행은 유지한다.
  * culture title→summaryLines, description→detailLines (`\n` 분할, 없으면 fallback).
- * interview title은 한 줄. titleLines·publishedAtLabel은 storyKey가 같을 때만 fallback.
- * year로 월·일을 만들지 않는다.
+ * interview title은 한 줄. titleLines는 호환 storyKey가 fallback과 같을 때만 유지한다.
+ * 식별은 impactStoryId/id를 쓰고 storyKey로 Impact Story를 만들지 않는다.
+ * year로 월·일을 만들지 않는다. publishAt이 있으면 그 날짜를 쓴다.
  *
  * 공고: publishedOn(YYYY-MM-DD)을 우선하고, 없으면 publishedAt(date-time)으로 날짜를 만든다.
  * 라벨은 `2026년 05월 08일`. CLOSED는 공개 목록에 없다.
@@ -101,25 +102,53 @@ function mapCultureItem(
   }
 }
 
+function interviewId(item: PublicCareerInterview): string | null {
+  const impactStoryId = item.impactStoryId ?? item.impactStory?.id
+  if (typeof impactStoryId === 'number' && Number.isInteger(impactStoryId) && impactStoryId > 0) {
+    return String(impactStoryId)
+  }
+  if (typeof item.id === 'number' && Number.isInteger(item.id) && item.id > 0) {
+    return String(item.id)
+  }
+  const storyKey = typeof item.storyKey === 'string' ? item.storyKey.trim() : ''
+  return storyKey || null
+}
+
+function interviewPublishedAtLabel(
+  item: PublicCareerInterview,
+  fallback?: CareersFeaturedStory
+): string {
+  const fromPublishAt = formatCareerPublishedAtLabel(item.impactStory?.publishAt)
+  if (fromPublishAt) return fromPublishAt
+  if (fallback?.publishedAtLabel) return fallback.publishedAtLabel
+  if (typeof item.year === 'number' && Number.isInteger(item.year)) {
+    return `${item.year}년`
+  }
+  return ''
+}
+
 function mapInterview(
   item: PublicCareerInterview,
   fallbackByKey: Map<string, CareersFeaturedStory>,
   defaultCover: string
 ): CareersFeaturedStory | null {
+  const id = interviewId(item)
+  if (!id) return null
   const storyKey = typeof item.storyKey === 'string' ? item.storyKey.trim() : ''
-  if (!storyKey) return null
-  const fallback = fallbackByKey.get(storyKey)
+  const fallback = storyKey ? fallbackByKey.get(storyKey) : undefined
 
-  const title = singleLine(item.title) || fallback?.title || ''
+  const title = singleLine(item.title) || singleLine(item.impactStory?.title) || fallback?.title || ''
   if (!title) return null
 
+  const cover = item.coverImageUrl || item.impactStory?.imageUrl
+
   return {
-    id: storyKey,
-    categoryLabel: '스토리',
+    id,
+    categoryLabel: singleLine(item.impactStory?.categoryName) || fallback?.categoryLabel || '스토리',
     title,
     titleLines: fallback?.titleLines,
-    publishedAtLabel: fallback?.publishedAtLabel ?? '',
-    imageUrl: resolveRemoteOrFallback(item.coverImageUrl, defaultCover),
+    publishedAtLabel: interviewPublishedAtLabel(item, fallback),
+    imageUrl: resolveRemoteOrFallback(cover, fallback?.imageUrl ?? defaultCover),
   }
 }
 
@@ -160,7 +189,9 @@ export function mapPublicCareerGuide(
       imageAlt: fallback.hero.imageAlt,
     },
     thriveValues: thriveValues.length === 4 ? thriveValues : fallback.thriveValues,
-    featuredStories: featuredStories.length === 3 ? featuredStories : fallback.featuredStories,
+    featuredStories: Array.isArray(response.interviews)
+      ? featuredStories
+      : fallback.featuredStories,
   }
 }
 
