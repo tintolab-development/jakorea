@@ -4,7 +4,7 @@
 
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import dayjs from 'dayjs'
+import { formatDateTimeSecondsDot } from '@/shared/utils/date'
 import { Spin } from 'antd'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
@@ -19,7 +19,7 @@ const FAQ_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('faq', 'single')
 import { RichTextViewer } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { ActionResultModal, CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton, showDeleteCompletedAlert } from '@/shared/ui'
 import './admin-faq-delete-btn.css'
 import './admin-faq-detail-page.css'
 
@@ -29,10 +29,11 @@ export function AdminFaqDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const { detailEnabled, goList, leaveToList, runDeleteThenLeave } = useLeaveDeletedDetail(
-    ADMIN_FAQ_LIST_PATH,
-    id ? postsQueryKeys.faqs.detail(id) : undefined
-  )
+  const { detailEnabled, goList, leaveToList, suspendDetailQuery, resumeDetailQuery } =
+    useLeaveDeletedDetail(
+      ADMIN_FAQ_LIST_PATH,
+      id ? postsQueryKeys.faqs.detail(id) : undefined
+    )
   const detailQuery = useFaqDetailQuery(id, { enabled: detailEnabled })
   const { deleteMutation } = useFaqMutations()
 
@@ -51,15 +52,18 @@ export function AdminFaqDetailPage() {
 
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return
+    suspendDetailQuery()
     try {
-      await runDeleteThenLeave(() => deleteMutation.mutateAsync(id))
+      await deleteMutation.mutateAsync(id)
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert({ onConfirm: leaveToList })
     } catch (error) {
+      resumeDetailQuery()
       setActionResultTitle('FAQ 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [deleteMutation, id, runDeleteThenLeave])
+  }, [deleteMutation, id, leaveToList, resumeDetailQuery, suspendDetailQuery])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
@@ -95,7 +99,7 @@ export function AdminFaqDetailPage() {
     )
   }
 
-  const dateStr = dayjs(faq.createdAt).format('YYYY년 M월 D일 HH:mm:ss')
+  const dateStr = formatDateTimeSecondsDot(faq.createdAt)
   const isPublic = faq.status === 'published'
 
   return (

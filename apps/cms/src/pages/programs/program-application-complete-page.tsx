@@ -13,6 +13,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import dayjs from 'dayjs'
+import { formatDateTimeDot } from '@/shared/utils/date'
 
 const { Paragraph, Text } = Typography
 
@@ -78,7 +79,7 @@ export function ProgramApplicationCompletePage() {
           </div>
           <div>
             <Text type="secondary">신청 일시: </Text>
-            <Text>{dayjs().format('YYYY년 MM월 DD일 HH:mm')}</Text>
+            <Text>{formatDateTimeDot(dayjs())}</Text>
           </div>
         </Space>
       </Card>

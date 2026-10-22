@@ -1,6 +1,5 @@
 /**
- * 문의내역 관리 — FilterTableLayout 래퍼
- * 필터 규격: 단일 기본 260px · 최소 240px · dateRange 540px · 칸 사이 gap 12px
+ * 문의내역 관리 — FilterTableLayout 래퍼 (FAQ·공지와 동일 filterResponsiveWrap)
  */
 
 .admin-inquiry-page {
@@ -8,122 +7,8 @@
   width: 100%;
 }
 
-/*
- * 필터 2행 고정 (1행 5필드 · 2행 담당자명·문의일시 + 조회)
- * 단일 열 260px · gap 12px · dateRange 열 = 2×260 + 20 = 540px
- */
-.filter-table-layout.admin-inquiry-page__filter-layout {
-  --filter-field-gap: 12px;
-  --table-filter-field-gap: 12px;
-  --table-filter-field-min-width: 240px;
-  --table-filter-field-max-width: 260px;
-  --filter-control-width: 260px;
-  --filter-control-max-width: 260px;
-  --filter-control-min-width: 240px;
-  --admin-inquiry-filter-col-width: 260px;
-  --admin-inquiry-filter-date-range-width: calc(
-    2 * var(--admin-inquiry-filter-col-width) + var(--filter-control-range-split-between, 20px)
-  );
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout .filter-table-layout__divider {
+.admin-inquiry-page .filter-table-layout .filter-table-layout__divider {
   padding: 32px 0;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__fields-rows {
-  gap: var(--filter-field-gap, 12px);
-  width: 100%;
-}
-
-/* 1행: 필드 5개 가로 한 줄 (각 260px · gap 12px) */
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__fields-rows
-  > .table-filter-group__fields-grid-row {
-  display: grid !important;
-  width: 100%;
-  box-sizing: border-box;
-  gap: var(--filter-field-gap, 12px);
-  align-items: end;
-  justify-content: start;
-  grid-template-columns: repeat(5, var(--admin-inquiry-filter-col-width)) !important;
-}
-
-/* 2행: 담당자명(260) · 문의일시(540) · 여백 · 조회(160, 우측) */
-.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__fields-row-with-action {
-  display: grid !important;
-  width: 100%;
-  box-sizing: border-box;
-  gap: var(--filter-field-gap, 12px);
-  align-items: end;
-  grid-template-columns:
-    var(--admin-inquiry-filter-col-width)
-    var(--admin-inquiry-filter-date-range-width)
-    minmax(0, 1fr)
-    160px !important;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__fields-row-with-action
-  > .table-filter-group__fields-grid-row {
-  display: contents;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__fields-row-with-action
-  > .table-filter-group__fields-shell--inline {
-  grid-column: 4;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  justify-self: end;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__grid-cell {
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__grid-cell
-  .table-filter-group__field,
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__grid-cell
-  .labeled-search-input,
-.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__grid-cell .cms-select,
-.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__grid-cell .ant-select,
-.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__grid-cell .cms-input,
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__grid-cell
-  .ant-input-affix-wrapper,
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__grid-cell
-  .cms-datepicker:not(.cms-datepicker--range-split) {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: var(--admin-inquiry-filter-col-width) !important;
-  box-sizing: border-box;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__grid-cell[data-filter-field-key='dateRange']
-  .cms-datepicker.cms-datepicker--range-split {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: var(--admin-inquiry-filter-date-range-width) !important;
-  box-sizing: border-box;
-}
-
-.filter-table-layout.admin-inquiry-page__filter-layout
-  .table-filter-group__grid-cell[data-filter-field-key='dateRange']
-  .cms-datepicker.cms-datepicker--range-split
-  .cms-datepicker__segment {
-  flex: 1 1 0;
-  min-width: 0 !important;
-  max-width: var(--admin-inquiry-filter-col-width) !important;
-  width: 100% !important;
-  box-sizing: border-box;
 }
 
 .admin-inquiry-page__table.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),

@@ -22,10 +22,12 @@ import { fillByPlaceholder } from './form-helpers'
 const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램명', '등록자명', '등록일시'] as const
 
 export class DetailedProgramManagementPage {
+  readonly page: Page
   readonly uniqueName: string
   readonly uniqueNameUpdated: string
 
-  constructor(private readonly page: Page) {
+  constructor(page: Page) {
+    this.page = page
     const stamp = Date.now()
     this.uniqueName = `${DATA_MANAGEMENT_NAME_PREFIX}-세부-${stamp}`
     this.uniqueNameUpdated = `${DATA_MANAGEMENT_NAME_PREFIX}-세부-수정-${stamp}`
@@ -57,7 +59,9 @@ export class DetailedProgramManagementPage {
   }
 
   async selectUseStatus(label: '사용' | '미사용') {
-    await filterField(this.page, '사용 여부').getByRole('radio', { name: label }).check({ force: true })
+    await filterField(this.page, '사용 여부')
+      .getByRole('radio', { name: label })
+      .check({ force: true })
   }
 
   async fillName(name: string) {
@@ -141,13 +145,11 @@ export class DetailedProgramManagementPage {
       res => isAdminMutation(res, 'PATCH', /\/api\/admin\/detailed-programs\/[^/]+\/?$/),
       { timeout: 60_000 }
     )
-    await this.page.getByRole('button', { name: '수정 완료' }).click()
+    await this.page.getByRole('button', { name: '정보 수정' }).click()
     const patch = await patchPromise
     if (!patch.ok()) {
       const body = await patch.text().catch(() => '')
-      throw new Error(
-        `세부 프로그램 수정 API 실패: HTTP ${patch.status()} ${body.slice(0, 400)}`
-      )
+      throw new Error(`세부 프로그램 수정 API 실패: HTTP ${patch.status()} ${body.slice(0, 400)}`)
     }
     await expect(this.page.getByRole('button', { name: '정보 수정' })).toBeVisible({
       timeout: 15_000,
@@ -183,7 +185,9 @@ export class DetailedProgramManagementPage {
   }
 
   async expectDeleteBlocked() {
-    const blocked = this.page.getByRole('dialog').filter({ hasText: '세부 프로그램 삭제 불가 안내' })
+    const blocked = this.page
+      .getByRole('dialog')
+      .filter({ hasText: '세부 프로그램 삭제 불가 안내' })
     await expect(blocked).toBeVisible({ timeout: 15_000 })
     await blocked.getByRole('button', { name: '확인' }).click()
     await expect(blocked).toBeHidden({ timeout: 10_000 })

@@ -14,6 +14,7 @@ import { CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { Calendar, Badge } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
@@ -296,7 +297,7 @@ export function InstructorSchedulePage() {
               </DetailInfoForm.Row>
             )}
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field label="날짜" view={dayjs(selectedSchedule.date).format('YYYY년 MM월 DD일')} />
+              <DetailInfoForm.Field label="날짜" view={formatDateDot(selectedSchedule.date)} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field label="시간" view={`${selectedSchedule.startTime} - ${selectedSchedule.endTime}`} />

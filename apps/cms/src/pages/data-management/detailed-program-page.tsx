@@ -390,10 +390,17 @@ export default function DetailedProgramPage() {
             <FilterTableToolbarButton variant="delete" onClick={handleBulkDelete}>
               항목 삭제
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton variant="secondary" onClick={isEditMode ? handleSave : enterEditMode}>
-              {isEditMode ? '수정 완료' : '정보 수정'}
+            <FilterTableToolbarButton
+              variant="secondary"
+              onClick={isEditMode ? handleSave : enterEditMode}
+            >
+              정보 수정
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton variant="primary" onClick={handleAddClick} disabled={isEditMode}>
+            <FilterTableToolbarButton
+              variant="primary"
+              onClick={handleAddClick}
+              disabled={isEditMode}
+            >
               신규 등록
             </FilterTableToolbarButton>
           </>

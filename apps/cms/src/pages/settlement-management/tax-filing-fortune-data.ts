@@ -4,6 +4,7 @@
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import { getCompletedRowsOrderedForBulkTransfer } from '@/pages/settlement-management/bulk-transfer-fortune-data'
 
@@ -31,8 +32,6 @@ const SUBTOTAL_BG = '#E8F5F6'
 /** 미리보기 전 셀 공통 글자 크기(데이터 영역과 동일) — 색·bold는 셀 유형별 유지 */
 const PREVIEW_UNIFIED_FS = 11
 const DASH = '-'
-
-const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 
 const LABEL_GROUP_1 = '기타소득 8.8%'
 const LABEL_GROUP_2 = '기타소득(상금) 4.4%'
@@ -65,7 +64,7 @@ function simpleHash(s: string): number {
 
 function formatPaymentDate(iso: string): string {
   const d = dayjs(iso)
-  return `${d.format('YYYY.MM.DD')} (${KO_WEEKDAY[d.day()]})`
+  return formatDateDotWithWeekday(d)
 }
 
 function mockResidentId(seed: string): string {

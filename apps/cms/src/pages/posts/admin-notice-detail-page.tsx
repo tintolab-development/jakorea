@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import dayjs from 'dayjs'
+import { formatDateTimeSecondsDot } from '@/shared/utils/date'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { AttachmentDownloadIcon } from '@/shared/ui'
@@ -21,7 +21,7 @@ const NOTICE_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('notice', 'singl
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { ActionResultModal, CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton, showDeleteCompletedAlert } from '@/shared/ui'
 import { RichTextViewer } from '@/shared/rich-text'
 import './admin-notice-detail-page.css'
 
@@ -29,10 +29,11 @@ export function AdminNoticeDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const { detailEnabled, goList, leaveToList, runDeleteThenLeave } = useLeaveDeletedDetail(
-    '/admin/posts/notices',
-    id ? postsQueryKeys.notices.detail(id) : undefined
-  )
+  const { detailEnabled, goList, leaveToList, suspendDetailQuery, resumeDetailQuery } =
+    useLeaveDeletedDetail(
+      '/admin/posts/notices',
+      id ? postsQueryKeys.notices.detail(id) : undefined
+    )
   const detailQuery = useNoticeDetailQuery(id, { enabled: detailEnabled })
   const { deleteMutation } = useNoticeMutations()
 
@@ -51,15 +52,18 @@ export function AdminNoticeDetailPage() {
 
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return
+    suspendDetailQuery()
     try {
-      await runDeleteThenLeave(() => deleteMutation.mutateAsync(id))
+      await deleteMutation.mutateAsync(id)
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert({ onConfirm: leaveToList })
     } catch (error) {
+      resumeDetailQuery()
       setActionResultTitle('공지 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [deleteMutation, id, runDeleteThenLeave])
+  }, [deleteMutation, id, leaveToList, resumeDetailQuery, suspendDetailQuery])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
@@ -105,7 +109,7 @@ export function AdminNoticeDetailPage() {
     )
   }
 
-  const dateStr = dayjs(notice.createdAt).format('YYYY년 M월 D일 HH:mm:ss')
+  const dateStr = formatDateTimeSecondsDot(notice.createdAt)
   const isPublic = notice.status === 'published'
 
   return (
