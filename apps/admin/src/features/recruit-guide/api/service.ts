@@ -164,7 +164,7 @@ export async function addInterviewService(
     const response = await careersApi().createCareerGuideInterview({
       storyKey: input.storyId.trim(),
       title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
-      year: input.publishedYear ?? undefined,
+      year: input.publishedYear,
     })
     return mergeInterviewResponse(prev, response)
   }
@@ -187,7 +187,7 @@ export async function replaceInterviewService(
     const response = await careersApi().updateCareerGuideInterview(numericId, {
       storyKey: input.storyId.trim(),
       title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
-      year: input.publishedYear ?? undefined,
+      year: input.publishedYear,
       version: current.version,
     })
     return mergeInterviewResponse(prev, response)

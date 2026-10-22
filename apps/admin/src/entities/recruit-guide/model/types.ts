@@ -28,6 +28,7 @@ export type CultureItem = {
 
 export type InterviewItem = {
   id: string
+  displayOrder: number
   storyId: string
   title: string
   publishedYear: number | null

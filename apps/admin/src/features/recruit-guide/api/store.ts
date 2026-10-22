@@ -90,6 +90,7 @@ function buildSeedInterviews(): InterviewItem[] {
   return [
     {
       id: 'ri-1',
+      displayOrder: 1,
       storyId: 'story-metlife-2026',
       title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울',
       publishedYear: 2026,
@@ -98,6 +99,7 @@ function buildSeedInterviews(): InterviewItem[] {
     },
     {
       id: 'ri-2',
+      displayOrder: 2,
       storyId: 'story-summer-camp',
       title: '청소년과 함께한 JA Korea 여름 캠프 이야기',
       publishedYear: 2025,
@@ -106,6 +108,7 @@ function buildSeedInterviews(): InterviewItem[] {
     },
     {
       id: 'ri-3',
+      displayOrder: 3,
       storyId: 'story-volunteer-day',
       title: '임직원 봉사로 이어진 따뜻한 하루',
       publishedYear: 2025,
@@ -206,6 +209,10 @@ function normalizeInterview(raw: unknown, i: number): InterviewItem | null {
   const imageUrl = asString(row.imageUrl, '').trim()
   return {
     id: asString(row.id, `ri-${i + 1}`),
+    displayOrder:
+      typeof row.displayOrder === 'number' && Number.isFinite(row.displayOrder)
+        ? row.displayOrder
+        : i + 1,
     storyId,
     title,
     publishedYear: year,
@@ -346,6 +353,7 @@ export function addInterview(input: InterviewSaveItem, options?: MutateOptions):
   }
   const nextRow: InterviewItem = {
     id: nextInterviewId(current.interviews),
+    displayOrder: current.interviews.length + 1,
     storyId: input.storyId,
     title: input.title.trim(),
     publishedYear: input.publishedYear,

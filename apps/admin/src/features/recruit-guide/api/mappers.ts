@@ -89,11 +89,21 @@ function mapCultureItem(row: CareerGuideAdminCultureItemResponse): CultureItem |
 }
 
 function mapInterview(row: CareerGuideAdminInterviewResponse): InterviewItem | null {
-  const id = row.id ?? row.displayOrder
+  const id = row.id
+  const displayOrder = row.displayOrder
   const storyId = row.storyKey?.trim()
-  if (id == null || !storyId) return null
+  if (
+    id == null ||
+    !Number.isInteger(id) ||
+    displayOrder == null ||
+    !Number.isInteger(displayOrder) ||
+    !storyId
+  ) {
+    throw new Error('CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID')
+  }
   return {
     id: String(id),
+    displayOrder,
     storyId,
     title: row.title ?? '',
     publishedYear: row.year ?? null,
@@ -198,7 +208,7 @@ export function mergeInterviewResponse(
     : [...current.interviews, interview]
   return {
     ...current,
-    interviews: interviews.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })),
+    interviews: interviews.sort((a, b) => a.displayOrder - b.displayOrder),
     updatedAt: new Date().toISOString(),
   }
 }
