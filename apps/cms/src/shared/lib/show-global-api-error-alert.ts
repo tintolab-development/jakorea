@@ -7,6 +7,10 @@ import {
   extractApiErrorMessage,
   formatApiErrorAlertContent,
 } from '@/shared/lib/extract-api-error-message'
+import {
+  getMemberDeleteCurrentPasswordInvalidAlertOptions,
+  isMemberDeleteCurrentPasswordInvalidError,
+} from '@/features/user/api/get-member-api-error'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
@@ -138,6 +142,12 @@ export function showGlobalApiErrorAlert(
       return false
     }
     return showForbiddenAccessDeniedAlert(error)
+  }
+
+  if (isMemberDeleteCurrentPasswordInvalidError(error)) {
+    markGlobalErrorAlertShown(error)
+    cmsAlertModal.show(getMemberDeleteCurrentPasswordInvalidAlertOptions())
+    return true
   }
 
   const method = (config?.method ?? error.config?.method ?? 'GET').toUpperCase()

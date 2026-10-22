@@ -8,6 +8,7 @@ import {
   isAdminAccessDeniedAlert,
   isPermissionRequestsPath,
   isPermissionSettingsPath,
+  isProgramManagerPermissionSettingsPath,
   isSecurityLogPath,
   isTemplateManagementPath,
   parseAdminRoleCode,
@@ -222,6 +223,12 @@ describe('canAdminAction 표 규칙', () => {
     expect(isPermissionSettingsPath('/admin/settings/permissions')).toBe(true)
     expect(isPermissionSettingsPath('/admin/settings/permissions/')).toBe(true)
     expect(isPermissionSettingsPath('/admin/permission-requests')).toBe(false)
+    expect(isProgramManagerPermissionSettingsPath('/admin/settings/program-manager-permissions')).toBe(
+      true
+    )
+    expect(resolveAdminPolicyScreen('/admin/settings/program-manager-permissions')).toBe(
+      'permission-settings'
+    )
   })
 
   it('isPermissionRequestsPath는 회원 권한 승인 경로만 인식한다', () => {

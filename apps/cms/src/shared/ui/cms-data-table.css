@@ -40,6 +40,27 @@
   width: 100%;
 }
 
+/**
+ * `useContainerFitTableScrollX` + `--fluid`: 래퍼 너비에 맞출 때만 scroll.x.
+ * `scroll.x: max-content` 대신 사용 (행 hover 시 가로 스크롤바 깜빡임 방지).
+ */
+.cms-data-table-fit-scroll-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+.detail-fullpage-modal
+  .cms-data-table-fit-scroll-wrap
+  .cms-data-table.cms-data-table--fluid
+  .ant-table-container {
+  min-width: 0;
+}
+
 .cms-data-table col.ant-table-selection-col {
   width: var(--table-selection-column-width, 80px) !important;
   min-width: var(--table-selection-column-width, 80px) !important;

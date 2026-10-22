@@ -8,7 +8,7 @@ import { cmsAlertModal } from './cms-alert-modal-api'
 
 export function showUpdateCompletedAlert(options?: { onConfirm?: () => void }): void {
   cmsAlertModal.show({
-    title: '수정 완료',
+    title: '정보 수정',
     content: MESSAGES.success.updated,
     confirmLabel: '확인',
     onConfirm: options?.onConfirm,
