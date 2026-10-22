@@ -16,6 +16,7 @@ import heroImageUrl from '@/assets/images/recruit/hero.png'
 import storyImageUrl from '@/assets/images/recruit/story-metlife.png'
 
 const STORAGE_KEY = 'admin.jakorea.recruitGuide.v2'
+export const MAX_RECRUIT_INTERVIEWS = 9
 
 export const RECRUIT_GUIDE_CHANGED_EVENT = 'jakorea:recruit-guide-changed' as const
 
@@ -92,6 +93,7 @@ function buildSeedInterviews(): InterviewItem[] {
       storyId: 'story-metlife-2026',
       title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울',
       publishedYear: 2026,
+      version: 0,
       imageUrl: storyImageUrl,
     },
     {
@@ -99,6 +101,7 @@ function buildSeedInterviews(): InterviewItem[] {
       storyId: 'story-summer-camp',
       title: '청소년과 함께한 JA Korea 여름 캠프 이야기',
       publishedYear: 2025,
+      version: 0,
       imageUrl: storyImageUrl,
     },
     {
@@ -106,6 +109,7 @@ function buildSeedInterviews(): InterviewItem[] {
       storyId: 'story-volunteer-day',
       title: '임직원 봉사로 이어진 따뜻한 하루',
       publishedYear: 2025,
+      version: 0,
       imageUrl: storyImageUrl,
     },
   ]
@@ -194,15 +198,18 @@ function normalizeInterview(raw: unknown, i: number): InterviewItem | null {
   const title = asString(row.title, '').trim()
   if (!storyId || !title) return null
   const year =
-    typeof row.publishedYear === 'number' && Number.isFinite(row.publishedYear)
-      ? row.publishedYear
-      : 2026
+    row.publishedYear == null
+      ? null
+      : typeof row.publishedYear === 'number' && Number.isFinite(row.publishedYear)
+        ? row.publishedYear
+        : null
   const imageUrl = asString(row.imageUrl, '').trim()
   return {
     id: asString(row.id, `ri-${i + 1}`),
     storyId,
     title,
     publishedYear: year,
+    version: normalizeVersion(row.version, 0),
     ...(imageUrl ? { imageUrl } : {}),
   }
 }
@@ -331,6 +338,9 @@ function nextInterviewId(existing: InterviewItem[]): string {
 
 export function addInterview(input: InterviewSaveItem, options?: MutateOptions): RecruitGuideData {
   const current = options?.base ?? readRecruitGuide()
+  if (current.interviews.length >= MAX_RECRUIT_INTERVIEWS) {
+    throw new Error('INTERVIEW_LIMIT_EXCEEDED')
+  }
   if (current.interviews.some(row => row.storyId === input.storyId)) {
     throw new Error('INTERVIEW_DUPLICATE')
   }
@@ -339,6 +349,7 @@ export function addInterview(input: InterviewSaveItem, options?: MutateOptions):
     storyId: input.storyId,
     title: input.title.trim(),
     publishedYear: input.publishedYear,
+    version: 0,
   }
   const next: RecruitGuideData = {
     ...current,
@@ -371,6 +382,7 @@ export function replaceInterview(
       storyId: input.storyId,
       title: input.title.trim(),
       publishedYear: input.publishedYear,
+      version: row.version + 1,
     }
   })
   if (!found) throw new Error('INTERVIEW_NOT_FOUND')

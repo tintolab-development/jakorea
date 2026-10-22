@@ -96,7 +96,8 @@ function mapInterview(row: CareerGuideAdminInterviewResponse): InterviewItem | n
     id: String(id),
     storyId,
     title: row.title ?? '',
-    publishedYear: row.year ?? 2026,
+    publishedYear: row.year ?? null,
+    version: row.version ?? 0,
     imageUrl: row.coverImageUrl || undefined,
   }
 }
@@ -182,6 +183,22 @@ export function mergeCultureItemsResponse(
   return {
     ...current,
     cultureItems,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+export function mergeInterviewResponse(
+  current: RecruitGuideData,
+  row: CareerGuideAdminInterviewResponse
+): RecruitGuideData {
+  const interview = mapInterview(row)
+  if (!interview) throw new Error('CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID')
+  const interviews = current.interviews.some(item => item.id === interview.id)
+    ? current.interviews.map(item => (item.id === interview.id ? interview : item))
+    : [...current.interviews, interview]
+  return {
+    ...current,
+    interviews: interviews.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })),
     updatedAt: new Date().toISOString(),
   }
 }

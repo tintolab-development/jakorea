@@ -70,29 +70,38 @@ export function useSaveRecruitCulture() {
 }
 
 export function useAddRecruitInterview() {
-  const { getCached, setCache } = useGuideCacheHelpers()
+  const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
     mutationFn: (input: InterviewSaveItem) => addInterviewService(input, getCached()),
     retry: false,
-    onSuccess: data => setCache(data),
+    onSuccess: async data => {
+      setCache(data)
+      await refresh()
+    },
   })
 }
 
 export function useReplaceRecruitInterview() {
-  const { getCached, setCache } = useGuideCacheHelpers()
+  const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
     mutationFn: (payload: { id: string; input: InterviewSaveItem }) =>
       replaceInterviewService(payload.id, payload.input, getCached()),
     retry: false,
-    onSuccess: data => setCache(data),
+    onSuccess: async data => {
+      setCache(data)
+      await refresh()
+    },
   })
 }
 
 export function useRemoveRecruitInterviews() {
-  const { getCached, setCache } = useGuideCacheHelpers()
+  const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
     mutationFn: (ids: string[]) => removeInterviewsService(ids, getCached()),
     retry: false,
-    onSuccess: data => setCache(data),
+    onSuccess: async data => {
+      setCache(data)
+      await refresh()
+    },
   })
 }

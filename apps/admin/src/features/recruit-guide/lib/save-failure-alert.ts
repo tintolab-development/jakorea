@@ -59,6 +59,7 @@ export function recruitGuideSaveFailureAlert(
     }
     if (
       code === 'INTERVIEW_SLOT_INVALID' ||
+      code === 'INTERVIEW_ID_INVALID' ||
       code === 'CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID' ||
       code === 'INVALID_CAREER_GUIDE_INTERVIEW_SLOT'
     ) {
@@ -67,8 +68,11 @@ export function recruitGuideSaveFailureAlert(
         content: '직무 인터뷰 슬롯 정보를 확인한 후 다시 시도해 주세요.',
       }
     }
-    if (code === 'INTERVIEW_DUPLICATE') {
+    if (code === 'INTERVIEW_DUPLICATE' || code === 'CAREER_GUIDE_INTERVIEW_DUPLICATE') {
       return { title: '중복 게시글', content: '이미 연결된 임팩트 스토리 게시글입니다.' }
+    }
+    if (code === 'INTERVIEW_LIMIT_EXCEEDED' || code === 'CAREER_GUIDE_INTERVIEW_LIMIT_EXCEEDED') {
+      return { title: '등록 한도 초과', content: '직무 인터뷰는 최대 9개까지 등록할 수 있습니다.' }
     }
     if (code === 'INTERVIEW_NOT_FOUND') {
       return { title: '수정 실패', content: '선택한 직무 인터뷰 항목을 찾을 수 없습니다.' }

@@ -10,6 +10,7 @@ import {
   mapCareerGuideAdminToDomain,
   mergeBannerResponse,
   mergeCultureItemsResponse,
+  mergeInterviewResponse,
 } from './mappers'
 import { uploadCareerHeroImageAsset } from './upload-career-hero-image'
 import {
@@ -19,6 +20,7 @@ import {
   replaceInterview as replaceInterviewLocal,
   saveBanner as saveBannerLocal,
   saveCulture as saveCultureLocal,
+  MAX_RECRUIT_INTERVIEWS,
 } from './store'
 
 const CULTURE_ID: Record<CultureSaveItem['id'], number> = {
@@ -156,7 +158,15 @@ export async function addInterviewService(
 ): Promise<RecruitGuideData> {
   if (shouldUseRecruitGuideRemoteApi()) {
     const prev = await resolvePrev(cached)
-    return addInterviewLocal(input, { base: prev, persist: false })
+    if (prev.interviews.length >= MAX_RECRUIT_INTERVIEWS) {
+      throw new Error('INTERVIEW_LIMIT_EXCEEDED')
+    }
+    const response = await careersApi().createCareerGuideInterview({
+      storyKey: input.storyId.trim(),
+      title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
+      year: input.publishedYear ?? undefined,
+    })
+    return mergeInterviewResponse(prev, response)
   }
   return addInterviewLocal(input)
 }
@@ -168,7 +178,19 @@ export async function replaceInterviewService(
 ): Promise<RecruitGuideData> {
   if (shouldUseRecruitGuideRemoteApi()) {
     const prev = await resolvePrev(cached)
-    return replaceInterviewLocal(id, input, { base: prev, persist: false })
+    const numericId = Number(id)
+    if (!Number.isInteger(numericId) || numericId < 1 || numericId > MAX_RECRUIT_INTERVIEWS) {
+      throw new Error('INTERVIEW_ID_INVALID')
+    }
+    const current = prev.interviews.find(item => item.id === id)
+    if (!current) throw new Error('INTERVIEW_NOT_FOUND')
+    const response = await careersApi().updateCareerGuideInterview(numericId, {
+      storyKey: input.storyId.trim(),
+      title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
+      year: input.publishedYear ?? undefined,
+      version: current.version,
+    })
+    return mergeInterviewResponse(prev, response)
   }
   return replaceInterviewLocal(id, input)
 }
@@ -179,7 +201,17 @@ export async function removeInterviewsService(
 ): Promise<RecruitGuideData> {
   if (shouldUseRecruitGuideRemoteApi()) {
     const prev = await resolvePrev(cached)
-    return removeInterviewsLocal(ids, { base: prev, persist: false })
+    if (ids.length === 0) throw new Error('INTERVIEW_NONE_SELECTED')
+    for (const id of ids) {
+      const numericId = Number(id)
+      const current = prev.interviews.find(item => item.id === id)
+      if (!Number.isInteger(numericId) || numericId < 1 || numericId > MAX_RECRUIT_INTERVIEWS) {
+        throw new Error('INTERVIEW_ID_INVALID')
+      }
+      if (!current) throw new Error('INTERVIEW_NOT_FOUND')
+      await careersApi().deleteCareerGuideInterview(numericId, { version: current.version })
+    }
+    return getRecruitGuideService()
   }
   return removeInterviewsLocal(ids)
 }

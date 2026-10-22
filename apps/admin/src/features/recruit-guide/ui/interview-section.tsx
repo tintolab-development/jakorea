@@ -11,6 +11,7 @@ import {
   useRemoveRecruitInterviews,
   useReplaceRecruitInterview,
 } from '@/features/recruit-guide/api/hooks'
+import { MAX_RECRUIT_INTERVIEWS } from '@/features/recruit-guide/api/store'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
 import { InterviewSelectModal } from '@/features/recruit-guide/ui/interview-select-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -146,10 +147,10 @@ export function InterviewSectionCard({ items }: Props) {
             variant="primary"
             size="large"
             type="button"
-            disabled={pickerLoading}
+            disabled={pickerLoading || items.length >= MAX_RECRUIT_INTERVIEWS}
             onClick={() => setPicker({ type: 'add' })}
           >
-            추가
+            {items.length >= MAX_RECRUIT_INTERVIEWS ? '최대 9개' : '추가'}
           </CmsButton>
         </div>
       </div>

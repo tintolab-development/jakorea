@@ -30,7 +30,8 @@ export type InterviewItem = {
   id: string
   storyId: string
   title: string
-  publishedYear: number
+  publishedYear: number | null
+  version: number
   /** Platform 직무 인터뷰 커버. 목록 표에는 제목만 보인다. */
   imageUrl?: string
 }
@@ -63,5 +64,5 @@ export type CultureSaveItem = {
 export type InterviewSaveItem = {
   storyId: string
   title: string
-  publishedYear: number
+  publishedYear: number | null
 }
