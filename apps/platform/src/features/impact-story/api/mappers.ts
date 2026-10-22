@@ -1,3 +1,4 @@
+import { IMPACT_STORY_PIN_MAX } from '../lib/pin-max.ts'
 import {
   categoryKeyFromName,
   IMPACT_STORY_CATEGORY_LABEL,
@@ -86,9 +87,10 @@ export function mapPublicStoryDetail(row: PublicStoryDetail): ImpactStoryDetail 
   }
 }
 
+/** 서버 배열 순서의 pinned만. 클라에서 다시 정렬하지 않는다. */
 export function featuredFromPreview(
   items: readonly ImpactStoryListItem[],
-  count = 3
+  count = IMPACT_STORY_PIN_MAX
 ): ImpactStoryListItem[] {
   return items.filter(item => item.isFeatured).slice(0, count)
 }

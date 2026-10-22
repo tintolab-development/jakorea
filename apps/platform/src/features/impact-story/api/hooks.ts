@@ -233,8 +233,7 @@ export function useFeaturedImpactStories(): ImpactStoryListItem[] {
       return getImpactStoryFeaturedFallback()
     }
     if (preview.isPending) return []
-    const pinned = featuredFromPreview(preview.items)
-    return pinned.length > 0 ? pinned : getImpactStoryFeaturedFallback()
+    return featuredFromPreview(preview.items)
   }, [preview.isError, preview.isPending, preview.isRemoteEnabled, preview.items])
 }
 
