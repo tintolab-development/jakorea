@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ProgramEducationSlotResponse } from '@/shared/api/generated/dashboard/schemas/programEducationSlotResponse'
-import { resolveParticipatingIndividualProgressScheduleSessions } from './participating-individual-progress-schedule-sessions'
+import {
+  resolveParticipatingIndividualProgressScheduleSessions,
+  resolveParticipatingIndividualProgressScheduleSessionsFallback,
+} from './participating-individual-progress-schedule-sessions'
 
 function session(scheduleId: number, overrides: Partial<ParticipatingSchoolSession> = {}) {
   return {
     round: 1,
-    date: '2026. 10. 30',
+    date: '2026.10.30',
     dayOfWeek: '금',
     duration: '60분',
     format: '-',
@@ -65,5 +68,16 @@ describe('resolveParticipatingIndividualProgressScheduleSessions', () => {
         assignedScheduleIds: [],
       })
     ).toEqual([])
+  })
+
+  it('list fallback keeps participant sessions and does not invent program dates', () => {
+    const assigned = [session(892011), session(892013)]
+    expect(
+      resolveParticipatingIndividualProgressScheduleSessionsFallback(assigned).map(
+        row => row.resolvedScheduleId
+      )
+    ).toEqual([892011, 892013])
+    expect(resolveParticipatingIndividualProgressScheduleSessionsFallback([])).toEqual([])
+    expect(resolveParticipatingIndividualProgressScheduleSessionsFallback(null)).toEqual([])
   })
 })

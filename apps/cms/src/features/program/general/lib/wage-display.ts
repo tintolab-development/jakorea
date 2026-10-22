@@ -2,6 +2,7 @@
  * 일반 프로그램 상세 임금 정보 — view / overlay 시드가 같은 급수·금액·지급 항목을 쓴다.
  */
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
+import { formatNumberDisplay } from '@/shared/utils'
 import {
   coerceProgramPaymentItemsText,
   programPaymentItemLabelsFromIds,
@@ -31,6 +32,12 @@ export function parseWageGradeAmount(pricing: string | undefined): number | null
   if (!match) return null
   const n = Number(match[1].replace(/,/g, ''))
   return Number.isFinite(n) ? n : null
+}
+
+/** 상세 RHF 금액 필드 — 「1시간 당」의 1을 금액으로 쓰지 않는다. */
+export function parseWageGradeAmountToFormString(pricing: string | undefined): string {
+  const amount = parseWageGradeAmount(pricing)
+  return amount == null ? '' : String(amount)
 }
 
 export function pricingByWageGrade(
@@ -71,7 +78,7 @@ function overlayWageFee(overlay: Record<string, unknown> | undefined, key: strin
 
 export function formatWageGradePricing(amount: number | null): string {
   if (amount == null) return ''
-  return `1시간 당 | 기본 : ${amount.toLocaleString('ko-KR')}원`
+  return `1시간 당 | 기본 : ${formatNumberDisplay(amount)}원`
 }
 
 export function resolveWageGradeFee(

@@ -46,9 +46,9 @@ const gangseoSecondSession: InstructorLectureAssignSlot = {
 describe('instructor-lecture-assign-schedule', () => {
   it('배정 칩은 학교명을 약식 없이 그대로 표기한다', () => {
     expect(formatLectureAssignTagLabel(dayjs('2026-11-03'), '부명초등학교')).toBe(
-      '2026. 11. 03(화) 부명초등학교'
+      '2026.11.03(화) 부명초등학교'
     )
-    expect(toLectureAssignItem(gangseoSlot).tagLabel).toBe('2026. 03. 19(목) 강서초등학교')
+    expect(toLectureAssignItem(gangseoSlot).tagLabel).toBe('2026.03.19(목) 강서초등학교')
   })
 
   it('같은 날 다른 기관 슬롯은 비활성화한다', () => {
@@ -77,7 +77,7 @@ describe('instructor-lecture-assign-schedule', () => {
       sessions: [
         {
           round: 1,
-          date: '2026. 10. 20',
+          date: '2026.10.20',
           dayOfWeek: '화',
           duration: '1차시',
           format: '단독',
@@ -109,7 +109,7 @@ describe('instructor-lecture-assign-schedule', () => {
       sessions: [
         {
           round: 1,
-          date: '2026. 10. 20',
+          date: '2026.10.20',
           dayOfWeek: '화',
           duration: '1차시',
           format: '단독',

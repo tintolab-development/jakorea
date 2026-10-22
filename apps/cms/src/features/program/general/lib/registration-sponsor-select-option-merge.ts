@@ -15,3 +15,29 @@ export function mergeSponsorRegistrationSelectOptions(args: {
   }
   return [...byId.values()]
 }
+
+export function sponsorSelectIdListsEqual(
+  next: readonly string[] | undefined,
+  previous: readonly string[] | undefined
+): boolean {
+  const left = (next ?? []).map(String)
+  const right = (previous ?? []).map(String)
+  if (left.length !== right.length) return false
+  return left.every((id, index) => id === right[index])
+}
+
+/** 담당자 셀렉트 — 카탈로그에 아직 없는 GET 선택값을 옵션에서 지우지 않는다. */
+export function mergeSponsorContactSelectOptions(args: {
+  selectedIds: readonly string[]
+  apiOptions: ReadonlyArray<{ value: string; label: string }>
+}): Array<{ value: string; label: string }> {
+  const byId = new Map(
+    args.apiOptions.map(option => [String(option.value), { ...option, value: String(option.value) }])
+  )
+  for (const id of args.selectedIds) {
+    const key = String(id)
+    if (!key || byId.has(key)) continue
+    byId.set(key, { value: key, label: key })
+  }
+  return [...byId.values()]
+}

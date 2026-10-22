@@ -25,6 +25,7 @@ import {
   wageCommonInfoFieldsUnchanged,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
@@ -47,7 +48,7 @@ import {
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import {
   applyResolvedVenueKindToCommonInfo,
-  buildProgramSponsorAssignmentsWire,
+  buildProgramSponsorAssignmentsReplaceWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
@@ -721,7 +722,40 @@ function mapProgramSponsorAssignments(program: Program) {
     ids: program.generalCommonInfo?.sponsorManagerContactIds,
     id: program.generalCommonInfo?.sponsorManagerContactId,
   })
-  return buildProgramSponsorAssignmentsWire(sponsorIdsFromForm, contactRefs)
+  return buildProgramSponsorAssignmentsReplaceWire(sponsorIdsFromForm, contactRefs)
+}
+
+function sponsorAssignmentWireKey(row: {
+  sponsorId: string
+  sponsorContactIds?: readonly string[]
+}) {
+  const contacts = [...(row.sponsorContactIds ?? [])].sort().join(',')
+  return `${row.sponsorId}::${contacts}`
+}
+
+function sponsorAssignmentWiresEqual(
+  next: ReadonlyArray<{ sponsorId: string; sponsorContactIds?: readonly string[] }>,
+  existing: ReadonlyArray<{ sponsorId: string; sponsorContactIds?: readonly string[] }>
+): boolean {
+  if (next.length !== existing.length) return false
+  const left = next.map(sponsorAssignmentWireKey).sort()
+  const right = existing.map(sponsorAssignmentWireKey).sort()
+  return left.every((key, index) => key === right[index])
+}
+
+function mapProgramSponsorAssignmentsForPatch(
+  merged: Program,
+  patch: Partial<Program>,
+  existing: Program
+) {
+  return mapProgramSponsorAssignments({
+    ...merged,
+    sponsorId: patchHasKey(patch, 'sponsorId') ? merged.sponsorId : existing.sponsorId,
+    generalCommonInfo: {
+      ...(existing.generalCommonInfo ?? {}),
+      ...(patch.generalCommonInfo ?? {}),
+    },
+  })
 }
 
 /** BE 전화번호 검증은 하이픈 포함 형식만 통과한다. */
@@ -771,7 +805,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
   const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
   const sponsors = mapProgramSponsorAssignments(program)
   const primarySponsorId =
-    sponsors.find(s => s.sponsorContactId)?.sponsorId ||
+    sponsors.find(s => (s.sponsorContactIds?.length ?? 0) > 0)?.sponsorId ||
     sponsors[0]?.sponsorId ||
     (program.sponsorId != null ? String(program.sponsorId) : undefined)
 
@@ -844,6 +878,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     rounds: mapProgramRoundsToUpdateRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
+  assignProgramPaymentItemsToWriteRequest({ body, program })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'full',
     merged: program,
@@ -934,22 +969,51 @@ function recruitmentTypeOf(
   return null
 }
 
+export type GeneralProgramUpdateSerializeOptions = {
+  /** Independent PATCH 전용. 기본 legacy-merge 는 overlay-first 제품 경로 */
+  overlayMerge?: 'legacy-merge' | 'nested-ssot'
+}
+
+function omittedNestedOverlayFallback(patch: Partial<Program>, existing: Program) {
+  const common = patch.generalCommonInfo
+  if (!common) {
+    return {
+      curriculumSessions: existing.generalCommonInfo?.curriculumSessions,
+      scheduleDetails: existing.generalCommonInfo?.scheduleDetails,
+    }
+  }
+  return {
+    ...(!Object.prototype.hasOwnProperty.call(common, 'curriculumSessions')
+      ? { curriculumSessions: existing.generalCommonInfo?.curriculumSessions }
+      : {}),
+    ...(!Object.prototype.hasOwnProperty.call(common, 'scheduleDetails')
+      ? { scheduleDetails: existing.generalCommonInfo?.scheduleDetails }
+      : {}),
+  }
+}
+
 function mapProgramPatchFieldsToRequest(
   merged: Program,
   patch: Partial<Program>,
-  existing: Program
+  existing: Program,
+  serializeOptions?: GeneralProgramUpdateSerializeOptions
 ): ProgramUpdateRequestBody {
   const body: ProgramUpdateRequestBody = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
   if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
-    const sponsors = mapProgramSponsorAssignments(merged)
-    body.sponsorId =
-      sponsors.find(s => s.sponsorContactId)?.sponsorId ||
-      sponsors[0]?.sponsorId ||
-      (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
-    // BE: sponsors 키 존재 = full replace. [] = 전체 해제. 후원 미수정 PATCH에서는 키 생략.
-    body.sponsors = sponsors
+    const sponsors = mapProgramSponsorAssignmentsForPatch(merged, patch, existing)
+    const existingSponsors = mapProgramSponsorAssignments(existing)
+    const sponsorIdExplicitlyChanged =
+      has('sponsorId') && String(merged.sponsorId ?? '') !== String(existing.sponsorId ?? '')
+    // BE: sponsors 키 존재 = full replace. 의미적으로 미변경이면 키를 생략한다.
+    if (sponsorIdExplicitlyChanged || !sponsorAssignmentWiresEqual(sponsors, existingSponsors)) {
+      body.sponsorId =
+        sponsors.find(s => (s.sponsorContactIds?.length ?? 0) > 0)?.sponsorId ||
+        sponsors[0]?.sponsorId ||
+        (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+      body.sponsors = sponsors
+    }
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type
@@ -1130,6 +1194,27 @@ function mapProgramPatchFieldsToRequest(
     body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeProgram, {
       omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
       omitUnchangedWageOverlay,
+      overlayMerge: serializeOptions?.overlayMerge,
+      overlayNestedFallback:
+        serializeOptions?.overlayMerge === 'nested-ssot'
+          ? omittedNestedOverlayFallback(patch, existing)
+          : undefined,
+      overlayMergeSource:
+        serializeOptions?.overlayMerge === 'nested-ssot'
+          ? {
+              ...serializeProgram,
+              generalCommonInfo: {
+                ...(existing.generalCommonInfo ?? {}),
+                ...(patch.generalCommonInfo ?? {}),
+              },
+              registrationOverlay:
+                existing.registrationOverlay ?? serializeProgram.registrationOverlay,
+            }
+          : undefined,
+      overlayExplicitCommonInfoKeys:
+        serializeOptions?.overlayMerge === 'nested-ssot' && patch.generalCommonInfo
+          ? new Set(Object.keys(patch.generalCommonInfo))
+          : undefined,
     })
     if (touchesTargetLevels && persistedTargetLevels != null) {
       body.targetLevels = persistedTargetLevels
@@ -1145,6 +1230,12 @@ function mapProgramPatchFieldsToRequest(
   }
 
   applyRecruitmentParticipantColumnFieldsToUpdateRequest(body, { merged, existing, patch })
+  assignProgramPaymentItemsToWriteRequest({
+    body,
+    program: merged,
+    patch,
+    baseline: existing,
+  })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,
@@ -1163,11 +1254,17 @@ export function mapGeneralProgramToUpdateRequest(
   program: Program,
   patch?: Partial<Program>,
   /** 저장 전 로드된 프로그램 — 임금·모집 잠금 비교 SSOT */
-  baseline?: Program
+  baseline?: Program,
+  serializeOptions?: GeneralProgramUpdateSerializeOptions
 ): ProgramUpdateRequestBody {
   const baselineProgram = baseline ?? program
   if (patch && Object.keys(patch).length > 0) {
-    return mapProgramPatchFieldsToRequest({ ...program, ...patch }, patch, baselineProgram)
+    return mapProgramPatchFieldsToRequest(
+      { ...program, ...patch },
+      patch,
+      baselineProgram,
+      serializeOptions
+    )
   }
   return mapProgramCoreFieldsToRequest(program)
 }

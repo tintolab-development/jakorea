@@ -17,6 +17,7 @@ import {
 import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -1002,16 +1003,7 @@ function formatAssignedInterviewFromIso(
 }
 
 function formatKoreanInterviewDate(date: Date): string {
-  const parts = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: '2-digit',
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-  }).formatToParts(date)
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find(part => part.type === type)?.value ?? ''
-  return `${value('year')}. ${value('month')}. ${value('day')}(${value('weekday')})`
+  return formatDateDotWithWeekday(date)
 }
 
 function formatKoreanInterviewTime(date: Date): string {
@@ -1362,6 +1354,7 @@ export function filterIndividualInterview2Rows(
   )
 }
 
+/** INDIVIDUAL 목록 sessions = education-scope 배정만. 공통 예정일로 채우지 않는다. */
 export function mapParticipantToParticipatingIndividualRow(
   dto: ParticipantListItemResponse,
   index: number,
@@ -1396,9 +1389,9 @@ export function mapParticipantToParticipatingIndividualRow(
     homeAddress,
     approvalStatus: 'approved',
     programId,
-    sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions),
+    sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? []),
     availableActions: dto.availableActions,
-    lectureAttendanceSessions: mapSessionProgressToLectureAttendanceSessions(dto.sessions),
+    lectureAttendanceSessions: mapSessionProgressToLectureAttendanceSessions(dto.sessions ?? []),
     satisfactionSurveyCompleted: extra.satisfactionSurveyCompleted === true,
     surveyResponse: parseParticipantSurveyViewKey(extra.surveyResponse),
     satisfactionResponse: parseParticipantSurveyViewKey(extra.satisfactionResponse),

@@ -9,6 +9,7 @@ import {
   generalCommonInfoEditValuesToProgramPatch,
   overlayIpsIndexForScheduleDetail,
   persistScheduleEducationFormByDetailOverlay,
+  resolveScheduleDetailsFormState,
   EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
   PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE,
   programToGeneralCommonInfoEditValues,
@@ -820,7 +821,7 @@ describe('일정형 일정별 IPS 조회 표시', () => {
         },
         overlayIndex: 1,
       })
-    ).toMatch(/26년 4월 20일\(/)
+    ).toMatch(/2026\.04\.20\(/)
   })
 
   it('사전 교육 교육 형태는 overlay 0번으로 보완한다', () => {
@@ -870,5 +871,34 @@ describe('진행 시간 요약 표기', () => {
     expect(formatScheduleProgressTimeSummaryForView('그룹 A : 15:43 ~ 16:43')).toBe(
       '15:43 ~ 16:43'
     )
+  })
+})
+
+describe('GET hydrate nested [] vs 누락', () => {
+  it('명시적 빈 일정 배열은 기본 행을 만들지 않는다', () => {
+    const empty = resolveScheduleDetailsFormState(
+      { scheduleDetails: [] },
+      'single'
+    )
+    expect(empty.scheduleDetails).toEqual([])
+  })
+
+  it('일정 배열 누락은 legacy 기본 행을 만든다', () => {
+    const missing = resolveScheduleDetailsFormState({}, 'single')
+    expect(missing.scheduleDetails.length).toBeGreaterThan(0)
+  })
+
+  it('명시적 빈 커리큘럼 배열은 RHF 세션을 비운다', () => {
+    const values = programToGeneralCommonInfoEditValues(
+      baseProgram({
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: {
+          announcementTitle: '공고',
+          curriculumSessions: [],
+        },
+      })
+    )
+    expect(values.curriculumSessions).toEqual([])
   })
 })

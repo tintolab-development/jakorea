@@ -90,10 +90,6 @@ import {
   useProgramWagePaymentItemOptionsState,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
-import {
-  filterProgramWagePaymentItemOptionsForPayees,
-  GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES,
-} from '@/features/settlement-management/lib/settlement-payment-item-payee'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   parseWageGradeAmount,
@@ -130,8 +126,14 @@ import {
   formatScheduleProgressTimeSummaryForView,
   overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
+  retainSponsorManagerContactIdsForSponsors,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
+import {
+  mergeSponsorContactSelectOptions,
+  mergeSponsorRegistrationSelectOptions,
+  sponsorSelectIdListsEqual,
+} from '@/features/program/general/lib/registration-sponsor-select-option-merge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
@@ -191,7 +193,6 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
-import { GeneralProgramCommonInfoRegistrationEdit } from './common-info-registration-edit'
 import { ButtonAddIcon, ButtonClockIcon } from '@/shared/ui/icons/ButtonIcons'
 import './common-info-view.css'
 
@@ -415,6 +416,16 @@ function BasicInfoSection({
     } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>)
 
   const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
+  const watchedContactIds = isFormEdit ? (editForm.watch('sponsorManagerContactIds') ?? []) : []
+  const sponsorSelectOptions = useMemo(
+    () =>
+      mergeSponsorRegistrationSelectOptions({
+        sponsorIds: isFormEdit ? watchedSponsorIds : sponsorManagementIds,
+        apiOptions: sponsorOptions,
+        sponsors: sponsorRows,
+      }),
+    [isFormEdit, sponsorManagementIds, sponsorOptions, sponsorRows, watchedSponsorIds]
+  )
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
   // 후원사 상세·담당자 연락처는 수정 시 담당자 선택지를 만들 때만 필요하다.
@@ -446,8 +457,9 @@ function BasicInfoSection({
         })
       }
     }
-    // 후원사 선택 즉시 미선택 노출 (전 후원사 contacts 로드 대기 금지)
-    if (isFormEdit && watchedSponsorIds.length > 0) {
+    // 담당자 목록이 온 뒤에만 미선택을 붙인다. 빈 카탈로그에 미선택만 있으면
+    // GET contact id가 옵션에 없어 Select가 값을 비우고 dirty가 된다.
+    if (isFormEdit && watchedSponsorIds.length > 0 && options.length > 0) {
       return withSponsorContactUnselectedOption(options)
     }
     return options
@@ -457,17 +469,28 @@ function BasicInfoSection({
     sponsorEditContext.contactsBySponsorId,
     watchedSponsorIds,
   ])
+  const managerSelectOptions = useMemo(
+    () =>
+      mergeSponsorContactSelectOptions({
+        selectedIds: watchedContactIds,
+        apiOptions: managerOptions,
+      }),
+    [managerOptions, watchedContactIds]
+  )
 
   const sponsorManagerViewText = useMemo(
     () =>
       resolveSponsorManagerViewLine({
-        storedLine: commonInfo.sponsorManagerLine?.trim() || program.managerName || '-',
+        storedLine: commonInfo.sponsorManagerLine?.trim() || '-',
+        contactRefs: commonInfo.sponsorManagerContactIds,
+        contactNames: commonInfo.sponsorManagerContactNames,
         sponsors: selectedSponsors,
         contactsBySponsorId: sponsorEditContext.contactsBySponsorId,
       }),
     [
+      commonInfo.sponsorManagerContactIds,
+      commonInfo.sponsorManagerContactNames,
       commonInfo.sponsorManagerLine,
-      program.managerName,
       selectedSponsors,
       sponsorEditContext.contactsBySponsorId,
     ]
@@ -478,52 +501,46 @@ function BasicInfoSection({
     const currentIds = editForm.getValues('sponsorManagerContactIds') ?? []
     if (watchedSponsorIds.length === 0) {
       if (currentIds.length > 0) {
-        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
-        editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
+        editForm.setValue('sponsorManagerContactIds', [], {
+          shouldValidate: false,
+          shouldDirty: false,
+        })
+        editForm.setValue('sponsorManagerContactId', '', {
+          shouldValidate: false,
+          shouldDirty: false,
+        })
       }
       return
     }
-    const contactsReady = watchedSponsorIds.every(
-      id => sponsorEditContext.contactsBySponsorId[id] != null
-    )
-    if (!contactsReady || managerOptions.length === 0) return
-    const optionValues = new Set(managerOptions.map(option => option.value))
-    const validIds = currentIds.filter(
-      id => optionValues.has(id) || isSponsorContactUnselected(id)
-    )
     if (currentIds.length === 0) {
       const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
       if (isSponsorContactUnselectedLabel(storedLine) || !storedLine) {
         editForm.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
           shouldValidate: false,
+          shouldDirty: false,
         })
         editForm.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
           shouldValidate: false,
+          shouldDirty: false,
         })
       }
       return
     }
-    if (validIds.length !== currentIds.length) {
-      const nextIds =
-        validIds.length > 0 ? validIds : [SPONSOR_CONTACT_UNSELECTED_VALUE]
-      editForm.setValue('sponsorManagerContactIds', nextIds, {
-        shouldValidate: true,
-        shouldDirty: true,
-      })
-      editForm.setValue('sponsorManagerContactId', nextIds[0] ?? '', {
-        shouldValidate: false,
-      })
-      editForm.clearErrors('sponsorManagerContactIds')
-    } else if (validIds.length > 0) {
-      editForm.clearErrors('sponsorManagerContactIds')
-    }
+    const retained = retainSponsorManagerContactIdsForSponsors(watchedSponsorIds, currentIds)
+    if (sponsorSelectIdListsEqual(retained, currentIds)) return
+    editForm.setValue('sponsorManagerContactIds', retained, {
+      shouldValidate: false,
+      shouldDirty: false,
+    })
+    editForm.setValue('sponsorManagerContactId', retained[0] ?? '', {
+      shouldValidate: false,
+      shouldDirty: false,
+    })
   }, [
     commonInfo.sponsorManagerLine,
     editForm,
     isFormEdit,
-    managerOptions,
     program.managerName,
-    sponsorEditContext.contactsBySponsorId,
     watchedSponsorIds,
   ])
 
@@ -834,14 +851,24 @@ function BasicInfoSection({
                       width="100%"
                       showSearch
                       optionFilterProp="label"
-                      options={sponsorOptions}
+                      options={sponsorSelectOptions}
                       value={field.value ?? []}
                       onChange={v => {
                         const next = Array.isArray(v) ? v.map(String) : []
+                        const previous = Array.isArray(field.value) ? field.value.map(String) : []
                         field.onChange(next)
-                        editForm.setValue('sponsorManagerContactIds', [])
-                        editForm.setValue('sponsorManagerContactId', '')
                         if (next.length > 0) editForm.clearErrors('sponsorManagementIds')
+                        if (sponsorSelectIdListsEqual(next, previous)) return
+                        const retained = retainSponsorManagerContactIdsForSponsors(
+                          next,
+                          editForm.getValues('sponsorManagerContactIds') ?? []
+                        )
+                        editForm.setValue('sponsorManagerContactIds', retained, {
+                          shouldDirty: true,
+                        })
+                        editForm.setValue('sponsorManagerContactId', retained[0] ?? '', {
+                          shouldDirty: true,
+                        })
                       }}
                       status={fieldState.error && !hasValue ? 'error' : undefined}
                     />
@@ -859,9 +886,10 @@ function BasicInfoSection({
                 control={editForm.control}
                 render={({ field, fieldState }) => {
                   const selected = Array.isArray(field.value) ? field.value : []
+                  const optionValues = new Set(managerSelectOptions.map(option => option.value))
                   const hasValidSelection =
                     selected.length > 0 &&
-                    selected.every(id => managerOptions.some(option => option.value === id))
+                    selected.every(id => optionValues.has(id) || isSponsorContactUnselected(id))
                   return (
                     <CmsSelect inputSize="small"
                       mode="multiple"
@@ -869,9 +897,9 @@ function BasicInfoSection({
                       width="100%"
                       showSearch
                       optionFilterProp="label"
-                      options={managerOptions}
+                      options={managerSelectOptions}
                       value={selected}
-                      disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
+                      disabled={watchedSponsorIds.length === 0}
                       onChange={v => {
                         const ids = normalizeSponsorContactUnselectedSelection(
                           Array.isArray(v) ? v.map(String) : [],
@@ -1285,7 +1313,7 @@ function WageGradeAmountView({
     <>
       1시간 당
       <DetailInfoForm.InputsSeparator />
-      {amount.toLocaleString('ko-KR')}원 (최대 {maxHint}원)
+      {formatNumberDisplay(amount)}원 (최대 {maxHint}원)
     </>
   )
 }
@@ -1304,15 +1332,7 @@ function WageSection({
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentCatalog = useProgramWagePaymentItemOptionsState()
-  const paymentItemOptions = useMemo(
-    () =>
-      filterProgramWagePaymentItemOptionsForPayees(
-        paymentCatalog.options,
-        paymentCatalog.sections,
-        GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES
-      ),
-    [paymentCatalog.options, paymentCatalog.sections]
-  )
+  const paymentItemOptions = paymentCatalog.options
 
   const editForm =
     form ??
@@ -4829,10 +4849,6 @@ export function GeneralProgramDetailCommonInfoView({
         </div>
       )}
 
-      {isEditMode ? (
-        <GeneralProgramCommonInfoRegistrationEdit program={program} />
-      ) : (
-        <>
       <BasicInfoSection
         program={program}
         sponsorName={sponsorName}
@@ -4869,8 +4885,6 @@ export function GeneralProgramDetailCommonInfoView({
         isEditMode={isEditMode}
         form={form}
       />
-        </>
-      )}
     </div>
   )
 }

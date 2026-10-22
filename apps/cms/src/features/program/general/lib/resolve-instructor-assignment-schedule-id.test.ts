@@ -25,7 +25,7 @@ describe('resolveInstructorAssignmentScheduleId', () => {
     expect(
       resolveInstructorAssignmentScheduleId({
         schedules: [allDay, timedA, timedB],
-        hopeDateOrLine: '2026. 10. 30',
+        hopeDateOrLine: '2026.10.30',
       })
     ).toBeNull()
   })

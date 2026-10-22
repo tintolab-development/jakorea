@@ -9,6 +9,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateRangeDot, formatNumberDisplay } from '@/shared/utils'
 import type { GeneralProgramSurveyMenuKey, Program } from '@/types/domain'
 import {
   coerceProgramPaymentItemsText,
@@ -139,7 +140,8 @@ function buildEconomyEducationScheduleLines(overlay: Record<string, unknown>): s
   const start = dayjs(range.start)
   const end = dayjs(range.end)
   if (!start.isValid() || !end.isValid()) return []
-  return [`${start.format('YYYY. MM. DD')} ~ ${end.format('YYYY. MM. DD')}`]
+  const rangeLabel = formatDateRangeDot(start, end)
+  return rangeLabel === '-' ? [] : [rangeLabel]
 }
 
 function skipUnselected(value: string): string {
@@ -198,10 +200,10 @@ function buildEconomyWageGradePricing(
   fee: number | undefined,
   distanceFee: number | undefined
 ): string {
-  const feeLabel = fee != null && Number.isFinite(fee) ? `${fee.toLocaleString('ko-KR')}원` : '-'
+  const feeLabel = fee != null && Number.isFinite(fee) ? `${formatNumberDisplay(fee)}원` : '-'
   const distanceLabel =
     distanceFee != null && Number.isFinite(distanceFee)
-      ? `${distanceFee.toLocaleString('ko-KR')}원`
+      ? `${formatNumberDisplay(distanceFee)}원`
       : feeLabel
   return `1시간 당 | 기본 : ${feeLabel} | 장거리 : ${distanceLabel}`
 }

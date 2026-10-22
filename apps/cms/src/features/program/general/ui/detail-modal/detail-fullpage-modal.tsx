@@ -18,6 +18,7 @@ import { useGeneralProgramDetail } from '@/features/program/general/hooks/use-ge
 import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
+import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
 import { fetchGeneralProgramRemoteById } from '@/features/program/general/api/admin-general-programs-service'
 import { getTrainedTeacherProgram } from '@/features/program/trained-teachers/api/service'
 import { reflectTrainedTeacherProgramSave } from '@/features/program/trained-teachers/api/detail-cache'
@@ -28,7 +29,10 @@ import {
   persistRecruitmentTabSave,
 } from '@/features/program/shared/lib/persist-recruitment-row-save'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
-import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import {
+  programDetailCacheFromSave,
+  syncOpenProgramDetailCache,
+} from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { invalidateGeneralProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { useProgramStore } from '@/features/program/general/model/program-store'
@@ -103,8 +107,17 @@ import {
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorCode,
+  getGeneralProgramApiErrorMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { isEducationStructureChanged } from '@/features/program/general/lib/overlay-phase1/independent-session-authoring'
+import {
+  EDUCATION_STRUCTURE_CHANGE_CONFIRM_MESSAGE,
+  EDUCATION_STRUCTURE_CHANGE_CONFIRM_TITLE,
+} from '@/features/program/general/lib/education-structure-guard'
 import {
   canGeneralProgramApplicationFormEdit,
   canGeneralProgramCommonInfoEdit,
@@ -604,7 +617,8 @@ export function GeneralProgramDetailFullPageModal({
     async (
       draft: Program,
       patch?: Partial<Program>,
-      baseline?: Program | null
+      baseline?: Program | null,
+      serializeOptions?: GeneralProgramUpdateSerializeOptions
     ) => {
       if (strictRemoteRecruitment) {
         const echoed = await updateTrainedTeacherProgramMutation.mutateAsync({
@@ -617,14 +631,21 @@ export function GeneralProgramDetailFullPageModal({
         return
       }
       if (remoteEnabled) {
-        await updateGeneralProgramMutation.mutateAsync({
+        const echoed = await updateGeneralProgramMutation.mutateAsync({
           programId: draft.id,
           program: draft,
           // 공통·모집 정보 저장: 변경 키만 PATCH (rounds·마스킹 담당자 등 전체 덤프 방지)
           patch,
           baseline: baseline ?? displayProgram ?? draft,
+          serializeOptions,
         })
         clearGeneralProgramDetailSession(draft.id)
+        await syncOpenProgramDetailCache(
+          queryClient,
+          generalProgramQueryKeys.detail(draft.id),
+          programDetailCacheFromSave(draft.id, echoed, draft, patch),
+          { refetch: false }
+        )
         return
       }
 
@@ -645,6 +666,7 @@ export function GeneralProgramDetailFullPageModal({
     },
     [
       displayProgram,
+      queryClient,
       remoteEnabled,
       setSelectedProgram,
       strictRemoteRecruitment,
@@ -869,8 +891,12 @@ export function GeneralProgramDetailFullPageModal({
     [setSearchParams]
   )
 
+  const [isInfoEditing, setIsInfoEditing] = useState(false)
+
   const setEditMode = useCallback(
     (tab: string | null) => {
+      if (tab === 'info') setIsInfoEditing(true)
+      else setIsInfoEditing(false)
       setSearchParams(
         prev => {
           if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
@@ -908,7 +934,7 @@ export function GeneralProgramDetailFullPageModal({
     open &&
     activeLnb === 'info' &&
     activeTab === 'info' &&
-    editTab === 'info' &&
+    isInfoEditing &&
     !!displayProgram &&
     canEditCommonInfo
 
@@ -921,11 +947,13 @@ export function GeneralProgramDetailFullPageModal({
       form: infoForm,
       program: displayProgram ?? null,
       onSaveEdit: displayProgram
-        ? async (draft, patch, baseline) => {
-            await persistGeneralProgramDraft(draft, patch, baseline)
+        ? async (draft, patch, baseline, serializeOptions) => {
+            await persistGeneralProgramDraft(draft, patch, baseline, serializeOptions)
           }
         : undefined,
     })
+  const [structureChangeConfirmOpen, setStructureChangeConfirmOpen] = useState(false)
+  const [structureChangeConfirmLoading, setStructureChangeConfirmLoading] = useState(false)
 
   const handleInfoEdit = useCallback(() => {
     if (activeLnb !== 'info' || activeTab !== 'info' || !displayProgram) return
@@ -943,11 +971,27 @@ export function GeneralProgramDetailFullPageModal({
   }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
 
   useEffect(() => {
-    if (!open || !displayProgram || editTab !== 'info') return
+    if (!open) {
+      setIsInfoEditing(false)
+      return
+    }
+    if (searchParams.get(EDIT_PARAM) === 'info') setIsInfoEditing(true)
+    // 상세 모달 오픈 시점 URL만 반영. 저장 후 URL 잔존으로 수정 모드가 되살아나지 않게 한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open transition only
+  }, [open])
+
+  useEffect(() => {
+    if (activeLnb !== 'info' || activeTab !== 'info') {
+      setIsInfoEditing(false)
+    }
+  }, [activeLnb, activeTab])
+
+  useEffect(() => {
+    if (!open || !displayProgram || !isInfoEditing) return
     if (activeLnb !== 'info' || activeTab !== 'info') return
     if (canGeneralProgramCommonInfoEdit(displayProgram)) return
     setEditMode(null)
-  }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
+  }, [open, isInfoEditing, displayProgram, activeLnb, activeTab, setEditMode])
 
   useEffect(() => {
     if (!open || !displayProgram) return
@@ -969,7 +1013,7 @@ export function GeneralProgramDetailFullPageModal({
     setEditMode(null)
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
-  const handleInfoSave = useCallback(async () => {
+  const runInfoSave = useCallback(async () => {
     if (displayProgram) logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'save')
     const endOverlay = beginBlockingOverlay()
     try {
@@ -978,22 +1022,33 @@ export function GeneralProgramDetailFullPageModal({
         if (result.kind === 'validation') {
           if (result.keys.length > 0) detailRequiredHighlight.report(result.keys)
           void showAlert({
-            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+            title: result.title?.trim() || REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: result.message?.trim() || REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
           })
         } else if (result.kind === 'schedule-count-mismatch') {
           void showAlert({
             title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
             content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
           })
-        } else if (!isGlobalApiErrorAlertShown(result.error)) {
-          void showAlert({
-            title: '저장 실패',
-            content: getGeneralProgramApiErrorMessage(
-              result.error,
-              '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
-            ),
-          })
+        } else if (result.kind === 'api') {
+          if (
+            programId &&
+            getGeneralProgramApiErrorCode(result.error) ===
+              'PROGRAM_EDUCATION_STRUCTURE_CHANGE_CONCURRENT'
+          ) {
+            void queryClient.invalidateQueries({
+              queryKey: generalProgramQueryKeys.detail(programId),
+            })
+          }
+          if (!isGlobalApiErrorAlertShown(result.error)) {
+            void showAlert({
+              title: '저장 실패',
+              content: getGeneralProgramApiErrorMessage(
+                result.error,
+                '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
+              ),
+            })
+          }
         }
         return
       }
@@ -1002,7 +1057,41 @@ export function GeneralProgramDetailFullPageModal({
     } finally {
       endOverlay()
     }
-  }, [detailRequiredHighlight, displayProgram, infoTriggerSave, setEditMode, showAlert])
+  }, [
+    detailRequiredHighlight,
+    displayProgram,
+    infoTriggerSave,
+    programId,
+    queryClient,
+    setEditMode,
+    showAlert,
+  ])
+
+  const handleInfoSave = useCallback(async () => {
+    if (
+      displayProgram &&
+      isEducationStructureChanged(displayProgram, infoForm.getValues().educationStructure)
+    ) {
+      setStructureChangeConfirmOpen(true)
+      return
+    }
+    await runInfoSave()
+  }, [displayProgram, infoForm, runInfoSave])
+
+  const handleStructureChangeConfirm = useCallback(async () => {
+    setStructureChangeConfirmLoading(true)
+    try {
+      await runInfoSave()
+    } finally {
+      setStructureChangeConfirmLoading(false)
+      setStructureChangeConfirmOpen(false)
+    }
+  }, [runInfoSave])
+
+  const handleStructureChangeCancel = useCallback(() => {
+    if (structureChangeConfirmLoading) return
+    setStructureChangeConfirmOpen(false)
+  }, [structureChangeConfirmLoading])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedGeneralRegistrationOverlayFromProgram(displayProgram)
@@ -2189,7 +2278,9 @@ export function GeneralProgramDetailFullPageModal({
           ) : null
         }
       >
-        {loading || (remoteEnabled && open && !displayProgram && !detailError) ? (
+        {open &&
+        !displayProgram &&
+        (loading || (remoteEnabled && !detailError)) ? (
           <div className="detail-fullpage-modal__loading">
             <Spin size="large" />
           </div>
@@ -2410,6 +2501,16 @@ export function GeneralProgramDetailFullPageModal({
         />
       ) : null}
       <ProgramDetailSponsorDetailOverlay />
+      <ConfirmModal
+        open={structureChangeConfirmOpen}
+        title={EDUCATION_STRUCTURE_CHANGE_CONFIRM_TITLE}
+        content={EDUCATION_STRUCTURE_CHANGE_CONFIRM_MESSAGE}
+        onConfirm={() => {
+          void handleStructureChangeConfirm()
+        }}
+        onCancel={handleStructureChangeCancel}
+        confirmLoading={structureChangeConfirmLoading}
+      />
     </>
     </RegistrationWizardValidationHighlightProvider>
   )

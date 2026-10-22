@@ -12,7 +12,7 @@ import { GeneralVolunteerDocumentBulkRejectModal } from './general-volunteer-doc
 import { GeneralVolunteerDocumentCancelApprovalModal } from './general-volunteer-document-cancel-approval-modal'
 import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-document-cancel-reject-modal'
 import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
-import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { buildGeneralVolunteerDoc1FilterFields } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
@@ -27,7 +27,7 @@ import {
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import './volunteer-screening.css'
 
-const FILTER_ROWS = buildGeneralVolunteerDoc1FilterRows()
+const FILTER_FIELDS = buildGeneralVolunteerDoc1FilterFields()
 
 export function GeneralVolunteerDocScreeningSection({
   program,
@@ -212,7 +212,7 @@ export function GeneralVolunteerDocScreeningSection({
         <FilterTableLayout
           bordered={false}
           className="general-volunteer-screening__filter-layout"
-          rows={FILTER_ROWS}
+          fields={FILTER_FIELDS}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}

@@ -145,6 +145,9 @@ export function useGeneralProgramCommonInfoEditForm({
 
   useEffect(() => {
     if (!program) return
+    // 편집 중 catalog/sponsor 도착이나 program 동기화로 화면 입력을 덮지 않는다.
+    // 편집 진입 reset은 상세 모달 handleInfoEdit → resetToProgram 이 담당한다.
+    if (isEditMode) return
     reset(
       programToGeneralCommonInfoEditValues(
         program,

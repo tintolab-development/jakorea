@@ -171,6 +171,26 @@ describe('resolveGeneralProgramCommonInfo 커리큘럼 복수', () => {
     expect(common.curriculumSessions).toHaveLength(1)
   })
 
+  it('명시적 빈 배열은 overlay 세션을 복원하지 않는다', () => {
+    const common = resolveGeneralProgramCommonInfo(
+      baseProgram({
+        generalProgramAudience: 'organization',
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: {
+          curriculumSessions: [],
+        },
+        registrationOverlay: {
+          'generalRegistration.educationCurriculum.unitNameBySession': {
+            1: 'stale1',
+            2: 'stale2',
+          },
+        },
+      })
+    )
+    expect(common.curriculumSessions).toEqual([])
+  })
+
   it('중첩 행이 있으면 overlay 단원 맵이 더 많아도 중첩 행을 조회한다', () => {
     const common = resolveGeneralProgramCommonInfo(
       baseProgram({

@@ -48,7 +48,7 @@ describe('participating-institution-activity-withdraw', () => {
       baseSession()
     )
 
-    expect(label).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 1차시')
+    expect(label).toBe('2026.01.09(금) 09:20 ~ 11:20 | 1차시')
   })
 
   it('복수 커리큘럼형 옵션은 회차명을 포함한다', () => {
@@ -88,7 +88,7 @@ describe('participating-institution-activity-withdraw', () => {
     expect(patch).toEqual({
       activityWithdrawn: true,
       activityWithdrawStopSessionKey: key,
-      activityWithdrawStopScheduleLabel: '2026. 01. 09(금) 09:20 ~ 11:20 | 1차시',
+      activityWithdrawStopScheduleLabel: '2026.01.09(금) 09:20 ~ 11:20 | 1차시',
     })
   })
 

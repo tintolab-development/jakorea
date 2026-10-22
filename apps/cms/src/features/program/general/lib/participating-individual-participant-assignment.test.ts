@@ -13,7 +13,7 @@ const localRow: ParticipatingIndividualParticipantAssignmentRow = {
   sessionOrder: 1,
   teamRole: 'member',
   teamName: '1조',
-  scheduleLabel: '2026.04.01 (수) | 1교시',
+  scheduleLabel: '2026.04.01(수) | 1교시',
   assignmentPeriodLabel: null,
   submission: { kind: 'none' },
   educationProgress: 'completed',

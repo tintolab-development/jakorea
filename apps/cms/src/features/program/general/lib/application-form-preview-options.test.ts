@@ -123,8 +123,8 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
       generalCommonInfo: {
         educationScheduleMode: 'date',
         educationScheduleLines: [
-          '26년 9월 1일(화) 9:00 ~ 12:00',
-          '26년 9월 8일(화) 13:00 ~ 16:00',
+          '2026.09.01(화) 09:00 ~ 12:00',
+          '2026.09.08(화) 13:00 ~ 16:00',
         ],
       },
     } as Program
@@ -144,12 +144,12 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     expect(options.applicationFormSchemaSnapshotPreview).toBeUndefined()
     expect(options.programLinkedIndividualApplicationForm).toBe(true)
     expect(options.institutionApplicationProgramBridge?.educationScheduleLines).toEqual([
-      '26년 9월 1일(화) 9:00 ~ 12:00',
-      '26년 9월 8일(화) 13:00 ~ 16:00',
+      '2026.09.01(화) 09:00 ~ 12:00',
+      '2026.09.08(화) 13:00 ~ 16:00',
     ])
     expect(institutionBridge.educationScheduleLines).toEqual([
-      '26년 9월 1일(화) 9:00 ~ 12:00',
-      '26년 9월 8일(화) 13:00 ~ 16:00',
+      '2026.09.01(화) 09:00 ~ 12:00',
+      '2026.09.08(화) 13:00 ~ 16:00',
     ])
     expect(options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(
       false

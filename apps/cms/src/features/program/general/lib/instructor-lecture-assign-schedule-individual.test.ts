@@ -238,17 +238,17 @@ describe('individual instructor lecture assign schedule', () => {
       { schoolName: '개인 프로그램', allInstructors: [] }
     )
 
-    expect(slot?.label).toBe('2026. 04. 20(월) 09:00 ~ 2026. 04. 22(수) 18:00')
+    expect(slot?.label).toBe('2026.04.20(월) 09:00 ~ 2026.04.22(수) 18:00')
   })
 
   it('개인 프로그램 슬롯·태그 라벨을 시안 형식으로 만든다', () => {
     const date = dayjs('2026-04-20')
 
     expect(formatIndividualLectureAssignSlotLabel(date, '09:30 ~ 12:20', '2차시')).toBe(
-      '2026. 04. 20(월) 09:30 ~ 12:20 | 2차시'
+      '2026.04.20(월) 09:30 ~ 12:20 | 2차시'
     )
     expect(formatIndividualLectureAssignTagLabel(date, '09:30 ~ 12:20')).toBe(
-      '2026. 04. 20(월) 09:30 ~ 12:20'
+      '2026.04.20(월) 09:30 ~ 12:20'
     )
   })
 })

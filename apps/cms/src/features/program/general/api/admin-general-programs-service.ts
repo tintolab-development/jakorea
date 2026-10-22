@@ -3,6 +3,7 @@ import {
   mapAdminProgramListItemToProgram,
   mapGeneralProgramToCreateRequest,
   mapGeneralProgramToUpdateRequest,
+  type GeneralProgramUpdateSerializeOptions,
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import {
   clientFilterGeneralPrograms,
@@ -206,21 +207,17 @@ export async function updateGeneralProgram(
   programId: string,
   program: Program,
   patch?: Partial<Program>,
-  baseline?: Program
+  baseline?: Program,
+  serializeOptions?: GeneralProgramUpdateSerializeOptions
 ): Promise<Program> {
   assertGeneralProgramsRemoteReady()
   const dto = await updateAdminProgramRemote(
     programId,
-    mapGeneralProgramToUpdateRequest(program, patch, baseline)
+    mapGeneralProgramToUpdateRequest(program, patch, baseline, serializeOptions)
   )
-  const mapped = mapAdminProgramDetailToProgram(dto)
-  const { withFetchedProgramSponsorAssignments } = await import(
-    '@/features/program/shared/lib/merge-program-sponsor-assignments'
-  )
-  const { fetchAdminProgramSponsorsRemote } = await import(
-    '@/features/program/general/api/programs-api-client'
-  )
-  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
+  // PATCH 200 body 가 저장 성공·view SSOT. sponsors GET 은 상세 훅이 별도 조회하므로
+  // 후속 요청 실패·지연이 수정 모드 종료를 막지 않는다.
+  return mapAdminProgramDetailToProgram(dto)
 }
 
 export async function deleteGeneralProgram(programId: string): Promise<void> {

@@ -3,6 +3,10 @@
  */
 
 import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+import {
+  isProgramEducationStructureGuardCode,
+  PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES,
+} from '@/features/program/general/lib/education-structure-guard'
 import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
 import {
   isProgramRecruitmentEditPeriodCode,
@@ -150,11 +154,18 @@ const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
     '하루 희망 차시 수가 모집 상한을 초과했습니다.',
 }
 
+export function getGeneralProgramApiErrorCode(error: unknown): string | undefined {
+  return extractApiErrorCode(error)
+}
+
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
   const organizationAssignmentMessage = formatOrganizationApplicationApproveErrorMessage(error)
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (isProgramEducationStructureGuardCode(code)) {
+    return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
+  }
   if (code === 'PROGRAM_EDUCATION_SLOT_KEY_MISMATCH') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw

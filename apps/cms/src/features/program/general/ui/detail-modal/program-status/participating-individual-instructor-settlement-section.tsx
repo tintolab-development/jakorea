@@ -137,7 +137,9 @@ export function ParticipatingIndividualInstructorSettlementSection({
         render: (_value, record) => (
           <StatusBadge
             domain="custom"
-            label={PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS[record.lectureProgress]}
+            label={
+              PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS[record.lectureProgress]
+            }
             accentColor={lectureProgressAccent(record.lectureProgress)}
             variant="text"
           />
@@ -230,15 +232,18 @@ export function ParticipatingIndividualInstructorSettlementSection({
         <div className="info-section-buttons--wrapper">
           <CmsButton
             variant="secondary"
-            size="large"
-            width={220}
+            size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
             onClick={() => void handleBulkDownloadPaymentStatements()}
           >
             지급조서 일괄 다운로드
           </CmsButton>
-          <ExcelButton onClick={exportExcel} loading={isExcelExporting} disabled={rows.length === 0} />
+          <ExcelButton
+            onClick={exportExcel}
+            loading={isExcelExporting}
+            disabled={rows.length === 0}
+          />
         </div>
       </div>
 

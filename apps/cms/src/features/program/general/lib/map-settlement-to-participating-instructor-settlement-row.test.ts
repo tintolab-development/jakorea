@@ -45,9 +45,9 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
   it('builds education schedule label from session display or date', () => {
     expect(
       buildParticipatingInstructorEducationScheduleLabel({
-        programSessionProgressDisplay: '2026. 01. 09(금) 09:20 ~ 11:20 | 1회차',
+        programSessionProgressDisplay: '2026.01.09(금) 09:20 ~ 11:20 | 1회차',
       })
-    ).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 1회차')
+    ).toBe('2026.01.09(금) 09:20 ~ 11:20 | 1회차')
 
     expect(
       buildParticipatingInstructorEducationScheduleLabel({
