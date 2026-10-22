@@ -222,7 +222,7 @@ assert.ok(!withCultureBreaks.thriveValues[0]!.summary.includes('\n'))
 assert.equal(view.featuredStories.length, 3)
 assert.equal(view.featuredStories[0]?.id, 'story-metlife-2026')
 assert.equal(view.featuredStories[0]?.categoryLabel, '스토리')
-assert.equal(view.featuredStories[0]?.publishedAtLabel, '2026년 08월 15일')
+assert.equal(view.featuredStories[0]?.publishedAtLabel, '2026년')
 assert.match(view.featuredStories[0]!.imageUrl, /careers-story-metlife\.png/)
 assert.ok(view.featuredStories[0]?.titleLines)
 
@@ -235,7 +235,7 @@ const nullBanner = mapPublicCareerGuide(
   fallback,
 )
 assert.equal(nullBanner.hero.imageUrl, fallback.hero.imageUrl)
-assert.equal(nullBanner.featuredStories[0]?.imageUrl, fallback.featuredStories[0]?.imageUrl)
+assert.equal(nullBanner.featuredStories[0]?.imageUrl, '')
 
 const linkedOne = mapPublicCareerGuide(
   {
@@ -266,6 +266,7 @@ assert.equal(linkedOne.featuredStories.length, 1)
 assert.equal(linkedOne.featuredStories[0]?.id, '7')
 assert.equal(linkedOne.featuredStories[0]?.categoryLabel, '뉴스레터')
 assert.equal(linkedOne.featuredStories[0]?.publishedAtLabel, '2026년 01월 07일')
+assert.equal(linkedOne.featuredStories[0]?.imageUrl, '')
 
 const emptyInterviews = mapPublicCareerGuide({ ...sample, interviews: [] }, fallback)
 assert.equal(emptyInterviews.featuredStories.length, 0)
@@ -279,6 +280,38 @@ const yearOnly = mapPublicCareerGuide(
 )
 assert.equal(yearOnly.featuredStories[0]?.id, '10')
 assert.equal(yearOnly.featuredStories[0]?.publishedAtLabel, '2024년')
+assert.equal(yearOnly.featuredStories[0]?.imageUrl, '')
+
+const yearNull = mapPublicCareerGuide(
+  {
+    ...sample,
+    interviews: [{ impactStoryId: 11, title: '연도 없음', year: null, coverImageUrl: null }],
+  },
+  fallback,
+)
+assert.equal(yearNull.featuredStories[0]?.id, '11')
+assert.equal(yearNull.featuredStories[0]?.publishedAtLabel, '')
+assert.equal(yearNull.featuredStories[0]?.imageUrl, '')
+
+const highDisplayOrder = mapPublicCareerGuide(
+  {
+    ...sample,
+    interviews: [
+      {
+        id: 4,
+        impactStoryId: 11,
+        displayOrder: 4,
+        title: '첨부 있는 스토리',
+        year: 2026,
+        coverImageUrl: 'https://cdn.example/story-11.png',
+        impactStory: { id: 11, imageUrl: 'https://cdn.example/story-11.png', categoryName: '스토리' },
+      },
+    ],
+  },
+  fallback,
+)
+assert.equal(highDisplayOrder.featuredStories[0]?.id, '11')
+assert.equal(highDisplayOrder.featuredStories[0]?.imageUrl, 'https://cdn.example/story-11.png')
 
 console.log('careers mapPublicCareerGuide selfcheck: ok')
 
