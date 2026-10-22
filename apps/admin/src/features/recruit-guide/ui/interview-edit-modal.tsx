@@ -123,7 +123,9 @@ function InterviewEditModalBody({
                 src={item.imageUrl}
                 alt=""
               />
-            ) : null}
+            ) : (
+              <div className="recruit-guide-interview-edit-modal__cover recruit-guide-interview-edit-modal__cover--empty" />
+            )}
             <strong>{item.impactStory?.title ?? '연결 정보 없음'}</strong>
             <span>
               ID {item.impactStoryId ?? '-'} · storyKey {item.storyKey ?? '-'}

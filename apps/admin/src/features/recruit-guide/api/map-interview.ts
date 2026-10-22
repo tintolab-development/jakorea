@@ -26,6 +26,6 @@ export function mapInterview(row: CareerGuideAdminInterviewResponse): InterviewI
     title: row.title ?? '',
     publishedYear: row.year ?? null,
     version: row.version ?? 0,
-    imageUrl: row.coverImageUrl || row.impactStory?.imageUrl || undefined,
+    imageUrl: row.coverImageUrl?.trim() || row.impactStory?.imageUrl?.trim() || undefined,
   }
 }

@@ -112,7 +112,7 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
       onSelect({
         impactStoryId,
         title: story.title,
-        publishedYear: storyYear(story),
+        publishedYear: null,
       })
     },
     [confirmLoading, onSelect]
