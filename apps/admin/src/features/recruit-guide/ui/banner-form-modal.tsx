@@ -5,10 +5,7 @@
 import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type {
-  BannerSaveInput,
-  RecruitGuideBanner,
-} from '@/entities/recruit-guide/model/types'
+import type { BannerSaveInput, RecruitGuideBanner } from '@/entities/recruit-guide/model/types'
 import {
   CmsButton,
   CmsTextArea,
@@ -27,6 +24,9 @@ const IMAGE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 권장 배너 사이즈는 740*790px입니다.',
 ]
+
+const MAIN_TEXT_MAX_LENGTH = 1000
+const SUB_TEXT_MAX_LENGTH = 2000
 
 const MODAL_DESCRIPTION = '채용 페이지의 상단 배너 이미지와 텍스트를 설정해 주세요.'
 
@@ -117,7 +117,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
         setImageUrl(dataUrl)
         setImageFileName(file.name)
         setImageFile(file)
-        setImageAssetId(undefined)
+        setImageAssetId(null)
         setErrors(prev => ({ ...prev, image: undefined }))
       } catch {
         showAlert({
@@ -133,7 +133,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
     setImageUrl('')
     setImageFileName('')
     setImageFile(null)
-    setImageAssetId(undefined)
+    setImageAssetId(null)
   }, [])
 
   const handleSubmit = useCallback(() => {
@@ -143,12 +143,18 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
     }
     if (!mainText.trim()) {
       nextErrors.mainText = '메인 텍스트를 입력해 주세요.'
+    } else if (mainText.trimEnd().length > MAIN_TEXT_MAX_LENGTH) {
+      nextErrors.mainText = `메인 텍스트는 ${MAIN_TEXT_MAX_LENGTH}자 이내로 입력해 주세요.`
     }
     if (!subText01.trim()) {
       nextErrors.subText01 = '서브 텍스트를 입력해 주세요.'
+    } else if (subText01.trimEnd().length > SUB_TEXT_MAX_LENGTH) {
+      nextErrors.subText01 = `서브 텍스트 01은 ${SUB_TEXT_MAX_LENGTH}자 이내로 입력해 주세요.`
     }
     if (!subText02.trim()) {
       nextErrors.subText02 = '서브 텍스트를 입력해 주세요.'
+    } else if (subText02.trimEnd().length > SUB_TEXT_MAX_LENGTH) {
+      nextErrors.subText02 = `서브 텍스트 02는 ${SUB_TEXT_MAX_LENGTH}자 이내로 입력해 주세요.`
     }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -264,6 +270,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={3}
+                  maxLength={MAIN_TEXT_MAX_LENGTH}
                   placeholder="메인 텍스트를 입력하세요"
                   value={mainText}
                   onChange={e => {
@@ -294,6 +301,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={2}
+                  maxLength={SUB_TEXT_MAX_LENGTH}
                   placeholder="서브 텍스트를 입력하세요"
                   value={subText01}
                   onChange={e => {
@@ -324,6 +332,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={3}
+                  maxLength={SUB_TEXT_MAX_LENGTH}
                   placeholder="서브 텍스트를 입력하세요"
                   value={subText02}
                   onChange={e => {

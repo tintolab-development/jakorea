@@ -1,5 +1,5 @@
 /**
- * 채용 안내 관리 — localStorage mock (API 연동 전)
+ * 채용 안내 관리 — local fallback
  */
 
 import type {
@@ -74,8 +74,9 @@ function buildSeedBanner(): RecruitGuideBanner {
 }
 
 function buildSeedCulture(): CultureItem[] {
-  return FIXED_CULTURE.map(item => ({
+  return FIXED_CULTURE.map((item, index) => ({
     id: item.id,
+    apiId: index + 1,
     itemLabel: item.itemLabel,
     title: item.defaultTitle,
     description: item.defaultDescription,
@@ -87,24 +88,28 @@ function buildSeedCulture(): CultureItem[] {
 function buildSeedInterviews(): InterviewItem[] {
   return [
     {
-      id: 'ri-1',
-      storyId: 'story-metlife-2026',
-      title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울',
+      id: 1,
+      storyKey: 'story-metlife-2026',
+      title: '“멘티에서 서포터로” 미래 게임 기획자의 성장기 - 이제윤님의 이야기',
       publishedYear: 2026,
+      version: 0,
       imageUrl: storyImageUrl,
     },
     {
-      id: 'ri-2',
-      storyId: 'story-summer-camp',
-      title: '청소년과 함께한 JA Korea 여름 캠프 이야기',
+      id: 2,
+      storyKey: 'story-summer-camp',
+      title: '봉사에서 시작된 변화의 여정: 대학생 봉사자에서 사회인 후원자로',
       publishedYear: 2025,
+      version: 0,
       imageUrl: storyImageUrl,
     },
     {
-      id: 'ri-3',
-      storyId: 'story-volunteer-day',
-      title: '임직원 봉사로 이어진 따뜻한 하루',
+      id: 3,
+      storyKey: 'story-volunteer-day',
+      title:
+        '우리의 만남은 우연이 아니야! 신혼여행을 봉사활동으로 채운 노무사, 변호사 부부의 인터뷰',
       publishedYear: 2025,
+      version: 0,
       imageUrl: storyImageUrl,
     },
   ]
@@ -136,7 +141,12 @@ function normalizeBanner(raw: Partial<RecruitGuideBanner> | null | undefined): R
       typeof raw.imageFileName === 'string' && raw.imageFileName.trim()
         ? raw.imageFileName.trim()
         : undefined,
-    imageAssetId: typeof raw.imageAssetId === 'number' ? raw.imageAssetId : undefined,
+    imageAssetId:
+      raw.imageAssetId === null
+        ? null
+        : typeof raw.imageAssetId === 'number'
+          ? raw.imageAssetId
+          : undefined,
     mainText: asString(raw.mainText, seed.mainText),
     subText01: asString(raw.subText01, seed.subText01),
     subText02: asString(raw.subText02, seed.subText02),
@@ -172,6 +182,7 @@ function normalizeCulture(raw: unknown): CultureItem[] {
     const overlay = byId.get(item.id)
     return {
       id: item.id,
+      apiId: item.apiId,
       itemLabel: item.itemLabel,
       title: overlay?.title ?? item.title,
       description: overlay?.description ?? item.description,
@@ -183,28 +194,52 @@ function normalizeCulture(raw: unknown): CultureItem[] {
 function normalizeInterview(raw: unknown, i: number): InterviewItem | null {
   if (!raw || typeof raw !== 'object') return null
   const row = raw as Partial<InterviewItem>
-  const storyId = asString(row.storyId, '').trim()
+  const legacyStoryKey = (row as { storyId?: unknown }).storyId
+  const storyKey = asString(row.storyKey ?? legacyStoryKey, '').trim()
   const title = asString(row.title, '').trim()
-  if (!storyId || !title) return null
+  if (!storyKey || !title) return null
+  const rawId = (row as { id?: unknown }).id
+  const id =
+    typeof rawId === 'number' && (rawId === 1 || rawId === 2 || rawId === 3)
+      ? rawId
+      : i + 1 >= 1 && i + 1 <= 3
+        ? ((i + 1) as 1 | 2 | 3)
+        : null
+  if (id == null) return null
   const year =
-    typeof row.publishedYear === 'number' && Number.isFinite(row.publishedYear)
-      ? row.publishedYear
-      : 2026
+    row.publishedYear == null
+      ? null
+      : typeof row.publishedYear === 'number' && Number.isFinite(row.publishedYear)
+        ? row.publishedYear
+        : null
   const imageUrl = asString(row.imageUrl, '').trim()
   return {
-    id: asString(row.id, `ri-${i + 1}`),
-    storyId,
+    id,
+    storyKey,
     title,
     publishedYear: year,
+    version: normalizeVersion(row.version, 0),
     ...(imageUrl ? { imageUrl } : {}),
   }
 }
 
 function normalizeInterviews(raw: unknown): InterviewItem[] {
-  if (!Array.isArray(raw)) return buildSeedInterviews()
-  return raw
+  const seed = buildSeedInterviews()
+  if (!Array.isArray(raw)) return seed
+  const normalized = raw
     .map((row, i) => normalizeInterview(row, i))
     .filter((row): row is InterviewItem => row != null)
+  return seed.map((defaultRow, index) => {
+    const overlay = normalized.find(row => row.id === defaultRow.id) ?? normalized[index]
+    if (!overlay) return defaultRow
+    return {
+      ...defaultRow,
+      title: overlay.title,
+      publishedYear: overlay.publishedYear,
+      version: overlay.version,
+      ...(overlay.imageUrl ? { imageUrl: overlay.imageUrl } : {}),
+    }
+  })
 }
 
 function normalizeData(raw: Partial<RecruitGuideData> | null | undefined): RecruitGuideData {
@@ -213,7 +248,8 @@ function normalizeData(raw: Partial<RecruitGuideData> | null | undefined): Recru
   return {
     banner: normalizeBanner(raw.banner),
     cultureItems: normalizeCulture(raw.cultureItems),
-    interviews: raw.interviews === undefined ? seed.interviews : normalizeInterviews(raw.interviews),
+    interviews:
+      raw.interviews === undefined ? seed.interviews : normalizeInterviews(raw.interviews),
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
   }
 }
@@ -246,9 +282,9 @@ export function readRecruitGuide(): RecruitGuideData {
 }
 
 type MutateOptions = {
-  /** remote GET 세션 캐시 기준값. 없으면 localStorage */
+  /** local fallback의 기준값 */
   base?: RecruitGuideData
-  /** false면 localStorage에 쓰지 않는다 (저장 API 없는 remote 세션용) */
+  /** false면 localStorage에 쓰지 않는다 */
   persist?: boolean
 }
 
@@ -294,6 +330,7 @@ export function saveCulture(items: CultureSaveItem[], options?: MutateOptions): 
     if (!description.trim()) throw new Error('CULTURE_DESCRIPTION_REQUIRED')
     return {
       id: fixed.id,
+      apiId: FIXED_CULTURE.indexOf(fixed) + 1,
       itemLabel: fixed.itemLabel,
       title,
       description,
@@ -312,46 +349,12 @@ export function saveCulture(items: CultureSaveItem[], options?: MutateOptions): 
   return next
 }
 
-function nextInterviewId(existing: InterviewItem[]): string {
-  const nums = existing
-    .map(row => Number(String(row.id).replace(/^ri-/, '')))
-    .filter(n => Number.isFinite(n))
-  const max = nums.length > 0 ? Math.max(...nums) : 0
-  return `ri-${max + 1}`
-}
-
-export function addInterview(input: InterviewSaveItem, options?: MutateOptions): RecruitGuideData {
-  const current = options?.base ?? readRecruitGuide()
-  if (current.interviews.some(row => row.storyId === input.storyId)) {
-    throw new Error('INTERVIEW_DUPLICATE')
-  }
-  const nextRow: InterviewItem = {
-    id: nextInterviewId(current.interviews),
-    storyId: input.storyId,
-    title: input.title.trim(),
-    publishedYear: input.publishedYear,
-  }
-  const next: RecruitGuideData = {
-    ...current,
-    interviews: [...current.interviews, nextRow],
-    updatedAt: new Date().toISOString(),
-  }
-  if (options?.persist !== false) {
-    writeFile({ version: 1, data: next })
-  }
-  return next
-}
-
-export function replaceInterview(
-  id: string,
+export function updateInterview(
+  id: InterviewItem['id'],
   input: InterviewSaveItem,
-  options?: MutateOptions,
+  options?: MutateOptions
 ): RecruitGuideData {
   const current = options?.base ?? readRecruitGuide()
-  const duplicate = current.interviews.find(
-    row => row.storyId === input.storyId && row.id !== id
-  )
-  if (duplicate) throw new Error('INTERVIEW_DUPLICATE')
 
   let found = false
   const interviews = current.interviews.map(row => {
@@ -359,9 +362,9 @@ export function replaceInterview(
     found = true
     return {
       ...row,
-      storyId: input.storyId,
       title: input.title.trim(),
       publishedYear: input.publishedYear,
+      version: input.version,
     }
   })
   if (!found) throw new Error('INTERVIEW_NOT_FOUND')
@@ -369,21 +372,6 @@ export function replaceInterview(
   const next: RecruitGuideData = {
     ...current,
     interviews,
-    updatedAt: new Date().toISOString(),
-  }
-  if (options?.persist !== false) {
-    writeFile({ version: 1, data: next })
-  }
-  return next
-}
-
-export function removeInterviews(ids: string[], options?: MutateOptions): RecruitGuideData {
-  if (ids.length === 0) throw new Error('INTERVIEW_NONE_SELECTED')
-  const idSet = new Set(ids)
-  const current = options?.base ?? readRecruitGuide()
-  const next: RecruitGuideData = {
-    ...current,
-    interviews: current.interviews.filter(row => !idSet.has(row.id)),
     updatedAt: new Date().toISOString(),
   }
   if (options?.persist !== false) {

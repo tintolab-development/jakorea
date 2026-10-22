@@ -2,16 +2,13 @@
  * 채용 안내 관리 — 홈페이지 채용 화면 노출 콘텐츠
  */
 
-export type CultureItemId =
-  | 'ready_to_help'
-  | 'make_an_impact'
-  | 'speak_openly'
-  | 'keep_learning'
+export type CultureItemId = 'ready_to_help' | 'make_an_impact' | 'speak_openly' | 'keep_learning'
 
 export type RecruitGuideBanner = {
   imageUrl: string
   imageFileName?: string
-  imageAssetId?: number
+  /** 서버에 보낼 배너 자산 ID. 이미지 제거는 null로 표현한다. */
+  imageAssetId?: number | null
   mainText: string
   subText01: string
   subText02: string
@@ -20,6 +17,8 @@ export type RecruitGuideBanner = {
 
 export type CultureItem = {
   id: CultureItemId
+  /** 서버 고정 식별자 (1~4) */
+  apiId: number
   /** 고정 노출 — 수정 불가 */
   itemLabel: string
   title: string
@@ -28,11 +27,14 @@ export type CultureItem = {
 }
 
 export type InterviewItem = {
-  id: string
-  storyId: string
+  /** 서버 고정 인터뷰 슬롯 ID (1~3) */
+  id: 1 | 2 | 3
+  /** 서버가 관리하는 연결 스토리 키 — 수정 불가 */
+  storyKey: string
   title: string
-  publishedYear: number
-  /** Platform 직무 인터뷰 커버. 목록 표에는 제목만 보인다. */
+  publishedYear: number | null
+  version: number
+  /** Platform 직무 인터뷰 커버 */
   imageUrl?: string
 }
 
@@ -47,7 +49,7 @@ export type BannerSaveInput = {
   imageUrl: string
   imageFileName?: string
   imageFile?: File | null
-  imageAssetId?: number
+  imageAssetId?: number | null
   mainText: string
   subText01: string
   subText02: string
@@ -62,7 +64,7 @@ export type CultureSaveItem = {
 }
 
 export type InterviewSaveItem = {
-  storyId: string
   title: string
-  publishedYear: number
+  publishedYear: number | null
+  version: number
 }

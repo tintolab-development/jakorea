@@ -8,12 +8,10 @@ import type {
 import { shouldUseRecruitGuideRemoteApi } from './capabilities'
 import { recruitGuideQueryKeys } from './query-keys'
 import {
-  addInterviewService,
   getRecruitGuideService,
-  removeInterviewsService,
-  replaceInterviewService,
   saveBannerService,
   saveCultureService,
+  updateInterviewService,
 } from './service'
 
 function source(): 'remote' | 'local' {
@@ -26,7 +24,6 @@ export function useRecruitGuide(enabled = true) {
     queryKey: recruitGuideQueryKeys.detail(dataSource),
     queryFn: () => getRecruitGuideService(),
     enabled,
-    // remote는 저장 API가 없어 세션 캐시 수정을 유지한다. 새로고침 시 서버 GET으로 복원.
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnWindowFocus: false,
     retry: dataSource === 'remote' ? 1 : false,
@@ -41,51 +38,44 @@ function useGuideCacheHelpers() {
     setCache: (data: RecruitGuideData) => {
       queryClient.setQueryData(key, data)
     },
+    refresh: () =>
+      queryClient.invalidateQueries({ queryKey: key, exact: true, refetchType: 'active' }),
   }
 }
 
 export function useSaveRecruitBanner() {
-  const { getCached, setCache } = useGuideCacheHelpers()
+  const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
     mutationFn: (input: BannerSaveInput) => saveBannerService(input, getCached()),
     retry: false,
-    onSuccess: data => setCache(data),
+    onSuccess: async data => {
+      setCache(data)
+      await refresh()
+    },
   })
 }
 
 export function useSaveRecruitCulture() {
-  const { getCached, setCache } = useGuideCacheHelpers()
+  const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
     mutationFn: (items: CultureSaveItem[]) => saveCultureService(items, getCached()),
     retry: false,
-    onSuccess: data => setCache(data),
+    onSuccess: async data => {
+      setCache(data)
+      await refresh()
+    },
   })
 }
 
-export function useAddRecruitInterview() {
-  const { getCached, setCache } = useGuideCacheHelpers()
+export function useUpdateRecruitInterview() {
+  const { getCached, setCache, refresh } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (input: InterviewSaveItem) => addInterviewService(input, getCached()),
+    mutationFn: (payload: { slotId: number; input: InterviewSaveItem }) =>
+      updateInterviewService(payload.slotId, payload.input, getCached()),
     retry: false,
-    onSuccess: data => setCache(data),
-  })
-}
-
-export function useReplaceRecruitInterview() {
-  const { getCached, setCache } = useGuideCacheHelpers()
-  return useMutation({
-    mutationFn: (payload: { id: string; input: InterviewSaveItem }) =>
-      replaceInterviewService(payload.id, payload.input, getCached()),
-    retry: false,
-    onSuccess: data => setCache(data),
-  })
-}
-
-export function useRemoveRecruitInterviews() {
-  const { getCached, setCache } = useGuideCacheHelpers()
-  return useMutation({
-    mutationFn: (ids: string[]) => removeInterviewsService(ids, getCached()),
-    retry: false,
-    onSuccess: data => setCache(data),
+    onSuccess: async data => {
+      setCache(data)
+      await refresh()
+    },
   })
 }

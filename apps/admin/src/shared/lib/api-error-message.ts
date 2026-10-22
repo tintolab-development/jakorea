@@ -29,7 +29,8 @@ export function readApiErrorCode(error: unknown): string | undefined {
   if (!axios.isAxiosError(error)) return undefined
   const data = error.response?.data
   if (!data || typeof data !== 'object') return undefined
-  const code = (data as { error?: { code?: unknown } }).error?.code
+  const record = data as { code?: unknown; error?: { code?: unknown } }
+  const code = record.error?.code ?? record.code
   return typeof code === 'string' && code.trim() ? code.trim() : undefined
 }
 

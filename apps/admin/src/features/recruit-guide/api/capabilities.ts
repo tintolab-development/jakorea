@@ -1,6 +1,6 @@
 /**
  * 채용 안내 — remote API opt-in
- * 실 JWT일 때 GET. 저장 API는 없어 세션 캐시에만 반영한다.
+ * 실 JWT 세션에서는 조회·저장 모두 백엔드 API를 사용한다.
  */
 import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
 
