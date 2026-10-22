@@ -239,7 +239,7 @@ describe('GENERAL_DETAIL_DATA_INTEGRITY', () => {
     expect(body.sponsors).toEqual([
       { sponsorId: '1627251', sponsorContactIds: ['1627253', '1627254'] },
     ])
-    expect(body.sponsorId).toBe('1627251')
+    expect(body).not.toHaveProperty('sponsorId')
   })
 
   it('같은 후원사 담당자 2명 중 1명을 지우면 나머지 1명과 다른 후원사 담당자를 유지한다', () => {

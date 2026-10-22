@@ -368,6 +368,9 @@ describe('교육구조 Guard 코드', () => {
         'fallback'
       )
     ).toBe('다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.')
+    expect(getGeneralProgramApiErrorMessage(errorFor('VERSION_CONFLICT'), 'fallback')).toBe(
+      '다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.'
+    )
     expect(
       getGeneralProgramApiErrorMessage(errorFor('GENERAL_CURRICULUM_SESSION_IN_USE'), 'fallback')
     ).toBe('설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.')

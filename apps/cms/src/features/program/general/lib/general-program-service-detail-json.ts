@@ -18,10 +18,37 @@ import {
 } from '@/features/program/general/lib/wage-display'
 import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
 export const GENERAL_REGISTRATION_WAGE_OVERLAY_PREFIX = 'generalRegistration.wageInfo.' as const
+
+const SPONSOR_MANAGER_CONTACT_NAMES_KEY = 'sponsorManagerContactNames'
+
+/**
+ * 일반 프로그램 serviceDetailJson 전송 경계.
+ * UI sentinel·legacy 이름 map은 관계형 sponsors[] 정본이 아니므로 persist JSON에 넣지 않는다.
+ */
+export function sanitizeGeneralProgramServiceDetailPersistValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return isSponsorContactUnselected(value) ? '' : value
+  }
+  if (Array.isArray(value)) {
+    return value
+      .filter(item => !(typeof item === 'string' && isSponsorContactUnselected(item)))
+      .map(item => sanitizeGeneralProgramServiceDetailPersistValue(item))
+  }
+  if (value != null && typeof value === 'object') {
+    const next: Record<string, unknown> = {}
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (key === SPONSOR_MANAGER_CONTACT_NAMES_KEY) continue
+      next[key] = sanitizeGeneralProgramServiceDetailPersistValue(nested)
+    }
+    return next
+  }
+  return value
+}
 
 function wageGradeAmountSignature(
   rows: NonNullable<Program['generalCommonInfo']>['wageGradeRows'] | undefined
@@ -41,6 +68,12 @@ export function wageCommonInfoFieldsUnchanged(
   next: Program['generalCommonInfo'] | undefined,
   existing: Program['generalCommonInfo'] | undefined
 ): boolean {
+  const nextHasWage =
+    next != null &&
+    (Object.prototype.hasOwnProperty.call(next, 'wageGradeRows') ||
+      Object.prototype.hasOwnProperty.call(next, 'paymentItems') ||
+      Object.prototype.hasOwnProperty.call(next, 'deductionItems'))
+  if (!nextHasWage) return true
   return (
     wageGradeAmountSignature(next?.wageGradeRows) ===
       wageGradeAmountSignature(existing?.wageGradeRows) &&
@@ -573,7 +606,7 @@ export function serializeGeneralProgramServiceDetailJson(
   })
 
   if (!hasContent) return undefined
-  return JSON.stringify(payload)
+  return JSON.stringify(sanitizeGeneralProgramServiceDetailPersistValue(payload))
 }
 
 function isServiceDetailRecord(value: unknown): value is Record<string, unknown> {

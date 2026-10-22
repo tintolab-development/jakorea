@@ -350,7 +350,8 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     if (!Object.prototype.hasOwnProperty.call(patch.generalCommonInfo ?? {}, 'sponsorManagerContactIds')) {
       expect(overlay?.['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['contact-1'])
     } else {
-      expect(overlay?.['generalRegistration.basicInfo.localManagerContactIds']).not.toEqual([])
+      const overlayContactIds = overlay?.['generalRegistration.basicInfo.localManagerContactIds']
+      expect(JSON.stringify(overlayContactIds ?? '')).not.toContain('__sponsor_contact_unselected__')
     }
     const overlayScheduleLines =
       overlay?.['generalRegistration.educationScheduleSettings.scheduleLines']

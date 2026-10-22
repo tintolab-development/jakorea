@@ -1189,7 +1189,10 @@ describe('general-program-adapters', () => {
     })
 
     expect(request.mainTitle).toBe('공통정보만')
-    expect(request.sponsorId).toBe('1627251')
+    expect(request).not.toHaveProperty('sponsorId')
+    expect(request.sponsors).toEqual([
+      { sponsorId: '1627251', sponsorContactIds: [] },
+    ])
     expect(request.applicationTargetMode).toBeUndefined()
     expect(request.serviceDetailJson).toContain('announcementTitle')
     expect(request.rounds).toBeUndefined()

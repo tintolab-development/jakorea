@@ -31,6 +31,7 @@ import {
   GENERAL_COMMON_INFO_VALIDATION_UX_STATUS,
   GENERAL_DETAIL_REQUIRED_VALIDATION_STATUS,
 } from './general-detail-rhf-save-path'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 function validValues(
   patch: Partial<GeneralProgramCommonInfoEditFormValues> = {}
@@ -495,5 +496,25 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
     ])
     expect(deriveIndependentEditorExtrasFromProgram(program).curriculumChartSessionCount).toBe(1)
     expect(extrasFromGeneralProgram(program).curriculumChartSessionCount).toBe(1)
+  })
+
+  it('담당자 미선택 sentinel은 상세 수정 필수 검증을 통과한다', () => {
+    const parsed = parseGeneralCommonInfoRhfValidation(
+      validValues({
+        sponsorManagerContactIds: [SPONSOR_CONTACT_UNSELECTED_VALUE],
+        sponsorManagerContactId: SPONSOR_CONTACT_UNSELECTED_VALUE,
+      })
+    )
+    expect(parsed.ok).toBe(true)
+  })
+
+  it('담당자 빈 배열은 상세 수정 필수 검증을 실패한다', () => {
+    const parsed = parseGeneralCommonInfoRhfValidation(
+      validValues({
+        sponsorManagerContactIds: [],
+        sponsorManagerContactId: '',
+      })
+    )
+    expect(parsed.ok).toBe(false)
   })
 })

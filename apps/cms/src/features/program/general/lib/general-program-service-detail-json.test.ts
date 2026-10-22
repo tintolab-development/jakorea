@@ -143,7 +143,9 @@ describe('serializeGeneralProgramServiceDetailJson overlayMerge', () => {
     const parsed = JSON.parse(json ?? '{}') as {
       registrationOverlay?: Record<string, Record<string, unknown>>
     }
-    return Object.keys(parsed.registrationOverlay?.[unitKey] ?? {})
+    const record = parsed.registrationOverlay?.[unitKey] ?? {}
+    return Object.keys(record)
+      .filter(key => record[key] != null)
       .map(Number)
       .sort((a, b) => a - b)
   }

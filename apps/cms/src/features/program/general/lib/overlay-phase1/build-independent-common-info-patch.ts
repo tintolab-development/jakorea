@@ -20,6 +20,7 @@ import {
   resolveNestedArrayIntent,
   type NestedArrayPatchIntent,
 } from './independent-session-authoring'
+import { toWireSponsorManagerContactIds } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 const NESTED_INTENT_KEYS = new Set(['curriculumSessions', 'scheduleDetails'])
 
@@ -128,6 +129,20 @@ function sponsorIdListsEqual(next: unknown, existing: unknown): boolean {
   return left.length === right.length && left.every((id, index) => id === right[index])
 }
 
+function contactIdListsEqual(next: unknown, existing: unknown): boolean {
+  const left = toWireSponsorManagerContactIds([
+    ...(Array.isArray(next) ? next.map(id => String(id)) : typeof next === 'string' ? [next] : []),
+  ])
+  const right = toWireSponsorManagerContactIds([
+    ...(Array.isArray(existing)
+      ? existing.map(id => String(id))
+      : typeof existing === 'string'
+        ? [existing]
+        : []),
+  ])
+  return left.length === right.length && left.every((id, index) => id === right[index])
+}
+
 function sponsorAssignmentsUnchanged(
   patchCommon: NonNullable<Program['generalCommonInfo']>,
   baselineCommon: Program['generalCommonInfo']
@@ -137,13 +152,15 @@ function sponsorAssignmentsUnchanged(
   const nextContacts = patchCommon.sponsorManagerContactIds ?? patchCommon.sponsorManagerContactId
   const existingContacts =
     baselineCommon?.sponsorManagerContactIds ?? baselineCommon?.sponsorManagerContactId
-  return sponsorIdListsEqual(nextIds, existingIds) && sponsorIdListsEqual(nextContacts, existingContacts)
+  return sponsorIdListsEqual(nextIds, existingIds) && contactIdListsEqual(nextContacts, existingContacts)
 }
 
 function omitUnchangedSponsorAssignments(
   patchCommon: NonNullable<Program['generalCommonInfo']>,
   baselineCommon: Program['generalCommonInfo']
 ) {
+  // 이름 map은 선택 SSOT가 아니다. 변경/미변경 모두 write source로 보내지 않는다.
+  delete patchCommon.sponsorManagerContactNames
   const hasAssignmentIds = [
     'sponsorManagementIds',
     'sponsorManagementId',

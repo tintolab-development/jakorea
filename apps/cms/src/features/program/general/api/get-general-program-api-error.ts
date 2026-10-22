@@ -166,6 +166,9 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (isProgramEducationStructureGuardCode(code)) {
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
+  if (code === 'VERSION_CONFLICT') {
+    return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES.PROGRAM_EDUCATION_STRUCTURE_CHANGE_CONCURRENT
+  }
   if (code === 'PROGRAM_EDUCATION_SLOT_KEY_MISMATCH') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw

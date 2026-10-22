@@ -706,18 +706,20 @@ function createRowContactOf(
   }
 }
 
+function resolveSponsorIdsForAssignmentWire(program: Program): string[] {
+  const common = program.generalCommonInfo
+  if (common && Object.prototype.hasOwnProperty.call(common, 'sponsorManagementIds')) {
+    return (common.sponsorManagementIds ?? [])
+      .map(id => String(id).trim())
+      .filter(Boolean)
+  }
+  if (common?.sponsorManagementId) return [String(common.sponsorManagementId).trim()].filter(Boolean)
+  if (program.sponsorId) return [String(program.sponsorId).trim()].filter(Boolean)
+  return []
+}
+
 function mapProgramSponsorAssignments(program: Program) {
-  const sponsorIdsFromForm = (
-    program.generalCommonInfo?.sponsorManagementIds?.length
-      ? program.generalCommonInfo.sponsorManagementIds
-      : program.generalCommonInfo?.sponsorManagementId
-        ? [program.generalCommonInfo.sponsorManagementId]
-        : program.sponsorId
-          ? [program.sponsorId]
-          : []
-  )
-    .map(id => String(id).trim())
-    .filter(Boolean)
+  const sponsorIdsFromForm = resolveSponsorIdsForAssignmentWire(program)
   const contactRefs = normalizeSponsorManagerContactIds({
     ids: program.generalCommonInfo?.sponsorManagerContactIds,
     id: program.generalCommonInfo?.sponsorManagerContactId,
@@ -1008,10 +1010,8 @@ function mapProgramPatchFieldsToRequest(
       has('sponsorId') && String(merged.sponsorId ?? '') !== String(existing.sponsorId ?? '')
     // BE: sponsors 키 존재 = full replace. 의미적으로 미변경이면 키를 생략한다.
     if (sponsorIdExplicitlyChanged || !sponsorAssignmentWiresEqual(sponsors, existingSponsors)) {
-      body.sponsorId =
-        sponsors.find(s => (s.sponsorContactIds?.length ?? 0) > 0)?.sponsorId ||
-        sponsors[0]?.sponsorId ||
-        (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+      // PATCH 정본은 sponsors[]. 레거시 body.sponsorId 중복 전송은 하지 않는다.
+      // Create·UJAT·1사1교 단수 DTO는 mapProgramCoreFieldsToRequest / 각 유형 adapter가 유지한다.
       body.sponsors = sponsors
     }
   }

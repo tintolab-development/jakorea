@@ -245,3 +245,6 @@ export const GENERAL_SCHEDULE_DETAILS_STATUS = 'GENERAL_SCHEDULE_DETAILS_FE_READ
 /** 일반 공통정보 수정 — 등록 위저드와 동일한 필수값 안내 팝업·필드 강조·단락 스크롤 */
 export const GENERAL_COMMON_INFO_VALIDATION_UX_STATUS =
   'GENERAL_COMMON_INFO_VALIDATION_UX_READY' as const
+
+/** 일반 프로그램 후원사 PATCH — sentinel/mirror/legacy sponsorId/refetch 정합 */
+export const GENERAL_SPONSOR_PATCH_STATUS = 'GENERAL_SPONSOR_PATCH_FE_READY' as const

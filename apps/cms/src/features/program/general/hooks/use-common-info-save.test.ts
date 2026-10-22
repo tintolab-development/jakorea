@@ -580,4 +580,56 @@ describe('useGeneralProgramCommonInfoSave', () => {
       await first
     })
   })
+
+  it('SP-FE-10 저장 실패 시 폼 reset을 호출하지 않는다', async () => {
+    const program = baseProgram()
+    const values = completeValues(program)
+    const reset = vi.fn()
+    const form = {
+      watch: vi.fn(() => []),
+      getValues: vi.fn(() => values),
+      reset,
+      formState: { dirtyFields: { sponsorManagementIds: true } },
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+    const onSaveEdit = vi.fn().mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() =>
+      useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
+    )
+    let saveResult: Awaited<ReturnType<typeof result.current.triggerSave>> | undefined
+    await act(async () => {
+      saveResult = await result.current.triggerSave()
+    })
+    expect(saveResult).toEqual({ ok: false, kind: 'api', error: expect.any(Error) })
+    expect(reset).not.toHaveBeenCalled()
+    expect(form.getValues()).toBe(values)
+  })
+
+  it('SP-FE-11 VERSION_CONFLICT 는 자동 재전송하지 않고 입력을 유지한다', async () => {
+    const program = baseProgram()
+    const values = completeValues(program)
+    const reset = vi.fn()
+    const form = {
+      watch: vi.fn(() => []),
+      getValues: vi.fn(() => values),
+      reset,
+      formState: { dirtyFields: { sponsorManagementIds: true } },
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+    const conflict = {
+      response: {
+        status: 409,
+        data: { success: false, error: { code: 'VERSION_CONFLICT', message: 'VERSION_CONFLICT' } },
+      },
+    }
+    const onSaveEdit = vi.fn().mockRejectedValue(conflict)
+    const { result } = renderHook(() =>
+      useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
+    )
+    let saveResult: Awaited<ReturnType<typeof result.current.triggerSave>> | undefined
+    await act(async () => {
+      saveResult = await result.current.triggerSave()
+    })
+    expect(saveResult).toEqual({ ok: false, kind: 'api', error: conflict })
+    expect(onSaveEdit).toHaveBeenCalledTimes(1)
+    expect(reset).not.toHaveBeenCalled()
+  })
 })

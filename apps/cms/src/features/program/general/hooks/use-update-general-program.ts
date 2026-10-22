@@ -13,6 +13,7 @@ export function useUpdateGeneralProgram() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    retry: false,
     mutationFn: ({
       programId,
       program,
@@ -28,6 +29,7 @@ export function useUpdateGeneralProgram() {
     }) => updateGeneralProgram(programId, program, patch, baseline, serializeOptions),
     onSuccess: async (updated, variables) => {
       const detailKey = generalProgramQueryKeys.detail(variables.programId)
+      const assignmentsKey = generalProgramQueryKeys.sponsorAssignments(variables.programId)
       await syncOpenProgramDetailCache(
         queryClient,
         detailKey,
@@ -39,12 +41,11 @@ export function useUpdateGeneralProgram() {
         ),
         { refetch: false }
       )
+      await queryClient.invalidateQueries({ queryKey: detailKey })
+      await queryClient.invalidateQueries({ queryKey: assignmentsKey })
       invalidateGeneralProgramListCaches(queryClient)
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(variables.programId),
-      })
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.sponsorAssignments(variables.programId),
       })
     },
   })

@@ -36,6 +36,7 @@ import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features
 import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
+  toWireSponsorManagerContactIds,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
@@ -1841,8 +1842,10 @@ function existingCommonWithoutRecruitment(
     instructorRecruitmentInfo: _instructorRecruitmentInfo,
     volunteerRecruitmentInfo: _volunteerRecruitmentInfo,
     volunteerInterviewScheduleInfo: _volunteerInterviewScheduleInfo,
+    sponsorManagerContactNames: _sponsorManagerContactNames,
     ...rest
   } = common
+  void _sponsorManagerContactNames
   return rest
 }
 
@@ -1861,6 +1864,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ids: values.sponsorManagerContactIds,
     id: values.sponsorManagerContactId,
   })
+  const persistContactIds = toWireSponsorManagerContactIds(selectedContactIds)
   const sponsorContactUnselectedOnly =
     selectedContactIds.length > 0 && selectedContactIds.every(id => isSponsorContactUnselected(id))
   const participantTypes = participantTypesFromFlags(values)
@@ -1969,16 +1973,10 @@ export function generalCommonInfoEditValuesToProgramPatch(
     detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
     sponsorDisplayName:
       sponsorRows.map(row => row.name).join(', ') || existingCommon.sponsorDisplayName,
-    sponsorManagementId: values.sponsorManagementIds[0] ?? existingCommon.sponsorManagementId,
+    sponsorManagementId: values.sponsorManagementIds[0],
     sponsorManagementIds: values.sponsorManagementIds,
-    sponsorManagerContactIds: normalizeSponsorManagerContactIds({
-      ids: values.sponsorManagerContactIds,
-      id: values.sponsorManagerContactId,
-    }),
-    sponsorManagerContactId: normalizeSponsorManagerContactIds({
-      ids: values.sponsorManagerContactIds,
-      id: values.sponsorManagerContactId,
-    })[0],
+    sponsorManagerContactIds: persistContactIds,
+    sponsorManagerContactId: persistContactIds[0],
     sponsorManagerLine: managerLine,
     venueKind: values.venueKind,
     venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
