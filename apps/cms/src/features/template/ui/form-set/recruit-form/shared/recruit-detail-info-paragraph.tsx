@@ -25,6 +25,10 @@ import {
   useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
+  persistRecruitDetailDraftMediaFromOverlay,
+  recruitDetailDraftMediaRestorePatch,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session'
+import {
   isEphemeralThumbPreviewUrl,
   RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID,
   recruitDetailAttachmentFileNamesKey,
@@ -349,6 +353,12 @@ export function RecruitDetailInfoParagraph({
   }, [])
 
   useEffect(() => {
+    const patch = recruitDetailDraftMediaRestorePatch(overlayScope, overlayKeyPrefix)
+    if (patch == null) return
+    patchGeneralRecruitOverlay(patch)
+  }, [overlayKeyPrefix, overlayScope])
+
+  useEffect(() => {
     if (!isEphemeralThumbPreviewUrl(persistedThumbObjectUrl)) return
     setPersistedThumbObjectUrl(null)
   }, [persistedThumbObjectUrl, setPersistedThumbObjectUrl])
@@ -418,12 +428,14 @@ export function RecruitDetailInfoParagraph({
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
               [thumbObjectUrlKey]: null,
             })
+            persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } catch {
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
               [thumbObjectUrlKey]: null,
             })
+            persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
             setLivePreviewUrl(prev => {
               revokeThumb(prev)
               return null
@@ -439,6 +451,8 @@ export function RecruitDetailInfoParagraph({
       revokeThumb,
       setPersistedThumbObjectUrl,
       setThumbFileName,
+      overlayKeyPrefix,
+      overlayScope,
       thumbContentUrlKey,
       thumbFileObjectIdKey,
       thumbObjectUrlKey,
@@ -462,7 +476,10 @@ export function RecruitDetailInfoParagraph({
       [thumbContentUrlKey]: null,
       [thumbObjectUrlKey]: null,
     })
+    persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
   }, [
+    overlayKeyPrefix,
+    overlayScope,
     resolvedThumbFileObjectId,
     revokeThumb,
     setPersistedThumbObjectUrl,
@@ -515,18 +532,22 @@ export function RecruitDetailInfoParagraph({
                 return next
               })
             }
-            if (uploadedIds.length === 0) return
+            if (uploadedIds.length === 0) {
+              persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
+              return
+            }
             updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev => [
               ...(prev ?? []),
               ...uploadedIds,
             ])
+            persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } finally {
             setUploadingAttachments(false)
           }
         })()
       )
     },
-    [attachmentFileNamesKey, attachmentFileObjectIdsKey]
+    [attachmentFileNamesKey, attachmentFileObjectIdsKey, overlayKeyPrefix, overlayScope]
   )
 
   const handleRemoveAttachment = useCallback(
@@ -537,8 +558,9 @@ export function RecruitDetailInfoParagraph({
       updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev =>
         (prev ?? []).filter((_, i) => i !== index)
       )
+      persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
     },
-    [attachmentFileNamesKey, attachmentFileObjectIdsKey]
+    [attachmentFileNamesKey, attachmentFileObjectIdsKey, overlayKeyPrefix, overlayScope]
   )
 
   const thumbnailPreviewUrl = livePreviewUrl ?? storedPreviewUrl
