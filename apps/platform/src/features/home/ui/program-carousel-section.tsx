@@ -12,6 +12,7 @@ import {
 } from '@/features/program'
 import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
+import { resolvePortalPublicFileImageUrl } from '@/shared/lib/resolve-portal-public-file-image-url'
 import { useMediaQuery } from '@/shared/hooks'
 import { PFArrowButton, PFStateBadge, PFText } from '@/shared/ui'
 import chevronRightUrl from '../image/icon/chevron-right-black-12.svg'
@@ -54,6 +55,8 @@ function ProgramCardSkeleton() {
 }
 
 function ProgramCard({ program }: { program: HomeProgramCard }) {
+  const thumbnailSrc = resolvePortalPublicFileImageUrl(program.thumbnailUrl)
+
   return (
     <Link
       className={styles.card}
@@ -61,8 +64,8 @@ function ProgramCard({ program }: { program: HomeProgramCard }) {
       aria-label={`${program.title} 상세 보기`}
     >
       <div className={styles.cardMedia}>
-        {program.thumbnailUrl ? (
-          <img className={styles.cardImage} src={program.thumbnailUrl} alt="" loading="lazy" />
+        {thumbnailSrc ? (
+          <img className={styles.cardImage} src={thumbnailSrc} alt="" loading="lazy" />
         ) : (
           <div className={styles.cardImagePlaceholder} aria-hidden="true" />
         )}
