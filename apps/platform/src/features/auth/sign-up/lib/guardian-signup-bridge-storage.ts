@@ -15,6 +15,17 @@ export type GuardianSignupBridgePersistedState = {
   finalConsentToken?: string
   finalConsentExpiresAt?: string
   finalConsentIdempotencyKey?: string
+  /** 보호자 NICE + 최종 동의까지 끝난 뒤 true. 가입 완료 직전 메모리 플래그 대신 복원 */
+  finalConsentCompleted?: boolean
+}
+
+function toGuardianSessionId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return null
 }
 
 export function readGuardianSignupBridgeState(): GuardianSignupBridgePersistedState | null {
@@ -23,14 +34,18 @@ export function readGuardianSignupBridgeState(): GuardianSignupBridgePersistedSt
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as GuardianSignupBridgePersistedState
+    const guardianSessionId = toGuardianSessionId(parsed.guardianSessionId)
     if (
       !parsed.signupIntentId?.trim() ||
-      typeof parsed.guardianSessionId !== 'number' ||
+      guardianSessionId == null ||
       !parsed.guardianStatusToken?.trim()
     ) {
       return null
     }
-    return parsed
+    return {
+      ...parsed,
+      guardianSessionId,
+    }
   } catch {
     return null
   }

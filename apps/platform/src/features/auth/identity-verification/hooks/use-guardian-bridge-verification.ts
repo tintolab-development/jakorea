@@ -53,6 +53,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
   const completingRef = useRef(false)
   const verifyingRef = useRef(false)
   const lastSessionIdRef = useRef<number | null>(null)
+  const completedIdentitySessionIdRef = useRef<number | null>(null)
   const onSuccessRef = useRef(options.onSuccess)
   onSuccessRef.current = options.onSuccess
 
@@ -61,6 +62,26 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
     stopWatchPopupRef.current = null
     popupRef.current = null
   }, [])
+
+  const resetCompletionGuard = useCallback(() => {
+    completingRef.current = false
+    completedIdentitySessionIdRef.current = null
+  }, [])
+
+  const notifyVerified = useCallback(
+    (identitySessionId: number) => {
+      if (completingRef.current) return
+      if (completedIdentitySessionIdRef.current === identitySessionId) return
+      completingRef.current = true
+      completedIdentitySessionIdRef.current = identitySessionId
+      cleanupPopupWatch()
+      verifyingRef.current = false
+      setIsVerifying(false)
+      setErrorMessage(null)
+      onSuccessRef.current({ identitySessionId })
+    },
+    [cleanupPopupWatch],
+  )
 
   const applyMessage = useCallback(
     (data: IdentityMessage) => {
@@ -71,7 +92,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
 
       if (data.type === 'IDENTITY_CANCELLED') {
         cleanupPopupWatch()
-        completingRef.current = false
+        resetCompletionGuard()
         verifyingRef.current = false
         setIsVerifying(false)
         return
@@ -79,7 +100,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
 
       if (data.type === 'IDENTITY_FAILED') {
         cleanupPopupWatch()
-        completingRef.current = false
+        resetCompletionGuard()
         verifyingRef.current = false
         setIsVerifying(false)
         setErrorMessage(
@@ -96,15 +117,9 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
       if (!sessionId || Number.isNaN(sessionId)) return
       if (expectedSessionId != null && expectedSessionId !== sessionId) return
 
-      completingRef.current = true
-      cleanupPopupWatch()
-      verifyingRef.current = false
-      setIsVerifying(false)
-      setErrorMessage(null)
-      onSuccessRef.current({ identitySessionId: sessionId })
-      completingRef.current = false
+      notifyVerified(sessionId)
     },
-    [cleanupPopupWatch],
+    [cleanupPopupWatch, notifyVerified, resetCompletionGuard],
   )
 
   const applyMessageRef = useRef(applyMessage)
@@ -138,19 +153,16 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
 
   const finishWithoutPopup = useCallback(
     (identitySessionId: number) => {
-      verifyingRef.current = false
-      setIsVerifying(false)
-      setErrorMessage(null)
-      onSuccessRef.current({ identitySessionId })
+      notifyVerified(identitySessionId)
     },
-    [],
+    [notifyVerified],
   )
 
   const verify = useCallback(async () => {
     if (verifyingRef.current) return
 
     setErrorMessage(null)
-    completingRef.current = false
+    resetCompletionGuard()
 
     const bridge = readGuardianSignupBridgeState()
     if (!bridge?.guardianSessionId || !bridge.guardianStatusToken.trim()) {
@@ -246,7 +258,7 @@ export function useGuardianBridgeVerification(options: UseGuardianBridgeVerifica
           '보호자 본인인증을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.',
       )
     }
-  }, [cleanupPopupWatch, finishWithoutPopup])
+  }, [cleanupPopupWatch, finishWithoutPopup, resetCompletionGuard])
 
   return { verify, isVerifying, errorMessage }
 }
