@@ -1,6 +1,7 @@
 import type { ChangeEvent, RefObject } from 'react'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { CmsButton } from '@/shared/ui'
+import '@/shared/ui/file-upload-picker.css'
 
 export interface TemplateCustomFieldImageUploadProps {
   /** 우측 타이틀·aria용 필드 라벨 */
@@ -36,19 +37,29 @@ export function TemplateCustomFieldImageUpload({
         ) : null}
       </div>
       <div className="template-custom-fields-form__logo-actions">
-        <input ref={fileInputRef} type="file" accept={accept} hidden onChange={onFileChange} />
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="large"
-          className="template-custom-fields-form__logo-file-btn"
-          loading={uploading}
-          disabled={uploading}
-          onClick={() => openFilePicker(fileInputRef.current)}
-          aria-label={`${fieldLabel} 파일 선택`}
-        >
-          파일 변경
-        </CmsButton>
+        <span className="file-upload-picker">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={accept}
+            className="file-upload-picker__input"
+            disabled={uploading}
+            onChange={onFileChange}
+          />
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            className="template-custom-fields-form__logo-file-btn"
+            loading={uploading}
+            disabled={uploading}
+            tabIndex={uploading ? undefined : -1}
+            onClick={() => openFilePicker(fileInputRef.current)}
+            aria-label={`${fieldLabel} 파일 선택`}
+          >
+            파일 변경
+          </CmsButton>
+        </span>
         <div className="template-custom-fields-form__logo-hint">
           <p>{'-  파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.'}</p>
           <p>{'-  첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.'}</p>

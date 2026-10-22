@@ -111,18 +111,6 @@ export function FileSelectField({
         .join(' ')}
       aria-busy={uploading || undefined}
     >
-      {!fieldDisabled && (
-        <input
-          ref={inputRef}
-          type="file"
-          multiple={multiple}
-          accept={accept}
-          className="file-select-field__input"
-          aria-label={buttonLabel}
-          onChange={handleChange}
-        />
-      )}
-
       {hasFiles ? (
         <div className="file-attachment-list file-select-field__names">
           {fileNames!.map((name, i) => (
@@ -139,15 +127,29 @@ export function FileSelectField({
       )}
 
       <div className="file-upload-actions file-select-field__actions">
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="h32"
-          disabled={fieldDisabled}
-          onClick={() => openFilePicker(inputRef.current)}
-        >
-          {buttonLabel}
-        </CmsButton>
+        <span className="file-upload-picker">
+          {!fieldDisabled ? (
+            <input
+              ref={inputRef}
+              type="file"
+              multiple={multiple}
+              accept={accept}
+              className="file-upload-picker__input"
+              aria-label={buttonLabel}
+              onChange={handleChange}
+            />
+          ) : null}
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="h32"
+            disabled={fieldDisabled}
+            tabIndex={fieldDisabled ? undefined : -1}
+            onClick={() => openFilePicker(inputRef.current)}
+          >
+            {buttonLabel}
+          </CmsButton>
+        </span>
         <FileUploadGuide lines={guideLines} className="file-select-field__guide" />
       </div>
     </div>

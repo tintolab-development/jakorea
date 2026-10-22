@@ -14,15 +14,28 @@
   gap: 0;
 }
 
-/* 숨겨진 file input */
-.file-select-field__input {
+.file-upload-picker {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.file-upload-picker__input {
   position: absolute;
-  width: 0;
-  height: 0;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   opacity: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  pointer-events: none;
+  cursor: pointer;
+  font-size: 0;
+}
+
+.file-upload-picker:focus-within .cms-button {
+  outline: 2px solid var(--color-focus-teal, #00a0af);
+  outline-offset: 2px;
 }
 
 /* 파일명 목록 */

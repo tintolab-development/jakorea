@@ -112,25 +112,28 @@ export function ThumbnailUploadField({
         )}
 
         <div className="file-upload-actions">
-          {canSelect ? (
-            <input
-              ref={inputRef}
-              type="file"
-              accept={accept}
-              className="thumbnail-upload-field__input"
-              aria-label={buttonLabel}
-              onChange={handleChange}
-            />
-          ) : null}
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="h32"
-            disabled={!canSelect}
-            onClick={() => openFilePicker(inputRef.current)}
-          >
-            {uploading ? '업로드 중…' : buttonLabel}
-          </CmsButton>
+          <span className="file-upload-picker">
+            {canSelect ? (
+              <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                className="file-upload-picker__input"
+                aria-label={buttonLabel}
+                onChange={handleChange}
+              />
+            ) : null}
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="h32"
+              disabled={!canSelect}
+              tabIndex={canSelect ? -1 : undefined}
+              onClick={() => openFilePicker(inputRef.current)}
+            >
+              {uploading ? '업로드 중…' : buttonLabel}
+            </CmsButton>
+          </span>
           <FileUploadGuide lines={guideLines} />
         </div>
       </div>
