@@ -115,6 +115,8 @@ export interface FilterFieldConfig {
   disabledDate?: (date: Dayjs) => boolean
   /** `select`: 첫 옵션 `전체` 자동 삽입 비활성화 */
   withAllOption?: boolean
+  /** `select`: 비활성화 */
+  disabled?: boolean
   /** `search`: 숫자만 입력 가능 */
   searchNumericOnly?: boolean
 }
@@ -489,9 +491,10 @@ export function TableFilterGroup({
             id={fieldIds.control}
             inputSize="medium"
             placeholder={field.placeholder || '전체'}
-            value={filters[field.key]}
+            value={field.disabled ? undefined : filters[field.key]}
             selectClassName="table-filter-group__select"
             withAllOption={field.withAllOption}
+            disabled={field.disabled}
             onChange={value => onFilterChange(field.key, value)}
             popupMatchSelectWidth
             style={{ width: '100%', ...field.style }}
