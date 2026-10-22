@@ -9,6 +9,7 @@ import type {
   CultureSaveItem,
   InterviewItem,
   InterviewSaveItem,
+  InterviewUpdateInput,
   RecruitGuideBanner,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
@@ -91,7 +92,9 @@ function buildSeedInterviews(): InterviewItem[] {
     {
       id: 'ri-1',
       displayOrder: 1,
-      storyId: 'story-metlife-2026',
+      impactStoryId: null,
+      storyKey: 'story-metlife-2026',
+      linkStatus: 'LINKED',
       title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울',
       publishedYear: 2026,
       version: 0,
@@ -100,7 +103,9 @@ function buildSeedInterviews(): InterviewItem[] {
     {
       id: 'ri-2',
       displayOrder: 2,
-      storyId: 'story-summer-camp',
+      impactStoryId: null,
+      storyKey: 'story-summer-camp',
+      linkStatus: 'LINKED',
       title: '청소년과 함께한 JA Korea 여름 캠프 이야기',
       publishedYear: 2025,
       version: 0,
@@ -109,7 +114,9 @@ function buildSeedInterviews(): InterviewItem[] {
     {
       id: 'ri-3',
       displayOrder: 3,
-      storyId: 'story-volunteer-day',
+      impactStoryId: null,
+      storyKey: 'story-volunteer-day',
+      linkStatus: 'LINKED',
       title: '임직원 봉사로 이어진 따뜻한 하루',
       publishedYear: 2025,
       version: 0,
@@ -196,15 +203,24 @@ function normalizeCulture(raw: unknown): CultureItem[] {
 
 function normalizeInterview(raw: unknown, i: number): InterviewItem | null {
   if (!raw || typeof raw !== 'object') return null
-  const row = raw as Partial<InterviewItem>
-  const storyId = asString(row.storyId, '').trim()
+  const row = raw as Record<string, unknown>
+  const legacyStoryKey = asString(row.storyId, '').trim()
+  const storyKey = asString(row.storyKey, '').trim() || legacyStoryKey
   const title = asString(row.title, '').trim()
-  if (!storyId || !title) return null
+  if (!title) return null
+  const rawImpactStoryId = row.impactStoryId
+  const impactStoryId =
+    typeof rawImpactStoryId === 'number' &&
+    Number.isInteger(rawImpactStoryId) &&
+    rawImpactStoryId > 0
+      ? rawImpactStoryId
+      : null
+  const rawYear = row.publishedYear ?? row.year
   const year =
-    row.publishedYear == null
+    rawYear == null
       ? null
-      : typeof row.publishedYear === 'number' && Number.isFinite(row.publishedYear)
-        ? row.publishedYear
+      : typeof rawYear === 'number' && Number.isFinite(rawYear)
+        ? rawYear
         : null
   const imageUrl = asString(row.imageUrl, '').trim()
   return {
@@ -213,7 +229,11 @@ function normalizeInterview(raw: unknown, i: number): InterviewItem | null {
       typeof row.displayOrder === 'number' && Number.isFinite(row.displayOrder)
         ? row.displayOrder
         : i + 1,
-    storyId,
+    impactStoryId,
+    ...(storyKey ? { storyKey } : {}),
+    ...(typeof row.linkStatus === 'string' && row.linkStatus.trim()
+      ? { linkStatus: row.linkStatus.trim() }
+      : {}),
     title,
     publishedYear: year,
     version: normalizeVersion(row.version, 0),
@@ -348,13 +368,17 @@ export function addInterview(input: InterviewSaveItem, options?: MutateOptions):
   if (current.interviews.length >= MAX_RECRUIT_INTERVIEWS) {
     throw new Error('INTERVIEW_LIMIT_EXCEEDED')
   }
-  if (current.interviews.some(row => row.storyId === input.storyId)) {
+  if (!Number.isInteger(input.impactStoryId) || input.impactStoryId <= 0) {
+    throw new Error('INTERVIEW_IMPACT_STORY_ID_INVALID')
+  }
+  if (current.interviews.some(row => row.impactStoryId === input.impactStoryId)) {
     throw new Error('INTERVIEW_DUPLICATE')
   }
   const nextRow: InterviewItem = {
     id: nextInterviewId(current.interviews),
     displayOrder: current.interviews.length + 1,
-    storyId: input.storyId,
+    impactStoryId: input.impactStoryId,
+    linkStatus: 'LINKED',
     title: input.title.trim(),
     publishedYear: input.publishedYear,
     version: 0,
@@ -372,14 +396,10 @@ export function addInterview(input: InterviewSaveItem, options?: MutateOptions):
 
 export function replaceInterview(
   id: string,
-  input: InterviewSaveItem,
+  input: InterviewUpdateInput,
   options?: MutateOptions,
 ): RecruitGuideData {
   const current = options?.base ?? readRecruitGuide()
-  const duplicate = current.interviews.find(
-    row => row.storyId === input.storyId && row.id !== id
-  )
-  if (duplicate) throw new Error('INTERVIEW_DUPLICATE')
 
   let found = false
   const interviews = current.interviews.map(row => {
@@ -387,7 +407,6 @@ export function replaceInterview(
     found = true
     return {
       ...row,
-      storyId: input.storyId,
       title: input.title.trim(),
       publishedYear: input.publishedYear,
       version: row.version + 1,
@@ -412,7 +431,9 @@ export function removeInterviews(ids: string[], options?: MutateOptions): Recrui
   const current = options?.base ?? readRecruitGuide()
   const next: RecruitGuideData = {
     ...current,
-    interviews: current.interviews.filter(row => !idSet.has(row.id)),
+    interviews: current.interviews
+      .filter(row => !idSet.has(row.id))
+      .map((row, index) => ({ ...row, displayOrder: index + 1 })),
     updatedAt: new Date().toISOString(),
   }
   if (options?.persist !== false) {

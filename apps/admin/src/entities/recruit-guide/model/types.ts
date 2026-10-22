@@ -26,10 +26,26 @@ export type CultureItem = {
   version: number
 }
 
+export type InterviewImpactStorySummary = {
+  id?: number
+  categoryId?: number
+  categoryName?: string
+  title?: string
+  publishAt?: string
+  imageUrl?: string | null
+  isPublished?: boolean
+}
+
 export type InterviewItem = {
+  /** 서버 DB의 직무 인터뷰 식별자. 배열 순번이나 1~9 슬롯이 아니다. */
   id: string
   displayOrder: number
-  storyId: string
+  /** 서버가 저장한 실제 임팩트 스토리 ID. 연결이 끊긴 기존 행은 null일 수 있다. */
+  impactStoryId: number | null
+  /** 호환 조회용 식별자. 저장 요청에는 사용하지 않는다. */
+  storyKey?: string
+  linkStatus?: string
+  impactStory?: InterviewImpactStorySummary | null
   title: string
   publishedYear: number | null
   version: number
@@ -63,7 +79,12 @@ export type CultureSaveItem = {
 }
 
 export type InterviewSaveItem = {
-  storyId: string
+  impactStoryId: number
+  title: string
+  publishedYear: number | null
+}
+
+export type InterviewUpdateInput = {
   title: string
   publishedYear: number | null
 }

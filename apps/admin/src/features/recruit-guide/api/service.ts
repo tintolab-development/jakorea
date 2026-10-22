@@ -2,6 +2,7 @@ import type {
   BannerSaveInput,
   CultureSaveItem,
   InterviewSaveItem,
+  InterviewUpdateInput,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api'
@@ -20,7 +21,6 @@ import {
   replaceInterview as replaceInterviewLocal,
   saveBanner as saveBannerLocal,
   saveCulture as saveCultureLocal,
-  MAX_RECRUIT_INTERVIEWS,
 } from './store'
 
 const CULTURE_ID: Record<CultureSaveItem['id'], number> = {
@@ -37,6 +37,14 @@ function requiredText(value: string, requiredCode: string, tooLongCode: string, 
   if (!normalized.trim()) throw new Error(requiredCode)
   if (normalized.length > maxLength) throw new Error(tooLongCode)
   return normalized
+}
+
+function interviewYear(value: number | null): number | null {
+  if (value == null) return null
+  if (!Number.isInteger(value) || value < 1900 || value > 2200) {
+    throw new Error('INVALID_CAREER_GUIDE_INTERVIEW_YEAR')
+  }
+  return value
 }
 
 function careersApi() {
@@ -158,13 +166,13 @@ export async function addInterviewService(
 ): Promise<RecruitGuideData> {
   if (shouldUseRecruitGuideRemoteApi()) {
     const prev = await resolvePrev(cached)
-    if (prev.interviews.length >= MAX_RECRUIT_INTERVIEWS) {
-      throw new Error('INTERVIEW_LIMIT_EXCEEDED')
+    if (!Number.isInteger(input.impactStoryId) || input.impactStoryId <= 0) {
+      throw new Error('INTERVIEW_IMPACT_STORY_ID_INVALID')
     }
     const response = await careersApi().createCareerGuideInterview({
-      storyKey: input.storyId.trim(),
+      impactStoryId: input.impactStoryId,
       title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
-      year: input.publishedYear,
+      year: interviewYear(input.publishedYear),
     })
     return mergeInterviewResponse(prev, response)
   }
@@ -173,21 +181,20 @@ export async function addInterviewService(
 
 export async function replaceInterviewService(
   id: string,
-  input: InterviewSaveItem,
+  input: InterviewUpdateInput,
   cached?: RecruitGuideData,
 ): Promise<RecruitGuideData> {
   if (shouldUseRecruitGuideRemoteApi()) {
     const prev = await resolvePrev(cached)
     const numericId = Number(id)
-    if (!Number.isInteger(numericId) || numericId < 1 || numericId > MAX_RECRUIT_INTERVIEWS) {
+    if (!Number.isInteger(numericId) || numericId < 1) {
       throw new Error('INTERVIEW_ID_INVALID')
     }
     const current = prev.interviews.find(item => item.id === id)
     if (!current) throw new Error('INTERVIEW_NOT_FOUND')
     const response = await careersApi().updateCareerGuideInterview(numericId, {
-      storyKey: input.storyId.trim(),
       title: requiredText(input.title, 'INTERVIEW_TITLE_REQUIRED', 'INTERVIEW_TITLE_TOO_LONG', 300),
-      year: input.publishedYear,
+      year: interviewYear(input.publishedYear),
       version: current.version,
     })
     return mergeInterviewResponse(prev, response)
@@ -205,7 +212,7 @@ export async function removeInterviewsService(
     for (const id of ids) {
       const numericId = Number(id)
       const current = prev.interviews.find(item => item.id === id)
-      if (!Number.isInteger(numericId) || numericId < 1 || numericId > MAX_RECRUIT_INTERVIEWS) {
+      if (!Number.isInteger(numericId) || numericId < 1) {
         throw new Error('INTERVIEW_ID_INVALID')
       }
       if (!current) throw new Error('INTERVIEW_NOT_FOUND')

@@ -3,7 +3,6 @@
 import type {
   CultureItem,
   CultureItemId,
-  InterviewItem,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
@@ -11,6 +10,7 @@ import type { CareerGuideAdminCultureItemResponse } from '@/shared/api/generated
 import type { CareerGuideAdminInterviewResponse } from '@/shared/api/generated/careers/schemas/careerGuideAdminInterviewResponse'
 import type { CareerGuideAdminResponse } from '@/shared/api/generated/careers/schemas/careerGuideAdminResponse'
 import type { CareerGuideBannerResponse } from '@/shared/api/generated/careers/schemas/careerGuideBannerResponse'
+import { mapInterview } from './map-interview'
 
 const CULTURE_CODE: Record<string, CultureItemId> = {
   MAKE_AN_IMPACT: 'make_an_impact',
@@ -88,30 +88,6 @@ function mapCultureItem(row: CareerGuideAdminCultureItemResponse): CultureItem |
   }
 }
 
-function mapInterview(row: CareerGuideAdminInterviewResponse): InterviewItem | null {
-  const id = row.id
-  const displayOrder = row.displayOrder
-  const storyId = row.storyKey?.trim()
-  if (
-    id == null ||
-    !Number.isInteger(id) ||
-    displayOrder == null ||
-    !Number.isInteger(displayOrder) ||
-    !storyId
-  ) {
-    throw new Error('CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID')
-  }
-  return {
-    id: String(id),
-    displayOrder,
-    storyId,
-    title: row.title ?? '',
-    publishedYear: row.year ?? null,
-    version: row.version ?? 0,
-    imageUrl: row.coverImageUrl || undefined,
-  }
-}
-
 export async function mapCareerGuideAdminToDomain(
   row: CareerGuideAdminResponse
 ): Promise<RecruitGuideData> {
@@ -123,7 +99,6 @@ export async function mapCareerGuideAdminToDomain(
   const interviews = [...(row.interviews ?? [])]
     .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
     .map(mapInterview)
-    .filter((item): item is InterviewItem => item != null)
 
   if (cultureItems.length !== 4 || new Set(cultureItems.map(item => item.apiId)).size !== 4) {
     throw new Error('CAREER_GUIDE_CULTURE_RESPONSE_INVALID')
@@ -202,7 +177,6 @@ export function mergeInterviewResponse(
   row: CareerGuideAdminInterviewResponse
 ): RecruitGuideData {
   const interview = mapInterview(row)
-  if (!interview) throw new Error('CAREER_GUIDE_INTERVIEW_RESPONSE_INVALID')
   const interviews = current.interviews.some(item => item.id === interview.id)
     ? current.interviews.map(item => (item.id === interview.id ? interview : item))
     : [...current.interviews, interview]

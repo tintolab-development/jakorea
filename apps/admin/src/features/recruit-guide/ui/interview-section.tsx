@@ -5,7 +5,11 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { InterviewItem, InterviewSaveItem } from '@/entities/recruit-guide/model/types'
+import type {
+  InterviewItem,
+  InterviewSaveItem,
+  InterviewUpdateInput,
+} from '@/entities/recruit-guide/model/types'
 import {
   useAddRecruitInterview,
   useRemoveRecruitInterviews,
@@ -14,13 +18,14 @@ import {
 import { MAX_RECRUIT_INTERVIEWS } from '@/features/recruit-guide/api/store'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
 import { InterviewSelectModal } from '@/features/recruit-guide/ui/interview-select-modal'
+import { InterviewEditModal } from '@/features/recruit-guide/ui/interview-edit-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
-type PickerMode = { type: 'add' } | { type: 'edit'; id: string; storyId: string }
+type PickerMode = { type: 'add' } | { type: 'edit'; item: InterviewItem }
 
 type Props = {
   items: InterviewItem[]
@@ -36,6 +41,12 @@ export function InterviewSectionCard({ items }: Props) {
   const [picker, setPicker] = useState<PickerMode | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
+  const rows = useMemo(
+    () => [...items].sort((a, b) => a.displayOrder - b.displayOrder),
+    [items]
+  )
+  const atLimit = rows.length >= MAX_RECRUIT_INTERVIEWS
+
   const columns = useMemo<ColumnsType<InterviewItem>>(
     () => [
       {
@@ -44,7 +55,7 @@ export function InterviewSectionCard({ items }: Props) {
         width: 100,
         align: 'center',
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_value, _record, index) => index + 1,
+        render: (_value, record) => record.displayOrder,
       },
       {
         title: '게시글 제목',
@@ -67,7 +78,7 @@ export function InterviewSectionCard({ items }: Props) {
             type="button"
             onClick={e => {
               e.stopPropagation()
-              setPicker({ type: 'edit', id: record.id, storyId: record.storyId })
+              setPicker({ type: 'edit', item: record })
             }}
           >
             수정
@@ -81,11 +92,8 @@ export function InterviewSectionCard({ items }: Props) {
   const handleSelectStory = useCallback(
     async (input: InterviewSaveItem) => {
       try {
-        if (picker?.type === 'edit') {
-          await replaceMutation.mutateAsync({ id: picker.id, input })
-        } else {
-          await addMutation.mutateAsync(input)
-        }
+        if (picker?.type !== 'add') return
+        await addMutation.mutateAsync(input)
         setPicker(null)
       } catch (err) {
         showAlert(
@@ -96,7 +104,25 @@ export function InterviewSectionCard({ items }: Props) {
         )
       }
     },
-    [addMutation, picker, replaceMutation, showAlert]
+    [addMutation, picker, showAlert]
+  )
+
+  const handleEditSubmit = useCallback(
+    async (input: InterviewUpdateInput) => {
+      if (picker?.type !== 'edit') return
+      try {
+        await replaceMutation.mutateAsync({ id: picker.item.id, input })
+        setPicker(null)
+      } catch (err) {
+        showAlert(
+          recruitGuideSaveFailureAlert(
+            err,
+            '직무 인터뷰 수정에 실패했습니다. 다시 시도해 주세요.'
+          )
+        )
+      }
+    },
+    [picker, replaceMutation, showAlert]
   )
 
   const handleDeleteClick = useCallback(() => {
@@ -143,15 +169,17 @@ export function InterviewSectionCard({ items }: Props) {
           >
             선택 삭제
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="large"
-            type="button"
-            disabled={pickerLoading || items.length >= MAX_RECRUIT_INTERVIEWS}
-            onClick={() => setPicker({ type: 'add' })}
-          >
-            {items.length >= MAX_RECRUIT_INTERVIEWS ? '최대 9개' : '추가'}
-          </CmsButton>
+          {atLimit ? null : (
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              disabled={pickerLoading}
+              onClick={() => setPicker({ type: 'add' })}
+            >
+              추가
+            </CmsButton>
+          )}
         </div>
       </div>
 
@@ -159,7 +187,7 @@ export function InterviewSectionCard({ items }: Props) {
         className="cms-data-table recruit-guide-interview-table"
         rowKey="id"
         columns={columns}
-        dataSource={items}
+        dataSource={rows}
         pagination={false}
         rowSelection={{
           selectedRowKeys,
@@ -175,12 +203,23 @@ export function InterviewSectionCard({ items }: Props) {
       />
 
       <InterviewSelectModal
-        key={picker ? `${picker.type}-${picker.type === 'edit' ? picker.id : 'add'}` : 'closed'}
-        open={picker != null}
-        selectedStoryId={picker?.type === 'edit' ? picker.storyId : undefined}
+        key={picker?.type === 'add' ? 'add' : 'closed'}
+        open={picker?.type === 'add'}
+        confirmLoading={addMutation.isPending}
         onCancel={() => setPicker(null)}
         onSelect={item => {
           void handleSelectStory(item)
+        }}
+      />
+
+      <InterviewEditModal
+        key={picker?.type === 'edit' ? `${picker.item.id}-${picker.item.version}` : 'closed'}
+        open={picker?.type === 'edit'}
+        item={picker?.type === 'edit' ? picker.item : null}
+        confirmLoading={replaceMutation.isPending}
+        onCancel={() => setPicker(null)}
+        onSubmit={input => {
+          void handleEditSubmit(input)
         }}
       />
 
