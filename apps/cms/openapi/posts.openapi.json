@@ -9926,6 +9926,21 @@
           }
         }
       },
+      "MemberPortalConsentListedRequest": {
+        "type": "object",
+        "properties": {
+          "consentTypes": {
+            "type": "array",
+            "description": "노출을 고정할 동의 유형(1~4개). PAYMENT_STATEMENT_PRE_CONSENT는 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.",
+            "example": [
+              "FACILITATOR_PLEDGE"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "MemberPortalConsentDocumentCreateRequest": {
         "type": "object",
         "properties": {
@@ -14668,10 +14683,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -20864,10 +20879,23 @@
       },
       "AdminSelfWithdrawalRequest": {
         "type": "object",
+        "description": "관리자 본인 탈퇴 요청. 본인 확인의 정본은 currentPassword이며 confirmationText는 구 클라이언트 호환용으로만 유지됩니다.",
         "properties": {
+          "currentPassword": {
+            "type": "string",
+            "format": "password",
+            "description": "현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.",
+            "example": "test1234!",
+            "maxLength": 200,
+            "minLength": 0
+          },
           "confirmationText": {
             "type": "string",
-            "minLength": 1
+            "description": "선택. 무시됩니다. 구 클라이언트가 보내던 확인 문구 호환용.",
+            "example": "탈퇴",
+            "maxLength": 30,
+            "minLength": 0,
+            "nullable": true
           },
           "reason": {
             "type": "string",
@@ -20876,7 +20904,7 @@
           }
         },
         "required": [
-          "confirmationText"
+          "currentPassword"
         ]
       },
       "AdminSelfWithdrawalResponse": {
@@ -24816,7 +24844,7 @@
           "ownerId": {
             "type": "integer",
             "format": "int64",
-            "description": "파일 소유 리소스 ID. upload-first draft는 CONTENT/NOTICE의 NOTICE_ATTACHMENT 또는 NOTICE_INLINE_IMAGE, CONTENT/FAQ의 FAQ_INLINE_IMAGE일 때 null 허용",
+            "description": "파일 소유 리소스 ID. upload-first draft는 CONTENT/NOTICE의 NOTICE_ATTACHMENT 또는 NOTICE_INLINE_IMAGE, CONTENT/FAQ의 FAQ_INLINE_IMAGE, PROGRAM_CONTENT/PROGRAM의 PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT·PROGRAM_INLINE_IMAGE일 때 null 허용",
             "example": 10001,
             "minimum": 1
           },
@@ -31843,6 +31871,92 @@
           }
         }
       },
+      "MemberLectureReportAssignmentItemResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "lectureStatus": {
+            "type": "string"
+          },
+          "reportStatus": {
+            "type": "string"
+          },
+          "submitDueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "reportId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageResponseMemberLectureReportAssignmentItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberLectureReportAssignmentItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "CertificateAvailabilityResponse": {
         "type": "object",
         "properties": {
@@ -32275,11 +32389,11 @@
           "answers": {
             "type": "object",
             "additionalProperties": {},
-            "description": "실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. 없으면 빈 객체 {}."
+            "description": "실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. UJAT 학교 신청 키는 ujat-program-application-institution-seed-basic-info, -grade-application-info, -grade-class-time, -preferred-education-schedule입니다. 없는 문단은 만들지 않으며 없으면 빈 객체 {}."
           },
           "preferredScheduleBlocks": {
             "type": "array",
-            "description": "희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 answers 투영. 없으면 [].",
+            "description": "희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 UJAT/TRAINED_TEACHER answers 투영. UJAT는 date-only이며 프로그램 운영일로 대체하지 않습니다. 없으면 [].",
             "items": {
               "$ref": "#/components/schemas/PreferredScheduleBlock"
             }
@@ -33917,6 +34031,156 @@
           }
         }
       },
+      "MemberLectureReportStatusResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submitted": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentGroupId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reportStatus": {
+            "type": "string"
+          },
+          "scheduleStatus": {
+            "type": "string"
+          },
+          "submitDueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MemberLectureReportContentResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "form": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberLectureReportFileResponse"
+            }
+          }
+        }
+      },
+      "MemberLectureReportFileResponse": {
+        "type": "object",
+        "properties": {
+          "formSubmissionFileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionKey": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadable": {
+            "type": "boolean"
+          }
+        }
+      },
       "MemberPortalInquiryListItem": {
         "type": "object",
         "properties": {
@@ -34498,6 +34762,11 @@
           },
           "programEligible": {
             "type": "boolean"
+          },
+          "listed": {
+            "type": "boolean",
+            "description": "4종 서약/동의의 마이페이지 노출 이력. 해당 4종은 항상 true/false이며, 그 외 유형에는 포함하지 않습니다.",
+            "nullable": true
           }
         }
       },
@@ -38963,6 +39232,7 @@
           },
           "sessions": {
             "type": "array",
+            "description": "참여 일정. 기관·개인 모두 해당 참여자 실제 배정 일정만. INDIVIDUAL은 education-scope 확정 일정만이며 프로그램 전체 예정일이 아니다. 없으면 []. null은 반환하지 않는다.",
             "items": {
               "$ref": "#/components/schemas/SessionProgress"
             }
@@ -39015,7 +39285,7 @@
       },
       "SessionProgress": {
         "type": "object",
-        "description": "참여 일정. 기관 참여자는 해당 기관에 실제 배정된 프로그램 일정만 반환한다. 신청 희망 일정은 실제 배정 일정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 기관에 배정되지 않은 프로그램 일정과 미확정 희망 일정은 출석 상세·회차 집계에서 제외한다. null은 반환하지 않는다.",
+        "description": "참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.",
         "properties": {
           "scheduleId": {
             "type": "integer",
@@ -39037,7 +39307,7 @@
           },
           "scheduleUnresolved": {
             "type": "boolean",
-            "description": "미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관 참여자 sessions에서는 미확정 희망 일정을 반환하지 않는다",
+            "description": "미확정 희망 일정이면 true. scheduleUnresolved는 true일 때만 미확정 희망 일정이며, 기관·개인 목록 sessions에서는 미확정 희망 일정을 반환하지 않는다",
             "nullable": true
           },
           "sessionNo": {
