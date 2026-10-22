@@ -5,16 +5,16 @@
  * Filtered for Homepage Admin careers Orval codegen.
  * OpenAPI spec version: v1
  */
-import type { CareerCultureItemResponse } from './careerCultureItemResponse';
-import type { CareerInterviewResponse } from './careerInterviewResponse';
+import type { CareerGuideAdminCultureItemResponse } from './careerGuideAdminCultureItemResponse';
+import type { CareerGuideAdminInterviewResponse } from './careerGuideAdminInterviewResponse';
 
 export interface CareerGuideAdminResponse {
   mainText?: string;
   subTextKo?: string;
   subTextEn?: string;
-  bannerAssetId?: number;
+  bannerAssetId?: number | null;
   bannerImageUrl?: string;
-  cultureItems?: CareerCultureItemResponse[];
-  interviews?: CareerInterviewResponse[];
+  cultureItems?: CareerGuideAdminCultureItemResponse[];
+  interviews?: CareerGuideAdminInterviewResponse[];
   version?: number;
 }

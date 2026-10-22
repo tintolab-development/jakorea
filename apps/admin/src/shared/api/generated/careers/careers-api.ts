@@ -7,7 +7,13 @@
  */
 import type {
   AssetResponse,
+  CareerGuideAdminCultureItemResponse,
+  CareerGuideAdminInterviewResponse,
   CareerGuideAdminResponse,
+  CareerGuideBannerResponse,
+  CareerGuideBannerUpdateRequest,
+  CareerGuideCultureItemsUpdateRequest,
+  CareerGuideInterviewUpdateRequest,
   CareerGuideResponse,
   CareerPostingAdminDetail,
   CareerPostingAdminItem,
@@ -259,7 +265,41 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
+const updateCareerGuideBanner = (
+    careerGuideBannerUpdateRequest: CareerGuideBannerUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideBannerResponse>>,) => {
+      return customInstance<CareerGuideBannerResponse>(
+      {url: `/api/admin/careers/guide/banner`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideBannerUpdateRequest
+    },
+      options);
+    }
+
+const updateCareerGuideCultureItems = (
+    careerGuideCultureItemsUpdateRequest: CareerGuideCultureItemsUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideAdminCultureItemResponse[]>>,) => {
+      return customInstance<CareerGuideAdminCultureItemResponse[]>(
+      {url: `/api/admin/careers/guide/culture-items`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideCultureItemsUpdateRequest
+    },
+      options);
+    }
+
+const updateCareerGuideInterview = (
+    slotId: number,
+    careerGuideInterviewUpdateRequest: CareerGuideInterviewUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideAdminInterviewResponse>>,) => {
+      return customInstance<CareerGuideAdminInterviewResponse>(
+      {url: `/api/admin/careers/guide/interviews/${slotId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideInterviewUpdateRequest
+    },
+      options);
+    }
+
+return {detail3,update14,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1,updateCareerGuideBanner,updateCareerGuideCultureItems,updateCareerGuideInterview}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create2']>>>
@@ -281,3 +321,6 @@ export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof get
 export type Detail9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail9']>>>
 export type AttachmentDownload2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownload2']>>>
 export type Guide1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide1']>>>
+export type UpdateCareerGuideBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideBanner']>>>
+export type UpdateCareerGuideCultureItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideCultureItems']>>>
+export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
