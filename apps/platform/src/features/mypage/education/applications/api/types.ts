@@ -65,7 +65,11 @@ export type PortalProgramApplicationListItem = {
   supplement?: PortalProgramApplicationSupplement | null
 }
 
-/** OpenAPI `UjatApplicationSupplementPortalBannerState` */
+/**
+ * OpenAPI `UjatApplicationSupplementPortalBannerState`
+ * (`MemberPortalUjatApplicationSupplement.portalBannerState`).
+ * 배너 분기는 이 enum만 사용한다. applicationStatus/displayStatus로 추론하지 않는다.
+ */
 export const UJAT_PORTAL_BANNER_STATES = {
   NONE: 'NONE',
   ACTION_REQUIRED: 'ACTION_REQUIRED',

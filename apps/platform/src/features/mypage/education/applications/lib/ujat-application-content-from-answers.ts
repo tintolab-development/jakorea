@@ -13,24 +13,12 @@ import type {
 } from '../model/types'
 
 const EMPTY_DISPLAY = '-'
+const ISO_DATE = /(\d{4}-\d{2}-\d{2})/
 
-const GRADE_INFO_KEYS = [
-  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
-  'gradeBlocks',
-  'gradeApplicationInfo',
-] as const
-
-const CLASS_TIME_KEYS = [
-  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime,
-  'classTimeRows',
-  'gradeClassTime',
-] as const
-
-const PREFERRED_SCHEDULE_ANSWER_KEYS = [
-  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
-  'preferredEducationDates',
-  'preferredEducationSchedule',
-] as const
+const GRADE_INFO_KEY = UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo
+const CLASS_TIME_KEY = UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime
+const PREFERRED_SCHEDULE_KEY =
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule
 
 const OVERLAY_GRADE_DETAIL_KEY = 'ujatApplication.gradeDetailByBlock'
 const OVERLAY_GRADE_BY_BLOCK_KEY = 'ujatApplication.applicationGradeByBlockId'
@@ -53,15 +41,14 @@ function readTrimmed(value: unknown): string {
   return ''
 }
 
-function displayOrDash(value: string): string {
-  return value.trim() || EMPTY_DISPLAY
+function pickSeedAnswer(answers: Record<string, unknown>, key: string): unknown {
+  if (key in answers) return answers[key]
+  return undefined
 }
 
-function pickAnswer(answers: Record<string, unknown>, keys: readonly string[]): unknown {
-  for (const key of keys) {
-    if (key in answers) return answers[key]
-  }
-  return undefined
+function parseIsoDateToken(raw: string): string {
+  const match = ISO_DATE.exec(raw.trim())
+  return match?.[1] ?? ''
 }
 
 function formatGradeLabel(raw: string): string {
@@ -149,25 +136,19 @@ function mapGradeBlock(raw: unknown): EducationUjatGradeBlock | null {
 
   if (!gradeLabel && !classCountLabel && classParts.length === 0) return null
   return {
-    gradeLabel: displayOrDash(gradeLabel),
+    gradeLabel,
     classCountLabel,
     classesLabel: classParts.join(', '),
   }
 }
 
-function mapGradeBlocksFromOverlay(
-  answers: Record<string, unknown>,
-  paragraphAnswer: unknown,
-): EducationUjatGradeBlock[] {
+function mapGradeBlocksFromOverlay(paragraphAnswer: unknown): EducationUjatGradeBlock[] {
   const paragraph = asRecord(paragraphAnswer)
   const detailByBlock =
-    asRecord(paragraph?.[OVERLAY_GRADE_DETAIL_KEY]) ??
-    asRecord(paragraph?.gradeDetailByBlock) ??
-    asRecord(answers[OVERLAY_GRADE_DETAIL_KEY])
+    asRecord(paragraph?.[OVERLAY_GRADE_DETAIL_KEY]) ?? asRecord(paragraph?.gradeDetailByBlock)
   const gradeByBlock =
     asRecord(paragraph?.[OVERLAY_GRADE_BY_BLOCK_KEY]) ??
-    asRecord(paragraph?.applicationGradeByBlockId) ??
-    asRecord(answers[OVERLAY_GRADE_BY_BLOCK_KEY])
+    asRecord(paragraph?.applicationGradeByBlockId)
   if (!detailByBlock && !gradeByBlock) return []
 
   const ids = [
@@ -184,12 +165,12 @@ function mapGradeBlocksFromOverlay(
 }
 
 function mapGradeBlocks(answers: Record<string, unknown>): EducationUjatGradeBlock[] {
-  const raw = pickAnswer(answers, GRADE_INFO_KEYS)
+  const raw = pickSeedAnswer(answers, GRADE_INFO_KEY)
   const fromList = unwrapList(raw)
     .map(mapGradeBlock)
     .filter((block): block is EducationUjatGradeBlock => Boolean(block))
   if (fromList.length > 0) return fromList
-  return mapGradeBlocksFromOverlay(answers, raw)
+  return mapGradeBlocksFromOverlay(raw)
 }
 
 function periodIndexFromKey(key: string): number | null {
@@ -241,11 +222,23 @@ function mapClassPeriods(rawPeriods: unknown): EducationUjatClassPeriod[] {
       const timeLabel = formatPeriodTime(item)
       if (!timeLabel) return []
       const record = asRecord(item)
-      const periodLabel =
+      const periodNumber =
+        typeof record?.period === 'number' && Number.isFinite(record.period)
+          ? record.period
+          : typeof record?.period === 'string' && /^\d+$/.test(record.period.trim())
+            ? Number(record.period.trim())
+            : null
+      const rawLabel =
         readTrimmed(record?.periodLabel) ||
         readTrimmed(record?.classPeriod) ||
-        `${index + 1}교시`
-      return [{ periodLabel: periodLabel.endsWith('교시') ? periodLabel : `${periodLabel}교시`, timeLabel }]
+        (periodNumber != null ? String(periodNumber) : '') ||
+        (record ? '' : String(index + 1))
+      const periodLabel = rawLabel
+        ? rawLabel.endsWith('교시')
+          ? rawLabel
+          : `${rawLabel}교시`
+        : ''
+      return [{ periodLabel, timeLabel }]
     })
   }
 
@@ -275,7 +268,7 @@ function mapClassTimeBlock(raw: unknown): EducationUjatClassTimeBlock | null {
   const periods = mapClassPeriods(record.periods ?? record.sessionTimes ?? record.times)
   if (!gradeRangeLabel && periods.length === 0) return null
   return {
-    gradeRangeLabel: displayOrDash(gradeRangeLabel),
+    gradeRangeLabel,
     periods,
   }
 }
@@ -303,19 +296,14 @@ function formatGradeRangeLabel(raw: string, record: Record<string, unknown>): st
   return ''
 }
 
-function mapClassTimeBlocksFromOverlay(
-  answers: Record<string, unknown>,
-  paragraphAnswer: unknown,
-): EducationUjatClassTimeBlock[] {
+function mapClassTimeBlocksFromOverlay(paragraphAnswer: unknown): EducationUjatClassTimeBlock[] {
   const paragraph = asRecord(paragraphAnswer)
   const checkedByBlock =
     asRecord(paragraph?.[OVERLAY_CLASS_TIME_CHECKED_KEY]) ??
-    asRecord(paragraph?.classTimeCheckedByBlock) ??
-    asRecord(answers[OVERLAY_CLASS_TIME_CHECKED_KEY])
+    asRecord(paragraph?.classTimeCheckedByBlock)
   const periodsByBlock =
     asRecord(paragraph?.[OVERLAY_CLASS_TIME_PERIODS_KEY]) ??
-    asRecord(paragraph?.classTimePeriodsByBlock) ??
-    asRecord(answers[OVERLAY_CLASS_TIME_PERIODS_KEY])
+    asRecord(paragraph?.classTimePeriodsByBlock)
   if (!checkedByBlock && !periodsByBlock) return []
 
   const ids = [
@@ -340,28 +328,21 @@ function mapClassTimeBlocksFromOverlay(
 }
 
 function mapClassTimeBlocks(answers: Record<string, unknown>): EducationUjatClassTimeBlock[] {
-  const raw = pickAnswer(answers, CLASS_TIME_KEYS)
+  const raw = pickSeedAnswer(answers, CLASS_TIME_KEY)
   const fromList = unwrapList(raw)
     .map(mapClassTimeBlock)
     .filter((block): block is EducationUjatClassTimeBlock => Boolean(block))
   if (fromList.length > 0) return fromList
-  return mapClassTimeBlocksFromOverlay(answers, raw)
+  return mapClassTimeBlocksFromOverlay(raw)
 }
 
-function formatPreferredDate(raw: unknown): string {
-  const record = asRecord(raw)
-  if (record) {
-    const fromFields =
-      readTrimmed(record.dateText) ||
-      readTrimmed(record.date) ||
-      readTrimmed(record.startAt) ||
-      readTrimmed(record.label)
-    if (!fromFields) return ''
-    return formatDisplayDate(fromFields) || fromFields
-  }
+function formatPreferredDateToken(raw: unknown): string {
   const text = readTrimmed(raw)
   if (!text) return ''
-  return formatDisplayDate(text) || text
+  const iso = parseIsoDateToken(text)
+  if (iso) return formatDisplayDate(iso) || iso
+  if (/^[a-zA-Z]+\d*:/.test(text)) return ''
+  return formatDisplayDate(text) || ''
 }
 
 function preferredDatesFromBlocks(
@@ -370,26 +351,30 @@ function preferredDatesFromBlocks(
   if (!blocks?.length) return []
   const labels: string[] = []
   for (const block of blocks) {
-    const label = formatPreferredDate(block)
+    const record = asRecord(block)
+    const date = parseIsoDateToken(readTrimmed(record?.date))
+    if (!date) continue
+    const label = formatDisplayDate(date) || date
     if (label) labels.push(label)
   }
   return labels
 }
 
-function preferredDatesFromAnswer(raw: unknown, answers: Record<string, unknown>): string[] {
-  const fromList = unwrapList(raw)
-    .map(formatPreferredDate)
-    .filter(Boolean)
+function preferredDatesFromAnswer(raw: unknown): string[] {
+  const fromList = unwrapList(raw).map(formatPreferredDateToken).filter(Boolean)
   if (fromList.length > 0) return fromList
 
   const record = asRecord(raw)
+  if (!record) return []
+  const dates = asArray(record.dates)?.map(formatPreferredDateToken).filter(Boolean) ?? []
+  if (dates.length > 0) return dates
+
   const overlayIds =
-    asArray(record?.[OVERLAY_PREFERRED_IDS_KEY]) ??
-    asArray(record?.preferredScheduleSelectedIds) ??
-    asArray(record?.selectedIds) ??
-    asArray(answers[OVERLAY_PREFERRED_IDS_KEY])
+    asArray(record[OVERLAY_PREFERRED_IDS_KEY]) ??
+    asArray(record.preferredScheduleSelectedIds) ??
+    asArray(record.selectedIds)
   if (overlayIds?.length) {
-    return overlayIds.map(formatPreferredDate).filter(Boolean)
+    return overlayIds.map(formatPreferredDateToken).filter(Boolean)
   }
   return []
 }
@@ -410,14 +395,8 @@ function mapInstitution(
 ): EducationUjatApplicationInstitution {
   const basicRaw = answers[UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo]
   const row = asRecord(basicRaw) ?? {}
-  const name =
-    readTrimmed(row.schoolName) ||
-    readTrimmed(row.institutionName) ||
-    readTrimmed(row.organizationName)
-  const address =
-    readTrimmed(row.regionLabel) ||
-    readTrimmed(row.organizationAddress) ||
-    readTrimmed(row.institutionAddress)
+  const name = readTrimmed(row.schoolName)
+  const address = readTrimmed(row.regionLabel) || readTrimmed(row.organizationRegion)
   const addressDetail =
     readTrimmed(row.addressDetail) ||
     readTrimmed(row.detailAddress) ||
@@ -428,11 +407,11 @@ function mapInstitution(
     readTrimmed(row['application.ujat.inst.basicInfo.otherRequests'])
 
   return {
-    name: displayOrDash(name),
-    address: displayOrDash(address),
-    addressDetail: displayOrDash(addressDetail),
-    teacherContact: displayOrDash(teacherContact),
-    otherRequests: displayOrDash(otherRequests),
+    name,
+    address,
+    addressDetail,
+    teacherContact,
+    otherRequests,
   }
 }
 
@@ -462,7 +441,7 @@ export function buildUjatApplicationContentFromPortal(input: {
   const preferredDates =
     fromBlocks.length > 0
       ? fromBlocks
-      : preferredDatesFromAnswer(pickAnswer(answers, PREFERRED_SCHEDULE_ANSWER_KEYS), answers)
+      : preferredDatesFromAnswer(pickSeedAnswer(answers, PREFERRED_SCHEDULE_KEY))
 
   const content: EducationUjatApplicationContent = {
     preferredDates,

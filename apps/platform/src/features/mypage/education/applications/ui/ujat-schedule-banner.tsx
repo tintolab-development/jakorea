@@ -1,7 +1,8 @@
 import peopleIconUrl from '../assets/icon/people.svg'
+import arrowForwardUrl from '../assets/icon/arrow-forward.svg'
 import educationStatusBgUrl from '../assets/image/education-status-bg-gradient.svg'
 import type { UjatScheduleBannerCopy } from '../lib/ujat-portal-banner'
-import { PFChevronButton, PFText } from '@/shared/ui'
+import { PFText } from '@/shared/ui'
 import styles from './ujat-schedule-banner.module.css'
 
 type UjatScheduleBannerProps = {
@@ -11,8 +12,8 @@ type UjatScheduleBannerProps = {
 
 function noopActivate() {}
 
-export function UjatScheduleBanner({ copy, onActivate }: UjatScheduleBannerProps) {
-  const copyBlock = (
+function BannerCopy({ copy }: { copy: UjatScheduleBannerCopy }) {
+  return (
     <>
       <img className={styles.bg} src={educationStatusBgUrl} alt="" aria-hidden="true" />
       <div className={styles.headline}>
@@ -25,15 +26,19 @@ export function UjatScheduleBanner({ copy, onActivate }: UjatScheduleBannerProps
         {copy.body}
       </PFText>
       {copy.clickable ? (
-        <PFChevronButton className={styles.chevron} size="large" direction="right" decorative />
+        <span className={styles.chevron} aria-hidden="true">
+          <img src={arrowForwardUrl} width={32} height={32} alt="" />
+        </span>
       ) : null}
     </>
   )
+}
 
+export function UjatScheduleBanner({ copy, onActivate }: UjatScheduleBannerProps) {
   if (!copy.clickable) {
     return (
       <div className={styles.banner} role="status">
-        {copyBlock}
+        <BannerCopy copy={copy} />
       </div>
     )
   }
@@ -43,10 +48,9 @@ export function UjatScheduleBanner({ copy, onActivate }: UjatScheduleBannerProps
       type="button"
       className={`${styles.banner} ${styles.bannerClickable}`}
       aria-label={copy.title}
-      data-pf-chevron-hover=""
       onClick={onActivate ?? noopActivate}
     >
-      {copyBlock}
+      <BannerCopy copy={copy} />
     </button>
   )
 }
