@@ -3,12 +3,13 @@ import { TEXTBOOK_EDUCATION_TARGETS } from '@/features/textbook/model/textbook-e
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import { listTextbooksFromStore } from '@/features/textbook/api/textbook-service'
 import {
+  normalizeEducationTargetLabel,
+  parseEducationTargetLabels,
   resolveSelectedGradeLabels,
   toEducationStageKey,
 } from '@/features/textbook/lib/textbook-education-stages'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
-import { normalizeEducationTargetLabel } from '@/features/textbook/lib/textbook-education-stages'
 import type { Program, TargetLevel } from '@/types/domain'
 
 const TARGET_LEVEL_TO_EDUCATION_TARGET: Partial<Record<TargetLevel, TextbookEducationTarget>> = {
@@ -61,6 +62,10 @@ export function textbookMatchesProgramEducationTargets(
   allowed: readonly TextbookEducationTarget[]
 ): boolean {
   if (allowed.length === 0) return true
+  const targets = parseEducationTargetLabels(educationTarget ?? '')
+  if (targets.length > 0) {
+    return targets.some(target => allowed.includes(target))
+  }
   const normalized = normalizeToTextbookEducationTarget(educationTarget)
   return normalized != null && allowed.includes(normalized)
 }

@@ -507,4 +507,60 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     ).toEqual([1])
     expect(unitMap?.['2'] ?? unitMap?.[2]).toBeUndefined()
   })
+
+  it('수정 모드에서 참여자 유형 체크박스를 비활성화한다', () => {
+    const program = getProgram186307()
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    expect(
+      screen.getByText('참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.')
+    ).toBeTruthy()
+    const field = screen
+      .getByText('참여자 유형', { selector: '.detail-info-form__field-label-text' })
+      .closest('.detail-info-form__field')
+    if (!field) throw new Error('참여자 유형 필드를 찾지 못했습니다')
+    const checkboxes = [...field.querySelectorAll('input[type="checkbox"]')]
+    expect(checkboxes).toHaveLength(4)
+    expect(checkboxes.every(input => (input as HTMLInputElement).disabled)).toBe(true)
+  })
+
+  it('담당자가 없는 후원사도 후원사 담당자 미선택을 보여준다', async () => {
+    const program = getProgram186307()
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    const field = screen
+      .getByText('후원사 담당자', { selector: '.detail-info-form__field-label-text' })
+      .closest('.detail-info-form__field')
+    if (!field) throw new Error('후원사 담당자 필드를 찾지 못했습니다')
+    const trigger = field.querySelector('button[aria-haspopup="listbox"]')
+    if (!trigger) throw new Error('담당자 셀렉트 트리거를 찾지 못했습니다')
+    fireEvent.click(trigger)
+    expect(await screen.findAllByText('미선택')).not.toHaveLength(0)
+    expect(document.querySelector('.cms-select-multi__label-pill')?.textContent).toBe('미선택')
+    expect(screen.queryByText('검색 결과가 없습니다.')).toBeNull()
+  })
 })

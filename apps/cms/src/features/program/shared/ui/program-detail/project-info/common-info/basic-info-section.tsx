@@ -22,22 +22,18 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import { SponsorManagerPartsInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
-  formatSponsorManagerPersonLabel,
   formatSponsorManagerSelectLabel,
   normalizeSponsorManagerContactIds,
   retainSponsorManagerContactIdsForSponsors,
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
-import type {
-  SponsorContactRow,
-  SponsorManagementRow,
-} from '@/features/sponsor/model/sponsor-management.types'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   isSponsorContactUnselected,
   isSponsorContactUnselectedLabel,
@@ -188,89 +184,6 @@ function formatCompanySchoolSurveyItems(program: Program): string {
   if (keys.includes('satisfaction')) labels.push('만족도조사')
   if (keys.includes('lecture_evaluation')) labels.push('강의평가')
   return labels.length > 0 ? labels.join(', ') : '-'
-}
-
-function SponsorManagerView({
-  program,
-  sponsorRows,
-  contactsBySponsorId,
-}: {
-  program: Program
-  sponsorRows: readonly SponsorManagementRow[]
-  contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
-}) {
-  if (
-    isProgramSponsorManagerUnselected({
-      sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
-      sponsorManagerContactId: program.generalCommonInfo?.sponsorManagerContactId,
-      managerLine: program.generalCommonInfo?.sponsorManagerLine,
-      managerName: program.managerName,
-    })
-  ) {
-    return <>{SPONSOR_CONTACT_UNSELECTED_LABEL}</>
-  }
-
-  const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
-  const multi = refs.length > 1 || sponsorRows.length > 1
-  const lines: string[][] = []
-  for (const ref of refs) {
-    const decoded = decodeSponsorManagerContactRef(ref)
-    if (!decoded) continue
-    const sponsor = sponsorRows.find(row => row.id === decoded.sponsorManagementId)
-    const contact = contactsBySponsorId[decoded.sponsorManagementId]?.find(
-      row => row.id === decoded.contactId
-    )
-    const storedName = program.generalCommonInfo?.sponsorManagerContactNames?.[ref]?.trim()
-    const contactName = contact?.name?.trim() || storedName
-    if (!contactName) continue
-    const personLabel = formatSponsorManagerPersonLabel({
-      contactName,
-      position: contact?.position,
-    })
-    const parts = [
-      multi ? sponsor?.name?.trim() : '',
-      personLabel,
-      contact?.phone?.trim(),
-    ].filter((part): part is string => Boolean(part))
-    if (parts.length > 0) lines.push(parts)
-  }
-  if (lines.length > 0) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: 4,
-          width: '100%',
-        }}
-      >
-        {lines.map(parts => (
-          <div
-            key={parts.join('-')}
-            style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}
-          >
-            <SponsorManagerPartsInlineView parts={parts} />
-          </div>
-        ))}
-      </div>
-    )
-  }
-  const managerName = program.managerName?.trim()
-  if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
-    return <>{sponsorRows.length > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
-  }
-  return (
-    <>
-      {managerName}
-      {program.contactPhone ? (
-        <>
-          {'\u00A0'}
-          <span>{program.contactPhone}</span>
-        </>
-      ) : null}
-    </>
-  )
 }
 
 function formatCompanySchoolVenue(program: Program): string {
@@ -905,7 +818,7 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="후원사 담당자"
               view={
-                <SponsorManagerView
+                <SponsorManagerContactsView
                   program={program}
                   sponsorRows={selectedSponsorManagementRows}
                   contactsBySponsorId={sponsorEditContext.contactsBySponsorId}

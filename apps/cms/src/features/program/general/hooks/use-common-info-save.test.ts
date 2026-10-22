@@ -319,6 +319,83 @@ describe('useGeneralProgramCommonInfoSave', () => {
     ])
   })
 
+  it('기관 커리큘럼 복수 회차 2회차 내용 공란은 PATCH를 보내지 않는다', async () => {
+    const program = baseProgram()
+    const values = completeValues(program, {
+      sessionRound: 'multi',
+      participantOrganization: true,
+      participantIndividual: false,
+      scheduleCurriculumPreEducation: true,
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 11월 5일(목) 00:42 ~ 07:42',
+        '26년 11월 16일(월) 02:43 ~ 01:43',
+      ],
+      startDate: '2026-11-01',
+      endDate: '2026-11-30',
+      curriculumSessions: [
+        {
+          sessionLabel: '사전 교육',
+          title: '사전교육',
+          description: '',
+          scheduleDate: '26년 11월 5일(목) 00:42 ~ 07:42',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'online',
+          ipsCategory: 'prepare',
+          ipsDetail: 'none',
+        },
+        {
+          sessionLabel: '1회차',
+          title: '1',
+          description: 'aaaaaa',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: 'succeed',
+          ipsDetail: 'competition',
+        },
+        {
+          sessionLabel: '2회차',
+          title: '1',
+          description: '',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: 'inspire',
+          ipsDetail: 'podcast',
+        },
+      ],
+    })
+    const form = {
+      watch: vi.fn(() => []),
+      getValues: vi.fn(() => values),
+      reset: vi.fn(),
+      trigger: vi.fn().mockResolvedValue(false),
+      setFocus: vi.fn(),
+      formState: { dirtyFields: { curriculumSessions: true } },
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+    const onSaveEdit = vi.fn()
+
+    const { result } = renderHook(() =>
+      useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
+    )
+    let saveResult: Awaited<ReturnType<typeof result.current.triggerSave>> | undefined
+    await act(async () => {
+      saveResult = await result.current.triggerSave()
+    })
+    expect(saveResult?.ok).toBe(false)
+    if (saveResult && !saveResult.ok && saveResult.kind === 'validation') {
+      expect(saveResult.message).toBe('2회차 내용을 입력해주세요')
+      expect(saveResult.keys).toContain('curriculum.unitContent[2]')
+      expect(saveResult.alertKind).toBe('required-incomplete')
+    }
+    expect(form.setFocus).toHaveBeenCalled()
+    expect(onSaveEdit).not.toHaveBeenCalled()
+  })
+
   it('보이는 1차시 내용이 비면 해당 필드 메시지를 반환한다', async () => {
     const program = baseProgram()
     const values = completeValues(program, {
@@ -389,8 +466,118 @@ describe('useGeneralProgramCommonInfoSave', () => {
     if (saveResult && !saveResult.ok && saveResult.kind === 'validation') {
       expect(saveResult.message).toBe('사업 운영기간 안에 교육 진행 일정을 입력해주세요')
       expect(saveResult.title).toBe('교육 진행 일정 설정 안내')
+      expect(saveResult.alertKind).toBe('operation-range')
       expect(saveResult.keys).toContain('educationScheduleSettings.singleDateIso')
     }
     expect(onSaveEdit).not.toHaveBeenCalled()
+  })
+
+  it('VAL-08 입력 보완 후 재저장은 PATCH로 이어진다', async () => {
+    const program = baseProgram()
+    const incomplete = completeValues(program, { mainTitle: '' })
+    const complete = completeValues(program, { mainTitle: '보완된 대표명' })
+    const getValues = vi
+      .fn()
+      .mockReturnValueOnce(incomplete)
+      .mockReturnValue(complete)
+    const form = {
+      watch: vi.fn(() => []),
+      getValues,
+      reset: vi.fn(),
+      trigger: vi.fn().mockResolvedValue(true),
+      setFocus: vi.fn(),
+      formState: { dirtyFields: { mainTitle: true } },
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const { result } = renderHook(() =>
+      useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
+    )
+    await act(async () => {
+      const first = await result.current.triggerSave()
+      expect(first.ok).toBe(false)
+    })
+    expect(onSaveEdit).not.toHaveBeenCalled()
+    await act(async () => {
+      const second = await result.current.triggerSave()
+      expect(second).toEqual({ ok: true })
+    })
+    expect(onSaveEdit).toHaveBeenCalledTimes(1)
+  })
+
+  it('VAL-10 회차 수·예정일 불일치는 PATCH 없이 전용 종류를 반환한다', async () => {
+    const program = baseProgram()
+    const values = completeValues(program, {
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 4월 1일(수) 10:00 ~ 12:00',
+        '26년 4월 2일(목) 10:00 ~ 12:00',
+      ],
+      curriculumSessions: [
+        {
+          sessionLabel: '1회차',
+          title: '1',
+          description: '본문',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'offline',
+          ipsCategory: 'prepare',
+          ipsDetail: 'none',
+        },
+      ],
+    })
+    const form = {
+      watch: vi.fn(() => []),
+      getValues: vi.fn(() => values),
+      reset: vi.fn(),
+      trigger: vi.fn().mockResolvedValue(true),
+      setFocus: vi.fn(),
+      formState: { dirtyFields: { educationScheduleLines: true } },
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+    const onSaveEdit = vi.fn()
+    const { result } = renderHook(() =>
+      useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
+    )
+    let saveResult: Awaited<ReturnType<typeof result.current.triggerSave>> | undefined
+    await act(async () => {
+      saveResult = await result.current.triggerSave()
+    })
+    expect(saveResult).toEqual({ ok: false, kind: 'schedule-count-mismatch' })
+    expect(onSaveEdit).not.toHaveBeenCalled()
+  })
+
+  it('VAL-13 저장 중 재클릭은 중복 PATCH를 만들지 않는다', async () => {
+    const program = baseProgram()
+    const values = completeValues(program)
+    const form = {
+      watch: vi.fn(() => []),
+      getValues: vi.fn(() => values),
+      reset: vi.fn(),
+      formState: { dirtyFields: { announcementTitle: true } },
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+    let resolveSave: (() => void) | undefined
+    const onSaveEdit = vi.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveSave = resolve
+        })
+    )
+    const { result } = renderHook(() =>
+      useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
+    )
+    let first: Promise<unknown> | undefined
+    await act(async () => {
+      first = result.current.triggerSave()
+    })
+    let second: Awaited<ReturnType<typeof result.current.triggerSave>> | undefined
+    await act(async () => {
+      second = await result.current.triggerSave()
+    })
+    expect(second?.ok).toBe(false)
+    expect(onSaveEdit).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      resolveSave?.()
+      await first
+    })
   })
 })

@@ -3,7 +3,7 @@
  * LNB·breadcrumb·queryParam 복원만 구성 (본문 화면은 추후 API 연동)
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
@@ -114,6 +114,11 @@ import {
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { isEducationStructureChanged } from '@/features/program/general/lib/overlay-phase1/independent-session-authoring'
+import {
+  hasRhfCurriculumMultiDateScheduleCountMismatch,
+  parseGeneralCommonInfoRhfValidation,
+  resolveGeneralCommonInfoValidationAlert,
+} from '@/features/program/general/lib/overlay-phase1/common-info-rhf-validation'
 import {
   EDUCATION_STRUCTURE_CHANGE_CONFIRM_MESSAGE,
   EDUCATION_STRUCTURE_CHANGE_CONFIRM_TITLE,
@@ -1015,21 +1020,36 @@ export function GeneralProgramDetailFullPageModal({
 
   const runInfoSave = useCallback(async () => {
     if (displayProgram) logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'save')
+    const values = infoForm.getValues()
+    const rhfValidation = parseGeneralCommonInfoRhfValidation(values)
+    if (!rhfValidation.ok) {
+      if (rhfValidation.keys.length > 0) detailRequiredHighlight.report(rhfValidation.keys)
+      void showAlert(resolveGeneralCommonInfoValidationAlert(rhfValidation))
+      return
+    }
+    if (hasRhfCurriculumMultiDateScheduleCountMismatch(values)) {
+      void showAlert({
+        title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
+        content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
+      })
+      return
+    }
     const endOverlay = beginBlockingOverlay()
+    let pendingAlert: { title: string; content: ReactNode } | null = null
     try {
       const result = await infoTriggerSave()
       if (!result.ok) {
         if (result.kind === 'validation') {
           if (result.keys.length > 0) detailRequiredHighlight.report(result.keys)
-          void showAlert({
-            title: result.title?.trim() || REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-            content: result.message?.trim() || REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          pendingAlert = resolveGeneralCommonInfoValidationAlert({
+            alertKind: result.alertKind ?? 'required-incomplete',
+            message: result.message,
           })
         } else if (result.kind === 'schedule-count-mismatch') {
-          void showAlert({
+          pendingAlert = {
             title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
             content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
-          })
+          }
         } else if (result.kind === 'api') {
           if (
             programId &&
@@ -1041,25 +1061,27 @@ export function GeneralProgramDetailFullPageModal({
             })
           }
           if (!isGlobalApiErrorAlertShown(result.error)) {
-            void showAlert({
+            pendingAlert = {
               title: '저장 실패',
               content: getGeneralProgramApiErrorMessage(
                 result.error,
                 '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
               ),
-            })
+            }
           }
         }
-        return
+      } else {
+        detailRequiredHighlight.clear()
+        setEditMode(null)
       }
-      detailRequiredHighlight.clear()
-      setEditMode(null)
     } finally {
       endOverlay()
     }
+    if (pendingAlert) void showAlert(pendingAlert)
   }, [
     detailRequiredHighlight,
     displayProgram,
+    infoForm,
     infoTriggerSave,
     programId,
     queryClient,

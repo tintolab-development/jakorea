@@ -86,6 +86,14 @@ export function withSponsorContactUnselectedOption<T extends { value: string; la
   return [...options, unselected]
 }
 
+/** 후원사가 선택돼 있으면 담당자가 0명이어도 미선택을 붙인다. */
+export function withSponsorContactUnselectedIfSponsorsSelected<
+  T extends { value: string; label: string },
+>(options: readonly T[], hasSelectedSponsors: boolean, extra?: Omit<T, 'value' | 'label'>): T[] {
+  if (!hasSelectedSponsors) return [...options]
+  return withSponsorContactUnselectedOption(options, extra)
+}
+
 /**
  * 미선택과 실제 담당자는 같이 두지 않는다.
  * 미선택을 새로 고르면 미선택만, 담당자를 고르면 미선택을 뺀다.

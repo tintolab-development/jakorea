@@ -18,10 +18,19 @@ import {
 import { createGeneralProgramCommonInfoIndependentSave } from './common-info-independent-save'
 import { deriveIndependentEditorExtrasFromProgram } from './common-info-domain'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import {
+  curriculumRegularSessionContentValidationKeys,
   hasRhfCurriculumMultiDateScheduleCountMismatch,
   parseGeneralCommonInfoRhfValidation,
+  resolveGeneralCommonInfoValidationAlert,
 } from './common-info-rhf-validation'
-import { GENERAL_DETAIL_REQUIRED_VALIDATION_STATUS } from './general-detail-rhf-save-path'
+import {
+  GENERAL_COMMON_INFO_VALIDATION_UX_STATUS,
+  GENERAL_DETAIL_REQUIRED_VALIDATION_STATUS,
+} from './general-detail-rhf-save-path'
 
 function validValues(
   patch: Partial<GeneralProgramCommonInfoEditFormValues> = {}
@@ -135,6 +144,9 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
     expect(GENERAL_DETAIL_REQUIRED_VALIDATION_STATUS).toBe(
       'GENERAL_DETAIL_REQUIRED_VALIDATION_FIXED'
     )
+    expect(GENERAL_COMMON_INFO_VALIDATION_UX_STATUS).toBe(
+      'GENERAL_COMMON_INFO_VALIDATION_UX_READY'
+    )
   })
 
   it('VAL-01 일반 커리큘럼 2개 모두 입력', () => {
@@ -241,6 +253,65 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
     expect(result.keys).toContain('curriculum.unitName[1]')
   })
 
+  it('기관 커리큘럼 복수 회차 — 회차 추가 기본값 title 1 과 빈 내용은 2회차를 차단한다', () => {
+    const values = validValues({
+      participantOrganization: true,
+      participantIndividual: false,
+      sessionRound: 'multi',
+      startDate: '2026-11-01',
+      endDate: '2026-11-30',
+      scheduleCurriculumPreEducation: true,
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 11월 5일(목) 00:42 ~ 07:42',
+        '26년 11월 16일(월) 02:43 ~ 01:43',
+      ],
+      curriculumSessions: [
+        {
+          sessionLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+          title: '사전교육',
+          description: '',
+          scheduleDate: '26년 11월 5일(목) 00:42 ~ 07:42',
+        },
+        {
+          sessionLabel: '1회차',
+          title: '1',
+          description: 'aaaaaa',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: 'succeed',
+          ipsDetail: 'competition',
+        },
+        {
+          sessionLabel: '2회차',
+          title: '1',
+          description: '',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: 'inspire',
+          ipsDetail: 'podcast',
+        },
+      ],
+    })
+    const result = parseGeneralCommonInfoRhfValidation(values)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.message).toBe('2회차 내용을 입력해주세요')
+    expect(result.alertKind).toBe('required-incomplete')
+    expect(result.keys).toContain('curriculum.unitContent[2]')
+    expect(resolveGeneralCommonInfoValidationAlert(result)).toEqual({
+      title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+      content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+    })
+    expect(result.issues.some(issue => issue.path.join('.') === 'curriculumSessions.2.description')).toBe(
+      true
+    )
+    expect(curriculumRegularSessionContentValidationKeys(2)).toEqual(
+      expect.arrayContaining(['curriculum.unitContent[2]', 'curriculum.roundContent[2]'])
+    )
+    expect(hasRhfCurriculumMultiDateScheduleCountMismatch(values)).toBe(false)
+  })
+
   it('VAL-08 일반 1차시 내용 비움', () => {
     const result = parseGeneralCommonInfoRhfValidation(
       validValues({
@@ -265,6 +336,46 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
     if (!result.ok) expect(result.keys.some(key => key.includes('[2]'))).toBe(false)
   })
 
+  it('VAL-04 기본 정보 필수값 누락은 공통 안내로 분류한다', () => {
+    const result = parseGeneralCommonInfoRhfValidation(validValues({ mainTitle: '' }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.message).toBe('대표 프로그램명(국문)을 입력해주세요')
+    expect(result.keys).toContain('basicInfo.programTitleKo')
+    expect(result.alertKind).toBe('required-incomplete')
+    expect(resolveGeneralCommonInfoValidationAlert(result).title).toBe(
+      REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE
+    )
+  })
+
+  it('VAL-05 임금 정보 필수값 누락은 공통 안내로 분류한다', () => {
+    const result = parseGeneralCommonInfoRhfValidation(validValues({ wageGrade1Amount: '' }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.keys).toContain('wage.grade1Fee')
+    expect(result.alertKind).toBe('required-incomplete')
+  })
+
+  it('VAL-06 여러 필수값 누락을 모두 식별한다', () => {
+    const result = parseGeneralCommonInfoRhfValidation(
+      validValues({
+        mainTitle: '',
+        educationProcess: '',
+        wageGrade1Amount: '',
+      })
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.keys).toEqual(
+      expect.arrayContaining([
+        'basicInfo.programTitleKo',
+        'basicInfo.educationCourse',
+        'wage.grade1Fee',
+      ])
+    )
+    expect(result.alertKind).toBe('required-incomplete')
+  })
+
   it('VAL-10 사업기간 밖 교육 일정', () => {
     const result = parseGeneralCommonInfoRhfValidation(
       validValues({
@@ -277,7 +388,28 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
     if (result.ok) return
     expect(result.message).toBe('사업 운영기간 안에 교육 진행 일정을 입력해주세요')
     expect(result.title).toBe(EDUCATION_SCHEDULE_OPERATION_RANGE_ALERT_TITLE)
+    expect(result.alertKind).toBe('operation-range')
+    expect(resolveGeneralCommonInfoValidationAlert(result)).toEqual({
+      title: EDUCATION_SCHEDULE_OPERATION_RANGE_ALERT_TITLE,
+      content: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
+    })
     expect(hasRhfCurriculumMultiDateScheduleCountMismatch(validValues())).toBe(false)
+  })
+
+  it('VAL-10 회차 수와 예정일 개수 불일치는 전용 안내 대상이다', () => {
+    expect(
+      hasRhfCurriculumMultiDateScheduleCountMismatch(
+        validValues({
+          sessionRound: 'multi',
+          educationScheduleMode: 'date',
+          educationScheduleLines: [
+            '26년 10월 31일(토) 10:00 ~ 12:00',
+            '26년 11월 1일(일) 10:00 ~ 12:00',
+          ],
+          curriculumSessions: [{ sessionLabel: '1회차', title: '1', description: '본문' }],
+        })
+      )
+    ).toBe(true)
   })
 
   it('VAL-11 정상 유효값', () => {

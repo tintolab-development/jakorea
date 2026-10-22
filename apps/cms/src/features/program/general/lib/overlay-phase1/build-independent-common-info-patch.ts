@@ -18,6 +18,7 @@ import {
 import {
   nestedRowsEqual,
   resolveNestedArrayIntent,
+  type NestedArrayPatchIntent,
 } from './independent-session-authoring'
 
 const NESTED_INTENT_KEYS = new Set(['curriculumSessions', 'scheduleDetails'])
@@ -161,6 +162,18 @@ function omitUnchangedSponsorAssignments(
   }
 }
 
+/** 일정 상세를 사용자가 건드리지 않았으면 mapper 기본값 차이로 배열을 재전송하지 않는다. */
+const SCHEDULE_DETAILS_DIRTY_KEYS = [
+  'scheduleDetails',
+  'scheduleCurriculumPreEducation',
+  'educationScheduleMode',
+  'sessionRound',
+  'educationStructure',
+  'educationFormScheduleDetail',
+  'participationScheduleDetail',
+  'ipsScheduleDetail',
+] as const
+
 const COMMON_INFO_FORM_DEPENDENCIES = {
   announcementTitle: ['announcementTitle'],
   detailedProgramName: ['detailedProgramId'],
@@ -185,6 +198,15 @@ const COMMON_INFO_FORM_DEPENDENCIES = {
   paymentItems: ['wagePaymentItemIds'],
   deductionItems: ['wagePaymentItemIds'],
 } as const
+
+function omitUndirtiedScheduleDetailsReplace<T>(
+  schedule: { intent: NestedArrayPatchIntent; value?: T[] },
+  changedFormKeys: ReadonlySet<string> | undefined
+): { intent: NestedArrayPatchIntent; value?: T[] } {
+  if (schedule.intent !== 'replace') return schedule
+  if (formFieldChanged(changedFormKeys, SCHEDULE_DETAILS_DIRTY_KEYS)) return schedule
+  return { intent: 'omit' }
+}
 
 function omitUndirtiedMapperRewrites(
   patchCommon: NonNullable<Program['generalCommonInfo']>,
@@ -239,10 +261,13 @@ export function buildIndependentCommonInfoPatch(args: {
     draftCommon?.curriculumSessions,
     baselineCommon?.curriculumSessions
   )
-  const schedule = resolveNestedArrayIntent(
-    args.sessionAuthoring?.schedule,
-    draftCommon?.scheduleDetails,
-    baselineCommon?.scheduleDetails
+  const schedule = omitUndirtiedScheduleDetailsReplace(
+    resolveNestedArrayIntent(
+      args.sessionAuthoring?.schedule,
+      draftCommon?.scheduleDetails,
+      baselineCommon?.scheduleDetails
+    ),
+    args.changedFormKeys
   )
 
   const generalCommonInfoPatch: NonNullable<Program['generalCommonInfo']> = {

@@ -2,6 +2,7 @@
  * 일반 프로그램 상세 — 공통 정보 (조회 / 정보 수정)
  * 프로그램 등록 양식 overlay(단락 title + DetailInfoForm hideHeader)와 동일 레이아웃
  */
+// @refresh reset — 후원사 담당자 뷰 컴포넌트 교체 시 HMR이 import/JSX를 어긋나게 두는 경우 방지
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form'
@@ -27,7 +28,7 @@ import {
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
@@ -103,17 +104,13 @@ import {
   isSponsorContactUnselectedLabel,
   normalizeSponsorContactUnselectedSelection,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
-  withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
 } from '@/features/program/general/lib/variant'
 import {
-  encodeSponsorManagerContactRef,
   formatGeneralProgramVenueViewLine,
-  formatSponsorManagerSelectLabel,
-  resolveSponsorManagerViewLine,
   getGeneralSurveyEditFieldsForAudience,
   getGeneralDetailedProgramSelectOptions,
   isGeneralProgramScheduleType,
@@ -130,10 +127,23 @@ import {
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import {
+  buildGeneralProgramSponsorManagerSelectOptions,
   mergeSponsorContactSelectOptions,
   mergeSponsorRegistrationSelectOptions,
   sponsorSelectIdListsEqual,
 } from '@/features/program/general/lib/registration-sponsor-select-option-merge'
+import {
+  CURRICULUM_PRE_EDUCATION_LINE_VALIDATION_KEY,
+  CURRICULUM_PRE_EDUCATION_NAME_VALIDATION_KEY,
+  SCHEDULE_PRE_EDUCATION_DATE_VALIDATION_KEY,
+  SCHEDULE_PRE_EDUCATION_NAME_VALIDATION_KEY,
+  curriculumRegularSessionContentValidationKeys,
+  curriculumRegularSessionIpsValidationKey,
+  scheduleRegularDetailDateValidationKey,
+  scheduleRegularDetailGroupTimesValidationKey,
+  scheduleRegularDetailIpsValidationKey,
+  scheduleRegularDetailNameValidationKey,
+} from '@/features/program/general/lib/overlay-phase1/common-info-rhf-validation'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
@@ -165,6 +175,7 @@ import {
   getProgramRegistrationCurriculumMultiSessionRowPlan,
   shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
+import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import {
@@ -270,6 +281,7 @@ function ProgramRegistrationDetailSection({
   isFormEdit = false,
   /** 수정 모드 + 블록 내 입력 항목이 모두 필수일 때 타이틀 `*` */
   required = false,
+  highlightParagraphId,
 }: {
   title: string
   children: ReactNode
@@ -279,6 +291,7 @@ function ProgramRegistrationDetailSection({
   titleTrailing?: ReactNode
   isFormEdit?: boolean
   required?: boolean
+  highlightParagraphId?: string
 }) {
   return (
     <section className="detail-common-info-view__section" aria-label={title}>
@@ -289,6 +302,7 @@ function ProgramRegistrationDetailSection({
         surface="responseEntry"
         titleAligned
         required={isFormEdit && required}
+        highlightParagraphId={highlightParagraphId}
       />
       <div
         className={['detail-common-info-view__section-body', bodyClassName]
@@ -431,7 +445,7 @@ function BasicInfoSection({
   // 후원사 상세·담당자 연락처는 수정 시 담당자 선택지를 만들 때만 필요하다.
   const sponsorEditContext = useGeneralProgramSponsorEditContext(
     sponsorIdsForContacts,
-    isFormEdit
+    sponsorIdsForContacts.length > 0
   )
   const selectedSponsors = useMemo(
     () =>
@@ -440,35 +454,23 @@ function BasicInfoSection({
         .filter((sponsor): sponsor is SponsorManagementRow => sponsor != null),
     [sponsorIdsForContacts, sponsorEditContext.sponsors]
   )
-  const managerOptions = useMemo(() => {
-    const options: Array<{ value: string; label: string }> = []
-    for (const sponsor of selectedSponsors) {
-      const contacts = sponsorEditContext.contactsBySponsorId[sponsor.id] ?? []
-      for (const contact of contacts) {
-        options.push({
-          value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
-          label: formatSponsorManagerSelectLabel({
-            sponsorName: sponsor.name,
-            contactName: contact.name,
-            position: contact.position,
-            // 시안: 드롭다운은 항상 `후원사명 | 담당자명 직함`
-            multiSponsor: true,
-          }),
-        })
-      }
-    }
-    // 담당자 목록이 온 뒤에만 미선택을 붙인다. 빈 카탈로그에 미선택만 있으면
-    // GET contact id가 옵션에 없어 Select가 값을 비우고 dirty가 된다.
-    if (isFormEdit && watchedSponsorIds.length > 0 && options.length > 0) {
-      return withSponsorContactUnselectedOption(options)
-    }
-    return options
-  }, [
-    isFormEdit,
-    selectedSponsors,
-    sponsorEditContext.contactsBySponsorId,
-    watchedSponsorIds,
-  ])
+  const managerOptions = useMemo(
+    () =>
+      buildGeneralProgramSponsorManagerSelectOptions({
+        isFormEdit,
+        selectedSponsorIds: watchedSponsorIds,
+        sponsors: sponsorEditContext.sponsors,
+        sponsorSelectOptions,
+        contactsBySponsorId: sponsorEditContext.contactsBySponsorId,
+      }),
+    [
+      isFormEdit,
+      sponsorEditContext.contactsBySponsorId,
+      sponsorEditContext.sponsors,
+      sponsorSelectOptions,
+      watchedSponsorIds,
+    ]
+  )
   const managerSelectOptions = useMemo(
     () =>
       mergeSponsorContactSelectOptions({
@@ -476,24 +478,6 @@ function BasicInfoSection({
         apiOptions: managerOptions,
       }),
     [managerOptions, watchedContactIds]
-  )
-
-  const sponsorManagerViewText = useMemo(
-    () =>
-      resolveSponsorManagerViewLine({
-        storedLine: commonInfo.sponsorManagerLine?.trim() || '-',
-        contactRefs: commonInfo.sponsorManagerContactIds,
-        contactNames: commonInfo.sponsorManagerContactNames,
-        sponsors: selectedSponsors,
-        contactsBySponsorId: sponsorEditContext.contactsBySponsorId,
-      }),
-    [
-      commonInfo.sponsorManagerContactIds,
-      commonInfo.sponsorManagerContactNames,
-      commonInfo.sponsorManagerLine,
-      selectedSponsors,
-      sponsorEditContext.contactsBySponsorId,
-    ]
   )
 
   useEffect(() => {
@@ -573,6 +557,8 @@ function BasicInfoSection({
       title="기본 정보"
       bodyClassName="detail-common-info-view__section-body--basic-info"
       isFormEdit={isFormEdit}
+      editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription}
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
       required
     >
       <DetailInfoForm
@@ -621,6 +607,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="대표 프로그램명 (국문)"
+            validationKey="basicInfo.programTitleKo"
             view={v.mainTitle?.trim() || '-'}
             edit={
               <Controller
@@ -640,6 +627,7 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="대표 프로그램명 (영문)"
+            validationKey="basicInfo.programTitleEn"
             view={program.titleEn?.trim() || '-'}
             edit={
               <Controller
@@ -660,6 +648,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="공고용 프로그램명"
+            validationKey="basicInfo.publicProgramTitle"
             view={announcementTitle}
             edit={
               <Controller
@@ -679,6 +668,7 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="세부 프로그램명"
+            validationKey="basicInfo.detailedProgram"
             view={detailedName}
             edit={
               <Controller
@@ -709,6 +699,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="사업 운영 기간"
+            validationKey="basicInfo.operationRangeSeal"
             view={operationRange}
             edit={
               <Controller
@@ -770,12 +761,14 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="참여자 유형"
+            validationKey="basicInfo.audience"
             view={formatGeneralParticipantTypesSummary(program)}
             edit={
               <div className="detail-info-form-inputs-wrapper">
                 <GeneralParticipantAudienceCheckboxGroup
                   individual={Boolean(participantIndividual)}
                   organization={Boolean(participantOrganization)}
+                  disabled
                   onIndividualChange={handleParticipantIndividualChange}
                   onOrganizationChange={handleParticipantOrganizationChange}
                 />
@@ -793,6 +786,7 @@ function BasicInfoSection({
                         <CmsCheckbox
                           checkboxSize="medium"
                           checked={Boolean(field.value)}
+                          disabled
                           onChange={event => field.onChange(event.target.checked)}
                         >
                           {option.label}
@@ -806,6 +800,7 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="사업 분야"
+            validationKey="basicInfo.businessField"
             view={optionLabel(BUSINESS_AREA_OPTIONS, v.businessArea)}
             edit={
               <Controller
@@ -836,6 +831,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="후원사"
+            validationKey="basicInfo.sponsorId"
             view={sponsorDisplay}
             edit={
               <Controller
@@ -879,7 +875,14 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
-            view={<SponsorManagerLineInlineView text={sponsorManagerViewText} />}
+            validationKey="basicInfo.sponsorContactId"
+            view={
+              <SponsorManagerContactsView
+                program={program}
+                sponsorRows={selectedSponsors}
+                contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+              />
+            }
             edit={
               <Controller
                 name="sponsorManagerContactIds"
@@ -924,6 +927,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 장소"
+            validationKey="basicInfo.educationVenueDetail"
             fullRow
             view={
               <PipeSeparatedInlineView
@@ -998,6 +1002,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"
+            validationKey="basicInfo.educationCourse"
             view={optionLabel(
               EDUCATION_PROCESS_OPTIONS,
               v.educationProcess ?? program.educationProcess
@@ -1029,6 +1034,7 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="IP Owned"
+            validationKey="basicInfo.ipOwned"
             view={optionLabel(IP_OWNED_OPTIONS, v.ipOwned)}
             edit={
               <Controller
@@ -1059,6 +1065,7 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="Course Delivered By"
+            validationKey="basicInfo.courseDeliveredBy"
             view={optionLabel(COURSE_DELIVERED_BY_OPTIONS, v.courseDeliveredBy ?? undefined)}
             edit={
               <Controller
@@ -1168,11 +1175,17 @@ function KpiSection({
   const formMode = isFormEdit ? 'edit' : 'view'
 
   return (
-    <ProgramRegistrationDetailSection title="사업 KPI 목표" isFormEdit={isFormEdit} required>
+    <ProgramRegistrationDetailSection
+      title="사업 KPI 목표"
+      isFormEdit={isFormEdit}
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.businessKpi}
+      required
+    >
       <DetailInfoForm title="사업 KPI 목표" hideHeader mode={formMode} className="program-registration-paragraph">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="참여자 최종 인원"
+            validationKey="kpi.participantCount"
             view={<KpiBoldNumber value={kpi?.finalParticipants ?? 0} />}
             edit={
               <Controller
@@ -1197,6 +1210,7 @@ function KpiSection({
           />
           <DetailInfoForm.Field
             label="교육진행자 최종 인원"
+            validationKey={['kpi.instructor', 'kpi.volunteer']}
             view={
               <div className="detail-info-form-inputs-wrapper">
                 <span className="detail-info-form--text">강사 :</span>
@@ -1270,6 +1284,7 @@ function KpiSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최종 파견 학교 수"
+            validationKey="kpi.finalSchools"
             view={dispatchedSchoolClassView}
             edit={
               <CmsInput
@@ -1283,6 +1298,7 @@ function KpiSection({
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
+            validationKey="kpi.finalClasses"
             view={dispatchedSchoolClassView}
             edit={
               <CmsInput
@@ -1360,9 +1376,27 @@ function WageSection({
       resolveProgramWageDeductionLabel(paymentItemIds))
 
   const wageFields = [
-    { label: WAGE_GRADE_FIELDS[0].label, name: 'wageGrade1Amount' as const, max: 500_000, maxHint: WAGE_GRADE_FIELDS[0].maxHint },
-    { label: WAGE_GRADE_FIELDS[1].label, name: 'wageGrade2Amount' as const, max: 400_000, maxHint: WAGE_GRADE_FIELDS[1].maxHint },
-    { label: WAGE_GRADE_FIELDS[2].label, name: 'wageGrade3Amount' as const, max: 300_000, maxHint: WAGE_GRADE_FIELDS[2].maxHint },
+    {
+      label: WAGE_GRADE_FIELDS[0].label,
+      name: 'wageGrade1Amount' as const,
+      max: 500_000,
+      maxHint: WAGE_GRADE_FIELDS[0].maxHint,
+      validationKey: 'wage.grade1Fee',
+    },
+    {
+      label: WAGE_GRADE_FIELDS[1].label,
+      name: 'wageGrade2Amount' as const,
+      max: 400_000,
+      maxHint: WAGE_GRADE_FIELDS[1].maxHint,
+      validationKey: 'wage.grade2Fee',
+    },
+    {
+      label: WAGE_GRADE_FIELDS[2].label,
+      name: 'wageGrade3Amount' as const,
+      max: 300_000,
+      maxHint: WAGE_GRADE_FIELDS[2].maxHint,
+      validationKey: 'wage.grade3Fee',
+    },
   ]
 
   return (
@@ -1370,13 +1404,15 @@ function WageSection({
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title}
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription}
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.wageInfo}
       required
     >
       <DetailInfoForm title="임금 정보" hideHeader mode={formMode} className="program-registration-paragraph">
-        {wageFields.map(({ label, name, max, maxHint }) => (
+        {wageFields.map(({ label, name, max, maxHint, validationKey }) => (
           <DetailInfoForm.Row key={label} type="single">
             <DetailInfoForm.Field
               label={label}
+              validationKey={validationKey}
               fullRow
               view={<WageGradeAmountView pricing={pricingByGrade[label]} maxHint={maxHint} />}
               edit={
@@ -1411,6 +1447,7 @@ function WageSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급 항목"
+            validationKey="wage.paymentItemValues"
             view={resolveWagePaymentItemsView(commonInfo.paymentItems)}
             edit={
               <Controller
@@ -1453,6 +1490,7 @@ function TypeSettingsScheduleDetailRow({
   formMode,
   commonDetailEdit,
   commonDetailView,
+  validationKey,
   perScheduleHint = typeSettingsPerScheduleHint({
     educationStructure: 'curriculum',
     sessionRound: 'single',
@@ -1468,6 +1506,7 @@ function TypeSettingsScheduleDetailRow({
   formMode: 'view' | 'edit'
   commonDetailEdit?: ReactNode
   commonDetailView?: ReactNode
+  validationKey?: string
   perScheduleHint?: string
 }) {
   const scheduleDetail =
@@ -1479,6 +1518,7 @@ function TypeSettingsScheduleDetailRow({
         <DetailInfoForm.Field
           label={label}
           fullRow
+          validationKey={validationKey}
           view={
             scheduleDetail === 'perSchedule' ? (
               '일정 별 상이'
@@ -1496,6 +1536,7 @@ function TypeSettingsScheduleDetailRow({
       <DetailInfoForm.Field
         label={label}
         fullRow
+        validationKey={validationKey}
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
             <Controller
@@ -1556,6 +1597,7 @@ function TypeSettingsIpsRow({
       <DetailInfoForm.Field
         label="IPS 유형"
         fullRow
+        validationKey="typeSettings.ipsType"
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
             <Controller
@@ -1727,6 +1769,7 @@ function TypeSettingsSection({
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
       bodyClassName="detail-common-info-view__section-body--type-settings"
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.typeSettings}
       required
     >
       <DetailInfoForm
@@ -1808,6 +1851,7 @@ function TypeSettingsSection({
           <DetailInfoForm.Row type={isOrganization ? 'single' : 'double'}>
             <DetailInfoForm.Field
               label="교육 형태"
+              validationKey="typeSettings.multiCommonEducationForm"
               fullRow={isOrganization}
               view={educationFormLabelView}
               edit={
@@ -1833,6 +1877,7 @@ function TypeSettingsSection({
             {!isOrganization ? (
               <DetailInfoForm.Field
                 label="참여 방식"
+                validationKey="typeSettings.multiCommonParticipation"
                 view={participationMethodLabel}
                 edit={
                   <Controller
@@ -1863,6 +1908,7 @@ function TypeSettingsSection({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="IPS 유형"
+                validationKey="typeSettings.ipsType"
                 fullRow
                 view={<PipeSeparatedInlineView text={commonInfo.ipsTypeSummary} />}
               />
@@ -1915,6 +1961,7 @@ function TypeSettingsSection({
           ) : (
             <TypeSettingsScheduleDetailRow
               label="교육 형태"
+              validationKey="typeSettings.multiCommonEducationForm"
               scheduleDetailName="educationFormScheduleDetail"
               scheduleDetailValue={educationFormScheduleDetail}
               editForm={editForm}
@@ -1943,6 +1990,7 @@ function TypeSettingsSection({
           {!isOrganization ? (
             <TypeSettingsScheduleDetailRow
               label="참여 방식"
+              validationKey="typeSettings.multiCommonParticipation"
               scheduleDetailName="participationScheduleDetail"
               scheduleDetailValue={participationScheduleDetail}
               editForm={editForm}
@@ -1973,6 +2021,7 @@ function TypeSettingsSection({
           ) : null}
           <TypeSettingsScheduleDetailRow
             label="IPS 유형"
+            validationKey="typeSettings.ipsType"
             scheduleDetailName="ipsScheduleDetail"
             scheduleDetailValue={ipsScheduleDetail}
             editForm={editForm}
@@ -2021,6 +2070,7 @@ function MultiRoundCurriculumSessionForm({
   individualTableRows,
   isPreEducationBlock = false,
   canRemove = false,
+  highlightSessionNo,
 }: {
   index: number
   session: CurriculumSessionViewModel
@@ -2040,6 +2090,7 @@ function MultiRoundCurriculumSessionForm({
   individualTableRows?: ReturnType<typeof getIndividualMultiRoundPerScheduleTableRows>
   isPreEducationBlock?: boolean
   canRemove?: boolean
+  highlightSessionNo: number
 }) {
   const assignmentEnabled = editForm.watch(`curriculumSessions.${index}.assignmentEnabled`) ?? false
   const sessionIpsCategory =
@@ -2056,6 +2107,7 @@ function MultiRoundCurriculumSessionForm({
     <DetailInfoForm.Field
       label="과제 설정"
       fullRow={fullRow}
+      validationKey={`curriculum.assignment[${highlightSessionNo}]`}
       view={
         <CurriculumAssignmentSettingView
           assignmentEnabled={session.assignmentEnabled}
@@ -2131,6 +2183,7 @@ function MultiRoundCurriculumSessionForm({
             <DetailInfoForm.Field
               label={classFieldLabel}
               fullRow
+              validationKey={curriculumRegularSessionContentValidationKeys(highlightSessionNo)}
               view={
                 <>
                   {formatGeneralProgramProgressSessionDisplay(session.title)}
@@ -2204,6 +2257,7 @@ function MultiRoundCurriculumSessionForm({
                     />
                     <DetailInfoForm.Field
                       label="IPS 유형"
+                      validationKey={curriculumRegularSessionIpsValidationKey(highlightSessionNo)}
                       view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
                       edit={
                         <ProgramRegistrationIpsTypeFields
@@ -2268,6 +2322,7 @@ function MultiRoundCurriculumSessionForm({
                   <DetailInfoForm.Field
                     label="IPS 유형"
                     fullRow
+                    validationKey={curriculumRegularSessionIpsValidationKey(highlightSessionNo)}
                     view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
                     edit={
                       <ProgramRegistrationIpsTypeFields
@@ -2337,6 +2392,7 @@ function MultiRoundCurriculumSessionForm({
                     <DetailInfoForm.Field
                       label="IPS 유형"
                       fullRow={options.fullRow}
+                      validationKey={curriculumRegularSessionIpsValidationKey(highlightSessionNo)}
                       view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
                       edit={
                         <ProgramRegistrationIpsTypeFields
@@ -2412,6 +2468,7 @@ function SingleRoundCurriculumSessionForm({
   isPreEducationBlock = false,
   canRemove = false,
   showHeading = true,
+  highlightSessionNo,
 }: {
   index: number
   session: CurriculumSessionViewModel
@@ -2423,6 +2480,7 @@ function SingleRoundCurriculumSessionForm({
   isPreEducationBlock?: boolean
   canRemove?: boolean
   showHeading?: boolean
+  highlightSessionNo: number
 }) {
   const sessionIpsCategory = editForm.watch(`curriculumSessions.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`curriculumSessions.${index}.ipsDetail`) ?? ''
@@ -2443,6 +2501,7 @@ function SingleRoundCurriculumSessionForm({
             <DetailInfoForm.Field
               label="단원명 및 교육 내용"
               fullRow
+              validationKey={curriculumRegularSessionContentValidationKeys(highlightSessionNo)}
               view={
                 session.title?.trim() || session.description?.trim() ? (
                   <>
@@ -2496,6 +2555,7 @@ function SingleRoundCurriculumSessionForm({
               <DetailInfoForm.Field
                 label="IPS 유형"
                 fullRow
+                validationKey={curriculumRegularSessionIpsValidationKey(highlightSessionNo)}
                 view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
                 edit={
                   <ProgramRegistrationIpsTypeFields
@@ -2567,6 +2627,7 @@ function CurriculumPreEducationEventEditBlock({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="일정명"
+                validationKey={CURRICULUM_PRE_EDUCATION_NAME_VALIDATION_KEY}
                 edit={
                   <Controller
                     name={`curriculumSessions.${index}.title`}
@@ -2587,6 +2648,7 @@ function CurriculumPreEducationEventEditBlock({
               />
               <DetailInfoForm.Field
                 label="진행 일정"
+                validationKey={CURRICULUM_PRE_EDUCATION_LINE_VALIDATION_KEY}
                 edit={
                   <div className="detail-info-form-inputs-wrapper-no-gap">
                     <Controller
@@ -2846,8 +2908,14 @@ function CurriculumSection({
     participantOrganization: Boolean(participantOrganization),
   })
 
+  const regularSessionNos = sessions.reduce<number[]>((acc, session) => {
+    const prev = acc.at(-1) ?? 0
+    acc.push(isPreEducationCurriculumSession(session) ? prev : prev + 1)
+    return acc
+  }, [])
   const sessionBlocks = sessions.map((session, index) => {
     const isPreEducationBlock = isPreEducationCurriculumSession(session)
+    const highlightSessionNo = regularSessionNos[index] ?? 0
     const canRemove =
       !isPreEducationBlock &&
       sessions
@@ -2896,6 +2964,7 @@ function CurriculumSection({
         individualTableRows={individualCurriculumTableRows}
         isPreEducationBlock={isPreEducationBlock}
         canRemove={canRemove}
+        highlightSessionNo={highlightSessionNo}
       />
     ) : (
       <SingleRoundCurriculumSessionForm
@@ -2909,6 +2978,7 @@ function CurriculumSection({
         showIpsPerSession={showIpsPerSession}
         isPreEducationBlock={isPreEducationBlock}
         canRemove={canRemove}
+        highlightSessionNo={highlightSessionNo}
         showHeading={
           isPreEducationBlock || curriculumPreEducation || regularSessionCount > 1
         }
@@ -2923,6 +2993,7 @@ function CurriculumSection({
       title={curriculumMeta.title}
       isFormEdit={isFormEdit}
       required
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
       editDescription={
         isMultiRoundCurriculum
           ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescriptionMultiRound
@@ -3453,6 +3524,7 @@ function ScheduleEventDetailEditBlock({
   isPreEducationBlock = false,
   showHeading = true,
   canRemove = false,
+  highlightScheduleNo,
 }: {
   index: number
   scheduleLabel: string
@@ -3462,6 +3534,7 @@ function ScheduleEventDetailEditBlock({
   isPreEducationBlock?: boolean
   showHeading?: boolean
   canRemove?: boolean
+  highlightScheduleNo: number
 }) {
   const headingLabel = isPreEducationBlock ? '사전 교육' : scheduleLabel
   const participantIndividual = Boolean(editForm.watch('participantIndividual'))
@@ -3487,6 +3560,11 @@ function ScheduleEventDetailEditBlock({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="일정명"
+                validationKey={
+                  isPreEducationBlock
+                    ? SCHEDULE_PRE_EDUCATION_NAME_VALIDATION_KEY
+                    : scheduleRegularDetailNameValidationKey(highlightScheduleNo)
+                }
                 edit={
                   <Controller
                     name={`scheduleDetails.${index}.name`}
@@ -3507,6 +3585,11 @@ function ScheduleEventDetailEditBlock({
               />
               <DetailInfoForm.Field
                 label="진행 일정"
+                validationKey={
+                  isPreEducationBlock
+                    ? SCHEDULE_PRE_EDUCATION_DATE_VALIDATION_KEY
+                    : scheduleRegularDetailDateValidationKey(highlightScheduleNo)
+                }
                 edit={
                   <div className="detail-info-form-inputs-wrapper-no-gap">
                     <Controller
@@ -3572,6 +3655,7 @@ function ScheduleDetailEditBlock({
   isPreEducationBlock = false,
   onRemove,
   onRemoveGroup,
+  highlightScheduleNo,
 }: {
   index: number
   scheduleLabel: string
@@ -3583,6 +3667,7 @@ function ScheduleDetailEditBlock({
   isPreEducationBlock?: boolean
   onRemove: () => void
   onRemoveGroup: (groupIndex: number) => void
+  highlightScheduleNo: number
 }) {
   const showGroupLabel = groupCount > 1
   const isSingleRound = sessionRound === 'single'
@@ -3755,6 +3840,11 @@ function ScheduleDetailEditBlock({
     <DetailInfoForm.Field
       label="IPS 유형"
       fullRow={options?.fullRow}
+      validationKey={
+        isPreEducationBlock
+          ? undefined
+          : scheduleRegularDetailIpsValidationKey(highlightScheduleNo)
+      }
       edit={
         <ProgramRegistrationIpsTypeFields
           layout={options?.layout}
@@ -3978,6 +4068,11 @@ function ScheduleDetailEditBlock({
               <DetailInfoForm.Field
                 label={groupCount > 1 ? '일정명' : '일정 상세'}
                 fullRow
+                validationKey={
+                  isPreEducationBlock
+                    ? SCHEDULE_PRE_EDUCATION_NAME_VALIDATION_KEY
+                    : scheduleRegularDetailNameValidationKey(highlightScheduleNo)
+                }
                 edit={
                   <Controller
                     name={`scheduleDetails.${index}.name`}
@@ -4005,6 +4100,7 @@ function ScheduleDetailEditBlock({
               <DetailInfoForm.Field
                 label="진행 시간"
                 fullRow
+                validationKey={scheduleRegularDetailGroupTimesValidationKey(highlightScheduleNo)}
                 edit={renderGroupTimeField()}
                 view="-"
               />
@@ -4182,6 +4278,7 @@ function ScheduleProgressEditSection({
       title={scheduleMeta.title}
       isFormEdit
       required
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
       editDescription={editDescription}
       titleTrailing={
         <div
@@ -4296,6 +4393,17 @@ function ScheduleProgressEditSection({
               ? padEventScheduleLabel(index)
               : padScheduleDetailLabel(index))
         const isPreEducationBlock = detailBlockKind === 'preEducation'
+        const highlightScheduleNo = isPreEducationBlock
+          ? 0
+          : fields.reduce((count, _, earlierIndex) => {
+              if (earlierIndex > index) return count
+              const earlierKind =
+                editForm.watch(`scheduleDetails.${earlierIndex}.blockKind`) ??
+                inferScheduleDetailBlockKind(
+                  editForm.watch(`scheduleDetails.${earlierIndex}.scheduleLabel`) ?? ''
+                )
+              return earlierKind === 'preEducation' ? count : count + 1
+            }, 0)
         const hasEarlierEvent = fields.some((_, earlierIndex) => {
           if (earlierIndex >= index) return false
           const earlierKind =
@@ -4318,6 +4426,7 @@ function ScheduleProgressEditSection({
               isPreEducationBlock={isPreEducationBlock}
               showHeading={fields.length > 1 || isPreEducationBlock}
               canRemove={detailBlockKind === 'event' && hasEarlierEvent}
+              highlightScheduleNo={highlightScheduleNo}
             />
           )
         }
@@ -4335,6 +4444,7 @@ function ScheduleProgressEditSection({
             isPreEducationBlock={scheduleCurriculumPreEducation && index === 0}
             onRemove={() => handleRemoveDetail(index)}
             onRemoveGroup={handleRemoveGroup}
+            highlightScheduleNo={highlightScheduleNo}
           />
         )
       })}
@@ -4673,6 +4783,10 @@ function ScheduleSettingsEditFields({
         />
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
+          validationKey={[
+            'educationScheduleSettings.singleDateIso',
+            'educationScheduleSettings.periodDateIso',
+          ]}
           edit={
             <ParagraphDatePicker inputSize="small"
               mode="single"
@@ -4752,6 +4866,7 @@ function ScheduleSettingsSection({
       title={scheduleMeta.title}
       isFormEdit={isFormEdit}
       editDescription={scheduleMeta.editDescription}
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
       required
       titleTrailing={
         isFormEdit ? (

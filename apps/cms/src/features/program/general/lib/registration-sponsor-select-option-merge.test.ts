@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
+  buildGeneralProgramSponsorManagerSelectOptions,
   mergeSponsorContactSelectOptions,
   mergeSponsorRegistrationSelectOptions,
   sponsorSelectIdListsEqual,
@@ -35,6 +37,53 @@ describe('mergeSponsorContactSelectOptions', () => {
       '1627251::1627253',
       '163301::163322',
     ])
+  })
+
+  it('선택된 미선택 sentinel은 라벨을 미선택으로 유지한다', () => {
+    const options = mergeSponsorContactSelectOptions({
+      selectedIds: [SPONSOR_CONTACT_UNSELECTED_VALUE],
+      apiOptions: [],
+    })
+    expect(options).toEqual([
+      { value: SPONSOR_CONTACT_UNSELECTED_VALUE, label: '미선택' },
+    ])
+  })
+})
+
+describe('buildGeneralProgramSponsorManagerSelectOptions', () => {
+  it('담당자가 없는 후원사도 수정 모드에서 미선택을 보여준다', () => {
+    const options = buildGeneralProgramSponsorManagerSelectOptions({
+      isFormEdit: true,
+      selectedSponsorIds: ['163336'],
+      sponsors: [{ id: '163336', name: '○' }],
+      contactsBySponsorId: { '163336': [] },
+    })
+    expect(options).toEqual([
+      { value: SPONSOR_CONTACT_UNSELECTED_VALUE, label: '미선택' },
+    ])
+  })
+
+  it('상세가 아직 없는 선택 후원사여도 미선택을 보여준다', () => {
+    const options = buildGeneralProgramSponsorManagerSelectOptions({
+      isFormEdit: true,
+      selectedSponsorIds: ['1627251', '163336'],
+      sponsors: [{ id: '1627251', name: '스타벅스' }],
+      contactsBySponsorId: {
+        '1627251': [{ id: 'c1', name: '김담당', position: '책임' }],
+      },
+    })
+    expect(options.map(option => option.label)).toEqual(['스타벅스 | 김담당 책임', '미선택'])
+  })
+
+  it('후원사를 고르지 않으면 미선택을 붙이지 않는다', () => {
+    expect(
+      buildGeneralProgramSponsorManagerSelectOptions({
+        isFormEdit: true,
+        selectedSponsorIds: [],
+        sponsors: [],
+        contactsBySponsorId: {},
+      })
+    ).toEqual([])
   })
 })
 

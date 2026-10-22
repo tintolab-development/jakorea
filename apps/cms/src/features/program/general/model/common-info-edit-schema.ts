@@ -1013,7 +1013,15 @@ export function formatSponsorManagerDisplayLine(input: {
  * view 모드 — 저장된 문구에서 담당자명을 매칭해 `이름 직함`(복수 시 `소속 | …`)으로 재구성.
  * 매칭 실패 시 stored 원문 반환.
  */
-export function resolveSponsorManagerViewLine(input: {
+function splitLegacyJoinedSponsorManagerLines(stored: string): string[] {
+  if (!stored.includes(', ')) return [stored]
+  const parts = stored.split(', ').map(part => part.trim()).filter(Boolean)
+  if (parts.length > 1 && parts.every(part => part.includes('|'))) return parts
+  return [stored]
+}
+
+/** view 모드 — 담당자 1명당 한 줄(복수 시 세로 스택용) */
+export function resolveSponsorManagerViewLines(input: {
   storedLine?: string | null
   contactRefs?: readonly string[]
   contactNames?: Record<string, string>
@@ -1022,7 +1030,7 @@ export function resolveSponsorManagerViewLine(input: {
     string,
     ReadonlyArray<{ id?: string; name: string; position?: string | null; phone?: string | null }>
   >
-}): string {
+}): string[] {
   const refs = (input.contactRefs ?? []).filter(ref => !isSponsorContactUnselected(ref))
   if (refs.length > 0) {
     const multiSponsor = input.sponsors.length > 1 || refs.length > 1
@@ -1050,10 +1058,10 @@ export function resolveSponsorManagerViewLine(input: {
         return phone ? `${label} | ${phone}` : label
       })
       .filter(Boolean)
-    if (labels.length > 0) return labels.join(', ')
+    if (labels.length > 0) return labels
   }
   const stored = input.storedLine?.trim() ?? ''
-  if (!stored || stored === '-') return stored || '-'
+  if (!stored || stored === '-') return []
   const multiSponsor = input.sponsors.length > 1
   for (const sponsor of input.sponsors) {
     const contacts = input.contactsBySponsorId[sponsor.id] ?? []
@@ -1067,10 +1075,26 @@ export function resolveSponsorManagerViewLine(input: {
         multiSponsor,
       })
       const phone = contact.phone?.trim()
-      return phone ? `${label} | ${phone}` : label
+      return [phone ? `${label} | ${phone}` : label]
     }
   }
-  return stored
+  return splitLegacyJoinedSponsorManagerLines(stored)
+}
+
+export function resolveSponsorManagerViewLine(input: {
+  storedLine?: string | null
+  contactRefs?: readonly string[]
+  contactNames?: Record<string, string>
+  sponsors: ReadonlyArray<{ id: string; name: string }>
+  contactsBySponsorId: Record<
+    string,
+    ReadonlyArray<{ id?: string; name: string; position?: string | null; phone?: string | null }>
+  >
+}): string {
+  const lines = resolveSponsorManagerViewLines(input)
+  if (lines.length > 0) return lines.join(', ')
+  const stored = input.storedLine?.trim() ?? ''
+  return stored || '-'
 }
 
 export type GeneralProgramSponsorEditContext = {
@@ -1791,6 +1815,23 @@ function resolveDetailedProgramName(
   return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
+/**
+ * 세부 일정(sub) 행의 scheduleDateLabel.
+ * 폼 `scheduleDate`는 GET 시드값이다. 단일·기관 세부 일정 UI는 진행 시간만 수정하므로
+ * 일정 방식을 바꾸지 않으면 GET 라벨을 그대로 보존한다.
+ * DATE↔PERIOD 전환 시에는 프로그램 `educationScheduleLines`가 정본이므로 행 라벨을 싣지 않는다.
+ */
+function persistSubScheduleDateLabel(args: {
+  formScheduleDate: string | undefined
+  nextMode: 'date' | 'period'
+  existingMode: 'date' | 'period'
+}): string | undefined {
+  const next = args.formScheduleDate?.trim() || undefined
+  if (!next) return undefined
+  if (args.nextMode !== args.existingMode) return undefined
+  return next
+}
+
 function existingCommonWithoutRecruitment(
   common: Program['generalCommonInfo']
 ): Program['generalCommonInfo'] {
@@ -1842,6 +1883,14 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ? resolveScheduleTypeDetailedProgramNameFromDetails(relabeledScheduleDetails)
     : resolveDetailedProgramName(values.detailedProgramId, detailedProgramCatalog)
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
+  const nextEducationScheduleMode = shouldDisableEducationSchedulePeriodMode({
+    participantOrganization: values.participantOrganization,
+    sessionRound: values.sessionRound,
+  })
+    ? 'date'
+    : values.educationScheduleMode
+  const existingEducationScheduleMode =
+    existingCommon.educationScheduleMode === 'period' ? 'period' : 'date'
 
   const managerLine = sponsorContactUnselectedOnly
     ? SPONSOR_CONTACT_UNSELECTED_LABEL
@@ -2066,6 +2115,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
             return {
               ...row,
               progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
+              scheduleDateLabel: persistSubScheduleDateLabel({
+                formScheduleDate: d.scheduleDate,
+                nextMode: nextEducationScheduleMode,
+                existingMode: existingEducationScheduleMode,
+              }),
               educationFormLabel:
                 values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
                   ? educationFormLabelFromValue(d.educationForm)
@@ -2086,12 +2140,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
             }
           })
         : [],
-    educationScheduleMode: shouldDisableEducationSchedulePeriodMode({
-      participantOrganization: values.participantOrganization,
-      sessionRound: values.sessionRound,
-    })
-      ? 'date'
-      : values.educationScheduleMode,
+    educationScheduleMode: nextEducationScheduleMode,
     educationScheduleLines: [...values.educationScheduleLines],
     wageGradeRows,
     paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds, paymentItemOptions),

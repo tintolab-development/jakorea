@@ -470,7 +470,7 @@ export class UjatProgramEditPage {
       }),
     ])
 
-    const completedDialog = this.page.getByRole('dialog').filter({ hasText: '정보 수정' })
+    const completedDialog = this.page.getByRole('dialog').filter({ hasText: '수정 완료' })
     await completedDialog.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined)
     if (await completedDialog.isVisible().catch(() => false)) {
       await completedDialog.getByRole('button', { name: '확인' }).click()

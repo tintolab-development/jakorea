@@ -18,6 +18,7 @@ import {
 import {
   hasRhfCurriculumMultiDateScheduleCountMismatch,
   parseGeneralCommonInfoRhfValidation,
+  type GeneralCommonInfoValidationAlertKind,
 } from '@/features/program/general/lib/overlay-phase1/common-info-rhf-validation'
 import { logGeneralProgramCommonInfoIndependentSave } from '@/features/program/general/lib/common-info-edit-payload-log'
 import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
@@ -39,7 +40,14 @@ import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teach
 
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
-  | { ok: false; kind: 'validation'; keys: readonly string[]; message?: string; title?: string }
+  | {
+      ok: false
+      kind: 'validation'
+      keys: readonly string[]
+      message?: string
+      title?: string
+      alertKind?: GeneralCommonInfoValidationAlertKind
+    }
   | { ok: false; kind: 'schedule-count-mismatch' }
   | { ok: false; kind: 'api'; error: unknown }
 
@@ -179,6 +187,7 @@ export function useGeneralProgramCommonInfoSave({
             keys: rhfValidation.keys,
             message: rhfValidation.message,
             title: rhfValidation.title,
+            alertKind: rhfValidation.alertKind,
           }
         }
         if (hasRhfCurriculumMultiDateScheduleCountMismatch(values)) {
