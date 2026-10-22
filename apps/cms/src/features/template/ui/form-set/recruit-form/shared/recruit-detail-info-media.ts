@@ -1,6 +1,7 @@
 /**
  * 모집 상세 정보(썸네일·첨부) overlay 키·생성 후 프로그램 바인딩.
- * 등록 중에는 ownerId=null draft 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
+ * 등록 중에는 ownerId=null draft(PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT)로 업로드하고,
+ * 생성 직후 실제 programId 에 연결한다.
  */
 
 import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
