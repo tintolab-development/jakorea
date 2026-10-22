@@ -86,21 +86,21 @@ function SponsorLogoViewList({ files }: { files: SponsorLogoFile[] }) {
       {files.map(file => {
         const displayName = file.fileName.trim() || sponsorLogoFallbackFileName(file.id)
         return (
-        <li key={file.id} className="sponsor-detail-basic-info__logo-item">
-          <button
-            type="button"
-            className="sponsor-detail-basic-info__logo-download-btn"
-            onClick={() => {
-              void downloadSponsorLogos([{ ...file, fileName: displayName }])
-            }}
-            aria-label={`${displayName} 다운로드`}
-          >
-            <span className="sponsor-detail-basic-info__logo-download" aria-hidden>
-              <FileDownloadRowIcon />
-            </span>
-            <span className="sponsor-detail-basic-info__logo-name">{displayName}</span>
-          </button>
-        </li>
+          <li key={file.id} className="sponsor-detail-basic-info__logo-item">
+            <button
+              type="button"
+              className="sponsor-detail-basic-info__logo-download-btn"
+              onClick={() => {
+                void downloadSponsorLogos([{ ...file, fileName: displayName }])
+              }}
+              aria-label={`${displayName} 다운로드`}
+            >
+              <span className="sponsor-detail-basic-info__logo-download" aria-hidden>
+                <FileDownloadRowIcon />
+              </span>
+              <span className="sponsor-detail-basic-info__logo-name">{displayName}</span>
+            </button>
+          </li>
         )
       })}
     </ul>
@@ -131,32 +131,31 @@ export function SponsorBasicInfoSection({
     ? dayjs(value.sponsorshipStartDate).format('YYYY.MM.DD')
     : '-'
 
-  const sponsorshipStatusFieldContent =
-    canWrite ? (
-      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-        <StatusDropdownCell<SponsorshipStatus>
-          status={value.sponsorshipStatus ?? 'active'}
-          statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
-          renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
-          isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
-          onChange={next => {
-            if (onSponsorshipStatusChange) {
-              onSponsorshipStatusChange(next)
-              return
-            }
-            onChange(prev => ({
-              ...prev,
-              sponsorshipStatus: next,
-            }))
-          }}
-          isOpen={isSponsorshipStatusDropdownOpen}
-          onOpenChange={setIsSponsorshipStatusDropdownOpen}
-          tagLayout="tag100"
-        />
-      </span>
-    ) : (
-      <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} />
-    )
+  const sponsorshipStatusFieldContent = canWrite ? (
+    <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+      <StatusDropdownCell<SponsorshipStatus>
+        status={value.sponsorshipStatus ?? 'active'}
+        statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
+        renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
+        isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+        onChange={next => {
+          if (onSponsorshipStatusChange) {
+            onSponsorshipStatusChange(next)
+            return
+          }
+          onChange(prev => ({
+            ...prev,
+            sponsorshipStatus: next,
+          }))
+        }}
+        isOpen={isSponsorshipStatusDropdownOpen}
+        onOpenChange={setIsSponsorshipStatusDropdownOpen}
+        tagLayout="tag100"
+      />
+    </span>
+  ) : (
+    <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} />
+  )
 
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode={isEditing ? 'edit' : 'view'}>
@@ -227,9 +226,7 @@ export function SponsorBasicInfoSection({
                 />
               ) : (
                 <span>
-                  {value.businessNumber
-                    ? formatKoreanBusinessNumber(value.businessNumber)
-                    : '-'}
+                  {value.businessNumber ? formatKoreanBusinessNumber(value.businessNumber) : '-'}
                 </span>
               ),
             },
@@ -242,7 +239,8 @@ export function SponsorBasicInfoSection({
           required
           view={<span>{sponsorshipStartDisplay}</span>}
           edit={
-            <CmsDatePicker inputSize="small"
+            <CmsDatePicker
+              inputSize="small"
               value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
               onChange={date =>
                 onChange(prev => ({
@@ -281,7 +279,9 @@ export function SponsorBasicInfoSection({
         <DetailInfoForm.Field
           label="소재지"
           view={
-            <span>{displayText([value.district, value.detailAddress].filter(Boolean).join(' '))}</span>
+            <span>
+              {displayText([value.district, value.detailAddress].filter(Boolean).join(' '))}
+            </span>
           }
           edit={
             <Space.Compact block>
@@ -337,18 +337,12 @@ export function SponsorBasicInfoSection({
                 onFilesChange={files =>
                   onChange(prev => {
                     const nextPending = mergeSponsorLogoFiles(prev.pendingLogoFiles, files)
-                    const validation = validateSponsorLogoTotalCount(
-                      prev.logos.length,
-                      nextPending
-                    )
+                    const validation = validateSponsorLogoTotalCount(prev.logos.length, nextPending)
                     if (validation) {
                       showAlert({ title: '안내', content: validation })
                       return prev
                     }
-                    if (
-                      nextPending.length === prev.pendingLogoFiles.length &&
-                      files.length > 0
-                    ) {
+                    if (nextPending.length === prev.pendingLogoFiles.length && files.length > 0) {
                       return prev
                     }
                     return { ...prev, pendingLogoFiles: nextPending }
@@ -381,7 +375,7 @@ export function SponsorBasicInfoSection({
             <CmsInput
               value={value.securityMemo}
               onChange={event => onChange(prev => ({ ...prev, securityMemo: event.target.value }))}
-              placeholder="비고를 입력하세요"
+              placeholder="비고를 입력해 주세요"
               inputSize="small"
               width="100%"
             />

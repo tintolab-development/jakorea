@@ -17,6 +17,11 @@ import {
 } from '@/shared/lib/admin-file-upload'
 import { parseOwnerResourceId } from '@/shared/lib/admin-file-upload/attachments'
 import type { Editor } from '@/shared/rich-text'
+import {
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
+} from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
 
@@ -124,6 +129,8 @@ export function useFaqFormModal({
           },
         })
         onSuccess?.(updated)
+        onCancel()
+        showUpdateCompletedAlert()
       } else {
         const created = await createMutation.mutateAsync({
           category,
@@ -134,8 +141,9 @@ export function useFaqFormModal({
           createdAt: new Date().toISOString(),
         })
         onSuccess?.(created)
+        onCancel()
+        showRegisterCompletedAlert()
       }
-      onCancel()
     } catch (err) {
       if (err && typeof err === 'object' && 'errorFields' in err) {
         return
@@ -174,8 +182,12 @@ export function useFaqFormModal({
     try {
       await deleteMutation.mutateAsync(faq.id)
       setDeleteConfirmOpen(false)
-      onDeleted?.()
       onCancel()
+      showDeleteCompletedAlert({
+        onConfirm: () => {
+          onDeleted?.()
+        },
+      })
     } catch (err) {
       handleError(err, {
         context: 'useFaqFormModal.handleConfirmDelete',

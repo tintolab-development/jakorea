@@ -2,13 +2,25 @@ import { Form } from 'antd'
 import type { Editor } from '@/shared/rich-text'
 import { RichTextEditor } from '@/shared/rich-text'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
-import { CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
+import {
+  CmsFieldFrame,
+  CmsInput,
+  CmsRadioGroup,
+  CmsSelect,
+  useCmsFieldStatus,
+} from '@/shared/ui'
 
 export type FaqFormFieldsProps = {
   categoryOptions: { label: string; value: string }[]
   editor: Editor | null
   editorMinHeight: string
   fileUploadOwner: AdminFileUploadOwner | null
+}
+
+function isRegisterableFaqCategory(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const v = value.trim()
+  return v.length > 0 && v !== 'ALL' && v !== '전체'
 }
 
 function FaqAnswerEditor({
@@ -19,24 +31,27 @@ function FaqAnswerEditor({
   editor: Editor | null
   editorMinHeight: string
   fileUploadOwner: AdminFileUploadOwner | null
-  value?: string
-  onChange?: (value: string) => void
 }) {
-  return (
-    <div className="faq-form-modal__editor-host">
-      <RichTextEditor
-        editor={editor}
-        minHeight={editorMinHeight}
-        fileUploadOwner={fileUploadOwner}
-      />
-    </div>
-  )
-}
+  const { isError, message, hasMessage } = useCmsFieldStatus({})
 
-function isRegisterableFaqCategory(value: unknown): value is string {
-  if (typeof value !== 'string') return false
-  const v = value.trim()
-  return v.length > 0 && v !== 'ALL' && v !== '전체'
+  return (
+    <CmsFieldFrame
+      size="large"
+      label="내용 (답변)"
+      required
+      isError={isError}
+      message={hasMessage ? message : undefined}
+      className="faq-form-modal__section faq-form-modal__section--editor"
+    >
+      <div className="faq-form-modal__editor-host">
+        <RichTextEditor
+          editor={editor}
+          minHeight={editorMinHeight}
+          fileUploadOwner={fileUploadOwner}
+        />
+      </div>
+    </CmsFieldFrame>
+  )
 }
 
 /**
@@ -56,7 +71,6 @@ export function FaqFormFields({
       <div className="faq-form-modal__row-split">
         <Form.Item
           name="category"
-          label="카테고리"
           className="faq-form-modal__field faq-form-modal__field--category"
           normalize={value => (isRegisterableFaqCategory(value) ? value.trim() : undefined)}
           rules={[
@@ -70,20 +84,33 @@ export function FaqFormFields({
           ]}
         >
           <CmsSelect
+            label="카테고리"
+            required
             placeholder="카테고리 선택"
             options={registerOptions}
             width={240}
             inputSize="large"
             withAllOption={false}
+            allowClear={false}
           />
         </Form.Item>
         <Form.Item
           name="visibility"
-          label="공개 여부"
           className="faq-form-modal__field faq-form-modal__field--visibility"
           initialValue="public"
+          rules={[
+            {
+              validator: async (_, value) => {
+                if (value !== 'public' && value !== 'private') {
+                  throw new Error('공개 여부를 선택해 주세요.')
+                }
+              },
+            },
+          ]}
         >
           <CmsRadioGroup
+            label="공개 여부"
+            required
             size="large"
             options={[
               { label: '공개', value: 'public' },
@@ -94,10 +121,12 @@ export function FaqFormFields({
       </div>
       <Form.Item
         name="question"
-        label="제목 (질문)"
+        className="faq-form-modal__section"
         rules={[{ required: true, whitespace: true, message: '제목을 입력해 주세요.' }]}
       >
         <CmsInput
+          label="제목 (질문)"
+          required
           placeholder="제목을 입력하세요"
           inputSize="large"
           width="100%"
@@ -106,7 +135,6 @@ export function FaqFormFields({
       </Form.Item>
       <Form.Item
         name="answer"
-        label="내용 (답변)"
         rules={[{ required: true, whitespace: true, message: '내용을 입력해 주세요.' }]}
       >
         <FaqAnswerEditor

@@ -25,6 +25,16 @@ export function useLeaveDeletedDetail(listPath: string, detailQueryKey: QueryKey
     navigate(listPath)
   }, [listPath, navigate])
 
+  const suspendDetailQuery = useCallback(() => {
+    flushSync(() => {
+      setDetailEnabled(false)
+    })
+  }, [])
+
+  const resumeDetailQuery = useCallback(() => {
+    setDetailEnabled(true)
+  }, [])
+
   const leaveToList = useCallback(() => {
     if (detailQueryKey) pendingRemoveKeyRef.current = detailQueryKey
     flushSync(() => {
@@ -50,5 +60,12 @@ export function useLeaveDeletedDetail(listPath: string, detailQueryKey: QueryKey
     [detailQueryKey, listPath, navigate]
   )
 
-  return { detailEnabled, goList, leaveToList, runDeleteThenLeave }
+  return {
+    detailEnabled,
+    goList,
+    leaveToList,
+    runDeleteThenLeave,
+    suspendDetailQuery,
+    resumeDetailQuery,
+  }
 }

@@ -19,7 +19,7 @@ export const NOTIFICATION_SEND_SCHEDULE_SHOW_TIME = {
 
 export type NotificationSendTiming = 'immediate' | 'scheduled'
 
-/** 입력 표시: YYYY. MM. DD(요일) HH:mm */
+/** 입력 표시: YYYY.MM.DD(요일) HH:mm */
 export function formatNotificationSendScheduleDisplay(
   value: Dayjs | null | undefined
 ): string {

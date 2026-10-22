@@ -35,6 +35,9 @@ import {
   CmsRadioGroup,
   CmsSelect,
   FileSelectField,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -202,7 +205,7 @@ export function NoticeFormModal({
       await deleteMutation.mutateAsync(notice.id)
       setDeleteConfirmOpen(false)
       handleCancel()
-      onDeleted?.()
+      showDeleteCompletedAlert({ onConfirm: () => onDeleted?.() })
     } catch (error) {
       setErrorMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
     }
@@ -292,7 +295,8 @@ export function NoticeFormModal({
         author: authorName,
       }
 
-      if (mode === 'create') {
+      const isCreate = mode === 'create'
+      if (isCreate) {
         const created = await createMutation.mutateAsync(base)
         markUploadsClaimed()
         onSuccess?.(created)
@@ -309,6 +313,11 @@ export function NoticeFormModal({
       setExistingAttachments([])
       setNewFiles([])
       onCancel()
+      if (isCreate) {
+        showRegisterCompletedAlert()
+      } else {
+        showUpdateCompletedAlert()
+      }
     } catch (error) {
       const message = getPostsApiErrorMessage(error, '저장에 실패했습니다.')
       const field = getApiErrorField(error)
@@ -489,9 +498,10 @@ export function NoticeFormModal({
                       onFilesChange={handleAttachmentAdd}
                       onRemoveFile={handleAttachmentRemove}
                       guideLines={[
-                        '파일은 총 최대 15MB까지 업로드 가능하며,',
-                        'JPG, PNG, PDF, Word, Excel 파일 형식만 지원됩니다.',
+                        '최대 20MB까지 업로드 가능하며,',
+                        'JPG, PNG, Excel, PDF, Word 형식만 지원됩니다.',
                       ]}
+                      sizeExceededMessage="최대 20MB까지 업로드 가능합니다."
                     />
                     {attachmentError ? (
                       <p className="notice-register-modal__error" role="alert">

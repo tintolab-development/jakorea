@@ -58,7 +58,7 @@ export function buildAdminFaqManagementFilterFields(
     {
       key: 'dateRange',
       type: 'dateRange',
-      label: '작성일시',
+      label: '작성일',
       defaultValue: null,
       width: '32%',
     },

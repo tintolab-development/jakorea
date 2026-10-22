@@ -6,6 +6,7 @@ import { SponsorContactTypeBadge } from '@/features/sponsor/ui/sponsor-contact-t
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { CmsInput, CmsPhoneInput } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -14,6 +15,8 @@ const CONTACT_TYPE_OPTIONS = [
   'lead',
   'assistant',
 ] as const satisfies readonly SponsorContactRow['contactType'][]
+
+export const SPONSOR_CONTACT_TYPE_CELL_CLASSNAME = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME}`
 
 export interface BuildContactColumnsParams {
   contacts: SponsorContactRow[]
@@ -81,7 +84,10 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
   }, [])
 
   const isItemDisabled = useCallback(
-    (current: SponsorContactRow['contactType'], option: SponsorContactRow['contactType']): boolean => {
+    (
+      current: SponsorContactRow['contactType'],
+      option: SponsorContactRow['contactType']
+    ): boolean => {
       // 유일한 주 담당자 → 담당자 변경은 선택 가능(클릭 시 안내 모달)
       return current === option
     },
@@ -97,6 +103,7 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
       onChange={canWrite ? handleChange : undefined}
       isOpen={openDropdownId === row.id}
       onOpenChange={handleOpenChange}
+      tagLayout="tag100"
     />
   )
 })
@@ -105,7 +112,9 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
  * 후원사 담당자 테이블의 `ColumnsType` 정의를 생성합니다.
  * 기획 컬럼: 유형 · 부서 · 직함 · 담당자명 · 내선 · 연락처 · 이메일 · 회사 주소 · 비고 · 등록일시
  */
-export function buildContactColumns(params: BuildContactColumnsParams): ColumnsType<SponsorContactRow> {
+export function buildContactColumns(
+  params: BuildContactColumnsParams
+): ColumnsType<SponsorContactRow> {
   const {
     contacts,
     canWrite,
@@ -130,9 +139,10 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
       title: '담당자 유형',
       dataIndex: 'contactType',
       key: 'contactType',
-      width: 130,
+      width: 160,
       align: 'center',
-      onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+      onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
+      onCell: () => ({ className: SPONSOR_CONTACT_TYPE_CELL_CLASSNAME }),
       render: (_: SponsorContactRow['contactType'], row: SponsorContactRow) =>
         isEditing ? (
           <SponsorContactTypeBadge type={row.contactType} />
