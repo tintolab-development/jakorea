@@ -85,6 +85,7 @@ export {
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
 } from './lib/detail-tabs'

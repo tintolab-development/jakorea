@@ -84,6 +84,7 @@ function buildMfaStateFromChallenge(
     lockUntil: null,
     challengeUuid: challenge.challengeUuid,
     mfaMethod: challenge.mfaMethod,
+    mfaSetupRequired: challenge.mfaSetupRequired,
     challengeExpiresAt: challenge.expiresAt,
     totpSecret: challenge.totpSecret,
     otpauthUri: challenge.otpauthUri,

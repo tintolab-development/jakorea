@@ -13,6 +13,7 @@ import {
   applyCreatedNoticeToLists,
   applyDeletedNoticeToLists,
   applyUpdatedNoticeToLists,
+  invalidateNoticeDetail,
   invalidateNoticeLists,
 } from '@/features/posts/lib/notice-query-cache'
 
@@ -28,6 +29,7 @@ export function useNoticeMutations() {
       }
       queryClient.setQueryData(postsQueryKeys.notices.detail(created.id), created)
       applyCreatedNoticeToLists(queryClient, created)
+      await invalidateNoticeDetail(queryClient, created.id)
     },
   })
 
@@ -48,6 +50,7 @@ export function useNoticeMutations() {
       }
       queryClient.setQueryData(postsQueryKeys.notices.detail(updated.id), updated)
       applyUpdatedNoticeToLists(queryClient, updated)
+      await invalidateNoticeDetail(queryClient, updated.id)
     },
   })
 

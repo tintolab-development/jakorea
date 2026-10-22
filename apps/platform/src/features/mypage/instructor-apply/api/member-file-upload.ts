@@ -1,5 +1,6 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
+import { resolvePortalPresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 import { isAxiosError } from 'axios'
 
 const POLL_INTERVAL_MS = 2_000
@@ -327,7 +328,7 @@ async function uploadPreparedMemberPortalFile(input: {
   const uploadMethod = !responseMethod || responseMethod === 'GET' ? 'PUT' : responseMethod
   let uploadResponse: Response
   try {
-    uploadResponse = await fetch(prepared.uploadUrl, {
+    uploadResponse = await fetch(resolvePortalPresignedUploadUrl(prepared.uploadUrl), {
       method: uploadMethod,
       headers,
       body: input.file,

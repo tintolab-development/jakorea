@@ -46,6 +46,20 @@ export function applyUpdatedNoticeToLists(queryClient: QueryClient, updated: Not
   )
 }
 
+/**
+ * 공지 저장 응답은 첨부 메타데이터를 포함하지 않을 수 있으므로
+ * 상세 캐시를 서버 응답 기준으로 다시 hydrate한다.
+ */
+export async function invalidateNoticeDetail(
+  queryClient: QueryClient,
+  noticeId: string
+): Promise<void> {
+  await queryClient.invalidateQueries({
+    queryKey: postsQueryKeys.notices.detail(noticeId),
+    exact: true,
+  })
+}
+
 export function applyDeletedNoticeToLists(
   queryClient: QueryClient,
   id: string | readonly string[]

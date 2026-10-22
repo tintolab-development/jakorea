@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, type ChangeEvent } from 'react'
 import { Image } from 'antd'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import {
@@ -126,7 +127,7 @@ export function ThumbnailUploadField({
             variant="secondary"
             size="h32"
             disabled={!canSelect}
-            onClick={() => inputRef.current?.click()}
+            onClick={() => openFilePicker(inputRef.current)}
           >
             {uploading ? '업로드 중…' : buttonLabel}
           </CmsButton>

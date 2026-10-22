@@ -9,6 +9,7 @@
 import { useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import {
   FILE_SELECT_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
@@ -178,7 +179,7 @@ export function FileSelectField({
           variant="secondary"
           size="medium"
           disabled={disabled}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => openFilePicker(inputRef.current)}
         >
           {buttonLabel}
         </CmsButton>

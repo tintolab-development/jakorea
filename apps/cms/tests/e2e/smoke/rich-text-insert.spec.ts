@@ -21,6 +21,17 @@ test.describe('Rich text insert menu', () => {
     await page.getByRole('menuitem', { name: '이미지 (URL)' }).click()
     await expect(demo.locator('.rich-text-content img[src="https://jakorea.test/photo.png"]')).toHaveCount(1)
 
+    const fileChooserPromise = page.waitForEvent('filechooser')
+    await demo.getByRole('button', { name: '삽입' }).click()
+    await page.getByRole('menuitem', { name: '이미지 (파일)' }).click()
+    const fileChooser = await fileChooserPromise
+    await fileChooser.setFiles({
+      name: 'toolbar-image.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    })
+    await expect(demo.locator('.rich-text-content img[src^="data:image/png"]')).toHaveCount(1)
+
     page.once('dialog', dialog => dialog.accept('https://www.youtube.com/watch?v=dQw4w9WgXcQ'))
     await demo.getByRole('button', { name: '삽입' }).click()
     await page.getByRole('menuitem', { name: 'YouTube 동영상' }).click()

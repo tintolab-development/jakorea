@@ -14,6 +14,7 @@ import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-man
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './crime-record-consent-document-fullpage-modal.css'
@@ -38,7 +39,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handlePickDocument = useCallback(() => {
-    fileInputRef.current?.click()
+    openFilePicker(fileInputRef.current)
   }, [])
 
   const handleFileChange = useCallback(

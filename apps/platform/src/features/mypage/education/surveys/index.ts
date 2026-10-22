@@ -2,6 +2,8 @@ export type { EducationSurveyEmptyKind } from './ui/empty-panel'
 export { EducationSurveyEmptyPanel } from './ui/empty-panel'
 export { EducationSurveyFillPanel } from './ui/fill-panel'
 export type { EducationSurveyFillPanelProps } from './ui/fill-panel'
+export { EducationSurveySection } from './ui/section'
+export type { EducationSurveySectionProps } from './ui/section'
 export { EducationSurveyList } from './ui/survey-list'
 export type { EducationSurveyListProps } from './ui/survey-list'
 export {

@@ -15,10 +15,8 @@ import {
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
   EducationSettlementPanel,
-  EducationSurveyEmptyPanel,
-  EducationSurveyFillPanel,
+  EducationSurveySection,
   DocumentPassBanner,
-  getEducationSurveyTabAvailability,
   isInstructorRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
@@ -133,7 +131,18 @@ export function MypageLectureDetailPage() {
     application?.programId ?? null,
     { fresh: true },
   )
-  const program = remoteProgramQuery.program
+  const remoteProgram = remoteProgramQuery.program
+  const program = useMemo(() => {
+    if (!remoteProgram) return undefined
+    const applicationProgram = application?.programConfig
+    if (!applicationProgram) return remoteProgram
+    return {
+      ...remoteProgram,
+      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+      satisfactionConfigured:
+        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+    }
+  }, [application?.programConfig, remoteProgram])
   const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
@@ -406,47 +415,40 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'survey') {
-      const surveyAvailability = getEducationSurveyTabAvailability({
-        displayStatus: application.displayStatus,
-        withdrawalPhase: application.withdrawalPhase,
-        configured: program.surveyConfigured,
-      })
-      if (remoteDetailEnabled || surveyAvailability === 'active') {
-        return (
-          <EducationSurveyFillPanel
-            kind="survey"
-            programTitle={program.title}
-            educationScheduleLines={program.educationScheduleLines}
-            educationTargetLabel={program.educationTargetDetailLabel}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            programId={program.id}
-          />
-        )
-      }
-      return <EducationSurveyEmptyPanel kind="survey" />
+      return (
+        <EducationSurveySection
+          kind="survey"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
+          configured={program.surveyConfigured}
+          remoteDetailEnabled={remoteDetailEnabled}
+          programTitle={program.title}
+          educationScheduleLines={program.educationScheduleLines}
+          educationTargetLabel={program.educationTargetDetailLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          programId={program.id}
+          pendingSurveyCount={application.pendingSurveyCount}
+        />
+      )
     }
     if (active === 'satisfaction') {
-      const satisfactionAvailability = getEducationSurveyTabAvailability({
-        displayStatus: application.displayStatus,
-        withdrawalPhase: application.withdrawalPhase,
-        configured: program.satisfactionConfigured,
-      })
-      if (remoteDetailEnabled || satisfactionAvailability === 'active') {
-        return (
-          <EducationSurveyFillPanel
-            kind="satisfaction"
-            satisfactionAudience="teacher"
-            programTitle={program.title}
-            educationScheduleLines={program.educationScheduleLines}
-            educationTargetLabel={program.educationTargetDetailLabel}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            programId={program.id}
-          />
-        )
-      }
-      return <EducationSurveyEmptyPanel kind="satisfaction" />
+      return (
+        <EducationSurveySection
+          kind="satisfaction"
+          satisfactionAudience="teacher"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
+          configured={program.satisfactionConfigured}
+          remoteDetailEnabled={remoteDetailEnabled}
+          programTitle={program.title}
+          educationScheduleLines={program.educationScheduleLines}
+          educationTargetLabel={program.educationTargetDetailLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          programId={program.id}
+        />
+      )
     }
     if (active === 'settlement') {
       return (

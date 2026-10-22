@@ -5,6 +5,7 @@
  */
 
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
+import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 export type JaHistoryUploadPurpose =
   | 'JA_HISTORY_HERO_IMAGE'
@@ -47,7 +48,7 @@ export async function uploadJaHistoryImageAsset(
     headers['Content-Type'] = file.type || 'application/octet-stream'
   }
 
-  const uploadRes = await fetch(uploadUrl, {
+  const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {
     method,
     headers,
     body: file,

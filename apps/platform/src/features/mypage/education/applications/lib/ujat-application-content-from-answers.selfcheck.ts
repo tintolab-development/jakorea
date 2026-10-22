@@ -20,7 +20,7 @@ const empty = buildUjatApplicationContentFromPortal({ answers: {} })
 assert.equal(empty, undefined)
 
 const fromBlocks = buildUjatApplicationContentFromPortal({
-  preferredScheduleBlocks: [{ date: '2026-04-20' }, { dateText: '2026-04-27' }],
+  preferredScheduleBlocks: [{ date: '2026-04-20' }, { date: '2026-04-27' }],
 })
 assert.ok(fromBlocks)
 assert.deepEqual(fromBlocks!.preferredDates, ['2026년 4월 20일(월)', '2026년 4월 27일(월)'])
@@ -151,6 +151,16 @@ const dashes = buildUjatApplicationContentFromPortal({
 })
 assert.equal(dashes, undefined)
 
+const partialInstitution = buildUjatApplicationContentFromPortal({
+  answers: {
+    [ujatBasic]: {
+      otherRequests: '주차 안내',
+    },
+  },
+})
+assert.equal(partialInstitution?.institution.name, '')
+assert.equal(partialInstitution?.institution.otherRequests, '주차 안내')
+
 const mappedContent = buildUjatApplicationContentFromPortal({
   answers: {
     [ujatBasic]: { schoolName: '매핑학교', regionLabel: '대전' },
@@ -169,5 +179,67 @@ assert.equal(
   }),
   undefined,
 )
+
+const operatingDayIsNotPreferred = buildUjatApplicationContentFromPortal({
+  preferredScheduleBlocks: [
+    {
+      startAt: '2026-09-01T00:00:00',
+      endAt: '2026-09-01T02:00:00',
+      scheduleId: 186290,
+      sessionCount: 1,
+      label: '운영일',
+    },
+  ],
+})
+assert.equal(operatingDayIsNotPreferred, undefined)
+
+const dateWinsOverSchedule = buildUjatApplicationContentFromPortal({
+  preferredScheduleBlocks: [
+    {
+      date: '2026-04-24',
+      startAt: '2026-09-01T00:00:00',
+      sessionCount: 1,
+      dayOfWeek: '금',
+    },
+  ],
+})
+assert.deepEqual(dateWinsOverSchedule?.preferredDates, ['2026년 4월 24일(금)'])
+assert.equal(dateWinsOverSchedule?.classTimeBlocks.length, 0)
+
+const overlaySelectedIds = buildUjatApplicationContentFromPortal({
+  preferredScheduleBlocks: [],
+  answers: {
+    [ujatSchedule]: { selectedIds: ['h1:2026-04-24', 'h2:not-a-date', 'h3:2026-05-08'] },
+  },
+})
+assert.deepEqual(overlaySelectedIds?.preferredDates, [
+  '2026년 4월 24일(금)',
+  '2026년 5월 8일(금)',
+])
+
+const periodObjects = buildUjatApplicationContentFromPortal({
+  answers: {
+    [ujatClassTime]: [
+      {
+        gradeRangeLabel: '1,2,4',
+        periods: [{ period: 1, start: '09:00', end: '10:00' }],
+      },
+    ],
+  },
+})
+assert.equal(periodObjects?.classTimeBlocks[0]?.gradeRangeLabel, '1학년, 2학년, 4학년')
+assert.deepEqual(periodObjects?.classTimeBlocks[0]?.periods, [
+  { periodLabel: '1교시', timeLabel: '09:00~10:00' },
+])
+
+const organizationRegion = buildUjatApplicationContentFromPortal({
+  answers: {
+    [ujatBasic]: {
+      schoolName: '지역학교',
+      organizationRegion: '광주광역시 남구',
+    },
+  },
+})
+assert.equal(organizationRegion?.institution.address, '광주광역시 남구')
 
 console.log('ujat-application-content-from-answers.selfcheck: ok')

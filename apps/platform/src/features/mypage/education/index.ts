@@ -51,6 +51,7 @@ export {
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
   hasTeacherAssignmentAsideContent,
@@ -80,6 +81,7 @@ export {
   UjatScheduleBanner,
   UjatApplicationContent,
 } from './applications'
+export { UjatVolunteerAssignmentPanel } from './ujat-assignments'
 export type {
   EducationInProgressFile,
   EducationInProgressNotice,
@@ -121,12 +123,14 @@ export type {
   EducationSatisfactionAudience,
   EducationSurveyEmptyKind,
   EducationSurveyFillPanelProps,
+  EducationSurveySectionProps,
   EducationSurveyTabAvailability,
   EducationSurveySeedKind,
 } from './surveys'
 export {
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
+  EducationSurveySection,
   createEducationSurveySeedDraft,
   EDUCATION_SURVEY_SEED_CREATED_AT,
   getEducationSurveyTabAvailability,

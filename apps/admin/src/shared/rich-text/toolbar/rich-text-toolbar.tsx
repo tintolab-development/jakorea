@@ -2,7 +2,7 @@ import '@jakorea/rich-text/extension-types'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
 import type { MenuProps } from 'antd'
-import { useCallback, useMemo, useRef, type ChangeEvent } from 'react'
+import { useCallback, useId, useMemo, useRef, type ChangeEvent } from 'react'
 import {
   insertEmoji,
   insertHorizontalRule,
@@ -118,6 +118,7 @@ export function RichTextToolbar({
   resolveImageSrc,
 }: RichTextToolbarProps) {
   const imageFileInputRef = useRef<HTMLInputElement>(null)
+  const imageFileInputId = useId()
   const state =
     useEditorState({
       editor,
@@ -278,8 +279,15 @@ export function RichTextToolbar({
           },
           {
             key: 'image-file',
-            label: '이미지 (파일)',
-            onClick: () => imageFileInputRef.current?.click(),
+            // Dropdown 메뉴의 onClick 안에서 input.click()/showPicker()를
+            // 호출하면 브라우저에 따라 사용자 제스처가 끊겨 파일 선택창이
+            // 열리지 않는다. native label 연결은 메뉴 클릭 자체를 파일
+            // input 활성화로 전달하므로 이 경로를 사용한다.
+            label: (
+              <label htmlFor={imageFileInputId} className="rich-text-toolbar__file-menu-label">
+                이미지 (파일)
+              </label>
+            ),
           },
           {
             key: 'youtube',
@@ -313,7 +321,7 @@ export function RichTextToolbar({
         onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
     ]
-  }, [allowInlineMedia, run])
+  }, [allowInlineMedia, imageFileInputId, run])
 
   const handleImageFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -331,6 +339,7 @@ export function RichTextToolbar({
     <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
       <input
         ref={imageFileInputRef}
+        id={imageFileInputId}
         type="file"
         accept={RICH_TEXT_IMAGE_ACCEPT}
         className="rich-text-toolbar__file-input"

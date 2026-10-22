@@ -5,7 +5,7 @@
 
 /**
  * Horizontal shell (width 기준)
- * - Mobile (~1079): padding 16
+ * - Mobile (~1079): padding 20
  * - PC compact (1080~1599): padding 40
  * - PC full (1600~): content-shell 1440 기준 fluid inset (1920 → 240)
  */
@@ -13,7 +13,7 @@
   box-sizing: border-box;
   width: 100%;
   margin-inline: auto;
-  padding-inline: var(--spacing-16);
+  padding-inline: var(--spacing-20);
 }
 
 .navigationArea {
@@ -54,7 +54,7 @@
   font-family: var(--font-family-base);
   font-size: 14px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 160%;
 }
 
@@ -200,8 +200,8 @@
 .contentArea .shell {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-20);
-  padding-block: var(--spacing-32);
+  gap: var(--spacing-16);
+  padding: var(--spacing-24) var(--spacing-20);
 }
 
 .logoRow {
@@ -291,17 +291,27 @@
   letter-spacing: -0.13px;
 }
 
-.companyInfoLine {
+.companyInfoMobile {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-8);
+  width: 100%;
+}
+
+.companyInfoLine {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: var(--spacing-16);
   margin: 0;
+  white-space: nowrap;
 }
 
 .companyInfoLineDesktop {
   display: none;
   flex-wrap: wrap;
   gap: var(--spacing-8) var(--spacing-20);
+  width: 100%;
   margin: 0;
 }
 
@@ -316,23 +326,11 @@
   gap: var(--spacing-16);
 }
 
-.socialLinks {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 18px;
-}
-
-.socialLink {
-  display: inline-flex;
-  width: var(--spacing-24);
-  height: var(--spacing-24);
-  align-items: center;
-  justify-content: center;
-}
-
 .copyright {
   margin: 0;
+  font-size: 14px;
+  line-height: 160%;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -347,7 +345,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-24);
-    min-height: var(--spacing-68);
+    min-height: var(--spacing-72);
     padding-block: 0;
   }
 
@@ -405,7 +403,7 @@
   }
 
   .contentArea .shell {
-    gap: var(--spacing-24);
+    gap: var(--spacing-20);
     padding-block: var(--spacing-60);
   }
 
@@ -423,7 +421,7 @@
     width: auto;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: var(--spacing-48);
+    gap: 0;
   }
 
   .partnerLogoArea {
@@ -452,8 +450,13 @@
     display: none;
   }
 
+  .companyInfoMobile {
+    display: none;
+  }
+
   .companyInfoLineDesktop {
     display: flex;
+    justify-content: flex-start;
   }
 
   .companyInfoEmailOnly {
@@ -461,10 +464,11 @@
   }
 
   .metaRow {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: space-between;
-    gap: var(--spacing-80);
+    display: none;
+  }
+
+  .companyInfoLineDesktop .copyright {
+    margin-left: auto;
   }
 }
 
@@ -509,9 +513,20 @@
     );
   }
 
+  .contentArea .shell {
+    padding-inline: max(
+      var(--spacing-80),
+      calc((100% - var(--content-shell-max-width)) / 2)
+    );
+  }
+
   .navigationArea .shell {
-    justify-content: center;
-    gap: clamp(var(--spacing-40), 6vw, 150px);
+    padding-inline: max(
+      var(--spacing-80),
+      calc((100% - var(--content-shell-max-width)) / 2)
+    );
+    justify-content: space-between;
+    gap: var(--spacing-24);
   }
 
   .navigation {
@@ -523,8 +538,8 @@
 /* ── PC wide · 1920~ (시안: 링크 gap 48 · 링크↔드롭다운 150) ── */
 @media (min-width: 1920px) {
   .navigationArea .shell {
-    justify-content: center;
-    gap: 150px;
+    justify-content: space-between;
+    gap: var(--spacing-24);
   }
 
   .navigation {

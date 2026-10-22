@@ -48,17 +48,20 @@ function humanizeAuthErrorMessage(code: string, message: string, fallback: strin
 function parseAuthError(payload: unknown, fallback: string): AdminMfaApiError {
   if (payload && typeof payload === 'object') {
     const o = payload as Record<string, unknown>
+    const wrapped = o.error as { code?: string; message?: string } | undefined
+    const codeFromBody = wrapped?.code ?? (typeof o.code === 'string' ? o.code : undefined)
     if (o.success === false) {
       const raw = typeof o.message === 'string' ? o.message : fallback
-      const codeFromMessage = raw.includes('ACCOUNT_LOCKED')
+      const codeFromMessage = codeFromBody ?? (raw.includes('ACCOUNT_LOCKED')
         ? 'ACCOUNT_LOCKED'
         : raw.includes('MFA_VERIFICATION_FAILED')
           ? 'MFA_VERIFICATION_FAILED'
-          : 'MFA_FAILED'
+          : raw.includes('MFA_ALREADY_ENROLLED') || raw.includes('이미 MFA 등록')
+            ? 'MFA_ALREADY_ENROLLED'
+            : 'MFA_FAILED')
       return new AdminMfaApiError(codeFromMessage, humanizeAuthErrorMessage(codeFromMessage, raw, fallback))
     }
-    const wrapped = o.error as { code?: string; message?: string } | undefined
-    const code = String(wrapped?.code ?? 'UNKNOWN')
+    const code = String(codeFromBody ?? 'UNKNOWN')
     const raw = wrapped?.message ?? (typeof o.message === 'string' ? o.message : fallback)
     return new AdminMfaApiError(code, humanizeAuthErrorMessage(code, raw, fallback))
   }
