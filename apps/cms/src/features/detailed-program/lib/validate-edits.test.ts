@@ -27,6 +27,7 @@ describe('planDetailedProgramSave', () => {
       ok: true,
       plan: {
         deleteIds: [],
+        deleteItems: [],
         updateItems: [
           { id: 1, nameKo: 'Alpha 2', useYn: true, version: 3 },
           { id: 2, nameKo: 'Beta', useYn: true, version: 5 },
@@ -45,7 +46,10 @@ describe('planDetailedProgramSave', () => {
       },
       stagedDeleteIds: [],
     })
-    expect(result).toEqual({ ok: true, plan: { deleteIds: [], updateItems: [] } })
+    expect(result).toEqual({
+      ok: true,
+      plan: { deleteIds: [], deleteItems: [], updateItems: [] },
+    })
   })
 
   it('blocks empty or whitespace names', () => {
@@ -118,5 +122,92 @@ describe('planDetailedProgramSave', () => {
     })
     expect(deleteResult.ok).toBe(false)
     if (!deleteResult.ok) expect(deleteResult.block.reason).toBe('over-max')
+  })
+
+  it('keeps original versions on staged deletes and builds mixed save items', () => {
+    const result = planDetailedProgramSave({
+      originals: {
+        ...originals,
+        '3': { name: 'Gamma', active: true, version: 2 },
+      },
+      drafts: {
+        '1': { name: 'Alpha 2', active: true, version: 3 },
+        '2': { name: 'Beta', active: true, version: 5 },
+        '3': { name: 'Gamma', active: true, version: 2 },
+      },
+      stagedDeleteIds: ['3'],
+    })
+    expect(result).toEqual({
+      ok: true,
+      plan: {
+        deleteIds: ['3'],
+        deleteItems: [{ id: 3, version: 2 }],
+        updateItems: [
+          { id: 1, nameKo: 'Alpha 2', useYn: true, version: 3 },
+          { id: 2, nameKo: 'Beta', useYn: true, version: 5 },
+        ],
+      },
+    })
+  })
+
+  it('blocks mixed save over 500 without splitting', () => {
+    const originalsMany: Record<string, { name: string; active: boolean; version: number }> = {}
+    const drafts: Record<string, { name: string; active: boolean; version: number }> = {}
+    for (let i = 1; i <= 300; i += 1) {
+      const id = String(i)
+      originalsMany[id] = { name: `U${i}`, active: true, version: 1 }
+      drafts[id] = { name: `U${i}-x`, active: true, version: 1 }
+    }
+    const stagedDeleteIds: string[] = []
+    for (let i = 1000; i <= 1200; i += 1) {
+      const id = String(i)
+      originalsMany[id] = { name: `D${i}`, active: true, version: 2 }
+      drafts[id] = { name: `D${i}`, active: true, version: 2 }
+      stagedDeleteIds.push(id)
+    }
+    const result = planDetailedProgramSave({
+      originals: originalsMany,
+      drafts,
+      stagedDeleteIds,
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.block).toMatchObject({ reason: 'over-max', kind: 'changes' })
+  })
+
+  it('blocks mixed save when a staged delete has no version', () => {
+    const result = planDetailedProgramSave({
+      originals: {
+        '1': { name: 'Alpha', active: true, version: 3 },
+        '3': { name: 'Gamma', active: true },
+      },
+      drafts: {
+        '1': { name: 'Alpha 2', active: true, version: 3 },
+      },
+      stagedDeleteIds: ['3'],
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.block.reason).toBe('version-missing')
+  })
+
+  it('keeps staged-delete version even when the draft row was removed', () => {
+    const result = planDetailedProgramSave({
+      originals: {
+        ...originals,
+        '3': { name: 'Gamma', active: true, version: 2 },
+      },
+      drafts: {
+        '1': { name: 'Alpha 2', active: true, version: 3 },
+        '2': { name: 'Beta', active: false, version: 5 },
+      },
+      stagedDeleteIds: ['3'],
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.plan.deleteItems).toEqual([{ id: 3, version: 2 }])
+    expect(result.plan.updateItems).toEqual([
+      { id: 1, nameKo: 'Alpha 2', useYn: true, version: 3 },
+    ])
   })
 })

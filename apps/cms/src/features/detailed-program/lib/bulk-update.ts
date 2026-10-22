@@ -22,3 +22,29 @@ export function toDetailedProgramBulkUpdateItem(input: {
     version: input.version,
   }
 }
+
+/** PATCH /api/admin/detailed-programs/bulk-changes 삭제 행 */
+export type DetailedProgramBulkDeleteItem = {
+  id: number
+  version: number
+}
+
+export type DetailedProgramBulkChangesRequest = {
+  updates: DetailedProgramBulkUpdateItem[]
+  deleteItems: DetailedProgramBulkDeleteItem[]
+}
+
+export type DetailedProgramBulkChangesResponse = {
+  updated?: unknown[]
+  deletedIds?: unknown[]
+}
+
+export function toDetailedProgramBulkDeleteItem(input: {
+  id: string
+  version: number
+}): DetailedProgramBulkDeleteItem {
+  return {
+    id: Number(input.id),
+    version: input.version,
+  }
+}

@@ -19,6 +19,7 @@ import { DETAILED_PROGRAM_BULK_MAX } from '@/features/detailed-program/lib/bulk-
 import { DETAILED_PROGRAM_DELETE_BLOCKED_REASON } from '@/features/detailed-program/lib/detailed-program-delete-blocked-copy'
 import { hasUnsavedDetailedProgramEdits } from '@/features/detailed-program/lib/edit-dirty'
 import { isDetailedProgramInUseDeleteError } from '@/features/detailed-program/lib/is-detailed-program-in-use-delete-error'
+import { resolveDetailedProgramSaveCall } from '@/features/detailed-program/lib/save-call'
 import {
   detailedProgramBulkMaxMessage,
   planDetailedProgramSave,
@@ -83,7 +84,7 @@ function detailedProgramDeleteGuideTitle(selectedCount: number): string {
 function detailedProgramDeleteGuideLines(selectedCount: number): string[] {
   if (selectedCount <= 1) return [...DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE]
   return [
-    `선택한 ${selectedCount}개의 세부 프로그램을 삭제하시겠습니까?`,
+    `**선택한 ${selectedCount}개의 세부 프로그램**을 삭제하시겠습니까?`,
     DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE[1],
   ]
 }
@@ -131,7 +132,8 @@ export default function DetailedProgramPage() {
   const listQuery = useDetailedProgramListQuery(searchParams, true)
   const isInitialListLoading = isDataManagementListLoading(listQuery)
   const isListFetching = listQuery.isFetching
-  const { createMutation, bulkUpdateMutation, deleteMutation } = useDetailedProgramMutations()
+  const { createMutation, bulkUpdateMutation, bulkChangesMutation, deleteMutation } =
+    useDetailedProgramMutations()
   const rows = listQuery.data ?? []
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [isEditMode, setIsEditMode] = useState(false)
@@ -243,8 +245,8 @@ export default function DetailedProgramPage() {
       return
     }
 
-    const { deleteIds, updateItems } = planned.plan
-    if (deleteIds.length === 0 && updateItems.length === 0) {
+    const saveCall = resolveDetailedProgramSaveCall(planned.plan)
+    if (saveCall.kind === 'none') {
       exitEditMode()
       setSelectedRowKeys([])
       return
@@ -252,19 +254,19 @@ export default function DetailedProgramPage() {
 
     setIsSaving(true)
     try {
-      if (deleteIds.length > 0) {
-        await deleteMutation.mutateAsync(deleteIds)
-        setStagedDeleteIds([])
-      }
-      if (updateItems.length > 0) {
-        await bulkUpdateMutation.mutateAsync(updateItems)
+      if (saveCall.kind === 'bulk-changes') {
+        await bulkChangesMutation.mutateAsync(saveCall.request)
+      } else if (saveCall.kind === 'bulk-update') {
+        await bulkUpdateMutation.mutateAsync(saveCall.items)
+      } else {
+        await deleteMutation.mutateAsync(saveCall.ids)
       }
       exitEditMode()
       setSelectedRowKeys([])
-      if (updateItems.length > 0) {
-        showUpdateCompletedAlert()
-      } else {
+      if (saveCall.kind === 'bulk-delete') {
         showDeleteCompletedAlert()
+      } else {
+        showUpdateCompletedAlert()
       }
     } catch (error) {
       if (isDetailedProgramConcurrentModificationError(error)) {
@@ -276,12 +278,12 @@ export default function DetailedProgramPage() {
         return
       }
       if (isDetailedProgramInUseDeleteError(error)) {
-        setDeleteBlockedSelectedCount(deleteIds.length || 1)
+        setDeleteBlockedSelectedCount(planned.plan.deleteIds.length || 1)
         setDeleteBlockedModalOpen(true)
         return
       }
       const code = getApiErrorCode(error)
-      const rowId = getDetailedProgramErrorRowId(error, updateItems)
+      const rowId = getDetailedProgramErrorRowId(error, planned.plan.updateItems)
       const fieldMessage = detailedProgramFieldErrorMessage(code)
       if (rowId && fieldMessage) {
         setNameErrorById({ [rowId]: fieldMessage })
@@ -296,7 +298,14 @@ export default function DetailedProgramPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [bulkUpdateMutation, deleteMutation, exitEditMode, isSaving, stagedDeleteIds])
+  }, [
+    bulkChangesMutation,
+    bulkUpdateMutation,
+    deleteMutation,
+    exitEditMode,
+    isSaving,
+    stagedDeleteIds,
+  ])
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
@@ -383,7 +392,11 @@ export default function DetailedProgramPage() {
     return tableData.filter(row => !stagedDeleteSet.has(row.id))
   }, [isEditMode, stagedDeleteSet, tableData])
 
-  const savePending = isSaving || bulkUpdateMutation.isPending || deleteMutation.isPending
+  const savePending =
+    isSaving ||
+    bulkUpdateMutation.isPending ||
+    bulkChangesMutation.isPending ||
+    deleteMutation.isPending
 
   const columns: ColumnsType<DetailedProgramManagementRow> = useMemo(
     () => [
@@ -587,9 +600,6 @@ export default function DetailedProgramPage() {
           const ids = [...viewDeletePendingIdsRef.current]
           if (!pendingDeleteAppliesImmediatelyRef.current) {
             setStagedDeleteIds(prev => [...new Set([...prev, ...ids])])
-            for (const id of ids) {
-              delete draftByIdRef.current[id]
-            }
             setSelectedRowKeys([])
             setViewDeleteModalOpen(false)
             setViewDeleteModalLines([])

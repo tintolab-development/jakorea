@@ -33,6 +33,12 @@ describe('detailed-program api errors', () => {
     )
   })
 
+  it('maps stale version 409 to concurrent popup, not in-use delete', () => {
+    const staleDelete = axiosError(409, DETAILED_PROGRAM_CONCURRENT_MODIFICATION_CODE)
+    expect(isDetailedProgramConcurrentModificationError(staleDelete)).toBe(true)
+    expect(isDetailedProgramInUseDeleteError(staleDelete)).toBe(false)
+  })
+
   it('still treats a generic delete 409 as in-use', () => {
     expect(isDetailedProgramInUseDeleteError(axiosError(409, 'DETAILED_PROGRAM_IN_USE'))).toBe(true)
     expect(isDetailedProgramInUseDeleteError({ response: { status: 409 } })).toBe(true)

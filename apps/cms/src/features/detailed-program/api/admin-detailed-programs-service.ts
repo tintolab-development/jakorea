@@ -9,11 +9,15 @@ import {
 } from '@/features/detailed-program/api/detailed-program-filter-params'
 import {
   createDetailedProgramRemote,
+  bulkChangeDetailedProgramsRemote,
   bulkDeleteDetailedProgramsRemote,
   bulkUpdateDetailedProgramsRemote,
   fetchDetailedProgramsRemote,
 } from '@/features/detailed-program/api/detailed-programs-api-client'
-import type { DetailedProgramBulkUpdateItem } from '@/features/detailed-program/lib/bulk-update'
+import type {
+  DetailedProgramBulkChangesRequest,
+  DetailedProgramBulkUpdateItem,
+} from '@/features/detailed-program/lib/bulk-update'
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -83,6 +87,17 @@ export async function bulkUpdateDetailedPrograms(
   assertDetailedProgramsRemoteReady()
   const dtos = await bulkUpdateDetailedProgramsRemote(items)
   return dtos.map(mapDetailedProgramResponse)
+}
+
+export async function bulkChangeDetailedPrograms(
+  request: DetailedProgramBulkChangesRequest
+): Promise<{ updated: DetailedProgramManagementRow[]; deletedIds: string[] }> {
+  assertDetailedProgramsRemoteReady()
+  const result = await bulkChangeDetailedProgramsRemote(request)
+  return {
+    updated: result.updated.map(mapDetailedProgramResponse),
+    deletedIds: result.deletedIds.map(String),
+  }
 }
 
 export async function deleteDetailedPrograms(ids: string[]): Promise<void> {

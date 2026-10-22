@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  bulkChangeDetailedPrograms,
   bulkUpdateDetailedPrograms,
   createDetailedProgram,
   deleteDetailedPrograms,
@@ -8,6 +9,7 @@ import { dataManagementQueryKeys } from '@/features/data-management/api/data-man
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
 import {
   applyCreatedToMatchingArrayLists,
+  applyDeletedIdsToArrayLists,
   applyDeletedToArrayLists,
   applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
@@ -78,6 +80,28 @@ export function useDetailedProgramMutations() {
     },
   })
 
+  const bulkChangesMutation = useMutation({
+    mutationFn: bulkChangeDetailedPrograms,
+    retry: false,
+    onSuccess: async result => {
+      for (const updated of result.updated) {
+        if (!updated.id) continue
+        queryClient.setQueryData(dataManagementQueryKeys.detailedPrograms.detail(updated.id), updated)
+        applyUpdatedToMatchingArrayLists(
+          queryClient,
+          listsKey,
+          updated,
+          rowId,
+          detailedProgramMatchesListFilter
+        )
+      }
+      for (const id of result.deletedIds) {
+        queryClient.removeQueries({ queryKey: dataManagementQueryKeys.detailedPrograms.detail(id) })
+      }
+      applyDeletedIdsToArrayLists(queryClient, listsKey, result.deletedIds, rowId)
+    },
+  })
+
   const deleteMutation = useMutation({
     mutationFn: deleteDetailedPrograms,
     retry: false,
@@ -89,5 +113,5 @@ export function useDetailedProgramMutations() {
     },
   })
 
-  return { createMutation, bulkUpdateMutation, deleteMutation }
+  return { createMutation, bulkUpdateMutation, bulkChangesMutation, deleteMutation }
 }
