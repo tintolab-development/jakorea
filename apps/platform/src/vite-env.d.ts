@@ -31,7 +31,7 @@ interface ImportMetaEnv {
   /** mock 전용 — remote Portal SSO는 BE가 client 보유 */
   readonly VITE_GOOGLE_CLIENT_ID?: string
   readonly VITE_KAKAO_CLIENT_ID?: string
-  readonly VITE_NAVER_CLIENT_ID?: string
+  readonly VITE_PLATFORM_NAVER_CLIENT_ID?: string
 }
 
 interface ImportMeta {
