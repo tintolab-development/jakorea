@@ -134,3 +134,15 @@ export async function fetchSystemIssueLogsRemote(
     await logsRemoteApi.systemIssueLogs(toOrvalListParams<SystemIssueLogsParams>(params))
   )
 }
+
+export async function exportSystemIssueLogsRemote(
+  filters: Record<string, string>
+): Promise<Blob> {
+  const query = toLogsQueryParams(filters)
+  return customInstance<Blob>({
+    url: '/api/admin/logs/system-issues/export',
+    method: 'GET',
+    params: query,
+    responseType: 'blob',
+  })
+}

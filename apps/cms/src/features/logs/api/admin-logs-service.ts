@@ -9,6 +9,7 @@ import {
 import {
   exportMemberLoginHistoryRemote,
   exportPrivacyAccessLogsRemote,
+  exportSystemIssueLogsRemote,
   fetchFileAccessLogsRemote,
   fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
@@ -16,6 +17,7 @@ import {
   toLogsListQueryParams,
 } from '@/features/logs/api/logs-api-client'
 import { downloadBlob } from '@/shared/utils/file-download'
+import { buildBugIssueHistoryExcelFilename } from '@/features/logs/lib/bug-issue-excel'
 import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member-login-excel'
 import { buildPersonalInfoAccessHistoryExcelFilename } from '@/features/logs/lib/personal-info-access-excel'
 import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
@@ -120,6 +122,28 @@ export async function getBugIssueLogsPage(
   assertLogsRemoteApiReady()
   const dto = await fetchSystemIssueLogsRemote(toLogsListQueryParams(filters, page, size))
   return mapBugIssueLogListPageResponse(dto)
+}
+
+export async function exportBugIssueLogs(
+  filters: Record<string, string> = {}
+): Promise<void> {
+  assertLogsRemoteApiReady()
+  const blob = await exportSystemIssueLogsRemote(filters)
+  if (blob.type.includes('json')) {
+    const text = await blob.text()
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: { message?: string } }
+      throw new Error(
+        parsed.error?.message ?? parsed.message ?? '버그/이슈 이력 다운로드에 실패했습니다.'
+      )
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'Unexpected end of JSON input') {
+        throw error
+      }
+      throw new Error('버그/이슈 이력 다운로드에 실패했습니다.')
+    }
+  }
+  await downloadBlob(blob, `${buildBugIssueHistoryExcelFilename()}.xlsx`)
 }
 
 export function getLogsApiErrorMessage(error: unknown, fallback: string): string {
