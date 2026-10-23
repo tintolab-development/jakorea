@@ -614,16 +614,21 @@ export function MypageEducationDetailPage() {
     application.ujatPortalBannerState,
   )
   const showBanner = !ujatScheduleBanner && shouldShowDocumentPassBanner(application)
-  const programForInfo = shouldUseUjatApplicationContent(application.detailCase)
-    ? {
-        ...program,
-        basicInfoFields: sanitizeUjatParticipantBasicInfoFields(
-          application.detailCase,
-          program.educationTargetDetailLabel,
-          program.basicInfoFields,
-        ),
-      }
-    : program
+  const programForInfo = {
+    ...program,
+    ...(application.operatingPeriodLabel && application.operatingPeriodLabel !== '-'
+      ? { operatingPeriodLabel: application.operatingPeriodLabel }
+      : {}),
+    ...(shouldUseUjatApplicationContent(application.detailCase)
+      ? {
+          basicInfoFields: sanitizeUjatParticipantBasicInfoFields(
+            application.detailCase,
+            program.educationTargetDetailLabel,
+            program.basicInfoFields,
+          ),
+        }
+      : {}),
+  }
   const showCancelCta =
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const showTeacherAssignment =

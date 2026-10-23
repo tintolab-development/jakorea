@@ -37,6 +37,7 @@ const ujatOrg = mapPortalProgramApplicationDetail({
   supplement: {
     ujat: {
       portalBannerState: 'ACTION_REQUIRED',
+      assignmentRevision: 3,
       temporarySchedule: {
         slots: [
           {
@@ -55,6 +56,7 @@ const ujatOrg = mapPortalProgramApplicationDetail({
 assert.ok(ujatOrg)
 assert.equal(ujatOrg.detailCase, 'ujat-participant')
 assert.equal(ujatOrg.ujatPortalBannerState, 'ACTION_REQUIRED')
+assert.equal(ujatOrg.ujatAssignmentRevision, 3)
 assert.equal(ujatOrg.ujatRevisionReason, undefined)
 assert.deepEqual(ujatOrg.ujatTemporarySchedule, {
   slots: [

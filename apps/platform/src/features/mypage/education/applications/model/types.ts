@@ -146,6 +146,8 @@ export type EducationApplicationListItem = {
   ujatPortalBannerState?: UjatPortalBannerState
   /** CMS 일정 수정 요청 본문 — `supplement.ujat` 문자열 필드 */
   ujatRevisionReason?: string
+  /** 화면에 표시 중인 배정 revision — confirm POST body */
+  ujatAssignmentRevision?: number
   /** 교사 UJAT 신청 내용 탭 — 학년별 신청·수업시간 */
   ujatApplicationContent?: EducationUjatApplicationContent
   /** UJAT 기관 상세 전용 CMS 확정 배정 일정. 신청 당시 희망 일정과 별도 SSOT. */

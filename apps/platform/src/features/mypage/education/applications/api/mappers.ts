@@ -204,6 +204,7 @@ export function mapPortalProgramApplicationListItem(
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
   const ujatRevisionReason = readUjatRevisionReason(row.supplement)
+  const ujatAssignmentRevision = row.supplement?.ujat?.assignmentRevision
 
   return {
     id: String(row.applicationId),
@@ -226,6 +227,7 @@ export function mapPortalProgramApplicationListItem(
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
     ...(ujatRevisionReason ? { ujatRevisionReason } : {}),
+    ...(typeof ujatAssignmentRevision === 'number' ? { ujatAssignmentRevision } : {}),
   }
 }
 
@@ -322,8 +324,8 @@ export function mapPortalProgramApplicationDetail(
     programType: detail.programType,
     programGroup: detail.programGroup,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
-    educationStartAt: detail.educationStartAt ?? detail.program?.educationStartAt,
-    educationEndAt: detail.educationEndAt ?? detail.program?.educationEndAt,
+    educationStartAt: detail.educationStartAt,
+    educationEndAt: detail.educationEndAt,
   })
   if (!mapped) return null
   mapped.displayStatus = displayStatus

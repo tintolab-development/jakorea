@@ -51,6 +51,12 @@ assert.equal(
   }),
   '학년 정보를 수정해 주세요.',
 )
+assert.equal(
+  readUjatRevisionReason({
+    ujat: { requestedReason: '학급 수를 확인해 주세요.' },
+  }),
+  '학급 수를 확인해 주세요.',
+)
 assert.equal(readUjatRevisionReason({ ujat: { portalBannerState: 'REVISION_REQUIRED' } }), null)
 
 assert.equal(readUjatPortalBannerState({ ujat: { portalBannerState: 'ACTION_REQUIRED' } }), 'ACTION_REQUIRED')
