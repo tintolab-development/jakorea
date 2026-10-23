@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict'
-import { readUjatPreferredEducationScheduleOptions } from './ujat-preferred-education-schedule-options.ts'
+import {
+  readUjatPreferredEducationScheduleOptions,
+  readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer,
+  resolveUjatPreferredScheduleSelectedOptions,
+} from './ujat-preferred-education-schedule-options.ts'
 
 function testRuntimeOptionsUseIdAndLabel() {
   const options = readUjatPreferredEducationScheduleOptions({
@@ -33,7 +37,40 @@ function testMissingFieldIsEmpty() {
   assert.deepEqual(options, [])
 }
 
+function testSelectedTokensMatchIdOrDateWithoutInventing() {
+  const options = readUjatPreferredEducationScheduleOptions({
+    runtimeContext: {
+      ujatPreferredEducationDateOptions: [
+        { id: 'h1:2026-04-24', date: '2026-04-24', label: '26년 4월 24일(금)' },
+        { id: 'h1:2026-05-08', date: '2026-05-08', label: '26년 5월 8일(금)' },
+      ],
+    },
+  })
+  const selected = resolveUjatPreferredScheduleSelectedOptions(
+    ['2026-04-24', 'h1:2026-05-08', '2026-11-20'],
+    options,
+  )
+  assert.deepEqual(
+    selected.map(option => option.id),
+    ['h1:2026-04-24', 'h1:2026-05-08'],
+  )
+}
+
+function testSubmittedAnswerDoesNotInventUnselectedFridays() {
+  const options = readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer({
+    selectedIds: ['h1:2027-04-30'],
+    dates: ['2027-04-30', '2027-06-04'],
+  })
+  assert.deepEqual(
+    options.map(option => option.date),
+    ['2027-04-30', '2027-06-04'],
+  )
+  assert.equal(options[0]?.id, 'h1:2027-04-30')
+}
+
 testRuntimeOptionsUseIdAndLabel()
 testEmptyArrayDoesNotInventFridays()
 testMissingFieldIsEmpty()
+testSelectedTokensMatchIdOrDateWithoutInventing()
+testSubmittedAnswerDoesNotInventUnselectedFridays()
 console.log('ujat-preferred-education-schedule-options: ok')
