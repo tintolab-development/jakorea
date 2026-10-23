@@ -43,6 +43,29 @@ import {
   registrationPendingSnapshotId,
   persistGeneralProgramRegistration,
 } from '@/features/program/general/lib/registration-local-save'
+import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/general/lib/overlay-phase1/build-registration-create-from-rhf'
+import {
+  hasIncompleteRegistrationWizardRequiredFields,
+  hasRegistrationWizardCurriculumScheduleCountMismatch,
+  listIncompleteRegistrationWizardRequiredFields,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-required-fields'
+import { hydrateRegistrationWizardUiValues } from '@/features/program/general/lib/overlay-phase1/registration-wizard-legacy-hydrate'
+import { peekApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { peekGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { flushRecruitDetailRichTextIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  createDefaultRegistrationWizardUiValues,
+  REGISTRATION_WIZARD_RHF_SETTINGS_KEY,
+  type RegistrationWizardUiValues,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-ui-values'
+import {
+  applyCurriculumCountTrim,
+  applyEducationStructureReset,
+  applyScheduleDetailCountTrim,
+  applyScheduleGroupCountTrim,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-structure'
 import {
   logProgramRegistrationCreatePayload,
   logRegistrationStepTransitionPayload,
@@ -350,6 +373,127 @@ export function useProgramRegistrationEditor(
     [programTitleKo, programRegistrationFormVariant]
   )
 
+  const generalRequiredFieldContext = useCallback(() => {
+    const resolvedSponsorId =
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
+    const resolvedContactId =
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
+    return {
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolveProgramTitleKo(),
+    }
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    sponsorContactId,
+    sponsorId,
+  ])
+
+  const patchGeneralWizardRhf = useCallback(
+    (patch: (values: RegistrationWizardUiValues) => RegistrationWizardUiValues) => {
+      if (programRegistrationFormVariant !== 'general') return
+      const rhf = peekGeneralRegistrationWizardRhf()
+      if (rhf == null) return
+      rhf.reset(patch(rhf.getValues()), { keepDefaultValues: true })
+    },
+    [programRegistrationFormVariant]
+  )
+
+  const buildGeneralWizardCreateProgram = useCallback(
+    (id: string) => {
+      const rhf = peekGeneralRegistrationWizardRhf()
+      if (programRegistrationFormVariant !== 'general' || rhf == null) return null
+      flushRecruitDetailRichTextIntoGeneralRecruitOverlay()
+      const uiValues = rhf.getValues()
+      return buildGeneralProgramCreateFromWizardRhf({
+        id,
+        uiValues: {
+          ...uiValues,
+          programTitleKo: resolveProgramTitleKo() || uiValues.programTitleKo,
+          sponsorId: sponsorId.trim() || uiValues.sponsorId,
+          managerContactId: sponsorContactId.trim() || uiValues.managerContactId,
+          extras: {
+            ...uiValues.extras,
+            programType,
+            sessionRoundType,
+            educationScheduleMode,
+            educationFormScheduleDetail,
+            participationScheduleDetail,
+            ipsScheduleDetail,
+            curriculumSessionCount,
+            curriculumChartSessionCount,
+            scheduleCurriculumDetailCount,
+            scheduleCurriculumGroupCount,
+            scheduleCurriculumPreEducation,
+            participant,
+          },
+        },
+        editorExtras: {
+          programType,
+          sessionRoundType,
+          educationScheduleMode,
+          educationFormScheduleDetail,
+          participationScheduleDetail,
+          ipsScheduleDetail,
+          curriculumSessionCount,
+          curriculumChartSessionCount,
+          scheduleCurriculumDetailCount,
+          scheduleCurriculumGroupCount,
+          scheduleCurriculumPreEducation,
+          participantOrganization: participant.organization,
+          participantIndividual: participant.individual,
+          participantTeacherInstructor: participant.teacherInstructor === true,
+          participantVolunteer: participant.volunteer === true,
+        },
+        overlay: getProgramRegistrationOverlayRecord(),
+      }).program
+    },
+    [
+      curriculumChartSessionCount,
+      curriculumSessionCount,
+      educationFormScheduleDetail,
+      educationScheduleMode,
+      ipsScheduleDetail,
+      participant,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      programType,
+      resolveProgramTitleKo,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      sessionRoundType,
+      sponsorContactId,
+      sponsorId,
+    ]
+  )
+
   const {
     openWritingUserPreview,
     syncWritingUserPreviewSession,
@@ -439,6 +583,11 @@ export function useProgramRegistrationEditor(
       setActiveParagraphId(next.paragraphs[0]?.id ?? null)
       setSingleItemListActiveItemId(null)
       applyEditorStateSnapshot(createDefaultRegistrationEditorState(programRegistrationFormVariant))
+      if (programRegistrationFormVariant === 'general') {
+        peekGeneralRegistrationWizardRhf()?.reset(createDefaultRegistrationWizardUiValues(), {
+          keepDirty: false,
+        })
+      }
     })
   }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
 
@@ -509,6 +658,28 @@ export function useProgramRegistrationEditor(
                 restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
               )
               setSingleItemListActiveItemId(null)
+              if (variant === 'general') {
+                peekGeneralRegistrationWizardRhf()?.reset(
+                  hydrateRegistrationWizardUiValues({
+                    overlay: {
+                      ...(saved.overlay ?? {}),
+                      ...peekApplicantRecruitInstitutionOverlayRecord(
+                        'recruitment-participant-school'
+                      ),
+                      ...peekGeneralRecruitOverlayRecord('recruitment-participant-individual'),
+                      ...peekGeneralRecruitOverlayRecord('recruitment-instructor'),
+                      ...peekGeneralRecruitOverlayRecord('recruitment-volunteer'),
+                      ...peekGeneralApplicationOverlayRecord('application-participant-school'),
+                      ...peekGeneralApplicationOverlayRecord('application-participant-individual'),
+                      ...peekGeneralApplicationOverlayRecord('application-instructor'),
+                      ...peekGeneralApplicationOverlayRecord('application-volunteer'),
+                    },
+                    editorState: restored,
+                    settingsJson: saved.settingsJson,
+                  }),
+                  { keepDirty: false }
+                )
+              }
             })
             return
           }
@@ -649,6 +820,18 @@ export function useProgramRegistrationEditor(
         individual: next.individual,
         organization: next.organization,
       }))
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: {
+          ...values.extras,
+          participant: {
+            ...values.extras.participant,
+            individual: next.individual,
+            organization: next.organization,
+          },
+          participationScheduleDetail: nextParticipation,
+        },
+      }))
       if (programRegistrationFormVariant === 'general' && programType === 'schedule') {
         setDraft(prev =>
           patchEducationCurriculumParagraph(prev, {
@@ -667,6 +850,7 @@ export function useProgramRegistrationEditor(
       educationFormScheduleDetail,
       ipsScheduleDetail,
       participationScheduleDetail,
+      patchGeneralWizardRhf,
       programRegistrationFormVariant,
       programType,
       sessionRoundType,
@@ -708,6 +892,18 @@ export function useProgramRegistrationEditor(
         individual: next.individual,
         organization: next.organization,
       }))
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: {
+          ...values.extras,
+          participant: {
+            ...values.extras.participant,
+            individual: next.individual,
+            organization: next.organization,
+          },
+          participationScheduleDetail: nextParticipation,
+        },
+      }))
       if (programRegistrationFormVariant === 'general' && programType === 'schedule') {
         setDraft(prev =>
           patchEducationCurriculumParagraph(prev, {
@@ -726,6 +922,7 @@ export function useProgramRegistrationEditor(
       educationFormScheduleDetail,
       ipsScheduleDetail,
       participationScheduleDetail,
+      patchGeneralWizardRhf,
       programRegistrationFormVariant,
       programType,
       sessionRoundType,
@@ -753,8 +950,15 @@ export function useProgramRegistrationEditor(
         return
       }
       setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: {
+          ...values.extras,
+          participant: { ...values.extras.participant, teacherInstructor: checked },
+        },
+      }))
     },
-    [programRegistrationFormVariant]
+    [patchGeneralWizardRhf, programRegistrationFormVariant]
   )
 
   const onVolunteerChange = useCallback(
@@ -778,8 +982,15 @@ export function useProgramRegistrationEditor(
         return
       }
       setParticipant(prev => ({ ...prev, volunteer: checked }))
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: {
+          ...values.extras,
+          participant: { ...values.extras.participant, volunteer: checked },
+        },
+      }))
     },
-    [programRegistrationFormVariant]
+    [patchGeneralWizardRhf, programRegistrationFormVariant]
   )
 
   const onSessionRoundTypeChange = useCallback(
@@ -787,6 +998,15 @@ export function useProgramRegistrationEditor(
       setSessionRoundType(value)
       if (value === 'multi') setCurriculumSessionCount(1)
       if (value === 'single') setCurriculumChartSessionCount(1)
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: {
+          ...values.extras,
+          sessionRoundType: value,
+          ...(value === 'multi' ? { curriculumSessionCount: 1 } : {}),
+          ...(value === 'single' ? { curriculumChartSessionCount: 1 } : {}),
+        },
+      }))
 
       if (programRegistrationFormVariant !== 'general') return
       setDraft(prev =>
@@ -809,6 +1029,7 @@ export function useProgramRegistrationEditor(
       ipsScheduleDetail,
       participant.organization,
       participationScheduleDetail,
+      patchGeneralWizardRhf,
       programRegistrationFormVariant,
       programType,
       restrictCurriculumSessionStructure,
@@ -818,32 +1039,51 @@ export function useProgramRegistrationEditor(
   const onEducationFormScheduleDetailChange = useCallback(
     (value: ProgramRegistrationScheduleDetailKind) => {
       setEducationFormScheduleDetail(value)
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: { ...values.extras, educationFormScheduleDetail: value },
+      }))
     },
-    []
+    [patchGeneralWizardRhf]
   )
 
   const onParticipationScheduleDetailChange = useCallback(
     (value: ProgramRegistrationScheduleDetailKind) => {
       setParticipationScheduleDetail(value)
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: { ...values.extras, participationScheduleDetail: value },
+      }))
     },
-    []
+    [patchGeneralWizardRhf]
   )
 
   const onIpsScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
     setIpsScheduleDetail(value)
-  }, [])
+    patchGeneralWizardRhf(values => ({
+      ...values,
+      extras: { ...values.extras, ipsScheduleDetail: value },
+    }))
+  }, [patchGeneralWizardRhf])
 
   const onAddCurriculumSession = useCallback(() => {
     if (restrictCurriculumSessionStructure) return
-    setCurriculumSessionCount(c => c + 1)
-  }, [restrictCurriculumSessionStructure])
+    const next = curriculumSessionCount + 1
+    setCurriculumSessionCount(next)
+    patchGeneralWizardRhf(values => ({
+      ...values,
+      extras: { ...values.extras, curriculumSessionCount: next },
+    }))
+  }, [curriculumSessionCount, patchGeneralWizardRhf, restrictCurriculumSessionStructure])
 
   const onDeleteCurriculumSession = useCallback(
     (_roundIndex: number) => {
       if (restrictCurriculumSessionStructure) return
-      setCurriculumSessionCount(c => Math.max(1, c - 1))
+      const next = Math.max(1, curriculumSessionCount - 1)
+      setCurriculumSessionCount(next)
+      patchGeneralWizardRhf(values => applyCurriculumCountTrim(values, next, 'session'))
     },
-    [restrictCurriculumSessionStructure]
+    [curriculumSessionCount, patchGeneralWizardRhf, restrictCurriculumSessionStructure]
   )
 
   const onAddCurriculumChartSession = useCallback(() => {
@@ -853,10 +1093,21 @@ export function useProgramRegistrationEditor(
     ) {
       return
     }
-    setCurriculumChartSessionCount(c =>
-      Math.min(c + 1, GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT)
+    const next = Math.min(
+      curriculumChartSessionCount + 1,
+      GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
     )
-  }, [programRegistrationFormVariant, restrictCurriculumSessionStructure])
+    setCurriculumChartSessionCount(next)
+    patchGeneralWizardRhf(values => ({
+      ...values,
+      extras: { ...values.extras, curriculumChartSessionCount: next },
+    }))
+  }, [
+    curriculumChartSessionCount,
+    patchGeneralWizardRhf,
+    programRegistrationFormVariant,
+    restrictCurriculumSessionStructure,
+  ])
 
   const onDeleteCurriculumChartSession = useCallback(
     (chartIndex: number) => {
@@ -867,9 +1118,16 @@ export function useProgramRegistrationEditor(
       ) {
         return
       }
-      setCurriculumChartSessionCount(c => Math.max(1, c - 1))
+      const next = Math.max(1, curriculumChartSessionCount - 1)
+      setCurriculumChartSessionCount(next)
+      patchGeneralWizardRhf(values => applyCurriculumCountTrim(values, next, 'chart'))
     },
-    [programRegistrationFormVariant, restrictCurriculumSessionStructure]
+    [
+      curriculumChartSessionCount,
+      patchGeneralWizardRhf,
+      programRegistrationFormVariant,
+      restrictCurriculumSessionStructure,
+    ]
   )
 
   const onProgramTypeChange = useCallback(
@@ -882,6 +1140,7 @@ export function useProgramRegistrationEditor(
           () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
         )
       }
+      patchGeneralWizardRhf(values => applyEducationStructureReset(values, next))
       setDraft(prev =>
         patchEducationCurriculumParagraph(prev, {
           paragraphTitle: next === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
@@ -905,32 +1164,52 @@ export function useProgramRegistrationEditor(
       ipsScheduleDetail,
       participant.organization,
       participationScheduleDetail,
+      patchGeneralWizardRhf,
       programRegistrationFormVariant,
       sessionRoundType,
     ]
   )
 
   const onAddScheduleCurriculumDetail = useCallback(() => {
-    setScheduleCurriculumDetailCount(c => Math.min(c + 1, 99))
-  }, [])
+    const next = Math.min(scheduleCurriculumDetailCount + 1, 99)
+    setScheduleCurriculumDetailCount(next)
+    patchGeneralWizardRhf(values => ({
+      ...values,
+      extras: { ...values.extras, scheduleCurriculumDetailCount: next },
+    }))
+  }, [patchGeneralWizardRhf, scheduleCurriculumDetailCount])
 
   const onDeleteScheduleCurriculumDetail = useCallback((_detailIndex: number) => {
-    setScheduleCurriculumDetailCount(c => Math.max(1, c - 1))
-  }, [])
+    const next = Math.max(1, scheduleCurriculumDetailCount - 1)
+    setScheduleCurriculumDetailCount(next)
+    patchGeneralWizardRhf(values => applyScheduleDetailCountTrim(values, next))
+  }, [patchGeneralWizardRhf, scheduleCurriculumDetailCount])
 
   const onAddScheduleCurriculumGroup = useCallback(() => {
-    setScheduleCurriculumGroupCount(c =>
-      Math.min(c + 1, PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT)
+    const next = Math.min(
+      scheduleCurriculumGroupCount + 1,
+      PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
     )
-  }, [])
+    setScheduleCurriculumGroupCount(next)
+    patchGeneralWizardRhf(values => ({
+      ...values,
+      extras: { ...values.extras, scheduleCurriculumGroupCount: next },
+    }))
+  }, [patchGeneralWizardRhf, scheduleCurriculumGroupCount])
 
   const onDeleteScheduleCurriculumGroup = useCallback((_groupIndex: number) => {
-    setScheduleCurriculumGroupCount(c => Math.max(1, c - 1))
-  }, [])
+    const next = Math.max(1, scheduleCurriculumGroupCount - 1)
+    setScheduleCurriculumGroupCount(next)
+    patchGeneralWizardRhf(values => applyScheduleGroupCountTrim(values, next))
+  }, [patchGeneralWizardRhf, scheduleCurriculumGroupCount])
 
   const onScheduleCurriculumPreEducationChange = useCallback((checked: boolean) => {
     setScheduleCurriculumPreEducation(checked)
-  }, [])
+    patchGeneralWizardRhf(values => ({
+      ...values,
+      extras: { ...values.extras, scheduleCurriculumPreEducation: checked },
+    }))
+  }, [patchGeneralWizardRhf])
 
   const onTrainedTeachersTeacherTrainingEnabledChange = useCallback((checked: boolean) => {
     setTrainedTeachersTeacherTrainingEnabled(checked)
@@ -940,8 +1219,12 @@ export function useProgramRegistrationEditor(
   const onEducationScheduleModeChange = useCallback(
     (value: ProgramRegistrationEducationScheduleMode) => {
       setEducationScheduleMode(value)
+      patchGeneralWizardRhf(values => ({
+        ...values,
+        extras: { ...values.extras, educationScheduleMode: value },
+      }))
     },
-    []
+    [patchGeneralWizardRhf]
   )
 
   const onSponsorIdChange = useCallback((next: string) => {
@@ -1140,12 +1423,17 @@ export function useProgramRegistrationEditor(
     if (usesRegistrationWizardDraft) {
       const { persistRegistrationWizardFormDraft } =
         await import('@/features/program/general/lib/registration-wizard-form-draft')
+      const rhf = peekGeneralRegistrationWizardRhf()
       await persistRegistrationWizardFormDraft({
         programType: registrationWizardProgramType!,
         templateCode,
         draft,
         overlay,
         editorState,
+        settingsJson:
+          programRegistrationFormVariant === 'general' && rhf != null
+            ? { [REGISTRATION_WIZARD_RHF_SETTINGS_KEY]: rhf.getValues() }
+            : undefined,
       })
     } else {
       await persistWritingFormTemplateDraft({
@@ -1230,6 +1518,8 @@ export function useProgramRegistrationEditor(
   const buildCurrentProgramSnapshot = useCallback(
     (id = 'registration-preview'): Program => {
       const variant = programRegistrationFormVariant
+      const fromRhf = buildGeneralWizardCreateProgram(id)
+      if (fromRhf) return fromRhf
       const resolvedSponsorId = sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
       return buildGeneralProgramListRowFromRegistrationSnapshot({
         id,
@@ -1262,6 +1552,7 @@ export function useProgramRegistrationEditor(
       })
     },
     [
+      buildGeneralWizardCreateProgram,
       curriculumChartSessionCount,
       curriculumSessionCount,
       educationFormScheduleDetail,
@@ -1399,6 +1690,31 @@ export function useProgramRegistrationEditor(
                 : '차시 별 정보를 입력해 주세요',
         })
       )
+      if (programRegistrationFormVariant === 'general') {
+        patchGeneralWizardRhf(values => ({
+          ...values,
+          extras: {
+            ...values.extras,
+            programType: nextProgramType,
+            sessionRoundType: typeSettings.sessionRoundType,
+            educationScheduleMode: typeSettings.educationScheduleMode,
+            educationFormScheduleDetail: typeSettings.educationFormScheduleDetail,
+            participationScheduleDetail: nextParticipationScheduleDetail,
+            ipsScheduleDetail: typeSettings.ipsScheduleDetail,
+            curriculumSessionCount:
+              nextLayout?.curriculumSessionCount ?? values.extras.curriculumSessionCount,
+            curriculumChartSessionCount:
+              nextLayout?.curriculumChartSessionCount ?? values.extras.curriculumChartSessionCount,
+            scheduleCurriculumDetailCount:
+              nextLayout?.scheduleCurriculumDetailCount ??
+              values.extras.scheduleCurriculumDetailCount,
+            scheduleCurriculumGroupCount:
+              nextLayout?.scheduleCurriculumGroupCount ??
+              values.extras.scheduleCurriculumGroupCount,
+            participant: nextParticipant,
+          },
+        }))
+      }
       if (
         programRegistrationFormVariant === 'general' ||
         programRegistrationFormVariant === 'trainedTeachers'
@@ -1422,6 +1738,7 @@ export function useProgramRegistrationEditor(
       curriculumChartSessionCount,
       curriculumSessionCount,
       participant,
+      patchGeneralWizardRhf,
       programRegistrationFormVariant,
       programType,
       scheduleCurriculumDetailCount,
@@ -1526,9 +1843,12 @@ export function useProgramRegistrationEditor(
             | null
             | undefined
 
+          const snapshotFromRegistration = () =>
+            buildGeneralWizardCreateProgram(registrationSnapshotArgs.id) ??
+            buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+
           if (usesRemoteFormBindings && templateCode) {
-            const program =
-              buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+            const program = snapshotFromRegistration()
             const overlay = { ...getProgramRegistrationOverlayRecord() }
             const editorState = buildProgramRegistrationEditorState({
               participant,
@@ -1561,18 +1881,14 @@ export function useProgramRegistrationEditor(
           } else {
             await persistTemplateDraftIfNeeded()
             if (usesRegistrationWizardDraft && registrationWizardProgramType) {
-              const program =
-                buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+              const program = snapshotFromRegistration()
               const { persistRegistrationOperationalOverlaySnapshots } =
                 await import('@/features/program/general/lib/registration-operational-form-drafts')
               await persistRegistrationOperationalOverlaySnapshots(program)
             }
           }
 
-          const programForCreate = buildGeneralProgramListRowFromRegistrationSnapshot({
-            ...registrationSnapshotArgs,
-            id: registrationSnapshotArgs.id,
-          })
+          const programForCreate = snapshotFromRegistration()
           await logProgramRegistrationCreatePayload({
             program: programForCreate,
             variant: programRegistrationFormVariant,
@@ -1593,6 +1909,8 @@ export function useProgramRegistrationEditor(
             scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
             editorExtras: registrationSnapshotArgs.editorExtras,
             preparedFormBindings,
+            programOverride:
+              programRegistrationFormVariant === 'general' ? programForCreate : undefined,
           })
           resetProgramRegistrationOverlay()
           onRegistrationSaved(createdProgram)
@@ -1613,6 +1931,7 @@ export function useProgramRegistrationEditor(
       return completion
     },
     [
+      buildGeneralWizardCreateProgram,
       curriculumChartSessionCount,
       curriculumSessionCount,
       draft,
@@ -1681,28 +2000,18 @@ export function useProgramRegistrationEditor(
       })
     }
     if (programRegistrationFormVariant !== 'general') return null
-    return describeIncompleteGeneralProgramRegistrationRequiredFields(overlay, {
-      participant,
-      programType,
-      sessionRoundType,
-      educationFormScheduleDetail,
-      participationScheduleDetail,
-      ipsScheduleDetail,
-      curriculumSessionCount,
-      curriculumChartSessionCount,
-      scheduleCurriculumDetailCount,
-      scheduleCurriculumGroupCount,
-      scheduleCurriculumPreEducation,
-      educationScheduleMode,
-      sponsorId: resolvedSponsorId,
-      sponsorContactId: resolvedContactId,
-      programTitleKo: resolveProgramTitleKo(),
-    })
+    const ctx = generalRequiredFieldContext()
+    const rhf = peekGeneralRegistrationWizardRhf()
+    if (rhf != null) {
+      return listIncompleteRegistrationWizardRequiredFields(rhf.getValues(), ctx)[0] ?? null
+    }
+    return describeIncompleteGeneralProgramRegistrationRequiredFields(overlay, ctx)
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
     educationFormScheduleDetail,
     educationScheduleMode,
+    generalRequiredFieldContext,
     ipsScheduleDetail,
     participant,
     participationScheduleDetail,
@@ -1722,6 +2031,15 @@ export function useProgramRegistrationEditor(
     if (programRegistrationFormVariant === 'economy') {
       return hasIncompleteEconomyRegistrationFromStore(participant)
     }
+    if (programRegistrationFormVariant === 'general') {
+      const rhf = peekGeneralRegistrationWizardRhf()
+      if (rhf != null) {
+        return hasIncompleteRegistrationWizardRequiredFields(
+          rhf.getValues(),
+          generalRequiredFieldContext()
+        )
+      }
+    }
     if (
       programRegistrationFormVariant !== 'general' &&
       programRegistrationFormVariant !== 'trainedTeachers'
@@ -1729,7 +2047,12 @@ export function useProgramRegistrationEditor(
       return false
     }
     return getIncompleteRequiredFieldsReason() != null
-  }, [getIncompleteRequiredFieldsReason, participant, programRegistrationFormVariant])
+  }, [
+    generalRequiredFieldContext,
+    getIncompleteRequiredFieldsReason,
+    participant,
+    programRegistrationFormVariant,
+  ])
 
   const listIncompleteRequiredFieldKeys = useCallback((): string[] => {
     if (programRegistrationFormVariant === 'economy') {
@@ -1764,28 +2087,18 @@ export function useProgramRegistrationEditor(
       })
     }
     if (programRegistrationFormVariant !== 'general') return []
-    return listIncompleteGeneralProgramRegistrationRequiredFields(overlay, {
-      participant,
-      programType,
-      sessionRoundType,
-      educationFormScheduleDetail,
-      participationScheduleDetail,
-      ipsScheduleDetail,
-      curriculumSessionCount,
-      curriculumChartSessionCount,
-      scheduleCurriculumDetailCount,
-      scheduleCurriculumGroupCount,
-      scheduleCurriculumPreEducation,
-      educationScheduleMode,
-      sponsorId: resolvedSponsorId,
-      sponsorContactId: resolvedContactId,
-      programTitleKo: resolveProgramTitleKo(),
-    })
+    const ctx = generalRequiredFieldContext()
+    const rhf = peekGeneralRegistrationWizardRhf()
+    if (rhf != null) {
+      return listIncompleteRegistrationWizardRequiredFields(rhf.getValues(), ctx)
+    }
+    return listIncompleteGeneralProgramRegistrationRequiredFields(overlay, ctx)
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
     educationFormScheduleDetail,
     educationScheduleMode,
+    generalRequiredFieldContext,
     ipsScheduleDetail,
     participant,
     participationScheduleDetail,
@@ -1835,32 +2148,22 @@ export function useProgramRegistrationEditor(
           programTitleKo: resolveProgramTitleKo(),
           omitKpiAndWage: true,
           allowEmptySponsor: true,
-          preEducationDisplayMode: programType === 'schedule' ? 'replaceFirst' : 'prepend',
+          preEducationDisplayMode: 'replaceFirst',
         }
       )
     }
-    return hasCurriculumMultiDateScheduleCountMismatch(overlay, {
-      participant,
-      programType,
-      sessionRoundType,
-      educationFormScheduleDetail,
-      participationScheduleDetail,
-      ipsScheduleDetail,
-      curriculumSessionCount,
-      curriculumChartSessionCount,
-      scheduleCurriculumDetailCount,
-      scheduleCurriculumGroupCount,
-      scheduleCurriculumPreEducation,
-      educationScheduleMode,
-      sponsorId: resolvedSponsorId,
-      sponsorContactId: resolvedContactId,
-      programTitleKo: resolveProgramTitleKo(),
-    })
+    const ctx = generalRequiredFieldContext()
+    const rhf = peekGeneralRegistrationWizardRhf()
+    if (rhf != null) {
+      return hasRegistrationWizardCurriculumScheduleCountMismatch(rhf.getValues(), ctx)
+    }
+    return hasCurriculumMultiDateScheduleCountMismatch(overlay, ctx)
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
     educationFormScheduleDetail,
     educationScheduleMode,
+    generalRequiredFieldContext,
     ipsScheduleDetail,
     participant,
     participationScheduleDetail,

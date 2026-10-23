@@ -55,6 +55,8 @@ import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by
 import { getProgramRegistrationOverlayVersion } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { useRegistrationWizardLeaveGuard } from '@/features/program/shared/lib/registration-wizard-leave-guard'
 import { RegistrationWizardLeaveConfirmModal } from '@/features/program/shared/ui/registration/registration-wizard-leave-confirm-modal'
+import { GeneralRegistrationWizardFormProvider } from '@/features/program/general/ui/registration/registration-wizard-form-provider'
+import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -88,11 +90,17 @@ export type GeneralProgramRegistrationFullpageModalProps = {
 export function GeneralProgramRegistrationFullpageModal(
   props: GeneralProgramRegistrationFullpageModalProps
 ) {
+  const variant = props.registrationFormVariant ?? 'general'
+  const inner = <GeneralProgramRegistrationFullpageModalInner {...props} />
   return (
     <RegistrationWizardValidationHighlightProvider
-      variant={registrationWizardHighlightVariant(props.registrationFormVariant ?? 'general')}
+      variant={registrationWizardHighlightVariant(variant)}
     >
-      <GeneralProgramRegistrationFullpageModalInner {...props} />
+      {variant === 'general' ? (
+        <GeneralRegistrationWizardFormProvider>{inner}</GeneralRegistrationWizardFormProvider>
+      ) : (
+        inner
+      )}
     </RegistrationWizardValidationHighlightProvider>
   )
 }
@@ -240,7 +248,12 @@ function GeneralProgramRegistrationFullpageModalInner({
   } = useRegistrationWizardLeaveGuard({
     open,
     programType: wizardProgramType,
-    getOverlayVersion: getProgramRegistrationOverlayVersion,
+    getOverlayVersion:
+      registrationFormVariant === 'general' ? undefined : getProgramRegistrationOverlayVersion,
+    isDirtyOverride:
+      registrationFormVariant === 'general'
+        ? () => peekGeneralRegistrationWizardRhf()?.isDirty() === true
+        : undefined,
     onLeave: handleClose,
   })
 
@@ -260,6 +273,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   const runDraftSave = useCallback(async () => {
     try {
       await flow.persistDraftSilent()
+      peekGeneralRegistrationWizardRhf()?.markBaseline()
       markLeaveBaseline()
       setDraftSaveSuccessOpen(true)
     } catch (error) {

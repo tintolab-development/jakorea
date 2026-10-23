@@ -12,13 +12,18 @@ import { formatCmsScheduleKoreanDisplayLabel } from '@/features/program/general/
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 
+const DEFAULT_FIXED_SCHEDULE_OVERLAY_KEY = 'application.institution.fixedScheduleSelected'
+
 /** 날짜 지정 등 — 프로그램 등록 교육 진행 예정일 목록에서 선택 (미리보기·응답용) */
 export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
   readOnlyPreview = false,
   programBridge,
+  overlayKey = DEFAULT_FIXED_SCHEDULE_OVERLAY_KEY,
 }: {
   readOnlyPreview?: boolean
   programBridge?: InstitutionApplicationProgramBridge
+  /** 기본은 기관 catalog. 개인 신청은 `application.individual.fixedScheduleSelected`. */
+  overlayKey?: string
 }) {
   const storeBridge = useInstitutionApplicationProgramBridge()
   const bridge = programBridge ?? storeBridge
@@ -50,14 +55,11 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
     bridge.sessionsPerRound,
   ])
 
-  const [selectedIds] = useGeneralApplicationOverlayKv<string[]>(
-    'application.institution.fixedScheduleSelected',
-    []
-  )
+  const [selectedIds] = useGeneralApplicationOverlayKv<string[]>(overlayKey, [])
 
   const toggleOption = (optionId: string, checked: boolean) => {
     if (readOnlyPreview) return
-    updateGeneralApplicationOverlayKey<string[]>('application.institution.fixedScheduleSelected', prev => {
+    updateGeneralApplicationOverlayKey<string[]>(overlayKey, prev => {
       const current = (prev ?? []) as string[]
       if (checked) {
         return current.includes(optionId) ? current : [...current, optionId]

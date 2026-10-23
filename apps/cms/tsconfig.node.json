@@ -27,7 +27,9 @@
     "vite-plugins/**/*.ts",
     "orval.config.ts",
     "playwright.config.ts",
-    "tests/e2e/**/*.ts"
+    "playwright.registration-isolated.config.ts",
+    "tests/e2e/**/*.ts",
+    "tests/e2e-isolated/**/*.ts"
   ]
 }
 

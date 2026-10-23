@@ -140,15 +140,17 @@ describe('Phase 0-B 신청 overlay collect / 복원', () => {
     expect(collected && 'application.instructor.crimeRecordConfirmed' in collected).toBe(false)
   })
 
-  it('개인 catalog는 institution 일정 키를 빠뜨린다 (known-diff)', () => {
+  it('개인 catalog는 institution 일정 키를 빠뜨리고 individual 일정 키만 수집한다', () => {
     setGeneralApplicationOverlayScope('application-participant-individual')
     patchGeneralApplicationOverlay({
       'application.individual.teamInfo.teamName': '팀A',
-      'application.institution.fixedScheduleSelected': ['slot-1'],
+      'application.individual.fixedScheduleSelected': ['slot-1'],
+      'application.institution.fixedScheduleSelected': ['stale-org'],
     })
     const collected = collectOperationalOverlayForCatalogId('application-participant-individual')
     expect(collected).toEqual({
       'application.individual.teamInfo.teamName': '팀A',
+      'application.individual.fixedScheduleSelected': ['slot-1'],
     })
     expect(collected?.['application.institution.fixedScheduleSelected']).toBeUndefined()
   })

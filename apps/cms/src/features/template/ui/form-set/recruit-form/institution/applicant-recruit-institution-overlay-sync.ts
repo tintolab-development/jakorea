@@ -1,7 +1,18 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import {
+  beginWizardRecruitmentRhfProjection,
+  endWizardRecruitmentRhfProjection,
+  isInstitutionRecruitOwnedKey,
+  isWizardRecruitmentRhfProjecting,
+  mergeWizardRecruitmentIntoOverlayRecord,
+  patchWizardRecruitmentKv,
+  peekGeneralRegistrationWizardRhf,
+  readWizardRecruitmentKvValue,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
 
 export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -80,14 +91,25 @@ export function getApplicantRecruitInstitutionOverlayRecord(): Record<string, un
 export function peekApplicantRecruitInstitutionOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
-  return store.peekRecord(templateCode)
+  return mergeWizardRecruitmentIntoOverlayRecord(
+    store.peekRecord(templateCode),
+    templateCode ?? 'recruitment-participant-school'
+  )
 }
 
 export function replaceApplicantRecruitInstitutionOverlayForScope(
   templateCode: string | undefined | null,
   next: Record<string, unknown>
 ): void {
-  store.replaceFor(templateCode, next)
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(next, { shouldDirty: false })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replaceFor(templateCode, next)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function resetApplicantRecruitInstitutionOverlayForScope(
@@ -157,11 +179,27 @@ export function syncInstitutionApplicationBridgeFromApplicantRecruitOverlay(
 }
 
 export function patchApplicantRecruitInstitutionOverlay(partial: Record<string, unknown>): void {
-  store.patch(partial)
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(partial, { shouldDirty: true })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.patch(partial)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function replaceApplicantRecruitInstitutionOverlay(next: Record<string, unknown>): void {
-  store.replace(next)
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(next, { shouldDirty: false })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replace(next)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function resetApplicantRecruitInstitutionOverlay(): void {
@@ -198,14 +236,29 @@ export function useApplicantRecruitInstitutionOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
-  const version = useSyncExternalStore(
-    subscribeApplicantRecruitInstitutionOverlay,
-    getApplicantRecruitInstitutionOverlayVersion,
-    getApplicantRecruitInstitutionOverlayVersion
+  const defaultRef = useRef(defaultValue)
+  const rhfOwned = isInstitutionRecruitOwnedKey(key)
+  const getSnapshot = useCallback(() => {
+    if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
+      return readWizardRecruitmentKvValue(key, defaultRef.current)
+    }
+    const record = getApplicantRecruitInstitutionOverlayRecord()
+    return readOperationalOverlayKvValue('institution-recruit', record, key, defaultRef.current)
+  }, [key, rhfOwned])
+
+  const value = useSyncExternalStore(
+    listener => {
+      const unsubOverlay = subscribeApplicantRecruitInstitutionOverlay(listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      return () => {
+        unsubOverlay()
+        unsubRhf()
+      }
+    },
+    getSnapshot,
+    getSnapshot
   )
-  void version
-  const record = getApplicantRecruitInstitutionOverlayRecord()
-  const value = readOperationalOverlayKvValue('institution-recruit', record, key, defaultValue)
+
   const setValue = useCallback(
     (next: T) => {
       patchApplicantRecruitInstitutionOverlay({ [key]: next })

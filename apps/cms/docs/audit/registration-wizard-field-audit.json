@@ -1,6 +1,12 @@
 {
-  "generatedAt": "2026-10-19T04:52:42.372Z",
-  "multipleSelectViolations": [],
+  "generatedAt": "2026-10-23T05:42:40.636Z",
+  "multipleSelectViolations": [
+    {
+      "id": "multiple_cms_select_missing_onOpenChange",
+      "file": "src/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph.tsx",
+      "severity": "error"
+    }
+  ],
   "catalogHardDisabled": [],
   "overlayKvDensity": [
     {
@@ -46,10 +52,6 @@
     {
       "file": "src/features/template/ui/form-set/registration-form/shared/registration-overlay-fields.tsx",
       "useProgramRegistrationOverlayKv": 3
-    },
-    {
-      "file": "src/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-curriculum-paragraph.tsx",
-      "useProgramRegistrationOverlayKv": 4
     },
     {
       "file": "src/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-schedule-settings-paragraph.tsx",

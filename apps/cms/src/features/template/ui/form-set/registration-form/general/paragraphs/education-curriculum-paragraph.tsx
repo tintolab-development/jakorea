@@ -115,6 +115,15 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
   /** 카드 헤더「사전 교육」ON이면 회차/차시 앞에 사전 교육 블록을 둔다 */
   scheduleCurriculumPreEducation?: boolean
+  /** 사전 교육/교육 연수 블록 헤딩 라벨 (기본: 사전 교육) */
+  preEducationBlockLabel?: string
+  /**
+   * prepend: 별도 사전교육 블록을 앞에 추가 (일반 기본)
+   * replaceFirst: 첫 차시/회차를 연수로 치환 (교육받은 교사)
+   */
+  preEducationDisplayMode?: 'prepend' | 'replaceFirst'
+  /** 교육받은 교사 — 과제 설정 비노출 (교육일지와 구분) */
+  hideAssignmentSettings?: boolean
 }
 
 type ProgramRegistrationCurriculumMultiSessionRowPlan =
@@ -307,7 +316,14 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   participationScheduleDetail,
   ipsScheduleDetail,
   scheduleCurriculumPreEducation = false,
+  preEducationBlockLabel = PRE_EDUCATION_SCHEDULE_LABEL,
+  preEducationDisplayMode = 'prepend',
+  hideAssignmentSettings = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
+  const replaceFirstTraining =
+    scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
+  const prependTraining =
+    scheduleCurriculumPreEducation && preEducationDisplayMode === 'prepend'
   const [ipsBySession] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationIpsTypeValue>
   >('generalRegistration.educationCurriculum.ipsBySession', {})
@@ -337,11 +353,11 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   )
 
   useEffect(() => {
-    if (!scheduleCurriculumPreEducation) return
+    if (!prependTraining) return
     updateProgramRegistrationOverlayKey<string>(CURRICULUM_PRE_EDUCATION_NAME_KEY, prev =>
       typeof prev === 'string' && prev.trim() ? prev : PRE_EDUCATION_SCHEDULE_LABEL
     )
-  }, [scheduleCurriculumPreEducation])
+  }, [prependTraining])
 
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'
@@ -502,7 +518,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     return (
       <div key="pre-education" className="program-registration-schedule-curriculum__block">
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {PRE_EDUCATION_SCHEDULE_LABEL}
+          ■ {preEducationBlockLabel}
         </div>
         <div className="program-registration-curriculum__session-row">
           <div className="program-registration-schedule-curriculum__session-panel">
@@ -557,64 +573,58 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   }
 
   const renderPreEducationChartBlock = () => {
-    if (!scheduleCurriculumPreEducation) return null
+    if (!prependTraining) return null
     return renderIndividualPreEducationScheduleBlock()
   }
+
+  const isTrainingSession = (index: number) => replaceFirstTraining && index === 1
+
+  const renderLockedTrainingIpsRow = () => (
+    <DetailInfoForm.Row type="single">
+      {renderLockedPreEducationIpsField({ fullRow: true })}
+    </DetailInfoForm.Row>
+  )
 
   if (sessionRoundType === 'single') {
     const isSingleIpsPerChart = ipsScheduleDetail === 'perSchedule'
     const showChartSessionHeading =
       scheduleCurriculumPreEducation || curriculumChartSessionCount > 1
 
-    if (isSingleIpsPerChart) {
-      return (
-        <div className="program-registration-curriculum__sessions">
-          {renderPreEducationChartBlock()}
-          {Array.from({ length: curriculumChartSessionCount }, (_, i) => {
-            const chartIndex = i + 1
-            const ipsValue = ipsBySession[chartIndex] ?? { category: '', detail: '' }
-            return (
-              <ProgramRegistrationCurriculumChartSessionBlock
-                key={chartIndex}
-                chartIndex={chartIndex}
-                showHeading={showChartSessionHeading}
-                onDeleteCurriculumChartSession={handleDeleteChartSession}
-                extraRows={
-                  <DetailInfoForm.Row type="single">
-                    <DetailInfoForm.Field
-                      label="IPS 유형"
-                      validationKey={`curriculum.ips[${chartIndex}]`}
-                      fullRow
-                      edit={
-                        <ProgramRegistrationIpsTypeFields
-                          value={ipsValue}
-                          onChange={(next: ProgramRegistrationIpsTypeValue) =>
-                            setSessionIps(chartIndex, next)
-                          }
-                        />
-                      }
-                      view="-"
-                    />
-                  </DetailInfoForm.Row>
-                }
-              />
-            )
-          })}
-        </div>
-      )
-    }
-
     return (
       <div className="program-registration-curriculum__sessions">
         {renderPreEducationChartBlock()}
         {Array.from({ length: curriculumChartSessionCount }, (_, i) => {
           const chartIndex = i + 1
+          const trainingSession = isTrainingSession(chartIndex)
+          const ipsValue = ipsBySession[chartIndex] ?? { category: '', detail: '' }
+          const extraRows = trainingSession ? (
+            renderLockedTrainingIpsRow()
+          ) : isSingleIpsPerChart ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                validationKey={`curriculum.ips[${chartIndex}]`}
+                fullRow
+                edit={
+                  <ProgramRegistrationIpsTypeFields
+                    value={ipsValue}
+                    onChange={(next: ProgramRegistrationIpsTypeValue) =>
+                      setSessionIps(chartIndex, next)
+                    }
+                  />
+                }
+                view="-"
+              />
+            </DetailInfoForm.Row>
+          ) : null
           return (
             <ProgramRegistrationCurriculumChartSessionBlock
               key={chartIndex}
               chartIndex={chartIndex}
-              showHeading={showChartSessionHeading}
+              headingLabel={trainingSession ? preEducationBlockLabel : undefined}
+              showHeading={showChartSessionHeading || trainingSession}
               onDeleteCurriculumChartSession={handleDeleteChartSession}
+              extraRows={extraRows}
             />
           )
         })}
@@ -787,16 +797,18 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   return (
     <div className="program-registration-curriculum__sessions">
-      {scheduleCurriculumPreEducation ? renderIndividualPreEducationScheduleBlock() : null}
+      {prependTraining ? renderIndividualPreEducationScheduleBlock() : null}
       {Array.from({ length: curriculumSessionCount }, (_, i) => {
         const roundIndex = i + 1
         const progressSession = progressSessionByRound[roundIndex] ?? ''
+        const trainingSession = isTrainingSession(roundIndex)
+        const roundHeading = trainingSession ? preEducationBlockLabel : `${roundIndex}회차`
 
         return (
           <div key={roundIndex} className="program-registration-curriculum__session-block">
-            {curriculumSessionCount > 1 || scheduleCurriculumPreEducation ? (
+            {curriculumSessionCount > 1 || scheduleCurriculumPreEducation || trainingSession ? (
               <div className="program-registration-curriculum__session-heading">
-                ■ {roundIndex}회차
+                ■ {roundHeading}
               </div>
             ) : null}
             <div className="program-registration-curriculum__session-row">
@@ -821,6 +833,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                     rows={individualExtraRows}
                     renderField={(field, options) => {
                       if (field === 'assignment') {
+                        if (hideAssignmentSettings) return null
                         return (
                           <ProgramRegistrationMultiRoundAssignmentFields
                             embedded
@@ -875,6 +888,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                       return renderParticipationField(roundIndex, { fullRow: options.fullRow })
                     }}
                   />
+                ) : trainingSession ? (
+                  renderLockedTrainingIpsRow()
                 ) : (
                   renderMultiRoundPlanExtraRows(roundIndex)
                 )}

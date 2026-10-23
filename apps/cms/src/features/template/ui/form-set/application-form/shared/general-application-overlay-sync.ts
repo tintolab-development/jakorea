@@ -1,6 +1,17 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import {
+  beginWizardApplicationRhfProjection,
+  endWizardApplicationRhfProjection,
+  isWizardApplicationOwnedOverlayKey,
+  isWizardApplicationRhfProjecting,
+  mergeWizardApplicationIntoOverlayRecord,
+  patchWizardApplicationKv,
+  peekGeneralRegistrationWizardRhf,
+  readWizardApplicationKvValue,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-application-rhf'
 
 /**
  * 지원 폼(기관 지원, 개인 지원 등) overlay.
@@ -21,6 +32,13 @@ export function subscribeGeneralApplicationOverlay(listener: () => void): () => 
   return store.subscribe(listener)
 }
 
+export function subscribeGeneralApplicationOverlayKey(
+  key: string,
+  listener: () => void
+): () => void {
+  return store.subscribeKey(key, listener)
+}
+
 export function getGeneralApplicationOverlayVersion(): number {
   return store.getVersion()
 }
@@ -32,14 +50,22 @@ export function getGeneralApplicationOverlayRecord(): Record<string, unknown> {
 export function peekGeneralApplicationOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
-  return store.peekRecord(templateCode)
+  return mergeWizardApplicationIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
 }
 
 export function replaceGeneralApplicationOverlayForScope(
   templateCode: string | undefined | null,
   next: Record<string, unknown>
 ): void {
-  store.replaceFor(templateCode, next)
+  if (!isWizardApplicationRhfProjecting()) {
+    patchWizardApplicationKv(next, { shouldDirty: false })
+  }
+  beginWizardApplicationRhfProjection()
+  try {
+    store.replaceFor(templateCode, next)
+  } finally {
+    endWizardApplicationRhfProjection()
+  }
 }
 
 export function resetGeneralApplicationOverlayForScope(
@@ -48,19 +74,52 @@ export function resetGeneralApplicationOverlayForScope(
   store.resetFor(templateCode)
 }
 
+function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
+  return readOperationalOverlayKvValue('general-application', store.getRecord(), key, defaultValue)
+}
+
 export function patchGeneralApplicationOverlay(partial: Record<string, unknown>): void {
-  store.patch(partial)
+  if (!isWizardApplicationRhfProjecting()) {
+    patchWizardApplicationKv(partial, { shouldDirty: true })
+  }
+  beginWizardApplicationRhfProjection()
+  try {
+    store.patch(partial)
+  } finally {
+    endWizardApplicationRhfProjection()
+  }
 }
 
 export function updateGeneralApplicationOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
+  const api = peekGeneralRegistrationWizardRhf()
+  if (api != null && isWizardApplicationOwnedOverlayKey(key) && !isWizardApplicationRhfProjecting()) {
+    const prev = readWizardApplicationKvValue<T | undefined>(key, undefined)
+    const next = updater(prev)
+    patchWizardApplicationKv({ [key]: next }, { shouldDirty: true })
+    beginWizardApplicationRhfProjection()
+    try {
+      store.updateKey(key, () => next)
+    } finally {
+      endWizardApplicationRhfProjection()
+    }
+    return
+  }
   store.updateKey(key, updater)
 }
 
 export function replaceGeneralApplicationOverlay(next: Record<string, unknown>): void {
-  store.replace(next)
+  if (!isWizardApplicationRhfProjecting()) {
+    patchWizardApplicationKv(next, { shouldDirty: false })
+  }
+  beginWizardApplicationRhfProjection()
+  try {
+    store.replace(next)
+  } finally {
+    endWizardApplicationRhfProjection()
+  }
 }
 
 export function resetGeneralApplicationOverlay(): void {
@@ -81,18 +140,25 @@ export function useGeneralApplicationOverlayKv<T>(
   defaultValue: T
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const version = useSyncExternalStore(
-    subscribeGeneralApplicationOverlay,
-    getGeneralApplicationOverlayVersion,
-    getGeneralApplicationOverlayVersion
-  )
-  void version
-  const record = getGeneralApplicationOverlayRecord()
-  const value = readOperationalOverlayKvValue(
-    'general-application',
-    record,
-    key,
-    defaultRef.current
+  const rhfOwned = isWizardApplicationOwnedOverlayKey(key)
+  const getSnapshot = useCallback(() => {
+    if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
+      return readWizardApplicationKvValue(key, defaultRef.current)
+    }
+    return readOverlayKeyValue(key, defaultRef.current)
+  }, [key, rhfOwned])
+
+  const value = useSyncExternalStore(
+    listener => {
+      const unsubOverlay = subscribeGeneralApplicationOverlayKey(key, listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      return () => {
+        unsubOverlay()
+        unsubRhf()
+      }
+    },
+    getSnapshot,
+    getSnapshot
   )
   const setValue = useCallback(
     (next: T) => {

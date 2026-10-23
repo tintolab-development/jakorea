@@ -3,6 +3,11 @@ import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/s
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import {
+  peekGeneralRegistrationWizardRhf,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { overlayKeyToWizardUiPath } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
 
 /**
  * 일반·1사1교·교육받은 교사 프로그램 등록 폼 단락 본문이 `WritingFormDraft`가 아닌
@@ -325,7 +330,7 @@ export function replaceProgramRegistrationOverlayPrefix(
   const kept = Object.fromEntries(
     Object.entries(overlayState()).filter(([key]) => !key.startsWith(prefix))
   )
-  replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues })
+  replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues }, { shouldDirty: true })
 }
 
 /** 개발용 자동입력처럼 여러 관련 namespace를 한 번에 교체할 때 사용한다. */
@@ -337,14 +342,40 @@ export function replaceProgramRegistrationOverlayPrefixes(
   const kept = Object.fromEntries(
     Object.entries(overlayState()).filter(([key]) => !shouldReplace(key))
   )
-  replaceProgramRegistrationOverlay({ ...kept, ...nextValues })
+  replaceProgramRegistrationOverlay({ ...kept, ...nextValues }, { shouldDirty: true })
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
   return readOperationalOverlayKvValue('program-registration', overlayState(), key, defaultValue)
 }
 
+/** RHF → overlay 일방향 projection 중이면 overlay 쓰기를 RHF로 되먹이지 않는다. */
+let projectingFromWizardRhf = 0
+
+export function beginRegistrationWizardRhfOverlayProjection(): void {
+  projectingFromWizardRhf += 1
+}
+
+export function endRegistrationWizardRhfOverlayProjection(): void {
+  projectingFromWizardRhf = Math.max(0, projectingFromWizardRhf - 1)
+}
+
+function syncWizardRhfFromOverlayPartial(
+  partial: Record<string, unknown>,
+  shouldDirty: boolean
+): void {
+  if (projectingFromWizardRhf > 0) return
+  const api = peekGeneralRegistrationWizardRhf()
+  if (api == null) return
+  for (const [key, value] of Object.entries(partial)) {
+    const path = overlayKeyToWizardUiPath(key)
+    if (path == null) continue
+    api.setPath(path, value, { shouldDirty })
+  }
+}
+
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {
+  syncWizardRhfFromOverlayPartial(partial, true)
   store.patch(partial)
 }
 
@@ -352,10 +383,32 @@ export function updateProgramRegistrationOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
+  const api = peekGeneralRegistrationWizardRhf()
+  const path = overlayKeyToWizardUiPath(key)
+  if (api != null && path != null && projectingFromWizardRhf === 0) {
+    const prev = api.getPath(path) as T | undefined
+    const next = updater(prev)
+    api.setPath(path, next, { shouldDirty: true })
+    projectingFromWizardRhf += 1
+    try {
+      store.updateKey(key, () => next)
+    } finally {
+      projectingFromWizardRhf -= 1
+    }
+    return
+  }
   store.updateKey(key, updater)
 }
 
-export function replaceProgramRegistrationOverlay(next: Record<string, unknown>): void {
+export function replaceProgramRegistrationOverlay(
+  next: Record<string, unknown>,
+  options?: { shouldDirty?: boolean }
+): void {
+  if (projectingFromWizardRhf === 0) {
+    peekGeneralRegistrationWizardRhf()?.applyOverlayRecord(next, {
+      shouldDirty: options?.shouldDirty ?? false,
+    })
+  }
   store.replace(next)
 }
 
@@ -383,21 +436,49 @@ export function useProgramRegistrationOverlayKv<T>(
   defaultValue: T
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const getSnapshot = useCallback(() => readOverlayKeyValue(key, defaultRef.current), [key])
+  const path = overlayKeyToWizardUiPath(key)
+  const getSnapshot = useCallback(() => {
+    const api = peekGeneralRegistrationWizardRhf()
+    if (api != null && path != null) {
+      const raw = api.getPath(path)
+      return raw === undefined ? defaultRef.current : (raw as T)
+    }
+    return readOverlayKeyValue(key, defaultRef.current)
+  }, [key, path])
 
   const value = useSyncExternalStore(
-    listener => subscribeProgramRegistrationOverlayKey(key, listener),
+    listener => {
+      const unsubOverlay = subscribeProgramRegistrationOverlayKey(key, listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      return () => {
+        unsubOverlay()
+        unsubRhf()
+      }
+    },
     getSnapshot,
     getSnapshot
   )
 
   const setValue = useCallback(
     (next: T) => {
+      const api = peekGeneralRegistrationWizardRhf()
+      if (api != null && path != null) {
+        const prev = api.getPath(path)
+        if (Object.is(prev, next)) return
+        api.setPath(path, next, { shouldDirty: true })
+        projectingFromWizardRhf += 1
+        try {
+          store.patch({ [key]: next })
+        } finally {
+          projectingFromWizardRhf -= 1
+        }
+        return
+      }
       const prev = getProgramRegistrationOverlayRecord()[key]
       if (Object.is(prev, next)) return
       patchProgramRegistrationOverlay({ [key]: next })
     },
-    [key]
+    [key, path]
   )
   return [value, setValue]
 }

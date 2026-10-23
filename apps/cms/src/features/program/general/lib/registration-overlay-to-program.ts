@@ -373,27 +373,24 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
   const hideParticipation = extras.participantOrganization === true
 
   const sessions: GeneralProgramCurriculumSessionRow[] = []
+  const isTeacherTraining = extras.teacherTrainingEnabled === true
 
-  if (extras.scheduleCurriculumPreEducation) {
-    const isTeacherTraining = extras.teacherTrainingEnabled === true
+  if (extras.scheduleCurriculumPreEducation && !isTeacherTraining) {
     const preName =
-      overlayString(overlay, `${CURRICULUM}.preEducationScheduleName`) ||
-      (isTeacherTraining ? '교육 연수' : '사전 교육')
+      overlayString(overlay, `${CURRICULUM}.preEducationScheduleName`) || '사전 교육'
     const preLine = overlayString(overlay, `${CURRICULUM}.preEducationScheduleLine`)
-    const teacherTrainingForm = overlayString(overlay, `${CURRICULUM}.teacherTrainingEducationForm`)
     sessions.push({
-      sessionLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
+      sessionLabel: '사전 교육',
       title: preName,
       description: '',
       scheduleDateLabel: preLine || undefined,
       assignmentEnabled: false,
-      educationFormLabel: isTeacherTraining
-        ? educationFormLabelFromValue(teacherTrainingForm || 'online')
-        : eduDetail === 'perSchedule'
+      educationFormLabel:
+        eduDetail === 'perSchedule'
           ? educationFormLabelFromValue(educationFormBySession[0] ?? 'online')
           : undefined,
       ipsTypeSummary:
-        isTeacherTraining || ipsDetail === 'perSchedule'
+        ipsDetail === 'perSchedule'
           ? buildSessionIpsTypeSummary('prepare', 'none')
           : undefined,
     })
@@ -434,8 +431,9 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
     const description = useUnit ? unitContent || roundContent : roundContent || unitContent
     const assignment = assignmentByRound[i]
     const ips = ipsBySession[i]
+    const replaceFirstTraining = isTeacherTraining && i === 1
     sessions.push({
-      sessionLabel: isMulti ? `${i}회차` : `${i}차시`,
+      sessionLabel: replaceFirstTraining ? '교육 연수' : isMulti ? `${i}회차` : `${i}차시`,
       title,
       description,
       assignmentEnabled: hideAssignment ? false : Boolean(assignment?.enabled),
@@ -450,8 +448,9 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
               (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
             )
           : undefined,
-      ipsTypeSummary:
-        ipsDetail === 'perSchedule'
+      ipsTypeSummary: replaceFirstTraining
+        ? buildSessionIpsTypeSummary('prepare', 'none')
+        : ipsDetail === 'perSchedule'
           ? buildSessionIpsTypeSummary(
               (ips?.category as ProgramRegistrationIpsCategory | '') ?? 'prepare',
               ips?.detail ?? 'none'
@@ -556,23 +555,35 @@ export function buildEnrichedScheduleDetails(
 
   if (extras.scheduleCurriculumPreEducation) {
     const isTeacherTraining = extras.teacherTrainingEnabled === true
-    const preName =
-      overlayString(overlay, `${SCHEDULE_CURRICULUM}.preEducationName`) ||
-      (isTeacherTraining ? '교육 연수' : '사전 교육')
-    const preEducationForm = educationFormByDetail[0]
-    rows.unshift({
-      scheduleLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
-      name: preName,
-      assignmentEnabled: false,
-      scheduleDateLabel: formatScheduleDateLabel(dates[0]),
-      educationFormLabel: preEducationForm
-        ? educationFormLabelFromValue(preEducationForm)
-        : undefined,
-      ipsTypeSummary:
-        isTeacherTraining || ipsDetailKind === 'perSchedule'
-          ? buildSessionIpsTypeSummary('prepare', 'none')
+    if (isTeacherTraining) {
+      if (rows[0]) {
+        rows[0] = {
+          ...rows[0],
+          scheduleLabel: '교육 연수',
+          name: rows[0].name?.trim() || '교육 연수',
+          assignmentEnabled: false,
+          assignmentPeriod: undefined,
+          ipsTypeSummary: buildSessionIpsTypeSummary('prepare', 'none'),
+        }
+      }
+    } else {
+      const preName =
+        overlayString(overlay, `${SCHEDULE_CURRICULUM}.preEducationName`) || '사전 교육'
+      const preEducationForm = educationFormByDetail[0]
+      rows.unshift({
+        scheduleLabel: '사전 교육',
+        name: preName,
+        assignmentEnabled: false,
+        scheduleDateLabel: formatScheduleDateLabel(dates[0]),
+        educationFormLabel: preEducationForm
+          ? educationFormLabelFromValue(preEducationForm)
           : undefined,
-    })
+        ipsTypeSummary:
+          ipsDetailKind === 'perSchedule'
+            ? buildSessionIpsTypeSummary('prepare', 'none')
+            : undefined,
+      })
+    }
   }
 
   return rows
