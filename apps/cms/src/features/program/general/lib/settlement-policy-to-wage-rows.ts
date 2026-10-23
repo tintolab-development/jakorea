@@ -21,6 +21,7 @@ import {
 
 const PAYMENT_ITEM_LABEL: Record<string, string> = {
   TRANSPORTATION: '교통비',
+  STUDENT_TRANSPORTATION: '학생 교통비',
   LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   LODGING: '숙박비',
   ACTIVITY: '참여자 활동비',

@@ -49,6 +49,19 @@ describe('resolveWagePaymentItemIds', () => {
       '강사 교통비, 숙박비, 참여자 활동비'
     )
   })
+
+  it('학생 교통비 GET은 강사 교통과 분리하고, 강사만 있으면 학생을 켜지 않는다', () => {
+    expect(
+      resolveWagePaymentItemIds([
+        { itemType: 'TRANSPORTATION', useYn: true },
+        { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+      ])
+    ).toEqual(['p-1', '학생 교통비'])
+    expect(resolveWagePaymentItemIds([{ itemType: 'TRANSPORTATION', useYn: true }])).toEqual(['p-1'])
+    expect(resolveWagePaymentItemIds([{ itemType: 'STUDENT_TRANSPORTATION', useYn: true }])).toEqual([
+      '학생 교통비',
+    ])
+  })
 })
 
 describe('applyRegistrationWageOverlayToCommonInfo', () => {

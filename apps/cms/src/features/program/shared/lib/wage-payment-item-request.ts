@@ -12,6 +12,7 @@ import {
 /** 프로그램 정산 정책 지급 항목 코드 — 설정 단계 저장 계약 */
 export const PROGRAM_SETTLEMENT_PAYMENT_ITEM_TYPES = [
   'TRANSPORTATION',
+  'STUDENT_TRANSPORTATION',
   'LONG_DISTANCE_TRANSPORTATION',
   'LODGING',
   'ACTIVITY',
@@ -26,7 +27,8 @@ const PROGRAM_ITEM_TYPE_SET = new Set<string>(PROGRAM_SETTLEMENT_PAYMENT_ITEM_TY
 const CATALOG_TYPE_TO_PROGRAM_TYPE: Record<string, ProgramSettlementPaymentItemType> = {
   TRANSPORTATION: 'TRANSPORTATION',
   TRANSPORT_INSTRUCTOR: 'TRANSPORTATION',
-  TRANSPORT_STUDENT: 'TRANSPORTATION',
+  STUDENT_TRANSPORTATION: 'STUDENT_TRANSPORTATION',
+  TRANSPORT_STUDENT: 'STUDENT_TRANSPORTATION',
   LONG_DISTANCE_TRANSPORTATION: 'LONG_DISTANCE_TRANSPORTATION',
   LONG_DISTANCE: 'LONG_DISTANCE_TRANSPORTATION',
   LODGING: 'LODGING',
@@ -45,6 +47,8 @@ const LEGACY_MOCK_ID_TO_TYPE: Record<string, ProgramSettlementPaymentItemType> =
   'p-3': 'LODGING',
   'p-6': 'ACTIVITY',
   'p-7': 'LODGING',
+  'p-166201': 'TRANSPORTATION',
+  'p-166202': 'STUDENT_TRANSPORTATION',
 }
 
 function normalizeItemTypeToken(type: string): string {
@@ -61,6 +65,7 @@ function labelToProgramType(label: string): string | undefined {
   const compact = compactLabel(label)
   if (!compact) return undefined
   if (compact.includes('장거리') && compact.includes('교통')) return 'LONG_DISTANCE_TRANSPORTATION'
+  if (compact.includes('학생') && compact.includes('교통')) return 'STUDENT_TRANSPORTATION'
   if (compact.includes('숙박')) return 'LODGING'
   if (compact.includes('식사') || compact === '식비') return 'MEAL'
   if (compact.includes('활동')) return 'ACTIVITY'
