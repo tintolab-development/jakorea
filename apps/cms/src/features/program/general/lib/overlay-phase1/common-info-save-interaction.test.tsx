@@ -161,6 +161,29 @@ describe('GENERAL_COMMON_INFO_SAVE_INTERACTION', () => {
     ).toBe(false)
   })
 
+  it('잠긴 뒤 참여 방식만 바꿔도 유형 저장을 막는다', () => {
+    const program = {
+      id: '1',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: { participationMethod: 'individual' },
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+      ],
+    } as Program
+    expect(
+      isProgramTypeSettingsSaveBlocked(
+        program,
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'single',
+          participationMethod: 'team',
+        },
+        new Date('2026-09-28T12:00:00+09:00')
+      )
+    ).toBe(true)
+  })
+
   it('확인 버튼은 runInfoSave 경로인 onConfirm만 호출한다', () => {
     const onConfirm = vi.fn()
     render(

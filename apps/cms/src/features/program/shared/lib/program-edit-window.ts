@@ -138,6 +138,8 @@ export function isRecruitmentStartLocked(
 export type ProgramTypeSettingsNext = {
   educationStructure?: string | null
   sessionRound?: string | null
+  participationMethod?: string | null
+  participationScheduleDetail?: string | null
 }
 
 function parseRecruitmentStartMs(startAt: string | null | undefined): number | null {
@@ -165,7 +167,7 @@ export function getEarliestPersistedRecruitmentStartAt(
   return earliest
 }
 
-/** 가장 빠른 기존 모집 시작 시각 전까지만 프로그램 구조(유형·회차) 수정 가능. */
+/** 가장 빠른 기존 모집 시작 시각 전까지만 프로그램 구조(유형·회차·참여 방식) 수정 가능. */
 export function isProgramStructureEditPeriodOpen(
   program: Program | null | undefined,
   now: Date = new Date()
@@ -189,9 +191,28 @@ function normalizeSessionRound(value: string | null | undefined): 'single' | 'mu
   return null
 }
 
+function normalizeParticipationMethod(
+  value: string | null | undefined
+): 'individual' | 'team' | null {
+  if (value === 'team') return 'team'
+  if (value === 'individual') return 'individual'
+  return null
+}
+
+function normalizeParticipationScheduleDetail(
+  value: string | null | undefined
+): 'common' | 'perSchedule' | null {
+  if (value === 'perSchedule') return 'perSchedule'
+  if (value === 'common') return 'common'
+  return null
+}
+
 export function isProgramTypeSettingsChanged(
   existing:
-    | Pick<Program, 'generalProgramEducationStructure' | 'generalProgramSessionRound'>
+    | Pick<
+        Program,
+        'generalProgramEducationStructure' | 'generalProgramSessionRound' | 'generalCommonInfo'
+      >
     | null
     | undefined,
   next: ProgramTypeSettingsNext
@@ -206,6 +227,20 @@ export function isProgramTypeSettingsChanged(
   if (nextRound != null) {
     const existingRound = normalizeSessionRound(existing?.generalProgramSessionRound) ?? 'single'
     if (existingRound !== nextRound) return true
+  }
+  const nextMethod = normalizeParticipationMethod(next.participationMethod)
+  if (nextMethod != null) {
+    const existingMethod =
+      normalizeParticipationMethod(existing?.generalCommonInfo?.participationMethod) ?? 'individual'
+    if (existingMethod !== nextMethod) return true
+  }
+  const nextScheduleDetail = normalizeParticipationScheduleDetail(next.participationScheduleDetail)
+  if (nextScheduleDetail != null) {
+    const existingScheduleDetail =
+      normalizeParticipationScheduleDetail(
+        existing?.generalCommonInfo?.participationScheduleDetail
+      ) ?? 'common'
+    if (existingScheduleDetail !== nextScheduleDetail) return true
   }
   return false
 }

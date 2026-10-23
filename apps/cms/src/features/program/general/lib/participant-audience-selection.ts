@@ -27,35 +27,18 @@ export type SavedGeneralParticipantTypeLocks = {
   volunteer: boolean
 }
 
-function recruitmentTypeOf(row: { recruitmentType?: string | null }): string {
-  return (row.recruitmentType ?? '').toUpperCase()
-}
-
 /**
- * 이미 등록된 참여자 유형은 수정할 수 없다.
- * 개인/기관은 한 모집행의 신청 유형이므로 한쪽이 있으면 둘 다 잠근다.
- * 강사·봉사자는 저장된 행이 없을 때만 새 모집 단위로 선택할 수 있다.
+ * 프로그램 상세 공통 정보 수정 — 참여자 유형은 등록 이후 전부 잠근다.
+ * 개인 / 학교·기관 / 강사 / 봉사자 모두 추가·해제 불가.
  */
 export function savedGeneralParticipantTypeLocks(
-  program: Pick<Program, 'generalParticipantTypes' | 'programRecruitments'>
+  _program?: Pick<Program, 'generalParticipantTypes' | 'programRecruitments'>,
 ): SavedGeneralParticipantTypeLocks {
-  const types = new Set(program.generalParticipantTypes ?? [])
-  const rows = program.programRecruitments ?? []
-  const saved = (predicate: (row: (typeof rows)[number]) => boolean) =>
-    rows.some(row => row.id != null && predicate(row))
-  const participantSaved =
-    types.has('individual') ||
-    types.has('school_institution') ||
-    saved(row => recruitmentTypeOf(row) === 'PARTICIPANT')
-  const instructorSaved =
-    types.has('teacher_instructor') || saved(row => recruitmentTypeOf(row) === 'INSTRUCTOR')
-  const volunteerSaved =
-    types.has('volunteer') || saved(row => recruitmentTypeOf(row) === 'VOLUNTEER')
   return {
-    individual: participantSaved,
-    organization: participantSaved,
-    teacherInstructor: instructorSaved,
-    volunteer: volunteerSaved,
+    individual: true,
+    organization: true,
+    teacherInstructor: true,
+    volunteer: true,
   }
 }
 

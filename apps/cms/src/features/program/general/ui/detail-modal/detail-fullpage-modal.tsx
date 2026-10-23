@@ -1132,6 +1132,8 @@ export function GeneralProgramDetailFullPageModal({
       isProgramTypeSettingsSaveBlocked(displayProgram, {
         educationStructure: values.educationStructure,
         sessionRound: values.sessionRound,
+        participationMethod: values.participationMethod,
+        participationScheduleDetail: values.participationScheduleDetail,
       })
     ) {
       void showAlert({

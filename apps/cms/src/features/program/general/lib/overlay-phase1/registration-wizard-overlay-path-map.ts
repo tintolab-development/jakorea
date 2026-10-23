@@ -91,6 +91,18 @@ export function wizardUiPathToOverlayKey(path: string): string | null {
   return UI_PATH_TO_OVERLAY_KEY[path] ?? null
 }
 
+/** 위저드 RHF UI 값 → persist overlay KV. 구버전 hydrate·세션 제목 호환용. */
+export function projectRegistrationWizardUiValuesToOverlay(
+  values: unknown
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [overlayKey, path] of Object.entries(REGISTRATION_WIZARD_OVERLAY_TO_UI_PATH)) {
+    const value = getNestedValue(values, path)
+    if (value !== undefined) out[overlayKey] = value
+  }
+  return out
+}
+
 export function isRegistrationWizardOwnedOverlayKey(key: string): boolean {
   return overlayKeyToWizardUiPath(key) != null
 }

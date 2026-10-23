@@ -717,6 +717,9 @@ export async function persistRegistrationOperationalOverlaysToLocal(
     })
     const draft = saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
+    // 공통정보(registration-*)는 handleSave가 settingsJson·RHF snapshot까지 저장한다.
+    // 여기서 overlay만 다시 쓰면 국문 대표명 등 RHF 입력이 지워진다.
+    if (resolveOperationalOverlayKind(catalogId) === 'program-registration') continue
     if (variant === 'trainedTeachers') {
       const { collectTrainedTeachersRecruitFormState, trainedTeachersRecruitEditorState } =
         await import('@/features/program/trained-teachers/lib/recruit-form-state')
@@ -744,6 +747,7 @@ export async function persistRegistrationOperationalOverlaysToLocal(
       draft,
       overlay: { ...(saved?.overlay ?? {}), ...overlay },
       editorState: saved?.editorState,
+      settingsJson: saved?.settingsJson,
     })
   }
 }

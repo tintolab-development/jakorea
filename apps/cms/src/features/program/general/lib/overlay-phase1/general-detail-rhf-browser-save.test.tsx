@@ -532,10 +532,160 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     if (!field) throw new Error('참여자 유형 필드를 찾지 못했습니다')
     const checkboxes = [...field.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
     expect(checkboxes).toHaveLength(4)
-    expect(checkboxes[0]?.disabled).toBe(true)
-    expect(checkboxes[1]?.disabled).toBe(true)
-    expect(checkboxes[2]?.disabled).toBe(false)
-    expect(checkboxes[3]?.disabled).toBe(false)
+    expect(checkboxes.every(checkbox => checkbox.disabled)).toBe(true)
+  })
+
+  it('모집이 시작된 프로그램은 유형 설정의 참여 방식을 수정할 수 없다', () => {
+    const program = {
+      ...getProgram186307(),
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT' as const, startAt: '2020-01-01T00:00:00+09:00' },
+      ],
+    }
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    const participationField = screen
+      .getByText('참여 방식', { selector: '.detail-info-form__field-label-text' })
+      .closest('.detail-info-form__field')
+    if (!participationField) throw new Error('참여 방식 필드를 찾지 못했습니다')
+    const participationRadios = [
+      ...participationField.querySelectorAll('input[type="radio"]'),
+    ] as HTMLInputElement[]
+    expect(participationRadios.length).toBeGreaterThan(0)
+    expect(participationRadios.every(radio => radio.disabled)).toBe(true)
+
+    const educationField = screen
+      .getByText('교육 형태', { selector: '.detail-info-form__field-label-text' })
+      .closest('.detail-info-form__field')
+    if (!educationField) throw new Error('교육 형태 필드를 찾지 못했습니다')
+    const educationRadios = [
+      ...educationField.querySelectorAll('input[type="radio"]'),
+    ] as HTMLInputElement[]
+    expect(educationRadios.length).toBeGreaterThan(0)
+    expect(educationRadios.every(radio => radio.disabled)).toBe(false)
+  })
+
+  it('수정 모드 교육 진행 단락에 참여 방식을 중복하지 않는다', () => {
+    const program = getProgram186307()
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    const curriculum = screen.getByRole('region', { name: '교육 진행 (커리큘럼)' })
+    const curriculumLabels = [...curriculum.querySelectorAll('.detail-info-form__field-label-text')].map(
+      el => el.textContent
+    )
+    expect(curriculumLabels).not.toContain('참여 방식')
+    expect(
+      screen.getAllByText('참여 방식', { selector: '.detail-info-form__field-label-text' })
+    ).toHaveLength(1)
+  })
+
+  it('수정 모드 일정형 교육 진행 단락에 참여 방식을 중복하지 않는다', () => {
+    const base = getProgram186307()
+    const program = {
+      ...base,
+      generalProgramEducationStructure: 'schedule',
+      generalCommonInfo: {
+        ...base.generalCommonInfo,
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '기존 일정' }],
+      },
+    } as Program
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    const schedule = screen.getByRole('region', { name: '교육 진행 (일정형)' })
+    const scheduleLabels = [...schedule.querySelectorAll('.detail-info-form__field-label-text')].map(
+      el => el.textContent
+    )
+    expect(scheduleLabels).not.toContain('참여 방식')
+    expect(
+      screen.getAllByText('참여 방식', { selector: '.detail-info-form__field-label-text' })
+    ).toHaveLength(1)
+  })
+
+  it('강사·봉사자 해당 없음은 비활성 인풋으로 보여 준다', () => {
+    const program = getProgram186307()
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    const instructorField = screen
+      .getByText('교육진행자 최종 인원', { selector: '.detail-info-form__field-label-text' })
+      .closest('.detail-info-form__field')
+    if (!instructorField) throw new Error('교육진행자 최종 인원 필드를 찾지 못했습니다')
+    const naInputs = [...instructorField.querySelectorAll('input')] as HTMLInputElement[]
+    expect(naInputs).toHaveLength(2)
+    expect(naInputs.every(input => input.disabled && input.placeholder === '해당 없음')).toBe(true)
+  })
+
+  it('KPI 인풋을 비워도 이전 목표값으로 되돌리지 않는다', () => {
+    const program = getProgram186307()
+    const formRef: {
+      current: ReturnType<typeof useForm<GeneralProgramCommonInfoEditFormValues>> | null
+    } = { current: null }
+    const onSaveEdit = vi.fn().mockResolvedValue(undefined)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness program={program} onSaveEdit={onSaveEdit} formRef={formRef} />
+      </QueryClientProvider>
+    )
+
+    const kpiInput = screen.getAllByPlaceholderText('목표값 입력')[0]
+    if (!kpiInput) throw new Error('참여자 최종 인원 인풋을 찾지 못했습니다')
+    expect(formRef.current?.getValues().kpiFinalParticipants).toBe(80)
+
+    fireEvent.change(kpiInput, { target: { value: '' } })
+
+    expect(formRef.current?.getValues().kpiFinalParticipants).toBeNull()
+    expect((kpiInput as HTMLInputElement).value).toBe('')
   })
 
   it('담당자가 없는 후원사도 후원사 담당자 미선택을 보여준다', async () => {

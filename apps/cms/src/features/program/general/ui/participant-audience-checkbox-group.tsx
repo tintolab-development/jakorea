@@ -15,7 +15,7 @@ export type GeneralParticipantAudienceCheckboxGroupProps = {
   organizationDisabled?: boolean
 }
 
-/** 참여자 유형 [개인]/[기관] — 상호 배타. 저장된 모집행은 항목별로 잠근다. */
+/** 참여자 유형 [개인]/[기관] — 상호 배타. 상세 수정에서는 전부 잠근다. */
 export function GeneralParticipantAudienceCheckboxGroup({
   individual,
   organization,
