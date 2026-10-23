@@ -125,9 +125,7 @@ describe('UJAT program adapters', () => {
     expect(request.educationStructure).toBe('SCHEDULE')
     expect(request.businessStartDate).toBe(program.startDate)
     expect(detail.version).toBe(1)
-    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe(
-      '2026 UJAT'
-    )
+    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe('2026 UJAT')
   })
 
   it('UJAT 전용 필드를 serviceDetailJson으로 round-trip 한다', () => {
@@ -158,9 +156,7 @@ describe('UJAT program adapters', () => {
       registration?: { overlay?: Record<string, unknown> }
     }
 
-    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe(
-      '2026 UJAT'
-    )
+    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe('2026 UJAT')
     expect(updated.title).toBe('수정된 UJAT')
     expect(updated.rounds).toBeUndefined()
     expect(updated.managerName).toBeUndefined()
@@ -440,9 +436,9 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
         h2: { 서울: { classCount: '24', volunteerCount: '48' } },
       },
       'ujat.basicInfo.educationCourse': '',
-      'ujat.basicInfo.ipOwned': '',
-      'ujat.basicInfo.partnerInvolvement': '',
-      'ujat.basicInfo.detailedProgramId': '',
+      'ujat.basicInfo.ipOwned': 'ja',
+      'ujat.basicInfo.partnerInvolvement': 'no',
+      'ujat.basicInfo.detailedProgramId': '__stale__',
     })
     expect(mapped.generalCommonInfo?.kpi).toEqual({
       finalParticipants: undefined,
@@ -481,7 +477,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.titleEn == null || mapped.titleEn === '').toBe(true)
     expect(mapped.totalParticipants == null).toBe(true)
     expect(mapped.generalCommonInfo?.kpi).toMatchObject({
-      finalParticipants: undefined,
+      finalParticipants: null,
       finalClasses: 0,
     })
     expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
@@ -572,9 +568,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.programManagementName']).toBe(
       '새 관리명'
     )
-    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.detailedProgramName']).toBe(
-      '해당없음'
-    )
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.detailedProgramName']).toBe('해당없음')
     expect(mapped.generalProgramEducationStructure).toBe('schedule')
   })
 
@@ -667,7 +661,10 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
         },
       },
     })
-    const request = toCreateRequest(created, { draft, overlay: created.ujatRegistrationOverlay ?? {} })
+    const request = toCreateRequest(created, {
+      draft,
+      overlay: created.ujatRegistrationOverlay ?? {},
+    })
 
     expect(request.applicationStartDate).toBeUndefined()
     expect(request.applicationEndDate).toBeUndefined()
@@ -855,16 +852,16 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
       interviewStartAt: '2026-04-01T00:00:00+09:00',
       interviewEndAt: '2026-04-15T00:00:00+09:00',
     })
-    expect(rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled).toBeUndefined()
+    expect(
+      rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled
+    ).toBeUndefined()
   })
 })
 
 describe('buildUjatNewVolunteerHalfRowRequests', () => {
   const existing: Program = {
     ...program,
-    programRecruitments: [
-      { id: 10, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' },
-    ],
+    programRecruitments: [{ id: 10, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' }],
   }
 
   it('저장되지 않은 하반기 행을 id 없이 SECOND_HALF로 보낸다', () => {
@@ -942,7 +939,10 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
   }
 
   function create(overlay: Record<string, unknown>) {
-    const pending = buildUjatProgramListRowFromRegistrationSnapshot({ id: 'ujat-pending-manual', overlay })
+    const pending = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-pending-manual',
+      overlay,
+    })
     return toCreateRequest(pending, { draft, overlay })
   }
 

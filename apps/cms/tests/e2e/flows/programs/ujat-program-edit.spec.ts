@@ -4,6 +4,7 @@ import {
   UjatProgramEditPage,
   type UjatCommonInfoEditedSnapshot,
   type UjatEditableDummyOpenResult,
+  type UjatMutationCapture,
   type UjatRecruitmentEditedSnapshot,
 } from '../../pages/ujat-program-edit.page'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
@@ -28,6 +29,8 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
   let editPage: UjatProgramEditPage | undefined
   let commonEdited: UjatCommonInfoEditedSnapshot | null = null
   let recruitmentEdited: UjatRecruitmentEditedSnapshot[] = []
+  let commonMutation: UjatMutationCapture | undefined
+  let recruitmentMutations: readonly UjatMutationCapture[] = []
   let seedMissing = false
 
   function requireOpened(): UjatEditableDummyOpenResult {
@@ -78,6 +81,7 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
     commonEdited = editPage.getCommonEditedSnapshot()
     expect(commonEdited, '공통 정보 수정 스냅샷이 필요합니다').toBeTruthy()
     await editPage.saveCommonInfo(programId)
+    commonMutation = editPage.getMutationHistory().at(-1)
     await editPage.expectCommonInfoUpdated(commonEdited, opened?.programTitle)
   })
 
@@ -97,6 +101,7 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
     await editPage.goToRecruitmentTab('recruit_participant')
     await editPage.updateAllRecruitmentTabs(programId)
     recruitmentEdited = [...editPage.getRecruitmentEditedSnapshots()]
+    recruitmentMutations = editPage.getMutationHistory()
   })
 
   test('4) 신청 목록 셸 확인', async ({ page }) => {
@@ -123,6 +128,59 @@ test.describe.serial('UJAT 프로그램 상세 풀페이지 수정', () => {
     await editPage.expectCommonInfoUpdated(commonEdited, opened?.programTitle)
     if (recruitmentEdited.length > 0) {
       await editPage.expectAllRecruitmentInfoUpdated(recruitmentEdited)
+    }
+
+    const canonical = await editPage.readCanonicalDetail(programId)
+    expect(canonical.titleEn).toBe(commonEdited?.titleEn)
+    expect(commonMutation?.programPatchBody).toBeTruthy()
+
+    const rows = Array.isArray(canonical.recruitments)
+      ? (canonical.recruitments as Array<Record<string, unknown>>)
+      : []
+    for (const snapshot of recruitmentEdited) {
+      const recruitTerm =
+        snapshot.tabKey === 'recruit_volunteer_h1'
+          ? 'FIRST_HALF'
+          : snapshot.tabKey === 'recruit_volunteer_h2'
+            ? 'SECOND_HALF'
+            : undefined
+      const row = rows.find(candidate => {
+        if (snapshot.tabKey === 'recruit_participant') {
+          return String(candidate.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+        }
+        return (
+          String(candidate.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
+          candidate.recruitTerm === recruitTerm
+        )
+      })
+      expect(row, `${snapshot.tabKey} canonical recruitment row`).toBeTruthy()
+      expect(row?.contactPhone).toBe(snapshot.contactTel)
+      if (snapshot.contactEmail) {
+        expect(row?.contactEmail).toBe(snapshot.contactEmail)
+      } else {
+        expect(row?.contactEmail == null || row?.contactEmail === '').toBe(true)
+      }
+    }
+
+    const recruitmentBodies = recruitmentMutations.flatMap(item => item.recruitmentPatchBodies)
+    expect(recruitmentBodies.length).toBeGreaterThanOrEqual(recruitmentEdited.length)
+    for (const snapshot of recruitmentEdited) {
+      const recruitTerm =
+        snapshot.tabKey === 'recruit_volunteer_h1'
+          ? 'FIRST_HALF'
+          : snapshot.tabKey === 'recruit_volunteer_h2'
+            ? 'SECOND_HALF'
+            : undefined
+      const body = recruitmentBodies.find(candidate => {
+        if (!candidate || typeof candidate !== 'object') return false
+        const record = candidate as Record<string, unknown>
+        return recruitTerm == null
+          ? String(record.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+          : record.recruitTerm === recruitTerm
+      }) as Record<string, unknown> | undefined
+      expect(body, `${snapshot.tabKey} row PATCH body`).toBeTruthy()
+      expect(body?.contactPhone).toBe(snapshot.contactTel)
+      if (!snapshot.contactEmail) expect(body?.contactEmail).toBe('')
     }
     await editPage.expectDummyVisibleInList(programId, opened?.programTitle)
   })

@@ -140,9 +140,7 @@ describe('applyRecruitmentRowCopy', () => {
   it('행 otherMatters가 없으면 overlay otherNotes(비고)를 비고로 덮지 않는다', () => {
     const program = baseProgram({
       otherNotes: 'overlay 비고',
-      programRecruitments: [
-        { id: 1, recruitmentType: 'VOLUNTEER', remarks: '행 비고' },
-      ],
+      programRecruitments: [{ id: 1, recruitmentType: 'VOLUNTEER', remarks: '행 비고' }],
     })
 
     const next = applyRecruitmentRowCopy(program, 'volunteer')
@@ -150,7 +148,7 @@ describe('applyRecruitmentRowCopy', () => {
     expect(next.oneLineIntroduction).toBe('행 비고')
   })
 
-  it('빈 모집 행은 overlay로 채운 설명·안내를 지우지 않는다', () => {
+  it('빈 모집 행은 overlay로 채운 설명·안내를 지우고 빈 값으로 표시한다', () => {
     const program = baseProgram({
       description: '등록한 프로그램 설명',
       recruitmentGuide: '등록한 모집 안내',
@@ -167,8 +165,8 @@ describe('applyRecruitmentRowCopy', () => {
     })
 
     const next = applyRecruitmentRowCopy(program, 'participant')
-    expect(next.description).toBe('등록한 프로그램 설명')
-    expect(next.recruitmentGuide).toBe('등록한 모집 안내')
+    expect(next.description).toBe('')
+    expect(next.recruitmentGuide).toBe('')
     expect(next.applicationMethod).toBe('등록한 신청 방법')
   })
 })
