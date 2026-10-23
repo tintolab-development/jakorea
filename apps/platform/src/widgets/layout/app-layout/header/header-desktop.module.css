@@ -91,14 +91,6 @@
     column-gap: var(--spacing-24);
     padding-inline: var(--spacing-24);
   }
-
-  .navigation {
-    gap: var(--spacing-8);
-  }
-
-  .navigationButton {
-    padding-inline: var(--spacing-8);
-  }
 }
 
 @media (--bp-pc-full-up) {
@@ -257,6 +249,30 @@
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
+}
+
+@media (--bp-pc-compact) {
+  .navigation {
+    width: 100%;
+    gap: var(--spacing-8);
+  }
+
+  .menuColumn {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 140px;
+  }
+
+  .navigationButton {
+    width: 100%;
+    padding-inline: var(--spacing-8);
+  }
+
+  .menuGroup,
+  .menuItem {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .menuItem:hover:not(.menuItemDisabled) {
