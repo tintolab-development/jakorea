@@ -118,10 +118,23 @@ function mapListGradeClassCounts(
     }))
   }
 
-  const gradeLabel = dto.grade?.trim() || '-'
-  const classCount = typeof dto.requestedClassCount === 'number' ? dto.requestedClassCount : null
-  if (gradeLabel === '-' && classCount == null) return []
-  return [{ gradeLabel, classCount }]
+  // gradeBlocks null/생략 시 requestedClassCount로 학급 줄을 만들지 않는다. 학년 원문만 표시.
+  const gradeLabel = dto.grade?.trim()
+  if (!gradeLabel) return []
+  return [{ gradeLabel, classCount: null }]
+}
+
+function resolveTotalClassCount(
+  dto: OrganizationApplicationListItemResponse,
+  gradeClassCounts: UjatInstitutionApplicationRow['gradeClassCounts']
+): number | null {
+  if (Array.isArray(dto.gradeBlocks) && dto.gradeBlocks.length > 0) {
+    if (gradeClassCounts.some(grade => typeof grade.classCount === 'number')) {
+      return sumGradeClassCounts(gradeClassCounts)
+    }
+  }
+  if (typeof dto.requestedClassCount === 'number') return dto.requestedClassCount
+  return null
 }
 
 function scheduleSlotsFromPreferredDates(
@@ -143,22 +156,26 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
   index: number,
   options?: {
     regionKey?: UjatInstitutionApplicationRegionKey
+    totalElements?: number
   }
 ): UjatInstitutionApplicationRow {
   const regionKey = resolveInstitutionRegionKey(dto, options)
   const gradeClassCounts = mapListGradeClassCounts(dto)
+  const totalElements = options?.totalElements
+  const no =
+    totalElements != null && totalElements > 0 ? totalElements - index : index + 1
 
   return {
     id: toId(dto.id),
     regionKey,
-    no: index + 1,
+    no,
     institutionName: displayTextOrDash(dto.organizationName),
     tempAssignmentStatus: mapOrgStatusToTempAssignment(
       dto.applicationStatus,
       dto.temporaryAssignmentStatus
     ),
     gradeClassCounts,
-    totalClassCount: sumGradeClassCounts(gradeClassCounts),
+    totalClassCount: resolveTotalClassCount(dto, gradeClassCounts),
     scheduleSlots: scheduleSlotsFromPreferredDates(dto.preferredEducationSchedules),
     sessionIsoDates: isoDatesFromStartAts(dto.sessions),
     teacherName: displayTextOrDash(dto.teacherName),
@@ -215,7 +232,7 @@ export function enrichUjatInstitutionDetailFromRemote(
   dto: OrganizationApplicationDetailDto
 ): UjatInstitutionApplicationDetail {
   const base = getUjatInstitutionApplicationDetail(row)
-  const classCount = dto.requestedClassCount ?? row.totalClassCount
+  const classCount = dto.requestedClassCount ?? row.totalClassCount ?? 0
   const gradeLabel =
     dto.requestedGrade?.trim() ||
     dto.grade?.trim() ||

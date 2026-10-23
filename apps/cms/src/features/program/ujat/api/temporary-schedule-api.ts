@@ -166,17 +166,21 @@ export async function fetchProgramSchedulesLoose(
   return []
 }
 
+const SEOUL_YMD = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** `startAt` → Asia/Seoul 달력일 `YYYY-MM-DD`. 파싱 불가면 선행 날짜만. */
 export function isoDateFromScheduleInstant(value: string | null | undefined): string | null {
   if (!value?.trim()) return null
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) {
-    const m = value.trim().match(/^(\d{4}-\d{2}-\d{2})/)
-    return m?.[1] ?? null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value.trim().match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? null
   }
-  const y = d.getFullYear()
-  const mo = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${mo}-${day}`
+  return SEOUL_YMD.format(parsed)
 }
 
 export function buildScheduleIdByIsoDateMap(

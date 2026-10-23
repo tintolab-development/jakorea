@@ -29,7 +29,7 @@ describe('UJAT 기관 신청 상세 adapter', () => {
     expect(row.institutionName).toBe('상세 기관')
     expect(row.totalClassCount).toBe(2)
     expect(row.gradeClassCounts[0]?.gradeLabel).toBe('2학년')
-    expect(row.gradeClassCounts[0]?.classCount).toBe(2)
+    expect(row.gradeClassCounts[0]?.classCount).toBeNull()
   })
 
   it('상세 응답의 UJAT 전용 필드를 행에 반영한다', () => {
@@ -101,7 +101,8 @@ describe('UJAT 기관 신청 목록 adapter', () => {
     )
 
     expect(row.institutionName).toBe('-')
-    expect(row.gradeClassCounts).toEqual([{ gradeLabel: '3학년', classCount: 1 }])
+    expect(row.gradeClassCounts).toEqual([{ gradeLabel: '3학년', classCount: null }])
+    expect(row.totalClassCount).toBe(1)
     expect(row.scheduleSlots['2026-11-04']).toBe('O')
     expect(row.sessionIsoDates).toEqual(['2026-11-11'])
   })
@@ -131,6 +132,38 @@ describe('UJAT 기관 신청 목록 adapter', () => {
       { gradeLabel: '2학년', classCount: 1 },
     ])
     expect(row.totalClassCount).toBe(3)
+  })
+
+  it('gradeBlocks가 null이면 requestedClassCount로 학급 줄을 만들지 않는다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 13,
+        organizationName: '학교',
+        applicationStatus: 'SUBMITTED',
+        grade: '1학년 2학급',
+        requestedClassCount: 2,
+        gradeBlocks: null,
+        preferredEducationSchedules: [],
+      },
+      0
+    )
+
+    expect(row.gradeClassCounts).toEqual([{ gradeLabel: '1학년 2학급', classCount: null }])
+    expect(row.totalClassCount).toBe(2)
+  })
+
+  it('No.는 totalElements 기준 역순이다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 14,
+        organizationName: '학교',
+        applicationStatus: 'SUBMITTED',
+      },
+      0,
+      { totalElements: 30 }
+    )
+
+    expect(row.no).toBe(30)
   })
 })
 
@@ -180,5 +213,144 @@ describe('UJAT 봉사자 목록 adapter', () => {
     expect(row.grade).toBe('leave')
     expect(row.contact).toBe('-')
     expect(row.totalAssignedDays).toBeNull()
+  })
+
+  const mapStatus = (
+    status: Partial<Parameters<typeof mapVolunteerApplicationToUjatApplicantRow>[0]>
+  ) =>
+    mapVolunteerApplicationToUjatApplicantRow(
+      {
+        id: 100,
+        programId: 186290,
+        memberName: '상태 검증 봉사자',
+        ...status,
+      },
+      0,
+      '186290',
+      'h2'
+    )
+
+  it.each([
+    {
+      name: 'ST-FIX-01 최종 합격',
+      input: {
+        applicationStatus: 'APPROVED',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'EVALUATED',
+        finalResultStatus: 'PASS',
+      },
+      expected: { document: 'pass', assignment: 'assigned', second: 'pass' },
+    },
+    {
+      name: 'ST-FIX-02 서류 불합격',
+      input: {
+        applicationStatus: 'REJECTED',
+        documentStatus: 'REJECTED',
+        interviewStatus: undefined,
+        finalResultStatus: undefined,
+      },
+      expected: { document: 'fail', assignment: 'waiting', second: undefined },
+    },
+    {
+      name: 'ST-FIX-03 면접 불합격',
+      input: {
+        applicationStatus: 'REJECTED',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'EVALUATED',
+        finalResultStatus: 'FAIL',
+      },
+      expected: { document: 'pass', assignment: 'assigned', second: 'fail' },
+    },
+    {
+      name: 'ST-FIX-04 면접 일정 배정',
+      input: {
+        applicationStatus: 'DOCUMENT_PASSED',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'ASSIGNED',
+        finalResultStatus: undefined,
+      },
+      expected: { document: 'pass', assignment: 'assigned', second: 'waiting' },
+    },
+    {
+      name: 'ST-FIX-05 면접 평가 완료',
+      input: {
+        applicationStatus: 'DOCUMENT_PASSED',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'EVALUATED',
+        finalResultStatus: undefined,
+      },
+      expected: { document: 'pass', assignment: 'assigned', second: 'completed' },
+    },
+  ] as const)('$name', ({ input, expected }) => {
+    const row = mapStatus(input)
+
+    expect(row.documentScreeningStatus).toBe(expected.document)
+    expect(row.interviewAssignmentStatus).toBe(expected.assignment)
+    expect(row.secondInterviewScreeningStatus).toBe(expected.second)
+  })
+
+  it('ST-FIX-05 면접 평가 점수와 합계는 상태 변환과 무관하게 유지한다', () => {
+    const row = mapStatus({
+      applicationStatus: 'DOCUMENT_PASSED',
+      documentStatus: 'DOCUMENT_PASSED',
+      interviewStatus: 'EVALUATED',
+      interviewEvaluations: [
+        { evaluatorOrder: 1, score: 4 },
+        { evaluatorOrder: 2, score: 5 },
+      ],
+    })
+
+    expect(row.secondInterviewScreeningStatus).toBe('completed')
+    expect(row.managerAScore).toBe(4)
+    expect(row.managerBScore).toBe(5)
+    expect(row.totalScore).toBe(9)
+  })
+
+  it.each([1, 2, 3, 4] as const)('ST-FIX-06 예비합격 rank %s를 보존한다', reserveRank => {
+    const row = mapStatus({
+      applicationStatus: 'RESERVE',
+      documentStatus: 'DOCUMENT_PASSED',
+      interviewStatus: 'EVALUATED',
+      finalResultStatus: 'RESERVE',
+      reserveRank,
+    })
+
+    expect(row.documentScreeningStatus).toBe('pass')
+    expect(row.secondInterviewScreeningStatus).toBe(`reserve${reserveRank}`)
+  })
+
+  it('ST-FIX-07 활동 포기는 다른 심사 상태보다 우선한다', () => {
+    const row = mapStatus({
+      applicationStatus: 'GIVE_UP',
+      documentStatus: 'DOCUMENT_PASSED',
+      interviewStatus: 'ASSIGNED',
+      giveUpYn: true,
+    })
+
+    expect(row.documentScreeningStatus).toBe('pass')
+    expect(row.interviewAssignmentStatus).toBe('withdrawn')
+    expect(row.secondInterviewScreeningStatus).toBeUndefined()
+  })
+
+  it('ST-FIX-08 기존 Canonical 상태를 계속 읽는다', () => {
+    expect(mapStatus({ applicationStatus: 'WAITING_REVIEW' }).documentScreeningStatus).toBe(
+      'pending'
+    )
+    expect(mapStatus({ applicationStatus: 'DOCUMENT_PASSED' }).documentScreeningStatus).toBe(
+      'pass'
+    )
+    expect(
+      mapStatus({ applicationStatus: 'INTERVIEW_ASSIGNED' }).interviewAssignmentStatus
+    ).toBe('assigned')
+    expect(mapStatus({ applicationStatus: 'FINAL_SELECTED' }).secondInterviewScreeningStatus).toBe(
+      'pass'
+    )
+    expect(
+      mapStatus({ applicationStatus: 'RESERVE', reserveRank: 2 }).secondInterviewScreeningStatus
+    ).toBe('reserve2')
+    expect(mapStatus({ applicationStatus: 'INTERVIEW_FAILED' }).secondInterviewScreeningStatus).toBe(
+      'fail'
+    )
+    expect(mapStatus({ applicationStatus: 'GIVE_UP' }).interviewAssignmentStatus).toBe('withdrawn')
   })
 })

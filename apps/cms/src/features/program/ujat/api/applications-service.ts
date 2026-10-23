@@ -82,7 +82,9 @@ export async function listUjatInstitutionApplicationsPage(
   return {
     ...meta,
     rows: (response.items ?? []).map((dto, index) =>
-      mapOrganizationApplicationToUjatInstitutionRow(dto, meta.page * meta.size + index)
+      mapOrganizationApplicationToUjatInstitutionRow(dto, meta.page * meta.size + index, {
+        totalElements: meta.totalElements,
+      })
     ),
   }
 }
