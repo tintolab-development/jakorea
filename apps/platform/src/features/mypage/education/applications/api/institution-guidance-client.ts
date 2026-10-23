@@ -7,9 +7,11 @@ import type { ProgramDetailCase } from '@/features/program'
 import type {
   OrganizationGuidanceAnswersPatchRequest,
   OrganizationGuidanceAnswersPatchResponse,
+  UjatTemporaryScheduleConfirmResponse,
 } from './institution-guidance-types'
 
 const ORGANIZATION_APPLICATIONS_PATH = '/api/portal/me/organization-applications'
+const PROGRAM_APPLICATIONS_PATH = '/api/portal/me/program-applications'
 
 function unwrapEnvelope<T>(payload: unknown): T {
   if (payload && typeof payload === 'object') {
@@ -39,6 +41,21 @@ export async function patchOrganizationGuidanceAnswers(
     body,
   )
   return unwrapEnvelope<OrganizationGuidanceAnswersPatchResponse>(data)
+}
+
+/** POST /api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule/confirm */
+export async function confirmUjatTemporarySchedule(
+  applicationId: string,
+): Promise<UjatTemporaryScheduleConfirmResponse> {
+  const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+  if (!orgApplicationId) {
+    throw new Error('신청 정보가 올바르지 않습니다.')
+  }
+  const { data } = await axiosClient.post<unknown>(
+    `${PROGRAM_APPLICATIONS_PATH}/${encodeURIComponent(orgApplicationId)}/ujat/temporary-schedule/confirm`,
+    {},
+  )
+  return unwrapEnvelope<UjatTemporaryScheduleConfirmResponse>(data)
 }
 
 export async function savePortalTeacherInstitutionGuidance(input: {

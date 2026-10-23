@@ -7,6 +7,12 @@ const INSTITUTION_GUIDANCE_ERROR_MESSAGES: Record<string, string> = {
   ORGANIZATION_APPLICATION_NOT_FOUND: '신청 정보를 찾을 수 없습니다.',
   APPLICATION_ANSWERS_CONFLICT:
     '신청 답변이 변경되었거나 최신 제출본이 없습니다. 새로고침 후 다시 시도해 주세요.',
+  UJAT_ACTIVE_EDUCATION_SLOT_REQUIRED:
+    '기관 확인에 사용할 활성 교육일·학급 배정이 없습니다. 관리자에게 확인해 주세요.',
+  UJAT_WORKFLOW_STATE_CONFLICT:
+    '일정 확인 상태가 변경되었습니다. 신청 상세를 새로고침한 후 다시 시도해 주세요.',
+  UJAT_TEMPORARY_ASSIGNMENT_REQUIRED:
+    '아직 확인할 수 있는 관리자 배정 일정이 없습니다. 관리자에게 확인해 주세요.',
   INVALID_REQUEST: '요청 내용을 확인해 주세요.',
   FORBIDDEN: '안내사항을 수정할 수 없습니다.',
 }
@@ -61,4 +67,13 @@ export function resolveInstitutionGuidanceErrorMessage(
   if (serverMessage) return serverMessage
   if (error instanceof Error && error.message.trim()) return error.message.trim()
   return fallback
+}
+
+export function resolveUjatTemporaryScheduleConfirmErrorMessage(
+  error: unknown,
+): string {
+  return resolveInstitutionGuidanceErrorMessage(
+    error,
+    '관리자 배정 일정 확인을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+  )
 }

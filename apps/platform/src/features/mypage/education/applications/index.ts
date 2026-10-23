@@ -17,6 +17,8 @@ export type {
   EducationUjatApplicationInstitution,
   EducationUjatClassTimeBlock,
   EducationUjatGradeBlock,
+  EducationUjatTemporarySchedule,
+  EducationUjatTemporaryScheduleSlot,
   EducationWithdrawalPhase,
 } from './model/types'
 export {
@@ -144,8 +146,12 @@ export {
   useOrganizationStudentRosterQuery,
   useSubmitOrganizationPortraitConsentMutation,
 } from './api/student-documents-hooks'
-export { usePatchOrganizationGuidanceAnswersMutation } from './api/institution-guidance-hooks'
 export {
+  useConfirmUjatTemporaryScheduleMutation,
+  usePatchOrganizationGuidanceAnswersMutation,
+} from './api/institution-guidance-hooks'
+export {
+  confirmUjatTemporarySchedule,
   patchOrganizationGuidanceAnswers,
   savePortalTeacherInstitutionGuidance,
 } from './api/institution-guidance-client'
