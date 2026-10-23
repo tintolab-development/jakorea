@@ -13,6 +13,7 @@ import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-c
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
+  EducationUjatTemporarySchedule,
 } from '../model/types'
 import type {
   PortalProgramApplicationDetail,
@@ -287,6 +288,23 @@ function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
   return record
 }
 
+function mapUjatTemporarySchedule(
+  detail: PortalProgramApplicationDetail,
+): EducationUjatTemporarySchedule | undefined {
+  const temporarySchedule = detail.supplement?.ujat?.temporarySchedule
+  if (!temporarySchedule) return undefined
+  return {
+    slots: (temporarySchedule.slots ?? []).map(slot => ({
+      scheduleId: slot.scheduleId ?? null,
+      scheduleStartAt: slot.scheduleStartAt ?? null,
+      grade: slot.grade ?? null,
+      className: slot.className ?? null,
+      studentCount: slot.studentCount ?? null,
+      assignmentStatus: slot.assignmentStatus ?? null,
+    })),
+  }
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
   knownApplicationType?: ProgramApplicationType | null,
@@ -360,6 +378,10 @@ export function mapPortalProgramApplicationDetail(
   const formResponseStatus = detail.formResponseStatus?.trim()
   if (formResponseStatus) {
     mapped.formResponseStatus = formResponseStatus
+  }
+  const ujatTemporarySchedule = mapUjatTemporarySchedule(detail)
+  if (ujatTemporarySchedule) {
+    mapped.ujatTemporarySchedule = ujatTemporarySchedule
   }
 
   const interview = resolveInterviewFields(detail, displayStatus)
