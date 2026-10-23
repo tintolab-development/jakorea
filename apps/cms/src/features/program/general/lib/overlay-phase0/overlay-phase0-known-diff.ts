@@ -18,11 +18,11 @@ export const OVERLAY_PHASE0_KNOWN_DIFFS: readonly OverlayPhase0KnownDiff[] = [
   {
     id: 'detail-common-save-overlay-first',
     current:
-      'useGeneralProgramCommonInfoSave는 form.getValues() → Independent PATCH → nested-ssot serialize. 교육받은 교사만 overlay-first',
-    expectedIfChanged: 'process rule의 RHF form.getValues() SSOT',
+      'useGeneralProgramCommonInfoSave는 Independent PATCH. 교육받은 교사는 일반 훅에서 저장을 거부하고 전용 모달 nested persist를 쓴다',
+    expectedIfChanged: '동일',
     change: 'keep_current',
     evidence: 'apps/cms/src/features/program/general/hooks/use-common-info-save.ts',
-    verifyTest: 'overlay-first 공통 저장 왕복은 공고명·임금을 overlay에서 가져온다',
+    verifyTest: '교육받은 교사는 일반 공통정보 overlay-first 저장을 하지 않는다',
   },
   {
     id: 'recruit-detailinfo-reseed-gap',
@@ -84,11 +84,12 @@ export const OVERLAY_PHASE0_KNOWN_DIFFS: readonly OverlayPhase0KnownDiff[] = [
   {
     id: 'individual-schedule-writes-institution-prefix',
     current:
-      '개인 신청 일정은 application.institution.fixedScheduleSelected 에 쓴다. individual catalog collect prefix는 application.individual 뿐',
-    expectedIfChanged: '개인 catalog 키로 쓰거나 collect prefix에 institution 일정 키를 포함',
-    change: 'change_required',
-    evidence: 'individual-schedule-paragraph → institution-fixed-schedule-paragraph',
-    verifyTest: '개인 catalog collect가 institution 일정 키를 빠뜨린다',
+      '개인 신청 일정은 application.individual.fixedScheduleSelected. 구 키 application.institution.fixedScheduleSelected 는 개인 전용 hydrate 호환만 하고 individual catalog collect prefix에 institution 전체를 넣지 않는다',
+    expectedIfChanged: '동일',
+    change: 'keep_current',
+    evidence:
+      'individual-schedule-paragraph overlayKey + canonicalizeWizardApplicationKv',
+    verifyTest: '개인 신청 일정은 individual catalog 키로 저장하고 기관 키와 섞지 않는다',
   },
   {
     id: 'application-overlay-not-in-program-create',

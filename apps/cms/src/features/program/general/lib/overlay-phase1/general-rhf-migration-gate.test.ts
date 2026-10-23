@@ -53,6 +53,7 @@ import {
   GENERAL_RHF_MIGRATION_GATE_SCOPE,
   GENERAL_RHF_MIGRATION_GATE_STATUS,
   GENERAL_RHF_SESSION_SCENARIOS,
+  TRAINED_TEACHER_NESTED_SSOT_PERSIST_STATUS,
   INDEPENDENT_TO_DETAIL_RHF_ADAPTER,
   LEGACY_VS_BE_SESSION_DIFF,
   MEDIA_RHF_CONNECTABLE,
@@ -173,14 +174,10 @@ describe('P0 일반 프로그램 RHF 게이트 — 계약', () => {
     expect(BE_SESSION_SSOT_CONTRACT.programSchedulesArePhysicalRows).toBe(true)
   })
 
-  it('기존 change_required known-diff 3건을 유지한다', () => {
+  it('기존 change_required known-diff 2건을 유지한다', () => {
     const required = OVERLAY_PHASE0_KNOWN_DIFFS.filter(item => item.change === 'change_required')
     expect(required.map(item => item.id).sort()).toEqual(
-      [
-        'empty-public-title-apply-fallback',
-        'individual-schedule-writes-institution-prefix',
-        'recruit-detailinfo-reseed-gap',
-      ].sort()
+      ['empty-public-title-apply-fallback', 'recruit-detailinfo-reseed-gap'].sort()
     )
   })
 })
@@ -725,31 +722,41 @@ describe('P0 RHF 연결 준비', () => {
     )
   })
 
-  it('위저드는 RHF가 없고 상세 공통/모집은 useForm이 있다', () => {
-    const dir = path.join(__dirname, '../../ui/registration/registration-fullpage-modal.tsx')
-    const wizard = readFileSync(dir, 'utf8')
-    expect(wizard.includes("from 'react-hook-form'")).toBe(false)
+  it('일반 위저드만 FormProvider를 연결하고 공통·모집·신청 wizardRhf를 켠다', () => {
+    const wizard = readFileSync(
+      path.join(__dirname, '../../ui/registration/registration-fullpage-modal.tsx'),
+      'utf8'
+    )
+    expect(wizard.includes('GeneralRegistrationWizardFormProvider')).toBe(true)
+    expect(wizard.includes("variant === 'general'")).toBe(true)
+    const provider = readFileSync(
+      path.join(__dirname, '../../ui/registration/registration-wizard-form-provider.tsx'),
+      'utf8'
+    )
+    expect(provider.includes("from 'react-hook-form'")).toBe(true)
+    expect(provider.includes('shouldUnregister: false')).toBe(true)
     const commonForm = readFileSync(
       path.join(__dirname, '../../hooks/use-common-info-edit-form.ts'),
       'utf8'
     )
     expect(commonForm.includes('useForm')).toBe(true)
     expect(commonForm.includes('curriculumSessions')).toBe(true)
-    expect(RECRUITMENT_RHF_CONNECTABLE.wizardRhf).toBe(false)
+    expect(RECRUITMENT_RHF_CONNECTABLE.wizardRhf).toBe(true)
     expect(RECRUITMENT_RHF_CONNECTABLE.connectableWithAdapter).toBe(true)
+    expect(APPLICATION_RHF_CONNECTABLE.wizardRhf).toBe(true)
     expect(APPLICATION_RHF_CONNECTABLE.sink).toBe('form-version-overlay')
     expect(MEDIA_RHF_CONNECTABLE.sink).toMatch(/fileObjectId|PUT/)
   })
 
-  it('세션 계약은 COMPLETE이고 위저드 FormProvider 부재는 남는다', () => {
+  it('세션 계약은 COMPLETE이고 known-diff 게이트만 남는다', () => {
     expect(GENERAL_RHF_CONTRACT_ALIGNMENT_STATUS).toBe(
       'GENERAL_RHF_CONTRACT_ALIGNMENT_COMPLETE'
     )
     expect(GENERAL_RHF_MIGRATION_GATE_STATUS).toBe('GENERAL_RHF_MIGRATION_GATE_BLOCKED')
-    expect(GENERAL_RHF_GATE_BLOCKERS).toEqual([
-      'wizard-has-no-form-provider',
-      'known-diff-change-required',
-    ])
+    expect(GENERAL_RHF_GATE_BLOCKERS).toEqual(['known-diff-change-required'])
     expect(GENERAL_RHF_SESSION_SCENARIOS.every(item => item.verdict === 'matches-be')).toBe(true)
+    expect(TRAINED_TEACHER_NESTED_SSOT_PERSIST_STATUS).toBe(
+      'TRAINED_TEACHER_NESTED_SSOT_PERSIST_READY'
+    )
   })
 })

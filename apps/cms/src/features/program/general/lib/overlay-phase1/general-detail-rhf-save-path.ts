@@ -248,3 +248,7 @@ export const GENERAL_COMMON_INFO_VALIDATION_UX_STATUS =
 
 /** 일반 프로그램 후원사 PATCH — sentinel/mirror/legacy sponsorId/refetch 정합 */
 export const GENERAL_SPONSOR_PATCH_STATUS = 'GENERAL_SPONSOR_PATCH_FE_READY' as const
+
+/** 일반 공통정보 정보 수정 — 교육구조 변경 ConfirmModal 레이어·저장 분기 */
+export const GENERAL_COMMON_INFO_SAVE_INTERACTION_STATUS =
+  'GENERAL_COMMON_INFO_SAVE_INTERACTION_PARTIAL' as const

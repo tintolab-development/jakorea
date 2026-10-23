@@ -91,9 +91,12 @@ const ECONOMY_IP_OWNED_OPTIONS = [
 function LockedParticipantTypeCheckboxes({
   organization = false,
   teacherInstructor = false,
+  teacherInstructorLabel = '강사',
 }: {
   organization?: boolean
   teacherInstructor?: boolean
+  /** 교육받은 교사만 「교사/강사」. 1사1교·기본은 「강사」 */
+  teacherInstructorLabel?: string
 }) {
   return (
     <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium">
@@ -104,7 +107,7 @@ function LockedParticipantTypeCheckboxes({
         학교/기관
       </CmsCheckbox>
       <CmsCheckbox checkboxSize="medium" checked={teacherInstructor} disabled>
-        강사
+        {teacherInstructorLabel}
       </CmsCheckbox>
       <CmsCheckbox checkboxSize="medium" checked={false} disabled>
         봉사자
@@ -118,7 +121,7 @@ function CompanySchoolFixedParticipantTypes() {
 }
 
 function TrainedTeachersFixedParticipantTypes() {
-  return <LockedParticipantTypeCheckboxes organization />
+  return <LockedParticipantTypeCheckboxes organization teacherInstructorLabel="교사/강사" />
 }
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
@@ -157,6 +160,10 @@ export interface BasicInfoSectionProps {
    * 교육받은 교사 상세 수정 전용 — 1사1교·일반 조회 타이틀은 유지.
    */
   hideFormTitles?: boolean
+  /** 교육받은 교사 — 등록 위저드와 같이 교육 장소 행 비노출 */
+  hideEducationPlace?: boolean
+  /** 교육받은 교사 — 공고용 프로그램명 placeholder (위저드 카피) */
+  announcementTitlePlaceholder?: string
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -223,6 +230,8 @@ export function BasicInfoSection({
   enableTitleEnEdit = false,
   useDetailedProgramSelect = false,
   hideFormTitles = false,
+  hideEducationPlace = false,
+  announcementTitlePlaceholder = '공고용 프로그램명을 입력하세요',
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
@@ -533,7 +542,7 @@ export function BasicInfoSection({
                     <CmsInput inputSize="small"
                       {...field}
                       value={field.value ?? ''}
-                      placeholder="공고용 프로그램명을 입력하세요"
+                      placeholder={announcementTitlePlaceholder}
                       width="100%"
                     />
                   )}
@@ -879,7 +888,7 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
-          {isEconomyCommonInfo ? null : (
+          {isEconomyCommonInfo || hideEducationPlace ? null : (
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="교육 장소"

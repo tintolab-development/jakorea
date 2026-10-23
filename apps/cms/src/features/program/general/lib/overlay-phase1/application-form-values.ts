@@ -32,6 +32,8 @@ export type IndividualApplicationValues = {
   customMemberCount: OptionalField<string | null>
   teamRole: OptionalField<string | null>
   extraTeamInfo: OptionalField<Record<string, unknown>>
+  /** 개인 catalog 정본. 기관 `application.institution.fixedScheduleSelected` 와 섞지 않는다. */
+  fixedScheduleSelected: OptionalField<readonly unknown[]>
   extraOwned: OptionalField<Record<string, unknown>>
 }
 

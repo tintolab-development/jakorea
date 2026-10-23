@@ -85,94 +85,14 @@ export function ProgramRegistrationCurriculumTitleActions({
     sessionRound: sessionRoundType,
     educationScheduleMode,
   })
-
-  if (variant === 'trainedTeachers') {
-    const teacherTrainingToggle = (
-      <CmsToggle
-        label="교육 연수"
-        checked={trainedTeachersTeacherTrainingEnabled}
-        onChange={onTrainedTeachersTeacherTrainingEnabledChange}
-      />
-    )
-
-    if (programType === 'schedule') {
-      const addScheduleLabel = isScheduleEventLayout ? '강의 행사 일정 추가' : '강의 세부 일정 추가'
-      return (
-        <TitleActionsWrap>
-          {teacherTrainingToggle}
-          {sessionRoundType === 'multi' || !allowProgressGroupAdd || isScheduleEventLayout ? (
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="medium"
-              width={160}
-              icon={<ButtonAddIcon aria-hidden />}
-              onClick={e => {
-                e.stopPropagation()
-                onAddScheduleCurriculumDetail()
-              }}
-            >
-              {addScheduleLabel}
-            </CmsButton>
-          ) : (
-            <>
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                width={160}
-                icon={<ButtonAddIcon aria-hidden />}
-                onClick={e => {
-                  e.stopPropagation()
-                  onAddScheduleCurriculumDetail()
-                }}
-              >
-                {addScheduleLabel}
-              </CmsButton>
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                width={160}
-                icon={<ButtonAddIcon aria-hidden />}
-                onClick={e => {
-                  e.stopPropagation()
-                  onAddScheduleCurriculumGroup()
-                }}
-              >
-                진행 그룹 추가
-              </CmsButton>
-            </>
-          )}
-        </TitleActionsWrap>
-      )
-    }
-
-    const curriculumChartSessionAtMax =
-      curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
-    return (
-      <TitleActionsWrap>
-        {teacherTrainingToggle}
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="medium"
-          width={160}
-          disabled={curriculumChartSessionAtMax}
-          icon={<ButtonAddIcon aria-hidden />}
-          onClick={e => {
-            e.stopPropagation()
-            if (curriculumChartSessionAtMax) return
-            onAddCurriculumChartSession()
-          }}
-        >
-          강의 진행 차시 추가
-        </CmsButton>
-      </TitleActionsWrap>
-    )
-  }
-
-  const preEducationToggle = (
+  const isTrainedTeachers = variant === 'trainedTeachers'
+  const extraToggle = isTrainedTeachers ? (
+    <CmsToggle
+      label="교육 연수"
+      checked={trainedTeachersTeacherTrainingEnabled}
+      onChange={onTrainedTeachersTeacherTrainingEnabledChange}
+    />
+  ) : (
     <CmsToggle
       label="사전 교육"
       checked={scheduleCurriculumPreEducation}
@@ -184,7 +104,7 @@ export function ProgramRegistrationCurriculumTitleActions({
     if (isScheduleEventLayout) {
       return (
         <TitleActionsWrap>
-          {preEducationToggle}
+          {extraToggle}
           <CmsButton
             type="button"
             variant="secondary"
@@ -205,7 +125,7 @@ export function ProgramRegistrationCurriculumTitleActions({
     if (sessionRoundType === 'multi' || !allowProgressGroupAdd) {
       return (
         <TitleActionsWrap>
-          {preEducationToggle}
+          {extraToggle}
           <CmsButton
             type="button"
             variant="secondary"
@@ -227,7 +147,7 @@ export function ProgramRegistrationCurriculumTitleActions({
       scheduleCurriculumGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
     return (
       <TitleActionsWrap>
-        {preEducationToggle}
+        {extraToggle}
         <CmsButton
           type="button"
           variant="secondary"
@@ -265,7 +185,7 @@ export function ProgramRegistrationCurriculumTitleActions({
     !isMulti && curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
   return (
     <TitleActionsWrap>
-      {preEducationToggle}
+      {extraToggle}
       <CmsButton
         type="button"
         variant="secondary"

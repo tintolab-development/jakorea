@@ -108,7 +108,7 @@ export const SESSION_AUTHORING_CONTRACTS = [
   {
     family: 'TRAINED_TEACHER',
     authoring:
-      'trainedTeachersRegistration.* 를 generalRegistration 키로 remap 후 applyGeneralRegistrationOverlayToProgram. nested vs overlay 세션 정본은 BE 미확정 — 코드상 일반 apply 재사용',
+      '상세 공통은 폼+draft nested curriculumSessions/scheduleDetails 정본. 비활성 nested는 []. stale session overlay maps는 serialize에서 제거',
   },
   {
     family: 'UJAT',
@@ -178,11 +178,11 @@ export const OVERLAY_PHASE0C_MATRIX: readonly OverlayPhase0CMatrixRow[] = [
     registrationScreen:
       'apps/cms/src/features/program/general/ui/registration/registration-fullpage-modal.tsx (variant=trainedTeachers)',
     detailScreen:
-      'apps/cms/src/features/program/general/ui/detail-modal/detail-fullpage-modal.tsx',
+      'apps/cms/src/features/program/general/ui/detail-modal/program-detail-fullpage-modal.tsx',
     wizardInputSsot: 'overlay-store',
-    detailInputSsot: 'overlay-store+rhf',
+    detailInputSsot: 'rhf',
     saveSsot:
-      'trainedTeachersRegistration overlay를 generalRegistration으로 remap 후 일반 apply. create는 mapTrainedTeacherToCreateRequest. schedules[]는 상세 일정 API',
+      '상세 공통: RHF getValues + draft nested → useProgramDetailInfoSave. A extra와 B configJson 동일 slices. 전환 overlay omit. 일반 모달은 TT 저장을 거부하고 전용 URL로 보낸다',
     saveHook:
       'persistGeneralProgramRegistration(variant=trainedTeachers) / useProgramDetailInfoSave / detailEditValuesToProgramPatch',
     createApi: 'createTrainedTeacherProgram → programType TRAINED_TEACHER',
@@ -195,7 +195,7 @@ export const OVERLAY_PHASE0C_MATRIX: readonly OverlayPhase0CMatrixRow[] = [
     mediaBuilder: 'reuse-with-adapter',
     risk: 'Medium',
     notes:
-      '세션 정본 BE 미확정. 코드는 prefix remap 후 일반 apply. Program.schedules는 overlay와 분리',
+      '상세 공통은 일반 Independent 빌더를 쓰지 않는다. nested curriculumSessions/scheduleDetails 정본. Program.schedules는 overlay와 분리',
   },
   {
     family: 'UJAT',

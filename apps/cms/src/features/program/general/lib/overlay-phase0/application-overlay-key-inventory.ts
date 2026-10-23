@@ -150,7 +150,7 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
     preview: true,
     bridge: true,
     notes:
-      '개인 신청 일정 UI가 동일 컴포넌트를 재사용한다. 키 prefix는 institution 고정. 개인 catalog collect prefix와 불일치',
+      '기관 신청 고정 일정. 개인 신청은 application.individual.fixedScheduleSelected 를 쓴다',
     ...FORM_VERSION_AND_DRAFT,
   },
   {
@@ -254,6 +254,19 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
     required: false,
     preview: true,
     bridge: false,
+    ...FORM_VERSION_AND_DRAFT,
+  },
+  {
+    catalog: 'application-participant-individual',
+    key: 'application.individual.fixedScheduleSelected',
+    kind: 'array',
+    input: 'individual-schedule-paragraph',
+    defaultValue: '[]',
+    required: false,
+    preview: true,
+    bridge: true,
+    notes:
+      '기관 고정 일정 컴포넌트를 overlayKey로 재사용. 포털 제출은 paragraph answer, CMS Form Version overlay는 개인 prefix',
     ...FORM_VERSION_AND_DRAFT,
   },
   {

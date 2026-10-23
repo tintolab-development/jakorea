@@ -1,6 +1,7 @@
 /**
  * P0 — 일반 프로그램 RHF 전환 게이트. 제품 저장 훅에서 import하지 않는다.
- * COMPANY_SCHOOL / TRAINED_TEACHER / UJAT / GEMINI 는 범위 밖.
+ * COMPANY_SCHOOL / UJAT / GEMINI 는 범위 밖.
+ * TRAINED_TEACHER 는 일반 Independent 빌더를 재사용하지 않고 전용 nested-ssot persist 를 쓴다.
  */
 
 export const GENERAL_RHF_MIGRATION_GATE_SCOPE = [
@@ -142,7 +143,6 @@ export type GeneralRhfGateBlockerId =
   | 'known-diff-change-required'
 
 export const GENERAL_RHF_GATE_BLOCKERS: readonly GeneralRhfGateBlockerId[] = [
-  'wizard-has-no-form-provider',
   'known-diff-change-required',
 ]
 
@@ -151,10 +151,14 @@ export const GENERAL_RHF_MIGRATION_GATE_STATUS = 'GENERAL_RHF_MIGRATION_GATE_BLO
 export const GENERAL_RHF_CONTRACT_ALIGNMENT_STATUS =
   'GENERAL_RHF_CONTRACT_ALIGNMENT_COMPLETE' as const
 
+/** 교육받은 교사 상세 공통정보 — 일반 Independent 재사용 아님. 전용 폼+draft nested persist. */
+export const TRAINED_TEACHER_NESTED_SSOT_PERSIST_STATUS =
+  'TRAINED_TEACHER_NESTED_SSOT_PERSIST_READY' as const
+
 export const GENERAL_RHF_GATE_PRECONDITIONS = [
   'Independent 세션 빌더를 BE 계약에 맞춤: [] 허용, extras/nested count가 overlayCount를 이김, sparse 유지',
   '상세는 기존 nested RHF(generalCommonInfoEditValuesToProgramPatch)를 우선. Independent maps로 상세를 되돌리지 않음',
-  '위저드는 전 스텝을 감싸는 FormProvider가 있어야 Independent 입력이 언마운트 후에도 유지됨',
+  '일반 위저드는 전 스텝을 감싸는 FormProvider(shouldUnregister:false)가 있다. Independent 입력은 모집/신청 언마운트 후에도 유지',
   '시드는 nested → overlay 미러. GET raw overlay maps를 formValues에 넣지 않음',
   '신청 PUT sink는 form version overlay 유지. create registrationOverlay에 application.* 금지',
   '미디어 canonical은 fileObjectId. blob URL은 create payload 제외',
@@ -216,19 +220,20 @@ export const INDEPENDENT_TO_DETAIL_RHF_ADAPTER: readonly {
 export const RECRUITMENT_RHF_CONNECTABLE = {
   independentModel: 'RecruitmentFormValues catalog objects',
   existingDetailRhf: 'ProgramDetailEditFormValues via useProgramDetailEditForm',
-  wizardRhf: false,
+  wizardRhf: true,
   connectableWithAdapter: true,
   notes:
-    '상세 모집 탭은 이미 RHF. Independent는 catalog overlay 형태. 행 PATCH는 recruitments[] SSOT를 덮으면 안 됨',
+    '일반 신규 등록은 recruitmentKv RHF Independent. 상세 모집 탭은 기존 RHF. 행 PATCH는 recruitments[] SSOT를 덮으면 안 됨',
 } as const
 
 export const APPLICATION_RHF_CONNECTABLE = {
   independentModel: 'ApplicationFormValues OptionalField catalogs',
   existingDetailRhf: false,
-  wizardRhf: false,
+  wizardRhf: true,
   connectableWithAdapter: true,
   sink: 'form-version-overlay',
-  notes: '신청은 프로그램 PATCH가 아님. Independent overlay PUT body가 정본 sink',
+  notes:
+    '일반 신규 등록은 applicationKv RHF Independent. Form Version overlay PUT이 sink. 프로그램 CREATE에 application.* 를 넣지 않는다',
 } as const
 
 export const MEDIA_RHF_CONNECTABLE = {

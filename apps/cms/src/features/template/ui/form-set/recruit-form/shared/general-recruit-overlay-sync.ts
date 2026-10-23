@@ -1,6 +1,17 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import {
+  beginWizardRecruitmentRhfProjection,
+  endWizardRecruitmentRhfProjection,
+  isGeneralRecruitOwnedKey,
+  isWizardRecruitmentRhfProjecting,
+  mergeWizardRecruitmentIntoOverlayRecord,
+  patchWizardRecruitmentKv,
+  peekGeneralRegistrationWizardRhf,
+  readWizardRecruitmentKvValue,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
 
 /**
  * 모집 폼(개인 모집, 강사 모집, 봉사자 모집) overlay.
@@ -37,14 +48,22 @@ export function getGeneralRecruitOverlayRecord(): Record<string, unknown> {
 export function peekGeneralRecruitOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
-  return store.peekRecord(templateCode)
+  return mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
 }
 
 export function replaceGeneralRecruitOverlayForScope(
   templateCode: string | undefined | null,
   next: Record<string, unknown>
 ): void {
-  store.replaceFor(templateCode, next)
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(next, { shouldDirty: false })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replaceFor(templateCode, next)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function resetGeneralRecruitOverlayForScope(
@@ -58,26 +77,63 @@ function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
 }
 
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
-  store.patch(partial)
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(partial, { shouldDirty: true })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.patch(partial)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function patchGeneralRecruitOverlayForScope(
   templateCode: string | undefined | null,
   partial: Record<string, unknown>
 ): void {
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(partial, { shouldDirty: true })
+  }
   const current = store.peekRecord(templateCode)
-  store.replaceFor(templateCode, { ...current, ...partial })
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replaceFor(templateCode, { ...current, ...partial })
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function updateGeneralRecruitOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
+  const api = peekGeneralRegistrationWizardRhf()
+  if (api != null && isGeneralRecruitOwnedKey(key) && !isWizardRecruitmentRhfProjecting()) {
+    const prev = readWizardRecruitmentKvValue<T | undefined>(key, undefined)
+    const next = updater(prev)
+    patchWizardRecruitmentKv({ [key]: next }, { shouldDirty: true })
+    beginWizardRecruitmentRhfProjection()
+    try {
+      store.updateKey(key, () => next)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
   store.updateKey(key, updater)
 }
 
 export function replaceGeneralRecruitOverlay(next: Record<string, unknown>): void {
-  store.replace(next)
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(next, { shouldDirty: false })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replace(next)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function resetGeneralRecruitOverlay(): void {
@@ -104,10 +160,23 @@ export function useGeneralRecruitOverlayKv<T>(
   defaultValue: T
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const getSnapshot = useCallback(() => readOverlayKeyValue(key, defaultRef.current), [key])
+  const rhfOwned = isGeneralRecruitOwnedKey(key)
+  const getSnapshot = useCallback(() => {
+    if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
+      return readWizardRecruitmentKvValue(key, defaultRef.current)
+    }
+    return readOverlayKeyValue(key, defaultRef.current)
+  }, [key, rhfOwned])
 
   const value = useSyncExternalStore(
-    listener => subscribeGeneralRecruitOverlayKey(key, listener),
+    listener => {
+      const unsubOverlay = subscribeGeneralRecruitOverlayKey(key, listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      return () => {
+        unsubOverlay()
+        unsubRhf()
+      }
+    },
     getSnapshot,
     getSnapshot
   )

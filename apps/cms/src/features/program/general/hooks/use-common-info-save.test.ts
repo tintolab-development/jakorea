@@ -7,7 +7,10 @@ import type { GeneralProgramCommonInfoEditFormValues } from '@/features/program/
 import { programToGeneralCommonInfoEditValues } from '@/features/program/general/model/common-info-edit-schema'
 import * as overlayToProgram from '@/features/program/general/lib/registration-overlay-to-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
-import { useGeneralProgramCommonInfoSave } from './use-common-info-save'
+import {
+  TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND,
+  useGeneralProgramCommonInfoSave,
+} from './use-common-info-save'
 
 vi.mock('@/features/program/general/hooks/use-general-program-sponsor-edit-context', () => ({
   useGeneralProgramSponsorEditContext: () => ({ sponsors: [], contactsBySponsorId: {} }),
@@ -225,7 +228,7 @@ describe('useGeneralProgramCommonInfoSave', () => {
     expect(reset).not.toHaveBeenCalled()
   })
 
-  it('교육받은 교사는 overlay-first 경로를 유지한다', async () => {
+  it('교육받은 교사는 일반 overlay-first 저장을 하지 않는다', async () => {
     vi.mocked(isTrainedTeachersDetailProgram).mockReturnValue(true)
     const applySpy = vi.spyOn(overlayToProgram, 'applyGeneralRegistrationOverlayToProgram')
     const program = baseProgram()
@@ -241,12 +244,16 @@ describe('useGeneralProgramCommonInfoSave', () => {
     const { result } = renderHook(() =>
       useGeneralProgramCommonInfoSave({ form, program, onSaveEdit })
     )
+    let saveResult: Awaited<ReturnType<typeof result.current.triggerSave>> | undefined
     await act(async () => {
-      await result.current.triggerSave()
+      saveResult = await result.current.triggerSave()
     })
-    expect(applySpy).toHaveBeenCalled()
-    const serializeOptions = onSaveEdit.mock.calls[0]?.[3]
-    expect(serializeOptions).toBeUndefined()
+    expect(saveResult).toEqual({
+      ok: false,
+      kind: TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND,
+    })
+    expect(applySpy).not.toHaveBeenCalled()
+    expect(onSaveEdit).not.toHaveBeenCalled()
   })
 
   it('유령 2차시 placeholder 는 Independent 저장을 막지 않는다', async () => {

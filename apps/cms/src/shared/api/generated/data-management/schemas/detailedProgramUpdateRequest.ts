@@ -9,5 +9,6 @@
 export interface DetailedProgramUpdateRequest {
   nameKo?: string;
   useYn?: boolean;
-  version?: number;
+  /** @minimum 1 */
+  version: number;
 }

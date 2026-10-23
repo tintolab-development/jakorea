@@ -660,6 +660,8 @@ export async function persistGeneralProgramRegistration(args: {
     'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
   >
   preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+  /** 일반 위저드 RHF Independent 스냅샷. 있으면 overlay apply snapshot을 쓰지 않는다. */
+  programOverride?: Program
 }): Promise<Program> {
   const { shouldUseRegistrationCreateFormBindings, assertRegistrationWizardRemoteReady } =
     await import('@/features/program/general/lib/registration-create-form-bindings-capabilities')
@@ -676,19 +678,21 @@ export async function persistGeneralProgramRegistration(args: {
       : variant === 'trainedTeachers'
         ? newTrainedTeachersLocalProgramId()
         : newLocalProgramId()
-  const program = buildGeneralProgramListRowFromRegistrationSnapshot({
-    id,
-    participant: args.participant,
-    programType: args.programType,
-    variant,
-    sponsorId: args.sponsorId,
-    title: args.title,
-    sessionRoundType: args.sessionRoundType,
-    educationScheduleMode: args.educationScheduleMode,
-    educationScheduleLines: args.educationScheduleLines,
-    scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
-    editorExtras: args.editorExtras,
-  })
+  const program =
+    args.programOverride ??
+    buildGeneralProgramListRowFromRegistrationSnapshot({
+      id,
+      participant: args.participant,
+      programType: args.programType,
+      variant,
+      sponsorId: args.sponsorId,
+      title: args.title,
+      sessionRoundType: args.sessionRoundType,
+      educationScheduleMode: args.educationScheduleMode,
+      educationScheduleLines: args.educationScheduleLines,
+      scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+      editorExtras: args.editorExtras,
+    })
 
   // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
   const recruitMediaOverlay = collectSelectedRecruitOverlaysForProgram(program)

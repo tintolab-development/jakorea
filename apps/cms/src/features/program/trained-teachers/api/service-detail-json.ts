@@ -12,6 +12,7 @@ import {
   syncSurveyItemsIntoRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
+import { omitTrainedTeacherStaleSessionOverlayKeys } from '@/features/program/trained-teachers/lib/common-info-persist'
 import {
   resolvePersistedProgramTargetLevels,
   resolveStoredBusinessArea,
@@ -265,10 +266,11 @@ export function serializeTrainedTeacherServiceDetailJson(program: Program): stri
     program.generalCommonInfo?.scheduleDetails
   )
   // keys가 있을 때만(빈 배열 포함) overlay surveyItems를 맞춤. 키 생략 시 overlay를 지우지 않는다.
-  const registrationOverlay =
+  const registrationOverlay = omitTrainedTeacherStaleSessionOverlayKeys(
     generalSurveyMenuKeys !== undefined
       ? syncSurveyItemsIntoRegistrationOverlay(baseOverlay, generalSurveyMenuKeys)
       : baseOverlay
+  )
   const payload: TrainedTeacherServiceDetailJsonV1 = {
     schemaVersion: TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION,
     // 일반 프로그램과 동일 — 루트 generalSurveyMenuKeys가 LNB SSOT

@@ -44,6 +44,8 @@ import {
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   persistRegistrationOperationalOverlaysToLocal,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { collectWizardApplicationOverlayForCatalog } from '@/features/program/general/lib/overlay-phase1/registration-wizard-application-from-rhf'
 import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
@@ -765,12 +767,55 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
-      if (isProgramStep && registrationVm.hasCurriculumMultiDateScheduleCountMismatch()) {
+      if (
+        (registrationFormVariant === 'general' ||
+          registrationFormVariant === 'economy' ||
+          registrationFormVariant === 'trainedTeachers') &&
+        registrationVm.hasIncompleteRequiredFields()
+      ) {
+        const incompleteKeys = registrationVm.listIncompleteRequiredFieldKeys()
+        options?.reportValidationIncomplete?.(incompleteKeys)
+        console.debug(
+          '[registration] 등록 완료 공통정보 필수항목 미입력:',
+          registrationVm.getIncompleteRequiredFieldsReason?.()
+        )
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+      if (registrationVm.hasCurriculumMultiDateScheduleCountMismatch()) {
         showAlert({
           title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
           content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
         })
         return
+      }
+      if (
+        registrationFormVariant === 'general' ||
+        registrationFormVariant === 'economy'
+      ) {
+        const recruitCtx = {
+          participant: participantFlags,
+          programType: registrationVm.programType,
+          sessionRoundType: registrationVm.sessionRoundType,
+          educationScheduleMode: registrationVm.educationScheduleMode,
+          volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+          registrationProgramType: programType,
+        }
+        const recruitIncompleteKeys =
+          registrationFormVariant === 'economy'
+            ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+            : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
+        if (recruitIncompleteKeys.length > 0) {
+          options?.reportValidationIncomplete?.(recruitIncompleteKeys)
+          showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+          return
+        }
       }
     }
 
@@ -793,7 +838,11 @@ export function useGeneralProgramRegistrationFlow(
               }),
             }
           : undefined,
-        overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+        overlayForTemplateCode: code =>
+          collectWizardApplicationOverlayForCatalog(
+            code,
+            peekGeneralRegistrationWizardRhf()?.getValues() ?? null
+          ) ?? collectOperationalOverlayForCatalogId(code),
       })
 
     if (isProgramStep) {
@@ -834,8 +883,11 @@ export function useGeneralProgramRegistrationFlow(
     selectedTemplateCode,
     isParticipantStep,
     isProgramStep,
+    options,
+    participantFlags,
     participantVariant,
     participantVm,
+    programType,
     registrationFormVariant,
     registrationVm,
     showAlert,

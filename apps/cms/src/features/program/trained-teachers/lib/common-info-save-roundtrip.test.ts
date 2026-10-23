@@ -56,6 +56,41 @@ function baseProgram(): Program {
 }
 
 describe('교육받은 교사 공통정보 저장 왕복', () => {
+  it('nested 2행이면 stale overlay 4행을 복원하지 않는다', () => {
+    const existing = baseProgram()
+    const nested = {
+      ...existing.generalCommonInfo,
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: '1', description: 'a' },
+        { sessionLabel: '2회차', title: '2', description: 'b' },
+      ],
+      scheduleDetails: [] as NonNullable<Program['generalCommonInfo']>['scheduleDetails'],
+    }
+    const withStaleOverlay: Program = {
+      ...existing,
+      generalCommonInfo: nested,
+      registrationOverlay: {
+        'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
+          1: '1',
+          2: '2',
+          3: '3',
+          4: '4',
+        },
+      },
+    }
+    const json = serializeTrainedTeacherServiceDetailJson(withStaleOverlay)
+    const envelope = JSON.parse(json) as {
+      program?: { generalCommonInfo?: { curriculumSessions?: unknown[] } }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(envelope.program?.generalCommonInfo?.curriculumSessions).toHaveLength(2)
+    expect(
+      envelope.registration?.overlay?.[
+        'trainedTeachersRegistration.educationCurriculum.unitNameBySession'
+      ]
+    ).toBeUndefined()
+  })
+
   it('일정 공통 라벨은 행에 들어가고 B 이후에도 공고·KPI가 남는다', () => {
     const existing = baseProgram()
     const curriculumSessions = stampTrainedTeachersSessionFields(

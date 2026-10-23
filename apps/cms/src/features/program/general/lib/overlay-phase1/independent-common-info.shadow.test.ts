@@ -172,11 +172,7 @@ describe('Phase 1-B independent builder import guard', () => {
   })
 
   it('known-diff 4건을 수정하지 않는다', () => {
-    const protectedIds = [
-      'recruit-detailinfo-reseed-gap',
-      'empty-public-title-apply-fallback',
-      'individual-schedule-writes-institution-prefix',
-    ]
+    const protectedIds = ['recruit-detailinfo-reseed-gap', 'empty-public-title-apply-fallback']
     for (const id of protectedIds) {
       const item = OVERLAY_PHASE0_KNOWN_DIFFS.find(diff => diff.id === id)
       expect(item, id).toBeDefined()
