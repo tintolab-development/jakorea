@@ -63,6 +63,27 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'comments-by-target', targetType, targetId] as const,
 }
 
+type OrganizationDetailCacheKey =
+  | ReturnType<typeof generalApplicationsQueryKeys.organizationDetail>
+  | ReturnType<typeof generalApplicationsQueryKeys.organizationDetailInProgram>
+
+/** 기관 신청 상세 저장 후 갱신할 캐시 키. 진행 현황은 programId가 포함된 키를 읽는다. */
+export function organizationApplicationDetailCacheKeys(
+  applicationId: string,
+  programId?: string
+): OrganizationDetailCacheKey[] {
+  const keys: OrganizationDetailCacheKey[] = [
+    generalApplicationsQueryKeys.organizationDetail(applicationId),
+  ]
+  const trimmedProgramId = programId?.trim() ?? ''
+  if (trimmedProgramId) {
+    keys.push(
+      generalApplicationsQueryKeys.organizationDetailInProgram(trimmedProgramId, applicationId)
+    )
+  }
+  return keys
+}
+
 export const generalProgramProgressQueryKeys = {
   all: ['general-program-progress'] as const,
   participants: (programId: string, participantType?: string | null) =>
