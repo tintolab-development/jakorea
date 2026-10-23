@@ -290,6 +290,9 @@ export const platformQueryKeys = {
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
     /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
     consents: () => [...platformQueryKeys.mypage.all(), 'consents'] as const,
+    /** 내 동의 유형 상세 — GET /api/portal/me/consents/{consentType} */
+    consent: (consentType: string) =>
+      [...platformQueryKeys.mypage.consents(), consentType] as const,
     /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
     calendar: (from: string, to: string) =>
       [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,
@@ -525,5 +528,20 @@ export const platformQueryKeys = {
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>
       [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
+    /**
+     * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
+     */
+    individualSettlementSchedules: (applicationId: string) =>
+      [...platformQueryKeys.mypage.all(), 'individual-settlements', 'schedules', applicationId] as const,
+    /**
+     * 일반회원 일정 정산 상세 — GET /api/portal/me/individual-settlements/{id} (Class D)
+     */
+    individualSettlementDetail: (settlementApplicationId: number) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'individual-settlements',
+        'detail',
+        settlementApplicationId,
+      ] as const,
   },
 } as const

@@ -502,6 +502,7 @@ export function MypageVolunteerDetailPage() {
           programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          operationEndAt={program.operatingPeriodEnd}
           lastParticipatedSession={lastParticipatedSession}
         />
       )

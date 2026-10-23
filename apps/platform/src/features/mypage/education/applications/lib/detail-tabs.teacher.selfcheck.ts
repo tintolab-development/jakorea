@@ -7,6 +7,7 @@ import {
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveVolunteerActivityDetailCase,
+  shouldShowSettlementTab,
 } from './detail-tabs.ts'
 import { hasTeacherAssignmentAsideContent } from '../model/types.ts'
 
@@ -16,6 +17,9 @@ const options = {
   surveyConfigured: true,
   satisfactionConfigured: true,
 }
+
+const schoolTeacherOptions = { ...options, schoolTeacherMember: true }
+const instructorDualOptions = { ...options, schoolTeacherMember: false }
 
 const general = buildInProgressDetailTabItems(options)
 assert.deepEqual(
@@ -58,14 +62,20 @@ assert.deepEqual(
   ['안내사항', '배정현황', '설문조사', '만족도조사', '정산현황'],
 )
 
-const teacher = buildTeacherInProgressDetailTabItems(options)
+const teacher = buildTeacherInProgressDetailTabItems(schoolTeacherOptions)
 assert.deepEqual(
   teacher.map(item => item.key),
   ['notice', 'schedule', 'students', 'survey', 'satisfaction'],
 )
 
+const instructorDualEducation = buildTeacherInProgressDetailTabItems(instructorDualOptions)
+assert.deepEqual(
+  instructorDualEducation.map(item => item.key),
+  ['notice', 'schedule', 'students', 'survey', 'satisfaction', 'settlement'],
+)
+
 const trainedTeacher = buildTeacherInProgressDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   programType: 'TRAINED_TEACHER',
 })
 assert.deepEqual(
@@ -74,7 +84,7 @@ assert.deepEqual(
 )
 
 const teacherWithJournal = buildTeacherInProgressDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   educationJournalEnabled: true,
 })
 assert.deepEqual(
@@ -83,7 +93,7 @@ assert.deepEqual(
 )
 
 const trainedTeacherWithJournal = buildTeacherInProgressDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   programType: 'TRAINED_TEACHER',
   educationJournalEnabled: true,
 })
@@ -92,14 +102,20 @@ assert.deepEqual(
   ['educationJournal', 'schedule', 'students', 'survey', 'satisfaction'],
 )
 
-const teacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems(options)
+const teacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems(schoolTeacherOptions)
 assert.deepEqual(
   teacherWithdrawn.map(item => item.key),
   ['schedule', 'students', 'survey', 'satisfaction'],
 )
 
+const instructorDualWithdrawn = buildTeacherWithdrawnDuringDetailTabItems(instructorDualOptions)
+assert.deepEqual(
+  instructorDualWithdrawn.map(item => item.key),
+  ['schedule', 'students', 'survey', 'satisfaction', 'settlement'],
+)
+
 const trainedTeacherWithdrawn = buildTeacherWithdrawnDuringDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   programType: 'TRAINED_TEACHER',
 })
 assert.deepEqual(
@@ -134,8 +150,24 @@ assert.equal(
   true,
 )
 
+assert.equal(shouldShowSettlementTab(options), true)
+assert.equal(shouldShowSettlementTab(instructorDualOptions), true)
+assert.equal(shouldShowSettlementTab(schoolTeacherOptions), false)
+assert.equal(
+  shouldShowSettlementTab({ ...schoolTeacherOptions, programType: 'TRAINED_TEACHER' }),
+  false,
+)
+assert.equal(
+  shouldShowSettlementTab({ detailCase: 'ujat-participant', schoolTeacherMember: true }),
+  false,
+)
+assert.equal(shouldShowSettlementTab({ detailCase: 'instructor' }), true)
+assert.equal(shouldShowSettlementTab({ detailCase: 'volunteer' }), true)
+assert.equal(shouldShowSettlementTab({ detailCase: 'ujat-volunteer' }), true)
+assert.equal(shouldShowSettlementTab({ detailCase: 'general', programType: 'GENERAL' }), true)
+
 const teacherNoSurvey = buildTeacherInProgressDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   programType: 'TRAINED_TEACHER',
   surveyConfigured: false,
   satisfactionConfigured: false,
@@ -146,7 +178,7 @@ assert.deepEqual(
 )
 
 const teacherNoStudentDocuments = buildTeacherInProgressDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   teacherStudentDocumentTabsVisible: false,
 })
 assert.deepEqual(
@@ -155,7 +187,7 @@ assert.deepEqual(
 )
 
 const teacherWithdrawnNoStudentDocuments = buildTeacherWithdrawnDuringDetailTabItems({
-  ...options,
+  ...schoolTeacherOptions,
   teacherStudentDocumentTabsVisible: false,
 })
 assert.deepEqual(
@@ -180,6 +212,7 @@ const ujatTeacher = buildTeacherInProgressDetailTabItems({
   surveyConfigured: true,
   satisfactionConfigured: true,
   teacherStudentDocumentTabsVisible: false,
+  schoolTeacherMember: true,
 })
 assert.deepEqual(
   ujatTeacher.map(item => item.label),

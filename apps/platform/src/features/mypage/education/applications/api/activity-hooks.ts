@@ -27,10 +27,7 @@ import {
   getEducationSchedulesQueryErrorCode,
   getEducationSchedulesQueryTraceId,
 } from '../../schedules/lib/schedules-query-error'
-import type {
-  EducationSettlementItem,
-  EducationSettlementStatus,
-} from '../../settlements/model/types'
+import { buildAssignedSettlementItems } from '../../settlements/lib/assigned-settlement-items'
 import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import {
   createApplicationNotice,
@@ -49,22 +46,31 @@ import {
   fetchApplicationScheduleAttendance,
   submitApplicationAbsenceReason,
   fetchExpenseReceipts,
+  fetchIndividualSettlementDetail,
+  fetchIndividualSettlementSchedules,
   fetchPortalSurveyFormBinding,
   fetchSettlementApplications,
+  resubmitIndividualSettlement,
+  submitIndividualSettlement,
   submitPortalSurveyResponse,
-  type PortalExpenseReceipt,
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
   type PortalNoticeDetail,
   type PortalNoticeListItem,
   type PortalNoticeReactionState,
   type PortalAbsenceReasonSubmissionInput,
-  type PortalSettlementApplication,
+  type PortalIndividualSettlementResubmitRequest,
+  type PortalIndividualSettlementSubmitRequest,
   type PortalSurveySubmitBody,
 } from './activity-client'
 import type { ProgramApplicationType } from './types'
 import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import { PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE } from '../../notices/lib/notice-attach-policy'
+import {
+  INDIVIDUAL_SETTLEMENT_DISABLED_CODE,
+  isIndividualScheduleSettlementAudience,
+  readIndividualSettlementErrorCode,
+} from '../../settlements/lib/individual-settlement-contract'
 
 const STALE_MS = 30_000
 const GC_MS = 10 * 60_000
@@ -216,56 +222,6 @@ function mapNoticeReactions(
     myReactionTypes: (state?.myReactions ?? []).filter(Boolean),
     total: summary.reduce((sum, row) => sum + row.count, 0),
     users,
-  }
-}
-
-function mapReceiptStatus(value: string | undefined): EducationSettlementStatus {
-  switch ((value ?? '').toUpperCase()) {
-    case 'REJECTED':
-      return 'rejected'
-    case 'PAID':
-      return 'paid'
-    case 'APPROVED':
-    case 'CONFIRMED':
-      return 'confirmed'
-    case 'RESUBMITTED':
-      return 'reapplied'
-    case 'OVERDUE':
-      return 'overdue'
-    default:
-      return 'waiting_confirm'
-  }
-}
-
-function mapReceipt(item: PortalExpenseReceipt, index: number): EducationSettlementItem | null {
-  if (item.receiptId == null) return null
-  const heldAt = item.expenseDate ?? item.submittedAt ?? ''
-  return {
-    id: `receipt-${item.receiptId}`,
-    sessionNumber: index + 1,
-    heldAt,
-    sessionMeta: item.description?.trim() || item.expenseType?.trim() || '영수증',
-    progress: heldAt && new Date(heldAt).getTime() < Date.now() ? 'completed' : 'upcoming',
-    status: mapReceiptStatus(item.receiptStatus),
-    amount: item.amount,
-    rejectReason: item.rejectReason,
-  }
-}
-
-function mapSettlement(
-  item: PortalSettlementApplication,
-  index: number
-): EducationSettlementItem | null {
-  if (item.applicationId == null) return null
-  const heldAt = item.submittedAt ?? item.createdAt ?? ''
-  return {
-    id: `settlement-${item.applicationId}`,
-    sessionNumber: index + 1,
-    heldAt,
-    sessionMeta: '정산 신청',
-    progress: 'completed',
-    status: mapReceiptStatus(item.status),
-    amount: item.netPaymentAmount ?? item.grossAmount,
   }
 }
 
@@ -785,12 +741,43 @@ export function useApplicationFormsQuery(
   }
 }
 
+export function useIndividualSettlementSchedulesQuery(
+  applicationId: string | null | undefined,
+  extraEnabled = true
+) {
+  const enabled =
+    isRemoteApiConfigured() &&
+    Boolean(getAccessToken()) &&
+    Boolean(applicationId) &&
+    extraEnabled
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.individualSettlementSchedules(applicationId ?? ''),
+    queryFn: ({ signal }) => fetchIndividualSettlementSchedules(applicationId!, signal),
+    enabled,
+    ...queryOptions(),
+  })
+  const errorCode = query.isError ? readIndividualSettlementErrorCode(query.error) : null
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    isSuccess: query.isSuccess,
+    isDisabled: errorCode === INDIVIDUAL_SETTLEMENT_DISABLED_CODE,
+    errorCode,
+    schedules: query.isError ? [] : (query.data ?? []),
+    refetch: query.refetch,
+  }
+}
+
 export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  programId: string | null | undefined
+  programId: string | null | undefined,
+  options?: { operationEndAt?: string | null }
 ) {
-  const enabled = isActivityQueryEnabled(applicationType, applicationId)
+  const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
+  const enabled = schedules.enabled
+  const individualAudience = isIndividualScheduleSettlementAudience(applicationType)
   const receipts = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.expenseReceipts(
       applicationType ?? '',
@@ -806,22 +793,122 @@ export function useApplicationSettlementsQuery(
     enabled,
     ...queryOptions(),
   })
-  const receiptItems = (receipts.data ?? []).flatMap((item, index) => {
-    const mapped = mapReceipt(item, index)
-    return mapped ? [mapped] : []
-  })
-  const settlementItems = (settlements.data ?? [])
-    .filter(item => programId == null || String(item.programId ?? '') === programId)
-    .flatMap((item, index) => {
-      const mapped = mapSettlement(item, receiptItems.length + index)
-      return mapped ? [mapped] : []
-    })
+  const individual = useIndividualSettlementSchedulesQuery(
+    applicationId,
+    enabled && individualAudience,
+  )
+  const joinReady =
+    !enabled ||
+    ((receipts.isSuccess || receipts.isError) &&
+      (settlements.isSuccess || settlements.isError) &&
+      (!individualAudience || individual.isSuccess || individual.isError))
+  const items = useMemo(
+    () =>
+      buildAssignedSettlementItems({
+        schedules: schedules.items,
+        scopeStatus: schedules.scopeStatus,
+        receipts: receipts.isError ? [] : (receipts.data ?? []),
+        settlements: settlements.isError ? [] : (settlements.data ?? []),
+        individualSchedules:
+          !individualAudience || individual.isError ? undefined : individual.schedules,
+        programId,
+        operationEndAt: options?.operationEndAt,
+        deadlinePolicy: applicationType === 'INSTRUCTOR' ? 'payment_statement' : 'receipt',
+        preferIndividualSchedules: individualAudience && individual.isSuccess,
+      }),
+    [
+      applicationType,
+      individual.schedules,
+      individual.isError,
+      individual.isSuccess,
+      options?.operationEndAt,
+      programId,
+      individualAudience,
+      receipts.data,
+      receipts.isError,
+      schedules.items,
+      schedules.scopeStatus,
+      settlements.data,
+      settlements.isError,
+    ]
+  )
   return {
     enabled,
-    isLoading: enabled && (receipts.isPending || settlements.isPending),
-    isError: enabled && (receipts.isError || settlements.isError),
-    items: [...receiptItems, ...settlementItems],
+    isLoading: enabled && (schedules.isLoading || (!schedules.isError && !joinReady)),
+    isError: enabled && schedules.isError,
+    isRefetching: schedules.isRefetching,
+    items,
+    scopeStatus: schedules.scopeStatus,
+    refetch: () => {
+      void schedules.refetch()
+      void receipts.refetch()
+      void settlements.refetch()
+      if (individualAudience) void individual.refetch()
+    },
+    errorCode: schedules.errorCode,
+    traceId: schedules.traceId,
+    individualDisabled: individualAudience && individual.isDisabled,
+    individualErrorCode: individualAudience ? individual.errorCode : null,
+    individualEmpty:
+      individualAudience && individual.isSuccess && individual.schedules.length === 0,
   }
+}
+
+export function useIndividualSettlementDetailQuery(settlementApplicationId: number | null | undefined) {
+  const enabled =
+    isRemoteApiConfigured() &&
+    Boolean(getAccessToken()) &&
+    settlementApplicationId != null &&
+    settlementApplicationId > 0
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.individualSettlementDetail(settlementApplicationId ?? 0),
+    queryFn: ({ signal }) => fetchIndividualSettlementDetail(settlementApplicationId!, signal),
+    enabled,
+    ...queryOptions(),
+  })
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    detail: query.data ?? null,
+  }
+}
+
+export function useSubmitIndividualSettlementMutation(applicationId: string | null | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      settlementApplicationId?: number
+      submit?: PortalIndividualSettlementSubmitRequest
+      resubmit?: PortalIndividualSettlementResubmitRequest
+    }) => {
+      if (!applicationId) throw new Error('applicationId is required')
+      if (input.resubmit && input.settlementApplicationId != null) {
+        return resubmitIndividualSettlement(input.settlementApplicationId, input.resubmit)
+      }
+      if (input.submit) {
+        return submitIndividualSettlement(applicationId, input.submit)
+      }
+      throw new Error('SETTLEMENT_SUBMIT_BODY_REQUIRED')
+    },
+    onSuccess: detail => {
+      if (!applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.individualSettlementSchedules(applicationId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.settlementApplications(),
+      })
+      if (detail.settlementApplicationId != null) {
+        void queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.individualSettlementDetail(detail.settlementApplicationId),
+        })
+      }
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.all(),
+      })
+    },
+  })
 }
 
 export function useApplicationSurveyFormQuery(
