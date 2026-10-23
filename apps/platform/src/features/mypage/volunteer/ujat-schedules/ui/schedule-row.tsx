@@ -13,18 +13,35 @@ import {
 } from '@/features/mypage/education/shared'
 import { PFButton, PFStateBadge, PFText } from '@/shared/ui'
 import { formatUjatAssignmentStatusLabel } from '../lib/history'
+import type { UjatEducationDayDocuments, UjatEducationDocumentTemplateSetup } from '../lib/documents'
+import type { UjatDocumentFillMode } from './document-slot'
+import { UjatEducationDocumentSlotBlock } from './document-slot'
 import styles from './schedule-row.module.css'
 
 type UjatVolunteerScheduleRowProps = {
   item: EducationScheduleItem
   canViewAttendance: boolean
   onViewAttendance?: (item: EducationScheduleItem) => void
+  documents?: UjatEducationDayDocuments | null
+  planSetup?: UjatEducationDocumentTemplateSetup | null
+  journalSetup?: UjatEducationDocumentTemplateSetup | null
+  onFillDocument?: (
+    kind: 'PLAN' | 'JOURNAL',
+    mode: UjatDocumentFillMode,
+    documents: UjatEducationDayDocuments,
+  ) => void
+  onViewDocumentFeedback?: (kind: 'PLAN' | 'JOURNAL', documents: UjatEducationDayDocuments) => void
 }
 
 export function UjatVolunteerScheduleRow({
   item,
   canViewAttendance,
   onViewAttendance,
+  documents = null,
+  planSetup = null,
+  journalSetup = null,
+  onFillDocument,
+  onViewDocumentFeedback,
 }: UjatVolunteerScheduleRowProps) {
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
   const heldLabel = resolveEducationScheduleDateLabel(item)
@@ -98,6 +115,24 @@ export function UjatVolunteerScheduleRow({
               {assignmentLabel}
             </PFText>
           ) : null}
+        </div>
+      ) : null}
+      {documents ? (
+        <div className={styles.documents}>
+          <UjatEducationDocumentSlotBlock
+            kind="PLAN"
+            slot={documents.plan}
+            setup={planSetup}
+            onFill={mode => onFillDocument?.('PLAN', mode, documents)}
+            onFeedback={() => onViewDocumentFeedback?.('PLAN', documents)}
+          />
+          <UjatEducationDocumentSlotBlock
+            kind="JOURNAL"
+            slot={documents.journal}
+            setup={journalSetup}
+            onFill={mode => onFillDocument?.('JOURNAL', mode, documents)}
+            onFeedback={() => onViewDocumentFeedback?.('JOURNAL', documents)}
+          />
         </div>
       ) : null}
     </EducationSessionCard>

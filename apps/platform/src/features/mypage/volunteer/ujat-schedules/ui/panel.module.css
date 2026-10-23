@@ -25,3 +25,14 @@
   flex-direction: column;
   gap: var(--spacing-16);
 }
+
+.setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-16);
+}
+
+.setup p {
+  margin: 0;
+}

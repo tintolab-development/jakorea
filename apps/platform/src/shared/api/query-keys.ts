@@ -312,6 +312,9 @@ export const platformQueryKeys = {
     /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
     formResponseFeedback: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
+    /** 내 폼 응답 상세 — GET /api/portal/me/form-responses/{id} (Class D) */
+    formResponseDetail: (formResponseId: number) =>
+      [...platformQueryKeys.mypage.all(), 'form-response', formResponseId] as const,
     /** 교사 회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
     assignedInstructors: (applicationId: number) =>
       [
@@ -375,6 +378,17 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /**
+       * 제출된 신청 양식 런타임 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
+       * 신청용 GET /api/portal/programs/.../form-bindings 는 제출 후 APPLICATION_ALREADY_SUBMITTED.
+       */
+      formBindingRender: (programId: string, bindingId: number) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'form-binding-render',
+          programId,
+          bindingId,
+        ] as const,
       educationJournals: (programId: string, organizationApplicationId: string) =>
         [
           ...platformQueryKeys.mypage.programApplications.all(),
@@ -436,6 +450,34 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
           'attendance',
+          scheduleId,
+        ] as const,
+      /**
+       * UJAT 봉사자 교육계획서·교육일지 목록
+       * GET .../education-documents (Class C, applicationId 스코프 — H1/H2 분리)
+       */
+      educationDocuments: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'education-documents',
+          applicationType,
+          applicationId,
+        ] as const,
+      /**
+       * UJAT 봉사자 교육일 문서
+       * GET .../schedules/{scheduleId}/education-documents (Class D)
+       */
+      educationDocumentsForSchedule: (
+        applicationType: string,
+        applicationId: string,
+        scheduleId: number,
+      ) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'education-documents',
+          applicationType,
+          applicationId,
+          'schedule',
           scheduleId,
         ] as const,
       /** 봉사 배정현황 — GET .../assignments (Class C). 교육일정 UI와 분리 */
