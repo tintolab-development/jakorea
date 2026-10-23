@@ -8,14 +8,11 @@ import {
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
-import {
-  resolveUjatScheduleBannerFromState,
-  shouldUseUjatApplicationContent,
-} from '@/features/mypage/education/applications/lib/ujat-portal-banner'
+import { shouldUseUjatApplicationContent } from '@/features/mypage/education/applications/lib/ujat-portal-banner'
 import { UjatProgressConfirmForm } from '@/features/mypage/education/applications/ui/ujat-progress-confirm-form'
+import { UjatRevisionNotice } from '@/features/mypage/education/applications/ui/ujat-revision-notice'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
-import writeFormStyles from '@/features/mypage/education/applications/ui/institution-guidance-write-form.module.css'
 
 export function MypageEducationUjatProgressConfirmPage() {
   const navigate = useNavigate()
@@ -40,9 +37,6 @@ export function MypageEducationUjatProgressConfirmPage() {
   const isUjat = shouldUseUjatApplicationContent(detailCase)
   const isRevision = application?.ujatPortalBannerState === 'REVISION_REQUIRED'
   const pageTitle = isRevision ? '교육 진행 정보 수정하기' : '교육 진행 정보 확인하기'
-  const revisionCopy = isRevision
-    ? resolveUjatScheduleBannerFromState(application?.ujatPortalBannerState)
-    : null
   const backPath = educationInstitutionGuidanceApplicationTabPath(
     applicationId,
     application?.applicationType ?? applicationType,
@@ -80,21 +74,16 @@ export function MypageEducationUjatProgressConfirmPage() {
       back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
       title={pageTitle}
       step="1 / 2"
-      programSummary={{
-        title: program?.title ?? '',
-        period: program?.applicationPeriodLabel,
-      }}
+      programSummary={
+        isRevision
+          ? undefined
+          : {
+              title: program?.title ?? '',
+              period: program?.applicationPeriodLabel,
+            }
+      }
     >
-      {revisionCopy ? (
-        <div className={writeFormStyles.revisionNotice}>
-          <PFText as="p" typo="hl-sm" color="primary-500" className={writeFormStyles.revisionTitle}>
-            {revisionCopy.title}
-          </PFText>
-          <PFText as="p" typo="bd-md-md" color="black" className={writeFormStyles.revisionBody}>
-            {revisionCopy.body}
-          </PFText>
-        </div>
-      ) : null}
+      {isRevision ? <UjatRevisionNotice reason={application.ujatRevisionReason} /> : null}
       <UjatProgressConfirmForm
         applicationId={applicationId}
         applicationType={applicationType}

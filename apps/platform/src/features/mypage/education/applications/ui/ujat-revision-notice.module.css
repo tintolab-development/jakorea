@@ -1,0 +1,38 @@
+.notice {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  border-radius: var(--radius-24);
+  background: var(--color-element-hover);
+}
+
+.headline {
+  margin: 0;
+}
+
+.reason {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-white);
+}
+
+.reasonLabel {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.reasonBody {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
