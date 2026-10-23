@@ -123,6 +123,8 @@ export function useUjatInstitutionApplicationDetail(input: {
     workflow,
     workflowReady,
     remoteEnabled,
+    remoteDetail: detailQuery.data ?? null,
+    temporarySchedule: temporaryScheduleQuery.data ?? null,
     invalidate,
     approveRemote: async () => {
       const current = resolveUjatInstitutionWorkflow(

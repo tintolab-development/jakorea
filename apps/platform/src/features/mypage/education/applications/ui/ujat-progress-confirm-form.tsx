@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
 import { coerceApplicationFormDocument } from '@/features/program/lib/application-form-draft'
-import { readUjatPreferredEducationScheduleOptions } from '@/features/program/lib/ujat-preferred-education-schedule-options'
-import { useProgramApplicationForm } from '@/features/program'
+import {
+  readUjatPreferredEducationScheduleOptions,
+  readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer,
+} from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import {
   ApplyUjatInstitutionBasicInfo,
   emptyUjatInstitutionBasicInfo,
@@ -42,21 +45,26 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { ApplyUjatInstitutionSubmitConfirmation } from '@/features/program/ui/apply-ujat-institution-submit-confirmation/apply-ujat-institution-submit-confirmation'
 import { PFAlertModal, PFButton } from '@/shared/ui'
 import type { ProgramApplicationType } from '../api/types'
+import { usePortalMeFormBindingRender } from '../api/hooks'
 import { patchOrganizationGuidanceAnswers } from '../api/institution-guidance-client'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { educationInstitutionGuidanceWritePath } from '../lib/guidance-path'
 import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
 import styles from './institution-guidance-write-form.module.css'
 
-const CONFIRM_LABEL = '상기 내용을 모두 확인하였으며 현재 답변으로 제출합니다.'
+const CONFIRM_HEADING = '상기 내용을 모두 확인하였으며 현재 답변으로 제출합니다.'
 const CONFIRM_DESCRIPTION =
-  '*신청 학년 정보 및 교육 일정은 추후 수정이 가능하며, 교육자 배정 과정에서 조정될 수 있습니다.'
+  '교육 일정과 학년 정보는 담당자와 협의된 내용으로 작성되어야 하며, 협의사항과 다를 경우 담당자가 수정 요청을 드릴 수 있습니다.'
+const CONFIRM_RADIO_LABEL =
+  '네. 상기 내용 모두 확인하였으며, 해당 내용으로 교육을 진행합니다.'
 const PREFERRED_DESCRIPTION =
-  '* 금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다.\n* 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
+  '금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다. * 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
 
 type UjatProgressConfirmFormProps = {
   applicationId: string
   applicationType: ProgramApplicationType
   programId: string
+  formBindingId?: number
   answers: Record<string, unknown> | undefined
   isRevision: boolean
 }
@@ -73,16 +81,24 @@ export function UjatProgressConfirmForm({
   applicationId,
   applicationType,
   programId,
+  formBindingId,
   answers,
   isRevision,
 }: UjatProgressConfirmFormProps) {
   const navigate = useNavigate()
-  const formQuery = useProgramApplicationForm(programId, { applicationTypes: ['ORGANIZATION'] })
-  const runtimeContext = coerceApplicationFormDocument(formQuery.bundle?.form)?.runtimeContext
-  const preferredOptions = useMemo(
-    () => readUjatPreferredEducationScheduleOptions({ runtimeContext }),
-    [runtimeContext],
-  )
+  const queryClient = useQueryClient()
+  const formRender = usePortalMeFormBindingRender(programId, formBindingId)
+  const preferredAnswer = pickAnswer(answers, [
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
+  ])
+  const preferredOptions = useMemo(() => {
+    const document = coerceApplicationFormDocument(formRender.document)
+    const fromRuntime = readUjatPreferredEducationScheduleOptions({
+      runtimeContext: document?.runtimeContext ?? formRender.document?.runtimeContext,
+    })
+    if (fromRuntime.length > 0) return fromRuntime
+    return readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer(preferredAnswer)
+  }, [formRender.document, preferredAnswer])
 
   const [basicInfo, setBasicInfo] = useState<ApplyUjatInstitutionBasicInfoValues>(
     () =>
@@ -145,6 +161,12 @@ export function UjatProgressConfirmForm({
           [UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule]:
             ujatInstitutionPreferredScheduleAnswerFromValues(preferredIds, preferredOptions),
         },
+      })
+      await queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.detail(
+          applicationType,
+          applicationId,
+        ),
       })
       navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType))
     } catch (error) {
@@ -210,7 +232,7 @@ export function UjatProgressConfirmForm({
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule}
             editableHeading={institutionGuidanceParagraphHeading(
-              '4. 신청 희망 교육 일정',
+              '4. 진행 희망 교육 일정',
               PREFERRED_DESCRIPTION,
             )}
           >
@@ -218,15 +240,20 @@ export function UjatProgressConfirmForm({
               options={preferredOptions}
               selectedIds={preferredIds}
               onChange={setPreferredIds}
+              optionsReady={!formRender.isLoading}
             />
           </ParagraphCard>
 
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation}
-            editableHeading={institutionGuidanceParagraphHeading(CONFIRM_LABEL, CONFIRM_DESCRIPTION)}
+            editableHeading={institutionGuidanceParagraphHeading(
+              CONFIRM_HEADING,
+              CONFIRM_DESCRIPTION,
+            )}
           >
             <ApplyUjatInstitutionSubmitConfirmation
-              label={CONFIRM_LABEL}
+              control="radio"
+              label={CONFIRM_RADIO_LABEL}
               checked={confirmed}
               onCheckedChange={setConfirmed}
             />

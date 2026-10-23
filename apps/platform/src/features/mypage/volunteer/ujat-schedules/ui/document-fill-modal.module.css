@@ -1,0 +1,12 @@
+.body {
+  display: flex;
+  max-height: min(72vh, 720px);
+  flex-direction: column;
+  gap: var(--spacing-24);
+  overflow: auto;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

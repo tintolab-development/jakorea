@@ -1,10 +1,13 @@
 import type { WritingFormParagraph } from '@jakorea/form-schema/writing-form'
-import { PFCheckbox } from '@/shared/ui'
+import { PFCheckbox, PFText } from '@/shared/ui'
+import styles from './apply-ujat-institution-submit-confirmation.module.css'
 
 type ApplyUjatInstitutionSubmitConfirmationProps = {
   label: string
   checked: boolean
   onCheckedChange: (checked: boolean) => void
+  /** 신청 양식은 체크, 협의된 일정 확인 시안은 라디오 */
+  control?: 'checkbox' | 'radio'
 }
 
 export function readUjatSubmitConfirmationItem(
@@ -25,11 +28,31 @@ export function isUjatSubmitConfirmationChecked(paragraph: WritingFormParagraph)
   return paragraph.selectedPreviewSingleId === item.id
 }
 
-/** 시안 확인 단락 — 단일 선택지를 PF 체크로 표시 (신청·교육 진행 정보 확인 공통) */
+/** 시안 확인 단락 — 신청은 체크, 협의된 일정 확인은 라디오 */
 export function ApplyUjatInstitutionSubmitConfirmation({
   label,
   checked,
   onCheckedChange,
+  control = 'checkbox',
 }: ApplyUjatInstitutionSubmitConfirmationProps) {
+  if (control === 'radio') {
+    return (
+      <div className={styles.radioGroup} role="radiogroup" aria-label={label}>
+        <label className={styles.radioOption}>
+          <input
+            type="radio"
+            name="ujat-progress-confirm-submit"
+            checked={checked}
+            onClick={() => onCheckedChange(!checked)}
+            onChange={() => onCheckedChange(true)}
+          />
+          <PFText as="span" typo="bd-md-rg" color={checked ? 'primary-500' : 'black'}>
+            {label}
+          </PFText>
+        </label>
+      </div>
+    )
+  }
+
   return <PFCheckbox checked={checked} onCheckedChange={onCheckedChange} label={label} />
 }

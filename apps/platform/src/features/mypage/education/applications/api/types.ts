@@ -91,6 +91,14 @@ export type PortalUjatApplicationSupplement = {
   assignmentRevision?: number
   assignmentLocked?: boolean
   portalBannerState?: UjatPortalBannerState | string
+  /** CMS 일정 수정 요청 `reason`. OpenAPI 미기재 시에도 응답에 있으면 표시 */
+  revisionReason?: string
+  scheduleChangeReason?: string
+  lastScheduleChangeReason?: string
+  revisionRequestReason?: string
+  changeRequestReason?: string
+  revisionMessage?: string
+  reason?: string
 }
 
 /** OpenAPI `ProgramApplicationSupplement` */

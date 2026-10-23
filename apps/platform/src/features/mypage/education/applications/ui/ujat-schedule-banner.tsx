@@ -17,14 +17,18 @@ function BannerCopy({ copy }: { copy: UjatScheduleBannerCopy }) {
     <>
       <img className={styles.bg} src={educationStatusBgUrl} alt="" aria-hidden="true" />
       <div className={styles.headline}>
-        <img className={styles.icon} src={peopleIconUrl} alt="" aria-hidden="true" />
+        <span className={styles.iconSlot}>
+          <img className={styles.icon} src={peopleIconUrl} alt="" aria-hidden="true" />
+        </span>
         <PFText as="p" typo="hd-sm" color="white" className={styles.title}>
           {copy.title}
         </PFText>
       </div>
-      <PFText as="p" typo="bd-lg-rg" color="white" className={styles.body}>
-        {copy.body}
-      </PFText>
+      <div className={styles.bodySlot}>
+        <PFText as="p" typo="bd-lg-rg" color="white" className={styles.body}>
+          {copy.body}
+        </PFText>
+      </div>
       {copy.clickable ? (
         <span className={styles.chevron} aria-hidden="true">
           <img src={arrowForwardUrl} width={32} height={32} alt="" />
@@ -47,7 +51,7 @@ export function UjatScheduleBanner({ copy, onActivate }: UjatScheduleBannerProps
     <button
       type="button"
       className={`${styles.banner} ${styles.bannerClickable}`}
-      aria-label={copy.title}
+      aria-label={`${copy.title} ${copy.body}`}
       onClick={onActivate ?? noopActivate}
     >
       <BannerCopy copy={copy} />

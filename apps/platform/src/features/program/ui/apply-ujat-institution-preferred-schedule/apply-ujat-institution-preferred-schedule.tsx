@@ -1,7 +1,15 @@
-import { Fragment } from 'react'
-import { DetailInfoForm } from '@/features/form-template'
 import type { UjatPreferredEducationScheduleOption } from '@/features/program/lib/ujat-preferred-education-schedule-options'
-import { PFText } from '@/shared/ui'
+import {
+  isUjatPreferredScheduleOptionSelected,
+  resolveUjatPreferredScheduleSelectedOptions,
+} from '@/features/program/lib/ujat-preferred-education-schedule-options'
+import {
+  PFFormField,
+  PFFormFieldRow,
+  PFFormFieldTable,
+  PFFormInlineSeparatedFields,
+  PFText,
+} from '@/shared/ui'
 import slotStyles from '../apply-instructor-available-schedule/apply-instructor-available-schedule.module.css'
 import styles from './apply-ujat-institution-preferred-schedule.module.css'
 
@@ -11,6 +19,7 @@ type ApplyUjatInstitutionPreferredScheduleProps = {
   options: readonly UjatPreferredEducationScheduleOption[]
   selectedIds: string[]
   onChange: (nextIds: string[]) => void
+  optionsReady?: boolean
 }
 
 export function findIncompleteUjatInstitutionPreferredScheduleMessage(
@@ -31,14 +40,10 @@ export function ujatInstitutionPreferredScheduleAnswerFromValues(
   selectedIds: readonly string[],
   options: readonly UjatPreferredEducationScheduleOption[],
 ): Record<string, unknown> {
-  const allowed = new Set(options.map(option => option.id))
-  const selected = selectedIds
-    .filter(id => allowed.has(id))
-    .slice(0, UJAT_PREFERRED_EDUCATION_DATE_MAX)
-    .flatMap(id => {
-      const option = options.find(row => row.id === id)
-      return option ? [option] : []
-    })
+  const selected = resolveUjatPreferredScheduleSelectedOptions(selectedIds, options).slice(
+    0,
+    UJAT_PREFERRED_EDUCATION_DATE_MAX,
+  )
   const ids = selected.map(option => option.id)
   return {
     selectedIds: ids,
@@ -71,27 +76,32 @@ export function ApplyUjatInstitutionPreferredSchedule({
   options,
   selectedIds,
   onChange,
+  optionsReady = true,
 }: ApplyUjatInstitutionPreferredScheduleProps) {
-  const selected = options.filter(option => selectedIds.includes(option.id))
+  const selected = resolveUjatPreferredScheduleSelectedOptions(selectedIds, options)
   const toggle = (id: string) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(selectedId => selectedId !== id))
+    const option = options.find(row => row.id === id)
+    if (!option) return
+    if (isUjatPreferredScheduleOptionSelected(option, selectedIds)) {
+      onChange(
+        selectedIds.filter(token => token !== option.id && token !== option.date),
+      )
       return
     }
-    if (selectedIds.length >= UJAT_PREFERRED_EDUCATION_DATE_MAX) return
-    onChange([...selectedIds, id])
+    if (selected.length >= UJAT_PREFERRED_EDUCATION_DATE_MAX) return
+    onChange([...selected.map(row => row.id), option.id])
   }
 
   return (
-    <div className={styles.gridWrap}>
+    <div className={styles.root}>
       <div className={styles.grid} role="list">
-        {options.length === 0 ? (
+        {!optionsReady ? null : options.length === 0 ? (
           <PFText as="p" typo="bd-md-md" color="neutral-cool-600" className={styles.empty}>
             선택 가능한 교육 일정이 없습니다.
           </PFText>
         ) : (
           options.map(option => {
-            const active = selectedIds.includes(option.id)
+            const active = isUjatPreferredScheduleOptionSelected(option, selectedIds)
             return (
               <button
                 key={option.id}
@@ -113,31 +123,25 @@ export function ApplyUjatInstitutionPreferredSchedule({
           })
         )}
       </div>
-      <DetailInfoForm title="진행 희망 교육 일정" hideHeader mode="edit">
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="교육 진행 희망일"
-            fullRow
-            view="-"
-            edit={
-              selected.length === 0 ? (
-                <span className="form-editor-template-field-hint-text">
-                  선택된 일정이 없습니다.
-                </span>
-              ) : (
-                <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-                  {selected.map((option, index) => (
-                    <Fragment key={option.id}>
-                      {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-                      <span>{option.display}</span>
-                    </Fragment>
-                  ))}
-                </div>
-              )
-            }
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
+      <PFFormFieldTable>
+        <PFFormFieldRow type="single">
+          <PFFormField label="교육 진행 희망일" labelWidth="wider" fullWidth>
+            {selected.length === 0 ? (
+              <PFText as="span" typo="bd-md-md" color="black">
+                -
+              </PFText>
+            ) : (
+              <PFFormInlineSeparatedFields>
+                {selected.map(option => (
+                  <PFText key={option.id} as="span" typo="bd-md-md" color="black">
+                    {option.display}
+                  </PFText>
+                ))}
+              </PFFormInlineSeparatedFields>
+            )}
+          </PFFormField>
+        </PFFormFieldRow>
+      </PFFormFieldTable>
     </div>
   )
 }

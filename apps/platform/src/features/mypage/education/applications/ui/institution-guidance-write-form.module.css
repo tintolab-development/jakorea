@@ -33,25 +33,6 @@
   text-align: left;
 }
 
-.revisionNotice {
-  box-sizing: border-box;
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px 24px;
-  border-radius: 16px;
-  background: var(--color-primary-50, #e6f7f8);
-}
-
-.revisionTitle {
-  margin: 0;
-}
-
-.revisionBody {
-  margin: 0;
-}
-
 .actions {
   display: flex;
   width: 100%;

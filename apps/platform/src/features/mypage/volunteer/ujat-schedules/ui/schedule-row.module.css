@@ -8,3 +8,9 @@
 .meta p {
   margin: 0;
 }
+
+.documents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}

@@ -26,21 +26,31 @@ export function usePatchOrganizationGuidanceAnswersMutation(
         existingAnswers: input.existingAnswers,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.detail(
-          applicationType,
-          applicationId,
-        ),
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.detail(
+            applicationType,
+            applicationId,
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+        }),
+      ])
     },
     onError: async error => {
       if (!isAxiosError(error) || error.response?.status !== 409) return
-      await queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.detail(
-          applicationType,
-          applicationId,
-        ),
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.detail(
+            applicationType,
+            applicationId,
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+        }),
+      ])
     },
   })
 }

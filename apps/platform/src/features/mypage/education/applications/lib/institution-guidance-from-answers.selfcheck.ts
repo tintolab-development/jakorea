@@ -79,4 +79,45 @@ const content = teacherGuidanceContentFromFormState({
 })
 assert.equal(content.sexOffenseConsentMethod, '동의서 미제출')
 
+const ujatGuidanceKey = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+const ujatAnswers = {
+  [ujatGuidanceKey]: {
+    'computer-in-room': 'tablet',
+    'waiting-place': 'lab',
+    meal: 'bin',
+    'other-notes': 'park',
+    snackAvailability: 'possible',
+    classroomSettingConfirmed: 'confirmed',
+  },
+  [PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest]: {
+    submissionRequest: 'request',
+  },
+  [PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod]: {
+    inquiryMethod: 'criminal_record_site',
+    siteSubmission: 'online',
+    institutionId: 'tinto',
+    verificationNumber: '940412',
+  },
+}
+const ujatFormState = mapInstitutionGuidanceFromApplicationAnswers(
+  ujatAnswers,
+  'ujat-participant',
+)
+assert.equal(ujatFormState.ujatExtras?.snackAvailability, 'possible')
+assert.equal(ujatFormState.ujatExtras?.classroomSettingConfirmed, 'confirmed')
+assert.equal(ujatFormState.sexOffense.siteSubmission, 'online')
+assert.equal(ujatFormState.sexOffense.institutionId, 'tinto')
+const ujatPatch = buildInstitutionGuidanceAnswerPatch(
+  ujatFormState,
+  'ujat-participant',
+  ujatAnswers,
+)
+assert.equal(
+  (ujatPatch[ujatGuidanceKey] as { snackAvailability?: string }).snackAvailability,
+  'possible',
+)
+assert.ok(
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod in ujatPatch,
+)
+
 console.log('institution-guidance-from-answers.selfcheck: ok')

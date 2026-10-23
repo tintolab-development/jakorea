@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { UJAT_PORTAL_BANNER_STATES } from '../api/types.ts'
 import {
   readUjatPortalBannerState,
+  readUjatRevisionReason,
   resolveUjatScheduleBanner,
   resolveUjatScheduleBannerFromState,
   resolveUjatScheduleBannerVariant,
@@ -37,6 +38,20 @@ assert.ok(revision)
 assert.equal(revision!.clickable, true)
 assert.equal(revision!.title, '작성된 내용에 수정사항이 있어요!')
 assert.equal(revision!.body, '담당자와 협의된 내용을 확인 후 수정 제출해 주세요!')
+
+assert.equal(
+  readUjatRevisionReason({
+    ujat: { portalBannerState: 'REVISION_REQUIRED', revisionReason: '기간에 대한 협의가 필요합니다.' },
+  }),
+  '기간에 대한 협의가 필요합니다.',
+)
+assert.equal(
+  readUjatRevisionReason({
+    ujat: { scheduleChangeRequest: { reason: '학년 정보를 수정해 주세요.' } },
+  }),
+  '학년 정보를 수정해 주세요.',
+)
+assert.equal(readUjatRevisionReason({ ujat: { portalBannerState: 'REVISION_REQUIRED' } }), null)
 
 assert.equal(readUjatPortalBannerState({ ujat: { portalBannerState: 'ACTION_REQUIRED' } }), 'ACTION_REQUIRED')
 assert.equal(readUjatPortalBannerState({ ujat: { portalBannerState: 'NONE' } }), 'NONE')

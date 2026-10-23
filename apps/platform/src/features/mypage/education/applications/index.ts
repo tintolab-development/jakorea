@@ -28,6 +28,8 @@ export { EDUCATION_APPLICATION_TAB_ITEMS } from './lib/application-tab-items'
 export {
   educationInstitutionGuidanceWritePath,
   educationInstitutionGuidanceApplicationTabPath,
+  educationUjatProgressConfirmPath,
+  educationUjatScheduleBannerPath,
 } from './lib/guidance-path'
 export {
   shouldShowTeacherInstitutionGuidanceWrite,
@@ -120,12 +122,14 @@ export type {
 } from './ui/teacher-assignment'
 export { DocumentPassBanner, shouldShowDocumentPassBanner } from './ui/document-pass-banner'
 export { UjatScheduleBanner } from './ui/ujat-schedule-banner'
+export { UjatRevisionNotice } from './ui/ujat-revision-notice'
 export { UjatApplicationContent } from './ui/ujat-application-content'
 export type { UjatApplicationContentProps } from './ui/ujat-application-content'
 export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  usePortalMeFormBindingRender,
   useProbeEducationApplicationType,
   useMyProgramApplications,
 } from './api/hooks'
