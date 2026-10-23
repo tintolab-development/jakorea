@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberPortalUjatTemporarySchedule } from './memberPortalUjatTemporarySchedule';
 import type { UjatApplicationSupplementPortalBannerState } from './ujatApplicationSupplementPortalBannerState';
 
 /**
@@ -25,4 +26,6 @@ export interface UjatApplicationSupplement {
   assignmentLocked?: boolean;
   /** CMS scheduleConfirmStatus를 서버가 파생한 포털 일정협의 배너 상태. institution_checking→ACTION_REQUIRED, institution_confirmed→ADMIN_REVIEW, revision_requested→REVISION_REQUIRED, approval_completed→FINAL_APPROVED, application_rejected→REJECTED이며 임시 배정 전·교사 확인 대상 아님·알 수 없는 값은 NONE입니다. 프론트는 applicationStatus/displayStatus로 대체 추론하지 않습니다. */
   portalBannerState?: UjatApplicationSupplementPortalBannerState;
+  /** CMS 임시배정 확정 슬롯. GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule 의 slots과 같은 일정 SSOT입니다. 신청 당시 answers 희망일과 별도 필드입니다. 목록은 null. 상세는 항상 객체를 주며 슬롯 없으면 slots=[]. 모집 공통값·educationScheduleLines·금요일 생성으로 채우지 않습니다. */
+  temporarySchedule?: MemberPortalUjatTemporarySchedule | null;
 }

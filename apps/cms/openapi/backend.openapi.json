@@ -44494,6 +44494,71 @@
         }
       }
     },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/education-documents": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 봉사자 교육일 교육계획서·교육일지 조회",
+        "description": "### 이 API가 하는 일\n- UJAT 봉사자 교육일 교육계획서·교육일지 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/education-documents`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_ASSIGNED_EDUCATION_DAY 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 해당 신청에 ASSIGNED된 EDUCATION|SESSION 일정만",
+        "operationId": "getMemberPortalUjatEducationDocuments",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationDocumentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
     "/api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance": {
       "get": {
         "tags": [
@@ -45024,6 +45089,61 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PortalFormListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/education-documents": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 봉사자 교육계획서·교육일지 목록 조회",
+        "description": "### 이 API가 하는 일\n- UJAT 봉사자 교육계획서·교육일지 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/education-documents`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_ASSIGNED_EDUCATION_DAY 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 실제 교육일 program_schedule.id에 연결. DRAFT 템플릿·미바인딩은 작성 식별자 null",
+        "operationId": "listMemberPortalUjatEducationDocuments",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationDocumentsResponse"
                 }
               }
             }
@@ -89697,7 +89817,7 @@
       },
       "OrganizationGuidanceAnswersPatchRequest": {
         "type": "object",
-        "description": "기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다. UJAT 조직 신청이 임시 배정 확인 또는 수정 요청 상태이면 이 제출 성공 시 일정협의 상태도 관리자 검토로 전이됩니다.",
+        "description": "기관 신청 답변 부분 갱신 요청. 기본은 안내·성범죄 단락만 허용합니다. UJAT ORGANIZATION이고 supplement.ujat.portalBannerState가 ACTION_REQUIRED 또는 REVISION_REQUIRED이면 basic-info·grade-application-info·grade-class-time·preferred-education-schedule도 함께 보낼 수 있습니다. ADMIN_REVIEW·FINAL_APPROVED·REJECTED이거나 assignmentLocked=true이면 거부합니다. 성공 시(임시배정 확인 창) 일정협의는 관리자 검토로 전이됩니다. 신청 당시 희망일 answers는 임시배정 슬롯으로 덮지 않습니다.",
         "properties": {
           "answers": {
             "type": "object",
@@ -95143,6 +95263,47 @@
           }
         }
       },
+      "MemberPortalUjatTemporarySchedule": {
+        "type": "object",
+        "description": "포털 공개용 CMS 임시배정 슬롯 묶음. 기관 주소 등 관리자 전용 필드는 넣지 않습니다.",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "description": "활성·미취소 슬롯. 없으면 빈 배열.",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalUjatTemporaryScheduleSlot"
+            }
+          }
+        }
+      },
+      "MemberPortalUjatTemporaryScheduleSlot": {
+        "type": "object",
+        "description": "CMS 임시배정 슬롯의 포털 공개 필드",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "교육일 시작 시각. ISO-8601, Asia/Seoul 오프셋(+09:00)."
+          },
+          "grade": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          }
+        }
+      },
       "PageResponseApplicationListItemResponse": {
         "type": "object",
         "properties": {
@@ -95223,6 +95384,17 @@
               "REVISION_REQUIRED",
               "FINAL_APPROVED",
               "REJECTED"
+            ]
+          },
+          "temporarySchedule": {
+            "description": "CMS 임시배정 확정 슬롯. GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule 의 slots과 같은 일정 SSOT입니다. 신청 당시 answers 희망일과 별도 필드입니다. 목록은 null. 상세는 항상 객체를 주며 슬롯 없으면 slots=[]. 모집 공통값·educationScheduleLines·금요일 생성으로 채우지 않습니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MemberPortalUjatTemporarySchedule"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         }
@@ -95889,6 +96061,152 @@
           "scopeStatus": {
             "type": "string",
             "description": "일정 목록과 동일한 scopeStatus 의미를 사용합니다. 화면에 일정이 보인다는 사실만으로 출결 변경 권한이 부여되지는 않습니다."
+          }
+        }
+      },
+      "DocumentSlot": {
+        "type": "object",
+        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | DEADLINE_MISSED | REVISED. deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
+        "properties": {
+          "documentKind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "deadlineAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deadlineDate": {
+            "type": "string"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canRevise": {
+            "type": "boolean"
+          },
+          "hasFeedback": {
+            "type": "boolean"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programFormBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DocumentTemplateSetup": {
+        "type": "object",
+        "description": "공식 템플릿 코드 기준 작성 가능 여부. DRAFT만 있으면 publishedTemplateVersionId가 null입니다.",
+        "properties": {
+          "templateCode": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "publishedTemplateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programFormBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unavailableReason": {
+            "type": "string"
+          }
+        }
+      },
+      "EducationDayDocuments": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationDate": {
+            "type": "string"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/DocumentSlot"
+          },
+          "journal": {
+            "$ref": "#/components/schemas/DocumentSlot"
+          }
+        }
+      },
+      "EducationDocumentsResponse": {
+        "type": "object",
+        "description": "UJAT 봉사자 본인 교육일별 교육계획서·교육일지 조회. items는 본인 배정 교육일만이며 연간 운영기간 일정은 포함하지 않습니다. 공개 버전·ISSUANCE 바인딩이 없으면 제출 식별자는 null입니다.",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitTerm": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "planSetup": {
+            "$ref": "#/components/schemas/DocumentTemplateSetup"
+          },
+          "journalSetup": {
+            "$ref": "#/components/schemas/DocumentTemplateSetup"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EducationDayDocuments"
+            }
           }
         }
       },

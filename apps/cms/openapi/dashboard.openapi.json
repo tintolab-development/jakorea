@@ -28393,7 +28393,7 @@
       },
       "OrganizationGuidanceAnswersPatchRequest": {
         "type": "object",
-        "description": "기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다. UJAT 조직 신청이 임시 배정 확인 또는 수정 요청 상태이면 이 제출 성공 시 일정협의 상태도 관리자 검토로 전이됩니다.",
+        "description": "기관 신청 답변 부분 갱신 요청. 기본은 안내·성범죄 단락만 허용합니다. UJAT ORGANIZATION이고 supplement.ujat.portalBannerState가 ACTION_REQUIRED 또는 REVISION_REQUIRED이면 basic-info·grade-application-info·grade-class-time·preferred-education-schedule도 함께 보낼 수 있습니다. ADMIN_REVIEW·FINAL_APPROVED·REJECTED이거나 assignmentLocked=true이면 거부합니다. 성공 시(임시배정 확인 창) 일정협의는 관리자 검토로 전이됩니다. 신청 당시 희망일 answers는 임시배정 슬롯으로 덮지 않습니다.",
         "properties": {
           "answers": {
             "type": "object",
@@ -33643,6 +33643,47 @@
           }
         }
       },
+      "MemberPortalUjatTemporarySchedule": {
+        "type": "object",
+        "description": "포털 공개용 CMS 임시배정 슬롯 묶음. 기관 주소 등 관리자 전용 필드는 넣지 않습니다.",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "description": "활성·미취소 슬롯. 없으면 빈 배열.",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalUjatTemporaryScheduleSlot"
+            }
+          }
+        }
+      },
+      "MemberPortalUjatTemporaryScheduleSlot": {
+        "type": "object",
+        "description": "CMS 임시배정 슬롯의 포털 공개 필드",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "교육일 시작 시각. ISO-8601, Asia/Seoul 오프셋(+09:00)."
+          },
+          "grade": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          }
+        }
+      },
       "PageResponseApplicationListItemResponse": {
         "type": "object",
         "properties": {
@@ -33723,6 +33764,17 @@
               "REVISION_REQUIRED",
               "FINAL_APPROVED",
               "REJECTED"
+            ]
+          },
+          "temporarySchedule": {
+            "description": "CMS 임시배정 확정 슬롯. GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule 의 slots과 같은 일정 SSOT입니다. 신청 당시 answers 희망일과 별도 필드입니다. 목록은 null. 상세는 항상 객체를 주며 슬롯 없으면 slots=[]. 모집 공통값·educationScheduleLines·금요일 생성으로 채우지 않습니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MemberPortalUjatTemporarySchedule"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         }
@@ -34335,6 +34387,152 @@
           "scopeStatus": {
             "type": "string",
             "description": "일정 목록과 동일한 scopeStatus 의미를 사용합니다. 화면에 일정이 보인다는 사실만으로 출결 변경 권한이 부여되지는 않습니다."
+          }
+        }
+      },
+      "DocumentSlot": {
+        "type": "object",
+        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | DEADLINE_MISSED | REVISED. deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
+        "properties": {
+          "documentKind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "deadlineAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deadlineDate": {
+            "type": "string"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canRevise": {
+            "type": "boolean"
+          },
+          "hasFeedback": {
+            "type": "boolean"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programFormBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DocumentTemplateSetup": {
+        "type": "object",
+        "description": "공식 템플릿 코드 기준 작성 가능 여부. DRAFT만 있으면 publishedTemplateVersionId가 null입니다.",
+        "properties": {
+          "templateCode": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "publishedTemplateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programFormBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unavailableReason": {
+            "type": "string"
+          }
+        }
+      },
+      "EducationDayDocuments": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationDate": {
+            "type": "string"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/DocumentSlot"
+          },
+          "journal": {
+            "$ref": "#/components/schemas/DocumentSlot"
+          }
+        }
+      },
+      "EducationDocumentsResponse": {
+        "type": "object",
+        "description": "UJAT 봉사자 본인 교육일별 교육계획서·교육일지 조회. items는 본인 배정 교육일만이며 연간 운영기간 일정은 포함하지 않습니다. 공개 버전·ISSUANCE 바인딩이 없으면 제출 식별자는 null입니다.",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitTerm": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "planSetup": {
+            "$ref": "#/components/schemas/DocumentTemplateSetup"
+          },
+          "journalSetup": {
+            "$ref": "#/components/schemas/DocumentTemplateSetup"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EducationDayDocuments"
+            }
           }
         }
       },
