@@ -2,6 +2,15 @@
  * 교육받은 교사 등록 위저드 공통정보 RHF sink.
  * FormProvider가 있을 때만 활성. 일반 / economy 와 인스턴스를 공유하지 않는다.
  */
+import dayjs from 'dayjs'
+import {
+  applyTrainedTeachersApplicationOverlayRecord,
+  isTrainedTeachersApplicationOverlayKey,
+  persistableTrainedTeachersPreferredSchedules,
+  readTrainedTeachersApplicationOverlayValue,
+  serializeTrainedTeachersApplicationForFormVersion,
+  splitTrainedTeachersApplicationOverlay,
+} from './registration-rhf-application'
 import {
   applyTrainedTeachersRecruitmentOverlayRecord,
   isTrainedTeachersRecruitmentOverlayKey,
@@ -33,6 +42,8 @@ export type TrainedTeachersRegistrationRhfApi = {
 
 let api: TrainedTeachersRegistrationRhfApi | null = null
 const listeners = new Set<() => void>()
+let notifying = false
+let notifyScheduled = false
 
 export function registerTrainedTeachersRegistrationRhf(
   next: TrainedTeachersRegistrationRhfApi | null
@@ -57,7 +68,22 @@ export function subscribeTrainedTeachersRegistrationRhf(listener: () => void): (
 }
 
 export function notifyTrainedTeachersRegistrationRhf(): void {
-  listeners.forEach(listener => listener())
+  if (notifying) return
+  notifying = true
+  try {
+    listeners.forEach(listener => listener())
+  } finally {
+    notifying = false
+  }
+}
+
+export function scheduleTrainedTeachersRegistrationRhfNotify(): void {
+  if (notifyScheduled || notifying) return
+  notifyScheduled = true
+  queueMicrotask(() => {
+    notifyScheduled = false
+    notifyTrainedTeachersRegistrationRhf()
+  })
 }
 
 export function readActiveTrainedTeachersRecruitmentOverlayValue(
@@ -87,6 +113,78 @@ export function patchActiveTrainedTeachersRecruitmentOverlay(
     {
       ...values,
       recruitment: applyTrainedTeachersRecruitmentOverlayRecord(values.recruitment, recruitment),
+    },
+    { keepDefaultValues: true }
+  )
+  return rest
+}
+
+function hydratePreferredSchedulesForUi(raw: unknown): unknown {
+  if (!Array.isArray(raw)) return raw
+  return raw.map(item => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return { date: null, times: [] }
+    }
+    const rec = item as Record<string, unknown>
+    const times = Array.isArray(rec.times)
+      ? rec.times.map(time => {
+          const row = time && typeof time === 'object' ? (time as Record<string, unknown>) : {}
+          return {
+            classPeriod: typeof row.classPeriod === 'string' ? row.classPeriod : '',
+            start:
+              typeof row.start === 'string' && row.start
+                ? dayjs(row.start, 'HH:mm')
+                : row.start ?? null,
+            end:
+              typeof row.end === 'string' && row.end ? dayjs(row.end, 'HH:mm') : row.end ?? null,
+          }
+        })
+      : []
+    return {
+      date:
+        typeof rec.date === 'string' && rec.date ? dayjs(rec.date, 'YYYY-MM-DD') : rec.date ?? null,
+      session: typeof rec.session === 'string' ? rec.session : undefined,
+      times,
+    }
+  })
+}
+
+let preferredSchedulesUiCache: { token: string; value: unknown } | null = null
+
+export function readActiveTrainedTeachersApplicationOverlayValue(
+  key: string,
+  defaultValue: unknown
+): unknown {
+  const current = api
+  if (current == null || !isTrainedTeachersApplicationOverlayKey(key)) return defaultValue
+  const raw = readTrainedTeachersApplicationOverlayValue(current.getValues().application, key)
+  if (raw === undefined) return defaultValue
+  if (key !== 'application.trainedTeachers.preferredSchedules') return raw
+  const token = JSON.stringify(persistableTrainedTeachersPreferredSchedules(raw))
+  if (preferredSchedulesUiCache?.token === token) return preferredSchedulesUiCache.value
+  const ui = hydratePreferredSchedulesForUi(raw)
+  preferredSchedulesUiCache = { token, value: ui }
+  return ui
+}
+
+export function peekActiveTrainedTeachersApplicationOverlayRecord(): Record<string, unknown> | null {
+  if (api == null) return null
+  return serializeTrainedTeachersApplicationForFormVersion(api.getValues().application)
+}
+
+/** TT 신청 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */
+export function patchActiveTrainedTeachersApplicationOverlay(
+  partial: Record<string, unknown>
+): Record<string, unknown> {
+  if (api == null) return partial
+  const { application, rest } = splitTrainedTeachersApplicationOverlay(partial)
+  if (Object.keys(application).length === 0) return partial
+  const values = api.getValues()
+  preferredSchedulesUiCache = null
+  api.reset(
+    {
+      ...values,
+      application: applyTrainedTeachersApplicationOverlayRecord(values.application, application),
     },
     { keepDefaultValues: true }
   )

@@ -9,6 +9,7 @@ import {
   isTrainedTeachersRegistrationCanonicalSnapshot,
   omitTrainedTeachersCommonInfoOverlayKeys,
   projectTrainedTeachersRhfToOverlayRecord,
+  readTrainedTeachersRhfOverlayValue,
   rhfValuesFromTrainedTeachersCanonicalCommon,
   writeTrainedTeachersRhfOverlayValue,
 } from './registration-rhf-values'
@@ -304,4 +305,27 @@ describe('TT RHF 구조 8조합', () => {
       expect(program.generalCommonInfo?.educationJournalEnabled).toBe(combo.teacherTrainingEnabled)
     }
   )
+
+  it('overlay 파생 스냅샷은 같은 값이면 참조가 유지된다', () => {
+    const values = createDefaultTrainedTeachersRegistrationRhfValues()
+    const surveyA = readTrainedTeachersRhfOverlayValue(
+      values,
+      'trainedTeachersRegistration.basicInfo.surveyItems'
+    )
+    const surveyB = readTrainedTeachersRhfOverlayValue(
+      values,
+      'trainedTeachersRegistration.basicInfo.surveyItems'
+    )
+    expect(surveyA).toBe(surveyB)
+    const sponsorA = readTrainedTeachersRhfOverlayValue(
+      values,
+      'trainedTeachersRegistration.basicInfo.sponsorIds'
+    )
+    const sponsorB = readTrainedTeachersRhfOverlayValue(
+      values,
+      'trainedTeachersRegistration.basicInfo.sponsorIds'
+    )
+    expect(sponsorA).toBe(sponsorB)
+    expect(sponsorA).toBe(values.sponsorManagementIds)
+  })
 })

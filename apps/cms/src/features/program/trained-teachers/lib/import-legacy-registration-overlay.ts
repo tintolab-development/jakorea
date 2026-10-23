@@ -146,6 +146,6 @@ export function importLegacyOverlayToTrainedTeachersCanonical(args: {
     editor: args.editor,
     common: extractCommon(applied, overlay, args.editor),
     recruit: collectTrainedTeachersRecruitFormState(overlay),
-    application: collectTrainedTeachersApplicationFormState(),
+    application: collectTrainedTeachersApplicationFormState(overlay),
   }
 }

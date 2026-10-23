@@ -11,7 +11,7 @@ import type {
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { collectTrainedTeachersCommonInfoState } from './collect-registration-common-info-state'
 import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
-import { collectTrainedTeachersApplicationFormState } from './application-form-state'
+import { collectTrainedTeachersApplicationState } from './registration-rhf-application'
 import { applyTrainedTeachersRecruitToProgram } from './recruit-form-state'
 import { collectTrainedTeachersRecruitmentState } from './registration-rhf-recruitment'
 import {
@@ -172,7 +172,7 @@ export function buildTrainedTeachersCanonicalFromRhf(args: {
     common: collectTrainedTeachersCommonInfoState(args.values),
     recruit:
       args.recruit ?? collectTrainedTeachersRecruitmentState(args.values.recruitment),
-    application: args.application ?? collectTrainedTeachersApplicationFormState(),
+    application: args.application ?? collectTrainedTeachersApplicationState(args.values.application),
     sidecar: { ...args.values.sidecar },
   }
 }
