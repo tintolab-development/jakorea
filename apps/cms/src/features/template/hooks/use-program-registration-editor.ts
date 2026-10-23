@@ -45,6 +45,9 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/general/lib/overlay-phase1/build-registration-create-from-rhf'
+import { buildTrainedTeachersCreateSnapshot } from '@/features/program/trained-teachers/lib/build-registration-create-from-canonical'
+import { importLegacyOverlayToTrainedTeachersCanonical } from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
+import { TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY } from '@/features/program/trained-teachers/lib/registration-canonical-types'
 import {
   hasIncompleteRegistrationWizardRequiredFields,
   hasRegistrationWizardCurriculumScheduleCountMismatch,
@@ -1433,7 +1436,28 @@ export function useProgramRegistrationEditor(
         settingsJson:
           programRegistrationFormVariant === 'general' && rhf != null
             ? { [REGISTRATION_WIZARD_RHF_SETTINGS_KEY]: rhf.getValues() }
-            : undefined,
+            : programRegistrationFormVariant === 'trainedTeachers'
+              ? {
+                  [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]:
+                    importLegacyOverlayToTrainedTeachersCanonical({
+                      id: registrationPendingSnapshotId('trainedTeachers'),
+                      editor: {
+                        educationStructure: programType,
+                        sessionRound: sessionRoundType,
+                        educationFormScheduleDetail,
+                        participationScheduleDetail,
+                        ipsScheduleDetail,
+                        curriculumSessionCount,
+                        curriculumChartSessionCount,
+                        scheduleCurriculumDetailCount,
+                        scheduleCurriculumGroupCount,
+                        educationScheduleMode,
+                        teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+                        participant,
+                      },
+                    }),
+                }
+              : undefined,
       })
     } else {
       await persistWritingFormTemplateDraft({
@@ -1764,7 +1788,9 @@ export function useProgramRegistrationEditor(
           shouldUseTrainedTeacherProgramsRemoteApi())
       // React state가 비어도 overlay에 남은 선택을 사용 (스텝 전환·draft 복원 불일치 대비)
       const resolvedSponsorId =
-        sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
+        programRegistrationFormVariant === 'trainedTeachers'
+          ? sponsorId.trim()
+          : sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
       if (isRemoteCreate && !resolvedSponsorId) {
         showAlert({
           title: '등록 실패',
@@ -1843,13 +1869,38 @@ export function useProgramRegistrationEditor(
             | null
             | undefined
 
-          const snapshotFromRegistration = () =>
-            buildGeneralWizardCreateProgram(registrationSnapshotArgs.id) ??
-            buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+          const snapshotFromRegistration = () => {
+            if (programRegistrationFormVariant === 'trainedTeachers') {
+              return buildTrainedTeachersCreateSnapshot({
+                id: registrationSnapshotArgs.id,
+                editor: {
+                  educationStructure: programType,
+                  sessionRound: sessionRoundType,
+                  educationFormScheduleDetail,
+                  participationScheduleDetail,
+                  ipsScheduleDetail,
+                  curriculumSessionCount,
+                  curriculumChartSessionCount,
+                  scheduleCurriculumDetailCount,
+                  scheduleCurriculumGroupCount,
+                  educationScheduleMode,
+                  teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+                  participant,
+                },
+              })
+            }
+            return (
+              buildGeneralWizardCreateProgram(registrationSnapshotArgs.id) ??
+              buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+            )
+          }
 
           if (usesRemoteFormBindings && templateCode) {
             const program = snapshotFromRegistration()
-            const overlay = { ...getProgramRegistrationOverlayRecord() }
+            const overlay =
+              programRegistrationFormVariant === 'trainedTeachers'
+                ? undefined
+                : { ...getProgramRegistrationOverlayRecord() }
             const editorState = buildProgramRegistrationEditorState({
               participant,
               programType,
@@ -1873,10 +1924,81 @@ export function useProgramRegistrationEditor(
             })
             const { prepareRegistrationCreateFormBindings } =
               await import('@/features/program/general/lib/prepare-registration-create-form-bindings')
+            let operationalOverrides = options?.operationalOverrides
+            if (programRegistrationFormVariant === 'trainedTeachers') {
+              const { createSeedDraftForOperationalCatalogId } = await import(
+                '@/features/program/general/lib/registration-operational-form-drafts'
+              )
+              const { loadRegistrationWizardFormDraft } = await import(
+                '@/features/program/general/lib/registration-wizard-form-draft'
+              )
+              const { trainedTeachersRecruitEditorState } = await import(
+                '@/features/program/trained-teachers/lib/recruit-form-state'
+              )
+              const { trainedTeachersApplicationEditorState } = await import(
+                '@/features/program/trained-teachers/lib/application-form-state'
+              )
+              const canonical = importLegacyOverlayToTrainedTeachersCanonical({
+                id: registrationSnapshotArgs.id,
+                editor: {
+                  educationStructure: programType,
+                  sessionRound: sessionRoundType,
+                  educationFormScheduleDetail,
+                  participationScheduleDetail,
+                  ipsScheduleDetail,
+                  curriculumSessionCount,
+                  curriculumChartSessionCount,
+                  scheduleCurriculumDetailCount,
+                  scheduleCurriculumGroupCount,
+                  educationScheduleMode,
+                  teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+                  participant,
+                },
+              })
+              const recruitSaved = registrationWizardProgramType
+                ? await loadRegistrationWizardFormDraft({
+                    programType: registrationWizardProgramType,
+                    templateCode: 'recruitment-trained-teachers',
+                  })
+                : null
+              const applicationSaved = registrationWizardProgramType
+                ? await loadRegistrationWizardFormDraft({
+                    programType: registrationWizardProgramType,
+                    templateCode: 'application-trained-teachers',
+                  })
+                : null
+              const recruitDraft =
+                recruitSaved?.draft ??
+                createSeedDraftForOperationalCatalogId('recruitment-trained-teachers')
+              const applicationDraft =
+                applicationSaved?.draft ??
+                createSeedDraftForOperationalCatalogId('application-trained-teachers')
+              operationalOverrides = [
+                ...(operationalOverrides ?? []),
+                ...(recruitDraft
+                  ? [
+                      {
+                        templateCode: 'recruitment-trained-teachers',
+                        draft: recruitDraft,
+                        editorState: trainedTeachersRecruitEditorState(canonical.recruit),
+                      },
+                    ]
+                  : []),
+                ...(applicationDraft
+                  ? [
+                      {
+                        templateCode: 'application-trained-teachers',
+                        draft: applicationDraft,
+                        editorState: trainedTeachersApplicationEditorState(canonical.application),
+                      },
+                    ]
+                  : []),
+              ]
+            }
             preparedFormBindings = await prepareRegistrationCreateFormBindings({
               program,
               registration: { templateCode, draft, overlay, editorState },
-              operationalOverrides: options?.operationalOverrides,
+              operationalOverrides,
             })
           } else {
             await persistTemplateDraftIfNeeded()
@@ -1910,7 +2032,10 @@ export function useProgramRegistrationEditor(
             editorExtras: registrationSnapshotArgs.editorExtras,
             preparedFormBindings,
             programOverride:
-              programRegistrationFormVariant === 'general' ? programForCreate : undefined,
+              programRegistrationFormVariant === 'general' ||
+              programRegistrationFormVariant === 'trainedTeachers'
+                ? programForCreate
+                : undefined,
           })
           resetProgramRegistrationOverlay()
           onRegistrationSaved(createdProgram)

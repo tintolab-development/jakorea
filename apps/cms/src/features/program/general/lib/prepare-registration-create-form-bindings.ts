@@ -74,7 +74,11 @@ export async function prepareRegistrationCreateFormBindings(args: {
 
     const override = overrideByCode.get(spec.templateCode)
     const overlay =
-      spec.formType === 'REGISTRATION' ? null : collectOperationalOverlayForCatalogId(spec.templateCode)
+      spec.formType === 'REGISTRATION' ||
+      spec.templateCode === 'recruitment-trained-teachers' ||
+      spec.templateCode === 'application-trained-teachers'
+        ? null
+        : collectOperationalOverlayForCatalogId(spec.templateCode)
     const wizardSaved =
       spec.formType !== 'REGISTRATION'
         ? await loadWizardOperationalDraft(spec.templateCode)

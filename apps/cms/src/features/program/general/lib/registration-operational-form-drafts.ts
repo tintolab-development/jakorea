@@ -627,6 +627,36 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
       templateCode: catalogId,
     })
     const overlay = saved?.overlay
+    if (variant === 'trainedTeachers') {
+      const { readTrainedTeachersRecruitEditorState, trainedTeachersRecruitStateToApplyRecord } =
+        await import('@/features/program/trained-teachers/lib/recruit-form-state')
+      const { readTrainedTeachersApplicationEditorState } = await import(
+        '@/features/program/trained-teachers/lib/application-form-state'
+      )
+      if (catalogId === 'recruitment-trained-teachers') {
+        const recruit = readTrainedTeachersRecruitEditorState(saved?.editorState)
+        if (recruit) {
+          applyOperationalOverlayForCatalogId(
+            catalogId,
+            trainedTeachersRecruitStateToApplyRecord(recruit)
+          )
+          continue
+        }
+      }
+      if (catalogId === 'application-trained-teachers') {
+        const application = readTrainedTeachersApplicationEditorState(saved?.editorState)
+        if (application) {
+          const projected: Record<string, unknown> = {
+            'application.trainedTeachers.preferredSchedules': application.preferredSchedules,
+          }
+          for (const [key, value] of Object.entries(application.basicInfo)) {
+            projected[`application.trainedTeachers.basicInfo.${key}`] = value
+          }
+          applyOperationalOverlayForCatalogId(catalogId, projected)
+          continue
+        }
+      }
+    }
     if (overlay == null || Object.keys(overlay).length === 0) continue
     if (resolveOperationalOverlayKind(catalogId) == null) continue
     applyOperationalOverlayForCatalogId(catalogId, overlay)
@@ -681,14 +711,33 @@ export async function persistRegistrationOperationalOverlaysToLocal(
   )
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant, programType)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
-    const overlay = collectOperationalOverlayForCatalogId(catalogId)
-    if (overlay == null || Object.keys(overlay).length === 0) continue
     const saved = await loadRegistrationWizardFormDraft({
       programType,
       templateCode: catalogId,
     })
     const draft = saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
+    if (variant === 'trainedTeachers') {
+      const { collectTrainedTeachersRecruitFormState, trainedTeachersRecruitEditorState } =
+        await import('@/features/program/trained-teachers/lib/recruit-form-state')
+      const { collectTrainedTeachersApplicationFormState, trainedTeachersApplicationEditorState } =
+        await import('@/features/program/trained-teachers/lib/application-form-state')
+      const editorState =
+        catalogId === 'recruitment-trained-teachers'
+          ? trainedTeachersRecruitEditorState(collectTrainedTeachersRecruitFormState())
+          : catalogId === 'application-trained-teachers'
+            ? trainedTeachersApplicationEditorState(collectTrainedTeachersApplicationFormState())
+            : saved?.editorState
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        editorState,
+      })
+      continue
+    }
+    const overlay = collectOperationalOverlayForCatalogId(catalogId)
+    if (overlay == null || Object.keys(overlay).length === 0) continue
     await persistRegistrationWizardFormDraft({
       programType,
       templateCode: catalogId,

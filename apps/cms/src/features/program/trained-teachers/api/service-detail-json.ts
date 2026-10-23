@@ -263,19 +263,9 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
 
 export function serializeTrainedTeacherServiceDetailJson(
   program: Program,
-  options?: { omitInfoDetailOwnedFields?: boolean }
+  options?: { omitInfoDetailOwnedFields?: boolean; omitRegistrationOverlay?: boolean }
 ): string {
   const generalSurveyMenuKeys = trainedTeacherSurveyMenuKeys(program.generalSurveyMenuKeys)
-  const baseOverlay = persistScheduleEducationFormByDetailOverlay(
-    buildRegistrationOverlayForPersist(program),
-    program.generalCommonInfo?.scheduleDetails
-  )
-  // keys가 있을 때만(빈 배열 포함) overlay surveyItems를 맞춤. 키 생략 시 overlay를 지우지 않는다.
-  const registrationOverlay = omitTrainedTeacherStaleSessionOverlayKeys(
-    generalSurveyMenuKeys !== undefined
-      ? syncSurveyItemsIntoRegistrationOverlay(baseOverlay, generalSurveyMenuKeys)
-      : baseOverlay
-  )
   const programDetails = trainedTeacherDetails(program)
   if (options?.omitInfoDetailOwnedFields) {
     programDetails.generalCommonInfo = omitTrainedTeacherInfoDetailOwnedCommonInfo(
@@ -287,7 +277,20 @@ export function serializeTrainedTeacherServiceDetailJson(
     // 일반 프로그램과 동일 — 루트 generalSurveyMenuKeys가 LNB SSOT
     ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
     program: programDetails,
-    ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
+  }
+  if (!options?.omitRegistrationOverlay) {
+    const baseOverlay = persistScheduleEducationFormByDetailOverlay(
+      buildRegistrationOverlayForPersist(program),
+      program.generalCommonInfo?.scheduleDetails
+    )
+    const registrationOverlay = omitTrainedTeacherStaleSessionOverlayKeys(
+      generalSurveyMenuKeys !== undefined
+        ? syncSurveyItemsIntoRegistrationOverlay(baseOverlay, generalSurveyMenuKeys)
+        : baseOverlay
+    )
+    if (registrationOverlay) {
+      payload.registration = { overlay: registrationOverlay }
+    }
   }
   return JSON.stringify(payload)
 }
