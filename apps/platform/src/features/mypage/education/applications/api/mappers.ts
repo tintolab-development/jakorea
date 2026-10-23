@@ -352,6 +352,9 @@ export function mapPortalProgramApplicationDetail(
   if (detail.formResponseId != null && Number.isFinite(detail.formResponseId)) {
     mapped.formResponseId = detail.formResponseId
   }
+  if (detail.formBindingId != null && Number.isFinite(detail.formBindingId)) {
+    mapped.formBindingId = detail.formBindingId
+  }
   const formResponseStatus = detail.formResponseStatus?.trim()
   if (formResponseStatus) {
     mapped.formResponseStatus = formResponseStatus

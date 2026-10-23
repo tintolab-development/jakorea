@@ -120,6 +120,8 @@ export type EducationApplicationListItem = {
   applicationAnswers?: Record<string, unknown>
   /** Portal 신청 상세 `formResponseId` — 안내사항 PATCH 전제 */
   formResponseId?: number
+  /** Portal 신청 상세 `formBindingId` — 제출 후 양식 runtime 조회 */
+  formBindingId?: number
   /** Portal 신청 상세 `formResponseStatus` — SUBMITTED/APPROVED/COMPLETED 등 */
   formResponseStatus?: string
   /** `displayStatus === 'withdrawn'` 일 때 포기 시점 */

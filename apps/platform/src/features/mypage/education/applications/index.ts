@@ -126,6 +126,7 @@ export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  usePortalMeFormBindingRender,
   useProbeEducationApplicationType,
   useMyProgramApplications,
 } from './api/hooks'

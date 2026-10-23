@@ -5,10 +5,12 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import type { EducationApplicationListItem, EducationApplicationTab } from '../model/types'
 import { EDUCATION_APPLICATION_PAGE_SIZE } from '../model/types'
+import { parsePortalProgramId } from '@/features/program/api/mappers'
 import {
   cancelMyProgramApplication,
   fetchMyProgramApplicationDetail,
   fetchMyProgramApplications,
+  fetchPortalMeFormBindingRender,
 } from './client'
 import {
   mapPortalProgramApplicationDetail,
@@ -311,6 +313,43 @@ export function useMyProgramApplicationDetail(
     isRemoteEnabled: true,
     refetch,
   }
+}
+
+export function usePortalMeFormBindingRender(
+  programId: string | null | undefined,
+  bindingId: number | null | undefined,
+): {
+  document: Record<string, unknown> | null
+  isLoading: boolean
+  isError: boolean
+} {
+  const remote = isRemoteApiConfigured()
+  const numericProgramId = parsePortalProgramId(programId)
+  const enabled = remote && numericProgramId != null && bindingId != null && bindingId > 0
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.formBindingRender(
+      String(numericProgramId ?? ''),
+      bindingId ?? 0,
+    ),
+    queryFn: ({ signal }) => fetchPortalMeFormBindingRender(numericProgramId!, bindingId!, signal),
+    enabled,
+    staleTime: APPLICATIONS_STALE_MS,
+    gcTime: APPLICATIONS_GC_MS,
+    refetchOnWindowFocus: false,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+
+  if (!enabled) {
+    return { document: null, isLoading: false, isError: false }
+  }
+  if (query.isPending) {
+    return { document: null, isLoading: true, isError: false }
+  }
+  if (query.isError) {
+    return { document: null, isLoading: false, isError: true }
+  }
+  return { document: query.data ?? null, isLoading: false, isError: false }
 }
 
 export function useCancelMyProgramApplicationMutation() {

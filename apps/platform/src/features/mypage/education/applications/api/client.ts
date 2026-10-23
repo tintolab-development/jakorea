@@ -80,6 +80,27 @@ export async function fetchMyProgramApplicationDetail(
   return unwrapEnvelope<PortalProgramApplicationDetail>(data)
 }
 
+/**
+ * 제출된 신청의 양식 runtime.
+ * GET /api/portal/programs/{programId}/form-bindings/{bindingId} 는 제출 후
+ * APPLICATION_ALREADY_SUBMITTED 로 거절된다.
+ */
+export async function fetchPortalMeFormBindingRender(
+  programId: number,
+  bindingId: number,
+  signal?: AbortSignal,
+): Promise<Record<string, unknown>> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`,
+    { signal },
+  )
+  const unwrapped = unwrapEnvelope<unknown>(data)
+  if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
+    return unwrapped as Record<string, unknown>
+  }
+  return {}
+}
+
 /** 서버 `reason`은 필수(@NotBlank)지만 신청 취소 모달에는 사유 입력이 없다. */
 const MEMBER_CANCEL_REQUEST = {
   reasonCode: 'MEMBER_REQUEST',

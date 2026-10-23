@@ -14,7 +14,7 @@ import {
 } from '@/features/mypage/education/applications/lib/ujat-portal-banner'
 import { UjatProgressConfirmForm } from '@/features/mypage/education/applications/ui/ujat-progress-confirm-form'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { PFFormPage, PFText } from '@/shared/ui'
+import { PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 import writeFormStyles from '@/features/mypage/education/applications/ui/institution-guidance-write-form.module.css'
 
 export function MypageEducationUjatProgressConfirmPage() {
@@ -36,7 +36,7 @@ export function MypageEducationUjatProgressConfirmPage() {
   )
   const application = remoteEnabled ? remoteQuery.application : undefined
   const program = useProgramDetail(application?.programId ?? '').program
-  const detailCase = program?.detailCase ?? application?.detailCase
+  const detailCase = application?.detailCase ?? program?.detailCase
   const isUjat = shouldUseUjatApplicationContent(detailCase)
   const isRevision = application?.ujatPortalBannerState === 'REVISION_REQUIRED'
   const pageTitle = isRevision ? '교육 진행 정보 수정하기' : '교육 진행 정보 확인하기'
@@ -47,6 +47,18 @@ export function MypageEducationUjatProgressConfirmPage() {
     applicationId,
     application?.applicationType ?? applicationType,
   )
+
+  if (member.isLoading || remoteQuery.isLoading || typeProbe.isProbing) {
+    return (
+      <PFFormPage
+        aria-label={pageTitle}
+        back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+        title={pageTitle}
+      >
+        <PFLoadingSpinner centered label="교육 진행 정보를 불러오는 중" />
+      </PFFormPage>
+    )
+  }
 
   if (!isTeacher || !isUjat || !application) {
     return (
@@ -87,6 +99,7 @@ export function MypageEducationUjatProgressConfirmPage() {
         applicationId={applicationId}
         applicationType={applicationType}
         programId={application.programId}
+        formBindingId={application.formBindingId}
         answers={application.applicationAnswers}
         isRevision={isRevision}
       />

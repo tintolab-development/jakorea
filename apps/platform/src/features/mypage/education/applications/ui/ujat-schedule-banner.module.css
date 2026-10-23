@@ -49,10 +49,21 @@
   gap: var(--spacing-40);
 }
 
-.icon {
-  display: block;
+.iconSlot {
+  position: relative;
+  display: flex;
   width: 80px;
   height: 80px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  display: block;
+  width: 112px;
+  height: 112px;
+  max-width: none;
   flex-shrink: 0;
   object-fit: contain;
 }
@@ -62,34 +73,43 @@
   white-space: nowrap;
 }
 
-.body {
+.bodySlot {
   position: relative;
   z-index: 1;
+  display: flex;
   min-width: 0;
   flex: 1 1 auto;
+  align-items: center;
+  align-self: stretch;
+}
+
+.body {
   margin: 0;
-  white-space: pre-line;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .chevron {
   position: relative;
   z-index: 1;
   display: flex;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
   border-radius: var(--radius-999);
-  background: rgba(35, 35, 35, 0.75);
+  background: rgb(35 35 35 / 75%);
 }
 
 .chevron img {
   display: block;
+  width: 32px;
+  height: 32px;
 }
 
 @media (--bp-pc-compact) {
-  .title {
+  .body {
     white-space: normal;
   }
 }
@@ -108,16 +128,22 @@
     gap: var(--spacing-16);
   }
 
-  .icon {
+  .iconSlot {
     width: 56px;
     height: 56px;
   }
 
-  .title {
+  .icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .title,
+  .body {
     white-space: normal;
   }
 
-  .body {
+  .bodySlot {
     flex: 1 1 100%;
   }
 
