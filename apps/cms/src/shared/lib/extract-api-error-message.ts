@@ -42,6 +42,8 @@ const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
     '연간 기간 일정이 아니라 해당 금요일 하루 일정으로 저장해 주세요.',
   UJAT_EDUCATION_SLOT_NOT_IN_APPLICATION_CLASS_CATALOG:
     '신청한 학년·반 범위 밖의 학급입니다. classCount 기준으로 반을 선택해 주세요.',
+  STALE_REVISION: '기관이 확인한 일정은 그대로 저장하지 않았습니다. 변경된 기관만 다시 확인해 주세요.',
+  UJAT_ASSIGNMENT_LOCKED: '기관이 확인한 일정은 수정할 수 없습니다. 수정 요청 후 다시 배정하세요.',
 }
 
 const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
