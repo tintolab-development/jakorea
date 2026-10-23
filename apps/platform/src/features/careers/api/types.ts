@@ -8,12 +8,26 @@ export type PublicCareerCultureItem = {
   description?: string
 }
 
+export type PublicCareerInterviewImpactStory = {
+  id?: number
+  categoryId?: number
+  categoryName?: string
+  title?: string
+  publishAt?: string
+  imageUrl?: string | null
+  isPublished?: boolean
+}
+
 export type PublicCareerInterview = {
+  id?: number
+  impactStoryId?: number | null
   displayOrder?: number
+  /** 호환 조회용. 식별·저장 키가 아니다. */
   storyKey?: string
   title?: string
-  year?: number
+  year?: number | null
   coverImageUrl?: string | null
+  impactStory?: PublicCareerInterviewImpactStory | null
 }
 
 export type PublicCareerGuideResponse = {

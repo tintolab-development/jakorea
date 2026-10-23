@@ -14,4 +14,5 @@ export interface ApiErrorResponse {
   message?: string;
   traceId?: string;
   timestamp?: string;
+  field?: string | null;
 }

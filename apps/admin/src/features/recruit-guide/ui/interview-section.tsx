@@ -11,6 +11,7 @@ import {
   useRemoveRecruitInterviews,
   useReplaceRecruitInterview,
 } from '@/features/recruit-guide/api/hooks'
+import { MAX_RECRUIT_INTERVIEWS } from '@/features/recruit-guide/api/store'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
 import { InterviewSelectModal } from '@/features/recruit-guide/ui/interview-select-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -19,7 +20,7 @@ import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
-type PickerMode = { type: 'add' } | { type: 'edit'; id: string; storyId: string }
+type PickerMode = { type: 'add' } | { type: 'edit'; item: InterviewItem }
 
 type Props = {
   items: InterviewItem[]
@@ -35,6 +36,12 @@ export function InterviewSectionCard({ items }: Props) {
   const [picker, setPicker] = useState<PickerMode | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
+  const rows = useMemo(
+    () => [...items].sort((a, b) => a.displayOrder - b.displayOrder),
+    [items]
+  )
+  const atLimit = rows.length >= MAX_RECRUIT_INTERVIEWS
+
   const columns = useMemo<ColumnsType<InterviewItem>>(
     () => [
       {
@@ -43,7 +50,7 @@ export function InterviewSectionCard({ items }: Props) {
         width: 100,
         align: 'center',
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_value, _record, index) => index + 1,
+        render: (_value, record) => record.displayOrder,
       },
       {
         title: '게시글 제목',
@@ -66,7 +73,7 @@ export function InterviewSectionCard({ items }: Props) {
             type="button"
             onClick={e => {
               e.stopPropagation()
-              setPicker({ type: 'edit', id: record.id, storyId: record.storyId })
+              setPicker({ type: 'edit', item: record })
             }}
           >
             수정
@@ -80,17 +87,21 @@ export function InterviewSectionCard({ items }: Props) {
   const handleSelectStory = useCallback(
     async (input: InterviewSaveItem) => {
       try {
-        if (picker?.type === 'edit') {
-          await replaceMutation.mutateAsync({ id: picker.id, input })
-        } else {
+        if (picker?.type === 'add') {
           await addMutation.mutateAsync(input)
+        } else if (picker?.type === 'edit') {
+          await replaceMutation.mutateAsync({ id: picker.item.id, input })
+        } else {
+          return
         }
         setPicker(null)
       } catch (err) {
         showAlert(
           recruitGuideSaveFailureAlert(
             err,
-            '직무 인터뷰 저장에 실패했습니다. 다시 시도해 주세요.'
+            picker?.type === 'edit'
+              ? '직무 인터뷰 수정에 실패했습니다. 다시 시도해 주세요.'
+              : '직무 인터뷰 저장에 실패했습니다. 다시 시도해 주세요.'
           )
         )
       }
@@ -142,15 +153,17 @@ export function InterviewSectionCard({ items }: Props) {
           >
             선택 삭제
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="large"
-            type="button"
-            disabled={pickerLoading}
-            onClick={() => setPicker({ type: 'add' })}
-          >
-            추가
-          </CmsButton>
+          {atLimit ? null : (
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              disabled={pickerLoading}
+              onClick={() => setPicker({ type: 'add' })}
+            >
+              추가
+            </CmsButton>
+          )}
         </div>
       </div>
 
@@ -158,7 +171,7 @@ export function InterviewSectionCard({ items }: Props) {
         className="cms-data-table recruit-guide-interview-table"
         rowKey="id"
         columns={columns}
-        dataSource={items}
+        dataSource={rows}
         pagination={false}
         rowSelection={{
           selectedRowKeys,
@@ -174,9 +187,15 @@ export function InterviewSectionCard({ items }: Props) {
       />
 
       <InterviewSelectModal
-        key={picker ? `${picker.type}-${picker.type === 'edit' ? picker.id : 'add'}` : 'closed'}
+        key={
+          picker?.type === 'edit'
+            ? `edit-${picker.item.id}`
+            : picker?.type === 'add'
+              ? 'add'
+              : 'closed'
+        }
         open={picker != null}
-        selectedStoryId={picker?.type === 'edit' ? picker.storyId : undefined}
+        confirmLoading={pickerLoading}
         onCancel={() => setPicker(null)}
         onSelect={item => {
           void handleSelectStory(item)

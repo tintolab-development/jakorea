@@ -5,7 +5,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { ImpactStory, ImpactStoryListFilter } from '@/entities/impact-stories/model/types'
+import {
+  isHomepageVisible,
+  type ImpactStory,
+  type ImpactStoryListFilter,
+} from '@/entities/impact-stories/model/types'
 import { useImpactStoriesPagedList } from '@/features/impact-stories/api/hooks'
 import type { InterviewSaveItem } from '@/entities/recruit-guide/model/types'
 import {
@@ -39,9 +43,16 @@ function yearRange(year: string): Pick<ImpactStoryListFilter, 'publishedFrom' | 
   }
 }
 
-function storyYear(story: ImpactStory): number {
+function storyYear(story: ImpactStory): number | null {
   const y = Number(story.publishedAt.slice(0, 4))
-  return Number.isFinite(y) ? y : CURRENT_YEAR
+  return Number.isInteger(y) && y >= 1900 && y <= 2200 ? y : null
+}
+
+function storyImpactId(story: ImpactStory): number | null {
+  const raw = story.id.trim()
+  if (!/^[1-9]\d*$/.test(raw)) return null
+  const id = Number(raw)
+  return Number.isSafeInteger(id) ? id : null
 }
 
 type Applied = {
@@ -52,18 +63,24 @@ type Applied = {
 
 type Props = {
   open: boolean
-  selectedStoryId?: string
+  confirmLoading?: boolean
   onCancel: () => void
   onSelect: (item: InterviewSaveItem) => void
 }
 
-export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect }: Props) {
+function canSelectStory(story: ImpactStory): boolean {
+  return storyImpactId(story) != null && isHomepageVisible(story)
+}
+
+export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect }: Props) {
   const [pendingYear, setPendingYear] = useState('')
   const [pendingTitle, setPendingTitle] = useState('')
+  const [pendingRowId, setPendingRowId] = useState('')
   const [applied, setApplied] = useState<Applied>({ year: '', title: '', page: 0 })
 
   const filter = useMemo<ImpactStoryListFilter>(
     () => ({
+      visibility: 'public',
       title: applied.title.trim() || undefined,
       page: applied.page,
       ...yearRange(applied.year),
@@ -88,13 +105,17 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
 
   const handleSelect = useCallback(
     (story: ImpactStory) => {
+      if (confirmLoading) return
+      const impactStoryId = storyImpactId(story)
+      if (impactStoryId == null || !isHomepageVisible(story)) return
+      setPendingRowId(story.id)
       onSelect({
-        storyId: story.id,
+        impactStoryId,
         title: story.title,
-        publishedYear: storyYear(story),
+        publishedYear: null,
       })
     },
-    [onSelect]
+    [confirmLoading, onSelect]
   )
 
   const columns = useMemo<ColumnsType<ImpactStory>>(
@@ -105,7 +126,10 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
         width: 160,
         align: 'center',
         className: 'recruit-guide-interview-modal__year',
-        render: (_value, record) => `${storyYear(record)}년`,
+        render: (_value, record) => {
+          const year = storyYear(record)
+          return year == null ? '-' : `${year}년`
+        },
       },
       {
         title: '게시글 제목',
@@ -175,18 +199,25 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
           <Table<ImpactStory>
             className="cms-data-table cms-data-table--skip-auto-no-col recruit-guide-interview-modal__table"
             rowKey="id"
-            loading={listQuery.isLoading}
+            loading={listQuery.isLoading || confirmLoading}
             dataSource={rows}
             columns={columns}
             pagination={false}
             rowClassName={record =>
-              record.id === selectedStoryId
-                ? 'recruit-guide-interview-modal__row--selected'
-                : ''
+              [
+                record.id === pendingRowId
+                  ? 'recruit-guide-interview-modal__row--selected'
+                  : '',
+                canSelectStory(record)
+                  ? ''
+                  : 'recruit-guide-interview-modal__row--disabled',
+              ]
+                .filter(Boolean)
+                .join(' ')
             }
             onRow={record => ({
               onClick: () => handleSelect(record),
-              style: { cursor: 'pointer' },
+              style: { cursor: canSelectStory(record) ? 'pointer' : 'default' },
             })}
             scroll={{ x: true }}
           />
