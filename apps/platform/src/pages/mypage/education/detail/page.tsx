@@ -79,7 +79,7 @@ import {
   sanitizeUjatParticipantBasicInfoFields,
   shouldUseUjatApplicationContent,
 } from '@/features/mypage/education/applications/lib/ujat-portal-banner'
-import { educationUjatProgressConfirmPath } from '@/features/mypage/education/applications/lib/guidance-path'
+import { educationUjatScheduleBannerPath } from '@/features/mypage/education/applications/lib/guidance-path'
 import type { EducationApplicationListItem } from '@/features/mypage/education/applications/model/types'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -856,7 +856,7 @@ export function MypageEducationDetailPage() {
             ujatScheduleBanner.clickable
               ? () =>
                   navigate(
-                    educationUjatProgressConfirmPath(
+                    educationUjatScheduleBannerPath(
                       application.id,
                       application.applicationType,
                     ),
