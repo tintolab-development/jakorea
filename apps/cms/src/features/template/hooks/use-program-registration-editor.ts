@@ -52,6 +52,7 @@ import {
 import { importLegacyOverlayToTrainedTeachersCanonical } from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
 import { TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY } from '@/features/program/trained-teachers/lib/registration-canonical-types'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { importLegacyTrainedTeachersApplicationOverlay } from '@/features/program/trained-teachers/lib/registration-rhf-application'
 import {
   isTrainedTeachersRegistrationCanonicalSnapshot,
   omitTrainedTeachersCommonInfoOverlayKeys,
@@ -63,6 +64,7 @@ import {
   listIncompleteRegistrationWizardRequiredFields,
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-required-fields'
 import { hydrateRegistrationWizardUiValues } from '@/features/program/general/lib/overlay-phase1/registration-wizard-legacy-hydrate'
+import { projectRegistrationWizardUiValuesToOverlay } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
 import { peekApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { peekGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
@@ -99,7 +101,6 @@ import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/fo
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
-  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
   patchGeneralRegistrationSponsorSelectionOverlay,
@@ -380,8 +381,6 @@ export function useProgramRegistrationEditor(
   const [sponsorId, setSponsorId] = useState('')
   const [sponsorContactId, setSponsorContactId] = useState('')
   const [programTitleKo, setProgramTitleKo] = useState('')
-  const usesGeneralRegistrationControlledFields =
-    programRegistrationFormVariant === 'general' && !restrictCurriculumSessionStructure
 
   const resolveProgramTitleKo = useCallback(
     () => readStoredRegistrationProgramTitleKo(programRegistrationFormVariant, programTitleKo),
@@ -449,7 +448,10 @@ export function useProgramRegistrationEditor(
       if (programRegistrationFormVariant !== 'trainedTeachers') return
       const rhf = peekTrainedTeachersRegistrationRhf()
       if (rhf == null) return
-      rhf.reset(patch(rhf.getValues()), { keepDefaultValues: true })
+      const current = rhf.getValues()
+      const next = patch(current)
+      if (next === current) return
+      rhf.reset(next, { keepDefaultValues: true })
     },
     [programRegistrationFormVariant]
   )
@@ -465,23 +467,45 @@ export function useProgramRegistrationEditor(
 
   useEffect(() => {
     if (programRegistrationFormVariant !== 'trainedTeachers') return
-    patchTrainedTeachersWizardRhf(values => ({
-      ...values,
-      educationStructure: programType,
-      sessionRound: sessionRoundType,
-      educationFormScheduleDetail,
-      participationScheduleDetail,
-      ipsScheduleDetail,
-      curriculumSessionCount,
-      curriculumChartSessionCount,
-      scheduleCurriculumDetailCount,
-      scheduleCurriculumGroupCount,
-      educationScheduleMode,
-      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
-      participant,
-      curriculumSessions: programType === 'schedule' ? [] : values.curriculumSessions,
-      scheduleDetails: programType === 'schedule' ? values.scheduleDetails : [],
-    }))
+    patchTrainedTeachersWizardRhf(values => {
+      const nextCurriculumSessions = programType === 'schedule' ? [] : values.curriculumSessions
+      const nextScheduleDetails = programType === 'schedule' ? values.scheduleDetails : []
+      if (
+        values.educationStructure === programType &&
+        values.sessionRound === sessionRoundType &&
+        values.educationFormScheduleDetail === educationFormScheduleDetail &&
+        values.participationScheduleDetail === participationScheduleDetail &&
+        values.ipsScheduleDetail === ipsScheduleDetail &&
+        values.curriculumSessionCount === curriculumSessionCount &&
+        values.curriculumChartSessionCount === curriculumChartSessionCount &&
+        values.scheduleCurriculumDetailCount === scheduleCurriculumDetailCount &&
+        values.scheduleCurriculumGroupCount === scheduleCurriculumGroupCount &&
+        values.educationScheduleMode === educationScheduleMode &&
+        values.teacherTrainingEnabled === trainedTeachersTeacherTrainingEnabled &&
+        values.participant === participant &&
+        values.curriculumSessions === nextCurriculumSessions &&
+        values.scheduleDetails === nextScheduleDetails
+      ) {
+        return values
+      }
+      return {
+        ...values,
+        educationStructure: programType,
+        sessionRound: sessionRoundType,
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+        curriculumSessionCount,
+        curriculumChartSessionCount,
+        scheduleCurriculumDetailCount,
+        scheduleCurriculumGroupCount,
+        educationScheduleMode,
+        teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+        participant,
+        curriculumSessions: nextCurriculumSessions,
+        scheduleDetails: nextScheduleDetails,
+      }
+    })
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
@@ -634,10 +658,14 @@ export function useProgramRegistrationEditor(
         })
       }
       setProgramTitleKo(state.programTitleKo ?? '')
-      patchRegistrationOverlayProgramTitleKo(
-        programRegistrationFormVariant,
-        state.programTitleKo ?? ''
-      )
+      // 일반 위저드 제목 SSOT는 RHF. 빈 editorState로 overlay/RHF를 지우면
+      // 임시저장 settingsJson 복원 전에 국문 대표명이 사라진다.
+      if (programRegistrationFormVariant !== 'general') {
+        patchRegistrationOverlayProgramTitleKo(
+          programRegistrationFormVariant,
+          state.programTitleKo ?? ''
+        )
+      }
     },
     [programRegistrationFormVariant]
   )
@@ -763,7 +791,9 @@ export function useProgramRegistrationEditor(
                       typed.common,
                       typed.editor,
                       typed.sidecar,
-                      typed.recruit
+                      typed.recruit,
+                      typed.application ??
+                        importLegacyTrainedTeachersApplicationOverlay(saved.overlay ?? {})
                     ),
                     { keepDirty: false }
                   )
@@ -792,7 +822,8 @@ export function useProgramRegistrationEditor(
                       imported.common,
                       imported.editor,
                       undefined,
-                      imported.recruit
+                      imported.recruit,
+                      imported.application
                     ),
                     { keepDirty: false }
                   )
@@ -1345,26 +1376,6 @@ export function useProgramRegistrationEditor(
     [patchGeneralWizardRhf]
   )
 
-  const onSponsorIdChange = useCallback((next: string) => {
-    setSponsorId(next)
-    setSponsorContactId('')
-    patchProgramRegistrationOverlay({
-      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: next,
-      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: '',
-    })
-  }, [])
-
-  const onSponsorContactIdChange = useCallback((next: string) => {
-    setSponsorContactId(next)
-    const contactSelectValue = next.trim()
-    patchProgramRegistrationOverlay({
-      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: contactSelectValue,
-      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]: contactSelectValue
-        ? [contactSelectValue]
-        : [],
-    })
-  }, [])
-
   const paragraphBodyOptions = useMemo(
     () =>
       buildProgramRegistrationParagraphBodyOptions(
@@ -1408,14 +1419,6 @@ export function useProgramRegistrationEditor(
           onTrainedTeachersTeacherTrainingEnabledChange,
           educationScheduleMode,
           onEducationScheduleModeChange,
-          ...(usesGeneralRegistrationControlledFields
-            ? {
-                sponsorId,
-                onSponsorIdChange,
-                sponsorContactId,
-                onSponsorContactIdChange,
-              }
-            : {}),
         },
         {
           hiddenParagraphIds:
@@ -1469,10 +1472,6 @@ export function useProgramRegistrationEditor(
       programRegistrationFormVariant,
       educationScheduleMode,
       onEducationScheduleModeChange,
-      usesGeneralRegistrationControlledFields,
-      ...(usesGeneralRegistrationControlledFields
-        ? [sponsorId, onSponsorIdChange, sponsorContactId, onSponsorContactIdChange]
-        : []),
     ]
   )
 
@@ -1518,10 +1517,16 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedProgramTitleKo = resolveProgramTitleKo()
-    const overlay =
-      programRegistrationFormVariant === 'trainedTeachers'
-        ? omitTrainedTeachersCommonInfoOverlayKeys({ ...getProgramRegistrationOverlayRecord() })
-        : { ...getProgramRegistrationOverlayRecord() }
+    const overlay = (() => {
+      const stored =
+        programRegistrationFormVariant === 'trainedTeachers'
+          ? omitTrainedTeachersCommonInfoOverlayKeys({ ...getProgramRegistrationOverlayRecord() })
+          : { ...getProgramRegistrationOverlayRecord() }
+      if (programRegistrationFormVariant !== 'general') return stored
+      const rhf = peekGeneralRegistrationWizardRhf()
+      if (rhf == null) return stored
+      return { ...stored, ...projectRegistrationWizardUiValuesToOverlay(rhf.getValues()) }
+    })()
     const editorState = buildProgramRegistrationEditorState({
       participant,
       programType,
@@ -1545,6 +1550,7 @@ export function useProgramRegistrationEditor(
       const { persistRegistrationWizardFormDraft } =
         await import('@/features/program/general/lib/registration-wizard-form-draft')
       const rhf = peekGeneralRegistrationWizardRhf()
+      const rhfValues = rhf?.getValues()
       await persistRegistrationWizardFormDraft({
         programType: registrationWizardProgramType!,
         templateCode,
@@ -1552,8 +1558,42 @@ export function useProgramRegistrationEditor(
         overlay,
         editorState,
         settingsJson:
-          programRegistrationFormVariant === 'general' && rhf != null
-            ? { [REGISTRATION_WIZARD_RHF_SETTINGS_KEY]: rhf.getValues() }
+          programRegistrationFormVariant === 'general' && rhfValues != null
+            ? {
+                [REGISTRATION_WIZARD_RHF_SETTINGS_KEY]: {
+                  ...rhfValues,
+                  programTitleKo: resolvedProgramTitleKo || rhfValues.programTitleKo,
+                  sponsorId: resolvedSponsorId || rhfValues.sponsorId,
+                  sponsorIds:
+                    rhfValues.sponsorIds.length > 0
+                      ? rhfValues.sponsorIds
+                      : resolvedSponsorId
+                        ? [resolvedSponsorId]
+                        : rhfValues.sponsorIds,
+                  managerContactId: resolvedContactId || rhfValues.managerContactId,
+                  managerContactIds:
+                    rhfValues.managerContactIds.length > 0
+                      ? rhfValues.managerContactIds
+                      : resolvedContactId
+                        ? [resolvedContactId]
+                        : rhfValues.managerContactIds,
+                  extras: {
+                    ...rhfValues.extras,
+                    programType,
+                    sessionRoundType,
+                    educationScheduleMode,
+                    educationFormScheduleDetail,
+                    participationScheduleDetail,
+                    ipsScheduleDetail,
+                    curriculumSessionCount,
+                    curriculumChartSessionCount,
+                    scheduleCurriculumDetailCount,
+                    scheduleCurriculumGroupCount,
+                    scheduleCurriculumPreEducation,
+                    participant,
+                  },
+                },
+              }
             : programRegistrationFormVariant === 'trainedTeachers'
               ? (() => {
                   const ttRhf = peekTrainedTeachersRegistrationRhf()
@@ -2039,6 +2079,9 @@ export function useProgramRegistrationEditor(
               const { serializeTrainedTeachersRecruitmentForFormVersion } = await import(
                 '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
               )
+              const { serializeTrainedTeachersApplicationForFormVersion } = await import(
+                '@/features/program/trained-teachers/lib/registration-rhf-application'
+              )
               const { trainedTeachersApplicationEditorState } = await import(
                 '@/features/program/trained-teachers/lib/application-form-state'
               )
@@ -2102,6 +2145,9 @@ export function useProgramRegistrationEditor(
                       {
                         templateCode: 'application-trained-teachers',
                         draft: applicationDraft,
+                        overlay: serializeTrainedTeachersApplicationForFormVersion(
+                          canonical.application
+                        ),
                         editorState: trainedTeachersApplicationEditorState(canonical.application),
                       },
                     ]

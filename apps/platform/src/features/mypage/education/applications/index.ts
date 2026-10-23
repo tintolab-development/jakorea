@@ -92,6 +92,7 @@ export {
   UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
+  shouldShowSettlementTab,
 } from './lib/detail-tabs'
 export type { EducationActivitySection, EducationDetailTabItem } from './lib/detail-tabs'
 export {

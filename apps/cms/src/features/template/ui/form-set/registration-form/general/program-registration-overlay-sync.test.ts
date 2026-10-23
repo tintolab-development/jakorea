@@ -1,11 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import {
+  registerGeneralRegistrationWizardRhf,
+  type GeneralRegistrationWizardRhfApi,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { createDefaultRegistrationWizardUiValues } from '@/features/program/general/lib/overlay-phase1/registration-wizard-ui-values'
+import {
   getProgramRegistrationOverlayRecord,
   getProgramRegistrationOverlayVersion,
   patchProgramRegistrationOverlay,
   patchRegistrationOverlayProgramTitleKo,
   peekProgramRegistrationOverlayRecord,
+  readGeneralRegistrationOverlayScheduleLines,
+  readGeneralRegistrationOverlaySponsorContactId,
+  readGeneralRegistrationOverlaySponsorId,
   readRegistrationOverlayProgramTitleKo,
   readStoredRegistrationProgramTitleKo,
   resetProgramRegistrationOverlayStoreForTests,
@@ -16,8 +24,23 @@ import {
 } from './program-registration-overlay-sync'
 
 afterEach(() => {
+  registerGeneralRegistrationWizardRhf(null)
   resetProgramRegistrationOverlayStoreForTests()
 })
+
+function mockWizardRhf(
+  values = createDefaultRegistrationWizardUiValues()
+): GeneralRegistrationWizardRhfApi {
+  return {
+    getValues: () => values,
+    getPath: () => undefined,
+    setPath: vi.fn(),
+    reset: vi.fn(),
+    applyOverlayRecord: vi.fn(),
+    isDirty: () => false,
+    markBaseline: vi.fn(),
+  }
+}
 
 describe('program-registration-overlay-sync', () => {
   it('같은 값으로 patch하면 overlay 버전을 올리지 않는다', () => {
@@ -117,6 +140,36 @@ describe('readRegistrationOverlayProgramTitleKo', () => {
 
   it('키가 없으면 React state fallback을 쓴다', () => {
     expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('이전 제목')
+  })
+
+  it('일반 위저드 RHF가 있으면 overlay 빈 후원사·일정줄보다 RHF를 쓴다', () => {
+    const values = createDefaultRegistrationWizardUiValues()
+    values.sponsorId = '163001'
+    values.sponsorIds = ['163001', '163002']
+    values.managerContactId = '163001::c1'
+    values.managerContactIds = ['163001::c1']
+    values.scheduleLines = ['2026-03-01 10:00~11:00']
+    registerGeneralRegistrationWizardRhf(mockWizardRhf(values))
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.localSponsorId': '',
+      'generalRegistration.basicInfo.localSponsorIds': [],
+      'generalRegistration.basicInfo.localManagerContactId': '',
+      'generalRegistration.educationScheduleSettings.scheduleLines': [],
+    })
+    expect(readGeneralRegistrationOverlaySponsorId()).toBe('163001')
+    expect(readGeneralRegistrationOverlaySponsorContactId()).toBe('163001::c1')
+    expect(readGeneralRegistrationOverlayScheduleLines()).toEqual(['2026-03-01 10:00~11:00'])
+  })
+
+  it('일반 위저드 RHF가 있으면 overlay 빈 키보다 국문 대표명을 쓴다', () => {
+    const values = createDefaultRegistrationWizardUiValues()
+    values.programTitleKo = 'RHF 국문 대표명'
+    registerGeneralRegistrationWizardRhf(mockWizardRhf(values))
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.localProgramTitleKo': '',
+    })
+    expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('RHF 국문 대표명')
+    expect(readRegistrationOverlayProgramTitleKo('general')).toBe('RHF 국문 대표명')
   })
 
   it('continue hydrate payload programTitleKo를 overlay에 반영한다', () => {

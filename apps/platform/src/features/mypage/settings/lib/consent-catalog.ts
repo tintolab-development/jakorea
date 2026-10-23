@@ -25,10 +25,12 @@ export type SettingsConsentItem = {
   validityLabel?: string
   hint?: string
   termsViewType?: TermsViewType
-  /** 전자서명 동의서 ID — 철회·확인 API 대상 */
-  documentId?: number
+  /** 전자서명 동의서 ID — 철회·확인 API 대상. 레거시 동의는 null */
+  documentId?: number | null
   /** 서버 `withdrawable` — 철회 버튼 노출 조건 */
   withdrawable?: boolean
+  /** 서버 `status` — WITHDRAWN이면 철회 버튼 비활성 */
+  status?: string
 }
 
 export type BasicConsentAudience = {

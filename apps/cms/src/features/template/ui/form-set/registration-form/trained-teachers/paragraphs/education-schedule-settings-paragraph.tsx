@@ -4,10 +4,7 @@ import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import {
-  canRemoveEducationSchedulePreviewLine,
-  formatEducationScheduleLineFromRange,
-} from '@/features/template/lib/format-education-schedule-line'
+import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
@@ -111,9 +108,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   const removeLine = useCallback(
     (index: number) => {
       updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
-        const next = (prev ?? []).filter(
-          (line, i) => i !== index || !canRemoveEducationSchedulePreviewLine(line)
-        )
+        const next = (prev ?? []).filter((_, i) => i !== index)
         syncBridgeFromLines(next, educationScheduleMode)
         return next
       })
@@ -215,7 +210,13 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
           label="교육 진행 예정일"
           fullRow
           readOnlyDisplay
-          view={<EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />}
+          view={
+            <EducationSchedulePreviewLines
+              lines={scheduleLines}
+              onRemove={removeLine}
+              lockStartedLines={false}
+            />
+          }
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

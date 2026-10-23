@@ -4,6 +4,7 @@ import type { Program } from '@/types/domain'
 
 const ensureDraftOwnedFormVersionWithBaseline = vi.fn()
 const loadRegistrationWizardFormDraft = vi.fn()
+const persistRegistrationWizardFormDraft = vi.fn()
 const persistDraftOwnedFormVersion = vi.fn()
 vi.mock('@/features/program/general/lib/registration-draft-form-versions', () => ({
   ensureDraftOwnedFormVersionWithBaseline: (...args: unknown[]) =>
@@ -19,6 +20,8 @@ vi.mock('@/features/program/general/lib/registration-program-draft-session', () 
 vi.mock('@/features/program/general/lib/registration-wizard-form-draft', () => ({
   loadRegistrationWizardFormDraft: (...args: unknown[]) =>
     loadRegistrationWizardFormDraft(...args),
+  persistRegistrationWizardFormDraft: (...args: unknown[]) =>
+    persistRegistrationWizardFormDraft(...args),
 }))
 
 import {
@@ -28,6 +31,7 @@ import {
   collectSelectedRecruitOverlaysForProgram,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
+  persistRegistrationOperationalOverlaysToLocal,
   persistRegistrationOperationalOverlaySnapshots,
   resetOperationalOverlayForCatalogId,
   resolveOperationalDraftStorageKey,
@@ -46,11 +50,16 @@ import {
   resetAllOperationalOverlayStoresForTests,
   setOperationalOverlayScope,
 } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
+import {
+  clearRegistrationStepTemplateSelections,
+  setRegistrationStepTemplateSelection,
+} from '@/features/program/shared/lib/step-template-selection'
 
 describe('registration operational draft-owned helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetAllOperationalOverlayStoresForTests()
+    clearRegistrationStepTemplateSelections()
   })
 
   it('clearRegistrationOperationalFormDrafts is no-op (local draft clear is centralized)', () => {
@@ -313,5 +322,34 @@ describe('registration operational draft-owned helpers', () => {
     expect(
       peekGeneralRecruitOverlayRecord('recruitment-instructor')['recruit.instructor.inquiryContact']
     ).toBe('강사문의')
+  })
+
+  it('임시저장 시 registration-general settingsJson을 overlay 재기록으로 덮지 않는다', async () => {
+    setRegistrationStepTemplateSelection('GENERAL', 'program', 'registration-general')
+    loadRegistrationWizardFormDraft.mockImplementation(
+      async (args: { templateCode: string }) => {
+        if (args.templateCode === 'registration-general') {
+          return {
+            draft: { paragraphs: [] },
+            overlay: {
+              'generalRegistration.basicInfo.localProgramTitleKo': '국문 대표명',
+            },
+            settingsJson: {
+              registrationWizardRhf: { programTitleKo: '국문 대표명' },
+            },
+          }
+        }
+        return null
+      }
+    )
+    persistRegistrationWizardFormDraft.mockResolvedValue(undefined)
+
+    await persistRegistrationOperationalOverlaysToLocal('GENERAL', 'general')
+
+    expect(
+      persistRegistrationWizardFormDraft.mock.calls.map(
+        call => (call[0] as { templateCode?: string } | undefined)?.templateCode
+      )
+    ).not.toContain('registration-general')
   })
 })

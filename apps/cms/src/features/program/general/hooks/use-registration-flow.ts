@@ -587,7 +587,13 @@ export function useGeneralProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
-      flushParticipantSessionOverlaysToOperationalStores()
+      // TT는 위저드 RHF가 모집·신청 정본이다. session overlay flush는
+      // stale snapshot으로 라이브 기간을 덮은 뒤 collect가 그 값을 저장한다.
+      if (registrationFormVariant !== 'trainedTeachers') {
+        flushParticipantSessionOverlaysToOperationalStores({
+          excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
+        })
+      }
       await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
       syncRegistrationProgramDraftSession({
         programType,
@@ -605,6 +611,7 @@ export function useGeneralProgramRegistrationFlow(
     registrationFormVariant,
     registrationTemplateId,
     registrationVm,
+    selectedTemplateCode,
   ])
 
   const selectStep = useCallback(

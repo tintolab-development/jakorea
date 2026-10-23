@@ -5,8 +5,12 @@ import {
   type InstructorApplyConsentKey,
 } from '../consent/catalog'
 import type { PortalConsentSummary } from '../../settings/api/consents'
+import { DOCUMENT_CONSENT_ITEMS, type SettingsConsentItem } from '../../settings/lib/consent-catalog'
 import { buildConsentItemsFromSummaries } from '../../settings/lib/map-consents'
-import { settingsConsentItemIdToInstructorKey } from '../../settings/lib/settings-consent-key'
+import {
+  instructorApplyKeyToSettingsConsentItemId,
+  settingsConsentItemIdToInstructorKey,
+} from '../../settings/lib/settings-consent-key'
 
 const CONSENT_TYPE_TO_APPLY_KEY: Record<string, InstructorApplyConsentKey> = {
   PAYMENT_STATEMENT_PRE_CONSENT: 'consentPaymentStatement',
@@ -51,4 +55,34 @@ export function mapPortalConsentsToInstructorApplyValues(
   }
 
   return { values, agreedAt }
+}
+
+/** 강사 신청 「동의서 보기」— 제출된 문서 id·제목을 마이페이지 미리보기 항목으로 맞춘다. */
+export function mapPortalConsentsToInstructorApplyPreviewItems(
+  summaries: readonly PortalConsentSummary[],
+): Partial<Record<InstructorApplyConsentKey, SettingsConsentItem>> {
+  const { documentItems } = buildConsentItemsFromSummaries([...summaries])
+  const result: Partial<Record<InstructorApplyConsentKey, SettingsConsentItem>> = {}
+  for (const item of documentItems) {
+    const key = settingsConsentItemIdToInstructorKey(item.id)
+    if (key && item.agreed) result[key] = item
+  }
+  return result
+}
+
+export function buildInstructorApplyConsentPreviewFallbackItem(
+  key: InstructorApplyConsentKey,
+  agreedAt?: string,
+): SettingsConsentItem {
+  const id = instructorApplyKeyToSettingsConsentItemId(key)
+  const catalog = DOCUMENT_CONSENT_ITEMS.find(item => item.id === id)
+  return {
+    id,
+    title: catalog?.title ?? '',
+    required: catalog?.required ?? false,
+    kind: 'document',
+    agreed: true,
+    agreedAt,
+    validityLabel: catalog?.validityLabel,
+  }
 }

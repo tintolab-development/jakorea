@@ -25,6 +25,7 @@ import {
   EducationSurveySection,
   DocumentPassBanner,
   hasTeacherMypageProfile,
+  isSchoolTeacherMypageProfile,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
   isParticipantRoleApplication,
@@ -177,6 +178,7 @@ export function MypageEducationDetailPage() {
   const queryClient = useQueryClient()
   const member = useMypageMember()
   const isTeacher = hasTeacherMypageProfile(member.profile)
+  const isSchoolTeacher = isSchoolTeacherMypageProfile(member.profile)
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(
     resolvedApplicationType,
@@ -281,12 +283,19 @@ export function MypageEducationDetailPage() {
               isTeacher &&
               program.programType === 'TRAINED_TEACHER' &&
               program.educationJournalEnabled === true,
+            schoolTeacherMember: isSchoolTeacher,
             ...(isTeacher
               ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
               : {}),
           }
         : null,
-    [isTeacher, isUjatParticipant, program, teacherStudentDocumentTabsVisible],
+    [
+      isSchoolTeacher,
+      isTeacher,
+      isUjatParticipant,
+      program,
+      teacherStudentDocumentTabsVisible,
+    ],
   )
 
   const inProgressTabItems = useMemo(() => {
@@ -801,18 +810,12 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'settlement') {
-      if (isTeacher) {
-        return (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
-            준비 중입니다.
-          </PFText>
-        )
-      }
       return (
         <EducationSettlementPanel
           programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          operationEndAt={program.operatingPeriodEnd}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

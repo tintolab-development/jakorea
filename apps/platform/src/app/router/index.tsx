@@ -243,7 +243,19 @@ export const router = createBrowserRouter([
         element: <SignUpPortraitConsentPage />,
       },
       {
+        path: '/mypage/education/:applicationType/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
         path: '/mypage/education/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/volunteer/:applicationType/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/volunteer/:applicationId/settlement/write',
         element: <MypageEducationSettlementWritePage />,
       },
       {
@@ -263,7 +275,19 @@ export const router = createBrowserRouter([
         element: <MypageEducationUjatProgressConfirmPage />,
       },
       {
+        path: '/mypage/education/:applicationType/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
+      {
         path: '/mypage/education/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
+      {
+        path: '/mypage/volunteer/:applicationType/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
+      {
+        path: '/mypage/volunteer/:applicationId/settlement/confirm',
         element: <MypageEducationSettlementConfirmPage />,
       },
       { path: '/design-system', element: <DesignSystemPage /> },

@@ -236,6 +236,64 @@ describe('isProgramTypeSettingsSaveBlocked', () => {
       )
     ).toBe(false)
   })
+
+  it('잠긴 뒤 참여 방식 또는 일정 공통/상이 변경은 막는다', () => {
+    const existing = {
+      ...lockedProgram,
+      generalProgramEducationStructure: 'curriculum' as const,
+      generalProgramSessionRound: 'single' as const,
+      generalCommonInfo: {
+        participationMethod: 'individual' as const,
+        participationScheduleDetail: 'common' as const,
+      },
+    }
+    expect(
+      isProgramTypeSettingsSaveBlocked(
+        existing,
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'single',
+          participationMethod: 'team',
+        },
+        now
+      )
+    ).toBe(true)
+    expect(
+      isProgramTypeSettingsSaveBlocked(
+        existing,
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'single',
+          participationScheduleDetail: 'perSchedule',
+        },
+        now
+      )
+    ).toBe(true)
+  })
+
+  it('잠긴 뒤에도 참여 방식이 같으면 막지 않는다', () => {
+    const existing = {
+      ...lockedProgram,
+      generalProgramEducationStructure: 'curriculum' as const,
+      generalProgramSessionRound: 'single' as const,
+      generalCommonInfo: {
+        participationMethod: 'individual' as const,
+        participationScheduleDetail: 'common' as const,
+      },
+    }
+    expect(
+      isProgramTypeSettingsSaveBlocked(
+        existing,
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'single',
+          participationMethod: 'individual',
+          participationScheduleDetail: 'common',
+        },
+        now
+      )
+    ).toBe(false)
+  })
 })
 
 describe('resolveRecruitmentTypeForFormBinding', () => {

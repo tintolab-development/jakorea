@@ -118,7 +118,7 @@ describe('resolveGeneralRegistrationKpiFieldAvailability', () => {
 })
 
 describe('savedGeneralParticipantTypeLocks', () => {
-  it('저장된 참여자 유형은 잠그고 없는 강사·봉사자는 연다', () => {
+  it('상세 수정에서는 저장된 유형과 무관하게 네 유형을 모두 잠근다', () => {
     expect(
       savedGeneralParticipantTypeLocks({
         generalParticipantTypes: ['individual'],
@@ -127,17 +127,22 @@ describe('savedGeneralParticipantTypeLocks', () => {
     ).toEqual({
       individual: true,
       organization: true,
-      teacherInstructor: false,
-      volunteer: false,
+      teacherInstructor: true,
+      volunteer: true,
     })
   })
 
-  it('저장된 강사 행은 신청자가 없어도 잠근다', () => {
+  it('강사·봉사자 행이 없어도 잠근다', () => {
     expect(
       savedGeneralParticipantTypeLocks({
-        programRecruitments: [{ id: 12, recruitmentType: 'INSTRUCTOR' }],
-      }).teacherInstructor
-    ).toBe(true)
+        programRecruitments: [],
+      })
+    ).toEqual({
+      individual: true,
+      organization: true,
+      teacherInstructor: true,
+      volunteer: true,
+    })
   })
 })
 

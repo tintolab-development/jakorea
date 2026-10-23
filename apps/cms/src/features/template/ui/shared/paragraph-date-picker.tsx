@@ -447,17 +447,21 @@ function ParagraphDatePickerSingleInner({
   /** 일정 + 시간 — ParagraphTimePicker(종료 시간 고정)와 같이 같은 날 시작·종료 */
   const sameDayTimeRange = presetMode === 'schedule' && effectiveTimeOn && !isRangeCalendarMode
 
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+
   /**
    * 기본값: 오늘 — 단일 날짜 모드에서만 부모 `value`가 null이면 동기화.
    * `presetMode: 'period'` + `customizable: false`(기간 고정)는 부모가 튜플로만 들고 가므로 여기서 오늘로 채우지 않음.
    * `suppressAutoTodayWhenEmpty`면 null 유지.
+   * onChange identity는 ref로만 본다. 인라인 핸들러가 effect를 다시 돌리면 무한 갱신된다.
    */
   useEffect(() => {
     if (resolvedValue != null) return
     if (presetMode === 'period' && !customizable) return
     if (suppressAutoTodayWhenEmpty) return
-    onChange(dayjs())
-  }, [resolvedValue, onChange, presetMode, customizable, suppressAutoTodayWhenEmpty])
+    onChangeRef.current(dayjs())
+  }, [resolvedValue, presetMode, customizable, suppressAutoTodayWhenEmpty])
 
   const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
 
@@ -471,6 +475,11 @@ function ParagraphDatePickerSingleInner({
     setSurfacePeriodOn(null)
   }, [resolvedValue, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
 
+  const appliedSurfaceRangeRef = useRef(appliedSurfaceRange)
+  appliedSurfaceRangeRef.current = appliedSurfaceRange
+  const appliedSurfaceWithTimeRef = useRef(appliedSurfaceWithTime)
+  appliedSurfaceWithTimeRef.current = appliedSurfaceWithTime
+
   const appliedSurfaceSyncKey = useMemo(() => {
     if (!hasExternalSurfaceControl) return 'uncontrolled'
     if (appliedSurfaceRange == null) return 'none'
@@ -482,46 +491,44 @@ function ParagraphDatePickerSingleInner({
   useEffect(() => {
     if (open) return
     if (!hasExternalSurfaceControl) return
-    if (
-      appliedSurfaceRange != null &&
-      appliedSurfaceRange[0]?.isValid() &&
-      appliedSurfaceRange[1]?.isValid()
-    ) {
-      setSurfaceRange([appliedSurfaceRange[0], appliedSurfaceRange[1]])
-      const withTime =
-        Boolean(appliedSurfaceWithTime) &&
-        dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1])
-      setSurfaceAppliedWithTime(withTime)
-      setSurfacePeriodOn(
-        resolveSchedulePeriodOnFromStoredRange(
-          [appliedSurfaceRange[0], appliedSurfaceRange[1]],
-          withTime,
-          { presetMode, lockPeriodToggleOn, lockTimeToggleOn }
-        )
+    const currentRange = appliedSurfaceRangeRef.current
+    const currentWithTime = appliedSurfaceWithTimeRef.current
+    if (currentRange != null && currentRange[0]?.isValid() && currentRange[1]?.isValid()) {
+      const [a, b] = currentRange
+      setSurfaceRange(prev =>
+        prev != null && prev[0].valueOf() === a.valueOf() && prev[1].valueOf() === b.valueOf()
+          ? prev
+          : [a, b]
       )
+      const withTime = Boolean(currentWithTime) && dateRangeUsesClockTime(a, b)
+      setSurfaceAppliedWithTime(prev => (prev === withTime ? prev : withTime))
+      const nextPeriodOn = resolveSchedulePeriodOnFromStoredRange([a, b], withTime, {
+        presetMode,
+        lockPeriodToggleOn,
+        lockTimeToggleOn,
+      })
+      setSurfacePeriodOn(prev => (prev === nextPeriodOn ? prev : nextPeriodOn))
       if (withTime) {
-        setTimeOn(true)
-        const ta = dayjsTimeParts(appliedSurfaceRange[0])
-        const tb = dayjsTimeParts(appliedSurfaceRange[1])
-        setStartHour(ta.h)
-        setStartMinute(ta.m)
-        setEndHour(tb.h)
-        setEndMinute(tb.m)
+        setTimeOn(prev => (prev === true ? prev : true))
+        const ta = dayjsTimeParts(a)
+        const tb = dayjsTimeParts(b)
+        setStartHour(prev => (prev === ta.h ? prev : ta.h))
+        setStartMinute(prev => (prev === ta.m ? prev : ta.m))
+        setEndHour(prev => (prev === tb.h ? prev : tb.h))
+        setEndMinute(prev => (prev === tb.m ? prev : tb.m))
       } else {
-        setTimeOn(false)
+        setTimeOn(prev => (prev === false ? prev : false))
       }
     } else {
-      setSurfaceRange(null)
-      setSurfaceAppliedWithTime(false)
-      setSurfacePeriodOn(null)
-      setTimeOn(false)
+      setSurfaceRange(prev => (prev == null ? prev : null))
+      setSurfaceAppliedWithTime(prev => (prev === false ? prev : false))
+      setSurfacePeriodOn(prev => (prev == null ? prev : null))
+      setTimeOn(prev => (prev === false ? prev : false))
     }
   }, [
     open,
     hasExternalSurfaceControl,
     appliedSurfaceSyncKey,
-    appliedSurfaceRange,
-    appliedSurfaceWithTime,
     lockPeriodToggleOn,
     lockTimeToggleOn,
     presetMode,

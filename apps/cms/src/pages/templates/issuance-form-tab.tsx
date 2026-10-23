@@ -22,7 +22,9 @@ import {
   PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/payment-statement-issuance-a4-preview'
 import {
   getPaymentStatementPreConsentA4ParagraphGap,
-  PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
+} from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import {
   buildSettlementApplicationDocumentPreviewDraft,
@@ -311,7 +313,9 @@ export function IssuanceFormTab() {
     enabled: isPreviewOpen && isPaymentStatementPreConsent,
     paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
     renderMode: 'contentOnly',
-    paragraphGapPx: getPaymentStatementPreConsentA4ParagraphGap })
+    paragraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
+    pageBreakBeforeParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
+  })
 
   const settlementPdfHostRef = useRef<HTMLDivElement>(null)
   const [settlementPdfLoading, setSettlementPdfLoading] = useState(false)

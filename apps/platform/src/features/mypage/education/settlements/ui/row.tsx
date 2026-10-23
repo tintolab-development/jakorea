@@ -1,18 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { EducationSettlementItem, EducationSettlementStatus } from '../model/types'
+import type { EducationSettlementItem } from '../model/types'
+import { EDUCATION_SETTLEMENT_PROGRESS_LABEL } from '../lib/settlement-rules'
+import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import {
-  EDUCATION_SETTLEMENT_PROGRESS_LABEL,
-  type SettlementAmountKind,
-} from '../lib/settlement-rules'
+  isSettlementDeadlinePassed,
+  isSettlementWriteCtaDisabled,
+  PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
+  resolveSettlementStatusUi,
+  type SettlementDocumentKind,
+  type SettlementStatusAction,
+} from '../lib/settlement-status-ui'
+import { buildReceiptSubmitPath, buildReceiptViewPath } from '../lib/receipt-path'
 import { buildSettlementPaymentConsentPath } from '../lib/consent-path'
-import { buildSettlementWritePath } from '../lib/write-path'
+import { buildSettlementWritePath, type SettlementArea } from '../lib/write-path'
 import {
   EducationSessionCard,
   EducationSessionCardHeader,
   EducationSessionGuideBlock,
   EducationSessionStatusMark,
-  type EducationSessionStatusMarkTone,
   formatEducationSessionDate,
 } from '../../shared'
 import checkMintUrl from '@/shared/assets/icons/check-mint-small.svg'
@@ -24,98 +30,49 @@ import styles from './row.module.css'
 type EducationSettlementRowProps = {
   item: EducationSettlementItem
   applicationId: string
+  documentKind?: SettlementDocumentKind
+  area?: SettlementArea
+  operationEndAt?: string
   initialRejectOpen?: boolean
+  hideInstructorWrite?: boolean
 }
 
-type StatusMarkConfig = {
-  tone: EducationSessionStatusMarkTone
-  label: string
-  iconSrc: string
-}
+const MARK_ICON = {
+  success: checkMintUrl,
+  alert: alertRedUrl,
+  neutral: clockGrayUrl,
+} as const
 
-type StatusAction = 'write' | 'view' | 'reject-reason' | 'reapply'
-
-type StatusConfig = {
-  message?: string
-  mark?: StatusMarkConfig
-  statusLabel?: string
-  statusTone?: 'submitted' | 'unsubmitted'
-  guideVariant?: 'default' | 'submitted'
-  cardTone?: 'default' | 'danger'
-  amountKind?: SettlementAmountKind
-  actionHint?: string
-  writeDisabled?: boolean
-  actions?: StatusAction[]
-}
-
-const STATUS_CONFIG: Record<EducationSettlementStatus, StatusConfig> = {
-  report_pending: {
-    message: '기한 내에 지급조서를 제출해 주세요',
-    actionHint: '강의보고서 작성 이후에 지급조서 작성이 가능합니다',
-    writeDisabled: true,
-    actions: ['write'],
-  },
-  pending_submit: {
-    message: '기한 내에 지급조서를 제출해 주세요',
-    actions: ['write'],
-  },
-  overdue: {
-    message: '기한 내에 지급조서를 제출해 주세요',
-    mark: { tone: 'alert', label: '지급조서 미제출', iconSrc: alertRedUrl },
-    statusLabel: '미제출',
-    statusTone: 'unsubmitted',
-    actions: ['write'],
-  },
-  waiting_confirm: {
-    message: '지급조서 신청이 완료되었어요',
-    mark: { tone: 'neutral', label: '확인 대기', iconSrc: clockGrayUrl },
-    statusLabel: '제출 완료',
-    statusTone: 'submitted',
-    guideVariant: 'submitted',
-    amountKind: 'expected',
-    actions: ['view'],
-  },
-  reapplied: {
-    message: '지급조서 재신청이 완료되었어요',
-    mark: { tone: 'neutral', label: '재신청', iconSrc: clockGrayUrl },
-    statusLabel: '제출 완료',
-    statusTone: 'submitted',
-    guideVariant: 'submitted',
-    amountKind: 'expected',
-    actions: ['view'],
-  },
-  confirmed: {
-    message: '담당자 확인이 완료되어 계좌 지급 예정이에요',
-    mark: { tone: 'success', label: '확인 완료', iconSrc: checkMintUrl },
-    amountKind: 'expected',
-    actions: ['view'],
-  },
-  paid: {
-    message: '계좌 지급이 완료되었어요',
-    mark: { tone: 'success', label: '지급 완료', iconSrc: checkMintUrl },
-    amountKind: 'completed',
-    actions: ['view'],
-  },
-  rejected: {
-    message: '지급조서 신청이 반려되었어요',
-    mark: { tone: 'alert', label: '신청 반려', iconSrc: alertRedUrl },
-    amountKind: 'expected',
-    cardTone: 'danger',
-    actions: ['reject-reason', 'reapply'],
-  },
-  upcoming: {},
-}
+const UNSUBMITTED_DEADLINE_STATUSES = new Set([
+  'upcoming',
+  'pending_submit',
+  'overdue',
+  'report_pending',
+])
 
 export function EducationSettlementRow({
   item,
   applicationId,
+  documentKind = 'receipt',
+  area = 'education',
+  operationEndAt,
   initialRejectOpen = false,
+  hideInstructorWrite = false,
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
-  const config = STATUS_CONFIG[item.status]
-  const writePath = buildSettlementWritePath({ applicationId, sessionId: item.id })
-  const viewPath = buildSettlementPaymentConsentPath({ applicationId, mode: 'view' })
+  const config = resolveSettlementStatusUi(item.status, documentKind)
+  const sessionId = item.id
+  const writePath = buildSettlementWritePath({ applicationId, sessionId, area })
+  const receiptSubmitPath = buildReceiptSubmitPath({ applicationId, sessionId, area })
+  const receiptViewPath = buildReceiptViewPath({
+    applicationId,
+    sessionId,
+    area,
+    receiptId: item.receiptId,
+    settlementApplicationId: item.settlementApplicationId,
+  })
+  const instructorViewPath = buildSettlementPaymentConsentPath({ applicationId, mode: 'view' })
   const closeRejectReason = () => {
     setRejectOpen(false)
     const params = new URLSearchParams(window.location.search)
@@ -129,7 +86,139 @@ export function EducationSettlementRow({
   }
   const amount = item.amount
   const showAmount = amount != null && config.amountKind != null
-  const showGuide = Boolean(config.message)
+  const showPreviousAmount =
+    documentKind === 'payment_statement' &&
+    item.status === 'correction_completed' &&
+    item.previousAmount != null
+  const guideMessage =
+    item.submitBlockedReason ??
+    (documentKind === 'payment_statement' && item.deadlineNotice === 'operation_ended'
+      ? PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE
+      : config.message)
+  const geminiUnsubmitted =
+    hideInstructorWrite && documentKind === 'payment_statement' && (config.actions ?? []).includes('write')
+  const showGuide = Boolean(guideMessage) && !geminiUnsubmitted
+  const showUnsubmittedDeadline = UNSUBMITTED_DEADLINE_STATUSES.has(item.status)
+  const relatedDateIso = showUnsubmittedDeadline
+    ? item.deadlineAt ?? operationEndAt
+    : item.submittedAt
+  const relatedDatePrefix = showUnsubmittedDeadline ? '제출 마감일' : '제출일'
+  const relatedDate = formatDisplayDate(relatedDateIso)
+  const description = relatedDate ? `${relatedDatePrefix} : ${relatedDate}` : item.deadlineLabel
+  const actions = config.actions ?? []
+  const actionHint = item.submitBlockedReason ? undefined : config.actionHint
+  const hideReceiptWrite =
+    documentKind === 'receipt' &&
+    item.hasPayableItems === false &&
+    item.settlementApplicationId == null &&
+    item.status !== 'rejected'
+  const writeDisabled = isSettlementWriteCtaDisabled({
+    documentKind,
+    writeDisabledByStatus: config.writeDisabled,
+    hasPayableItems: item.hasPayableItems,
+    eligible: item.eligible,
+    evidencePolicyUnconfigured: item.evidencePolicyUnconfigured,
+    canSubmit: item.canSubmitReceipt,
+    status: item.status,
+  })
+  const viewPath =
+    documentKind === 'payment_statement' ? instructorViewPath : receiptViewPath
+  const viewDisabled = !viewPath
+  const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
+
+  const renderAction = (action: SettlementStatusAction) => {
+    if (action === 'write') {
+      if (hideReceiptWrite) return null
+      if (hideInstructorWrite && documentKind === 'payment_statement') return null
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="primary"
+          size="large"
+          disabled={writeDisabled}
+          onClick={() => {
+            if (writeDisabled) return
+            if (documentKind === 'payment_statement') {
+              navigate(writePath)
+              return
+            }
+            if (receiptSubmitPath) navigate(receiptSubmitPath)
+          }}
+        >
+          {config.writeLabel ?? '영수증 작성하기'}
+        </PFButton>
+      )
+    }
+    if (action === 'view') {
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="tertiary"
+          size="large"
+          disabled={viewDisabled}
+          onClick={() => {
+            if (viewDisabled || !viewPath) return
+            navigate(viewPath)
+          }}
+        >
+          {config.viewLabel ?? '영수증 확인하기'}
+        </PFButton>
+      )
+    }
+    if (action === 'reject-reason') {
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="tertiary"
+          size="large"
+          onClick={() => setRejectOpen(true)}
+        >
+          반려사유 확인
+        </PFButton>
+      )
+    }
+    if (action === 'view-correction') {
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="tertiary"
+          size="large"
+          disabled={viewDisabled}
+          onClick={() => {
+            if (viewDisabled || !viewPath) return
+            navigate(viewPath)
+          }}
+        >
+          {config.viewLabel ?? '정정 내역 확인'}
+        </PFButton>
+      )
+    }
+    if (hideInstructorWrite && documentKind === 'payment_statement') return null
+    const reapplyPath = documentKind === 'receipt' ? receiptSubmitPath : writePath
+    const reapplyUnavailable =
+      documentKind === 'receipt' &&
+      (item.canResubmitReceipt === false ||
+        (item.hasPayableItems === false && item.canResubmitReceipt !== true))
+    return (
+      <PFButton
+        key={action}
+        type="button"
+        variant="primary"
+        size="large"
+        disabled={reapplyDisabled || reapplyUnavailable}
+        onClick={() => {
+          if (reapplyDisabled || reapplyUnavailable) return
+          navigate(reapplyPath)
+        }}
+      >
+        {config.writeLabel ?? '지급조서 재신청'}
+      </PFButton>
+    )
+  }
 
   return (
     <>
@@ -145,98 +234,85 @@ export function EducationSettlementRow({
           }
           date={formatEducationSessionDate(item.heldAt)}
           subtitle={
-            <PFText as="span" typo="bd-lg-rg">
-              {item.sessionMeta}
-            </PFText>
+            item.sessionMeta ? (
+              <PFText as="span" typo="bd-lg-rg">
+                {item.sessionMeta}
+              </PFText>
+            ) : undefined
           }
-          aside={config.mark ? <EducationSessionStatusMark {...config.mark} /> : undefined}
+          aside={
+            config.markLabel && config.markTone ? (
+              <EducationSessionStatusMark
+                tone={config.markTone}
+                label={config.markLabel}
+                iconSrc={MARK_ICON[config.markTone]}
+              />
+            ) : undefined
+          }
         />
 
-        {showGuide && config.message ? (
+        {showGuide && guideMessage ? (
           <EducationSessionGuideBlock
             variant={config.guideVariant ?? 'default'}
             statusLabel={config.statusLabel}
             statusTone={config.statusTone}
-            message={config.message}
-            description={item.deadlineLabel}
+            message={guideMessage ?? ''}
+            description={description}
             actions={
-              <div className={styles.buttons}>
-                {config.actionHint ? (
-                  <PFText
-                    as="p"
-                    typo="bd-md-rg"
-                    color="neutral-cool-600"
-                    className={styles.actionHint}
-                  >
-                    {config.actionHint}
-                  </PFText>
-                ) : null}
+              actionHint || showAmount || actions.length > 0 ? (
+                <div className={styles.buttons}>
+                  {showAmount ? (
+                    <div className={styles.amountContainer}>
+                      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                        {config.amountKind === 'expected' ? '정산 예정금액' : '정산 완료금액'}
+                      </PFText>
+                      {showPreviousAmount ? (
+                        <PFText
+                          as="p"
+                          typo="bd-md-rg"
+                          color="neutral-cool-500"
+                          className={styles.amountStruck}
+                        >
+                          {item.previousAmount?.toLocaleString('ko-KR')}원
+                        </PFText>
+                      ) : null}
+                      <PFText as="p" typo="hl-lg" color="black" className={styles.amount}>
+                        {amount.toLocaleString('ko-KR')}원
+                      </PFText>
+                    </div>
+                  ) : null}
 
-                {showAmount ? (
-                  <div className={styles.amountContainer}>
-                    <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-                      {config.amountKind === 'expected' ? '정산 예정금액' : '정산 완료금액'}
-                    </PFText>
-                    <PFText as="p" typo="hl-lg" color="black" className={styles.amount}>
-                      {amount.toLocaleString('ko-KR')}원
-                    </PFText>
-                  </div>
-                ) : null}
-
-                {config.actions?.map(action => {
-                  if (action === 'write') {
-                    return (
-                      <PFButton
-                        key={action}
-                        type="button"
-                        variant="primary"
-                        size="large"
-                        disabled={config.writeDisabled}
-                        onClick={() => navigate(writePath)}
-                      >
-                        지급조서 작성하기
-                      </PFButton>
-                    )
-                  }
-                  if (action === 'view') {
-                    return (
-                      <PFButton
-                        key={action}
-                        type="button"
-                        variant="tertiary"
-                        size="large"
-                        onClick={() => navigate(viewPath)}
-                      >
-                        지급조서 확인하기
-                      </PFButton>
-                    )
-                  }
-                  if (action === 'reject-reason') {
-                    return (
-                      <PFButton
-                        key={action}
-                        type="button"
-                        variant="tertiary"
-                        size="large"
-                        onClick={() => setRejectOpen(true)}
-                      >
-                        반려사유 확인
-                      </PFButton>
-                    )
-                  }
-                  return (
-                    <PFButton
-                      key={action}
-                      type="button"
-                      variant="primary"
-                      size="large"
-                      onClick={() => navigate(writePath)}
-                    >
-                      지급조서 재신청
-                    </PFButton>
-                  )
-                })}
-              </div>
+                  {actions.includes('write') ? (
+                    <div className={styles.writeRow}>
+                      {actionHint ? (
+                        <PFText
+                          as="p"
+                          typo="bd-md-rg"
+                          color="neutral-cool-600"
+                          className={styles.actionHint}
+                        >
+                          {actionHint}
+                        </PFText>
+                      ) : null}
+                      {renderAction('write')}
+                    </div>
+                  ) : (
+                    <>
+                      {actionHint ? (
+                        <PFText
+                          as="p"
+                          typo="bd-md-rg"
+                          color="neutral-cool-600"
+                          className={styles.actionHint}
+                        >
+                          {actionHint}
+                        </PFText>
+                      ) : null}
+                      {actions.map(renderAction)}
+                    </>
+                  )}
+                </div>
+              ) : undefined
             }
           />
         ) : null}
@@ -245,9 +321,40 @@ export function EducationSettlementRow({
       <PFAlertModal
         open={rejectOpen}
         title="반려사유"
-        description={item.rejectReason ?? '반려 사유가 없습니다.'}
+        confirmLabel="닫기"
         onConfirm={closeRejectReason}
-      />
+        onDismiss={closeRejectReason}
+      >
+        <div className={styles.rejectBody}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            해당 강의 일정
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="black">
+            {[formatEducationSessionDate(item.heldAt), item.sessionMeta].filter(Boolean).join(' ')}
+          </PFText>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            관리자 반려 사유
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="black">
+            {item.rejectReason ?? '반려 사유가 없습니다.'}
+          </PFText>
+          {documentKind === 'payment_statement' && !hideInstructorWrite ? (
+            <PFButton
+              type="button"
+              variant="primary"
+              size="large"
+              disabled={reapplyDisabled}
+              onClick={() => {
+                if (reapplyDisabled) return
+                closeRejectReason()
+                navigate(writePath)
+              }}
+            >
+              지급조서 재신청
+            </PFButton>
+          ) : null}
+        </div>
+      </PFAlertModal>
     </>
   )
 }

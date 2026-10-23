@@ -277,6 +277,19 @@ describe('canRemoveEducationSchedulePreviewLine', () => {
       canRemoveEducationSchedulePreviewLine('2026.11.04(수) 13:30 ~ 15:30', now)
     ).toBe(true)
   })
+
+  it('등록 위저드는 지난 일정도 삭제할 수 있다', () => {
+    expect(
+      canRemoveEducationSchedulePreviewLine('2026.10.21(수) 13:30 ~ 15:30', now, {
+        lockStartedLines: false,
+      })
+    ).toBe(true)
+    expect(
+      canRemoveEducationSchedulePreviewLine('26년 10월 23일(금) 13:30 ~ 15:30', now, {
+        lockStartedLines: false,
+      })
+    ).toBe(true)
+  })
 })
 
 describe('serializeEducationScheduleLineForServer', () => {

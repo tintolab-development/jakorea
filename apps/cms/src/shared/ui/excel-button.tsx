@@ -1,5 +1,5 @@
 /**
- * 엑셀 다운로드 공통 버튼 — Large + icon 180×44 (padding 6 16 6 10)
+ * 엑셀 다운로드 공통 버튼 — primary + 아이콘. 기본 h40 × 140.
  */
 
 import { forwardRef } from 'react'
@@ -9,19 +9,19 @@ import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export type ExcelButtonProps = Omit<
   CmsButtonProps,
-  'variant' | 'size' | 'width' | 'icon' | 'children' | 'adminAction'
+  'variant' | 'icon' | 'children' | 'adminAction'
 >
 
-/** 테이블 상단 엑셀 — primary · large · has-icon → 180×44 */
+/** 테이블 상단 엑셀 — primary · 기본 h40 × 140. `size`/`width`로 오버라이드 */
 export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
-  ({ type = 'button', className, ...rest }, ref) => {
+  ({ type = 'button', className, size = 'h40', width = 140, ...rest }, ref) => {
     return (
       <CmsButton
         ref={ref}
         type={type}
         variant="primary"
-        size="h40"
-        width={140}
+        size={size}
+        width={width}
         icon={<ButtonDownloadIcon />}
         className={['excel-button', className].filter(Boolean).join(' ')}
         {...rest}

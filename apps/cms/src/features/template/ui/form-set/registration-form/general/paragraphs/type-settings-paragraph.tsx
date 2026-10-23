@@ -45,6 +45,8 @@ type ProgramRegistrationTypeSettingsParagraphProps = {
   onParticipationScheduleDetailChange: (value: ProgramRegistrationScheduleDetailKind) => void
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
   onIpsScheduleDetailChange: (value: ProgramRegistrationScheduleDetailKind) => void
+  /** 모집 시작 이후 상세 수정에서만 true. 등록 위저드는 기본 false. */
+  participationMethodLocked?: boolean
 }
 
 function ScheduleDetailRadioRow({
@@ -54,6 +56,7 @@ function ScheduleDetailRadioRow({
   commonDetailEdit,
   perScheduleHint,
   validationKey,
+  disabled = false,
 }: {
   label: string
   value: ProgramRegistrationScheduleDetailKind
@@ -62,6 +65,7 @@ function ScheduleDetailRadioRow({
   commonDetailEdit?: ReactNode
   perScheduleHint: string
   validationKey?: string
+  disabled?: boolean
 }) {
   const handleChange = (e: RadioChangeEvent) => {
     onChange(e.target.value as ProgramRegistrationScheduleDetailKind)
@@ -75,7 +79,7 @@ function ScheduleDetailRadioRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
-            <CmsRadioGroup size="medium" value={value} onChange={handleChange}>
+            <CmsRadioGroup size="medium" value={value} disabled={disabled} onChange={handleChange}>
               <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
               <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
             </CmsRadioGroup>
@@ -164,6 +168,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
   onParticipationScheduleDetailChange,
   ipsScheduleDetail,
   onIpsScheduleDetailChange,
+  participationMethodLocked = false,
 }: ProgramRegistrationTypeSettingsParagraphProps) {
   const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
     'generalRegistration.typeSettings.ipsType',
@@ -373,12 +378,14 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 value={participationScheduleDetail}
                 onChange={onParticipationScheduleDetailChange}
                 perScheduleHint={perScheduleHint}
+                disabled={participationMethodLocked}
                 commonDetailEdit={
                   <CmsSelect
                     inputSize="small"
                     withAllOption={false}
                     placeholder="참여 방식"
                     width={160}
+                    disabled={participationMethodLocked}
                     options={[...PROGRAM_REGISTRATION_MULTI_COMMON_PARTICIPATION_OPTIONS]}
                     value={multiCommonParticipation || undefined}
                     onChange={v => setMultiCommonParticipation(String(v ?? ''))}
@@ -427,6 +434,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
                     <CmsRadioGroup
                       size="medium"
                       value={singleParticipation}
+                      disabled={participationMethodLocked}
                       onChange={e => setSingleParticipation(String(e.target.value))}
                     >
                       <CmsRadio size="medium" value="individual">개인</CmsRadio>

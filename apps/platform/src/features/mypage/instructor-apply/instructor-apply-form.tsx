@@ -76,6 +76,8 @@ import {
 } from './map-locked-basic-info'
 import { fetchPortalConsents } from '../settings/api/consents'
 import { mapPortalConsentsToInstructorApplyValues } from './lib/map-portal-consents-to-apply'
+import { useInstructorApplyConsentDocumentPreview } from './lib/use-instructor-apply-consent-document-preview'
+import { ConsentDocumentPreviewOverlay } from '../settings/ui/consent-document-preview-overlay'
 import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
@@ -358,6 +360,16 @@ export function InstructorApplyForm({
 
   const formReturnTo = instructorApplyPath({ reapply: seedFromSubmittedRequest })
 
+  const {
+    previewItem,
+    fallbackDraft,
+    fallbackPaymentBasicInfo,
+    fallbackSignatureImageSrc,
+    isRemoteSession: isConsentPreviewRemote,
+    openPreview,
+    closePreview,
+  } = useInstructorApplyConsentDocumentPreview()
+
   const handleConsentDocumentWrite = (key: InstructorConsentDocumentKey) => {
     saveInstructorApplyFormDraft(values)
     const returnTo = encodeURIComponent(formReturnTo)
@@ -365,9 +377,7 @@ export function InstructorApplyForm({
   }
 
   const handleConsentDocumentView = (key: InstructorConsentDocumentKey) => {
-    saveInstructorApplyFormDraft(values)
-    const returnTo = encodeURIComponent(formReturnTo)
-    navigate(`${getInstructorApplyConsentPath(key)}?mode=view&returnTo=${returnTo}`)
+    openPreview(key)
   }
 
   const handleSubmit = () => {
@@ -761,6 +771,16 @@ export function InstructorApplyForm({
         title={alert?.title ?? ''}
         description={alert?.description}
         onConfirm={() => setAlert(null)}
+      />
+
+      <ConsentDocumentPreviewOverlay
+        open={previewItem != null}
+        item={previewItem}
+        isRemoteSession={isConsentPreviewRemote}
+        fallbackDraft={fallbackDraft}
+        fallbackPaymentBasicInfo={fallbackPaymentBasicInfo}
+        fallbackSignatureImageSrc={fallbackSignatureImageSrc}
+        onClose={closePreview}
       />
     </>
   )

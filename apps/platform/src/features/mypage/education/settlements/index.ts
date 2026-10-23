@@ -4,7 +4,13 @@ export type {
   EducationSettlementStatus,
 } from './model/types'
 export { EDUCATION_SETTLEMENT_PAGE_SIZE } from './model/types'
-export { buildSettlementWritePath, buildSettlementConfirmPath, buildSettlementTabPath } from './lib/write-path'
+export {
+  buildSettlementWritePath,
+  buildSettlementConfirmPath,
+  buildSettlementTabPath,
+  resolveSettlementAreaFromPathname,
+} from './lib/write-path'
+export { resolveSettlementDocumentKind } from './lib/settlement-status-ui'
 export { buildSettlementWriteDraft, hydrateSettlementWriteFormState } from './lib/build-write-draft'
 export {
   clearSettlementWriteDraft,

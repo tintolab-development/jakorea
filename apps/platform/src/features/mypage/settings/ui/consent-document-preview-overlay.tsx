@@ -6,6 +6,7 @@ import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { PFPagination, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { fetchPortalConsentDocument } from '../api/consents'
 import {
   buildConsentDocumentPreviewHeaderTitle,
@@ -32,6 +33,10 @@ const NO_SUBMITTED_DOCUMENT_MESSAGE =
   '제출된 동의서를 찾을 수 없어요. 잠시 후 다시 시도하거나 고객센터로 문의해 주세요.'
 const PREVIEW_NOTICE = '현재 화면은 미리보기 화면입니다.'
 
+function revokePreviewObjectUrl(url: string | undefined) {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+}
+
 export type ConsentDocumentPreviewTarget = SettingsConsentItem
 
 type ConsentDocumentPreviewOverlayProps = {
@@ -39,6 +44,11 @@ type ConsentDocumentPreviewOverlayProps = {
   item: ConsentDocumentPreviewTarget | null
   isRemoteSession: boolean
   onClose: () => void
+  /** 원격 제출본이 없을 때 강사 신청 로컬 작성 초안을 미리보기에 사용 */
+  fallbackDraft?: WritingFormDraft | null
+  fallbackPaymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
+  /** 방금 작성한 전자서명 이미지(data URL). 원격 documentId가 없을 때 사용 */
+  fallbackSignatureImageSrc?: string | null
 }
 
 function ConsentDocumentPreviewBody({
@@ -85,7 +95,11 @@ export function ConsentDocumentPreviewOverlay({
   item,
   isRemoteSession,
   onClose,
+  fallbackDraft = null,
+  fallbackPaymentBasicInfo,
+  fallbackSignatureImageSrc = null,
 }: ConsentDocumentPreviewOverlayProps) {
+  const { displayName: memberName } = useMypageMember()
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
@@ -121,7 +135,7 @@ export function ConsentDocumentPreviewOverlay({
       setPaymentBasicInfo(undefined)
       setSignatureDisplayName('')
       setSignatureImageSrc(previous => {
-        if (previous) URL.revokeObjectURL(previous)
+        revokePreviewObjectUrl(previous)
         return undefined
       })
       setLoadFailed(false)
@@ -143,14 +157,30 @@ export function ConsentDocumentPreviewOverlay({
       setPaymentBasicInfo(undefined)
       setSignatureDisplayName('')
       setSignatureImageSrc(previous => {
-        if (previous) URL.revokeObjectURL(previous)
+        revokePreviewObjectUrl(previous)
         return undefined
       })
+
+      const applyLocalDraftFallback = () => {
+        setDraft(fallbackDraft)
+        setPaymentBasicInfo(fallbackPaymentBasicInfo)
+        const localImage = fallbackSignatureImageSrc?.trim()
+        if (localImage) {
+          setSignatureImageSrc(previous => {
+            revokePreviewObjectUrl(previous)
+            return localImage
+          })
+        }
+      }
 
       try {
         let detail = null
         if (isRemoteSession) {
           if (item.documentId == null) {
+            if (fallbackDraft != null && !isCrimeConsentTemplate(templateId)) {
+              applyLocalDraftFallback()
+              return
+            }
             setLoadFailed(true)
             setLoadFailedMessage(NO_SUBMITTED_DOCUMENT_MESSAGE)
             return
@@ -165,11 +195,11 @@ export function ConsentDocumentPreviewOverlay({
             if (!cancelled) {
               setSignatureDisplayName(signature.displayName)
               setSignatureImageSrc(previous => {
-                if (previous) URL.revokeObjectURL(previous)
+                revokePreviewObjectUrl(previous)
                 return signature.imageSrc ?? undefined
               })
             } else if (signature.imageSrc) {
-              URL.revokeObjectURL(signature.imageSrc)
+              revokePreviewObjectUrl(signature.imageSrc)
             }
           }
         }
@@ -186,9 +216,13 @@ export function ConsentDocumentPreviewOverlay({
         }
 
         const resolved = resolveConsentPreviewDraft(detail, templateId, {
-          allowTemplateSeedFallback: !isRemoteSession,
+          allowTemplateSeedFallback: !isRemoteSession && fallbackDraft == null,
         })
         if (resolved == null) {
+          if (fallbackDraft != null && !isCrimeConsentTemplate(templateId)) {
+            applyLocalDraftFallback()
+            return
+          }
           setLoadFailed(true)
           setLoadFailedMessage(
             isRemoteSession ? NO_SUBMITTED_DOCUMENT_MESSAGE : LOAD_FAILED_MESSAGE,
@@ -210,7 +244,15 @@ export function ConsentDocumentPreviewOverlay({
     return () => {
       cancelled = true
     }
-  }, [open, item, previewConfig, isRemoteSession])
+  }, [
+    open,
+    item,
+    previewConfig,
+    isRemoteSession,
+    fallbackDraft,
+    fallbackPaymentBasicInfo,
+    fallbackSignatureImageSrc,
+  ])
 
   const pages = useMemo(() => {
     if (draft == null || previewConfig == null) return [[]]
@@ -227,6 +269,7 @@ export function ConsentDocumentPreviewOverlay({
   const signerName = resolveConsentPreviewSignerName({
     draft,
     paymentName: paymentBasicInfo?.nameKo,
+    memberName,
     signatureDisplayName,
   })
   const showClosingRecipient =

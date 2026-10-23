@@ -64,9 +64,7 @@ export function UjatEducationProgressAttendanceSection({
     useTableExcelExport({
       columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
       data: firstSessionExcelRows,
-      filename: firstSession
-        ? resolveUjatAttendanceSessionExcelFilename(firstSession)
-        : '출석관리',
+      filename: firstSession ? resolveUjatAttendanceSessionExcelFilename(firstSession) : '출석관리',
     })
 
   const firstSessionTitle = useMemo(() => {
@@ -111,15 +109,11 @@ export function UjatEducationProgressAttendanceSection({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                width={120}
                 onClick={() => openFirstSessionCorrection?.()}
               >
                 출결 정정
               </FilterTableToolbarButton>
-              <ExcelButton
-                loading={isFirstSessionExporting}
-                onClick={exportFirstSessionExcel}
-              />
+              <ExcelButton loading={isFirstSessionExporting} onClick={exportFirstSessionExcel} />
             </div>
           ) : null
         }

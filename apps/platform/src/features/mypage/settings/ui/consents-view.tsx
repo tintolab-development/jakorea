@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { settingsConsentWritePath } from '@/features/mypage'
@@ -14,14 +14,22 @@ import {
   PFToggle,
 } from '@/shared/ui'
 import {
+  fetchPortalConsent,
   putPortalMarketingConsent,
-  TYPE_WITHDRAWABLE_CONSENT_TYPES,
   withdrawPortalConsentByType,
   withdrawPortalConsentDocument,
   type PortalConsentMutationResponse,
 } from '../api/consents'
 import { useSettingsConsents } from '../hooks/use-settings-consents'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
+import {
+  canWithdrawConsent,
+  CONSENT_WITHDRAW_CONFLICT_MESSAGE,
+  CONSENT_WITHDRAW_FAILED_MESSAGE,
+  logConsentWithdrawBackendRegression,
+  parseConsentWithdrawError,
+  resolveConsentWithdrawTarget,
+} from '../lib/consent-withdraw'
 import { formatConsentDate, SETTINGS_CONSENT_TYPE_BY_ID } from '../lib/map-consents'
 import {
   isSettingsDocumentConsentItemId,
@@ -33,12 +41,11 @@ import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overla
 import styles from './consents-view.module.css'
 
 const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
-const WITHDRAW_FAILED_MESSAGE = '동의 철회에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const DOWNLOAD_FAILED_MESSAGE =
   '업로드한 동의서를 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_FAILED_MESSAGE =
   '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
-const MARKETING_CONFLICT_MESSAGE = '이미 반영된 상태예요. 최신 동의 현황으로 갱신했어요.'
+const MARKETING_CONFLICT_MESSAGE = CONSENT_WITHDRAW_CONFLICT_MESSAGE
 
 const MARKETING_AGREE_COPY = {
   title: '마케팅 정보 수신에 동의할까요?',
@@ -50,26 +57,39 @@ const MARKETING_AGREE_COPY = {
   completeGuide: '수신을 원하지 않으시면 언제든지 동의를 철회할 수 있어요.',
 }
 
-type TypeWithdrawableConsentType = (typeof TYPE_WITHDRAWABLE_CONSENT_TYPES)[number]
-
-function isTypeWithdrawableConsentType(value: string): value is TypeWithdrawableConsentType {
-  return (TYPE_WITHDRAWABLE_CONSENT_TYPES as readonly string[]).includes(value)
-}
-
 function isConflictError(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 409
 }
 
-/** documentId 있으면 문서 철회, 없으면 초상권·아동개인정보만 유형 철회 */
-function withdrawConsentItem(item: SettingsConsentItem): Promise<PortalConsentMutationResponse> {
-  if (item.documentId != null) {
-    return withdrawPortalConsentDocument(item.documentId, WITHDRAW_REASON)
-  }
+function applyLocalWithdrawn(
+  items: SettingsConsentItem[],
+  withdrawnIds: ReadonlySet<SettingsConsentItemId>,
+): SettingsConsentItem[] {
+  return items.map(item =>
+    withdrawnIds.has(item.id)
+      ? { ...item, agreed: false, agreedAt: undefined, withdrawable: false, status: 'WITHDRAWN' }
+      : item,
+  )
+}
+
+/** documentId 있으면 문서 철회, 없으면 유형 철회. DRAFT 오류 시 유형 API로 우회하지 않는다. */
+function withdrawConsentItem(
+  item: SettingsConsentItem,
+  idempotencyKey: string,
+): Promise<PortalConsentMutationResponse> {
   const consentType = SETTINGS_CONSENT_TYPE_BY_ID[item.id]
-  if (isTypeWithdrawableConsentType(consentType)) {
-    return withdrawPortalConsentByType(consentType, WITHDRAW_REASON)
+  const target = resolveConsentWithdrawTarget({
+    documentId: item.documentId,
+    consentType,
+  })
+  if (target == null) {
+    return Promise.reject(new Error(`withdraw not supported: ${consentType}`))
   }
-  return Promise.reject(new Error(`withdraw not supported: ${consentType}`))
+  const options = { reason: WITHDRAW_REASON, idempotencyKey }
+  if (target.kind === 'document') {
+    return withdrawPortalConsentDocument(target.documentId, options)
+  }
+  return withdrawPortalConsentByType(target.consentType, options)
 }
 
 type WithdrawCopy = {
@@ -180,6 +200,7 @@ function ConsentCard({
   item,
   marketingAgreed,
   showRequirementLabel = true,
+  withdrawPending = false,
   onMarketingChange,
   onViewTerms,
   onViewDocument,
@@ -190,6 +211,7 @@ function ConsentCard({
   item: SettingsConsentItem
   marketingAgreed: boolean
   showRequirementLabel?: boolean
+  withdrawPending?: boolean
   onMarketingChange: (next: boolean) => void
   onViewTerms: (item: SettingsConsentItem) => void
   onViewDocument?: (item: SettingsConsentItem) => void
@@ -199,7 +221,12 @@ function ConsentCard({
 }) {
   const agreed = item.kind === 'toggle' ? marketingAgreed : item.agreed
   const canWithdraw =
-    agreed && onWithdraw != null && (item.kind === 'document' || item.withdrawable === true)
+    onWithdraw != null &&
+    canWithdrawConsent({
+      withdrawable: item.withdrawable,
+      status: item.status,
+      pending: withdrawPending,
+    })
   const isCrimeDocument = item.id === 'sexOffenseCheck'
   const cardClassName = [
     styles.card,
@@ -270,6 +297,7 @@ function ConsentCard({
             size="medium"
             variant="tertiary"
             width="100%"
+            disabled={withdrawPending}
             onClick={() => onWithdraw?.(item)}
           >
             동의 철회
@@ -284,6 +312,7 @@ function ConsentCard({
               size="large"
               variant="tertiary"
               className={styles.actionButton}
+              disabled={withdrawPending}
               onClick={() => onWithdraw?.(item)}
             >
               동의 철회
@@ -344,10 +373,12 @@ export function SettingsConsentsView() {
   const [marketingOverride, setMarketingOverride] = useState<boolean | null>(null)
   const marketingAgreed = marketingOverride ?? marketingItem?.agreed ?? false
   const [withdrawTarget, setWithdrawTarget] = useState<SettingsConsentItem | null>(null)
+  const [withdrawIdempotencyKey, setWithdrawIdempotencyKey] = useState<string | null>(null)
   const [withdrawnIds, setWithdrawnIds] = useState<ReadonlySet<SettingsConsentItemId>>(
     () => new Set()
   )
   const [isWithdrawing, setIsWithdrawing] = useState(false)
+  const withdrawingRef = useRef(false)
   const [isMarketingSaving, setIsMarketingSaving] = useState(false)
   const [marketingAgreeOpen, setMarketingAgreeOpen] = useState(false)
   const [marketingAgreedAt, setMarketingAgreedAt] = useState<string | null>(null)
@@ -387,12 +418,32 @@ export function SettingsConsentsView() {
     })
   }
 
-  const refetchConsents = () =>
-    queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
+  const refetchConsents = async (consentType?: string) => {
+    await queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
+    if (!consentType) return
+    try {
+      await queryClient.fetchQuery({
+        queryKey: platformQueryKeys.mypage.consent(consentType),
+        queryFn: ({ signal }) => fetchPortalConsent(consentType, signal),
+      })
+    } catch {
+      // 목록 GET이 화면 SSOT. 상세 readback 실패는 철회 성공 UX를 막지 않는다.
+    }
+  }
 
-  const basicItems = consents.basicItems.map(item =>
-    withdrawnIds.has(item.id) ? { ...item, agreed: false, agreedAt: undefined } : item
-  )
+  const openWithdrawConfirm = (item: SettingsConsentItem) => {
+    if (withdrawingRef.current) return
+    setWithdrawTarget(item)
+    setWithdrawIdempotencyKey(crypto.randomUUID())
+  }
+
+  const closeWithdrawConfirm = () => {
+    setWithdrawTarget(null)
+    setWithdrawIdempotencyKey(null)
+  }
+
+  const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
+  const documentItems = applyLocalWithdrawn(consents.documentItems, withdrawnIds)
 
   /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
   const saveMarketingConsent = async (
@@ -430,7 +481,7 @@ export function SettingsConsentsView() {
       setMarketingAgreeOpen(true)
       return
     }
-    if (marketingItem) setWithdrawTarget(marketingItem)
+    if (marketingItem) openWithdrawConfirm(marketingItem)
   }
 
   const handleMarketingAgreeConfirm = async () => {
@@ -443,34 +494,50 @@ export function SettingsConsentsView() {
 
   const handleWithdrawConfirm = async () => {
     const target = withdrawTarget
-    if (!target) return
+    if (!target || withdrawingRef.current) return
+    withdrawingRef.current = true
 
     if (target.kind === 'toggle') {
       setIsWithdrawing(true)
       const result = await saveMarketingConsent(false)
       setIsWithdrawing(false)
-      setWithdrawTarget(null)
+      withdrawingRef.current = false
+      closeWithdrawConfirm()
       if (result.ok) showWithdrawComplete(target.id, result.withdrawnAt)
       return
     }
 
     if (!consents.isRemoteSession) {
       setWithdrawnIds(prev => new Set(prev).add(target.id))
-      setWithdrawTarget(null)
+      withdrawingRef.current = false
+      closeWithdrawConfirm()
       showWithdrawComplete(target.id)
       return
     }
 
+    const consentType = SETTINGS_CONSENT_TYPE_BY_ID[target.id]
+    const idempotencyKey = withdrawIdempotencyKey ?? crypto.randomUUID()
     setIsWithdrawing(true)
     try {
-      const res = await withdrawConsentItem(target)
-      await refetchConsents()
-      setWithdrawTarget(null)
+      const res = await withdrawConsentItem(target, idempotencyKey)
+      await refetchConsents(consentType)
+      closeWithdrawConfirm()
       showWithdrawComplete(target.id, res.changedAt)
-    } catch {
-      setWithdrawTarget(null)
-      setNotice({ title: '동의 철회 실패', description: WITHDRAW_FAILED_MESSAGE })
+    } catch (error) {
+      const parsed = parseConsentWithdrawError(error, consentType)
+      if (parsed.backendRegression) {
+        logConsentWithdrawBackendRegression(parsed.code, consentType)
+      }
+      if (parsed.refetch) {
+        await refetchConsents(consentType)
+      }
+      closeWithdrawConfirm()
+      setNotice({
+        title: parsed.refetch ? '안내' : '동의 철회 실패',
+        description: parsed.message || CONSENT_WITHDRAW_FAILED_MESSAGE,
+      })
     } finally {
+      withdrawingRef.current = false
       setIsWithdrawing(false)
     }
   }
@@ -502,13 +569,14 @@ export function SettingsConsentsView() {
             key={item.id}
             item={item}
             marketingAgreed={marketingAgreed}
+            withdrawPending={isWithdrawing}
             onMarketingChange={handleMarketingChange}
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
             }}
             onViewDocument={item.kind === 'document' ? setDocumentPreviewItem : undefined}
             onWriteDocument={item.kind === 'document' ? handleWriteDocument : undefined}
-            onWithdraw={BASIC_WITHDRAW_COPY[item.id] ? setWithdrawTarget : undefined}
+            onWithdraw={BASIC_WITHDRAW_COPY[item.id] ? openWithdrawConfirm : undefined}
           />
         ))}
       </section>
@@ -517,12 +585,13 @@ export function SettingsConsentsView() {
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
           동의서·서약서
         </PFText>
-        {consents.documentItems.map(item => (
+        {documentItems.map(item => (
           <ConsentCard
             key={item.id}
             item={item}
             marketingAgreed={marketingAgreed}
             showRequirementLabel={false}
+            withdrawPending={isWithdrawing}
             onMarketingChange={handleMarketingChange}
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
@@ -530,7 +599,7 @@ export function SettingsConsentsView() {
             onViewDocument={setDocumentPreviewItem}
             onWriteDocument={handleWriteDocument}
             onDownloadDocument={handleDownloadDocument}
-            onWithdraw={resolveWithdrawCopy(item.id) ? setWithdrawTarget : undefined}
+            onWithdraw={resolveWithdrawCopy(item.id) ? openWithdrawConfirm : undefined}
           />
         ))}
       </section>
@@ -551,7 +620,7 @@ export function SettingsConsentsView() {
         title={withdrawCopy?.title}
         description={withdrawCopy?.description}
         confirmLoading={isWithdrawing}
-        onCancel={() => setWithdrawTarget(null)}
+        onCancel={closeWithdrawConfirm}
         onConfirm={() => {
           void handleWithdrawConfirm()
         }}

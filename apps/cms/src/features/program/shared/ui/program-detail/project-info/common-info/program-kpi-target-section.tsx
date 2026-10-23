@@ -284,7 +284,13 @@ export function ProgramKpiTargetSection({
                           )}
                         />
                       ) : (
-                        <CmsInput inputSize="small" width={120} value="해당 없음" disabled />
+                        <CmsInput
+                          disabled
+                          inputSize="small"
+                          placeholder="해당 없음"
+                          width={120}
+                          value=""
+                        />
                       )}
                     </div>
                   </div>

@@ -24,7 +24,7 @@ export interface FormDocumentPreviewParagraphViewModel {
   isClosing: boolean
   /** closing 또는 제목 없는 동의 확인 문구 — A4 우측 볼드 스펙 */
   isConfirmText: boolean
-  /** 확인 문구 위에 table-line 구분선 (지급조서 최종확인·서약 위반·초상권 확인) */
+  /** 확인 문구 위에 table-line 구분선 (지급조서 mid/최종확인·서약 위반·초상권 확인) */
   isConfirmTextRule: boolean
   isClosingSignature: boolean
 }
@@ -69,6 +69,7 @@ export function isAgreementDocumentSignatureParagraph(
 }
 
 const AGREEMENT_A4_CONFIRM_TEXT_RULE_IDS = new Set<string>([
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,

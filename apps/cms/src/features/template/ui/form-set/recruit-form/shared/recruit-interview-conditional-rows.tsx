@@ -55,6 +55,7 @@ export function RecruitInterviewConditionalRows({
                   width="100%"
                   placeholder="모집 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  suppressAutoTodayWhenEmpty
                   showTimeToggle={false}
                   appliedSurfaceRange={state.recruitRange}
                   appliedSurfaceWithTime={false}
@@ -115,6 +116,7 @@ export function RecruitInterviewConditionalRows({
                   style={{ flex: '1 1 0', minWidth: 0 }}
                   placeholder="면접 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  suppressAutoTodayWhenEmpty
                   appliedSurfaceRange={state.interviewRange}
                   appliedSurfaceWithTime={state.interviewRangeWithTime}
                   onRangeChange={range => state.setInterviewRange(range)}
@@ -185,6 +187,7 @@ export function RecruitInterviewConditionalRows({
               width="100%"
               placeholder="모집 기간을 선택하세요"
               preferPeriodModeInPopover
+              suppressAutoTodayWhenEmpty
               showTimeToggle={false}
               appliedSurfaceRange={state.recruitRange}
               appliedSurfaceWithTime={false}

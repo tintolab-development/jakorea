@@ -12956,12 +12956,21 @@
       "InstitutionScheduleConfirmRequest": {
         "type": "object",
         "properties": {
+          "assignmentRevision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "포털에서 조회한 현재 임시배정 revision. 서버 현재값과 다르면 STALE_REVISION(409)입니다.",
+            "example": 2
+          },
           "guideNote": {
             "type": "string",
             "maxLength": 4000,
             "minLength": 0
           }
-        }
+        },
+        "required": [
+          "assignmentRevision"
+        ]
       },
       "PhoneIdentityConfirmRequest": {
         "type": "object",
@@ -14427,7 +14436,9 @@
         "properties": {
           "documentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "전자서명 문서 철회 시 문서 ID. documentId 없는 legacy ledger 철회에서는 null.",
+            "nullable": true
           },
           "consentType": {
             "type": "string"
@@ -28948,6 +28959,9 @@
             "type": "string",
             "maxLength": 4000,
             "minLength": 0
+          },
+          "decision": {
+            "type": "string"
           }
         },
         "required": [
@@ -37011,6 +37025,17 @@
               "REJECTED"
             ]
           },
+          "revisionRequestReason": {
+            "type": "string",
+            "description": "최신 CHANGE_REQUESTED 이력의 수정 요청 사유. 목록에서는 null이며 상세에서만 제공합니다.",
+            "nullable": true
+          },
+          "revisionRequestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "최신 CHANGE_REQUESTED 이력의 요청 시각. 목록에서는 null이며 상세에서만 제공합니다.",
+            "nullable": true
+          },
           "temporarySchedule": {
             "description": "CMS 임시배정 확정 슬롯. GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule 의 slots과 같은 일정 SSOT입니다. 신청 당시 answers 희망일과 별도 필드입니다. 목록은 null. 상세는 항상 객체를 주며 슬롯 없으면 slots=[]. 모집 공통값·educationScheduleLines·금요일 생성으로 채우지 않습니다.",
             "oneOf": [
@@ -37637,7 +37662,7 @@
       },
       "DocumentSlot": {
         "type": "object",
-        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | DEADLINE_MISSED | REVISED. deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
+        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
         "properties": {
           "documentKind": {
             "type": "string"
@@ -48801,15 +48826,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { resolveSettlementAreaFromPathname } from '../lib/write-path'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
-import { PFText } from '@/shared/ui'
+import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
+import { PFButton, PFText } from '@/shared/ui'
 import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
@@ -11,6 +13,16 @@ import {
   countCompletedSettlementSessions,
   resolvePaymentStatementProcessLabel,
 } from '../lib/settlement-rules'
+import { isGeminiSettlementProgram } from '../lib/payment-statement-status'
+import {
+  INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
+  INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE,
+  individualIneligibleMessage,
+} from '../lib/individual-settlement-contract'
+import {
+  readProgramOperationEndAt,
+  resolveSettlementDocumentKind,
+} from '../lib/settlement-status-ui'
 import { EducationSettlementRow } from './row'
 import { EducationSettlementSummary } from './summary'
 import styles from './panel.module.css'
@@ -20,6 +32,10 @@ type EducationSettlementPanelProps = {
   applicationId: string
   applicationType?: ProgramApplicationType | null
   lastParticipatedSession?: number
+  /** 프로그램 사업 운영 종료일. 없으면 제출 마감일을 표시하지 않는다. */
+  operationEndAt?: string | null
+  programType?: string | null
+  detailCase?: string | null
 }
 
 export function EducationSettlementPanel({
@@ -27,10 +43,18 @@ export function EducationSettlementPanel({
   applicationId,
   applicationType,
   lastParticipatedSession,
+  operationEndAt,
+  programType,
+  detailCase,
 }: EducationSettlementPanelProps) {
   const location = useLocation()
   const [page, setPage] = useState(1)
-  const remoteSettlements = useApplicationSettlementsQuery(applicationType, applicationId, programId)
+  const remoteSettlements = useApplicationSettlementsQuery(
+    applicationType,
+    applicationId,
+    programId,
+    { operationEndAt },
+  )
   const settlementSearchParams = useMemo(
     () => new URLSearchParams(location.search),
     [location.search],
@@ -58,7 +82,17 @@ export function EducationSettlementPanel({
       : null
   const currentPage = requestedSessionPage ?? Math.min(page, totalPages)
   const completedCount = countCompletedSettlementSessions(allItems)
-  const processLabel = resolvePaymentStatementProcessLabel(allItems)
+  const documentKind = resolveSettlementDocumentKind(applicationType)
+  const isGemini = isGeminiSettlementProgram({ programType, detailCase })
+  const processLabel = resolvePaymentStatementProcessLabel(allItems, {
+    variant: isGemini
+      ? 'gemini'
+      : documentKind === 'payment_statement'
+        ? 'payment_statement'
+        : 'receipt',
+  })
+  const area = resolveSettlementAreaFromPathname(location.pathname)
+  const operationEnd = readProgramOperationEndAt(operationEndAt)
 
   const pageItems = useMemo(() => {
     const start = (currentPage - 1) * EDUCATION_SETTLEMENT_PAGE_SIZE
@@ -68,11 +102,59 @@ export function EducationSettlementPanel({
   if (remoteSettlements.isLoading) {
     return <EducationSessionListSkeleton statusMessage="정산현황을 불러오는 중입니다." />
   }
-  if (remoteSettlements.isError) {
+  if (remoteSettlements.individualDisabled) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        정산현황을 불러오지 못했습니다.
-      </PFText>
+      <div className={styles.status}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE}
+        </PFText>
+      </div>
+    )
+  }
+  if (remoteSettlements.individualErrorCode) {
+    return (
+      <div className={styles.status}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {individualIneligibleMessage(remoteSettlements.individualErrorCode) ??
+            '정산현황을 불러오지 못했습니다.'}
+        </PFText>
+        <PFButton
+          type="button"
+          variant="tertiary"
+          size="large"
+          disabled={remoteSettlements.isRefetching}
+          onClick={() => void remoteSettlements.refetch()}
+        >
+          다시 시도
+        </PFButton>
+      </div>
+    )
+  }
+  if (remoteSettlements.isError) {
+    const errorMessage =
+      remoteSettlements.errorCode === 'DATABASE_ERROR'
+        ? DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE
+        : '정산현황을 불러오지 못했습니다.'
+    return (
+      <div className={styles.status}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {errorMessage}
+        </PFText>
+        {remoteSettlements.traceId ? (
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500">
+            traceId: {remoteSettlements.traceId}
+          </PFText>
+        ) : null}
+        <PFButton
+          type="button"
+          variant="tertiary"
+          size="large"
+          disabled={remoteSettlements.isRefetching}
+          onClick={() => void remoteSettlements.refetch()}
+        >
+          다시 시도
+        </PFButton>
+      </div>
     )
   }
 
@@ -89,13 +171,21 @@ export function EducationSettlementPanel({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setPage}
-        emptyMessage="정산 현황이 없어요."
+        emptyMessage={
+          remoteSettlements.individualEmpty
+            ? INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE
+            : '정산 현황이 없어요.'
+        }
       >
         {pageItems.map(item => (
           <EducationSettlementRow
             key={item.id}
             item={item}
             applicationId={applicationId}
+            documentKind={documentKind}
+            area={area}
+            operationEndAt={operationEnd}
+            hideInstructorWrite={isGemini}
             initialRejectOpen={
               shouldOpenRejectReason &&
               item.status === 'rejected' &&

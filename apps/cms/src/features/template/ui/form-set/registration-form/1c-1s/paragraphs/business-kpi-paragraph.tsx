@@ -8,7 +8,7 @@ export function OneCOneSRegistrationBusinessKpiParagraph() {
     <ProgramRegistrationBusinessKpiParagraph
       overlayKeyPrefix="economyRegistration.kpi"
       volunteerDisabled
-      volunteerPlaceholder="해당없음"
+      volunteerPlaceholder="해당 없음"
     />
   )
 }

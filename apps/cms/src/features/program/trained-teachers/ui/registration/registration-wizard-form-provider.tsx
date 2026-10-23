@@ -3,6 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import {
   notifyTrainedTeachersRegistrationRhf,
   registerTrainedTeachersRegistrationRhf,
+  scheduleTrainedTeachersRegistrationRhfNotify,
   type TrainedTeachersRegistrationRhfApi,
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
@@ -62,7 +63,7 @@ export function TrainedTeachersRegistrationWizardFormProvider({
     }
     registerTrainedTeachersRegistrationRhf(api)
     const subscription = form.watch(() => {
-      notifyTrainedTeachersRegistrationRhf()
+      scheduleTrainedTeachersRegistrationRhfNotify()
     })
     return () => {
       subscription.unsubscribe()

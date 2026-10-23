@@ -83,6 +83,7 @@ import {
   applyGeneralParticipantAudienceToEditForm,
   savedGeneralParticipantTypeLocks,
 } from '@/features/program/general/lib/participant-audience-selection'
+import { isProgramStructureEditPeriodOpen } from '@/features/program/shared/lib/program-edit-window'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import {
   isGeneralIndividualParticipantTarget,
@@ -221,14 +222,17 @@ const PARTICIPATION_METHOD_LABELS = {
 function ParticipationMethodRadioGroup({
   value,
   onChange,
+  disabled = false,
 }: {
   value: string | undefined
   onChange: (next: string) => void
+  disabled?: boolean
 }) {
   return (
     <CmsRadioGroup
       size="medium"
       value={value ?? 'individual'}
+      disabled={disabled}
       onChange={e => onChange(e.target.value)}
     >
       <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -331,6 +335,17 @@ function ProgramProgressView({ program }: { program: Program }) {
 function KpiBoldNumber({ value }: { value: number }) {
   return (
     <span className="detail-common-info-view__kpi-number">{formatNumberDisplay(value)}</span>
+  )
+}
+
+/** 빈 값은 null — RHF Controller는 undefined면 defaultValues(이전 KPI)를 다시 보여 준다. */
+function parseOptionalNonNegativeInt(raw: string): number | null {
+  return raw === '' ? null : Number.parseInt(raw, 10)
+}
+
+function KpiNotApplicableInput() {
+  return (
+    <CmsInput disabled inputSize="small" placeholder="해당 없음" width={120} value="" />
   )
 }
 
@@ -532,10 +547,7 @@ function BasicInfoSection({
     watchedSponsorIds,
   ])
 
-  const participantTypeLocks = useMemo(
-    () => savedGeneralParticipantTypeLocks(program),
-    [program]
-  )
+  const participantTypeLocks = savedGeneralParticipantTypeLocks()
   const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
   const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
   const isIndividualTarget = isFormEdit
@@ -1206,13 +1218,13 @@ function KpiSection({
                 control={editForm.control}
                 render={({ field }) => (
                   <CmsNumericInput
-                    {...field}
                     mode="integer"
                     min={0}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
                     value={field.value == null ? '' : String(field.value)}
-                    onValueChange={value =>
-                      field.onChange(value === '' ? undefined : Number(value))
-                    }
+                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                     inputSize="small"
                     placeholder="목표값 입력"
                     width={120}
@@ -1250,13 +1262,13 @@ function KpiSection({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsNumericInput
-                        {...field}
                         mode="integer"
                         min={0}
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
                         value={field.value == null ? '' : String(field.value)}
-                        onValueChange={value =>
-                          field.onChange(value === '' ? undefined : Number(value))
-                        }
+                        onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                         inputSize="small"
                         placeholder="목표값 입력"
                         width={120}
@@ -1264,7 +1276,7 @@ function KpiSection({
                     )}
                   />
                 ) : (
-                  <span className="detail-info-form--text">해당 없음</span>
+                  <KpiNotApplicableInput />
                 )}
                 <DetailInfoForm.InputsSeparator />
                 <span className="detail-info-form--text mr-6">봉사자</span>
@@ -1274,13 +1286,13 @@ function KpiSection({
                     control={editForm.control}
                     render={({ field }) => (
                       <CmsNumericInput
-                        {...field}
                         mode="integer"
                         min={0}
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
                         value={field.value == null ? '' : String(field.value)}
-                        onValueChange={value =>
-                          field.onChange(value === '' ? undefined : Number(value))
-                        }
+                        onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                         inputSize="small"
                         placeholder="목표값 입력"
                         width={120}
@@ -1288,7 +1300,7 @@ function KpiSection({
                     )}
                   />
                 ) : (
-                  <span className="detail-info-form--text">해당 없음</span>
+                  <KpiNotApplicableInput />
                 )}
               </div>
             }
@@ -1299,29 +1311,13 @@ function KpiSection({
             label="최종 파견 학교 수"
             validationKey="kpi.finalSchools"
             view={dispatchedSchoolClassView}
-            edit={
-              <CmsInput
-                disabled
-                inputSize="small"
-                placeholder="해당 없음"
-                width={120}
-                value=""
-              />
-            }
+            edit={<KpiNotApplicableInput />}
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
             validationKey="kpi.finalClasses"
             view={dispatchedSchoolClassView}
-            edit={
-              <CmsInput
-                disabled
-                inputSize="small"
-                placeholder="해당 없음"
-                width={120}
-                value=""
-              />
-            }
+            edit={<KpiNotApplicableInput />}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -1504,6 +1500,7 @@ function TypeSettingsScheduleDetailRow({
   commonDetailEdit,
   commonDetailView,
   validationKey,
+  locked = false,
   perScheduleHint = typeSettingsPerScheduleHint({
     educationStructure: 'curriculum',
     sessionRound: 'single',
@@ -1520,6 +1517,7 @@ function TypeSettingsScheduleDetailRow({
   commonDetailEdit?: ReactNode
   commonDetailView?: ReactNode
   validationKey?: string
+  locked?: boolean
   perScheduleHint?: string
 }) {
   const scheduleDetail =
@@ -1559,6 +1557,7 @@ function TypeSettingsScheduleDetailRow({
                 <CmsRadioGroup
                   size="medium"
                   value={field.value ?? 'common'}
+                  disabled={locked}
                   onChange={e => {
                     field.onChange(e.target.value)
                     applyCurriculumTypeSettingsDetailChangeToForm(
@@ -1680,6 +1679,7 @@ function TypeSettingsSection({
   })
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
+  const typeSettingsLocked = !isProgramStructureEditPeriodOpen(program)
 
   const editForm =
     form ??
@@ -1900,6 +1900,7 @@ function TypeSettingsSection({
                       <CmsRadioGroup
                         size="medium"
                         value={field.value ?? 'individual'}
+                        disabled={typeSettingsLocked}
                         onChange={e => field.onChange(e.target.value)}
                       >
                         <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -2008,6 +2009,7 @@ function TypeSettingsSection({
               scheduleDetailValue={participationScheduleDetail}
               editForm={editForm}
               formMode={formMode}
+              locked={typeSettingsLocked}
               commonDetailView={participationMethodLabel}
               perScheduleHint={schedulePerScheduleHint}
               commonDetailEdit={
@@ -2020,6 +2022,7 @@ function TypeSettingsSection({
                       withAllOption={false}
                       placeholder="참여 방식"
                       width={160}
+                      disabled={typeSettingsLocked}
                       options={[
                         { value: 'individual', label: '개인' },
                         { value: 'team', label: '팀' },
@@ -2084,6 +2087,7 @@ function MultiRoundCurriculumSessionForm({
   isPreEducationBlock = false,
   canRemove = false,
   highlightSessionNo,
+  participationMethodLocked = false,
 }: {
   index: number
   session: CurriculumSessionViewModel
@@ -2104,6 +2108,7 @@ function MultiRoundCurriculumSessionForm({
   isPreEducationBlock?: boolean
   canRemove?: boolean
   highlightSessionNo: number
+  participationMethodLocked?: boolean
 }) {
   const assignmentEnabled = editForm.watch(`curriculumSessions.${index}.assignmentEnabled`) ?? false
   const sessionIpsCategory =
@@ -2445,6 +2450,7 @@ function MultiRoundCurriculumSessionForm({
                           <ParticipationMethodRadioGroup
                             value={radioField.value}
                             onChange={radioField.onChange}
+                            disabled={participationMethodLocked}
                           />
                         )}
                       />
@@ -2719,6 +2725,7 @@ function CurriculumSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const isFormEdit = isEditMode && !!form
+  const participationMethodLocked = !isProgramStructureEditPeriodOpen(program)
   const editForm =
     form ??
     ({
@@ -2978,6 +2985,7 @@ function CurriculumSection({
         isPreEducationBlock={isPreEducationBlock}
         canRemove={canRemove}
         highlightSessionNo={highlightSessionNo}
+        participationMethodLocked={participationMethodLocked}
       />
     ) : (
       <SingleRoundCurriculumSessionForm
@@ -3048,37 +3056,7 @@ function CurriculumSection({
       bodyClassName="detail-common-info-view__section-body--curriculum"
     >
       {isFormEdit ? (
-        <div className="program-registration-curriculum__sessions">
-          {!isMultiRoundCurriculum && fields.length > 0 && !participantOrganization ? (
-            <DetailInfoForm
-              title="교육 진행 (커리큘럼)"
-              hideHeader
-              mode={formMode}
-              className="program-registration-paragraph"
-            >
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="참여 방식"
-                  fullRow
-                  edit={
-                    <Controller
-                      name="participationMethod"
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <ParticipationMethodRadioGroup
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      )}
-                    />
-                  }
-                  view="-"
-                />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
-          ) : null}
-          {sessionBlocks}
-        </div>
+        <div className="program-registration-curriculum__sessions">{sessionBlocks}</div>
       ) : (
         sessionBlocks
       )}
@@ -3322,11 +3300,13 @@ function ScheduleEventPerScheduleExtraEditRows({
   editForm,
   isPreEducationBlock,
   fieldArrayName = 'scheduleDetails',
+  participationMethodLocked = false,
 }: {
   index: number
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   isPreEducationBlock: boolean
   fieldArrayName?: 'scheduleDetails' | 'curriculumSessions'
+  participationMethodLocked?: boolean
 }) {
   const participantOrganization = editForm.watch('participantOrganization')
   const extraPlan = getScheduleEventPerScheduleExtraPlan({
@@ -3495,6 +3475,7 @@ function ScheduleEventPerScheduleExtraEditRows({
                     <CmsRadioGroup
                       size="medium"
                       value={radioField.value ?? 'individual'}
+                      disabled={participationMethodLocked}
                       onChange={e => radioField.onChange(e.target.value)}
                     >
                       <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -3538,6 +3519,7 @@ function ScheduleEventDetailEditBlock({
   showHeading = true,
   canRemove = false,
   highlightScheduleNo,
+  participationMethodLocked = false,
 }: {
   index: number
   scheduleLabel: string
@@ -3548,6 +3530,7 @@ function ScheduleEventDetailEditBlock({
   showHeading?: boolean
   canRemove?: boolean
   highlightScheduleNo: number
+  participationMethodLocked?: boolean
 }) {
   const headingLabel = isPreEducationBlock ? '사전 교육' : scheduleLabel
   const participantIndividual = Boolean(editForm.watch('participantIndividual'))
@@ -3639,6 +3622,7 @@ function ScheduleEventDetailEditBlock({
               index={index}
               editForm={editForm}
               isPreEducationBlock={isPreEducationBlock}
+              participationMethodLocked={participationMethodLocked}
             />
           </DetailInfoForm>
         </div>
@@ -3669,6 +3653,7 @@ function ScheduleDetailEditBlock({
   onRemove,
   onRemoveGroup,
   highlightScheduleNo,
+  participationMethodLocked = false,
 }: {
   index: number
   scheduleLabel: string
@@ -3681,6 +3666,7 @@ function ScheduleDetailEditBlock({
   onRemove: () => void
   onRemoveGroup: (groupIndex: number) => void
   highlightScheduleNo: number
+  participationMethodLocked?: boolean
 }) {
   const showGroupLabel = groupCount > 1
   const isSingleRound = sessionRound === 'single'
@@ -3958,6 +3944,7 @@ function ScheduleDetailEditBlock({
                     <CmsRadioGroup
                       size="medium"
                       value={field.value ?? 'individual'}
+                      disabled={participationMethodLocked}
                       onChange={e => field.onChange(e.target.value)}
                     >
                       <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -3985,6 +3972,7 @@ function ScheduleDetailEditBlock({
                     <CmsRadioGroup
                       size="medium"
                       value={field.value ?? 'individual'}
+                      disabled={participationMethodLocked}
                       onChange={e => field.onChange(e.target.value)}
                     >
                       <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -4017,6 +4005,7 @@ function ScheduleDetailEditBlock({
                       <CmsRadioGroup
                         size="medium"
                         value={field.value ?? 'individual'}
+                        disabled={participationMethodLocked}
                         onChange={e => field.onChange(e.target.value)}
                       >
                         <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -4045,6 +4034,7 @@ function ScheduleDetailEditBlock({
                       <CmsRadioGroup
                         size="medium"
                         value={field.value ?? 'individual'}
+                        disabled={participationMethodLocked}
                         onChange={e => field.onChange(e.target.value)}
                       >
                         <CmsRadio size="medium" value="individual">개인</CmsRadio>
@@ -4149,9 +4139,11 @@ function ScheduleDetailEditBlock({
 function ScheduleProgressEditSection({
   editForm,
   scheduleMeta,
+  participationMethodLocked = false,
 }: {
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   scheduleMeta: (typeof PROGRAM_REGISTRATION_GENERAL_SECTION_META)['educationScheduleCurriculum']
+  participationMethodLocked?: boolean
 }) {
   const formMode = 'edit' as const
   const sessionRound = editForm.watch('sessionRound') ?? 'single'
@@ -4364,34 +4356,6 @@ function ScheduleProgressEditSection({
       }
       bodyClassName="detail-common-info-view__section-body--schedule-curriculum"
     >
-      {!isMultiRound && !multiAllPer && fields.length > 0 && !participantOrganization ? (
-        <DetailInfoForm
-          title="교육 진행 (일정형)"
-          hideHeader
-          mode={formMode}
-          className="program-registration-paragraph"
-        >
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="참여 방식"
-              fullRow
-              edit={
-                <Controller
-                  name="participationMethod"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <ParticipationMethodRadioGroup
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-      ) : null}
       {fields.map((field, index) => {
         const detailBlockKind =
           editForm.watch(`scheduleDetails.${index}.blockKind`) ??
@@ -4440,6 +4404,7 @@ function ScheduleProgressEditSection({
               showHeading={fields.length > 1 || isPreEducationBlock}
               canRemove={detailBlockKind === 'event' && hasEarlierEvent}
               highlightScheduleNo={highlightScheduleNo}
+              participationMethodLocked={participationMethodLocked}
             />
           )
         }
@@ -4458,6 +4423,7 @@ function ScheduleProgressEditSection({
             onRemove={() => handleRemoveDetail(index)}
             onRemoveGroup={handleRemoveGroup}
             highlightScheduleNo={highlightScheduleNo}
+            participationMethodLocked={participationMethodLocked}
           />
         )
       })}
@@ -4510,6 +4476,7 @@ function ScheduleProgressSection({
         key={scheduleSectionKey}
         editForm={form}
         scheduleMeta={scheduleMeta}
+        participationMethodLocked={!isProgramStructureEditPeriodOpen(program)}
       />
     )
   }

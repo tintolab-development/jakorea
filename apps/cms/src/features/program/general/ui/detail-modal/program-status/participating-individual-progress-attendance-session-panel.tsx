@@ -19,11 +19,21 @@ import type {
   ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 import { ATTENDANCE_RECORDING_NOT_OPEN_MESSAGE } from '@/features/program/general/lib/attendance-recording-not-open'
+import { formatMonthDayWithWeekday } from '@/shared/utils/date'
 import {
   ParticipatingIndividualProgressAttendanceCorrectionModal,
   type ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload,
 } from './participating-individual-progress-attendance-correction-modal'
 import { ParticipatingIndividualProgressAttendanceTable } from './participating-individual-progress-attendance-table'
+
+function resolveEducationDateLabel(
+  session: ParticipatingIndividualProgressAttendanceSessionGroup
+): string {
+  const source = session.headerPeriodRangeLabel.split('~')[0]?.trim() ?? ''
+  const formatted = formatMonthDayWithWeekday(source)
+  if (formatted !== '-') return formatted
+  return source || session.headerTitle
+}
 
 function mapCorrectionPayloadToAttendancePatch(
   payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload
@@ -57,7 +67,9 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
 }: {
   session: ParticipatingIndividualProgressAttendanceSessionGroup
   appliedFilters: ParticipatingIndividualProgressAttendanceFilters
-  getSessionParticipants: (sessionId: string) => ParticipatingIndividualProgressAttendanceParticipantRow[]
+  getSessionParticipants: (
+    sessionId: string
+  ) => ParticipatingIndividualProgressAttendanceParticipantRow[]
   onSaveParticipant: (
     sessionId: string,
     participantRowId: string,
@@ -122,15 +134,15 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
       return
     }
     setCorrectionModalOpen(true)
-  }, [
-    participantCorrectionOptions.length,
-    session.attendanceRecordingOpen,
-    showAlert,
-  ])
+  }, [participantCorrectionOptions.length, session.attendanceRecordingOpen, showAlert])
 
   const handleConfirmCorrection = useCallback(
     (payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload) => {
-      onSaveParticipant(session.id, payload.participantRowId, mapCorrectionPayloadToAttendancePatch(payload))
+      onSaveParticipant(
+        session.id,
+        payload.participantRowId,
+        mapCorrectionPayloadToAttendancePatch(payload)
+      )
       setCorrectionModalOpen(false)
       showAlert({
         title: '안내',
@@ -156,8 +168,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
           <CmsButton
             type="button"
             variant="secondary"
-            size="large"
-            width={120}
+            size="h40"
             onClick={handleOpenCorrectionModal}
           >
             출결 정정
@@ -170,7 +181,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
       </div>
       <ParticipatingIndividualProgressAttendanceCorrectionModal
         open={correctionModalOpen}
-        sessionLabel={session.headerTitle}
+        educationDateLabel={resolveEducationDateLabel(session)}
         scheduleId={session.id}
         participantOptions={participantCorrectionOptions}
         onCancel={() => setCorrectionModalOpen(false)}

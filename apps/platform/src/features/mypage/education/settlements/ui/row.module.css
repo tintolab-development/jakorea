@@ -4,16 +4,55 @@
   text-align: right;
 }
 
+.amountStruck {
+  margin: 0;
+  text-align: right;
+  text-decoration: line-through;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.rejectBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
 .buttons {
   display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-8);
+}
+
+.writeRow {
+  display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--spacing-8);
+  gap: var(--spacing-12);
 }
 
 .amountContainer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-16);
+  justify-content: flex-end;
+  gap: var(--spacing-8) var(--spacing-16);
+}
+
+@media (--bp-below-pc) {
+  .writeRow {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-8);
+  }
+
+  .amountContainer {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-4);
+  }
 }

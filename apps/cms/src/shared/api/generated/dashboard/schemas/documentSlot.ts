@@ -7,7 +7,7 @@
  */
 
 /**
- * 한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | DEADLINE_MISSED | REVISED. deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.
+ * 한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.
  */
 export interface DocumentSlot {
   documentKind?: string;

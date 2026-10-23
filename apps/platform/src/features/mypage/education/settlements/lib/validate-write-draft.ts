@@ -3,47 +3,61 @@ import {
   isSettlementTripLegStarted,
   parseSettlementAmount,
 } from './format-write-draft'
+import { readTripLegAttachments, readTripLegFileNames } from './empty-trip-leg'
 
 export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 export const SETTLEMENT_MIN_EXPENSE_ITEM_MESSAGE =
   '지급조서는 최소 한개 이상의 항목이 작성된 경우에만 제출 가능합니다.'
+export const SETTLEMENT_RECEIPT_MIN_EXPENSE_ITEM_MESSAGE =
+  '영수증은 최소 한 개 이상의 항목이 작성된 경우에만 제출 가능합니다.'
 export const SETTLEMENT_RECEIPT_REQUIRED_MESSAGE = '신청한 항목의 영수증을 제출해 주세요.'
+export const SETTLEMENT_RECEIPT_UPLOAD_INCOMPLETE_MESSAGE =
+  '업로드가 완료되지 않은 영수증이 있습니다. 잠시 후 다시 시도해 주세요.'
 
 export type SettlementWriteValidationError =
   | 'required_incomplete'
   | 'min_expense_item'
   | 'receipt_required'
+  | 'upload_incomplete'
 
 function isBlank(value: string): boolean {
   return value.trim() === ''
+}
+
+function hasUploadedReceipts(leg: SettlementTripLegDraft): boolean {
+  return readTripLegAttachments(leg).length > 0 || readTripLegFileNames(leg).length > 0
 }
 
 function isTripLegIncomplete(leg: SettlementTripLegDraft): boolean {
   return (
     isBlank(leg.transit) ||
     parseSettlementAmount(leg.amount) <= 0 ||
-    leg.fileNames.length === 0
+    !hasUploadedReceipts(leg)
   )
 }
 
 function isTripLegMissingReceipt(leg: SettlementTripLegDraft): boolean {
-  return isSettlementTripLegStarted(leg) && leg.fileNames.length === 0
+  return isSettlementTripLegStarted(leg) && !hasUploadedReceipts(leg)
 }
 
-function isAmountMissingReceipt(amount: string, fileNames: string[]): boolean {
-  return parseSettlementAmount(amount) > 0 && fileNames.length === 0
+function isAmountMissingReceipt(amount: string, fileCount: number): boolean {
+  return parseSettlementAmount(amount) > 0 && fileCount === 0
+}
+
+function isReceiptDraft(draft: SettlementWriteDraft): boolean {
+  return draft.meta.documentKind === 'receipt' || !draft.meta.isInstructor
 }
 
 export function validateSettlementWriteDraft(
   draft: SettlementWriteDraft
 ): SettlementWriteValidationError | null {
-  const { basic, transport, meal, activity, meta } = draft
+  const { basic, transport, meal, activity, extraItems, meta } = draft
 
   if (isBlank(basic.bank) || isBlank(basic.accountNumber) || isBlank(basic.accountHolder)) {
     return 'required_incomplete'
   }
 
-  if (meta.isInstructor) {
+  if (meta.isInstructor && meta.documentKind !== 'receipt') {
     if (isTripLegIncomplete(transport.depart)) return 'required_incomplete'
     if (transport.tripType === 'round_trip' && isTripLegIncomplete(transport.return)) {
       return 'required_incomplete'
@@ -51,14 +65,21 @@ export function validateSettlementWriteDraft(
     return null
   }
 
+  if (isReceiptDraft(draft) && extraItems.length + (transport.itemType ? 1 : 0) === 0 && draft.enabledItemTypes.length === 0) {
+    return 'min_expense_item'
+  }
+
   const transportStarted =
     isSettlementTripLegStarted(transport.depart) ||
     (transport.tripType === 'round_trip' && isSettlementTripLegStarted(transport.return))
+  const extraStarted = extraItems.some(
+    item => parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0
+  )
   const mealStarted = parseSettlementAmount(meal.amount) > 0 || meal.fileNames.length > 0
   const activityStarted =
     parseSettlementAmount(activity.amount) > 0 || activity.fileNames.length > 0
 
-  if (!transportStarted && !mealStarted && !activityStarted) {
+  if (!transportStarted && !extraStarted && !mealStarted && !activityStarted) {
     return 'min_expense_item'
   }
 
@@ -66,21 +87,45 @@ export function validateSettlementWriteDraft(
   if (transport.tripType === 'round_trip' && isTripLegMissingReceipt(transport.return)) {
     return 'receipt_required'
   }
-  if (isAmountMissingReceipt(meal.amount, meal.fileNames)) return 'receipt_required'
-  if (isAmountMissingReceipt(activity.amount, activity.fileNames)) return 'receipt_required'
+  if (isReceiptDraft(draft) && transportStarted) {
+    const departIds = readTripLegAttachments(transport.depart)
+    if (isSettlementTripLegStarted(transport.depart) && departIds.length === 0) {
+      return 'upload_incomplete'
+    }
+    if (transport.tripType === 'round_trip' && isSettlementTripLegStarted(transport.return)) {
+      if (readTripLegAttachments(transport.return).length === 0) return 'upload_incomplete'
+    }
+  }
+
+  for (const item of extraItems) {
+    const started = parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0
+    if (!started) continue
+    if (item.evidenceRequired === true && item.attachments.length === 0) {
+      return parseSettlementAmount(item.amount) > 0 ? 'receipt_required' : 'receipt_required'
+    }
+    if (parseSettlementAmount(item.amount) <= 0) return 'required_incomplete'
+  }
+
+  if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
+  if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
 
   return null
 }
 
 export function resolveSettlementWriteValidationMessage(
-  error: SettlementWriteValidationError
+  error: SettlementWriteValidationError,
+  documentKind: SettlementWriteDraft['meta']['documentKind'] = 'receipt'
 ): string {
   switch (error) {
     case 'required_incomplete':
       return SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_MESSAGE
     case 'min_expense_item':
-      return SETTLEMENT_MIN_EXPENSE_ITEM_MESSAGE
+      return documentKind === 'payment_statement'
+        ? SETTLEMENT_MIN_EXPENSE_ITEM_MESSAGE
+        : SETTLEMENT_RECEIPT_MIN_EXPENSE_ITEM_MESSAGE
     case 'receipt_required':
       return SETTLEMENT_RECEIPT_REQUIRED_MESSAGE
+    case 'upload_incomplete':
+      return SETTLEMENT_RECEIPT_UPLOAD_INCOMPLETE_MESSAGE
   }
 }

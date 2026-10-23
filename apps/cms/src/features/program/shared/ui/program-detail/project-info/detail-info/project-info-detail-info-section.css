@@ -24,10 +24,7 @@
  * - 내용이 늘면 height:auto 로 자연 증가
  * - shared 320px / cms --rt-body-min-height:200px / template 420px 를 이 스코프에서만 덮음
  */
-.project-info-detail-info-section__frame .program-detail-info-tab__editor-host--field,
-.project-info-detail-info-section__frame
-  .program-detail-info-tab__additional-content--edit
-  .program-detail-info-tab__editor-host--field {
+.project-info-detail-info-section__frame .program-detail-info-tab__editor-host--field {
   width: 100%;
   min-height: 100px !important;
 }
@@ -57,6 +54,3 @@
   max-height: none !important;
 }
 
-.project-info-detail-info-section__frame .program-detail-info-tab__additional-content--edit {
-  min-height: 100px !important;
-}

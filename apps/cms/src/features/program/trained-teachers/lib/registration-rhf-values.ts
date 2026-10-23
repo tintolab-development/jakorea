@@ -10,12 +10,18 @@ import {
   surveyMenuKeysFromRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
+  applyTrainedTeachersApplicationOverlayRecord,
+  emptyTrainedTeachersApplicationFormState,
+  isTrainedTeachersApplicationOverlayKey,
+} from './registration-rhf-application'
+import {
   applyTrainedTeachersRecruitmentOverlayRecord,
   emptyTrainedTeachersRecruitFormState,
   isTrainedTeachersRecruitmentOverlayKey,
 } from './registration-rhf-recruitment'
 import {
   TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
+  type TrainedTeachersApplicationFormState,
   type TrainedTeachersRecruitFormState,
   type TrainedTeachersRegistrationCommonCanonical,
   type TrainedTeachersRegistrationEditorMeta,
@@ -32,6 +38,7 @@ export type TrainedTeachersRegistrationRhfValues = TrainedTeachersRegistrationCo
   participant: ProgramRegistrationParticipantSelection
   sidecar: Record<string, unknown>
   recruitment: TrainedTeachersRecruitFormState
+  application: TrainedTeachersApplicationFormState
 }
 
 const COMMON_INFO_PREFIXES = [
@@ -133,6 +140,7 @@ export function createDefaultTrainedTeachersRegistrationRhfValues(
     participant: extras?.participant ?? defaultParticipant(),
     sidecar: {},
     recruitment: emptyTrainedTeachersRecruitFormState(),
+    application: emptyTrainedTeachersApplicationFormState(),
   }
 }
 
@@ -178,6 +186,16 @@ function partnerInvolvementToOverlay(value: boolean): string {
   return value ? 'yes' : 'no'
 }
 
+const derivedOverlaySnapshotCache = new Map<string, { token: string; value: unknown }>()
+
+function cachedDerivedOverlaySnapshot(key: string, token: string, create: () => unknown): unknown {
+  const hit = derivedOverlaySnapshotCache.get(key)
+  if (hit?.token === token) return hit.value
+  const value = create()
+  derivedOverlaySnapshotCache.set(key, { token, value })
+  return value
+}
+
 export function readTrainedTeachersRhfOverlayValue(
   values: TrainedTeachersRegistrationRhfValues,
   key: string
@@ -188,16 +206,20 @@ export function readTrainedTeachersRhfOverlayValue(
   }
   const suffix = suffixOf(key)
   if (suffix === 'surveyItems') {
-    return surveyItemsRecordFromMenuKeys(values.generalSurveyMenuKeys)
+    return cachedDerivedOverlaySnapshot(
+      key,
+      values.generalSurveyMenuKeys.join('\u0001'),
+      () => surveyItemsRecordFromMenuKeys(values.generalSurveyMenuKeys)
+    )
   }
   if (SPONSOR_IDS_SUFFIXES.has(suffix) || SPONSOR_ID_SUFFIXES.has(suffix)) {
     return SPONSOR_IDS_SUFFIXES.has(suffix)
-      ? [...values.sponsorManagementIds]
+      ? values.sponsorManagementIds
       : (values.sponsorManagementIds[0] ?? '')
   }
   if (CONTACT_IDS_SUFFIXES.has(suffix) || CONTACT_ID_SUFFIXES.has(suffix)) {
     return CONTACT_IDS_SUFFIXES.has(suffix)
-      ? [...values.sponsorManagerContactIds]
+      ? values.sponsorManagerContactIds
       : (values.sponsorManagerContactIds[0] ?? '')
   }
   if (suffix === 'partnerInvolvement') {
@@ -205,7 +227,11 @@ export function readTrainedTeachersRhfOverlayValue(
   }
   if (suffix === 'operationRangeSeal') {
     if (values.startDate == null && values.endDate == null) return null
-    return { start: values.startDate ?? '', end: values.endDate ?? '' }
+    return cachedDerivedOverlaySnapshot(
+      key,
+      `${values.startDate ?? ''}\u0001${values.endDate ?? ''}`,
+      () => ({ start: values.startDate ?? '', end: values.endDate ?? '' })
+    )
   }
   const field = FIELD_BY_SUFFIX[suffix]
   if (field != null) return values[field]
@@ -272,9 +298,14 @@ export function applyTrainedTeachersRhfOverlayRecord(
 ): TrainedTeachersRegistrationRhfValues {
   let next = values
   const recruitPartial: Record<string, unknown> = {}
+  const applicationPartial: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(overlay)) {
     if (isTrainedTeachersRecruitmentOverlayKey(key)) {
       recruitPartial[key] = value
+      continue
+    }
+    if (isTrainedTeachersApplicationOverlayKey(key)) {
+      applicationPartial[key] = value
       continue
     }
     if (!isTrainedTeachersCommonInfoOverlayKey(key)) continue
@@ -284,6 +315,15 @@ export function applyTrainedTeachersRhfOverlayRecord(
     next = {
       ...next,
       recruitment: applyTrainedTeachersRecruitmentOverlayRecord(next.recruitment, recruitPartial),
+    }
+  }
+  if (Object.keys(applicationPartial).length > 0) {
+    next = {
+      ...next,
+      application: applyTrainedTeachersApplicationOverlayRecord(
+        next.application ?? emptyTrainedTeachersApplicationFormState(),
+        applicationPartial
+      ),
     }
   }
   return next
@@ -335,7 +375,8 @@ export function rhfValuesFromTrainedTeachersCanonicalCommon(
   common: TrainedTeachersRegistrationCommonCanonical,
   editor: TrainedTeachersRegistrationEditorMeta,
   sidecar?: Record<string, unknown>,
-  recruitment?: TrainedTeachersRecruitFormState
+  recruitment?: TrainedTeachersRecruitFormState,
+  application?: TrainedTeachersApplicationFormState
 ): TrainedTeachersRegistrationRhfValues {
   return {
     ...createDefaultTrainedTeachersRegistrationRhfValues(editor),
@@ -362,6 +403,9 @@ export function rhfValuesFromTrainedTeachersCanonicalCommon(
     recruitment: recruitment
       ? structuredClone(recruitment)
       : emptyTrainedTeachersRecruitFormState(),
+    application: application
+      ? structuredClone(application)
+      : emptyTrainedTeachersApplicationFormState(),
   }
 }
 
@@ -372,6 +416,7 @@ export function isTrainedTeachersRegistrationCanonicalSnapshot(
     editor: TrainedTeachersRegistrationEditorMeta
     common: TrainedTeachersRegistrationCommonCanonical
     recruit?: TrainedTeachersRecruitFormState
+    application?: TrainedTeachersApplicationFormState
     sidecar?: Record<string, unknown>
   } {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return false

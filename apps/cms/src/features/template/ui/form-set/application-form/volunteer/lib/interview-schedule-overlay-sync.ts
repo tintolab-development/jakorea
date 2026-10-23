@@ -115,13 +115,26 @@ export function useVolunteerInterviewOverlayKv<T>(
   const key = store === 'recruit' ? recruitKey : applicationKey
 
   const defaultRef = useRef(defaultValue)
+  const snapshotRef = useRef<T>(defaultValue)
   const getSnapshot = useCallback(() => {
-    return readOperationalOverlayKvValue(
+    const next = readOperationalOverlayKvValue(
       store === 'recruit' ? 'general-recruit' : 'general-application',
       liveInterviewRecord(store),
       key,
       defaultRef.current
     )
+    if (Object.is(snapshotRef.current, next)) return snapshotRef.current
+    if (Array.isArray(snapshotRef.current) && Array.isArray(next)) {
+      const prevItems = snapshotRef.current
+      if (
+        prevItems.length === next.length &&
+        prevItems.every((item, index) => Object.is(item, next[index]))
+      ) {
+        return snapshotRef.current
+      }
+    }
+    snapshotRef.current = next
+    return next
   }, [key, store])
 
   const value = useSyncExternalStore(

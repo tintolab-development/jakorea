@@ -80,12 +80,44 @@ function readOverlayString(key: string): string {
   return ''
 }
 
+function readRhfSponsorIds(): string[] | null {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf == null) return null
+  const values = rhf.getValues()
+  if (Array.isArray(values.sponsorIds)) {
+    const ids = values.sponsorIds.map(String).map(id => id.trim()).filter(Boolean)
+    if (ids.length > 0) return ids
+  }
+  return typeof values.sponsorId === 'string' && values.sponsorId.trim()
+    ? [values.sponsorId.trim()]
+    : []
+}
+
+function readRhfSponsorContactIds(): string[] | null {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf == null) return null
+  const values = rhf.getValues()
+  if (Array.isArray(values.managerContactIds)) {
+    const ids = [
+      ...new Set(values.managerContactIds.map(String).map(id => id.trim()).filter(Boolean)),
+    ]
+    if (ids.length > 0) return ids
+  }
+  return typeof values.managerContactId === 'string' && values.managerContactId.trim()
+    ? [values.managerContactId.trim()]
+    : []
+}
+
 /** overlay에 남은 후원사 id (controlled state가 비었을 때 완료·복원 fallback) */
 export function readGeneralRegistrationOverlaySponsorId(): string {
+  const fromRhf = readRhfSponsorIds()
+  if (fromRhf != null) return fromRhf[0] ?? ''
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
 }
 
 export function readGeneralRegistrationOverlaySponsorIds(): string[] {
+  const fromRhf = readRhfSponsorIds()
+  if (fromRhf != null) return fromRhf
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]
   if (Array.isArray(raw)) {
     return raw
@@ -93,16 +125,20 @@ export function readGeneralRegistrationOverlaySponsorIds(): string[] {
       .map(id => id.trim())
       .filter(Boolean)
   }
-  const primary = readGeneralRegistrationOverlaySponsorId()
+  const primary = readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
   return primary ? [primary] : []
 }
 
 export function readGeneralRegistrationOverlaySponsorContactId(): string {
+  const fromRhf = readRhfSponsorContactIds()
+  if (fromRhf != null) return fromRhf[0] ?? ''
   const ids = readGeneralRegistrationOverlaySponsorContactIds()
   return ids[0] ?? readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
 }
 
 export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
+  const fromRhf = readRhfSponsorContactIds()
+  if (fromRhf != null) return fromRhf
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
   if (Array.isArray(raw)) {
     return [
@@ -136,6 +172,11 @@ export function patchGeneralRegistrationSponsorSelectionOverlay(args: {
 }
 
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf != null) {
+    const fromRhf = rhf.getValues().programTitleKo
+    return typeof fromRhf === 'string' ? fromRhf.trim() : ''
+  }
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
@@ -269,6 +310,10 @@ export function readStoredRegistrationProgramTitleKo(
   if (variant === 'trainedTeachers' && peekTrainedTeachersRegistrationRhf() != null) {
     return peekTrainedTeachersRegistrationRhf()?.getValues().title.trim() || fallback.trim()
   }
+  if (variant === 'general' && peekGeneralRegistrationWizardRhf() != null) {
+    const fromRhf = peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo
+    return typeof fromRhf === 'string' ? fromRhf.trim() : fallback.trim()
+  }
   const key =
     variant === 'trainedTeachers'
       ? TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
@@ -304,6 +349,17 @@ export function patchRegistrationOverlayProgramTitleKo(
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf != null) {
+    const lines = rhf.getValues().scheduleLines
+    if (Array.isArray(lines)) {
+      return lines
+        .filter((line): line is string => typeof line === 'string')
+        .map(line => line.trim())
+        .filter(Boolean)
+    }
+    return []
+  }
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
   if (!Array.isArray(raw)) return []
   return raw
@@ -417,10 +473,16 @@ function splitTrainedTeachersCommonInfoOverlay(
 function writeTrainedTeachersRhfOverlayPartial(partial: Record<string, unknown>): void {
   const api = peekTrainedTeachersRegistrationRhf()
   if (api == null) return
-  let next = api.getValues()
+  const current = api.getValues()
+  let next = current
+  let changed = false
   for (const [key, value] of Object.entries(partial)) {
+    const prev = readTrainedTeachersRhfOverlayValue(current, key)
+    if (Object.is(prev, value)) continue
     next = writeTrainedTeachersRhfOverlayValue(next, key, value)
+    changed = true
   }
+  if (!changed || next === current) return
   api.reset(next, { keepDefaultValues: true })
 }
 
