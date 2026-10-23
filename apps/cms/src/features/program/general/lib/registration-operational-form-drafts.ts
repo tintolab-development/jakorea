@@ -627,6 +627,30 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
       templateCode: catalogId,
     })
     const overlay = saved?.overlay
+    if (variant === 'economy' && catalogId === 'recruitment-economy') {
+      const { readCompanySchoolRecruitEditorState, companySchoolRecruitStateToApplyRecord } =
+        await import('@/features/program/1c-1s/lib/recruit-form-state')
+      const recruit = readCompanySchoolRecruitEditorState(saved?.editorState)
+      if (recruit) {
+        applyOperationalOverlayForCatalogId(
+          catalogId,
+          companySchoolRecruitStateToApplyRecord(recruit)
+        )
+        continue
+      }
+    }
+    if (variant === 'economy' && catalogId === 'application-economy') {
+      const { readCompanySchoolApplicationEditorState, companySchoolApplicationStateToApplyRecord } =
+        await import('@/features/program/1c-1s/lib/application-form-state')
+      const application = readCompanySchoolApplicationEditorState(saved?.editorState)
+      if (application) {
+        applyOperationalOverlayForCatalogId(
+          catalogId,
+          companySchoolApplicationStateToApplyRecord(application)
+        )
+        continue
+      }
+    }
     if (variant === 'trainedTeachers') {
       const { readTrainedTeachersRecruitEditorState, trainedTeachersRecruitStateToApplyRecord } =
         await import('@/features/program/trained-teachers/lib/recruit-form-state')
@@ -736,6 +760,28 @@ export async function persistRegistrationOperationalOverlaysToLocal(
         templateCode: catalogId,
         draft,
         editorState,
+      })
+      continue
+    }
+    if (variant === 'economy' && catalogId === 'recruitment-economy') {
+      const { collectCompanySchoolRecruitFormState, companySchoolRecruitEditorState } =
+        await import('@/features/program/1c-1s/lib/recruit-form-state')
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        editorState: companySchoolRecruitEditorState(collectCompanySchoolRecruitFormState()),
+      })
+      continue
+    }
+    if (variant === 'economy' && catalogId === 'application-economy') {
+      const { collectCompanySchoolApplicationFormState, companySchoolApplicationEditorState } =
+        await import('@/features/program/1c-1s/lib/application-form-state')
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        editorState: companySchoolApplicationEditorState(collectCompanySchoolApplicationFormState()),
       })
       continue
     }

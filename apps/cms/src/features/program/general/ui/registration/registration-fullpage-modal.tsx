@@ -59,6 +59,8 @@ import { GeneralRegistrationWizardFormProvider } from '@/features/program/genera
 import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { TrainedTeachersRegistrationWizardFormProvider } from '@/features/program/trained-teachers/ui/registration/registration-wizard-form-provider'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { CompanySchoolRegistrationWizardFormProvider } from '@/features/program/1c-1s/ui/registration/registration-wizard-form-provider'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -104,6 +106,10 @@ export function GeneralProgramRegistrationFullpageModal(
         <TrainedTeachersRegistrationWizardFormProvider>
           {inner}
         </TrainedTeachersRegistrationWizardFormProvider>
+      ) : variant === 'economy' ? (
+        <CompanySchoolRegistrationWizardFormProvider>
+          {inner}
+        </CompanySchoolRegistrationWizardFormProvider>
       ) : (
         inner
       )}
@@ -261,7 +267,9 @@ function GeneralProgramRegistrationFullpageModalInner({
         ? () => peekGeneralRegistrationWizardRhf()?.isDirty() === true
         : registrationFormVariant === 'trainedTeachers'
           ? () => peekTrainedTeachersRegistrationRhf()?.isDirty() === true
-          : undefined,
+          : registrationFormVariant === 'economy'
+            ? () => peekCompanySchoolRegistrationRhf()?.isDirty() === true
+            : undefined,
     onLeave: handleClose,
   })
 

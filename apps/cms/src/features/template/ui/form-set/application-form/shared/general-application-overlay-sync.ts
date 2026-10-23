@@ -23,6 +23,17 @@ import {
   isTrainedTeachersApplicationCatalog,
   isTrainedTeachersApplicationOverlayKey,
 } from '@/features/program/trained-teachers/lib/registration-rhf-application'
+import {
+  patchActiveCompanySchoolApplicationOverlay,
+  peekActiveCompanySchoolApplicationOverlayRecord,
+  peekCompanySchoolRegistrationRhf,
+  readActiveCompanySchoolApplicationOverlayValue,
+  subscribeCompanySchoolRegistrationRhf,
+} from '@/features/program/1c-1s/lib/registration-rhf-api'
+import {
+  isCompanySchoolApplicationCatalog,
+  isCompanySchoolApplicationOverlayKey,
+} from '@/features/program/1c-1s/lib/registration-rhf-application'
 
 /**
  * 지원 폼(기관 지원, 개인 지원 등) overlay.
@@ -62,10 +73,15 @@ export function peekGeneralApplicationOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
   const merged = mergeWizardApplicationIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
+  const csRecord =
+    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolApplicationCatalog(templateCode)
+      ? peekActiveCompanySchoolApplicationOverlayRecord()
+      : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersApplicationCatalog(templateCode)
       ? peekActiveTrainedTeachersApplicationOverlayRecord()
       : null
+  if (csRecord != null) return { ...merged, ...csRecord }
   return ttRecord != null ? { ...merged, ...ttRecord } : merged
 }
 
@@ -75,6 +91,10 @@ export function replaceGeneralApplicationOverlayForScope(
 ): void {
   if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersApplicationCatalog(templateCode)) {
     patchActiveTrainedTeachersApplicationOverlay(next)
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolApplicationCatalog(templateCode)) {
+    patchActiveCompanySchoolApplicationOverlay(next)
     return
   }
   if (!isWizardApplicationRhfProjecting()) {
@@ -110,6 +130,17 @@ export function patchGeneralApplicationOverlay(partial: Record<string, unknown>)
     }
     return
   }
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    const rest = patchActiveCompanySchoolApplicationOverlay(partial)
+    if (Object.keys(rest).length === 0) return
+    beginWizardApplicationRhfProjection()
+    try {
+      store.patch(rest)
+    } finally {
+      endWizardApplicationRhfProjection()
+    }
+    return
+  }
   if (!isWizardApplicationRhfProjecting()) {
     patchWizardApplicationKv(partial, { shouldDirty: true })
   }
@@ -131,6 +162,12 @@ export function updateGeneralApplicationOverlayKey<T>(
     patchActiveTrainedTeachersApplicationOverlay({ [key]: next })
     return
   }
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolApplicationOverlayKey(key)) {
+    const prev = readActiveCompanySchoolApplicationOverlayValue(key, undefined) as T | undefined
+    const next = updater(prev)
+    patchActiveCompanySchoolApplicationOverlay({ [key]: next })
+    return
+  }
   const api = peekGeneralRegistrationWizardRhf()
   if (api != null && isWizardApplicationOwnedOverlayKey(key) && !isWizardApplicationRhfProjecting()) {
     const prev = readWizardApplicationKvValue<T | undefined>(key, undefined)
@@ -150,6 +187,17 @@ export function updateGeneralApplicationOverlayKey<T>(
 export function replaceGeneralApplicationOverlay(next: Record<string, unknown>): void {
   if (peekTrainedTeachersRegistrationRhf() != null) {
     const rest = patchActiveTrainedTeachersApplicationOverlay(next)
+    if (Object.keys(rest).length === 0) return
+    beginWizardApplicationRhfProjection()
+    try {
+      store.replace(rest)
+    } finally {
+      endWizardApplicationRhfProjection()
+    }
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    const rest = patchActiveCompanySchoolApplicationOverlay(next)
     if (Object.keys(rest).length === 0) return
     beginWizardApplicationRhfProjection()
     try {
@@ -193,6 +241,9 @@ export function useGeneralApplicationOverlayKv<T>(
     if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersApplicationOverlayKey(key)) {
       return readActiveTrainedTeachersApplicationOverlayValue(key, defaultRef.current) as T
     }
+    if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolApplicationOverlayKey(key)) {
+      return readActiveCompanySchoolApplicationOverlayValue(key, defaultRef.current) as T
+    }
     if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
       return readWizardApplicationKvValue(key, defaultRef.current)
     }
@@ -204,10 +255,12 @@ export function useGeneralApplicationOverlayKv<T>(
       const unsubOverlay = subscribeGeneralApplicationOverlayKey(key, listener)
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
       const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
+      const unsubCs = subscribeCompanySchoolRegistrationRhf(listener)
       return () => {
         unsubOverlay()
         unsubRhf()
         unsubTt()
+        unsubCs()
       }
     },
     getSnapshot,

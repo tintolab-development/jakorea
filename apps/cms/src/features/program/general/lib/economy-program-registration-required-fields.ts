@@ -17,6 +17,9 @@ import {
   peekSelectedInstitutionRecruitOverlay,
 } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
+import { serializeCompanySchoolRecruitmentForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
+import { serializeCompanySchoolApplicationForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-application'
 
 const ALL = '__all__'
 
@@ -255,9 +258,17 @@ function listIncompleteEconomyInstitutionRecruit(overlay: Record<string, unknown
     `${p}.announcementPublished`
   )
   const maxI = read(overlay, RK.maxAssignableInstructors)
-  pushReason(reasons, maxI !== undefined && isEmptyNumber(maxI), `${p}.maxAssignableInstructors`)
+  pushReason(
+    reasons,
+    maxI !== undefined && maxI !== null && isEmptyNumber(maxI),
+    `${p}.maxAssignableInstructors`
+  )
   const maxC = read(overlay, RK.maxClassCount)
-  pushReason(reasons, maxC !== undefined && isEmptyNumber(maxC), `${p}.maxClassCount`)
+  pushReason(
+    reasons,
+    maxC !== undefined && maxC !== null && isEmptyNumber(maxC),
+    `${p}.maxClassCount`
+  )
   pushReason(reasons, isRangeSealIncomplete(read(overlay, RK.programRangeSeal)), `${p}.programRangeSeal`)
   pushReason(reasons, isEmptyStringList(read(overlay, RK.targetLevels)), `${p}.targetLevels`)
   pushReason(reasons, isEmptyText(read(overlay, RK.targetLevelDetail)), `${p}.targetLevelDetail`)
@@ -277,9 +288,12 @@ export function listIncompleteEconomyProgramRecruitmentRequiredFields(
 ): string[] {
   const reasons: string[] = []
   if (participant.organization) {
+    const rhf = peekCompanySchoolRegistrationRhf()
     reasons.push(
       ...listIncompleteEconomyInstitutionRecruit(
-        peekSelectedInstitutionRecruitOverlay('COMPANY_SCHOOL')
+        rhf != null
+          ? serializeCompanySchoolRecruitmentForFormVersion(rhf.getValues().recruitment)
+          : peekSelectedInstitutionRecruitOverlay('COMPANY_SCHOOL')
       )
     )
   }
@@ -337,7 +351,15 @@ function isScheduleBlockIncomplete(block: unknown): boolean {
 }
 
 export function hasIncompleteEconomyProgramApplicationRequiredFields(
-  applicationOverlay: Record<string, unknown> = getGeneralApplicationOverlayRecord()
+  applicationOverlay: Record<string, unknown> = (() => {
+    const store = getGeneralApplicationOverlayRecord()
+    const rhf = peekCompanySchoolRegistrationRhf()
+    if (rhf == null) return store
+    return {
+      ...store,
+      ...serializeCompanySchoolApplicationForFormVersion(rhf.getValues().application),
+    }
+  })()
 ): boolean {
   const b = 'application.economy.basicInfo'
   if (isEmptyText(read(applicationOverlay, `${b}.applicationGrade`))) return true

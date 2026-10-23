@@ -129,6 +129,7 @@ import {
   resetOperationalOverlayForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   applyParticipantApplicationEditorState,
@@ -618,8 +619,15 @@ export function flushParticipantSessionOverlaysToOperationalStores(options?: {
   // TT 위저드 RHF가 켜져 있으면 session snapshot으로 모집·신청 기간을 덮지 않는다.
   // persist는 collectTrainedTeachers*FormState()가 라이브 RHF를 읽는다.
   if (peekTrainedTeachersRegistrationRhf() != null) return
+  const companySchoolRhf = peekCompanySchoolRegistrationRhf()
   for (const [catalogId, overlay] of participantSessionOverlayByCatalogId) {
     if (options?.excludeCatalogId != null && catalogId === options.excludeCatalogId) continue
+    if (
+      companySchoolRhf != null &&
+      (catalogId === 'recruitment-economy' || catalogId === 'application-economy')
+    ) {
+      continue
+    }
     if (Object.keys(overlay).length === 0) continue
     applyOperationalOverlayForCatalogId(catalogId, overlay)
   }

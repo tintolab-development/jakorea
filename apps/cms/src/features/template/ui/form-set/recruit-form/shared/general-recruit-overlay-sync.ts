@@ -23,6 +23,17 @@ import {
   isTrainedTeachersRecruitmentCatalog,
   isTrainedTeachersRecruitmentOverlayKey,
 } from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
+import {
+  patchActiveCompanySchoolRecruitmentOverlay,
+  peekActiveCompanySchoolRecruitmentOverlayRecord,
+  peekCompanySchoolRegistrationRhf,
+  readActiveCompanySchoolRecruitmentOverlayValue,
+  subscribeCompanySchoolRegistrationRhf,
+} from '@/features/program/1c-1s/lib/registration-rhf-api'
+import {
+  isCompanySchoolRecruitmentCatalog,
+  isCompanySchoolRecruitmentOverlayKey,
+} from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 
 /**
  * 모집 폼(개인 모집, 강사 모집, 봉사자 모집) overlay.
@@ -60,10 +71,15 @@ export function peekGeneralRecruitOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
   const merged = mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
+  const csRecord =
+    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)
+      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+      : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
       ? peekActiveTrainedTeachersRecruitmentOverlayRecord()
       : null
+  if (csRecord != null) return { ...merged, ...csRecord }
   return ttRecord != null ? { ...merged, ...ttRecord } : merged
 }
 
@@ -84,6 +100,10 @@ export function replaceGeneralRecruitOverlayForScope(
 ): void {
   if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)) {
     patchActiveTrainedTeachersRecruitmentOverlay(next)
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)) {
+    patchActiveCompanySchoolRecruitmentOverlay(next)
     return
   }
   if (!isWizardRecruitmentRhfProjecting()) {
@@ -110,6 +130,17 @@ function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
   if (peekTrainedTeachersRegistrationRhf() != null) {
     const rest = patchActiveTrainedTeachersRecruitmentOverlay(partial)
+    if (Object.keys(rest).length === 0) return
+    beginWizardRecruitmentRhfProjection()
+    try {
+      store.patch(rest)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    const rest = patchActiveCompanySchoolRecruitmentOverlay(partial)
     if (Object.keys(rest).length === 0) return
     beginWizardRecruitmentRhfProjection()
     try {
@@ -167,6 +198,20 @@ export function updateGeneralRecruitOverlayKey<T>(
 }
 
 export function replaceGeneralRecruitOverlay(next: Record<string, unknown>): void {
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    const rest = patchActiveCompanySchoolRecruitmentOverlay(next)
+    if (Object.keys(rest).length === 0) return
+    if (!isWizardRecruitmentRhfProjecting()) {
+      patchWizardRecruitmentKv(rest, { shouldDirty: false })
+    }
+    beginWizardRecruitmentRhfProjection()
+    try {
+      store.replace(rest)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
   if (!isWizardRecruitmentRhfProjecting()) {
     patchWizardRecruitmentKv(next, { shouldDirty: false })
   }
@@ -207,6 +252,9 @@ export function useGeneralRecruitOverlayKv<T>(
     if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentOverlayKey(key)) {
       return readActiveTrainedTeachersRecruitmentOverlayValue(key, defaultRef.current) as T
     }
+    if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentOverlayKey(key)) {
+      return readActiveCompanySchoolRecruitmentOverlayValue(key, defaultRef.current) as T
+    }
     if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
       return readWizardRecruitmentKvValue(key, defaultRef.current)
     }
@@ -218,10 +266,12 @@ export function useGeneralRecruitOverlayKv<T>(
       const unsubOverlay = subscribeGeneralRecruitOverlayKey(key, listener)
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
       const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
+      const unsubCs = subscribeCompanySchoolRegistrationRhf(listener)
       return () => {
         unsubOverlay()
         unsubRhf()
         unsubTt()
+        unsubCs()
       }
     },
     getSnapshot,

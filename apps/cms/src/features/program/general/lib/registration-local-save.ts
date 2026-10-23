@@ -47,6 +47,8 @@ import {
 
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
+import { serializeCompanySchoolRecruitmentForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 
 export function resolveTrainedTeacherEducationJournalEnabled(
   raw: unknown,
@@ -695,7 +697,16 @@ export async function persistGeneralProgramRegistration(args: {
     })
 
   // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
-  const recruitMediaOverlay = collectSelectedRecruitOverlaysForProgram(program)
+  const recruitMediaOverlay = (() => {
+    const leftover = collectSelectedRecruitOverlaysForProgram(program)
+    if (variant !== 'economy') return leftover
+    const rhf = peekCompanySchoolRegistrationRhf()
+    if (rhf == null) return leftover
+    return {
+      ...leftover,
+      ...serializeCompanySchoolRecruitmentForFormVersion(rhf.getValues().recruitment),
+    }
+  })()
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
     const { createCompanySchoolProgram } = await import(

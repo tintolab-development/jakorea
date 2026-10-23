@@ -14,6 +14,8 @@ import {
 } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
+import { listIncompleteCompanySchoolRegistrationRhfRequiredFields } from '@/features/program/1c-1s/lib/registration-rhf-required-fields'
 import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
 import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
@@ -39,6 +41,13 @@ export function collectRegistrationWizardProgramPhaseIncompleteKeys(
   ctx: CollectRegistrationWizardProgramIncompleteContext
 ): string[] {
   if (ctx.variant === 'economy') {
+    const rhf = peekCompanySchoolRegistrationRhf()
+    if (rhf != null) {
+      return listIncompleteCompanySchoolRegistrationRhfRequiredFields(
+        rhf.getValues(),
+        ctx.participant
+      )
+    }
     return listIncompleteEconomyProgramRegistrationRequiredFields(ctx.overlay, ctx.participant)
   }
   if (ctx.variant === 'trainedTeachers' && ctx.trainedTeachersCtx != null) {
