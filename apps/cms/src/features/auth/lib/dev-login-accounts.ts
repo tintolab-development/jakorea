@@ -3,7 +3,8 @@
  *
  * - **마스터**: `admin1@jakorea.org` — MFA `000000`
  * - **PM/Partner/Viewer**: `pm1` / `partner1` / `viewer1@jakorea.org`
- * - 공통 비밀번호: `test1234!`
+ * - 마스터 비밀번호: `admin1234!`
+ * - PM/Partner/Viewer 비밀번호: `test1234!`
  */
 export type DevLoginQaAccount = {
   key: 'master' | 'pm' | 'partner' | 'viewer'
@@ -22,7 +23,7 @@ export const DEV_LOGIN_QA_ACCOUNTS: readonly DevLoginQaAccount[] = [
     key: 'master',
     label: '마스터',
     email: 'admin1@jakorea.org',
-    password: 'test1234!',
+    password: 'admin1234!',
     apiReady: true,
   },
   {
