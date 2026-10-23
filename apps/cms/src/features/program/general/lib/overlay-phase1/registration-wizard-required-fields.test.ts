@@ -42,6 +42,15 @@ describe('registration-wizard-required-fields', () => {
     expect(registrationWizardCommonInfoZodSchema.safeParse(values).success).toBe(false)
   })
 
+  it('빈 공고용 프로그램명은 기존값으로 채우지 않고 필수 오류로 남긴다', () => {
+    const values = createDefaultRegistrationWizardUiValues({
+      participant: orgCtx.participant,
+    })
+    values.publicProgramTitle = ''
+    const keys = listIncompleteRegistrationWizardRequiredFields(values, orgCtx)
+    expect(keys).toContain('basicInfo.publicProgramTitle')
+  })
+
   it('숨겨진 일정형 값은 커리큘럼 검증을 오염시키지 않는다', () => {
     const values = createDefaultRegistrationWizardUiValues({
       programType: 'curriculum',

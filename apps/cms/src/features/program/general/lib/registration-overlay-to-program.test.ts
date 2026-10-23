@@ -573,3 +573,57 @@ describe('일정형 사전 교육 overlay 교육 형태', () => {
     )
   })
 })
+
+describe('empty-public-title-apply-fallback', () => {
+  const extras = {
+    programType: 'curriculum' as const,
+    sessionRoundType: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationFormScheduleDetail: 'common' as const,
+    participationScheduleDetail: 'common' as const,
+    ipsScheduleDetail: 'common' as const,
+    participantOrganization: true,
+  }
+
+  function programWithTitle(): Program {
+    return {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        announcementTitle: '기존 공고명',
+      },
+    }
+  }
+
+  it('키가 없으면 기존 공고명을 유지한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(programWithTitle(), {}, extras)
+    expect(next.generalCommonInfo?.announcementTitle).toBe('기존 공고명')
+  })
+
+  it('명시적 빈 문자열은 기존 공고명으로 되돌리지 않는다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      programWithTitle(),
+      { 'generalRegistration.basicInfo.publicProgramTitle': '' },
+      extras
+    )
+    expect(next.generalCommonInfo?.announcementTitle).toBe('')
+  })
+
+  it('공백 문자열은 trim 후 명시적 빈 값이다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      programWithTitle(),
+      { 'generalRegistration.basicInfo.publicProgramTitle': '   ' },
+      extras
+    )
+    expect(next.generalCommonInfo?.announcementTitle).toBe('')
+  })
+
+  it('새 공고명을 적용한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      programWithTitle(),
+      { 'generalRegistration.basicInfo.publicProgramTitle': '새 공고명' },
+      extras
+    )
+    expect(next.generalCommonInfo?.announcementTitle).toBe('새 공고명')
+  })
+})

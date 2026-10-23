@@ -64,9 +64,9 @@ const volunteerKv = {
 }
 
 describe('모집 CREATE RHF Independent vs Legacy overlay apply', () => {
-  it('recruit-detailinfo-reseed-gap 은 상세 GET 시드로 남기고 상태를 바꾸지 않는다', () => {
+  it('recruit-detailinfo-reseed-gap 은 상세 GET 시드 수정 후 keep_current 이다', () => {
     const item = OVERLAY_PHASE0_KNOWN_DIFFS.find(row => row.id === 'recruit-detailinfo-reseed-gap')
-    expect(item?.change).toBe('change_required')
+    expect(item?.change).toBe('keep_current')
   })
 
   it('기관 모집 nested·persist 는 RHF kv 를 따른다', () => {

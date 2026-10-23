@@ -630,9 +630,10 @@ export function applyGeneralRegistrationOverlayToProgram(
     program.mainTitle ||
     program.title
   const titleEn = overlayString(overlay, `${BASIC}.programTitleEn`) || program.titleEn
-  const announcementTitle =
-    overlayString(overlay, `${BASIC}.publicProgramTitle`) ||
-    program.generalCommonInfo?.announcementTitle
+  const publicTitleKey = `${BASIC}.publicProgramTitle`
+  const announcementTitle = Object.prototype.hasOwnProperty.call(overlay, publicTitleKey)
+    ? overlayString(overlay, publicTitleKey)
+    : program.generalCommonInfo?.announcementTitle
 
   const sealDates = resolveProgramDatesFromOperationRangeSeal(overlay)
   const startDate = sealDates?.startDate ?? program.startDate

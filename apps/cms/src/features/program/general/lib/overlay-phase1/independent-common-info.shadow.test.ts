@@ -171,17 +171,13 @@ describe('Phase 1-B independent builder import guard', () => {
     }
   })
 
-  it('known-diff 4건을 수정하지 않는다', () => {
+  it('known-diff 2건은 수정 후 keep_current 이다', () => {
     const protectedIds = ['recruit-detailinfo-reseed-gap', 'empty-public-title-apply-fallback']
     for (const id of protectedIds) {
       const item = OVERLAY_PHASE0_KNOWN_DIFFS.find(diff => diff.id === id)
       expect(item, id).toBeDefined()
-      expect(item?.change).not.toBe('keep_current')
+      expect(item?.change).toBe('keep_current')
     }
-    expect(
-      OVERLAY_PHASE0_KNOWN_DIFFS.find(diff => diff.id === 'empty-public-title-apply-fallback')
-        ?.change
-    ).toBe('change_required')
   })
 })
 
@@ -368,7 +364,7 @@ describe('4. 일정 라인 추가·삭제 shadow', () => {
 })
 
 describe('5. 공고용명 빈값 · 후원 담당자 미선택 · KPI null', () => {
-  it('빈 공고용명 apply fallback(known-diff)을 재현한다', () => {
+  it('빈 공고용명 apply는 Independent와 Legacy 모두 명시적 빈 값을 유지한다', () => {
     const overlay = { 'generalRegistration.basicInfo.publicProgramTitle': '' }
     const legacy = applyGeneralRegistrationOverlayToProgram(
       baseProgram(),
@@ -384,7 +380,7 @@ describe('5. 공고용명 빈값 · 후원 담당자 미선택 · KPI null', () 
     expect(independent.applied.generalCommonInfo?.announcementTitle).toBe(
       legacy.generalCommonInfo?.announcementTitle
     )
-    expect(independent.applied.generalCommonInfo?.announcementTitle).toBe('기존 공고')
+    expect(independent.applied.generalCommonInfo?.announcementTitle).toBe('')
   })
 
   it('후원 담당자 미선택은 contact id를 비운다', () => {

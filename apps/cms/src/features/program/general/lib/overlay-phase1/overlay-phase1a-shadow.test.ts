@@ -335,7 +335,7 @@ describe('7. 임금/KPI/후원사/공고명 shadow', () => {
     expect(snapshotStripUnchangedWage(program, baseProgram())).toEqual(baseline)
   })
 
-  it('빈 공고용명 apply fallback(known-diff)을 그대로 둔다', () => {
+  it('빈 공고용명 apply는 기존 공고명으로 되돌리지 않는다', () => {
     const baseline = applyGeneralRegistrationOverlayToProgram(
       baseProgram(),
       { 'generalRegistration.basicInfo.publicProgramTitle': '' },
@@ -349,7 +349,7 @@ describe('7. 임금/KPI/후원사/공고명 shadow', () => {
     expect(draft.applied.generalCommonInfo?.announcementTitle).toBe(
       baseline.generalCommonInfo?.announcementTitle
     )
-    expect(draft.applied.generalCommonInfo?.announcementTitle).toBe('기존 공고')
+    expect(draft.applied.generalCommonInfo?.announcementTitle).toBe('')
   })
 
   it('serialize nested 승이 기존 serialize와 같다', () => {

@@ -26,11 +26,12 @@ export const OVERLAY_PHASE0_KNOWN_DIFFS: readonly OverlayPhase0KnownDiff[] = [
   },
   {
     id: 'recruit-detailinfo-reseed-gap',
-    current: 'persist된 recruit.detailInfo 키가 상세 시드에서 스토어로 안 돌아가는 fixture가 있다',
-    expectedIfChanged: 'GET registrationOverlay.recruit.detailInfo* 가 catalog 스토어에 재시드',
-    change: 'change_required',
-    evidence: 'apps/cms/src/features/program/shared/parity/known-parity-gaps.test.ts',
-    verifyTest: 'parity known gaps — overlay_only recruit.detailInfo',
+    current:
+      'GET nested가 있는 recruit.detailInfo는 catalog에 재시드. nested 부재면 registrationOverlay 호환 복원. 명시적 빈 값은 overlay로 되살리지 않는다',
+    expectedIfChanged: '동일',
+    change: 'keep_current',
+    evidence: 'apps/cms/src/features/program/general/lib/detail-operational-save-merge.ts',
+    verifyTest: 'recruit-detailinfo-reseed.test.ts / parity overlay_only',
   },
   {
     id: 'nested-wins-over-overlay',
@@ -59,11 +60,11 @@ export const OVERLAY_PHASE0_KNOWN_DIFFS: readonly OverlayPhase0KnownDiff[] = [
   {
     id: 'empty-public-title-apply-fallback',
     current:
-      'apply overlayString(publicProgramTitle) || existing. 빈 문자열은 기존 공고명으로 돌아간다. seed는 nested 빈값을 유지',
-    expectedIfChanged: '명시적 빈 공고용명을 apply에서도 유지',
-    change: 'change_required',
-    evidence: 'registration-overlay-to-program.ts announcementTitle || fallback',
-    verifyTest: '빈 공고용명 apply fallback',
+      'publicProgramTitle 키 부재는 기존 공고명 유지. 키 존재+빈/공백 문자열은 명시적 빈 값. seed는 nested 빈값을 유지',
+    expectedIfChanged: '동일',
+    change: 'keep_current',
+    evidence: 'registration-overlay-to-program.ts / build-independent-common-info.ts',
+    verifyTest: '빈 공고용명 apply는 기존값을 복원하지 않는다',
   },
   {
     id: 'wage-unchanged-strip',

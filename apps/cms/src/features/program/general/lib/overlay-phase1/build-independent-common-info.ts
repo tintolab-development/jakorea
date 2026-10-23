@@ -74,8 +74,9 @@ function applyFormValuesToProgram(
   const titleKo =
     readOptionalText(values.programTitleKo) || program.mainTitle || program.title
   const titleEn = readOptionalText(values.programTitleEn) || program.titleEn
-  const announcementTitle =
-    readOptionalText(values.publicProgramTitle) || program.generalCommonInfo?.announcementTitle
+  const announcementTitle = values.publicProgramTitle.present
+    ? readOptionalText(values.publicProgramTitle)
+    : program.generalCommonInfo?.announcementTitle
 
   const seal = values.operationRangeSeal.present ? values.operationRangeSeal.value : null
   const sealDates = programDatesFromOperationRange(seal)

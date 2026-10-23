@@ -142,11 +142,9 @@ export type GeneralRhfGateBlockerId =
   | 'wizard-has-no-form-provider'
   | 'known-diff-change-required'
 
-export const GENERAL_RHF_GATE_BLOCKERS: readonly GeneralRhfGateBlockerId[] = [
-  'known-diff-change-required',
-]
+export const GENERAL_RHF_GATE_BLOCKERS: readonly GeneralRhfGateBlockerId[] = []
 
-export const GENERAL_RHF_MIGRATION_GATE_STATUS = 'GENERAL_RHF_MIGRATION_GATE_BLOCKED' as const
+export const GENERAL_RHF_MIGRATION_GATE_STATUS = 'GENERAL_RHF_MIGRATION_GATE_OPEN' as const
 
 export const GENERAL_RHF_CONTRACT_ALIGNMENT_STATUS =
   'GENERAL_RHF_CONTRACT_ALIGNMENT_COMPLETE' as const

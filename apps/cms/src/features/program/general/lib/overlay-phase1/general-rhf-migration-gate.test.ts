@@ -174,11 +174,9 @@ describe('P0 일반 프로그램 RHF 게이트 — 계약', () => {
     expect(BE_SESSION_SSOT_CONTRACT.programSchedulesArePhysicalRows).toBe(true)
   })
 
-  it('기존 change_required known-diff 2건을 유지한다', () => {
+  it('known-diff change_required 가 남아 있지 않다', () => {
     const required = OVERLAY_PHASE0_KNOWN_DIFFS.filter(item => item.change === 'change_required')
-    expect(required.map(item => item.id).sort()).toEqual(
-      ['empty-public-title-apply-fallback', 'recruit-detailinfo-reseed-gap'].sort()
-    )
+    expect(required.map(item => item.id)).toEqual([])
   })
 })
 
@@ -748,12 +746,12 @@ describe('P0 RHF 연결 준비', () => {
     expect(MEDIA_RHF_CONNECTABLE.sink).toMatch(/fileObjectId|PUT/)
   })
 
-  it('세션 계약은 COMPLETE이고 known-diff 게이트만 남는다', () => {
+  it('세션 계약은 COMPLETE이고 known-diff 게이트는 열려 있다', () => {
     expect(GENERAL_RHF_CONTRACT_ALIGNMENT_STATUS).toBe(
       'GENERAL_RHF_CONTRACT_ALIGNMENT_COMPLETE'
     )
-    expect(GENERAL_RHF_MIGRATION_GATE_STATUS).toBe('GENERAL_RHF_MIGRATION_GATE_BLOCKED')
-    expect(GENERAL_RHF_GATE_BLOCKERS).toEqual(['known-diff-change-required'])
+    expect(GENERAL_RHF_MIGRATION_GATE_STATUS).toBe('GENERAL_RHF_MIGRATION_GATE_OPEN')
+    expect(GENERAL_RHF_GATE_BLOCKERS).toEqual([])
     expect(GENERAL_RHF_SESSION_SCENARIOS.every(item => item.verdict === 'matches-be')).toBe(true)
     expect(TRAINED_TEACHER_NESTED_SSOT_PERSIST_STATUS).toBe(
       'TRAINED_TEACHER_NESTED_SSOT_PERSIST_READY'

@@ -156,12 +156,10 @@ const CASES: Array<{ programType: Structure; sessionRoundType: Round; audience: 
 )
 
 describe('Phase 3 CREATE payload Legacy Overlay vs RHF Independent', () => {
-  it('known-diff change_required 2건을 수정하지 않고 분류만 한다', () => {
+  it('known-diff change_required 가 없고 기존 id 분류는 유지한다', () => {
     const required = OVERLAY_PHASE0_KNOWN_DIFFS.filter(item => item.change === 'change_required')
-    expect(required.map(item => item.id).sort()).toEqual(
-      ['empty-public-title-apply-fallback', 'recruit-detailinfo-reseed-gap'].sort()
-    )
-    expect(GENERAL_RHF_GATE_BLOCKERS).toEqual(['known-diff-change-required'])
+    expect(required.map(item => item.id)).toEqual([])
+    expect(GENERAL_RHF_GATE_BLOCKERS).toEqual([])
     expect(classifyKnownDiff('empty-public-title-apply-fallback')).toBe('common-info-rhf')
     expect(classifyKnownDiff('recruit-detailinfo-reseed-gap')).toBe('recruit-application-followup')
     expect(classifyKnownDiff('individual-schedule-writes-institution-prefix')).toBe(

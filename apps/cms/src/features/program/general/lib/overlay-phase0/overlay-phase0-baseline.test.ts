@@ -316,7 +316,7 @@ describe('5. 일정형·커리큘럼형 seed', () => {
 })
 
 describe('6. 공고용명·후원 담당자 빈값', () => {
-  it('seed는 nested 빈 공고명을 유지하고, apply 빈 문자열은 기존 공고명으로 fallback 한다', () => {
+  it('seed는 nested 빈 공고명을 유지하고, apply 빈 문자열은 기존 공고명으로 되돌리지 않는다', () => {
     const seeded = buildGeneralRegistrationOverlayFromProgram({
       ...baseProgram(),
       generalCommonInfo: {
@@ -331,7 +331,7 @@ describe('6. 공고용명·후원 담당자 빈값', () => {
       { 'generalRegistration.basicInfo.publicProgramTitle': '' },
       EDITOR_EXTRAS_CURRICULUM_SINGLE
     )
-    expect(applied.generalCommonInfo?.announcementTitle).toBe('기존 공고')
+    expect(applied.generalCommonInfo?.announcementTitle).toBe('')
   })
 })
 

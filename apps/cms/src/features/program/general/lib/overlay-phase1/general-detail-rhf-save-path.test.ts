@@ -131,12 +131,10 @@ describe('Phase 1-E 상세 공통정보 저장 경로', () => {
       'apps/cms/src/features/program/general/hooks/use-common-info-save.ts',
     ])
     expect(
-      OVERLAY_PHASE0_KNOWN_DIFFS.filter(item => item.change === 'change_required')
-        .map(item => item.id)
-        .sort()
-    ).toEqual(
-      ['empty-public-title-apply-fallback', 'recruit-detailinfo-reseed-gap'].sort()
-    )
+      OVERLAY_PHASE0_KNOWN_DIFFS.filter(item => item.change === 'change_required').map(
+        item => item.id
+      )
+    ).toEqual([])
   })
 
   it('1. 필드 미변경 PATCH omit 이 최종 JSON 에도 유지된다', () => {
