@@ -51,6 +51,17 @@ export function peekGeneralRecruitOverlayRecord(
   return mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
 }
 
+/**
+ * 일반 위저드 라이브 읽기. 활성 overlay 스코프가 다른 모집 탭이어도
+ * RHF recruitmentKv 의 선택 참여자 키를 유지한다.
+ */
+export function readLiveGeneralRecruitOverlayRecord(): Record<string, unknown> {
+  if (peekGeneralRegistrationWizardRhf() != null) {
+    return mergeWizardRecruitmentIntoOverlayRecord(store.getRecord(), null)
+  }
+  return store.getRecord()
+}
+
 export function replaceGeneralRecruitOverlayForScope(
   templateCode: string | undefined | null,
   next: Record<string, unknown>

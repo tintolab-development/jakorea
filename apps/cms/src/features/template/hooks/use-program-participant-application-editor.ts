@@ -182,8 +182,10 @@ import {
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
+  readLiveGeneralRecruitOverlayRecord,
   subscribeGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { subscribeGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import {
   beginRecruitDetailContentReset,
   commitRecruitDetailContentReset,
@@ -257,11 +259,19 @@ function subscribeNoop(_listener: () => void): () => void {
 }
 
 function subscribeVolunteerInterviewRequiredOverlay(listener: () => void): () => void {
-  return subscribeGeneralRecruitOverlayKey(VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY, listener)
+  const unsubOverlay = subscribeGeneralRecruitOverlayKey(
+    VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY,
+    listener
+  )
+  const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+  return () => {
+    unsubOverlay()
+    unsubRhf()
+  }
 }
 
 function getVolunteerInterviewRequiredSnapshot(): unknown {
-  return getGeneralRecruitOverlayRecord()[VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY]
+  return readLiveGeneralRecruitOverlayRecord()[VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY]
 }
 
 function useParticipantApplicationMiddleActions(
@@ -545,7 +555,7 @@ function restoreParticipantOverlayForVariant(
         applyOperationalOverlayForCatalogId(overlayId, overlay)
       } else {
         const live = isGeneralRecruitOverlayVariant(variant)
-          ? getGeneralRecruitOverlayRecord()
+          ? readLiveGeneralRecruitOverlayRecord()
           : getGeneralApplicationOverlayRecord()
         const patch = overlayEntriesAbsentFromLive(overlay, live)
         if (Object.keys(patch).length === 0) return
