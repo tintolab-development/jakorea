@@ -8,7 +8,7 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
-import { readUjatPortalBannerState } from '../lib/ujat-portal-banner'
+import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
 import type {
   EducationApplicationListItem,
@@ -202,6 +202,7 @@ export function mapPortalProgramApplicationListItem(
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
+  const ujatRevisionReason = readUjatRevisionReason(row.supplement)
 
   return {
     id: String(row.applicationId),
@@ -223,6 +224,7 @@ export function mapPortalProgramApplicationListItem(
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
+    ...(ujatRevisionReason ? { ujatRevisionReason } : {}),
   }
 }
 

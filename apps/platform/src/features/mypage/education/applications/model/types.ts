@@ -144,6 +144,8 @@ export type EducationApplicationListItem = {
    * 재계산하지 않고 서버 값만 전달한다.
    */
   ujatPortalBannerState?: UjatPortalBannerState
+  /** CMS 일정 수정 요청 본문 — `supplement.ujat` 문자열 필드 */
+  ujatRevisionReason?: string
   /** 교사 UJAT 신청 내용 탭 — 학년별 신청·수업시간 */
   ujatApplicationContent?: EducationUjatApplicationContent
 }

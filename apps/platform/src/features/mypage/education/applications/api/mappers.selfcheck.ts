@@ -39,6 +39,26 @@ const ujatOrg = mapPortalProgramApplicationDetail({
 assert.ok(ujatOrg)
 assert.equal(ujatOrg.detailCase, 'ujat-participant')
 assert.equal(ujatOrg.ujatPortalBannerState, 'ACTION_REQUIRED')
+assert.equal(ujatOrg.ujatRevisionReason, undefined)
+
+const ujatRevision = mapPortalProgramApplicationDetail({
+  applicationId: 1691622,
+  applicationType: 'ORGANIZATION',
+  programId: 186292,
+  programTitle: 'UJAT 기관 수정요청',
+  programGroup: 'UJAT',
+  applicationStatus: 'SUBMITTED',
+  displayStatus: '진행 중',
+  supplement: {
+    ujat: {
+      portalBannerState: 'REVISION_REQUIRED',
+      revisionReason: '기간에 대한 협의가 필요합니다.',
+    },
+  },
+})
+assert.ok(ujatRevision)
+assert.equal(ujatRevision.ujatPortalBannerState, 'REVISION_REQUIRED')
+assert.equal(ujatRevision.ujatRevisionReason, '기간에 대한 협의가 필요합니다.')
 assert.equal(ujatOrg.displayStatus, 'waiting_result')
 
 const missingRootIdentity = mapPortalProgramApplicationDetail({
