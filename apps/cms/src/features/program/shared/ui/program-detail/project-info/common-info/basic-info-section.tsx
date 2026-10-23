@@ -121,7 +121,13 @@ function CompanySchoolFixedParticipantTypes() {
 }
 
 function TrainedTeachersFixedParticipantTypes() {
-  return <LockedParticipantTypeCheckboxes organization teacherInstructorLabel="교사/강사" />
+  return (
+    <LockedParticipantTypeCheckboxes
+      organization
+      teacherInstructor
+      teacherInstructorLabel="교사/강사"
+    />
+  )
 }
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
@@ -164,6 +170,8 @@ export interface BasicInfoSectionProps {
   hideEducationPlace?: boolean
   /** 교육받은 교사 — 공고용 프로그램명 placeholder (위저드 카피) */
   announcementTitlePlaceholder?: string
+  /** 교육받은 교사 — 교재명 독립 입력 (세부 프로그램명과 분리) */
+  enableTextbookNameEdit?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -232,6 +240,7 @@ export function BasicInfoSection({
   hideFormTitles = false,
   hideEducationPlace = false,
   announcementTitlePlaceholder = '공고용 프로그램명을 입력하세요',
+  enableTextbookNameEdit = false,
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
@@ -295,6 +304,7 @@ export function BasicInfoSection({
             sponsorName: sponsor.name,
             contactName: contact.name,
             position: contact.position,
+            phone: contact.phone,
             multiSponsor: true,
           }),
           sponsorId: sponsor.id,
@@ -631,6 +641,30 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          {enableTextbookNameEdit ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="교재명"
+                fullRow
+                view={program.textbookName?.trim() || '-'}
+                edit={
+                  <Controller
+                    name="textbookName"
+                    control={commonInfoForm.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        inputSize="small"
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="교재명을 입력하세요"
+                        width="100%"
+                      />
+                    )}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="사업 운영 기간"
@@ -686,8 +720,10 @@ export function BasicInfoSection({
               view={
                 isEconomyCommonInfo ? (
                   <CompanySchoolFixedParticipantTypes />
+                ) : fixedParticipantTypeLabel != null ? (
+                  <TrainedTeachersFixedParticipantTypes />
                 ) : (
-                  (fixedParticipantTypeLabel ?? formatCompanySchoolParticipantTypes(program))
+                  formatCompanySchoolParticipantTypes(program)
                 )
               }
               edit={

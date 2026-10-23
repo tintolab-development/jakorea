@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import {
   applyTrainedTeachersProgressGroupsToScheduleDetails,
   buildTrainedTeachersCommonInfoSaveSlices,
   buildTrainedTeachersNestedCommonInfo,
   omitTrainedTeacherStaleSessionOverlayKeys,
+  rebuildTrainedTeachersDraftForTypeChange,
   resolveTrainedTeachersCanonicalCommonInfo,
+  resolveTrainedTeachersDetailedProgramForStructure,
 } from './common-info-persist'
 import { serializeTrainedTeacherServiceDetailJson } from '@/features/program/trained-teachers/api/service-detail-json'
 import { mapTrainedTeacherInfoSaveToRequest } from '@/features/program/trained-teachers/api/info-detail-adapters'
@@ -41,6 +44,66 @@ describe('buildTrainedTeachersNestedCommonInfo', () => {
       curriculumSessions: [],
       scheduleDetails: [{ scheduleLabel: '행사 일정 01', name: '행사' }],
     })
+  })
+})
+
+describe('rebuildTrainedTeachersDraftForTypeChange', () => {
+  it('커리큘럼·복수면 1회차 한 행과 빈 일정을 만든다', () => {
+    expect(
+      rebuildTrainedTeachersDraftForTypeChange({
+        educationStructure: 'curriculum',
+        sessionRound: 'multi',
+      })
+    ).toEqual({
+      curriculumSessions: [{ sessionLabel: '1회차', title: '', description: '' }],
+      scheduleDetails: [],
+      progressGroupsByDetail: [],
+    })
+  })
+
+  it('일정·단일이면 세부 일정 한 행과 빈 커리큘럼을 만든다', () => {
+    expect(
+      rebuildTrainedTeachersDraftForTypeChange({
+        educationStructure: 'schedule',
+        sessionRound: 'single',
+      })
+    ).toEqual({
+      curriculumSessions: [],
+      scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '' }],
+      progressGroupsByDetail: [['']],
+    })
+  })
+})
+
+describe('resolveTrainedTeachersDetailedProgramForStructure', () => {
+  it('일정형은 해당없음 센티널을 넣는다', () => {
+    expect(
+      resolveTrainedTeachersDetailedProgramForStructure({
+        nextStructure: 'schedule',
+        currentDetailedProgramId: '163009',
+      })
+    ).toEqual({
+      detailedProgramId: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+      detailedProgramName: '해당없음',
+    })
+  })
+
+  it('커리큘럼형으로 돌아올 때 해당없음 센티널만 비운다', () => {
+    expect(
+      resolveTrainedTeachersDetailedProgramForStructure({
+        nextStructure: 'curriculum',
+        currentDetailedProgramId: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+      })
+    ).toEqual({ detailedProgramId: '', detailedProgramName: '' })
+  })
+
+  it('커리큘럼형에서 실제 마스터 id는 유지한다', () => {
+    expect(
+      resolveTrainedTeachersDetailedProgramForStructure({
+        nextStructure: 'curriculum',
+        currentDetailedProgramId: '163009',
+      })
+    ).toBeNull()
   })
 })
 
@@ -276,5 +339,19 @@ describe('buildTrainedTeachersCommonInfoSaveSlices', () => {
       scheduleDetails: [],
     })
     expect(slices.infoDetailCommonInfo).toEqual(slices.extraCommonInfo)
+  })
+
+  it('일정형으로 바꾸면 커리큘럼 nested를 명시 빈 배열로 보낸다', () => {
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'schedule',
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      curriculumSessions: [{ sessionLabel: '1회차', title: 'stale', description: '' }],
+      scheduleDetails: [{ scheduleLabel: '행사 일정 01', name: '행사' }],
+    })
+    expect(slices.extraCommonInfo.curriculumSessions).toEqual([])
+    expect(slices.extraCommonInfo.scheduleDetails).toEqual([
+      { scheduleLabel: '행사 일정 01', name: '행사' },
+    ])
   })
 })

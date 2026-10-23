@@ -135,16 +135,9 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
       '02-000-0000'
     )
     expect(programsDetail.program?.generalCommonInfo?.kpi?.finalParticipants).toBe(30)
-    expect(programsDetail.program?.generalCommonInfo?.curriculumSessions).toEqual([
-      expect.objectContaining({
-        educationFormLabel: '오프라인',
-        ipsTypeSummary: '일정 공통 | Inspire | 학교',
-      }),
-      expect.objectContaining({
-        educationFormLabel: '오프라인',
-        ipsTypeSummary: '일정 공통 | Inspire | 학교',
-      }),
-    ])
+    expect(programsDetail.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
+    expect(infoRequest.configJson).toContain('오프라인')
+    expect(infoRequest.configJson).toContain('일정 공통 | Inspire | 학교')
     expect(infoRequest.configJson).not.toContain('announcementTitle')
     expect(infoRequest.configJson).not.toContain('finalParticipants')
 
@@ -169,7 +162,7 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
     )
   })
 
-  it('일정별 상이 교육 형태는 행 값을 유지한 채 A에 실린다', () => {
+  it('일정별 상이 교육 형태는 행 값을 유지한 채 B에 실린다', () => {
     const existing = baseProgram()
     const curriculumSessions = stampTrainedTeachersSessionFields(
       existing.generalCommonInfo?.curriculumSessions,
@@ -180,26 +173,30 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
         ipsTypeSummary: '일정 공통 | Inspire | 학교',
       }
     )
-    const request = mapTrainedTeacherToUpdateRequest(existing, {
+    const aRequest = mapTrainedTeacherToUpdateRequest(existing, {
       generalCommonInfo: {
         ...existing.generalCommonInfo,
         educationFormScheduleDetail: 'perSchedule',
         curriculumSessions,
       },
     })
-    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+    const bRequest = mapTrainedTeacherInfoSaveToRequest({
+      commonInfo: {
+        ...existing.generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule',
+        curriculumSessions,
+      },
+    })
+    const aDetail = JSON.parse(aRequest.serviceDetailJson ?? '{}') as {
       program?: {
         generalCommonInfo?: {
           curriculumSessions?: Array<{ educationFormLabel?: string }>
         }
       }
     }
-    expect(detail.program?.generalCommonInfo?.curriculumSessions?.[0]?.educationFormLabel).toBe(
-      '오프라인'
-    )
-    expect(detail.program?.generalCommonInfo?.curriculumSessions?.[1]?.educationFormLabel).toBe(
-      '온라인'
-    )
+    expect(aDetail.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
+    expect(bRequest.configJson).toContain('"educationFormLabel":"오프라인"')
+    expect(bRequest.configJson).toContain('"educationFormLabel":"온라인"')
   })
 
   it('설문 keys·overlay가 serialize → parse 왕복에서 유지된다', () => {

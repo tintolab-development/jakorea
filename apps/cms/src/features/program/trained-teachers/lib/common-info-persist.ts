@@ -7,6 +7,7 @@ import type {
   GeneralProgramScheduleDetailRow,
   Program,
 } from '@/types/domain'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from './is-trained-teachers-primary-program'
 
 /** 전환된 공통정보 overlay — persist·hydrate 에서 source 로 쓰지 않는다. */
@@ -90,6 +91,65 @@ export function buildTrainedTeachersNestedCommonInfo(args: {
   }
 }
 
+export function emptyTrainedTeachersScheduleDetail(
+  sessionRound: 'single' | 'multi'
+): GeneralProgramScheduleDetailRow {
+  return {
+    scheduleLabel: sessionRound === 'multi' ? '행사 일정 01' : '세부 일정 01',
+    name: '',
+  }
+}
+
+export function emptyTrainedTeachersCurriculumSession(
+  sessionRound: 'single' | 'multi'
+): GeneralProgramCurriculumSessionRow {
+  return {
+    sessionLabel: sessionRound === 'multi' ? '1회차' : '1차시',
+    title: '',
+    description: '',
+  }
+}
+
+/** 구조·회차 변경 시 활성 nested를 기본 1행으로 교체하고 비활성 쪽은 []. */
+export function rebuildTrainedTeachersDraftForTypeChange(input: {
+  educationStructure: 'curriculum' | 'schedule'
+  sessionRound: 'single' | 'multi'
+}): {
+  curriculumSessions: GeneralProgramCurriculumSessionRow[]
+  scheduleDetails: GeneralProgramScheduleDetailRow[]
+  progressGroupsByDetail: string[][]
+} {
+  if (input.educationStructure === 'schedule') {
+    return {
+      curriculumSessions: [],
+      scheduleDetails: [emptyTrainedTeachersScheduleDetail(input.sessionRound)],
+      progressGroupsByDetail: [['']],
+    }
+  }
+  return {
+    curriculumSessions: [emptyTrainedTeachersCurriculumSession(input.sessionRound)],
+    scheduleDetails: [],
+    progressGroupsByDetail: [],
+  }
+}
+
+/** 일정형 → 세부 프로그램 「해당없음」. 커리큘럼형으로 돌아올 때 센티널만 비운다. */
+export function resolveTrainedTeachersDetailedProgramForStructure(args: {
+  nextStructure: 'curriculum' | 'schedule'
+  currentDetailedProgramId?: string
+}): { detailedProgramId: string; detailedProgramName: string } | null {
+  if (args.nextStructure === 'schedule') {
+    return {
+      detailedProgramId: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+      detailedProgramName: '해당없음',
+    }
+  }
+  if (args.currentDetailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
+    return { detailedProgramId: '', detailedProgramName: '' }
+  }
+  return null
+}
+
 function isConvertedOverlayKey(key: string): boolean {
   if ((TRAINED_TEACHER_OVERLAY_KEEP_EXACT as readonly string[]).includes(key)) {
     return false
@@ -165,6 +225,29 @@ export function resolveTrainedTeachersCanonicalCommonInfo(
       ? nested.scheduleDetails
       : undefined,
   }
+}
+
+/** B PATCH (`trained-teacher/detail`) 전용. A programs JSON 에는 넣지 않는다. */
+export const TRAINED_TEACHER_INFO_DETAIL_OWNED_COMMON_INFO_KEYS = [
+  'curriculumSessions',
+  'scheduleDetails',
+  'educationScheduleLines',
+  'educationScheduleMode',
+  'educationScheduleRange',
+  'teacherTrainingEnabled',
+  'educationJournalEnabled',
+  'teacherTrainingScheduleName',
+] as const
+
+export function omitTrainedTeacherInfoDetailOwnedCommonInfo(
+  common: Program['generalCommonInfo'] | undefined
+): Program['generalCommonInfo'] | undefined {
+  if (!common) return common
+  const next = { ...common } as Record<string, unknown>
+  for (const key of TRAINED_TEACHER_INFO_DETAIL_OWNED_COMMON_INFO_KEYS) {
+    delete next[key]
+  }
+  return next as NonNullable<Program['generalCommonInfo']>
 }
 
 export type TrainedTeachersCommonInfoSaveSlices = {

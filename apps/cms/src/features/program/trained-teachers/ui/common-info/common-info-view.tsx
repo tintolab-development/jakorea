@@ -12,7 +12,7 @@
  * - 일정형 복수: ■ 행사 일정 NN(일정명/진행 일정) — 교육 진행 일정 설정 섹션 비노출
  * - 교육 연수 ON: 첫 진행 항목 타이틀·일정명 교육 연수 치환 (IPS Prepare 고정)
  *
- * 수정 모드: 기본 정보(form) · KPI 인풋 · 교육일지 라디오 · 차시/회차/일정 추가·삭제 · 교육 연수 토글 · 진행 그룹 구분 추가
+ * 수정 모드: 기본 정보(form) · 유형 설정(구조·회차) · 교육일지 라디오 · 차시/회차/일정 추가·삭제 · 교육 연수 토글 · 진행 그룹 구분 추가
  * (진행 그룹은 전 테이블 동시 적용).
  * remote OFF 시 KPI/커리큘럼은 컴포넌트 로컬 오버레이 · 기본 정보는 `onBeforePersist`(programs PATCH).
  * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail` (+ `onBeforePersist`).
@@ -74,9 +74,16 @@ import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   ProgramRegistrationIpsTypeFields,
+  PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
-import type { ProgramRegistrationIpsCategory } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import {
+  PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS,
+  PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
+  PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
+  type ProgramRegistrationIpsCategory,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import { buildSessionIpsTypeSummary } from '@/features/program/general/model/common-info-edit-schema'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -116,25 +123,6 @@ interface TrainedTeachersCommonInfoDraft {
   progressGroupsByDetail: string[][]
 }
 
-function emptyScheduleDetail(
-  sessionRound: 'single' | 'multi'
-): GeneralProgramScheduleDetailRow {
-  return {
-    scheduleLabel: sessionRound === 'multi' ? '행사 일정 01' : '세부 일정 01',
-    name: '',
-  }
-}
-
-function emptyCurriculumSession(
-  sessionRound: 'single' | 'multi'
-): GeneralProgramCurriculumSessionRow {
-  return {
-    sessionLabel: sessionRound === 'multi' ? '1회차' : '1차시',
-    title: '',
-    description: '',
-  }
-}
-
 function progressGroupLetter(index: number): string {
   return String.fromCharCode('A'.charCodeAt(0) + index)
 }
@@ -171,23 +159,15 @@ export function seedDraft(
   commonInfo: TrainedTeachersCommonInfo,
   educatedTeachers: number | undefined,
   totals: { totalParticipants?: number; participatingSchoolCount?: number } | undefined,
-  typeFields: {
+  _typeFields: {
     educationStructure: 'curriculum' | 'schedule'
     sessionRound: 'single' | 'multi'
   }
 ): TrainedTeachersCommonInfoDraft {
-  let scheduleDetails = (commonInfo.scheduleDetails ?? []).map(detail => ({ ...detail }))
-  let curriculumSessions = (commonInfo.curriculumSessions ?? []).map(session => ({
+  const scheduleDetails = (commonInfo.scheduleDetails ?? []).map(detail => ({ ...detail }))
+  const curriculumSessions = (commonInfo.curriculumSessions ?? []).map(session => ({
     ...session,
   }))
-
-  // 일정/차시 테이블 최소 1개 — 저장된 값이 없어도 구조에 맞는 빈 행 노출
-  if (typeFields.educationStructure === 'schedule' && scheduleDetails.length === 0) {
-    scheduleDetails = [emptyScheduleDetail(typeFields.sessionRound)]
-  }
-  if (typeFields.educationStructure === 'curriculum' && curriculumSessions.length === 0) {
-    curriculumSessions = [emptyCurriculumSession(typeFields.sessionRound)]
-  }
 
   // 그룹 수는 전 테이블 공통 — 최대 그룹 수 기준으로 정규화
   const parsedGroups = scheduleDetails.map(detail =>
@@ -296,6 +276,114 @@ function PipeSeparatedInlineView({ text }: { text: string | undefined | null }) 
   return renderDetailInfoPipeSeparated(text)
 }
 
+function ipsValueFromRowSummary(summary: string | undefined): ProgramRegistrationIpsTypeValue {
+  const text = summary?.trim() ?? ''
+  if (!text || text === '-') return PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT
+  const parts = text
+    .split(/\s*\|\s*/)
+    .map(part => part.trim())
+    .filter(part => part && part !== '일정 공통' && part !== '일정 별 상이')
+  const categoryPart =
+    parts.find(part => /inspire|prepare|succeed/i.test(part)) ?? parts[0] ?? ''
+  const category = PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS.find(option =>
+    categoryPart.toLowerCase().includes(option.value)
+  )?.value
+  if (!category) return PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT
+  const detailPart = parts[parts.length - 1] ?? ''
+  if (category === 'prepare' || /해당/.test(detailPart)) {
+    return { category, detail: 'none' }
+  }
+  const options =
+    category === 'inspire'
+      ? PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS
+      : PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS
+  const matched = options.find(
+    option =>
+      option.value !== 'none' &&
+      (detailPart === option.label || detailPart.includes(option.label))
+  )
+  return { category, detail: matched?.value ?? 'none' }
+}
+
+function PerScheduleIpsTypeField({
+  summary,
+  isFormEdit,
+  fullRow,
+  disabled,
+  onChange,
+}: {
+  summary?: string
+  isFormEdit: boolean
+  fullRow?: boolean
+  disabled?: boolean
+  onChange?: (nextSummary: string) => void
+}) {
+  const value = disabled
+    ? PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT
+    : ipsValueFromRowSummary(summary)
+  const viewText = disabled ? TEACHER_TRAINING_IPS_SUMMARY : summary?.trim() || '-'
+  return (
+    <DetailInfoForm.Field
+      label="IPS 유형"
+      fullRow={fullRow}
+      view={<PipeSeparatedInlineView text={viewText} />}
+      edit={
+        isFormEdit ? (
+          <ProgramRegistrationIpsTypeFields
+            layout="inline"
+            disabled={disabled}
+            value={value}
+            onChange={next => {
+              if (disabled) return
+              onChange?.(buildSessionIpsTypeSummary(next.category, next.detail))
+            }}
+          />
+        ) : undefined
+      }
+    />
+  )
+}
+
+function PerScheduleEducationFormField({
+  valueLabel,
+  isFormEdit,
+  fullRow,
+  onChange,
+}: {
+  valueLabel?: string
+  isFormEdit: boolean
+  fullRow?: boolean
+  onChange?: (nextLabel: string) => void
+}) {
+  const options = getProgramRegistrationEducationFormOptions(true, { context: 'perScheduleBlock' })
+  const value = options.find(option => option.label === valueLabel)?.value ?? 'online'
+  return (
+    <DetailInfoForm.Field
+      label="교육 형태"
+      fullRow={fullRow}
+      view={valueLabel?.trim() || '-'}
+      edit={
+        isFormEdit ? (
+          <CmsRadioGroup
+            size="medium"
+            value={value}
+            onChange={e => {
+              const next = options.find(option => option.value === String(e.target.value))
+              onChange?.(next?.label ?? '')
+            }}
+          >
+            {options.map(option => (
+              <CmsRadio size="medium" key={option.value} value={option.value}>
+                {option.label}
+              </CmsRadio>
+            ))}
+          </CmsRadioGroup>
+        ) : undefined
+      }
+    />
+  )
+}
+
 /** 프로그램 유형 설정 — 수정 모드: 라디오·IPS 후속 셀렉트 / 조회: 라벨 */
 function TrainedTeachersTypeSettingsSection({
   educationStructure,
@@ -368,10 +456,12 @@ function TrainedTeachersTypeSettingsSection({
           <DetailInfoForm.Field
             label="교육 진행 구조"
             view={GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS[educationStructure]}
+            readOnlyDisplay={isFormEdit}
           />
           <DetailInfoForm.Field
             label="수업 회차 유형"
             view={GENERAL_PROGRAM_SESSION_ROUND_LABELS[sessionRound]}
+            readOnlyDisplay={isFormEdit}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -726,11 +816,12 @@ function SingleRoundSessionBlock({
           </DetailInfoForm.Row>
           {showIpsRow ? (
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="IPS 유형"
+              <PerScheduleIpsTypeField
+                summary={ipsSummary}
+                isFormEdit={isFormEdit}
                 fullRow
-                readOnlyDisplay={isFormEdit}
-                view={<PipeSeparatedInlineView text={ipsSummary} />}
+                disabled={ipsSummaryOverride != null}
+                onChange={nextSummary => onChange?.({ ipsTypeSummary: nextSummary })}
               />
             </DetailInfoForm.Row>
           ) : null}
@@ -823,33 +914,35 @@ function MultiRoundSessionBlock({
           </DetailInfoForm.Row>
           {showEducationPerRound && showIpsRow ? (
             <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="교육 형태"
-                readOnlyDisplay={isFormEdit}
-                view={session.educationFormLabel ?? '-'}
+              <PerScheduleEducationFormField
+                valueLabel={session.educationFormLabel}
+                isFormEdit={isFormEdit}
+                onChange={nextLabel => onChange?.({ educationFormLabel: nextLabel })}
               />
-              <DetailInfoForm.Field
-                label="IPS 유형"
-                readOnlyDisplay={isFormEdit}
-                view={<PipeSeparatedInlineView text={ipsSummary} />}
+              <PerScheduleIpsTypeField
+                summary={ipsSummary}
+                isFormEdit={isFormEdit}
+                disabled={ipsSummaryOverride != null}
+                onChange={nextSummary => onChange?.({ ipsTypeSummary: nextSummary })}
               />
             </DetailInfoForm.Row>
           ) : showEducationPerRound ? (
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="교육 형태"
+              <PerScheduleEducationFormField
+                valueLabel={session.educationFormLabel}
+                isFormEdit={isFormEdit}
                 fullRow
-                readOnlyDisplay={isFormEdit}
-                view={session.educationFormLabel ?? '-'}
+                onChange={nextLabel => onChange?.({ educationFormLabel: nextLabel })}
               />
             </DetailInfoForm.Row>
           ) : showIpsRow ? (
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="IPS 유형"
+              <PerScheduleIpsTypeField
+                summary={ipsSummary}
+                isFormEdit={isFormEdit}
                 fullRow
-                readOnlyDisplay={isFormEdit}
-                view={<PipeSeparatedInlineView text={ipsSummary} />}
+                disabled={ipsSummaryOverride != null}
+                onChange={nextSummary => onChange?.({ ipsTypeSummary: nextSummary })}
               />
             </DetailInfoForm.Row>
           ) : null}
@@ -898,13 +991,7 @@ function TrainedTeachersCurriculumSection({
         [
           ...d.curriculumSessions,
           isMulti
-            ? {
-                sessionLabel: '',
-                title: '1',
-                description: '',
-                assignmentEnabled: false,
-                assignmentPeriod: '',
-              }
+            ? { sessionLabel: '', title: '1', description: '' }
             : { sessionLabel: '', title: '', description: '' },
         ],
         isMulti
@@ -969,7 +1056,7 @@ function TrainedTeachersCurriculumSection({
             session={session}
             heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
             ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
-            showEducationPerRound={showEducationPerRound}
+            showEducationPerRound={showEducationPerRound && !isTeacherTrainingBlock}
             showIpsPerRound={showIpsPerRound}
             isFormEdit={isFormEdit}
             showDelete={sessions.length >= 2 && !isTeacherTrainingBlock}
@@ -1115,11 +1202,11 @@ function ScheduleDetailBlock({
             </DetailInfoForm.Row>
             {showIpsPerSchedule ? (
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="IPS 유형"
+                <PerScheduleIpsTypeField
+                  summary={detail.ipsTypeSummary}
+                  isFormEdit={isFormEdit}
                   fullRow
-                  readOnlyDisplay={isFormEdit}
-                  view={<PipeSeparatedInlineView text={detail.ipsTypeSummary} />}
+                  onChange={nextSummary => onChange?.({ ipsTypeSummary: nextSummary })}
                 />
               </DetailInfoForm.Row>
             ) : null}
@@ -1157,6 +1244,7 @@ function ScheduleEventBlock({
 }) {
   const ipsSummary = ipsSummaryOverride ?? detail.ipsTypeSummary
   const isTeacherTrainingBlock = heading != null
+  const showEducationForm = showEducationPerSchedule && !isTeacherTrainingBlock
   const scheduleRange = parseEducationScheduleLineToRange(detail.scheduleDateLabel)
   const scheduleWithTime = Boolean(
     scheduleRange?.[0] && (scheduleRange[0].hour() !== 0 || scheduleRange[0].minute() !== 0)
@@ -1229,35 +1317,37 @@ function ScheduleEventBlock({
                 }
               />
             </DetailInfoForm.Row>
-            {showEducationPerSchedule && showIpsPerSchedule ? (
+            {showEducationForm && showIpsPerSchedule ? (
               <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="교육 형태"
-                  readOnlyDisplay={isFormEdit}
-                  view={detail.educationFormLabel ?? '-'}
+                <PerScheduleEducationFormField
+                  valueLabel={detail.educationFormLabel}
+                  isFormEdit={isFormEdit}
+                  onChange={nextLabel => onChange?.({ educationFormLabel: nextLabel })}
                 />
-                <DetailInfoForm.Field
-                  label="IPS 유형"
-                  readOnlyDisplay={isFormEdit}
-                  view={<PipeSeparatedInlineView text={ipsSummary} />}
+                <PerScheduleIpsTypeField
+                  summary={ipsSummary}
+                  isFormEdit={isFormEdit}
+                  disabled={isTeacherTrainingBlock}
+                  onChange={nextSummary => onChange?.({ ipsTypeSummary: nextSummary })}
                 />
               </DetailInfoForm.Row>
-            ) : showEducationPerSchedule ? (
+            ) : showEducationForm ? (
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="교육 형태"
+                <PerScheduleEducationFormField
+                  valueLabel={detail.educationFormLabel}
+                  isFormEdit={isFormEdit}
                   fullRow
-                  readOnlyDisplay={isFormEdit}
-                  view={detail.educationFormLabel ?? '-'}
+                  onChange={nextLabel => onChange?.({ educationFormLabel: nextLabel })}
                 />
               </DetailInfoForm.Row>
             ) : showIpsPerSchedule ? (
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="IPS 유형"
+                <PerScheduleIpsTypeField
+                  summary={ipsSummary}
+                  isFormEdit={isFormEdit}
                   fullRow
-                  readOnlyDisplay={isFormEdit}
-                  view={<PipeSeparatedInlineView text={ipsSummary} />}
+                  disabled={isTeacherTrainingBlock}
+                  onChange={nextSummary => onChange?.({ ipsTypeSummary: nextSummary })}
                 />
               </DetailInfoForm.Row>
             ) : null}
@@ -1733,7 +1823,6 @@ export function TrainedTeachersCommonInfoView({
         : resolvedTypeFields.educationStructure
   const baseSessionRound = resolvedTypeFields.sessionRound
 
-  // 등록 후 교육 진행 구조·회차 유형은 고정. 회차 내용·일정·연수만 수정한다.
   const educationStructure = baseEducationStructure
   const sessionRound = baseSessionRound
 
@@ -1777,28 +1866,6 @@ export function TrainedTeachersCommonInfoView({
     }
   }, [isEditMode, form, baseEducationStructure, baseSessionRound])
 
-  // 유형 설정(교육 구조/회차) 변경 시 — 빈 테이블이면 최소 1행 보장 (기존 값 유지)
-  useLayoutEffect(() => {
-    if (!isEditMode) return
-    setDraft(current => {
-      if (!current) return current
-      if (educationStructure === 'schedule' && current.scheduleDetails.length === 0) {
-        return {
-          ...current,
-          scheduleDetails: [emptyScheduleDetail(sessionRound)],
-          progressGroupsByDetail: [['']],
-        }
-      }
-      if (educationStructure === 'curriculum' && current.curriculumSessions.length === 0) {
-        return {
-          ...current,
-          curriculumSessions: [emptyCurriculumSession(sessionRound)],
-        }
-      }
-      return current
-    })
-  }, [isEditMode, educationStructure, sessionRound])
-
   useEffect(() => {
     if (!isEditMode || !form || !draft) return
     form.setValue('trainedTeachersCurriculumSessions', draft.curriculumSessions, {
@@ -1816,8 +1883,7 @@ export function TrainedTeachersCommonInfoView({
     })
   }, [isEditMode, form, draft])
 
-  const handleSave = () => {
-    const run = async () => {
+  const runSave = async () => {
       setSaving(true)
       const endOverlay = beginBlockingOverlay()
       try {
@@ -1848,6 +1914,12 @@ export function TrainedTeachersCommonInfoView({
           })
         }
 
+        const persistStructure = baseEducationStructure
+        const persistRound = baseSessionRound
+        if (form) {
+          form.setValue('educationStructure', persistStructure, { shouldDirty: true })
+          form.setValue('sessionRound', persistRound, { shouldDirty: true })
+        }
         const formPatchForRows = form
           ? detailEditValuesToProgramPatch(form.getValues(), program)
           : undefined
@@ -1867,21 +1939,21 @@ export function TrainedTeachersCommonInfoView({
           draft?.progressGroupsByDetail ??
           []
         const nested = buildTrainedTeachersNestedCommonInfo({
-          educationStructure: baseEducationStructure,
+          educationStructure: persistStructure,
           curriculumSessions: stampTrainedTeachersSessionFields(sourceSessions, rowFields),
           scheduleDetails: stampTrainedTeachersSessionFields(
             sourceDetails
               ? applyTrainedTeachersProgressGroupsToScheduleDetails(
                   sourceDetails,
                   sourceGroups,
-                  baseSessionRound
+                  persistRound
                 )
               : undefined,
             rowFields
           ),
         })
         const slices = buildTrainedTeachersCommonInfoSaveSlices({
-          educationStructure: baseEducationStructure,
+          educationStructure: persistStructure,
           teacherTrainingEnabled: draft?.teacherTrainingEnabled === true,
           educationJournalEnabled: draft?.educationJournalEnabled === true,
           curriculumSessions: nested.curriculumSessions,
@@ -1894,8 +1966,8 @@ export function TrainedTeachersCommonInfoView({
 
         if (draft) {
           const draftValidationMessage = validateTrainedTeachersCommonInfoDraft({
-            educationStructure: baseEducationStructure,
-            sessionRound: baseSessionRound,
+            educationStructure: persistStructure,
+            sessionRound: persistRound,
             scheduleDetails: draft.scheduleDetails,
             progressGroupsByDetail: draft.progressGroupsByDetail,
             educationScheduleLines: form?.getValues('educationScheduleLines'),
@@ -1910,7 +1982,8 @@ export function TrainedTeachersCommonInfoView({
         }
 
         if (onBeforePersist) {
-          await onBeforePersist(draft ? slices.extraCommonInfo : undefined)
+          // A programs PATCH 는 RHF 기본정보만. 연수·일지·커리큘럼·일정은 B 전용.
+          await onBeforePersist()
         }
 
         if (draft) {
@@ -1974,11 +2047,14 @@ export function TrainedTeachersCommonInfoView({
         endOverlay()
         setSaving(false)
       }
-    }
-    void run()
+  }
+
+  const handleSave = () => {
+    void runSave()
   }
 
   return (
+    <>
     <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
       <div className="trained-teachers-common-info__header">
         <ProgramEditInfoActions
@@ -2010,8 +2086,9 @@ export function TrainedTeachersCommonInfoView({
             hideEducationPlace
             auditDateOnly
             hideFormTitles
-            fixedParticipantTypeLabel="학교/기관"
+            fixedParticipantTypeLabel="교사/강사"
             enableTitleEnEdit
+            enableTextbookNameEdit
             useDetailedProgramSelect
             announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력하세요"
             isEditMode={isEditMode}
@@ -2034,8 +2111,9 @@ export function TrainedTeachersCommonInfoView({
             hideEducationPlace
             auditDateOnly
             hideFormTitles
-            fixedParticipantTypeLabel="학교/기관"
+            fixedParticipantTypeLabel="교사/강사"
             enableTitleEnEdit
+            enableTextbookNameEdit
             useDetailedProgramSelect
             announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력하세요"
             isEditMode={isEditMode}
@@ -2047,8 +2125,8 @@ export function TrainedTeachersCommonInfoView({
       {/* 교육받은 교사 공통정보 기획 — 사업 KPI 목표 비노출 (다른 유형 KPI는 유지) */}
 
       <TrainedTeachersTypeSettingsSection
-        educationStructure={baseEducationStructure}
-        sessionRound={baseSessionRound}
+        educationStructure={educationStructure}
+        sessionRound={sessionRound}
         commonInfo={commonInfo}
         isEditMode={isEditMode}
         form={form}
@@ -2059,9 +2137,6 @@ export function TrainedTeachersCommonInfoView({
           sessionRound={sessionRound}
           commonInfo={{
             ...commonInfo,
-            ...(isEditMode && (commonInfo.curriculumSessions?.length ?? 0) === 0
-              ? { curriculumSessions: [emptyCurriculumSession(sessionRound)] }
-              : {}),
             ipsScheduleDetail:
               isEditMode && form
                 ? (form.watch('ipsScheduleDetail') ?? 'common')
@@ -2080,9 +2155,6 @@ export function TrainedTeachersCommonInfoView({
           sessionRound={sessionRound}
           commonInfo={{
             ...commonInfo,
-            ...(isEditMode && (commonInfo.scheduleDetails?.length ?? 0) === 0
-              ? { scheduleDetails: [emptyScheduleDetail(sessionRound)] }
-              : {}),
             ipsScheduleDetail:
               isEditMode && form
                 ? (form.watch('ipsScheduleDetail') ?? 'common')
@@ -2113,5 +2185,6 @@ export function TrainedTeachersCommonInfoView({
         form={form}
       />
     </div>
+    </>
   )
 }

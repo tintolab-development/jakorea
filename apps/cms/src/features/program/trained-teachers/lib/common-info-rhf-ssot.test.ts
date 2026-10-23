@@ -223,18 +223,27 @@ describe('교육받은 교사 공통정보 RHF SSOT', () => {
   })
 
   it('9-10. 후원사·세부 프로그램 canonical ID 를 overlay 과거 ID 로 덮지 않고 교재명과 독립이다', () => {
-    const program = getFixture({ textbookName: '교재명 유지' })
+    const program = getFixture({
+      textbookName: '1사1교 금융특강',
+      generalCommonInfo: {
+        ...getFixture().generalCommonInfo,
+        detailedProgramName: 'UJAT 사전교육',
+      },
+    })
     const values = programToDetailEditValues(program)
     expect(values.detailedProgramId).toBe('163009')
+    expect(values.detailedProgramName).toBe('UJAT 사전교육')
+    expect(values.textbookName).toBe('1사1교 금융특강')
     expect(values.sponsorManagementIds).toEqual(['1627253'])
     const patch = detailEditValuesToProgramPatch(
-      { ...values, detailedProgramId: '163009' },
+      { ...values, detailedProgramId: '163009', textbookName: '수정 교재명' },
       program
     )
     const request = mapTrainedTeacherToUpdateRequest(program, patch)
     expect(request.detailedProgramId).toBe(163009)
     expect(request.sponsorId).toBe('1627253')
-    expect(request.textbookName).toBe('교재명 유지')
+    expect(request.textbookName).toBe('수정 교재명')
+    expect(request.textbookName).not.toBe('UJAT 사전교육')
     expect(omitTrainedTeacherStaleSessionOverlayKeys(program.registrationOverlay)).not.toHaveProperty(
       'trainedTeachersRegistration.basicInfo.detailedProgramId'
     )
@@ -281,9 +290,15 @@ describe('교육받은 교사 공통정보 RHF SSOT', () => {
     expect(bRequest.teacherTrainingEnabled).toBe(true)
     expect(bRequest.educationJournalEnabled).toBe(false)
     const aDetail = JSON.parse(aRequest.serviceDetailJson ?? '{}') as {
-      program?: { generalCommonInfo?: { teacherTrainingEnabled?: boolean } }
+      program?: {
+        generalCommonInfo?: {
+          teacherTrainingEnabled?: boolean
+          curriculumSessions?: unknown[]
+        }
+      }
     }
-    expect(aDetail.program?.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
+    expect(aDetail.program?.generalCommonInfo?.teacherTrainingEnabled).toBeUndefined()
+    expect(aDetail.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
 
     const merged = mergeTrainedTeacherInfoDetailIntoProgram(
       { ...existing, ...patch, generalCommonInfo: { ...existing.generalCommonInfo, ...patch.generalCommonInfo, ...slices.extraCommonInfo } },
@@ -315,7 +330,7 @@ describe('교육받은 교사 공통정보 RHF SSOT', () => {
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('모집 비고')
   })
 
-  it('14. 등록 후 교육 구조·회차 유형 patch 는 기존 값을 유지한다', () => {
+  it('14. 교육 구조·회차 유형 patch 는 등록된 기존 값을 유지한다', () => {
     const program = getFixture({
       generalProgramEducationStructure: 'schedule',
       generalProgramSessionRound: 'single',
@@ -328,5 +343,11 @@ describe('교육받은 교사 공통정보 RHF SSOT', () => {
     const patch = detailEditValuesToProgramPatch(values, program)
     expect(patch.generalProgramEducationStructure).toBe('schedule')
     expect(patch.generalProgramSessionRound).toBe('single')
+    const request = mapTrainedTeacherToUpdateRequest(program, patch)
+    expect(request.educationStructure).toBe('SCHEDULE')
+    const json = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      program?: { generalProgramSessionRound?: string }
+    }
+    expect(json.program?.generalProgramSessionRound).toBe('single')
   })
 })
