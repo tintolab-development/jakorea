@@ -147,7 +147,10 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
-import { PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import {
+  PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE,
+  PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
+} from '@/shared/lib/program-edit-window-error-message'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE } from '@/features/template/lib/ujat-volunteer-notice-exposure'
@@ -1413,7 +1416,7 @@ export function UjatProgramDetailFullPageModal({
     activeRecruitTab === 'recruit_participant' &&
     editTab === 'recruit_participant' &&
     !!displayProgram &&
-    canEditInfo
+    canUjatRecruitmentInfoEdit(displayProgram, 'recruit_participant')
 
   const isEditModeRecruitVolunteer =
     open &&
@@ -1421,7 +1424,7 @@ export function UjatProgramDetailFullPageModal({
     (activeRecruitTab === 'recruit_volunteer_h1' || activeRecruitTab === 'recruit_volunteer_h2') &&
     editTab === activeRecruitTab &&
     !!displayProgram &&
-    canEditInfo
+    canUjatRecruitmentInfoEdit(displayProgram, activeRecruitTab)
 
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -1710,8 +1713,8 @@ export function UjatProgramDetailFullPageModal({
     if (!activeRecruitTab || !displayProgram) return
     if (!canUjatRecruitmentInfoEdit(displayProgram, activeRecruitTab)) {
       void showAlert({
-        title: '안내',
-        content: PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE,
+        title: PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE,
+        content: PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
       })
       return
     }
@@ -2836,7 +2839,7 @@ export function UjatProgramDetailFullPageModal({
               <UjatProgramRecruitmentTabsRow
                 activeTab={activeRecruitTab}
                 onSelectTab={selectRecruitTab}
-                canEdit={canEditInfo}
+                canEdit
                 isEditMode={isRecruitEditMode}
                 onEdit={handleRecruitmentEdit}
                 onCancel={handleRecruitmentCancel}

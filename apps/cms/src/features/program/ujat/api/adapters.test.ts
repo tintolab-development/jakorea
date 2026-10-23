@@ -804,6 +804,16 @@ describe('UJAT API policy', () => {
 })
 
 describe('mapUjatProgramRecruitmentsToRequest', () => {
+  it('봉사자 정원이 0이어도 maxCount를 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      ujatFirstHalfVolunteerCount: 0,
+      volunteerApplicationStartDate: '2026-03-01T00:00:00+09:00',
+      volunteerApplicationEndDate: '2026-03-31T00:00:00+09:00',
+    })
+    expect(rows?.find(row => row.recruitmentType === 'VOLUNTEER')?.maxCount).toBe(0)
+  })
+
   it('프로그램 봉사자 기간은 상반기 행에만 넣고 하반기 행은 보내지 않는다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
@@ -950,6 +960,69 @@ describe('buildUjatNewVolunteerHalfRowRequests', () => {
       announcementTitle: '하반기 모집',
     })
     expect(rows[0]).not.toHaveProperty('id')
+  })
+
+  it('상반기 모집이 시작해도 하반기 신규 행을 빼지 않는다', () => {
+    const rows = buildUjatNewVolunteerHalfRowRequests(
+      [
+        {
+          id: 10,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2020-01-01T00:00:00+09:00',
+          operationStartDate: '2020-02-01',
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-08-01T00:00:00',
+        },
+      ],
+      {
+        ...existing,
+        programRecruitments: [
+          {
+            id: 10,
+            recruitmentType: 'VOLUNTEER',
+            recruitTerm: 'FIRST_HALF',
+            startAt: '2020-01-01T00:00:00+09:00',
+            operationStartDate: '2020-02-01',
+          },
+        ],
+      }
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ recruitTerm: 'SECOND_HALF' })
+    expect(rows[0]).not.toHaveProperty('id')
+  })
+
+  it('하반기를 추가할 때 저장된 상반기 id를 함께 보낸다', () => {
+    const request = toUpdateRequest(existing, {
+      programRecruitments: [
+        ...(existing.programRecruitments ?? []),
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-08-01T00:00:00',
+        },
+      ],
+    })
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 10,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+        }),
+      ])
+    )
+    expect(request.recruitments?.find(row => row.recruitTerm === 'SECOND_HALF')).not.toHaveProperty(
+      'id'
+    )
   })
 
   it('이미 저장된 반기는 새 행으로 보내지 않는다', () => {

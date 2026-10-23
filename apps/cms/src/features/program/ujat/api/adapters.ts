@@ -44,13 +44,14 @@ import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/pu
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
-  isProgramOperationStartLocked,
+  isRecruitmentStartLocked,
   toProgramRecruitmentWindows,
 } from '@/features/program/shared/lib/program-edit-window'
 import {
   attachRecruitmentRowIdentity,
   buildRecruitmentRowCopyRequests,
   mergeRecruitmentRowRequests,
+  recruitmentRowIdentityRequests,
 } from '@/features/program/shared/lib/recruitment-row-request'
 import {
   resolveUjatRecruitAnnouncementTitle,
@@ -301,7 +302,7 @@ function recruitmentRow(input: {
     ...(input.endAt ? { endAt: input.endAt } : {}),
     ...(input.operationStartDate ? { operationStartDate: input.operationStartDate } : {}),
     ...(input.operationEndDate ? { operationEndDate: input.operationEndDate } : {}),
-    ...(input.maxCount != null && input.maxCount > 0 ? { maxCount: input.maxCount } : {}),
+    ...(input.maxCount != null ? { maxCount: input.maxCount } : {}),
     selectionMethod: 'ADMIN_REVIEW',
     ...(input.interviewEnabled === true ? { interviewEnabled: true } : {}),
     ...(input.interviewStartAt ? { interviewStartAt: input.interviewStartAt } : {}),
@@ -372,7 +373,6 @@ export function buildUjatNewVolunteerHalfRowRequests(
   rows: Program['programRecruitments'],
   existing: Program
 ): ProgramRecruitmentRequest[] {
-  if (isProgramOperationStartLocked(existing, 'VOLUNTEER')) return []
   const savedTerms = new Set(
     (existing.programRecruitments ?? []).map(row => row.recruitTerm).filter(Boolean)
   )
@@ -1088,17 +1088,18 @@ function patchRequest(
     const copyRows = buildRecruitmentRowCopyRequests(
       merged.programRecruitments,
       existing.programRecruitments,
-      row =>
-        row.recruitmentType === 'PARTICIPANT' || row.recruitmentType === 'VOLUNTEER'
-          ? isProgramOperationStartLocked(existing, row.recruitmentType)
-          : false
+      row => isRecruitmentStartLocked(row.startAt)
     )
     if (copyRows.length > 0) {
       body.recruitments = mergeRecruitmentRowRequests(body.recruitments ?? [], copyRows)
     }
     const newHalfRows = buildUjatNewVolunteerHalfRowRequests(merged.programRecruitments, existing)
     if (newHalfRows.length > 0) {
-      body.recruitments = [...(body.recruitments ?? []), ...newHalfRows]
+      body.recruitments = mergeRecruitmentRowRequests(
+        recruitmentRowIdentityRequests(existing.programRecruitments),
+        body.recruitments ?? [],
+        newHalfRows
+      )
     }
   }
   if (has('businessArea')) {
