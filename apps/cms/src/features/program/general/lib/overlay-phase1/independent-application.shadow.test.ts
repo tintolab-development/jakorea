@@ -191,7 +191,7 @@ describe('1. 참여기관 신청 catalog', () => {
 })
 
 describe('2. 개인 참여자 신청 catalog', () => {
-  it('teamInfo 정적·동적 키를 유지하고 institution 일정 키는 빠뜨린다 (known-diff)', () => {
+  it('teamInfo 정적·동적 키를 유지하고 institution 일정 키는 빠뜨린다', () => {
     const legacy = legacyCollect('application-participant-individual', individualOverlay)
     const independent = independentFromOverlay(individualOverlay, 'application-participant-individual')
     expect(independent.overlay).toEqual(legacy)
@@ -202,6 +202,16 @@ describe('2. 개인 참여자 신청 catalog', () => {
       'application.individual.teamInfo.teamRole': 'leader',
       'application.individual.teamInfo.customNote': '동적 키',
     })
+    expect(independent.overlay['application.institution.fixedScheduleSelected']).toBeUndefined()
+  })
+
+  it('개인 catalog 정본 일정 키는 Independent overlay에 남고 기관 키와 섞이지 않는다', () => {
+    const overlay = {
+      ...individualOverlay,
+      'application.individual.fixedScheduleSelected': ['slot-ind'],
+    }
+    const independent = independentFromOverlay(overlay, 'application-participant-individual')
+    expect(independent.overlay['application.individual.fixedScheduleSelected']).toEqual(['slot-ind'])
     expect(independent.overlay['application.institution.fixedScheduleSelected']).toBeUndefined()
   })
 })
@@ -271,6 +281,42 @@ describe('4. 봉사자 신청 catalog', () => {
     expect(
       Object.keys(independent.overlay).some(key => key.includes('exception.20'))
     ).toBe(false)
+    expect(
+      Object.keys(independent.localOverlay).some(key => key.includes('exception.20'))
+    ).toBe(false)
+  })
+
+  it('이전 localOverlay의 같은 catalog 삭제 키는 복원하지 않는다', () => {
+    const adapted = overlayKvToIndependentApplicationInput(volunteerOverlay)
+    const volunteer = adapted.formValues.volunteer
+    if (!volunteer || !isFieldPresent(volunteer.interviewExceptions)) throw new Error('expected exceptions')
+    const independent = buildIndependentApplicationDraft({
+      catalog: 'application-volunteer',
+      formValues: {
+        ...adapted.formValues,
+        volunteer: {
+          ...volunteer,
+          interviewExceptions: {
+            present: true as const,
+            value: volunteer.interviewExceptions.value.filter(block => block.blockId !== '20'),
+            persist: volunteer.interviewExceptions.value.filter(block => block.blockId !== '20'),
+          },
+        },
+      },
+      sidecars: {
+        ...adapted.sidecars,
+        previousLocalOverlay: {
+          'application.volunteer.interview.exception.20.exceptionDate': 'stale',
+          'application.instructor.selectedSlotIds': ['keep-other-catalog'],
+        },
+      },
+    })
+    expect(
+      independent.localOverlay['application.volunteer.interview.exception.20.exceptionDate']
+    ).toBeUndefined()
+    expect(independent.localOverlay['application.instructor.selectedSlotIds']).toEqual([
+      'keep-other-catalog',
+    ])
   })
 })
 

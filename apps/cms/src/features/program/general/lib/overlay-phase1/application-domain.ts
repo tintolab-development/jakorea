@@ -71,6 +71,7 @@ export const INDIVIDUAL_APPLICATION_STATIC_KEYS = {
   memberCountSelect: `${INDIVIDUAL_TEAM}.memberCountSelect`,
   customMemberCount: `${INDIVIDUAL_TEAM}.customMemberCount`,
   teamRole: `${INDIVIDUAL_TEAM}.teamRole`,
+  fixedScheduleSelected: `${INDIVIDUAL}.fixedScheduleSelected`,
 } as const
 
 export const INSTRUCTOR_APPLICATION_STATIC_KEYS = {
@@ -212,6 +213,11 @@ function serializeIndividual(values: IndividualApplicationValues): Record<string
   writePresent(out, INDIVIDUAL_APPLICATION_STATIC_KEYS.memberCountSelect, values.memberCountSelect)
   writePresent(out, INDIVIDUAL_APPLICATION_STATIC_KEYS.customMemberCount, values.customMemberCount)
   writePresent(out, INDIVIDUAL_APPLICATION_STATIC_KEYS.teamRole, values.teamRole)
+  writePresent(
+    out,
+    INDIVIDUAL_APPLICATION_STATIC_KEYS.fixedScheduleSelected,
+    values.fixedScheduleSelected
+  )
   writeExtraSuffixes(out, INDIVIDUAL_TEAM, values.extraTeamInfo)
   writeExtraSuffixes(out, INDIVIDUAL, values.extraOwned)
   return out
@@ -289,9 +295,17 @@ export function serializeIndependentApplicationFormValues(
 
 export function mergeIndependentApplicationLocalOverlay(
   previous: Record<string, unknown> | undefined,
-  catalogOverlay: Record<string, unknown>
+  catalogOverlay: Record<string, unknown>,
+  catalog?: ApplicationCatalog
 ): Record<string, unknown> {
-  return { ...(previous ?? {}), ...catalogOverlay }
+  const merged: Record<string, unknown> = { ...(previous ?? {}) }
+  if (catalog) {
+    const prefixes = applicationCatalogPrefixes(catalog)
+    for (const key of Object.keys(merged)) {
+      if (keyMatchesOperationalOverlayPrefixes(key, prefixes)) delete merged[key]
+    }
+  }
+  return { ...merged, ...catalogOverlay }
 }
 
 export function parseVolunteerInterviewExceptionKey(

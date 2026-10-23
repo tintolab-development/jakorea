@@ -90,7 +90,10 @@ import {
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
-import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
+import {
+  TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND,
+  useGeneralProgramCommonInfoSave,
+} from '@/features/program/general/hooks/use-common-info-save'
 import {
   EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
   EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
@@ -148,6 +151,7 @@ import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { ParticipantRecruitmentPreviewModal } from './info/participant-recruitment-preview-modal'
 import {
   GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX,
+  GENERAL_PROGRAM_DETAIL_STRUCTURE_CONFIRM_Z_INDEX,
 } from '@/features/program/general/lib/general-program-modal-z-index'
 import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
@@ -167,6 +171,7 @@ import {
   resolveGeneralProgramForRecruitmentEdit,
 } from '@/features/program/general/lib/general-program-recruitment-edit-seed'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { getProgramAdminDetailInfoTabUrlForProgramType } from '@/features/program/general/lib/program-admin-detail-url'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useUpdateTrainedTeacherProgram } from '@/features/program/trained-teachers/api/hooks'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -577,6 +582,18 @@ export function GeneralProgramDetailFullPageModal({
     if (base == null) return null
     return hydrateRecruitmentWindowsOntoProgram(applyGeneralProgramDetailSession(base))
   }, [detailProgram, program, programId, remoteEnabled])
+
+  useEffect(() => {
+    if (!open || !displayProgram) return
+    if (!isTrainedTeachersDetailProgram(displayProgram)) return
+    navigate(
+      getProgramAdminDetailInfoTabUrlForProgramType(
+        displayProgram.id,
+        displayProgram.backendProgramType ?? 'TRAINED_TEACHER'
+      ),
+      { replace: true }
+    )
+  }, [displayProgram, navigate, open])
 
   const strictRemoteRecruitment =
     shouldUseTrainedTeacherProgramsRemoteApi() &&
@@ -1050,6 +1067,16 @@ export function GeneralProgramDetailFullPageModal({
             title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
             content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
           }
+        } else if (result.kind === TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND) {
+          if (displayProgram) {
+            navigate(
+              getProgramAdminDetailInfoTabUrlForProgramType(
+                displayProgram.id,
+                displayProgram.backendProgramType ?? 'TRAINED_TEACHER'
+              ),
+              { replace: true }
+            )
+          }
         } else if (result.kind === 'api') {
           if (
             programId &&
@@ -1083,6 +1110,7 @@ export function GeneralProgramDetailFullPageModal({
     displayProgram,
     infoForm,
     infoTriggerSave,
+    navigate,
     programId,
     queryClient,
     setEditMode,
@@ -2527,6 +2555,7 @@ export function GeneralProgramDetailFullPageModal({
         open={structureChangeConfirmOpen}
         title={EDUCATION_STRUCTURE_CHANGE_CONFIRM_TITLE}
         content={EDUCATION_STRUCTURE_CHANGE_CONFIRM_MESSAGE}
+        zIndex={GENERAL_PROGRAM_DETAIL_STRUCTURE_CONFIRM_Z_INDEX}
         onConfirm={() => {
           void handleStructureChangeConfirm()
         }}

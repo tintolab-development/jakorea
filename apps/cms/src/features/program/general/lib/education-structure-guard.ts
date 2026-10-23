@@ -1,7 +1,7 @@
 export const EDUCATION_STRUCTURE_CHANGE_CONFIRM_TITLE = '교육구조 변경 안내'
 
 export const EDUCATION_STRUCTURE_CHANGE_CONFIRM_MESSAGE =
-  '교육구조를 변경하면 이전 교육구조에 입력한 회차 또는 일정 정보가 삭제됩니다. 변경하시겠습니까?'
+  '교육구조를 변경하면 이전 교육구조에 입력한 회차 또는 일정 정보가 삭제됩니다.\n변경하시겠습니까?'
 
 export const PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES = {
   PROGRAM_EDUCATION_STRUCTURE_RESET_REQUIRED:

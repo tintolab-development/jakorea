@@ -148,6 +148,7 @@ function readIndividual(overlay: Record<string, unknown>): IndividualApplication
   const extraTeam = extraOwnedFromKeys(scoped, P.individualTeam, INDIVIDUAL_TEAM_RESERVED)
   const reserved = new Set<string>([
     ...INDIVIDUAL_TEAM_RESERVED,
+    INDIVIDUAL_APPLICATION_STATIC_KEYS.fixedScheduleSelected,
     ...Object.keys(scoped).filter(key => key.startsWith(`${P.individualTeam}.`)),
   ])
   return {
@@ -164,6 +165,11 @@ function readIndividual(overlay: Record<string, unknown>): IndividualApplication
     ),
     teamRole: fieldFromKey(scoped, INDIVIDUAL_APPLICATION_STATIC_KEYS.teamRole, asStringOrNull),
     extraTeamInfo: extraTeam,
+    fixedScheduleSelected: fieldFromKey(
+      scoped,
+      INDIVIDUAL_APPLICATION_STATIC_KEYS.fixedScheduleSelected,
+      asArray
+    ),
     extraOwned: extraOwnedFromKeys(scoped, P.individual, reserved),
   }
 }

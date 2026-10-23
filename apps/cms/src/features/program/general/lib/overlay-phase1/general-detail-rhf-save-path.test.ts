@@ -135,11 +135,7 @@ describe('Phase 1-E 상세 공통정보 저장 경로', () => {
         .map(item => item.id)
         .sort()
     ).toEqual(
-      [
-        'empty-public-title-apply-fallback',
-        'individual-schedule-writes-institution-prefix',
-        'recruit-detailinfo-reseed-gap',
-      ].sort()
+      ['empty-public-title-apply-fallback', 'recruit-detailinfo-reseed-gap'].sort()
     )
   })
 

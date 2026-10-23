@@ -1,42 +1,35 @@
 /**
  * 일반 프로그램 상세 — 공통 정보 저장/리셋
  * RHF form.getValues() → Independent PATCH → nested-ssot serialize
+ *
+ * 교육받은 교사는 이 훅에서 overlay-first 저장하지 않는다.
+ * 전용 모달(`ProgramDetailFullPageModal` + nested persist)만 사용한다.
  */
 
 import { useCallback, useRef } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import {
-  generalCommonInfoEditValuesToProgramPatch,
   programToGeneralCommonInfoEditValues,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
-import {
-  hasCurriculumMultiDateScheduleCountMismatch,
-  listIncompleteGeneralProgramRegistrationRequiredFields,
-} from '@/features/program/general/lib/registration-required-fields'
 import {
   hasRhfCurriculumMultiDateScheduleCountMismatch,
   parseGeneralCommonInfoRhfValidation,
   type GeneralCommonInfoValidationAlertKind,
 } from '@/features/program/general/lib/overlay-phase1/common-info-rhf-validation'
 import { logGeneralProgramCommonInfoIndependentSave } from '@/features/program/general/lib/common-info-edit-payload-log'
-import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
-import {
-  generalRegistrationRequiredFieldContextFromDetailEdit,
-  getGeneralRegistrationDetailEditExtras,
-  readGeneralRegistrationOverlayForSave,
-  resyncGeneralRegistrationOverlayFromProgram,
-  writeGeneralRegistrationOverlayFromCommonInfoFormValues,
-} from '@/features/program/general/lib/registration-overlay-sync'
+import { writeGeneralRegistrationOverlayFromCommonInfoFormValues } from '@/features/program/general/lib/registration-overlay-sync'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
-import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
 import { createGeneralProgramCommonInfoIndependentSave } from '@/features/program/general/lib/overlay-phase1/common-info-independent-save'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+
+export const TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND =
+  'trained-teachers-dedicated-path' as const
 
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
@@ -49,6 +42,7 @@ export type GeneralProgramCommonInfoSaveResult =
       alertKind?: GeneralCommonInfoValidationAlertKind
     }
   | { ok: false; kind: 'schedule-count-mismatch' }
+  | { ok: false; kind: typeof TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND }
   | { ok: false; kind: 'api'; error: unknown }
 
 export interface UseGeneralProgramCommonInfoSaveOptions {
@@ -68,65 +62,6 @@ function collectDirtyFormKeys(dirtyFields: unknown): ReadonlySet<string> | undef
     return undefined
   }
   return new Set(Object.keys(dirtyFields as Record<string, unknown>))
-}
-
-function saveViaLegacyOverlayFirst(args: {
-  form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
-  program: Program
-  onSaveEdit: NonNullable<UseGeneralProgramCommonInfoSaveOptions['onSaveEdit']>
-  sponsorContext: ReturnType<typeof useGeneralProgramSponsorEditContext>
-  detailedProgramCatalog: ReturnType<typeof useDetailedProgramOptionsQuery>['data']
-  paymentItemOptions: ReturnType<typeof useProgramWagePaymentItemOptions>
-}): Promise<void> {
-  const extras = getGeneralRegistrationDetailEditExtras()
-  const overlay = readGeneralRegistrationOverlayForSave()
-  const appliedFromOverlay = applyGeneralRegistrationOverlayToProgram(
-    args.program,
-    overlay,
-    extras
-  )
-  const withType: Program = {
-    ...appliedFromOverlay,
-    generalProgramEducationStructure: extras.programType,
-    generalProgramSessionRound: extras.sessionRoundType,
-  }
-  const syncedOverlay = resyncGeneralRegistrationOverlayFromProgram(withType, overlay)
-  const persistedTargetLevels = resolvePersistedProgramTargetLevels(args.program)
-  const draftToSave: Program = {
-    ...withType,
-    registrationOverlay: syncedOverlay,
-    ...(persistedTargetLevels.length > 0
-      ? { targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
-      : {}),
-    updatedAt: new Date().toISOString(),
-  }
-  const valuesFromDraft = programToGeneralCommonInfoEditValues(
-    draftToSave,
-    args.sponsorContext,
-    args.detailedProgramCatalog
-  )
-  const patch = generalCommonInfoEditValuesToProgramPatch(
-    {
-      ...valuesFromDraft,
-      educationStructure: extras.programType,
-      sessionRound: extras.sessionRoundType,
-    },
-    draftToSave,
-    args.sponsorContext,
-    args.detailedProgramCatalog,
-    args.paymentItemOptions
-  )
-  return args.onSaveEdit(
-    draftToSave,
-    {
-      ...patch,
-      registrationOverlay: syncedOverlay,
-      generalProgramEducationStructure: extras.programType,
-      generalProgramSessionRound: extras.sessionRoundType,
-      ...(persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : {}),
-    },
-    args.program
-  )
 }
 
 export function useGeneralProgramCommonInfoSave({
@@ -149,83 +84,56 @@ export function useGeneralProgramCommonInfoSave({
     }
     savingRef.current = true
     try {
+      if (isTrainedTeachersDetailProgram(program)) {
+        return { ok: false, kind: TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND }
+      }
       const values = form.getValues()
       const changedFormKeys = collectDirtyFormKeys(dirtyFields)
-      const independent = isTrainedTeachersDetailProgram(program)
-        ? null
-        : createGeneralProgramCommonInfoIndependentSave({
-            values,
-            program,
-            context: sponsorContext,
-            detailedProgramCatalog,
-            paymentItemOptions,
-            changedFormKeys,
-          })
-
-      if (independent) {
-        const rhfValidation = parseGeneralCommonInfoRhfValidation(values)
-        logGeneralProgramCommonInfoIndependentSave({
-          programId: program.id,
-          values,
-          rhfValidation,
-          patch: independent.patch,
-        })
-        if (!rhfValidation.ok) {
-          if (typeof form.trigger === 'function') {
-            await form.trigger()
-          }
-          const firstPath = rhfValidation.issues[0]?.path
-          if (firstPath && firstPath.length > 0 && typeof form.setFocus === 'function') {
-            const name = firstPath
-              .filter(part => typeof part === 'string' || typeof part === 'number')
-              .join('.')
-            form.setFocus(name as never)
-          }
-          return {
-            ok: false,
-            kind: 'validation',
-            keys: rhfValidation.keys,
-            message: rhfValidation.message,
-            title: rhfValidation.title,
-            alertKind: rhfValidation.alertKind,
-          }
-        }
-        if (hasRhfCurriculumMultiDateScheduleCountMismatch(values)) {
-          return { ok: false, kind: 'schedule-count-mismatch' }
-        }
-        writeGeneralRegistrationOverlayFromCommonInfoFormValues(independent.programDraft)
-        await onSaveEdit(
-          independent.programDraft,
-          independent.patch,
-          program,
-          independent.serializeOptions
-        )
-        showUpdateCompletedAlert()
-        return { ok: true }
-      }
-
-      const extras = getGeneralRegistrationDetailEditExtras()
-      const overlay = readGeneralRegistrationOverlayForSave()
-      const requiredCtx = generalRegistrationRequiredFieldContextFromDetailEdit(overlay, extras)
-      const incompleteKeys = listIncompleteGeneralProgramRegistrationRequiredFields(
-        overlay,
-        requiredCtx
-      )
-      if (incompleteKeys.length > 0) {
-        return { ok: false, kind: 'validation', keys: incompleteKeys }
-      }
-      if (hasCurriculumMultiDateScheduleCountMismatch(overlay, requiredCtx)) {
-        return { ok: false, kind: 'schedule-count-mismatch' }
-      }
-
-      await saveViaLegacyOverlayFirst({
-        form,
+      const independent = createGeneralProgramCommonInfoIndependentSave({
+        values,
         program,
-        onSaveEdit,
-        sponsorContext,
+        context: sponsorContext,
         detailedProgramCatalog,
         paymentItemOptions,
+        changedFormKeys,
       })
+      const rhfValidation = parseGeneralCommonInfoRhfValidation(values)
+      logGeneralProgramCommonInfoIndependentSave({
+        programId: program.id,
+        values,
+        rhfValidation,
+        patch: independent.patch,
+      })
+      if (!rhfValidation.ok) {
+        if (typeof form.trigger === 'function') {
+          await form.trigger()
+        }
+        const firstPath = rhfValidation.issues[0]?.path
+        if (firstPath && firstPath.length > 0 && typeof form.setFocus === 'function') {
+          const name = firstPath
+            .filter(part => typeof part === 'string' || typeof part === 'number')
+            .join('.')
+          form.setFocus(name as never)
+        }
+        return {
+          ok: false,
+          kind: 'validation',
+          keys: rhfValidation.keys,
+          message: rhfValidation.message,
+          title: rhfValidation.title,
+          alertKind: rhfValidation.alertKind,
+        }
+      }
+      if (hasRhfCurriculumMultiDateScheduleCountMismatch(values)) {
+        return { ok: false, kind: 'schedule-count-mismatch' }
+      }
+      writeGeneralRegistrationOverlayFromCommonInfoFormValues(independent.programDraft)
+      await onSaveEdit(
+        independent.programDraft,
+        independent.patch,
+        program,
+        independent.serializeOptions
+      )
       showUpdateCompletedAlert()
       return { ok: true }
     } catch (error) {

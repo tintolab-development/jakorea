@@ -13,6 +13,10 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import {
   applyCurriculumPreEducationBlock,
+  applyEducationStructureChangeToForm,
+  applySchedulePreEducationBlock,
+  applySessionRoundChangeToForm,
+  createEmptyScheduleDetailBlock,
   PRE_EDUCATION_SCHEDULE_LABEL,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { createGeneralProgramCommonInfoIndependentSave } from './common-info-independent-save'
@@ -32,6 +36,8 @@ import {
   GENERAL_DETAIL_REQUIRED_VALIDATION_STATUS,
 } from './general-detail-rhf-save-path'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
+import { findEducationScheduleLinesOutsideOperationRange } from '@/features/program/shared/lib/education-schedule-change'
 
 function validValues(
   patch: Partial<GeneralProgramCommonInfoEditFormValues> = {}
@@ -516,5 +522,169 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
       })
     )
     expect(parsed.ok).toBe(false)
+  })
+
+  it('186310 커리큘럼형 저장 — 예정일 2건이 운영기간 밖이면 educationScheduleLines만 실패한다', () => {
+    const values = validValues({
+      startDate: '2026-10-02',
+      endDate: '2026-11-04',
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '2026.11.06(금) 10:00 ~ 12:00',
+        '2026.11.13(금) 13:30 ~ 16:00',
+      ],
+      curriculumSessions: [
+        {
+          sessionLabel: '1회차',
+          title: '1차시',
+          description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: '',
+          ipsDetail: '',
+          scheduleDate: '',
+        },
+        {
+          sessionLabel: '2회차',
+          title: '2차시',
+          description: '용돈 사용 내역을 보고 한 달 저축 목표와 방법을 정합니다.',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: '',
+          ipsDetail: '',
+          scheduleDate: '',
+        },
+      ],
+      scheduleDetails: [],
+      participantTeacherInstructor: true,
+      participantVolunteer: true,
+      kpiFinalParticipants: 52,
+      kpiInstructorCount: 4,
+      kpiVolunteerCount: 15,
+    })
+    const result = parseGeneralCommonInfoRhfValidation(values)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alertKind).toBe('operation-range')
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        path: ['educationScheduleLines'],
+        message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
+      }),
+    ])
+    expect(result.keys).toEqual(['educationScheduleSettings.singleDateIso'])
+    expect(
+      findEducationScheduleLinesOutsideOperationRange(
+        values.educationScheduleLines,
+        values.startDate,
+        values.endDate
+      )
+    ).toEqual([0, 1])
+  })
+
+  it('186310 일정형 전환 직후 — 빈 행사 일정 name·scheduleDate가 필수 누락이다', () => {
+    const values = validValues({
+      startDate: '2026-10-02',
+      endDate: '2026-11-04',
+      educationStructure: 'schedule',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '2026.11.06(금) 10:00 ~ 12:00',
+        '2026.11.13(금) 13:30 ~ 16:00',
+      ],
+      curriculumSessions: [],
+      detailedProgramId: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+      scheduleCurriculumPreEducation: false,
+      scheduleDetails: [
+        {
+          scheduleLabel: '행사 일정 01',
+          blockKind: 'event',
+          name: '',
+          groupTimes: [{ startTime: '', endTime: '' }],
+          scheduleDate: '',
+          assignmentEnabled: false,
+          assignmentPeriod: '',
+          educationForm: 'online',
+          participationMethod: 'individual',
+          ipsCategory: 'prepare',
+          ipsDetail: 'none',
+        },
+      ],
+      participantTeacherInstructor: true,
+      participantVolunteer: true,
+      kpiFinalParticipants: 52,
+      kpiInstructorCount: 4,
+      kpiVolunteerCount: 15,
+    })
+    const result = parseGeneralCommonInfoRhfValidation(values)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alertKind).toBe('required-incomplete')
+    expect(result.issues.map(issue => ({ path: issue.path, message: issue.message }))).toEqual([
+      { path: ['scheduleDetails', 0, 'name'], message: '일정 상세를 입력해주세요' },
+      { path: ['scheduleDetails', 0, 'scheduleDate'], message: '일정을 선택해주세요' },
+    ])
+    expect(result.keys).toEqual([
+      'scheduleCurriculum.eventName[1]',
+      'scheduleCurriculum.scheduleDate[1]',
+    ])
+  })
+
+  it('일정형 단일·팀·사전교육 ON·세부 2건 빈 시드 — 사전교육 일정·세부 name/groupTimes·운영기간 밖 예정일', () => {
+    const store = validValues({
+      startDate: '2026-10-02',
+      endDate: '2026-11-04',
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '2026.11.06(금) 10:00 ~ 12:00',
+        '2026.11.13(금) 13:30 ~ 16:00',
+      ],
+      participantTeacherInstructor: true,
+      participantVolunteer: true,
+      kpiFinalParticipants: 52,
+      kpiInstructorCount: 4,
+      kpiVolunteerCount: 15,
+    })
+    const setValue = (key: string, value: unknown) => {
+      Object.assign(store, { [key]: value })
+    }
+    store.educationStructure = 'schedule'
+    applyEducationStructureChangeToForm(setValue as never, (() => store) as never, 'schedule')
+    store.sessionRound = 'single'
+    applySessionRoundChangeToForm(setValue as never, (() => store) as never, 'single')
+    store.participationMethod = 'team'
+    store.scheduleDetails = applySchedulePreEducationBlock(
+      [
+        ...store.scheduleDetails,
+        createEmptyScheduleDetailBlock(1, { blockKind: 'sub', groupCount: 1 }),
+      ],
+      true,
+      { groupCount: 1 }
+    )
+    store.scheduleCurriculumPreEducation = true
+    const result = parseGeneralCommonInfoRhfValidation(store)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alertKind).toBe('required-incomplete')
+    expect(result.issues.map(issue => ({ path: issue.path, message: issue.message }))).toEqual([
+      { path: ['scheduleDetails', 0, 'scheduleDate'], message: '사전 교육 일정을 입력해주세요' },
+      { path: ['scheduleDetails', 1, 'name'], message: '일정 상세를 입력해주세요' },
+      { path: ['scheduleDetails', 1, 'groupTimes', 0], message: '진행 시간을 입력해주세요' },
+      { path: ['scheduleDetails', 2, 'name'], message: '일정 상세를 입력해주세요' },
+      { path: ['scheduleDetails', 2, 'groupTimes', 0], message: '진행 시간을 입력해주세요' },
+      {
+        path: ['educationScheduleLines'],
+        message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
+      },
+    ])
   })
 })

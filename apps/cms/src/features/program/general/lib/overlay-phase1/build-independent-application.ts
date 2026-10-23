@@ -30,7 +30,8 @@ export function buildIndependentApplicationDraft(
   )
   const localOverlay = mergeIndependentApplicationLocalOverlay(
     input.sidecars?.previousLocalOverlay,
-    overlay
+    overlay,
+    input.catalog
   )
 
   return {
