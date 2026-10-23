@@ -40,6 +40,11 @@ describe('지급 항목 선택 라벨', () => {
     ).toEqual(['p-1', '학생 교통비'])
   })
 
+  it('학생 교통비 라벨은 강사 교통비 부분일치로 접히지 않는다', () => {
+    expect(resolveProgramPaymentItemIdsFromLabels('학생 교통비')).toEqual(['학생 교통비'])
+    expect(resolveProgramPaymentItemIdsFromLabels('장거리 교통비')).not.toEqual(['p-1'])
+  })
+
   it('원격 옵션 라벨이 코드여도 mock 항목명을 유지한다', () => {
     const merged = mergeProgramWagePaymentItemOptions([
       { value: 'p-3', label: 'p-3' },
