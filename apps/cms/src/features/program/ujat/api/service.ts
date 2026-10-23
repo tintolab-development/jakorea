@@ -177,14 +177,10 @@ export async function update(
     programId,
     toUpdateRequest(program, patch, nextRegistration)
   )
-  const mapped = fromDetail(dto)
-  const { withFetchedProgramSponsorAssignments } = await import(
-    '@/features/program/shared/lib/merge-program-sponsor-assignments'
-  )
-  const { fetchAdminProgramSponsorsRemote } = await import(
-    '@/features/program/general/api/programs-api-client'
-  )
-  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
+  // PATCH echo는 서버 정규화·clearFields 적용 결과의 최종 정본이 아니다.
+  // 저장 직후 canonical GET을 다시 읽어 열린 상세와 다음 화면이 같은 값을 사용하게 한다.
+  const canonical = await detail(programId)
+  return canonical ?? fromDetail(dto)
 }
 
 export async function remove(programId: string): Promise<void> {
