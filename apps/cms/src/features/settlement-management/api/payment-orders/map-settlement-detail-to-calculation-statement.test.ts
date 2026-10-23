@@ -36,7 +36,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
       lineRow,
       settlement({
         programSessionProgressDisplay: '4 / 16',
-        period: '2025. 12. 08(월) ~ 2026. 12. 30(수)',
+        period: '2025.12.08(월) ~ 2026.12.30(수)',
         lectureFeeStandardTitle: '2급 강사비',
         lectureFeeStandardAmount: 915000,
         businessIncomeEarnerLabel: '해당 없음',

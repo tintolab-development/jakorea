@@ -7,6 +7,22 @@ export function isSponsorContactUnselected(value: string | null | undefined): bo
   return value === SPONSOR_CONTACT_UNSELECTED_VALUE
 }
 
+/**
+ * RHF/UI sentinel을 제외한 실제 담당자 ref·id.
+ * 미선택은 유효한 폼 값이지만 API·JSON 전송에는 `[]` 만 쓴다.
+ */
+export function toWireSponsorManagerContactIds(
+  ids: readonly string[] | null | undefined
+): string[] {
+  return [
+    ...new Set(
+      (ids ?? [])
+        .map(id => String(id).trim())
+        .filter(id => id && !isSponsorContactUnselected(id))
+    ),
+  ]
+}
+
 export function isSponsorContactUnselectedLabel(value: string | null | undefined): boolean {
   return value?.trim() === SPONSOR_CONTACT_UNSELECTED_LABEL
 }
@@ -84,6 +100,14 @@ export function withSponsorContactUnselectedOption<T extends { value: string; la
     label: SPONSOR_CONTACT_UNSELECTED_LABEL,
   } as T
   return [...options, unselected]
+}
+
+/** 후원사가 선택돼 있으면 담당자가 0명이어도 미선택을 붙인다. */
+export function withSponsorContactUnselectedIfSponsorsSelected<
+  T extends { value: string; label: string },
+>(options: readonly T[], hasSelectedSponsors: boolean, extra?: Omit<T, 'value' | 'label'>): T[] {
+  if (!hasSelectedSponsors) return [...options]
+  return withSponsorContactUnselectedOption(options, extra)
 }
 
 /**

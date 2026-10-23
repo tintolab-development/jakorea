@@ -50,7 +50,7 @@ function baseProgram(): Program {
     ],
     generalCommonInfo: {
       educationScheduleMode: 'period',
-      educationScheduleLines: ['2026. 04. 01 ~ 2026. 10. 31'],
+      educationScheduleLines: ['2026.04.01 ~ 2026.10.31'],
       wageGradeRows: [{ grade: '1급 강사비', pricing: '1시간 당 | 기본 : 100,000원' }],
       kpi: {
         finalParticipants: 10,

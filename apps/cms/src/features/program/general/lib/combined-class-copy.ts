@@ -14,9 +14,7 @@ export const COMBINED_CLASS_CANCEL_MODAL_TITLE = '합반 처리 취소 안내'
 
 export const COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT = 'combined-class-grade-required' as const
 
-export type InstitutionInfoSaveResult =
-  | boolean
-  | typeof COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT
+export type InstitutionInfoSaveResult = boolean | typeof COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT
 
 export function buildCombinedClassProcessDescription(params: {
   schoolName: string
@@ -53,7 +51,7 @@ export function buildCombinedClassCancelCompleteDescription(params: {
   return `정보 수정이 완료되었습니다.\n[${schoolName}] ${leadGrade}과 ${partnerGrade} 합반이 취소되었습니다.`
 }
 
-export const COMBINED_CLASS_COMPLETE_MODAL_TITLE = '수정 완료'
+export const COMBINED_CLASS_COMPLETE_MODAL_TITLE = '정보 수정'
 
 export function buildCombinedClassCompleteDescription(params: {
   leadGrade: string

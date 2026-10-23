@@ -3,7 +3,14 @@
  */
 import type { DashboardPreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesResponse'
 import type { DashboardPreferencesSaveRequest } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesSaveRequest'
-import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
+import {
+  normalizeShortcutVisibilityFromServer,
+  restrictShortcutVisibilityToCatalog,
+} from '@/features/dashboard/model/dashboard-shortcut-contract'
+import {
+  normalizeShortcutVisibilityForSave,
+  useDashboardSettingsStore,
+} from '@/features/dashboard/model/dashboard-settings-store'
 import {
   stripRemovedDashboardWidgetIds,
   stripRemovedDashboardWidgetWidths,
@@ -87,7 +94,10 @@ export function buildDashboardPreferencesSaveRequest(): DashboardPreferencesSave
   return {
     dashboardSettings: {
       state: {
-        shortcutEnabled: settings.shortcutEnabled,
+        shortcutEnabled: normalizeShortcutVisibilityForSave(
+          settings.shortcutEnabled,
+          settings.shortcutCatalogKeys
+        ),
         shortcutBadgeCounts: settings.shortcutBadgeCounts,
         widgetProgramIds: settings.widgetProgramIds,
         inquiryNotificationReadProgramKeys: settings.inquiryNotificationReadProgramKeys,
@@ -107,11 +117,17 @@ export function buildDashboardPreferencesSaveRequest(): DashboardPreferencesSave
 export function applyDashboardPreferencesResponse(dto: DashboardPreferencesResponse): void {
   const settingsState = asRecord(dto.dashboardSettings?.state)
   if (settingsState) {
-    useDashboardSettingsStore.setState({
-      shortcutEnabled: {
-        ...useDashboardSettingsStore.getState().shortcutEnabled,
-        ...asStringRecord(settingsState.shortcutEnabled),
-      },
+    useDashboardSettingsStore.setState(state => {
+      const normalized = normalizeShortcutVisibilityFromServer(
+        asStringRecord(settingsState.shortcutEnabled)
+      )
+      const catalogKeys = state.shortcutCatalogKeys
+      const shortcutEnabled =
+        catalogKeys != null && catalogKeys.length > 0
+          ? restrictShortcutVisibilityToCatalog(normalized, catalogKeys)
+          : normalized
+      return {
+      shortcutEnabled,
       shortcutBadgeCounts: {
         ...useDashboardSettingsStore.getState().shortcutBadgeCounts,
         ...asNumberRecord(settingsState.shortcutBadgeCounts),
@@ -121,9 +137,10 @@ export function applyDashboardPreferencesResponse(dto: DashboardPreferencesRespo
         ...asStringArrayRecord(settingsState.widgetProgramIds),
       },
       inquiryNotificationReadProgramKeys: {
-        ...useDashboardSettingsStore.getState().inquiryNotificationReadProgramKeys,
+        ...state.inquiryNotificationReadProgramKeys,
         ...asStringRecord(settingsState.inquiryNotificationReadProgramKeys),
       },
+    }
     })
   }
 

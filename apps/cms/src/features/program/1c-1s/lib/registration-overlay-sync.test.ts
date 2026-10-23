@@ -36,7 +36,7 @@ function baseProgram(): Program {
         { sessionLabel: '1차시', title: '단원1', description: '내용1' },
         { sessionLabel: '2차시', title: '단원2', description: '내용2' },
       ],
-      educationScheduleLines: ['2026. 10. 11 ~ 2026. 11. 09'],
+      educationScheduleLines: ['2026.10.11 ~ 2026.11.09'],
       wageGradeRows: [
         { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 140,000원 | 장거리 : 50,000원' },
       ],

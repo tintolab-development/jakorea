@@ -78,18 +78,6 @@ function shouldShowCompanySchoolEconomyFields(
   )
 }
 
-function maskSexOffenseCheckRequestLine(text: string): string {
-  return text
-    .replace(/\bID\s*:\s*(\S+)/gi, (_, id: string) => {
-      if (id.length <= 1) return 'ID : *'
-      return `ID : ${id[0]}***`
-    })
-    .replace(/\b검증번호\s*:\s*(\d+)/gi, (_, n: string) => {
-      if (n.length <= 2) return '검증번호 : **'
-      return `검증번호 : ${n[0]}${'*'.repeat(Math.max(0, n.length - 2))}${n[n.length - 1]}`
-    })
-}
-
 export interface ApplicantGeneralInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow
   detail?: ApplicantInstitutionDetailExtend
@@ -137,13 +125,11 @@ function ProgramApprovalStatusValue({
 }
 
 function buildSexOffenseRequestCell(
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.sexOffenseCheckRequest?.trim()
   if (!raw) return '-'
-  const text = shouldMask ? maskSexOffenseCheckRequestLine(raw) : raw
-  const parts = text
+  const parts = raw
     .split(' | ')
     .map(s => s.trim())
     .filter(Boolean)
@@ -231,7 +217,7 @@ function buildCombinedClassViewValue(
 export function ApplicantGeneralInstitutionBasicInfo({
   institution,
   detail,
-  maskSensitive = true,
+  maskSensitive: _maskSensitive = true,
   mode = 'view',
   draft,
   onDraftChange,
@@ -256,7 +242,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   adminCommentError,
 }: ApplicantGeneralInstitutionBasicInfoProps) {
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
-  const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
@@ -315,7 +300,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
     ) : (
       buildTeacherInfoCell(institution, detail)
     )
-  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
+  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail)
   const useStoredRequestedHopeSchedules = !isCompanySchoolProgram(program)
   const requestedHopeSchedulesQuery = useQuery({
     ...organizationRequestedSchedulesQueryOptions(institution.id),

@@ -121,7 +121,11 @@ export function EducationInstitutionGuidanceWriteForm({
         setAlertMessage(blockedMessage)
         return
       }
-      await patchGuidanceMutation.mutateAsync({ detailCase, state })
+      await patchGuidanceMutation.mutateAsync({
+        detailCase,
+        state,
+        existingAnswers: portalPatchContext?.applicationAnswers,
+      })
       navigate(
         educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
         { replace: true },

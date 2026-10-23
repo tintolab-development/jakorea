@@ -10,6 +10,7 @@ import {
   ContentModal,
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -74,7 +75,7 @@ const INITIAL_FILTERS: TextbookFilters = {
   textbookName: '',
   businessArea: 'ALL',
   educationTarget: 'ALL',
-  grade: 'ALL',
+  grade: '',
 }
 
 export default function TextbookPage() {
@@ -162,6 +163,7 @@ export default function TextbookPage() {
     () => textbookFilterGradeOptions(pendingFilters.educationTarget),
     [pendingFilters.educationTarget]
   )
+  const isGradeFilterEnabled = pendingFilters.educationTarget !== 'ALL'
 
   const textbookFilterFields: FilterFieldConfig[] = useMemo(
     () => [
@@ -203,13 +205,14 @@ export default function TextbookPage() {
         key: 'grade',
         type: 'select',
         label: '대상 학년',
-        placeholder: '전체',
+        placeholder: isGradeFilterEnabled ? '전체' : '교육 대상을 선택하세요',
         width: '16%',
         withAllOption: false,
+        disabled: !isGradeFilterEnabled,
         options: gradeOptions,
       },
     ],
-    [businessAreaSelectOptions, gradeOptions]
+    [businessAreaSelectOptions, gradeOptions, isGradeFilterEnabled]
   )
 
   const detailTextbookId = searchParams.get('textbookId')
@@ -245,8 +248,19 @@ export default function TextbookPage() {
       }
       const nextValue = (value ?? (key === 'textbookName' ? '' : 'ALL')) as string
       if (key === 'educationTarget') {
+        if (nextValue === 'ALL') {
+          return {
+            ...prev,
+            educationTarget: nextValue,
+            grade: '',
+          }
+        }
         const nextGradeOptions = textbookFilterGradeOptions(nextValue).map(opt => opt.value)
-        const nextGrade = nextGradeOptions.includes(prev.grade) ? prev.grade : 'ALL'
+        const normalizedPrevGrade =
+          prev.grade === 'ALL' || !prev.grade.trim() ? '' : prev.grade
+        const nextGrade = nextGradeOptions.includes(normalizedPrevGrade)
+          ? normalizedPrevGrade
+          : (nextGradeOptions[0] ?? '')
         return {
           ...prev,
           educationTarget: nextValue,
@@ -489,6 +503,7 @@ export default function TextbookPage() {
               input: payload,
             })
             setDetailRoute(updated.id, 'view')
+            showUpdateCompletedAlert()
           } catch (error) {
             console.debug(
               'textbookPage detail update failed',

@@ -28,12 +28,12 @@ function programWithRows(): Program {
     volunteerApplicationEndDate: '2026-10-20T14:59:59.999Z',
     generalCommonInfo: {
       volunteerRecruitmentInfo: {
-        recruitmentPeriodLabel: '2026. 10. 02 (금) ~ 2026. 10. 21 (수)',
+        recruitmentPeriodLabel: '2026.10.02(금) ~ 2026.10.21(수)',
         contactOrganizationName: '옛 문의처',
         inquiryTel: '010-0000-0000',
       },
       instructorRecruitmentInfo: {
-        recruitmentPeriodLabel: '2026. 10. 01 ~ 2026. 11. 01',
+        recruitmentPeriodLabel: '2026.10.01 ~ 2026.11.01',
       },
     },
     programRecruitments: [
@@ -94,7 +94,7 @@ describe('모집 탭 표시·폼 시드 — 행 SSOT', () => {
       ...program.generalCommonInfo,
       volunteerRecruitmentInfo: {
         ...program.generalCommonInfo?.volunteerRecruitmentInfo,
-        recruitmentPeriodLabel: '2026. 10. 17 (토) ~ 2026. 11. 22 (일)',
+        recruitmentPeriodLabel: '2026.10.17(토) ~ 2026.11.22(일)',
       },
     }
     const display = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
@@ -116,7 +116,7 @@ describe('모집 탭 표시·폼 시드 — 행 SSOT', () => {
 
   it('강사 모집기간·문의처는 행 값을 보여 준다', () => {
     const display = resolveGeneralProgramInstructorRecruitmentDisplay(programWithRows())
-    expect(display.recruitmentPeriodLabel).not.toBe('2026. 10. 01 ~ 2026. 11. 01')
+    expect(display.recruitmentPeriodLabel).not.toBe('2026.10.01 ~ 2026.11.01')
     expect(display.contactOrganizationName).toBe('강사 담당')
     expect(display.contactPhone).toBe('010-1111-2222')
   })

@@ -23,7 +23,7 @@ describe('buildParticipatingInstructorPaymentStatementViewOptions', () => {
     const options = buildParticipatingInstructorPaymentStatementViewOptions(instructor(), {
       id: 'set-1',
       schoolName: '진월초등학교',
-      educationScheduleLabel: '2026. 08. 15(토) 10:00 | 3회차',
+      educationScheduleLabel: '2026.08.15(토) 10:00 | 3회차',
       scheduledSettlementAmount: null,
     })
     const serialized = JSON.stringify(options)
@@ -51,7 +51,7 @@ describe('buildParticipatingInstructorPaymentStatementViewOptions', () => {
       {
         id: 'set-2',
         schoolName: '진월초등학교',
-        educationScheduleLabel: '2026. 08. 15(토) | 3회차',
+        educationScheduleLabel: '2026.08.15(토) | 3회차',
         scheduledSettlementAmount: 915000,
       }
     )

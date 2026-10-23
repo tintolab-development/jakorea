@@ -94,10 +94,10 @@ describe('InstitutionApproveModal schedule sources', () => {
 
     expect(await screen.findByText(/신청 희망 교육 일정이 없습니다/)).toBeTruthy()
     const firstSlot = await screen.findByRole('button', {
-      name: /2026\. 11\. 02\(월\) 10:00 ~ 12:00/,
+      name: /2026\.11\.02\(월\) 10:00 ~ 12:00/,
     })
     const secondSlot = screen.getByRole('button', {
-      name: /2회차 · 2026\. 11\. 09\(월\) 13:30 ~ 16:00/,
+      name: /2회차 · 2026\.11\.09\(월\) 13:30 ~ 16:00/,
     })
     expect(screen.getByText('공통 교육 예정 일정')).toBeTruthy()
     expect(screen.queryByText('00:00')).toBeNull()
@@ -126,8 +126,8 @@ describe('InstitutionApproveModal schedule sources', () => {
 
     expect(await screen.findByText(/담당 교사에게 승인 알림이 발송됩니다/)).toBeTruthy()
     expect(screen.queryByText(/교육 진행 일정이 자동으로 배정되며/)).toBeNull()
-    expect(await screen.findByText(/2026\. 11\. 02\(월\) 10:00 ~ 12:00/)).toBeTruthy()
-    expect(screen.getByText('2026. 11. 09(월) 13:30 ~ 16:00')).toBeTruthy()
+    expect(await screen.findByText(/2026\.11\.02\(월\) 10:00 ~ 12:00/)).toBeTruthy()
+    expect(screen.getByText('2026.11.09(월) 13:30 ~ 16:00')).toBeTruthy()
     expect(screen.queryByText(/2회차/)).toBeNull()
     expect(screen.getAllByText('교육 진행 일정')).toHaveLength(1)
     expect(screen.queryByText('행사 일정 01')).toBeNull()
@@ -155,7 +155,7 @@ describe('InstitutionApproveModal schedule sources', () => {
     })
 
     expect(await screen.findByText('교육 진행 일정')).toBeTruthy()
-    expect(await screen.findByText(/2026\. 11\. 02\(월\) 10:00 ~ 12:00/)).toBeTruthy()
+    expect(await screen.findByText(/2026\.11\.02\(월\) 10:00 ~ 12:00/)).toBeTruthy()
     const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
     await waitFor(() => expect(approve.disabled).toBe(false))
     fireEvent.click(approve)
@@ -198,7 +198,7 @@ describe('InstitutionApproveModal schedule sources', () => {
       },
     })
 
-    const preferredCard = await screen.findByRole('button', { name: /2026\. 11\. 02/ })
+    const preferredCard = await screen.findByRole('button', { name: /2026\.11\.02/ })
     const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
     await waitFor(() => expect(approve.disabled).toBe(true))
     fireEvent.click(preferredCard)
@@ -540,8 +540,8 @@ describe('InstitutionApproveModal schedule sources', () => {
     })
 
     expect(screen.queryByText('공통 교육 예정 일정')).toBeNull()
-    const firstChoice = await screen.findByRole('button', { name: /2026\. 11\. 05/ })
-    const secondChoice = await screen.findByRole('button', { name: /2026\. 11\. 13/ })
+    const firstChoice = await screen.findByRole('button', { name: /2026\.11\.05/ })
+    const secondChoice = await screen.findByRole('button', { name: /2026\.11\.13/ })
     expect((secondChoice as HTMLButtonElement).disabled).toBe(false)
     const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
     await waitFor(() => expect(approve.disabled).toBe(true))
@@ -577,7 +577,7 @@ describe('InstitutionApproveModal schedule sources', () => {
       },
     })
 
-    const preferredCard = await screen.findByRole('button', { name: /2026\. 11\. 02/ })
+    const preferredCard = await screen.findByRole('button', { name: /2026\.11\.02/ })
     fireEvent.click(preferredCard)
     fireEvent.click(screen.getByRole('button', { name: '승인' }))
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())

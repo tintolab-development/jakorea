@@ -60,6 +60,7 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import {
+  resolveEducationApplicationProgramFocus,
   shouldShowTeacherInstitutionGuidanceEditLink,
   shouldShowTeacherInstitutionGuidanceOnApplicationTab,
   shouldShowTeacherInstitutionGuidanceWrite,
@@ -183,20 +184,10 @@ export function MypageEducationDetailPage() {
     applicationId,
   )
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
-  const programDetailFocus = useMemo(() => {
-    if (!application) return null
-
-    const applicationType = (
-      application.applicationType ?? resolvedApplicationType ?? ''
-    )
-      .trim()
-      .toUpperCase()
-    const recruitmentId = application.recruitmentId
-    return {
-      ...(applicationType ? { applicationTypes: [applicationType] } : {}),
-      ...(recruitmentId != null && recruitmentId > 0 ? { recruitmentIds: [recruitmentId] } : {}),
-    }
-  }, [application, resolvedApplicationType])
+  const programDetailFocus = useMemo(
+    () => resolveEducationApplicationProgramFocus(application, resolvedApplicationType),
+    [application, resolvedApplicationType],
+  )
   const remoteProgramQuery = useProgramDetail(
     application?.programId ?? null,
     { fresh: true, focus: programDetailFocus },
@@ -375,7 +366,7 @@ export function MypageEducationDetailPage() {
   }, [application, isTeacher, program])
 
   const applicationInfoBody = useMemo(() => {
-    if (!application || !program || !isTeacher) return undefined
+    if (!application || !program) return undefined
     if (shouldUseUjatApplicationContent(application.detailCase)) {
       return <UjatApplicationContent content={application.ujatApplicationContent} />
     }
@@ -408,7 +399,6 @@ export function MypageEducationDetailPage() {
     application?.id,
     application?.detailCase,
     application?.ujatApplicationContent,
-    isTeacher,
     program,
     program?.educationForm,
     routeApplicationType,
@@ -673,10 +663,19 @@ export function MypageEducationDetailPage() {
     canShowEducationApplicationContent(application.displayStatus) ? (
       shouldUseUjatApplicationContent(application.detailCase) ? (
         <UjatApplicationContent content={application.ujatApplicationContent} />
-      ) : isTeacher && teacherApplicationContent ? (
+      ) : isOrganizationEducationApplication(application, program) &&
+        teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
-          applicationType={application.applicationType}
+          applicationType={
+            application.applicationType ??
+            routeApplicationType ??
+            resolveOrganizationApplicationTypeForContent(
+              undefined,
+              program,
+              application.applicationAnswers,
+            )
+          }
           content={teacherApplicationContent}
           showGuidanceWriteLink={showTeacherGuidanceEditLink}
           institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}

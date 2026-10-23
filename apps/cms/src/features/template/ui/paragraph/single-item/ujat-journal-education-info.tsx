@@ -8,14 +8,13 @@ import { UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS } from '@/features/template/m
 import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   UserInfoPreviewTable,
   type UserInfoPreviewTableSkin,
 } from '@/features/template/ui/paragraph/single-item/user-info'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
 import './ujat-journal-education-info.css'
-
-const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 const UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES = {
   institutionName: '틴토초등학교',
@@ -28,8 +27,8 @@ const UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES = {
 function formatKoreanDateWithWeekday(raw: string): string {
   const d = dayjs(raw, 'YYYY-MM-DD', true)
   if (!d.isValid()) return raw
-  const weekday = WEEKDAYS_KO[d.day()] ?? ''
-  return `${d.year()}년 ${d.month() + 1}월 ${d.date()}일(${weekday})`
+  const label = formatDateDotWithWeekday(d)
+  return label === '-' ? raw : label
 }
 
 function formatGradeClass(grade: string, classSection: string): string {

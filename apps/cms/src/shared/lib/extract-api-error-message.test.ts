@@ -74,6 +74,17 @@ describe('extractApiErrorMessage', () => {
       })
     ).toBe('같은 UJAT 프로그램에 이미 신청한 학교입니다.')
   })
+
+  it('교육구조 Guard 코드는 서버 영문보다 FE 한글 안내를 쓴다', () => {
+    expect(
+      extractApiErrorMessage({
+        error: {
+          code: 'PROGRAM_EDUCATION_STRUCTURE_CHANGE_BLOCKED',
+          message: 'PROGRAM_EDUCATION_STRUCTURE_CHANGE_BLOCKED',
+        },
+      })
+    ).toBe('이미 신청·배정 또는 교육 운영 이력이 있는 프로그램은 교육구조를 변경할 수 없습니다.')
+  })
 })
 
 describe('getApiErrorCode / getApiErrorHttpStatus', () => {

@@ -103,7 +103,7 @@ describe('IndividualApproveScopeModal', () => {
   it('CURRICULUM / SINGLE approves the one preferred schedule', async () => {
     fetchSlots.mockResolvedValue([educationSlot(168351), educationSlot(168352, { sessionNo: 2 })])
     const { onConfirm } = renderSingle({})
-    await screen.findByRole('button', { name: /^2026\. 11\. 05\(목\)$/ })
+    await screen.findByRole('button', { name: /^2026\.11\.05\(목\)$/ })
     expect(screen.getByText('프로그램 신청 승인 안내')).toBeTruthy()
     expect(screen.getByText(/김참여자/)).toBeTruthy()
     expect(screen.getByText(/회원에게 승인 알림이 발송됩니다/)).toBeTruthy()
@@ -183,7 +183,7 @@ describe('IndividualApproveScopeModal', () => {
       screen.getByText('일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정합니다.')
     ).toBeTruthy()
     expect(screen.queryByText('교육 진행 예정일')).toBeNull()
-    expect(screen.getAllByText(/2026\. 11\. 05\(목\)/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/2026\.11\.05\(목\)/).length).toBeGreaterThan(0)
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([31, 32])
@@ -227,7 +227,7 @@ describe('IndividualApproveScopeModal', () => {
     fetchSlots.mockResolvedValue([educationSlot(168351)])
     const { onConfirm } = renderSingle({})
     onConfirm.mockResolvedValue({ rejectedScheduleIds: [168351] })
-    const card = await screen.findByRole('button', { name: /^2026\. 11\. 05\(목\)$/ })
+    const card = await screen.findByRole('button', { name: /^2026\.11\.05\(목\)$/ })
     expect(card.getAttribute('aria-pressed')).toBe('true')
     submitApproval()
     await waitFor(() => {

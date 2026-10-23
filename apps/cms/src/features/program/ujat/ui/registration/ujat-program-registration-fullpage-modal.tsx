@@ -52,6 +52,9 @@ import {
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
+import { getUjatProgramRegistrationOverlayVersion } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { useRegistrationWizardLeaveGuard } from '@/features/program/shared/lib/registration-wizard-leave-guard'
+import { RegistrationWizardLeaveConfirmModal } from '@/features/program/shared/ui/registration/registration-wizard-leave-confirm-modal'
 
 const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
 
@@ -197,6 +200,19 @@ function UjatProgramRegistrationFullpageModalInner({
     onClose()
   }, [onClose, searchParams, setSearchParams])
 
+  const {
+    leaveConfirmOpen,
+    requestLeave,
+    confirmLeave,
+    cancelLeave,
+    markLeaveBaseline,
+  } = useRegistrationWizardLeaveGuard({
+    open,
+    programType: 'UJAT',
+    getOverlayVersion: getUjatProgramRegistrationOverlayVersion,
+    onLeave: handleClose,
+  })
+
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
       const overlay = collectUjatRegistrationCreateOverlay(
@@ -223,6 +239,7 @@ function UjatProgramRegistrationFullpageModalInner({
   const runDraftSave = useCallback(async () => {
     try {
       await flow.persistDraftSilent()
+      markLeaveBaseline()
       setDraftSaveSuccessOpen(true)
     } catch (error) {
       console.debug('ujatProgramRegistration draft save failed', error)
@@ -231,7 +248,7 @@ function UjatProgramRegistrationFullpageModalInner({
         content: draftSaveFailureMessage(error),
       })
     }
-  }, [flow, showAlert])
+  }, [flow, markLeaveBaseline, showAlert])
 
   const handleSaveClick = useCallback(() => {
     const existing = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
@@ -248,6 +265,7 @@ function UjatProgramRegistrationFullpageModalInner({
       setOverwriteSaving(true)
       try {
         await flow.persistDraftSilent()
+        markLeaveBaseline()
         setOverwriteOpen(false)
         setDraftSaveSuccessOpen(true)
       } catch (error) {
@@ -260,7 +278,7 @@ function UjatProgramRegistrationFullpageModalInner({
         setOverwriteSaving(false)
       }
     })()
-  }, [flow, showAlert])
+  }, [flow, markLeaveBaseline, showAlert])
 
   const footerActions = useMemo((): TemplateFullpageModalFooterAction[] | undefined => {
     if (flow.phase === 'program') {
@@ -322,7 +340,7 @@ function UjatProgramRegistrationFullpageModalInner({
         open={open}
         bodyLoading={flow.isDraftLoading}
         scrollResetKey={flow.activeStep}
-        onClose={handleClose}
+        onClose={requestLeave}
         title={UJAT_REGISTRATION_MODAL_TITLE}
         titleReadOnly
         templateTabType="writing"
@@ -346,6 +364,7 @@ function UjatProgramRegistrationFullpageModalInner({
               templateName={flow.stepTemplateName}
               isDefault={flow.isDefaultStepTemplate}
               category={flow.phase === 'application' ? 'application_form' : 'application'}
+              allowedFamilyBaseTemplateCode={flow.currentStepDef.templateId}
               pickerOpen={templatePickerOpen}
               onOpenPicker={() => setTemplatePickerOpen(true)}
               onClosePicker={() => setTemplatePickerOpen(false)}
@@ -375,6 +394,11 @@ function UjatProgramRegistrationFullpageModalInner({
           </HideParagraphSelectionChromeContext.Provider>
         }
         rightNavigation={flow.phase === 'application' ? flow.panels.rightNavigation : null}
+      />
+      <RegistrationWizardLeaveConfirmModal
+        open={leaveConfirmOpen}
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}

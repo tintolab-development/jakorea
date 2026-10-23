@@ -120,6 +120,12 @@ import {
   resolveInstitutionAllowedScheduleEnabledDates,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   normalizeInstitutionFixedScheduleAnswerTokens,
+  isApplyScheduleParagraphForcedHidden,
+  isApplyScheduleChoiceHiddenInSet,
+  pickApplyScheduleChoiceParagraph,
+  readApplyFixedScheduleChoiceIds,
+  resolveApplyScheduleChoiceAnswerKey,
+  resolveHiddenScheduleAutoSubmitIds,
   buildApplyPreferredSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
   resolveApplyPreferredMaxSessionsPerDay,
@@ -2158,6 +2164,58 @@ export function ProgramApplyPage() {
         setSubmitAlert({ description: '신청 가능한 교육 일정을 선택해 주세요.' })
         return
       }
+      const applyScheduleChoiceParagraph = pickApplyScheduleChoiceParagraph(
+        displayDraft.paragraphs,
+        Array.isArray(applicationFormDocument?.paragraphs)
+          ? applicationFormDocument.paragraphs
+          : undefined,
+      )
+      const applyScheduleChoiceHidden = isApplyScheduleChoiceHiddenInSet(
+        hiddenParagraphIds,
+        applyScheduleChoiceParagraph,
+      )
+      const applyScheduleChoiceIdsRaw = readApplyFixedScheduleChoiceIds({
+        runtime: applicationFormDocument?.runtimeContext,
+        paragraph: applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
+        runtimeChoices: readRuntimeFixedScheduleChoiceItems(
+          applicationFormDocument?.runtimeContext,
+          applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
+        ),
+        program: applicationScheduleVisibility,
+        educationScheduleLines: educationScheduleLinesForApply,
+      })
+      const applyScheduleChoiceIds =
+        applyCase === 'institution-general'
+          ? normalizeInstitutionFixedScheduleAnswerTokens(
+              applyScheduleChoiceIdsRaw,
+              applicationFormDocument?.runtimeContext,
+              applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
+            )
+          : applyScheduleChoiceIdsRaw
+      const hiddenScheduleAutoSubmitIds = resolveHiddenScheduleAutoSubmitIds({
+        hidden: applyScheduleChoiceHidden,
+        forcedHidden: isApplyScheduleParagraphForcedHidden(applicationScheduleVisibility),
+        choiceIds: applyScheduleChoiceIds,
+      })
+      const applyScheduleChoiceAnswerKey = resolveApplyScheduleChoiceAnswerKey(
+        applyCase,
+        applyScheduleChoiceParagraph,
+      )
+      const trainedScheduleHidden =
+        trainedTeachersScheduleParagraphForSubmit != null &&
+        hiddenParagraphIds.has(trainedTeachersScheduleParagraphForSubmit.id)
+      const trainedHiddenScheduleAutoSubmitIds = resolveHiddenScheduleAutoSubmitIds({
+        hidden: trainedScheduleHidden,
+        forcedHidden: isApplyScheduleParagraphForcedHidden(applicationScheduleVisibility),
+        choiceIds: readApplyFixedScheduleChoiceIds({
+          runtime: applicationFormDocument?.runtimeContext,
+          paragraph: trainedTeachersScheduleParagraphForSubmit,
+          runtimeChoices: trainedTeachersRuntimeFixedScheduleChoices,
+        }),
+      })
+      const skipPreferredScheduleInput =
+        applyScheduleChoiceHidden || Boolean(hiddenScheduleAutoSubmitIds)
+
       const preferredScheduleBlocks = isUjatInstitutionApplyFormCase(applyCase)
         ? toPortalPreferredScheduleBlocks(
             ujatPreferredScheduleOptions
@@ -2170,10 +2228,12 @@ export function ProgramApplyPage() {
               })),
             { dateFieldsOnly: true }
           )
-        : showPreferredScheduleInput && !isTrainedTeachersFixedScheduleTarget
+        : showPreferredScheduleInput &&
+            !isTrainedTeachersFixedScheduleTarget &&
+            !skipPreferredScheduleInput
           ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
-      if (showPreferredScheduleInput) {
+      if (showPreferredScheduleInput && !skipPreferredScheduleInput) {
         if (trainedTeachersScheduleNotConfigured) {
           setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
           setSubmitAlert({
@@ -2217,10 +2277,15 @@ export function ProgramApplyPage() {
       }
       const preferredAnswer = isTrainedTeachersFixedScheduleTarget
         ? trainedTeachersFixedScheduleAnswer
-        : showPreferredScheduleInput
+        : showPreferredScheduleInput && !skipPreferredScheduleInput
           ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
           : null
-      if (showPreferredScheduleInput && !preferredAnswer && !isTrainedTeachersFixedScheduleTarget) {
+      if (
+        showPreferredScheduleInput &&
+        !skipPreferredScheduleInput &&
+        !preferredAnswer &&
+        !isTrainedTeachersFixedScheduleTarget
+      ) {
         setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
         return
       }
@@ -2483,16 +2548,10 @@ export function ProgramApplyPage() {
         }
       }
 
-      // 고정 일정이 1개뿐이라 선택 UI를 숨긴 경우에만 runtime option을 자동 제출한다.
-      // 선택지가 2개 이상이면 사용자 체크 값을 그대로 보내고, 첫 항목으로 덮지 않는다.
-      const fixedInstitutionScheduleChoices =
-        applyCase === 'institution-general' &&
-        institutionScheduleInputMode === 'fixed_schedule_options'
-          ? institutionRuntimeFixedScheduleChoices
-          : null
       if (
         applyCase === 'institution-general' &&
         institutionScheduleInputMode === 'fixed_schedule_options' &&
+        !applyScheduleChoiceHidden &&
         institutionRuntimeFixedScheduleChoices == null
       ) {
         setSubmitAlert({
@@ -2500,14 +2559,8 @@ export function ProgramApplyPage() {
         })
         return
       }
-      const singleFixedInstitutionSchedule =
-        fixedInstitutionScheduleChoices?.length === 1 &&
-        institutionScheduleParagraph != null &&
-        hiddenParagraphIds.has(institutionScheduleParagraph.id)
-          ? fixedInstitutionScheduleChoices[0]
-          : undefined
       const overrides: Record<string, unknown> = {}
-      if (preferredAnswer != null) {
+      if (preferredAnswer != null && hiddenScheduleAutoSubmitIds == null) {
         const scheduleParagraph = displayDraft.paragraphs.find(
           paragraph =>
             isApplicationPreferredScheduleParagraphId(paragraph.id) ||
@@ -2521,7 +2574,7 @@ export function ProgramApplyPage() {
         !showGeneralPreferredSchedule &&
         institutionScheduleParagraph &&
         institutionScheduleInputMode === 'fixed_schedule_options' &&
-        singleFixedInstitutionSchedule == null
+        hiddenScheduleAutoSubmitIds == null
       ) {
         const scheduleParagraph = displayDraft.paragraphs.find(
           paragraph =>
@@ -2547,13 +2600,13 @@ export function ProgramApplyPage() {
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
       }
-      if (singleFixedInstitutionSchedule && institutionScheduleParagraph) {
-        overrides[resolveApplicationAnswerKey(institutionScheduleParagraph)] = [
-          singleFixedInstitutionSchedule.id,
-        ]
+      if (hiddenScheduleAutoSubmitIds && applyScheduleChoiceAnswerKey) {
+        overrides[applyScheduleChoiceAnswerKey] = hiddenScheduleAutoSubmitIds
       }
       if (trainedTeachersFixedScheduleAnswer && trainedTeachersScheduleAnswerKey) {
         overrides[trainedTeachersScheduleAnswerKey] = trainedTeachersFixedScheduleAnswer
+      } else if (trainedHiddenScheduleAutoSubmitIds && trainedTeachersScheduleAnswerKey) {
+        overrides[trainedTeachersScheduleAnswerKey] = trainedHiddenScheduleAutoSubmitIds
       }
       if (teamInfoVisible) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
@@ -2672,14 +2725,19 @@ export function ProgramApplyPage() {
         if (
           isApplyScheduleChoiceParagraphId(paragraph.id) &&
           hiddenParagraphIds.has(paragraph.id) &&
-          singleFixedInstitutionSchedule == null
+          hiddenScheduleAutoSubmitIds == null
         ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
         }
         if (
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule &&
-          hiddenParagraphIds.has(paragraph.id)
+          hiddenParagraphIds.has(paragraph.id) &&
+          trainedHiddenScheduleAutoSubmitIds == null &&
+          !(
+            trainedTeachersFixedScheduleAnswer &&
+            trainedTeachersFixedScheduleAnswer.length > 0
+          )
         ) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))

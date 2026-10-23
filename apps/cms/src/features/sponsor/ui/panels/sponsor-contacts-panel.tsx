@@ -26,7 +26,8 @@ import {
 import { useCmsAlert,
   FilterTableToolbarButton
 } from '@/shared/ui'
-import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 
 const contactFilterFields: FilterFieldConfig[] = [
   {
@@ -89,6 +90,14 @@ export function SponsorContactsPanel({
   const { pendingFilters, filteredRows, isLoading, handleFilterChange, handleSearch } = contactsList
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteBlockedSelectedCount, setDeleteBlockedSelectedCount] = useState(1)
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: canWrite,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
 
   const deleteBlockedCopy = useMemo(
     () =>
@@ -211,7 +220,7 @@ export function SponsorContactsPanel({
                 onClick={() => void handleToggleEdit()}
                 disabled={isSavingEdits}
               >
-                {isEditing ? '수정 완료' : '정보 수정'}
+                정보 수정
               </FilterTableToolbarButton>
             ) : null}
             <FilterTableToolbarButton
@@ -224,25 +233,27 @@ export function SponsorContactsPanel({
           </>
         }
       >
-        <CmsDataTable<SponsorContactRow>
-          rowKey="id"
-          className="cms-data-table"
-          columns={columns}
-          dataSource={tableRows}
-          loading={isLoading}
-          pagination={false}
-          scroll={TABLE_CONFIG.scroll}
-          rowSelection={
-            canWrite
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys: selectedKeys,
-                  onChange: setSelectedKeys,
-                  preserveSelectedRowKeys: false,
-                }
-              : undefined
-          }
-        />
+        <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
+          <CmsDataTable<SponsorContactRow>
+            rowKey="id"
+            className="cms-data-table cms-data-table--fluid"
+            columns={columns}
+            dataSource={tableRows}
+            loading={isLoading}
+            pagination={false}
+            scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+            rowSelection={
+              canWrite
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys: selectedKeys,
+                    onChange: setSelectedKeys,
+                    preserveSelectedRowKeys: false,
+                  }
+                : undefined
+            }
+          />
+        </div>
       </FilterTableLayout>
       <SponsorContactDeleteModal
         open={deleteModalOpen}

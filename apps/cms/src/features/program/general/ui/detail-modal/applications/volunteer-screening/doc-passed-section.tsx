@@ -5,7 +5,7 @@ import { FilterTableToolbarButton } from '@/shared/ui'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
-import { buildGeneralVolunteerDocPassedFilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { buildGeneralVolunteerDocPassedFilterFields } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   screeningDocPassedListTitle,
@@ -43,8 +43,8 @@ export function GeneralVolunteerDocPassedSection({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const programId = program.id
-  const filterRows = useMemo(
-    () => buildGeneralVolunteerDocPassedFilterRows(subjectKind),
+  const filterFields = useMemo(
+    () => buildGeneralVolunteerDocPassedFilterFields(subjectKind),
     [subjectKind]
   )
   const listTitle = screeningDocPassedListTitle(subjectKind)
@@ -252,8 +252,7 @@ export function GeneralVolunteerDocPassedSection({
         bordered={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         className="general-volunteer-doc-passed__filter-layout applicant-details__filter-table-layout"
-        filterResponsiveWrap={false}
-        rows={filterRows}
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}

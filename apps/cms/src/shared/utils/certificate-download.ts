@@ -6,6 +6,7 @@ import { downloadBlob, generateFilename } from './file-download'
 import type { Certificate } from '@/types/domain'
 import type { DateValue } from '@/types'
 import dayjs from 'dayjs'
+import { formatDateDot } from './date'
 
 /**
  * 증빙 문서 다운로드
@@ -47,7 +48,7 @@ function generateMockPdfContent(certificate: Certificate | { id: string; title: 
 증빙 문서
 
 제목: ${certificate.title}
-발급일: ${dayjs(certificate.issuedAt).format('YYYY년 MM월 DD일')}
+발급일: ${formatDateDot(certificate.issuedAt)}
 문서 ID: ${certificate.id}
 
 이 문서는 Mock 데이터입니다.

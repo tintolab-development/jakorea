@@ -319,6 +319,20 @@ function testTrainedTeachersProgramTypeRouting() {
   )
 }
 
+function testEconomyProgramTypeRouting() {
+  assert.equal(
+    resolveProgramApplyFormCase({
+      id: '186092',
+      category: 'institution',
+      programType: 'ONE_COMPANY_ONE_SCHOOL',
+      applicationType: 'ORGANIZATION',
+      programAudience: 'organization',
+      participationMethod: 'individual',
+    }),
+    'institution-economy',
+  )
+}
+
 function run() {
   testCaseToTemplateCode()
   testIndividualGeneral()
@@ -334,6 +348,7 @@ function run() {
   testInstructorGemini()
   testTrainedTeachers()
   testTrainedTeachersProgramTypeRouting()
+  testEconomyProgramTypeRouting()
   console.log(
     'apply-form-drafts: all checks passed (apply cases × CMS templateCode seed paragraphs)'
   )

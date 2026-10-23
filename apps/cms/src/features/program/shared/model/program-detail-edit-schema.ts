@@ -19,6 +19,7 @@
  *    새 공통정보 필드를 추가하면 패치 함수와 `Program` 모델도 함께 갱신할 것.
  */
 
+import { formatNumberDisplay } from '@/shared/lib/numeric-input'
 import {
   formatDateOnly,
   formatDateRange,
@@ -114,7 +115,7 @@ const optionalNonNegJavaInt = z.preprocess(
   z
     .number()
     .min(0)
-    .max(JAVA_INT_MAX, `0 ~ ${JAVA_INT_MAX.toLocaleString('ko-KR')} 범위로 입력해주세요`)
+    .max(JAVA_INT_MAX, `0 ~ ${formatNumberDisplay(JAVA_INT_MAX)} 범위로 입력해주세요`)
     .optional()
 )
 
@@ -709,7 +710,7 @@ function formatCompanySchoolWageAmount(amount: string | number | undefined): str
   if (amount == null || amount === '') return ''
   const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))
   if (Number.isNaN(num)) return String(amount)
-  return num.toLocaleString('ko-KR')
+  return formatNumberDisplay(num)
 }
 
 function buildWageGradeRowsFromDetailValues(

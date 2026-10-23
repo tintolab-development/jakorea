@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { mapTextbookResponse } from './textbook-adapters'
 import {
   buildEducationStages,
+  parseEducationTargetLabels,
   toEducationStageKey,
 } from '@/features/textbook/lib/textbook-education-stages'
 
 describe('textbook education stage mapping', () => {
+  it('parses comma-separated education targets in canonical order', () => {
+    expect(parseEducationTargetLabels('중학교, 초등학교')).toEqual(['초등학교', '중학교'])
+    expect(parseEducationTargetLabels('ELEMENTARY')).toEqual(['초등학교'])
+  })
+
   it('maps English ELEMENTARY educationTarget to elementary stage', () => {
     expect(toEducationStageKey('ELEMENTARY')).toBe('elementary')
     const stages = buildEducationStages('ELEMENTARY', '3학년')
@@ -115,6 +121,23 @@ describe('textbook education stage mapping', () => {
       '3학년',
       '4학년',
     ])
+  })
+
+  it('여러 교육 대상 stage를 목록 요약에 모두 남긴다', () => {
+    const row = mapTextbookResponse({
+      id: '1',
+      businessArea: '기업가정신',
+      educationTarget: '초등학교',
+      grade: '전학년',
+      educationStages: [
+        { stage: 'elementary', grades: ['1', '2', '3', '4', '5', '6'] },
+        { stage: 'middle', grades: ['1'] },
+      ],
+      textbookName: '초중 교재',
+      useStatus: 'USED',
+    })
+    expect(row.educationTarget).toBe('초등학교, 중학교')
+    expect(row.grade).toBe('초등학교 전학년, 중학교 1학년')
   })
 
   it('empty educationTarget/grade leaves all unchecked', () => {

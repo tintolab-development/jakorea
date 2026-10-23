@@ -14,7 +14,7 @@ function assignedSession(
 ): ParticipatingSchoolSession {
   return {
     round: 1,
-    date: '2026. 04. 03',
+    date: '2026.04.03',
     dayOfWeek: '금',
     duration: '60분',
     format: '-',
@@ -76,7 +76,7 @@ describe('buildParticipatingIndividualParticipantAttendanceRowsFromAssigned', ()
     const assigned = [
       assignedSession(10, { educationScheduleLabel: '오리엔테이션' }),
       assignedSession(20, {
-        date: '2026. 04. 17',
+        date: '2026.04.17',
         educationScheduleLabel: '1차 교육',
       }),
     ]
@@ -133,7 +133,7 @@ describe('buildParticipatingIndividualParticipantAttendanceRowsFromAssigned', ()
     const sessions = [
       assignedSession(10),
       assignedSession(20, {
-        date: '2026. 06. 05',
+        date: '2026.06.05',
         deliveryScheduleStatus: 'SCHEDULED',
         educationScheduleLabel: '4차 교육',
       }),

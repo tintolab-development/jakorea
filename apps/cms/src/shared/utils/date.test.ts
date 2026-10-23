@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   formatDate,
   formatDateDot,
+  formatDateDotWithWeekday,
   formatDateRangeDot,
+  formatDateRangeDotWithWeekday,
   formatDateSpaced,
   formatDateTimeDot,
+  formatDateTimeDotWithWeekday,
+  formatDateTimeSecondsDot,
 } from './date'
 
 describe('formatDate', () => {
@@ -35,9 +39,9 @@ describe('formatDateDot', () => {
 })
 
 describe('formatDateSpaced', () => {
-  it('YYYY. MM. DD(공백 포함)로 표시한다', () => {
-    expect(formatDateSpaced('2025-09-15')).toBe('2025. 09. 15')
-    expect(formatDateSpaced('2026-1-2')).toBe('2026. 01. 02')
+  it('표시는 공백 없는 YYYY.MM.DD다', () => {
+    expect(formatDateSpaced('2025-09-15')).toBe('2025.09.15')
+    expect(formatDateSpaced('2026-1-2')).toBe('2026.01.02')
   })
 
   it('빈 값과 잘못된 값은 -로 표시한다', () => {
@@ -58,6 +62,25 @@ describe('formatDateTimeDot', () => {
   })
 })
 
+describe('formatDateTimeSecondsDot', () => {
+  it('YYYY.MM.DD HH:mm:ss로 표시한다', () => {
+    expect(formatDateTimeSecondsDot('2026-04-20T09:30:42')).toBe('2026.04.20 09:30:42')
+  })
+})
+
+describe('formatDateDotWithWeekday', () => {
+  it('YYYY.MM.DD(요일)이고 점·괄호 앞뒤 공백이 없다', () => {
+    expect(formatDateDotWithWeekday('2026-04-20')).toBe('2026.04.20(월)')
+    expect(formatDateDotWithWeekday('2026-01-09')).toBe('2026.01.09(금)')
+  })
+})
+
+describe('formatDateTimeDotWithWeekday', () => {
+  it('YYYY.MM.DD(요일) HH:mm이다', () => {
+    expect(formatDateTimeDotWithWeekday('2026-04-20T09:30:00')).toBe('2026.04.20(월) 09:30')
+  })
+})
+
 describe('formatDateRangeDot', () => {
   it('시작·종료를 YYYY.MM.DD ~ YYYY.MM.DD로 연결한다', () => {
     expect(formatDateRangeDot('2026-1-2', '2026-12-31')).toBe('2026.01.02 ~ 2026.12.31')
@@ -66,5 +89,13 @@ describe('formatDateRangeDot', () => {
   it('한쪽이라도 없으면 -이다', () => {
     expect(formatDateRangeDot('2026-01-02', null)).toBe('-')
     expect(formatDateRangeDot(undefined, '2026-01-02')).toBe('-')
+  })
+})
+
+describe('formatDateRangeDotWithWeekday', () => {
+  it('양쪽에 요일을 붙인다', () => {
+    expect(formatDateRangeDotWithWeekday('2026-04-20', '2026-11-20')).toBe(
+      '2026.04.20(월) ~ 2026.11.20(금)'
+    )
   })
 })

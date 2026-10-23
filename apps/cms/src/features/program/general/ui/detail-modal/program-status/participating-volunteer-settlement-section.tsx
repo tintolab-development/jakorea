@@ -12,6 +12,7 @@ import { CmsButton, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { handleError } from '@/shared/utils/error-handler'
+import { formatNumberDisplay } from '@/shared/utils'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { lectureProgressAccent } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
@@ -35,7 +36,7 @@ import './participating-volunteer-settlement-section.css'
 
 function formatSettlementAmount(amount: number | null): string {
   if (amount == null) return '-'
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 function renderPaymentStatementProcessingStatus(row: ParticipatingVolunteerSettlementApiRow) {
@@ -276,8 +277,7 @@ export function ParticipatingVolunteerSettlementSection({
         <div className="info-section-buttons--wrapper">
           <CmsButton
             variant="secondary"
-            size="large"
-            width={220}
+            size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
             onClick={() => void handleBulkDownloadPaymentStatements()}

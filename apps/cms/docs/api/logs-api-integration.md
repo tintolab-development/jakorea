@@ -27,6 +27,7 @@
 |------------------|------------------|--------|-----|
 | `GET /api/admin/logs/file-access` | `get_api_logs_file-access` | `getFileDownloadLogsPage()` | 파일 다운로드 이력 |
 | `GET /api/admin/logs/privacy-access` | `get_api_logs_privacy-access` | `getPersonalInfoAccessLogsPage()` | 개인정보 조회 이력 |
+| `GET /api/admin/logs/privacy-access/export` | — | `exportPersonalInfoAccessLogs()` | 개인정보 조회 이력 엑셀 (현재 필터) |
 | `GET /api/admin/logs/member-logins` | `get_api_logs_member-logins` | `getMemberLoginLogsPage()` | 회원 로그인 이력 |
 | `GET /api/admin/logs/system-issues` | `get_api_logs_system-issues` | `getBugIssueLogsPage()` | 버그/이슈 이력 (목록만) |
 
@@ -80,6 +81,9 @@ OpenAPI의 `GET /system-issues/{id}` · `PATCH /system-issues/{id}/status`는 **
 - Class C + F, `staleTime: 30s`, `gcTime: 10m`, `retry: false` (403 재시도 없음)
 - `logout` / `completeAdminAuth` → `clearLogsQueryCache()`
 - API 실패 시 `LogsQueryError` 표시 (**4화면 모두 mock fallback 없음**)
+- 개인정보 조회 이력:
+  - 엑셀: `GET /api/admin/logs/privacy-access/export` + 현재 화면 필터 (`pia_*` → `targetName`/`accessPurpose`/`accessorName`/`from`/`to`)
+  - 엑셀 파일명: `[JA Korea] CMS 어드민_개인정보 조회 이력_YYMMDD`
 - 회원 로그인 이력:
   - 기획: 수집일로부터 1개월 보관 후 파기 — 사용자가 `from`을 보낸 경우에만 cutoff로 clamp. 미지정 시 쿼리에 `from`을 넣지 않음 (서버 기본 1개월을 신뢰)
   - 엑셀 파일명: `[JA Korea] CMS 어드민_회원 로그인 이력_YYMMDD` (현재 로드된 목록만)
@@ -104,4 +108,4 @@ OpenAPI의 `GET /system-issues/{id}` · `PATCH /system-issues/{id}/status`는 **
 
 **개인정보 조회 대상:** DTO에 `targetName`(또는 동등 키)이 오면 `조회 대상` 컬럼에 표시하고, 없으면 `-`입니다.
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-10-23

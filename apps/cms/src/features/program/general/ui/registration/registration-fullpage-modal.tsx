@@ -52,6 +52,9 @@ import type { TrainedTeachersRegistrationDevAutofillCaseId } from '@/features/pr
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
+import { getProgramRegistrationOverlayVersion } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useRegistrationWizardLeaveGuard } from '@/features/program/shared/lib/registration-wizard-leave-guard'
+import { RegistrationWizardLeaveConfirmModal } from '@/features/program/shared/ui/registration/registration-wizard-leave-confirm-modal'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -220,6 +223,27 @@ function GeneralProgramRegistrationFullpageModalInner({
     onClose()
   }, [onClose, searchParams, setSearchParams])
 
+  const wizardProgramType = useMemo(
+    () =>
+      registrationProgramTypeForTemplateCode(
+        flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+      ),
+    [flow.registrationTemplateId]
+  )
+
+  const {
+    leaveConfirmOpen,
+    requestLeave,
+    confirmLeave,
+    cancelLeave,
+    markLeaveBaseline,
+  } = useRegistrationWizardLeaveGuard({
+    open,
+    programType: wizardProgramType,
+    getOverlayVersion: getProgramRegistrationOverlayVersion,
+    onLeave: handleClose,
+  })
+
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
       setRecruitmentPreviewProgram(flow.registrationVm.buildCurrentProgramSnapshot())
@@ -236,6 +260,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   const runDraftSave = useCallback(async () => {
     try {
       await flow.persistDraftSilent()
+      markLeaveBaseline()
       setDraftSaveSuccessOpen(true)
     } catch (error) {
       console.debug('generalProgramRegistration draft save failed', error)
@@ -244,7 +269,7 @@ function GeneralProgramRegistrationFullpageModalInner({
         content: draftSaveFailureMessage(error),
       })
     }
-  }, [flow, showAlert])
+  }, [flow, markLeaveBaseline, showAlert])
 
   const handleSaveClick = useCallback(() => {
     const existing = peekRegistrationDraftNotice(
@@ -263,6 +288,7 @@ function GeneralProgramRegistrationFullpageModalInner({
       setOverwriteSaving(true)
       try {
         await flow.persistDraftSilent()
+        markLeaveBaseline()
         setOverwriteOpen(false)
         setDraftSaveSuccessOpen(true)
       } catch (error) {
@@ -275,7 +301,7 @@ function GeneralProgramRegistrationFullpageModalInner({
         setOverwriteSaving(false)
       }
     })()
-  }, [flow, showAlert])
+  }, [flow, markLeaveBaseline, showAlert])
 
   const handleCompleteSuccessConfirm = useCallback(() => {
     const created = pendingCreatedProgramRef.current
@@ -376,7 +402,7 @@ function GeneralProgramRegistrationFullpageModalInner({
         open={open}
         bodyLoading={flow.isDraftLoading}
         scrollResetKey={flow.activeStep}
-        onClose={handleClose}
+        onClose={requestLeave}
         title={
           registrationFormVariant === 'economy'
             ? COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE
@@ -408,6 +434,7 @@ function GeneralProgramRegistrationFullpageModalInner({
               templateName={flow.stepTemplateName}
               isDefault={flow.isDefaultStepTemplate}
               category={flow.phase === 'application' ? 'application_form' : 'application'}
+              allowedFamilyBaseTemplateCode={flow.currentStepDef.templateId}
               pickerOpen={templatePickerOpen}
               onOpenPicker={() => setTemplatePickerOpen(true)}
               onClosePicker={() => setTemplatePickerOpen(false)}
@@ -446,6 +473,11 @@ function GeneralProgramRegistrationFullpageModalInner({
           </HideParagraphSelectionChromeContext.Provider>
         }
         rightNavigation={hideCustomFieldNav ? null : flow.panels.rightNavigation}
+      />
+      <RegistrationWizardLeaveConfirmModal
+        open={leaveConfirmOpen}
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}

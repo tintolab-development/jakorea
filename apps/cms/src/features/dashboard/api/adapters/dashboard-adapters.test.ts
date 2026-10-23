@@ -213,6 +213,17 @@ describe('filterRecruitmentListForWidget', () => {
     expect(filtered.items?.map((i: { programId?: number }) => i.programId)).toEqual([1])
   })
 
+  it('일반 일정 위젯은 교육받은 교사를 같은 항목으로 포함한다', () => {
+    const filtered = filterRecruitmentListForWidget('program-schedule-general-widget', {
+      items: [
+        { programId: 1, nameKo: '일반', programType: 'general' },
+        { programId: 4, nameKo: '교육받은 교사', programType: 'trained_teachers' },
+        { programId: 2, nameKo: '1사1교', programType: 'company_school' },
+      ],
+    })
+    expect(filtered.items?.map((i: { programId?: number }) => i.programId)).toEqual([1, 4])
+  })
+
   it('programType 없는 위젯은 전체를 유지한다', () => {
     const filtered = filterRecruitmentListForWidget('recruitment-status-widget', dto)
     expect(filtered.items).toHaveLength(3)

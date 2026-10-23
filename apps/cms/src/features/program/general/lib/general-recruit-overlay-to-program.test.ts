@@ -187,7 +187,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
         generalCommonInfo: {
           instructorRecruitmentInfo: {
             contactOrganizationName: '강사 문의처',
-            recruitmentPeriodLabel: '2026.10.16 (금) ~ 2027.09.15 (수)',
+            recruitmentPeriodLabel: '2026.10.16(금) ~ 2027.09.15(수)',
           },
         },
       } as Program,
@@ -444,7 +444,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       generalCommonInfo: {
         volunteerInterviewScheduleInfo: {
           recurringUnavailable: '토요일, 일요일, 공휴일',
-          specificUnavailableDates: '2026. 03. 26 (목)',
+          specificUnavailableDates: '2026.03.26(목)',
           specificUnavailableDateIsos: ['2026-03-26'],
         },
       },
@@ -629,7 +629,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.startDate).toBe('2026-10-13T15:00:00.000Z')
     expect(next.endDate).toBe('2026-11-07T14:59:59.999Z')
     expect(next.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toContain(
-      '2026. 10. 21'
+      '2026.10.21'
     )
   })
 

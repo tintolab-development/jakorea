@@ -145,26 +145,29 @@ export class UjatProgramEditPage {
         const response = await fetch('/api/admin/programs?page=0&size=100&programType=UJAT', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
-        const body = (await response.json().catch(() => null)) as {
-          items?: Array<{
-            id?: string | number
-            mainTitle?: string
-            periodStatus?: string
-            businessStartDate?: string
-          }>
-          content?: Array<{
-            id?: string | number
-            mainTitle?: string
-            periodStatus?: string
-            businessStartDate?: string
-          }>
-        } | Array<{
-          id?: string | number
-          mainTitle?: string
-          periodStatus?: string
-          businessStartDate?: string
-        }> | null
-        const rows = Array.isArray(body) ? body : body?.items ?? body?.content ?? []
+        const body = (await response.json().catch(() => null)) as
+          | {
+              items?: Array<{
+                id?: string | number
+                mainTitle?: string
+                periodStatus?: string
+                businessStartDate?: string
+              }>
+              content?: Array<{
+                id?: string | number
+                mainTitle?: string
+                periodStatus?: string
+                businessStartDate?: string
+              }>
+            }
+          | Array<{
+              id?: string | number
+              mainTitle?: string
+              periodStatus?: string
+              businessStartDate?: string
+            }>
+          | null
+        const rows = Array.isArray(body) ? body : (body?.items ?? body?.content ?? [])
         const candidates = rows.filter(
           item =>
             typeof item.mainTitle === 'string' &&
@@ -172,7 +175,11 @@ export class UjatProgramEditPage {
         )
         const match =
           candidates.find(item => item.periodStatus === 'SCHEDULED') ??
-          candidates.find(item => item.businessStartDate && item.businessStartDate > new Date().toISOString().slice(0, 10)) ??
+          candidates.find(
+            item =>
+              item.businessStartDate &&
+              item.businessStartDate > new Date().toISOString().slice(0, 10)
+          ) ??
           candidates[0]
         return match?.id != null
           ? { id: String(match.id), mainTitle: String(match.mainTitle) }
@@ -253,9 +260,9 @@ export class UjatProgramEditPage {
     }
 
     await expect(this.page).toHaveURL(/edit=info/, { timeout: 15_000 })
-    await expect(
-      this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()
-    ).toBeVisible({ timeout: 15_000 })
+    await expect(this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toBeVisible({
+      timeout: 15_000,
+    })
   }
 
   /**
@@ -312,11 +319,7 @@ export class UjatProgramEditPage {
     const s = snapshot ?? this.commonEdited
     await this.ensureCommonInfoTab()
 
-    await expectDetailInfoFieldContains(
-      this.page,
-      '대표 프로그램명 (국문)',
-      programTitle
-    )
+    await expectDetailInfoFieldContains(this.page, '대표 프로그램명 (국문)', programTitle)
 
     if (!s) {
       await expect(this.page.getByText(EDIT_MARKER).first()).toBeVisible({ timeout: 15_000 })
@@ -391,16 +394,8 @@ export class UjatProgramEditPage {
       '프로그램명을 입력하세요',
       `E2E UJAT 공고 ${EDIT_MARKER}`
     )
-    await fillByPlaceholderIfVisible(
-      this.page,
-      '상세 교육 대상을 입력하세요',
-      EDIT_TARGET_DETAIL
-    )
-    await fillByPlaceholderIfVisible(
-      this.page,
-      '상세 모집 대상을 입력하세요',
-      EDIT_TARGET_DETAIL
-    )
+    await fillByPlaceholderIfVisible(this.page, '상세 교육 대상을 입력하세요', EDIT_TARGET_DETAIL)
+    await fillByPlaceholderIfVisible(this.page, '상세 모집 대상을 입력하세요', EDIT_TARGET_DETAIL)
     await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', EDIT_CONTACT_TEL)
@@ -462,9 +457,9 @@ export class UjatProgramEditPage {
       `/programs/ujat?programId=${programId}&lnb=institution_applications&tab=inst_all`
     )
     await expect(this.lnb()).toBeVisible({ timeout: 60_000 })
-    await expect(
-      this.page.getByText(/신청 기관|참여 기관 신청/).first()
-    ).toBeVisible({ timeout: 30_000 })
+    await expect(this.page.getByText(/신청 기관|참여 기관 신청/).first()).toBeVisible({
+      timeout: 30_000,
+    })
 
     await this.page.goto(`/programs/ujat?programId=${programId}&lnb=volunteer_h1&tab=vh1_all`)
     await expect(this.lnb()).toBeVisible({ timeout: 60_000 })
@@ -494,10 +489,12 @@ export class UjatProgramEditPage {
       `/programs/ujat?programId=${programId}&lnb=education_progress&tab=edu_h1_institutions`
     )
     await expect(this.lnb()).toBeVisible({ timeout: 60_000 })
+    await expect(this.page.getByText(/참여 기관|교육 진행/).first()).toBeVisible({
+      timeout: 30_000,
+    })
     await expect(
-      this.page.getByText(/참여 기관|교육 진행/).first()
-    ).toBeVisible({ timeout: 30_000 })
-    await expect(this.page.locator('.cms-data-table, .ant-table, .filter-table-layout').first()).toBeVisible({
+      this.page.locator('.cms-data-table, .ant-table, .filter-table-layout').first()
+    ).toBeVisible({
       timeout: 30_000,
     })
   }
@@ -524,9 +521,7 @@ export class UjatProgramEditPage {
       patchPromise.then(async res => {
         if (!res.ok()) {
           const body = await res.text().catch(() => '')
-          throw new Error(
-            `프로그램 수정 API 실패: HTTP ${res.status()} ${body.slice(0, 400)}`
-          )
+          throw new Error(`프로그램 수정 API 실패: HTTP ${res.status()} ${body.slice(0, 400)}`)
         }
       }),
       failDialog.waitFor({ state: 'visible', timeout: 60_000 }).then(async () => {
@@ -537,9 +532,7 @@ export class UjatProgramEditPage {
       }),
     ])
 
-    const completedDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: '수정 완료' })
+    const completedDialog = this.page.getByRole('dialog').filter({ hasText: '수정 완료' })
     await completedDialog.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined)
     if (await completedDialog.isVisible().catch(() => false)) {
       await completedDialog.getByRole('button', { name: '확인' }).click()

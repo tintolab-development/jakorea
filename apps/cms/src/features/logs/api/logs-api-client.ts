@@ -115,6 +115,18 @@ export async function exportMemberLoginHistoryRemote(
   })
 }
 
+export async function exportPrivacyAccessLogsRemote(
+  filters: Record<string, string>
+): Promise<Blob> {
+  const query = toLogsQueryParams(filters)
+  return customInstance<Blob>({
+    url: '/api/admin/logs/privacy-access/export',
+    method: 'GET',
+    params: query,
+    responseType: 'blob',
+  })
+}
+
 export async function fetchSystemIssueLogsRemote(
   params: Record<string, string>
 ): Promise<LogListPageResponseBugIssueLogFrontendResponse> {

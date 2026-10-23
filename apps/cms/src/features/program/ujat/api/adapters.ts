@@ -75,6 +75,8 @@ import {
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   generalParticipantTypesFromUjatFlags,
@@ -641,12 +643,24 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   } as unknown as GeneralProgramCommonInfoExtension['kpi']
 
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
-  const generalCommonInfoBase = Object.prototype.hasOwnProperty.call(dto, 'detailedProgramName')
+  const namedCommonInfo = Object.prototype.hasOwnProperty.call(dto, 'detailedProgramName')
     ? {
         ...details.generalCommonInfo,
         detailedProgramName: dto.detailedProgramName?.trim() ?? '',
       }
     : details.generalCommonInfo
+  const policyCommonInfo = applySettlementPolicyToCommonInfo(
+    namedCommonInfo,
+    dto.settlementPolicy
+  )
+  const generalCommonInfoBase = policyCommonInfo
+    ? {
+        ...namedCommonInfo,
+        ...(Array.isArray(dto.settlementPolicy?.paymentItems)
+          ? { paymentItems: policyCommonInfo.paymentItems }
+          : {}),
+      }
+    : namedCommonInfo
   const generalCommonInfo = generalCommonInfoBase
     ? {
         ...generalCommonInfoBase,
@@ -1014,6 +1028,7 @@ function coreRequest(
       registrationSnapshotForApi(registration)
     ),
   }
+  assignProgramPaymentItemsToWriteRequest({ body, program })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'full',
     merged: program,
@@ -1182,6 +1197,12 @@ function patchRequest(
     body.targetLevels = persistedTargetLevels
     body.targetLevel = persistedTargetLevels[0]
   }
+  assignProgramPaymentItemsToWriteRequest({
+    body,
+    program: merged,
+    patch,
+    baseline: existing,
+  })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,

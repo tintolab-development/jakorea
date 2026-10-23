@@ -66,11 +66,11 @@ describe('mapRequestedSchedulesToSessions', () => {
       '09:30 ~ 11:30',
       '종일',
     ])
-    expect(sessions?.[0]?.date).toBe('2026. 10. 20')
+    expect(sessions?.[0]?.date).toBe('2026.10.20')
     expect(sessions?.[0]?.resolvedScheduleId).toBe(186621)
     expect(sessions?.[0]?.requestedScheduleId).toBeUndefined()
     expect(sessions?.[2]?.scheduleUnresolved).toBe(true)
-    expect(formatRequestedSchedulesPeriodLabel([schedules[0]!])).toBe('2026. 10. 20(화) 10:00 ~ 12:00')
+    expect(formatRequestedSchedulesPeriodLabel([schedules[0]!])).toBe('2026.10.20(화) 10:00 ~ 12:00')
   })
 
   it('startPeriod가 있어도 sessionTimes·label이 있으면 시각 지정형으로 매핑한다', () => {

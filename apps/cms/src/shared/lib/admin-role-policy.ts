@@ -117,6 +117,18 @@ export function isPermissionSettingsPath(pathname: string): boolean {
   )
 }
 
+export function isProgramManagerPermissionSettingsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/admin/settings/program-manager-permissions' ||
+    normalized.startsWith('/admin/settings/program-manager-permissions/')
+  )
+}
+
+export function isMemberPermissionSettingsPath(pathname: string): boolean {
+  return isPermissionSettingsPath(pathname) || isProgramManagerPermissionSettingsPath(pathname)
+}
+
 export function isPermissionRequestsPath(pathname: string): boolean {
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   return (
@@ -135,7 +147,7 @@ export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPol
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   if (isSecurityLogPath(normalized)) return 'security-logs'
-  if (isPermissionSettingsPath(normalized)) {
+  if (isMemberPermissionSettingsPath(normalized)) {
     return 'permission-settings'
   }
   if (isPermissionRequestsPath(normalized)) {

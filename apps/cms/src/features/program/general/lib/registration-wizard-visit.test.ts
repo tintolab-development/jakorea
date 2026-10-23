@@ -21,6 +21,7 @@ import {
 import {
   beginRegistrationWizardVisit,
   endRegistrationWizardVisit,
+  isRegistrationWizardVisitDirty,
   trackRegistrationWizardVisitSave,
 } from '@/features/program/general/lib/registration-wizard-visit'
 import {
@@ -58,6 +59,16 @@ describe('registration wizard visit', () => {
     clearOperationalSeedDefaultSuppression()
     resetGeminiRecruitOverlay()
     vi.clearAllMocks()
+  })
+
+  it('방문 중 양식 선택을 바꾸면 dirty로 판별한다', async () => {
+    beginRegistrationWizardVisit(PROGRAM_TYPE)
+    expect(isRegistrationWizardVisitDirty(PROGRAM_TYPE)).toBe(false)
+
+    setRegistrationStepTemplateSelection(PROGRAM_TYPE, STEP_KEY, CUSTOM_CODE)
+    expect(isRegistrationWizardVisitDirty(PROGRAM_TYPE)).toBe(true)
+
+    endRegistrationWizardVisit(PROGRAM_TYPE)
   })
 
   it('임시저장 없이 닫으면 바꾼 양식 선택과 초안을 연 시점으로 되돌린다', async () => {

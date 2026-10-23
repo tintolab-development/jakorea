@@ -347,3 +347,44 @@ describe('getParticipationConsentRequiredMessage', () => {
     expect(getParticipationConsentRequiredMessage(error)).toBeUndefined()
   })
 })
+
+describe('교육구조 Guard 코드', () => {
+  it('400/409 코드를 지정 안내로 바꾼다', () => {
+    const errorFor = (code: string) => ({
+      response: {
+        status: 409,
+        data: { success: false, error: { code, message: code } },
+      },
+    })
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_CHANGE_BLOCKED'),
+        'fallback'
+      )
+    ).toBe('이미 신청·배정 또는 교육 운영 이력이 있는 프로그램은 교육구조를 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_CHANGE_CONCURRENT'),
+        'fallback'
+      )
+    ).toBe('다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.')
+    expect(getGeneralProgramApiErrorMessage(errorFor('VERSION_CONFLICT'), 'fallback')).toBe(
+      '다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.'
+    )
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('GENERAL_CURRICULUM_SESSION_IN_USE'), 'fallback')
+    ).toBe('설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_RESET_REQUIRED'),
+        'fallback'
+      )
+    ).toBe('교육구조를 변경하려면 이전 교육구조의 회차 또는 일정 정보를 비워야 합니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_PAYLOAD_REQUIRED'),
+        'fallback'
+      )
+    ).toBe('변경할 교육구조의 회차 또는 일정 정보를 입력해 주세요.')
+  })
+})

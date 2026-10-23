@@ -17,8 +17,13 @@ function parseError(payload: unknown, fallback: string): AdminMfaApiError {
   if (payload && typeof payload === 'object') {
     const o = payload as Record<string, unknown>
     if (o.success === false) {
-      const raw = typeof o.message === 'string' ? o.message : fallback
-      return new AdminMfaApiError('PASSWORD_CHANGE_FAILED', raw)
+      const wrapped = o.error as { code?: string; message?: string } | undefined
+      const code = wrapped?.code?.trim() || 'PASSWORD_CHANGE_FAILED'
+      const raw =
+        wrapped?.message?.trim() ||
+        (typeof o.message === 'string' ? o.message.trim() : '') ||
+        fallback
+      return new AdminMfaApiError(code, raw || fallback)
     }
     const wrapped = o.error as { code?: string; message?: string } | undefined
     const code = wrapped?.code ?? 'UNKNOWN'

@@ -11,6 +11,16 @@ const restart = resolveGuardianBridgeError(
 assert.equal(restart.action, 'restart_profile')
 assert.equal(restart.message.includes('이메일 또는 비밀번호'), false)
 
+const invalidChallenge = resolveGuardianBridgeError(
+  bridgeError(
+    'GUARDIAN_FINAL_CONSENT_CHALLENGE_INVALID',
+    '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+    401,
+  ),
+)
+assert.equal(invalidChallenge.action, 'show_message')
+assert.equal(invalidChallenge.code, 'GUARDIAN_FINAL_CONSENT_CHALLENGE_INVALID')
+
 const conflict = resolveGuardianBridgeError(
   bridgeError('CONFLICT', '이미 처리된 요청입니다.', 409),
 )

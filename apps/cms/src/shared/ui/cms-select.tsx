@@ -41,8 +41,7 @@ function isAllSentinelOption(opt: unknown): boolean {
   const o = opt as { value?: unknown; label?: unknown; options?: unknown[] }
   if (Array.isArray(o.options)) return false
   const value = String(o.value ?? '').trim()
-  const label = String(o.label ?? '').trim()
-  return value === '' || value === 'ALL' || label === '전체'
+  return value === '' || value === 'ALL'
 }
 
 function stripAllSentinelOptions(options: SelectProps['options']): SelectProps['options'] {

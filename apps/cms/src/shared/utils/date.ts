@@ -1,17 +1,26 @@
 /**
- * 날짜 포맷팅 유틸리티
+ * CMS 화면 날짜 표시 SSOT (QA-126)
  *
- * 텍스트 공통 정책:
- * - 목록 날짜: YYYY.MM.DD (월·일은 2자리)
- * - 목록 날짜(공백): YYYY. MM. DD
+ * - 날짜: YYYY.MM.DD
  * - 날짜+시간: YYYY.MM.DD HH:mm
+ * - 날짜+시간+초: YYYY.MM.DD HH:mm:ss
+ * - 요일: YYYY.MM.DD(요일) — 점·괄호 앞뒤 공백 없음
+ * - 날짜+요일+시분: YYYY.MM.DD(요일) HH:mm
+ * - 기간: YYYY.MM.DD ~ YYYY.MM.DD
+ *
+ * 생년월일 표시는 이 모듈을 쓰지 않는다.
  */
 
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
+
+export type CmsDateInput = Date | string | number | Dayjs | null | undefined
+
+export const CMS_WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 const defaultLocale = 'ko-KR'
 
-function parseDisplayDate(value: Date | string | number) {
+function parseDisplayDate(value: Date | string | number | Dayjs) {
+  if (dayjs.isDayjs(value)) return value
   if (typeof value === 'string') {
     const trimmed = value.trim()
     // 날짜만·점 구분(2026.1.2) 패딩. ISO date-time(`…T…`)은 T를 유지해 dayjs가 파싱되게 한다.
@@ -27,38 +36,75 @@ function parseDisplayDate(value: Date | string | number) {
   return dayjs(value)
 }
 
-/** 목록 등 날짜(시간 제외) 표시 — 예: 2025.09.15 */
-export function formatDateDot(value: Date | string | number | null | undefined): string {
-  if (value == null || value === '') return '-'
+function weekdayLabel(parsed: Dayjs): string {
+  return CMS_WEEKDAY_KO[parsed.day()] ?? ''
+}
+
+function emptyOrInvalid(value: CmsDateInput): value is null | undefined | '' {
+  return value == null || value === ''
+}
+
+/** 목록 등 날짜(시간 제외) 표시 — 예: 2026.04.20 */
+export function formatDateDot(value: CmsDateInput): string {
+  if (emptyOrInvalid(value)) return '-'
   const parsed = parseDisplayDate(value)
   if (!parsed.isValid()) return '-'
   return parsed.format('YYYY.MM.DD')
 }
 
-/** 목록 등 날짜(시간 제외) — 점 뒤 공백 포함. 예: 2025. 09. 15 */
-export function formatDateSpaced(value: Date | string | number | null | undefined): string {
-  if (value == null || value === '') return '-'
-  const parsed = parseDisplayDate(value)
-  if (!parsed.isValid()) return '-'
-  return parsed.format('YYYY. MM. DD')
+/**
+ * @deprecated 표시는 `formatDateDot`(공백 없음)을 쓴다. 호출 호환용 별칭.
+ */
+export function formatDateSpaced(value: CmsDateInput): string {
+  return formatDateDot(value)
 }
 
-/** 목록 등 날짜+시간 표시 — 예: 2025.09.15 14:30 */
-export function formatDateTimeDot(value: Date | string | number | null | undefined): string {
-  if (value == null || value === '') return '-'
+/** 목록 등 날짜+시간 표시 — 예: 2026.04.20 09:30 */
+export function formatDateTimeDot(value: CmsDateInput): string {
+  if (emptyOrInvalid(value)) return '-'
   const parsed = parseDisplayDate(value)
   if (!parsed.isValid()) return '-'
   return parsed.format('YYYY.MM.DD HH:mm')
 }
 
-/** 목록 기간 표시 — 예: 2025.09.15 ~ 2025.12.31 */
-export function formatDateRangeDot(
-  start: Date | string | number | null | undefined,
-  end: Date | string | number | null | undefined
-): string {
-  if (start == null || start === '' || end == null || end === '') return '-'
+/** 목록 등 날짜+시간+초 표시 — 예: 2026.04.20 09:30:42 */
+export function formatDateTimeSecondsDot(value: CmsDateInput): string {
+  if (emptyOrInvalid(value)) return '-'
+  const parsed = parseDisplayDate(value)
+  if (!parsed.isValid()) return '-'
+  return parsed.format('YYYY.MM.DD HH:mm:ss')
+}
+
+/** 요일 포함 날짜 — 예: 2026.04.20(월) */
+export function formatDateDotWithWeekday(value: CmsDateInput): string {
+  if (emptyOrInvalid(value)) return '-'
+  const parsed = parseDisplayDate(value)
+  if (!parsed.isValid()) return '-'
+  return `${parsed.format('YYYY.MM.DD')}(${weekdayLabel(parsed)})`
+}
+
+/** 요일 포함 날짜+시분 — 예: 2026.04.20(월) 09:30 */
+export function formatDateTimeDotWithWeekday(value: CmsDateInput): string {
+  if (emptyOrInvalid(value)) return '-'
+  const parsed = parseDisplayDate(value)
+  if (!parsed.isValid()) return '-'
+  return `${parsed.format('YYYY.MM.DD')}(${weekdayLabel(parsed)}) ${parsed.format('HH:mm')}`
+}
+
+/** 목록 기간 표시 — 예: 2026.04.20 ~ 2026.11.20 */
+export function formatDateRangeDot(start: CmsDateInput, end: CmsDateInput): string {
+  if (emptyOrInvalid(start) || emptyOrInvalid(end)) return '-'
   const startLabel = formatDateDot(start)
   const endLabel = formatDateDot(end)
+  if (startLabel === '-' || endLabel === '-') return '-'
+  return `${startLabel} ~ ${endLabel}`
+}
+
+/** 요일 포함 기간 — 예: 2026.04.20(월) ~ 2026.11.20(금) */
+export function formatDateRangeDotWithWeekday(start: CmsDateInput, end: CmsDateInput): string {
+  if (emptyOrInvalid(start) || emptyOrInvalid(end)) return '-'
+  const startLabel = formatDateDotWithWeekday(start)
+  const endLabel = formatDateDotWithWeekday(end)
   if (startLabel === '-' || endLabel === '-') return '-'
   return `${startLabel} ~ ${endLabel}`
 }

@@ -1,3 +1,4 @@
+import { parseProgramParticipantCount } from '@/features/sponsor/lib/program-participant-count'
 import type {
   SponsorProgramHistoryFilters,
   SponsorProgramHistoryRow,
@@ -70,6 +71,17 @@ export function matchesProgramHistoryFilter(
     row.participantType !== filters.participantType
   ) {
     return false
+  }
+
+  const beneficiaryQuery = filters.beneficiaryCount.trim()
+  if (beneficiaryQuery) {
+    const expected = Number(beneficiaryQuery)
+    if (
+      !Number.isFinite(expected) ||
+      parseProgramParticipantCount(row.participantCount) !== expected
+    ) {
+      return false
+    }
   }
 
   if (managerQuery && !row.managerName.toLowerCase().includes(managerQuery)) {

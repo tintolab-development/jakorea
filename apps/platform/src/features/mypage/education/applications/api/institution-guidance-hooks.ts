@@ -16,12 +16,14 @@ export function usePatchOrganizationGuidanceAnswersMutation(
     mutationFn: (input: {
       detailCase: ProgramDetailCase | undefined
       state: TeacherInstitutionGuidanceFormState
+      existingAnswers?: Record<string, unknown> | null
     }) =>
       savePortalTeacherInstitutionGuidance({
         applicationType,
         applicationId,
         detailCase: input.detailCase,
         state: input.state,
+        existingAnswers: input.existingAnswers,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

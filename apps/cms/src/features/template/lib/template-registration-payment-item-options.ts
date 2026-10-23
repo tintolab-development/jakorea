@@ -1,5 +1,9 @@
 import { useMemo } from 'react'
-import type { SettlementItemSettingSection } from '@/features/settlement-management/model/settlement-item-settings'
+import {
+  getSettlementItemSettingSectionsSnapshot,
+  type SettlementItemSettingRow,
+  type SettlementItemSettingSection,
+} from '@/features/settlement-management/model/settlement-item-settings'
 import {
   getSettlementConfigRemote,
   type SettlementConfigQueryData,
@@ -59,10 +63,24 @@ export function isPaymentItemCatalogReady(): boolean {
  * 동기 헬퍼용 현재 지급 항목 카탈로그.
  * 실 API 환경에서 응답 전이면 `[]` — mock 으로 대체하지 않는다.
  */
+function paymentRowsFromSections(
+  sections: readonly SettlementItemSettingSection[] | undefined
+): SettlementItemSettingRow[] {
+  return sections?.find(s => s.kind === 'payment')?.items ?? []
+}
+
 export function getActivePaymentItemCatalogOptions(): CmsSelectMultipleOption[] {
   if (!isPaymentItemCatalogRemote()) return localPaymentItemCatalogFallback([])
   const sections = cachedRemotePaymentSections()
   return sections ? getTemplateRegistrationPaymentItemOptions(sections) : []
+}
+
+/** 현재 카탈로그 지급 항목 행 — 옵션 id ↔ paymentItemType 조회용 */
+export function getActivePaymentItemCatalogRows(): SettlementItemSettingRow[] {
+  if (!isPaymentItemCatalogRemote()) {
+    return paymentRowsFromSections(getSettlementItemSettingSectionsSnapshot())
+  }
+  return paymentRowsFromSections(cachedRemotePaymentSections())
 }
 
 /** 제출 직전 등 — 화면에서 셀렉트를 열지 않았어도 실제 지급 항목 목록을 캐시에 올린다. */

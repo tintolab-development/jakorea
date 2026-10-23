@@ -1,3 +1,4 @@
+import { formatNumberDisplay } from '@/shared/utils'
 import {
   GEMINI_RECRUITMENT_EDUCATION_FORM_OPTIONS,
   GEMINI_RECRUITMENT_EDUCATION_TARGET_OPTIONS,
@@ -45,7 +46,7 @@ export function formatOptionalText(value: string): string {
 
 export function formatMinStudentCount(count: number | null | undefined): string {
   if (count == null || !Number.isFinite(count) || count < 1) return '-'
-  return `${count.toLocaleString('ko-KR')}명`
+  return `${formatNumberDisplay(count)}명`
 }
 
 export function formatAttachmentFileNames(names: string[]): string {

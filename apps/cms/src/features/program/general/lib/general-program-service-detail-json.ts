@@ -3,44 +3,100 @@ import { pickDisplayValue } from '@/features/program/general/lib/detail-value-he
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
-import { buildGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import {
+  buildGeneralRegistrationOverlayFromProgram,
+  mergeRegistrationOverlayNestedSsot,
+} from '@/features/program/general/lib/registration-overlay-sync'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
-import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import {
+  parseWageGradeAmount,
+  resolveWagePaymentItemIds,
+  WAGE_GRADE_FIELDS,
+} from '@/features/program/general/lib/wage-display'
 import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
 export const GENERAL_REGISTRATION_WAGE_OVERLAY_PREFIX = 'generalRegistration.wageInfo.' as const
 
-function wageGradeRowsSignature(
+const SPONSOR_MANAGER_CONTACT_NAMES_KEY = 'sponsorManagerContactNames'
+
+/**
+ * 일반 프로그램 serviceDetailJson 전송 경계.
+ * UI sentinel·legacy 이름 map은 관계형 sponsors[] 정본이 아니므로 persist JSON에 넣지 않는다.
+ */
+export function sanitizeGeneralProgramServiceDetailPersistValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return isSponsorContactUnselected(value) ? '' : value
+  }
+  if (Array.isArray(value)) {
+    return value
+      .filter(item => !(typeof item === 'string' && isSponsorContactUnselected(item)))
+      .map(item => sanitizeGeneralProgramServiceDetailPersistValue(item))
+  }
+  if (value != null && typeof value === 'object') {
+    const next: Record<string, unknown> = {}
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (key === SPONSOR_MANAGER_CONTACT_NAMES_KEY) continue
+      next[key] = sanitizeGeneralProgramServiceDetailPersistValue(nested)
+    }
+    return next
+  }
+  return value
+}
+
+function wageGradeAmountSignature(
   rows: NonNullable<Program['generalCommonInfo']>['wageGradeRows'] | undefined
 ): string {
-  if (!rows?.length) return ''
-  return JSON.stringify(
-    rows.map(row => ({
-      grade: row.grade ?? '',
-      pricing: row.pricing ?? '',
-    }))
-  )
+  const byGrade = Object.fromEntries((rows ?? []).map(row => [row.grade, row.pricing]))
+  return WAGE_GRADE_FIELDS.map(field => {
+    const amount = parseWageGradeAmount(byGrade[field.label])
+    return `${field.label}:${amount ?? ''}`
+  }).join('|')
+}
+
+function paymentItemIdsSignature(paymentItems: unknown): string {
+  return [...resolveWagePaymentItemIds(paymentItems)].sort().join(',')
 }
 
 export function wageCommonInfoFieldsUnchanged(
   next: Program['generalCommonInfo'] | undefined,
   existing: Program['generalCommonInfo'] | undefined
 ): boolean {
-  const nextPayment = coerceProgramPaymentItemsText(next?.paymentItems).trim()
-  const existingPayment = coerceProgramPaymentItemsText(existing?.paymentItems).trim()
-  const nextDeduction = (next?.deductionItems ?? '').trim()
-  const existingDeduction = (existing?.deductionItems ?? '').trim()
+  const nextHasWage =
+    next != null &&
+    (Object.prototype.hasOwnProperty.call(next, 'wageGradeRows') ||
+      Object.prototype.hasOwnProperty.call(next, 'paymentItems') ||
+      Object.prototype.hasOwnProperty.call(next, 'deductionItems'))
+  if (!nextHasWage) return true
   return (
-    nextPayment === existingPayment &&
-    nextDeduction === existingDeduction &&
-    wageGradeRowsSignature(next?.wageGradeRows) ===
-      wageGradeRowsSignature(existing?.wageGradeRows)
+    wageGradeAmountSignature(next?.wageGradeRows) ===
+      wageGradeAmountSignature(existing?.wageGradeRows) &&
+    paymentItemIdsSignature(next?.paymentItems) === paymentItemIdsSignature(existing?.paymentItems)
+  )
+}
+
+const KPI_COMPARE_KEYS = [
+  'finalParticipants',
+  'instructorCount',
+  'volunteerCount',
+  'finalSchools',
+  'finalClasses',
+] as const
+
+export function kpiCommonInfoFieldsUnchanged(
+  next: Program['generalCommonInfo'] | undefined,
+  existing: Program['generalCommonInfo'] | undefined
+): boolean {
+  const nextKpi = next?.kpi
+  const existingKpi = existing?.kpi
+  return KPI_COMPARE_KEYS.every(
+    key => Number(nextKpi?.[key] ?? 0) === Number(existingKpi?.[key] ?? 0)
   )
 }
 
@@ -391,6 +447,41 @@ export function withVolunteerInterviewSchedulePeriod(
   }
 }
 
+type NestedSsotOverlayFallback = {
+  curriculumSessions?: NonNullable<Program['generalCommonInfo']>['curriculumSessions']
+  scheduleDetails?: NonNullable<Program['generalCommonInfo']>['scheduleDetails']
+}
+
+function nestedArrayPresent(
+  common: object,
+  key: 'curriculumSessions' | 'scheduleDetails'
+): boolean {
+  if (!Object.prototype.hasOwnProperty.call(common, key)) return false
+  return (common as Record<string, unknown>)[key] != null
+}
+
+function withNestedSsotOverlayFallback(
+  nestedProgram: Program,
+  fallback?: NestedSsotOverlayFallback
+): Program {
+  if (!fallback) return nestedProgram
+  const common = nestedProgram.generalCommonInfo ?? {}
+  return {
+    ...nestedProgram,
+    generalCommonInfo: {
+      ...common,
+      ...(!nestedArrayPresent(common, 'curriculumSessions') &&
+      Object.prototype.hasOwnProperty.call(fallback, 'curriculumSessions')
+        ? { curriculumSessions: fallback.curriculumSessions }
+        : {}),
+      ...(!nestedArrayPresent(common, 'scheduleDetails') &&
+      Object.prototype.hasOwnProperty.call(fallback, 'scheduleDetails')
+        ? { scheduleDetails: fallback.scheduleDetails }
+        : {}),
+    },
+  }
+}
+
 export function serializeGeneralProgramServiceDetailJson(
   program: Program,
   options?: {
@@ -398,6 +489,23 @@ export function serializeGeneralProgramServiceDetailJson(
     omitUnchangedWageOverlay?: boolean
     /** 루트 모집 창 날짜는 빼되, nested `*RecruitmentInfo`는 남긴다. */
     keepNestedRecruitmentInfo?: boolean
+    /**
+     * Independent PATCH: nested 정본. stale unit map 을 baseline overlay에서 되살리지 않는다.
+     * 기본값 legacy-merge 는 기존 overlay-first 제품 경로.
+     */
+    overlayMerge?: 'legacy-merge' | 'nested-ssot'
+    /**
+     * omit 된 nested 는 JSON 에 넣지 않고, overlay 미러만 existing nested 로 채운다.
+     * `[]` / replace 는 fallback 을 쓰지 않는다.
+     */
+    overlayNestedFallback?: NestedSsotOverlayFallback
+    /**
+     * nested-ssot overlay 미러 소스. JSON generalCommonInfo 는 `program`(sparse PATCH)을 쓰고,
+     * overlay 는 GET nested + PATCH 를 합친 이 소스로 다시 만든다.
+     */
+    overlayMergeSource?: Program
+    /** PATCH 에 실제로 실린 nested 키. overlay 미러는 이 키만 갱신한다. */
+    overlayExplicitCommonInfoKeys?: ReadonlySet<string>
   }
 ): string | undefined {
   const isIndividual = isGeneralIndividualProgram(program)
@@ -418,16 +526,23 @@ export function serializeGeneralProgramServiceDetailJson(
     ...program,
     generalCommonInfo,
   }
-  const fromNested = buildGeneralRegistrationOverlayFromProgram(nestedProgram)
-  const overlayForPersist = options?.omitRecruitmentWindow
-    ? {
-        ...(program.registrationOverlay ?? {}),
-        ...fromNested,
-      }
-    : resyncGeneralRecruitOverlayFromProgram(nestedProgram, {
-        ...(program.registrationOverlay ?? {}),
-        ...fromNested,
-      })
+  const overlaySourceProgram = options?.overlayMergeSource ?? nestedProgram
+  const overlayForPersist =
+    options?.overlayMerge === 'nested-ssot'
+      ? mergeRegistrationOverlayNestedSsot(
+          withNestedSsotOverlayFallback(overlaySourceProgram, options.overlayNestedFallback),
+          overlaySourceProgram.registrationOverlay ?? program.registrationOverlay,
+          options.overlayExplicitCommonInfoKeys
+        )
+      : options?.omitRecruitmentWindow
+        ? {
+            ...(program.registrationOverlay ?? {}),
+            ...buildGeneralRegistrationOverlayFromProgram(nestedProgram),
+          }
+        : resyncGeneralRecruitOverlayFromProgram(nestedProgram, {
+            ...(program.registrationOverlay ?? {}),
+            ...buildGeneralRegistrationOverlayFromProgram(nestedProgram),
+          })
   const persistedOverlay = persistScheduleEducationFormByDetailOverlay(
     buildRegistrationOverlayForPersist({
       ...nestedProgram,
@@ -491,7 +606,7 @@ export function serializeGeneralProgramServiceDetailJson(
   })
 
   if (!hasContent) return undefined
-  return JSON.stringify(payload)
+  return JSON.stringify(sanitizeGeneralProgramServiceDetailPersistValue(payload))
 }
 
 function isServiceDetailRecord(value: unknown): value is Record<string, unknown> {

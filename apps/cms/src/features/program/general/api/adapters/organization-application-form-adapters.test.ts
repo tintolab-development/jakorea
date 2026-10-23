@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { FormResponseResponse } from '@/shared/api/generated/forms-surveys/schemas/formResponseResponse'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import { hydrateOrganizationApplicationRowFromForm } from './organization-application-form-adapters'
+import {
+  buildFormAnswerMap,
+  hydrateOrganizationApplicationRowFromForm,
+  parseAnswerValue,
+  parseSexOffenseCheckRequest,
+} from './organization-application-form-adapters'
 
 const baseRow: ApplicantSchoolRow = {
   id: '1691183',
@@ -95,7 +100,7 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.detail?.waitingPlaceGuide).toBe('교무실 앞')
     expect(hydrated.detail?.mealInfo).toBe('교내 식당 가능')
     expect(hydrated.detail?.otherSpecialNotes).toBe('정문 주차')
-    expect(hydrated.detail?.sexOffenseCheckRequest).toBe('성범죄 조회 요청 완료')
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBeUndefined()
     expect(hydrated.sessions?.[0]?.date).toBe('2026.03.10(화) 오전')
   })
 
@@ -245,8 +250,68 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.detail?.computerInSpace).toBeUndefined()
     expect(hydrated.detail?.previousYearParticipation).toBeUndefined()
     expect(hydrated.sessions).toBeUndefined()
-    // canonical DTO에 없는 동적 답변은 계속 표시할 수 있다.
-    expect(hydrated.detail?.sexOffenseCheckRequest).toBe('성범죄 조회 요청 완료')
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBeUndefined()
+  })
+
+  it('maps institution sex-offense JSON even when answerDisplayText is null', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'program-application-institution-seed-guidance',
+        answerDisplayText: undefined,
+        answerValueJson: JSON.stringify({
+          'computer-in-room': '33',
+          'waiting-place': '23',
+          meal: '3323',
+          'other-notes': '223',
+        }),
+      },
+      {
+        questionKeySnapshot: 'program-application-institution-seed-sex-offense-consent-submission',
+        answerDisplayText: undefined,
+        answerValueJson: JSON.stringify({ submissionRequest: 'request' }),
+      },
+      {
+        questionKeySnapshot: 'program-application-institution-seed-sex-offense-consent-inquiry',
+        answerDisplayText: undefined,
+        answerValueJson: JSON.stringify({
+          inquiryMethod: 'criminal_record_site',
+          siteSubmission: 'online',
+          institutionId: '33233',
+          verificationNumber: '23233',
+        }),
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: baseRow,
+      formResponse: form,
+    })
+    expect(hydrated.detail?.computerInSpace).toBe('33')
+    expect(hydrated.detail?.waitingPlaceGuide).toBe('23')
+    expect(hydrated.detail?.mealInfo).toBe('3323')
+    expect(hydrated.detail?.otherSpecialNotes).toBe('223')
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBe(
+      '동의서 제출 요청 | 범죄경력회보서 사이트 이용 | 온라인 제출 | 기관 ID 33233 | 검증번호 23233'
+    )
+  })
+
+  it('does not invent no_submit when sex-offense answerValueJson is null', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'program-application-institution-seed-sex-offense-consent-submission',
+        answerValueJson: undefined,
+        answerDisplayText: undefined,
+      },
+      {
+        questionKeySnapshot: 'program-application-institution-seed-sex-offense-consent-inquiry',
+        answerValueJson: undefined,
+        answerDisplayText: undefined,
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: baseRow,
+      formResponse: form,
+    })
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBeUndefined()
   })
 
   it('does not use form answers when the detail snapshot omits optional fields', () => {
@@ -276,5 +341,70 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.detail?.teacherTel).toBeUndefined()
     expect(hydrated.detail?.teacherMobile).toBeUndefined()
     expect(hydrated.detail?.computerInSpace).toBeUndefined()
+  })
+})
+
+describe('parseAnswerValue', () => {
+  it('parses quoted string, object, array, null, and empty', () => {
+    expect(parseAnswerValue('"텍스트"')).toBe('텍스트')
+    expect(parseAnswerValue('{"key":"value"}')).toEqual({ key: 'value' })
+    expect(parseAnswerValue('["A","B"]')).toEqual(['A', 'B'])
+    expect(parseAnswerValue(null)).toBeUndefined()
+    expect(parseAnswerValue('')).toBeUndefined()
+    expect(parseAnswerValue('null')).toBeUndefined()
+  })
+})
+
+describe('buildFormAnswerMap', () => {
+  it('uses parsed answerValueJson and ignores displayText JSON substitutes', () => {
+    const map = buildFormAnswerMap([
+      {
+        questionKeySnapshot: 'program-application-institution-seed-sex-offense-consent-inquiry',
+        answerDisplayText: undefined,
+        answerValueJson:
+          '{"inquiryMethod":"criminal_record_site","siteSubmission":"online","institutionId":"33233","verificationNumber":"23233"}',
+      },
+      {
+        questionKeySnapshot: 'program-application-institution-seed-basic-info',
+        answerDisplayText: '{schoolName=표시용}',
+        answerValueJson: JSON.stringify({ applicationReason: '23' }),
+      },
+      {
+        questionKeySnapshot: 'skipped-null',
+        answerValueJson: undefined,
+        answerDisplayText: undefined,
+      },
+    ])
+    expect(JSON.parse(map['program-application-institution-seed-sex-offense-consent-inquiry'])).toEqual({
+      inquiryMethod: 'criminal_record_site',
+      siteSubmission: 'online',
+      institutionId: '33233',
+      verificationNumber: '23233',
+    })
+    expect(JSON.parse(map['program-application-institution-seed-basic-info'])).toEqual({
+      applicationReason: '23',
+    })
+    expect(map['skipped-null']).toBeUndefined()
+  })
+})
+
+describe('parseSexOffenseCheckRequest', () => {
+  it('maps institution keys without filling no_submit for missing JSON', () => {
+    expect(parseSexOffenseCheckRequest({})).toBeUndefined()
+    expect(
+      parseSexOffenseCheckRequest({
+        'program-application-institution-seed-sex-offense-consent-submission': JSON.stringify({
+          submissionRequest: 'request',
+        }),
+        'program-application-institution-seed-sex-offense-consent-inquiry': JSON.stringify({
+          inquiryMethod: 'criminal_record_site',
+          siteSubmission: 'online',
+          institutionId: '33233',
+          verificationNumber: '23233',
+        }),
+      })
+    ).toBe(
+      '동의서 제출 요청 | 범죄경력회보서 사이트 이용 | 온라인 제출 | 기관 ID 33233 | 검증번호 23233'
+    )
   })
 })

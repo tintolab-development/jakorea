@@ -13,7 +13,7 @@ import {
 import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { KO_DOW } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
@@ -32,11 +32,8 @@ type DetailLineRow = ProgramDetailLineRow | InstructorDetailLineRow
 
 function formatIsoToKoreanWeekday(iso: string): string {
   if (!iso) return '—'
-  const [y, m, d] = iso.split('-').map(Number)
-  if (!y || !m || !d) return iso
-  const date = new Date(y, m - 1, d)
-  const dow = KO_DOW[date.getDay()]
-  return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}(${dow})`
+  const label = formatDateDotWithWeekday(iso)
+  return label === '-' ? iso : label
 }
 
 function mapItemToLine(item: SettlementFrontendItemResponse, index: number): PaymentOrderCalculationStatementLine {

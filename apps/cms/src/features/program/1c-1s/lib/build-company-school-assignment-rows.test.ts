@@ -34,7 +34,7 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
       sessions: [
         {
           round: 1,
-          date: '2026. 09. 12',
+          date: '2026.09.12',
           dayOfWeek: '금',
           duration: '1차시',
           format: '단독',
@@ -70,7 +70,7 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
       sessions: [
         {
           round: 1,
-          date: '2024. 10. 01',
+          date: '2024.10.01',
           dayOfWeek: '화',
           duration: '1차시',
           format: '단독',
@@ -111,7 +111,7 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
       sessions: [
         {
           round: 1,
-          date: '2026. 09. 12',
+          date: '2026.09.12',
           dayOfWeek: '금',
           duration: '1차시',
           format: '단독',

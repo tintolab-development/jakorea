@@ -105,6 +105,8 @@ describe('saveProgramSurveyFormEdit', () => {
   })
 
   it('등록 직후(기간 null·IN_PROGRESS)에는 기간을 먼저 넣고 양식 저장을 진행한다', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-19T00:00:00.000Z'))
     listBindings
       .mockResolvedValueOnce([
         { bindingId: 900, progressStatus: 'IN_PROGRESS', submittedCount: 0 },
@@ -118,16 +120,20 @@ describe('saveProgramSurveyFormEdit', () => {
         },
       ])
 
-    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
-      ok: true,
-      templateId: 2001,
-      templateVersionId: 400,
-    })
+    try {
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+        ok: true,
+        templateId: 2001,
+        templateVersionId: 400,
+      })
 
-    expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
-      submissionStartAt: '2026-10-20T00:00:00.000Z',
-    })
-    expect(copyVersion).toHaveBeenCalled()
+      expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
+        submissionStartAt: '2026-10-20T00:00:00.000Z',
+      })
+      expect(copyVersion).toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it.each([

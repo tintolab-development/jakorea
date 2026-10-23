@@ -1,16 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildMeDashboardPreferencesRequest } from './dashboard-me-preferences-adapters'
 
-vi.mock('@/features/dashboard/model/dashboard-settings-store', () => ({
-  useDashboardSettingsStore: {
-    getState: () => ({
-      shortcutEnabled: { notices: true },
-      widgetProgramIds: { 'recruitment-status-widget': ['p-1'] },
-      inquiryNotificationReadProgramKeys: {},
-    }),
-  },
-  normalizeShortcutEnabled: (value: Record<string, boolean>) => value,
-}))
+vi.mock('@/features/dashboard/model/dashboard-settings-store', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/features/dashboard/model/dashboard-settings-store')>()
+  return {
+    ...actual,
+    useDashboardSettingsStore: {
+      getState: () => ({
+        shortcutEnabled: { notices: true },
+        shortcutCatalogKeys: ['notices'],
+        widgetProgramIds: { 'recruitment-status-widget': ['p-1'] },
+        inquiryNotificationReadProgramKeys: {},
+      }),
+    },
+  }
+})
 
 vi.mock('@/features/dashboard/model/dashboard-widget-order-store', () => ({
   stripRemovedDashboardWidgetIds: (ids: string[]) => ids,

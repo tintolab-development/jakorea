@@ -502,16 +502,31 @@ export function isPreEducationCurriculumSession(session: { sessionLabel?: string
   return (session.sessionLabel ?? '').includes(PRE_EDUCATION_SCHEDULE_LABEL)
 }
 
+const DEFAULT_CURRICULUM_SESSION_TITLE_RE = /^(?:\d+)(?:차시|회차)$/
+
 /** 사전 교육 제외 — 단원명·교육 내용이 모두 비어 있으면 true */
 export function isBlankRegularCurriculumSession(session: {
   sessionLabel?: string
   title?: string
   description?: string
+  educationFormLabel?: string
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
 }): boolean {
   if (isPreEducationCurriculumSession(session)) return false
+  if (session.educationFormLabel?.trim()) return false
+  if (session.assignmentEnabled === true) return false
+  if (session.assignmentPeriod?.trim()) return false
   const title = session.title?.trim() ?? ''
   const description = session.description?.trim() ?? ''
-  return title === '' && description === ''
+  if (description !== '') return false
+  if (title === '') return true
+  const label = session.sessionLabel?.trim() ?? ''
+  // 자동 라벨만 있고 내용이 없는 placeholder 행 (예: title/label 모두 「2차시」)
+  if (DEFAULT_CURRICULUM_SESSION_TITLE_RE.test(title) && (label === '' || title === label)) {
+    return true
+  }
+  return false
 }
 
 /**

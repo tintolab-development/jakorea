@@ -116,6 +116,7 @@ import {
 } from '../model/mapper'
 import {
   hasRequiredVerificationSessions,
+  resolveUnderAgeSignupSessions,
   SIGNUP_IDENTITY_REQUIRED_MESSAGE,
 } from '../model/validation'
 import {
@@ -161,6 +162,8 @@ export function useSignUp() {
   const wizardPathname = location.pathname
   const freshEntryHandledKeyRef = useRef<string | null>(null)
   const pendingWizardFormResetRef = useRef(false)
+  const guardianFinalConsentInFlightRef = useRef(false)
+  const guardianFinalConsentDoneRef = useRef(false)
 
   const isFreshSignupEntry = isFreshSignUpWizardEntry(
     searchParams,
@@ -203,7 +206,9 @@ export function useSignUp() {
     () => parseSignUpPhase(searchParams) === 'guardian-identity',
   )
   const [isGuardianIdentityVerified, setIsGuardianIdentityVerified] = useState(false)
-  const [isGuardianFinalConsentCompleted, setIsGuardianFinalConsentCompleted] = useState(false)
+  const [isGuardianFinalConsentCompleted, setIsGuardianFinalConsentCompleted] = useState(
+    () => readGuardianSignupBridgeState()?.finalConsentCompleted === true,
+  )
   const [signupIntentId, setSignupIntentId] = useState<string | null>(
     () => readGuardianSignupBridgeState()?.signupIntentId ?? null,
   )
@@ -361,6 +366,8 @@ export function useSignUp() {
     setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
     setIsGuardianFinalConsentCompleted(false)
+    guardianFinalConsentInFlightRef.current = false
+    guardianFinalConsentDoneRef.current = false
     setSignupIntentId(null)
     setGuardianProfileSubmitError('')
     setGuardianIdentityErrorMessage('')
@@ -600,6 +607,8 @@ export function useSignUp() {
   }
 
   const resetGuardianBridgeSession = () => {
+    guardianFinalConsentInFlightRef.current = false
+    guardianFinalConsentDoneRef.current = false
     setIsGuardianAgreementCompleted(false)
     setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
@@ -833,6 +842,8 @@ export function useSignUp() {
   })
 
   const restartGuardianFromProfile = (message: string) => {
+    guardianFinalConsentInFlightRef.current = false
+    guardianFinalConsentDoneRef.current = false
     setIsGuardianIdentityVerified(false)
     setIsGuardianFinalConsentCompleted(false)
     setIsGuardianProfileCompleted(false)
@@ -844,9 +855,14 @@ export function useSignUp() {
   }
 
   const handleGuardianIdentitySuccess = async (_result: { identitySessionId: number }) => {
+    if (guardianFinalConsentDoneRef.current || guardianFinalConsentInFlightRef.current) {
+      return
+    }
+    guardianFinalConsentInFlightRef.current = true
     setGuardianIdentityErrorMessage('')
     const bridge = readGuardianSignupBridgeState()
     if (!bridge) {
+      guardianFinalConsentInFlightRef.current = false
       setGuardianIdentityErrorMessage('보호자 인증 정보가 없습니다. 이전 단계부터 다시 진행해 주세요.')
       return
     }
@@ -857,57 +873,68 @@ export function useSignUp() {
     const guardianRelation =
       bridge.guardianRelation?.trim() || guardianRelationship.trim()
 
-    const result = await completeGuardianAfterNice({
-      termsVersion: termsVersion ?? '',
-      guardianRelation,
-      client: {
-        getStatus: () =>
-          pollGuardianSignupStatus({
-            guardianSessionId: bridge.guardianSessionId,
-            statusToken: bridge.guardianStatusToken,
-          }),
-        issueFinalConsentChallenge: () =>
-          postGuardianFinalConsentChallenge({
-            guardianSessionId: bridge.guardianSessionId,
-            statusToken: bridge.guardianStatusToken,
-          }),
-        postFinalConsent: ({ finalConsentToken, idempotencyKey }) =>
-          postGuardianConsent({
-            guardianSessionId: bridge.guardianSessionId,
-            statusToken: bridge.guardianStatusToken,
-            body: {
-              agreed: true,
-              termsVersion: termsVersion ?? '',
-              guardianRelation,
-              finalConsentToken,
-            },
-            idempotencyKey,
-          }),
-        readStoredChallenge: () => readGuardianFinalConsentChallenge(),
-        persistChallenge: writeGuardianFinalConsentChallenge,
-        createIdempotencyKey: () =>
-          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-            ? crypto.randomUUID()
-            : `guardian-final-${Date.now()}`,
-      },
-    })
+    try {
+      const result = await completeGuardianAfterNice({
+        termsVersion: termsVersion ?? '',
+        guardianRelation,
+        client: {
+          getStatus: () =>
+            pollGuardianSignupStatus({
+              guardianSessionId: bridge.guardianSessionId,
+              statusToken: bridge.guardianStatusToken,
+            }),
+          issueFinalConsentChallenge: () =>
+            postGuardianFinalConsentChallenge({
+              guardianSessionId: bridge.guardianSessionId,
+              statusToken: bridge.guardianStatusToken,
+            }),
+          postFinalConsent: ({ finalConsentToken, idempotencyKey }) =>
+            postGuardianConsent({
+              guardianSessionId: bridge.guardianSessionId,
+              statusToken: bridge.guardianStatusToken,
+              body: {
+                agreed: true,
+                termsVersion: termsVersion ?? '',
+                guardianRelation,
+                finalConsentToken,
+              },
+              idempotencyKey,
+            }),
+          readStoredChallenge: () => readGuardianFinalConsentChallenge(),
+          persistChallenge: writeGuardianFinalConsentChallenge,
+          createIdempotencyKey: () =>
+            typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+              ? crypto.randomUUID()
+              : `guardian-final-${Date.now()}`,
+        },
+      })
 
-    if (result.kind === 'error') {
-      if (result.action === 'restart_profile' || result.action === 'restart_intent') {
-        restartGuardianFromProfile(result.message)
+      if (result.kind === 'error') {
+        guardianFinalConsentInFlightRef.current = false
+        if (result.action === 'restart_profile' || result.action === 'restart_intent') {
+          restartGuardianFromProfile(result.message)
+          return
+        }
+        setGuardianIdentityErrorMessage(result.message)
         return
       }
-      setGuardianIdentityErrorMessage(result.message)
-      return
-    }
 
-    setIsGuardianIdentityVerified(true)
-    const minorBirth = readMinorMemberBirthDate()
-    if (minorBirth) {
-      setBirthDate(minorBirth)
+      guardianFinalConsentDoneRef.current = true
+      setIsGuardianIdentityVerified(true)
+      const minorBirth = readMinorMemberBirthDate()
+      if (minorBirth) {
+        setBirthDate(minorBirth)
+      }
+      writeGuardianSignupBridgeState({
+        ...bridge,
+        finalConsentCompleted: true,
+      })
+      setIsGuardianFinalConsentCompleted(true)
+      pushWizard(4)
+    } catch {
+      guardianFinalConsentInFlightRef.current = false
+      setGuardianIdentityErrorMessage('보호자 동의를 완료하지 못했습니다. 다시 시도해 주세요.')
     }
-    setIsGuardianFinalConsentCompleted(true)
-    pushWizard(4)
   }
 
   const handleGuardianProfileSubmit = async () => {
@@ -1152,6 +1179,8 @@ export function useSignUp() {
     setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
     setIsGuardianFinalConsentCompleted(false)
+    guardianFinalConsentInFlightRef.current = false
+    guardianFinalConsentDoneRef.current = false
     setSignupIntentId(null)
     clearGuardianSignupBridgeState()
     setGuardianAgreements(createInitialGuardianAgreementState())
@@ -1176,6 +1205,8 @@ export function useSignUp() {
     setIsGuardianProfileCompleted(false)
     setIsGuardianIdentityVerified(false)
     setIsGuardianFinalConsentCompleted(false)
+    guardianFinalConsentInFlightRef.current = false
+    guardianFinalConsentDoneRef.current = false
     setSignupIntentId(null)
     clearGuardianSignupBridgeState()
     setGuardianAgreements(createInitialGuardianAgreementState())
@@ -1206,13 +1237,27 @@ export function useSignUp() {
       return
     }
 
+    const guardianBridge = readGuardianSignupBridgeState()
+    const underAgeSessions = resolveUnderAgeSignupSessions({
+      signupIntentId,
+      guardianVerificationSessionId,
+      guardianBridgeFinalConsentCompleted: isGuardianFinalConsentCompleted,
+      persisted: guardianBridge,
+      wizardStep: currentStep,
+    })
+    const underAgeSignup =
+      isUnderAgeSignup ||
+      readSignupWizardFields()?.under14Flow === true ||
+      guardianBridge != null
+
     if (
       !hasRequiredVerificationSessions({
-        isUnderAgeSignup,
+        isUnderAgeSignup: underAgeSignup,
         identityVerificationSessionId,
-        guardianVerificationSessionId,
-        signupIntentId,
-        guardianBridgeFinalConsentCompleted: isGuardianFinalConsentCompleted,
+        guardianVerificationSessionId: underAgeSessions.guardianVerificationSessionId,
+        signupIntentId: underAgeSessions.signupIntentId,
+        guardianBridgeFinalConsentCompleted:
+          underAgeSessions.guardianBridgeFinalConsentCompleted,
       })
     ) {
       setSubmitMessage(SIGNUP_IDENTITY_REQUIRED_MESSAGE)
@@ -1279,11 +1324,11 @@ export function useSignUp() {
       password,
       birthDate: signupMemberBirthDate,
       gender,
-      isUnderAgeSignup,
+      isUnderAgeSignup: underAgeSignup,
       isIdentityVerified,
       identityVerificationSessionId,
-      guardianVerificationSessionId,
-      signupIntentId,
+      guardianVerificationSessionId: underAgeSessions.guardianVerificationSessionId,
+      signupIntentId: underAgeSessions.signupIntentId,
       schoolStatus,
       schoolName,
       schoolOrganizationId: teacherSchoolOrganizationId,

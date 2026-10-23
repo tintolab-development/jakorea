@@ -4,7 +4,9 @@ import {
   normalizeSponsorContactUnselectedSelection,
   resolveSponsorContactIdsForEdit,
   resolveSponsorContactIdsFromProgram,
+  toWireSponsorManagerContactIds,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
+  withSponsorContactUnselectedIfSponsorsSelected,
   withSponsorContactUnselectedOption,
 } from './sponsor-contact-unselected-option'
 
@@ -22,6 +24,13 @@ describe('sponsor contact unselected option', () => {
     expect(withSponsorContactUnselectedOption([])).toEqual([
       { value: SPONSOR_CONTACT_UNSELECTED_VALUE, label: '미선택' },
     ])
+  })
+
+  it('후원사가 선택돼 있으면 담당자 0명이어도 미선택을 붙인다', () => {
+    expect(withSponsorContactUnselectedIfSponsorsSelected([], true)).toEqual([
+      { value: SPONSOR_CONTACT_UNSELECTED_VALUE, label: '미선택' },
+    ])
+    expect(withSponsorContactUnselectedIfSponsorsSelected([], false)).toEqual([])
   })
 
   it('treats 미선택 as exclusive', () => {
@@ -98,6 +107,13 @@ describe('sponsor contact unselected option', () => {
         hasSelectedSponsors: true,
       })
     ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+  })
+
+  it('전송용 contactIds는 미선택 sentinel을 빼고 []로 정규화한다', () => {
+    expect(toWireSponsorManagerContactIds([SPONSOR_CONTACT_UNSELECTED_VALUE])).toEqual([])
+    expect(
+      toWireSponsorManagerContactIds(['1627251::1627253', SPONSOR_CONTACT_UNSELECTED_VALUE])
+    ).toEqual(['1627251::1627253'])
   })
 
   it('Program 스냅샷에 후원사만 있으면 수정 폼에 미선택을 넣는다', () => {

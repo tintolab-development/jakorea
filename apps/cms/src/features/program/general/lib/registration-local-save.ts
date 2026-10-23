@@ -4,6 +4,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateRangeDot } from '@/shared/utils/date'
 import type {
   GeneralProgramParticipantType,
   GeneralProgramScheduleDetailRow,
@@ -343,7 +344,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
             },
           ],
           educationScheduleLines: [
-            `${dayjs(`${y}-03-01`).format('YYYY. MM. DD')} ~ ${dayjs(`${y}-12-31`).format('YYYY. MM. DD')}`,
+            formatDateRangeDot(`${y}-03-01`, `${y}-12-31`),
           ],
           wageGradeRows: [
             {

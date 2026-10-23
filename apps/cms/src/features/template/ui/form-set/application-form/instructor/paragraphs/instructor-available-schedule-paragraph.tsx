@@ -19,6 +19,7 @@ import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 
 const EMPTY_SCHEDULE_SLOTS: readonly InstructorAvailableScheduleSlot[] = []
 
@@ -47,28 +48,22 @@ function coerceOverlayDayjs(value: Dayjs | string | null | undefined, fallback: 
   return parsed.isValid() ? parsed : fallback
 }
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+function formatKoreanDateLabelFromDateKey(dateKey: string): string {
+  const label = formatKoreanYearMonthDayWithWeekday(dayjs(dateKey))
+  return label || dateKey
+}
 
 function formatIndividualSlotDateLabel(dateKey: string): string {
-  const d = dayjs(dateKey)
-  const yShort = d.year() % 100
-  const weekday = WEEKDAY_KO[d.day()] ?? ''
-  return `${yShort}년 ${d.month() + 1}월 ${d.date()}일(${weekday})`
+  return formatKoreanDateLabelFromDateKey(dateKey)
 }
 
 function formatIndividualSummarySegment(slot: InstructorAvailableScheduleSlot): string {
-  const d = dayjs(slot.dateKey)
-  const yShort = d.year() % 100
-  const datePart = `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
-  return `${slot.sessionLabel} : ${datePart} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
+  return `${slot.sessionLabel} : ${formatKoreanDateLabelFromDateKey(slot.dateKey)} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
 }
 
-/** 스크린: `강서초등학교 : 26년 3월 9일 (9:20 ~ 12:00)` — 교시 없이 시각만 */
+/** 스크린: `강서초등학교 : 2026년 3월 9일(월) (09:20 ~ 12:00)` — 교시 없이 시각만 */
 function slotDisplaySegment(slot: InstructorAvailableScheduleSlot): string {
-  const d = dayjs(slot.dateKey)
-  const yShort = d.year() % 100
-  const datePart = `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
-  return `${slot.school} : ${datePart} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
+  return `${slot.school} : ${formatKoreanDateLabelFromDateKey(slot.dateKey)} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
 }
 
 export type InstructorAvailableScheduleParagraphProps = {

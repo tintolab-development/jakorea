@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralSecondInterviewScreeningStatus } from './volunteer-screening-constants'
 import {
@@ -92,9 +93,7 @@ export function formatGeneralInterviewManagerScoreDisplay(
   return '미평가'
 }
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-/** 배정 면접 일정 — `26년 3월 30일 (목) 09:00 ~ 09:30` */
+/** 배정 면접 일정 — `2026.03.30(목) 09:00 ~ 09:30` */
 export function formatGeneralAssignedInterviewScheduleDisplay(
   row: Pick<GeneralVolunteerApplicantRow, 'assignedInterviewDateLabel' | 'assignedInterviewTime'>
 ): string {
@@ -106,11 +105,8 @@ export function formatGeneralAssignedInterviewScheduleDisplay(
   const slot = normalizeTimeRangeKey(timeRange)
   if (!date) return `${dateLabel} ${slot}`
 
-  const y = date.year() % 100
-  const m = date.month() + 1
-  const d = date.date()
-  const weekday = WEEKDAY_KO[date.day()]
-  return `${y}년 ${m}월 ${d}일 (${weekday}) ${slot}`
+  const datePart = formatDateDotWithWeekday(date)
+  return datePart === '-' ? `${dateLabel} ${slot}` : `${datePart} ${slot}`
 }
 
 function hasValidInterviewEvaluatorScore(score: number | null | undefined): boolean {

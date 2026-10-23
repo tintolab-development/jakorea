@@ -2,8 +2,17 @@ import type { DetailedProgramManagementRow } from '@/features/detailed-program/m
 import type {
   DetailedProgramRequest,
   DetailedProgramResponse,
+  DetailedProgramUpdateRequest,
   PageResponseDetailedProgramResponse,
 } from '@/shared/api/generated/data-management/schemas'
+
+/** OpenAPI v9 스키마에 아직 없을 수 있는 version. 없으면 undefined, 1로 채우지 않는다. */
+export function readDetailedProgramVersion(dto: unknown): number | undefined {
+  if (!dto || typeof dto !== 'object') return undefined
+  const version = (dto as { version?: unknown }).version
+  if (typeof version !== 'number' || !Number.isFinite(version)) return undefined
+  return version
+}
 
 export function mapDetailedProgramResponse(dto: DetailedProgramResponse): DetailedProgramManagementRow {
   return {
@@ -13,6 +22,7 @@ export function mapDetailedProgramResponse(dto: DetailedProgramResponse): Detail
     createdBy: dto.createdByName?.trim() || (dto.createdByAdminId != null ? String(dto.createdByAdminId) : '-'),
     createdAt: dto.createdAt ?? '',
     inUse: dto.inUse ?? false,
+    version: readDetailedProgramVersion(dto),
   }
 }
 
@@ -39,13 +49,15 @@ export function toDetailedProgramRequest(input: {
   }
 }
 
-/** PATCH는 nameKo·useYn만 갱신. nameEn은 보내도 BE가 무시한다. */
+/** PATCH는 nameKo·useYn·version. nameEn은 보내도 BE가 무시한다. */
 export function toDetailedProgramPatchRequest(input: {
   name: string
   active: boolean
-}): DetailedProgramRequest {
+  version: number
+}): DetailedProgramUpdateRequest {
   return {
     nameKo: input.name.trim(),
     useYn: input.active,
+    version: input.version,
   }
 }

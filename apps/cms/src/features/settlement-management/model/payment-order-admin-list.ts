@@ -4,6 +4,7 @@
  */
 
 import type { PaymentOrderCalculationBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 export type PaymentOrderAdminProcessingStatus =
   | 'pending'
@@ -300,13 +301,9 @@ export interface PaymentOrderAdminInstructorDetail {
   programRows: PaymentOrderAdminInstructorDetailProgramRow[]
 }
 
-const KO_DOW_CALC = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 function formatIsoToKoreanWeekday(iso: string): string {
-  const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
-  const date = new Date(y, m - 1, d)
-  const dow = KO_DOW_CALC[date.getDay()]
-  return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}(${dow})`
+  const label = formatDateDotWithWeekday(iso.slice(0, 10))
+  return label === '-' ? iso : label
 }
 
 function splitAddressAfterDongForStatement(address: string): { head: string; tail: string } | null {

@@ -9,6 +9,11 @@ type InstitutionInfoTableProps = {
   showPreferredEducationForm?: boolean
 }
 
+function displayInstitutionField(value: string | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return trimmed || '-'
+}
+
 export function InstitutionInfoTable({
   institution,
   showPreferredEducationForm = false,
@@ -22,18 +27,18 @@ export function InstitutionInfoTable({
     <PFFormFieldTable>
       <PFFormFieldRow type="double">
         <PFFormField label="신청 기관명" labelWidth="wider">
-          <p className={styles.fieldValue}>{institution.name}</p>
+          <p className={styles.fieldValue}>{displayInstitutionField(institution.name)}</p>
         </PFFormField>
         <PFFormField label="신청 학년" labelWidth="wider">
-          <p className={styles.fieldValue}>{institution.grade}</p>
+          <p className={styles.fieldValue}>{displayInstitutionField(institution.grade)}</p>
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="double">
         <PFFormField label="기관 소재지" labelWidth="wider">
-          <p className={styles.fieldValue}>{institution.address}</p>
+          <p className={styles.fieldValue}>{displayInstitutionField(institution.address)}</p>
         </PFFormField>
         <PFFormField label="상세주소" labelWidth="wider">
-          <p className={styles.fieldValue}>{institution.addressDetail}</p>
+          <p className={styles.fieldValue}>{displayInstitutionField(institution.addressDetail)}</p>
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type={showPreferredForm ? 'double' : 'single'}>
@@ -46,7 +51,9 @@ export function InstitutionInfoTable({
         </PFFormField>
         {showPreferredForm ? (
           <PFFormField label="희망 교육 형태" labelWidth="wider">
-            <p className={styles.fieldValue}>{institution.preferredEducationForm}</p>
+            <p className={styles.fieldValue}>
+              {displayInstitutionField(institution.preferredEducationForm)}
+            </p>
           </PFFormField>
         ) : null}
       </PFFormFieldRow>
@@ -64,12 +71,12 @@ export function InstitutionInfoTable({
       </PFFormFieldRow>
       <PFFormFieldRow>
         <PFFormField label="신청 사유" labelWidth="wider" fullWidth>
-          <p className={styles.fieldValue}>{institution.reason}</p>
+          <p className={styles.fieldValue}>{displayInstitutionField(institution.reason)}</p>
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow>
         <PFFormField label="기타 요청사항" labelWidth="wider" fullWidth>
-          <p className={styles.fieldValue}>{institution.otherRequests}</p>
+          <p className={styles.fieldValue}>{displayInstitutionField(institution.otherRequests)}</p>
         </PFFormField>
       </PFFormFieldRow>
     </PFFormFieldTable>

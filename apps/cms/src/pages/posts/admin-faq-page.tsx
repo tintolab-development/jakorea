@@ -31,6 +31,7 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
+  showDeleteCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -158,6 +159,7 @@ function AdminFAQPage() {
       await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       setActionResultTitle('FAQ 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
@@ -220,7 +222,7 @@ function AdminFAQPage() {
         ),
       },
       {
-        title: '작성자',
+        title: '작성자명',
         dataIndex: 'author',
         key: 'author',
         width: FAQ_LIST_COL_WIDTH.author,

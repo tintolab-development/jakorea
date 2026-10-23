@@ -28,7 +28,6 @@ import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scro
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   readCurriculumSessionLabels,
-  readProgramEducationScheduleLines,
   resolveScheduleDetailTimeSpan,
 } from '@/features/program/general/lib/participating-school-session-display'
 import {
@@ -113,7 +112,6 @@ export function ParticipatingParticipantsSection({
         program?.generalCommonInfo?.scheduleDetails
       ),
       curriculumSessionLabels: readCurriculumSessionLabels(program),
-      educationScheduleLines: readProgramEducationScheduleLines(program),
     }),
     [program]
   )

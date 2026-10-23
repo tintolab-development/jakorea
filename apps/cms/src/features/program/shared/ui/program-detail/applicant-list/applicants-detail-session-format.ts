@@ -15,6 +15,7 @@ import type { SessionLinePreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { formatHopeScheduleFormOptionLine } from '@/features/program/general/lib/hope-schedule-form-option'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   formatGeneralEducationScheduleLine,
   type GeneralEducationScheduleShape,
@@ -49,7 +50,7 @@ export function getSessionLineParts(
   preset: SessionLinePreset = 'legacy',
   bridge?: InstitutionApplicationProgramBridge | null
 ) {
-  const datePart = `${s.date.replace(/\./g, '. ')}(${s.dayOfWeek})`
+  const datePart = formatCmsScheduleDisplayLabel(`${s.date}(${s.dayOfWeek})`)
   if (preset === 'general-detail') {
     const timePart = s.timeRange.replace('~', ' ~ ')
     const periodPart = bridge

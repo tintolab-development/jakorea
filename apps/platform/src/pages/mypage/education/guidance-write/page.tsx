@@ -17,15 +17,18 @@ import {
   useMyProgramApplicationDetail,
   useProbeEducationApplicationType,
 } from '@/features/mypage/education/applications'
-import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
-import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
+import { isOrganizationEducationApplication } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import {
   resolveUjatScheduleBannerFromState,
   shouldUseUjatApplicationContent,
 } from '@/features/mypage/education/applications/lib/ujat-portal-banner'
-import { hasInstitutionGuidanceDraftContent } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
+import {
+  hasInstitutionGuidanceDraftContent,
+  resolveEducationApplicationProgramFocus,
+} from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
+import { resolveInstitutionPreEducationNoticeRequired } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
 import { PFFormPage, PFText } from '@/shared/ui'
 import writeFormStyles from '@/features/mypage/education/applications/ui/institution-guidance-write-form.module.css'
 
@@ -35,9 +38,6 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     applicationId: string
     applicationType?: string
   }>()
-  const member = useMypageMember()
-  const isTeacher = hasTeacherMypageProfile(member.profile)
-
   const remoteEnabled = isRemoteApiConfigured()
   const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)
   const typeProbe = useProbeEducationApplicationType(applicationId, routeApplicationType)
@@ -49,7 +49,11 @@ export function MypageEducationInstitutionGuidanceWritePage() {
   )
   const application = remoteEnabled ? remoteQuery.application : undefined
   const programId = application?.programId ?? ''
-  const programQuery = useProgramDetail(programId)
+  const programDetailFocus = useMemo(
+    () => resolveEducationApplicationProgramFocus(application),
+    [application],
+  )
+  const programQuery = useProgramDetail(programId, { focus: programDetailFocus })
   const program = programQuery.program
 
   const guidanceDetailCase = program?.detailCase ?? application?.detailCase
@@ -94,21 +98,7 @@ export function MypageEducationInstitutionGuidanceWritePage() {
       ? resolveUjatScheduleBannerFromState(application.ujatPortalBannerState)
       : null
 
-  if (!isTeacher) {
-    return (
-      <PFFormPage
-        aria-label="안내사항"
-        back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
-        title="안내사항"
-      >
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          교사 회원만 안내사항을 작성할 수 있습니다.
-        </PFText>
-      </PFFormPage>
-    )
-  }
-
-  if (program?.preEducationNoticeRequired === false) {
+  if (resolveInstitutionPreEducationNoticeRequired(program) === false) {
     return (
       <PFFormPage
         aria-label="안내사항"
@@ -122,7 +112,7 @@ export function MypageEducationInstitutionGuidanceWritePage() {
     )
   }
 
-  if (!application || program?.programAudience !== 'organization') {
+  if (!application || !program || !isOrganizationEducationApplication(application, program)) {
     return (
       <PFFormPage
         aria-label="안내사항"

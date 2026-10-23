@@ -3,6 +3,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import { z } from 'zod'
 import { GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import type {
@@ -21,6 +22,7 @@ import {
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
+import { parseWageGradeAmountToFormString } from '@/features/program/general/lib/wage-display'
 import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   isProgramPaymentNoneOnly,
@@ -34,6 +36,7 @@ import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features
 import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
+  toWireSponsorManagerContactIds,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
@@ -49,6 +52,7 @@ import {
   isPreEducationCurriculumSession,
   relabelScheduleDetailFormRowsByKind,
   shouldDisableEducationSchedulePeriodMode,
+  trimTrailingBlankRegularCurriculumSessions,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -127,6 +131,13 @@ export const PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE = '사전 교육 일정을 
 
 /** ParagraphDatePicker schedule 모드 — 진행 일정에 시각(00:00만 아님) 필수 */
 export const EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE = '진행 일정에 시간을 설정해 주세요'
+
+/** 교육 진행 일정이 사업 운영기간을 벗어날 때 AlertModal 본문 */
+export const EDUCATION_SCHEDULE_OUTSIDE_OPERATION_RANGE_MESSAGE =
+  '사업 운영기간 안에 교육 진행 일정을 입력해주세요'
+
+/** 교육 진행 일정이 사업 운영기간을 벗어날 때 AlertModal 제목 */
+export const EDUCATION_SCHEDULE_OPERATION_RANGE_ALERT_TITLE = '교육 진행 일정 설정 안내'
 
 /**
  * 일반 프로그램 공통 정보 — 등록(`registration-required-fields`)과 동일하게
@@ -329,16 +340,24 @@ export const generalProgramCommonInfoEditSchema = z
       data.curriculumSessions.forEach((session, index) => {
         const isPre = isPreEducationCurriculumSession(session)
         if (isBlankText(session.title)) {
+          const sessionHint = session.sessionLabel?.trim()
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: isPre ? '사전 교육명을 입력해주세요' : '차시명을 입력해주세요',
+            message: isPre
+              ? '사전 교육명을 입력해주세요'
+              : sessionHint
+                ? `${sessionHint} 제목을 입력해주세요`
+                : '차시명을 입력해주세요',
             path: ['curriculumSessions', index, 'title'],
           })
         }
         if (!isPre && isBlankText(session.description)) {
+          const sessionHint = session.sessionLabel?.trim()
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: '차시 내용을 입력해주세요',
+            message: sessionHint
+              ? `${sessionHint} 내용을 입력해주세요`
+              : '차시 내용을 입력해주세요',
             path: ['curriculumSessions', index, 'description'],
           })
         }
@@ -520,7 +539,7 @@ export const generalProgramCommonInfoEditSchema = z
       if (outOfRangeLineIndices.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
+          message: EDUCATION_SCHEDULE_OUTSIDE_OPERATION_RANGE_MESSAGE,
           path: ['educationScheduleLines'],
         })
       }
@@ -621,8 +640,16 @@ export function resolveScheduleDetailsFormState(
     commonInfo.ipsScheduleDetail ??
     (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common')
 
+  const nestedSchedulePresent = Array.isArray(commonInfo.scheduleDetails)
   const raw = commonInfo.scheduleDetails ?? []
   if (raw.length === 0) {
+    if (nestedSchedulePresent) {
+      return {
+        scheduleGroupCount: 1,
+        scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
+        scheduleDetails: [],
+      }
+    }
     const groupCount = 1
     return {
       scheduleGroupCount: groupCount,
@@ -869,14 +896,10 @@ export function retainSponsorManagerContactIdsForSponsors(
   })
 }
 
-/**
- * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
- * 후원사·담당자 모두 복수. 같은 후원사의 담당자가 여러 명이면 행을 나눈다.
- */
-export function buildProgramSponsorAssignmentsWire(
+function collectContactsBySponsorId(
   sponsorManagementIds: readonly string[],
   contactRefs: readonly string[]
-): Array<{ sponsorId: string; sponsorContactId?: string }> {
+) {
   const contactsBySponsor = new Map<string, string[]>()
   for (const ref of contactRefs) {
     if (isSponsorContactUnselected(ref)) continue
@@ -896,11 +919,50 @@ export function buildProgramSponsorAssignmentsWire(
         .filter(Boolean)
     ),
   ]
+  return { contactsBySponsor, sponsorIds }
+}
+
+/**
+ * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
+ * 후원사·담당자 모두 복수. 같은 후원사의 담당자가 여러 명이면 행을 나눈다.
+ * UJAT·1사1교·TT 레거시 행 형식. 일반 프로그램 PATCH는 ReplaceWire 를 쓴다.
+ */
+export function buildProgramSponsorAssignmentsWire(
+  sponsorManagementIds: readonly string[],
+  contactRefs: readonly string[]
+): Array<{ sponsorId: string; sponsorContactId?: string }> {
+  const { contactsBySponsor, sponsorIds } = collectContactsBySponsorId(
+    sponsorManagementIds,
+    contactRefs
+  )
   return sponsorIds.flatMap(sponsorId => {
     const contactIds = contactsBySponsor.get(sponsorId) ?? []
     if (contactIds.length === 0) return [{ sponsorId }]
     return contactIds.map(sponsorContactId => ({ sponsorId, sponsorContactId }))
   })
+}
+
+export type ProgramSponsorAssignmentReplaceWire = {
+  sponsorId: string
+  sponsorContactIds: string[]
+}
+
+/**
+ * 일반 프로그램 PATCH `sponsors[]` — 후원사 1행 + 해당 후원사의 담당자 전체.
+ * `sponsorContactIds` 생략은 기존 담당자 유지가 아니다. 명시 해제는 `[]`.
+ */
+export function buildProgramSponsorAssignmentsReplaceWire(
+  sponsorManagementIds: readonly string[],
+  contactRefs: readonly string[]
+): ProgramSponsorAssignmentReplaceWire[] {
+  const { contactsBySponsor, sponsorIds } = collectContactsBySponsorId(
+    sponsorManagementIds,
+    contactRefs
+  )
+  return sponsorIds.map(sponsorId => ({
+    sponsorId,
+    sponsorContactIds: contactsBySponsor.get(sponsorId) ?? [],
+  }))
 }
 
 /**
@@ -952,16 +1014,55 @@ export function formatSponsorManagerDisplayLine(input: {
  * view 모드 — 저장된 문구에서 담당자명을 매칭해 `이름 직함`(복수 시 `소속 | …`)으로 재구성.
  * 매칭 실패 시 stored 원문 반환.
  */
-export function resolveSponsorManagerViewLine(input: {
+function splitLegacyJoinedSponsorManagerLines(stored: string): string[] {
+  if (!stored.includes(', ')) return [stored]
+  const parts = stored.split(', ').map(part => part.trim()).filter(Boolean)
+  if (parts.length > 1 && parts.every(part => part.includes('|'))) return parts
+  return [stored]
+}
+
+/** view 모드 — 담당자 1명당 한 줄(복수 시 세로 스택용) */
+export function resolveSponsorManagerViewLines(input: {
   storedLine?: string | null
+  contactRefs?: readonly string[]
+  contactNames?: Record<string, string>
   sponsors: ReadonlyArray<{ id: string; name: string }>
   contactsBySponsorId: Record<
     string,
-    ReadonlyArray<{ name: string; position?: string | null; phone?: string | null }>
+    ReadonlyArray<{ id?: string; name: string; position?: string | null; phone?: string | null }>
   >
-}): string {
+}): string[] {
+  const refs = (input.contactRefs ?? []).filter(ref => !isSponsorContactUnselected(ref))
+  if (refs.length > 0) {
+    const multiSponsor = input.sponsors.length > 1 || refs.length > 1
+    const labels = refs
+      .map(ref => {
+        const decoded = decodeSponsorManagerContactRef(ref)
+        const sponsor = decoded
+          ? input.sponsors.find(row => row.id === decoded.sponsorManagementId)
+          : undefined
+        const catalogContact = decoded
+          ? input.contactsBySponsorId[decoded.sponsorManagementId]?.find(
+              contact => contact.id === decoded.contactId
+            )
+          : undefined
+        const contactName =
+          catalogContact?.name?.trim() || input.contactNames?.[ref]?.trim() || ''
+        if (!contactName) return ''
+        const label = formatSponsorManagerSelectLabel({
+          sponsorName: sponsor?.name ?? '',
+          contactName,
+          position: catalogContact?.position,
+          multiSponsor,
+        })
+        const phone = catalogContact?.phone?.trim()
+        return phone ? `${label} | ${phone}` : label
+      })
+      .filter(Boolean)
+    if (labels.length > 0) return labels
+  }
   const stored = input.storedLine?.trim() ?? ''
-  if (!stored || stored === '-') return stored || '-'
+  if (!stored || stored === '-') return []
   const multiSponsor = input.sponsors.length > 1
   for (const sponsor of input.sponsors) {
     const contacts = input.contactsBySponsorId[sponsor.id] ?? []
@@ -975,10 +1076,26 @@ export function resolveSponsorManagerViewLine(input: {
         multiSponsor,
       })
       const phone = contact.phone?.trim()
-      return phone ? `${label} | ${phone}` : label
+      return [phone ? `${label} | ${phone}` : label]
     }
   }
-  return stored
+  return splitLegacyJoinedSponsorManagerLines(stored)
+}
+
+export function resolveSponsorManagerViewLine(input: {
+  storedLine?: string | null
+  contactRefs?: readonly string[]
+  contactNames?: Record<string, string>
+  sponsors: ReadonlyArray<{ id: string; name: string }>
+  contactsBySponsorId: Record<
+    string,
+    ReadonlyArray<{ id?: string; name: string; position?: string | null; phone?: string | null }>
+  >
+}): string {
+  const lines = resolveSponsorManagerViewLines(input)
+  if (lines.length > 0) return lines.join(', ')
+  const stored = input.storedLine?.trim() ?? ''
+  return stored || '-'
 }
 
 export type GeneralProgramSponsorEditContext = {
@@ -1107,9 +1224,7 @@ function surveyFlagsFromProgram(
 const WAGE_GRADE_LABELS = ['1급 강사비', '2급 강사비', '3급 강사비'] as const
 
 function parseWageGradeAmount(pricing: string | undefined): string {
-  if (!pricing?.trim()) return ''
-  const match = pricing.replace(/,/g, '').match(/(\d+)/)
-  return match?.[1] ?? ''
+  return parseWageGradeAmountToFormString(pricing)
 }
 
 function buildWageGradePricing(amount: string | undefined): string {
@@ -1117,7 +1232,7 @@ function buildWageGradePricing(amount: string | undefined): string {
   if (!trimmed) return '1시간 당 | 기본 : -'
   const num = Number(trimmed.replace(/,/g, ''))
   if (Number.isNaN(num)) return `1시간 당 | 기본 : ${trimmed}`
-  return `1시간 당 | 기본 : ${num.toLocaleString('ko-KR')}원`
+  return `1시간 당 | 기본 : ${formatNumberDisplay(num)}원`
 }
 
 function resolvePaymentItemIds(paymentItems: string | undefined): string[] {
@@ -1238,9 +1353,8 @@ function formatScheduleDateLabelFromIso(iso: string | null | undefined): string 
   if (!iso?.trim()) return undefined
   const d = dayjs(iso)
   if (!d.isValid()) return iso.trim()
-  const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-  const yy = d.year() % 100
-  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
+  const label = formatDateDotWithWeekday(d)
+  return label === '-' ? iso.trim() : label
 }
 
 function overlayGroupTimeSlotsAtIndex(
@@ -1628,7 +1742,9 @@ export function programToGeneralCommonInfoEditValues(
     ...resolveKpiFromProgram(program),
     ...resolveWageFromProgram(program),
     ...typeSettings,
-    curriculumSessions: (commonInfo.curriculumSessions ?? []).map(s => {
+    curriculumSessions: trimTrailingBlankRegularCurriculumSessions(
+      commonInfo.curriculumSessions ?? []
+    ).map(s => {
       const sessionIps = parseSessionIpsTypeSummary(s.ipsTypeSummary)
       const isPreEducation = isPreEducationCurriculumSession(s)
       return {
@@ -1700,6 +1816,23 @@ function resolveDetailedProgramName(
   return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
+/**
+ * 세부 일정(sub) 행의 scheduleDateLabel.
+ * 폼 `scheduleDate`는 GET 시드값이다. 단일·기관 세부 일정 UI는 진행 시간만 수정하므로
+ * 일정 방식을 바꾸지 않으면 GET 라벨을 그대로 보존한다.
+ * DATE↔PERIOD 전환 시에는 프로그램 `educationScheduleLines`가 정본이므로 행 라벨을 싣지 않는다.
+ */
+function persistSubScheduleDateLabel(args: {
+  formScheduleDate: string | undefined
+  nextMode: 'date' | 'period'
+  existingMode: 'date' | 'period'
+}): string | undefined {
+  const next = args.formScheduleDate?.trim() || undefined
+  if (!next) return undefined
+  if (args.nextMode !== args.existingMode) return undefined
+  return next
+}
+
 function existingCommonWithoutRecruitment(
   common: Program['generalCommonInfo']
 ): Program['generalCommonInfo'] {
@@ -1709,8 +1842,10 @@ function existingCommonWithoutRecruitment(
     instructorRecruitmentInfo: _instructorRecruitmentInfo,
     volunteerRecruitmentInfo: _volunteerRecruitmentInfo,
     volunteerInterviewScheduleInfo: _volunteerInterviewScheduleInfo,
+    sponsorManagerContactNames: _sponsorManagerContactNames,
     ...rest
   } = common
+  void _sponsorManagerContactNames
   return rest
 }
 
@@ -1729,6 +1864,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ids: values.sponsorManagerContactIds,
     id: values.sponsorManagerContactId,
   })
+  const persistContactIds = toWireSponsorManagerContactIds(selectedContactIds)
   const sponsorContactUnselectedOnly =
     selectedContactIds.length > 0 && selectedContactIds.every(id => isSponsorContactUnselected(id))
   const participantTypes = participantTypesFromFlags(values)
@@ -1751,6 +1887,14 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ? resolveScheduleTypeDetailedProgramNameFromDetails(relabeledScheduleDetails)
     : resolveDetailedProgramName(values.detailedProgramId, detailedProgramCatalog)
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
+  const nextEducationScheduleMode = shouldDisableEducationSchedulePeriodMode({
+    participantOrganization: values.participantOrganization,
+    sessionRound: values.sessionRound,
+  })
+    ? 'date'
+    : values.educationScheduleMode
+  const existingEducationScheduleMode =
+    existingCommon.educationScheduleMode === 'period' ? 'period' : 'date'
 
   const managerLine = sponsorContactUnselectedOnly
     ? SPONSOR_CONTACT_UNSELECTED_LABEL
@@ -1829,16 +1973,10 @@ export function generalCommonInfoEditValuesToProgramPatch(
     detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
     sponsorDisplayName:
       sponsorRows.map(row => row.name).join(', ') || existingCommon.sponsorDisplayName,
-    sponsorManagementId: values.sponsorManagementIds[0] ?? existingCommon.sponsorManagementId,
+    sponsorManagementId: values.sponsorManagementIds[0],
     sponsorManagementIds: values.sponsorManagementIds,
-    sponsorManagerContactIds: normalizeSponsorManagerContactIds({
-      ids: values.sponsorManagerContactIds,
-      id: values.sponsorManagerContactId,
-    }),
-    sponsorManagerContactId: normalizeSponsorManagerContactIds({
-      ids: values.sponsorManagerContactIds,
-      id: values.sponsorManagerContactId,
-    })[0],
+    sponsorManagerContactIds: persistContactIds,
+    sponsorManagerContactId: persistContactIds[0],
     sponsorManagerLine: managerLine,
     venueKind: values.venueKind,
     venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
@@ -1975,6 +2113,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
             return {
               ...row,
               progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
+              scheduleDateLabel: persistSubScheduleDateLabel({
+                formScheduleDate: d.scheduleDate,
+                nextMode: nextEducationScheduleMode,
+                existingMode: existingEducationScheduleMode,
+              }),
               educationFormLabel:
                 values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
                   ? educationFormLabelFromValue(d.educationForm)
@@ -1995,12 +2138,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
             }
           })
         : [],
-    educationScheduleMode: shouldDisableEducationSchedulePeriodMode({
-      participantOrganization: values.participantOrganization,
-      sessionRound: values.sessionRound,
-    })
-      ? 'date'
-      : values.educationScheduleMode,
+    educationScheduleMode: nextEducationScheduleMode,
     educationScheduleLines: [...values.educationScheduleLines],
     wageGradeRows,
     paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds, paymentItemOptions),

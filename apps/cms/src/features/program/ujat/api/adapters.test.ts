@@ -145,6 +145,68 @@ describe('UJAT program adapters', () => {
     expect(mapped.startTime).toBe('09:00')
   })
 
+  it('Create는 숙박비·장거리 교통비를 paymentItems로 보낸다', () => {
+    const request = toCreateRequest({
+      ...program,
+      generalCommonInfo: { paymentItems: '숙박비, 장거리 교통비' },
+    })
+    expect(request.paymentItems).toEqual([
+      { itemType: 'LODGING', useYn: true },
+      { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+    ])
+  })
+
+  it('지급 항목 외 PATCH는 paymentItems를 omit한다', () => {
+    const existing: Program = {
+      ...program,
+      generalCommonInfo: { paymentItems: '숙박비' },
+    }
+    const request = toUpdateRequest(existing, { title: '제목만' }, { overlay: {} })
+    expect(request).not.toHaveProperty('paymentItems')
+  })
+
+  it('전체 지급 항목 해제는 paymentItems: []를 보낸다', () => {
+    const existing: Program = {
+      ...program,
+      generalCommonInfo: { paymentItems: '숙박비' },
+    }
+    const request = toUpdateRequest(
+      existing,
+      { generalCommonInfo: { paymentItems: '해당없음' } },
+      { overlay: {} }
+    )
+    expect(request.paymentItems).toEqual([])
+  })
+
+  it('상세 settlementPolicy 지급 항목을 유형으로 숨기지 않는다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      settlementPolicy: {
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+        ],
+      },
+    })
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비, 장거리 교통비, 숙박비')
+  })
+
+  it('settlementPolicy.paymentItems []는 JSON overlay 지급 항목을 덮어 빈 상태로 둔다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: { paymentItems: '숙박비' },
+      }),
+      settlementPolicy: { paymentItems: [] },
+    })
+    expect(mapped.generalCommonInfo?.paymentItems).toBeUndefined()
+  })
+
   it('수정 요청에서도 등록 draft와 overlay를 보존한다', () => {
     const created = toCreateRequest(program, {
       draft,

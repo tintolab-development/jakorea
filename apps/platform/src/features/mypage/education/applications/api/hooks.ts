@@ -303,7 +303,9 @@ export function useMyProgramApplicationDetail(
   }
 
   return {
-    application: query.data ? (mapPortalProgramApplicationDetail(query.data) ?? undefined) : undefined,
+    application: query.data
+      ? (mapPortalProgramApplicationDetail(query.data, applicationType ?? undefined) ?? undefined)
+      : undefined,
     isLoading: false,
     isError: false,
     isRemoteEnabled: true,

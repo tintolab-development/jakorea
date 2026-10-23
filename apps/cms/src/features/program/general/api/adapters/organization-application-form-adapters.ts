@@ -53,19 +53,37 @@ export function formatApplicantGradeLabel(raw: string | undefined): string {
   return trimmed
 }
 
-function stripJsonQuotes(raw: string): string {
-  const t = raw.trim()
-  if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
-    try {
-      return JSON.parse(t) as string
-    } catch {
-      return t.slice(1, -1)
-    }
+/**
+ * Admin form-response `answerValueJson` 정본 파서.
+ * JSON 문자열(`"텍스트"` / `{...}` / `[...]`)을 파싱하고, 파싱 실패 시 원문을 반환한다.
+ * `null`·빈 문자열은 값 없음으로 둔다. 기본값을 만들지 않는다.
+ */
+export function parseAnswerValue(answerValueJson: string | null | undefined): unknown {
+  if (!answerValueJson || answerValueJson.trim() === '') return undefined
+  try {
+    const parsed: unknown = JSON.parse(answerValueJson)
+    return parsed === null ? undefined : parsed
+  } catch {
+    return answerValueJson
   }
-  return t
 }
 
-/** form_response answers → questionKey → display/value 맵 */
+function serializeParsedAnswer(parsed: unknown): string | undefined {
+  if (parsed == null) return undefined
+  if (typeof parsed === 'string') {
+    const trimmed = parsed.trim()
+    return trimmed || undefined
+  }
+  if (typeof parsed === 'number' && Number.isFinite(parsed)) return String(parsed)
+  if (typeof parsed === 'boolean') return String(parsed)
+  if (typeof parsed === 'object') return JSON.stringify(parsed)
+  return undefined
+}
+
+/**
+ * form_response answers → questionKey → 문자열 맵.
+ * 구조화 답의 정본은 `answerValueJson`이다. displayText는 JSON 대체 소스로 쓰지 않는다.
+ */
 export function buildFormAnswerMap(
   answers: FormResponseAnswerResponse[] | undefined
 ): Record<string, string> {
@@ -73,22 +91,14 @@ export function buildFormAnswerMap(
   for (const answer of answers ?? []) {
     const key = answer.questionKeySnapshot?.trim()
     if (!key) continue
-    const valueJson = answer.answerValueJson?.trim()
-    /**
-     * 객체·배열 답의 displayText는 Java Map toString(`{a=b}`)이라 JSON이 아니다.
-     * 학년·사유는 answerValueJson에만 있으므로 그걸 우선한다.
-     */
-    if (valueJson && valueJson !== 'null' && isJsonContainer(valueJson)) {
-      map[key] = valueJson
+    const serialized = serializeParsedAnswer(parseAnswerValue(answer.answerValueJson))
+    if (serialized) {
+      map[key] = serialized
       continue
     }
     const display = answer.answerDisplayText?.trim()
-    if (display) {
-      map[key] = display
-      continue
-    }
-    if (!valueJson || valueJson === 'null') continue
-    map[key] = stripJsonQuotes(valueJson)
+    if (!display || isJsonContainer(display)) continue
+    map[key] = display
   }
   return map
 }
@@ -254,22 +264,18 @@ function formatSexOffenseInquiryParts(object: Record<string, unknown> | null): s
   return parts
 }
 
-function parseSexOffenseCheckRequest(map: Record<string, string>): string | undefined {
-  const flat = pickAnswer(map, ...SEX_OFFENSE_SUBMISSION_KEYS)
-  if (flat && !isJsonContainer(flat)) return flat
-
+export function parseSexOffenseCheckRequest(map: Record<string, string>): string | undefined {
   const submissionObject =
-    parseJsonObject(flat) ??
-    SEX_OFFENSE_SUBMISSION_KEYS.map(key => parseJsonObject(map[key])).find(Boolean) ??
-    null
+    SEX_OFFENSE_SUBMISSION_KEYS.map(key => parseJsonObject(map[key])).find(Boolean) ?? null
+  const inquiryObject =
+    SEX_OFFENSE_INQUIRY_KEYS.map(key => parseJsonObject(map[key])).find(Boolean) ?? null
+  if (!submissionObject && !inquiryObject) return undefined
+
   const submissionLabel = formatSexOffenseSubmissionLabel(
     typeof submissionObject?.submissionRequest === 'string'
       ? submissionObject.submissionRequest
-      : flat
+      : undefined
   )
-
-  const inquiryObject =
-    SEX_OFFENSE_INQUIRY_KEYS.map(key => parseJsonObject(map[key])).find(Boolean) ?? null
   const parts = [
     ...(submissionLabel ? [submissionLabel] : []),
     ...formatSexOffenseInquiryParts(inquiryObject),

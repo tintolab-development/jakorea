@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   formatAccountPaymentInstitutionDisplay,
   formatAccountPaymentSessionLabelDisplay,
@@ -101,7 +102,7 @@ function placeholderInvoiceForAccountPaymentCalendar(
     sessionProgress: formatAccountPaymentSessionLabelDisplay(row.sessionLabel),
     operationPeriod: '-',
     paymentStatementStatus: status,
-    expectedTransferDate: `${d.format('YYYY. MM. DD')}(${['일', '월', '화', '수', '목', '금', '토'][d.day()]})`,
+    expectedTransferDate: formatDateDotWithWeekday(d),
     lectureFeeBasis: '-',
     businessIncomeEarner: '해당 없음',
     institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),

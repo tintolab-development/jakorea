@@ -656,6 +656,7 @@ export function resolveGeneralProgramScheduleDetailsForView(
     program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
       ? (program.registrationOverlay as Record<string, unknown>)
       : undefined
+  const nestedSchedulePresent = Array.isArray(commonInfo.scheduleDetails)
   const fromCommon = commonInfo.scheduleDetails ?? []
   const isSchedule =
     resolveEffectiveGeneralProgramTypeFields({
@@ -670,7 +671,11 @@ export function resolveGeneralProgramScheduleDetailsForView(
       ? buildEnrichedScheduleDetails(overlay, extrasFromGeneralProgram(program))
       : []
 
-  const baseRows = fromCommon.length > 0 ? fromCommon : fromOverlay
+  const baseRows = nestedSchedulePresent
+    ? fromCommon
+    : fromCommon.length > 0
+      ? fromCommon
+      : fromOverlay
   if (baseRows.length === 0) return []
 
   return baseRows.map((row, index) => {
@@ -731,6 +736,7 @@ function applyCurriculumSessionsFromRegistrationOverlay<
     registrationOverlay: overlay,
   })
   if (typeFields.educationStructure !== 'curriculum') return common
+  if (Array.isArray(common.curriculumSessions)) return common
   if (countRegularCurriculumSessions(common.curriculumSessions) > 0) return common
   if (countGeneralCurriculumOverlaySessions(overlay) === 0) return common
 

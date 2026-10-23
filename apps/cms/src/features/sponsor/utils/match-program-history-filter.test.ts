@@ -26,6 +26,7 @@ describe('matchesProgramHistoryFilter', () => {
         lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         educationTarget: 'elementary',
+        beneficiaryCount: '',
         managerName: '',
       })
     ).toBe(true)
@@ -36,6 +37,7 @@ describe('matchesProgramHistoryFilter', () => {
         lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         educationTarget: 'middle',
+        beneficiaryCount: '',
         managerName: '',
       })
     ).toBe(false)
@@ -54,9 +56,35 @@ describe('matchesProgramHistoryFilter', () => {
         lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         educationTarget: 'middle',
+        beneficiaryCount: '',
         managerName: '',
       })
     ).toBe(true)
+  })
+
+  it('matches beneficiaryCount when set', () => {
+    expect(
+      matchesProgramHistoryFilter(baseRow, {
+        title: '',
+        year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        beneficiaryCount: '10',
+        managerName: '',
+      })
+    ).toBe(true)
+    expect(
+      matchesProgramHistoryFilter(baseRow, {
+        title: '',
+        year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        beneficiaryCount: '9',
+        managerName: '',
+      })
+    ).toBe(false)
   })
 
   it('matches participantType when set', () => {
@@ -67,6 +95,7 @@ describe('matchesProgramHistoryFilter', () => {
         lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         participantType: 'school',
         educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        beneficiaryCount: '',
         managerName: '',
       })
     ).toBe(true)
@@ -77,6 +106,7 @@ describe('matchesProgramHistoryFilter', () => {
         lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
         participantType: 'volunteer',
         educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        beneficiaryCount: '',
         managerName: '',
       })
     ).toBe(false)

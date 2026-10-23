@@ -13,88 +13,8 @@
   box-sizing: border-box;
 }
 
-/*
- * 필터 2행 고정 (1행 5필드 · 2행 3필드 + 조회)
- * - 래퍼 width 100%, 칸 gap 12px, 필드 max-width 260px (공통 토큰)
- */
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout {
-  --filter-field-gap: 12px;
-  --table-filter-field-gap: 12px;
-  /* 1행 5열과 동일한 칸 너비 — 2행 필드에도 동일 적용 */
-  --ujat-volunteer-filter-col-width: min(
-    var(--filter-control-max-width, 240px),
-    calc((100% - 4 * var(--filter-field-gap)) / 5)
-  );
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  margin-bottom: 0;
-  padding: 0;
-}
-
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout .filter-table-layout__divider {
+.ujat-volunteer-doc-screening .filter-table-layout .filter-table-layout__divider {
   padding: 32px 0;
-}
-
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout .table-filter-group__fields-rows {
-  gap: 12px;
-  width: 100%;
-}
-
-/* 1행: 필드 5개 가로 한 줄 */
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-rows
-  > .table-filter-group__fields-grid-row {
-  display: grid !important;
-  width: 100%;
-  box-sizing: border-box;
-  gap: 12px;
-  align-items: end;
-  justify-content: start;
-  grid-template-columns: repeat(5, minmax(0, var(--ujat-volunteer-filter-col-width))) !important;
-}
-
-/* 2행: 필드 3개(1행과 동일 열 너비) + 여백 + 조회(영역 우측 끝) */
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action {
-  display: grid !important;
-  width: 100%;
-  box-sizing: border-box;
-  gap: 12px;
-  align-items: end;
-  grid-template-columns:
-    repeat(3, minmax(0, var(--ujat-volunteer-filter-col-width))) minmax(0, 1fr) 160px !important;
-}
-
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action
-  > .table-filter-group__fields-grid-row {
-  display: contents;
-}
-
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action
-  > .table-filter-group__fields-shell--inline {
-  grid-column: 5;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  justify-self: end;
-}
-
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout .table-filter-group__grid-cell {
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action
-  .table-filter-group__grid-cell
-  :is(.table-filter-group__field, .labeled-search-input, .cms-select, .ant-select) {
-  width: 100% !important;
-  max-width: 100% !important;
 }
 
 /*

@@ -31,6 +31,20 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td {
   box-sizing: border-box !important;
   min-height: 52px !important;
@@ -52,6 +66,13 @@
   > th:not(.ant-table-cell-scrollbar),
 .detail-fullpage-modal.user-detail-fullpage-modal
   .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
   .filter-table-layout__table
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
@@ -88,6 +109,20 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr
+  > td.ant-table-cell.ant-table-selection-column,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.ant-table-selection-column,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
   > td.ant-table-cell.ant-table-selection-column {
   width: var(--table-selection-column-width, 80px) !important;
   min-width: var(--table-selection-column-width, 80px) !important;
@@ -118,6 +153,20 @@
   > th.cms-table-col--no,
 .detail-fullpage-modal.user-detail-fullpage-modal
   .admin-managed-program-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.cms-table-col--no,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.cms-table-col--no,
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history
   .filter-table-layout__table
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody

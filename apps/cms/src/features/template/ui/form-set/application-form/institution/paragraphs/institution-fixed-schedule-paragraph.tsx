@@ -8,6 +8,7 @@ import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { formatCmsScheduleKoreanDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 
@@ -82,7 +83,9 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
             checked={selectedIds.includes(item.id)}
             onChange={event => toggleOption(item.id, event.target.checked)}
           />
-          <span className="multiple-choice-row__label">{item.label}</span>
+          <span className="multiple-choice-row__label">
+            {formatCmsScheduleKoreanDisplayLabel(item.label)}
+          </span>
         </div>
       ))}
     </div>

@@ -31,9 +31,6 @@ export const TABLE_COLUMN_WIDTHS = {
 } as const
 
 export const TABLE_CONFIG = {
-  scroll: {
-    x: 'max-content',
-  },
   size: 'middle' as const,
   bordered: false,
 } as const

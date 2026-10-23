@@ -71,7 +71,7 @@ describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
 
     expect(display.exceptions).toEqual([
       {
-        exceptionDate: '2026. 10. 02 (금)',
+        exceptionDate: '2026.10.02(금)',
         availableTimeSlots: slotLabel(1790743800000, 1790744700000),
       },
     ])

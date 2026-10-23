@@ -15,7 +15,7 @@ import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-
 import {
   canAdminAction,
   isPermissionRequestsPath,
-  isPermissionSettingsPath,
+  isMemberPermissionSettingsPath,
   isSecurityLogPath,
   isTemplateManagementPath,
   showAdminAccessDeniedAlert,
@@ -97,6 +97,7 @@ export function Sidebar() {
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members') ||
         path.startsWith('/admin/settings/permissions') ||
+        path.startsWith('/admin/settings/program-manager-permissions') ||
         path.startsWith('/admin/permission-requests'))
     ) {
       keys.push('members-group')
@@ -110,6 +111,7 @@ export function Sidebar() {
       }
       if (
         path.startsWith('/admin/settings/permissions') ||
+        path.startsWith('/admin/settings/program-manager-permissions') ||
         path.startsWith('/admin/permission-requests')
       ) {
         keys.push('member-permissions-group')
@@ -233,7 +235,7 @@ export function Sidebar() {
               return
             }
             if (
-              isPermissionSettingsPath(key) &&
+              isMemberPermissionSettingsPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
             ) {
               showAdminAccessDeniedAlert()

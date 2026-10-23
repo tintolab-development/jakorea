@@ -9,8 +9,16 @@ describe('isDetailedProgramInUseDeleteError', () => {
     expect(isDetailedProgramInUseDeleteError(new Error(DETAILED_PROGRAM_IN_USE_CODE))).toBe(true)
   })
 
-  it('detects HTTP 409', () => {
+  it('detects HTTP 409 that is not concurrent modification', () => {
     expect(isDetailedProgramInUseDeleteError({ response: { status: 409 } })).toBe(true)
+    expect(
+      isDetailedProgramInUseDeleteError({
+        response: {
+          status: 409,
+          data: { error: { code: 'DETAILED_PROGRAM_CONCURRENT_MODIFICATION' } },
+        },
+      })
+    ).toBe(false)
   })
 
   it('ignores unrelated errors', () => {

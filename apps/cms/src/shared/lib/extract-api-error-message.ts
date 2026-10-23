@@ -18,6 +18,19 @@ export type ApiErrorEnvelope = {
   traceId?: string
 }
 
+const PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES: Record<string, string> = {
+  PROGRAM_EDUCATION_STRUCTURE_RESET_REQUIRED:
+    '교육구조를 변경하려면 이전 교육구조의 회차 또는 일정 정보를 비워야 합니다.',
+  PROGRAM_EDUCATION_STRUCTURE_PAYLOAD_REQUIRED:
+    '변경할 교육구조의 회차 또는 일정 정보를 입력해 주세요.',
+  PROGRAM_EDUCATION_STRUCTURE_CHANGE_BLOCKED:
+    '이미 신청·배정 또는 교육 운영 이력이 있는 프로그램은 교육구조를 변경할 수 없습니다.',
+  PROGRAM_EDUCATION_STRUCTURE_CHANGE_CONCURRENT:
+    '다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.',
+  GENERAL_CURRICULUM_SESSION_IN_USE:
+    '설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.',
+}
+
 const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
   UJAT_ACTIVITY_CERTIFICATE_ADMIN_ONLY: 'UJAT 활동인증서는 관리자만 발급할 수 있습니다.',
   UJAT_ORGANIZATION_ALREADY_APPLIED: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
@@ -39,6 +52,9 @@ export function extractApiErrorMessage(
   options?: { httpStatus?: number | null; fallback?: string }
 ): string {
   const code = extractApiErrorCode(data)
+  if (code && PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]) {
+    return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
+  }
   const envelope = asEnvelope(data)
   const serverMessage = envelope?.error?.message?.trim()
   if (

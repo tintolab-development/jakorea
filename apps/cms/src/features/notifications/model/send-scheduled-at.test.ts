@@ -113,7 +113,7 @@ describe('nextNotificationSendSchedule', () => {
 describe('formatNotificationSendScheduleDisplay', () => {
   it('formats date with HH:mm (no seconds)', () => {
     expect(formatNotificationSendScheduleDisplay(dayjs('2026-03-09T09:15:30'))).toMatch(
-      /2026\. 03\. 09\(.\) 09:15$/
+      /2026\.03\.09\(.\) 09:15$/
     )
   })
 })

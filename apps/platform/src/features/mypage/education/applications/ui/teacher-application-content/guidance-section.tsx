@@ -56,7 +56,7 @@ export function GuidanceSection({
         {TEACHER_GUIDANCE_FIELDS.map(field => (
           <PFFormFieldRow key={field.key}>
             <PFFormField label={field.label} labelWidth="wider" fullWidth>
-              <p className={styles.fieldValue}>{guidance[field.key]}</p>
+              <p className={styles.fieldValue}>{guidance[field.key]?.trim() || '-'}</p>
             </PFFormField>
           </PFFormFieldRow>
         ))}

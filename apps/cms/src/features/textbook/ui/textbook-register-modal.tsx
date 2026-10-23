@@ -8,9 +8,21 @@ import type { TextbookBusinessArea } from '@/features/textbook/model/textbook-bu
 import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import {
   TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS,
+  TEXTBOOK_EDUCATION_TARGETS,
   type TextbookEducationTarget,
 } from '@/features/textbook/model/textbook-education-targets'
-import { textbookRegisterGradeOptions } from '@/features/textbook/model/textbook-grade-options'
+import {
+  gradesByTargetFromRegisterValues,
+  nextTextbookRegisterGradeValuesForTargets,
+  parseTextbookRegisterGradeValuesForTargets,
+  parseTextbookRegisterGradeValuesFromStages,
+  textbookRegisterGradeOptionsForTargets,
+} from '@/features/textbook/model/textbook-grade-options'
+import {
+  buildEducationStagesFromSelections,
+  parseEducationTargetLabels,
+  summarizeEducationStages,
+} from '@/features/textbook/lib/textbook-education-stages'
 import type { TextbookCreateInput } from '@/features/textbook/model/textbook.types'
 import './textbook-register-modal.css'
 
@@ -26,22 +38,48 @@ export interface TextbookRegisterModalProps {
 
 type RegisterFormState = Omit<
   TextbookCreateInput,
-  'businessArea' | 'educationStages' | 'educationTarget'
+  'businessArea' | 'educationStages' | 'educationTarget' | 'grade' | 'useStatus'
 > & {
   textbookName: string
   textbookNameEn: string
   businessArea: TextbookBusinessArea | ''
-  educationTarget: TextbookEducationTarget | ''
+  educationTargets: TextbookEducationTarget[]
+  grades: string[]
+  useStatus: TextbookCreateInput['useStatus'] | ''
 }
 
 const emptyForm = (): RegisterFormState => ({
-  useStatus: 'USED',
+  useStatus: '',
   textbookName: '',
   textbookNameEn: '',
   businessArea: '',
-  educationTarget: '',
-  grade: '',
+  educationTargets: [],
+  grades: [],
 })
+
+function orderedEducationTargets(values: readonly string[]): TextbookEducationTarget[] {
+  const selected = new Set(values)
+  return TEXTBOOK_EDUCATION_TARGETS.filter(target => selected.has(target))
+}
+
+function toRegisterForm(initialValues?: Partial<TextbookRegisterPayload> | null): RegisterFormState {
+  const fromStages = parseTextbookRegisterGradeValuesFromStages(initialValues?.educationStages)
+  const educationTargets =
+    fromStages.targets.length > 0
+      ? fromStages.targets
+      : parseEducationTargetLabels(initialValues?.educationTarget ?? '')
+  return {
+    useStatus: initialValues?.useStatus ?? '',
+    textbookName: initialValues?.textbookName ?? '',
+    textbookNameEn: initialValues?.textbookNameEn ?? '',
+    businessArea: initialValues?.businessArea ?? '',
+    educationTargets,
+    grades:
+      fromStages.grades.length > 0
+        ? fromStages.grades
+        : parseTextbookRegisterGradeValuesForTargets(educationTargets, initialValues?.grade ?? ''),
+  }
+}
 
 export function TextbookRegisterModal({
   open,
@@ -56,25 +94,18 @@ export function TextbookRegisterModal({
 
   useEffect(() => {
     if (!open) return
-    setForm({
-      ...emptyForm(),
-      ...initialValues,
-      textbookNameEn: initialValues?.textbookNameEn ?? '',
-    })
+    setForm(toRegisterForm(initialValues))
   }, [open, initialValues])
 
   const gradeOptions = useMemo(
-    () => textbookRegisterGradeOptions(form.educationTarget),
-    [form.educationTarget]
+    () => textbookRegisterGradeOptionsForTargets(form.educationTargets),
+    [form.educationTargets]
   )
 
   const handleSubmit = () => {
     if (
-      !form.textbookName.trim() ||
-      !form.textbookNameEn.trim() ||
-      !form.businessArea ||
-      !form.educationTarget ||
-      !form.grade
+      form.useStatus !== 'USED' &&
+      form.useStatus !== 'UNUSED'
     ) {
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -82,12 +113,33 @@ export function TextbookRegisterModal({
       })
       return
     }
+    const gradesByTarget = gradesByTargetFromRegisterValues(form.educationTargets, form.grades)
+    const missingGradeTarget = form.educationTargets.some(
+      target => (gradesByTarget.get(target) ?? []).length === 0
+    )
+    if (
+      !form.textbookName.trim() ||
+      !form.textbookNameEn.trim() ||
+      !form.businessArea ||
+      form.educationTargets.length === 0 ||
+      missingGradeTarget
+    ) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    const educationStages = buildEducationStagesFromSelections(form.educationTargets, gradesByTarget)
+    const summary = summarizeEducationStages(educationStages)
     onSubmit({
-      ...form,
+      useStatus: form.useStatus,
       textbookName: form.textbookName.trim(),
       textbookNameEn: form.textbookNameEn.trim(),
       businessArea: form.businessArea,
-      educationTarget: form.educationTarget,
+      educationTarget: summary.educationTarget,
+      grade: summary.grade,
+      educationStages,
     })
   }
 
@@ -114,7 +166,9 @@ export function TextbookRegisterModal({
         <div className="textbook-register-modal__field">
           <CmsRadio.Group
             label="사용 여부"
-            value={form.useStatus}
+            required
+            size="large"
+            value={form.useStatus || undefined}
             onChange={e => setForm(prev => ({ ...prev, useStatus: e.target.value }))}
           >
             <CmsRadio value="USED">사용</CmsRadio>
@@ -169,16 +223,22 @@ export function TextbookRegisterModal({
             <CmsSelect
               label="교육 대상"
               required
+              mode="multiple"
+              withAllOption={false}
               inputSize="large"
               placeholder="교육 대상을 선택해 주세요."
-              value={form.educationTarget || undefined}
+              value={form.educationTargets}
               onChange={value => {
-                const nextTarget = (value ?? '') as TextbookEducationTarget | ''
-                const nextGradeValues = textbookRegisterGradeOptions(nextTarget).map(o => o.value)
+                const incoming = Array.isArray(value) ? value.map(String) : []
+                const nextTargets = orderedEducationTargets(incoming)
                 setForm(prev => ({
                   ...prev,
-                  educationTarget: nextTarget,
-                  grade: nextGradeValues.includes(prev.grade) ? prev.grade : '',
+                  educationTargets: nextTargets,
+                  grades: nextTextbookRegisterGradeValuesForTargets(
+                    nextTargets,
+                    prev.grades ?? [],
+                    prev.grades ?? []
+                  ),
                 }))
               }}
               options={TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS}
@@ -191,10 +251,27 @@ export function TextbookRegisterModal({
           <CmsSelect
             label="대상 학년"
             required
+            mode="multiple"
+            withAllOption={false}
             inputSize="large"
-            placeholder="대상 학년을 선택해 주세요."
-            value={form.grade || undefined}
-            onChange={value => setForm(prev => ({ ...prev, grade: String(value ?? '') }))}
+            placeholder={
+              form.educationTargets.length > 0
+                ? '대상 학년을 선택해 주세요.'
+                : '교육 대상을 선택해 주세요.'
+            }
+            value={form.educationTargets.length > 0 ? form.grades ?? [] : []}
+            disabled={form.educationTargets.length === 0}
+            onChange={value => {
+              const incoming = Array.isArray(value) ? value.map(String) : []
+              setForm(prev => ({
+                ...prev,
+                grades: nextTextbookRegisterGradeValuesForTargets(
+                  prev.educationTargets,
+                  prev.grades ?? [],
+                  incoming
+                ),
+              }))
+            }}
             options={gradeOptions}
             width="100%"
           />

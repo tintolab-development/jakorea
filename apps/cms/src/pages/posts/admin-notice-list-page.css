@@ -20,7 +20,10 @@
 }
 
 /* th/td: 패딩 + 테이블 셀 정렬 (display:flex 금지 — 그리드 붕괴) */
-.admin-notice-list-page__table.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
 .admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr > td {
   box-sizing: border-box !important;
   padding: 12px 16px !important;
@@ -57,8 +60,14 @@
 }
 
 /* 제목 열 — 시안 justify-content: center */
-.admin-notice-list-page__table.cms-data-table .ant-table-thead > tr > th.admin-notice-list-page__col-title,
-.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr > td.admin-notice-list-page__col-title {
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-title,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-title {
   text-align: center !important;
 }
 
@@ -160,7 +169,7 @@
   color: var(--color-red, #c32f4a);
   text-align: center;
   font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;

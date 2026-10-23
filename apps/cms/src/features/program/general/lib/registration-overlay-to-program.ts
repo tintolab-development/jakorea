@@ -4,6 +4,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import type {
   GeneralProgramCurriculumSessionRow,
   GeneralProgramScheduleDetailKind,
@@ -214,7 +215,7 @@ function educationFormLabelFromValue(value: string | undefined): string {
 
 function buildWageGradePricing(amount: number | undefined): string {
   if (amount == null || !Number.isFinite(amount)) return '1시간 당 | 기본 : -'
-  return `1시간 당 | 기본 : ${amount.toLocaleString('ko-KR')}원`
+  return `1시간 당 | 기본 : ${formatNumberDisplay(amount)}원`
 }
 
 function resolveDetailedProgramName(
@@ -465,9 +466,8 @@ function formatScheduleDateLabel(iso: string | null | undefined): string | undef
   if (!iso?.trim()) return undefined
   const d = dayjs(iso)
   if (!d.isValid()) return iso.trim()
-  const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-  const yy = d.year() % 100
-  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
+  const label = formatDateDotWithWeekday(d)
+  return label === '-' ? iso.trim() : label
 }
 
 /** 상세 조회 — registration overlay → 일정형 scheduleDetails (저장본이 비어 있을 때) */

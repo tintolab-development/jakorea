@@ -11,7 +11,7 @@ import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-erro
 import { useAdminInquiryCategories } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import { useInquiryListQuery } from '@/features/posts/hooks/use-inquiry-list-query'
 import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutations'
-import { buildAdminInquiryFilterRows } from '@/features/posts/model/admin-inquiry-management-filter-fields'
+import { buildAdminInquiryManagementFilterFields } from '@/features/posts/model/admin-inquiry-management-filter-fields'
 import { adminInquiryManagementTablePageConfig } from '@/features/posts/model/admin-inquiry-management-table.config'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
@@ -26,6 +26,7 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
+  showDeleteCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -110,8 +111,8 @@ export function AdminInquiryPage() {
     [allowedCategoryLabels]
   )
 
-  const filterRowsConfig = useMemo(
-    () => buildAdminInquiryFilterRows(tablePageContext.allowedCategoryLabels),
+  const filterFields = useMemo(
+    () => buildAdminInquiryManagementFilterFields(tablePageContext.allowedCategoryLabels),
     [tablePageContext.allowedCategoryLabels]
   )
 
@@ -181,6 +182,7 @@ export function AdminInquiryPage() {
       await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       setActionResultTitle('문의 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
@@ -204,6 +206,7 @@ export function AdminInquiryPage() {
       setSingleDeleteConfirmOpen(false)
       setSingleDeleteInquiryId(null)
       closeDetailModal()
+      showDeleteCompletedAlert()
     } catch (error) {
       setActionResultTitle('문의 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
@@ -392,8 +395,7 @@ export function AdminInquiryPage() {
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         bordered={false}
-        className="admin-inquiry-page__filter-layout"
-        rows={filterRowsConfig}
+        fields={filterFields}
         filters={{
           status: pendingFilters.status,
           category: pendingFilters.category,

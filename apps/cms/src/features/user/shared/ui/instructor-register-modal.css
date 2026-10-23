@@ -146,7 +146,7 @@
 }
 
 .instructor-register-modal__consent-status {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
@@ -191,7 +191,9 @@
   min-width: 0;
 }
 
-.instructor-register-modal__multi-row > .detail-info-form__field > .detail-info-form__field-content--edit {
+.instructor-register-modal__multi-row
+  > .detail-info-form__field
+  > .detail-info-form__field-content--edit {
   padding: 0;
   align-items: stretch;
 }

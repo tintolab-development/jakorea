@@ -1,15 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 
-export const WRITING_FORM_PERIOD_PICKER_WIDTH = 240
+export { dateRangeUsesClockTime }
 
-/** `startOf('day')`가 아닌 시각이 하나라도 있으면 시간 포함으로 간주 */
-export function dateRangeUsesClockTime(a: Dayjs, b: Dayjs): boolean {
-  const atMidnight = (d: Dayjs) =>
-    d.hour() === 0 && d.minute() === 0 && d.second() === 0 && d.millisecond() === 0
-  return !atMidnight(a) || !atMidnight(b)
-}
+export const WRITING_FORM_PERIOD_PICKER_WIDTH = 240
 
 type WritingFormPeriodDatePickerFieldProps = {
   label?: ReactNode

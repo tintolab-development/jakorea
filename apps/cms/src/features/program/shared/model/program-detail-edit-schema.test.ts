@@ -54,7 +54,7 @@ describe('narrowProgramDetailPatchForCommonInfoSave', () => {
       },
       generalCommonInfo: {
         participantRecruitmentInfo: {
-          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          recruitmentPeriodLabel: '2026.10.03 ~ 2026.10.07',
           preEducationNoticeRequired: true,
         },
         kpi: {
@@ -641,9 +641,9 @@ describe('최종 합격자 발표 수정 저장 (강사·봉사자 공용 컬럼
     finalPassAnnouncementMethod: '예전 방법',
     generalCommonInfo: {
       ...program.generalCommonInfo,
-      instructorRecruitmentInfo: { finalAnnouncementLabel: '2026. 10. 01 (목) | 강사 등록값' },
+      instructorRecruitmentInfo: { finalAnnouncementLabel: '2026.10.01(목) | 강사 등록값' },
       volunteerRecruitmentInfo: {
-        finalAnnouncementLabel: '2026. 10. 05 (월) | 예전 방법',
+        finalAnnouncementLabel: '2026.10.05(월) | 예전 방법',
         finalPassAnnouncementDate: '2026-10-05T00:00:00+09:00',
         finalPassAnnouncementMethod: '예전 방법',
       },
@@ -658,7 +658,7 @@ describe('최종 합격자 발표 수정 저장 (강사·봉사자 공용 컬럼
     }
     const volunteer = detailEditValuesToProgramPatch(values, withRecruitLabels).generalCommonInfo
       ?.volunteerRecruitmentInfo as Record<string, unknown>
-    expect(volunteer.finalAnnouncementLabel).toBe('2026. 10. 08 (목) | 새 방법')
+    expect(volunteer.finalAnnouncementLabel).toBe('2026.10.08(목) | 새 방법')
     expect(volunteer.finalPassAnnouncementMethod).toBe('새 방법')
   })
 
@@ -668,7 +668,7 @@ describe('최종 합격자 발표 수정 저장 (강사·봉사자 공용 컬럼
       withRecruitLabels
     )
     expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.finalAnnouncementLabel).toBe(
-      '2026. 10. 01 (목) | 강사 등록값'
+      '2026.10.01(목) | 강사 등록값'
     )
   })
 })
@@ -809,8 +809,8 @@ describe('trained teachers recruitment edit round-trip', () => {
     expect(display.maxClassLabel).toBe('6개')
     expect(display.maxScheduleCountLabel).toBe('5개')
     expect(display.maxSessionsPerDayLabel).toBe('4차시')
-    expect(display.recruitmentPeriodLabel).toContain('2026. 10. 01')
-    expect(display.operationPeriodLabel).toContain('2026. 11. 01')
+    expect(display.recruitmentPeriodLabel).toContain('2026.10.01')
+    expect(display.operationPeriodLabel).toContain('2026.11.01')
     expect(display.targetLabel).toBe('중학교')
     expect(display.targetDetailLabel).toBe('중학교 2학년')
     expect(display.finalAnnouncementLabel).toContain('이메일 안내')

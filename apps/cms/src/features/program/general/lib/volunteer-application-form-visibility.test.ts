@@ -8,9 +8,13 @@ import type { MultipleChoiceParagraph } from '@/features/template/model/writing-
 import { getVolunteerApplicationFormHiddenParagraphIds } from './volunteer-application-form-visibility'
 
 describe('getVolunteerApplicationFormHiddenParagraphIds', () => {
-  it('시드 기본값 「있음」이면 이전 참여 단락을 노출한다', () => {
+  it('시드 기본값(미선택)이면 이전 참여 단락을 숨긴다', () => {
     const draft = createProgramApplicationFormVolunteerDraft()
-    expect(getVolunteerApplicationFormHiddenParagraphIds(draft.paragraphs)).toBeUndefined()
+    expect(
+      getVolunteerApplicationFormHiddenParagraphIds(draft.paragraphs)?.has(
+        PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram
+      )
+    ).toBe(true)
   })
 
   it('경험 「없음」 또는 미선택 시 이전 참여 단락을 숨긴다', () => {

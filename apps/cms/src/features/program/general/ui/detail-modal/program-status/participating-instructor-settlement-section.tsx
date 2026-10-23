@@ -12,6 +12,7 @@ import { CmsButton, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { handleError } from '@/shared/utils/error-handler'
+import { formatNumberDisplay } from '@/shared/utils'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -45,7 +46,7 @@ function lectureProgressAccent(
 
 function formatSettlementAmount(amount: number | null): string {
   if (amount == null) return '-'
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 function renderPaymentStatementProcessingStatus(row: ParticipatingInstructorSettlementApiRow) {
@@ -269,15 +270,18 @@ export function ParticipatingInstructorSettlementSection({
         <div className="info-section-buttons--wrapper">
           <CmsButton
             variant="secondary"
-            size="large"
-            width={220}
+            size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
             onClick={() => void handleBulkDownloadPaymentStatements()}
           >
             지급조서 일괄 다운로드
           </CmsButton>
-          <ExcelButton onClick={exportExcel} loading={isExcelExporting} disabled={rows.length === 0} />
+          <ExcelButton
+            onClick={exportExcel}
+            loading={isExcelExporting}
+            disabled={rows.length === 0}
+          />
         </div>
       </div>
 

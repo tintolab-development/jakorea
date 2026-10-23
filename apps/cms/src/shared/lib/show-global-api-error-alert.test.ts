@@ -1,6 +1,9 @@
 import type { AxiosError } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  getMemberDeleteCurrentPasswordInvalidAlertOptions,
+} from '@/features/user/api/get-member-api-error'
+import {
   ADMIN_ACCESS_DENIED_ALERT_CONTENT,
   ADMIN_ACCESS_DENIED_ALERT_TITLE,
 } from '@/shared/lib/admin-role-policy'
@@ -114,5 +117,41 @@ describe('showGlobalApiErrorAlert 403', () => {
       title: '처리 불가',
       content: 'CONFLICT: ADMIN_EMAIL_ALREADY_EXISTS',
     })
+  })
+})
+
+function currentPasswordInvalidError(url: string): AxiosError {
+  return {
+    isAxiosError: true,
+    message: 'Bad Request',
+    name: 'AxiosError',
+    toJSON: () => ({}),
+    response: {
+      status: 400,
+      data: {
+        success: false,
+        error: {
+          code: 'CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID',
+          message: '현재 비밀번호를 확인해 주세요.',
+        },
+      },
+    },
+    config: { method: 'post', url },
+  } as AxiosError
+}
+
+describe('showGlobalApiErrorAlert CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it('비밀번호 불일치 안내 고정 카피를 띄운다', () => {
+    const error = currentPasswordInvalidError('/api/admin/me/withdrawals')
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith(
+      getMemberDeleteCurrentPasswordInvalidAlertOptions()
+    )
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
   })
 })

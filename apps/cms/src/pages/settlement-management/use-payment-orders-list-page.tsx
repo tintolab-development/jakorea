@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } 
 import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { formatNumberDisplay } from '@/shared/utils'
 import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
@@ -94,7 +95,7 @@ const PO_DETAIL_NO = PAYMENT_ORDERS_DETAIL_NO_PARAM
 const PO_DETAIL_KEY = PAYMENT_ORDERS_DETAIL_KEY_PARAM
 
 function formatWon(amount: number): string {
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 function pickPaymentOrdersListAnchorDate(
