@@ -859,10 +859,15 @@ export function FormDocumentPreviewParagraph({
       paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
     const isUjatJournalContentFeedback =
       paragraph.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback
+    const noticeConfirmationClosingVisible = allParagraphs.some(
+      p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+    )
     const isNoticeStackDivider =
       paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+    /** 구버전(confirmationClosing 없음)만 날짜 단락에서 대체 구분선 */
     const isNoticeDateWithDivider =
-      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate
+      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate &&
+      !noticeConfirmationClosingVisible
     /** 지급조서 mid/final도 다른 동의서와 동일 confirm·구분선 크롬 (A4 contentOnly) */
     const useConfirmTextChrome =
       !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing

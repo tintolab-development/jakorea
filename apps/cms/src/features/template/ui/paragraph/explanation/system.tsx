@@ -2,6 +2,11 @@ import type {
   AgreementSystemBodyDisplayMode,
   SystemParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
+} from '@/features/template/model/writing-form-draft.schema'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -16,6 +21,36 @@ function isPaymentStatementPreConsentSheetBarSystemParagraph(p: SystemParagraph)
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature ||
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate ||
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature
+  )
+}
+
+function isEducatorFacilitatorPledgeA4SystemParagraph(p: SystemParagraph): boolean {
+  return (
+    p.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate ||
+    p.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature
+  )
+}
+
+function isAgreementNoticeA4SystemParagraph(p: SystemParagraph): boolean {
+  return (
+    p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate ||
+    p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature
+  )
+}
+
+function isAgreementPortraitA4SystemParagraph(p: SystemParagraph): boolean {
+  return (
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemDate ||
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature
+  )
+}
+
+function isAgreementA4TemplatePlaceholderSystemParagraph(p: SystemParagraph): boolean {
+  return (
+    isPaymentStatementPreConsentSheetBarSystemParagraph(p) ||
+    isEducatorFacilitatorPledgeA4SystemParagraph(p) ||
+    isAgreementNoticeA4SystemParagraph(p) ||
+    isAgreementPortraitA4SystemParagraph(p)
   )
 }
 
@@ -52,14 +87,20 @@ export function ExplanationSystem({
 
   const trimmedName = (participantName ?? '').trim()
   const trimmedSignatureSrc = signatureImageSrc?.trim() ?? ''
+  const hasExplicitNow = now != null
   const resolvedNow = now ?? new Date()
+  const usePreConsentSheetBar = isAgreementA4TemplatePlaceholderSystemParagraph(paragraph)
+  const isDocument = displayMode === 'document'
   /**
-   * authoring(템플릿 편집): YYYY placeholder.
-   * write / document(미리보기·fill): 실제 연·월·일 동기화.
+   * authoring: YYYY placeholder.
+   * 지급조서 A4 템플릿 미리보기(document + now 없음): 시안 placeholder 유지.
+   * 제출 문서(document + now): 실제 연·월·일.
    */
+  const useTemplateDatePlaceholder =
+    displayMode === 'authoring' || (isDocument && !hasExplicitNow && usePreConsentSheetBar)
   const bodyText =
     preset === 'agreement_date'
-      ? displayMode === 'authoring'
+      ? useTemplateDatePlaceholder
         ? AUTHORING_DATE_LABEL
         : formatKoreanFullDate(resolvedNow)
       : displayMode === 'write'
@@ -97,9 +138,6 @@ export function ExplanationSystem({
         )}
       </div>
     ) : null
-
-  const usePreConsentSheetBar = isPaymentStatementPreConsentSheetBarSystemParagraph(paragraph)
-  const isDocument = displayMode === 'document'
   const documentModifier =
     isDocument && preset === 'agreement_date'
       ? 'explanation-system--document-date'

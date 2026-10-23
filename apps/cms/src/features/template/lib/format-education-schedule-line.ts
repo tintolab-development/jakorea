@@ -193,11 +193,16 @@ export function isEducationScheduleLineUpcoming(
   return start.isAfter(now, 'day')
 }
 
-/** 이미 진행된 예정일은 삭제 불가. 파싱할 수 없으면 삭제 가능. */
+/**
+ * 이미 진행된 예정일은 삭제 불가. 파싱할 수 없으면 삭제 가능.
+ * 등록 위저드(임시 저장 포함)는 `lockStartedLines: false` — 미게시라 지난 줄도 삭제.
+ */
 export function canRemoveEducationSchedulePreviewLine(
   line: string,
-  now: Dayjs = dayjs()
+  now: Dayjs = dayjs(),
+  options?: { lockStartedLines?: boolean }
 ): boolean {
+  if (options?.lockStartedLines === false) return true
   if (!parseEducationScheduleLineToRange(line)) return true
   return isEducationScheduleLineUpcoming(line, now)
 }

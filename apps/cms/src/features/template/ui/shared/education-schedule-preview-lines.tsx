@@ -24,6 +24,11 @@ export type EducationSchedulePreviewLinesProps = {
   /** 지정 시 각 행에 X 제거 버튼 노출 */
   onRemove?: (index: number) => void
   placeholder?: string
+  /**
+   * true(기본): 이미 시작한 줄은 X 숨김(프로그램 상세).
+   * false: 등록 위저드 — 지난 일정도 삭제.
+   */
+  lockStartedLines?: boolean
 }
 
 /** 교육 진행 예정일 목록 — 구분선 + 텍스트 + (선택) X */
@@ -31,6 +36,7 @@ export function EducationSchedulePreviewLines({
   lines,
   onRemove,
   placeholder = EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER,
+  lockStartedLines = true,
 }: EducationSchedulePreviewLinesProps) {
   if (lines.length === 0) {
     return (
@@ -49,7 +55,8 @@ export function EducationSchedulePreviewLines({
             {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
             <span className="education-schedule-preview-lines__item">
               <span className="detail-info-form--text nowrap">{displayLine}</span>
-              {editable && canRemoveEducationSchedulePreviewLine(line) ? (
+              {editable &&
+              canRemoveEducationSchedulePreviewLine(line, undefined, { lockStartedLines }) ? (
                 <button
                   type="button"
                   className="education-schedule-preview-lines__remove"
