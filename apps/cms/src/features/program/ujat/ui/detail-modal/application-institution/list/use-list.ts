@@ -11,21 +11,18 @@ import {
 } from './types'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { useUjatInstitutionApplicationColumns } from './columns'
-import { scheduleColumnsFromDates } from '../education-schedule'
-import { useUjatProgramScheduleDates } from '../use-program-schedule-dates'
 import {
-  getUjatInstitutionTempAssignCompleteContent,
+  collectPreferredEducationIsoDates,
+  scheduleColumnsFromIsoDates,
+} from '../education-schedule'
+import {
   getUjatInstitutionTempRejectCompleteContent,
-  UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
   UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
 } from './temp-assign-complete'
-import {
-  checkUjatRegionClassCapacityExceeded,
-  getUjatRegionClassCapacityExceededAlertContent,
-} from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { buildUjatInstitutionApplicationsListQuery } from '@/features/program/ujat/api/applications-list-query'
+import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import {
@@ -68,7 +65,7 @@ export function useUjatInstitutionApplicationList(
   const listQuery = useMemo(
     () =>
       buildUjatInstitutionApplicationsListQuery(appliedFilters, null, {
-        educationRegionCode: regionKey,
+        educationRegionCode: toUjatEducationRegionCode(regionKey),
       }),
     [appliedFilters, regionKey]
   )
@@ -99,6 +96,9 @@ export function useUjatInstitutionApplicationList(
   }, [dataVersion, remoteEnabled, remoteQuery.data])
 
   const tableData = useMemo(() => filterRowsByRegion(allRows, regionKey), [allRows, regionKey])
+  const totalElements = remoteEnabled
+    ? (remoteQuery.data?.pages[0]?.totalElements ?? tableData.length)
+    : tableData.length
   const infiniteScrollResetKey = useMemo(
     () => `${programId ?? ''}:${regionKey}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, programId, regionKey]
@@ -109,8 +109,10 @@ export function useUjatInstitutionApplicationList(
     [tableData, selectedRowKeys]
   )
 
-  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
-  const scheduleColumns = useMemo(() => scheduleColumnsFromDates(scheduleDates), [scheduleDates])
+  const scheduleColumns = useMemo(
+    () => scheduleColumnsFromIsoDates(collectPreferredEducationIsoDates(tableData)),
+    [tableData]
+  )
   const columns = useUjatInstitutionApplicationColumns(scheduleColumns)
 
   const maxClassesPerDay = useMemo(() => {
@@ -195,41 +197,16 @@ export function useUjatInstitutionApplicationList(
   }, [programId, selectedRowKeys, showNoSelectionAlert, showAlert])
 
   const handleBulkTempAssign = useCallback(() => {
-    const ids = selectedRowKeys.map(String)
-    if (ids.length === 0) {
+    if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
-    const count = ids.length
-    const rowsAfterAssign = allRows.map(row =>
-      ids.includes(row.id) ? { ...row, tempAssignmentStatus: 'temp_assigned' as const } : row
-    )
-    patchUjatInstitutionApplicationRows(ids, 'temp_assigned')
-    setDataVersion(v => v + 1)
-    setSelectedRowKeys([])
-
-    const capacityCheck = checkUjatRegionClassCapacityExceeded({
-      regionKey,
-      rowsAfterAssign,
-      // 목록에서 조회한 typed capacity를 우선 사용해 stale overlay가 경고 기준을 덮지 않게 한다.
-      serverMaxClassCount: maxClassesPerDay,
-    })
-
-    const completeContent = getUjatInstitutionTempAssignCompleteContent(count)
-    const content =
-      capacityCheck.exceeded && capacityCheck.maxClassCount != null
-        ? `${completeContent}\n\n${getUjatRegionClassCapacityExceededAlertContent({
-            regionLabel: capacityCheck.regionLabel,
-            maxClassCount: capacityCheck.maxClassCount,
-            totalAfterAssign: capacityCheck.totalAfterAssign,
-          })}`
-        : completeContent
-
     showAlert({
-      title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-      content,
+      title: '임시 일정 배정',
+      content:
+        '선택한 기관의 임시 일정은 신청 기관 임시 배정 화면에서 지역·일정·학급을 저장해야 합니다. 이 단계에서는 최종 승인되지 않습니다.',
     })
-  }, [allRows, maxClassesPerDay, regionKey, selectedRowKeys, showNoSelectionAlert, showAlert])
+  }, [selectedRowKeys.length, showNoSelectionAlert, showAlert])
 
   const closeApplicationRejectModal = useCallback(() => {
     setPendingApplicationRejectModal(false)
@@ -256,6 +233,7 @@ export function useUjatInstitutionApplicationList(
     handleFilterChange,
     handleSearch,
     tableData,
+    totalElements,
     columns,
     scheduleColumnCount: scheduleColumns.length,
     selectedRowKeys,

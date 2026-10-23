@@ -14,9 +14,11 @@ import {
 export function UjatInstitutionApplicationDetailView({
   detail,
   personalInfoRevealed,
+  workflowDisplayLabel,
 }: {
   detail: UjatInstitutionApplicationDetail
   personalInfoRevealed: boolean
+  workflowDisplayLabel?: string
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
@@ -25,7 +27,12 @@ export function UjatInstitutionApplicationDetailView({
           <DetailInfoForm.Field
             label="임시 배정 현황"
             fullRow
-            view={<UjatInstitutionApplicationStatusBadge status={detail.tempAssignmentStatus} />}
+            view={
+              <UjatInstitutionApplicationStatusBadge
+                status={detail.tempAssignmentStatus}
+                label={workflowDisplayLabel}
+              />
+            }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

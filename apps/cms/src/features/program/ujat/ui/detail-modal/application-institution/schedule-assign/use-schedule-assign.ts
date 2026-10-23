@@ -37,6 +37,7 @@ import {
   buildTemporaryScheduleSaveRequest,
 } from './temporary-schedule-mapper'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 
 export function useUjatInstitutionScheduleAssign(
   regionKey: UjatInstitutionApplicationRegionKey,
@@ -360,10 +361,7 @@ export function useUjatInstitutionScheduleAssign(
     } catch (error) {
       return {
         ok: false as const,
-        message:
-          error instanceof Error
-            ? error.message
-            : '임시 배정 저장에 실패했습니다. 다시 시도해 주세요.',
+        message: readApiErrorAlertMessage(error, '임시 배정 저장에 실패했습니다. 다시 시도해 주세요.'),
       }
     } finally {
       setSaving(false)

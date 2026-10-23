@@ -5,6 +5,7 @@ import { patchUjatInstitutionScheduleConfirmStatus } from '@/features/program/uj
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -32,17 +33,20 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   programId,
   onBack,
   onStatusUpdated,
+  onOpenScheduleAssign,
 }: {
   institutionId: string
   programId?: string | null
   onBack: () => void
   onStatusUpdated: () => void
+  onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
   const [pendingReject, setPendingReject] = useState(false)
   const [pendingApprove, setPendingApprove] = useState(false)
   const [pendingRevisionRequest, setPendingRevisionRequest] = useState(false)
-  const { row, detail: baseDetail, invalidate } = useUjatInstitutionApplicationDetail({
+  const { row, detail: baseDetail, invalidate, approveRemote, workflow, workflowReady } =
+    useUjatInstitutionApplicationDetail({
     institutionId,
     programId,
   })
@@ -75,19 +79,35 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   }, [row, onStatusUpdated, onBack])
 
   const handleApproveConfirm = useCallback(() => {
-    if (!row) return
-    patchUjatInstitutionScheduleConfirmStatus([row.id], 'approval_completed')
-    void invalidate()
-    onStatusUpdated()
-    setPendingApprove(false)
-    showAlert({
-      title: UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
-      content: getUjatInstitutionScheduleConfirmApproveCompleteContent(
-        row.institutionName,
-        row.assignedInstructorCount ?? null
-      ),
-    })
-  }, [row, invalidate, onStatusUpdated, showAlert])
+    if (!row || !workflow.canFinalApprove) {
+      setPendingApprove(false)
+      showAlert({
+        title: '안내',
+        content: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
+      })
+      return
+    }
+    void (async () => {
+      try {
+        await approveRemote()
+        patchUjatInstitutionScheduleConfirmStatus([row.id], 'approval_completed')
+        onStatusUpdated()
+        setPendingApprove(false)
+        showAlert({
+          title: UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
+          content: getUjatInstitutionScheduleConfirmApproveCompleteContent(
+            row.institutionName,
+            row.assignedInstructorCount ?? null
+          ),
+        })
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: readApiErrorAlertMessage(error, '최종 승인에 실패했습니다.'),
+        })
+      }
+    })()
+  }, [approveRemote, onStatusUpdated, row, showAlert, workflow.canFinalApprove])
 
   const handleRevisionRequestConfirm = useCallback(
     async (payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
@@ -100,10 +120,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
         } catch (error) {
           showAlert({
             title: '수정 요청 실패',
-            content:
-              error instanceof Error
-                ? error.message
-                : '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.',
+            content: readApiErrorAlertMessage(error, '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.'),
           })
           return
         }
@@ -144,20 +161,29 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             type="button"
             variant="secondary"
             size="large"
-            width={140}
+            width={180}
             style={APPROVE_BUTTON_STYLE}
-            onClick={() => setPendingApprove(true)}
+            disabled={!workflowReady || workflow.primaryDisabled}
+            onClick={() => {
+              if (!workflowReady || workflow.primaryDisabled) return
+              if (workflow.primaryAction === 'open_schedule_assign') {
+                onOpenScheduleAssign?.()
+                return
+              }
+              if (workflow.canFinalApprove) setPendingApprove(true)
+            }}
           >
-            신청 승인
+            {workflow.primaryAction === 'final_approve' ? '최종 승인' : workflow.primaryLabel}
           </CmsButton>
           <CmsButton
             type="button"
             variant="primary"
             size="large"
             width={140}
+            disabled={workflow.scheduleEditDisabled}
             onClick={() => setPendingRevisionRequest(true)}
           >
-            수정 요청
+            일정 수정 요청
           </CmsButton>
           <PersonalInfoRevealButton
             labelMode="stickyReveal"

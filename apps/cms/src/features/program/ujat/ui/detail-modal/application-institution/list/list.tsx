@@ -18,9 +18,11 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
+  onOpenScheduleAssign,
   programId,
 }: {
   onOpenDetail: (row: UjatInstitutionApplicationRow) => void
+  onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
@@ -31,6 +33,7 @@ export function UjatInstitutionApplicationList({
     handleFilterChange,
     handleSearch,
     tableData,
+    totalElements,
     columns,
     scheduleColumnCount,
     selectedRowKeys,
@@ -85,7 +88,7 @@ export function UjatInstitutionApplicationList({
         onSearch={handleSearch}
         title="기관 신청 목록"
         titleNote={titleNote}
-        description={`${tableData.length}건`}
+        description={`${totalElements}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
             <FilterTableToolbarButton
@@ -110,10 +113,17 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="secondary"
               className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={handleBulkTempAssign}
+              width={180}
+              onClick={() => {
+                if (selectedRowKeys.length === 0) {
+                  handleBulkTempAssign()
+                  return
+                }
+                onOpenScheduleAssign?.()
+                handleBulkTempAssign()
+              }}
             >
-              선택 임시 배정
+              임시 일정 배정
             </FilterTableToolbarButton>
             {viewMode === 'table' ? (
               <FilterTableToolbarButton

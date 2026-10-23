@@ -2866,12 +2866,18 @@ export function UjatProgramDetailFullPageModal({
                 programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+                onOpenScheduleAssign={() =>
+                  setLnbTab('institution_applications', 'inst_schedule_assign')
+                }
               />
             ) : (
               <UjatInstitutionApplicationList
                 key={institutionListVersion}
                 programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
+                onOpenScheduleAssign={() =>
+                  setLnbTab('institution_applications', 'inst_schedule_assign')
+                }
               />
             ))}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_assign' && (
@@ -2884,6 +2890,9 @@ export function UjatProgramDetailFullPageModal({
                 programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+                onOpenScheduleAssign={() =>
+                  setLnbTab('institution_applications', 'inst_schedule_assign')
+                }
               />
             ) : (
               <UjatInstitutionScheduleConfirmList

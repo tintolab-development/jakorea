@@ -35,9 +35,31 @@
 
 .ujat-institution-application-list__table-wrap {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: visible;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-content {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -47,7 +69,7 @@
   table.ant-table {
   table-layout: fixed !important;
   width: max-content !important;
-  min-width: max-content !important;
+  min-width: 100%;
 }
 
 .ujat-institution-application-list__table-wrap
@@ -177,6 +199,21 @@
   width: 112px !important;
   min-width: 112px !important;
   max-width: 112px !important;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-institution-application-list__cell-teacher,
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-institution-application-list__cell-teacher {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
 }
 
 .ujat-institution-application-list .calendar-set {
