@@ -3,6 +3,7 @@ import type { SettlementItemSettingSection } from '@/features/settlement-managem
 import {
   ensurePaymentItemCatalog,
   getActivePaymentItemCatalogOptions,
+  getActivePaymentItemCatalogRows,
   getTemplateRegistrationPaymentItemOptions,
   LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS,
   isPaymentItemCatalogReady,
@@ -17,6 +18,10 @@ export const PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL = '해당없음' as const
 export const PROGRAM_WAGE_DEDUCTION_LABEL = '일용근로자 원천징수세액' as const
 
 const PAYMENT_ITEM_CODE_RE = /^(p|w|d)-\d+$/i
+
+function compactPaymentLabel(label: string | undefined): string {
+  return (label ?? '').replace(/\s+/g, '')
+}
 
 /** settlementPolicy 한글 라벨 → 등록 지급 항목 옵션명 */
 const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
@@ -37,6 +42,119 @@ const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
   MEAL: '식비',
 }
 
+/** GET·카탈로그 paymentItemType → 프로그램 저장 canonical. 강사/학생 교통은 접지 않는다. */
+const SETTLEMENT_TYPE_ALIASES: Record<string, string> = {
+  TRANSPORTATION: 'TRANSPORTATION',
+  TRANSPORT_INSTRUCTOR: 'TRANSPORTATION',
+  STUDENT_TRANSPORTATION: 'STUDENT_TRANSPORTATION',
+  TRANSPORT_STUDENT: 'STUDENT_TRANSPORTATION',
+  LONG_DISTANCE_TRANSPORTATION: 'LONG_DISTANCE_TRANSPORTATION',
+  LONG_DISTANCE: 'LONG_DISTANCE_TRANSPORTATION',
+  LODGING: 'LODGING',
+  LODGING_GENERAL: 'LODGING',
+  LODGING_1C1S: 'LODGING',
+  ACTIVITY: 'ACTIVITY',
+  MEAL: 'MEAL',
+}
+
+function normalizePaymentTypeToken(type: string): string {
+  return type.trim().toUpperCase().replace(/[\s-]+/g, '_')
+}
+
+function canonicalSettlementPaymentType(token: string): string | undefined {
+  const normalized = normalizePaymentTypeToken(token)
+  if (!normalized) return undefined
+  return SETTLEMENT_TYPE_ALIASES[normalized]
+}
+
+function paymentTransportKind(compact: string): 'student' | 'long' | 'instructor' | 'none' {
+  if (!compact.includes('교통')) return 'none'
+  if (compact.includes('장거리')) return 'long'
+  if (compact.includes('학생')) return 'student'
+  return 'instructor'
+}
+
+function labelsCompatible(target: string, optionLabel: string): boolean {
+  if (target === optionLabel) return true
+  if (!target.includes(optionLabel)) return false
+  const targetKind = paymentTransportKind(target)
+  const optionKind = paymentTransportKind(optionLabel)
+  if (targetKind !== 'none' && optionKind !== 'none' && targetKind !== optionKind) return false
+  return true
+}
+
+function matchOptionIdByLabel(
+  token: string,
+  options: readonly CmsSelectMultipleOption[]
+): string | undefined {
+  const aliased = PAYMENT_ITEM_LABEL_ALIASES[compactPaymentLabel(token)] ?? token
+  const target = compactPaymentLabel(aliased)
+  if (!target) return undefined
+  const byValue = options.find(option => option.value === token || option.value === aliased)
+  if (byValue) return byValue.value
+  const exact = options.find(option => compactPaymentLabel(String(option.label)) === target)
+  if (exact) return exact.value
+  return options
+    .filter(option => {
+      const label = compactPaymentLabel(String(option.label))
+      return label.length > 0 && labelsCompatible(target, label)
+    })
+    .sort((a, b) => String(b.label).length - String(a.label).length)[0]?.value
+}
+
+function findCatalogIdForCanonicalType(
+  canonical: string,
+  options: readonly CmsSelectMultipleOption[]
+): string | undefined {
+  const byType = getActivePaymentItemCatalogRows().find(row => {
+    const rowType = row.paymentItemType?.trim()
+    if (!rowType) return false
+    return canonicalSettlementPaymentType(rowType) === canonical
+  })
+  if (byType?.id) return byType.id
+  const displayLabel = SETTLEMENT_ITEM_TYPE_LABEL[canonical]
+  return displayLabel ? matchOptionIdByLabel(displayLabel, options) : undefined
+}
+
+function resolveTokenToPaymentItemId(
+  token: string,
+  options: readonly CmsSelectMultipleOption[]
+): string {
+  const canonical = canonicalSettlementPaymentType(token)
+  if (canonical) {
+    return (
+      findCatalogIdForCanonicalType(canonical, options) ??
+      SETTLEMENT_ITEM_TYPE_LABEL[canonical] ??
+      token
+    )
+  }
+  return matchOptionIdByLabel(token, options) ?? token
+}
+
+function paymentItemRecords(value: unknown): Array<Record<string, unknown>> | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined
+  if (!value.every(item => item != null && typeof item === 'object' && !Array.isArray(item))) {
+    return undefined
+  }
+  if (!value.some(item => 'itemType' in (item as object))) return undefined
+  return value as Array<Record<string, unknown>>
+}
+
+function resolveIdsFromSettlementRecords(
+  records: Array<Record<string, unknown>>,
+  options: readonly CmsSelectMultipleOption[]
+): string[] {
+  const out: string[] = []
+  for (const record of records) {
+    if (record.useYn === false) continue
+    const type = typeof record.itemType === 'string' ? record.itemType.trim() : ''
+    if (!type) continue
+    const id = resolveTokenToPaymentItemId(type, options)
+    if (id && !out.includes(id)) out.push(id)
+  }
+  return out
+}
+
 function labelFromPaymentItemEntry(item: unknown): string {
   if (typeof item === 'string') return item.trim()
   if (typeof item === 'number' && Number.isFinite(item)) return String(item)
@@ -44,8 +162,9 @@ function labelFromPaymentItemEntry(item: unknown): string {
   const record = item as Record<string, unknown>
   if (record.useYn === false) return ''
   if (typeof record.itemType === 'string' && record.itemType.trim()) {
-    const type = record.itemType.trim().toUpperCase()
-    return SETTLEMENT_ITEM_TYPE_LABEL[type] ?? record.itemType.trim()
+    const type = record.itemType.trim()
+    const canonical = canonicalSettlementPaymentType(type) ?? normalizePaymentTypeToken(type)
+    return SETTLEMENT_ITEM_TYPE_LABEL[canonical] ?? type
   }
   for (const key of ['label', 'name', 'itemName'] as const) {
     const raw = record[key]
@@ -156,17 +275,9 @@ function legacyMockPaymentItemLabel(id: string): string | undefined {
   return getActivePaymentItemCatalogOptions().find(option => option.value === id)?.label
 }
 
-function compactPaymentLabel(label: string | undefined): string {
-  return (label ?? '').replace(/\s+/g, '')
-}
-
 /** 현재 카탈로그에서 항목명으로 지급 항목 id 찾기 (공백 무시) */
 export function findProgramPaymentItemIdByLabel(label: string): string | undefined {
-  const target = compactPaymentLabel(label)
-  if (!target) return undefined
-  return getActivePaymentItemCatalogOptions().find(
-    option => compactPaymentLabel(String(option.label)) === target
-  )?.value
+  return matchOptionIdByLabel(label, getActivePaymentItemCatalogOptions())
 }
 
 /**
@@ -182,7 +293,8 @@ function isLegacyMockPaymentItemId(id: string): boolean {
 export function normalizeProgramPaymentItemIds(ids: readonly unknown[]): string[] {
   const tokens = ids.map(id => String(id ?? '').trim()).filter(Boolean)
   if (!isPaymentItemCatalogReady()) return tokens
-  const known = new Set(getActivePaymentItemCatalogOptions().map(option => option.value))
+  const options = getActivePaymentItemCatalogOptions()
+  const known = new Set(options.map(option => option.value))
   const out: string[] = []
   for (const id of tokens) {
     let next: string | undefined
@@ -191,6 +303,11 @@ export function normalizeProgramPaymentItemIds(ids: readonly unknown[]): string[
     } else {
       const legacyLabel = legacyMockPaymentItemLabel(id)
       next = legacyLabel ? findProgramPaymentItemIdByLabel(legacyLabel) : undefined
+      if (!next) {
+        const canonical = canonicalSettlementPaymentType(id)
+        next = canonical ? findCatalogIdForCanonicalType(canonical, options) : undefined
+      }
+      if (!next) next = findProgramPaymentItemIdByLabel(id)
       if (!next && !isLegacyMockPaymentItemId(id)) {
         next = id
       }
@@ -317,26 +434,14 @@ export function resolveProgramPaymentItemIdsFromLabels(
             ? LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS
             : getTemplateRegistrationPaymentItemOptions()
         )
+  const records = paymentItemRecords(paymentItems)
+  if (records) return resolveIdsFromSettlementRecords(records, options)
+
   return text
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
-    .map(token => PAYMENT_ITEM_LABEL_ALIASES[compactPaymentLabel(token)] ?? token)
-    .map(token => {
-      const byValue = options.find(o => o.value === token)
-      if (byValue) return byValue.value
-      const target = compactPaymentLabel(token)
-      const exact = options.find(o => compactPaymentLabel(String(o.label)) === target)
-      if (exact) return exact.value
-      // 「숙박비 (1사1교)」가 「숙박비」에 먼저 걸리지 않도록 가장 긴 항목명을 고른다
-      const longest = options
-        .filter(o => {
-          const label = compactPaymentLabel(String(o.label))
-          return label.length > 0 && target.includes(label)
-        })
-        .sort((a, b) => String(b.label).length - String(a.label).length)[0]?.value
-      return longest ?? token
-    })
+    .map(token => resolveTokenToPaymentItemId(token, options))
     .filter((v, index, all): v is string => Boolean(v) && all.indexOf(v) === index)
 }
 
