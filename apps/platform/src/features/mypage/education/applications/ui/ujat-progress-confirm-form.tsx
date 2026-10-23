@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
@@ -46,6 +47,7 @@ import { PFAlertModal, PFButton } from '@/shared/ui'
 import type { ProgramApplicationType } from '../api/types'
 import { usePortalMeFormBindingRender } from '../api/hooks'
 import { patchOrganizationGuidanceAnswers } from '../api/institution-guidance-client'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { educationInstitutionGuidanceWritePath } from '../lib/guidance-path'
 import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
 import styles from './institution-guidance-write-form.module.css'
@@ -84,6 +86,7 @@ export function UjatProgressConfirmForm({
   isRevision,
 }: UjatProgressConfirmFormProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const formRender = usePortalMeFormBindingRender(programId, formBindingId)
   const preferredAnswer = pickAnswer(answers, [
     UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
@@ -158,6 +161,12 @@ export function UjatProgressConfirmForm({
           [UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule]:
             ujatInstitutionPreferredScheduleAnswerFromValues(preferredIds, preferredOptions),
         },
+      })
+      await queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.detail(
+          applicationType,
+          applicationId,
+        ),
       })
       navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType))
     } catch (error) {
