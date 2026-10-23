@@ -29,8 +29,25 @@ import {
 
 export type UjatRecruitDisplayKind = 'institution' | 'volunteer' | 'volunteer_h1' | 'volunteer_h2'
 
-function nonemptyField(value: string | null | undefined): string | undefined {
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+function hasOwnField(value: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key)
+}
+
+function rowString(
+  row: ProgramRecruitmentWindow,
+  key:
+    | 'startAt'
+    | 'endAt'
+    | 'operationStartDate'
+    | 'operationEndDate'
+    | 'interviewStartAt'
+    | 'interviewEndAt'
+    | 'contactName'
+    | 'contactPhone'
+    | 'contactEmail'
+): string | undefined {
+  if (!hasOwnField(row, key) || row[key] === undefined) return undefined
+  return row[key] ?? ''
 }
 
 /** UJAT GET — 봉사 반기는 recruitTerm만. startAt 정렬로 h1/h2를 추측하지 않는다. */
@@ -51,15 +68,15 @@ function applyUjatRecruitmentRowCanonicalFields(
   options?: { volunteerHalf?: boolean }
 ): Program {
   if (!row) return program
-  const opStart = nonemptyField(row.operationStartDate)
-  const opEnd = nonemptyField(row.operationEndDate)
-  const interviewStart = nonemptyField(row.interviewStartAt)
-  const interviewEnd = nonemptyField(row.interviewEndAt)
-  const contactName = nonemptyField(row.contactName)
-  const contactPhone = nonemptyField(row.contactPhone)
-  const contactEmail = nonemptyField(row.contactEmail)
-  const startAt = nonemptyField(row.startAt)
-  const endAt = nonemptyField(row.endAt)
+  const opStart = rowString(row, 'operationStartDate')
+  const opEnd = rowString(row, 'operationEndDate')
+  const interviewStart = rowString(row, 'interviewStartAt')
+  const interviewEnd = rowString(row, 'interviewEndAt')
+  const contactName = rowString(row, 'contactName')
+  const contactPhone = rowString(row, 'contactPhone')
+  const contactEmail = rowString(row, 'contactEmail')
+  const startAt = rowString(row, 'startAt')
+  const endAt = rowString(row, 'endAt')
   const volunteerInfo = {
     ...(program.generalCommonInfo?.volunteerRecruitmentInfo ?? {}),
     ...(contactName ? { contactOrganizationName: contactName, contactName } : { contactOrganizationName: '', contactName: '' }),
@@ -86,10 +103,13 @@ function applyUjatRecruitmentRowCanonicalFields(
     contactEmail: contactEmail ?? '',
     ...(options?.volunteerHalf
       ? {
-          volunteerApplicationStartDate: startAt ?? '',
-          volunteerApplicationEndDate: endAt ?? '',
+          ...(startAt !== undefined ? { volunteerApplicationStartDate: startAt } : {}),
+          ...(endAt !== undefined ? { volunteerApplicationEndDate: endAt } : {}),
         }
-      : {}),
+      : {
+          ...(startAt !== undefined ? { applicationStartDate: startAt } : {}),
+          ...(endAt !== undefined ? { applicationEndDate: endAt } : {}),
+        }),
     generalCommonInfo: {
       ...program.generalCommonInfo,
       ...(options?.volunteerHalf
@@ -230,12 +250,15 @@ function rowAnnouncementTitle(
 ): string | undefined {
   const audience = kind === 'institution' ? 'participant' : 'volunteer'
   const half = volunteerHalfFromRecruitDisplayKind(kind) ?? undefined
-  const title =
+  const row =
     (audience === 'volunteer' && half
       ? pickUjatVolunteerRecruitmentRow(program, half)
       : pickRecruitmentCopyRow(program, audience, half)
-    )?.announcementTitle
-  return typeof title === 'string' && title.trim() ? title.trim() : undefined
+    )
+  if (!row || !hasOwnField(row, 'announcementTitle') || row.announcementTitle === undefined) {
+    return undefined
+  }
+  return row.announcementTitle ?? ''
 }
 
 /** 공고용 프로그램명 — GET 행 우선, 없으면 모집 overlay. 공통정보와 공유하지 않는다. */
@@ -244,9 +267,9 @@ export function resolveUjatRecruitAnnouncementTitle(
   kind: UjatRecruitDisplayKind
 ): string {
   const fromRow = rowAnnouncementTitle(program, kind)
+  if (fromRow !== undefined) return fromRow || '-'
   if (kind === 'institution') {
     return (
-      fromRow ||
       overlayString(mergedInstitutionOverlay(program), UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle) ||
       '-'
     )
@@ -255,13 +278,11 @@ export function resolveUjatRecruitAnnouncementTitle(
   const half = volunteerHalfFromRecruitDisplayKind(kind)
   if (half) {
     return (
-      fromRow ||
       overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) ||
       '-'
     )
   }
   return (
-    fromRow ||
     overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) ||
     '-'
   )
@@ -313,7 +334,9 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
               ? institutionHtml
               : args.values.additionalContentHtml
             )?.trim() || null,
-          remarks: args.values.oneLineIntroduction?.trim() || null,
+          ...(args.kind === 'institution'
+            ? { remarks: args.values.oneLineIntroduction?.trim() || null }
+            : { otherMatters: args.values.otherNotes?.trim() || null }),
           contactName:
             (args.kind === 'institution'
               ? args.values.recruitmentContactOrganizationName
