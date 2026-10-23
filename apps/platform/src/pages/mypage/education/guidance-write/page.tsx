@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ProgramBackButton, useProgramDetail } from '@/features/program'
 import {
   EducationInstitutionGuidanceWriteForm,
@@ -27,10 +27,17 @@ import {
   resolveEducationApplicationProgramFocus,
 } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
 import { resolveInstitutionPreEducationNoticeRequired } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
+import {
+  hasUjatScheduleRevisionDrift,
+  isValidUjatAcknowledgedScheduleForApplication,
+  readUjatAcknowledgedScheduleFromLocationState,
+  UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE,
+} from '@/features/mypage/education/applications/lib/ujat-acknowledged-schedule'
 import { PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 
 export function MypageEducationInstitutionGuidanceWritePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { applicationId = '', applicationType: applicationTypeParam } = useParams<{
     applicationId: string
     applicationType?: string
@@ -166,6 +173,16 @@ export function MypageEducationInstitutionGuidanceWritePage() {
   }
 
   const resolvedInitial = resolveTeacherInstitutionGuidanceInitialState(applicationId, initialState)
+  const acknowledgedSchedule = isUjat
+    ? readUjatAcknowledgedScheduleFromLocationState(location.state)
+    : null
+  const hasValidAcknowledgedSchedule = isUjat
+    ? isValidUjatAcknowledgedScheduleForApplication(acknowledgedSchedule, applicationId)
+    : true
+  const scheduleRevisionDrift =
+    isUjat &&
+    hasValidAcknowledgedSchedule &&
+    hasUjatScheduleRevisionDrift(acknowledgedSchedule, application.ujatAssignmentRevision)
 
   return (
     <PFFormPage
@@ -185,6 +202,16 @@ export function MypageEducationInstitutionGuidanceWritePage() {
       {showRevisionNotice ? (
         <UjatRevisionNotice reason={application.ujatRevisionReason} />
       ) : null}
+      {isUjat && !hasValidAcknowledgedSchedule ? (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE}
+        </PFText>
+      ) : null}
+      {scheduleRevisionDrift ? (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          관리자가 배정 일정을 변경했습니다. 1단계에서 변경된 일정을 확인한 후 다시 제출해 주세요.
+        </PFText>
+      ) : null}
       <EducationInstitutionGuidanceWriteForm
         applicationId={applicationId}
         applicationType={applicationType}
@@ -193,7 +220,8 @@ export function MypageEducationInstitutionGuidanceWritePage() {
         variant={isUjat ? 'ujat' : 'general'}
         isEdit={isUjat ? isEdit : hasDraft}
         submitPeriodLabel={program?.applicationPeriodLabel}
-        assignmentRevision={application.ujatAssignmentRevision}
+        ujatAcknowledgedSchedule={hasValidAcknowledgedSchedule ? acknowledgedSchedule : null}
+        scheduleRevisionDrift={scheduleRevisionDrift}
         temporarySchedule={application.ujatTemporarySchedule}
         portalPatchContext={{
           formResponseId: application.formResponseId,

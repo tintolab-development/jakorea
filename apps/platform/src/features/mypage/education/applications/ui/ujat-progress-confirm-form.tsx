@@ -49,8 +49,16 @@ import type { EducationUjatTemporarySchedule } from '../model/types'
 import { usePortalMeFormBindingRender } from '../api/hooks'
 import { patchOrganizationGuidanceAnswers } from '../api/institution-guidance-client'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import {
+  buildUjatAcknowledgedScheduleNavigateState,
+  canAcknowledgeDisplayedUjatSchedule,
+  isPositiveIntegerRevision,
+} from '../lib/ujat-acknowledged-schedule'
 import { educationInstitutionGuidanceWritePath } from '../lib/guidance-path'
-import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
+import {
+  resolveInstitutionGuidanceErrorMessage,
+  UJAT_STALE_REVISION_ALERT_MESSAGE,
+} from '../lib/institution-guidance-errors'
 import styles from './institution-guidance-write-form.module.css'
 
 const CONFIRM_HEADING = '상기 내용을 모두 확인하였으며 현재 답변으로 제출합니다.'
@@ -69,6 +77,7 @@ type UjatProgressConfirmFormProps = {
   answers: Record<string, unknown> | undefined
   isRevision: boolean
   temporarySchedule?: EducationUjatTemporarySchedule
+  assignmentRevision?: number
 }
 
 function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly string[]): unknown {
@@ -138,6 +147,7 @@ export function UjatProgressConfirmForm({
   answers,
   isRevision,
   temporarySchedule,
+  assignmentRevision,
 }: UjatProgressConfirmFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -190,6 +200,10 @@ export function UjatProgressConfirmForm({
   const formRootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    setConfirmed(false)
+  }, [assignmentRevision, temporarySchedule])
+
+  useEffect(() => {
     focusIncompleteApplicationField(formRootRef.current, incompleteField)
     return () => {
       formRootRef.current
@@ -223,6 +237,24 @@ export function UjatProgressConfirmForm({
       setAlertMessage('기관 프로그램 신청만 진행할 수 있습니다.')
       return
     }
+    const revisionAtConfirm = assignmentRevision
+    if (
+      !canAcknowledgeDisplayedUjatSchedule({
+        assignmentRevision: revisionAtConfirm,
+        temporarySchedule,
+      })
+    ) {
+      setAlertMessage(
+        '관리자 배정 일정을 확인할 수 없습니다. 잠시 후 다시 시도하거나 담당자에게 문의해 주세요.',
+      )
+      return
+    }
+    if (!isPositiveIntegerRevision(revisionAtConfirm)) {
+      setAlertMessage(
+        '배정 일정 확인 정보가 올바르지 않습니다. 화면을 새로고침한 후 다시 확인해 주세요.',
+      )
+      return
+    }
     submittingRef.current = true
     setSaving(true)
     try {
@@ -238,14 +270,29 @@ export function UjatProgressConfirmForm({
             ujatInstitutionPreferredScheduleAnswerFromValues(preferredIds, preferredOptions),
         },
       })
-      await queryClient.refetchQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.detail(
-          applicationType,
+      const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
+        applicationType,
+        applicationId,
+      )
+      await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+      const latest = queryClient.getQueryData<{
+        supplement?: { ujat?: { assignmentRevision?: number } }
+      }>(detailQueryKey)
+      const latestRevision = latest?.supplement?.ujat?.assignmentRevision
+      if (
+        typeof latestRevision === 'number' &&
+        Number.isInteger(latestRevision) &&
+        latestRevision !== revisionAtConfirm
+      ) {
+        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        return
+      }
+      navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType), {
+        state: buildUjatAcknowledgedScheduleNavigateState({
           applicationId,
-        ),
-        exact: true,
+          assignmentRevision: revisionAtConfirm,
+        }),
       })
-      navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType))
     } catch (error) {
       setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
     } finally {

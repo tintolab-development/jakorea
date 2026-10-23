@@ -78,11 +78,8 @@ export function useConfirmUjatTemporaryScheduleMutation(
   }
 
   return useMutation({
-    mutationFn: (assignmentRevision?: number) =>
-      confirmUjatTemporarySchedule(
-        applicationId,
-        typeof assignmentRevision === 'number' ? { assignmentRevision } : {},
-      ),
+    mutationFn: (assignmentRevision: number) =>
+      confirmUjatTemporarySchedule(applicationId, { assignmentRevision }),
     onSuccess: refreshApplicationQueries,
     onError: refreshApplicationQueries,
   })

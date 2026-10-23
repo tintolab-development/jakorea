@@ -52,6 +52,11 @@ import {
   educationInstitutionGuidanceApplicationTabPath,
   educationUjatProgressConfirmPath,
 } from '../lib/guidance-path'
+import {
+  isValidUjatAcknowledgedScheduleForApplication,
+  type UjatAcknowledgedSchedule,
+  UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE,
+} from '../lib/ujat-acknowledged-schedule'
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
 import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -71,7 +76,8 @@ type EducationInstitutionGuidanceWriteFormProps = {
   variant?: 'general' | 'ujat'
   isEdit?: boolean
   submitPeriodLabel?: string
-  assignmentRevision?: number
+  ujatAcknowledgedSchedule?: UjatAcknowledgedSchedule | null
+  scheduleRevisionDrift?: boolean
   temporarySchedule?: EducationUjatTemporarySchedule
 }
 
@@ -83,7 +89,8 @@ export function EducationInstitutionGuidanceWriteForm({
   portalPatchContext,
   variant = 'general',
   submitPeriodLabel,
-  assignmentRevision,
+  ujatAcknowledgedSchedule,
+  scheduleRevisionDrift = false,
   temporarySchedule,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
@@ -144,6 +151,23 @@ export function EducationInstitutionGuidanceWriteForm({
       setAlertMessage('API가 설정되지 않아 저장할 수 없습니다.')
       return
     }
+    if (isUjat) {
+      if (scheduleRevisionDrift) {
+        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+        return
+      }
+      if (
+        !isValidUjatAcknowledgedScheduleForApplication(
+          ujatAcknowledgedSchedule,
+          applicationId,
+        )
+      ) {
+        setAlertMessage(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE)
+        setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+        return
+      }
+    }
     submittingRef.current = true
     try {
       const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(portalPatchContext ?? {})
@@ -151,7 +175,9 @@ export function EducationInstitutionGuidanceWriteForm({
         setAlertMessage(blockedMessage)
         return
       }
-      const displayedRevision = assignmentRevision
+      const acknowledgedRevision = isUjat
+        ? ujatAcknowledgedSchedule?.assignmentRevision
+        : undefined
       await patchGuidanceMutation.mutateAsync({
         detailCase,
         state,
@@ -167,9 +193,18 @@ export function EducationInstitutionGuidanceWriteForm({
         const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
         const latestRevision = latest?.supplement?.ujat?.assignmentRevision
         if (
-          typeof displayedRevision === 'number' &&
+          typeof acknowledgedRevision !== 'number' ||
+          !Number.isInteger(acknowledgedRevision) ||
+          acknowledgedRevision < 1
+        ) {
+          setAlertMessage(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE)
+          setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+          return
+        }
+        if (
           typeof latestRevision === 'number' &&
-          latestRevision !== displayedRevision
+          Number.isInteger(latestRevision) &&
+          latestRevision !== acknowledgedRevision
         ) {
           setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
           setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
@@ -177,7 +212,7 @@ export function EducationInstitutionGuidanceWriteForm({
         }
         try {
           const confirmation = await confirmUjatTemporaryScheduleMutation.mutateAsync(
-            typeof displayedRevision === 'number' ? displayedRevision : latestRevision,
+            acknowledgedRevision,
           )
           if (confirmation.portalBannerState !== 'ADMIN_REVIEW') {
             await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })

@@ -17,7 +17,7 @@ export type OrganizationGuidanceAnswersPatchResponse = {
 
 /** POST …/ujat/temporary-schedule/confirm 요청 */
 export type UjatTemporaryScheduleConfirmRequest = {
-  assignmentRevision?: number
+  assignmentRevision: number
 }
 
 /** POST …/ujat/temporary-schedule/confirm 응답 */

@@ -47,19 +47,18 @@ export async function patchOrganizationGuidanceAnswers(
 /** POST /api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule/confirm */
 export async function confirmUjatTemporarySchedule(
   applicationId: string,
-  body: UjatTemporaryScheduleConfirmRequest = {},
+  body: UjatTemporaryScheduleConfirmRequest,
 ): Promise<UjatTemporaryScheduleConfirmResponse> {
   const orgApplicationId = resolveOrganizationApplicationId(applicationId)
   if (!orgApplicationId) {
     throw new Error('신청 정보가 올바르지 않습니다.')
   }
-  const payload: UjatTemporaryScheduleConfirmRequest = {}
-  if (typeof body.assignmentRevision === 'number') {
-    payload.assignmentRevision = body.assignmentRevision
+  if (!Number.isInteger(body.assignmentRevision) || body.assignmentRevision < 1) {
+    throw new Error('확인한 배정 revision이 유효하지 않습니다.')
   }
   const { data } = await axiosClient.post<unknown>(
     `${PROGRAM_APPLICATIONS_PATH}/${encodeURIComponent(orgApplicationId)}/ujat/temporary-schedule/confirm`,
-    payload,
+    { assignmentRevision: body.assignmentRevision },
   )
   return unwrapEnvelope<UjatTemporaryScheduleConfirmResponse>(data)
 }
