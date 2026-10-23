@@ -23,4 +23,16 @@ describe('id-type resident input persist/display', () => {
     expect(canonicalizeIdTypeResidentInputValue('9707211234567')).toBe('970721-1234567')
     expect(canonicalizeIdTypeResidentInputValue('970721-1234567')).toBe('970721-1234567')
   })
+
+  it('keeps front and back independent when a hyphen is present', () => {
+    expect(splitIdTypeResidentInputValue('222-1')).toEqual({
+      front: '222',
+      back: '1',
+    })
+    expect(splitIdTypeResidentInputValue('-1234567')).toEqual({
+      front: '',
+      back: '1234567',
+    })
+    expect(canonicalizeIdTypeResidentInputValue('222-1')).toBe('222-1')
+  })
 })

@@ -141,6 +141,11 @@ export { CmsPhoneInput } from './cms-phone-input'
 export { CmsBusinessNumberInput } from './cms-business-number-input'
 export { CmsNumericInput } from './numeric-input'
 export type { CmsNumericInputProps } from './numeric-input'
+export { CmsResidentBackInput } from './cms-resident-back-input'
+export type {
+  CmsResidentBackInputProps,
+  CmsResidentBackInputSize,
+} from './cms-resident-back-input'
 export type { NumericInputMode } from '../lib/numeric-input'
 export {
   CmsDateTextInput,
