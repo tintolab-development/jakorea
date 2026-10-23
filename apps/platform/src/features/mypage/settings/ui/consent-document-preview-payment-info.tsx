@@ -1,4 +1,8 @@
-import { mergePaymentStatementBasicInfo, type PaymentStatementBasicInfoValues } from '@jakorea/form-schema/consent'
+import {
+  formatResidentNumberForPreview,
+  mergePaymentStatementBasicInfo,
+  type PaymentStatementBasicInfoValues,
+} from '@jakorea/form-schema/consent'
 import previewTypography from './consent-document-preview-typography.module.css'
 
 function textOrDash(value: string | undefined): string {
@@ -42,7 +46,7 @@ export function ConsentPreviewPaymentInfo({
   values?: Partial<PaymentStatementBasicInfoValues>
 }) {
   const merged = mergePaymentStatementBasicInfo(values)
-  const resident = [merged.residentFront, merged.residentBack].filter(part => part.trim()).join('-')
+  const resident = formatResidentNumberForPreview(merged.residentFront, merged.residentBack)
   const address = [merged.addressRoad, merged.addressDetail].filter(part => part.trim()).join(' ')
   const account = [textOrDash(merged.bankName), merged.accountNumber, merged.accountHolder]
     .filter(part => part && part !== '-')

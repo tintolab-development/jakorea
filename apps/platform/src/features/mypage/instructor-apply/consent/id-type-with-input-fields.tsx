@@ -1,3 +1,4 @@
+import { formatResidentNumberRawForPreview } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
   isIdTypeResidentOptionId,
@@ -41,7 +42,7 @@ export function PlatformIdTypeWithInputFields({
   const isResident = isIdTypeResidentOptionId(selectedId)
   const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
   const selectedLabel = options.find(option => option.id === selectedId)?.label?.trim() || '-'
-  const residentText = [residentParts.front, residentParts.back].filter(part => part.trim()).join('-')
+  const residentText = formatResidentNumberRawForPreview(paragraph.inputValue)
   const inputText = isResident ? residentText : paragraph.inputValue.trim()
 
   if (readOnly) {
