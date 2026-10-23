@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
@@ -29,9 +30,16 @@ import {
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
 import type { ProgramApplicationType } from '../api/types'
-import { usePatchOrganizationGuidanceAnswersMutation } from '../api/institution-guidance-hooks'
+import type { PortalProgramApplicationDetail } from '../api/types'
+import {
+  useConfirmUjatTemporaryScheduleMutation,
+  usePatchOrganizationGuidanceAnswersMutation,
+} from '../api/institution-guidance-hooks'
 import type { TeacherInstitutionGuidanceFormState } from '../lib/institution-guidance-from-answers'
-import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
+import {
+  resolveInstitutionGuidanceErrorMessage,
+  resolveUjatTemporaryScheduleConfirmErrorMessage,
+} from '../lib/institution-guidance-errors'
 import {
   resolveOrganizationGuidancePatchBlockedMessage,
   type OrganizationGuidancePatchPortalContext,
@@ -40,6 +48,7 @@ import { educationInstitutionGuidanceApplicationTabPath } from '../lib/guidance-
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
 import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
@@ -67,6 +76,7 @@ export function EducationInstitutionGuidanceWriteForm({
   submitPeriodLabel,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const isUjat = variant === 'ujat'
   const [guidance, setGuidance] = useState<ApplyInstitutionGuidanceAnswers>(initialState.guidance)
   const [sexOffense, setSexOffense] = useState<ApplyInstitutionSexOffenseValues>(
@@ -77,6 +87,10 @@ export function EducationInstitutionGuidanceWriteForm({
   )
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const patchGuidanceMutation = usePatchOrganizationGuidanceAnswersMutation(
+    applicationType,
+    applicationId,
+  )
+  const confirmUjatTemporaryScheduleMutation = useConfirmUjatTemporaryScheduleMutation(
     applicationType,
     applicationId,
   )
@@ -121,6 +135,45 @@ export function EducationInstitutionGuidanceWriteForm({
         state,
         existingAnswers: portalPatchContext?.applicationAnswers,
       })
+
+      if (isUjat) {
+        try {
+          const confirmation = await confirmUjatTemporaryScheduleMutation.mutateAsync()
+          if (confirmation.portalBannerState !== 'ADMIN_REVIEW') {
+            const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
+              applicationType,
+              applicationId,
+            )
+            await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+            const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
+            if (latest?.supplement?.ujat?.portalBannerState !== 'ADMIN_REVIEW') {
+              setAlertMessage(
+                '일정 확인 응답을 확인하지 못했습니다. 신청 상세를 새로고침 후 다시 시도해 주세요.',
+              )
+              return
+            }
+          }
+        } catch (confirmError) {
+          // POST 응답이 끊겼더라도 서버에서 이미 확정되었을 수 있다.
+          // 최신 상세의 서버 상태가 ADMIN_REVIEW인 경우에만 성공 화면으로 이동한다.
+          const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
+            applicationType,
+            applicationId,
+          )
+          await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+          const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
+          if (latest?.supplement?.ujat?.portalBannerState === 'ADMIN_REVIEW') {
+            navigate(
+              educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
+              { replace: true },
+            )
+            return
+          }
+          setAlertMessage(resolveUjatTemporaryScheduleConfirmErrorMessage(confirmError))
+          return
+        }
+      }
+
       navigate(
         educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
         { replace: true },
@@ -252,12 +305,18 @@ export function EducationInstitutionGuidanceWriteForm({
           type="button"
           size="xlarge"
           width={240}
-          disabled={patchGuidanceMutation.isPending}
+          disabled={
+            patchGuidanceMutation.isPending || confirmUjatTemporaryScheduleMutation.isPending
+          }
           onClick={() => {
             void handleSubmit()
           }}
         >
-          {patchGuidanceMutation.isPending ? '저장 중…' : submitLabel}
+          {patchGuidanceMutation.isPending || confirmUjatTemporaryScheduleMutation.isPending
+            ? isUjat
+              ? '제출 중…'
+              : '저장 중…'
+            : submitLabel}
         </PFButton>
       </div>
 

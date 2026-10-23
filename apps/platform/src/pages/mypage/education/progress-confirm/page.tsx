@@ -91,6 +91,7 @@ export function MypageEducationUjatProgressConfirmPage() {
         formBindingId={application.formBindingId}
         answers={application.applicationAnswers}
         isRevision={isRevision}
+        temporarySchedule={application.ujatTemporarySchedule}
       />
     </PFFormPage>
   )

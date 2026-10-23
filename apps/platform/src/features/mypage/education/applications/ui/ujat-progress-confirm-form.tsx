@@ -43,8 +43,10 @@ import { ApplyPreferredScheduleAddButton } from '@/features/program/ui/apply-pre
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { ApplyUjatInstitutionSubmitConfirmation } from '@/features/program/ui/apply-ujat-institution-submit-confirmation/apply-ujat-institution-submit-confirmation'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import { formatDisplayDateTime } from '@/shared/lib'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import type { ProgramApplicationType } from '../api/types'
+import type { EducationUjatTemporarySchedule } from '../model/types'
 import { usePortalMeFormBindingRender } from '../api/hooks'
 import { patchOrganizationGuidanceAnswers } from '../api/institution-guidance-client'
 import { platformQueryKeys } from '@/shared/api/query-keys'
@@ -67,6 +69,7 @@ type UjatProgressConfirmFormProps = {
   formBindingId?: number
   answers: Record<string, unknown> | undefined
   isRevision: boolean
+  temporarySchedule?: EducationUjatTemporarySchedule
 }
 
 function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly string[]): unknown {
@@ -77,6 +80,57 @@ function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly
   return undefined
 }
 
+function UjatTemporaryScheduleSummary({
+  temporarySchedule,
+}: {
+  temporarySchedule?: EducationUjatTemporarySchedule
+}) {
+  const slots = (temporarySchedule?.slots ?? []).filter(slot => slot.scheduleId != null)
+  if (slots.length === 0) return null
+
+  return (
+    <ParagraphCard
+      dataParagraphId="ujat-temporary-assigned-schedule"
+      editableHeading={institutionGuidanceParagraphHeading(
+        '관리자 배정 일정',
+        '관리자가 배정한 교육 일정입니다. 신청 당시 희망 일정과 다를 수 있습니다.',
+        { required: false },
+      )}
+    >
+      <div className={styles.assignedScheduleList} aria-label="관리자 배정 일정 목록">
+        {slots.map((slot, index) => {
+          const scheduleDate = formatDisplayDateTime(slot.scheduleStartAt)
+          const gradeLabel = slot.grade
+            ? slot.grade.endsWith('학년')
+              ? slot.grade
+              : `${slot.grade}학년`
+            : null
+          return (
+            <div
+              key={`${slot.scheduleId}-${index}`}
+              className={styles.assignedScheduleItem}
+              role="listitem"
+            >
+              <PFText as="p" typo="bd-md-sb" color="black">
+                {scheduleDate || '일정 정보 없음'}
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                {[
+                  gradeLabel,
+                  slot.className,
+                  slot.studentCount != null ? `${slot.studentCount}명` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || '학급 정보 없음'}
+              </PFText>
+            </div>
+          )
+        })}
+      </div>
+    </ParagraphCard>
+  )
+}
+
 export function UjatProgressConfirmForm({
   applicationId,
   applicationType,
@@ -84,6 +138,7 @@ export function UjatProgressConfirmForm({
   formBindingId,
   answers,
   isRevision,
+  temporarySchedule,
 }: UjatProgressConfirmFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -180,6 +235,7 @@ export function UjatProgressConfirmForm({
     <>
       <FormTemplateHost surface="platformUser">
         <div className={styles.paragraphStack}>
+          <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo}
             editableHeading={institutionGuidanceParagraphHeading('1. 기본 정보', '설명이 노출됩니다.')}
