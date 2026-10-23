@@ -10,6 +10,13 @@ import {
   insertImageFromUrl,
   insertTable,
   insertYoutubeFromUrl,
+  EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
+  RICH_TEXT_TABLE_EDIT_ACTIONS,
+  getRichTextTableCommandAvailability,
+  isRichTextTableActive,
+  listRichTextTableToolbarItems,
+  richTextDocumentHasTable,
+  runRichTextTableCommand,
   LINE_HEIGHT_OPTIONS,
   LIST_OPTIONS,
   promptImageUrl,
@@ -83,6 +90,9 @@ const EMPTY_TOOLBAR_STATE = {
   isBlockquote: false,
   isBulletList: false,
   isOrderedList: false,
+  isTable: false,
+  hasTable: false,
+  tableCommandAvailability: EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
 }
 
 function getHeadingLevel(editor: Editor): HeadingLevel {
@@ -152,6 +162,9 @@ export function RichTextToolbar({
           isBlockquote: ed.isActive('blockquote'),
           isBulletList: ed.isActive('bulletList'),
           isOrderedList: ed.isActive('orderedList'),
+          isTable: isRichTextTableActive(ed),
+          hasTable: richTextDocumentHasTable(ed),
+          tableCommandAvailability: getRichTextTableCommandAvailability(ed),
         }
       },
     }) ?? EMPTY_TOOLBAR_STATE
@@ -278,6 +291,30 @@ export function RichTextToolbar({
     [run]
   )
 
+  const tableMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      listRichTextTableToolbarItems({
+        inTable: state.isTable,
+        availability: state.tableCommandAvailability,
+      }).map(item => {
+        if (item.kind === 'divider') return { type: 'divider' as const }
+        if (item.kind === 'insert') {
+          return {
+            key: 'insert-table',
+            label: item.label,
+            onClick: () => run(ed => insertTable(ed)),
+          }
+        }
+        return {
+          key: item.command,
+          label: item.label,
+          disabled: item.disabled,
+          onClick: () => run(ed => runRichTextTableCommand(ed, item.command)),
+        }
+      }),
+    [run, state.isTable, state.tableCommandAvailability]
+  )
+
   const insertMenuItems: MenuProps['items'] = useMemo(
     () => [
       {
@@ -353,7 +390,10 @@ export function RichTextToolbar({
 
   if (!editor) return null
 
+  const showTableActions = state.isTable || state.hasTable
+
   return (
+    <div className="rich-text-toolbar-shell">
     <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
       <input
         ref={imageFileInputRef}
@@ -531,13 +571,14 @@ export function RichTextToolbar({
         <HorizontalRuleIcon />
       </ToolbarToggle>
 
-      <ToolbarToggle
-        title="표"
+      <ToolbarDropdown
+        ariaLabel="표"
+        label="표"
+        leadingIcon={<TableIcon />}
+        iconOnly
+        menuItems={tableMenuItems}
         disabled={disabled}
-        onAction={() => run(ed => insertTable(ed))}
-      >
-        <TableIcon />
-      </ToolbarToggle>
+      />
 
       <ToolbarDropdown
         ariaLabel="삽입"
@@ -545,6 +586,26 @@ export function RichTextToolbar({
         menuItems={insertMenuItems}
         disabled={disabled}
       />
+    </div>
+    {showTableActions ? (
+      <div className="rich-text-toolbar__table-actions" role="toolbar" aria-label="표 편집">
+        {RICH_TEXT_TABLE_EDIT_ACTIONS.map(action => (
+          <button
+            key={action.command}
+            type="button"
+            className="rich-text-toolbar__table-action"
+            disabled={
+              disabled || !state.isTable || state.tableCommandAvailability[action.command] === false
+            }
+            title={action.label}
+            onMouseDown={event => event.preventDefault()}
+            onClick={() => run(ed => runRichTextTableCommand(ed, action.command))}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    ) : null}
     </div>
   )
 }
