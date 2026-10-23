@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   readUjatInstitutionWorkflowInput,
   resolveUjatInstitutionWorkflow,
+  UJAT_REVISION_REQUEST_PENDING_REASON,
 } from './ujat-institution-approval-workflow'
 
 describe('resolveUjatInstitutionWorkflow', () => {
@@ -60,6 +61,61 @@ describe('resolveUjatInstitutionWorkflow', () => {
     expect(view.primaryLabel).toBe('일정 재배정')
     expect(view.primaryAction).toBe('open_schedule_assign')
     expect(view.canFinalApprove).toBe(false)
+    expect(view.revisionRequestDisabled).toBe(true)
+    expect(view.revisionRequestDisabledReason).toBe(UJAT_REVISION_REQUEST_PENDING_REASON)
+  })
+
+  describe('revisionRequestDisabled', () => {
+    const tempAssignedBase = {
+      applicationStatus: 'SUBMITTED',
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+      assignmentLockedAt: '2026-10-23T05:00:00Z',
+    }
+
+    it('CONFIRMED(잠금 포함)에서는 수정 요청을 허용한다', () => {
+      const view = resolveUjatInstitutionWorkflow({
+        ...tempAssignedBase,
+        institutionConfirmationStatus: 'CONFIRMED',
+      })
+      expect(view.revisionRequestDisabled).toBe(false)
+      expect(view.revisionRequestDisabledReason).toBeUndefined()
+    })
+
+    it('REVISION_REQUESTED에서는 수정 요청을 막고 안내를 준다', () => {
+      const view = resolveUjatInstitutionWorkflow({
+        ...tempAssignedBase,
+        institutionConfirmationStatus: 'REVISION_REQUESTED',
+      })
+      expect(view.revisionRequestDisabled).toBe(true)
+      expect(view.revisionRequestDisabledReason).toBe(UJAT_REVISION_REQUEST_PENDING_REASON)
+    })
+
+    it('CHECKING에서는 수정 요청을 막는다', () => {
+      const view = resolveUjatInstitutionWorkflow({
+        applicationStatus: 'SUBMITTED',
+        temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+        institutionConfirmationStatus: 'CHECKING',
+      })
+      expect(view.revisionRequestDisabled).toBe(true)
+      expect(view.revisionRequestDisabledReason).toBeDefined()
+    })
+
+    it('APPROVED·REJECTED에서는 수정 요청을 막는다', () => {
+      expect(
+        resolveUjatInstitutionWorkflow({
+          applicationStatus: 'APPROVED',
+          temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+          institutionConfirmationStatus: 'CONFIRMED',
+        }).revisionRequestDisabled
+      ).toBe(true)
+      expect(
+        resolveUjatInstitutionWorkflow({
+          applicationStatus: 'REJECTED',
+          temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+          institutionConfirmationStatus: 'CONFIRMED',
+        }).revisionRequestDisabled
+      ).toBe(true)
+    })
   })
 
   it('applicationStatus가 APPROVED여도 임시 배정·기관 확인 없이 다시 승인하지 않는다', () => {
