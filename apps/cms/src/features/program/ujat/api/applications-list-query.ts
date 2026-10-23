@@ -48,11 +48,14 @@ const FINAL_STATUS_TO_API: Record<string, string> = {
   withdrawn: 'WITHDRAWN',
 }
 
-const TEMP_ASSIGN_TO_ORG_STATUS: Record<string, string> = {
+const TEMP_ASSIGN_TO_APPLICATION_STATUS: Record<string, string> = {
   evaluation_pending: 'PENDING',
+  application_rejected: 'REJECTED',
+}
+
+const TEMP_ASSIGN_TO_TEMPORARY_STATUS: Record<string, string> = {
   temp_assigned: 'TEMP_ASSIGNED',
   temp_rejected: 'TEMP_REJECTED',
-  application_rejected: 'REJECTED',
 }
 
 function trimKeyword(value: string | undefined): string | undefined {
@@ -212,10 +215,16 @@ export function buildUjatInstitutionApplicationsListQuery(
 ): ApplicationsListQuery {
   const organizationName = trimKeyword(filters.institutionName)
   const teacherName = trimKeyword(filters.teacherName)
-  const status =
+  const selectedStatus =
     filters.tempAssignmentStatus !== UJAT_INSTITUTION_APPLICATION_FILTER_ALL
-      ? TEMP_ASSIGN_TO_ORG_STATUS[filters.tempAssignmentStatus]
+      ? filters.tempAssignmentStatus
       : undefined
+  const applicationStatus = selectedStatus
+    ? TEMP_ASSIGN_TO_APPLICATION_STATUS[selectedStatus]
+    : undefined
+  const temporaryAssignmentStatus = selectedStatus
+    ? TEMP_ASSIGN_TO_TEMPORARY_STATUS[selectedStatus]
+    : undefined
   const totalClassCount = filters.totalClassCount.trim()
   const requestedClassCount =
     totalClassCount && Number.isInteger(Number(totalClassCount))
@@ -226,7 +235,8 @@ export function buildUjatInstitutionApplicationsListQuery(
     {
       ...(organizationName ? { organizationName } : {}),
       ...(teacherName ? { teacherName } : {}),
-      ...(status ? { status } : {}),
+      ...(applicationStatus ? { status: applicationStatus } : {}),
+      ...(temporaryAssignmentStatus ? { temporaryAssignmentStatus } : {}),
       ...(requestedClassCount != null ? { requestedClassCount } : {}),
       ...(options.educationRegionCode
         ? { educationRegionCode: options.educationRegionCode }

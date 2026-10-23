@@ -22,9 +22,17 @@ function formatGradeSummaries(row: UjatInstitutionApplicationRow): {
   calendarGradeSummary: string
 } {
   const gradeDetail = row.gradeClassCounts
-    .map(g => `${g.gradeLabel} / ${g.classCount == null ? '-' : g.classCount}`)
+    .map(g => {
+      const label = g.gradeLabel.trim()
+      const hasLabel = Boolean(label) && label !== '-'
+      if (g.classCount == null) return hasLabel ? label : ''
+      if (!hasLabel) return `${g.classCount}학급`
+      return `${label} ${g.classCount}학급`
+    })
+    .filter(Boolean)
     .join(', ')
-  const calendarTotalClassSummary = `총 ${row.totalClassCount}개 학급`
+  const calendarTotalClassSummary =
+    row.totalClassCount == null ? '-' : `총 ${row.totalClassCount}개 학급`
   return {
     calendarTotalClassSummary,
     calendarGradeDetail: gradeDetail,

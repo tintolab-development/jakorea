@@ -103,6 +103,15 @@ describe('extractApiErrorMessage', () => {
       })
     ).toBe('이미 신청·배정 또는 교육 운영 이력이 있는 프로그램은 교육구조를 변경할 수 없습니다.')
   })
+
+  it('UJAT 승인 순서 오류는 서버 문구 대신 상태 안내를 보여 준다', () => {
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: { code: 'UJAT_WORKFLOW_STATE_CONFLICT', field: 'status' },
+      })
+    ).toBe('먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.')
+  })
 })
 
 describe('getApiErrorCode / getApiErrorHttpStatus', () => {

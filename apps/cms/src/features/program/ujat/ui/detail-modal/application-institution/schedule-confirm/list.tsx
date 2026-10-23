@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
-import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
-import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
+import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
 import { UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X } from './columns'
 import { UjatInstitutionScheduleConfirmCalendarView } from './calendar-view'
 import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
@@ -19,9 +18,7 @@ export function UjatInstitutionScheduleConfirmList({
   programId?: string | null
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
-    getDefaultUjatEducationRegionKey
-  )
+  const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
     filterFields,

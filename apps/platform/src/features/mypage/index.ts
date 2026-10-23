@@ -139,6 +139,7 @@ export { getMypageLnbItems } from './lib/lnb-config'
 export {
   VolunteerAssignmentPanel,
   VolunteerNoticePanel,
+  UjatVolunteerSchedulePanel,
   buildVolunteerApplicationListPath,
   resolveVolunteerListBackPath,
 } from './volunteer'

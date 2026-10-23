@@ -23,6 +23,13 @@ function optionalText(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+function mapAvailableActions(values: readonly string[] | undefined): string[] | undefined {
+  const actions = (values ?? [])
+    .map(value => value.trim().toUpperCase())
+    .filter(value => value.length > 0)
+  return actions.length > 0 ? [...new Set(actions)] : undefined
+}
+
 function mapAttendance(
   value: string | null | undefined,
 ): EducationScheduleAttendanceStatus | null {
@@ -149,6 +156,11 @@ export function mapPortalEducationSchedule(
   const id =
     item.scheduleId != null ? String(item.scheduleId) : `schedule-${sessionNumber}-${index}`
   const assignment = mapAssignment(item.assignment)
+  const availableActions = mapAvailableActions(item.availableActions)
+  const assignmentStatus = optionalText(item.assignmentStatus ?? undefined)
+  const scheduleStatus = optionalText(item.scheduleStatus)
+  const classLabel = optionalText(item.classLabel)
+  const locationName = optionalText(item.locationName)
 
   return {
     id,
@@ -167,5 +179,10 @@ export function mapPortalEducationSchedule(
     ...(optionalText(item.content) ? { content: item.content!.trim() } : {}),
     ...(progressTimeLabel ? { progressTimeLabel } : {}),
     ...(assignment ? { assignment } : {}),
+    ...(availableActions ? { availableActions } : {}),
+    ...(assignmentStatus ? { assignmentStatus } : {}),
+    ...(scheduleStatus ? { scheduleStatus } : {}),
+    ...(classLabel ? { classLabel } : {}),
+    ...(locationName ? { locationName } : {}),
   }
 }

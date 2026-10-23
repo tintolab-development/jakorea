@@ -26,6 +26,26 @@ assert.deepEqual(
 assert.equal(resolveVolunteerActivityDetailCase('general'), 'volunteer')
 assert.equal(resolveVolunteerActivityDetailCase('volunteer'), 'volunteer')
 assert.equal(resolveVolunteerActivityDetailCase('ujat-volunteer'), 'ujat-volunteer')
+
+const ujatVolunteerTabs = buildInProgressDetailTabItems({
+  detailCase: resolveVolunteerActivityDetailCase('ujat-volunteer'),
+  surveyConfigured: true,
+  satisfactionConfigured: true,
+})
+assert.equal(
+  ujatVolunteerTabs.find(item => item.key === 'schedule')?.label,
+  '배정 및 출결 현황',
+)
+const ujatVolunteerWithdrawnTabs = buildWithdrawnDuringDetailTabItems({
+  detailCase: 'ujat-volunteer',
+  surveyConfigured: true,
+  satisfactionConfigured: true,
+})
+assert.ok(!ujatVolunteerWithdrawnTabs.some(item => item.key === 'notice'))
+assert.equal(
+  ujatVolunteerWithdrawnTabs.find(item => item.key === 'schedule')?.label,
+  '배정 및 출결 현황',
+)
 assert.equal(resolveVolunteerActivityDetailCase(undefined), 'volunteer')
 
 const volunteerTabs = buildInProgressDetailTabItems({

@@ -108,8 +108,8 @@ export function applyTemporaryScheduleSlotsToDraft(input: {
     const scheduleId = slot.scheduleId
     if (scheduleId == null) continue
     const iso =
-      isoByScheduleId.get(Number(scheduleId)) ??
       isoDateFromScheduleInstant(slot.scheduleStartAt) ??
+      isoByScheduleId.get(Number(scheduleId)) ??
       null
     if (!iso) continue
     if (!next.days[iso]) {

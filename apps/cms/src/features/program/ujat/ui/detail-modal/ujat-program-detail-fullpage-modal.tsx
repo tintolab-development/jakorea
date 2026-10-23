@@ -66,6 +66,9 @@ import {
   UJAT_EDU_INST_ID_PARAM,
   UJAT_EDU_INST_TAB_PARAM,
   UJAT_INST_APP_ID_PARAM,
+  UJAT_INSTITUTION_APPLICATION_VIEW_PARAM,
+  UJAT_INSTITUTION_CALENDAR_DATE_PARAM,
+  UJAT_INSTITUTION_EDUCATION_REGION_PARAM,
   UJAT_VOL_ADD_MEMBER_ID_PARAM,
   UJAT_EDU_VOL_ID_PARAM,
   UJAT_EDU_VOL_TAB_PARAM,
@@ -76,6 +79,17 @@ import {
   type UjatEducationProgressVolunteerDetailTab,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { isUjatVolunteerApplicantInTabList } from './application-volunteer/screening/applicant/detail-url'
+import {
+  clearUjatInstitutionApplicationViewParams,
+  parseUjatInstitutionCalendarDateParam,
+  shouldKeepUjatInstitutionApplicationViewParams,
+} from './application-institution/list/calendar-query'
+import {
+  clearUjatInstitutionEducationRegionParam,
+  parseUjatInstitutionEducationRegionParam,
+  shouldKeepUjatInstitutionEducationRegionParam,
+  applyUjatInstitutionEducationRegionParam,
+} from './application-institution/list/region-query'
 import {
   educationProgressHalfFromTab,
   isEducationProgressInstitutionsTab,
@@ -101,6 +115,7 @@ import {
 } from '@/features/program/shared/lib/persist-recruitment-row-save'
 import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { persistRecruitmentOverlaySnapshot } from '@/features/program/ujat/api/service'
+import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import {
   replaceUjatRegionCapacitiesRemote,
@@ -292,6 +307,9 @@ const UJAT_DETAIL_QUERY_PARAMS = [
   UJAT_EDU_INST_ID_PARAM,
   UJAT_EDU_INST_TAB_PARAM,
   UJAT_VOL_ADD_MEMBER_ID_PARAM,
+  UJAT_INSTITUTION_APPLICATION_VIEW_PARAM,
+  UJAT_INSTITUTION_CALENDAR_DATE_PARAM,
+  UJAT_INSTITUTION_EDUCATION_REGION_PARAM,
 ] as const
 const UJAT_NESTED_DETAIL_QUERY_PARAMS = [
   UJAT_INST_APP_ID_PARAM,
@@ -526,6 +544,31 @@ function normalizeUjatDetailParams(
     !volAddMemberIdRaw?.trim()
   ) {
     next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  }
+
+  if (!shouldKeepUjatInstitutionApplicationViewParams(lnb, tab)) {
+    clearUjatInstitutionApplicationViewParams(next)
+  } else {
+    const view = next.get(UJAT_INSTITUTION_APPLICATION_VIEW_PARAM)
+    if (view !== 'calendar') {
+      clearUjatInstitutionApplicationViewParams(next)
+    } else {
+      const calendarDate = parseUjatInstitutionCalendarDateParam(
+        next.get(UJAT_INSTITUTION_CALENDAR_DATE_PARAM)
+      )
+      if (calendarDate) next.set(UJAT_INSTITUTION_CALENDAR_DATE_PARAM, calendarDate)
+      else next.delete(UJAT_INSTITUTION_CALENDAR_DATE_PARAM)
+    }
+  }
+
+  if (!shouldKeepUjatInstitutionEducationRegionParam(lnb)) {
+    clearUjatInstitutionEducationRegionParam(next)
+  } else {
+    const regionKey = parseUjatInstitutionEducationRegionParam(
+      next.get(UJAT_INSTITUTION_EDUCATION_REGION_PARAM)
+    )
+    if (regionKey) applyUjatInstitutionEducationRegionParam(next, regionKey)
+    else clearUjatInstitutionEducationRegionParam(next)
   }
 
   const before = searchParams.toString()
@@ -1055,7 +1098,16 @@ export function UjatProgramDetailFullPageModal({
       ? eduInstitutionIdRaw
       : null
 
-  const institutionDetailName: string | null = null
+  const { row: institutionApplicationDetailRow } = useUjatInstitutionApplicationDetail({
+    institutionId: institutionDetailId ?? '',
+    programId: displayProgram?.id ?? programId,
+  })
+  const institutionDetailName =
+    institutionDetailId &&
+    institutionApplicationDetailRow?.institutionName &&
+    institutionApplicationDetailRow.institutionName !== '-'
+      ? institutionApplicationDetailRow.institutionName
+      : null
   const eduInstitutionDetailName: string | null = null
 
   const eduInstitutionDetailTab = open
@@ -1175,6 +1227,9 @@ export function UjatProgramDetailFullPageModal({
       if (lnb !== 'education_progress' || !isUjatEducationProgressVolunteersTab(tab)) {
         next.delete(UJAT_EDU_VOL_ID_PARAM)
         next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      }
+      if (!shouldKeepUjatInstitutionApplicationViewParams(lnb, tab)) {
+        clearUjatInstitutionApplicationViewParams(next)
       }
       setSearchParams(next, { replace: true })
     },
@@ -2749,7 +2804,9 @@ export function UjatProgramDetailFullPageModal({
 
     items.push(makeBreadcrumbItem(programTitle, location.pathname, programParams))
 
-    if (!childLabel) {
+    if (nestedDetailLabel && activeLnb === 'institution_applications') {
+      items.push(makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams))
+    } else if (!childLabel) {
       items.push(
         nestedDetailLabel
           ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
@@ -2869,12 +2926,18 @@ export function UjatProgramDetailFullPageModal({
                 programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+                onOpenScheduleAssign={() =>
+                  setLnbTab('institution_applications', 'inst_schedule_assign')
+                }
               />
             ) : (
               <UjatInstitutionApplicationList
                 key={institutionListVersion}
                 programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
+                onOpenScheduleAssign={() =>
+                  setLnbTab('institution_applications', 'inst_schedule_assign')
+                }
               />
             ))}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_assign' && (
@@ -2887,6 +2950,9 @@ export function UjatProgramDetailFullPageModal({
                 programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+                onOpenScheduleAssign={() =>
+                  setLnbTab('institution_applications', 'inst_schedule_assign')
+                }
               />
             ) : (
               <UjatInstitutionScheduleConfirmList

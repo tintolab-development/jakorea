@@ -93,7 +93,7 @@ describe('buildUjatInstitutionApplicationsListQuery', () => {
       })
     ).toEqual({
       organizationName: '서울초',
-      status: 'TEMP_ASSIGNED',
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
     })
   })
 
@@ -106,13 +106,21 @@ describe('buildUjatInstitutionApplicationsListQuery', () => {
           totalClassCount: '3',
         },
         null,
-        { educationRegionCode: 'seoul' }
+        { educationRegionCode: 'GYEONGGI_SOUTH' }
       )
     ).toEqual({
       teacherName: '김교사',
       requestedClassCount: 3,
-      educationRegionCode: 'seoul',
+      educationRegionCode: 'GYEONGGI_SOUTH',
     })
+  })
+
+  it('지역 탭 코드를 목록 query에 포함한다', () => {
+    expect(
+      buildUjatInstitutionApplicationsListQuery(EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS, null, {
+        educationRegionCode: 'DAEGU',
+      })
+    ).toEqual({ educationRegionCode: 'DAEGU' })
   })
 })
 

@@ -22,7 +22,7 @@ function BannerCopy({ copy }: { copy: UjatScheduleBannerCopy }) {
           {copy.title}
         </PFText>
       </div>
-      <PFText as="p" typo="bd-lg-sb" color="white" className={styles.body}>
+      <PFText as="p" typo="bd-lg-rg" color="white" className={styles.body}>
         {copy.body}
       </PFText>
       {copy.clickable ? (

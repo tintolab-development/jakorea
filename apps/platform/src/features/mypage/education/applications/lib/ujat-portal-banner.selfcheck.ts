@@ -5,6 +5,7 @@ import {
   resolveUjatScheduleBanner,
   resolveUjatScheduleBannerFromState,
   resolveUjatScheduleBannerVariant,
+  resolveVisibleUjatScheduleBanner,
   sanitizeUjatParticipantBasicInfoFields,
   shouldShowUjatScheduleBanner,
   shouldUseUjatApplicationContent,
@@ -29,11 +30,13 @@ const review = resolveUjatScheduleBannerFromState('ADMIN_REVIEW')
 assert.ok(review)
 assert.equal(review!.clickable, false)
 assert.equal(review!.title, '전달주신 일정을 관리자가 확인 중이에요.')
+assert.equal(review!.body, '확인 후 최종 승인 여부가 반영됩니다.')
 
 const revision = resolveUjatScheduleBannerFromState('REVISION_REQUIRED')
 assert.ok(revision)
 assert.equal(revision!.clickable, true)
 assert.equal(revision!.title, '작성된 내용에 수정사항이 있어요!')
+assert.equal(revision!.body, '담당자와 협의된 내용을 확인 후 수정 제출해 주세요!')
 
 assert.equal(readUjatPortalBannerState({ ujat: { portalBannerState: 'ACTION_REQUIRED' } }), 'ACTION_REQUIRED')
 assert.equal(readUjatPortalBannerState({ ujat: { portalBannerState: 'NONE' } }), 'NONE')
@@ -50,7 +53,18 @@ assert.equal(
   true,
 )
 assert.equal(shouldShowUjatScheduleBanner('ujat-participant', 'NONE'), false)
+assert.equal(shouldShowUjatScheduleBanner('ujat-participant', 'FINAL_APPROVED'), false)
+assert.equal(shouldShowUjatScheduleBanner('ujat-participant', 'REJECTED'), false)
 assert.equal(shouldShowUjatScheduleBanner('general', 'ACTION_REQUIRED'), false)
+assert.equal(shouldShowUjatScheduleBanner('ujat-volunteer', 'ACTION_REQUIRED'), false)
+assert.equal(shouldShowUjatScheduleBanner('ujat-volunteer', 'REVISION_REQUIRED'), false)
+
+assert.equal(
+  resolveVisibleUjatScheduleBanner('ujat-participant', 'ADMIN_REVIEW')?.variant,
+  'review',
+)
+assert.equal(resolveVisibleUjatScheduleBanner('ujat-volunteer', 'ACTION_REQUIRED'), null)
+assert.equal(resolveVisibleUjatScheduleBanner('ujat-participant', 'NONE'), null)
 
 const invented = sanitizeUjatParticipantBasicInfoFields(
   'ujat-participant',

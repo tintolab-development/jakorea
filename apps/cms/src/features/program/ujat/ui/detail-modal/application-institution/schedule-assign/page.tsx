@@ -3,8 +3,11 @@ import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
-import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
-import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
+import {
+  isUjatInstitutionApplicationRegionKey,
+  type UjatInstitutionApplicationRegionKey,
+} from '../list/regions'
+import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
 import {
   UjatInstitutionScheduleAssignSection,
   type UjatScheduleAssignRemoteSave,
@@ -20,9 +23,7 @@ export function UjatInstitutionScheduleAssignPage({
 }) {
   const { showAlert } = useCmsAlert()
   const { regions: regionTabs } = useUjatEducationRegions()
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
-    getDefaultUjatEducationRegionKey
-  )
+  const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
   const [scheduleSheetRefreshKey, setScheduleSheetRefreshKey] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -48,8 +49,10 @@ export function UjatInstitutionScheduleAssignPage({
 
   const handleSave = useCallback(async () => {
     if (!remoteEnabled || !saveRef.current) {
-      commitUjatScheduleAssignDraft(activeRegion)
-      showAlert({ title: '안내', content: '임시 배정 내용이 저장되었습니다.' })
+      showAlert({
+        title: '저장 실패',
+        content: '원격 API가 비활성 상태입니다. 로컬 저장으로 임시 배정 상태를 만들지 않습니다.',
+      })
       return
     }
     const result = await saveRef.current()
@@ -66,7 +69,10 @@ export function UjatInstitutionScheduleAssignPage({
       <CmsTextTabs
         className="ujat-schedule-assign-page__tabs-row ujat-institution-application-region-tabs"
         activeKey={activeRegion}
-        onChange={setActiveRegion}
+        onChange={key => {
+          const next = String(key)
+          if (isUjatInstitutionApplicationRegionKey(next)) setActiveRegion(next)
+        }}
         wrap
         items={regionTabs.map(region => ({
           key: region.key as UjatInstitutionApplicationRegionKey,

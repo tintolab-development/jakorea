@@ -150,6 +150,7 @@ export type PortalEducationSchedule = {
   startAt?: string | null
   endAt?: string | null
   locationName?: string
+  classLabel?: string
   attendanceStatus?: string | null
   absenceReason?: string
   sessionLabel?: string
@@ -162,9 +163,20 @@ export type PortalEducationSchedule = {
   groupTimes?: PortalEducationScheduleGroupTime[]
   assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
+  assignmentStatus?: string | null
   surveyCount?: number
   absenceReasonStatus?: string
   availableActions?: string[]
+}
+
+export type PortalScheduleAttendanceDetail = {
+  scheduleId?: number | null
+  attendanceStatus?: string | null
+  absenceReason?: string | null
+  classLabel?: string | null
+  assignmentStatus?: string | null
+  canCheckIn?: boolean
+  locationName?: string | null
 }
 
 export type PortalEducationScheduleScopeStatus =
@@ -560,6 +572,20 @@ export async function fetchApplicationSchedules(
     applicationId: unwrapped.applicationId,
     applicationType: unwrapped.applicationType,
   }
+}
+
+/** GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance */
+export async function fetchApplicationScheduleAttendance(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  scheduleId: number,
+  signal?: AbortSignal,
+): Promise<PortalScheduleAttendanceDetail> {
+  const { data } = await axiosClient.get<unknown>(
+    `${applicationPath(applicationType, applicationId)}/schedules/${encodeURIComponent(String(scheduleId))}/attendance`,
+    { signal },
+  )
+  return unwrapEnvelope<PortalScheduleAttendanceDetail>(data) ?? {}
 }
 
 /** POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/absence-reasons */

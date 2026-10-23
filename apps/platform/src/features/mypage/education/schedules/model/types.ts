@@ -68,6 +68,14 @@ export type EducationScheduleItem = {
   /** 진행 시간 표시. 없으면 Row가 heldAt 포맷 */
   progressTimeLabel?: string
   assignment?: EducationScheduleAssignment
+  /** Portal `availableActions` — VIEW_ATTENDANCE / CHECK_IN 등. 없으면 액션 없음 */
+  availableActions?: readonly string[]
+  /** 봉사자 배정 상태. 프로그램 전체 일정과 본인 배정을 구분한다. */
+  assignmentStatus?: string | null
+  /** 일정 운영 상태. CANCELLED 등은 본인 현재 활동으로 표시하지 않는다. */
+  scheduleStatus?: string | null
+  classLabel?: string
+  locationName?: string
 }
 
 export const EDUCATION_SCHEDULE_PAGE_SIZE = 7

@@ -84,6 +84,15 @@ export function shouldShowUjatScheduleBanner(
   return shouldUseUjatApplicationContent(detailCase) && resolveUjatScheduleBannerFromState(state) != null
 }
 
+/** 교육현황 UJAT 기관 상세에 그릴 상태 안내 배너. 봉사·그 외 유형은 null. */
+export function resolveVisibleUjatScheduleBanner(
+  detailCase: string | undefined,
+  state: UjatPortalBannerState | null | undefined,
+): UjatScheduleBannerCopy | null {
+  if (!shouldShowUjatScheduleBanner(detailCase, state)) return null
+  return resolveUjatScheduleBannerFromState(state)
+}
+
 export function sanitizeUjatParticipantBasicInfoFields<T extends { label: string; value: string }>(
   detailCase: string | undefined,
   educationTargetDetailLabel: string | null | undefined,
