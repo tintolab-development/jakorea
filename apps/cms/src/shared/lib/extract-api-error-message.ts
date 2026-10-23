@@ -31,8 +31,12 @@ const PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES: Record<string, string> = {
     '설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.',
 }
 
+import {
+  UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE,
+  UJAT_REVISION_REQUEST_DUPLICATE_MESSAGE,
+} from '@/features/program/ujat/lib/ujat-institution-approval-workflow'
+
 const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
-  UJAT_WORKFLOW_STATE_CONFLICT: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
   UJAT_INSTITUTION_CONFIRMATION_REQUIRED: '기관 확인이 완료되기 전에는 승인할 수 없습니다.',
   UJAT_TEMPORARY_SLOT_REQUIRED: '일정과 학급을 먼저 입력해 주세요.',
   UJAT_REGION_CLASS_CAPACITY_EXCEEDED:
@@ -42,6 +46,21 @@ const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
     '연간 기간 일정이 아니라 해당 금요일 하루 일정으로 저장해 주세요.',
   UJAT_EDUCATION_SLOT_NOT_IN_APPLICATION_CLASS_CATALOG:
     '신청한 학년·반 범위 밖의 학급입니다. classCount 기준으로 반을 선택해 주세요.',
+  STALE_REVISION: '기관이 확인한 일정은 그대로 저장하지 않았습니다. 변경된 기관만 다시 확인해 주세요.',
+  UJAT_ASSIGNMENT_LOCKED: '기관이 확인한 일정은 수정할 수 없습니다. 수정 요청 후 다시 배정하세요.',
+}
+
+function resolveUjatInstitutionWorkflowErrorMessage(
+  code: string,
+  field?: string
+): string | undefined {
+  if (code === 'UJAT_WORKFLOW_STATE_CONFLICT') {
+    if (field === 'status') {
+      return UJAT_REVISION_REQUEST_DUPLICATE_MESSAGE
+    }
+    return UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE
+  }
+  return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]
 }
 
 const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
@@ -65,6 +84,11 @@ export function extractApiErrorMessage(
   options?: { httpStatus?: number | null; fallback?: string }
 ): string {
   const code = extractApiErrorCode(data)
+  const field = extractApiErrorField(data)
+  const ujatWorkflowMessage = code ? resolveUjatInstitutionWorkflowErrorMessage(code, field) : undefined
+  if (ujatWorkflowMessage) {
+    return ujatWorkflowMessage
+  }
   if (code && UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]) {
     return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]
   }

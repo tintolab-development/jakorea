@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import {
   getSessionAdminRoleCode,
   guardAdminDownload,
@@ -66,5 +67,11 @@ describe('guardAdminDownload', () => {
   it('명시 roleCode를 우선한다', () => {
     useAuthStore.setState({ user: masterUser })
     expect(guardAdminDownload({ roleCode: 'VIEWER' })).toBe(false)
+  })
+
+  it('adminSessionSyncPending이면 알림 없이 차단한다', () => {
+    useAuthStore.setState({ user: masterUser, adminSessionSyncPending: true })
+    expect(guardAdminAction({ roleCode: 'MASTER', action: 'delete' })).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
 })

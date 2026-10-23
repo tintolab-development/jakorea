@@ -24,14 +24,52 @@ function createEmptyRow(): UjatScheduleAssignRow {
   }
 }
 
+export function studentCountLookupKey(
+  institutionRowId: string,
+  grade: string,
+  className: string
+): string {
+  return `${institutionRowId}|${grade}|${className}`
+}
+
+export function collectStudentCountByClass(
+  slots: readonly UjatOrganizationScheduleSlotResponse[],
+  fallbackInstitutionId?: string
+): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const slot of slots) {
+    const appId = slot.organizationApplicationId ?? fallbackInstitutionId
+    const grade = slot.grade?.trim()
+    const className = (slot.className ?? slot.classLabel ?? '').trim()
+    const count = slot.studentCount
+    if (appId == null || !grade || !className) continue
+    if (typeof count !== 'number' || !Number.isFinite(count) || count <= 0) continue
+    map.set(studentCountLookupKey(String(appId), grade, className), count)
+  }
+  return map
+}
+
+export function serializeTemporaryScheduleSlots(
+  slots: readonly UjatTemporaryScheduleSlotRequest[]
+): string {
+  return [...slots]
+    .map(
+      slot =>
+        `${slot.scheduleId}|${slot.grade}|${slot.className}|${slot.studentCount}`
+    )
+    .sort()
+    .join(';')
+}
+
 export function buildTemporaryScheduleSlotsFromDraft(input: {
   regionState: UjatScheduleAssignRegionState
   institutionRowId: string
   scheduleIdByIsoDate: Map<string, number>
   defaultStudentCount?: number
+  studentCountByClass?: Map<string, number>
 }): UjatTemporaryScheduleSlotRequest[] {
   const slots: UjatTemporaryScheduleSlotRequest[] = []
-  const studentCount = input.defaultStudentCount ?? 0
+  const fallback = input.defaultStudentCount
 
   for (const day of Object.values(input.regionState.days)) {
     const scheduleId = input.scheduleIdByIsoDate.get(day.isoDate)
@@ -43,10 +81,27 @@ export function buildTemporaryScheduleSlotsFromDraft(input: {
         const parsed = parseGradeClassSectionValue(value)
         if (!parsed) continue
         const gradeNumber = parsed.gradeLabel.replace(/[^0-9]/g, '') || parsed.gradeLabel
+        const className = `${parsed.classNo}반`
+        const exact = input.studentCountByClass?.get(
+          studentCountLookupKey(input.institutionRowId, gradeNumber, className)
+        )
+        const fromSameInstitution =
+          exact && exact > 0
+            ? exact
+            : [...(input.studentCountByClass?.entries() ?? [])].find(
+                ([key, value]) =>
+                  key.startsWith(`${input.institutionRowId}|`) && value > 0
+              )?.[1]
+        const studentCount =
+          typeof fromSameInstitution === 'number' && fromSameInstitution > 0
+            ? fromSameInstitution
+            : typeof fallback === 'number' && fallback > 0
+              ? fallback
+              : 0
         slots.push({
           scheduleId,
           grade: gradeNumber,
-          className: `${parsed.classNo}반`,
+          className,
           studentCount,
         })
       }
@@ -62,6 +117,7 @@ export function buildTemporaryScheduleSaveRequest(input: {
   institutionRowId: string
   scheduleIdByIsoDate: Map<string, number>
   defaultStudentCount?: number
+  studentCountByClass?: Map<string, number>
 }): UjatTemporaryScheduleSaveRequest | null {
   const slots = buildTemporaryScheduleSlotsFromDraft(input)
   if (slots.length === 0) return null

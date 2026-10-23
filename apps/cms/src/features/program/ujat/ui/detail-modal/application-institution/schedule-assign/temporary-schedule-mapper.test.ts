@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildTemporaryScheduleSaveRequest } from './temporary-schedule-mapper'
+import {
+  buildTemporaryScheduleSaveRequest,
+  serializeTemporaryScheduleSlots,
+} from './temporary-schedule-mapper'
 import type { UjatScheduleAssignRegionState } from './types'
 
 const draft: UjatScheduleAssignRegionState = {
@@ -42,13 +45,14 @@ describe('buildTemporaryScheduleSaveRequest', () => {
         ['2027-04-30', 111],
         ['2027-06-04', 222],
       ]),
+      studentCountByClass: new Map([['1691444|1|1반', 28]]),
     })
 
     expect(body).toEqual({
       educationRegionCode: 'GYEONGGI_SOUTH',
       slots: [
-        { scheduleId: 111, grade: '1', className: '1반', studentCount: 0 },
-        { scheduleId: 222, grade: '1', className: '1반', studentCount: 0 },
+        { scheduleId: 111, grade: '1', className: '1반', studentCount: 28 },
+        { scheduleId: 222, grade: '1', className: '1반', studentCount: 28 },
       ],
     })
     expect(JSON.stringify(body)).not.toContain('scheduleDate')
@@ -63,5 +67,15 @@ describe('buildTemporaryScheduleSaveRequest', () => {
       scheduleIdByIsoDate: new Map(),
     })
     expect(body).toBeNull()
+  })
+
+  it('슬롯 서명이 같으면 변경이 없다', () => {
+    const slots = [
+      { scheduleId: 111, grade: '1', className: '1반', studentCount: 28 },
+      { scheduleId: 222, grade: '1', className: '1반', studentCount: 28 },
+    ]
+    expect(serializeTemporaryScheduleSlots(slots)).toBe(
+      serializeTemporaryScheduleSlots([...slots].reverse())
+    )
   })
 })

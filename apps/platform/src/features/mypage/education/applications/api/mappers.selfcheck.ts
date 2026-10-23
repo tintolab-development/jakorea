@@ -34,12 +34,42 @@ const ujatOrg = mapPortalProgramApplicationDetail({
   programGroup: 'UJAT',
   applicationStatus: 'SUBMITTED',
   displayStatus: '승인 대기',
-  supplement: { ujat: { portalBannerState: 'ACTION_REQUIRED' } },
+  supplement: {
+    ujat: {
+      portalBannerState: 'ACTION_REQUIRED',
+      assignmentRevision: 3,
+      temporarySchedule: {
+        slots: [
+          {
+            scheduleId: 87611,
+            scheduleStartAt: '2027-03-12T10:00:00+09:00',
+            grade: '1',
+            className: '1반',
+            studentCount: 28,
+            assignmentStatus: 'TEMPORARY',
+          },
+        ],
+      },
+    },
+  },
 })
 assert.ok(ujatOrg)
 assert.equal(ujatOrg.detailCase, 'ujat-participant')
 assert.equal(ujatOrg.ujatPortalBannerState, 'ACTION_REQUIRED')
+assert.equal(ujatOrg.ujatAssignmentRevision, 3)
 assert.equal(ujatOrg.ujatRevisionReason, undefined)
+assert.deepEqual(ujatOrg.ujatTemporarySchedule, {
+  slots: [
+    {
+      scheduleId: 87611,
+      scheduleStartAt: '2027-03-12T10:00:00+09:00',
+      grade: '1',
+      className: '1반',
+      studentCount: 28,
+      assignmentStatus: 'TEMPORARY',
+    },
+  ],
+})
 
 const ujatRevision = mapPortalProgramApplicationDetail({
   applicationId: 1691622,

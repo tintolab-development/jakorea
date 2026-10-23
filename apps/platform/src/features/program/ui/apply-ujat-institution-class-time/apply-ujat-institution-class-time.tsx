@@ -107,6 +107,61 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
+function normalizeClassPeriodClock(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === '00:00') return ''
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})/)
+  if (!match) return trimmed
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return ''
+  if (hour === 0 && minute === 0) return ''
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+function periodIdFromLabel(label: string, index: number): string {
+  const matched = label.match(/(\d+)/)
+  const number = matched?.[1] ?? String(index + 1)
+  return `period${number}`
+}
+
+function periodsFromRaw(
+  rawPeriods: unknown,
+): Record<string, ApplyUjatClassTimePeriod> {
+  const periods: Record<string, ApplyUjatClassTimePeriod> = {}
+  if (Array.isArray(rawPeriods)) {
+    rawPeriods.forEach((item, index) => {
+      const period = asRecord(item)
+      const label =
+        typeof period?.periodLabel === 'string'
+          ? period.periodLabel
+          : typeof period?.classPeriod === 'string'
+            ? period.classPeriod
+            : ''
+      const periodId = periodIdFromLabel(label || String(index + 1), index)
+      const start = normalizeClassPeriodClock(period?.start ?? period?.startAt)
+      const end = normalizeClassPeriodClock(period?.end ?? period?.endAt)
+      if (!start && !end) return
+      periods[periodId] = { start, end }
+    })
+    return periods
+  }
+  const record = asRecord(rawPeriods)
+  if (!record) return periods
+  for (const [periodId, raw] of Object.entries(record)) {
+    const period = asRecord(raw)
+    const start = normalizeClassPeriodClock(period?.start ?? period?.startAt ?? raw)
+    const end = normalizeClassPeriodClock(period?.end ?? period?.endAt)
+    if (!start && !end) continue
+    periods[periodId.startsWith('period') ? periodId : periodIdFromLabel(periodId, 0)] = {
+      start,
+      end,
+    }
+  }
+  return periods
+}
+
 export function ujatInstitutionClassTimeValuesFromDraftAnswer(
   answer: unknown,
 ): ApplyUjatClassTimeBlock[] | null {
@@ -127,13 +182,16 @@ export function ujatInstitutionClassTimeValuesFromDraftAnswer(
   if (list && list.length > 0) {
     return list.map((row, index) => {
       const item = asRecord(row)
+      const id = String(item?.id ?? `ujat-class-time-${index + 1}`)
       const grades = Array.isArray(item?.gradeValues)
         ? item.gradeValues.map(value => String(value))
         : []
+      const fromRow = periodsFromRaw(item?.periods)
+      const fromByBlock = periodsFromRaw(periodsByBlock?.[id])
       return {
-        id: String(item?.id ?? `ujat-class-time-${index + 1}`),
+        id,
         checkedGrades: Object.fromEntries(grades.map(grade => [grade, true])),
-        periods: {},
+        periods: { ...fromByBlock, ...fromRow },
       }
     })
   }
@@ -141,19 +199,10 @@ export function ujatInstitutionClassTimeValuesFromDraftAnswer(
   const ids = [...new Set([...Object.keys(checkedByBlock ?? {}), ...Object.keys(periodsByBlock ?? {})])]
   if (ids.length === 0) return null
   return ids.map(id => {
-    const periodsRecord = asRecord(periodsByBlock?.[id]) ?? {}
-    const periods: Record<string, ApplyUjatClassTimePeriod> = {}
-    for (const [periodId, raw] of Object.entries(periodsRecord)) {
-      const period = asRecord(raw)
-      periods[periodId] = {
-        start: typeof period?.start === 'string' ? period.start : '',
-        end: typeof period?.end === 'string' ? period.end : '',
-      }
-    }
     return {
       id,
       checkedGrades: (asRecord(checkedByBlock?.[id]) ?? {}) as Record<string, boolean>,
-      periods,
+      periods: periodsFromRaw(periodsByBlock?.[id]),
     }
   })
 }

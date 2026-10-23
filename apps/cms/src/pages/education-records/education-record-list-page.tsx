@@ -23,10 +23,17 @@ import { EducationRecordDataTab } from '@/features/education-record/ui/education
 import { EducationRecordSummaryTab } from '@/features/education-record/ui/education-record-summary-tab'
 import { usePerformanceListQuery } from '@/features/education-record/hooks/use-performance-list-query'
 import { usePerformanceSummaryQuery } from '@/features/education-record/hooks/use-performance-summary-query'
+import {
+  getPerformanceExportErrorMessage,
+  getPerformanceLoadErrorMessage,
+} from '@/features/education-record/api/performance-errors'
+import {
+  performanceFilterSearchKey,
+  performanceRecordsParamsFromSearchParams,
+} from '@/features/education-record/api/performance-filter-params'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ExcelButton } from '@/shared/ui/excel-button'
-import { MESSAGES } from '@/shared/constants'
 import './education-record-list-page.css'
 
 const TAB_PARAM = 'tab'
@@ -41,7 +48,8 @@ export function EducationRecordListPage() {
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
 
   const listQuery = usePerformanceListQuery(searchParams)
-  const sourceRows = listQuery.data ?? []
+  const remoteRows = listQuery.data?.rows
+  const sourceRows = useMemo(() => remoteRows ?? [], [remoteRows])
   const isDataTab = activeKey === 'data'
   const summaryQuery = usePerformanceSummaryQuery(searchParams, activeKey === 'summary')
 
@@ -86,6 +94,17 @@ export function EducationRecordListPage() {
     [pendingFilters]
   )
 
+  const performanceFilterKey = performanceFilterSearchKey(searchParams)
+  const exportFilters = useMemo(
+    () => performanceRecordsParamsFromSearchParams(new URLSearchParams(performanceFilterKey)),
+    [performanceFilterKey]
+  )
+  const exportOfficialPerformance = useCallback(
+    (columns: typeof antdColumns, data: typeof tableData, filename: string) =>
+      exportEducationRecordExcel(columns, data, filename, exportFilters),
+    [exportFilters]
+  )
+
   const handleTabChange = useCallback(
     (key: EducationRecordTabKey) => {
       setSearchParams(
@@ -108,9 +127,12 @@ export function EducationRecordListPage() {
     columns: antdColumns,
     data: tableData,
     filename: '실적데이터',
-    exporter: exportEducationRecordExcel,
+    exporter: exportOfficialPerformance,
     alertOnEmpty: false,
+    errorAlertContent: getPerformanceExportErrorMessage,
   })
+
+  const totalRecordCount = listQuery.data?.totalElements ?? displayedCount
 
   return (
     <div
@@ -125,7 +147,7 @@ export function EducationRecordListPage() {
         <Alert
           type="error"
           showIcon
-          message={MESSAGES.error.performanceRecordsLoadFailed}
+          message={getPerformanceLoadErrorMessage(listQuery.error)}
           className="education-record-list-page__remote-notice"
         />
       ) : null}
@@ -143,7 +165,7 @@ export function EducationRecordListPage() {
           <ExcelButton
             onClick={handleExportExcel}
             loading={isExporting}
-            disabled={tableData.length === 0 || listQuery.isLoading}
+            disabled={tableData.length === 0 || listQuery.isLoading || listQuery.isError}
           />
         }
       />
@@ -169,14 +191,14 @@ export function EducationRecordListPage() {
           <EducationRecordDataTab
             antdColumns={antdColumns}
             tableData={tableData}
-            displayedCount={displayedCount}
+            displayedCount={totalRecordCount}
           />
         ) : (
           <EducationRecordSummaryTab
             view={summaryQuery.data}
             loading={summaryQuery.isLoading || summaryQuery.isFetching}
             error={summaryQuery.isError}
-            errorMessage={MESSAGES.error.performanceRecordsLoadFailed}
+            errorMessage={getPerformanceLoadErrorMessage(summaryQuery.error)}
           />
         )}
       </FilterTableLayout>

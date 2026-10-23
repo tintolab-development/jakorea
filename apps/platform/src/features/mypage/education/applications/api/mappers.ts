@@ -13,6 +13,7 @@ import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-c
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
+  EducationUjatTemporarySchedule,
 } from '../model/types'
 import type {
   PortalProgramApplicationDetail,
@@ -203,6 +204,7 @@ export function mapPortalProgramApplicationListItem(
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
   const ujatRevisionReason = readUjatRevisionReason(row.supplement)
+  const ujatAssignmentRevision = row.supplement?.ujat?.assignmentRevision
 
   return {
     id: String(row.applicationId),
@@ -225,6 +227,7 @@ export function mapPortalProgramApplicationListItem(
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
     ...(ujatRevisionReason ? { ujatRevisionReason } : {}),
+    ...(typeof ujatAssignmentRevision === 'number' ? { ujatAssignmentRevision } : {}),
   }
 }
 
@@ -287,6 +290,23 @@ function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
   return record
 }
 
+function mapUjatTemporarySchedule(
+  detail: PortalProgramApplicationDetail,
+): EducationUjatTemporarySchedule | undefined {
+  const temporarySchedule = detail.supplement?.ujat?.temporarySchedule
+  if (!temporarySchedule) return undefined
+  return {
+    slots: (temporarySchedule.slots ?? []).map(slot => ({
+      scheduleId: slot.scheduleId ?? null,
+      scheduleStartAt: slot.scheduleStartAt ?? null,
+      grade: slot.grade ?? null,
+      className: slot.className ?? null,
+      studentCount: slot.studentCount ?? null,
+      assignmentStatus: slot.assignmentStatus ?? null,
+    })),
+  }
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
   knownApplicationType?: ProgramApplicationType | null,
@@ -304,8 +324,8 @@ export function mapPortalProgramApplicationDetail(
     programType: detail.programType,
     programGroup: detail.programGroup,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
-    educationStartAt: detail.educationStartAt ?? detail.program?.educationStartAt,
-    educationEndAt: detail.educationEndAt ?? detail.program?.educationEndAt,
+    educationStartAt: detail.educationStartAt,
+    educationEndAt: detail.educationEndAt,
   })
   if (!mapped) return null
   mapped.displayStatus = displayStatus
@@ -360,6 +380,10 @@ export function mapPortalProgramApplicationDetail(
   const formResponseStatus = detail.formResponseStatus?.trim()
   if (formResponseStatus) {
     mapped.formResponseStatus = formResponseStatus
+  }
+  const ujatTemporarySchedule = mapUjatTemporarySchedule(detail)
+  if (ujatTemporarySchedule) {
+    mapped.ujatTemporarySchedule = ujatTemporarySchedule
   }
 
   const interview = resolveInterviewFields(detail, displayStatus)

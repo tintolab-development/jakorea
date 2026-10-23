@@ -57,11 +57,14 @@ export function UjatInstitutionScheduleAssignPage({
     }
     const result = await saveRef.current()
     if (!result.ok) {
-      showAlert({ title: '저장 실패', content: result.message })
+      showAlert({ title: '저장 결과', content: result.message })
       return
     }
     commitUjatScheduleAssignDraft(activeRegion)
-    showAlert({ title: '안내', content: '임시 배정 내용이 저장되었습니다.' })
+    showAlert({
+      title: '저장 결과',
+      content: result.message?.trim() || '임시 배정 내용이 저장되었습니다.',
+    })
   }, [activeRegion, remoteEnabled, showAlert])
 
   return (

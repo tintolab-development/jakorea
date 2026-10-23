@@ -6,6 +6,34 @@
   gap: var(--spacing-16);
 }
 
+.paragraphStack :global([data-application-error='true']) {
+  border-radius: var(--radius-12);
+  outline: 2px solid var(--color-error, #d92d20);
+  outline-offset: 3px;
+}
+
+.assignedScheduleList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.assignedScheduleItem {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-16);
+  border-radius: var(--radius-12);
+  background: var(--color-element-hover);
+}
+
+.assignedScheduleItem p {
+  margin: 0;
+}
+
 /* form-template ParagraphCard와 동일 shell */
 .closingCard {
   box-sizing: border-box;

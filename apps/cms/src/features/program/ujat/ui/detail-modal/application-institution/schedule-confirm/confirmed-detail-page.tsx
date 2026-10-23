@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Space, Spin } from 'antd'
+import { Space, Spin, Tooltip } from 'antd'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
@@ -153,6 +153,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             reason: payload.message || '학급 수 변경 요청',
           })
         } catch (error) {
+          await invalidate()
           showAlert({
             title: '수정 요청 실패',
             content: readApiErrorAlertMessage(error, '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.'),
@@ -231,17 +232,33 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
           >
             {approveOrReassignLabel}
           </CmsButton>
-          <CmsButton
-            type="button"
-            variant="primary"
-            size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            disabled={isTerminal || workflow.scheduleEditDisabled}
-            onClick={() => setPendingRevisionRequest(true)}
-          >
-            수정 요청
-          </CmsButton>
+          {(() => {
+            const revisionDisabled = isTerminal || workflow.revisionRequestDisabled
+            const revisionButton = (
+              <CmsButton
+                type="button"
+                variant="primary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={revisionDisabled}
+                onClick={() => {
+                  if (revisionDisabled) return
+                  setPendingRevisionRequest(true)
+                }}
+              >
+                수정 요청
+              </CmsButton>
+            )
+            if (!workflow.revisionRequestDisabledReason) return revisionButton
+            return (
+              <Tooltip title={workflow.revisionRequestDisabledReason}>
+                <span className="ujat-institution-application-detail-page__revision-request-wrap">
+                  {revisionButton}
+                </span>
+              </Tooltip>
+            )
+          })()}
           <PersonalInfoRevealButton
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}

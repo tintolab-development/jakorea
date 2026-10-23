@@ -3,7 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ProgramDetailCase } from '@/features/program'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import type { ProgramApplicationType } from './types'
-import { savePortalTeacherInstitutionGuidance } from './institution-guidance-client'
+import {
+  confirmUjatTemporarySchedule,
+  savePortalTeacherInstitutionGuidance,
+} from './institution-guidance-client'
 import type { TeacherInstitutionGuidanceFormState } from '../lib/institution-guidance-from-answers'
 
 export function usePatchOrganizationGuidanceAnswersMutation(
@@ -52,5 +55,32 @@ export function usePatchOrganizationGuidanceAnswersMutation(
         }),
       ])
     },
+  })
+}
+
+export function useConfirmUjatTemporaryScheduleMutation(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+) {
+  const queryClient = useQueryClient()
+  const refreshApplicationQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.detail(
+          applicationType,
+          applicationId,
+        ),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+      }),
+    ])
+  }
+
+  return useMutation({
+    mutationFn: (assignmentRevision: number) =>
+      confirmUjatTemporarySchedule(applicationId, { assignmentRevision }),
+    onSuccess: refreshApplicationQueries,
+    onError: refreshApplicationQueries,
   })
 }

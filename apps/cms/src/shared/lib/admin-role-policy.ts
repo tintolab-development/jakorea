@@ -5,6 +5,7 @@
 
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
+import { isAdminSessionRoleSyncPending } from '@/features/auth/lib/admin-session-sync-state'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 export type { AdminRoleCode }
@@ -233,6 +234,7 @@ export function guardAdminAction(input: {
   screen?: AdminPolicyScreen
   pathname?: string
 }): boolean {
+  if (isAdminSessionRoleSyncPending()) return false
   if (canAdminAction(input)) return true
   showAdminAccessDeniedAlert()
   return false

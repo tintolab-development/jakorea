@@ -5,7 +5,8 @@ import { UjatInstitutionScheduleAssignEstimationTable } from './estimation-table
 import { useUjatInstitutionScheduleAssign } from './use-schedule-assign'
 
 export type UjatScheduleAssignRemoteSave = () => Promise<
-  { ok: true } | { ok: false; message: string }
+  | { ok: true; message?: string }
+  | { ok: false; message: string }
 >
 
 export function UjatInstitutionScheduleAssignSection({

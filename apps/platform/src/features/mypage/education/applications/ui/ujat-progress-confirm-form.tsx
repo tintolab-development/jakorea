@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
-import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
+import {
+  focusIncompleteApplicationField,
+  resolveUjatInstitutionApplyIncomplete,
+} from '@/features/program/lib/ujat-institution-apply-incomplete'
 import { coerceApplicationFormDocument } from '@/features/program/lib/application-form-draft'
 import {
   readUjatPreferredEducationScheduleOptions,
@@ -12,7 +15,6 @@ import {
 import {
   ApplyUjatInstitutionBasicInfo,
   emptyUjatInstitutionBasicInfo,
-  findIncompleteUjatInstitutionBasicInfoMessage,
   ujatInstitutionBasicInfoAnswerFromValues,
   ujatInstitutionBasicInfoValuesFromDraftAnswer,
   type ApplyUjatInstitutionBasicInfoValues,
@@ -21,7 +23,6 @@ import {
   ApplyUjatInstitutionGradeInfo,
   appendUjatInstitutionGradeBlock,
   emptyUjatInstitutionGradeBlocks,
-  findIncompleteUjatInstitutionGradeInfoMessage,
   ujatInstitutionGradeAnswerFromValues,
   ujatInstitutionGradeValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
@@ -29,13 +30,11 @@ import {
   ApplyUjatInstitutionClassTime,
   appendUjatInstitutionClassTimeBlock,
   emptyUjatInstitutionClassTimeBlocks,
-  findIncompleteUjatInstitutionClassTimeMessage,
   ujatInstitutionClassTimeAnswerFromValues,
   ujatInstitutionClassTimeValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-class-time/apply-ujat-institution-class-time'
 import {
   ApplyUjatInstitutionPreferredSchedule,
-  findIncompleteUjatInstitutionPreferredScheduleMessage,
   ujatInstitutionPreferredScheduleAnswerFromValues,
   ujatInstitutionPreferredScheduleValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-preferred-schedule/apply-ujat-institution-preferred-schedule'
@@ -43,13 +42,23 @@ import { ApplyPreferredScheduleAddButton } from '@/features/program/ui/apply-pre
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { ApplyUjatInstitutionSubmitConfirmation } from '@/features/program/ui/apply-ujat-institution-submit-confirmation/apply-ujat-institution-submit-confirmation'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import { formatDisplayDateTime } from '@/shared/lib'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import type { ProgramApplicationType } from '../api/types'
+import type { EducationUjatTemporarySchedule } from '../model/types'
 import { usePortalMeFormBindingRender } from '../api/hooks'
 import { patchOrganizationGuidanceAnswers } from '../api/institution-guidance-client'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import {
+  buildUjatAcknowledgedScheduleNavigateState,
+  canAcknowledgeDisplayedUjatSchedule,
+  isPositiveIntegerRevision,
+} from '../lib/ujat-acknowledged-schedule'
 import { educationInstitutionGuidanceWritePath } from '../lib/guidance-path'
-import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
+import {
+  resolveInstitutionGuidanceErrorMessage,
+  UJAT_STALE_REVISION_ALERT_MESSAGE,
+} from '../lib/institution-guidance-errors'
 import styles from './institution-guidance-write-form.module.css'
 
 const CONFIRM_HEADING = '상기 내용을 모두 확인하였으며 현재 답변으로 제출합니다.'
@@ -67,6 +76,8 @@ type UjatProgressConfirmFormProps = {
   formBindingId?: number
   answers: Record<string, unknown> | undefined
   isRevision: boolean
+  temporarySchedule?: EducationUjatTemporarySchedule
+  assignmentRevision?: number
 }
 
 function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly string[]): unknown {
@@ -77,6 +88,57 @@ function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly
   return undefined
 }
 
+export function UjatTemporaryScheduleSummary({
+  temporarySchedule,
+}: {
+  temporarySchedule?: EducationUjatTemporarySchedule
+}) {
+  const slots = (temporarySchedule?.slots ?? []).filter(slot => slot.scheduleId != null)
+  if (slots.length === 0) return null
+
+  return (
+    <ParagraphCard
+      dataParagraphId="ujat-temporary-assigned-schedule"
+      editableHeading={institutionGuidanceParagraphHeading(
+        '관리자 배정 일정',
+        '관리자가 배정한 교육 일정입니다. 신청 당시 희망 일정과 다를 수 있습니다.',
+        { required: false },
+      )}
+    >
+      <div className={styles.assignedScheduleList} aria-label="관리자 배정 일정 목록">
+        {slots.map((slot, index) => {
+          const scheduleDate = formatDisplayDateTime(slot.scheduleStartAt)
+          const gradeLabel = slot.grade
+            ? slot.grade.endsWith('학년')
+              ? slot.grade
+              : `${slot.grade}학년`
+            : null
+          return (
+            <div
+              key={`${slot.scheduleId}-${index}`}
+              className={styles.assignedScheduleItem}
+              role="listitem"
+            >
+              <PFText as="p" typo="bd-md-sb" color="black">
+                {scheduleDate || '일정 정보 없음'}
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                {[
+                  gradeLabel,
+                  slot.className,
+                  slot.studentCount != null ? `${slot.studentCount}명` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || '학급 정보 없음'}
+              </PFText>
+            </div>
+          )
+        })}
+      </div>
+    </ParagraphCard>
+  )
+}
+
 export function UjatProgressConfirmForm({
   applicationId,
   applicationType,
@@ -84,6 +146,8 @@ export function UjatProgressConfirmForm({
   formBindingId,
   answers,
   isRevision,
+  temporarySchedule,
+  assignmentRevision,
 }: UjatProgressConfirmFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -129,15 +193,40 @@ export function UjatProgressConfirmForm({
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [incompleteField, setIncompleteField] = useState<ReturnType<
+    typeof resolveUjatInstitutionApplyIncomplete
+  >>(null)
+  const submittingRef = useRef(false)
+  const formRootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setConfirmed(false)
+  }, [assignmentRevision, temporarySchedule])
+
+  useEffect(() => {
+    focusIncompleteApplicationField(formRootRef.current, incompleteField)
+    return () => {
+      formRootRef.current
+        ?.querySelectorAll<HTMLElement>('[data-application-error="true"]')
+        .forEach(element => {
+          delete element.dataset.applicationError
+        })
+    }
+  }, [incompleteField])
 
   const handleContinue = async () => {
-    const incomplete =
-      findIncompleteUjatInstitutionBasicInfoMessage(basicInfo) ??
-      findIncompleteUjatInstitutionGradeInfoMessage(gradeBlocks) ??
-      findIncompleteUjatInstitutionClassTimeMessage(classTimeBlocks, gradeBlocks) ??
-      findIncompleteUjatInstitutionPreferredScheduleMessage(preferredIds, preferredOptions)
-    if (incomplete || !confirmed) {
-      setAlertMessage(PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE)
+    if (submittingRef.current || saving) return
+    const incomplete = resolveUjatInstitutionApplyIncomplete({
+      basicInfo,
+      gradeBlocks,
+      classTimeBlocks,
+      preferredIds,
+      preferredOptions,
+      confirmed,
+    })
+    if (incomplete) {
+      setIncompleteField(incomplete)
+      setAlertMessage(incomplete.message)
       return
     }
     if (!isRemoteApiConfigured()) {
@@ -148,6 +237,25 @@ export function UjatProgressConfirmForm({
       setAlertMessage('기관 프로그램 신청만 진행할 수 있습니다.')
       return
     }
+    const revisionAtConfirm = assignmentRevision
+    if (
+      !canAcknowledgeDisplayedUjatSchedule({
+        assignmentRevision: revisionAtConfirm,
+        temporarySchedule,
+      })
+    ) {
+      setAlertMessage(
+        '관리자 배정 일정을 확인할 수 없습니다. 잠시 후 다시 시도하거나 담당자에게 문의해 주세요.',
+      )
+      return
+    }
+    if (!isPositiveIntegerRevision(revisionAtConfirm)) {
+      setAlertMessage(
+        '배정 일정 확인 정보가 올바르지 않습니다. 화면을 새로고침한 후 다시 확인해 주세요.',
+      )
+      return
+    }
+    submittingRef.current = true
     setSaving(true)
     try {
       await patchOrganizationGuidanceAnswers(applicationId, {
@@ -162,16 +270,33 @@ export function UjatProgressConfirmForm({
             ujatInstitutionPreferredScheduleAnswerFromValues(preferredIds, preferredOptions),
         },
       })
-      await queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.detail(
-          applicationType,
+      const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
+        applicationType,
+        applicationId,
+      )
+      await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+      const latest = queryClient.getQueryData<{
+        supplement?: { ujat?: { assignmentRevision?: number } }
+      }>(detailQueryKey)
+      const latestRevision = latest?.supplement?.ujat?.assignmentRevision
+      if (
+        typeof latestRevision === 'number' &&
+        Number.isInteger(latestRevision) &&
+        latestRevision !== revisionAtConfirm
+      ) {
+        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        return
+      }
+      navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType), {
+        state: buildUjatAcknowledgedScheduleNavigateState({
           applicationId,
-        ),
+          assignmentRevision: revisionAtConfirm,
+        }),
       })
-      navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType))
     } catch (error) {
       setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
     } finally {
+      submittingRef.current = false
       setSaving(false)
     }
   }
@@ -179,7 +304,8 @@ export function UjatProgressConfirmForm({
   return (
     <>
       <FormTemplateHost surface="platformUser">
-        <div className={styles.paragraphStack}>
+        <div ref={formRootRef} className={styles.paragraphStack}>
+          <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo}
             editableHeading={institutionGuidanceParagraphHeading('1. 기본 정보', '설명이 노출됩니다.')}
@@ -251,6 +377,7 @@ export function UjatProgressConfirmForm({
               CONFIRM_DESCRIPTION,
             )}
           >
+            <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
             <ApplyUjatInstitutionSubmitConfirmation
               control="radio"
               label={CONFIRM_RADIO_LABEL}
