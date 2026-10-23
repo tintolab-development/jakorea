@@ -46,6 +46,24 @@ describe('extractApiErrorMessage', () => {
     ).toBe('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
   })
 
+  it('모집 구조 코드만 오면 정책 문구를 쓴다', () => {
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: { code: 'PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED' },
+      })
+    ).toBe('최초 모집 시작일 이후에는 모집 단위(추가/삭제)를 변경할 수 없습니다.')
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: {
+          code: 'PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED',
+          message: '서버가 내려준 구조 잠금 문장',
+        },
+      })
+    ).toBe('서버가 내려준 구조 잠금 문장')
+  })
+
   it('Alert 본문에 traceId를 붙이지 않는다', () => {
     expect(
       formatApiErrorAlertContent({

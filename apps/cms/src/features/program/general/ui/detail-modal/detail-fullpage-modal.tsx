@@ -132,6 +132,7 @@ import {
   canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
   getGeneralProgramRecruitmentInfoEditBlockedAlertMessage,
+  getGeneralProgramRecruitmentInfoEditBlockedAlertTitle,
 } from '@/features/program/general/lib/common-info-edit-policy'
 import {
   applyGeneralProgramDetailSession,
@@ -1358,7 +1359,7 @@ export function GeneralProgramDetailFullPageModal({
           : 'PARTICIPANT'
     if (!canGeneralProgramRecruitmentInfoEdit(displayProgram, recruitmentType)) {
       showAlert({
-        title: '안내',
+        title: getGeneralProgramRecruitmentInfoEditBlockedAlertTitle(),
         content: getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(displayProgram),
       })
       return

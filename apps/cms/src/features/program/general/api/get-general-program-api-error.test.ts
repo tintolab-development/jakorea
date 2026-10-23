@@ -100,7 +100,7 @@ describe('getGeneralProgramApiErrorMessage', () => {
     ).toContain('공통 정보')
     expect(
       getGeneralProgramApiErrorMessage(errorFor('PROGRAM_PARTICIPANT_TYPE_IMMUTABLE'), 'fallback')
-    ).toContain('참여자 유형')
+    ).toBe('raw')
     expect(
       getGeneralProgramApiErrorMessage(
         {
@@ -135,6 +135,29 @@ describe('getGeneralProgramApiErrorMessage', () => {
         'fallback'
       )
     ).toBe('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
+  })
+
+  it('모집 구조 오류는 서버 문장이 없으면 정책 문구를 쓴다', () => {
+    const errorFor = (code: string) => ({
+      response: { status: 409, data: { success: false, error: { code } } },
+    })
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_PARTICIPANT_TYPE_IMMUTABLE'), 'fallback')
+    ).toBe('모집 등록 후 참여자 유형은 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED'), 'fallback')
+    ).toBe('최초 모집 시작일 이후에는 모집 단위(추가/삭제)를 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED'),
+        'fallback'
+      )
+    ).toBe('해당 모집 시작 후에는 모집 정보를 수정할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('RECRUITMENT_HAS_APPLICATIONS'), 'fallback')
+    ).toBe(
+      '신청자가 있는 모집은 삭제하거나 참여자 유형을 변경할 수 없습니다. 필요한 경우 상태를 INACTIVE로 변경해 주세요.'
+    )
   })
 
   it('참여 강사 등록·강등·포기 코드를 FE 메시지로 매핑한다', () => {

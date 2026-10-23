@@ -9,8 +9,8 @@ import {
 } from '@/features/program/general/lib/education-structure-guard'
 import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
 import {
-  isProgramRecruitmentEditPeriodCode,
   programEditWindowErrorMessage,
+  resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
 
 const BUSINESS_START_LOCK_PATTERN =
@@ -184,10 +184,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
   }
-  if (isProgramRecruitmentEditPeriodCode(code)) {
-    const recruitmentMessage = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
-    if (recruitmentMessage && recruitmentMessage !== code) return recruitmentMessage
-  }
+  const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(
+    code,
+    extractRawApiMessage(error)
+  )
+  if (policyMessage) return policyMessage
   const editWindowMessage = programEditWindowErrorMessage(code)
   if (editWindowMessage) return editWindowMessage
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {

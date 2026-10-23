@@ -1,7 +1,7 @@
 /**
  * 프로그램 수정 가능 기간.
  * 공통 정보는 `businessEndDate`(도메인 `endDate`) 당일까지, 한국 시간 다음 날 00:00부터 불가.
- * 모집정보는 유형별 `operationStartDate` 전. 값이 없으면 잠그지 않고 `startAt`·사업 시작일로 대체하지 않는다.
+ * 모집 일반 정보는 그 모집행의 `startAt` 전. 같은 유형의 다른 행이 시작해도 아직 시작하지 않은 행은 연다.
  * 신청양식은 유형별 `startAt`. `startAt`이 없으면 아직 시작 전이다.
  */
 
@@ -133,6 +133,22 @@ export function isRecruitmentStartLocked(
   const startMs = Date.parse(startAt)
   if (Number.isNaN(startMs)) return false
   return Math.floor(now.getTime() / MINUTE_MS) >= Math.floor(startMs / MINUTE_MS)
+}
+
+/**
+ * 저장된 모집행이 모두 모집 시작 시각을 지났으면 그 유형의 일반 정보 수정을 닫는다.
+ * id 없는 행과 시작 전 행이 하나라도 있으면 닫지 않는다.
+ */
+export function isRecruitmentTypeGeneralInfoClosed(
+  program: Program | null | undefined,
+  recruitmentType: ProgramRecruitmentEditType,
+  now: Date = new Date()
+): boolean {
+  const rows = (program?.programRecruitments ?? []).filter(
+    row => row.recruitmentType === recruitmentType && row.id != null
+  )
+  if (rows.length === 0) return false
+  return rows.every(row => isRecruitmentStartLocked(row.startAt, now))
 }
 
 export function isProgramRecruitmentTypeLocked(

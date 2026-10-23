@@ -7,6 +7,7 @@ import {
   isProgramOperationStartLocked,
   isProgramRecruitmentTypeLocked,
   isRecruitmentStartLocked,
+  isRecruitmentTypeGeneralInfoClosed,
   resolveRecruitmentTypeForFormBinding,
 } from './program-edit-window'
 
@@ -79,6 +80,28 @@ describe('isProgramOperationStartLocked', () => {
     expect(isProgramOperationStartLocked(program, 'INSTRUCTOR', now)).toBe(true)
     expect(isProgramOperationStartLocked(program, 'VOLUNTEER', now)).toBe(false)
     expect(isProgramRecruitmentTypeLocked(program, 'VOLUNTEER', now)).toBe(true)
+  })
+})
+
+describe('isRecruitmentTypeGeneralInfoClosed', () => {
+  const now = new Date('2026-09-28T12:00:00+09:00')
+
+  it('저장된 행이 모두 시작한 뒤에만 그 유형의 일반 정보를 닫는다', () => {
+    const program = programWith([
+      { id: 1, recruitmentType: 'VOLUNTEER', startAt: '2020-01-01T00:00:00+09:00' },
+      { id: 2, recruitmentType: 'VOLUNTEER', startAt: '2099-06-01T00:00:00+09:00' },
+      { id: 3, recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+    ])
+    expect(isRecruitmentTypeGeneralInfoClosed(program, 'VOLUNTEER', now)).toBe(false)
+    expect(isRecruitmentTypeGeneralInfoClosed(program, 'PARTICIPANT', now)).toBe(true)
+    expect(isProgramRecruitmentTypeLocked(program, 'VOLUNTEER', now)).toBe(true)
+  })
+
+  it('id가 없는 행만 있으면 일반 정보를 닫지 않는다', () => {
+    const program = programWith([
+      { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+    ])
+    expect(isRecruitmentTypeGeneralInfoClosed(program, 'PARTICIPANT', now)).toBe(false)
   })
 })
 

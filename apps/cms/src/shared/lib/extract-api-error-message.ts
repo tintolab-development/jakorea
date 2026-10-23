@@ -1,6 +1,6 @@
 import {
-  isProgramRecruitmentEditPeriodCode,
   programEditWindowErrorMessage,
+  resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
 
 /** 백엔드 공통 에러 envelope (`success: false`, `error: { code, message, traceId }`) */
@@ -56,14 +56,9 @@ export function extractApiErrorMessage(
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
   const envelope = asEnvelope(data)
-  const serverMessage = envelope?.error?.message?.trim()
-  if (
-    isProgramRecruitmentEditPeriodCode(code) &&
-    serverMessage &&
-    serverMessage !== code
-  ) {
-    return serverMessage
-  }
+  const serverMessage = envelope?.error?.message?.trim() || envelope?.message?.trim()
+  const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(code, serverMessage)
+  if (policyMessage) return policyMessage
 
   const mapped = programEditWindowErrorMessage(code)
   if (mapped) return mapped
