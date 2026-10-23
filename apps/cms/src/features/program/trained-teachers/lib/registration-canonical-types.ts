@@ -136,6 +136,8 @@ export type TrainedTeachersRegistrationCanonical = {
   common: TrainedTeachersRegistrationCommonCanonical
   recruit: TrainedTeachersRecruitFormState
   application: TrainedTeachersApplicationFormState
+  /** UI overlay-shaped maps. CREATE는 쓰지 않고 임시저장 복원만 사용한다. */
+  sidecar?: Record<string, unknown>
 }
 
 export const TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY =

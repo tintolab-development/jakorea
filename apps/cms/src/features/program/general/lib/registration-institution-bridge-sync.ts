@@ -29,6 +29,10 @@ import { subscribeApplicantRecruitInstitutionOverlay } from '@/features/template
 import { resolveInstitutionApplicationScheduleMetaForRegistrationWizard } from '@/features/program/general/lib/institution-application-schedule-meta'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 import dayjs from 'dayjs'
+import {
+  peekTrainedTeachersRegistrationRhf,
+  subscribeTrainedTeachersRegistrationRhf,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
 
 const CURRICULUM_PROGRESS_SESSION_BY_ROUND_KEY =
   'generalRegistration.educationCurriculum.progressSessionByRound' as const
@@ -174,20 +178,28 @@ export function syncInstitutionApplicationBridgeForRegistrationWizard(
   }
 
   if (args.registrationFormVariant === 'trainedTeachers') {
+    const ttRhf = peekTrainedTeachersRegistrationRhf()
+    const ttValues = ttRhf?.getValues()
     const trainedEducationFormScheduleDetail =
+      ttValues?.educationFormScheduleDetail ??
       overlay['trainedTeachersRegistration.typeSettings.educationFormScheduleDetail']
     syncInstitutionApplicationPreferredEducationFormFromOverlay(overlay, {
       sessionRound: args.sessionRound === 'multi' ? 'multi' : 'single',
       educationFormScheduleDetail:
         trainedEducationFormScheduleDetail === 'perSchedule' ? 'perSchedule' : 'common',
     })
-    const lines = readTrainedTeachersScheduleLinesFromOverlay()
-    const mode = args.educationScheduleMode as InstitutionApplicationEducationScheduleMode
+    const lines = ttValues?.educationScheduleLines ?? readTrainedTeachersScheduleLinesFromOverlay()
+    const mode = (ttValues?.educationScheduleMode ??
+      args.educationScheduleMode) as InstitutionApplicationEducationScheduleMode
+    const recruit = ttValues?.recruitment
     patchInstitutionApplicationProgramBridge({
-      ...recruitLimits,
+      maxAssignableInstructors: 0,
+      maxClassCount: recruit?.maxClassCount ?? recruitLimits.maxClassCount,
+      maxScheduleCount: recruit?.maxScheduleCount ?? recruitLimits.maxScheduleCount,
+      maxSessionsPerDay: recruit?.maxSessionsPerDay ?? recruitLimits.maxSessionsPerDay,
       preEducationNoticeRequired: false,
-      educationStructure: args.programType,
-      sessionRound: args.sessionRound,
+      educationStructure: ttValues?.educationStructure ?? args.programType,
+      sessionRound: ttValues?.sessionRound ?? args.sessionRound,
       educationScheduleMode: mode,
       educationScheduleLines: lines,
       educationScheduleRange:
@@ -222,9 +234,14 @@ export function subscribeInstitutionApplicationBridgeForRegistrationWizard(
     run
   )
   const unsubRecruit = subscribeApplicantRecruitInstitutionOverlay(run)
+  const unsubTt =
+    args.registrationFormVariant === 'trainedTeachers'
+      ? subscribeTrainedTeachersRegistrationRhf(run)
+      : () => {}
   return () => {
     unsubReg()
     unsubRecruit()
+    unsubTt()
   }
 }
 

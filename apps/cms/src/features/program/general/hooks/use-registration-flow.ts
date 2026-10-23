@@ -72,6 +72,8 @@ import {
 } from '@/features/program/general/lib/registration-required-fields'
 import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
 import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 import {
@@ -665,13 +667,8 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
-      /** 모집→신청 필수 검사는 일반·1사1교만 — 교육받은 교사는 프로그램 단계 검사만 적용 */
-      if (
-        shouldCheckRequired &&
-        registrationFormVariant !== 'trainedTeachers' &&
-        phase === 'recruitment' &&
-        nextPhase === 'application'
-      ) {
+      /** 모집→신청 필수 검사. TT는 typed RHF, 일반·1사1교는 기존 경로 */
+      if (shouldCheckRequired && phase === 'recruitment' && nextPhase === 'application') {
         const recruitCtx = {
           participant: participantFlags,
           programType: registrationVm.programType,
@@ -681,9 +678,16 @@ export function useGeneralProgramRegistrationFlow(
           registrationProgramType: programType,
         }
         const recruitIncompleteKeys =
-          registrationFormVariant === 'economy'
-            ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
-            : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
+          registrationFormVariant === 'trainedTeachers'
+            ? (() => {
+                const rhf = peekTrainedTeachersRegistrationRhf()
+                return rhf != null
+                  ? listIncompleteTrainedTeachersRecruitmentRequiredFields(rhf.getValues())
+                  : []
+              })()
+            : registrationFormVariant === 'economy'
+              ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+              : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
         const recruitIncomplete = recruitIncompleteKeys.length > 0
         if (recruitIncomplete) {
           options?.reportValidationIncomplete?.(recruitIncompleteKeys)
@@ -794,7 +798,8 @@ export function useGeneralProgramRegistrationFlow(
       }
       if (
         registrationFormVariant === 'general' ||
-        registrationFormVariant === 'economy'
+        registrationFormVariant === 'economy' ||
+        registrationFormVariant === 'trainedTeachers'
       ) {
         const recruitCtx = {
           participant: participantFlags,
@@ -805,9 +810,16 @@ export function useGeneralProgramRegistrationFlow(
           registrationProgramType: programType,
         }
         const recruitIncompleteKeys =
-          registrationFormVariant === 'economy'
-            ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
-            : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
+          registrationFormVariant === 'trainedTeachers'
+            ? (() => {
+                const rhf = peekTrainedTeachersRegistrationRhf()
+                return rhf != null
+                  ? listIncompleteTrainedTeachersRecruitmentRequiredFields(rhf.getValues())
+                  : []
+              })()
+            : registrationFormVariant === 'economy'
+              ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+              : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
         if (recruitIncompleteKeys.length > 0) {
           options?.reportValidationIncomplete?.(recruitIncompleteKeys)
           showAlert({

@@ -2109,7 +2109,6 @@ export function TrainedTeachersCommonInfoView({
             hideFormTitles
             fixedParticipantTypeLabel="교사/강사"
             enableTitleEnEdit
-            enableTextbookNameEdit
             useDetailedProgramSelect
             announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력하세요"
             isEditMode={isEditMode}
@@ -2134,7 +2133,6 @@ export function TrainedTeachersCommonInfoView({
             hideFormTitles
             fixedParticipantTypeLabel="교사/강사"
             enableTitleEnEdit
-            enableTextbookNameEdit
             useDetailedProgramSelect
             announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력하세요"
             isEditMode={isEditMode}

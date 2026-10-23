@@ -45,9 +45,18 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/general/lib/overlay-phase1/build-registration-create-from-rhf'
-import { buildTrainedTeachersCreateSnapshot } from '@/features/program/trained-teachers/lib/build-registration-create-from-canonical'
+import {
+  buildTrainedTeachersCanonicalFromRhf,
+  buildTrainedTeachersProgramFromRhf,
+} from '@/features/program/trained-teachers/lib/build-registration-create-from-canonical'
 import { importLegacyOverlayToTrainedTeachersCanonical } from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
 import { TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY } from '@/features/program/trained-teachers/lib/registration-canonical-types'
+import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import {
+  isTrainedTeachersRegistrationCanonicalSnapshot,
+  omitTrainedTeachersCommonInfoOverlayKeys,
+  rhfValuesFromTrainedTeachersCanonicalCommon,
+} from '@/features/program/trained-teachers/lib/registration-rhf-values'
 import {
   hasIncompleteRegistrationWizardRequiredFields,
   hasRegistrationWizardCurriculumScheduleCountMismatch,
@@ -118,7 +127,10 @@ import {
 } from '@/features/program/general/lib/registration-required-fields'
 import {
   describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
+  describeIncompleteTrainedTeachersRegistrationRhfRequiredFields,
+  hasTrainedTeachersRegistrationRhfCurriculumScheduleCountMismatch,
   listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons,
+  listIncompleteTrainedTeachersRegistrationRhfRequiredFieldReasons,
 } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
   describeIncompleteEconomyProgramRegistrationRequiredFields,
@@ -428,6 +440,65 @@ export function useProgramRegistrationEditor(
     [programRegistrationFormVariant]
   )
 
+  const patchTrainedTeachersWizardRhf = useCallback(
+    (
+      patch: (
+        values: import('@/features/program/trained-teachers/lib/registration-rhf-values').TrainedTeachersRegistrationRhfValues
+      ) => import('@/features/program/trained-teachers/lib/registration-rhf-values').TrainedTeachersRegistrationRhfValues
+    ) => {
+      if (programRegistrationFormVariant !== 'trainedTeachers') return
+      const rhf = peekTrainedTeachersRegistrationRhf()
+      if (rhf == null) return
+      rhf.reset(patch(rhf.getValues()), { keepDefaultValues: true })
+    },
+    [programRegistrationFormVariant]
+  )
+
+  const buildTrainedTeachersWizardCreateProgram = useCallback(
+    (id: string) => {
+      const rhf = peekTrainedTeachersRegistrationRhf()
+      if (programRegistrationFormVariant !== 'trainedTeachers' || rhf == null) return null
+      return buildTrainedTeachersProgramFromRhf({ id, values: rhf.getValues() })
+    },
+    [programRegistrationFormVariant]
+  )
+
+  useEffect(() => {
+    if (programRegistrationFormVariant !== 'trainedTeachers') return
+    patchTrainedTeachersWizardRhf(values => ({
+      ...values,
+      educationStructure: programType,
+      sessionRound: sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      educationScheduleMode,
+      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+      participant,
+      curriculumSessions: programType === 'schedule' ? [] : values.curriculumSessions,
+      scheduleDetails: programType === 'schedule' ? values.scheduleDetails : [],
+    }))
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    patchTrainedTeachersWizardRhf,
+    programRegistrationFormVariant,
+    programType,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    sessionRoundType,
+    trainedTeachersTeacherTrainingEnabled,
+  ])
+
   const buildGeneralWizardCreateProgram = useCallback(
     (id: string) => {
       const rhf = peekGeneralRegistrationWizardRhf()
@@ -682,6 +753,50 @@ export function useProgramRegistrationEditor(
                   }),
                   { keepDirty: false }
                 )
+              }
+              if (variant === 'trainedTeachers') {
+                const typed = saved.settingsJson?.[TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]
+                const rhf = peekTrainedTeachersRegistrationRhf()
+                if (rhf != null && isTrainedTeachersRegistrationCanonicalSnapshot(typed)) {
+                  rhf.reset(
+                    rhfValuesFromTrainedTeachersCanonicalCommon(
+                      typed.common,
+                      typed.editor,
+                      typed.sidecar,
+                      typed.recruit
+                    ),
+                    { keepDirty: false }
+                  )
+                } else if (rhf != null) {
+                  const imported = importLegacyOverlayToTrainedTeachersCanonical({
+                    id: registrationPendingSnapshotId('trainedTeachers'),
+                    editor: {
+                      educationStructure: restored.programType,
+                      sessionRound: restored.sessionRoundType,
+                      educationFormScheduleDetail: restored.educationFormScheduleDetail,
+                      participationScheduleDetail: restored.participationScheduleDetail,
+                      ipsScheduleDetail: restored.ipsScheduleDetail,
+                      curriculumSessionCount: restored.curriculumSessionCount,
+                      curriculumChartSessionCount: restored.curriculumChartSessionCount,
+                      scheduleCurriculumDetailCount: restored.scheduleCurriculumDetailCount,
+                      scheduleCurriculumGroupCount: restored.scheduleCurriculumGroupCount,
+                      educationScheduleMode: restored.educationScheduleMode,
+                      teacherTrainingEnabled:
+                        restored.trainedTeachersTeacherTrainingEnabled === true,
+                      participant: restored.participant,
+                    },
+                    overlay: saved.overlay ?? {},
+                  })
+                  rhf.reset(
+                    rhfValuesFromTrainedTeachersCanonicalCommon(
+                      imported.common,
+                      imported.editor,
+                      undefined,
+                      imported.recruit
+                    ),
+                    { keepDirty: false }
+                  )
+                }
               }
             })
             return
@@ -1403,7 +1518,10 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedProgramTitleKo = resolveProgramTitleKo()
-    const overlay = { ...getProgramRegistrationOverlayRecord() }
+    const overlay =
+      programRegistrationFormVariant === 'trainedTeachers'
+        ? omitTrainedTeachersCommonInfoOverlayKeys({ ...getProgramRegistrationOverlayRecord() })
+        : { ...getProgramRegistrationOverlayRecord() }
     const editorState = buildProgramRegistrationEditorState({
       participant,
       programType,
@@ -1437,26 +1555,17 @@ export function useProgramRegistrationEditor(
           programRegistrationFormVariant === 'general' && rhf != null
             ? { [REGISTRATION_WIZARD_RHF_SETTINGS_KEY]: rhf.getValues() }
             : programRegistrationFormVariant === 'trainedTeachers'
-              ? {
-                  [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]:
-                    importLegacyOverlayToTrainedTeachersCanonical({
-                      id: registrationPendingSnapshotId('trainedTeachers'),
-                      editor: {
-                        educationStructure: programType,
-                        sessionRound: sessionRoundType,
-                        educationFormScheduleDetail,
-                        participationScheduleDetail,
-                        ipsScheduleDetail,
-                        curriculumSessionCount,
-                        curriculumChartSessionCount,
-                        scheduleCurriculumDetailCount,
-                        scheduleCurriculumGroupCount,
-                        educationScheduleMode,
-                        teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
-                        participant,
-                      },
-                    }),
-                }
+              ? (() => {
+                  const ttRhf = peekTrainedTeachersRegistrationRhf()
+                  if (ttRhf == null) return undefined
+                  return {
+                    [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]:
+                      buildTrainedTeachersCanonicalFromRhf({
+                        id: registrationPendingSnapshotId('trainedTeachers'),
+                        values: ttRhf.getValues(),
+                      }),
+                  }
+                })()
               : undefined,
       })
     } else {
@@ -1542,7 +1651,8 @@ export function useProgramRegistrationEditor(
   const buildCurrentProgramSnapshot = useCallback(
     (id = 'registration-preview'): Program => {
       const variant = programRegistrationFormVariant
-      const fromRhf = buildGeneralWizardCreateProgram(id)
+      const fromRhf =
+        buildGeneralWizardCreateProgram(id) ?? buildTrainedTeachersWizardCreateProgram(id)
       if (fromRhf) return fromRhf
       const resolvedSponsorId = sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
       return buildGeneralProgramListRowFromRegistrationSnapshot({
@@ -1577,6 +1687,7 @@ export function useProgramRegistrationEditor(
     },
     [
       buildGeneralWizardCreateProgram,
+      buildTrainedTeachersWizardCreateProgram,
       curriculumChartSessionCount,
       curriculumSessionCount,
       educationFormScheduleDetail,
@@ -1789,7 +1900,9 @@ export function useProgramRegistrationEditor(
       // React state가 비어도 overlay에 남은 선택을 사용 (스텝 전환·draft 복원 불일치 대비)
       const resolvedSponsorId =
         programRegistrationFormVariant === 'trainedTeachers'
-          ? sponsorId.trim()
+          ? sponsorId.trim() ||
+            peekTrainedTeachersRegistrationRhf()?.getValues().sponsorManagementIds[0]?.trim() ||
+            ''
           : sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
       if (isRemoteCreate && !resolvedSponsorId) {
         showAlert({
@@ -1871,23 +1984,11 @@ export function useProgramRegistrationEditor(
 
           const snapshotFromRegistration = () => {
             if (programRegistrationFormVariant === 'trainedTeachers') {
-              return buildTrainedTeachersCreateSnapshot({
-                id: registrationSnapshotArgs.id,
-                editor: {
-                  educationStructure: programType,
-                  sessionRound: sessionRoundType,
-                  educationFormScheduleDetail,
-                  participationScheduleDetail,
-                  ipsScheduleDetail,
-                  curriculumSessionCount,
-                  curriculumChartSessionCount,
-                  scheduleCurriculumDetailCount,
-                  scheduleCurriculumGroupCount,
-                  educationScheduleMode,
-                  teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
-                  participant,
-                },
-              })
+              const fromRhf = buildTrainedTeachersWizardCreateProgram(registrationSnapshotArgs.id)
+              if (fromRhf == null) {
+                throw new Error('trainedTeachers registration RHF is not mounted')
+              }
+              return fromRhf
             }
             return (
               buildGeneralWizardCreateProgram(registrationSnapshotArgs.id) ??
@@ -1935,26 +2036,35 @@ export function useProgramRegistrationEditor(
               const { trainedTeachersRecruitEditorState } = await import(
                 '@/features/program/trained-teachers/lib/recruit-form-state'
               )
+              const { serializeTrainedTeachersRecruitmentForFormVersion } = await import(
+                '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
+              )
               const { trainedTeachersApplicationEditorState } = await import(
                 '@/features/program/trained-teachers/lib/application-form-state'
               )
-              const canonical = importLegacyOverlayToTrainedTeachersCanonical({
-                id: registrationSnapshotArgs.id,
-                editor: {
-                  educationStructure: programType,
-                  sessionRound: sessionRoundType,
-                  educationFormScheduleDetail,
-                  participationScheduleDetail,
-                  ipsScheduleDetail,
-                  curriculumSessionCount,
-                  curriculumChartSessionCount,
-                  scheduleCurriculumDetailCount,
-                  scheduleCurriculumGroupCount,
-                  educationScheduleMode,
-                  teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
-                  participant,
-                },
-              })
+              const ttRhf = peekTrainedTeachersRegistrationRhf()
+              const canonical = ttRhf
+                ? buildTrainedTeachersCanonicalFromRhf({
+                    id: registrationSnapshotArgs.id,
+                    values: ttRhf.getValues(),
+                  })
+                : importLegacyOverlayToTrainedTeachersCanonical({
+                    id: registrationSnapshotArgs.id,
+                    editor: {
+                      educationStructure: programType,
+                      sessionRound: sessionRoundType,
+                      educationFormScheduleDetail,
+                      participationScheduleDetail,
+                      ipsScheduleDetail,
+                      curriculumSessionCount,
+                      curriculumChartSessionCount,
+                      scheduleCurriculumDetailCount,
+                      scheduleCurriculumGroupCount,
+                      educationScheduleMode,
+                      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+                      participant,
+                    },
+                  })
               const recruitSaved = registrationWizardProgramType
                 ? await loadRegistrationWizardFormDraft({
                     programType: registrationWizardProgramType,
@@ -1980,6 +2090,9 @@ export function useProgramRegistrationEditor(
                       {
                         templateCode: 'recruitment-trained-teachers',
                         draft: recruitDraft,
+                        overlay: serializeTrainedTeachersRecruitmentForFormVersion(
+                          canonical.recruit
+                        ),
                         editorState: trainedTeachersRecruitEditorState(canonical.recruit),
                       },
                     ]
@@ -2057,6 +2170,7 @@ export function useProgramRegistrationEditor(
     },
     [
       buildGeneralWizardCreateProgram,
+      buildTrainedTeachersWizardCreateProgram,
       curriculumChartSessionCount,
       curriculumSessionCount,
       draft,
@@ -2106,6 +2220,10 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     if (programRegistrationFormVariant === 'trainedTeachers') {
+      const ttRhf = peekTrainedTeachersRegistrationRhf()
+      if (ttRhf != null) {
+        return describeIncompleteTrainedTeachersRegistrationRhfRequiredFields(ttRhf.getValues())
+      }
       return describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(overlay, {
         participant,
         programType,
@@ -2193,6 +2311,10 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     if (programRegistrationFormVariant === 'trainedTeachers') {
+      const ttRhf = peekTrainedTeachersRegistrationRhf()
+      if (ttRhf != null) {
+        return listIncompleteTrainedTeachersRegistrationRhfRequiredFieldReasons(ttRhf.getValues())
+      }
       return listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons(overlay, {
         participant,
         programType,
@@ -2253,6 +2375,10 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     if (programRegistrationFormVariant === 'trainedTeachers') {
+      const ttRhf = peekTrainedTeachersRegistrationRhf()
+      if (ttRhf != null) {
+        return hasTrainedTeachersRegistrationRhfCurriculumScheduleCountMismatch(ttRhf.getValues())
+      }
       return hasCurriculumMultiDateScheduleCountMismatch(
         normalizeRegistrationOverlayForApply(overlay, 'trainedTeachers'),
         {

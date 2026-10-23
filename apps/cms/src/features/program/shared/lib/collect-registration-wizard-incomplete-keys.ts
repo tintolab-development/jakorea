@@ -13,6 +13,8 @@ import {
   listIncompleteEconomyProgramRecruitmentRequiredFields,
 } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
+import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
 import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
   listIncompleteUjatProgramRegistrationRequiredFields,
@@ -78,13 +80,17 @@ export function collectRegistrationWizardRecruitmentPhaseIncompleteKeys(args: {
   if (args.variant === 'economy') {
     return listIncompleteEconomyProgramRecruitmentRequiredFields(args.participant)
   }
+  if (args.variant === 'trainedTeachers') {
+    const rhf = peekTrainedTeachersRegistrationRhf()
+    return rhf != null ? listIncompleteTrainedTeachersRecruitmentRequiredFields(rhf.getValues()) : []
+  }
   return listIncompleteGeneralProgramRecruitmentRequiredFields({
     participant: args.participant,
     programType: args.programType,
     sessionRoundType: args.sessionRoundType,
     educationScheduleMode: args.educationScheduleMode,
     volunteerExceptionScheduleCount: args.volunteerExceptionScheduleCount,
-    registrationProgramType: args.variant === 'trainedTeachers' ? 'TRAINED_TEACHER' : 'GENERAL',
+    registrationProgramType: 'GENERAL',
   })
 }
 

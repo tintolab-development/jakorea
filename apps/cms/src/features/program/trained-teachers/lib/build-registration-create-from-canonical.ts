@@ -9,9 +9,19 @@ import type {
   Program,
 } from '@/types/domain'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { collectTrainedTeachersCommonInfoState } from './collect-registration-common-info-state'
 import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
+import { collectTrainedTeachersApplicationFormState } from './application-form-state'
 import { applyTrainedTeachersRecruitToProgram } from './recruit-form-state'
-import type { TrainedTeachersRegistrationCanonical } from './registration-canonical-types'
+import { collectTrainedTeachersRecruitmentState } from './registration-rhf-recruitment'
+import {
+  TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
+  type TrainedTeachersRegistrationCanonical,
+} from './registration-canonical-types'
+import {
+  trainedTeachersRhfToEditorMeta,
+  type TrainedTeachersRegistrationRhfValues,
+} from './registration-rhf-values'
 
 function withoutAssignment<T extends GeneralProgramCurriculumSessionRow | GeneralProgramScheduleDetailRow>(
   row: T
@@ -87,7 +97,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
           ? 'outside_school'
           : undefined,
     generalCommonInfo: {
-      announcementTitle: common.announcementTitle || title,
+      announcementTitle: common.announcementTitle,
       detailedProgramName: common.detailedProgramName,
       sponsorManagementIds: [...common.sponsorManagementIds],
       sponsorManagementId: sponsorId || undefined,
@@ -132,7 +142,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
     textbookName: common.textbookName,
     generalCommonInfo: {
       ...withRecruit.generalCommonInfo,
-      announcementTitle: common.announcementTitle || title,
+      announcementTitle: common.announcementTitle,
       detailedProgramName: common.detailedProgramName,
       sponsorManagementIds: [...common.sponsorManagementIds],
       sponsorManagerContactIds: [...common.sponsorManagerContactIds],
@@ -150,6 +160,36 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
   })
 }
 
+export function buildTrainedTeachersCanonicalFromRhf(args: {
+  id: string
+  values: TrainedTeachersRegistrationRhfValues
+  recruit?: TrainedTeachersRegistrationCanonical['recruit']
+  application?: TrainedTeachersRegistrationCanonical['application']
+}): TrainedTeachersRegistrationCanonical {
+  return {
+    schemaVersion: TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
+    editor: trainedTeachersRhfToEditorMeta(args.values),
+    common: collectTrainedTeachersCommonInfoState(args.values),
+    recruit:
+      args.recruit ?? collectTrainedTeachersRecruitmentState(args.values.recruitment),
+    application: args.application ?? collectTrainedTeachersApplicationFormState(),
+    sidecar: { ...args.values.sidecar },
+  }
+}
+
+export function buildTrainedTeachersProgramFromRhf(args: {
+  id: string
+  values: TrainedTeachersRegistrationRhfValues
+  recruit?: TrainedTeachersRegistrationCanonical['recruit']
+  application?: TrainedTeachersRegistrationCanonical['application']
+}): Program {
+  return buildTrainedTeacherProgramFromCanonical({
+    id: args.id,
+    canonical: buildTrainedTeachersCanonicalFromRhf(args),
+  })
+}
+
+/** Legacy overlay snapshot → Program. 정상 신규 등록 CREATE 는 사용하지 않는다. */
 export function buildTrainedTeachersCreateSnapshot(args: {
   id: string
   editor: TrainedTeachersRegistrationCanonical['editor']

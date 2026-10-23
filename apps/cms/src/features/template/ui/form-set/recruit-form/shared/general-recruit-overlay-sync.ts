@@ -12,6 +12,17 @@ import {
   readWizardRecruitmentKvValue,
   subscribeGeneralRegistrationWizardRhf,
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
+import {
+  patchActiveTrainedTeachersRecruitmentOverlay,
+  peekActiveTrainedTeachersRecruitmentOverlayRecord,
+  peekTrainedTeachersRegistrationRhf,
+  readActiveTrainedTeachersRecruitmentOverlayValue,
+  subscribeTrainedTeachersRegistrationRhf,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import {
+  isTrainedTeachersRecruitmentCatalog,
+  isTrainedTeachersRecruitmentOverlayKey,
+} from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
 
 /**
  * 모집 폼(개인 모집, 강사 모집, 봉사자 모집) overlay.
@@ -48,7 +59,12 @@ export function getGeneralRecruitOverlayRecord(): Record<string, unknown> {
 export function peekGeneralRecruitOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
-  return mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
+  const merged = mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
+  const ttRecord =
+    peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
+      ? peekActiveTrainedTeachersRecruitmentOverlayRecord()
+      : null
+  return ttRecord != null ? { ...merged, ...ttRecord } : merged
 }
 
 /**
@@ -66,6 +82,10 @@ export function replaceGeneralRecruitOverlayForScope(
   templateCode: string | undefined | null,
   next: Record<string, unknown>
 ): void {
+  if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)) {
+    patchActiveTrainedTeachersRecruitmentOverlay(next)
+    return
+  }
   if (!isWizardRecruitmentRhfProjecting()) {
     patchWizardRecruitmentKv(next, { shouldDirty: false })
   }
@@ -88,6 +108,17 @@ function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
 }
 
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
+  if (peekTrainedTeachersRegistrationRhf() != null) {
+    const rest = patchActiveTrainedTeachersRecruitmentOverlay(partial)
+    if (Object.keys(rest).length === 0) return
+    beginWizardRecruitmentRhfProjection()
+    try {
+      store.patch(rest)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
   if (!isWizardRecruitmentRhfProjecting()) {
     patchWizardRecruitmentKv(partial, { shouldDirty: true })
   }
@@ -173,6 +204,9 @@ export function useGeneralRecruitOverlayKv<T>(
   const defaultRef = useRef(defaultValue)
   const rhfOwned = isGeneralRecruitOwnedKey(key)
   const getSnapshot = useCallback(() => {
+    if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentOverlayKey(key)) {
+      return readActiveTrainedTeachersRecruitmentOverlayValue(key, defaultRef.current) as T
+    }
     if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
       return readWizardRecruitmentKvValue(key, defaultRef.current)
     }
@@ -183,9 +217,11 @@ export function useGeneralRecruitOverlayKv<T>(
     listener => {
       const unsubOverlay = subscribeGeneralRecruitOverlayKey(key, listener)
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
       return () => {
         unsubOverlay()
         unsubRhf()
+        unsubTt()
       }
     },
     getSnapshot,

@@ -57,6 +57,8 @@ import { useRegistrationWizardLeaveGuard } from '@/features/program/shared/lib/r
 import { RegistrationWizardLeaveConfirmModal } from '@/features/program/shared/ui/registration/registration-wizard-leave-confirm-modal'
 import { GeneralRegistrationWizardFormProvider } from '@/features/program/general/ui/registration/registration-wizard-form-provider'
 import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { TrainedTeachersRegistrationWizardFormProvider } from '@/features/program/trained-teachers/ui/registration/registration-wizard-form-provider'
+import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -98,6 +100,10 @@ export function GeneralProgramRegistrationFullpageModal(
     >
       {variant === 'general' ? (
         <GeneralRegistrationWizardFormProvider>{inner}</GeneralRegistrationWizardFormProvider>
+      ) : variant === 'trainedTeachers' ? (
+        <TrainedTeachersRegistrationWizardFormProvider>
+          {inner}
+        </TrainedTeachersRegistrationWizardFormProvider>
       ) : (
         inner
       )}
@@ -253,7 +259,9 @@ function GeneralProgramRegistrationFullpageModalInner({
     isDirtyOverride:
       registrationFormVariant === 'general'
         ? () => peekGeneralRegistrationWizardRhf()?.isDirty() === true
-        : undefined,
+        : registrationFormVariant === 'trainedTeachers'
+          ? () => peekTrainedTeachersRegistrationRhf()?.isDirty() === true
+          : undefined,
     onLeave: handleClose,
   })
 
@@ -274,6 +282,7 @@ function GeneralProgramRegistrationFullpageModalInner({
     try {
       await flow.persistDraftSilent()
       peekGeneralRegistrationWizardRhf()?.markBaseline()
+      peekTrainedTeachersRegistrationRhf()?.markBaseline()
       markLeaveBaseline()
       setDraftSaveSuccessOpen(true)
     } catch (error) {

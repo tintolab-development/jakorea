@@ -145,7 +145,7 @@ export function importLegacyOverlayToTrainedTeachersCanonical(args: {
     schemaVersion: TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
     editor: args.editor,
     common: extractCommon(applied, overlay, args.editor),
-    recruit: collectTrainedTeachersRecruitFormState(),
+    recruit: collectTrainedTeachersRecruitFormState(overlay),
     application: collectTrainedTeachersApplicationFormState(),
   }
 }
