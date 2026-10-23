@@ -305,62 +305,74 @@ export function reconcileUjatRegistrationOverlayFromApi(
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...overlay }
 
-  if (dto.mainTitle?.trim()) {
-    next['ujat.basicInfo.repKo'] = dto.mainTitle.trim()
+  if (dto.mainTitle !== undefined) {
+    next['ujat.basicInfo.repKo'] = dto.mainTitle?.trim() ?? ''
   }
-  if (dto.titleEn?.trim()) {
-    next['ujat.basicInfo.repEn'] = dto.titleEn.trim()
+  if (dto.titleEn !== undefined) {
+    next['ujat.basicInfo.repEn'] = dto.titleEn?.trim() ?? ''
   }
-  if (dto.title?.trim()) {
-    next['ujat.basicInfo.programManagementName'] = dto.title.trim()
+  if (dto.title !== undefined) {
+    next['ujat.basicInfo.programManagementName'] = dto.title?.trim() ?? ''
   }
-  if (dto.businessArea?.trim()) {
-    next['ujat.basicInfo.businessField'] = reverseBusinessField(dto.businessArea)
+  if (dto.businessArea !== undefined) {
+    next['ujat.basicInfo.businessField'] = dto.businessArea?.trim()
+      ? reverseBusinessField(dto.businessArea)
+      : ''
   }
-  if (dto.sponsorId?.trim()) {
-    next['ujat.basicInfo.sponsorId'] = dto.sponsorId.trim()
+  if (dto.sponsorId !== undefined) {
+    next['ujat.basicInfo.sponsorId'] = dto.sponsorId?.trim() ?? ''
   }
-  next['ujat.basicInfo.educationCourse'] = dto.educationProcess?.trim() ?? ''
-  next['ujat.basicInfo.ipOwned'] = reverseIpOwned(dto.ipOwned ?? undefined)
-  if (dto.courseDeliveredBy) {
-    next['ujat.basicInfo.courseDeliveredBy'] = reverseIpOwned(dto.courseDeliveredBy)
+  if (dto.educationProcess !== undefined) {
+    next['ujat.basicInfo.educationCourse'] = dto.educationProcess?.trim() ?? ''
   }
-  if (dto.ips) {
-    next['ujat.basicInfo.ipsCategory'] = reverseIps(dto.ips)
+  if (dto.ipOwned !== undefined) {
+    next['ujat.basicInfo.ipOwned'] = reverseIpOwned(dto.ipOwned ?? undefined)
   }
-  next['ujat.basicInfo.partnerInvolvement'] = reversePartnerInvolvement(dto.partnerInvolvement)
+  if (dto.courseDeliveredBy !== undefined) {
+    next['ujat.basicInfo.courseDeliveredBy'] = dto.courseDeliveredBy
+      ? reverseIpOwned(dto.courseDeliveredBy)
+      : ''
+  }
+  if (dto.ips !== undefined) {
+    next['ujat.basicInfo.ipsCategory'] = dto.ips ? reverseIps(dto.ips) : ''
+  }
+  if (dto.partnerInvolvement !== undefined) {
+    next['ujat.basicInfo.partnerInvolvement'] = reversePartnerInvolvement(
+      dto.partnerInvolvement
+    )
+  }
   if (dto.detailedProgramName?.trim() === '해당없음') {
     next['ujat.basicInfo.detailedProgramId'] = TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
     next['ujat.basicInfo.detailedProgramName'] = '해당없음'
-  } else {
+  } else if (dto.detailedProgramName !== undefined || dto.detailedProgramId !== undefined) {
     next['ujat.basicInfo.detailedProgramId'] =
       dto.detailedProgramId == null ? '' : String(dto.detailedProgramId)
     next['ujat.basicInfo.detailedProgramName'] = dto.detailedProgramName?.trim() ?? ''
   }
-  if (dto.startDate && dto.endDate) {
+  if (dto.startDate !== undefined || dto.endDate !== undefined) {
     next['ujat.basicInfo.operationRangeSeal'] = {
-      start: String(dto.startDate),
-      end: String(dto.endDate),
+      start: dto.startDate ?? null,
+      end: dto.endDate ?? null,
     }
   }
   if (dto.generalSurveyMenuKeys && !hasExplicitUjatSurveySplit(next['ujat.basicInfo.surveyItems'])) {
     next['ujat.basicInfo.surveyItems'] = ujatSurveyItemsFromProgramKeys(dto.generalSurveyMenuKeys)
   }
-  const managerLine = dto.sponsorManagerLine?.trim()
-  if (managerLine) {
-    next['ujat.basicInfo.sponsorManagerName'] = managerLine
+  if (dto.sponsorManagerLine !== undefined) {
+    next['ujat.basicInfo.sponsorManagerName'] = dto.sponsorManagerLine?.trim() ?? ''
   }
-  if (dto.sponsorManagerContactIds?.length) {
+  if (dto.sponsorManagerContactIds !== undefined) {
     const contactIds = resolveSponsorContactIdsForEdit({
       ids: [...dto.sponsorManagerContactIds],
-      managerLine: managerLine ?? '',
+      managerLine: dto.sponsorManagerLine?.trim() ?? '',
     })
     next['ujat.basicInfo.sponsorContactIds'] = contactIds
     next['ujat.basicInfo.sponsorContactId'] = contactIds[0] ?? ''
   }
   if (dto.kpi) {
     const assignKpi = (key: string, value: unknown) => {
-      if (typeof value === 'number' && Number.isFinite(value)) next[key] = value
+      if (value === undefined) return
+      next[key] = typeof value === 'number' && Number.isFinite(value) ? value : null
     }
     assignKpi('ujat.kpi.participantCount', dto.kpi.finalParticipants)
     assignKpi('ujat.kpi.instructor', dto.kpi.instructorCount)

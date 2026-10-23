@@ -26,7 +26,6 @@ import { APPLICATION_BINDING_CATALOG_IDS } from './program-edit-snapshot.types'
 function hasOwn(overlay: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(overlay, key)
 }
-
 function fieldFromKey<T>(
   overlay: Record<string, unknown>,
   key: string,
@@ -332,4 +331,3 @@ export function overlayKvToIndependentApplicationInput(
     },
   }
 }
-

@@ -57,7 +57,6 @@ function coalesceString(
   if (trimmed) return programVal
   return overlayVal
 }
-
 function coalesceIso(
   programVal: string | Date | undefined,
   overlayIso: string | undefined,
@@ -1223,4 +1222,3 @@ function fillVolunteerInfo(
     )
   }
 }
-

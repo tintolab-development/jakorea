@@ -1470,6 +1470,7 @@ export function UjatProgramDetailFullPageModal({
                   if (!next) throw new Error('UJAT 프로그램 상세를 다시 불러오지 못했습니다.')
                   return next
                 },
+                remoteResponsePriority: true,
                 beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
               })
               if (result.mode === 'row') {
@@ -1595,6 +1596,7 @@ export function UjatProgramDetailFullPageModal({
                   if (!next) throw new Error('UJAT 프로그램 상세를 다시 불러오지 못했습니다.')
                   return next
                 },
+                remoteResponsePriority: true,
                 beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
               })
               if (result.mode === 'row') {

@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => ({
   shouldUseRemoteApi: vi.fn(),
   awaitMediaUploads: vi.fn(),
   bindMedia: vi.fn(),
+  fetchProgram: vi.fn(),
+  updateProgram: vi.fn(),
+  fetchSponsors: vi.fn(),
 }))
 
 vi.mock(
@@ -27,9 +30,10 @@ vi.mock(
 vi.mock('@/features/program/general/api/programs-api-client', () => ({
   bulkDeleteAdminProgramsRemote: vi.fn(),
   deleteAdminProgramRemote: (...args: unknown[]) => mocks.deleteProgram(...args),
-  fetchAdminProgramByIdRemote: vi.fn(),
+  fetchAdminProgramByIdRemote: (...args: unknown[]) => mocks.fetchProgram(...args),
   fetchAdminProgramsRemote: vi.fn(),
-  updateAdminProgramRemote: vi.fn(),
+  fetchAdminProgramSponsorsRemote: (...args: unknown[]) => mocks.fetchSponsors(...args),
+  updateAdminProgramRemote: (...args: unknown[]) => mocks.updateProgram(...args),
 }))
 
 vi.mock('@/features/program/ujat/lib/ujat-registration-local-save', () => ({
@@ -54,12 +58,16 @@ vi.mock('@/features/program/ujat/api/region-capacities-client', () => ({
   fetchUjatRegionCapacitiesRemote: vi.fn(),
 }))
 
+vi.mock('@/features/program/shared/lib/merge-program-sponsor-assignments', () => ({
+  withFetchedProgramSponsorAssignments: async (program: Program) => program,
+}))
+
 vi.mock('@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media', () => ({
   awaitRecruitDetailMediaUploads: (...args: unknown[]) => mocks.awaitMediaUploads(...args),
   bindUjatRecruitDetailMediaToRows: (...args: unknown[]) => mocks.bindMedia(...args),
 }))
 
-import { create } from './service'
+import { create, update } from './service'
 
 const pending = { id: 'ujat-pending', title: 'pending' } as Program
 const created = {
@@ -94,6 +102,9 @@ describe('UJAT create media binding', () => {
     mocks.awaitMediaUploads.mockResolvedValue(undefined)
     mocks.bindMedia.mockResolvedValue(undefined)
     mocks.deleteProgram.mockResolvedValue(undefined)
+    mocks.fetchProgram.mockResolvedValue({ id: '186300', title: 'server detail' })
+    mocks.updateProgram.mockResolvedValue({ id: '186300', title: 'patch echo' })
+    mocks.fetchSponsors.mockResolvedValue([])
   })
 
   it('업로드 완료를 기다린 뒤 생성하고 UJAT 모집 row 미디어를 연결한다', async () => {
@@ -135,5 +146,18 @@ describe('ujat API policy', () => {
     expect(shouldRetryQuery(0, { response: { status: 404 } })).toBe(false)
     expect(shouldRetryQuery(0, { response: { status: 500 } })).toBe(true)
     expect(shouldRetryQuery(2, { response: { status: 500 } })).toBe(false)
+  })
+
+  it('저장 결과는 PATCH echo가 아니라 저장 후 canonical GET을 반환한다', async () => {
+    const baseline = { id: '186300', title: '기존' } as Program
+    const canonical = { id: '186300', title: 'GET 정본' } as Program
+    mocks.fromDetail.mockReturnValue(canonical)
+    mocks.fetchProgram
+      .mockResolvedValueOnce({ id: '186300', title: '저장 전' })
+      .mockResolvedValueOnce({ id: '186300', title: '저장 후' })
+
+    await expect(update('186300', baseline, { title: '수정' })).resolves.toBe(canonical)
+    expect(mocks.updateProgram).toHaveBeenCalledOnce()
+    expect(mocks.fetchProgram).toHaveBeenCalledTimes(2)
   })
 })

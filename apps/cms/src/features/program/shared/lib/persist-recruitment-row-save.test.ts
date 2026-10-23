@@ -121,6 +121,45 @@ describe('persist-recruitment-row-save', () => {
     expect(body?.startAt).toBe('2026-09-10T00:00:00.000Z')
   })
 
+  it("빈 row 값은 유지(null)가 아니라 비움('')으로 PATCH한다", () => {
+    const program: Program = {
+      ...orgProgram(),
+      backendProgramType: 'UJAT',
+      programRecruitments: [
+        volunteerRow({
+          recruitTerm: 'FIRST_HALF',
+          announcementTitle: null,
+          programDescription: null,
+          recruitmentGuide: null,
+          applicationMethod: null,
+          remarks: null,
+          contactName: null,
+          interviewStartAt: null,
+        }),
+      ],
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft: program,
+      patch: {
+        volunteerApplicationStartDate: '',
+        interviewStartDate: '',
+      },
+      audience: 'volunteer',
+      volunteerHalf: 'h1',
+    })
+    expect(body).toMatchObject({
+      announcementTitle: '',
+      programDescription: '',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      remarks: '',
+      contactName: '',
+      interviewStartAt: '',
+    })
+    expect(body?.clearFields).toContain('startAt')
+  })
+
   it('모집 탭 fallback patch에서 rounds를 제거한다', () => {
     const next = omitRecruitmentTabScheduleFields({
       volunteerApplicationEndDate: '2026-10-31',
@@ -279,9 +318,9 @@ describe('persist-recruitment-row-save', () => {
     expect(next.resultAnnouncementDate).toBe('2026-12-01T00:00:00.000Z')
     expect(next.resultAnnouncementMethod).toBe('홈페이지')
     expect(next.generalParticipantInterviewEnabled).toBe(false)
-    expect(next.programRecruitments?.find(row => row.recruitmentType === 'PARTICIPANT')?.endAt).toBe(
-      '2026-11-30T14:59:59.999Z'
-    )
+    expect(
+      next.programRecruitments?.find(row => row.recruitmentType === 'PARTICIPANT')?.endAt
+    ).toBe('2026-11-30T14:59:59.999Z')
   })
 
   it('재조회 nested가 옛값이면 저장한 강사 모집 정보를 화면에 남긴다', () => {

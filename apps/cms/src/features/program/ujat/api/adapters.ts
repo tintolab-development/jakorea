@@ -635,18 +635,20 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   // UJAT 상세 응답의 최상위 KPI가 canonical source다. serviceDetailJson 안에
   // 오래된 KPI가 남아 있어도 상세 응답값(null 포함)으로 덮어쓴다.
   const responseKpi = {
-    finalParticipants: dto.totalParticipants ?? undefined,
-    instructorCount: dto.instructors ?? undefined,
-    volunteerCount: dto.generalVolunteers ?? undefined,
-    finalSchools: dto.finalSchools ?? undefined,
-    finalClasses: dto.finalClasses ?? undefined,
-  }
+    finalParticipants: dto.totalParticipants === null ? null : dto.totalParticipants ?? undefined,
+    instructorCount: dto.instructors === null ? null : dto.instructors ?? undefined,
+    volunteerCount: dto.generalVolunteers === null ? null : dto.generalVolunteers ?? undefined,
+    finalSchools: dto.finalSchools === null ? null : dto.finalSchools ?? undefined,
+    finalClasses: dto.finalClasses === null ? null : dto.finalClasses ?? undefined,
+  } as unknown as GeneralProgramCommonInfoExtension['kpi']
 
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
-  const namedCommonInfo =
-    dto.detailedProgramName?.trim()
-      ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
-      : details.generalCommonInfo
+  const namedCommonInfo = Object.prototype.hasOwnProperty.call(dto, 'detailedProgramName')
+    ? {
+        ...details.generalCommonInfo,
+        detailedProgramName: dto.detailedProgramName?.trim() ?? '',
+      }
+    : details.generalCommonInfo
   const policyCommonInfo = applySettlementPolicyToCommonInfo(
     namedCommonInfo,
     dto.settlementPolicy

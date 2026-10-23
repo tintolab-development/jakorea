@@ -4,10 +4,7 @@
  * 빈 문자열은 보내지 않고, 삭제는 `clearFields` canonical 이름만 사용한다.
  */
 
-import type {
-  GeneralProgramParticipantRecruitmentInfo,
-  Program,
-} from '@/types/domain'
+import type { GeneralProgramParticipantRecruitmentInfo, Program } from '@/types/domain'
 
 export const PROGRAM_UPDATE_COMMON_STRING_CLEAR_FIELDS = [
   'contactName',
@@ -78,10 +75,7 @@ function patchTouchesRecruitmentTargetDetail(patch: Partial<Program>): boolean {
   )
 }
 
-function appendClearField(
-  clearFields: string[],
-  field: ProgramUpdateCommonStringClearField
-): void {
+function appendClearField(clearFields: string[], field: ProgramUpdateCommonStringClearField): void {
   if (!clearFields.includes(field)) clearFields.push(field)
 }
 
@@ -167,10 +161,12 @@ export function mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
   }
 ): GeneralProgramParticipantRecruitmentInfo {
   const base: GeneralProgramParticipantRecruitmentInfo = { ...(info ?? {}) }
-  const contactName = trimOrUndefined(dto.contactName ?? undefined)
-  const recruitmentTargetDetail = trimOrUndefined(dto.recruitmentTargetDetail ?? undefined)
-  if (contactName) base.contactName = contactName
-  if (recruitmentTargetDetail) base.recruitmentTargetDetail = recruitmentTargetDetail
+  if (dto.contactName !== undefined) {
+    base.contactName = trimOrUndefined(dto.contactName)
+  }
+  if (dto.recruitmentTargetDetail !== undefined) {
+    base.recruitmentTargetDetail = trimOrUndefined(dto.recruitmentTargetDetail)
+  }
   return base
 }
 
@@ -178,7 +174,10 @@ export function resolveOtherNotesFromProgramResponse(dto: {
   otherMatters?: string | null
   otherNotes?: string | null
 }): string | undefined {
-  return trimOrUndefined(dto.otherMatters ?? undefined) || trimOrUndefined(dto.otherNotes ?? undefined)
+  if (dto.otherMatters !== undefined) {
+    return trimOrUndefined(dto.otherMatters)
+  }
+  return trimOrUndefined(dto.otherNotes)
 }
 
 /** 참여자 모집 비고 — top-level remarks, 없으면 nested. otherNotes(otherMatters)와 분리. */
@@ -255,8 +254,7 @@ export function applyParticipantRecruitmentColumnsFromResponse(
   )
   const clearMethod = hasMethod && !method && Boolean(currentInfo?.applicationMethod)
   // 행 모집은 비고 SSOT가 nested다. 프로그램 remarks 컬럼이 비어 있다고 nested를 지우면 저장값이 사라진다.
-  const clearRemarks =
-    hasRemarks && !remarks && Boolean(currentInfo?.remarks) && !hasParticipantRow
+  const clearRemarks = hasRemarks && !remarks && Boolean(currentInfo?.remarks) && !hasParticipantRow
   const participantRecruitmentInfo =
     clearMethod || clearRemarks
       ? {

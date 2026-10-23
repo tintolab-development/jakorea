@@ -7,10 +7,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
-import {
-  programDetailCacheFromSave,
-  syncOpenProgramDetailCache,
-} from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import { fetchUjatProgramBusinessYears } from './business-years'
@@ -141,12 +138,7 @@ export function useUpdateProgram() {
       await syncOpenProgramDetailCache(
         queryClient,
         detailKey,
-        programDetailCacheFromSave(
-          variables.programId,
-          program,
-          variables.program,
-          variables.patch
-        ),
+        program,
         { refetch: false }
       )
       invalidateUjatProgramListCaches(queryClient)

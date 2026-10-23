@@ -40,6 +40,11 @@ export type UjatEditableDummyOpenResult = {
   programTitle: string
 }
 
+export type UjatMutationCapture = {
+  programPatchBody?: unknown
+  recruitmentPatchBodies: unknown[]
+}
+
 const RECRUIT_TABS = [
   { key: 'recruit_participant', label: '참여자 모집 정보' },
   { key: 'recruit_volunteer_h1', label: '상반기 봉사자 모집 정보' },
@@ -55,8 +60,27 @@ const RECRUIT_TABS = [
 export class UjatProgramEditPage {
   private commonEdited: UjatCommonInfoEditedSnapshot | null = null
   private recruitmentEdited: UjatRecruitmentEditedSnapshot[] = []
+  private currentMutation: UjatMutationCapture = { recruitmentPatchBodies: [] }
+  private mutationHistory: UjatMutationCapture[] = []
 
-  constructor(private readonly page: Page) {}
+  constructor(private readonly page: Page) {
+    this.page.on('request', request => {
+      if (request.method() !== 'PATCH') return
+      const pathname = new URL(request.url()).pathname
+      if (!pathname.startsWith('/api/admin/programs/')) return
+      let body: unknown
+      try {
+        body = request.postDataJSON()
+      } catch {
+        body = request.postData()
+      }
+      if (/\/recruitments\/\d+\/?$/.test(pathname)) {
+        this.currentMutation.recruitmentPatchBodies.push(body)
+      } else if (/\/api\/admin\/programs\/[^/]+\/?$/.test(pathname)) {
+        this.currentMutation.programPatchBody = body
+      }
+    })
+  }
 
   getCommonEditedSnapshot(): UjatCommonInfoEditedSnapshot | null {
     return this.commonEdited
@@ -64,6 +88,28 @@ export class UjatProgramEditPage {
 
   getRecruitmentEditedSnapshots(): readonly UjatRecruitmentEditedSnapshot[] {
     return this.recruitmentEdited
+  }
+
+  getMutationHistory(): readonly UjatMutationCapture[] {
+    return this.mutationHistory
+  }
+
+  async readCanonicalDetail(programId: string): Promise<Record<string, unknown>> {
+    const result = await this.page.evaluate(async id => {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      const body = (await response.json().catch(() => null)) as unknown
+      const payload =
+        body && typeof body === 'object' && 'data' in body
+          ? (body as { data?: unknown }).data
+          : body
+      return { status: response.status, payload }
+    }, programId)
+    expect(result.status, `상세 GET HTTP ${result.status}`).toBe(200)
+    expect(result.payload && typeof result.payload === 'object').toBe(true)
+    return result.payload as Record<string, unknown>
   }
 
   private lnb() {
@@ -354,6 +400,19 @@ export class UjatProgramEditPage {
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', EDIT_CONTACT_TEL)
     await fillByPlaceholderIfVisible(this.page, '문의처 이메일', EDIT_CONTACT_EMAIL)
+    let contactEmail = EDIT_CONTACT_EMAIL
+    if (tabKey === 'recruit_volunteer_h2') {
+      const emailInput = this.page.getByPlaceholder('문의처 이메일').first()
+      if (
+        (await emailInput.count()) > 0 &&
+        (await emailInput.isVisible().catch(() => false)) &&
+        !(await emailInput.isDisabled().catch(() => true)) &&
+        !(await emailInput.evaluate(el => (el as HTMLInputElement).readOnly).catch(() => true))
+      ) {
+        await emailInput.fill('')
+        contactEmail = ''
+      }
+    }
     await checkRadioIfVisible(this.page, '면접 없음')
 
     const snapshot: UjatRecruitmentEditedSnapshot = {
@@ -361,7 +420,7 @@ export class UjatProgramEditPage {
       tabKey,
       targetDetail: EDIT_TARGET_DETAIL,
       contactTel: EDIT_CONTACT_TEL,
-      contactEmail: EDIT_CONTACT_EMAIL,
+      contactEmail,
     }
 
     await this.clickInfoEditSave(programId)
@@ -441,7 +500,10 @@ export class UjatProgramEditPage {
   }
 
   private async clickInfoEditSave(programId: string) {
-    const failDialog = this.page.getByRole('dialog').filter({ hasText: /저장 실패|입력 확인/ })
+    this.currentMutation = { recruitmentPatchBodies: [] }
+    const failDialog = this.page
+      .getByRole('dialog')
+      .filter({ hasText: /저장 실패|입력 확인/ })
     const editButton = this.page.getByRole('button', { name: '정보 수정' }).first()
 
     const patchPromise = this.page.waitForResponse(
@@ -476,5 +538,6 @@ export class UjatProgramEditPage {
       await completedDialog.getByRole('button', { name: '확인' }).click()
       await expect(completedDialog).toBeHidden({ timeout: 10_000 })
     }
+    this.mutationHistory.push(this.currentMutation)
   }
 }

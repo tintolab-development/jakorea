@@ -192,9 +192,9 @@ describe('UJAT recruit form overlay', () => {
     expect(programToUjatRecruitTemplateFormValues(program, 'institution').announcementTitle).toBe(
       '기관 공고'
     )
-    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1').announcementTitle).toBe(
-      '봉사자 공고'
-    )
+    expect(
+      programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1').announcementTitle
+    ).toBe('봉사자 공고')
 
     const saved = applyUjatRecruitAnnouncementTitleToDraft({
       draft: {
@@ -260,12 +260,12 @@ describe('UJAT recruit form overlay', () => {
         'ujat.recruit.volunteer.h2.publicTitle': '하반기 프로그램 공고',
       },
     }
-    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1').announcementTitle).toBe(
-      '상반기 프로그램 공고'
-    )
-    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h2').announcementTitle).toBe(
-      '하반기 프로그램 공고'
-    )
+    expect(
+      programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1').announcementTitle
+    ).toBe('상반기 프로그램 공고')
+    expect(
+      programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h2').announcementTitle
+    ).toBe('하반기 프로그램 공고')
   })
 
   it('상반기·하반기 봉사자 공고용 프로그램명은 서로 분리된다', () => {
@@ -297,6 +297,31 @@ describe('UJAT recruit form overlay', () => {
       '하반기 공고'
     )
     expect(resolveUjatRecruitAnnouncementTitle(savedH1, 'volunteer_h2')).toBe('하반기 공고')
+  })
+
+  it('봉사자 모집 기타사항은 row otherMatters로 저장한다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [
+        {
+          id: 41,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+        },
+      ],
+    }
+    const values = {
+      ...programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1'),
+      otherNotes: '봉사자 준비물 안내',
+    }
+    const saved = applyUjatRecruitAnnouncementTitleToDraft({
+      draft: program,
+      existing: program,
+      title: values.announcementTitle,
+      kind: 'volunteer_h1',
+      values,
+    })
+    expect(saved.programRecruitments?.[0]?.otherMatters).toBe('봉사자 준비물 안내')
   })
 
   it('프로그램 상세는 등록 overlay의 교육 대상을 view·edit 시드에 올린다', () => {
@@ -410,14 +435,22 @@ describe('UJAT recruit form overlay', () => {
         },
       ],
     }
-    expect(resolveUjatRecruitDisplayProgram(program, 'institution').recruitmentGuide).toBe('기관 안내')
+    expect(resolveUjatRecruitDisplayProgram(program, 'institution').recruitmentGuide).toBe(
+      '기관 안내'
+    )
     expect(resolveUjatRecruitDisplayProgram(program, 'institution').description).toBe('기관 설명')
-    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').recruitmentGuide).toBe('상반기 안내')
-    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h2').recruitmentGuide).toBe('하반기 안내')
-    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').description).toBe('상반기 설명')
+    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').recruitmentGuide).toBe(
+      '상반기 안내'
+    )
+    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h2').recruitmentGuide).toBe(
+      '하반기 안내'
+    )
+    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').description).toBe(
+      '상반기 설명'
+    )
   })
 
-  it('빈 모집 행이 등록 overlay 공고명·설명을 지우지 않는다', () => {
+  it('빈 모집 행이 등록 overlay 공고명·설명을 지우고 빈 값으로 표시한다', () => {
     const program = {
       ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
       description: '',
@@ -431,6 +464,7 @@ describe('UJAT recruit form overlay', () => {
         {
           id: 11,
           recruitmentType: 'PARTICIPANT',
+          announcementTitle: null,
           programDescription: '',
           recruitmentGuide: '',
           applicationMethod: null,
@@ -441,9 +475,9 @@ describe('UJAT recruit form overlay', () => {
       ],
     }
     const displayed = resolveUjatRecruitDisplayProgram(program, 'institution')
-    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('등록한 기관 공고')
-    expect(displayed.description).toBe('등록한 프로그램 설명')
-    expect(displayed.recruitmentGuide).toBe('등록한 모집 안내')
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('-')
+    expect(displayed.description).toBe('')
+    expect(displayed.recruitmentGuide).toBe('')
   })
 
   it('overlay가 없어도 모집 행 공고명·설명을 쓴다', () => {
