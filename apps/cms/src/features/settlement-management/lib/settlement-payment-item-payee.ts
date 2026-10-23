@@ -21,7 +21,12 @@ const INSTRUCTOR_ONLY_PAYMENT_TYPES = new Set([
   'LODGING_1C1S',
 ])
 
-const PARTICIPANT_PAYMENT_TYPES = new Set(['TRANSPORT_STUDENT', 'ACTIVITY', 'MEAL'])
+const PARTICIPANT_PAYMENT_TYPES = new Set([
+  'TRANSPORT_STUDENT',
+  'STUDENT_TRANSPORTATION',
+  'ACTIVITY',
+  'MEAL',
+])
 
 export function readPaymentItemEligiblePayeeTypes(item: unknown): SettlementEligiblePayeeType[] {
   if (!item || typeof item !== 'object') return []
