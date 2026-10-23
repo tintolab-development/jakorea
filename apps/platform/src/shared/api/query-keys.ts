@@ -424,6 +424,20 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /** 일정 출결 상세 — GET .../schedules/{scheduleId}/attendance (Class D) */
+      scheduleAttendance: (
+        applicationType: string,
+        applicationId: string,
+        scheduleId: number,
+      ) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'schedules',
+          applicationType,
+          applicationId,
+          'attendance',
+          scheduleId,
+        ] as const,
       /** 봉사 배정현황 — GET .../assignments (Class C). 교육일정 UI와 분리 */
       assignments: (applicationType: string, applicationId: string) =>
         [

@@ -35,6 +35,13 @@
   min-height: 280px;
 }
 
+.errorStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+}
+
 .placeholder {
   margin: 0;
   padding-block: var(--spacing-40);

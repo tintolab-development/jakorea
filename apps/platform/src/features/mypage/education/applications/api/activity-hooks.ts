@@ -46,6 +46,7 @@ import {
   updateApplicationNoticeComment,
   upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
+  fetchApplicationScheduleAttendance,
   submitApplicationAbsenceReason,
   fetchExpenseReceipts,
   fetchPortalSurveyFormBinding,
@@ -663,6 +664,45 @@ export function useApplicationSchedulesQuery(
     refetch: query.refetch,
     errorCode: query.isError ? getEducationSchedulesQueryErrorCode(query.error) : null,
     traceId: query.isError ? getEducationSchedulesQueryTraceId(query.error) : null,
+  }
+}
+
+export function useApplicationScheduleAttendanceQuery(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+  scheduleId: number | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const canView = options?.enabled !== false
+  const enabled =
+    isActivityQueryEnabled(applicationType, applicationId) &&
+    scheduleId != null &&
+    Number.isSafeInteger(scheduleId) &&
+    scheduleId > 0 &&
+    canView
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.scheduleAttendance(
+      applicationType ?? '',
+      applicationId ?? '',
+      scheduleId ?? 0
+    ),
+    queryFn: ({ signal }) =>
+      fetchApplicationScheduleAttendance(applicationType!, applicationId!, scheduleId!, signal),
+    enabled,
+    staleTime: STALE_MS,
+    gcTime: GC_MS,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    error: enabled ? query.error : null,
+    data: query.data ?? null,
+    refetch: query.refetch,
   }
 }
 
