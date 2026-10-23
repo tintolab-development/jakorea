@@ -50,6 +50,8 @@ import {
   toFixedScheduleOptionAnswerValue,
   toPortalPreferredScheduleBlocks,
 } from './preferred-schedule-blocks.ts'
+import { normalizeScheduleDisplayLabel } from '../../../shared/lib/format-display-date.ts'
+import type { PortalSaveApplicationRequest } from '../api/application-types.ts'
 
 function testUniqueCalendarDays() {
   assert.equal(
@@ -969,5 +971,128 @@ function testHiddenScheduleAutoSubmitIds() {
 }
 
 testHiddenScheduleAutoSubmitIds()
+
+function testEducationScheduleWireContract() {
+  const runtimeOption = {
+    id: '187223',
+    scheduleId: 187223,
+    value: '187223',
+    label: '26년 11월 12일(목) 00:00 ~ 23:59',
+    startAt: '2026-11-12T00:00:00+09:00',
+    endAt: '2026-11-12T23:59:00+09:00',
+  }
+  const choices = readRuntimeFixedScheduleChoiceItems(
+    {
+      scheduleInputMode: 'fixed_schedule_options',
+      educationScheduleLines: ['26년 11월 6일(금) 10:00 ~ 12:00'],
+      scheduleOptions: [
+        runtimeOption,
+        {
+          id: '187224',
+          value: '187224',
+          label: '26년 11월 6일(금) 10:00 ~ 12:00',
+        },
+      ],
+    },
+    { items: [{ id: 'line:0', label: 'schema seed 2026.11.06' }] },
+  )
+  assert.deepEqual(
+    choices?.map(item => item.id),
+    ['187223', '187224'],
+  )
+  assert.equal(
+    normalizeScheduleDisplayLabel(choices?.[0]?.label),
+    '2026년 11월 12일(목) 00:00 ~ 23:59',
+  )
+  assert.equal(choices?.[0]?.id, runtimeOption.value)
+  assert.notEqual(choices?.[0]?.id, choices?.[0]?.label)
+
+  const missingRuntime = readRuntimeFixedScheduleChoiceItems(
+    { scheduleInputMode: 'fixed_schedule_options', educationScheduleLines: ['26년 11월 6일(금)'] },
+    { items: [{ id: 'line:0', label: '26년 11월 6일(금)' }] },
+  )
+  assert.equal(missingRuntime, null)
+
+  const selected = toFixedScheduleOptionAnswerValue([
+    { scheduleOptionId: '187224' },
+    { scheduleOptionId: '187223' },
+    { scheduleOptionId: '187223' },
+  ])
+  assert.deepEqual(selected, ['187224', '187223'])
+  assert.equal(selected?.some(value => value.includes('년') || value.startsWith('line:')), false)
+
+  const restored = selectedFixedScheduleIdsFromDraftAnswer(selected)
+  assert.deepEqual(restored, ['187224', '187223'])
+
+  const preferred = toPortalPreferredScheduleBlocks([
+    {
+      date: '2026-11-20',
+      classPeriod: '1교시',
+      startTime: '9:00',
+      endTime: '12:00',
+    },
+  ])
+  assert.deepEqual(preferred, [
+    {
+      preferenceRank: 1,
+      date: '2026-11-20',
+      sessionCount: 1,
+      sessionTimes: [
+        {
+          sessionIndex: 1,
+          classPeriod: '1교시',
+          startTime: '09:00',
+          endTime: '12:00',
+          timeRange: '09:00~12:00',
+        },
+      ],
+    },
+  ])
+  assert.equal(preferred[0]?.date.includes('년'), false)
+
+  const incomplete = toPortalPreferredScheduleBlocks([
+    { date: '2026-11-20', classPeriod: '', startTime: '', endTime: '' },
+  ])
+  assert.deepEqual(incomplete, [])
+
+  const ujat = toPortalPreferredScheduleBlocks(
+    [
+      {
+        date: '2026-11-20',
+        classPeriod: '1교시',
+        startTime: '10:00',
+        endTime: '12:00',
+      },
+    ],
+    { dateFieldsOnly: true },
+  )
+  assert.deepEqual(ujat, [{ preferenceRank: 1, date: '2026-11-20' }])
+
+  const trainedChoices = readRuntimeFixedScheduleChoiceItems(
+    {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [{ id: 'teacher-slot-1', value: 'teacher-slot-1', label: '26년 11월 6일(금)' }],
+    },
+    { items: [] },
+  )
+  assert.deepEqual(trainedChoices?.map(item => item.id), ['teacher-slot-1'])
+
+  const answerKey = 'program-participant-application-seed-schedule'
+  const body: PortalSaveApplicationRequest = {
+    recruitmentId: 186702,
+    applicationType: 'INDIVIDUAL',
+    formBindingId: 189073,
+    answers: { [answerKey]: selected },
+    preferredScheduleBlocks: preferred,
+    requestedSchedules: [],
+  }
+  const draftPut: PortalSaveApplicationRequest = { ...body, answers: { ...body.answers } }
+  const applicationPost: PortalSaveApplicationRequest = { ...body, answers: { ...body.answers } }
+  assert.deepEqual(draftPut, applicationPost)
+  assert.deepEqual(draftPut.answers?.[answerKey], ['187224', '187223'])
+  assert.equal(JSON.stringify(draftPut).includes('00:00 ~ 23:59'), false)
+}
+
+testEducationScheduleWireContract()
 
 console.log('apply-form-schedule.selfcheck: ok')

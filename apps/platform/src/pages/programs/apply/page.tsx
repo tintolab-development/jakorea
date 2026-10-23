@@ -293,6 +293,7 @@ import { readUjatPreferredEducationScheduleOptions } from '@/features/program/li
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
+import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
 import {
   PFAlertModal,
   PFButton,
@@ -310,8 +311,9 @@ function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
 }
 
 function ScheduleChoiceLabel({ label }: { label: string }) {
-  const parts = label.split(/\s*\|\s*/).filter(part => part.length > 0)
-  if (parts.length < 2) return label
+  const display = normalizeScheduleDisplayLabel(label)
+  const parts = display.split(/\s*\|\s*/).filter(part => part.length > 0)
+  if (parts.length < 2) return display
 
   return (
     <span className={styles.scheduleChoiceLabel}>
@@ -325,8 +327,9 @@ function ScheduleChoiceLabel({ label }: { label: string }) {
 }
 
 function TrainedTeacherScheduleChoiceLabel({ label }: { label: string }) {
-  const separatorIndex = label.indexOf('|')
-  return separatorIndex >= 0 ? label.slice(0, separatorIndex).trim() : label
+  const display = normalizeScheduleDisplayLabel(label)
+  const separatorIndex = display.indexOf('|')
+  return separatorIndex >= 0 ? display.slice(0, separatorIndex).trim() : display
 }
 
 function findDraftParagraph(
