@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
-import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
+import {
+  focusIncompleteApplicationField,
+  resolveUjatInstitutionApplyIncomplete,
+} from '@/features/program/lib/ujat-institution-apply-incomplete'
 import { coerceApplicationFormDocument } from '@/features/program/lib/application-form-draft'
 import {
   readUjatPreferredEducationScheduleOptions,
@@ -12,7 +15,6 @@ import {
 import {
   ApplyUjatInstitutionBasicInfo,
   emptyUjatInstitutionBasicInfo,
-  findIncompleteUjatInstitutionBasicInfoMessage,
   ujatInstitutionBasicInfoAnswerFromValues,
   ujatInstitutionBasicInfoValuesFromDraftAnswer,
   type ApplyUjatInstitutionBasicInfoValues,
@@ -21,7 +23,6 @@ import {
   ApplyUjatInstitutionGradeInfo,
   appendUjatInstitutionGradeBlock,
   emptyUjatInstitutionGradeBlocks,
-  findIncompleteUjatInstitutionGradeInfoMessage,
   ujatInstitutionGradeAnswerFromValues,
   ujatInstitutionGradeValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
@@ -29,13 +30,11 @@ import {
   ApplyUjatInstitutionClassTime,
   appendUjatInstitutionClassTimeBlock,
   emptyUjatInstitutionClassTimeBlocks,
-  findIncompleteUjatInstitutionClassTimeMessage,
   ujatInstitutionClassTimeAnswerFromValues,
   ujatInstitutionClassTimeValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-class-time/apply-ujat-institution-class-time'
 import {
   ApplyUjatInstitutionPreferredSchedule,
-  findIncompleteUjatInstitutionPreferredScheduleMessage,
   ujatInstitutionPreferredScheduleAnswerFromValues,
   ujatInstitutionPreferredScheduleValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-preferred-schedule/apply-ujat-institution-preferred-schedule'
@@ -80,7 +79,7 @@ function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly
   return undefined
 }
 
-function UjatTemporaryScheduleSummary({
+export function UjatTemporaryScheduleSummary({
   temporarySchedule,
 }: {
   temporarySchedule?: EducationUjatTemporarySchedule
@@ -184,15 +183,36 @@ export function UjatProgressConfirmForm({
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [incompleteField, setIncompleteField] = useState<ReturnType<
+    typeof resolveUjatInstitutionApplyIncomplete
+  >>(null)
+  const submittingRef = useRef(false)
+  const formRootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    focusIncompleteApplicationField(formRootRef.current, incompleteField)
+    return () => {
+      formRootRef.current
+        ?.querySelectorAll<HTMLElement>('[data-application-error="true"]')
+        .forEach(element => {
+          delete element.dataset.applicationError
+        })
+    }
+  }, [incompleteField])
 
   const handleContinue = async () => {
-    const incomplete =
-      findIncompleteUjatInstitutionBasicInfoMessage(basicInfo) ??
-      findIncompleteUjatInstitutionGradeInfoMessage(gradeBlocks) ??
-      findIncompleteUjatInstitutionClassTimeMessage(classTimeBlocks, gradeBlocks) ??
-      findIncompleteUjatInstitutionPreferredScheduleMessage(preferredIds, preferredOptions)
-    if (incomplete || !confirmed) {
-      setAlertMessage(PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE)
+    if (submittingRef.current || saving) return
+    const incomplete = resolveUjatInstitutionApplyIncomplete({
+      basicInfo,
+      gradeBlocks,
+      classTimeBlocks,
+      preferredIds,
+      preferredOptions,
+      confirmed,
+    })
+    if (incomplete) {
+      setIncompleteField(incomplete)
+      setAlertMessage(incomplete.message)
       return
     }
     if (!isRemoteApiConfigured()) {
@@ -203,6 +223,7 @@ export function UjatProgressConfirmForm({
       setAlertMessage('기관 프로그램 신청만 진행할 수 있습니다.')
       return
     }
+    submittingRef.current = true
     setSaving(true)
     try {
       await patchOrganizationGuidanceAnswers(applicationId, {
@@ -217,16 +238,18 @@ export function UjatProgressConfirmForm({
             ujatInstitutionPreferredScheduleAnswerFromValues(preferredIds, preferredOptions),
         },
       })
-      await queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: platformQueryKeys.mypage.programApplications.detail(
           applicationType,
           applicationId,
         ),
+        exact: true,
       })
       navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType))
     } catch (error) {
       setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
     } finally {
+      submittingRef.current = false
       setSaving(false)
     }
   }
@@ -234,7 +257,7 @@ export function UjatProgressConfirmForm({
   return (
     <>
       <FormTemplateHost surface="platformUser">
-        <div className={styles.paragraphStack}>
+        <div ref={formRootRef} className={styles.paragraphStack}>
           <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo}
@@ -307,6 +330,7 @@ export function UjatProgressConfirmForm({
               CONFIRM_DESCRIPTION,
             )}
           >
+            <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
             <ApplyUjatInstitutionSubmitConfirmation
               control="radio"
               label={CONFIRM_RADIO_LABEL}

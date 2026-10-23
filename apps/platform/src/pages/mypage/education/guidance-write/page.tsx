@@ -193,6 +193,8 @@ export function MypageEducationInstitutionGuidanceWritePage() {
         variant={isUjat ? 'ujat' : 'general'}
         isEdit={isUjat ? isEdit : hasDraft}
         submitPeriodLabel={program?.applicationPeriodLabel}
+        assignmentRevision={application.ujatAssignmentRevision}
+        temporarySchedule={application.ujatTemporarySchedule}
         portalPatchContext={{
           formResponseId: application.formResponseId,
           formResponseStatus: application.formResponseStatus,

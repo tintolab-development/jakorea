@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -37,14 +37,21 @@ import {
 } from '../api/institution-guidance-hooks'
 import type { TeacherInstitutionGuidanceFormState } from '../lib/institution-guidance-from-answers'
 import {
+  isUjatStaleRevisionError,
   resolveInstitutionGuidanceErrorMessage,
   resolveUjatTemporaryScheduleConfirmErrorMessage,
+  UJAT_STALE_REVISION_ALERT_MESSAGE,
 } from '../lib/institution-guidance-errors'
+import { UjatTemporaryScheduleSummary } from './ujat-progress-confirm-form'
+import type { EducationUjatTemporarySchedule } from '../model/types'
 import {
   resolveOrganizationGuidancePatchBlockedMessage,
   type OrganizationGuidancePatchPortalContext,
 } from '../lib/institution-guidance-patch-readiness'
-import { educationInstitutionGuidanceApplicationTabPath } from '../lib/guidance-path'
+import {
+  educationInstitutionGuidanceApplicationTabPath,
+  educationUjatProgressConfirmPath,
+} from '../lib/guidance-path'
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
 import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -64,6 +71,8 @@ type EducationInstitutionGuidanceWriteFormProps = {
   variant?: 'general' | 'ujat'
   isEdit?: boolean
   submitPeriodLabel?: string
+  assignmentRevision?: number
+  temporarySchedule?: EducationUjatTemporarySchedule
 }
 
 export function EducationInstitutionGuidanceWriteForm({
@@ -74,6 +83,8 @@ export function EducationInstitutionGuidanceWriteForm({
   portalPatchContext,
   variant = 'general',
   submitPeriodLabel,
+  assignmentRevision,
+  temporarySchedule,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -86,6 +97,8 @@ export function EducationInstitutionGuidanceWriteForm({
     initialState.ujatExtras ?? emptyUjatInstitutionGuidanceExtras(),
   )
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [afterAlertPath, setAfterAlertPath] = useState<string | null>(null)
+  const submittingRef = useRef(false)
   const patchGuidanceMutation = usePatchOrganizationGuidanceAnswersMutation(
     applicationType,
     applicationId,
@@ -102,6 +115,13 @@ export function EducationInstitutionGuidanceWriteForm({
       : '작성하기'
 
   const handleSubmit = async () => {
+    if (
+      submittingRef.current ||
+      patchGuidanceMutation.isPending ||
+      confirmUjatTemporaryScheduleMutation.isPending
+    ) {
+      return
+    }
     const nextSexOffense = isUjat
       ? { ...sexOffense, submissionRequest: sexOffense.submissionRequest || 'request' }
       : sexOffense
@@ -124,12 +144,14 @@ export function EducationInstitutionGuidanceWriteForm({
       setAlertMessage('API가 설정되지 않아 저장할 수 없습니다.')
       return
     }
+    submittingRef.current = true
     try {
       const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(portalPatchContext ?? {})
       if (blockedMessage) {
         setAlertMessage(blockedMessage)
         return
       }
+      const displayedRevision = assignmentRevision
       await patchGuidanceMutation.mutateAsync({
         detailCase,
         state,
@@ -137,16 +159,32 @@ export function EducationInstitutionGuidanceWriteForm({
       })
 
       if (isUjat) {
+        const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
+          applicationType,
+          applicationId,
+        )
+        await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+        const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
+        const latestRevision = latest?.supplement?.ujat?.assignmentRevision
+        if (
+          typeof displayedRevision === 'number' &&
+          typeof latestRevision === 'number' &&
+          latestRevision !== displayedRevision
+        ) {
+          setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+          setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+          return
+        }
         try {
-          const confirmation = await confirmUjatTemporaryScheduleMutation.mutateAsync()
+          const confirmation = await confirmUjatTemporaryScheduleMutation.mutateAsync(
+            typeof displayedRevision === 'number' ? displayedRevision : latestRevision,
+          )
           if (confirmation.portalBannerState !== 'ADMIN_REVIEW') {
-            const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
-              applicationType,
-              applicationId,
-            )
             await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
-            const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
-            if (latest?.supplement?.ujat?.portalBannerState !== 'ADMIN_REVIEW') {
+            const afterConfirm = queryClient.getQueryData<PortalProgramApplicationDetail>(
+              detailQueryKey,
+            )
+            if (afterConfirm?.supplement?.ujat?.portalBannerState !== 'ADMIN_REVIEW') {
               setAlertMessage(
                 '일정 확인 응답을 확인하지 못했습니다. 신청 상세를 새로고침 후 다시 시도해 주세요.',
               )
@@ -154,19 +192,18 @@ export function EducationInstitutionGuidanceWriteForm({
             }
           }
         } catch (confirmError) {
-          // POST 응답이 끊겼더라도 서버에서 이미 확정되었을 수 있다.
-          // 최신 상세의 서버 상태가 ADMIN_REVIEW인 경우에만 성공 화면으로 이동한다.
-          const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
-            applicationType,
-            applicationId,
-          )
           await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
-          const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
-          if (latest?.supplement?.ujat?.portalBannerState === 'ADMIN_REVIEW') {
+          const afterError = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
+          if (afterError?.supplement?.ujat?.portalBannerState === 'ADMIN_REVIEW') {
             navigate(
               educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
               { replace: true },
             )
+            return
+          }
+          if (isUjatStaleRevisionError(confirmError)) {
+            setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+            setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
             return
           }
           setAlertMessage(resolveUjatTemporaryScheduleConfirmErrorMessage(confirmError))
@@ -179,7 +216,14 @@ export function EducationInstitutionGuidanceWriteForm({
         { replace: true },
       )
     } catch (error) {
+      if (isUjatStaleRevisionError(error)) {
+        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+        return
+      }
       setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
+    } finally {
+      submittingRef.current = false
     }
   }
 
@@ -187,6 +231,7 @@ export function EducationInstitutionGuidanceWriteForm({
     <>
       <FormTemplateHost surface="platformUser">
         <div className={styles.paragraphStack}>
+          {isUjat ? <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} /> : null}
           {isUjat ? (
             <ParagraphCard
               dataParagraphId="ujat-institution-guidance-intro"
@@ -306,7 +351,8 @@ export function EducationInstitutionGuidanceWriteForm({
           size="xlarge"
           width={240}
           disabled={
-            patchGuidanceMutation.isPending || confirmUjatTemporaryScheduleMutation.isPending
+            patchGuidanceMutation.isPending ||
+            confirmUjatTemporaryScheduleMutation.isPending
           }
           onClick={() => {
             void handleSubmit()
@@ -324,7 +370,14 @@ export function EducationInstitutionGuidanceWriteForm({
         open={alertMessage != null}
         title="안내"
         description={alertMessage ?? undefined}
-        onConfirm={() => setAlertMessage(null)}
+        onConfirm={() => {
+          const nextPath = afterAlertPath
+          setAlertMessage(null)
+          setAfterAlertPath(null)
+          if (nextPath) {
+            navigate(nextPath, { replace: true })
+          }
+        }}
       />
     </>
   )

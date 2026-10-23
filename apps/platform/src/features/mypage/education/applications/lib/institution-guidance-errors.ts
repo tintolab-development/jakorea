@@ -1,5 +1,8 @@
 import type { AxiosError } from 'axios'
 
+export const UJAT_STALE_REVISION_ALERT_MESSAGE =
+  '관리자가 배정 일정을 변경했습니다. 변경된 일정을 확인 후 다시 제출해 주세요.'
+
 const INSTITUTION_GUIDANCE_ERROR_MESSAGES: Record<string, string> = {
   GUIDANCE_ANSWERS_VALIDATION_FAILED: '입력 내용을 확인해 주세요.',
   ORGANIZATION_APPLICATION_NOT_OWNED: '본인 신청만 수정할 수 있습니다.',
@@ -9,6 +12,8 @@ const INSTITUTION_GUIDANCE_ERROR_MESSAGES: Record<string, string> = {
     '신청 답변이 변경되었거나 최신 제출본이 없습니다. 새로고침 후 다시 시도해 주세요.',
   UJAT_ACTIVE_EDUCATION_SLOT_REQUIRED:
     '기관 확인에 사용할 활성 교육일·학급 배정이 없습니다. 관리자에게 확인해 주세요.',
+  STALE_REVISION: UJAT_STALE_REVISION_ALERT_MESSAGE,
+  UJAT_STALE_REVISION: UJAT_STALE_REVISION_ALERT_MESSAGE,
   UJAT_WORKFLOW_STATE_CONFLICT:
     '일정 확인 상태가 변경되었습니다. 신청 상세를 새로고침한 후 다시 시도해 주세요.',
   UJAT_TEMPORARY_ASSIGNMENT_REQUIRED:
@@ -53,6 +58,9 @@ export function resolveInstitutionGuidanceErrorMessage(
   const data = axiosError?.response?.data
   const code = readPortalErrorCode(data)
   const serverMessage = readPortalErrorMessage(data)
+  if (code === 'STALE_REVISION' || code === 'UJAT_STALE_REVISION') {
+    return UJAT_STALE_REVISION_ALERT_MESSAGE
+  }
   if (code === 'APPLICATION_ANSWERS_CONFLICT') {
     const base =
       serverMessage ?? INSTITUTION_GUIDANCE_ERROR_MESSAGES.APPLICATION_ANSWERS_CONFLICT
@@ -69,9 +77,17 @@ export function resolveInstitutionGuidanceErrorMessage(
   return fallback
 }
 
+export function isUjatStaleRevisionError(error: unknown): boolean {
+  const axiosError = error as AxiosError | undefined
+  if (axiosError?.response?.status !== 409) return false
+  const code = readPortalErrorCode(axiosError.response?.data)
+  return code === 'STALE_REVISION' || code === 'UJAT_STALE_REVISION'
+}
+
 export function resolveUjatTemporaryScheduleConfirmErrorMessage(
   error: unknown,
 ): string {
+  if (isUjatStaleRevisionError(error)) return UJAT_STALE_REVISION_ALERT_MESSAGE
   return resolveInstitutionGuidanceErrorMessage(
     error,
     '관리자 배정 일정 확인을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.',

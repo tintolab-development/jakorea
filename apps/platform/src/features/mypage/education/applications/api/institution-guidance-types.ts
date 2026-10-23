@@ -15,6 +15,11 @@ export type OrganizationGuidanceAnswersPatchResponse = {
   formResponseStatus?: string
 }
 
+/** POST …/ujat/temporary-schedule/confirm 요청 */
+export type UjatTemporaryScheduleConfirmRequest = {
+  assignmentRevision?: number
+}
+
 /** POST …/ujat/temporary-schedule/confirm 응답 */
 export type UjatTemporaryScheduleConfirmResponse = {
   programId?: number | null
