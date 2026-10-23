@@ -31,6 +31,15 @@ const PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES: Record<string, string> = {
     '설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.',
 }
 
+const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
+  UJAT_WORKFLOW_STATE_CONFLICT: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
+  UJAT_INSTITUTION_CONFIRMATION_REQUIRED: '기관 확인이 완료되기 전에는 승인할 수 없습니다.',
+  UJAT_TEMPORARY_SLOT_REQUIRED: '일정과 학급을 먼저 입력해 주세요.',
+  UJAT_REGION_CLASS_CAPACITY_EXCEEDED:
+    '선택한 지역·반기의 잔여 학급 정원을 초과했습니다. 지역 또는 일정을 변경해 주세요.',
+  UJAT_TEMPORARY_ASSIGNMENT_REQUIRED: '임시 일정을 먼저 배정한 뒤 기관 확인을 진행해 주세요.',
+}
+
 const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
   UJAT_ACTIVITY_CERTIFICATE_ADMIN_ONLY: 'UJAT 활동인증서는 관리자만 발급할 수 있습니다.',
   UJAT_ORGANIZATION_ALREADY_APPLIED: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
@@ -52,6 +61,9 @@ export function extractApiErrorMessage(
   options?: { httpStatus?: number | null; fallback?: string }
 ): string {
   const code = extractApiErrorCode(data)
+  if (code && UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]) {
+    return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]
+  }
   if (code && PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]) {
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
@@ -146,4 +158,19 @@ export function getApiErrorCode(error: unknown): string | undefined {
   if (!error || typeof error !== 'object' || !('response' in error)) return undefined
   const data = (error as { response?: { data?: unknown } }).response?.data
   return extractApiErrorCode(data)
+}
+
+/** Axios 오류의 envelope을 사용자 안내로 바꾼다. 응답 body가 없으면 fallback. */
+export function readApiErrorAlertMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: unknown; status?: number } }).response
+    if (response && 'data' in response) {
+      return extractApiErrorMessage(response.data, {
+        httpStatus: response.status,
+        fallback,
+      })
+    }
+  }
+  if (error instanceof Error && error.message.trim()) return error.message
+  return fallback
 }
