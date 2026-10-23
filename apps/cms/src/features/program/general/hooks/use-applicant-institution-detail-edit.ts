@@ -51,6 +51,7 @@ import {
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
+  organizationApplicationDetailCacheKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
@@ -215,7 +216,22 @@ export function useApplicantInstitutionDetailEdit({
   }, [resetEditState])
 
   const updateDraft = useCallback((partial: Partial<ApplicantInstitutionEditDraft>) => {
-    setDraft(prev => (prev ? { ...prev, ...partial } : prev))
+    setDraft(prev => {
+      if (!prev) return prev
+      const next = { ...prev, ...partial }
+      if (
+        partial.educationGrade != null &&
+        formatInstitutionApplicationGradeDisplay(partial.educationGrade) !==
+          formatInstitutionApplicationGradeDisplay(prev.educationGrade)
+      ) {
+        return {
+          ...next,
+          textbookId: TEXTBOOK_NOT_USED_OPTION_VALUE,
+          textbookName: '해당 없음',
+        }
+      }
+      return next
+    })
     setValidationErrors({})
   }, [])
 
@@ -355,10 +371,13 @@ export function useApplicantInstitutionDetailEdit({
           response,
           institution
         )
-        queryClient.setQueryData(
-          generalApplicationsQueryKeys.organizationDetail(institution.id),
-          response
-        )
+        for (const queryKey of organizationApplicationDetailCacheKeys(
+          institution.id,
+          String(program?.id ?? '')
+        )) {
+          queryClient.setQueryData(queryKey, response)
+          void queryClient.invalidateQueries({ queryKey })
+        }
         void queryClient.invalidateQueries({
           queryKey: generalApplicationsQueryKeys.organizationList(String(program?.id ?? '')),
         })
