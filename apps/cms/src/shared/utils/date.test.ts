@@ -3,6 +3,7 @@ import {
   formatDate,
   formatDateDot,
   formatDateDotWithWeekday,
+  formatMonthDayWithWeekday,
   formatDateRangeDot,
   formatDateRangeDotWithWeekday,
   formatDateSpaced,
@@ -72,6 +73,14 @@ describe('formatDateDotWithWeekday', () => {
   it('YYYY.MM.DD(요일)이고 점·괄호 앞뒤 공백이 없다', () => {
     expect(formatDateDotWithWeekday('2026-04-20')).toBe('2026.04.20(월)')
     expect(formatDateDotWithWeekday('2026-01-09')).toBe('2026.01.09(금)')
+  })
+})
+
+describe('formatMonthDayWithWeekday', () => {
+  it('M월 D일(요일)로 표시한다', () => {
+    expect(formatMonthDayWithWeekday('2026-01-09')).toBe('1월 9일(금)')
+    expect(formatMonthDayWithWeekday('2026-05-08')).toBe('5월 8일(금)')
+    expect(formatMonthDayWithWeekday('2026.01.09(금)')).toBe('1월 9일(금)')
   })
 })
 

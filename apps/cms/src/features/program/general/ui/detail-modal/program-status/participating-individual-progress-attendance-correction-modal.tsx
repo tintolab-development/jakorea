@@ -3,6 +3,7 @@ import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAl
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   parseAttendanceScheduleOwnerId,
+  parseProgramAttendanceCorrectionStatus,
   type ProgramAttendanceCorrectionStatus,
 } from '@/features/program/shared/lib/attendance-correction-types'
 import {
@@ -28,18 +29,9 @@ export type ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload = 
   evidenceFileObjectIds?: number[]
 }
 
-function toCorrectionStatus(
-  row: ParticipatingIndividualProgressAttendanceParticipantRow
-): ProgramAttendanceCorrectionStatus {
-  if (row.attendanceStatus === 'late') return 'late'
-  if (row.attendanceStatus === 'excused_absence') return 'excused_absence'
-  if (row.attendanceStatus === 'absent') return 'absence'
-  return 'present'
-}
-
 export type ParticipatingIndividualProgressAttendanceCorrectionModalProps = {
   open: boolean
-  sessionLabel: string
+  educationDateLabel: string
   /** program-schedules 숫자 PK. 증빙 ownerId */
   scheduleId: string
   participantOptions: ReadonlyArray<ParticipatingIndividualProgressAttendanceCorrectionParticipantOption>
@@ -49,7 +41,7 @@ export type ParticipatingIndividualProgressAttendanceCorrectionModalProps = {
 
 export function ParticipatingIndividualProgressAttendanceCorrectionModal({
   open,
-  sessionLabel,
+  educationDateLabel,
   scheduleId,
   participantOptions,
   onCancel,
@@ -57,7 +49,7 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
 }: ParticipatingIndividualProgressAttendanceCorrectionModalProps) {
   const { showAlert } = useCmsAlert()
   const [participantRowId, setParticipantRowId] = useState<string | undefined>(undefined)
-  const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus>('present')
+  const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus | undefined>(undefined)
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
@@ -70,17 +62,10 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
   useEffect(() => {
     if (!open) return
     setParticipantRowId(undefined)
-    setStatus('present')
+    setStatus(undefined)
     setReason('')
     setEvidenceFiles([])
-  }, [open, participantOptions, sessionLabel])
-
-  useEffect(() => {
-    if (!selectedOption) return
-    setStatus(toCorrectionStatus(selectedOption.row))
-    setReason(selectedOption.row.remark?.trim() ?? '')
-    setEvidenceFiles([])
-  }, [selectedOption])
+  }, [open, participantOptions, educationDateLabel])
 
   const showReasonTable = status === 'excused_absence'
 
@@ -92,7 +77,8 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
 
   const evidenceFileNames = evidenceFiles.map(file => file.name)
 
-  const canConfirm = Boolean(participantRowId && selectedOption && !uploadingEvidence)
+  const canConfirm = Boolean(participantRowId && selectedOption && status && !uploadingEvidence)
+  const displayDateLabel = educationDateLabel.trim() || '교육'
 
   return (
     <ContentModal
@@ -101,6 +87,7 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
       title="출결 정정"
       width={600}
       className="participating-individual-attendance-correction-modal"
+      description={`참여자를 선택 후 **${displayDateLabel}** 교육의 출결 상태를 정정해 주세요.`}
       footer={
         <div className="participating-individual-attendance-correction-modal__footer">
           <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
@@ -112,7 +99,7 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
             type="button"
             disabled={!canConfirm}
             onClick={() => {
-              if (!participantRowId || !selectedOption) return
+              if (!participantRowId || !selectedOption || !status) return
               if (status === 'excused_absence' && reason.trim().length === 0) {
                 showAlert({
                   title: '안내',
@@ -124,13 +111,13 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
               void (async () => {
                 let evidenceFileObjectIds: number[] | undefined
                 if (status === 'excused_absence' && evidenceFiles.length > 5) {
-                showAlert({
-                  title: '안내',
-                  content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
-                })
-                return
-              }
-              if (status === 'excused_absence' && evidenceFiles.length > 0) {
+                  showAlert({
+                    title: '안내',
+                    content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
+                  })
+                  return
+                }
+                if (status === 'excused_absence' && evidenceFiles.length > 0) {
                   const scheduleOwnerId = parseAttendanceScheduleOwnerId(scheduleId)
                   if (scheduleOwnerId == null) {
                     showAlert({
@@ -172,37 +159,45 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
               })()
             }}
           >
-            출결 정정
+            정정
           </CmsButton>
         </div>
       }
     >
       <div className="participating-individual-attendance-correction-modal__content">
         <div className="participating-individual-attendance-correction-modal__field">
-          <span className="participating-individual-attendance-correction-modal__label">출결 정정</span>
+          <span className="participating-individual-attendance-correction-modal__label">
+            출결 정정{' '}
+            <span
+              className="participating-individual-attendance-correction-modal__required"
+              aria-hidden
+            >
+              *
+            </span>
+          </span>
           <div className="participating-individual-attendance-correction-modal__select-row">
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder="정정할 참여자를 선택해 주세요"
+              placeholder="참여자를 선택해 주세요"
               value={participantRowId}
               options={participantOptions.map(option => ({
                 value: option.value,
                 label: option.label,
               }))}
-              onChange={value => setParticipantRowId(value == null ? undefined : String(value))}
-              aria-label="정정할 참여자"
+              onChange={value =>
+                setParticipantRowId(value == null || value === '' ? undefined : String(value))
+              }
+              aria-label="참여자"
             />
             <CmsSelect
               inputSize="large"
               width={170}
-              withAllOption={false}
-              value={status}
+              value={status ?? ''}
               options={[...PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS]}
-              onChange={value => setStatus((value as ProgramAttendanceCorrectionStatus) ?? 'present')}
+              onChange={value => setStatus(parseProgramAttendanceCorrectionStatus(value))}
               aria-label="출결 현황"
-              disabled={!selectedOption}
             />
           </div>
         </div>

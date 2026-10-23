@@ -8,6 +8,20 @@ export type ProgramAttendanceCorrectionStatus =
   | 'absence'
   | 'excused_absence'
 
+export function parseProgramAttendanceCorrectionStatus(
+  value: unknown
+): ProgramAttendanceCorrectionStatus | undefined {
+  if (
+    value === 'present' ||
+    value === 'late' ||
+    value === 'absence' ||
+    value === 'excused_absence'
+  ) {
+    return value
+  }
+  return undefined
+}
+
 export type ProgramAttendanceCorrectionInitialValue =
   | { kind: 'present' }
   | { kind: 'late'; time: string }

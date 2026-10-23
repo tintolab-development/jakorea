@@ -25,6 +25,7 @@ export type UjatAttendanceCorrectionPayload = {
 export type UjatAttendanceCorrectionModalProps = {
   open: boolean
   timeRange: string
+  educationDateLabel: string
   volunteers: ReadonlyArray<UjatAttendanceVolunteerRow>
   onCancel: () => void
   onConfirm: (payload: UjatAttendanceCorrectionPayload) => void
@@ -42,17 +43,30 @@ function formatCheckInTime(value: Dayjs | null): string {
   return value.format('H:mm')
 }
 
-function isTimeFieldVisible(status: UjatAttendanceStatus): boolean {
-  return status === 'present' || status === 'late'
+function parseUjatAttendanceStatus(value: unknown): UjatAttendanceStatus | undefined {
+  if (
+    value === 'present' ||
+    value === 'late' ||
+    value === 'absent' ||
+    value === 'excused_absence'
+  ) {
+    return value
+  }
+  return undefined
 }
 
-function isReasonFieldVisible(status: UjatAttendanceStatus): boolean {
+function isTimeFieldVisible(status: UjatAttendanceStatus | undefined): boolean {
+  return status == null || status === 'present' || status === 'late'
+}
+
+function isReasonFieldVisible(status: UjatAttendanceStatus | undefined): boolean {
   return status === 'excused_absence'
 }
 
 export function UjatAttendanceCorrectionModal({
   open,
   timeRange,
+  educationDateLabel,
   volunteers,
   onCancel,
   onConfirm,
@@ -66,46 +80,34 @@ export function UjatAttendanceCorrectionModal({
   )
 
   const [volunteerId, setVolunteerId] = useState<string | undefined>(undefined)
-  const [status, setStatus] = useState<UjatAttendanceStatus>('present')
+  const [status, setStatus] = useState<UjatAttendanceStatus | undefined>(undefined)
   const [checkInTime, setCheckInTime] = useState<Dayjs>(() =>
     parseCheckInDayjs(undefined, sessionStartTime)
   )
   const [excusedReason, setExcusedReason] = useState('')
 
-  const selectedVolunteer = useMemo(
-    () => volunteers.find(row => row.id === volunteerId),
-    [volunteerId, volunteers]
-  )
-
   useEffect(() => {
     if (!open) return
     setVolunteerId(undefined)
-    setStatus('present')
+    setStatus(undefined)
     setCheckInTime(parseCheckInDayjs(undefined, sessionStartTime))
     setExcusedReason('')
   }, [open, sessionStartTime])
-
-  useEffect(() => {
-    if (!selectedVolunteer) return
-    setStatus(selectedVolunteer.status)
-    const defaultTime =
-      selectedVolunteer.checkInTime ??
-      (selectedVolunteer.status === 'late' ? '9:10' : sessionStartTime)
-    setCheckInTime(parseCheckInDayjs(defaultTime, sessionStartTime))
-    setExcusedReason(
-      selectedVolunteer.status === 'excused_absence' ? (selectedVolunteer.excusedReason ?? '') : ''
-    )
-  }, [selectedVolunteer, sessionStartTime])
 
   useEffect(() => {
     if (isReasonFieldVisible(status)) return
     setExcusedReason('')
   }, [status])
 
+  useEffect(() => {
+    if (status !== 'present' && status !== 'late') return
+    setCheckInTime(parseCheckInDayjs(undefined, sessionStartTime))
+  }, [sessionStartTime, status])
+
   const canConfirm = useMemo(() => {
-    if (!volunteerId) return false
+    if (!volunteerId || !status) return false
     return volunteers.some(row => row.id === volunteerId)
-  }, [volunteerId, volunteers])
+  }, [status, volunteerId, volunteers])
 
   const handleCancel = useCallback(() => {
     setVolunteerId(undefined)
@@ -113,7 +115,7 @@ export function UjatAttendanceCorrectionModal({
   }, [onCancel])
 
   const handleConfirm = useCallback(() => {
-    if (!canConfirm || !volunteerId) return
+    if (!canConfirm || !volunteerId || !status) return
     if (isReasonFieldVisible(status) && excusedReason.trim().length === 0) {
       showAlert({
         title: '안내',
@@ -124,11 +126,14 @@ export function UjatAttendanceCorrectionModal({
     onConfirm({
       volunteerId,
       status,
-      checkInTime: isTimeFieldVisible(status) ? formatCheckInTime(checkInTime) : undefined,
+      checkInTime: status === 'present' || status === 'late' ? formatCheckInTime(checkInTime) : undefined,
       excusedReason: isReasonFieldVisible(status) ? excusedReason.trim() : undefined,
     })
     setVolunteerId(undefined)
   }, [canConfirm, checkInTime, excusedReason, onConfirm, showAlert, status, volunteerId])
+
+  const displayDateLabel = educationDateLabel.trim() || '교육'
+  const statusUnset = status == null
 
   const footer = (
     <div className="ujat-attendance-correction-modal__footer">
@@ -142,7 +147,7 @@ export function UjatAttendanceCorrectionModal({
         disabled={!canConfirm}
         onClick={handleConfirm}
       >
-        출결 정정
+        정정
       </CmsButton>
     </div>
   )
@@ -157,49 +162,61 @@ export function UjatAttendanceCorrectionModal({
       className="ujat-attendance-correction-modal"
       wrapClassName="ujat-attendance-correction-modal-wrap"
       footer={footer}
-      description="출결 정정할 봉사자를 및 정정 내용을 선택해 주세요"
+      description={`봉사자를 선택 후 **${displayDateLabel}** 교육의 출결 상태를 정정해 주세요.`}
     >
       <div className="ujat-attendance-correction-modal__form">
         <div className="ujat-attendance-correction-modal__field">
-          <span className="ujat-attendance-correction-modal__label">봉사자명</span>
+          <span className="ujat-attendance-correction-modal__label">
+            봉사자{' '}
+            <span className="ujat-attendance-correction-modal__required" aria-hidden>
+              *
+            </span>
+          </span>
           <CmsSelect
             inputSize="large"
             width="100%"
             withAllOption={false}
-            placeholder="봉사자명을 선택해 주세요"
+            placeholder="봉사자를 선택해 주세요"
             value={volunteerId}
-            onChange={value => setVolunteerId(value == null ? undefined : String(value))}
+            onChange={value => setVolunteerId(value == null || value === '' ? undefined : String(value))}
             options={volunteerOptions}
-            aria-label="봉사자명"
+            aria-label="봉사자"
           />
         </div>
 
         <div className="ujat-attendance-correction-modal__field">
-          <span className="ujat-attendance-correction-modal__label">교육 출결 현황</span>
+          <span className="ujat-attendance-correction-modal__label">
+            출결 정정{' '}
+            <span className="ujat-attendance-correction-modal__required" aria-hidden>
+              *
+            </span>
+          </span>
           <div className="ujat-attendance-correction-modal__status-row">
             <CmsSelect
               inputSize="large"
               className="ujat-attendance-correction-modal__status-select"
-              withAllOption={false}
-              value={status}
-              onChange={value => setStatus((value ?? 'present') as UjatAttendanceStatus)}
+              width={170}
+              value={status ?? ''}
+              onChange={value => setStatus(parseUjatAttendanceStatus(value))}
               options={UJAT_ATTENDANCE_STATUS_ORDER.map(value => ({
                 value,
                 label: UJAT_ATTENDANCE_STATUS_LABEL[value],
               }))}
-              aria-label="교육 출결 현황"
+              aria-label="출결 현황"
             />
             {isTimeFieldVisible(status) ? (
               <div className="ujat-attendance-correction-modal__time-field">
                 <ParagraphTimePicker
-                  value={checkInTime}
+                  value={statusUnset ? null : checkInTime}
                   onChange={next =>
                     setCheckInTime(next ?? parseCheckInDayjs(undefined, sessionStartTime))
                   }
-                  placeholder="시간 선택"
+                  placeholder={statusUnset ? '출결 상태를 먼저 선택해 주세요' : '시간 선택'}
+                  disabled={statusUnset}
                   width="100%"
                   inputSize="large"
                   zIndex={MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
+                  showEndTimeToggle={false}
                 />
               </div>
             ) : isReasonFieldVisible(status) ? (

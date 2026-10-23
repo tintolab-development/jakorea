@@ -62,6 +62,8 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { handleError } from '@/shared/utils/error-handler'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { formatAttendanceRecordingNotOpenMessage } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
@@ -353,10 +355,13 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
             content: '출결이 정정되었습니다.',
           })
         },
-        () => {
+        error => {
+          if (isGlobalApiErrorAlertShown(error)) return
+          if (formatAttendanceRecordingNotOpenMessage(error)) return
+          if (isInvalidAttendanceArrivalTimeError(error)) return
           showAlert({
             title: '안내',
-            content: '출결 정정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            content: readApiErrorAlertMessage(error, '요청 처리에 실패했습니다.'),
           })
         }
       )
@@ -486,6 +491,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
 
       <ParticipatingIndividualParticipantAttendanceCorrectionModal
         open={attendanceCorrectionModalOpen}
+        participantName={participant.applicantName}
         scheduleOptions={correctableScheduleOptions}
         onCancel={() => setAttendanceCorrectionModalOpen(false)}
         onConfirm={handleAttendanceCorrectionConfirm}

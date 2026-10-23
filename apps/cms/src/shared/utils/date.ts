@@ -83,6 +83,16 @@ export function formatDateDotWithWeekday(value: CmsDateInput): string {
   return `${parsed.format('YYYY.MM.DD')}(${weekdayLabel(parsed)})`
 }
 
+/** 출결 정정 설명문 날짜 — 예: 1월 9일(금) */
+export function formatMonthDayWithWeekday(value: CmsDateInput): string {
+  if (emptyOrInvalid(value)) return '-'
+  const parsed = parseDisplayDate(value)
+  if (!parsed.isValid()) return '-'
+  const weekday = weekdayLabel(parsed)
+  if (!weekday) return '-'
+  return `${parsed.month() + 1}월 ${parsed.date()}일(${weekday})`
+}
+
 /** 요일 포함 날짜+시분 — 예: 2026.04.20(월) 09:30 */
 export function formatDateTimeDotWithWeekday(value: CmsDateInput): string {
   if (emptyOrInvalid(value)) return '-'
