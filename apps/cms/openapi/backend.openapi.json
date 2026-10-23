@@ -9781,8 +9781,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "documentId 없는 선택 동의 유형 철회",
-        "description": "### 이 API가 하는 일\n- documentId 없는 선택 동의 유형 철회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 회원포탈 약관·동의 (`null`)\n- 프론트 담당 영역: member-portal-consent (`member-portal-consent`)\n- 호출 방식: `POST /api/portal/me/consents/{consentType}/withdraw`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: authenticated member portal action\n- 응답 사용 위치: documentId 없는 선택 동의 유형 철회\n- 프론트 조회 키: `post_api_portal_me_consents_consent_type_withdraw`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: MEMBER_PORTAL_CONSENT_SMOKE\n- 목데이터 대체: server state via authenticated API; no legal evidence in localStorage\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: MEMBER_CONSENT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 마이페이지 동의 관리 documentId 없는 초상권/아동개인정보 철회",
+        "summary": "동의 유형 철회",
+        "description": "### 이 API가 하는 일\n- 동의 유형 철회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 회원포탈 약관·동의 (`null`)\n- 프론트 담당 영역: member-portal-consent (`member-portal-consent`)\n- 호출 방식: `POST /api/portal/me/consents/{consentType}/withdraw`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: authenticated member portal action\n- 응답 사용 위치: documentId 없는 선택 동의 유형 철회\n- 프론트 조회 키: `post_api_portal_me_consents_consent_type_withdraw`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: MEMBER_PORTAL_CONSENT_SMOKE\n- 목데이터 대체: server state via authenticated API; no legal evidence in localStorage\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: MEMBER_CONSENT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 마이페이지 동의 관리 5종의 전자서명 문서·documentId 없는 기존 ledger 이력 철회",
         "operationId": "withdrawByType",
         "parameters": [
           {
@@ -70661,12 +70661,21 @@
       "InstitutionScheduleConfirmRequest": {
         "type": "object",
         "properties": {
+          "assignmentRevision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "포털에서 조회한 현재 임시배정 revision. 서버 현재값과 다르면 STALE_REVISION(409)입니다.",
+            "example": 2
+          },
           "guideNote": {
             "type": "string",
             "maxLength": 4000,
             "minLength": 0
           }
-        }
+        },
+        "required": [
+          "assignmentRevision"
+        ]
       },
       "PhoneIdentityConfirmRequest": {
         "type": "object",
@@ -72133,8 +72142,12 @@
         "type": "object",
         "properties": {
           "documentId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "전자서명 문서 철회 시 문서 ID. documentId 없는 legacy ledger 철회에서는 null."
           },
           "consentType": {
             "type": "string"
@@ -87111,6 +87124,9 @@
             "type": "string",
             "maxLength": 4000,
             "minLength": 0
+          },
+          "decision": {
+            "type": "string"
           }
         },
         "required": [
@@ -95386,6 +95402,21 @@
               "REJECTED"
             ]
           },
+          "revisionRequestReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "최신 CHANGE_REQUESTED 이력의 수정 요청 사유. 목록에서는 null이며 상세에서만 제공합니다."
+          },
+          "revisionRequestedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "최신 CHANGE_REQUESTED 이력의 요청 시각. 목록에서는 null이며 상세에서만 제공합니다."
+          },
           "temporarySchedule": {
             "description": "CMS 임시배정 확정 슬롯. GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule 의 slots과 같은 일정 SSOT입니다. 신청 당시 answers 희망일과 별도 필드입니다. 목록은 null. 상세는 항상 객체를 주며 슬롯 없으면 slots=[]. 모집 공통값·educationScheduleLines·금요일 생성으로 채우지 않습니다.",
             "oneOf": [
@@ -96066,7 +96097,7 @@
       },
       "DocumentSlot": {
         "type": "object",
-        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | DEADLINE_MISSED | REVISED. deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
+        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
         "properties": {
           "documentKind": {
             "type": "string"
@@ -107438,15 +107469,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
