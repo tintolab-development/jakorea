@@ -24,6 +24,22 @@ assert.equal(mapped.programId, '186290')
 assert.equal(mapped.recruitmentId, 186674)
 assert.equal(mapped.title, '신청 상세 API 제목')
 assert.equal(mapped.detailCase, 'ujat-volunteer')
+assert.equal(mapped.ujatPortalBannerState, undefined)
+
+const ujatOrg = mapPortalProgramApplicationDetail({
+  applicationId: 1691621,
+  applicationType: 'ORGANIZATION',
+  programId: 186291,
+  programTitle: 'UJAT 기관 신청',
+  programGroup: 'UJAT',
+  applicationStatus: 'SUBMITTED',
+  displayStatus: '승인 대기',
+  supplement: { ujat: { portalBannerState: 'ACTION_REQUIRED' } },
+})
+assert.ok(ujatOrg)
+assert.equal(ujatOrg.detailCase, 'ujat-participant')
+assert.equal(ujatOrg.ujatPortalBannerState, 'ACTION_REQUIRED')
+assert.equal(ujatOrg.displayStatus, 'waiting_result')
 
 const missingRootIdentity = mapPortalProgramApplicationDetail({
   applicationId: 1691620,

@@ -75,9 +75,8 @@ import {
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
-  resolveUjatScheduleBannerFromState,
+  resolveVisibleUjatScheduleBanner,
   sanitizeUjatParticipantBasicInfoFields,
-  shouldShowUjatScheduleBanner,
   shouldUseUjatApplicationContent,
 } from '@/features/mypage/education/applications/lib/ujat-portal-banner'
 import { educationUjatProgressConfirmPath } from '@/features/mypage/education/applications/lib/guidance-path'
@@ -610,12 +609,10 @@ export function MypageEducationDetailPage() {
     )
   }
 
-  const ujatScheduleBanner = shouldShowUjatScheduleBanner(
+  const ujatScheduleBanner = resolveVisibleUjatScheduleBanner(
     application.detailCase,
     application.ujatPortalBannerState,
   )
-    ? resolveUjatScheduleBannerFromState(application.ujatPortalBannerState)
-    : null
   const showBanner = !ujatScheduleBanner && shouldShowDocumentPassBanner(application)
   const programForInfo = shouldUseUjatApplicationContent(application.detailCase)
     ? {
@@ -835,7 +832,11 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
-            statusAudience={isTeacher ? 'teacher' : 'general'}
+            statusAudience={
+              isTeacher || shouldUseUjatApplicationContent(application.detailCase)
+                ? 'teacher'
+                : 'general'
+            }
           />
         }
         aside={
