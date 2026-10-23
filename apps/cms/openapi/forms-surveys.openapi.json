@@ -14362,10 +14362,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -29302,9 +29302,13 @@
           },
           "version": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "minimum": 1
           }
-        }
+        },
+        "required": [
+          "version"
+        ]
       },
       "DetailedProgramBulkUpdateItem": {
         "type": "object",
@@ -29321,9 +29325,13 @@
           },
           "version": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "minimum": 1
           }
-        }
+        },
+        "required": [
+          "version"
+        ]
       },
       "DetailedProgramBulkUpdateRequest": {
         "type": "object",
@@ -29368,6 +29376,93 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          }
+        }
+      },
+      "DetailedProgramBulkChangesRequest": {
+        "type": "object",
+        "properties": {
+          "updates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailedProgramBulkUpdateItem"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          },
+          "deleteItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailedProgramBulkDeleteItem"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "deleteItems",
+          "updates"
+        ]
+      },
+      "DetailedProgramBulkDeleteItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "ApiResponseDetailedProgramBulkChangesResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/DetailedProgramBulkChangesResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "DetailedProgramBulkChangesResponse": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailedProgramResponse"
+            }
+          },
+          "deletedIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         }
       },
