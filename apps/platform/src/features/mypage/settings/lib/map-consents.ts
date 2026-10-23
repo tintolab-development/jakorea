@@ -82,12 +82,14 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
     const expired = summary.expired === true
     const reconsentRequired = summary.reconsentRequired === true
     const status = summary.status?.trim().toUpperCase() ?? ''
+    const withdrawn = status === 'WITHDRAWN'
     /** 작성 중 draft documentId만으로는 완료가 아니다. 서버 `agreed`/`signed`/완료 status만 인정. */
     const hasCompletedDocument =
       summary.signed === true ||
       ['AGREED', 'COMPLETED', 'SIGNED', 'SUBMITTED', 'CONSENTED', 'ACTIVE'].includes(status)
     const isDocumentItem = DOCUMENT_SECTION_IDS.has(meta.id)
     const agreed =
+      !withdrawn &&
       !expired &&
       !reconsentRequired &&
       (summary.agreed === true || (isDocumentItem && hasCompletedDocument))
@@ -98,7 +100,8 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
       hint: expired || reconsentRequired ? EXPIRED_HINT : meta.hint,
       documentId: summary.documentId ?? undefined,
-      withdrawable: isDocumentItem ? agreed : summary.withdrawable === true,
+      withdrawable: summary.withdrawable === true,
+      status: summary.status,
     }
     ;(DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems).push(item)
   }

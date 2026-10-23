@@ -1,5 +1,7 @@
-import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft'
-import { SETTLEMENT_TRANSIT_OPTIONS, SETTLEMENT_TRIP_TYPE_OPTIONS } from './settlement-options'
+import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft.ts'
+import { SETTLEMENT_TRANSIT_OPTIONS, SETTLEMENT_TRIP_TYPE_OPTIONS } from './settlement-options.ts'
+import { isTransportPaymentItemType } from './payment-items.ts'
+import { readTripLegFileNames } from './empty-trip-leg.ts'
 
 export function digitsOnly(value: string): string {
   return value.replace(/\D/g, '')
@@ -44,7 +46,11 @@ export function formatSettlementHomeAddress(draft: SettlementWriteDraft): string
 }
 
 export function formatSettlementResidentNumber(draft: SettlementWriteDraft): string {
-  return `${draft.basic.residentFront} - ${draft.basic.residentBack}`
+  const front = draft.basic.residentFront.trim()
+  const back = draft.basic.residentBack.trim()
+  if (!front && !back) return ''
+  if (front && back) return `${front} - ${back}`
+  return front || back
 }
 
 export function formatSettlementFileNames(fileNames: string[]): string {
@@ -55,7 +61,7 @@ export function isSettlementTripLegStarted(leg: SettlementTripLegDraft): boolean
   return (
     leg.transit.trim() !== '' ||
     parseSettlementAmount(leg.amount) > 0 ||
-    leg.fileNames.length > 0
+    readTripLegFileNames(leg).length > 0
   )
 }
 
@@ -68,16 +74,49 @@ export function computeSettlementTransportTotal(draft: SettlementWriteDraft): nu
   return depart + back
 }
 
+export function isReceiptWriteDraft(draft: SettlementWriteDraft): boolean {
+  return draft.meta.documentKind === 'receipt'
+}
+
+function isTransportEnabled(draft: SettlementWriteDraft): boolean {
+  if (draft.transport.itemType) return true
+  return draft.enabledItemTypes.some(type => isTransportPaymentItemType(type))
+}
+
 export function hasSettlementTransportSection(draft: SettlementWriteDraft): boolean {
   const { depart, return: returnLeg, tripType } = draft.transport
   const returnStarted = tripType === 'round_trip' && isSettlementTripLegStarted(returnLeg)
-  return isSettlementTripLegStarted(depart) || returnStarted || draft.meta.isInstructor
+  const started = isSettlementTripLegStarted(depart) || returnStarted
+  if (isReceiptWriteDraft(draft)) {
+    return isTransportEnabled(draft) && started
+  }
+  return started || draft.meta.isInstructor
 }
 
 export function hasSettlementMealSection(draft: SettlementWriteDraft): boolean {
+  if (isReceiptWriteDraft(draft)) {
+    return draft.extraItems.some(
+      item =>
+        item.itemType === 'MEAL' &&
+        (parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0)
+    )
+  }
   return parseSettlementAmount(draft.meal.amount) > 0 || draft.meal.fileNames.length > 0
 }
 
 export function hasSettlementActivitySection(draft: SettlementWriteDraft): boolean {
+  if (isReceiptWriteDraft(draft)) {
+    return draft.extraItems.some(
+      item =>
+        item.itemType === 'ACTIVITY' &&
+        (parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0)
+    )
+  }
   return parseSettlementAmount(draft.activity.amount) > 0 || draft.activity.fileNames.length > 0
+}
+
+export function startedReceiptExtraItems(draft: SettlementWriteDraft) {
+  return draft.extraItems.filter(
+    item => parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0
+  )
 }

@@ -11,10 +11,13 @@ import {
   hasSettlementActivitySection,
   hasSettlementMealSection,
   hasSettlementTransportSection,
+  isReceiptWriteDraft,
   isSettlementTripLegStarted,
   resolveSettlementTransitLabel,
   resolveSettlementTripTypeLabel,
+  startedReceiptExtraItems,
 } from '../lib/format-write-draft'
+import { readTripLegFileNames } from '../lib/empty-trip-leg'
 import { EducationSettlementSessionBanner } from './settlement-session-banner'
 import { PFButton, PFInfoReview, PFText, type PFInfoReviewItem } from '@/shared/ui'
 import styles from './confirm-view.module.css'
@@ -23,6 +26,8 @@ type EducationSettlementConfirmViewProps = {
   draft: SettlementWriteDraft
   programTitle?: string
   session?: EducationSettlementItem
+  submitting?: boolean
+  readOnly?: boolean
   onComplete: () => void
   onBack: () => void
 }
@@ -31,7 +36,7 @@ function buildTripLegRows(leg: SettlementTripLegDraft): PFInfoReviewItem[] {
   return [
     { label: '대중교통 수단', value: resolveSettlementTransitLabel(leg.transit) },
     { label: '지출 금액', value: formatSettlementAmountDisplay(leg.amount) },
-    { label: '영수증 제출', value: formatSettlementFileNames(leg.fileNames) },
+    { label: '영수증 제출', value: formatSettlementFileNames(readTripLegFileNames(leg)) },
   ]
 }
 
@@ -95,6 +100,8 @@ export function EducationSettlementConfirmView({
   draft,
   programTitle,
   session,
+  submitting = false,
+  readOnly = false,
   onComplete,
   onBack,
 }: EducationSettlementConfirmViewProps) {
@@ -102,10 +109,12 @@ export function EducationSettlementConfirmView({
   const showTransport = hasSettlementTransportSection(draft)
   const showMeal = hasSettlementMealSection(draft)
   const showActivity = hasSettlementActivitySection(draft)
+  const receiptExtras = isReceiptWriteDraft(draft) ? startedReceiptExtraItems(draft) : []
+  const resident = formatSettlementResidentNumber(draft)
 
   const basicRows: PFInfoReviewItem[] = [
     { label: '성명', value: draft.basic.name },
-    { label: '주민등록번호', value: formatSettlementResidentNumber(draft) },
+    { label: '주민등록번호', value: resident },
     { label: '자택 주소', value: formatSettlementHomeAddress(draft) },
     { label: '정산 계좌 정보', value: formatSettlementAccountInfo(draft) },
   ]
@@ -144,7 +153,29 @@ export function EducationSettlementConfirmView({
         </ConfirmSection>
       ) : null}
 
-      {showMeal ? (
+      {receiptExtras.map(item => (
+        <ConfirmSection
+          key={item.itemType}
+          title={`${item.itemName} 신청`}
+          footer={item.itemType === 'ACTIVITY' ? '사용한 금액의 영수증을 제출해 주세요.' : undefined}
+        >
+          <PFInfoReview
+            accentFirstRow={false}
+            rows={[
+              {
+                label: '영수증 제출',
+                value: formatSettlementFileNames(item.attachments.map(file => file.fileName)),
+              },
+            ]}
+          />
+          <ConfirmAmountSummary
+            label={item.itemName}
+            amount={formatSettlementAmountDisplay(item.amount)}
+          />
+        </ConfirmSection>
+      ))}
+
+      {!isReceiptWriteDraft(draft) && showMeal ? (
         <ConfirmSection
           title="식사비 신청"
           footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
@@ -160,7 +191,7 @@ export function EducationSettlementConfirmView({
         </ConfirmSection>
       ) : null}
 
-      {showActivity ? (
+      {!isReceiptWriteDraft(draft) && showActivity ? (
         <ConfirmSection title="활동비 신청" footer="사용한 금액의 영수증을 제출해 주세요.">
           <PFInfoReview
             accentFirstRow={false}
@@ -174,10 +205,25 @@ export function EducationSettlementConfirmView({
       ) : null}
 
       <div className={styles.actions}>
-        <PFButton type="button" size="xlarge" width="100%" onClick={onComplete}>
-          신청 완료하기
-        </PFButton>
-        <PFButton type="button" variant="tertiary" size="xlarge" width="100%" onClick={onBack}>
+        {readOnly ? null : (
+          <PFButton
+            type="button"
+            size="xlarge"
+            width="100%"
+            disabled={submitting}
+            onClick={onComplete}
+          >
+            {submitting ? '제출 중' : '신청 완료하기'}
+          </PFButton>
+        )}
+        <PFButton
+          type="button"
+          variant="tertiary"
+          size="xlarge"
+          width="100%"
+          disabled={submitting}
+          onClick={onBack}
+        >
           이전
         </PFButton>
       </div>
