@@ -15,6 +15,11 @@ import {
   resolveWritingTemplateRowFamily,
 } from '@/features/program/shared/lib/writing-template-family'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import {
+  resolveOperationalCatalogPreviewParagraphBodyOptions,
+  resolveWritingTemplateSelectPreviewDraft,
+  resolveWritingTemplateSelectPreviewEditorKind,
+} from '@/features/template/lib/operational-catalog-preview-paragraph-body-options'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import './writing-template-select-modal.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -117,9 +122,30 @@ export function WritingTemplateSelectModal({
     const seed = createSeedDraftForOperationalCatalogId(
       resolveWritingFormBaseTemplateCode(row.id, row.baseTemplateCode)
     )
-    setPreviewDraft(saved?.draft ?? seed ?? EMPTY_WRITING_FORM_DRAFT)
+    setPreviewDraft(resolveWritingTemplateSelectPreviewDraft(saved?.draft, seed))
     setPreviewRow(row)
   }
+
+  const previewParagraphBodyOptions = useMemo(
+    () =>
+      previewRow == null
+        ? undefined
+        : resolveOperationalCatalogPreviewParagraphBodyOptions(
+            previewRow.id,
+            previewRow.baseTemplateCode
+          ),
+    [previewRow]
+  )
+  const previewEditorKind = useMemo(
+    () =>
+      previewRow == null
+        ? undefined
+        : resolveWritingTemplateSelectPreviewEditorKind(
+            previewRow.id,
+            previewRow.baseTemplateCode
+          ),
+    [previewRow]
+  )
 
   const columns: ColumnsType<TemplateRow> = useMemo(
     () => [
@@ -273,6 +299,8 @@ export function WritingTemplateSelectModal({
         headerTitle={previewRow?.templateName ?? '양식 미리보기'}
         draft={previewDraft ?? EMPTY_WRITING_FORM_DRAFT}
         updateParagraph={noopUpdateParagraph}
+        editorKind={previewEditorKind}
+        paragraphBodyOptions={previewParagraphBodyOptions}
         zIndex={PREVIEW_Z_INDEX}
         hideParagraphRequiredChrome
       />
