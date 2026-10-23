@@ -83,6 +83,56 @@ describe('UJAT 기관 신청 상세 adapter', () => {
     })
     expect(detail.preferredEducationDates).toEqual([])
   })
+
+  it('기타 요청사항은 otherRequests를 쓰고 classes가 비면 반 목록을 만들지 않는다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 3,
+      organizationName: '진월초등학교',
+      applicationStatus: 'SUBMITTED',
+      educationRegionCode: 'GWANGJU',
+      requestedClassCount: 8,
+      requestedStudentCount: 202,
+    })
+    const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      organizationName: '진월초등학교',
+      educationRegionCode: 'GWANGJU',
+      otherRequests: '주차 협의 필요',
+      managerComment: '레거시 코멘트',
+      preferredEducationDates: ['2026-04-24', '2026-05-08'],
+      gradeBlocks: [{ gradeLabel: '1학년', classCount: 8, classes: [] }],
+      classTimeRows: [
+        {
+          gradeRangeLabel: '1학년, 2학년, 3학년',
+          periods: ['09:00 ~ 09:40', '09:50 ~ 10:30'],
+        },
+      ],
+    })
+
+    expect(detail.regionLabel).toBe('광주')
+    expect(detail.otherRequests).toBe('주차 협의 필요')
+    expect(detail.gradeBlocks).toEqual([{ gradeLabel: '1학년', classCount: 8, classes: [] }])
+    expect(detail.classTimeRows).toEqual([
+      {
+        gradeRangeLabel: '1학년, 2학년, 3학년',
+        periods: ['09:00 ~ 09:40', '09:50 ~ 10:30', '-', '-'],
+      },
+    ])
+    expect(detail.preferredEducationDates).toEqual(['2026-04-24', '2026-05-08'])
+  })
+
+  it('preferredEducationDates가 비면 preferredEducationSchedules 달력일을 쓴다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 4,
+      organizationName: '학교',
+      applicationStatus: 'SUBMITTED',
+    })
+    const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      preferredEducationDates: null,
+      preferredEducationSchedules: [{ startAt: '2026-11-20T00:00:00+09:00' }],
+    })
+
+    expect(detail.preferredEducationDates).toEqual(['2026-11-20'])
+  })
 })
 
 describe('UJAT 기관 신청 목록 adapter', () => {
@@ -104,7 +154,49 @@ describe('UJAT 기관 신청 목록 adapter', () => {
     expect(row.gradeClassCounts).toEqual([{ gradeLabel: '3학년', classCount: null }])
     expect(row.totalClassCount).toBe(1)
     expect(row.scheduleSlots['2026-11-04']).toBe('O')
+    expect(row.preferredScheduleIdByIso).toEqual({})
     expect(row.sessionIsoDates).toEqual(['2026-11-11'])
+  })
+
+  it('SUBMITTED는 applicationStatus만으로 임시 배정 배지를 만들지 않는다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 1691444,
+        organizationName: '기관',
+        applicationStatus: 'SUBMITTED',
+        educationRegionCode: 'GYEONGGI_SOUTH',
+        temporaryAssignmentStatus: null,
+        preferredEducationSchedules: [{ startAt: '2027-04-29T15:00:00Z' }],
+        gradeBlocks: [{ gradeLabel: '1학년', classCount: 2, classes: [] }],
+      },
+      0
+    )
+
+    expect(row.tempAssignmentStatus).toBe('evaluation_pending')
+    expect(row.scheduleSlots['2027-04-30']).toBe('O')
+    expect(row.gradeClassCounts).toEqual([{ gradeLabel: '1학년', classCount: 2 }])
+  })
+
+  it('preferred scheduleId는 미해결이 아닐 때만 날짜에 붙인다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 21,
+        organizationName: '기관',
+        applicationStatus: 'SUBMITTED',
+        preferredEducationSchedules: [
+          { startAt: '2027-04-29T15:00:00Z', scheduleId: 111 },
+          {
+            startAt: '2027-06-03T15:00:00Z',
+            scheduleId: null,
+            unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH',
+          },
+        ],
+      },
+      0
+    )
+
+    expect(row.preferredScheduleIdByIso).toEqual({ '2027-04-30': 111 })
+    expect(row.scheduleSlots['2027-06-04']).toBe('O')
   })
 
   it('빈 희망일은 날짜 열을 채우지 않고 gradeBlocks를 여러 줄로 쓴다', () => {

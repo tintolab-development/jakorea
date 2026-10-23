@@ -1,6 +1,7 @@
 /**
  * UJAT 프로그램 상세 URL — `/programs/ujat?programId=…&lnb=…&tab=…`
  * - `instAppId`: 신청 기관 상세(목록 행 id). `tab=inst_schedule_confirm`이면 해당 탭 유지, 아니면 `inst_all`.
+ * - `institutionApplicationView=calendar` · `calendarDate=YYYY-MM-DD`: 신청 기관 캘린더 뷰.
  * - `edit`: 공통정보·모집 폼 수정 모드.
  */
 
@@ -28,6 +29,15 @@ const TAB_PARAM = 'tab'
 
 /** 신청 기관 목록 → 기관 상세 (풀페이지 메인) */
 export const UJAT_INST_APP_ID_PARAM = 'instAppId'
+
+/** 신청 기관 목록 캘린더 뷰. 값 `calendar`(생략 시 리스트). 일반 프로그램과 키를 맞춘다. */
+export const UJAT_INSTITUTION_APPLICATION_VIEW_PARAM = 'institutionApplicationView'
+
+/** 신청 기관 캘린더 선택일 `YYYY-MM-DD`(KST). 리스트 뷰에서는 제거. */
+export const UJAT_INSTITUTION_CALENDAR_DATE_PARAM = 'calendarDate'
+
+/** 기관 신청 지역 탭. 값 = API `educationRegionCode` (예: GYEONGGI_SOUTH). */
+export const UJAT_INSTITUTION_EDUCATION_REGION_PARAM = 'educationRegion'
 
 /** 교육 진행 > 참여 기관 목록 → 기관 상세 */
 export const UJAT_EDU_INST_ID_PARAM = 'eduInstId'

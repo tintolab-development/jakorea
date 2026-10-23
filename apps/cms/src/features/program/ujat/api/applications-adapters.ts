@@ -50,16 +50,6 @@ function mapOrgStatusToTempAssignment(
   if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
     return 'application_rejected'
   }
-  if (['TEMP_REJECTED', 'TEMPORARY_REJECTED'].includes(normalized)) {
-    return 'temp_rejected'
-  }
-  if (
-    ['APPROVED', 'ASSIGNED', 'TEMP_ASSIGNED', 'TEMPORARY_ASSIGNED', 'WAITING_ASSIGNMENT'].includes(
-      normalized
-    )
-  ) {
-    return 'temp_assigned'
-  }
   return 'evaluation_pending'
 }
 
@@ -106,6 +96,22 @@ function isoDatesFromStartAts(
     if (iso && !dates.includes(iso)) dates.push(iso)
   }
   return dates.sort()
+}
+
+function preferredScheduleIdByIsoFromSchedules(
+  preferred: OrganizationApplicationListItemResponse['preferredEducationSchedules']
+): Record<string, number> {
+  const ids: Record<string, number> = {}
+  for (const item of preferred ?? []) {
+    const iso = toSeoulYmd(item?.startAt)
+    const scheduleId = item?.scheduleId
+    const unresolved = item?.unresolvedReason?.trim().toUpperCase() ?? ''
+    if (!iso) continue
+    if (unresolved === 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH') continue
+    if (scheduleId == null || !Number.isFinite(Number(scheduleId))) continue
+    ids[iso] = Number(scheduleId)
+  }
+  return ids
 }
 
 function mapListGradeClassCounts(
@@ -177,6 +183,9 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     gradeClassCounts,
     totalClassCount: resolveTotalClassCount(dto, gradeClassCounts),
     scheduleSlots: scheduleSlotsFromPreferredDates(dto.preferredEducationSchedules),
+    preferredScheduleIdByIso: preferredScheduleIdByIsoFromSchedules(
+      dto.preferredEducationSchedules
+    ),
     sessionIsoDates: isoDatesFromStartAts(dto.sessions),
     teacherName: displayTextOrDash(dto.teacherName),
     scheduleConfirmStatus: parseUjatScheduleConfirmStatus(dto.scheduleConfirmStatus),
@@ -232,15 +241,7 @@ export function enrichUjatInstitutionDetailFromRemote(
   dto: OrganizationApplicationDetailDto
 ): UjatInstitutionApplicationDetail {
   const base = getUjatInstitutionApplicationDetail(row)
-  const classCount = dto.requestedClassCount ?? row.totalClassCount ?? 0
-  const gradeLabel =
-    dto.requestedGrade?.trim() ||
-    dto.grade?.trim() ||
-    row.gradeClassCounts[0]?.gradeLabel ||
-    '신청 학급'
-  const studentCount = dto.requestedStudentCount ?? 0
-
-  const remoteGradeBlocks = mapRemoteGradeBlocks(dto.gradeBlocks, studentCount)
+  const remoteGradeBlocks = mapRemoteGradeBlocks(dto.gradeBlocks)
   const remoteClassTimeRows = mapRemoteClassTimeRows(dto.classTimeRows)
 
   const hasField = (key: keyof OrganizationApplicationDetailDto): boolean =>
@@ -250,48 +251,51 @@ export function enrichUjatInstitutionDetailFromRemote(
     const value = dto[key]
     return typeof value === 'string' ? value.trim() : ''
   }
+  const otherRequests = hasField('otherRequests')
+    ? stringField('otherRequests', '')
+    : stringField('managerComment', base.otherRequests)
 
   return {
     ...base,
     address: stringField('organizationAddress', base.address),
     addressDetail: stringField('organizationAddressDetail', base.addressDetail),
-    otherRequests: stringField('managerComment', base.otherRequests),
+    otherRequests,
     teacherContact: {
       teacherName: stringField('teacherName', row.teacherName || base.teacherContact.teacherName),
       tel: stringField('teacherTel', base.teacherContact.tel),
       mobile: stringField('teacherPhone', base.teacherContact.mobile),
       email: stringField('teacherEmail', base.teacherContact.email),
     },
-    preferredEducationDates: hasField('preferredEducationDates')
-      ? dto.preferredEducationDates ?? []
-      : base.preferredEducationDates,
+    preferredEducationDates: mapPreferredEducationDates(dto, base.preferredEducationDates),
     classTimeRows: remoteClassTimeRows ?? base.classTimeRows,
-    gradeBlocks:
-      remoteGradeBlocks ??
-      (classCount > 0
-        ? [
-            {
-              gradeLabel,
-              classCount,
-              classes: Array.from({ length: classCount }, (_, index) => ({
-                classNo: index + 1,
-                studentCount: classCount === 1 ? studentCount : 0,
-              })),
-            },
-          ]
-        : base.gradeBlocks),
+    gradeBlocks: remoteGradeBlocks ?? base.gradeBlocks,
   }
 }
 
-/** `classes`가 비어 있으면 총원을 나누지 않는다 — 학급 1개면 총원, 2개 이상이면 0 */
+function mapPreferredEducationDates(
+  dto: OrganizationApplicationDetailDto,
+  fallback: string[]
+): string[] {
+  const hasDates = Object.prototype.hasOwnProperty.call(dto, 'preferredEducationDates')
+  const fromDates = Array.isArray(dto.preferredEducationDates)
+    ? dto.preferredEducationDates.filter(
+        (item): item is string => typeof item === 'string' && item.trim().length > 0
+      )
+    : []
+  if (fromDates.length > 0) return fromDates.map(item => item.trim())
+
+  const fromSchedules = isoDatesFromStartAts(dto.preferredEducationSchedules)
+  if (fromSchedules.length > 0) return fromSchedules
+  if (hasDates) return []
+  return fallback
+}
+
+/** classes가 []이면 classCount로 반 목록을 만들지 않는다 */
 function mapRemoteGradeBlocks(
-  blocks: OrganizationApplicationDetailDto['gradeBlocks'],
-  totalStudentCount: number
+  blocks: OrganizationApplicationDetailDto['gradeBlocks']
 ): UjatInstitutionApplicationDetail['gradeBlocks'] | null {
   if (!blocks) return null
-  const singleBlock = blocks.length === 1
   return blocks.map(block => {
-    const classCount = block.classCount ?? 0
     const classes = (block.classes ?? []).map((room, index) => {
       const parsedNo = Number(room.classNo)
       return {
@@ -301,14 +305,8 @@ function mapRemoteGradeBlocks(
     })
     return {
       gradeLabel: block.gradeLabel?.trim() || '-',
-      classCount,
-      classes:
-        classes.length > 0
-          ? classes
-          : Array.from({ length: classCount }, (_, index) => ({
-              classNo: index + 1,
-              studentCount: singleBlock && classCount === 1 ? totalStudentCount : 0,
-            })),
+      classCount: block.classCount ?? 0,
+      classes,
     }
   })
 }
@@ -317,15 +315,17 @@ function mapRemoteClassTimeRows(
   rows: OrganizationApplicationDetailDto['classTimeRows']
 ): UjatInstitutionApplicationDetail['classTimeRows'] | null {
   if (!rows) return null
-  return rows.flatMap(row => {
+  return rows.map(row => {
     const periods = row.periods ?? []
-    if (periods.length !== 4) return []
-    return [
-      {
-        gradeRangeLabel: row.gradeRangeLabel?.trim() || '-',
-        periods: [periods[0]!, periods[1]!, periods[2]!, periods[3]!] as const,
-      },
-    ]
+    return {
+      gradeRangeLabel: row.gradeRangeLabel?.trim() || '-',
+      periods: [
+        periods[0]?.trim() || '-',
+        periods[1]?.trim() || '-',
+        periods[2]?.trim() || '-',
+        periods[3]?.trim() || '-',
+      ] as const,
+    }
   })
 }
 

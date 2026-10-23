@@ -14,6 +14,7 @@ import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { OrganizationApplications1Params } from '@/shared/api/generated/dashboard/schemas/organizationApplications1Params'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 import type { OrganizationApplicationNotificationResendRequest as OrganizationApplicationNotificationResendRequestDto } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequest'
 import type { OrganizationApplicationNotificationResendRequestTiming } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequestTiming'
@@ -73,6 +74,13 @@ export type ApplicationsListQuery = {
   /** 총점 미평가 — 유효 score_total 제출 평가자 2명 미만 (`totalScore`와 동시 전송 불가) */
   totalScoreUnevaluated?: boolean
 }
+
+/** GET …/organization-applications — OpenAPI `OrganizationApplications1Params` + 공통 page query */
+export type OrganizationApplicationsListQuery = ApplicationsListQuery &
+  Omit<OrganizationApplications1Params, 'recruitmentId'> & {
+    /** UJAT 임시 배정 워크플로. applicationStatus `status`와 별개 */
+    temporaryAssignmentStatus?: string
+  }
 
 const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
 
@@ -204,7 +212,7 @@ export type IndividualApplicationUpdatePayload = Omit<
 
 async function fetchApplicationsPage<T>(
   url: string,
-  params?: ApplicationsListQuery
+  params?: ApplicationsListQuery | OrganizationApplicationsListQuery
 ): Promise<ApplicationsPageDto<T>> {
   const body = unwrapApiBody<ApplicationsPageDto<T> & { content?: T[] }>(
     await customInstance({
@@ -218,7 +226,7 @@ async function fetchApplicationsPage<T>(
 
 export async function fetchOrganizationApplicationsRemote(
   programId: string,
-  params?: ApplicationsListQuery
+  params?: OrganizationApplicationsListQuery
 ): Promise<ApplicationsPageDto<OrganizationApplicationListItemResponse>> {
   return fetchApplicationsPage<OrganizationApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/organization-applications`,

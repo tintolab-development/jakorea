@@ -26,6 +26,12 @@ export const queryKeys = {
       'temporary-schedule',
       institutionId,
     ] as const,
+  organizationScheduleAssignments: (programId: string, educationRegionCode: string) =>
+    [
+      ...queryKeys.organizationApplicationsRoot(programId),
+      'schedule-assignments',
+      educationRegionCode,
+    ] as const,
   programSchedules: (programId: string) =>
     [...queryKeys.all, 'program-schedules', programId] as const,
   volunteerApplications: (

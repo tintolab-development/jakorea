@@ -23,6 +23,8 @@ export type UjatApplicationsListQuery = ApplicationsListQuery & {
   educationRegionCode?: string
   /** `YYYY-MM-DD` (KST) */
   scheduleDate?: string
+  /** 임시 배정 워크플로. applicationStatus가 아님 */
+  temporaryAssignmentStatus?: string
 }
 
 export type UjatScheduleConfirmStatusWire =
