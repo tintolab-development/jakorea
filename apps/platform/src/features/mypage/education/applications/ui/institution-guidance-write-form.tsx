@@ -17,7 +17,6 @@ import {
   emptyUjatInstitutionGuidanceExtras,
   UJAT_CLASSROOM_SETTING_FIELD,
   UJAT_CLASSROOM_SETTING_OPTIONS,
-  UJAT_SEX_OFFENSE_WRITE_HEADING,
   UJAT_SNACK_AVAILABILITY_OPTIONS,
   UJAT_SNACK_FIELD,
   type ApplyUjatInstitutionGuidanceExtras,
@@ -65,7 +64,6 @@ export function EducationInstitutionGuidanceWriteForm({
   initialState,
   portalPatchContext,
   variant = 'general',
-  isEdit = false,
   submitPeriodLabel,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
@@ -84,9 +82,7 @@ export function EducationInstitutionGuidanceWriteForm({
   )
 
   const submitLabel = isUjat
-    ? isEdit
-      ? '수정 제출하기'
-      : '제출하기'
+    ? '제출하기'
     : hasInstitutionGuidanceDraftContent(initialState.guidance)
       ? '수정하기'
       : '작성하기'
@@ -103,7 +99,6 @@ export function EducationInstitutionGuidanceWriteForm({
     if (
       isTeacherInstitutionGuidanceSubmitIncomplete(guidance, nextSexOffense, {
         ujat: isUjat,
-        isEdit: isUjat && isEdit,
         ujatExtras: isUjat ? ujatExtras : undefined,
       })
     ) {
@@ -189,27 +184,15 @@ export function EducationInstitutionGuidanceWriteForm({
                 />
               </ParagraphCard>
 
-              {isEdit ? (
-                <ParagraphCard
-                  dataParagraphId="institution-sex-offense-submission"
-                  editableHeading={institutionGuidanceParagraphHeading(
-                    INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
-                    INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
-                  )}
-                >
-                  <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
-                </ParagraphCard>
-              ) : (
-                <ParagraphCard
-                  dataParagraphId="institution-sex-offense-ujat-write"
-                  editableHeading={institutionGuidanceParagraphHeading(
-                    UJAT_SEX_OFFENSE_WRITE_HEADING.title,
-                    UJAT_SEX_OFFENSE_WRITE_HEADING.description,
-                  )}
-                >
-                  <ApplyInstitutionSexOffenseUjatWrite value={sexOffense} onChange={setSexOffense} />
-                </ParagraphCard>
-              )}
+              <ParagraphCard
+                dataParagraphId="institution-sex-offense-ujat-write"
+                editableHeading={institutionGuidanceParagraphHeading(
+                  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
+                  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
+                )}
+              >
+                <ApplyInstitutionSexOffenseUjatWrite value={sexOffense} onChange={setSexOffense} />
+              </ParagraphCard>
 
               <ParagraphCard
                 dataParagraphId="institution-guidance-classroom"

@@ -12,7 +12,6 @@ import {
 } from '@/shared/ui'
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION,
-  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES,
   INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS,
@@ -23,7 +22,6 @@ import styles from './apply-institution-sex-offense.module.css'
 import {
   emptyInstitutionSexOffense,
   type ApplyInstitutionSexOffenseValues,
-  type ApplySexOffenseInquiryMethod,
   type ApplySexOffenseSiteSubmission,
   type ApplySexOffenseSubmissionRequest,
 } from './apply-institution-sex-offense-answers.ts'
@@ -144,82 +142,12 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
   )
 }
 
-/** UJAT 안내사항 작성 2/2 — 조회 방식 + 사이트 제출을 한 표에 */
+/** UJAT 안내사항 작성 2/2 — 사이트 제출 방식 + 온라인 제출 시 조회 정보 + 안내 문구 */
 export function ApplyInstitutionSexOffenseUjatWrite({ value, onChange }: SubmissionProps) {
-  const showOnlineCredentials = value.siteSubmission === 'online'
   return (
-    <div className={[styles.root, hostStyles.root].join(' ')}>
-      <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
-        <PFFormFieldRow type="double">
-          <PFFormField label="조회 방식">
-            <ApplyFormRadioGroup
-              name="apply-sex-offense-inquiry-method"
-              value={value.inquiryMethod}
-              options={INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS}
-              onChange={next =>
-                onChange({
-                  ...value,
-                  submissionRequest: 'request',
-                  inquiryMethod: next as ApplySexOffenseInquiryMethod,
-                })
-              }
-            />
-          </PFFormField>
-          <PFFormField label="사이트 제출 방식">
-            <ApplyFormRadioGroup
-              name="apply-sex-offense-site"
-              value={value.siteSubmission}
-              options={INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS}
-              onChange={next =>
-                onChange({
-                  ...value,
-                  submissionRequest: 'request',
-                  siteSubmission: next as ApplySexOffenseSiteSubmission,
-                })
-              }
-            />
-          </PFFormField>
-        </PFFormFieldRow>
-        {showOnlineCredentials ? (
-          <PFFormFieldRow type="single">
-            <PFFormField label="성범죄 경력조회용 정보" fullWidth>
-              <PFFormInlineRow>
-                <PFFormInlineSegment>
-                  <PFFormControlCluster>
-                    <PFText as="span" typo="bd-md-md" color="neutral-cool-700">
-                      ID
-                    </PFText>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      width={120}
-                      placeholder="기관 아이디"
-                      value={value.institutionId}
-                      onValueChange={next => onChange({ ...value, institutionId: next })}
-                    />
-                  </PFFormControlCluster>
-                </PFFormInlineSegment>
-                <PFFormInlineSeparator />
-                <PFFormInlineSegment>
-                  <PFFormControlCluster>
-                    <PFText as="span" typo="bd-md-md" color="neutral-cool-700">
-                      검증번호
-                    </PFText>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      width={120}
-                      placeholder="검증번호"
-                      value={value.verificationNumber}
-                      onValueChange={next => onChange({ ...value, verificationNumber: next })}
-                    />
-                  </PFFormControlCluster>
-                </PFFormInlineSegment>
-              </PFFormInlineRow>
-            </PFFormField>
-          </PFFormFieldRow>
-        ) : null}
-      </PFFormFieldTable>
-    </div>
+    <ApplyInstitutionSexOffenseInquiry
+      value={{ ...value, submissionRequest: value.submissionRequest || 'request' }}
+      onChange={next => onChange({ ...next, submissionRequest: 'request' })}
+    />
   )
 }
