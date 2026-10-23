@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CMS_ACTION_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
-import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
-import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
+import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
 import { UjatInstitutionApplicationCalendarView } from './calendar-view'
 import { ujatInstitutionApplicationTableScrollX } from './columns'
 import type { UjatInstitutionApplicationRow } from './types'
@@ -25,9 +24,7 @@ export function UjatInstitutionApplicationList({
   onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
-    getDefaultUjatEducationRegionKey
-  )
+  const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
     handleFilterChange,
@@ -53,6 +50,7 @@ export function UjatInstitutionApplicationList({
     hasNextPage,
     isFetchingNextPage,
     infiniteScrollResetKey,
+    isListPending,
   } = useUjatInstitutionApplicationList(activeRegion, programId)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
@@ -182,10 +180,12 @@ export function UjatInstitutionApplicationList({
           </div>
         ) : (
           <UjatInstitutionApplicationCalendarView
+            programId={programId}
             rows={tableData}
             selectedRowKeys={selectedRowKeys}
             onSelectionChange={setSelectedRowKeys}
             onOpenDetail={onOpenDetail}
+            listPending={isListPending}
           />
         )}
         <div ref={loadMoreRef} aria-hidden={!isFetchingNextPage} style={{ minHeight: 1 }}>

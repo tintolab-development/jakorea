@@ -3,6 +3,8 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   isoDateFromScheduleInstant,
+  isExactDayProgramSchedule,
+  resolveScheduleIdForIsoDate,
   type ProgramScheduleListItem,
 } from '@/features/program/ujat/api/temporary-schedule-api'
 import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
@@ -69,6 +71,27 @@ export function formatUjatInstitutionFridayDisplay(isoDate: string): string {
   if (!d.isValid()) return isoDate
   const label = formatDateDotWithWeekday(d)
   return label === '-' ? isoDate : label
+}
+
+const KOREAN_PREFERRED_DATE = /^\d{2,4}년\s*\d{1,2}월\s*\d{1,2}일?(?:\([^)]+\))?$/
+
+/** 신청 기관 상세 희망일 — `26년 4월 24일(금)` */
+export function formatUjatPreferredEducationDateDisplay(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  if (KOREAN_PREFERRED_DATE.test(trimmed.replace(/\s+/g, ' '))) return trimmed
+
+  const iso = trimmed.match(/^(\d{4}-\d{2}-\d{2})/)?.[1]
+  const d = iso ? dayjs(iso) : dayjs(trimmed)
+  if (!d.isValid()) return trimmed
+
+  const dotted = formatDateDotWithWeekday(d)
+  if (dotted === '-') return trimmed
+  const open = dotted.lastIndexOf('(')
+  const close = dotted.lastIndexOf(')')
+  const weekday = open >= 0 && close > open ? dotted.slice(open + 1, close) : ''
+  const weekdayPart = weekday ? `(${weekday})` : ''
+  return `${String(d.year()).slice(-2)}년 ${d.month() + 1}월 ${d.date()}일${weekdayPart}`
 }
 
 export function sumGradeClassCounts(
@@ -189,6 +212,42 @@ export function buildUjatProgramScheduleDates(
         semesterFromApi ??
         (overlay != null ? resolveEducationSemesterForIsoDate(iso, overlay) : null),
       scheduleId,
+    })
+  }
+
+  return entries.sort((a, b) => a.isoDate.localeCompare(b.isoDate))
+}
+
+/**
+ * 임시 배정 날짜 열은 preferredEducationSchedules 달력일만.
+ * GET /schedules의 연간 PROGRAM_DEFINED 창·다른 하루 행을 열로 추가하지 않는다.
+ */
+export function buildUjatScheduleAssignDates(input: {
+  preferredIsoDates: readonly string[]
+  schedules: readonly ProgramScheduleListItem[]
+  overlay?: Record<string, unknown>
+}): UjatInstitutionScheduleAssignDateEntry[] {
+  const seen = new Set<string>()
+  const entries: UjatInstitutionScheduleAssignDateEntry[] = []
+
+  for (const iso of input.preferredIsoDates) {
+    if (!ISO_DATE.test(iso) || seen.has(iso)) continue
+    seen.add(iso)
+    const matched = input.schedules.find(item => {
+      if (!isExactDayProgramSchedule(item)) return false
+      const start =
+        isoDateFromScheduleInstant(item.startDate) ??
+        isoDateFromScheduleInstant(item.startAt) ??
+        isoDateFromScheduleInstant(item.scheduleStartAt)
+      return start === iso
+    })
+    entries.push({
+      isoDate: iso,
+      title: formatScheduleColumnTitle(iso),
+      semester:
+        (matched ? readScheduleSemester(matched) : null) ??
+        (input.overlay != null ? resolveEducationSemesterForIsoDate(iso, input.overlay) : null),
+      scheduleId: resolveScheduleIdForIsoDate(input.schedules, iso) ?? undefined,
     })
   }
 

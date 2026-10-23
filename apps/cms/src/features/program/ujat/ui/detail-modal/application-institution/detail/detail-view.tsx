@@ -6,45 +6,43 @@ import {
   UjatInstitutionTeacherInfoValue,
 } from './detail-display'
 import type { UjatInstitutionApplicationDetail } from './detail-types'
+import { formatUjatPreferredEducationDateDisplay } from '../education-schedule'
 import {
   ClassTimeTable,
   PipeSeparatedValues,
 } from '../shared/institution-detail-shared'
+import './detail-page.css'
+
+function displayOrDash(value: string | null | undefined): string {
+  return value?.trim() || '-'
+}
 
 export function UjatInstitutionApplicationDetailView({
   detail,
   personalInfoRevealed,
-  workflowDisplayLabel,
 }: {
   detail: UjatInstitutionApplicationDetail
   personalInfoRevealed: boolean
-  workflowDisplayLabel?: string
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
-      <DetailInfoForm title="임시 배정 현황" mode="view">
+    <div className="ujat-institution-application-detail-view">
+      <DetailInfoForm title="기본 정보" mode="view">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="임시 배정 현황"
             fullRow
             view={
-              <UjatInstitutionApplicationStatusBadge
-                status={detail.tempAssignmentStatus}
-                label={workflowDisplayLabel}
-              />
+              <UjatInstitutionApplicationStatusBadge status={detail.tempAssignmentStatus} />
             }
           />
         </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      <DetailInfoForm title="기본 정보" mode="view">
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="신청 기관명" view={detail.institutionName} />
-          <DetailInfoForm.Field label="신청 지역" view={detail.regionLabel} />
+          <DetailInfoForm.Field label="신청 기관명" view={displayOrDash(detail.institutionName)} />
+          <DetailInfoForm.Field label="신청 지역" view={displayOrDash(detail.regionLabel)} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="기관 소재지" view={detail.address} />
-          <DetailInfoForm.Field label="상세 주소" view={detail.addressDetail} />
+          <DetailInfoForm.Field label="기관 소재지" view={displayOrDash(detail.address)} />
+          <DetailInfoForm.Field label="상세 주소" view={displayOrDash(detail.addressDetail)} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
@@ -73,28 +71,42 @@ export function UjatInstitutionApplicationDetailView({
           </DetailInfoForm.Row>
         ) : null}
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="기타 요청사항" fullRow view={detail.otherRequests} />
+          <DetailInfoForm.Field
+            label="기타 요청사항"
+            fullRow
+            view={displayOrDash(detail.otherRequests)}
+          />
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
       <DetailInfoForm title="학년 별 신청 정보" mode="view">
-        {detail.gradeBlocks.map((block, blockIndex) => (
-          <DetailInfoForm.Row key={`${block.gradeLabel}-${blockIndex}`} type="single">
-            <DetailInfoForm.Field
-              label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
-              fullRow
-              view={
-                <PipeSeparatedValues
-                  parts={block.classes.map(classRow => (
-                    <span key={classRow.classNo}>
-                      {classRow.classNo}반 : {formatNumberDisplay(classRow.studentCount)}명
-                    </span>
-                  ))}
-                />
-              }
-            />
+        {detail.gradeBlocks.length === 0 ? (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="학년 별 신청 정보" fullRow view="-" />
           </DetailInfoForm.Row>
-        ))}
+        ) : (
+          detail.gradeBlocks.map((block, blockIndex) => (
+            <DetailInfoForm.Row key={`${block.gradeLabel}-${blockIndex}`} type="single">
+              <DetailInfoForm.Field
+                label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
+                fullRow
+                view={
+                  block.classes.length > 0 ? (
+                    <PipeSeparatedValues
+                      parts={block.classes.map(classRow => (
+                        <span key={classRow.classNo}>
+                          {classRow.classNo}반 : {formatNumberDisplay(classRow.studentCount)}명
+                        </span>
+                      ))}
+                    />
+                  ) : (
+                    '-'
+                  )
+                }
+              />
+            </DetailInfoForm.Row>
+          ))
+        )}
       </DetailInfoForm>
 
       <DetailInfoForm title="학년 별 수업 시간" mode="view">
@@ -112,7 +124,7 @@ export function UjatInstitutionApplicationDetailView({
               detail.preferredEducationDates.length > 0 ? (
                 <PipeSeparatedValues
                   parts={detail.preferredEducationDates.map(date => (
-                    <span key={date}>{date}</span>
+                    <span key={date}>{formatUjatPreferredEducationDateDisplay(date)}</span>
                   ))}
                 />
               ) : (

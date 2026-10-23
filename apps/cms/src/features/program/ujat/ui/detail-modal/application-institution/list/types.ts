@@ -41,6 +41,8 @@ export type UjatInstitutionApplicationRow = {
   gradeClassCounts: UjatInstitutionGradeClassCount[]
   totalClassCount: number | null
   scheduleSlots: Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>
+  /** preferredEducationSchedules[].scheduleId. 숫자이고 미해결이 아닐 때만 */
+  preferredScheduleIdByIso: Record<string, number>
   /** GET sessions[].startAt 날짜. 없으면 빈 배열 */
   sessionIsoDates: string[]
   teacherName: string

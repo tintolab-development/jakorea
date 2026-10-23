@@ -12,6 +12,8 @@ export {
   compareUjatEducationRegionByLabel,
   buildUjatRegionCapacityPairRows,
   findUjatEducationRegionKeyByLabel,
+  findUjatEducationRegionKeyByCode,
+  getDefaultUjatEducationRegionKey,
   isUjatInstitutionApplicationRegionKey,
   type UjatDefaultEducationRegionKey,
   type UjatEducationRegionOption,

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import { patchUjatInstitutionApplicationRows } from '@/features/program/ujat/model/ujat-institution-application'
@@ -29,6 +30,13 @@ import {
   buildUjatRegionCapacityMaxClassMap,
   fetchUjatRegionCapacitiesRemote,
 } from '@/features/program/ujat/api/region-capacities-client'
+import {
+  applyUjatInstitutionApplicationViewMode,
+  parseUjatInstitutionApplicationViewMode,
+  parseUjatInstitutionCalendarDateParam,
+  resolveUjatInstitutionCalendarFocusIso,
+} from './calendar-query'
+import { UJAT_INSTITUTION_CALENDAR_DATE_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 
 /** 필터 조건은 모두 서버 query로 보낸다. 응답이 다른 지역 코드를 섞어 보낼 때만 탭 기준으로 거른다. */
 function filterRowsByRegion(
@@ -51,6 +59,7 @@ export function useUjatInstitutionApplicationList(
   )
 
   const { showAlert } = useCmsAlert()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] = useState<UjatInstitutionApplicationFilters>(() => ({
     ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
@@ -59,7 +68,7 @@ export function useUjatInstitutionApplicationList(
     ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
   }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+  const viewMode = parseUjatInstitutionApplicationViewMode(searchParams)
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
 
   const listQuery = useMemo(
@@ -99,6 +108,19 @@ export function useUjatInstitutionApplicationList(
   const totalElements = remoteEnabled
     ? (remoteQuery.data?.pages[0]?.totalElements ?? tableData.length)
     : tableData.length
+
+  useEffect(() => {
+    if (viewMode !== 'calendar' || !remoteEnabled) return
+    if (!remoteQuery.hasNextPage || remoteQuery.isFetchingNextPage) return
+    void remoteQuery.fetchNextPage()
+  }, [
+    viewMode,
+    remoteEnabled,
+    remoteQuery.hasNextPage,
+    remoteQuery.isFetchingNextPage,
+    remoteQuery.dataUpdatedAt,
+    remoteQuery.fetchNextPage,
+  ])
   const infiniteScrollResetKey = useMemo(
     () => `${programId ?? ''}:${regionKey}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, programId, regionKey]
@@ -137,6 +159,29 @@ export function useUjatInstitutionApplicationList(
     setAppliedFilters({ ...pendingFilters })
     setSelectedRowKeys([])
   }, [pendingFilters])
+
+  const setViewMode = useCallback(
+    (mode: 'table' | 'calendar') => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          const calendarIso =
+            mode === 'calendar'
+              ? resolveUjatInstitutionCalendarFocusIso(
+                  parseUjatInstitutionCalendarDateParam(
+                    next.get(UJAT_INSTITUTION_CALENDAR_DATE_PARAM)
+                  ),
+                  collectPreferredEducationIsoDates(tableData)
+                )
+              : null
+          applyUjatInstitutionApplicationViewMode(next, mode, calendarIso)
+          return next.toString() === prev.toString() ? prev : next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams, tableData]
+  )
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -221,7 +266,6 @@ export function useUjatInstitutionApplicationList(
     setPendingFilters({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })
     setAppliedFilters({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })
     setSelectedRowKeys([])
-    setViewMode('table')
   }, [])
 
   const refreshData = useCallback(() => {
@@ -254,5 +298,6 @@ export function useUjatInstitutionApplicationList(
     hasNextPage: remoteQuery.hasNextPage,
     isFetchingNextPage: remoteQuery.isFetchingNextPage,
     infiniteScrollResetKey,
+    isListPending: remoteEnabled && remoteQuery.isPending,
   }
 }

@@ -34,12 +34,12 @@ export function UjatInstitutionTeacherInfoValue({
   contact: UjatInstitutionApplicationTeacherContact
   revealed: boolean
 }) {
-  const tel = displayServerPiiAsIs(contact.tel, contact.tel)
-  const mobile = displayServerPiiAsIs(contact.mobile, contact.mobile)
-  const email = displayServerPiiAsIs(contact.email, contact.email)
+  const tel = displayServerPiiAsIs(contact.tel)
+  const mobile = displayServerPiiAsIs(contact.mobile)
+  const email = displayServerPiiAsIs(contact.email)
 
   const segments: ReactNode[] = [
-    <span key="name">담당 교사 : {contact.teacherName}</span>,
+    <span key="name">담당 교사 : {displayServerPiiAsIs(contact.teacherName)}</span>,
     <span key="tel">Tel : {tel}</span>,
     <span key="mobile">M : {mobile}</span>,
     <span key="email">E-mail : {email}</span>,

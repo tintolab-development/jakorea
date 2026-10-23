@@ -12,11 +12,7 @@ import {
 } from '../list/action-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
-
-const TEMP_REJECT_BUTTON_STYLE = {
-  borderColor: '#e07a96',
-  color: '#e07a96',
-} as const
+import './detail-page.css'
 
 export function UjatInstitutionApplicationDetailPage({
   institutionId,
@@ -149,10 +145,7 @@ export function UjatInstitutionApplicationDetailPage({
 
   return (
     <div className="ujat-institution-application-detail-page">
-      <div
-        className="ujat-institution-application-detail-page__actions"
-        style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}
-      >
+      <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
           <CmsButton
             type="button"
@@ -171,7 +164,6 @@ export function UjatInstitutionApplicationDetailPage({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
-            style={TEMP_REJECT_BUTTON_STYLE}
             loading={actionLoading}
             onClick={() => setPendingAction('temp_reject')}
           >
@@ -182,12 +174,12 @@ export function UjatInstitutionApplicationDetailPage({
             variant="secondary"
             size="large"
             className="cms-button--action"
-            width={180}
+            width={CMS_ACTION_BUTTON_WIDTH}
             loading={actionLoading}
             disabled={!workflowReady || workflow.primaryDisabled}
             onClick={handlePrimaryAction}
           >
-            {workflow.primaryLabel}
+            {workflow.primaryAction === 'open_schedule_assign' ? '임시 배정' : workflow.primaryLabel}
           </CmsButton>
           <PersonalInfoRevealButton
             labelMode="stickyReveal"
@@ -203,7 +195,6 @@ export function UjatInstitutionApplicationDetailPage({
       <UjatInstitutionApplicationDetailView
         detail={detail}
         personalInfoRevealed={personalInfoRevealed}
-        workflowDisplayLabel={workflow.displayLabel}
       />
       {confirmModal}
       {pendingAction ? (

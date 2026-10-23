@@ -83,13 +83,9 @@ export function UjatInstitutionScheduleSheetPreviewModal({
   const { showAlert } = useCmsAlert()
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const remoteQuery = useInfiniteQuery({
-    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {
-      status: 'TEMP_ASSIGNED',
-    }),
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {}),
     queryFn: ({ pageParam }) =>
-      listUjatInstitutionApplicationsPage(String(programId), pageParam, {
-        status: 'TEMP_ASSIGNED',
-      }),
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, {}),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled && open,
