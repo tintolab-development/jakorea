@@ -23,6 +23,11 @@ export const PROGRAM_PARTICIPANT_TYPE_IMMUTABLE_MESSAGE =
 export const PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED_MESSAGE =
   '최초 모집 시작일 이후에는 모집 단위(추가/삭제)를 변경할 수 없습니다.'
 
+export const PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE = '프로그램 유형 변경 불가 안내'
+
+export const PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE =
+  '모집이 시작된 프로그램은 유형을 변경할 수 없습니다.\n변경 전 유형으로 되돌린 후 다시 저장해 주세요.'
+
 export const PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE =
   '모집 정보 수정 불가 안내'
 

@@ -109,7 +109,14 @@ import {
   RegistrationWizardValidationHighlightSync,
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
-import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
+import {
+  isProgramTypeSettingsSaveBlocked,
+  recruitmentEditTypeForDetailTab,
+} from '@/features/program/shared/lib/program-edit-window'
+import {
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+} from '@/shared/lib/program-edit-window-error-message'
 import {
   getGeneralProgramApiErrorCode,
   getGeneralProgramApiErrorMessage,
@@ -1119,15 +1126,26 @@ export function GeneralProgramDetailFullPageModal({
   ])
 
   const handleInfoSave = useCallback(async () => {
+    const values = infoForm.getValues()
     if (
       displayProgram &&
-      isEducationStructureChanged(displayProgram, infoForm.getValues().educationStructure)
+      isProgramTypeSettingsSaveBlocked(displayProgram, {
+        educationStructure: values.educationStructure,
+        sessionRound: values.sessionRound,
+      })
     ) {
+      void showAlert({
+        title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+        content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+      })
+      return
+    }
+    if (displayProgram && isEducationStructureChanged(displayProgram, values.educationStructure)) {
       setStructureChangeConfirmOpen(true)
       return
     }
     await runInfoSave()
-  }, [displayProgram, infoForm, runInfoSave])
+  }, [displayProgram, infoForm, runInfoSave, showAlert])
 
   const handleStructureChangeConfirm = useCallback(async () => {
     setStructureChangeConfirmLoading(true)

@@ -127,6 +127,11 @@ import {
 import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
+import {
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+} from '@/shared/lib/program-edit-window-error-message'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   canGeneralProgramCommonInfoEdit,
@@ -1529,6 +1534,21 @@ export function ProgramDetailFullPageModal({
     })
 
   const handleInfoSave = useCallback(async () => {
+    if (displayProgram) {
+      const values = infoForm.getValues()
+      if (
+        isProgramTypeSettingsSaveBlocked(displayProgram, {
+          educationStructure: values.educationStructure,
+          sessionRound: values.sessionRound,
+        })
+      ) {
+        void showAlert({
+          title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+          content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+        })
+        return
+      }
+    }
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
       const patch = narrowProgramDetailPatchForCommonInfoSave(
         detailEditValuesToProgramPatch(infoForm.getValues(), displayProgram)

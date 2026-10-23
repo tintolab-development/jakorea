@@ -15,6 +15,12 @@ import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { isEducationStructureChanged } from './independent-session-authoring'
 import { GENERAL_COMMON_INFO_SAVE_INTERACTION_STATUS } from './general-detail-rhf-save-path'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
+import {
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+} from '@/shared/lib/program-edit-window-error-message'
+import type { Program } from '@/types/domain'
 
 vi.mock('@/shared/ui/cms-button', async importOriginal => {
   const actual = await importOriginal<typeof import('@/shared/ui/cms-button')>()
@@ -109,6 +115,50 @@ describe('GENERAL_COMMON_INFO_SAVE_INTERACTION', () => {
     fireEvent.click(screen.getByRole('button', { name: '취소' }))
     expect(onCancel).toHaveBeenCalledTimes(1)
     expect(onConfirm).not.toHaveBeenCalled()
+  })
+
+  it('잠긴 뒤 유형 변경은 확인 분기가 아니라 안내 Alert다', () => {
+    const program = {
+      id: '1',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+      ],
+    } as Program
+    const now = new Date('2026-09-28T12:00:00+09:00')
+    expect(
+      isProgramTypeSettingsSaveBlocked(
+        program,
+        { educationStructure: 'schedule', sessionRound: 'single' },
+        now
+      )
+    ).toBe(true)
+    expect(PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE).toBe('프로그램 유형 변경 불가 안내')
+    expect(PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE).toContain(
+      '모집이 시작된 프로그램은 유형을 변경할 수 없습니다.'
+    )
+    expect(PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE).toContain(
+      '변경 전 유형으로 되돌린 후 다시 저장해 주세요.'
+    )
+  })
+
+  it('잠긴 뒤 교육 형태·IPS만 바꾸면 유형 저장을 막지 않는다', () => {
+    const program = {
+      id: '1',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+      ],
+    } as Program
+    expect(
+      isProgramTypeSettingsSaveBlocked(
+        program,
+        { educationStructure: 'curriculum', sessionRound: 'single' },
+        new Date('2026-09-28T12:00:00+09:00')
+      )
+    ).toBe(false)
   })
 
   it('확인 버튼은 runInfoSave 경로인 onConfirm만 호출한다', () => {

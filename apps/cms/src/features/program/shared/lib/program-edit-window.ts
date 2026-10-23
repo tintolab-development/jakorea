@@ -135,6 +135,91 @@ export function isRecruitmentStartLocked(
   return Math.floor(now.getTime() / MINUTE_MS) >= Math.floor(startMs / MINUTE_MS)
 }
 
+export type ProgramTypeSettingsNext = {
+  educationStructure?: string | null
+  sessionRound?: string | null
+}
+
+function parseRecruitmentStartMs(startAt: string | null | undefined): number | null {
+  if (startAt == null || !startAt.trim()) return null
+  const ms = Date.parse(startAt)
+  return Number.isNaN(ms) ? null : ms
+}
+
+/** 저장된 모집 행 중 가장 빠른 `startAt`. id 없거나 파싱 실패인 행은 제외. */
+export function getEarliestPersistedRecruitmentStartAt(
+  program: Program | null | undefined
+): string | null {
+  let earliestMs: number | null = null
+  let earliest: string | null = null
+  for (const row of program?.programRecruitments ?? []) {
+    if (row.id == null) continue
+    const startAt = row.startAt
+    const ms = parseRecruitmentStartMs(startAt)
+    if (ms == null || startAt == null) continue
+    if (earliestMs == null || ms < earliestMs) {
+      earliestMs = ms
+      earliest = startAt
+    }
+  }
+  return earliest
+}
+
+/** 가장 빠른 기존 모집 시작 시각 전까지만 프로그램 구조(유형·회차) 수정 가능. */
+export function isProgramStructureEditPeriodOpen(
+  program: Program | null | undefined,
+  now: Date = new Date()
+): boolean {
+  const startAt = getEarliestPersistedRecruitmentStartAt(program)
+  if (startAt == null) return true
+  return !isRecruitmentStartLocked(startAt, now)
+}
+
+function normalizeEducationStructure(
+  value: string | null | undefined
+): 'curriculum' | 'schedule' | null {
+  if (value === 'schedule') return 'schedule'
+  if (value === 'curriculum') return 'curriculum'
+  return null
+}
+
+function normalizeSessionRound(value: string | null | undefined): 'single' | 'multi' | null {
+  if (value === 'multi') return 'multi'
+  if (value === 'single') return 'single'
+  return null
+}
+
+export function isProgramTypeSettingsChanged(
+  existing:
+    | Pick<Program, 'generalProgramEducationStructure' | 'generalProgramSessionRound'>
+    | null
+    | undefined,
+  next: ProgramTypeSettingsNext
+): boolean {
+  const nextStructure = normalizeEducationStructure(next.educationStructure)
+  if (nextStructure != null) {
+    const existingStructure =
+      normalizeEducationStructure(existing?.generalProgramEducationStructure) ?? 'curriculum'
+    if (existingStructure !== nextStructure) return true
+  }
+  const nextRound = normalizeSessionRound(next.sessionRound)
+  if (nextRound != null) {
+    const existingRound = normalizeSessionRound(existing?.generalProgramSessionRound) ?? 'single'
+    if (existingRound !== nextRound) return true
+  }
+  return false
+}
+
+export function isProgramTypeSettingsSaveBlocked(
+  program: Program | null | undefined,
+  next: ProgramTypeSettingsNext,
+  now: Date = new Date()
+): boolean {
+  if (!program) return false
+  if (!isProgramTypeSettingsChanged(program, next)) return false
+  return !isProgramStructureEditPeriodOpen(program, now)
+}
+
 /**
  * 저장된 모집행이 모두 모집 시작 시각을 지났으면 그 유형의 일반 정보 수정을 닫는다.
  * id 없는 행과 시작 전 행이 하나라도 있으면 닫지 않는다.

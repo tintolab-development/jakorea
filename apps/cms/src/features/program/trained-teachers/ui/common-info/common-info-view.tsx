@@ -29,6 +29,11 @@ import type {
 } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useCmsAlert } from '@/shared/ui'
+import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
+import {
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+} from '@/shared/lib/program-edit-window-error-message'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -60,6 +65,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
+  canRemoveEducationSchedulePreviewLine,
   formatEducationScheduleLineFromRange,
   parseEducationScheduleLineToRange,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -1574,6 +1580,8 @@ function TrainedTeachersScheduleSettingsSection({
   const removeLine = (index: number) => {
     if (!form) return
     const current = form.getValues('educationScheduleLines') ?? []
+    const target = current[index]
+    if (target != null && !canRemoveEducationSchedulePreviewLine(target)) return
     form.setValue(
       'educationScheduleLines',
       current.filter((_, i) => i !== index),
@@ -1884,6 +1892,19 @@ export function TrainedTeachersCommonInfoView({
   }, [isEditMode, form, draft])
 
   const runSave = async () => {
+      const typeSettingsValues = form?.getValues()
+      if (
+        isProgramTypeSettingsSaveBlocked(program, {
+          educationStructure: typeSettingsValues?.educationStructure,
+          sessionRound: typeSettingsValues?.sessionRound,
+        })
+      ) {
+        void showAlert({
+          title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+          content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+        })
+        return
+      }
       setSaving(true)
       const endOverlay = beginBlockingOverlay()
       try {

@@ -162,9 +162,12 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
 import {
   PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE,
   PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
 } from '@/shared/lib/program-edit-window-error-message'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
@@ -1403,7 +1406,20 @@ export function UjatProgramDetailFullPageModal({
 
   const handleInfoSave = useCallback(async () => {
     if (!displayProgram) return
-    syncUjatDetailEditFormKpiToOverlay(infoForm.getValues())
+    const infoValues = infoForm.getValues()
+    if (
+      isProgramTypeSettingsSaveBlocked(displayProgram, {
+        educationStructure: infoValues.educationStructure,
+        sessionRound: infoValues.sessionRound,
+      })
+    ) {
+      void showAlert({
+        title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+        content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+      })
+      return
+    }
+    syncUjatDetailEditFormKpiToOverlay(infoValues)
     let overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
       readUjatRegistrationBasicInfoOverlayForSave()
     )
