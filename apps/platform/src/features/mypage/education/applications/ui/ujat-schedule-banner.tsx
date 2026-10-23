@@ -1,6 +1,6 @@
 import peopleIconUrl from '../assets/icon/people.svg'
 import arrowForwardUrl from '../assets/icon/arrow-forward.svg'
-import educationStatusBgUrl from '../assets/image/education-status-bg-gradient.svg'
+import ujatScheduleBgUrl from '../assets/image/ujat-schedule-bg-gradient.svg'
 import type { UjatScheduleBannerCopy } from '../lib/ujat-portal-banner'
 import { PFText } from '@/shared/ui'
 import styles from './ujat-schedule-banner.module.css'
@@ -15,7 +15,7 @@ function noopActivate() {}
 function BannerCopy({ copy }: { copy: UjatScheduleBannerCopy }) {
   return (
     <>
-      <img className={styles.bg} src={educationStatusBgUrl} alt="" aria-hidden="true" />
+      <img className={styles.bg} src={ujatScheduleBgUrl} alt="" aria-hidden="true" />
       <div className={styles.headline}>
         <span className={styles.iconSlot}>
           <img className={styles.icon} src={peopleIconUrl} alt="" aria-hidden="true" />
