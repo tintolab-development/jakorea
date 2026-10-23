@@ -78,6 +78,18 @@ describe('performance-summary-adapters', () => {
     expect(view.grandTotal.instructors).toBe(1)
   })
 
+  it('uses BE unique institution total instead of adding business-area subtotals', () => {
+    const view = mapPerformanceStatsToSummaryTabView({
+      stats: { totalSchools: 1 },
+      sections: [
+        { businessArea: '경제금융', total: { schoolCount: 1 } },
+        { businessArea: '진로취업', total: { schoolCount: 1 } },
+      ],
+    })
+
+    expect(view.grandTotal.schoolCount).toBe(1)
+  })
+
   it('aggregates list rows when building mock summary', () => {
     const rows: EducationRecordRow[] = [
       {
