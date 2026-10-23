@@ -30,6 +30,80 @@ export type UjatVolunteerStatusProjection = {
   reserveRank?: number
 }
 
+type UjatVolunteerApplicationStatusInput = {
+  applicationStatus?: string | null
+  documentStatus?: string | null
+  interviewStatus?: string | null
+  finalResultStatus?: string | null
+  reserveRank?: number
+  giveUpYn?: boolean
+}
+
+function normalizeWireStatus(raw?: string | null): string {
+  return String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/-/g, '_')
+}
+
+function isDocumentPassed(status: string): boolean {
+  return ['PASS', 'PASSED', 'APPROVED', 'DOCUMENT_PASSED'].includes(status)
+}
+
+function isDocumentRejected(status: string): boolean {
+  return ['FAIL', 'FAILED', 'REJECTED', 'DOCUMENT_FAILED', 'DOCUMENT_REJECTED'].includes(status)
+}
+
+function isInterviewAssignedOrEvaluated(status: string): boolean {
+  return ['ASSIGNED', 'PARTIALLY_EVALUATED', 'EVALUATED', 'COMPLETED'].includes(status)
+}
+
+/**
+ * Admin API는 applicationStatus 하나가 아니라 심사 단계별 필드를 함께 반환한다.
+ * 최종 결과와 서류 결과를 먼저 반영하고, applicationStatus는 레거시 응답에만 사용한다.
+ */
+function resolveUjatVolunteerCanonicalStatus(
+  input: UjatVolunteerApplicationStatusInput
+): UjatCanonicalApplicationStatus | 'UNKNOWN' {
+  if (input.giveUpYn) return 'GIVE_UP'
+
+  const finalResultStatus = normalizeWireStatus(input.finalResultStatus)
+  if (finalResultStatus === 'PASS') return 'FINAL_SELECTED'
+  if (finalResultStatus === 'FAIL') return 'INTERVIEW_FAILED'
+  if (finalResultStatus === 'RESERVE') return 'RESERVE'
+
+  const documentStatus = normalizeWireStatus(input.documentStatus)
+  const applicationStatus = normalizeWireStatus(input.applicationStatus)
+  const interviewStatus = normalizeWireStatus(input.interviewStatus)
+  const hasDetailStatus = Boolean(input.documentStatus || input.interviewStatus || input.finalResultStatus)
+
+  // REJECTED is ambiguous without the stage-specific fields. An explicit document
+  // rejection must stay in the first-stage result instead of becoming interview fail.
+  if (isDocumentRejected(documentStatus)) return 'UNKNOWN'
+
+  if (isDocumentPassed(documentStatus) && isInterviewAssignedOrEvaluated(interviewStatus)) {
+    return 'INTERVIEW_ASSIGNED'
+  }
+
+  if (applicationStatus === 'REJECTED' && hasDetailStatus) return 'UNKNOWN'
+
+  const legacyCanonical = normalizeUjatVolunteerApplicationStatus(input.applicationStatus, {
+    giveUpYn: false,
+    reserveRank: input.reserveRank,
+  })
+  if (
+    isDocumentPassed(documentStatus) &&
+    ['FINAL_SELECTED', 'RESERVE', 'INTERVIEW_FAILED', 'GIVE_UP', 'INTERVIEW_ASSIGNED'].includes(
+      legacyCanonical
+    )
+  ) {
+    return legacyCanonical
+  }
+  if (isDocumentPassed(documentStatus)) return 'DOCUMENT_PASSED'
+
+  return legacyCanonical
+}
+
 /** thin/alias → canonical (표시·필터용). PASSED/WAITING/FINAL_ACCEPTED는 Primary에 맞게 정규화 */
 export function normalizeUjatVolunteerApplicationStatus(
   raw?: string | null,
@@ -74,18 +148,10 @@ export function normalizeUjatVolunteerApplicationStatus(
   }
 }
 
-export function projectUjatVolunteerApplicationStatus(input: {
-  applicationStatus?: string | null
-  documentStatus?: string | null
-  interviewStatus?: string | null
-  finalResultStatus?: string | null
-  reserveRank?: number
-  giveUpYn?: boolean
-}): UjatVolunteerStatusProjection {
-  const canonical = normalizeUjatVolunteerApplicationStatus(input.applicationStatus, {
-    giveUpYn: input.giveUpYn,
-    reserveRank: input.reserveRank,
-  })
+export function projectUjatVolunteerApplicationStatus(
+  input: UjatVolunteerApplicationStatusInput
+): UjatVolunteerStatusProjection {
+  const canonical = resolveUjatVolunteerCanonicalStatus(input)
 
   if (canonical === 'WAITING_REVIEW') {
     return {
@@ -104,12 +170,13 @@ export function projectUjatVolunteerApplicationStatus(input: {
     }
   }
   if (canonical === 'INTERVIEW_ASSIGNED') {
+    const interviewStatus = normalizeWireStatus(input.interviewStatus)
     return {
       canonicalStatus: canonical,
       documentScreeningStatus: 'pass',
       interviewAssignmentStatus: 'assigned',
-      // 면접 완료 여부는 evaluation 행 개수(2)로 UI에서 판단 — status만으로 completed 강제하지 않음
-      secondInterviewScreeningStatus: 'waiting',
+      secondInterviewScreeningStatus:
+        interviewStatus === 'EVALUATED' ? 'completed' : 'waiting',
     }
   }
   if (canonical === 'FINAL_SELECTED') {
@@ -148,11 +215,11 @@ export function projectUjatVolunteerApplicationStatus(input: {
   }
 
   // fallback — document/interview/final columns (비-Primary 응답)
-  const doc = String(input.documentStatus ?? '').toUpperCase()
+  const doc = normalizeWireStatus(input.documentStatus)
   const documentScreeningStatus: UjatDocumentScreeningStatus =
-    ['PASS', 'PASSED', 'APPROVED', 'DOCUMENT_PASSED'].includes(doc)
+    isDocumentPassed(doc)
       ? 'pass'
-      : ['FAIL', 'FAILED', 'REJECTED'].includes(doc)
+      : isDocumentRejected(doc)
         ? 'fail'
         : 'pending'
 

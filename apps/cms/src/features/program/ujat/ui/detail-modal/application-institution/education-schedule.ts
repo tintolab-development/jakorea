@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   isoDateFromScheduleInstant,
   type ProgramScheduleListItem,
@@ -56,11 +56,11 @@ export function listFridayIsoDatesInPeriod(startDate: string, endDate: string): 
   return out
 }
 
+/** 기관 신청 목록 날짜 열 헤더 — `M월 D일` (GET schedules startAt 달력일) */
 export function formatScheduleColumnTitle(isoDate: string): string {
   const d = dayjs(isoDate)
   if (!d.isValid()) return isoDate
-  const label = formatDateDot(d)
-  return label === '-' ? isoDate : label
+  return `${d.month() + 1}월 ${d.date()}일`
 }
 
 /** 교육 진행 희망일 등 표시용 — `2026.04.24(금)` */
@@ -88,6 +88,31 @@ export function scheduleColumnsFromDates(
     key: entry.isoDate,
     title: entry.title,
     isoDate: entry.isoDate,
+  }))
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/** 목록 날짜 열 — 행의 희망일(O)만. GET schedules 기간·overlay로 금요일을 펼치지 않는다. */
+export function collectPreferredEducationIsoDates(
+  rows: ReadonlyArray<{ scheduleSlots: Record<string, 'O' | '-'> }>
+): string[] {
+  const dates = new Set<string>()
+  for (const row of rows) {
+    for (const [iso, mark] of Object.entries(row.scheduleSlots)) {
+      if (mark === 'O' && ISO_DATE.test(iso)) dates.add(iso)
+    }
+  }
+  return [...dates].sort()
+}
+
+export function scheduleColumnsFromIsoDates(
+  isoDates: readonly string[]
+): UjatInstitutionScheduleColumn[] {
+  return isoDates.map(isoDate => ({
+    key: isoDate,
+    title: formatScheduleColumnTitle(isoDate),
+    isoDate,
   }))
 }
 
@@ -137,7 +162,7 @@ export function resolveEducationSemesterForIsoDate(
   return null
 }
 
-/** GET /programs/{id}/schedules 항목만 날짜 열로 쓴다. 응답이 없으면 빈 배열. */
+/** GET /programs/{id}/schedules 항목만 날짜 열로 쓴다. 응답이 없으면 빈 배열. overlay로 날짜·학기를 채우지 않는다. */
 export function buildUjatProgramScheduleDates(
   schedules: readonly ProgramScheduleListItem[],
   overlay?: Record<string, unknown>
@@ -156,10 +181,13 @@ export function buildUjatProgramScheduleDates(
       scheduleIdRaw != null && Number.isFinite(Number(scheduleIdRaw))
         ? Number(scheduleIdRaw)
         : undefined
+    const semesterFromApi = readScheduleSemester(item)
     entries.push({
       isoDate: iso,
-      title: item.name?.trim() || formatScheduleColumnTitle(iso),
-      semester: readScheduleSemester(item) ?? resolveEducationSemesterForIsoDate(iso, overlay),
+      title: formatScheduleColumnTitle(iso),
+      semester:
+        semesterFromApi ??
+        (overlay != null ? resolveEducationSemesterForIsoDate(iso, overlay) : null),
       scheduleId,
     })
   }
