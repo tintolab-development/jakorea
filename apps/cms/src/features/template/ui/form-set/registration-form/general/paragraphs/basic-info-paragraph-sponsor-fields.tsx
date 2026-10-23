@@ -1,6 +1,5 @@
 import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import {
@@ -265,6 +264,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               sponsorName: sponsor.name,
               contactName: contact.name,
               position: contact.position,
+              phone: contact.phone,
               multiSponsor: selectedSponsors.length > 1,
             }),
           })
@@ -275,7 +275,13 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     if (!sponsorId) return []
     return (singleContactsQuery.data ?? []).map(c => ({
       value: String(c.id),
-      label: c.name,
+      label: formatSponsorManagerSelectLabel({
+        sponsorName: '',
+        contactName: c.name,
+        position: c.position,
+        phone: c.phone,
+        multiSponsor: false,
+      }),
     }))
   }, [
     allowMultipleSponsors,
@@ -302,40 +308,6 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     managerOptions,
     sponsorId,
     sponsorIds.length,
-  ])
-
-  const selectedManagerContactPhone = useMemo(() => {
-    if (
-      managerContactIds.length === 0 ||
-      managerContactIds.some(
-        id => id === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE || isSponsorContactUnselected(id)
-      )
-    ) {
-      return ''
-    }
-
-    const phones: string[] = []
-    for (const ref of managerContactIds) {
-      if (isSponsorContactUnselected(ref)) continue
-      if (allowMultipleSponsors) {
-        const decoded = decodeSponsorManagerContactRef(ref)
-        if (!decoded) continue
-        const contact = multiSponsorContext.contactsBySponsorId[
-          decoded.sponsorManagementId
-        ]?.find(c => String(c.id) === decoded.contactId)
-        if (contact?.phone?.trim()) phones.push(contact.phone.trim())
-        continue
-      }
-      const contact = (singleContactsQuery.data ?? []).find(c => String(c.id) === ref)
-      if (contact?.phone?.trim()) phones.push(contact.phone.trim())
-    }
-
-    return [...new Set(phones)].join(', ')
-  }, [
-    allowMultipleSponsors,
-    managerContactIds,
-    multiSponsorContext.contactsBySponsorId,
-    singleContactsQuery.data,
   ])
 
   // 담당자 API 로드 후 옵션에 없는 overlay 값(이전 mock id 등)만 선택 해제
@@ -511,16 +483,6 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 setManagerContactIds(next)
               }}
               onOpenChange={onSelectOpenChange}
-            />
-            <DetailInfoForm.InputsSeparator />
-            <CmsInput
-              inputSize="small"
-              width={220}
-              placeholder="담당자 연락처"
-              value={selectedManagerContactPhone}
-              readOnly
-              allowClear={false}
-              aria-label="선택된 후원사 담당자 연락처"
             />
           </div>
         }

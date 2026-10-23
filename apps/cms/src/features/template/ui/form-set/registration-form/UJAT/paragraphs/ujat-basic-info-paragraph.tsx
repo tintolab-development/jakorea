@@ -7,6 +7,7 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
+import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
@@ -248,7 +249,13 @@ export function UjatBasicInfoParagraph({
     if (!sponsorId) return []
     const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
-      label: c.name,
+      label: formatSponsorManagerSelectLabel({
+        sponsorName: '',
+        contactName: c.name,
+        position: c.position,
+        phone: c.phone,
+        multiSponsor: false,
+      }),
     }))
     return withSponsorContactUnselectedOption(contacts)
   }, [contactsQuery.data, sponsorId])
@@ -277,23 +284,6 @@ export function UjatBasicInfoParagraph({
     }
     return []
   }, [sponsorContactId, sponsorContactIds, sponsorId, sponsorManagerName])
-
-  const selectedSponsorContactPhone = useMemo(() => {
-    if (
-      selectedSponsorContactIds.length === 0 ||
-      selectedSponsorContactIds.some(
-        id => id === UJAT_SPONSOR_ALL_VALUE || isSponsorContactUnselected(id)
-      )
-    ) {
-      return ''
-    }
-
-    const phones = selectedSponsorContactIds
-      .map(id => contactsQuery.data?.find(contact => String(contact.id) === id)?.phone?.trim())
-      .filter((phone): phone is string => Boolean(phone))
-
-    return [...new Set(phones)].join(', ')
-  }, [contactsQuery.data, selectedSponsorContactIds])
 
   const applySponsorContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedSponsorContactIds)
@@ -551,16 +541,6 @@ export function UjatBasicInfoParagraph({
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)
                   }}
-                />
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="small"
-                  width={220}
-                  placeholder="담당자 연락처"
-                  value={selectedSponsorContactPhone}
-                  readOnly
-                  allowClear={false}
-                  aria-label="선택된 후원사 담당자 연락처"
                 />
               </div>
             }

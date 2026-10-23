@@ -63,7 +63,12 @@ export function buildGeneralProgramSponsorManagerSelectOptions(args: {
   sponsorSelectOptions?: ReadonlyArray<{ value: string; label: string }>
   contactsBySponsorId: Record<
     string,
-    ReadonlyArray<{ id: string | number; name?: string | null; position?: string | null }>
+    ReadonlyArray<{
+      id: string | number
+      name?: string | null
+      position?: string | null
+      phone?: string | null
+    }>
   >
 }): Array<{ value: string; label: string }> {
   const options: Array<{ value: string; label: string }> = []
@@ -82,6 +87,7 @@ export function buildGeneralProgramSponsorManagerSelectOptions(args: {
           sponsorName,
           contactName: contact.name ?? '',
           position: contact.position,
+          phone: contact.phone,
           multiSponsor: true,
         }),
       })

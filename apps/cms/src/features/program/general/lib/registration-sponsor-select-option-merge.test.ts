@@ -69,10 +69,13 @@ describe('buildGeneralProgramSponsorManagerSelectOptions', () => {
       selectedSponsorIds: ['1627251', '163336'],
       sponsors: [{ id: '1627251', name: '스타벅스' }],
       contactsBySponsorId: {
-        '1627251': [{ id: 'c1', name: '김담당', position: '책임' }],
+        '1627251': [{ id: 'c1', name: '김담당', position: '책임', phone: '010-1234-5678' }],
       },
     })
-    expect(options.map(option => option.label)).toEqual(['스타벅스 | 김담당 책임', '미선택'])
+    expect(options.map(option => option.label)).toEqual([
+      '스타벅스 | 김담당 책임 | 010-1234-5678',
+      '미선택',
+    ])
   })
 
   it('후원사를 고르지 않으면 미선택을 붙이지 않는다', () => {
