@@ -127,6 +127,20 @@ export default function MemberLoginHistoryPage() {
     }
   }, [isExporting, remoteEnabled, searchParams, showAlert])
 
+  const descriptionNum = useMemo(() => `총 ${totalElements.toLocaleString()}건 |`, [totalElements])
+  const descriptionText = (
+    <span>
+      홈페이지 어드민과 사용자 플랫폼의 로그인 이력은{' '}
+      <span
+        style={{ color: '#0070E7', cursor: 'pointer' }}
+        onClick={() => window.open(import.meta.env.VITE_HOMEPAGE_ADMIN_URL, '_blank')}
+      >
+        홈페이지 어드민
+      </span>
+      에서 확인 가능합니다.
+    </span>
+  )
+
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
@@ -140,7 +154,11 @@ export default function MemberLoginHistoryPage() {
       onFilterChange={handleFilterChange}
       onSearch={applySearch}
       title="관리자 로그인 이력"
-      description={`총 ${totalElements.toLocaleString()}건`}
+      description={
+        <>
+          {descriptionNum} {descriptionText}
+        </>
+      }
       contentLoading={remoteEnabled && isLoading}
       onExcelDownload={exportExcel}
       excelDownloadLoading={isExporting}
