@@ -33,6 +33,17 @@ describe('seedDraft', () => {
     expect(draft.kpiFinalParticipants).toBe(10)
   })
 
+  it('canonical false 는 overlay yes 가 있어도 교육일지를 켜지 않는다', () => {
+    const draft = seedDraft(
+      { educationJournalEnabled: false, teacherTrainingEnabled: true },
+      undefined,
+      undefined,
+      { educationStructure: 'curriculum', sessionRound: 'multi' }
+    )
+    expect(draft.educationJournalEnabled).toBe(false)
+    expect(draft.teacherTrainingEnabled).toBe(true)
+  })
+
   it('저장된 일정이 없으면 빈 행만 만들고 기존 이름을 지어내지 않는다', () => {
     const draft = seedDraft(
       { educationJournalEnabled: true, teacherTrainingEnabled: false },
