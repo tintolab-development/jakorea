@@ -1,4 +1,5 @@
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import type { ApplicationIncompleteField } from '@/features/program/lib/application-apply-incomplete'
 import {
   findIncompleteUjatInstitutionBasicInfoMessage,
   type ApplyUjatInstitutionBasicInfoValues,
@@ -16,11 +17,7 @@ import {
   findIncompleteUjatInstitutionPreferredScheduleMessage,
 } from '@/features/program/ui/apply-ujat-institution-preferred-schedule/apply-ujat-institution-preferred-schedule'
 
-export type UjatInstitutionIncompleteField = {
-  message: string
-  paragraphId: string
-  field?: string
-}
+export type UjatInstitutionIncompleteField = ApplicationIncompleteField
 
 export function resolveUjatInstitutionApplyIncomplete(input: {
   basicInfo: ApplyUjatInstitutionBasicInfoValues
@@ -71,23 +68,4 @@ export function resolveUjatInstitutionApplyIncomplete(input: {
   return null
 }
 
-export function focusIncompleteApplicationField(
-  root: HTMLElement | null,
-  incomplete: UjatInstitutionIncompleteField | null,
-): void {
-  if (!root || !incomplete) return
-  const paragraphs = Array.from(root.querySelectorAll<HTMLElement>('[data-paragraph-id]'))
-  const target =
-    paragraphs.find(element => element.dataset.paragraphId === incomplete.paragraphId) ?? null
-  if (!target) return
-  target.dataset.applicationError = 'true'
-  const fieldTarget = incomplete.field
-    ? target.querySelector<HTMLElement>(`[data-field="${incomplete.field}"]`)
-    : null
-  const scrollTarget = fieldTarget ?? target
-  scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  const focusable = (fieldTarget ?? target).querySelector<HTMLElement>(
-    'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )
-  focusable?.focus({ preventScroll: true })
-}
+export { focusIncompleteApplicationField } from '@/features/program/lib/application-apply-incomplete'

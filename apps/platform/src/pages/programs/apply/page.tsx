@@ -153,7 +153,6 @@ import {
   basicInfoAnswerFromValues,
   basicInfoValuesFromDraftAnswer,
   emptyTrainedTeachersBasicInfo,
-  findIncompleteTrainedTeachersBasicInfoMessage,
   type ApplyTrainedTeachersBasicInfoValues,
 } from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
 import {
@@ -279,6 +278,11 @@ import {
   ujatInstitutionPreferredScheduleAnswerFromValues,
   ujatInstitutionPreferredScheduleValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-preferred-schedule/apply-ujat-institution-preferred-schedule'
+import {
+  focusIncompleteApplicationField,
+  resolveGeneralBasicInfoApplyIncomplete,
+  type ApplicationIncompleteField,
+} from '@/features/program/lib/application-apply-incomplete'
 import { resolveUjatInstitutionApplyIncomplete } from '@/features/program/lib/ujat-institution-apply-incomplete'
 import {
   ApplyUjatInstitutionSubmitConfirmation,
@@ -529,6 +533,7 @@ export function ProgramApplyPage() {
   } | null>(null)
   const [submitErrorField, setSubmitErrorField] = useState<string | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
+  const pendingApplyIncompleteRef = useRef<ApplicationIncompleteField | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
 
@@ -2061,7 +2066,17 @@ export function ProgramApplyPage() {
     navigate(programDetailPath(program.id, fromPath, focus))
   }
 
+  const dismissSubmitAlert = () => {
+    const incomplete = pendingApplyIncompleteRef.current
+    pendingApplyIncompleteRef.current = null
+    setSubmitAlert(null)
+    if (incomplete) {
+      focusIncompleteApplicationField(formRef.current, incomplete)
+    }
+  }
+
   const handleSubmit = async () => {
+    pendingApplyIncompleteRef.current = null
     setSubmitAlert(null)
     setSubmitErrorField(null)
     if (displayDraft == null) {
@@ -2331,9 +2346,13 @@ export function ProgramApplyPage() {
           })
         : null
       if (basicParagraph) {
-        const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
-        if (basicError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+        const basicIncomplete = resolveGeneralBasicInfoApplyIncomplete(
+          basicInfo,
+          basicParagraph.id,
+        )
+        if (basicIncomplete) {
+          pendingApplyIncompleteRef.current = basicIncomplete
+          setSubmitAlert({ description: basicIncomplete.message })
           return
         }
         const requestedClassCount = Number.parseInt(basicInfo.classCount, 10)
@@ -2523,7 +2542,7 @@ export function ProgramApplyPage() {
           preferredOptions: ujatPreferredScheduleOptions,
         })
         if (incomplete) {
-          setSubmitErrorField(incomplete.paragraphId)
+          pendingApplyIncompleteRef.current = incomplete
           setSubmitAlert({ description: incomplete.message })
           return
         }
@@ -2982,7 +3001,7 @@ export function ProgramApplyPage() {
         open={submitAlert != null}
         title="안내"
         description={submitAlert?.description}
-        onConfirm={() => setSubmitAlert(null)}
+        onConfirm={dismissSubmitAlert}
       >
         {submitAlert?.promptSettingsGrade ? (
           <div className={styles.submitAlertFollowUp}>
