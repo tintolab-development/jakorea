@@ -237,7 +237,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
-            disabled={isTerminal || workflow.scheduleEditDisabled}
+            disabled={isTerminal || workflow.revisionRequestDisabled}
             onClick={() => setPendingRevisionRequest(true)}
           >
             수정 요청

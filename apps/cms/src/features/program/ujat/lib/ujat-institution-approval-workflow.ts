@@ -27,6 +27,7 @@ export type UjatInstitutionWorkflowView = {
   primaryDisabled: boolean
   canFinalApprove: boolean
   scheduleEditDisabled: boolean
+  revisionRequestDisabled: boolean
 }
 
 function wire(value?: string | null): string {
@@ -66,6 +67,8 @@ export function resolveUjatInstitutionWorkflow(
   const institutionConfirmationStatus = wire(input.institutionConfirmationStatus)
   const scheduleEditDisabled =
     Boolean(input.assignmentLockedAt?.trim()) || applicationStatus === 'APPROVED'
+  const revisionRequestDisabled =
+    applicationStatus === 'APPROVED' || isTerminalReject(applicationStatus)
 
   if (applicationStatus === 'APPROVED') {
     return {
@@ -75,6 +78,7 @@ export function resolveUjatInstitutionWorkflow(
       primaryDisabled: true,
       canFinalApprove: false,
       scheduleEditDisabled: true,
+      revisionRequestDisabled: true,
     }
   }
 
@@ -86,6 +90,7 @@ export function resolveUjatInstitutionWorkflow(
       primaryDisabled: true,
       canFinalApprove: false,
       scheduleEditDisabled,
+      revisionRequestDisabled: true,
     }
   }
 
@@ -97,6 +102,7 @@ export function resolveUjatInstitutionWorkflow(
       primaryDisabled: true,
       canFinalApprove: false,
       scheduleEditDisabled,
+      revisionRequestDisabled,
     }
   }
 
@@ -109,6 +115,7 @@ export function resolveUjatInstitutionWorkflow(
         primaryDisabled: false,
         canFinalApprove: true,
         scheduleEditDisabled,
+        revisionRequestDisabled,
       }
     }
     if (isRevisionRequested(institutionConfirmationStatus)) {
@@ -119,6 +126,7 @@ export function resolveUjatInstitutionWorkflow(
         primaryDisabled: scheduleEditDisabled,
         canFinalApprove: false,
         scheduleEditDisabled,
+        revisionRequestDisabled,
       }
     }
     return {
@@ -128,6 +136,7 @@ export function resolveUjatInstitutionWorkflow(
       primaryDisabled: true,
       canFinalApprove: false,
       scheduleEditDisabled,
+      revisionRequestDisabled,
     }
   }
 
@@ -138,6 +147,7 @@ export function resolveUjatInstitutionWorkflow(
     primaryDisabled: false,
     canFinalApprove: false,
     scheduleEditDisabled,
+    revisionRequestDisabled,
   }
 }
 

@@ -45,6 +45,7 @@ describe('resolveUjatInstitutionWorkflow', () => {
     expect(view.primaryLabel).toBe('최종 승인')
     expect(view.canFinalApprove).toBe(true)
     expect(view.scheduleEditDisabled).toBe(true)
+    expect(view.revisionRequestDisabled).toBe(false)
   })
 
   it('일정 수정 요청 상태에서는 재배정만 열고 승인은 막는다', () => {
