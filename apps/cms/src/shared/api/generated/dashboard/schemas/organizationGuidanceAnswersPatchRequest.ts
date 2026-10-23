@@ -8,7 +8,7 @@
 import type { OrganizationGuidanceAnswersPatchRequestAnswers } from './organizationGuidanceAnswersPatchRequestAnswers';
 
 /**
- * 기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다.
+ * 기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다. UJAT 조직 신청이 임시 배정 확인 또는 수정 요청 상태이면 이 제출 성공 시 일정협의 상태도 관리자 검토로 전이됩니다.
  */
 export interface OrganizationGuidanceAnswersPatchRequest {
   answers: OrganizationGuidanceAnswersPatchRequestAnswers;

@@ -11,6 +11,6 @@ import type { UjatApplicationSupplement } from './ujatApplicationSupplement';
  * 프로그램 유형별 회원 포탈 신청 보조 projection. 해당 프로그램에 필요한 보조정보가 없으면 null입니다.
  */
 export interface ProgramApplicationSupplement {
-  /** UJAT 조직 신청 workflow 상태. ORGANIZATION + UJAT에서만 제공 */
+  /** UJAT 조직 신청 workflow 상태. ORGANIZATION + UJAT에서만 제공하며 목록과 상세에서 같은 신청의 projection을 반환합니다. 비대상 신청은 ujat이 null입니다. */
   ujat?: UjatApplicationSupplement;
 }
