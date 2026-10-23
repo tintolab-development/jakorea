@@ -254,7 +254,6 @@ import {
   ApplyUjatInstitutionBasicInfo,
   emptyUjatInstitutionBasicInfo,
   fillUjatInstitutionBasicInfoFromProfile,
-  findIncompleteUjatInstitutionBasicInfoMessage,
   ujatInstitutionBasicInfoAnswerFromValues,
   ujatInstitutionBasicInfoValuesFromDraftAnswer,
   type ApplyUjatInstitutionBasicInfoValues,
@@ -263,7 +262,6 @@ import {
   ApplyUjatInstitutionGradeInfo,
   appendUjatInstitutionGradeBlock,
   emptyUjatInstitutionGradeBlocks,
-  findIncompleteUjatInstitutionGradeInfoMessage,
   ujatInstitutionGradeAnswerFromValues,
   ujatInstitutionGradeValuesFromDraftAnswer,
   type ApplyUjatGradeBlock,
@@ -272,17 +270,16 @@ import {
   ApplyUjatInstitutionClassTime,
   appendUjatInstitutionClassTimeBlock,
   emptyUjatInstitutionClassTimeBlocks,
-  findIncompleteUjatInstitutionClassTimeMessage,
   ujatInstitutionClassTimeAnswerFromValues,
   ujatInstitutionClassTimeValuesFromDraftAnswer,
   type ApplyUjatClassTimeBlock,
 } from '@/features/program/ui/apply-ujat-institution-class-time/apply-ujat-institution-class-time'
 import {
   ApplyUjatInstitutionPreferredSchedule,
-  findIncompleteUjatInstitutionPreferredScheduleMessage,
   ujatInstitutionPreferredScheduleAnswerFromValues,
   ujatInstitutionPreferredScheduleValuesFromDraftAnswer,
 } from '@/features/program/ui/apply-ujat-institution-preferred-schedule/apply-ujat-institution-preferred-schedule'
+import { resolveUjatInstitutionApplyIncomplete } from '@/features/program/lib/ujat-institution-apply-incomplete'
 import {
   ApplyUjatInstitutionSubmitConfirmation,
   isUjatSubmitConfirmationChecked,
@@ -1921,8 +1918,10 @@ export function ProgramApplyPage() {
     if (!target) return
 
     target.dataset.applicationError = 'true'
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    const focusable = target.querySelector<HTMLElement>(
+    const fieldTarget = target.querySelector<HTMLElement>('[data-field]')
+    const scrollTarget = fieldTarget ?? target
+    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const focusable = scrollTarget.querySelector<HTMLElement>(
       'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
     )
     focusable?.focus({ preventScroll: true })
@@ -2505,41 +2504,27 @@ export function ProgramApplyPage() {
       const ujatInstitutionBasicParagraph = visibleDraftParagraph(
         isUjatInstitutionBasicInfoParagraphId
       )
-      if (ujatInstitutionBasicParagraph && isRequiredParagraph(ujatInstitutionBasicParagraph)) {
-        if (findIncompleteUjatInstitutionBasicInfoMessage(ujatInstitutionBasicInfo)) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
-          return
-        }
-      }
       const ujatGradeParagraph = visibleDraftParagraph(isUjatInstitutionGradeInfoParagraphId)
-      if (ujatGradeParagraph && isRequiredParagraph(ujatGradeParagraph)) {
-        if (findIncompleteUjatInstitutionGradeInfoMessage(ujatInstitutionGradeBlocks)) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
-          return
-        }
-      }
       const ujatClassTimeParagraph = visibleDraftParagraph(isUjatInstitutionClassTimeParagraphId)
-      if (ujatClassTimeParagraph && isRequiredParagraph(ujatClassTimeParagraph)) {
-        if (
-          findIncompleteUjatInstitutionClassTimeMessage(
-            ujatInstitutionClassTimeBlocks,
-            ujatInstitutionGradeBlocks
-          )
-        ) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
-          return
-        }
-      }
       const ujatPreferredParagraph = visibleDraftParagraph(
         isUjatInstitutionPreferredScheduleParagraphId
       )
-      if (ujatPreferredParagraph && isRequiredParagraph(ujatPreferredParagraph)) {
-        const preferredError = findIncompleteUjatInstitutionPreferredScheduleMessage(
-          ujatPreferredScheduleIds,
-          ujatPreferredScheduleOptions
-        )
-        if (preferredError) {
-          setSubmitAlert({ description: preferredError })
+      if (
+        (ujatInstitutionBasicParagraph && isRequiredParagraph(ujatInstitutionBasicParagraph)) ||
+        (ujatGradeParagraph && isRequiredParagraph(ujatGradeParagraph)) ||
+        (ujatClassTimeParagraph && isRequiredParagraph(ujatClassTimeParagraph)) ||
+        (ujatPreferredParagraph && isRequiredParagraph(ujatPreferredParagraph))
+      ) {
+        const incomplete = resolveUjatInstitutionApplyIncomplete({
+          basicInfo: ujatInstitutionBasicInfo,
+          gradeBlocks: ujatInstitutionGradeBlocks,
+          classTimeBlocks: ujatInstitutionClassTimeBlocks,
+          preferredIds: ujatPreferredScheduleIds,
+          preferredOptions: ujatPreferredScheduleOptions,
+        })
+        if (incomplete) {
+          setSubmitErrorField(incomplete.paragraphId)
+          setSubmitAlert({ description: incomplete.message })
           return
         }
       }
