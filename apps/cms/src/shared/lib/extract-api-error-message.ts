@@ -38,6 +38,10 @@ const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
   UJAT_REGION_CLASS_CAPACITY_EXCEEDED:
     '선택한 지역·반기의 잔여 학급 정원을 초과했습니다. 지역 또는 일정을 변경해 주세요.',
   UJAT_TEMPORARY_ASSIGNMENT_REQUIRED: '임시 일정을 먼저 배정한 뒤 기관 확인을 진행해 주세요.',
+  UJAT_EDUCATION_DAY_SCHEDULE_REQUIRED:
+    '연간 기간 일정이 아니라 해당 금요일 하루 일정으로 저장해 주세요.',
+  UJAT_EDUCATION_SLOT_NOT_IN_APPLICATION_CLASS_CATALOG:
+    '신청한 학년·반 범위 밖의 학급입니다. classCount 기준으로 반을 선택해 주세요.',
 }
 
 const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
