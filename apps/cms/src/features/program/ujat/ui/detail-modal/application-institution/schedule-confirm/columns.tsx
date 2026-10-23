@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { UjatInstitutionScheduleConfirmStatusBadge } from './status-badge'
 import {
   UJAT_SCHEDULE_CONFIRM_GRADE_YEAR_LABELS,
@@ -9,15 +10,24 @@ import {
 const COL = {
   no: 80,
   institution: 180,
-  status: 140,
-  confirmedSchedule: 450,
-  gradeYear: 88,
-  total: 120,
+  /** 「일정 확인 현황」·「기관 확인 완료」+ 좌우 패딩 */
+  status: 160,
+  /** 「교육 진행 확정 일정」복수 일자 줄바꿈 */
+  confirmedSchedule: 280,
+  /** 「N학급」+ 좌우 패딩 */
+  gradeYear: 100,
+  /** 「총 교육 학급」헤더 */
+  total: 140,
   teacher: 120,
 } as const
 
-const GRADE_COUNT_CELL_CLASS = 'ujat-schedule-confirm-list__cell-grade-count'
+const NO_CELL_CLASS = CMS_TABLE_NO_COL_CLASS
+const INSTITUTION_CELL_CLASS = 'ujat-schedule-confirm-list__cell-institution'
+const STATUS_CELL_CLASS = 'ujat-schedule-confirm-list__cell-status'
 const CONFIRMED_SCHEDULE_CELL_CLASS = 'ujat-schedule-confirm-list__cell-confirmed-schedule'
+const GRADE_COUNT_CELL_CLASS = 'ujat-schedule-confirm-list__cell-grade-count'
+const TOTAL_CELL_CLASS = 'ujat-schedule-confirm-list__cell-total'
+const TEACHER_CELL_CLASS = 'ujat-schedule-confirm-list__cell-teacher'
 
 function formatGradeCountCell(count: number): string {
   return count > 0 ? `${count}학급` : '-'
@@ -32,6 +42,14 @@ export const UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X =
   COL.total +
   COL.teacher
 
+function cellClass(className: string) {
+  return {
+    className,
+    onHeaderCell: () => ({ className }),
+    onCell: () => ({ className }),
+  }
+}
+
 export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirmRow> {
   return useMemo(
     () => [
@@ -41,6 +59,7 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'no',
         width: COL.no,
         align: 'center',
+        ...cellClass(NO_CELL_CLASS),
       },
       {
         title: '참여 기관명',
@@ -48,6 +67,8 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'institutionName',
         width: COL.institution,
         align: 'center',
+        ellipsis: true,
+        ...cellClass(INSTITUTION_CELL_CLASS),
       },
       {
         title: '일정 확인 현황',
@@ -55,26 +76,25 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'scheduleConfirmStatus',
         width: COL.status,
         align: 'center',
+        ...cellClass(STATUS_CELL_CLASS),
         render: (status: UjatScheduleConfirmRow['scheduleConfirmStatus']) =>
-          status ? <UjatInstitutionScheduleConfirmStatusBadge status={status} /> : null,
+          status ? <UjatInstitutionScheduleConfirmStatusBadge status={status} /> : '-',
       },
       {
-        title: '교육 진행 일정',
+        title: '교육 진행 확정 일정',
         dataIndex: 'confirmedScheduleDisplay',
         key: 'confirmedScheduleDisplay',
         width: COL.confirmedSchedule,
-        className: CONFIRMED_SCHEDULE_CELL_CLASS,
-        onHeaderCell: () => ({ className: CONFIRMED_SCHEDULE_CELL_CLASS }),
-        onCell: () => ({ className: CONFIRMED_SCHEDULE_CELL_CLASS }),
+        ...cellClass(CONFIRMED_SCHEDULE_CELL_CLASS),
+        render: (value: UjatScheduleConfirmRow['confirmedScheduleDisplay']) =>
+          value?.trim() || '-',
       },
       ...UJAT_SCHEDULE_CONFIRM_GRADE_YEAR_LABELS.map(gradeLabel => ({
         title: gradeLabel,
         key: gradeLabel,
         width: COL.gradeYear,
         align: 'center' as const,
-        className: GRADE_COUNT_CELL_CLASS,
-        onHeaderCell: () => ({ className: GRADE_COUNT_CELL_CLASS }),
-        onCell: () => ({ className: GRADE_COUNT_CELL_CLASS }),
+        ...cellClass(GRADE_COUNT_CELL_CLASS),
         render: (_: unknown, record: UjatScheduleConfirmRow) =>
           formatGradeCountCell(record.assignedGradeCounts[gradeLabel]),
       })),
@@ -84,6 +104,7 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'totalEducationClassCount',
         width: COL.total,
         align: 'center',
+        ...cellClass(TOTAL_CELL_CLASS),
         render: (count: number) => (count > 0 ? `${count}개` : '-'),
       },
       {
@@ -92,6 +113,8 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'teacherName',
         width: COL.teacher,
         align: 'center',
+        ellipsis: true,
+        ...cellClass(TEACHER_CELL_CLASS),
       },
     ],
     []

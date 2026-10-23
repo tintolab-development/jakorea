@@ -9,11 +9,11 @@ import type { UjatInstitutionScheduleConfirmStatus } from './types'
 export type ScheduleConfirmTextbookInfo = {
   textbookName: string
   kitSummary: string
-  deliveryStatus: TextbookDeliveryStatus
+  deliveryStatus: TextbookDeliveryStatus | null
 }
 
 export type ScheduleConfirmGradeEducationBlock = UjatInstitutionApplicationGradeBlockDetail & {
-  textbook: ScheduleConfirmTextbookInfo
+  textbook: ScheduleConfirmTextbookInfo | null
 }
 
 export type UjatScheduleConfirmEducationScheduleDay = {
