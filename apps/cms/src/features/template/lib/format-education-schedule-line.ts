@@ -193,6 +193,15 @@ export function isEducationScheduleLineUpcoming(
   return start.isAfter(now, 'day')
 }
 
+/** 이미 진행된 예정일은 삭제 불가. 파싱할 수 없으면 삭제 가능. */
+export function canRemoveEducationSchedulePreviewLine(
+  line: string,
+  now: Dayjs = dayjs()
+): boolean {
+  if (!parseEducationScheduleLineToRange(line)) return true
+  return isEducationScheduleLineUpcoming(line, now)
+}
+
 /** 같은 날·시각 없음이면 피커 트리거에 `날짜 ~ 날짜`가 나오지 않도록 null */
 export function educationScheduleAppliedSurfaceRange(
   range: [Dayjs, Dayjs] | null

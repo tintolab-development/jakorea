@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { formatCmsScheduleKoreanDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { canRemoveEducationSchedulePreviewLine } from '@/features/template/lib/format-education-schedule-line'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './education-schedule-preview-lines.css'
 
@@ -48,7 +49,7 @@ export function EducationSchedulePreviewLines({
             {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
             <span className="education-schedule-preview-lines__item">
               <span className="detail-info-form--text nowrap">{displayLine}</span>
-              {editable ? (
+              {editable && canRemoveEducationSchedulePreviewLine(line) ? (
                 <button
                   type="button"
                   className="education-schedule-preview-lines__remove"

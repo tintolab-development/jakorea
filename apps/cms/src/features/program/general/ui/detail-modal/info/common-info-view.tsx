@@ -182,6 +182,7 @@ import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-regi
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import {
+  canRemoveEducationSchedulePreviewLine,
   educationScheduleLinesFromSelectionRangeApply,
   educationScheduleLinesEqual,
   educationScheduleAppliedSurfaceRange,
@@ -4700,6 +4701,8 @@ function ScheduleSettingsEditFields({
   const removeLine = useCallback(
     (index: number) => {
       const current = form.getValues('educationScheduleLines') ?? []
+      const target = current[index]
+      if (target != null && !canRemoveEducationSchedulePreviewLine(target)) return
       form.setValue(
         'educationScheduleLines',
         current.filter((_, i) => i !== index),

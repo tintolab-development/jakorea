@@ -4,7 +4,10 @@ import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
+import {
+  canRemoveEducationSchedulePreviewLine,
+  formatEducationScheduleLineFromRange,
+} from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
@@ -108,7 +111,9 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   const removeLine = useCallback(
     (index: number) => {
       updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
-        const next = (prev ?? []).filter((_, i) => i !== index)
+        const next = (prev ?? []).filter(
+          (line, i) => i !== index || !canRemoveEducationSchedulePreviewLine(line)
+        )
         syncBridgeFromLines(next, educationScheduleMode)
         return next
       })

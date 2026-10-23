@@ -10,6 +10,7 @@ import {
   flattenGroupTimeSlotsByDetail,
   isCanonicalServerEducationScheduleLine,
   isEducationScheduleLineBeforeSeoulToday,
+  canRemoveEducationSchedulePreviewLine,
   isEducationScheduleLineUpcoming,
   parseEducationScheduleLineForCms,
   parseEducationScheduleLineToRange,
@@ -258,6 +259,23 @@ describe('isEducationScheduleLineUpcoming', () => {
     expect(
       isEducationScheduleLineUpcoming('26년 9월 20일(일) ~ 26년 10월 12일(월)', now)
     ).toBe(false)
+  })
+})
+
+describe('canRemoveEducationSchedulePreviewLine', () => {
+  const now = dayjs('2026-10-23T16:00:00')
+
+  it('이미 시작한 예정일은 삭제할 수 없다', () => {
+    expect(
+      canRemoveEducationSchedulePreviewLine('2026.10.21(수) 13:30 ~ 15:30', now)
+    ).toBe(false)
+    expect(canRemoveEducationSchedulePreviewLine('26년 10월 21일(수)', now)).toBe(false)
+  })
+
+  it('아직 시작하지 않은 예정일은 삭제할 수 있다', () => {
+    expect(
+      canRemoveEducationSchedulePreviewLine('2026.11.04(수) 13:30 ~ 15:30', now)
+    ).toBe(true)
   })
 })
 

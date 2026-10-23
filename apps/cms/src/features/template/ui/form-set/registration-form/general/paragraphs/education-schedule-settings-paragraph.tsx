@@ -3,6 +3,7 @@ import type { ProgramRegistrationEducationScheduleMode } from '@/features/templa
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
+  canRemoveEducationSchedulePreviewLine,
   educationScheduleLinesEqual,
   educationScheduleLinesFromSelectionRangeApply,
   mergeUniqueEducationScheduleLines,
@@ -151,7 +152,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   const removeLine = useCallback(
     (index: number) => {
       updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
-        (prev ?? []).filter((_, i) => i !== index)
+        (prev ?? []).filter(
+          (line, i) => i !== index || !canRemoveEducationSchedulePreviewLine(line)
+        )
       )
     },
     [scheduleLinesKey]
