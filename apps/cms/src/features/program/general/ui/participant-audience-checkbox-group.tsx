@@ -11,22 +11,26 @@ export type GeneralParticipantAudienceCheckboxGroupProps = {
   onIndividualChange: (checked: boolean) => void
   onOrganizationChange: (checked: boolean) => void
   disabled?: boolean
+  individualDisabled?: boolean
+  organizationDisabled?: boolean
 }
 
-/** 참여자 유형 [개인]/[기관] — 상호 배타. 프로그램 상세 수정에서는 disabled. */
+/** 참여자 유형 [개인]/[기관] — 상호 배타. 저장된 모집행은 항목별로 잠근다. */
 export function GeneralParticipantAudienceCheckboxGroup({
   individual,
   organization,
   onIndividualChange,
   onOrganizationChange,
   disabled = false,
+  individualDisabled,
+  organizationDisabled,
 }: GeneralParticipantAudienceCheckboxGroupProps) {
   return (
     <>
       <CmsCheckbox
         checkboxSize="medium"
         checked={individual}
-        disabled={disabled}
+        disabled={individualDisabled ?? disabled}
         onChange={event => onIndividualChange(event.target.checked)}
       >
         {participantAudienceLabel('individual')}
@@ -34,7 +38,7 @@ export function GeneralParticipantAudienceCheckboxGroup({
       <CmsCheckbox
         checkboxSize="medium"
         checked={organization}
-        disabled={disabled}
+        disabled={organizationDisabled ?? disabled}
         onChange={event => onOrganizationChange(event.target.checked)}
       >
         {participantAudienceLabel('school_institution')}

@@ -8,6 +8,12 @@ import {
   mergeRegistrationOverlayNestedSsot,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
+import {
+  parseEducationScheduleLineForCms,
+  parseEducationScheduleLinesForCms,
+  serializeEducationScheduleLineForServer,
+  serializeEducationScheduleLinesForServer,
+} from '@/features/template/lib/format-education-schedule-line'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -482,6 +488,53 @@ function withNestedSsotOverlayFallback(
   }
 }
 
+function commonInfoWithServerEducationScheduleLines(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common?.educationScheduleLines) return common
+  return {
+    ...common,
+    educationScheduleLines: serializeEducationScheduleLinesForServer(common.educationScheduleLines),
+  }
+}
+
+function commonInfoWithCmsEducationScheduleLines(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common?.educationScheduleLines) return common
+  return {
+    ...common,
+    educationScheduleLines: parseEducationScheduleLinesForCms(common.educationScheduleLines),
+  }
+}
+
+function registrationOverlayWithMappedScheduleLines(
+  overlay: Record<string, unknown> | undefined,
+  mapLine: (line: string) => string
+): Record<string, unknown> | undefined {
+  if (!overlay) return overlay
+  const raw = overlay[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
+  if (!Array.isArray(raw)) return overlay
+  const next = raw.map(line => (typeof line === 'string' ? mapLine(line) : line))
+  if (raw.every((line, index) => line === next[index])) return overlay
+  return {
+    ...overlay,
+    [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: next,
+  }
+}
+
+function registrationOverlayWithServerEducationScheduleLines(
+  overlay: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  return registrationOverlayWithMappedScheduleLines(overlay, serializeEducationScheduleLineForServer)
+}
+
+function registrationOverlayWithCmsEducationScheduleLines(
+  overlay: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  return registrationOverlayWithMappedScheduleLines(overlay, parseEducationScheduleLineForCms)
+}
+
 export function serializeGeneralProgramServiceDetailJson(
   program: Program,
   options?: {
@@ -517,10 +570,12 @@ export function serializeGeneralProgramServiceDetailJson(
     !isTrainedTeachersDetailProgram(program)
       ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
       : withAudienceRule
-  const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
-    options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
-      ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
-      : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+  const generalCommonInfo = commonInfoWithServerEducationScheduleLines(
+    omitColumnTargetLevelsFromCommonInfo(
+      options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
+        ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
+        : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+    )
   )
   const nestedProgram: Program = {
     ...program,
@@ -563,6 +618,7 @@ export function serializeGeneralProgramServiceDetailJson(
   if (options?.omitUnchangedWageOverlay) {
     registrationOverlay = stripWageKeysFromRegistrationOverlay(registrationOverlay)
   }
+  registrationOverlay = registrationOverlayWithServerEducationScheduleLines(registrationOverlay)
   const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
@@ -674,10 +730,20 @@ export function parseGeneralProgramServiceDetailJson(
       parsed as Record<string, unknown>
     )
     const normalized = normalizeGeneralProgramServiceDetailParsed(parsed)
+    const cmsRegistrationOverlay = registrationOverlayWithCmsEducationScheduleLines(
+      registrationOverlay
+    )
 
     return {
       ...normalized,
-      ...(registrationOverlay ? { registrationOverlay } : {}),
+      ...(normalized.generalCommonInfo
+        ? {
+            generalCommonInfo: commonInfoWithCmsEducationScheduleLines(
+              normalized.generalCommonInfo
+            ),
+          }
+        : {}),
+      ...(cmsRegistrationOverlay ? { registrationOverlay: cmsRegistrationOverlay } : {}),
       generalSurveyMenuKeys: resolveGeneralSurveyMenuKeys({
         keys: normalized.generalSurveyMenuKeys,
         overlay: registrationOverlay,

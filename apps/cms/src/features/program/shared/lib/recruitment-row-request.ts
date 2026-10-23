@@ -134,6 +134,35 @@ export function buildRecruitmentRowCopyRequests(
   return out
 }
 
+/** 저장된 모집행은 id와 구조 필드만 남긴다. 일반 정보 값으로 덮지 않는다. */
+export function recruitmentRowIdentityRequests(
+  rows: ProgramRecruitmentWindow[] | undefined
+): ProgramRecruitmentRequest[] {
+  const out: ProgramRecruitmentRequest[] = []
+  for (const row of rows ?? []) {
+    if (row.id == null) continue
+    const recruitmentType = (row.recruitmentType ?? '').toUpperCase()
+    if (
+      recruitmentType !== 'PARTICIPANT' &&
+      recruitmentType !== 'INSTRUCTOR' &&
+      recruitmentType !== 'VOLUNTEER'
+    ) {
+      continue
+    }
+    const applicationType = rowApplicationType(row)
+    out.push({
+      id: row.id,
+      recruitmentType: recruitmentType as ProgramRecruitmentRequest['recruitmentType'],
+      ...(applicationType ? { applicationType } : {}),
+      ...(row.targetType ? { targetType: row.targetType } : {}),
+      ...(row.recruitTerm === 'FIRST_HALF' || row.recruitTerm === 'SECOND_HALF'
+        ? { recruitTerm: row.recruitTerm }
+        : {}),
+    })
+  }
+  return out
+}
+
 /** 같은 행 id 요청은 하나로 합친다. */
 export function mergeRecruitmentRowRequests(
   ...groups: ProgramRecruitmentRequest[][]

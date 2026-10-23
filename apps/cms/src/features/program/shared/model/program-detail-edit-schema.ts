@@ -429,6 +429,8 @@ const programDetailEditSchemaBase = z.object({
   detailedProgramName: z.string().optional(),
   /** 세부 프로그램 마스터 id — Select 저장용 */
   detailedProgramId: z.string().optional(),
+  /** 교재명 — detailedProgramName 과 독립 (TT canonical) */
+  textbookName: z.string().optional(),
   /** 교육받은 교사 프로그램 유형 설정 (opt-in) */
   educationStructure: z.enum(['curriculum', 'schedule']).optional(),
   sessionRound: z.enum(['single', 'multi']).optional(),
@@ -1041,6 +1043,7 @@ export function programToDetailEditValues(
         }) || undefined,
     detailedProgramName: program.generalCommonInfo?.detailedProgramName?.trim() || undefined,
     detailedProgramId: program.detailedProgramId ?? undefined,
+    textbookName: program.textbookName ?? '',
     educationStructure: (() => {
       const raw = program.generalProgramEducationStructure
       if (raw === 'curriculum' || raw === 'schedule') return raw
@@ -1394,7 +1397,11 @@ export function detailEditValuesToProgramPatch(
     title:
       (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
       existing.title,
-    textbookName: existing.textbookName,
+    textbookName: isTrainedTeacherProgram
+      ? values.textbookName !== undefined
+        ? values.textbookName
+        : existing.textbookName
+      : existing.textbookName,
     startDate,
     endDate,
     category: values.category,
@@ -1487,15 +1494,13 @@ export function detailEditValuesToProgramPatch(
         return existing.generalCommonInfo?.sponsorManagerContactIds
       })(),
       sponsorManagerContactId: (() => {
-        const ids =
-          values.sponsorManagerContactIds ??
-          (values.sponsorManagerContactId?.trim()
-            ? [values.sponsorManagerContactId.trim()]
-            : undefined)
-        return (
-          ids?.[0] ??
-          existing.generalCommonInfo?.sponsorManagerContactId
-        )
+        if (values.sponsorManagerContactIds != null) {
+          return values.sponsorManagerContactIds[0]
+        }
+        if (values.sponsorManagerContactId != null) {
+          return values.sponsorManagerContactId.trim() || undefined
+        }
+        return existing.generalCommonInfo?.sponsorManagerContactId
       })(),
       venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,
       venueKind: values.venueKind ?? existing.generalCommonInfo?.venueKind,

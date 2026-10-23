@@ -845,7 +845,7 @@ describe('general-program-adapters', () => {
     expect(request.contactPhone).toBeUndefined()
   })
 
-  it('운영이 시작된 유형의 기간·recruitments는 빼고 아직 시작 전인 유형은 보낸다', () => {
+  it('모집이 시작된 유형의 기간은 빼고 아직 시작 전인 유형은 보낸다', () => {
     const request = mapGeneralProgramToUpdateRequest(
       {
         ...sampleProgram,
@@ -854,14 +854,16 @@ describe('general-program-adapters', () => {
         instructorApplicationEndDate: '2099-02-01T00:00:00.000Z',
         programRecruitments: [
           {
+            id: 11,
             recruitmentType: 'PARTICIPANT',
             startAt: '2020-01-01T00:00:00+09:00',
-            operationStartDate: '2020-01-01',
+            operationStartDate: '2099-01-01',
           },
           {
+            id: 12,
             recruitmentType: 'INSTRUCTOR',
-            startAt: '2020-01-01T00:00:00+09:00',
-            operationStartDate: '2099-01-01',
+            startAt: '2099-01-01T00:00:00+09:00',
+            operationStartDate: '2020-01-01',
           },
         ],
       },
@@ -1155,6 +1157,78 @@ describe('general-program-adapters', () => {
     expect(request.recruitments).toBeUndefined()
   })
 
+  it('저장된 참여자 행에 봉사 모집을 더할 때 기존 id를 유지하고 새 행은 id 없이 보낸다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalParticipantTypes: ['individual'],
+      programRecruitments: [
+        {
+          id: 99011,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+          targetType: 'INDIVIDUAL',
+        },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      {
+        title: '봉사 추가',
+        generalParticipantTypes: ['individual', 'volunteer'],
+      },
+      existing
+    )
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 99011,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+        }),
+      ])
+    )
+    expect(request.recruitments?.find(row => row.recruitmentType === 'VOLUNTEER')).not.toHaveProperty(
+      'id'
+    )
+    expect(request.recruitments).toHaveLength(2)
+  })
+
+  it('같은 참여자 유형이면 저장된 행이 있어도 recruitments를 보내지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalParticipantTypes: ['individual'],
+      programRecruitments: [
+        { id: 99011, recruitmentType: 'PARTICIPANT', applicationType: 'INDIVIDUAL' },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      { title: '제목만', generalParticipantTypes: ['individual'] },
+      existing
+    )
+    expect(request.recruitments).toBeUndefined()
+  })
+
+  it('저장된 개인 모집은 기관 유형으로 바꾸지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalParticipantTypes: ['individual'],
+      programRecruitments: [
+        { id: 99011, recruitmentType: 'PARTICIPANT', applicationType: 'INDIVIDUAL' },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      { generalParticipantTypes: ['school_institution'] },
+      existing
+    )
+    expect(request.recruitments).toBeUndefined()
+  })
+
   it('등록 후 audience 패치는 applicationTargetMode를 바꾸지 않고 serviceDetailJson만 남긴다', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
       generalProgramAudience: 'individual',
@@ -1323,8 +1397,8 @@ describe('general-program-adapters', () => {
           targetType: 'ORGANIZATION',
           operationStartDate: '2026-11-18',
           operationEndDate: '2026-12-25',
-          startAt: '2026-10-01',
-          endAt: '2026-10-31',
+          startAt: '2099-10-01',
+          endAt: '2099-10-31',
         },
       ],
       generalCommonInfo: {

@@ -525,16 +525,17 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
       </QueryClientProvider>
     )
 
-    expect(
-      screen.getByText('참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.')
-    ).toBeTruthy()
+    expect(screen.getByText('모집 등록 후 참여자 유형은 변경할 수 없습니다.')).toBeTruthy()
     const field = screen
       .getByText('참여자 유형', { selector: '.detail-info-form__field-label-text' })
       .closest('.detail-info-form__field')
     if (!field) throw new Error('참여자 유형 필드를 찾지 못했습니다')
-    const checkboxes = [...field.querySelectorAll('input[type="checkbox"]')]
+    const checkboxes = [...field.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
     expect(checkboxes).toHaveLength(4)
-    expect(checkboxes.every(input => (input as HTMLInputElement).disabled)).toBe(true)
+    expect(checkboxes[0]?.disabled).toBe(true)
+    expect(checkboxes[1]?.disabled).toBe(true)
+    expect(checkboxes[2]?.disabled).toBe(false)
+    expect(checkboxes[3]?.disabled).toBe(false)
   })
 
   it('담당자가 없는 후원사도 후원사 담당자 미선택을 보여준다', async () => {

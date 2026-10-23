@@ -33,6 +33,7 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
+import { educationScheduleLineSerializationIssue } from '@/features/template/lib/format-education-schedule-line'
 import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
@@ -543,6 +544,16 @@ export const generalProgramCommonInfoEditSchema = z
           path: ['educationScheduleLines'],
         })
       }
+
+      data.educationScheduleLines.forEach((line, index) => {
+        const message = educationScheduleLineSerializationIssue(line)
+        if (!message) return
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message,
+          path: ['educationScheduleLines', index],
+        })
+      })
     }
   })
 
@@ -982,21 +993,23 @@ export function formatSponsorManagerPersonLabel(input: {
  * 후원사 담당자 셀렉트 라벨
  * - multiSponsor(시안 기본): `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
  * - 단일 표시만 필요할 때: `이름 직함` / `이름`
+ * - 연락처가 있으면 이름 뒤에 ` | 연락처`를 붙인다.
  */
 export function formatSponsorManagerSelectLabel(input: {
   sponsorName: string
   contactName: string
   position?: string | null
+  phone?: string | null
   multiSponsor: boolean
 }): string {
   const nameWithPosition = formatSponsorManagerPersonLabel({
     contactName: input.contactName,
     position: input.position,
   })
-  if (!input.multiSponsor) return nameWithPosition
-  const sponsorName = input.sponsorName.trim()
-  if (!sponsorName) return nameWithPosition
-  return `${sponsorName} | ${nameWithPosition}`
+  const sponsorName = input.multiSponsor ? input.sponsorName.trim() : ''
+  const head = sponsorName ? `${sponsorName} | ${nameWithPosition}` : nameWithPosition
+  const phone = input.phone?.trim()
+  return phone ? `${head} | ${phone}` : head
 }
 
 /**
@@ -1049,14 +1062,13 @@ export function resolveSponsorManagerViewLines(input: {
         const contactName =
           catalogContact?.name?.trim() || input.contactNames?.[ref]?.trim() || ''
         if (!contactName) return ''
-        const label = formatSponsorManagerSelectLabel({
+        return formatSponsorManagerSelectLabel({
           sponsorName: sponsor?.name ?? '',
           contactName,
           position: catalogContact?.position,
+          phone: catalogContact?.phone,
           multiSponsor,
         })
-        const phone = catalogContact?.phone?.trim()
-        return phone ? `${label} | ${phone}` : label
       })
       .filter(Boolean)
     if (labels.length > 0) return labels
@@ -1069,14 +1081,15 @@ export function resolveSponsorManagerViewLines(input: {
     for (const contact of contacts) {
       const name = contact.name?.trim() ?? ''
       if (!name || !stored.includes(name)) continue
-      const label = formatSponsorManagerSelectLabel({
-        sponsorName: sponsor.name,
-        contactName: contact.name,
-        position: contact.position,
-        multiSponsor,
-      })
-      const phone = contact.phone?.trim()
-      return [phone ? `${label} | ${phone}` : label]
+      return [
+        formatSponsorManagerSelectLabel({
+          sponsorName: sponsor.name,
+          contactName: contact.name,
+          position: contact.position,
+          phone: contact.phone,
+          multiSponsor,
+        }),
+      ]
     }
   }
   return splitLegacyJoinedSponsorManagerLines(stored)

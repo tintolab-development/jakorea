@@ -79,7 +79,10 @@ import {
 } from '@/features/program/general/lib/detail-common-info-display'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
-import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
+import {
+  applyGeneralParticipantAudienceToEditForm,
+  savedGeneralParticipantTypeLocks,
+} from '@/features/program/general/lib/participant-audience-selection'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import {
   isGeneralIndividualParticipantTarget,
@@ -528,6 +531,10 @@ function BasicInfoSection({
     watchedSponsorIds,
   ])
 
+  const participantTypeLocks = useMemo(
+    () => savedGeneralParticipantTypeLocks(program),
+    [program]
+  )
   const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
   const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
   const isIndividualTarget = isFormEdit
@@ -768,7 +775,8 @@ function BasicInfoSection({
                 <GeneralParticipantAudienceCheckboxGroup
                   individual={Boolean(participantIndividual)}
                   organization={Boolean(participantOrganization)}
-                  disabled
+                  individualDisabled={participantTypeLocks.individual}
+                  organizationDisabled={participantTypeLocks.organization}
                   onIndividualChange={handleParticipantIndividualChange}
                   onOrganizationChange={handleParticipantOrganizationChange}
                 />
@@ -777,6 +785,10 @@ function BasicInfoSection({
                     PARTICIPANT_FORM_KEYS[
                       option.value as keyof typeof PARTICIPANT_FORM_KEYS
                     ]
+                  const typeLocked =
+                    option.value === 'teacher_instructor'
+                      ? participantTypeLocks.teacherInstructor
+                      : participantTypeLocks.volunteer
                   return (
                     <Controller
                       key={option.value}
@@ -786,7 +798,7 @@ function BasicInfoSection({
                         <CmsCheckbox
                           checkboxSize="medium"
                           checked={Boolean(field.value)}
-                          disabled
+                          disabled={typeLocked}
                           onChange={event => field.onChange(event.target.checked)}
                         >
                           {option.label}

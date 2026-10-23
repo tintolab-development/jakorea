@@ -5,6 +5,7 @@
 import { z } from 'zod'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
+import { educationScheduleLineSerializationIssue } from '@/features/template/lib/format-education-schedule-line'
 import {
   DEFAULT_REGISTRATION_EDUCATION_FORM,
   DEFAULT_REGISTRATION_PARTICIPATION,
@@ -296,6 +297,10 @@ export function listIncompleteRegistrationWizardRequiredFields(
         pushReason(reasons, isEmptyText(values.singleDateIso), 'educationScheduleSettings.singleDateIso')
       }
     }
+    const invalidScheduleLine = values.scheduleLines.some(
+      line => typeof line === 'string' && educationScheduleLineSerializationIssue(line) != null
+    )
+    pushReason(reasons, invalidScheduleLine, 'educationScheduleSettings.scheduleLines')
   }
 
   return reasons

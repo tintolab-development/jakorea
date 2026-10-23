@@ -337,7 +337,9 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
       new Set(['educationScheduleMode', 'educationScheduleLines'])
     )
     expect(parsed.generalCommonInfo?.educationScheduleMode).toBe('date')
-    expect(parsed.generalCommonInfo?.educationScheduleLines).toEqual([dateLine])
+    expect(parsed.generalCommonInfo?.educationScheduleLines).toEqual([
+      '26년 11월 5일(목) 10:00 ~ 12:00',
+    ])
     const details = jsonScheduleDetails(parsed)
     expect(details?.[0]?.progressTimeSummary).toBe(TIME_SUMMARY)
     expect(details?.[0]?.scheduleDateLabel).toBeUndefined()

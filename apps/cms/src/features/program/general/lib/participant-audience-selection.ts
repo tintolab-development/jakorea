@@ -20,6 +20,45 @@ export type GeneralParticipantRegistrationFlags = GeneralParticipantAudienceFlag
   volunteer: boolean
 }
 
+export type SavedGeneralParticipantTypeLocks = {
+  individual: boolean
+  organization: boolean
+  teacherInstructor: boolean
+  volunteer: boolean
+}
+
+function recruitmentTypeOf(row: { recruitmentType?: string | null }): string {
+  return (row.recruitmentType ?? '').toUpperCase()
+}
+
+/**
+ * 이미 등록된 참여자 유형은 수정할 수 없다.
+ * 개인/기관은 한 모집행의 신청 유형이므로 한쪽이 있으면 둘 다 잠근다.
+ * 강사·봉사자는 저장된 행이 없을 때만 새 모집 단위로 선택할 수 있다.
+ */
+export function savedGeneralParticipantTypeLocks(
+  program: Pick<Program, 'generalParticipantTypes' | 'programRecruitments'>
+): SavedGeneralParticipantTypeLocks {
+  const types = new Set(program.generalParticipantTypes ?? [])
+  const rows = program.programRecruitments ?? []
+  const saved = (predicate: (row: (typeof rows)[number]) => boolean) =>
+    rows.some(row => row.id != null && predicate(row))
+  const participantSaved =
+    types.has('individual') ||
+    types.has('school_institution') ||
+    saved(row => recruitmentTypeOf(row) === 'PARTICIPANT')
+  const instructorSaved =
+    types.has('teacher_instructor') || saved(row => recruitmentTypeOf(row) === 'INSTRUCTOR')
+  const volunteerSaved =
+    types.has('volunteer') || saved(row => recruitmentTypeOf(row) === 'VOLUNTEER')
+  return {
+    individual: participantSaved,
+    organization: participantSaved,
+    teacherInstructor: instructorSaved,
+    volunteer: volunteerSaved,
+  }
+}
+
 const PARTICIPANT_AUDIENCE_LABEL_BY_KIND: Record<GeneralParticipantAudienceSelectValue, string> = {
   individual:
     TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(option => option.value === 'individual')?.label ??

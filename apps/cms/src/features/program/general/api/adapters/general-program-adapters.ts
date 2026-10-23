@@ -30,7 +30,8 @@ import { mapListParticipantRecruitment } from '@/features/program/shared/lib/for
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
-  isProgramOperationStartLocked,
+  isRecruitmentStartLocked,
+  isRecruitmentTypeGeneralInfoClosed,
   toProgramRecruitmentWindows,
   type ProgramRecruitmentEditType,
 } from '@/features/program/shared/lib/program-edit-window'
@@ -56,6 +57,8 @@ import {
   attachRecruitmentRowIdentity,
   buildRecruitmentRowCopyRequests,
   mergeRecruitmentRowRequests,
+  recruitmentRowIdentityRequests,
+  resolveRecruitmentApplicationType,
 } from '@/features/program/shared/lib/recruitment-row-request'
 import {
   hydrateGeneralRecruitmentInfoFromRows,
@@ -648,6 +651,86 @@ export function mapGeneralProgramRecruitmentsToRequest(
   return out.length > 0 ? attachRecruitmentRowIdentity(out, program.programRecruitments) : undefined
 }
 
+function participantTypeCoveredByRows(
+  type: string,
+  rows: NonNullable<Program['programRecruitments']>
+): boolean {
+  return rows.some(row => {
+    const recruitmentType = (row.recruitmentType ?? '').toUpperCase()
+    const applicationType =
+      row.applicationType?.toUpperCase() ??
+      resolveRecruitmentApplicationType(row.recruitmentType, row.targetType)
+    if (type === 'teacher_instructor') return recruitmentType === 'INSTRUCTOR'
+    if (type === 'volunteer') return recruitmentType === 'VOLUNTEER'
+    if (type === 'individual') {
+      return recruitmentType === 'PARTICIPANT' && applicationType === 'INDIVIDUAL'
+    }
+    if (type === 'school_institution') {
+      return recruitmentType === 'PARTICIPANT' && applicationType === 'ORGANIZATION'
+    }
+    return false
+  })
+}
+
+/**
+ * 이미 저장된 모집 구조에 새 참여자 유형만 붙인다.
+ * 기존 행은 id와 구조 필드만 다시 실어 삭제로 읽히지 않게 하고, 유형 교체는 만들지 않는다.
+ * 저장된 행 id가 없으면 부분 목록으로 기존 행이 빠질 수 있어 보내지 않는다.
+ */
+export function buildParticipantRecruitmentAdditionRequests(
+  merged: Program,
+  existing: Program
+): ProgramRecruitmentRequest[] | null {
+  const savedRows = (existing.programRecruitments ?? []).filter(row => row.id != null)
+  if (savedRows.length === 0) return null
+  const before = new Set(existing.generalParticipantTypes ?? [])
+  const after = merged.generalParticipantTypes ?? []
+  const hasParticipantRow = savedRows.some(
+    row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+  )
+  const added = after.filter(type => {
+    if (before.has(type) || participantTypeCoveredByRows(type, savedRows)) return false
+    if (hasParticipantRow && (type === 'individual' || type === 'school_institution')) return false
+    return true
+  })
+  if (added.length === 0) return null
+  const created =
+    mapGeneralProgramRecruitmentsToRequest({
+      ...merged,
+      generalParticipantTypes: added,
+      programRecruitments: [],
+    })?.map(row => {
+      const { id: _id, ...rest } = row
+      return rest
+    }) ?? []
+  if (created.length === 0) return null
+  return [...recruitmentRowIdentityRequests(savedRows), ...created]
+}
+
+/** 새 모집 단위만 상세 JSON 유형에 더한다. 기존 유형은 빼거나 바꾸지 않는다. */
+function participantTypesKeptWithAdditions(
+  existing: Program,
+  additions: ProgramRecruitmentRequest[] | null
+): Program['generalParticipantTypes'] {
+  const kept = [...(existing.generalParticipantTypes ?? [])]
+  if (!additions?.length) return existing.generalParticipantTypes
+  for (const row of additions) {
+    if (row.id != null) continue
+    const type =
+      row.recruitmentType === 'INSTRUCTOR'
+        ? 'teacher_instructor'
+        : row.recruitmentType === 'VOLUNTEER'
+          ? 'volunteer'
+          : row.applicationType === 'INDIVIDUAL'
+            ? 'individual'
+            : row.applicationType === 'ORGANIZATION'
+              ? 'school_institution'
+              : null
+    if (type && !kept.includes(type)) kept.push(type)
+  }
+  return kept
+}
+
 function copyAudienceOf(row: ProgramRecruitmentRequest): RecruitmentCopyAudience {
   if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.INSTRUCTOR) return 'instructor'
   if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER) return 'volunteer'
@@ -1026,9 +1109,9 @@ function mapProgramPatchFieldsToRequest(
     body.businessStartDate = toRequestDate(merged.startDate)
     body.businessEndDate = toRequestDate(merged.endDate)
   }
-  const participantLocked = isProgramOperationStartLocked(existing, 'PARTICIPANT')
-  const instructorLocked = isProgramOperationStartLocked(existing, 'INSTRUCTOR')
-  const volunteerLocked = isProgramOperationStartLocked(existing, 'VOLUNTEER')
+  const participantLocked = isRecruitmentTypeGeneralInfoClosed(existing, 'PARTICIPANT')
+  const instructorLocked = isRecruitmentTypeGeneralInfoClosed(existing, 'INSTRUCTOR')
+  const volunteerLocked = isRecruitmentTypeGeneralInfoClosed(existing, 'VOLUNTEER')
   const includeParticipantRecruitment =
     (has('applicationStartDate') || has('applicationEndDate')) && !participantLocked
   const includeInstructorRecruitment =
@@ -1064,14 +1147,13 @@ function mapProgramPatchFieldsToRequest(
     ? buildRecruitmentRowCopyRequests(
         merged.programRecruitments,
         existing.programRecruitments,
-        row => {
-          const type = recruitmentTypeOf(row.recruitmentType)
-          return type != null && isProgramOperationStartLocked(existing, type)
-        }
+        row => isRecruitmentStartLocked(row.startAt)
       )
     : []
   const recruitmentRows = mergeRecruitmentRowRequests(windowRows, copyRows)
-  if (recruitmentRows.length > 0) body.recruitments = recruitmentRows
+  const recruitmentAdditions = buildParticipantRecruitmentAdditionRequests(merged, existing)
+  const recruitments = mergeRecruitmentRowRequests(recruitmentAdditions ?? [], recruitmentRows)
+  if (recruitments.length > 0) body.recruitments = recruitments
   if (has('businessArea')) {
     const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
     body.businessArea = businessArea
@@ -1162,7 +1244,10 @@ function mapProgramPatchFieldsToRequest(
       ? {
           ...merged,
           generalProgramAudience: existing.generalProgramAudience,
-          generalParticipantTypes: existing.generalParticipantTypes,
+          generalParticipantTypes: participantTypesKeptWithAdditions(
+            existing,
+            recruitmentAdditions
+          ),
         }
       : merged
 
