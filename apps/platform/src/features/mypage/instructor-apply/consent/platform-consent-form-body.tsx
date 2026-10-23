@@ -12,6 +12,7 @@ import type { ReactNode } from 'react'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFFormSection } from '@/shared/ui'
 import { ConsentPreviewPaymentInfo } from '@/features/mypage/settings/ui/consent-document-preview-payment-info'
+import { resolveConsentDocumentPreviewBodyVariant } from '@/features/mypage/settings/lib/consent-document-preview-config'
 import {
   ConsentPreviewRecipient,
   resolveConsentDocumentPreviewChrome,
@@ -54,15 +55,6 @@ function shouldHideParagraph(
 ): boolean {
   if (hiddenParagraphIds.has(paragraph.id)) return true
   if (documentPreview && paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient) {
-    return true
-  }
-  if (
-    documentPreview &&
-    paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
-    paragraph.kind === 'description' &&
-    paragraph.variant === 'closing' &&
-    paragraph.body.trim() === ''
-  ) {
     return true
   }
   if (paragraph.kind === 'description' && paragraph.variant === 'system') {
@@ -156,14 +148,21 @@ export function PlatformConsentFormBody({
 }: PlatformConsentFormBodyProps) {
   let numberedIndex = 0
 
+  const bodyVariant = resolveConsentDocumentPreviewBodyVariant(documentPreviewTemplateId)
   const rootClassName = documentPreview
     ? [
         previewTypography.body,
-        documentPreviewTemplateId === 'agreement-portrait' ? previewTypography.bodyPortrait : undefined,
+        bodyVariant === 'payment' ? previewTypography.bodyPayment : undefined,
+        bodyVariant === 'expense' ? previewTypography.bodyExpense : undefined,
+        bodyVariant === 'notice' ? previewTypography.bodyNotice : undefined,
+        bodyVariant === 'portrait' ? previewTypography.bodyPortrait : undefined,
       ]
         .filter(Boolean)
         .join(' ')
     : styles.paragraphStack
+  const noticeClosingVisible =
+    documentPreview &&
+    draft.paragraphs.some(paragraph => paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing)
 
   return (
     <div className={rootClassName}>
@@ -184,6 +183,7 @@ export function PlatformConsentFormBody({
               draft.paragraphs[index + 1],
               submittedDateLabel,
               { signerName, signatureImageSrc },
+              { noticeClosingVisible },
             )
           : null
 

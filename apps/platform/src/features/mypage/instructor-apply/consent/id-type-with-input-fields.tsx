@@ -41,15 +41,38 @@ export function PlatformIdTypeWithInputFields({
       : (options[0]?.id ?? '')
   const isResident = isIdTypeResidentOptionId(selectedId)
   const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
-  const selectedLabel = options.find(option => option.id === selectedId)?.label?.trim() || '-'
   const residentText = formatResidentNumberRawForPreview(paragraph.inputValue)
   const inputText = isResident ? residentText : paragraph.inputValue.trim()
 
   if (readOnly) {
     return (
       <div className={styles.idTypeWithInput}>
-        <p className={styles.cellText}>{selectedLabel}</p>
-        <p className={styles.cellText}>{inputText || '-'}</p>
+        <div className={styles.idTypeWithInputRadios} role="radiogroup" aria-label="식별번호 종류">
+          {options.map(opt => (
+            <label key={opt.id} className={styles.radioOption}>
+              <input
+                type="radio"
+                name={`id-type-preview-${paragraph.id}`}
+                value={opt.id}
+                checked={selectedId === opt.id}
+                disabled
+                readOnly
+              />
+              <PFText as="span" typo="bd-md-rg" color="black">
+                {opt.label}
+              </PFText>
+            </label>
+          ))}
+        </div>
+        {isResident ? (
+          <div className={styles.idTypeWithInputResident}>
+            <p className={styles.cellText}>{residentText || '-'}</p>
+          </div>
+        ) : (
+          <p className={[styles.cellText, styles.idTypeWithInputInput].join(' ')}>
+            {inputText || '-'}
+          </p>
+        )}
       </div>
     )
   }

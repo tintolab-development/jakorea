@@ -10,9 +10,10 @@ import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { fetchPortalConsentDocument } from '../api/consents'
 import {
   buildConsentDocumentPreviewHeaderTitle,
+  resolveConsentDocumentA4Title,
   resolveConsentDocumentPreviewConfig,
 } from '../lib/consent-document-preview-config'
-import { formatConsentSubmittedDateLabel } from '../lib/format-consent-submitted-date'
+import { resolveConsentA4PreviewDateLabel } from '../lib/format-consent-submitted-date'
 import { loadConsentPreviewSignature } from '../lib/load-consent-preview-signature'
 import {
   readPaymentBasicInfoFromConsentDetail,
@@ -112,10 +113,14 @@ export function ConsentDocumentPreviewOverlay({
   >()
   const [signatureDisplayName, setSignatureDisplayName] = useState('')
   const [signatureImageSrc, setSignatureImageSrc] = useState<string | undefined>()
+  const [isSubmittedDocument, setIsSubmittedDocument] = useState(false)
 
   const previewConfig = item ? resolveConsentDocumentPreviewConfig(item.id) : null
   const headerTitle = item ? buildConsentDocumentPreviewHeaderTitle(item.title) : ''
-  const documentTitle = item?.title ?? ''
+  const documentTitle =
+    item != null && previewConfig != null
+      ? resolveConsentDocumentA4Title(previewConfig.templateId, item.title)
+      : (item?.title ?? '')
 
   useEffect(() => {
     if (!open) return
@@ -138,6 +143,7 @@ export function ConsentDocumentPreviewOverlay({
         revokePreviewObjectUrl(previous)
         return undefined
       })
+      setIsSubmittedDocument(false)
       setLoadFailed(false)
       setLoadFailedMessage(LOAD_FAILED_MESSAGE)
       setIsLoading(false)
@@ -160,8 +166,10 @@ export function ConsentDocumentPreviewOverlay({
         revokePreviewObjectUrl(previous)
         return undefined
       })
+      setIsSubmittedDocument(false)
 
       const applyLocalDraftFallback = () => {
+        setIsSubmittedDocument(false)
         setDraft(fallbackDraft)
         setPaymentBasicInfo(fallbackPaymentBasicInfo)
         const localImage = fallbackSignatureImageSrc?.trim()
@@ -187,6 +195,7 @@ export function ConsentDocumentPreviewOverlay({
           }
           detail = await fetchPortalConsentDocument(item.documentId)
           if (!cancelled) {
+            setIsSubmittedDocument(true)
             setSubmittedAtRaw(detail.signedAt?.trim() || item.agreedAt)
             setPaymentBasicInfo(readPaymentBasicInfoFromConsentDetail(detail))
             const signature = await loadConsentPreviewSignature({
@@ -265,13 +274,15 @@ export function ConsentDocumentPreviewOverlay({
   const activeParagraphs = pages[safePage - 1] ?? []
   const pageDraft =
     draft != null ? sliceDraftForParagraphs(draft, activeParagraphs) : null
-  const submittedDateLabel = formatConsentSubmittedDateLabel(submittedAtRaw)
-  const signerName = resolveConsentPreviewSignerName({
-    draft,
-    paymentName: paymentBasicInfo?.nameKo,
-    memberName,
-    signatureDisplayName,
-  })
+  const submittedDateLabel = resolveConsentA4PreviewDateLabel(submittedAtRaw, isSubmittedDocument)
+  const signerName = isSubmittedDocument
+    ? resolveConsentPreviewSignerName({
+        draft,
+        paymentName: paymentBasicInfo?.nameKo,
+        memberName,
+        signatureDisplayName,
+      })
+    : ''
   const showClosingRecipient =
     previewConfig?.templateId === 'agreement-third-party' && safePage === totalPages
 

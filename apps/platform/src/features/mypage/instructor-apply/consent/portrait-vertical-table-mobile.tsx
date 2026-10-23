@@ -31,9 +31,11 @@ function tableBottomConsentToChoice(value?: TableBottomConsent): ConsentValue | 
 export function PortraitVerticalTableBottom({
   paragraph,
   onUpdateParagraph,
+  documentPreview = false,
 }: {
   paragraph: VerticalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
+  documentPreview?: boolean
 }) {
   if (!paragraph.showBottomText && !paragraph.showBottomConsent) {
     return null
@@ -48,6 +50,8 @@ export function PortraitVerticalTableBottom({
         <ConsentWriteRadioGroup
           name={`consent-table-${paragraph.id}`}
           value={tableBottomConsentToChoice(paragraph.bottomConsent)}
+          readOnly={documentPreview}
+          documentTone={documentPreview}
           onChange={next =>
             onUpdateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'vertical_table'
