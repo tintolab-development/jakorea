@@ -109,6 +109,18 @@
 }
 
 @media (--bp-below-pc) {
+  .textArea .text {
+    order: 1;
+  }
+
+  .media {
+    order: 2;
+  }
+
+  .actionButtonWrap {
+    order: 3;
+  }
+
   .eyebrow {
     font-size: 30px;
   }
