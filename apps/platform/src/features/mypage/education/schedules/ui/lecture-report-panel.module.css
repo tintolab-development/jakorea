@@ -1,0 +1,22 @@
+.panel { margin-top: var(--spacing-40); padding-top: var(--spacing-32); border-top: 1px solid var(--color-neutral-cool-200); }
+.heading { display: flex; justify-content: space-between; margin-bottom: var(--spacing-20); }
+.heading h2, .heading p { margin: 0; }
+.heading p { margin-top: var(--spacing-8); color: var(--color-neutral-cool-600); }
+.rows { display: grid; gap: var(--spacing-12); }
+.row { display: grid; gap: var(--spacing-12); padding: var(--spacing-20); border: 1px solid var(--color-neutral-cool-200); border-radius: var(--radius-16); }
+.rowTitle { display: flex; justify-content: space-between; gap: var(--spacing-12); }
+.rowTitle span { color: var(--color-neutral-cool-600); }
+.row dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-8) var(--spacing-20); margin: 0; }
+.row dl div { display: flex; gap: var(--spacing-8); }
+.row dt { color: var(--color-neutral-cool-600); }
+.row dd { margin: 0; }
+.pagination, .actions { display: flex; align-items: center; justify-content: center; gap: var(--spacing-12); margin-top: var(--spacing-20); }
+.overlay { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / 45%); }
+.dialog { box-sizing: border-box; width: min(760px, 100%); max-height: min(90vh, 900px); overflow: auto; padding: 24px; border-radius: var(--radius-16); background: white; }
+.dialogHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.dialogHead h3 { margin: 0; }
+.dialogHead button { border: 0; background: transparent; font-size: 28px; cursor: pointer; }
+.question { display: grid; gap: 8px; margin-top: 20px; }
+.question p { margin: 0; white-space: pre-wrap; }
+.question textarea, .question select { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid var(--color-neutral-cool-300); border-radius: 8px; font: inherit; }
+@media (max-width: 640px) { .row dl { grid-template-columns: 1fr; } .rowTitle { flex-direction: column; } .dialog { padding: 18px; } }

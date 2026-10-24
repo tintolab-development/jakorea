@@ -200,6 +200,7 @@ const teacherInstructorProgramCase = buildTeacherInProgressDetailTabItems({
   scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   surveyConfigured: true,
   satisfactionConfigured: true,
+  lectureReportVisible: true,
 })
 assert.equal(
   teacherInstructorProgramCase.find(item => item.key === 'schedule')?.label,
@@ -218,5 +219,7 @@ assert.deepEqual(
   ujatTeacher.map(item => item.label),
   ['안내사항', '봉사자 배정 현황', '설문조사', '만족도조사'],
 )
+assert.ok(teacherInstructorProgramCase.some(item => item.key === 'lecture-report'))
+assert.ok(!general.some(item => item.key === 'lecture-report'))
 
 console.log('detail-tabs.teacher.selfcheck: ok')

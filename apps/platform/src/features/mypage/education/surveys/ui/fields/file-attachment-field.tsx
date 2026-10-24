@@ -7,6 +7,7 @@ type SurveyFileAttachmentFieldProps = {
   paragraph: FileAttachmentParagraph
   fileName: string | null
   onFileNameChange: (next: string | null) => void
+  onFileChange?: (next: File | null) => void
   disabled?: boolean
 }
 
@@ -14,6 +15,7 @@ export function SurveyFileAttachmentField({
   paragraph: _paragraph,
   fileName,
   onFileNameChange,
+  onFileChange,
   disabled = false,
 }: SurveyFileAttachmentFieldProps) {
   const inputId = useId()
@@ -30,6 +32,7 @@ export function SurveyFileAttachmentField({
         onChange={event => {
           const file = event.target.files?.[0]
           onFileNameChange(file?.name ?? null)
+          onFileChange?.(file ?? null)
         }}
       />
       <PFButton
