@@ -1203,20 +1203,31 @@ export function programToDetailEditValues(
           curriculumSessions: program.generalCommonInfo?.curriculumSessions,
         })
       )
-      if (fromLabel) return fromLabel
       if (!isTrainedTeacherForm) return fromLabel
+      if (fromLabel) return fromLabel
+      if (
+        program.type === 'online' ||
+        program.type === 'offline' ||
+        program.type === 'hybrid'
+      ) {
+        return program.type
+      }
       return normalizeTrainedTeacherEducationFormFromApiType(program.type)
     })(),
-    educationFormScheduleDetail:
-      program.generalCommonInfo?.educationFormScheduleDetail ?? 'common',
-    ipsScheduleDetail: program.generalCommonInfo?.ipsScheduleDetail ?? (() => {
-      const summary = resolveStoredIpsTypeSummary({
-        ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
-        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
-        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
-      })
-      return summary.includes('별') ? 'perSchedule' : 'common'
-    })(),
+    educationFormScheduleDetail: isTrainedTeacherForm
+      ? program.generalCommonInfo?.educationFormScheduleDetail
+      : (program.generalCommonInfo?.educationFormScheduleDetail ?? 'common'),
+    ipsScheduleDetail: isTrainedTeacherForm
+      ? program.generalCommonInfo?.ipsScheduleDetail
+      : program.generalCommonInfo?.ipsScheduleDetail ??
+        (() => {
+          const summary = resolveStoredIpsTypeSummary({
+            ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
+            scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+            curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+          })
+          return summary.includes('별') ? 'perSchedule' : 'common'
+        })(),
     ipsCategory: (() => {
       const summary = resolveStoredIpsTypeSummary({
         ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,

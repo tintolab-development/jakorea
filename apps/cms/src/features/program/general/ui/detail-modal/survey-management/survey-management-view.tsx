@@ -70,6 +70,7 @@ import {
   surveyBindingResolutionAlert,
   type SurveySubmissionPeriod,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import { ensureSurveyCreateSubmissionPeriod } from '@/features/program/shared/lib/survey-management/survey-binding-period'
 import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
@@ -612,12 +613,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         : kind === 'lecture'
           ? 'ADMIN'
           : undefined
+    const submissionPeriod =
+      kind === 'survey' ? ensureSurveyCreateSubmissionPeriod(ids) : ids
     return {
       formType,
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
-      submissionStartAt: ids.submissionStartAt,
-      submissionEndAt: ids.submissionEndAt,
+      submissionStartAt: submissionPeriod.submissionStartAt,
+      submissionEndAt: submissionPeriod.submissionEndAt,
       targetRole,
       ...(audience === 'volunteer_h1'
         ? { targetScope: 'TERM', targetScopeId: 1 }

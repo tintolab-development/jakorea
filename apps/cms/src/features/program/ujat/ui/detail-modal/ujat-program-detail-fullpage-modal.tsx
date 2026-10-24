@@ -275,6 +275,7 @@ import {
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import { ensureSurveyCreateSubmissionPeriod } from '@/features/program/shared/lib/survey-management/survey-binding-period'
 import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
@@ -1964,8 +1965,7 @@ export function UjatProgramDetailFullPageModal({
           formType: 'SURVEY',
           templateId: resolved.templateId,
           templateVersionId: resolved.templateVersionId,
-          submissionStartAt: resolved.submissionStartAt,
-          submissionEndAt: resolved.submissionEndAt,
+          ...ensureSurveyCreateSubmissionPeriod(resolved),
           active: true,
           required: false,
           ...targetScopePayload,

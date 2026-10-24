@@ -3,6 +3,11 @@ import {
   updateAdminProgramFormBindingRemote,
 } from '@/features/program/general/api/programs-api-client'
 import { readSurveySubmissionPeriodFromSchema } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import {
+  isSameSeoulCalendarDay,
+  resolveSurveyBindingPeriodForFormSave,
+  seoulStartOfNextCalendarDayIso,
+} from '@/features/program/shared/lib/survey-management/survey-binding-period'
 import { validateSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
 import { writingFormDraftToSchemaJson } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { publishFormTemplateVersionById } from '@/features/template/api/admin-form-templates-service'
@@ -47,29 +52,6 @@ export function buildProgramSurveyFormEditTarget(
 
 export const PROGRAM_SURVEY_FORM_EDIT_LOCKED_MESSAGE =
   '진행 중이거나 응답이 있는 설문은 양식을 수정할 수 없습니다.'
-
-const SEOUL_TIME_ZONE = 'Asia/Seoul'
-
-function seoulCalendarYmd(value: string | number | Date): string | null {
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleDateString('en-CA', { timeZone: SEOUL_TIME_ZONE })
-}
-
-function isSameSeoulCalendarDay(iso: string, now = new Date()): boolean {
-  const left = seoulCalendarYmd(iso)
-  const right = seoulCalendarYmd(now)
-  return left != null && left === right
-}
-
-/** 양식 교체용 임시 시작 — Asia/Seoul 다음 달력일 00:00 */
-function seoulStartOfNextCalendarDayIso(now = new Date()): string {
-  const ymd = seoulCalendarYmd(now)
-  if (ymd == null) return dayjs(now).add(1, 'day').startOf('day').toISOString()
-  const [year, month, day] = ymd.split('-').map(Number)
-  const nextYmd = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10)
-  return `${nextYmd}T00:00:00.000+09:00`
-}
 
 function bindingHasSubmissionPeriod(
   binding: Pick<ProgramFormBindingResponse, 'submissionStartAt' | 'submissionEndAt'>
@@ -374,7 +356,7 @@ export async function saveProgramSurveyFormEdit(
     await updateAdminProgramFormBindingRemote(target.programId, target.bindingId, {
       templateId,
       templateVersionId,
-      ...readSurveySubmissionPeriodFromSchema(schemaJson),
+      ...resolveSurveyBindingPeriodForFormSave(readSurveySubmissionPeriodFromSchema(schemaJson)),
     })
 
     return { ok: true, templateId, templateVersionId }
