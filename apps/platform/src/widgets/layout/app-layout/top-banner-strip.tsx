@@ -1,21 +1,21 @@
 import { Link } from 'react-router-dom'
-import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
+import arrowForwardCool200Url from '@/shared/assets/icons/arrow-forward-cool-200.svg'
 import { useHomeMain } from '@/features/home/api/use-home-main'
 import type { HomeStripBanner } from '@/features/home/lib/view'
 import { SkeletonBlock } from '@/features/home/ui/skeleton-block'
 import styles from './top-banner-strip.module.css'
 
 function StripBannerLink({ banner }: { banner: HomeStripBanner }) {
-  const className = [styles.banner, 'typo-bd-md-bd'].join(' ')
+  const className = styles.banner
   const body = (
     <>
       <span className={styles.label}>{banner.label}</span>
       <img
         className={styles.arrow}
-        src={arrowRightWhite16Url}
+        src={arrowForwardCool200Url}
         alt=""
-        width={16}
-        height={16}
+        width={20}
+        height={20}
         aria-hidden="true"
       />
     </>

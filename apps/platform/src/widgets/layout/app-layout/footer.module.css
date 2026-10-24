@@ -50,7 +50,7 @@
 }
 
 .relatedSitesLabel {
-  color: var(--color-neutral-cool-600);
+  color: var(--color-neutral-cool-500);
   font-family: var(--font-family-base);
   font-size: 14px;
   font-style: normal;
@@ -185,7 +185,7 @@
   font-family: var(--font-family-base);
   font-size: 16px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 150%;
   letter-spacing: -0.16px;
 }
@@ -373,7 +373,7 @@
   }
 
   .relatedSitesLabel {
-    color: var(--color-neutral-cool-600);
+    color: var(--color-neutral-cool-500);
     font-size: 16px;
     font-weight: 400;
     line-height: 150%;
@@ -385,7 +385,7 @@
     font-family: var(--font-family-base);
     font-size: 16px;
     font-style: normal;
-    font-weight: 500;
+    font-weight: 400;
     line-height: 150%;
     letter-spacing: -0.16px;
   }
@@ -491,7 +491,7 @@
 
   .navigationButton {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 400;
     line-height: 160%;
     letter-spacing: -0.14px;
   }

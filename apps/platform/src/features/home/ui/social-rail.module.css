@@ -13,11 +13,9 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-24);
-  border-radius: var(--radius-24);
-  background: rgba(61, 61, 61, var(--rail-bg-alpha));
-  box-shadow:
-    0 0 8px 0 rgba(0, 13, 18, 0.17),
-    0 14px 36px 0 rgba(0, 13, 18, 0.26);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   transform: translate3d(0, calc(50vh - 50%), 0);
@@ -31,6 +29,11 @@
 
 /* 배경 알파가 생긴 뒤에만 블러. 투명할 때는 합성 비용을 두지 않는다. */
 .railBlur {
+  border-radius: var(--radius-24);
+  background: rgba(61, 61, 61, var(--rail-bg-alpha));
+  box-shadow:
+    0 0 8px 0 rgba(0, 13, 18, 0.17),
+    0 14px 36px 0 rgba(0, 13, 18, 0.26);
   backdrop-filter: blur(3.5px);
   -webkit-backdrop-filter: blur(3.5px);
 }
@@ -47,7 +50,7 @@
 @media (--bp-pc-up) {
   .rail {
     display: inline-flex;
-    right: var(--spacing-24);
+    right: var(--spacing-40);
   }
 }
 

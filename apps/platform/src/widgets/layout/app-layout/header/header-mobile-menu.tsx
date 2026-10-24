@@ -191,7 +191,7 @@ export function HeaderMobileMenu({
             ) : (
               <>
                 <button
-                  className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
+                  className={[styles.authButton, 'typo-bd-sm-md'].join(' ')}
                   type="button"
                   onClick={() => {
                     navigate(guestUserActionRoutes['회원가입'])
@@ -201,7 +201,7 @@ export function HeaderMobileMenu({
                   회원가입
                 </button>
                 <button
-                  className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
+                  className={[styles.authButton, 'typo-bd-sm-md'].join(' ')}
                   type="button"
                   onClick={() => {
                     navigate(guestUserActionRoutes['로그인'])

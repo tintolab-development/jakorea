@@ -1,6 +1,6 @@
 import { useHomeMain } from '../api/use-home-main'
 import { FALLBACK_EDUCATION_TITLE, HOME_PROGRAM_CARD_LIMIT, type HomeProgramCard } from '../lib/view'
-import { useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties, type WheelEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import {
@@ -132,6 +132,7 @@ export function ProgramCarouselSection() {
   /** PC: 아이템 617px × 3 + gap → 약 3장 노출 · 모바일은 네이티브 가로 스크롤 */
   const visibleCount = isPcUp ? 3 : 1
   const [index, setIndex] = useState(0)
+  const [isPointerInteraction, setIsPointerInteraction] = useState(false)
 
   const cards: HomeProgramCard[] = items.slice(0, HOME_PROGRAM_CARD_LIMIT).map(program => ({
     id: program.id,
@@ -155,7 +156,16 @@ export function ProgramCarouselSection() {
     : undefined
 
   return (
-    <section className={styles.section} aria-busy={isPending || undefined}>
+    <section
+      className={styles.section}
+      aria-busy={isPending || undefined}
+      data-pointer-interaction={isPointerInteraction ? 'true' : undefined}
+      onKeyDown={() => setIsPointerInteraction(false)}
+      onPointerDown={() => setIsPointerInteraction(true)}
+      onWheel={(event: WheelEvent<HTMLElement>) => {
+        if (event.shiftKey || event.deltaX !== 0) setIsPointerInteraction(true)
+      }}
+    >
       <div className={styles.inner}>
         <div className={styles.content}>
           <div className={styles.header}>
