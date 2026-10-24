@@ -13,8 +13,11 @@ import {
   mapSettlementDetailToInstructorPageCalculationStatement,
   mapSettlementDetailToProgramCalculationStatement,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
+import { mapCalculationDetailToBasisDetail } from '@/features/settlement-management/api/shared/map-frontend-fields'
+import { mapTransportationSnapshotToBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import { usePaymentOrdersDetailContextQuery } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { useSettlementDetailQuery } from '@/features/settlement-management/hooks/use-settlement-detail-query'
+import { useSettlementTransportationSnapshotQuery } from '@/features/settlement-management/hooks/use-settlement-transportation-snapshot-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import type {
@@ -68,6 +71,24 @@ export function usePaymentOrderDetailFullPageModalState(
     calcStatementOpen && paymentOrdersRemote
   )
 
+  const shouldFetchTransportationSnapshot = useMemo(() => {
+    if (!calcStatementOpen || !paymentOrdersRemote || calcSettlementId == null) return false
+    return (settlementDetailQuery.data?.items ?? []).some(item => {
+      if (item.type !== 'transportation') return false
+      return mapCalculationDetailToBasisDetail(item.calculationDetail)?.layout !== 'transportSnapshot'
+    })
+  }, [
+    calcSettlementId,
+    calcStatementOpen,
+    paymentOrdersRemote,
+    settlementDetailQuery.data?.items,
+  ])
+
+  const transportationSnapshotQuery = useSettlementTransportationSnapshotQuery(
+    calcSettlementId,
+    shouldFetchTransportationSnapshot
+  )
+
   const handleAggregateChange = useCallback((status: PaymentOrderDetailAggregateStatus) => {
     setLineAggregateStatus(status)
   }, [])
@@ -118,6 +139,13 @@ export function usePaymentOrderDetailFullPageModalState(
       return
     }
     if (!settlementDetailQuery.data) return
+    if (shouldFetchTransportationSnapshot && !transportationSnapshotQuery.isFetched) return
+    const transportationSnapshot = transportationSnapshotQuery.data?.find(snapshot => {
+      if (snapshot.settlementId != null && snapshot.settlementId !== calcSettlementId) {
+        return false
+      }
+      return mapTransportationSnapshotToBasisDetail(snapshot) != null
+    })
 
     switch (type) {
       case 'program': {
@@ -128,7 +156,8 @@ export function usePaymentOrderDetailFullPageModalState(
             line,
             settlementDetailQuery.data,
             instructorIdentityFromLine(line.instructorName),
-            detail.programName
+            detail.programName,
+            transportationSnapshot
           )
         )
         break
@@ -141,7 +170,8 @@ export function usePaymentOrderDetailFullPageModalState(
             line,
             settlementDetailQuery.data,
             line.programName,
-            detail.nameKo
+            detail.nameKo,
+            transportationSnapshot
           )
         )
         break
@@ -156,7 +186,11 @@ export function usePaymentOrderDetailFullPageModalState(
     row,
     detail,
     type,
+    calcSettlementId,
+    shouldFetchTransportationSnapshot,
     settlementDetailQuery.data,
+    transportationSnapshotQuery.data,
+    transportationSnapshotQuery.isFetched,
   ])
 
   const openCalculationStatement = useCallback(
@@ -206,7 +240,9 @@ export function usePaymentOrderDetailFullPageModalState(
   const calcStatementLoading =
     paymentOrdersRemote &&
     calcStatementOpen &&
-    (settlementDetailQuery.isLoading || (settlementDetailQuery.isSuccess && !calcStatementData))
+    (settlementDetailQuery.isLoading ||
+      (shouldFetchTransportationSnapshot && transportationSnapshotQuery.isLoading) ||
+      (settlementDetailQuery.isSuccess && !calcStatementData))
 
   const sharedViewProps = {
     isOpen,
@@ -227,22 +263,24 @@ export function usePaymentOrderDetailFullPageModalState(
   }
 
   const detailLoading =
-    paymentOrdersRemote && isOpen && Boolean(aggregateKey) && isAwaitingFirstQueryData(detailContextQuery)
+    paymentOrdersRemote &&
+    isOpen &&
+    Boolean(aggregateKey) &&
+    isAwaitingFirstQueryData(detailContextQuery)
 
   return {
     detailLoading,
     detailError: paymentOrdersRemote ? detailContextQuery.error : null,
     sharedViewProps,
-    viewBranch:
-      row
-        ? {
-            kind: type,
-            title,
-            modalClassName: type === 'instructor' ? '' : undefined,
-            detail,
-            row,
-            listPageDateRange,
-          }
-        : null,
+    viewBranch: row
+      ? {
+          kind: type,
+          title,
+          modalClassName: type === 'instructor' ? '' : undefined,
+          detail,
+          row,
+          listPageDateRange,
+        }
+      : null,
   }
 }

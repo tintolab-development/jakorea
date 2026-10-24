@@ -9,6 +9,7 @@ import {
   buildTravelBasisDetail,
   buildWithholdingBasisDetail,
   isSupportedBasisDetailLayout,
+  mapTransportationSnapshotToBasisDetail,
   lectureFeeLineDescriptionFromStandardTitle,
   parseLectureSessionStartFromDisplay,
   resolveActivityBasisDetailTotalWon,
@@ -144,6 +145,32 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(resolveTravelBasisDetailTotalWon(instructor)).toBe(51000)
   })
 
+  it('교통비 스냅샷 API 응답을 원격 교통비 상세 payload로 매핑한다', () => {
+    const detail = mapTransportationSnapshotToBasisDetail({
+      snapshotId: 1,
+      settlementId: 2,
+      provider: 'NAVER_MAPS',
+      oneWayDistanceKm: 36.5,
+      roundTripDistanceKm: 73,
+      tollAmount: 1000,
+      fuelType: '휘발유',
+      calculatedTransportAmount: 51000,
+      snapshotAt: '2026-10-24T12:00:00Z',
+    })
+
+    expect(detail).toEqual({
+      layout: 'transportSnapshot',
+      provider: 'NAVER_MAPS',
+      oneWayDistanceKm: 36.5,
+      roundTripDistanceKm: 73,
+      tollAmount: 1000,
+      fuelType: '휘발유',
+      calculatedTransportAmount: 51000,
+      snapshotAt: '2026-10-24T12:00:00Z',
+    })
+    expect(isSupportedBasisDetailLayout(detail)).toBe(true)
+  })
+
   it('resolveBasisDetailModalTitle returns transport title', () => {
     expect(resolveBasisDetailModalTitle(buildTravelBasisDetail(0))).toBe('교통비 산정 기준 상세')
   })
@@ -228,6 +255,24 @@ describe('payment-order-calculation-basis-detail', () => {
       lectureSessionDisplay: '1 ~ 2차시',
     })
     expect(detail).toBeUndefined()
+  })
+
+  it('원격 교통비 상세가 없어도 정산 행 금액으로 모달을 연다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'travel',
+        itemLabel: '교통비',
+        amount: 199052,
+        lineId: 'travel-remote-1',
+        lectureSessionDisplay: '1차시',
+      },
+      { remoteData: true }
+    )
+
+    expect(detail).toMatchObject({
+      layout: 'transportSnapshot',
+      calculatedTransportAmount: 199052,
+    })
   })
 
   it('row.basisDetail 없어도 강의비·원천징수 등은 산정 기준 상세를 만든다 (교통비는 서버 basis만)', () => {

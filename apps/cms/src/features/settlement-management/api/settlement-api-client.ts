@@ -14,6 +14,7 @@ import type {
   PageResponsePaymentStatementListItemResponse,
   PageResponseSettlementExportHistoryResponse,
   PageResponseSettlementListItemResponse,
+  PageResponseSettlementTransportationSnapshotResponse,
   SettlementBudgetSummaryResponse,
   SettlementBulkStatusChangeRequest,
   SettlementConfigResponse,
@@ -44,6 +45,15 @@ export async function fetchSettlementDetailRemote(
   settlementId: number
 ): Promise<SettlementFrontendResponse> {
   return unwrapApiBody(await settlementApi.getSettlement(settlementId))
+}
+
+export async function fetchSettlementTransportationSnapshotsRemote(
+  settlementId: number
+): Promise<PageResponseSettlementTransportationSnapshotResponse['items']> {
+  const page = unwrapApiBody<PageResponseSettlementTransportationSnapshotResponse>(
+    await settlementApi.listTransportationSnapshots({ settlementId, page: 0, size: 20 })
+  )
+  return page.items ?? []
 }
 
 export async function confirmPaymentStatementRemote(
@@ -210,20 +220,13 @@ export async function deleteSettlementConfigPaymentItemRemote(
   return unwrapApiBody(await settlementApi.deleteConfigItem('payment', itemId))
 }
 
-export async function fetchSettlementCalendarRemote(
-  fromDate: string,
-  toDate: string
-) {
-  const data = await unwrapApiBody(
-    await settlementApi.settlementCalendar({ fromDate, toDate })
-  )
+export async function fetchSettlementCalendarRemote(fromDate: string, toDate: string) {
+  const data = await unwrapApiBody(await settlementApi.settlementCalendar({ fromDate, toDate }))
   return Array.isArray(data) ? data : []
 }
 
 export async function fetchSettlementCalendarSummaryRemote(year: number, month: number) {
-  return unwrapApiBody(
-    await settlementApi.settlementCalendarSummary({ year, month })
-  )
+  return unwrapApiBody(await settlementApi.settlementCalendarSummary({ year, month }))
 }
 
 export async function fetchSettlementCalendarDateRemote(date: string) {

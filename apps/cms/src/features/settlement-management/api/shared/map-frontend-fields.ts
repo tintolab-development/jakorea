@@ -1,5 +1,6 @@
 import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
+  mapTransportationCalculationDetailToBasisDetail,
   isSupportedBasisDetailLayout,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
@@ -255,6 +256,9 @@ export function mapCalculationDetailToBasisDetail(
   detail?: SettlementFrontendCalculationDetailResponse | null
 ): PaymentOrderCalculationBasisDetail | undefined {
   if (!detail) return undefined
+
+  const transportationSnapshot = mapTransportationCalculationDetailToBasisDetail(detail)
+  if (transportationSnapshot) return transportationSnapshot
 
   const candidates: unknown[] = []
   if (detail.basisJson?.trim()) {

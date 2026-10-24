@@ -199,6 +199,50 @@ describe('mapCalculationDetailToBasisDetail', () => {
     })
   })
 
+  it('교통비 basisJson 스냅샷을 교통비 상세 payload로 매핑한다', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'transportInstructor',
+      basisJson: JSON.stringify({
+        itemType: 'TRANSPORTATION',
+        provider: 'NAVER_MAPS',
+        oneWayDistanceKm: '36.50',
+        roundTripDistanceKm: '73.00',
+        tollFeeWon: 1000,
+        fuelType: '휘발유',
+        fuelCostWon: 50000,
+        calculatedTransportAmount: 51000,
+        snapshotAt: '2026-09-01T00:00:00Z',
+      }),
+    })
+
+    expect(detail).toMatchObject({
+      layout: 'transportSnapshot',
+      provider: 'NAVER_MAPS',
+      oneWayDistanceKm: 36.5,
+      roundTripDistanceKm: 73,
+      tollAmount: 1000,
+      fuelCostWon: 50000,
+      calculatedTransportAmount: 51000,
+    })
+  })
+
+  it('fuelCostWon은 산출 교통비 총액으로 대체되지 않는다', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      basisJson: JSON.stringify({
+        itemType: 'TRANSPORTATION',
+        fuelCostWon: 155052,
+        tollFeeWon: 44000,
+      }),
+    })
+
+    expect(detail).toMatchObject({
+      layout: 'transportSnapshot',
+      fuelCostWon: 155052,
+      tollAmount: 44000,
+      calculatedTransportAmount: undefined,
+    })
+  })
+
   it('표시용 필드도 없으면 basisDetail을 만들지 않는다', () => {
     expect(mapCalculationDetailToBasisDetail({ layout: 'transportInstructor' })).toBeUndefined()
   })

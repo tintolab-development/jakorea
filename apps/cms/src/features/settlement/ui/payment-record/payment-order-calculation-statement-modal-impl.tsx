@@ -27,7 +27,7 @@ import { PaymentOrderPaymentConfirmationModal } from './payment-order-payment-co
 import { PaymentOrderPaymentRejectionModal } from './payment-order-payment-rejection-modal'
 import { PaymentOrderPaymentRejectionResultModal } from './payment-order-payment-rejection-result-modal'
 import {
-  PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH,
+  PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
 } from './payment-order-calculation-breakdown-table'
 import {
@@ -38,7 +38,7 @@ import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payme
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
-const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH
+const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH
 
 export type PaymentOrderCalculationStatementProgramContext = Extract<
   PaymentOrderProgramCalculationStatement,
@@ -224,6 +224,11 @@ export function PaymentOrderCalculationStatementModalImpl({
   const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
     processingStatusClass
   )
+  const isStatementActionLocked =
+    processingStatusClass === 'confirmed' ||
+    processingStatusClass === 'awaiting_payment' ||
+    processingStatusClass === 'rejected' ||
+    processingStatusClass === 'application_rejected'
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     if (statementId == null) {
@@ -321,31 +326,34 @@ export function PaymentOrderCalculationStatementModalImpl({
           blocks={statement.blocks}
           formulaLabel={statement.formulaLabel}
           totalAmount={statement.totalAmount}
-          processingStatus={processingStatusClass}
+          detailDescription={
+            entryKind === 'instructor'
+              ? '교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.'
+              : undefined
+          }
           paymentStatementIssueDisabled={!canIssuePaymentStatement}
           lectureSessionSegmentLabel={entryKind === 'instructor' ? 'round' : 'session'}
           onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
-            entryKind === 'program' ? (
-              <>
-                <CmsButton
-                  variant="delete"
-                  size="medium"
-                  disabled={rejectMutation.isPending}
-                  onClick={() => setPaymentRejectOpen(true)}
-                >
-                  신청 반려
-                </CmsButton>
-                <CmsButton
-                  variant="primary"
-                  size="medium"
-                  onClick={() => setPaymentConfirmOpen(true)}
-                >
-                  확인 처리
-                </CmsButton>
-              </>
-            ) : undefined
+            <>
+              <CmsButton
+                variant="delete"
+                size="medium"
+                disabled={rejectMutation.isPending || isStatementActionLocked}
+                onClick={() => setPaymentRejectOpen(true)}
+              >
+                신청 반려
+              </CmsButton>
+              <CmsButton
+                variant="primary"
+                size="medium"
+                disabled={confirmMutation.isPending || isStatementActionLocked}
+                onClick={() => setPaymentConfirmOpen(true)}
+              >
+                확인 처리
+              </CmsButton>
+            </>
           }
         />
       </ContentModal>

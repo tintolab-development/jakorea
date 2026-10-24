@@ -3,6 +3,10 @@
  */
 
 import type { PaymentOrderCalculationStatementSessionBlock } from '@/features/settlement-management/model/payment-order-admin-list'
+import type {
+  SettlementFrontendCalculationDetailResponse,
+  SettlementTransportationSnapshotResponse,
+} from '@/shared/api/generated/settlement/schemas'
 
 export interface PaymentOrderCalculationBasisDetailLectureFeeTier {
   layout: 'lectureFeeTier'
@@ -67,6 +71,19 @@ export interface PaymentOrderCalculationBasisDetailTransportInstructor {
   fuelCostWon: number
   tollFeeWon: number
   totalWon: number
+}
+
+/** 정산 거리 스냅샷 API 기반 교통비 상세 */
+export interface PaymentOrderCalculationBasisDetailTransportSnapshot {
+  layout: 'transportSnapshot'
+  provider?: string
+  oneWayDistanceKm?: number
+  roundTripDistanceKm?: number
+  tollAmount?: number
+  fuelType?: string
+  fuelCostWon?: number
+  calculatedTransportAmount?: number
+  snapshotAt?: string
 }
 
 export interface PaymentOrderCalculationBasisDetailLodgingReceipt {
@@ -141,6 +158,7 @@ export type PaymentOrderCalculationBasisDetail =
   | PaymentOrderCalculationBasisDetailTransportRoundTrip
   | PaymentOrderCalculationBasisDetailTransportOneWay
   | PaymentOrderCalculationBasisDetailTransportInstructor
+  | PaymentOrderCalculationBasisDetailTransportSnapshot
   | PaymentOrderCalculationBasisDetailLodgingGeneral
   | PaymentOrderCalculationBasisDetailLodging1s1g
   | PaymentOrderCalculationBasisDetailMeal
@@ -181,6 +199,8 @@ export function resolveBasisDetailModalTitle(detail: PaymentOrderCalculationBasi
     case 'transportOneWay':
     case 'transportInstructor':
       return '교통비 산정 기준 상세'
+    case 'transportSnapshot':
+      return '교통비 산정 기준 상세'
     case 'lodgingGeneral':
       return '숙박비 산정 기준 상세'
     case 'lodging1s1g':
@@ -209,6 +229,7 @@ export function isSupportedBasisDetailLayout(
     detail.layout === 'transportRoundTrip' ||
     detail.layout === 'transportOneWay' ||
     detail.layout === 'transportInstructor' ||
+    detail.layout === 'transportSnapshot' ||
     detail.layout === 'lodgingGeneral' ||
     detail.layout === 'lodging1s1g' ||
     detail.layout === 'meal' ||
@@ -234,6 +255,108 @@ export function resolveTravelBasisDetailTotalWon(
     default:
       return 0
   }
+}
+
+export function mapTransportationSnapshotToBasisDetail(
+  snapshot?: SettlementTransportationSnapshotResponse | null
+): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
+  if (!snapshot) return undefined
+
+  const hasValue =
+    Boolean(snapshot.provider?.trim()) ||
+    snapshot.oneWayDistanceKm != null ||
+    snapshot.roundTripDistanceKm != null ||
+    snapshot.tollAmount != null ||
+    Boolean(snapshot.fuelType?.trim()) ||
+    snapshot.calculatedTransportAmount != null ||
+    Boolean(snapshot.snapshotAt)
+  if (!hasValue) return undefined
+
+  return {
+    layout: 'transportSnapshot',
+    provider: snapshot.provider?.trim() || undefined,
+    oneWayDistanceKm: snapshot.oneWayDistanceKm,
+    roundTripDistanceKm: snapshot.roundTripDistanceKm,
+    tollAmount: snapshot.tollAmount,
+    fuelType: snapshot.fuelType?.trim() || undefined,
+    calculatedTransportAmount: snapshot.calculatedTransportAmount,
+    snapshotAt: snapshot.snapshotAt,
+  }
+}
+
+function recordValue(record: Record<string, unknown>, ...keys: string[]): unknown {
+  for (const key of keys) {
+    if (record[key] != null) return record[key]
+  }
+  return undefined
+}
+
+function numberValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value !== 'string' || value.trim() === '') return undefined
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/** settlement_calculation_detail.basis_jsonb에 보관된 교통비 스냅샷을 상세 모달 payload로 변환한다. */
+export function mapTransportationCalculationDetailToBasisDetail(
+  detail?: SettlementFrontendCalculationDetailResponse | null
+): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
+  if (!detail) return undefined
+
+  const candidates: Record<string, unknown>[] = []
+  if (detail.basisJson?.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(detail.basisJson)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        candidates.push(parsed as Record<string, unknown>)
+      }
+    } catch {
+      // invalid JSON is handled by the regular calculationDetail mapper
+    }
+  }
+  candidates.push(detail as unknown as Record<string, unknown>)
+
+  for (const candidate of candidates) {
+    const itemType = stringValue(recordValue(candidate, 'itemType'))?.toLowerCase()
+    const layout = stringValue(recordValue(candidate, 'layout'))?.toLowerCase()
+    const isTransportation =
+      itemType?.includes('transport') === true ||
+      layout?.includes('transport') === true ||
+      ['oneWayDistanceKm', 'roundTripDistanceKm', 'tollFeeWon', 'fuelCostWon'].some(key =>
+        Object.prototype.hasOwnProperty.call(candidate, key)
+      )
+    if (!isTransportation) continue
+
+    const mapped = {
+      layout: 'transportSnapshot' as const,
+      provider: stringValue(recordValue(candidate, 'provider')),
+      oneWayDistanceKm: numberValue(recordValue(candidate, 'oneWayDistanceKm')),
+      roundTripDistanceKm: numberValue(recordValue(candidate, 'roundTripDistanceKm')),
+      tollAmount: numberValue(recordValue(candidate, 'tollAmount', 'tollFeeWon')),
+      fuelType: stringValue(recordValue(candidate, 'fuelType')),
+      fuelCostWon: numberValue(recordValue(candidate, 'fuelCostWon')),
+      calculatedTransportAmount: numberValue(recordValue(candidate, 'calculatedTransportAmount')),
+      snapshotAt: stringValue(recordValue(candidate, 'snapshotAt')),
+    }
+
+    const hasValue =
+      mapped.provider != null ||
+      mapped.oneWayDistanceKm != null ||
+      mapped.roundTripDistanceKm != null ||
+      mapped.tollAmount != null ||
+      mapped.fuelType != null ||
+      mapped.fuelCostWon != null ||
+      mapped.calculatedTransportAmount != null ||
+      mapped.snapshotAt != null
+    if (hasValue) return mapped
+  }
+
+  return undefined
 }
 
 /** mock·데모 — seed로 학생 왕복 / 학생 편도 / 강사(1사1교) 순환 */
@@ -575,6 +698,14 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 
   if (context?.remoteData && row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
     return row.basisDetail
+  }
+
+  // 원격 응답에 교통비 상세 스냅샷이 누락되어도 행 금액만으로 모달을 열 수 있다.
+  // 거리·업체 등 미제공 값은 모달에서 '-'로 표시하고, 금액은 정산 행의 원본 값을 사용한다.
+  if (context?.remoteData && (row.kind === 'travel' || row.itemLabel === '교통비')) {
+    return mapTransportationSnapshotToBasisDetail({
+      calculatedTransportAmount: row.amount,
+    })
   }
 
   if (isLectureFeeCalculationRow(row)) {

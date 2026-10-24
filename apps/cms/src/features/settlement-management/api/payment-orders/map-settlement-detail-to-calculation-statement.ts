@@ -10,7 +10,11 @@ import {
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   addressDisplayForStatementBlur,
 } from '@/features/settlement-management/model/payment-order-admin-list'
-import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
+import type {
+  SettlementFrontendItemResponse,
+  SettlementFrontendResponse,
+  SettlementTransportationSnapshotResponse,
+} from '@/shared/api/generated/settlement/schemas'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -25,6 +29,10 @@ import {
   mapSettlementFrontendItemTypeToLineKind,
   prepareSettlementFrontendItemsForStatement,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
+import {
+  mapTransportationSnapshotToBasisDetail,
+  type PaymentOrderCalculationBasisDetailTransportSnapshot,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 type ProgramDetailLineRow = PaymentOrderAdminProgramDetailInstructorRow
 type InstructorDetailLineRow = PaymentOrderAdminInstructorDetailProgramRow
@@ -36,15 +44,62 @@ function formatIsoToKoreanWeekday(iso: string): string {
   return label === '-' ? iso : label
 }
 
-function mapItemToLine(item: SettlementFrontendItemResponse, index: number): PaymentOrderCalculationStatementLine {
+function mapItemToLine(
+  item: SettlementFrontendItemResponse,
+  index: number,
+  transportationSnapshot?: SettlementTransportationSnapshotResponse
+): PaymentOrderCalculationStatementLine {
   const amount = item.amount ?? 0
+  const mappedBasisDetail = mapCalculationDetailToBasisDetail(item.calculationDetail)
+  const basisDetail = resolveItemBasisDetail(
+    item.type,
+    mappedBasisDetail,
+    transportationSnapshot,
+    amount
+  )
+
   return {
     id: `calc-line-remote-${index}`,
     itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '—',
     amount,
     kind: mapSettlementFrontendItemTypeToLineKind(item.type, amount),
-    basisDetail: mapCalculationDetailToBasisDetail(item.calculationDetail),
+    basisDetail,
+  }
+}
+
+function resolveItemBasisDetail(
+  itemType: SettlementFrontendItemResponse['type'],
+  mappedBasisDetail: ReturnType<typeof mapCalculationDetailToBasisDetail>,
+  transportationSnapshot: SettlementTransportationSnapshotResponse | undefined,
+  amount: number
+) {
+  if (itemType !== 'transportation') return mappedBasisDetail
+
+  if (mappedBasisDetail?.layout === 'transportSnapshot') {
+    return withTransportationAmountFallback(mappedBasisDetail, amount)
+  }
+
+  const isLegacyTransportLayout =
+    mappedBasisDetail?.layout === 'transportRoundTrip' ||
+    mappedBasisDetail?.layout === 'transportOneWay' ||
+    mappedBasisDetail?.layout === 'transportInstructor'
+  if (isLegacyTransportLayout) return mappedBasisDetail
+
+  return withTransportationAmountFallback(
+    mapTransportationSnapshotToBasisDetail(transportationSnapshot),
+    amount
+  )
+}
+
+function withTransportationAmountFallback(
+  detail: PaymentOrderCalculationBasisDetailTransportSnapshot | undefined,
+  amount: number
+): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
+  if (!detail) return undefined
+  return {
+    ...detail,
+    calculatedTransportAmount: detail.calculatedTransportAmount ?? amount,
   }
 }
 
@@ -67,18 +122,22 @@ function resolveLectureSessionDisplay(
 function buildBlocks(
   lineRow: DetailLineRow,
   settlement: SettlementFrontendResponse,
-  sessionDisplay: 'range' | 'single' = 'range'
+  sessionDisplay: 'range' | 'single' = 'range',
+  transportationSnapshot?: SettlementTransportationSnapshotResponse
 ): PaymentOrderCalculationStatementSessionBlock[] {
   const items = prepareSettlementFrontendItemsForStatement(settlement.items)
-  const lines = items.length > 0 ? items.map(mapItemToLine) : [
-    {
-      id: 'calc-line-remote-fallback',
-      itemLabel: '정산 예정',
-      description: '지급조서 확인',
-      amount: lineRow.estimatedAmount,
-      kind: 'lecture_fee' as const,
-    },
-  ]
+  const lines =
+    items.length > 0
+      ? items.map((item, index) => mapItemToLine(item, index, transportationSnapshot))
+      : [
+          {
+            id: 'calc-line-remote-fallback',
+            itemLabel: '정산 예정',
+            description: '지급조서 확인',
+            amount: lineRow.estimatedAmount,
+            kind: 'lecture_fee' as const,
+          },
+        ]
 
   const institutionName =
     settlement.institutionName?.trim() || lineRow.institutionName?.trim() || '—'
@@ -111,11 +170,13 @@ export function mapSettlementDetailToProgramCalculationStatement(
   lineRow: DetailLineRow,
   settlement: SettlementFrontendResponse,
   programName: string,
-  instructorNameKo: string
+  instructorNameKo: string,
+  transportationSnapshot?: SettlementTransportationSnapshotResponse
 ): PaymentOrderProgramCalculationStatement {
-  const blocks = buildBlocks(lineRow, settlement)
+  const blocks = buildBlocks(lineRow, settlement, 'range', transportationSnapshot)
   const itemsTotal = sumItems(settlement.items)
-  const totalAmount = settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
+  const totalAmount =
+    settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
 
   return {
     context: 'program',
@@ -168,11 +229,13 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
   lineRow: DetailLineRow,
   settlement: SettlementFrontendResponse,
   instructorDetail: PaymentOrderAdminInstructorDetail,
-  programName?: string
+  programName?: string,
+  transportationSnapshot?: SettlementTransportationSnapshotResponse
 ): PaymentOrderProgramCalculationStatement {
-  const blocks = buildBlocks(lineRow, settlement, 'single')
+  const blocks = buildBlocks(lineRow, settlement, 'single', transportationSnapshot)
   const itemsTotal = sumItems(settlement.items)
-  const totalAmount = settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
+  const totalAmount =
+    settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
 
   const { addressDisplay, addressBlurredTail } = addressDisplayForStatementBlur(
     instructorDetail.address

@@ -31,6 +31,7 @@ import { PaymentOrderCalculationBasisDetailMealView } from './payment-order-calc
 import { PaymentOrderCalculationBasisDetailActivityView } from './payment-order-calculation-basis-detail-activity-view'
 import { PaymentOrderCalculationBasisDetailWithholdingView } from './payment-order-calculation-basis-detail-withholding-view'
 import { PaymentOrderCalculationBasisDetailRemoteView } from './payment-order-calculation-basis-detail-remote-view'
+import { PaymentOrderCalculationBasisDetailTransportSnapshotView } from './payment-order-calculation-basis-detail-transport-snapshot-view'
 import type { PaymentOrderCalculationStatementDetailContext } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import './payment-order-calculation-basis-detail-modal.css'
 
@@ -85,6 +86,9 @@ export function PaymentOrderCalculationBasisDetailModal({
       ) : null}
       {detail.layout === 'transportInstructor' ? (
         <PaymentOrderCalculationBasisDetailTransportInstructorView detail={detail} />
+      ) : null}
+      {detail.layout === 'transportSnapshot' ? (
+        <PaymentOrderCalculationBasisDetailTransportSnapshotView detail={detail} />
       ) : null}
       {detail.layout === 'lodgingGeneral' ? (
         <PaymentOrderCalculationBasisDetailLodgingGeneralView detail={detail} />
