@@ -17,6 +17,7 @@ import {
   isDynamicVolunteerInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
+  isPortalDynamicOptionArrayParagraphId,
   isUjatInstitutionBasicInfoParagraphId,
   isUjatInstitutionClassTimeParagraphId,
   isUjatInstitutionGradeInfoParagraphId,
@@ -86,6 +87,10 @@ assert.equal(
   isInstructorAvailableScheduleParagraphId(
     PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   ),
+  true,
+)
+assert.equal(
+  isPortalDynamicOptionArrayParagraphId(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule),
   true,
 )
 

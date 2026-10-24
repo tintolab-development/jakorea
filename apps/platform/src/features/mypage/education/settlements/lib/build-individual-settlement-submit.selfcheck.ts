@@ -197,4 +197,44 @@ assert.equal(resubmit.expectedRevisionNo, 1)
 assert.equal(resubmit.idempotencyKey, '33333333-3333-3333-3333-333333333333')
 assert.equal(resubmit.items[0]?.itemType, 'MEAL')
 
+const duplicateTransportDraft = buildSettlementWriteDraft({
+  applicationId: '12',
+  sessionId: '88',
+  scheduleId: 88,
+  isInstructor: false,
+  documentKind: 'receipt',
+  expenseDate: '2026-04-20',
+  idempotencyKey: '44444444-4444-4444-4444-444444444444',
+  name: '홍길동',
+  homeAddress: '',
+  homeAddressDetail: '',
+  bank: '국민',
+  accountNumber: '123',
+  accountHolder: '홍길동',
+  transportItemType: 'TRANSPORTATION',
+  transportItemName: '교통비',
+  transportEvidenceRequired: false,
+  tripType: 'one_way',
+  departTransit: 'bus',
+  departAmount: '5,000',
+  returnTransit: '',
+  returnAmount: '',
+  extraItems: [
+    {
+      itemType: 'STUDENT_TRANSPORTATION',
+      itemName: '학생 교통비',
+      evidenceRequired: false,
+      amount: '5,000',
+      attachments: [],
+    },
+  ],
+  mealAmount: '',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+const dedupedTransport = buildIndividualSettlementItems(duplicateTransportDraft)
+assert.equal(dedupedTransport.length, 1)
+assert.equal(dedupedTransport[0]?.itemType, 'TRANSPORTATION')
+
 console.log('build-individual-settlement-submit.selfcheck: ok')

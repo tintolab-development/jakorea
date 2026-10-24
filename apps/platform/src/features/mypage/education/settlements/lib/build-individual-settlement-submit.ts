@@ -6,7 +6,11 @@ import {
   resolveSettlementTransitLabel,
   resolveSettlementTripTypeLabel,
 } from './format-write-draft.ts'
-import { mapItemTypeToExpenseType } from './payment-items.ts'
+import {
+  isIndividualTransportAlias,
+  mapItemTypeToExpenseType,
+  normalizePaymentItemType,
+} from './payment-items.ts'
 import { readTripLegAttachments } from './empty-trip-leg.ts'
 import { toSeoulIsoDate } from './seoul-deadline.ts'
 import type {
@@ -79,6 +83,18 @@ function buildTransportItem(
   }
 }
 
+function isDuplicateIndividualPaymentItem(
+  items: readonly PortalIndividualSettlementItemInput[],
+  itemType: string,
+): boolean {
+  const type = normalizePaymentItemType(itemType)
+  if (items.some(item => normalizePaymentItemType(item.itemType) === type)) return true
+  return (
+    isIndividualTransportAlias(type) &&
+    items.some(item => isIndividualTransportAlias(item.itemType))
+  )
+}
+
 export function buildIndividualSettlementItems(
   draft: SettlementWriteDraft
 ): PortalIndividualSettlementItemInput[] {
@@ -89,6 +105,7 @@ export function buildIndividualSettlementItems(
   for (const extra of draft.extraItems) {
     const amount = parseSettlementAmount(extra.amount)
     if (amount <= 0) continue
+    if (isDuplicateIndividualPaymentItem(items, extra.itemType)) continue
     items.push({
       itemType: extra.itemType,
       amount,

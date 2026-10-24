@@ -293,6 +293,9 @@ export const platformQueryKeys = {
     /** 내 동의 유형 상세 — GET /api/portal/me/consents/{consentType} */
     consent: (consentType: string) =>
       [...platformQueryKeys.mypage.consents(), consentType] as const,
+    /** 제출 동의서 상세 — GET /api/portal/me/consents/documents/{documentId} (Class D, PII) */
+    consentDocument: (documentId: number) =>
+      [...platformQueryKeys.mypage.consents(), 'documents', documentId] as const,
     /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
     calendar: (from: string, to: string) =>
       [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,

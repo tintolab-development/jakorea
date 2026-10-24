@@ -163,6 +163,7 @@ const PORTAL_DYNAMIC_OPTION_ARRAY_PARAGRAPH_IDS = new Set<string>([
   ...VOLUNTEER_INTERVIEW_SCHEDULE_IDS,
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
   ...INDIVIDUAL_INTERVIEW_SCHEDULE_IDS,
+  ...INSTRUCTOR_AVAILABLE_SCHEDULE_IDS,
 ])
 
 function isVisibleApplicationParagraphRow(row: Record<string, unknown>): boolean {

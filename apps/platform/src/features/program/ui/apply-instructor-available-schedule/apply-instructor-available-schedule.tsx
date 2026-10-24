@@ -212,40 +212,65 @@ function buildScheduleSlotCardDisplay(
   const sessionLabel =
     sanitizeScheduleSessionLabel(readScheduleSessionLabel(option, meta)) ||
     sanitizeScheduleSessionLabel(parsedLabel.sessionLabel ?? '')
-  const timeRange = start
-    ? buildScheduleTimeRangeLabel(option, meta, start, end, start.dateKey)
-    : parsedLabel.timeRange ?? ''
-  const title = joinScheduleCardLine([schoolName, region])
+  const orgTitle = joinScheduleCardLine([schoolName, region])
+  const timeRange =
+    parsedLabel.timeRange &&
+    start &&
+    start.time === '00:00' &&
+    (end == null || end.time === '00:00')
+      ? parsedLabel.timeRange
+      : start
+        ? buildScheduleTimeRangeLabel(option, meta, start, end, start.dateKey)
+        : parsedLabel.timeRange ?? ''
   const detail = joinScheduleCardLine([sessionLabel, timeRange])
   const dateKey = start?.dateKey ?? parsedLabel.dateKey
 
   return {
     dateKey,
-    title: title || schoolName,
+    title: orgTitle,
     detail: detail || undefined,
   }
+}
+
+function isOrgScheduleChipTitle(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  if (isScheduleDateLikeText(trimmed) || isTimeRangeLikeText(trimmed)) return false
+  return true
+}
+
+function resolveSlotChipTimeRange(slot: ApplyInstructorScheduleSlot): string {
+  const parsed = parseKoreanEducationScheduleLabel(slot.label)
+  const candidates = [
+    slot.detail ?? '',
+    parsed.timeRange ?? '',
+    slot.label,
+  ]
+  for (const candidate of candidates) {
+    const timeRange = extractClockTimeRangeForSummary(candidate)
+    if (isTimeRangeLikeText(timeRange)) return timeRange
+    if (/^\d{1,2}:\d{2}$/.test(timeRange.trim())) {
+      return formatScheduleClockTime(timeRange.trim())
+    }
+  }
+  return ''
 }
 
 export function resolveScheduleSlotCardLines(slot: ApplyInstructorScheduleSlot): {
   primary: string
   secondary?: string
 } {
-  const title = slot.title?.trim()
-  const detail = slot.detail?.trim()
-  if (title && !isScheduleDateLikeText(title)) {
+  const title = slot.title?.trim() ?? ''
+  const detail = slot.detail?.trim() ?? ''
+  if (isOrgScheduleChipTitle(title)) {
     return { primary: title, secondary: detail || undefined }
   }
 
-  const parsed = parseKoreanEducationScheduleLabel(slot.label)
-  const secondary = joinScheduleCardLine([
-    parsed.sessionLabel ?? '',
-    parsed.timeRange ?? '',
-  ])
-  if (secondary) {
-    return { primary: title && !isScheduleDateLikeText(title) ? title : '', secondary }
-  }
+  const timeRange = resolveSlotChipTimeRange(slot)
+  if (timeRange) return { primary: timeRange }
 
-  return { primary: slot.label.trim(), secondary: undefined }
+  if (detail && !isScheduleDateLikeText(detail)) return { primary: detail }
+  return { primary: '' }
 }
 
 /** CMS `extractClockTimeRangeForScheduleSummary` — 요약 괄호 안 시각만 */
@@ -273,10 +298,10 @@ function readSchoolNameForScheduleSummary(slot: ApplyInstructorScheduleSlot): st
   const title = slot.title?.trim()
   if (title) {
     const school = title.split('|')[0]?.trim() ?? ''
-    if (school && !isScheduleDateLikeText(school)) return school
+    if (school && isOrgScheduleChipTitle(school)) return school
   }
   const labelHead = splitPipeLabel(slot.label).head
-  if (labelHead && !isScheduleDateLikeText(labelHead)) return labelHead
+  if (labelHead && isOrgScheduleChipTitle(labelHead)) return labelHead
   return ''
 }
 
@@ -461,6 +486,30 @@ export function readRuntimeInstructorScheduleSlots(
   return bindingOptionSlotsFromParagraphRow(row)
 }
 
+/**
+ * 강사·봉사자 일정 선택지.
+ * remote / OSA 는 프로그램 상세 표시용 일정을 fallback 하지 않는다.
+ */
+export function resolveApplyAvailableScheduleSlots(input: {
+  runtimeSlots: ApplyInstructorScheduleSlot[] | null
+  allowProgramDisplayFallback: boolean
+  program?: {
+    educationScheduleLines?: readonly string[]
+    educationSchedules?: readonly { label?: string; value?: string }[]
+  } | null
+}): ApplyInstructorScheduleSlot[] {
+  if (!input.allowProgramDisplayFallback) return input.runtimeSlots ?? []
+  return (
+    input.runtimeSlots ??
+    (input.program
+      ? buildInstructorApplyScheduleSlots({
+          educationScheduleLines: input.program.educationScheduleLines,
+          educationSchedules: input.program.educationSchedules,
+        })
+      : [])
+  )
+}
+
 /** 런타임 선택지 제출값 — 백엔드는 목록에 있는 `option_value` 배열만 받는다. */
 export function instructorAvailableScheduleOptionValues(
   values: ApplyInstructorAvailableScheduleValues,
@@ -469,12 +518,18 @@ export function instructorAvailableScheduleOptionValues(
   return slots.filter(slot => values.selectedSlotIds.includes(slot.id)).map(slot => slot.id)
 }
 
+export const INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE =
+  '선택 가능한 강의 일정이 없습니다. 관리자에게 문의해 주세요.'
+
+export const VOLUNTEER_ACTIVITY_SCHEDULE_EMPTY_MESSAGE =
+  '선택 가능한 봉사 일정이 없습니다. 관리자에게 문의해 주세요.'
+
 export function findIncompleteInstructorAvailableScheduleMessage(
   values: ApplyInstructorAvailableScheduleValues,
   slots: readonly ApplyInstructorScheduleSlot[],
 ): string | null {
   if (slots.length === 0) {
-    return '선택 가능한 강의 일정이 없습니다. 관리자에게 문의해 주세요.'
+    return INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE
   }
   if (!slots.some(slot => values.selectedSlotIds.includes(slot.id))) {
     return '강의 진행이 가능한 일정을 하나 이상 선택해 주세요.'
@@ -528,7 +583,7 @@ export type ApplyScheduleSlotPickerCopy = {
 const INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '강의 진행 가능 일정 날짜',
   summaryLabel: '강의 진행 가능일',
-  emptyMessage: '선택 가능한 강의 일정이 없습니다.',
+  emptyMessage: INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
   slotChipStyle: 'lecture',
 }
 
@@ -543,7 +598,7 @@ export const INDIVIDUAL_INTERVIEW_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
 export const VOLUNTEER_ACTIVITY_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '봉사 진행 가능 일정 날짜',
   summaryLabel: '봉사 진행 가능일',
-  emptyMessage: '선택 가능한 봉사 일정이 없습니다.',
+  emptyMessage: VOLUNTEER_ACTIVITY_SCHEDULE_EMPTY_MESSAGE,
   slotChipStyle: 'lecture',
 }
 
@@ -552,7 +607,7 @@ export function findIncompleteVolunteerActivityScheduleMessage(
   slots: readonly ApplyInstructorScheduleSlot[],
 ): string | null {
   if (slots.length === 0) {
-    return '선택 가능한 봉사 일정이 없습니다. 관리자에게 문의해 주세요.'
+    return VOLUNTEER_ACTIVITY_SCHEDULE_EMPTY_MESSAGE
   }
   if (!slots.some(slot => values.selectedSlotIds.includes(slot.id))) {
     return '봉사 진행이 가능한 일정을 하나 이상 선택해 주세요.'

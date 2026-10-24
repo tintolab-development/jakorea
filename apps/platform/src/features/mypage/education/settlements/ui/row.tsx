@@ -14,7 +14,6 @@ import {
 import { buildReceiptSubmitPath, buildReceiptViewPath } from '../lib/receipt-path'
 import { buildSettlementPaymentConsentPath } from '../lib/consent-path'
 import { buildSettlementWritePath, type SettlementArea } from '../lib/write-path'
-import { payableItemEvidenceCaption } from '../lib/payment-items'
 import {
   EducationSessionCard,
   EducationSessionCardHeader,
@@ -36,6 +35,7 @@ type EducationSettlementRowProps = {
   operationEndAt?: string
   initialRejectOpen?: boolean
   hideInstructorWrite?: boolean
+  onReceiptWrite?: (path: string) => void
 }
 
 const MARK_ICON = {
@@ -59,6 +59,7 @@ export function EducationSettlementRow({
   operationEndAt,
   initialRejectOpen = false,
   hideInstructorWrite = false,
+  onReceiptWrite,
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
@@ -80,10 +81,7 @@ export function EducationSettlementRow({
     if (params.get('modal') !== 'reject-reason') return
     params.delete('modal')
     params.delete('sessionId')
-    navigate(
-      { search: params.toString() ? `?${params.toString()}` : '' },
-      { replace: true },
-    )
+    navigate({ search: params.toString() ? `?${params.toString()}` : '' }, { replace: true })
   }
   const amount = item.amount
   const showAmount = amount != null && config.amountKind != null
@@ -97,11 +95,13 @@ export function EducationSettlementRow({
       ? PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE
       : config.message)
   const geminiUnsubmitted =
-    hideInstructorWrite && documentKind === 'payment_statement' && (config.actions ?? []).includes('write')
+    hideInstructorWrite &&
+    documentKind === 'payment_statement' &&
+    (config.actions ?? []).includes('write')
   const showGuide = Boolean(guideMessage) && !geminiUnsubmitted
   const showUnsubmittedDeadline = UNSUBMITTED_DEADLINE_STATUSES.has(item.status)
   const relatedDateIso = showUnsubmittedDeadline
-    ? item.deadlineAt ?? operationEndAt
+    ? (item.deadlineAt ?? operationEndAt)
     : item.submittedAt
   const relatedDatePrefix = showUnsubmittedDeadline ? '제출 마감일' : '제출일'
   const relatedDate = formatDisplayDate(relatedDateIso)
@@ -122,8 +122,7 @@ export function EducationSettlementRow({
     canSubmit: item.canSubmitReceipt,
     status: item.status,
   })
-  const viewPath =
-    documentKind === 'payment_statement' ? instructorViewPath : receiptViewPath
+  const viewPath = documentKind === 'payment_statement' ? instructorViewPath : receiptViewPath
   const viewDisabled = !viewPath
   const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
 
@@ -144,7 +143,12 @@ export function EducationSettlementRow({
               navigate(writePath)
               return
             }
-            if (receiptSubmitPath) navigate(receiptSubmitPath)
+            if (!receiptSubmitPath) return
+            if (onReceiptWrite) {
+              onReceiptWrite(receiptSubmitPath)
+              return
+            }
+            navigate(receiptSubmitPath)
           }}
         >
           {config.writeLabel ?? '영수증 작성하기'}
@@ -213,6 +217,10 @@ export function EducationSettlementRow({
         disabled={reapplyDisabled || reapplyUnavailable}
         onClick={() => {
           if (reapplyDisabled || reapplyUnavailable) return
+          if (documentKind === 'receipt' && onReceiptWrite) {
+            onReceiptWrite(reapplyPath)
+            return
+          }
           navigate(reapplyPath)
         }}
       >
@@ -251,16 +259,6 @@ export function EducationSettlementRow({
             ) : undefined
           }
         />
-
-        {documentKind === 'receipt' && (item.payableItems ?? []).length > 0 ? (
-          <div className={styles.payableItems}>
-            {(item.payableItems ?? []).map(payable => (
-              <PFText key={payable.itemType} as="p" typo="bd-sm-rg" color="neutral-cool-600">
-                {payableItemEvidenceCaption(payable)}
-              </PFText>
-            ))}
-          </div>
-        ) : null}
 
         {showGuide && guideMessage ? (
           <EducationSessionGuideBlock
