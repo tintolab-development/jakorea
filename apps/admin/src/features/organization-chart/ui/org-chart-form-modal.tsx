@@ -16,10 +16,10 @@ import {
 import './org-chart-form-modal.css'
 
 const IMAGE_ACCEPT = '.png,image/png'
-const MAX_IMAGE_BYTES = 15 * 1024 * 1024
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 PNG 형식만 등록 가능합니다.',
-  '- 조직도 이미지의 권장 사이즈는 1440*826입니다.',
+  '- 파일은 최대 20MB까지 PNG 형식만 등록 가능합니다.',
+  '- 조직도 이미지의 권장 사이즈는 1440 × 826px입니다.',
 ]
 
 const MODAL_DESCRIPTION =
@@ -96,7 +96,7 @@ function OrgChartFormBody({
       if (file.size > MAX_IMAGE_BYTES) {
         showAlert({
           title: '파일 용량 초과',
-          content: '파일은 최대 15MB까지 등록 가능합니다.',
+          content: '파일은 최대 20MB까지 등록 가능합니다.',
         })
         return
       }
@@ -233,6 +233,7 @@ function OrgChartFormBody({
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
                   fileNames={imageFileName ? [imageFileName] : []}
+                  maxTotalBytes={MAX_IMAGE_BYTES}
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}

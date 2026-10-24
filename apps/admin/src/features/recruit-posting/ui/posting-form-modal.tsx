@@ -29,6 +29,7 @@ import {
   ConfirmModal,
   ContentModal,
   FileSelectField,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -37,10 +38,10 @@ import './posting-form-modal.css'
 const FILE_ACCEPT =
   '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-const MAX_BYTES = 15 * 1024 * 1024
+const DOCUMENT_MAX_BYTES = 15 * 1024 * 1024
 
 const ATTACH_GUIDE = [
-  '- 파일은 1개, 최대 15MB까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
+  '- 이미지 파일은 최대 20MB, Excel·PDF·Word 파일은 최대 15MB까지 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
@@ -54,6 +55,13 @@ const ALLOWED_EXT = new Set([
   '.doc',
   '.docx',
 ])
+
+function isImageAttachment(file: File): boolean {
+  const type = file.type.toLowerCase()
+  if (type === 'image/jpeg' || type === 'image/png') return true
+  const name = file.name.toLowerCase()
+  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
+}
 
 export type RecruitPostingFormValues = RecruitPostingCreateInput
 
@@ -210,10 +218,15 @@ export function RecruitPostingFormModal({
         })
         return
       }
-      if (file.size > MAX_BYTES) {
+      const maxBytes = isImageAttachment(file)
+        ? FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
+        : DOCUMENT_MAX_BYTES
+      if (file.size > maxBytes) {
         showAlert({
           title: '파일 용량',
-          content: '파일은 최대 15MB까지 등록 가능합니다.',
+          content: `이미지 파일은 최대 20MB, 문서 파일은 최대 ${
+            DOCUMENT_MAX_BYTES / (1024 * 1024)
+          }MB까지 등록 가능합니다.`,
         })
         return
       }
@@ -470,6 +483,7 @@ export function RecruitPostingFormModal({
                 accept={FILE_ACCEPT}
                 buttonLabel="파일 추가"
                 fileNames={fileNames}
+                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                 guideLines={ATTACH_GUIDE}
                 onFilesChange={files => {
                   void handleFilesChange(files)

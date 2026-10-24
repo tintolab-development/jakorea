@@ -11,7 +11,7 @@ import {
   CmsTextTabs,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
@@ -22,8 +22,8 @@ import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } 
 const EVENT_SLOT_COUNT = 3
 
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 이미지 사이즈는 1440×380',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 권장 이미지 사이즈는 520 × 240px입니다.',
 ]
 
 type Props = {
@@ -161,10 +161,10 @@ function TimelineFormBody({
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
@@ -347,6 +347,7 @@ function TimelineFormBody({
                     accept={JA_HISTORY_IMAGE_ACCEPT}
                     buttonLabel="파일 추가"
                     fileNames={imageFileName ? [imageFileName] : []}
+                    maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                     onFilesChange={files => {
                       void handleFilesChange(files)
                     }}
