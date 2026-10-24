@@ -177,6 +177,8 @@ function formatCompanySchoolPaymentItemsView(
     const matched = options.find(option => option.value === token || option.label === token)
     if (matched?.label) return matched.label
     if (token === 'LONG_DISTANCE_TRANSPORTATION') return '장거리 교통비'
+    if (token === 'STUDENT_TRANSPORTATION') return '학생 교통비'
+    if (token === 'TRANSPORTATION') return '강사 교통비'
     return token
   })
   const resolvedIds = resolveProgramPaymentItemIdsFromLabels(text)

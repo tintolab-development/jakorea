@@ -42,6 +42,13 @@ const testSections: SettlementItemSettingSection[] = [
         paymentItemType: 'TRANSPORT_INSTRUCTOR',
         eligiblePayeeTypes: ['INSTRUCTOR'],
       },
+      {
+        id: 'pay-student-transport-policy',
+        title: '학생 교통비(정책)',
+        description: '',
+        iconKey: 'pay_transport',
+        paymentItemType: 'STUDENT_TRANSPORTATION',
+      },
     ],
   },
 ]
@@ -61,6 +68,7 @@ describe('filterProgramWagePaymentItemOptionsForPayees — 지급 실행 자격 
     )
     const labels = filtered.map(o => o.label)
     expect(labels).toContain('학생 교통비')
+    expect(labels).toContain('학생 교통비(정책)')
     expect(labels).toContain('참여자 활동비')
     expect(labels).not.toContain('숙박비')
     expect(labels).not.toContain('강사 교통비')
@@ -76,5 +84,6 @@ describe('filterProgramWagePaymentItemOptionsForPayees — 지급 실행 자격 
     expect(labels).toContain('강사 교통비')
     expect(labels).toContain('숙박비')
     expect(labels).not.toContain('학생 교통비')
+    expect(labels).not.toContain('학생 교통비(정책)')
   })
 })

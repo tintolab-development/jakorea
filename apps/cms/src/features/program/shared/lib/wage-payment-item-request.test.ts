@@ -9,7 +9,10 @@ import {
   programPaymentItemsUnchanged,
   resolveProgramSettlementItemType,
 } from './wage-payment-item-request'
-import { getProgramWagePaymentItemOptions } from './program-wage-payment-item-helpers'
+import {
+  getProgramWagePaymentItemOptions,
+  resolveProgramPaymentItemIdsFromLabels,
+} from './program-wage-payment-item-helpers'
 import {
   applySettlementPolicyToCommonInfo,
   mapSettlementPaymentItemsToLabel,
@@ -63,14 +66,17 @@ describe('지급 항목 설정 — 프로그램 유형별 필터 없음', () => 
   it('카탈로그 활성 항목을 프로그램 유형으로 제거하지 않는다', () => {
     seedRemoteCatalog([
       { id: 'p-166201', title: '강사 교통비', paymentItemType: 'TRANSPORT_INSTRUCTOR' },
-      { id: 'p-166202', title: '장거리 교통비', paymentItemType: 'LONG_DISTANCE_TRANSPORTATION' },
+      { id: 'p-166202', title: '학생 교통비', paymentItemType: 'TRANSPORT_STUDENT' },
+      { id: 'p-166206', title: '장거리 교통비', paymentItemType: 'LONG_DISTANCE_TRANSPORTATION' },
       { id: 'p-166203', title: '숙박비', paymentItemType: 'LODGING_GENERAL' },
       { id: 'p-166204', title: '참여자 활동비', paymentItemType: 'ACTIVITY' },
       { id: 'p-166205', title: '식사비', paymentItemType: 'MEAL' },
       { id: 'p-166209', title: '숙박비 (비활성)', paymentItemType: 'LODGING_GENERAL', useYn: false },
     ])
     const labels = getProgramWagePaymentItemOptions().map(option => option.label)
-    expect(labels).toEqual(expect.arrayContaining(['강사 교통비', '장거리 교통비', '숙박비', '참여자 활동비', '식사비']))
+    expect(labels).toEqual(
+      expect.arrayContaining(['강사 교통비', '학생 교통비', '장거리 교통비', '숙박비', '참여자 활동비', '식사비'])
+    )
     expect(labels).not.toContain('숙박비 (비활성)')
     expect(labels).not.toContain('p-1')
   })
@@ -107,6 +113,42 @@ describe('mapProgramPaymentItemsToSettlementRequest', () => {
     expect(mapProgramPaymentItemsToSettlementRequest(null)).toBeUndefined()
     expect(mapProgramPaymentItemsToSettlementRequest('')).toEqual([])
     expect(mapProgramPaymentItemsToSettlementRequest('해당없음')).toEqual([])
+  })
+
+  it('강사 교통비와 학생 교통비를 서로 다른 itemType으로 저장한다', () => {
+    expect(mapProgramPaymentItemsToSettlementRequest('강사 교통비, 학생 교통비')).toEqual([
+      { itemType: 'TRANSPORTATION', useYn: true },
+      { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+    ])
+    expect(mapProgramPaymentItemsToSettlementRequest('학생 교통비')).toEqual([
+      { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+    ])
+    expect(resolveProgramSettlementItemType('TRANSPORT_STUDENT')).toBe('STUDENT_TRANSPORTATION')
+    expect(resolveProgramSettlementItemType('p-166202')).toBe('STUDENT_TRANSPORTATION')
+    expect(resolveProgramSettlementItemType('p-166201')).toBe('TRANSPORTATION')
+    expect(resolveProgramSettlementItemType('장거리 교통비')).toBe('LONG_DISTANCE_TRANSPORTATION')
+  })
+
+  it('GET 강사+학생 itemType은 둘 다 켜고, TRANSPORTATION만 있으면 학생은 끈다', () => {
+    seedRemoteCatalog([
+      { id: 'p-166201', title: '강사 교통비', paymentItemType: 'TRANSPORT_INSTRUCTOR' },
+      { id: 'p-166202', title: '학생 교통비', paymentItemType: 'TRANSPORT_STUDENT' },
+    ])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([
+        { itemType: 'TRANSPORTATION', useYn: true },
+        { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+      ])
+    ).toEqual(['p-166201', 'p-166202'])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([{ itemType: 'TRANSPORTATION', useYn: true }])
+    ).toEqual(['p-166201'])
+    expect(
+      mapProgramPaymentItemsToSettlementRequest(['p-166201', 'p-166202'])
+    ).toEqual([
+      { itemType: 'TRANSPORTATION', useYn: true },
+      { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+    ])
   })
 })
 
@@ -186,6 +228,19 @@ describe('settlementPolicy hydrate', () => {
     expect(mapSettlementPaymentItemsToLabel([...ALL_POLICY_ITEMS])).toBe(
       '교통비, 장거리 교통비, 숙박비, 참여자 활동비, 식비'
     )
+  })
+
+  it('강사·학생 교통비를 GET itemType 기준으로 따로 표시한다', () => {
+    expect(
+      mapSettlementPaymentItemsToLabel([
+        { itemType: 'TRANSPORTATION', useYn: true },
+        { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+        { itemType: 'MEAL', useYn: true },
+      ])
+    ).toBe('교통비, 학생 교통비, 식비')
+    expect(
+      mapSettlementPaymentItemsToLabel([{ itemType: 'TRANSPORTATION', useYn: true }])
+    ).toBe('교통비')
   })
 
   it('settlementPolicy.paymentItems []는 overlay 라벨을 덮어 빈 상태로 둔다', () => {
