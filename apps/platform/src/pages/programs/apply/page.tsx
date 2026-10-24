@@ -65,6 +65,8 @@ import {
   isApplicationBasicInfoParagraphId,
   isApplicationGuidanceParagraphId,
   isApplicationPreferredScheduleParagraphId,
+  isGeminiInstitutionContactPersonParagraphId,
+  isGeminiInstitutionTrainingInfoParagraphId,
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
@@ -86,9 +88,24 @@ import {
   isUjatVolunteerBasicInfoParagraphId,
   isUjatVolunteerFreeTextItemsParagraphId,
   isUjatVolunteerPreviousTermParagraphId,
+  resolveUjatVolunteerHiddenParagraphIds,
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
+import {
+  ApplyGeminiInstitutionContact,
+  ApplyGeminiInstitutionTrainingInfo,
+  emptyGeminiInstitutionContact,
+  emptyGeminiInstitutionTrainingInfo,
+  findIncompleteGeminiInstitutionContactMessage,
+  findIncompleteGeminiInstitutionTrainingInfoMessage,
+  geminiInstitutionContactAnswerFromValues,
+  geminiInstitutionContactValuesFromDraftAnswer,
+  geminiInstitutionTrainingInfoAnswerFromValues,
+  geminiInstitutionTrainingInfoValuesFromDraftAnswer,
+  type ApplyGeminiInstitutionContactValues,
+  type ApplyGeminiInstitutionTrainingInfoValues,
+} from '@/features/program/ui/apply-gemini-institution-info/apply-gemini-institution-info'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
 import { readApplyScheduleMetaFromProgram } from '@/features/program/lib/apply-form-schedule-meta'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
@@ -484,6 +501,11 @@ export function ProgramApplyPage() {
   const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
     createEmptyPreferredBlock(),
   ])
+  const [geminiTrainingInfo, setGeminiTrainingInfo] =
+    useState<ApplyGeminiInstitutionTrainingInfoValues>(emptyGeminiInstitutionTrainingInfo)
+  const [geminiContact, setGeminiContact] = useState<ApplyGeminiInstitutionContactValues>(
+    emptyGeminiInstitutionContact,
+  )
   const [trainedTeachersFixedSelectedIds, setTrainedTeachersFixedSelectedIds] = useState<string[]>(
     []
   )
@@ -551,6 +573,7 @@ export function ProgramApplyPage() {
     applyCase === 'trained-teachers' ||
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
+  const showGeminiInstitutionApply = applyCase === 'institution-gemini'
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
     [profileQuery.data]
@@ -745,12 +768,14 @@ export function ProgramApplyPage() {
   const showPreferredScheduleInput =
     showTrainedTeachersPreferredSchedule ||
     showGeneralPreferredSchedule ||
-    showEconomyPreferredSchedule
+    showEconomyPreferredSchedule ||
+    showGeminiInstitutionApply
   const institutionPreferredSessionSelect = useMemo(() => {
-    if (!program || !showGeneralPreferredSchedule) {
+    if (!program || (!showGeneralPreferredSchedule && !showGeminiInstitutionApply)) {
       return { show: false, options: [] as { value: string; label: string }[] }
     }
-    const show = shouldShowApplyPreferredScheduleSessionSelect(program)
+    const show =
+      showGeminiInstitutionApply || shouldShowApplyPreferredScheduleSessionSelect(program)
     const maxSessionsPerDay = resolveApplyPreferredMaxSessionsPerDay(
       program,
       applicationFormRuntimeContext
@@ -759,7 +784,12 @@ export function ProgramApplyPage() {
       show,
       options: show ? buildApplyPreferredSessionSelectOptions(maxSessionsPerDay) : [],
     }
-  }, [program, showGeneralPreferredSchedule, applicationFormRuntimeContext])
+  }, [
+    applicationFormRuntimeContext,
+    program,
+    showGeminiInstitutionApply,
+    showGeneralPreferredSchedule,
+  ])
   const institutionDateOnlyPreferred = useMemo(() => {
     if (!program || !showGeneralPreferredSchedule) return false
     return shouldShowApplySchedulePeriodDateOnlyPreferred(program)
@@ -772,8 +802,9 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
+    if (showGeminiInstitutionApply) return 3
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
-  }, [applicationFormRuntimeContext, program])
+  }, [applicationFormRuntimeContext, program, showGeminiInstitutionApply])
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
@@ -1018,6 +1049,8 @@ export function ProgramApplyPage() {
                 ? createEmptyApplyPreferredScheduleBlocks(
                     resolveApplyPreferredScheduleInitialBlockCount(program)
                   )
+                : applyCaseForDraft === 'institution-gemini'
+                  ? createEmptyApplyPreferredScheduleBlocks(3)
                 : [createEmptyPreferredBlock()])
           )
           setTrainedTeachersFixedSelectedIds(
@@ -1044,6 +1077,24 @@ export function ProgramApplyPage() {
               fromBasic ?? emptyTrainedTeachersBasicInfo(),
               profileDefaults
             )
+          )
+          const geminiTrainingInfoParagraph = findDraftParagraph(
+            programLinkedDraft,
+            isGeminiInstitutionTrainingInfoParagraphId,
+          )
+          setGeminiTrainingInfo(
+            geminiInstitutionTrainingInfoValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, geminiTrainingInfoParagraph),
+            ) ?? emptyGeminiInstitutionTrainingInfo(),
+          )
+          const geminiContactParagraph = findDraftParagraph(
+            programLinkedDraft,
+            isGeminiInstitutionContactPersonParagraphId,
+          )
+          setGeminiContact(
+            geminiInstitutionContactValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, geminiContactParagraph),
+            ) ?? emptyGeminiInstitutionContact(),
           )
           const teamParagraph = findDraftParagraph(remoteDraft, isApplicationTeamInfoParagraphId)
           setTeamInfo(
@@ -1193,7 +1244,13 @@ export function ProgramApplyPage() {
       if (hydratedFormKeyRef.current === remoteMissKey) return
       hydratedFormKeyRef.current = remoteMissKey
       setDraft(null)
-      setPreferredBlocks([createEmptyPreferredBlock()])
+      setPreferredBlocks(
+        applyCase === 'institution-gemini'
+          ? createEmptyApplyPreferredScheduleBlocks(3)
+          : [createEmptyPreferredBlock()],
+      )
+      setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
+      setGeminiContact(emptyGeminiInstitutionContact())
       setBasicInfo(
         fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults)
       )
@@ -1229,7 +1286,13 @@ export function ProgramApplyPage() {
         })
       )
     )
-    setPreferredBlocks([createEmptyPreferredBlock()])
+    setPreferredBlocks(
+      applyCase === 'institution-gemini'
+        ? createEmptyApplyPreferredScheduleBlocks(3)
+        : [createEmptyPreferredBlock()],
+    )
+    setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
+    setGeminiContact(emptyGeminiInstitutionContact())
     setBasicInfo(emptyTrainedTeachersBasicInfo())
     setTeamInfo(emptyIndividualTeamInfo())
     setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
@@ -1299,6 +1362,19 @@ export function ProgramApplyPage() {
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
       if (program == null) return undefined
+
+      if (isGeminiInstitutionTrainingInfoParagraphId(paragraph.id)) {
+        return (
+          <ApplyGeminiInstitutionTrainingInfo
+            value={geminiTrainingInfo}
+            onChange={setGeminiTrainingInfo}
+          />
+        )
+      }
+
+      if (isGeminiInstitutionContactPersonParagraphId(paragraph.id)) {
+        return <ApplyGeminiInstitutionContact value={geminiContact} onChange={setGeminiContact} />
+      }
 
       if (isApplicationBasicInfoParagraphId(paragraph.id)) {
         return (
@@ -1611,10 +1687,13 @@ export function ProgramApplyPage() {
             }
             disabled={trainedTeachersScheduleNotConfigured}
             showSessionSelect={
-              showGeneralPreferredSchedule && institutionPreferredSessionSelect.show
+              (showGeneralPreferredSchedule || showGeminiInstitutionApply) &&
+              institutionPreferredSessionSelect.show
             }
             sessionOptions={
-              showGeneralPreferredSchedule ? institutionPreferredSessionSelect.options : []
+              showGeneralPreferredSchedule || showGeminiInstitutionApply
+                ? institutionPreferredSessionSelect.options
+                : []
             }
             dateOnlyPreferred={
               useInstitutionScheduleBounds
@@ -1794,6 +1873,8 @@ export function ProgramApplyPage() {
     [
       program,
       preferredBlocks,
+      geminiContact,
+      geminiTrainingInfo,
       basicInfo,
       teamInfo,
       guidanceAnswers,
@@ -1822,7 +1903,9 @@ export function ProgramApplyPage() {
       useTrainedTeachersOperatingPeriod,
       showTrainedTeachersPreferredSchedule,
       showGeneralPreferredSchedule,
+      showGeminiInstitutionApply,
       showPreferredScheduleInput,
+      institutionPreferredSessionSelect,
       showPreferredEducationForm,
       institutionScheduleDateBounds.minScheduleDate,
       institutionScheduleDateBounds.maxScheduleDate,
@@ -1983,15 +2066,11 @@ export function ProgramApplyPage() {
       }
     }
     if (displayDraft) {
-      const ujatApplicationType = ujatVolunteerBasicInfo.applicationType
+      const ujatHiddenParagraphIds = resolveUjatVolunteerHiddenParagraphIds(
+        ujatVolunteerBasicInfo.applicationType,
+      )
       for (const paragraph of displayDraft.paragraphs) {
-        if (
-          (ujatApplicationType === 'new' && isUjatVolunteerPreviousTermParagraphId(paragraph.id)) ||
-          (ujatApplicationType === 'ujat-graduate' &&
-            isUjatVolunteerFreeTextItemsParagraphId(paragraph.id))
-        ) {
-          hidden.add(paragraph.id)
-        }
+        if (ujatHiddenParagraphIds.has(paragraph.id)) hidden.add(paragraph.id)
       }
     }
     if (
@@ -2372,6 +2451,35 @@ export function ProgramApplyPage() {
           return
         }
       }
+      const geminiTrainingInfoParagraph = findDraftParagraph(
+        displayDraft,
+        isGeminiInstitutionTrainingInfoParagraphId,
+      )
+      const geminiTrainingInfoVisible =
+        geminiTrainingInfoParagraph != null &&
+        !hiddenParagraphIds.has(geminiTrainingInfoParagraph.id)
+      if (geminiTrainingInfoVisible && isRequiredParagraph(geminiTrainingInfoParagraph)) {
+        const trainingInfoError = findIncompleteGeminiInstitutionTrainingInfoMessage(
+          geminiTrainingInfo,
+        )
+        if (trainingInfoError) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const geminiContactParagraph = findDraftParagraph(
+        displayDraft,
+        isGeminiInstitutionContactPersonParagraphId,
+      )
+      const geminiContactVisible =
+        geminiContactParagraph != null && !hiddenParagraphIds.has(geminiContactParagraph.id)
+      if (geminiContactVisible && isRequiredParagraph(geminiContactParagraph)) {
+        const contactError = findIncompleteGeminiInstitutionContactMessage(geminiContact)
+        if (contactError) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
       const teamParagraph = findDraftParagraph(displayDraft, isApplicationTeamInfoParagraphId)
       const showTeamInfo = applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
       const teamInfoVisible =
@@ -2606,6 +2714,18 @@ export function ProgramApplyPage() {
       }
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
+      }
+      if (geminiTrainingInfoVisible && geminiTrainingInfoParagraph) {
+        const trainingInfoAnswer = geminiInstitutionTrainingInfoAnswerFromValues(geminiTrainingInfo)
+        if (trainingInfoAnswer) {
+          overrides[resolveApplicationAnswerKey(geminiTrainingInfoParagraph)] = trainingInfoAnswer
+        }
+      }
+      if (geminiContactVisible && geminiContactParagraph) {
+        const contactAnswer = geminiInstitutionContactAnswerFromValues(geminiContact)
+        if (contactAnswer) {
+          overrides[resolveApplicationAnswerKey(geminiContactParagraph)] = contactAnswer
+        }
       }
       if (hiddenScheduleAutoSubmitIds && applyScheduleChoiceAnswerKey) {
         overrides[applyScheduleChoiceAnswerKey] = hiddenScheduleAutoSubmitIds

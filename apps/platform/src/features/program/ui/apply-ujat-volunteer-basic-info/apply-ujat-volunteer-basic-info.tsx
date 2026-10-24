@@ -101,17 +101,31 @@ export function ujatVolunteerBasicInfoValuesFromDraftAnswer(
   const row = answer as Record<string, unknown>
   const text = (key: string) => (typeof row[key] === 'string' ? (row[key] as string) : '')
   const universityName = text('universityName')
-  if (!universityName && !text('major') && !text('grade')) return null
+  const grade = text('grade')
+  const major = text('major')
+  const applicationRoute = text('applicationRoute')
+  const applicationRouteOther = text('applicationRouteOther')
+  const applicationType = text('applicationType').trim().toLowerCase()
+  if (
+    !universityName &&
+    !grade &&
+    !major &&
+    !applicationRoute &&
+    !applicationRouteOther &&
+    !applicationType
+  ) {
+    return null
+  }
   return {
     universityName,
-    grade: text('grade'),
-    major: text('major'),
-    applicationRoute: text('applicationRoute'),
-    applicationRouteOther: text('applicationRouteOther'),
+    grade,
+    major,
+    applicationRoute,
+    applicationRouteOther,
     applicationType:
-      row.applicationType === 'ujat-graduate'
+      applicationType === 'ujat-graduate'
         ? 'ujat-graduate'
-        : row.applicationType === 'new'
+        : applicationType === 'new'
           ? 'new'
           : '',
   }

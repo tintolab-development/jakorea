@@ -5,6 +5,7 @@ import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/pa
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import {
   isApplicationBasicInfoParagraphId,
   isApplicationGuidanceParagraphId,
@@ -22,6 +23,7 @@ import {
   isUjatInstitutionGradeInfoParagraphId,
   isUjatInstitutionPreferredScheduleParagraphId,
   isUjatSubmitConfirmationParagraphId,
+  resolveUjatVolunteerHiddenParagraphIds,
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from './apply-form-paragraph-ids.ts'
@@ -191,5 +193,14 @@ assert.equal(
   ),
   true,
 )
+assert.deepEqual(
+  [...resolveUjatVolunteerHiddenParagraphIds('new')],
+  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm],
+)
+assert.deepEqual(
+  [...resolveUjatVolunteerHiddenParagraphIds('UJAT-GRADUATE')],
+  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems],
+)
+assert.deepEqual([...resolveUjatVolunteerHiddenParagraphIds('')], [])
 
 console.log('apply-form-paragraph-ids.selfcheck: ok')

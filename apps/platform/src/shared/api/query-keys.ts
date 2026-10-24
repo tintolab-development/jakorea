@@ -456,6 +456,22 @@ export const platformQueryKeys = {
           scheduleId,
         ] as const,
       /**
+       * 일정 출결 참여자 현황 — GET .../schedules/{scheduleId}/attendance/participants (Class D)
+       */
+      scheduleAttendanceParticipants: (
+        applicationType: string,
+        applicationId: string,
+        scheduleId: number,
+      ) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.scheduleAttendance(
+            applicationType,
+            applicationId,
+            scheduleId,
+          ),
+          'participants',
+        ] as const,
+      /**
        * UJAT 봉사자 교육계획서·교육일지 목록
        * GET .../education-documents (Class C, applicationId 스코프 — H1/H2 분리)
        */
