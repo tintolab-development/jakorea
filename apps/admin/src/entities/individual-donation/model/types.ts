@@ -28,8 +28,8 @@ export type UsageGuideItem = {
 }
 
 export type DonateCta = {
-  /** 고정값 — 항상 '후원하기' */
-  buttonLabel: '후원하기'
+  /** 개인후원 CTA 노출 문구. 백엔드 label 필드와 매핑 */
+  buttonLabel: string
   linkUrl: string
   /** setting.version — banner와 공유 */
   version: number

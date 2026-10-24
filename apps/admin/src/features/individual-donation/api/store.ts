@@ -13,6 +13,12 @@ import type {
 } from '@/entities/individual-donation/model/types'
 
 const STORAGE_KEY = 'admin.sponsor.individualDonation.v1'
+const DONATE_CTA_LABEL = '성장 후원하기'
+const LEGACY_DONATE_CTA_LABEL = '후원하기'
+const HERO_DESCRIPTION =
+  'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고, 스스로의 가능성을 펼칠 수 있도록 돕습니다.'
+const LEGACY_HERO_DESCRIPTION =
+  'JA 코리아는 청소년들이 미래 사회에 필요한 역량을 키우고, 세상을 긍정적으로 변화시키는 주체가 되도록 돕습니다. 여러분의 후원이 청소년의 더 밝은 내일을 만듭니다.'
 
 export const INDIVIDUAL_DONATION_CHANGED_EVENT = 'jakorea:individual-donation-changed' as const
 
@@ -51,8 +57,7 @@ function buildSeedBanner(): IndividualDonationBanner {
       'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=400&fit=crop',
     imageFileName: 'banner-seed.jpg',
     mainText: '청소년을 위한\n지속가능한 교육의 첫걸음',
-    subText:
-      'JA 코리아는 청소년들이 미래 사회에 필요한 역량을 키우고,\n세상을 긍정적으로 변화시키는 주체가 되도록 돕습니다.\n여러분의 후원이 청소년의 더 밝은 내일을 만듭니다.',
+    subText: HERO_DESCRIPTION,
     version: 0,
   }
 }
@@ -73,7 +78,7 @@ function buildSeedData(): IndividualDonationData {
     banner: buildSeedBanner(),
     usageGuideItems: buildSeedUsageGuide(),
     donateCta: {
-      buttonLabel: '후원하기',
+      buttonLabel: DONATE_CTA_LABEL,
       linkUrl: 'https://online.mrm.or.kr/WJEP4tK',
       version: 0,
     },
@@ -83,6 +88,20 @@ function buildSeedData(): IndividualDonationData {
 
 function asString(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value : fallback
+}
+
+function normalizeCopy(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function resolveHeroDescription(value: unknown, fallback: string): string {
+  const text = asString(value, fallback)
+  return normalizeCopy(text) === normalizeCopy(LEGACY_HERO_DESCRIPTION) ? fallback : text
+}
+
+function resolveDonateCtaLabel(value: unknown): string {
+  const label = asString(value, DONATE_CTA_LABEL).trim()
+  return !label || label === LEGACY_DONATE_CTA_LABEL ? DONATE_CTA_LABEL : label
 }
 
 function normalizeVersion(value: unknown, fallback: number): number {
@@ -102,7 +121,7 @@ function normalizeBanner(
         : undefined,
     imageAssetId: typeof raw.imageAssetId === 'number' ? raw.imageAssetId : undefined,
     mainText: asString(raw.mainText, seed.mainText),
-    subText: asString(raw.subText, seed.subText),
+    subText: resolveHeroDescription(raw.subText, seed.subText),
     version: normalizeVersion(raw.version, seed.version),
   }
 }
@@ -153,7 +172,7 @@ function normalizeData(
     banner: normalizeBanner(raw.banner),
     usageGuideItems: normalizeUsageGuide(raw.usageGuideItems),
     donateCta: {
-      buttonLabel: '후원하기',
+      buttonLabel: resolveDonateCtaLabel(raw.donateCta?.buttonLabel),
       linkUrl:
         asString(raw.donateCta?.linkUrl, seed.donateCta.linkUrl).trim() ||
         seed.donateCta.linkUrl,
@@ -256,7 +275,7 @@ export function saveDonateCta(input: DonateCtaSaveInput): IndividualDonationData
   const next: IndividualDonationData = {
     ...current,
     donateCta: {
-      buttonLabel: '후원하기',
+      buttonLabel: current.donateCta.buttonLabel,
       linkUrl,
       version: input.version,
     },

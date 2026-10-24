@@ -30,7 +30,7 @@ const METRIC_BY_ID: Record<number, MetricItemId> = {
 
 const METRIC_LABEL: Record<MetricItemId, string> = {
   global_scale: '글로벌 확장성',
-  transparency: '최고 수준의 투명성',
+  transparency: '최고수준의 투명성',
   proven_impact: '검증된 임팩트',
 }
 
@@ -38,6 +38,73 @@ const METRIC_API_ID: Record<MetricItemId, number> = {
   global_scale: 1,
   transparency: 2,
   proven_impact: 3,
+}
+
+const METRIC_LABEL_DEFAULTS: Record<MetricItemId, string> = {
+  global_scale: '글로벌 확장성',
+  transparency: '최고수준의 투명성',
+  proven_impact: '검증된 임팩트',
+}
+
+const METRIC_DESCRIPTION_DEFAULTS: Record<MetricItemId, string> = {
+  global_scale: 'JA 글로벌 네트워크를 통한 교육 프로그램 확장',
+  transparency: 'JA Worldwide 기준에 따른 투명한 조직 운영 체계',
+  proven_impact: '연간 청소년 교육으로 이어온 10년 이상의 장기 파트너십',
+}
+
+const LEGACY_METRIC_LABELS: Partial<Record<MetricItemId, string>> = {
+  transparency: '최고 수준의 투명성',
+}
+
+const LEGACY_METRIC_DESCRIPTIONS: Partial<Record<MetricItemId, string>> = {
+  global_scale: '글로벌 네트워크를 통한 사업 확장',
+  proven_impact: '10년 이상 이어온 파트너십을 통한 누적 교육 인원',
+}
+
+const STEP_DESCRIPTION_DEFAULTS: Record<PartnershipStepNumber, string> = {
+  1: 'JA Korea에 파트너십 문의',
+  2: '프로그램 적합도 및 수혜 대상 타당성 조사\n기업 사회공헌 목표 파악',
+  3: '프로그램 목적 및 포지셔닝 설계\n수혜 대상 및 프로그램 운영 방식 제안',
+  4: '운영 기간 및 기부금 확정\n기부금(프로그램 운영비) 지원',
+  5: '수혜 대상자 및 교사·강사·봉사자 모집/선발\n프로그램 진행',
+  6: '프로그램 결과 및 회계 보고\n성과 평가\n차년도 계획 수립 및 파트너십 점검',
+}
+
+const LEGACY_STEP_DESCRIPTIONS: Record<PartnershipStepNumber, string> = {
+  1: '파트너십 문의',
+  2: '프로그램 적합성 및 교육 대상 검토\n기업 CSR 목표 파악',
+  3: '프로그램 목적 및 포지셔닝 설계\n운영 방식 제안',
+  4: '운영 기간 및 후원 규모 확정\n프로그램 비용 지원',
+  5: '수혜자 및 강사 모집·선발\n프로그램 진행',
+  6: '결과·정산 보고서 제공\n성과 평가 및 차년도 계획 수립',
+}
+
+function normalizeCopy(value: string): string {
+  return value.replace(/·/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function resolveMetricLabel(id: MetricItemId, value: string | undefined): string {
+  const label = value?.trim() ?? ''
+  return !label || label === LEGACY_METRIC_LABELS[id]
+    ? METRIC_LABEL_DEFAULTS[id]
+    : label
+}
+
+function resolveMetricDescription(id: MetricItemId, value: string | undefined): string {
+  const description = value?.trim() ?? ''
+  return !description || normalizeCopy(description) === normalizeCopy(LEGACY_METRIC_DESCRIPTIONS[id] ?? '')
+    ? METRIC_DESCRIPTION_DEFAULTS[id]
+    : value ?? METRIC_DESCRIPTION_DEFAULTS[id]
+}
+
+function resolveStepDescription(
+  step: PartnershipStepNumber,
+  value: string | undefined,
+): string {
+  const description = value?.trim() ?? ''
+  return !description || normalizeCopy(description) === normalizeCopy(LEGACY_STEP_DESCRIPTIONS[step])
+    ? STEP_DESCRIPTION_DEFAULTS[step]
+    : value ?? STEP_DESCRIPTION_DEFAULTS[step]
 }
 
 export function mapCorporateAdminToDomain(row: CorporateAdminResponse): CorporateGuideData {
@@ -52,9 +119,9 @@ export function mapCorporateAdminToDomain(row: CorporateAdminResponse): Corporat
       return {
         id: domainId,
         apiId,
-        itemLabel: item.name ?? METRIC_LABEL[domainId],
+        itemLabel: resolveMetricLabel(domainId, item.name),
         title: item.title ?? '',
-        description: item.description ?? '',
+        description: resolveMetricDescription(domainId, item.description),
         version: item.version ?? 0,
       }
     })
@@ -83,7 +150,7 @@ export function mapCorporateAdminToDomain(row: CorporateAdminResponse): Corporat
         step,
         apiId: item.id ?? stepNum,
         title: item.title ?? '',
-        description: item.description ?? '',
+        description: resolveStepDescription(step, item.description),
         version: item.version ?? 0,
       }
     })

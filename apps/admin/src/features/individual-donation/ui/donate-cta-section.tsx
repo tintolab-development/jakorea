@@ -1,5 +1,5 @@
 /**
- * 개인후원 — 후원하기 버튼 (인라인 편집)
+ * 개인후원 — 성장 후원하기 버튼 (인라인 편집)
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -57,7 +57,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
       showAlert(
         individualDonationSaveFailureAlert(
           err,
-          '후원하기 연결 링크 저장에 실패했습니다. 다시 시도해 주세요.'
+          '성장 후원하기 연결 링크 저장에 실패했습니다. 다시 시도해 주세요.'
         )
       )
     }
@@ -71,7 +71,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
         width: 320,
         align: 'center',
         className: 'individual-donation-col--button',
-        render: () => '후원하기',
+        render: (_value, record) => record.buttonLabel,
       },
       {
         title: '연결 링크',
@@ -88,7 +88,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 value={draftLink}
                 onChange={e => setDraftLink(e.target.value)}
                 placeholder="연결 링크를 입력하세요"
-                aria-label="후원하기 연결 링크"
+                aria-label="성장 후원하기 연결 링크"
               />
             )
           }
@@ -107,7 +107,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
     <div className="individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">■ 후원하기</span>
+          <span className="table-title">■ 성장 후원하기</span>
         </div>
         <div className="table-header-actions--wrapper">
           {isEditing ? (

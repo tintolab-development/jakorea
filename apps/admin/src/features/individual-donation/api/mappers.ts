@@ -36,6 +36,29 @@ const USAGE_API_ID: Record<UsageGuideItemId, number> = {
   education_access: 2,
 }
 
+const DONATE_CTA_LABEL = '성장 후원하기'
+const LEGACY_DONATE_CTA_LABEL = '후원하기'
+const HERO_DESCRIPTION =
+  'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고, 스스로의 가능성을 펼칠 수 있도록 돕습니다.'
+const LEGACY_HERO_DESCRIPTION =
+  'JA 코리아는 청소년들이 미래 사회에 필요한 역량을 키우고, 세상을 긍정적으로 변화시키는 주체가 되도록 돕습니다. 여러분의 후원이 청소년의 더 밝은 내일을 만듭니다.'
+
+function normalizeCopy(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function resolveHeroDescription(value: string | undefined): string {
+  const text = value?.trim() ?? ''
+  return !text || normalizeCopy(text) === normalizeCopy(LEGACY_HERO_DESCRIPTION)
+    ? HERO_DESCRIPTION
+    : value ?? HERO_DESCRIPTION
+}
+
+function resolveDonateCtaLabel(value: string | undefined): string {
+  const label = value?.trim() ?? ''
+  return !label || label === LEGACY_DONATE_CTA_LABEL ? DONATE_CTA_LABEL : label
+}
+
 export function usageGuideApiId(id: UsageGuideItemId): number {
   return USAGE_API_ID[id]
 }
@@ -84,12 +107,12 @@ export function mapPersonalAdminToDomain(row: PersonalAdminResponse): Individual
       imageFileName: bannerImage?.originalName ?? undefined,
       imageAssetId: bannerImage?.assetId,
       mainText: row.banner?.mainText ?? '',
-      subText: row.banner?.subText ?? '',
+      subText: resolveHeroDescription(row.banner?.subText),
       version: settingVersion,
     },
     usageGuideItems: fixedUsage,
     donateCta: {
-      buttonLabel: '후원하기',
+      buttonLabel: resolveDonateCtaLabel(row.donationButton?.label),
       linkUrl: row.donationButton?.url ?? '',
       version: row.donationButton?.version ?? settingVersion,
     },
@@ -178,7 +201,7 @@ export function mergeDonateCtaIntoPersonal(
       version,
     },
     donateCta: {
-      buttonLabel: '후원하기',
+      buttonLabel: resolveDonateCtaLabel(button.label) || prev.donateCta.buttonLabel,
       linkUrl: button.url ?? prev.donateCta.linkUrl,
       version,
     },
