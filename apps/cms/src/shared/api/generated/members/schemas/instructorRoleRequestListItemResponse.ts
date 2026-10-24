@@ -16,7 +16,7 @@ export interface InstructorRoleRequestListItemResponse {
   maskedName?: string;
   maskedPhone?: string;
   maskedEmail?: string;
-  birthDate?: string;
+  birthYear?: number;
   businessIncome?: boolean;
   requestedAt?: string;
   reviewedAt?: string;

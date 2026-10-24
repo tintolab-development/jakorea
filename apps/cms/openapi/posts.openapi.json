@@ -3023,12 +3023,16 @@
           },
           "gender": {
             "type": "string",
+            "description": "Existing roster rows may omit or send '*' to retain the stored value. Required for new rows.",
             "maxLength": 30,
-            "minLength": 0
+            "minLength": 0,
+            "nullable": true
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "Existing roster rows may omit this value to retain the stored date. Required for new rows.",
+            "nullable": true
           },
           "grade": {
             "type": "string",
@@ -3070,9 +3074,7 @@
           }
         },
         "required": [
-          "birthDate",
           "className",
-          "gender",
           "studentName"
         ]
       },
@@ -3096,6 +3098,10 @@
           "birthDate": {
             "type": "string",
             "format": "date"
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "grade": {
             "type": "string"
@@ -11747,6 +11753,10 @@
             "type": "string",
             "format": "date"
           },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
           "age": {
             "type": "integer",
             "format": "int32"
@@ -14715,10 +14725,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -21745,6 +21755,10 @@
             "type": "string",
             "format": "date"
           },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
           "phone": {
             "type": "string"
           },
@@ -27021,20 +27035,31 @@
             "format": "int64"
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 이메일 아이디 앞 3자리를 마스킹합니다."
           },
           "name": {
             "type": "string"
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 가운데 숫자를 마스킹합니다."
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "기본 조회에서는 null입니다. 출생연도는 birthYear로 제공합니다.",
+            "nullable": true
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32",
+            "description": "기본 조회에서 표시 가능한 출생연도",
+            "nullable": true
           },
           "gender": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 '*'로 마스킹합니다."
           },
           "memberType": {
             "type": "string"
@@ -27050,10 +27075,14 @@
             "type": "string"
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 자택 주소를 동까지만 표시합니다.",
+            "nullable": true
           },
           "addressDetail": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 반환하지 않습니다.",
+            "nullable": true
           },
           "regionSido": {
             "type": "string"
@@ -41011,6 +41040,10 @@
             "type": "string",
             "format": "date"
           },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
           "affiliation": {
             "type": "string"
           },
@@ -44772,9 +44805,9 @@
           "maskedEmail": {
             "type": "string"
           },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessIncome": {
             "type": "boolean"
@@ -47539,6 +47572,10 @@
           "birthDate": {
             "type": "string",
             "format": "date"
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "status": {
             "type": "string"
