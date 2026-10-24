@@ -548,6 +548,11 @@ export const platformQueryKeys = {
     settlementApplications: () =>
       [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
     /**
+     * 강의보고서 배정 목록 — GET /api/portal/me/programs/{programId}/lecture-report-assignments (Class C)
+     */
+    lectureReportAssignments: (programId: string) =>
+      [...platformQueryKeys.mypage.all(), 'lecture-report-assignments', programId] as const,
+    /**
      * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
      */
     individualSettlementSchedules: (applicationId: string) =>

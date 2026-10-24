@@ -34,9 +34,31 @@ function unwrap<T>(value: unknown): T {
   return value as T
 }
 
-export async function getLectureReportAssignments(programId: number, page: number): Promise<LectureReportPage> {
-  const { data } = await axiosClient.get(`/api/portal/me/programs/${programId}/lecture-report-assignments`, { params: { page, size: 10 } })
+export async function getLectureReportAssignments(
+  programId: number,
+  page: number,
+  signal?: AbortSignal,
+  size = 10,
+): Promise<LectureReportPage> {
+  const { data } = await axiosClient.get(`/api/portal/me/programs/${programId}/lecture-report-assignments`, {
+    params: { page, size },
+    signal,
+  })
   return unwrap(data)
+}
+
+export async function getAllLectureReportAssignments(
+  programId: number,
+  signal?: AbortSignal,
+): Promise<LectureReportAssignment[]> {
+  const first = await getLectureReportAssignments(programId, 0, signal, 50)
+  const items = [...(first.items ?? [])]
+  const totalPages = Math.max(1, first.totalPages ?? 1)
+  for (let page = 1; page < totalPages && page < 20; page += 1) {
+    const next = await getLectureReportAssignments(programId, page, signal, 50)
+    items.push(...(next.items ?? []))
+  }
+  return items
 }
 export async function getLectureReportState(assignmentId: number): Promise<LectureReportState> {
   const { data } = await axiosClient.get(`/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`)

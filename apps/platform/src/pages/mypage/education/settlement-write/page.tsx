@@ -4,6 +4,7 @@ import { ProgramBackButton } from '@/features/program'
 import {
   buildSettlementTabPath,
   EducationSettlementWriteForm,
+  readSettlementRouteApplicationType,
   resolveSettlementAreaFromPathname,
   resolveSettlementDocumentKind,
 } from '@/features/mypage/education/settlements'
@@ -30,7 +31,9 @@ export function MypageEducationSettlementWritePage() {
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('sessionId') ?? ''
   const remoteEnabled = isRemoteApiConfigured()
-  const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)
+  const routeApplicationType =
+    readSettlementRouteApplicationType(applicationTypeParam) ??
+    readEducationApplicationTypeFromRoute(applicationTypeParam)
   const typeProbe = useProbeEducationApplicationType(applicationId, routeApplicationType)
   const applicationType = routeApplicationType ?? typeProbe.applicationType ?? 'INDIVIDUAL'
   const documentKind = resolveSettlementDocumentKind(applicationType)
@@ -58,7 +61,7 @@ export function MypageEducationSettlementWritePage() {
     !receiptConsent.isConsentLoading &&
     !receiptConsent.isConsentSubmitted
   const backPath = applicationId
-    ? buildSettlementTabPath(applicationId, area)
+    ? buildSettlementTabPath(applicationId, area, applicationType)
     : educationApplicationDetailPath(applicationId)
 
   if (!remoteEnabled) {

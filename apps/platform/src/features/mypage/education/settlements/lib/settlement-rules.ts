@@ -144,6 +144,11 @@ export type ResolveEducationSettlementStatusInput = {
   deadlinePolicy?: SettlementDeadlinePolicy
   isResubmitted?: boolean
   hasSubmission?: boolean
+  /**
+   * 강의보고서 제출 여부.
+   * `null`/`undefined`이면 강의보고서 상태를 모른다 — report_pending을 만들지 않는다.
+   */
+  lectureReportSubmitted?: boolean | null
   now?: Date
 }
 
@@ -182,10 +187,11 @@ export function resolveEducationSettlementStatusResult(
   if (input.deadlinePolicy === 'payment_statement') {
     if (mapped) return { status: mapped }
     if (input.hasSubmission === true) return { status: 'unresolved' }
+    if (input.lectureReportSubmitted === false) return { status: 'report_pending' }
     if (isTimestampPassed(input.operationEndAt, now)) {
       return { status: 'overdue', deadlineNotice: 'operation_ended' }
     }
-    if (input.canSubmit === false && isTimestampPassed(input.receiptDeadlineAt, now)) {
+    if (isTimestampPassed(input.receiptDeadlineAt, now)) {
       return { status: 'overdue', deadlineNotice: 'overdue' }
     }
     return { status: 'pending_submit' }

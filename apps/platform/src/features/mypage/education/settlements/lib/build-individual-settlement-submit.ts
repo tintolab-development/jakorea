@@ -122,7 +122,25 @@ export function buildIndividualSettlementItems(
           : [],
     })
   }
+
+  appendInstructorNamedAmount(items, 'MEAL', draft.meal.amount)
+  appendInstructorNamedAmount(items, 'ACTIVITY', draft.activity.amount)
   return items
+}
+
+function appendInstructorNamedAmount(
+  items: PortalIndividualSettlementItemInput[],
+  itemType: string,
+  amount: string,
+): void {
+  const parsed = parseSettlementAmount(amount)
+  if (parsed <= 0) return
+  if (isDuplicateIndividualPaymentItem(items, itemType)) return
+  items.push({
+    itemType,
+    amount: parsed,
+    expenses: [],
+  })
 }
 
 export function buildIndividualSettlementSubmitRequest(

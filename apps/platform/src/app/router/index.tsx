@@ -229,6 +229,22 @@ export const router = createBrowserRouter([
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
+      {
+        path: '/mypage/lectures/:applicationType/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationType/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       {
         path: '/mypage/instructor-apply/consent/:consentKey',
