@@ -106,8 +106,9 @@ export function PaymentOrderCalculationStatementModalImpl({
       lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle,
       withholdingDailySalaryTotalWon:
         subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+      remoteData: paymentOrdersRemote,
     }
-  }, [data])
+  }, [data, paymentOrdersRemote])
 
   const {
     basisDetailOpen,

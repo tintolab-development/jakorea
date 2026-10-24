@@ -60,3 +60,11 @@
 .payment-order-calculation-basis-detail-modal__file-link:hover {
   color: #1d4ed8;
 }
+
+.payment-order-calculation-basis-detail-modal__remote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+}

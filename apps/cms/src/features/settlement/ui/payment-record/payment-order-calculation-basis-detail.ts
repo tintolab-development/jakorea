@@ -120,6 +120,20 @@ export interface PaymentOrderCalculationBasisDetailWithholding {
   withholdingTaxAmountWon: number
 }
 
+/** 백엔드가 내려준 표시용 calculationDetail snapshot을 읽기 전용으로 표시한다. */
+export interface PaymentOrderCalculationBasisDetailRemote {
+  layout: 'remote'
+  sourceLayout?: string
+  title: string
+  formulaText?: string
+  lineLabels: string[]
+  formulaLines: string[]
+  summaryLabels: string[]
+  resultAmount?: number
+  iconKey?: string
+  emojiOverride?: string
+}
+
 export type PaymentOrderCalculationBasisDetail =
   | PaymentOrderCalculationBasisDetailLectureFeeTier
   | PaymentOrderCalculationBasisDetailLectureFeeSpecial
@@ -132,13 +146,16 @@ export type PaymentOrderCalculationBasisDetail =
   | PaymentOrderCalculationBasisDetailMeal
   | PaymentOrderCalculationBasisDetailActivity
   | PaymentOrderCalculationBasisDetailWithholding
+  | PaymentOrderCalculationBasisDetailRemote
 
-const LECTURE_FEE_TIER_TITLE_MAP: Record<string, PaymentOrderCalculationBasisDetailLectureFeeTier['tier']> =
-  {
-    '1급 강사비': '1',
-    '2급 강사비': '2',
-    '3급 강사비': '3',
-  }
+const LECTURE_FEE_TIER_TITLE_MAP: Record<
+  string,
+  PaymentOrderCalculationBasisDetailLectureFeeTier['tier']
+> = {
+  '1급 강사비': '1',
+  '2급 강사비': '2',
+  '3급 강사비': '3',
+}
 
 const DEFAULT_PARTICIPANT_TRANSIT: PaymentOrderCalculationBasisDetailTransportPublicTransit = {
   modeLabel: '기차(KTX·SRT·무궁화호 등)',
@@ -174,6 +191,8 @@ export function resolveBasisDetailModalTitle(detail: PaymentOrderCalculationBasi
       return '참여자 활동비 산정 기준 상세'
     case 'withholding':
       return '원천징수 산정 기준 상세'
+    case 'remote':
+      return detail.title || '산정 기준 상세'
     default:
       return '산정 기준 상세'
   }
@@ -194,7 +213,8 @@ export function isSupportedBasisDetailLayout(
     detail.layout === 'lodging1s1g' ||
     detail.layout === 'meal' ||
     detail.layout === 'activity' ||
-    detail.layout === 'withholding'
+    detail.layout === 'withholding' ||
+    detail.layout === 'remote'
   )
 }
 
@@ -258,7 +278,9 @@ export function buildTravelBasisDetail(
 /** mock·데모 — seed 짝수: 일반 숙박비 / 홀수: 1사1교 숙박비 */
 export function buildLodgingBasisDetail(
   seed: number
-): PaymentOrderCalculationBasisDetailLodgingGeneral | PaymentOrderCalculationBasisDetailLodging1s1g {
+):
+  | PaymentOrderCalculationBasisDetailLodgingGeneral
+  | PaymentOrderCalculationBasisDetailLodging1s1g {
   if (seed % 2 === 0) {
     const amountWon = 150000
     return {
@@ -287,7 +309,9 @@ export function buildLodgingBasisDetail(
 }
 
 export function resolveLodgingBasisDetailTotalWon(
-  detail: PaymentOrderCalculationBasisDetailLodgingGeneral | PaymentOrderCalculationBasisDetailLodging1s1g
+  detail:
+    | PaymentOrderCalculationBasisDetailLodgingGeneral
+    | PaymentOrderCalculationBasisDetailLodging1s1g
 ): number {
   return detail.totalWon
 }
@@ -444,7 +468,9 @@ export function buildLectureFeeBasisDetailFromStandardTitle(
   return buildLectureFeeTierBasisDetail(lectureFeeStandardTitle, lectureFee, sessionStart)
 }
 
-export function lectureFeeLineDescriptionFromStandardTitle(lectureFeeStandardTitle: string): string {
+export function lectureFeeLineDescriptionFromStandardTitle(
+  lectureFeeStandardTitle: string
+): string {
   if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
     return '프로그램 1회 강의비 (특강 강사)'
   }
@@ -478,6 +504,8 @@ export type PaymentOrderCalculationBasisDetailResolveContext = {
   lectureFeeStandardTitle?: string
   /** 원천징수 fallback — 세전 1일 급여 총액 */
   withholdingDailySalaryTotalWon?: number
+  /** true이면 서버 calculationDetail이 없는 항목에 mock 기준을 만들지 않는다. */
+  remoteData?: boolean
 }
 
 /** 원천징수 산정 — 세전 1일 급여 총액(양수 항목 합) */
@@ -540,6 +568,15 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 ): PaymentOrderCalculationBasisDetail | undefined {
   const sessionStart = parseLectureSessionStartFromDisplay(row.lectureSessionDisplay)
 
+  // 표시용 원격 snapshot은 기존 호환 fallback보다 우선한다.
+  if (row.basisDetail?.layout === 'remote') {
+    return row.basisDetail
+  }
+
+  if (context?.remoteData && row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
+    return row.basisDetail
+  }
+
   if (isLectureFeeCalculationRow(row)) {
     return buildLectureFeeBasisDetailFromStandardTitle(
       resolveLectureFeeStandardTitleForRow(row, context),
@@ -550,6 +587,10 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 
   if (row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
     return row.basisDetail
+  }
+
+  if (context?.remoteData) {
+    return undefined
   }
 
   const seed = hashLineSeed(row.lineId)

@@ -30,6 +30,7 @@ import {
 import { PaymentOrderCalculationBasisDetailMealView } from './payment-order-calculation-basis-detail-meal-view'
 import { PaymentOrderCalculationBasisDetailActivityView } from './payment-order-calculation-basis-detail-activity-view'
 import { PaymentOrderCalculationBasisDetailWithholdingView } from './payment-order-calculation-basis-detail-withholding-view'
+import { PaymentOrderCalculationBasisDetailRemoteView } from './payment-order-calculation-basis-detail-remote-view'
 import type { PaymentOrderCalculationStatementDetailContext } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import './payment-order-calculation-basis-detail-modal.css'
 
@@ -99,6 +100,9 @@ export function PaymentOrderCalculationBasisDetailModal({
       ) : null}
       {detail.layout === 'withholding' ? (
         <PaymentOrderCalculationBasisDetailWithholdingView detail={detail} />
+      ) : null}
+      {detail.layout === 'remote' ? (
+        <PaymentOrderCalculationBasisDetailRemoteView detail={detail} />
       ) : null}
     </ContentModal>
   )

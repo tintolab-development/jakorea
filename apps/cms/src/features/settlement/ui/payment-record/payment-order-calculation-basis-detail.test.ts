@@ -287,6 +287,44 @@ describe('payment-order-calculation-basis-detail', () => {
     }
   })
 
+  it('remote display snapshot은 강의비 fallback보다 우선한다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강의비',
+        amount: 31500,
+        lineId: 'lecture-remote-1',
+        lectureSessionDisplay: '1차시',
+        basisDetail: {
+          layout: 'remote',
+          title: '강의비 산출 내역',
+          lineLabels: ['회차', '단가'],
+          formulaLines: ['회차별 산출'],
+          summaryLabels: ['금액'],
+          resultAmount: 31500,
+        },
+      },
+      { lectureFeeStandardTitle: '2급 강사비' }
+    )
+
+    expect(detail?.layout).toBe('remote')
+  })
+
+  it('원격 응답에 basisDetail이 없으면 mock 기준을 만들지 않는다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'meal',
+        itemLabel: '식사비',
+        amount: 30000,
+        lineId: 'meal-remote-empty',
+        lectureSessionDisplay: '1차시',
+      },
+      { remoteData: true }
+    )
+
+    expect(detail).toBeUndefined()
+  })
+
   it('parseLectureSessionStartFromDisplay extracts first number', () => {
     expect(parseLectureSessionStartFromDisplay('2 ~ 3차시')).toBe(2)
   })

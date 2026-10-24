@@ -42,9 +42,9 @@ describe('formatProgramSessionProgressDisplay', () => {
   })
 
   it('completed/total 조합', () => {
-    expect(
-      formatProgramSessionProgressDisplay({ sessionCompleted: 4, sessionTotal: 16 })
-    ).toBe('4 / 16')
+    expect(formatProgramSessionProgressDisplay({ sessionCompleted: 4, sessionTotal: 16 })).toBe(
+      '4 / 16'
+    )
   })
 })
 
@@ -95,10 +95,7 @@ describe('needsPaymentStatementJoin', () => {
 
   it('statementId 없는 행이 있으면 true', () => {
     expect(
-      needsPaymentStatementJoin([
-        { settlementId: 1, statementId: 10 },
-        { settlementId: 2 },
-      ])
+      needsPaymentStatementJoin([{ settlementId: 1, statementId: 10 }, { settlementId: 2 }])
     ).toBe(true)
   })
 })
@@ -180,5 +177,29 @@ describe('mapCalculationDetailToBasisDetail', () => {
         basisJson: '{not-json',
       })
     ).toBeUndefined()
+  })
+
+  it('typed 필드가 없어도 백엔드 display snapshot을 generic basisDetail로 매핑한다', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'transportInstructor',
+      title: '교통비 산출 내역',
+      formulaText: '출강일별 이동 거리 × 교통비 단가',
+      lineLabels: ['출강일', '출발지', '도착지', '거리', '단가', '금액'],
+      formulaLines: ['출강일별 이동 구간 확인', '거리/단가 기준 금액 계산'],
+      summaryLabels: ['인정 건수', '산출 금액'],
+      resultAmount: 31500,
+    })
+
+    expect(detail).toMatchObject({
+      layout: 'remote',
+      sourceLayout: 'transportInstructor',
+      title: '교통비 산출 내역',
+      formulaText: '출강일별 이동 거리 × 교통비 단가',
+      resultAmount: 31500,
+    })
+  })
+
+  it('표시용 필드도 없으면 basisDetail을 만들지 않는다', () => {
+    expect(mapCalculationDetailToBasisDetail({ layout: 'transportInstructor' })).toBeUndefined()
   })
 })
