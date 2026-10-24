@@ -5,8 +5,8 @@
  * Filtered for Homepage Admin education Orval codegen.
  * OpenAPI spec version: v1
  */
-import type { CareerCultureItemResponse } from './careerCultureItemResponse';
-import type { CareerInterviewResponse } from './careerInterviewResponse';
+import type { CareerGuideAdminCultureItemResponse } from './careerGuideAdminCultureItemResponse';
+import type { CareerGuideAdminInterviewResponse } from './careerGuideAdminInterviewResponse';
 
 export interface CareerGuideAdminResponse {
   mainText?: string;
@@ -14,7 +14,7 @@ export interface CareerGuideAdminResponse {
   subTextEn?: string;
   bannerAssetId?: number;
   bannerImageUrl?: string;
-  cultureItems?: CareerCultureItemResponse[];
-  interviews?: CareerInterviewResponse[];
+  cultureItems?: CareerGuideAdminCultureItemResponse[];
+  interviews?: CareerGuideAdminInterviewResponse[];
   version?: number;
 }

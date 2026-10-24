@@ -22,5 +22,10 @@ export interface MemberLoginCreateRequest {
      * @maxLength 255
      */
   loginId: string;
+  /**
+     * @minLength 0
+     * @maxLength 64
+     */
+  clientIp?: string;
   loggedAt?: string;
 }
