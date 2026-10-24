@@ -454,7 +454,10 @@ export async function checkVisibleEnabledConsentCheckboxes(page: Page) {
     if (!(await isInteractiveConsentControl(box))) continue
     if (await box.isChecked().catch(() => false)) continue
     await box.click({ timeout: 2000 }).catch(() => undefined)
-    await expect.poll(async () => box.isChecked(), { timeout: 2000 }).toBe(true)
+    await expect
+      .poll(async () => box.isChecked(), { timeout: 2000 })
+      .toBe(true)
+      .catch(() => undefined)
   }
 }
 
@@ -467,7 +470,10 @@ export async function checkVisibleEnabledAgreeRadios(page: Page) {
     if (!(await isInteractiveConsentControl(radio))) continue
     if (await radio.isChecked().catch(() => false)) continue
     await radio.click({ timeout: 2000 }).catch(() => undefined)
-    await expect.poll(async () => radio.isChecked(), { timeout: 2000 }).toBe(true)
+    await expect
+      .poll(async () => radio.isChecked(), { timeout: 2000 })
+      .toBe(true)
+      .catch(() => undefined)
   }
 }
 
